@@ -1,5 +1,6 @@
 # Exclude user-specific config file
 config.py
+personal_testing.py
 
 # The .gitignore file is a configuration file used in our project to specify which files or directories should be excluded from version control.
 # It helps keep our repository clean and prevents Git from tracking files that are not meant to be shared among all team members.

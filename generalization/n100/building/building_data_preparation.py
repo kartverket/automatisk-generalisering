@@ -23,3 +23,8 @@ import arcpy
 # Importing environment
 environment_setup.setup(workspace=config.n100_building_workspace)
 
+input_n100.BegrensningsKurve
+sql_expr_begrensningskurve_waterfeatures = "OBJTYPE = 'ElvBekkKant' Or OBJTYPE = 'Innsjøkant' Or OBJTYPE = 'InnsjøkantRegulert' Or OBJTYPE = 'Kystkontur'"
+
+
+custom_arcpy.attribute_select_and_make_feature_layer(input_n100.BegrensningsKurve, sql_expr_begrensningskurve_waterfeatures, "begrensningskurve_waterfeatures")
