@@ -10,31 +10,32 @@ def add_subdirs_to_path(dir_path):
 root_path = detect()
 add_subdirs_to_path(root_path)
 
-# Now you should be able to import any of your custom modules
+# Importing custom files relative to the root path
 import custom_arcpy
 import config
 import environment_setup
 import input_n100
+import  input_n50
 
 # Importing general packages
 import arcpy
 
-
+# Importing environment
 environment_setup.setup(workspace=config.n100_building_workspace)
 
-# Importing the input features
-
-print("Input features imported.")
 
 
-print(input_n100.BegrensingsKurve)
+# print(input_n100.BegrensingsKurve)
+# print(r"C:\GIS_Files\n100.gdb\BegrensningsKurve")
+#
+# # Selecting water features to use as barriers and creating a temporary layer feature
+# water_expr = "OBJTYPE = 'ElvBekkKant' Or OBJTYPE = 'Innsjøkant' Or OBJTYPE = 'InnsjøkantRegulert' Or OBJTYPE = 'Kystkontur'"
+# # custom_arcpy.attribute_select_and_make_feature_layer(
+# #     r"C:\GIS_Files\n100.gdb\BegrensingsKurve", water_expr, "n100_begrensingskurve_waterfeatures"
+# # )
+# custom_arcpy.attribute_select_and_make_feature_layer(input_n100.BegrensingsKurve, water_expr, "n100_begrensingskurve_waterfeatures")
 
-# Selecting water features to use as barriers and creating a temporary layer feature
-water_expr = "OBJTYPE = 'ElvBekkKant' Or OBJTYPE = 'Innsjøkant' Or OBJTYPE = 'InnsjøkantRegulert' Or OBJTYPE = 'Kystkontur'"
-# custom_arcpy.attribute_select_and_make_feature_layer(
-#     r"C:\GIS_Files\n100.gdb\BegrensingsKurve", water_expr, "n100_begrensingskurve_waterfeatures"
-# )
-custom_arcpy.attribute_select_and_make_feature_layer(input_n100.BegrensingsKurve, water_expr, "n100_begrensingskurve_waterfeatures")
+
 
 # custom_arcpy.attribute_select_and_make_permanent_feature(
 #     input_n100.BegrensingsKurve,
