@@ -1,15 +1,3 @@
-from rootpath import detect
-import sys, os
-
-def add_subdirs_to_path(dir_path):
-    for root, dirs, files in os.walk(dir_path):
-        sys.path.append(root)
-        for dir_name in dirs:
-            sys.path.append(os.path.join(root, dir_name))
-
-root_path = detect()
-add_subdirs_to_path(root_path)
-
 # Importing custom files relative to the root path
 from custom_tools import custom_arcpy
 import config
@@ -20,6 +8,11 @@ from input_data import input_n100
 # Importing general packages
 import arcpy
 
+# Importing sub models
+from generalization.n100.building import building_data_preparation
+
 # Importing environment
 environment_setup.setup(workspace=config.n100_building_workspace)
 
+# def main:
+#
