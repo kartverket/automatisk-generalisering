@@ -4,6 +4,12 @@ personal_testing.py
 .vscode
 .env
 
+# Ignore Python bytecode files
+__pycache__/
+
+# Ignore .pyc files
+*.pyc
+
 # The .gitignore file is a configuration file used in our project to specify which files or directories should be excluded from version control.
 # It helps keep our repository clean and prevents Git from tracking files that are not meant to be shared among all team members.
 
