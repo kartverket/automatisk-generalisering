@@ -1,9 +1,3 @@
-# Makes sure the path is relative to the root path
-from rootpath import detect
-import sys
-root_path = detect()
-sys.path.append(root_path)
-
 # Importing config file from the root path
 from config import n50_path
 import arcpy
