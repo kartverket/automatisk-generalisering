@@ -76,7 +76,7 @@ To test that everything is working as intended we can test a little script. Tryi
 - Copy the following script and run it:
 
 
-  ```python
+```python
 import config
 from setup import environment_setup
 from input_data import input_n50
@@ -87,7 +87,6 @@ environment_setup.setup(workspace=config.n100_building_workspace)
 
 input_n50.check_paths()
 input_n100.check_paths()
-
 ```
 
 ### Interpreting the result
