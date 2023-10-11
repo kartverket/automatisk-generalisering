@@ -2,7 +2,7 @@
 from config import n100_path
 import arcpy
 
-# Defining universal paths for n100 regardless of local path setup
+# Defining universal paths for n100 regardless of local path env_setup
 AdminFlate = fr"{n100_path}\AdminFlate"
 AdminGrense = fr"{n100_path}\AdminGrense"
 AdminGrensePunkt = fr"{n100_path}\AdminGrensePunkt"

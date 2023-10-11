@@ -25,7 +25,7 @@ __pycache__/
 # - Ensures that the main codebase remains clean and consistent.
 
 # Usage:
-# - If you have any files that are specific to your local setup or user preferences, you can add them to the .gitignore file.
+# - If you have any files that are specific to your local env_setup or user preferences, you can add them to the .gitignore file.
 # - These files will remain on your local machine but won't affect the shared codebase on GitHub.
 # - Refer to the .gitignore file for a list of ignored files and directories.
 
