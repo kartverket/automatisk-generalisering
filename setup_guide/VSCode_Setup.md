@@ -75,10 +75,9 @@ To test that everything is working as intended we can test a little script. Tryi
 - Create a python file name `personal_testing.py` this can be located anywhere inside your project. This file will not be tracked by git.
 - Copy the following script and run it:
 
-
 ```python
 import config
-from setup import environment_setup
+from env_setup import environment_setup
 from input_data import input_n50
 from input_data import input_n100
 

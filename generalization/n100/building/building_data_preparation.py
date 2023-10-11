@@ -1,7 +1,7 @@
 # Importing custom files relative to the root path
 from custom_tools import custom_arcpy
 import config
-from setup import environment_setup
+from env_setup import environment_setup
 from input_data import input_n50
 from input_data import input_n100
 
