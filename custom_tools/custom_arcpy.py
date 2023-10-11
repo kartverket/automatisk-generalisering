@@ -1,6 +1,30 @@
 import arcpy
 from enum import Enum
 
+# Define your enums at the module level
+class SelectionTypeAttribute(Enum):
+    NEW_SELECTION = "NEW_SELECTION"
+    ADD_TO_SELECTION = "ADD_TO_SELECTION"
+    REMOVE_FROM_SELECTION = "REMOVE_FROM_SELECTION"
+    SUBSET_SELECTION = "SUBSET_SELECTION"
+    SWITCH_SELECTION = "SWITCH_SELECTION"
+    CLEAR_SELECTION = "CLEAR_SELECTION"
+
+# Define your function using the above enum
+def a_attribute_select_and_make_feature_layer(
+    input_layer, expression, output_name, selection_type="NEW_SELECTION", inverted=False
+):
+    selected_type = (
+        SelectionTypeAttribute[selection_type].value
+        if selection_type in SelectionTypeAttribute.__members__
+        else "NEW_SELECTION"
+    )
+    arcpy.management.MakeFeatureLayer(input_layer, output_name)
+    arcpy.management.SelectLayerByAttribute(
+        output_name, selected_type, expression, invert_where_clause=inverted
+    )
+    print(f"{output_name} created temporarily.")
+
 
 def attribute_select_and_make_feature_layer(
     input_layer, expression, output_name, selection_type="NEW_SELECTION", inverted=False
