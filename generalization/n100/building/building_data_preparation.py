@@ -14,7 +14,9 @@ environment_setup.setup(workspace=config.n100_building_workspace)
 
 # Defining the SQL selection expression for water features for begrensningskurve, then using that selection to create a temporary feature layer
 sql_expr_begrensningskurve_waterfeatures = "OBJTYPE = 'ElvBekkKant' Or OBJTYPE = 'Innsjøkant' Or OBJTYPE = 'InnsjøkantRegulert' Or OBJTYPE = 'Kystkontur'"
-custom_arcpy.attribute_select_and_make_feature_layer(
+
+
+custom_arcpy.select_attribute_and_make_feature_layer(
     input_n100.BegrensningsKurve,
     sql_expr_begrensningskurve_waterfeatures,
     "begrensningskurve_waterfeatures",
@@ -43,3 +45,4 @@ arcpy.management.CalculateFields(
     "PYTHON3",
     [["hierarchy", "0"], ["invisibility", "0"]],
 )
+
