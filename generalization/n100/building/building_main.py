@@ -4,6 +4,7 @@ import config
 from env_setup import environment_setup
 from input_data import input_n50
 from input_data import input_n100
+from generalization.n100.building import building_data_preparation
 
 # Importing general packages
 import arcpy
@@ -14,5 +15,7 @@ from generalization.n100.building import building_data_preparation
 # Importing environment
 environment_setup.setup(workspace=config.n100_building_workspace)
 
-# def main:
-#
+def main():
+    building_data_preparation.main()
+
+

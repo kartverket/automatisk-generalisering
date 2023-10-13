@@ -15,13 +15,17 @@ Lastly we will make sure you have created and set up the config.py file correctl
 - Inside `.vscode`, create a file named `settings.json` if it's not already there.
 - Open `settings.json` and add or update the following content:
 
-  ```json
-  {
-    "python.envFile": "${workspaceFolder}/.env",
-    "python.autoComplete.addBrackets": true,
-    "python.analysis.autoSearchPaths": true,
-    "python.analysis.useImportHeuristic": true
-  }
+```json
+{
+  "python.envFile": "${workspaceFolder}/.env",
+  "python.autoComplete.addBrackets": true,
+  "python.analysis.autoSearchPaths": true,
+  "python.analysis.useImportHeuristic": true,
+  "terminal.integrated.env.windows": {
+    "PYTHONPATH": "C:\\example\\path\\to\\the\\project"
+  },
+  "python.analysis.completeFunctionParens": true
+}
   ```
   
 
@@ -54,7 +58,7 @@ This configuration guides VS Code on how to handle Python environments and modul
 ### 2. Configure VS Code to Use ArcGIS Pro's Python Interpreter
 
 - In VS Code select the python interpreter used. Press ***(Ctrl+Shift+P)*** and search for `"Python: Select Interpreter"`
-- If the python interpreter used by ArcGIS Pro is not suggested Select `"Enter interpreter path..."` and use the path you founs previously. Select the python.exe file, and then press "Select interpreter"
+- If the python interpreter used by ArcGIS Pro is not suggested Select `"Enter interpreter path..."` and use the path you found previously. Select the python.exe file, and then press "Select interpreter"
 
 ### 3. Reload VS Code
 - To apply these changes, you may need to reload VS Code. Close and re-open VS Code to make sure the changes are loaded in correctly.
@@ -70,24 +74,9 @@ The config.py file is not tracked by GIT and will contain system specific inform
 
 ## Testing  that your environment is set up correctly. 
 
-To test that everything is working as intended we can test a little script. Trying to load in the N50 and N100 data.
+To test that everything is working as intended we can test a little script. Try running the script called `setup_test.py`, located under `automatic-generalization-kv\setup_guide\ `.
 
-- Create a python file name `personal_testing.py` this can be located anywhere inside your project. This file will not be tracked by git.
-- Copy the following script and run it:
-
-```python
-import config
-from env_setup import environment_setup
-from input_data import input_n50
-from input_data import input_n100
-
-# Importing environment
-environment_setup.setup(workspace=config.n100_building_workspace)
-
-input_n50.check_paths()
-input_n100.check_paths()
-```
-
+- Run the file to test that everyting is set up correctly.
 ### Interpreting the result
 
 - If you only get print statements like `"Success on file\path\to\data"` then congratulations your setup is complete and you are ready :)
