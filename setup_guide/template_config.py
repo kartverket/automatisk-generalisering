@@ -23,4 +23,4 @@ n100_path = r"path\to\n100.gdb"
 ###########################
 # Other path locations
 ###########################
-matrikkel_path = "path\to\matrikkel.gdb"
+matrikkel_path = r"path\to\matrikkel.gdb"
