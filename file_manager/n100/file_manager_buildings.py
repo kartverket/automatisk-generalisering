@@ -8,7 +8,7 @@ class temp_files(Enum):
         "begrensningskurve_waterfeatures_20m_buffer"
     )
     unsplit_veg_sti_n100 = "unsplit_veg_sti_n100"
-    urban_selection_n100 = "urban_selection_n100"
+    no_longer_urban_n100 = "no_longer_urban_n100"
 
 
 # class file_manager:
