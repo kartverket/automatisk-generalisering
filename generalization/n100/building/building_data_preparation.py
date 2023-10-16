@@ -16,9 +16,18 @@ environment_setup.setup(workspace=config.n100_building_workspace)
 
 def main():
     preparation_begrensningskurve()
+    preperation_vegsti()
+    preperation_arealdekke_flate()
+
 
 
 def preparation_begrensningskurve():
+    """
+    A function that prepares the begrensningskurve by performing the following steps:
+    1. Defining the SQL selection expression for water features for begrensningskurve and creating a temporary feature layer.
+    2. Creating a buffer of the water features begrensningskurve to take into account symbology of the water features.
+    3. Adding hierarchy and invisibility fields to the begrensningskurve_waterfeatures_buffer and setting them to 0.
+    """
     # Defining the SQL selection expression for water features for begrensningskurve, then using that selection to create a temporary feature layer
     sql_expr_begrensningskurve_waterfeatures = "OBJTYPE = 'ElvBekkKant' Or OBJTYPE = 'Innsjøkant' Or OBJTYPE = 'InnsjøkantRegulert' Or OBJTYPE = 'Kystkontur'"
 
@@ -31,7 +40,8 @@ def preparation_begrensningskurve():
 
     # Creating a buffer of the water features begrensningskurve to take into account symbology of the water features
     buffer_distance_begrensningskurve_waterfeatures = "20 Meters"
-    output_name_buffer_begrensningskurve_waterfeatures = f"begrensningskurve_waterfeatures_{buffer_distance_begrensningskurve_waterfeatures.replace(' ', '')}_buffer"
+    # output_name_buffer_begrensningskurve_waterfeatures = f"begrensningskurve_waterfeatures_{buffer_distance_begrensningskurve_waterfeatures.replace(' ', '')}_buffer"
+    output_name_buffer_begrensningskurve_waterfeatures = "begrensningskurve_waterfeatures_20m_buffer"
     arcpy.analysis.PairwiseBuffer(
         output_name_begrensningskurve_waterfeatures,
         output_name_buffer_begrensningskurve_waterfeatures,
@@ -51,37 +61,19 @@ def preparation_begrensningskurve():
         "PYTHON3",
         [["hierarchy", "0"], ["invisibility", "0"]],
     )
-    return output_name_buffer_begrensningskurve_waterfeatures
 
 
-# def testing_file_manager_old():
-#     output_name_unsplit_veg_sti_n100 = "unsplit_veg_sti_n100"
-#     arcpy.UnsplitLine_management(
-#         input_n100.VegSti,
-#         output_name_unsplit_veg_sti_n100,
-#         ["subtypekode", "motorvegtype", "UTTEGNING"],
-#     )
-#
-#     sql_expr_arealdekke_urban_n100 = "OBJTYPE = 'Tettbebyggelse' Or OBJTYPE = 'Industriområde' Or OBJTYPE = 'BymessigBebyggelse'"
-#     output_name_arealdekke_urban_n100 = "arealdekke_urban_n100"
-#     custom_arcpy.select_attribute_and_make_permanent_feature(
-#         input_n100.ArealdekkeFlate,
-#         sql_expr_arealdekke_urban_n100,
-#         output_name_arealdekke_urban_n100,
-#         custom_arcpy.SelectionType.NEW_SELECTION,
-#     )
-#
-#     output_name_unsplit_veg_sti_n100 = "unsplit_veg_sti_n100"
-#     file_manager.add_file(
-#         "output_name_unsplit_veg_sti_n100", output_name_unsplit_veg_sti_n100
-#     )
-#
-#
-# def test_file_manger():
-#     custom_arcpy.select_attribute_and_make_permanent_feature(
-#         input_n100.AdminFlate, "NAVN = 'Oslo'", "selection_fc"
-#     )
-#
-#     selection_fc = "selection_fc"
-#     return  selection_fc
+def preperation_vegsti():
+    arcpy.UnsplitLine_management(input_n100.VegSti, "unsplit_veg_sti_n100", ["subtypekode", "motorvegtype", "UTTEGNING"])
+    unsplit_veg_sti_n100 = "unsplit_veg_sti_n100"
+
+def preperation_arealdekke_flate():
+    sql_expr = "OBJTYPE = 'Tettbebyggelse' Or OBJTYPE = 'Industriområde' Or OBJTYPE = 'BymessigBebyggelse'"
+    custom_arcpy.select_location_and_make_permanent_feature(input_n100.ArealdekkeFlate, sql_expr, "urban_selection_n100")
+    urban_selection_n100 = "urban_selection_n100"
+
+    custom_arcpy.select_location_and_make_permanent_feature(input_n50.ArealdekkeFlate, sql_expr, "urban_selection_n50")
+    urban_selection_n50 = "urban_selection_n50"
+
+
 
