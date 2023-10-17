@@ -8,7 +8,9 @@ class temp_files(Enum):
         "begrensningskurve_waterfeatures_20m_buffer"
     )
     unsplit_veg_sti_n100 = "unsplit_veg_sti_n100"
-    no_longer_urban_n100 = "no_longer_urban_n100"
+    matrikkel_bygningspunkt = "matrikkel_bygningspunkt"
+    grunnriss_selection_n50 = "grunnriss_selection_n50"
+    kirke_sykehus_points_n50 = "kirke_sykehus_points_n50"
 
 
 # class file_manager:

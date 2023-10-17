@@ -4,6 +4,7 @@ import config
 from env_setup import environment_setup
 from input_data import input_n50
 from input_data import input_n100
+from input_data import input_other
 
 # from file_manager.n100.file_manager_buildings import file_manager, file_keys
 
@@ -17,7 +18,8 @@ environment_setup.setup(workspace=config.n100_building_workspace)
 def main():
     preparation_begrensningskurve()
     preperation_vegsti()
-    no_longer_urban_areas_n100()
+    adding_matrikkel_as_points()
+    selecting_grunnriss_for_generalization()
 
 
 def preparation_begrensningskurve():
@@ -76,15 +78,15 @@ def preperation_vegsti():
     Returns:
         None
     """
+    unsplit_veg_sti_n100 = "unsplit_veg_sti_n100"
     arcpy.UnsplitLine_management(
         input_n100.VegSti,
-        "unsplit_veg_sti_n100",
+        unsplit_veg_sti_n100,
         ["subtypekode", "motorvegtype", "UTTEGNING"],
     )
-    unsplit_veg_sti_n100 = "unsplit_veg_sti_n100"
 
 
-def no_longer_urban_areas_n100():
+def adding_matrikkel_as_points():
     """
     Generates a selection of areas that are no longer considered urban based on specific criteria.
 
@@ -128,7 +130,55 @@ def no_longer_urban_areas_n100():
     )
     no_longer_urban_n100 = "no_longer_urban_n100"
 
+    matrikkel_bygningspunkt = "matrikkel_bygningspunkt"
+    custom_arcpy.select_location_and_make_permanent_feature(
+        input_other.matrikkel_bygningspunkt,
+        custom_arcpy.OverlapType.INTERSECT,
+        no_longer_urban_n100,
+        matrikkel_bygningspunkt,
+    )
+
+    arcpy.Delete_management(urban_selection_n100_buffer)
+    arcpy.Delete_management(no_longer_urban_n100)
+
+    # Adding transferring the NBR value to the matrikkel_bygningspunkt
+    arcpy.AddField_management(matrikkel_bygningspunkt, "BYGGTYP_NBR", "LONG")
+    arcpy.CalculateField_management(
+        matrikkel_bygningspunkt, "BYGGTYP_NBR", "!bygningstype!"
+    )
+
+    ###### NEED TO REMEBER TO REMOVE NBR VALUES NOT WANTED TO BE DELIVERED############
+
+
+
+
 def selecting_grunnriss_for_generalization():
+    """
+    Selects grunnriss features for generalization based on a given SQL expression.
+
+    This function first selects all grunnriss features that are not churches or hospitals based on the NBR values (970, 719, 671).
+    These selected features are then used for polygon generalization.
+
+    Additionally, this function transforms the selected hospitals and churches into points using the 'CENTROID' method.
+    These points are used for point generalization.
+    """
+
     sql_expr = "BYGGTYP_NBR IN (970, 719, 671)"
-    custom_arcpy.select_attribute_and_make_permanent_feature(input_n50.Grunnriss, sql_expr, "grunnriss_selection_n50", custom_arcpy.SelectionType.NEW_SELECTION, inverted=True)
     grunnriss_selection_n50 = "grunnriss_selection_n50"
+    custom_arcpy.select_attribute_and_make_permanent_feature(
+        input_n50.Grunnriss,
+        sql_expr,
+        grunnriss_selection_n50,
+        custom_arcpy.SelectionType.NEW_SELECTION,
+        inverted=True,
+    )
+
+    kirke_sykehus_grunnriss_n50 = "kirke_sykehus_grunnriss_n50"
+    custom_arcpy.select_attribute_and_make_feature_layer(
+        input_n50.Grunnriss, sql_expr, kirke_sykehus_grunnriss_n50
+    )
+
+    kirke_sykehus_points_n50 = "kirke_sykehus_points_n50"
+    arcpy.FeatureToPoint_management(
+        kirke_sykehus_grunnriss_n50, kirke_sykehus_points_n50, "CENTROID"
+    )
