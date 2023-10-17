@@ -6,8 +6,6 @@ from input_data import input_n50
 from input_data import input_n100
 from input_data import input_other
 
-# from file_manager.n100.file_manager_buildings import file_manager, file_keys
-
 # Importing general packages
 import arcpy
 
@@ -29,127 +27,164 @@ def preparation_begrensningskurve():
     2. Creating a buffer of the water features begrensningskurve to take into account symbology of the water features.
     3. Adding hierarchy and invisibility fields to the begrensningskurve_waterfeatures_buffer and setting them to 0.
     """
-    # Defining the SQL selection expression for water features for begrensningskurve, then using that selection to create a temporary feature layer
+    # Defining the SQL selection expression for water features for begrensningskurve
     sql_expr_begrensningskurve_waterfeatures = "OBJTYPE = 'ElvBekkKant' Or OBJTYPE = 'Innsjøkant' Or OBJTYPE = 'InnsjøkantRegulert' Or OBJTYPE = 'Kystkontur'"
 
-    custom_arcpy.select_attribute_and_make_feature_layer(
-        input_n100.BegrensningsKurve,
-        sql_expr_begrensningskurve_waterfeatures,
-        "begrensningskurve_waterfeatures",
-    )
+    # Defining the output name
     output_name_begrensningskurve_waterfeatures = "begrensningskurve_waterfeatures"
 
-    # Creating a buffer of the water features begrensningskurve to take into account symbology of the water features
+    # Creating a temporary feature of water features from begrensningskurve
+    custom_arcpy.select_attribute_and_make_feature_layer(
+        input_layer=input_n100.BegrensningsKurve,
+        expression=sql_expr_begrensningskurve_waterfeatures,
+        output_name=output_name_begrensningskurve_waterfeatures,
+    )
+
+
+    # Defining the buffer distance used for the buffer of begrensningskurve water features
     buffer_distance_begrensningskurve_waterfeatures = "20 Meters"
-    # output_name_buffer_begrensningskurve_waterfeatures = f"begrensningskurve_waterfeatures_{buffer_distance_begrensningskurve_waterfeatures.replace(' ', '')}_buffer"
+
+    # Defining the output name
     output_name_buffer_begrensningskurve_waterfeatures = (
         "begrensningskurve_waterfeatures_20m_buffer"
     )
+
+    # Creating a buffer of the water features begrensningskurve to take into account symbology of the water features
     arcpy.analysis.PairwiseBuffer(
-        output_name_begrensningskurve_waterfeatures,
-        output_name_buffer_begrensningskurve_waterfeatures,
-        buffer_distance_begrensningskurve_waterfeatures,
-        "NONE",
-        "",
-        "PLANAR",
+        in_features=output_name_begrensningskurve_waterfeatures,
+        out_feature_class=output_name_buffer_begrensningskurve_waterfeatures,
+        buffer_distance_or_field=buffer_distance_begrensningskurve_waterfeatures,
+        dissolve_option="NONE",
+        dissolve_field=None,
+        method="PLANAR",
     )
 
     # Adding hierarchy and invisibility fields to the begrensningskurve_waterfeatures_buffer and setting them to 0
+    # Define field information
+    fields_to_add = [["hierarchy", "LONG"], ["invisibility", "LONG"]]
+    fields_to_calculate = [["hierarchy", "0"], ["invisibility", "0"]]
+
+    # Add fields
     arcpy.management.AddFields(
-        output_name_buffer_begrensningskurve_waterfeatures,
-        [["hierarchy", "LONG"], ["invisibility", "LONG"]],
+        in_table=output_name_buffer_begrensningskurve_waterfeatures,
+        field_description=fields_to_add,
     )
+
+    # Calculate fields
     arcpy.management.CalculateFields(
-        output_name_buffer_begrensningskurve_waterfeatures,
-        "PYTHON3",
-        [["hierarchy", "0"], ["invisibility", "0"]],
+        in_table=output_name_buffer_begrensningskurve_waterfeatures,
+        expression_type="PYTHON3",
+        fields=fields_to_calculate,
     )
 
 
 def preperation_vegsti():
     """
-    Unsplit the lines in the specified feature class based on the given fields.
+    Unsplit the lines in the specified feature class based on the given fields, to speed up future processing speed
+    when using this as a barrier.
 
     Parameters:
         input_n100 (str): The path to the input feature class containing the lines to be unsplit.
         output_feature_class (str): The name of the output feature class to be created.
         fields (List[str]): The list of fields to use for unsplitting the lines.
-
-    Returns:
-        None
     """
     unsplit_veg_sti_n100 = "unsplit_veg_sti_n100"
     arcpy.UnsplitLine_management(
-        input_n100.VegSti,
-        unsplit_veg_sti_n100,
-        ["subtypekode", "motorvegtype", "UTTEGNING"],
+        in_features=input_n100.VegSti,
+        out_feature_class=unsplit_veg_sti_n100,
+        dissolve_field=["subtypekode", "motorvegtype", "UTTEGNING"],
     )
 
 
 def adding_matrikkel_as_points():
     """
-    Generates a selection of areas that are no longer considered urban based on specific criteria.
+    Adds building points from matrikkel for areas which no longer are urban areas.
 
     This function performs the following steps:
-    1. Selects features from the input_n100.ArealdekkeFlate layer where the OBJTYPE is 'Tettbebyggelse', 'Industriområde', or 'BymessigBebyggelse'.
-    2. Creates a feature layer called 'urban_selection_n100' based on the selected features.
-    3. Selects features from the input_n50.ArealdekkeFlate layer where the OBJTYPE is 'Tettbebyggelse', 'Industriområde', or 'BymessigBebyggelse'.
-    4. Creates a feature layer called 'urban_selection_n50' based on the selected features.
-    5. Performs a pairwise buffer analysis on the 'urban_selection_n100' layer with a buffer distance of 50 Meters, resulting in a new feature layer called 'urban_selection_n100_buffer'.
-    6. Performs a pairwise erase analysis on the 'urban_selection_n50' layer using the 'urban_selection_n100_buffer' layer as the erase feature, resulting in a new feature layer called 'no_longer_urban_n100'.
-
-    Parameters:
-    None
-
-    Returns:
-    None
+    1. Selects features and creates a layer from the input_n100.ArealdekkeFlate layer which are urban.
+    2. Selects features and creates a layer from the input_n50.ArealdekkeFlate layer which are urban.
+    3. Adds a buffer to the urban selection from n100 as a short hand for symbology.
+    4. Removes areas from n50 urban areas from the buffer of n|50 urban areas resulting in areas in n100 which no longer are urban.
+    5. Selects matrikkel bygningspunkter based on this new urban selection layer, and adds NBR values to the created points.
     """
-    sql_expr = "OBJTYPE = 'Tettbebyggelse' Or OBJTYPE = 'Industriområde' Or OBJTYPE = 'BymessigBebyggelse'"
-    custom_arcpy.select_attribute_and_make_feature_layer(
-        input_n100.ArealdekkeFlate, sql_expr, "urban_selection_n100"
-    )
+
+    # Defining sql expression to select urban areas
+    urban_areas_sql_expr = "OBJTYPE = 'Tettbebyggelse' Or OBJTYPE = 'Industriområde' Or OBJTYPE = 'BymessigBebyggelse'"
+
+    # Defining output names
     urban_selection_n100 = "urban_selection_n100"
 
+    # Selecting urban areas from n100 using sql expression
     custom_arcpy.select_attribute_and_make_feature_layer(
-        input_n50.ArealdekkeFlate, sql_expr, "urban_selection_n50"
+        input_layer=input_n100.ArealdekkeFlate,
+        expression=urban_areas_sql_expr,
+        output_name=urban_selection_n100,
     )
+
+    # Defining output names
     urban_selection_n50 = "urban_selection_n50"
 
-    arcpy.PairwiseBuffer_analysis(
-        urban_selection_n100,
-        "urban_selection_n100_buffer",
-        "50 Meters",
-        "NONE",
-        "",
-        "PLANAR",
+    # Selecting urban areas from n50 using sql expression
+    custom_arcpy.select_attribute_and_make_feature_layer(
+        input_layer=input_n50.ArealdekkeFlate,
+        expression=urban_areas_sql_expr,
+        output_name=urban_selection_n50,
     )
+
+    # Defining output names
     urban_selection_n100_buffer = "urban_selection_n100_buffer"
 
-    arcpy.PairwiseErase_analysis(
-        urban_selection_n50, urban_selection_n100_buffer, "no_longer_urban_n100"
+    # Creating a buffer of the urban selection of n100 to take into account symbology
+    arcpy.PairwiseBuffer_analysis(
+        in_features=urban_selection_n100,
+        out_feature_class=urban_selection_n100_buffer,
+        buffer_distance_or_field="50 Meters",
+        dissolve_option="NONE",
+        dissolve_field=None,
+        method="PLANAR",
     )
+
+    # Defining output names
     no_longer_urban_n100 = "no_longer_urban_n100"
 
-    matrikkel_bygningspunkt = "matrikkel_bygningspunkt"
-    custom_arcpy.select_location_and_make_permanent_feature(
-        input_other.matrikkel_bygningspunkt,
-        custom_arcpy.OverlapType.INTERSECT,
-        no_longer_urban_n100,
-        matrikkel_bygningspunkt,
+    # Removing areas from n50 urban areas from the buffer of n100 urban areas resulting in areas in n100 which no longer are urban
+    arcpy.PairwiseErase_analysis(
+        in_features=urban_selection_n50,
+        erase_features=urban_selection_n100_buffer,
+        out_feature_class=no_longer_urban_n100,
     )
 
+    # Defining output names
+    matrikkel_bygningspunkt = "matrikkel_bygningspunkt"
+
+    # Selecting matrikkel bygningspunkter based on this new urban selection layer
+    custom_arcpy.select_location_and_make_permanent_feature(
+        input_layer=input_other.matrikkel_bygningspunkt,
+        overlap_type=custom_arcpy.OverlapType.INTERSECT,
+        select_features=no_longer_urban_n100,
+        output_name=matrikkel_bygningspunkt,
+    )
+
+    # Deleting temporary files no longer needed
     arcpy.Delete_management(urban_selection_n100_buffer)
     arcpy.Delete_management(no_longer_urban_n100)
 
     # Adding transferring the NBR value to the matrikkel_bygningspunkt
-    arcpy.AddField_management(matrikkel_bygningspunkt, "BYGGTYP_NBR", "LONG")
+    arcpy.AddField_management(
+        in_table=matrikkel_bygningspunkt,
+        field_name="BYGGTYP_NBR",
+        field_type="LONG",
+    )
     arcpy.CalculateField_management(
-        matrikkel_bygningspunkt, "BYGGTYP_NBR", "!bygningstype!"
+        in_table=matrikkel_bygningspunkt,
+        field="BYGGTYP_NBR",
+        expression="!bygningstype!",
     )
 
     ###### NEED TO REMEBER TO REMOVE NBR VALUES NOT WANTED TO BE DELIVERED############
 
 
+adding_matrikkel_as_points()
 
 
 def selecting_grunnriss_for_generalization():
@@ -163,22 +198,37 @@ def selecting_grunnriss_for_generalization():
     These points are used for point generalization.
     """
 
-    sql_expr = "BYGGTYP_NBR IN (970, 719, 671)"
+    # Expression to be able to select churchs and hospitals
+    grunnriss_nbr_sql_expr = "BYGGTYP_NBR IN (970, 719, 671)"
+
+    # Output feature name definition
     grunnriss_selection_n50 = "grunnriss_selection_n50"
+
+    # Selecting grunnriss which are not churches or hospitals using inverted selection
     custom_arcpy.select_attribute_and_make_permanent_feature(
-        input_n50.Grunnriss,
-        sql_expr,
-        grunnriss_selection_n50,
-        custom_arcpy.SelectionType.NEW_SELECTION,
+        input_layer=input_n50.Grunnriss,
+        expression=grunnriss_nbr_sql_expr,
+        output_name=grunnriss_selection_n50,
+        selection_type=custom_arcpy.SelectionType.NEW_SELECTION,
         inverted=True,
     )
 
+    # Output feeature name definition
     kirke_sykehus_grunnriss_n50 = "kirke_sykehus_grunnriss_n50"
+
+    # Selecting grunnriss features not inverted based on sql expression above to select churches and hospitals
     custom_arcpy.select_attribute_and_make_feature_layer(
-        input_n50.Grunnriss, sql_expr, kirke_sykehus_grunnriss_n50
+        input_layer=input_n50.Grunnriss,
+        expression=grunnriss_nbr_sql_expr,
+        output_name=kirke_sykehus_grunnriss_n50,
     )
 
+    # Defining output feature name
     kirke_sykehus_points_n50 = "kirke_sykehus_points_n50"
+
+    # Transforming selected churches and hospitals into points
     arcpy.FeatureToPoint_management(
-        kirke_sykehus_grunnriss_n50, kirke_sykehus_points_n50, "CENTROID"
+        in_features=kirke_sykehus_grunnriss_n50,
+        out_feature_class=kirke_sykehus_points_n50,
+        point_location="CENTROID",
     )
