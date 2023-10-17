@@ -18,4 +18,4 @@ environment_setup.setup(workspace=config.n100_building_workspace)
 def main():
     building_data_preparation.main()
 
-
+main()
