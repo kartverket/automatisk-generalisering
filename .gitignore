@@ -10,6 +10,9 @@ __pycache__/
 # Ignore .pyc files
 *.pyc
 
+# Ignore pytest directories
+.pytest_cache
+
 # The .gitignore file is a configuration file used in our project to specify which files or directories should be excluded from version control.
 # It helps keep our repository clean and prevents Git from tracking files that are not meant to be shared among all team members.
 
@@ -31,3 +34,4 @@ __pycache__/
 
 # By using the .gitignore file, we can maintain a more organized and efficient version control system for our Python scripts and code.
 # If you have any questions or need assistance with Git or version control, feel free to reach out to the team.
+

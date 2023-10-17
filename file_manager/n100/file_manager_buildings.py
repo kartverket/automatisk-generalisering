@@ -1,7 +1,16 @@
 from generalization.n100.building import building_data_preparation
 from env_setup import environment_setup
+from enum import Enum  # , unique, global_enum
 
 
+class temp_files(Enum):
+    output_name_buffer_begrensningskurve_waterfeatures = (
+        "begrensningskurve_waterfeatures_20m_buffer"
+    )
+    unsplit_veg_sti_n100 = "unsplit_veg_sti_n100"
+    matrikkel_bygningspunkt = "matrikkel_bygningspunkt"
+    grunnriss_selection_n50 = "grunnriss_selection_n50"
+    kirke_sykehus_points_n50 = "kirke_sykehus_points_n50"
 
 
 # class file_manager:

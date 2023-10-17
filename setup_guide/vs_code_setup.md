@@ -83,3 +83,10 @@ To test that everything is working as intended we can test a little script. Try 
 - If you get error message `ModuleNotFoundError: No module named 'config'` or `ModuleNotFoundError: No module named 'environment_setup'` then you have an issue with how you Configured your VS Code environmnet and make sure you followed the steps under **Steps to Configure VS Code environment** correctly.
 - If you get an error message with `ModuleNotFoundError: No module named 'arcpy'` then you have an issue with the **Steps to import ArcPy** section and you need to make sure you followed that section correctly.
 - If you get no error messages but you get some print statements similar to `"Failed on file\path\to\data"` then you have an error in the path in the config file, however all other environments are set up correctly. Make sure the path follow the template correctly.
+
+###  Alternate solution
+If you have followed this guide and get issues finding the custom modules like config, then you can try running this code in your IDE terminal:
+
+`setx PYTHONPATH "C:\path\to\your\modules"`
+
+This solution sets the PythonPath for your system globally for your IDE so be catious about using it.
