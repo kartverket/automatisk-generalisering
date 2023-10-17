@@ -13,34 +13,20 @@ import arcpy
 environment_setup.setup(workspace=config.n100_building_workspace)
 
 
-
-
-
-def printer(): 
-    print("hei")
-
-printer()
-
-
+#           *************************    CURRENT WORKFLOW   ****************************
 
 # Main function
 def main(): 
     aggregate_polygon()
-    #simplify_building()
-    #simplify_polygon()
-    #simplify_building()
-
-
-main()
-
-
-#           *************************    CURRENT WORKFLOW   ****************************
-
+    simplify_building()
+    simplify_polygon()
+    simplify_building()
 
 
 # Aggregating building polygons 
 
 def aggregate_polygon():
+
     arcpy.cartography.AggregatePolygons(
         in_features=input_n50.Grunnriss,
         out_feature_class="aggregated_polygons", 
@@ -48,18 +34,17 @@ def aggregate_polygon():
         minimum_area="3200 SquareMeters", 
         minimum_hole_size="10000 SquareMeters", 
         orthogonality_option="ORTHOGONAL", 
-        barrier_features=[input_n100.VegSti, None], 
+        barrier_features=[input_n100.VegSti], 
         out_table="grunnriss_n50_aggregated_tbl", 
-        aggregate_field="BYGGTYP_NBR")
-
-""""
+        aggregate_field="BYGGTYP_NBR") 
+    
     
 # Simpliifying building polygons and generating points for polygons that are smaller than the specified minimum size
 
 def simplify_building():
 
     SimplifyBuilding_model_step1_Pnt = arcpy.cartography.SimplifyBuilding(
-    in_features=buildings,
+    in_features="aggregated_polygons",
     out_feature_class="simplified_buildings_1"
     simplification_tolerance="75", 
     minimum_area="3200 SquareMeters", 
@@ -80,7 +65,7 @@ def simplify_polygon(buildings):
        
 def spatial_join(): 
     arcpy.analysis.SpatialJoin(target_features="simplified_buildings_1", 
-                               join_features, 
+                               join_features=input_n50.Grunnriss, 
                                out_feature_class="spatial_joined_polygon_1")
 
 
@@ -133,5 +118,3 @@ def simplify_polygon_parameterized(buildings, out_feature_class, algorithm, simp
         minimum_area=minimum_area,
         collapsed_point_option=collapsed_point_option
     )
-
-    """
