@@ -1,13 +1,11 @@
-# Importing custom files relative to the root path
-# From custom_tools import custom_arcpy
+import arcpy
 
+# Importing custom files relative to the root path
 import config
+from custom_tools import custom_arcpy
 from env_setup import environment_setup
 from input_data import input_n50
 from input_data import input_n100
-
-# Importing general packages
-import arcpy
 
 # Importing environment
 environment_setup.setup(workspace=config.n100_building_workspace)
@@ -36,7 +34,6 @@ def simplify_building_polygon():
 
     """
      
-
     # Aggregating building polygons
     
     print("Aggregating building polygons...")
@@ -80,6 +77,19 @@ def simplify_building_polygon():
         minimum_area="3200 SquareMeters",
         collapsed_point_option="KEEP_COLLAPSED_POINTS")
     print("Simplifying polygons completed.")
+
+    # Simplifying building polygons
+
+    print("Simplifying building polygons...")
+    output_simplify_building = "simplified_building"
+    
+    arcpy.cartography.SimplifyBuilding(
+        in_features=output_aggregate_polygon,
+        out_feature_class=output_simplify_building,
+        simplification_tolerance="75", 
+        minimum_area="3200 SquareMeters", 
+        collapsed_point_option="KEEP_COLLAPSED_POINTS")
+    print("Simplifying building polygons completed.")
     
     # Spatial join between simplified building polygons and original building polygons
 
@@ -115,7 +125,7 @@ def simplify_building_polygon():
     # Making a copy of the feature class
 
     print("Making a copy of the feature class...")
-    arcpy.management.CopyFeatures(output_spatial_join, "simplified_grunnriss_n50")
+    arcpy.management.CopyFeatures(output_spatial_join, "simplified_grunnriss_n100")
     print("Copy completed.")
 
 main()
