@@ -5,6 +5,7 @@ from env_setup import environment_setup
 from input_data import input_n50
 from input_data import input_n100
 from input_data import input_other
+from file_manager.n100.file_manager_buildings import TemporaryFiles
 
 # Importing general packages
 import arcpy
@@ -45,14 +46,12 @@ def preparation_begrensningskurve():
     buffer_distance_begrensningskurve_waterfeatures = "20 Meters"
 
     # Defining the output name
-    output_name_buffer_begrensningskurve_waterfeatures = (
-        "begrensningskurve_waterfeatures_20m_buffer"
-    )
+    begrensningskurve_buffer_waterfeatures = TemporaryFiles.begrensningskurve_buffer_waterfeatures.value
 
     # Creating a buffer of the water features begrensningskurve to take into account symbology of the water features
     arcpy.analysis.PairwiseBuffer(
         in_features=output_name_begrensningskurve_waterfeatures,
-        out_feature_class=output_name_buffer_begrensningskurve_waterfeatures,
+        out_feature_class=begrensningskurve_buffer_waterfeatures,
         buffer_distance_or_field=buffer_distance_begrensningskurve_waterfeatures,
         dissolve_option="NONE",
         dissolve_field=None,
@@ -66,13 +65,13 @@ def preparation_begrensningskurve():
 
     # Add fields
     arcpy.management.AddFields(
-        in_table=output_name_buffer_begrensningskurve_waterfeatures,
+        in_table=begrensningskurve_buffer_waterfeatures,
         field_description=fields_to_add,
     )
 
     # Calculate fields
     arcpy.management.CalculateFields(
-        in_table=output_name_buffer_begrensningskurve_waterfeatures,
+        in_table=begrensningskurve_buffer_waterfeatures,
         expression_type="PYTHON3",
         fields=fields_to_calculate,
     )
@@ -88,7 +87,7 @@ def preperation_vegsti():
         output_feature_class (str): The name of the output feature class to be created.
         fields (List[str]): The list of fields to use for unsplitting the lines.
     """
-    unsplit_veg_sti_n100 = "unsplit_veg_sti_n100"
+    unsplit_veg_sti_n100 = TemporaryFiles.unsplit_veg_sti_n100.value
     arcpy.UnsplitLine_management(
         in_features=input_n100.VegSti,
         out_feature_class=unsplit_veg_sti_n100,
@@ -155,7 +154,7 @@ def adding_matrikkel_as_points():
     )
 
     # Defining output names
-    matrikkel_bygningspunkt = "matrikkel_bygningspunkt"
+    matrikkel_bygningspunkt = TemporaryFiles.matrikkel_bygningspunkt.value
 
     # Selecting matrikkel bygningspunkter based on this new urban selection layer
     custom_arcpy.select_location_and_make_permanent_feature(
@@ -202,7 +201,7 @@ def selecting_grunnriss_for_generalization():
     grunnriss_nbr_sql_expr = "BYGGTYP_NBR IN (970, 719, 671)"
 
     # Output feature name definition
-    grunnriss_selection_n50 = "grunnriss_selection_n50"
+    grunnriss_selection_n50 = TemporaryFiles.grunnriss_selection_n50.value
 
     # Selecting grunnriss which are not churches or hospitals using inverted selection
     custom_arcpy.select_attribute_and_make_permanent_feature(
@@ -224,7 +223,7 @@ def selecting_grunnriss_for_generalization():
     )
 
     # Defining output feature name
-    kirke_sykehus_points_n50 = "kirke_sykehus_points_n50"
+    kirke_sykehus_points_n50 = TemporaryFiles.kirke_sykehus_points_n50.value
 
     # Transforming selected churches and hospitals into points
     arcpy.FeatureToPoint_management(

@@ -5,7 +5,7 @@ from env_setup import environment_setup
 from input_data import input_n50
 from input_data import input_n100
 from generalization.n100.building import building_data_preparation
-from file_manager.n100.file_manager_buildings import temp_files
+from file_manager.n100.file_manager_buildings import TemporaryFiles
 
 # Importing general packages
 import arcpy
