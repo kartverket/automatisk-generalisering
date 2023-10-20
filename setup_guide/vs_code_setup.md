@@ -87,6 +87,6 @@ To test that everything is working as intended we can test a little script. Try 
 ###  Alternate solution
 If you have followed this guide and get issues finding the custom modules like config, then you can try running this code in your IDE terminal:
 
-`setx PYTHONPATH "C:\path\to\your\modules"`
+`setx PYTHONPATH "C:\path\to\your\project\root"`
 
-This solution sets the PythonPath for your system globally for your IDE so be catious about using it.
+This solution sets the PythonPath for your system globally for your IDE so be cautious about using it. It would be preferable to not need to use this solution.
