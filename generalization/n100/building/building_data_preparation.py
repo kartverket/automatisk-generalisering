@@ -15,6 +15,10 @@ environment_setup.setup(workspace=config.n100_building_workspace)
 
 
 def main():
+    """
+    This function prepares data selection of the following features:
+    - Begrensningskurve water features to be used as a berrier
+    """
     preparation_begrensningskurve()
     preperation_vegsti()
     adding_matrikkel_as_points()
