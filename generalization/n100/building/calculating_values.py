@@ -12,24 +12,35 @@ from file_manager.n100.file_manager_buildings import PermanentFiles
 import arcpy
 
 # Importing environment
-environment_setup.setup(workspace=config.n100_building_workspace)
-
-
-def main():
-    table_management()
-
-
-# Creating a dummy point file as a placeholder for points added from grunnriss generalization
-dummy_point = "dummy_point"
-print("Important! Remember to update the placeholder Dummy point at a later point!")
-custom_arcpy.select_attribute_and_make_permanent_feature(
-    input_layer=input_n100.BygningsPunkt,
-    expression="OBJECTID=1",
-    output_name=dummy_point,
+environment_setup.setup(
+    workspace=config.n100_building_workspace, cpu_percentage=config.cpu_percentage
 )
 
 
+def main():
+    """
+    Adding required fields for bygningspunkt for symbology and resolve building conflicts: angle, hierarchy and invisibility.
+    And adding additional information such as source information making it possible to know if a point was added from grunnriss or not.
+    """
+    table_management()
+
+
 def table_management():
+    """
+    Adding required fields for bygningspunkt for symbology and resolve building conflicts: angle, hierarchy and invisibility.
+    Creates a symbology value field based on NBR values
+    Also adds additional information such as source information making it possible to know if a point was added from grunnriss or not.
+    """
+
+    # Creating a dummy point file as a placeholder for points added from grunnriss generalization
+    dummy_point = "dummy_point"
+    print("Important! Remember to update the placeholder Dummy point at a later point!")
+    custom_arcpy.select_attribute_and_make_permanent_feature(
+        input_layer=input_n100.BygningsPunkt,
+        expression="OBJECTID=1",
+        output_name=dummy_point,
+    )
+
     # Define the output name
     merged_bygningspunkt_matrikkel = "merged_bygningspunkt_matrikkel"
 
@@ -116,10 +127,12 @@ def table_management():
         PermanentFiles.n100_building_points_undefined_nbr_values.value
     )
 
+    expression_no_nbr = "symbol_val = -99"
+
     # Selecting undefined NBR values and make a permanent feature of them
     custom_arcpy.select_attribute_and_make_permanent_feature(
         input_layer=merged_points,
-        expression="symbol_val = -99",
+        expression=expression_no_nbr,
         output_name=undefined_nbr_values,
         selection_type=custom_arcpy.SelectionType.NEW_SELECTION,
         inverted=False,
@@ -131,8 +144,10 @@ def table_management():
     # Selecting defined NBR values
     custom_arcpy.select_attribute_and_make_permanent_feature(
         input_layer=merged_points,
-        expression="symbol_val != -99",
+        expression=expression_no_nbr,
         output_name=bygningspunkt_pre_symbology,
+        selection_type=custom_arcpy.SelectionType.NEW_SELECTION,
+        inverted=True,
     )
 
     # Adding agnle, hierarchy and invisibility fields to the bygningspunkt pre symbology and setting them to 0
@@ -152,6 +167,3 @@ def table_management():
         expression_type="PYTHON3",
         fields=fields_to_calculate,
     )
-
-
-table_management()
