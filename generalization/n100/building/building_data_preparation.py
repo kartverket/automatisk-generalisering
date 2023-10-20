@@ -15,6 +15,13 @@ environment_setup.setup(workspace=config.n100_building_workspace)
 
 
 def main():
+    """
+    This function prepares data selection of the following features:
+    - Begrensningskurve water features to be used as a barrier
+    - Unsplit veg sti to be used as a barrier
+    - Matrikkel bygningspunkt to add building points removed by urban areas in n50
+    - Grunnriss selection for generalization and transforming church and hospital grunnriss to points.
+    """
     preparation_begrensningskurve()
     preperation_vegsti()
     adding_matrikkel_as_points()

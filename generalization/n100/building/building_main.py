@@ -12,12 +12,15 @@ import arcpy
 
 # Importing sub models
 from generalization.n100.building import building_data_preparation
+from generalization.n100.building import calculating_values
 
 # Importing environment
 environment_setup.setup(workspace=config.n100_building_workspace)
 
 def main():
     building_data_preparation.main()
+    calculating_values.main()
+
 
 main()
 
