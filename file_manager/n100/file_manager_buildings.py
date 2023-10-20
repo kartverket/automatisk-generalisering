@@ -3,8 +3,8 @@ from env_setup import environment_setup
 from enum import Enum  # , unique, global_enum
 
 
-class temp_files(Enum):
-    output_name_buffer_begrensningskurve_waterfeatures = (
+class TemporaryFiles(Enum):
+    begrensningskurve_buffer_waterfeatures = (
         "begrensningskurve_waterfeatures_20m_buffer"
     )
     unsplit_veg_sti_n100 = "unsplit_veg_sti_n100"
