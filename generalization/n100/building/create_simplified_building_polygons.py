@@ -72,8 +72,8 @@ def simplify_building_polygon():
 
     # Creating points to permanently store auto generated points from simplified building polygons to a specified path
     auto_generated_points = f"{output_simplify_building}_Pnt"
-    output_collapsed_points = TemporaryFiles.output_collapsed_points.value
-    arcpy.management.CopyFeatures(auto_generated_points, output_collapsed_points)
+    output_collapsed_points_simplified_building = TemporaryFiles.output_collapsed_points_simplified_building.value
+    arcpy.management.CopyFeatures(auto_generated_points, output_collapsed_points_simplified_building)
     arcpy.management.Delete(auto_generated_points)
 
     # Simplifying polygons
@@ -91,19 +91,32 @@ def simplify_building_polygon():
     )
     print("Simplifying polygons completed.")
 
+    # Creating points to permanently store auto generated points from simplified polygon to a specified path
+    auto_generated_points2 = f"{output_simplify_polygon}_Pnt"
+    output_collapsed_points_simplified_polygon = TemporaryFiles.output_collapsed_points_simplified_polygon.value
+    arcpy.management.CopyFeatures(auto_generated_points2, output_collapsed_points_simplified_polygon)
+    arcpy.management.Delete(auto_generated_points2)
+
+
     # Simplifying building polygons
 
     print("Simplifying building polygons...")
-    output_simplify_building = "simplified_building"
+    output_simplify_building2 = "simplified_building2"
 
     arcpy.cartography.SimplifyBuilding(
         in_features=output_aggregate_polygon,
-        out_feature_class=output_simplify_building,
+        out_feature_class=output_simplify_building2,
         simplification_tolerance="75",
         minimum_area="3200 SquareMeters",
         collapsed_point_option="KEEP_COLLAPSED_POINTS",
     )
     print("Simplifying building polygons completed.")
+
+    # Creating points to permanently store auto generated points from simplified polygon to a specified path
+    auto_generated_points3 = f"{output_simplify_building2}_Pnt"
+    output_collapsed_points_simplified_building2 = TemporaryFiles.output_collapsed_points_simplified_building2.value
+    arcpy.management.CopyFeatures(auto_generated_points3, output_collapsed_points_simplified_building2)
+    arcpy.management.Delete(auto_generated_points3)
 
     # Spatial join between simplified building polygons and original building polygons
 
