@@ -48,12 +48,13 @@ def preparation_begrensningskurve():
         output_name=output_name_begrensningskurve_waterfeatures,
     )
 
-
     # Defining the buffer distance used for the buffer of begrensningskurve water features
     buffer_distance_begrensningskurve_waterfeatures = "20 Meters"
 
     # Defining the output name
-    begrensningskurve_buffer_waterfeatures = TemporaryFiles.begrensningskurve_buffer_waterfeatures.value
+    begrensningskurve_buffer_waterfeatures = (
+        TemporaryFiles.begrensningskurve_buffer_waterfeatures.value
+    )
 
     # Creating a buffer of the water features begrensningskurve to take into account symbology of the water features
     arcpy.analysis.PairwiseBuffer(
@@ -190,9 +191,6 @@ def adding_matrikkel_as_points():
     ###### NEED TO REMEBER TO REMOVE NBR VALUES NOT WANTED TO BE DELIVERED############
 
 
-adding_matrikkel_as_points()
-
-
 def selecting_grunnriss_for_generalization():
     """
     Selects grunnriss features for generalization based on a given SQL expression.
@@ -207,16 +205,47 @@ def selecting_grunnriss_for_generalization():
     # Expression to be able to select churchs and hospitals
     grunnriss_nbr_sql_expr = "BYGGTYP_NBR IN (970, 719, 671)"
 
-    # Output feature name definition
-    grunnriss_selection_n50 = TemporaryFiles.grunnriss_selection_n50.value
+    # Defining output names
+    grunnriss_selection_not_church_hospital = "grunnriss_selection_not_church_hospital"
 
     # Selecting grunnriss which are not churches or hospitals using inverted selection
     custom_arcpy.select_attribute_and_make_permanent_feature(
         input_layer=input_n50.Grunnriss,
         expression=grunnriss_nbr_sql_expr,
-        output_name=grunnriss_selection_n50,
+        output_name=grunnriss_selection_not_church_hospital,
         selection_type=custom_arcpy.SelectionType.NEW_SELECTION,
         inverted=True,
+    )
+
+    # Output feature name definition
+    grunnriss_selection_n50 = TemporaryFiles.grunnriss_selection_n50.value
+    sql_expression_too_small_grunnriss = "Shape_Area >= 1500"
+
+    custom_arcpy.select_attribute_and_make_permanent_feature(
+        input_layer=grunnriss_selection_not_church_hospital,
+        expression=sql_expression_too_small_grunnriss,
+        output_name=grunnriss_selection_n50,
+    )
+
+    # Define output feature name
+    too_small_grunnriss = "too_small_grunnriss"
+
+    custom_arcpy.select_attribute_and_make_feature_layer(
+        input_layer=grunnriss_selection_not_church_hospital,
+        expression=sql_expression_too_small_grunnriss,
+        output_name=too_small_grunnriss,
+        selection_type=custom_arcpy.SelectionType.NEW_SELECTION,
+        inverted=True,
+    )
+
+    #Defining output feature name
+    small_grunnriss_points_n50 = TemporaryFiles.small_grunnriss_points_n50.value
+
+    # Transforming selected churches and hospitals into points
+    arcpy.FeatureToPoint_management(
+        in_features=too_small_grunnriss,
+        out_feature_class=small_grunnriss_points_n50,
+        point_location="CENTROID",
     )
 
     # Output feeature name definition
@@ -238,3 +267,4 @@ def selecting_grunnriss_for_generalization():
         out_feature_class=kirke_sykehus_points_n50,
         point_location="CENTROID",
     )
+
