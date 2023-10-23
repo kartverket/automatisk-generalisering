@@ -31,3 +31,13 @@ n100_path = r"path\to\n100.gdb"
 # Other path locations
 ###########################
 matrikkel_path = r"path\to\matrikkel.gdb"
+
+
+###########################
+# Symbology path locations
+###########################
+
+symbology_n100_veg_sti = r"C:\path\to\symbology\layer.lyrx"
+symbology_n100_begrensningskurve = r"C:\path\to\symbology\layer.lyrx"
+symbology_n100_bygningspunkt = r"C:\path\to\symbology\layer.lyrx"
+symbology_n100_grunnriss = r"C:\path\to\symbology\layer.lyrx"
