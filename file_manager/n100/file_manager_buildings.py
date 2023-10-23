@@ -21,6 +21,16 @@ class TemporaryFiles(Enum):
         "simplified_building_points_simplified_polygon"
     )
 
+    output_aggregate_polygon = "aggregated_polygon"
+
+    select_location_make_feature_layer_aggregated_polygon = "aggregated_polygon_select_by_location_grunnriss"
+
+    feature_to_point = "feature_to_point"
+
+    merged = "merged_features" 
+
+    final_merge ="final_merge"
+
 
 class PermanentFiles(Enum):
     n100_building_points_undefined_nbr_values = (
