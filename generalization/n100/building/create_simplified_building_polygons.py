@@ -160,4 +160,3 @@ def simplify_building_polygon():
     print("Copy completed.")
 
 
-main()
