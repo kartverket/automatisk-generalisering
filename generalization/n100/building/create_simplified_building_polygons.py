@@ -39,7 +39,7 @@ def simplify_building_polygon():
     # Aggregating building polygons
 
     print("Aggregating building polygons...")
-    output_aggregate_polygon = "aggregated_polygon"
+    output_aggregate_polygon = TemporaryFiles.output_aggregate_polygon.value
 
     arcpy.cartography.AggregatePolygons(
         in_features=TemporaryFiles.grunnriss_selection_n50.value,
