@@ -14,6 +14,7 @@ import arcpy
 from generalization.n100.building import building_data_preparation
 from generalization.n100.building import calculating_values
 from  generalization.n100.building import create_simplified_building_polygons
+from generalization.n100.building import create_points_from_polygon
 
 # Importing environment
 environment_setup.setup(workspace=config.n100_building_workspace)
@@ -22,6 +23,7 @@ def main():
     building_data_preparation.main()
     calculating_values.main()
     create_simplified_building_polygons.main()
+    create_points_from_polygon()
 
 
 main()
