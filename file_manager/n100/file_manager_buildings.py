@@ -11,6 +11,12 @@ class TemporaryFiles(Enum):
     kirke_sykehus_points_n50 = "kirke_sykehus_points_n50"
     bygningspunkt_pre_symbology = "bygningspunkt_pre_symbology"
     small_grunnriss_points_n50 = "small_grunnriss_points_n50"
+
+
+    # create_simplified_building_polygons
+
+    output_aggregate_polygon = "aggregated_polygon"
+
     output_collapsed_points_simplified_building = (
         "simplified_building_points_simplified_building"
     )
@@ -21,16 +27,9 @@ class TemporaryFiles(Enum):
         "simplified_building_points_simplified_polygon"
     )
 
-    output_aggregate_polygon = "aggregated_polygon"
+    # create_points_from_polygon
 
-    select_location_make_feature_layer_aggregated_polygon = "aggregated_polygon_select_by_location_grunnriss"
-
-    feature_to_point = "feature_to_point"
-
-    merged = "merged_features" 
-
-    final_merge ="final_merge"
-
+    merged_points_final ="merged_points_final"
 
 class PermanentFiles(Enum):
     n100_building_points_undefined_nbr_values = (
