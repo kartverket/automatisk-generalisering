@@ -74,18 +74,19 @@ def create_points_from_polygon():
 
         output_spatial_joins.append(output_spatial_join)
 
-    # 4: Preparing for Merge - collecting layers 
+    # 4: Preparing for Merge - collecting layers
+    small_grunnriss_points = TemporaryFiles.small_grunnriss_points_n50.value 
     grunnriss_sykehus_kirke_points = TemporaryFiles.kirke_sykehus_points_n50.value                                               
     points_from_aggregation = feature_to_point 
 
     # List of all point layers to be merged                                             
-    input_merge = [grunnriss_sykehus_kirke_points, points_from_aggregation] + output_spatial_joins
+    all_point_layers = [small_grunnriss_points, grunnriss_sykehus_kirke_points, points_from_aggregation] + output_spatial_joins
     
     output_merge = "merged_points"
 
-    # Merging points together into one feature class - total 5 point layers 
+    # Merging points together into one feature class - total 6 point layers 
     arcpy.management.Merge(
-        inputs=input_merge, 
+        inputs=all_point_layers, 
         output=output_merge)
     
     # 5: Copying the layer 
