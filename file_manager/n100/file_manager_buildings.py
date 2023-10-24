@@ -26,6 +26,7 @@ class TemporaryFiles(Enum):
     output_collapsed_points_simplified_polygon = (
         "simplified_building_points_simplified_polygon"
     )
+    simplified_grunnriss_n50 = "simplified_grunnriss_n50"
 
     # create_points_from_polygon
 
