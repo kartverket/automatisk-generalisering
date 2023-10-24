@@ -23,7 +23,7 @@ def main():
     building_data_preparation.main()
     calculating_values.main()
     create_simplified_building_polygons.main()
-    create_points_from_polygon()
+    create_points_from_polygon.main()
 
 
 main()
