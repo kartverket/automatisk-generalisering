@@ -36,6 +36,7 @@ def create_points_from_polygon():
 
     # 1: Custom tool: Select By Location and Make Feature Layer 
     intersect_aggregated_and_original = "intersect_aggregated_and_original"
+    print("Creating intersected feature layer using Select By Location and Make Feature Layer...")
 
     custom_arcpy.select_location_and_make_feature_layer(
         input_layer=TemporaryFiles.grunnriss_selection_n50.value,
@@ -44,12 +45,17 @@ def create_points_from_polygon():
         output_name=intersect_aggregated_and_original,
         invert_spatial_relationship=True)
     
+    print("Custom tool completed.")
+
     # 2: Feature to point 
     feature_to_point = "feature_to_point"
+    print("Converting selected features to points using Feature To Point...")
 
     arcpy.management.FeatureToPoint(
         in_features=intersect_aggregated_and_original, 
         out_feature_class=feature_to_point)
+
+    print("Feature to Point completed.")
 
     # 3: Spatial join 
     simplified_building_points = [
@@ -57,6 +63,7 @@ def create_points_from_polygon():
     TemporaryFiles.output_collapsed_points_simplified_polygon,
     TemporaryFiles.output_collapsed_points_simplified_building2.value,
     ]
+    print("Performing spatial joins...")
 
     # List of all point layers that were spatially joined 
     output_spatial_joins = []
@@ -74,6 +81,8 @@ def create_points_from_polygon():
 
         output_spatial_joins.append(output_spatial_join)
 
+    print("Spatial joins completed.")
+
     # 4: Preparing for Merge - collecting layers
     small_grunnriss_points = TemporaryFiles.small_grunnriss_points_n50.value 
     grunnriss_sykehus_kirke_points = TemporaryFiles.kirke_sykehus_points_n50.value                                               
@@ -82,19 +91,27 @@ def create_points_from_polygon():
     # List of all point layers to be merged                                             
     all_point_layers = [small_grunnriss_points, grunnriss_sykehus_kirke_points, points_from_aggregation] + output_spatial_joins
     
+    print("Preparing for merge...")
+
     output_merge = "merged_points"
 
-    # Merging points together into one feature class - total 6 point layers 
+    # 5: Merging points together into one feature class - total 6 point layers 
     arcpy.management.Merge(
         inputs=all_point_layers, 
         output=output_merge)
     
-    # 5: Copying the layer 
+    print("Merge completed.")
+
+    # Copying the layer 
     merged_points_final = TemporaryFiles.merged_points_final.value
-    
+    print("Copying the merged layer...")
+
     arcpy.management.CopyFeatures(
         in_features=output_merge,               
         out_feature_class=merged_points_final)
+
+    print("Copy completed.")
+
     
 
   
