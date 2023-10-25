@@ -43,7 +43,7 @@ def create_points_from_polygon():
         overlap_type=custom_arcpy.OverlapType.INTERSECT,
         select_features=TemporaryFiles.output_aggregate_polygon,
         output_name=intersect_aggregated_and_original,
-        invert_spatial_relationship=True)
+        inverted=True)
     
     print("Custom tool completed.")
 
@@ -60,7 +60,7 @@ def create_points_from_polygon():
     # 3: Spatial join 
     simplified_building_points = [
     TemporaryFiles.output_collapsed_points_simplified_building.value,
-    TemporaryFiles.output_collapsed_points_simplified_polygon,
+    TemporaryFiles.output_collapsed_points_simplified_polygon.value,
     TemporaryFiles.output_collapsed_points_simplified_building2.value,
     ]
     print("Performing spatial joins...")
@@ -87,9 +87,10 @@ def create_points_from_polygon():
     small_grunnriss_points = TemporaryFiles.small_grunnriss_points_n50.value 
     grunnriss_sykehus_kirke_points = TemporaryFiles.kirke_sykehus_points_n50.value                                               
     points_from_aggregation = feature_to_point 
+    n50_points = input_n50.BygningsPunkt
 
     # List of all point layers to be merged                                             
-    all_point_layers = [small_grunnriss_points, grunnriss_sykehus_kirke_points, points_from_aggregation] + output_spatial_joins
+    all_point_layers = [small_grunnriss_points, grunnriss_sykehus_kirke_points, points_from_aggregation, n50_points] + output_spatial_joins
     
     print("Preparing for merge...")
 
