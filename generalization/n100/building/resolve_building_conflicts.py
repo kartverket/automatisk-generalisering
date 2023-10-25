@@ -153,6 +153,7 @@ def resolve_building_conflicts():
         is_relative_path="ABSOLUTE",
     )
 
+    print("Starting Resolve Building Conflicts")
     # Defining variables for Resolve Building Conflicts
     arcpy.env.referenceScale = "100000"
     input_buildings = [lyrx_bygningspunkt, lyrx_grunnriss]
@@ -166,8 +167,8 @@ def resolve_building_conflicts():
         in_buildings=input_buildings,
         invisibility_field="invisibility",
         in_barriers=input_barriers,
-        building_gap="10 meters",
-        minimum_size="15 meters",
+        building_gap="25 meters",
+        minimum_size="10 meters",
         hierarchy_field="hierarchy",
     )
 

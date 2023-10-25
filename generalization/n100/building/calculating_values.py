@@ -167,3 +167,21 @@ def table_management():
         expression_type="PYTHON3",
         fields=fields_to_calculate,
     )
+
+    code_block_hierarchy = (
+    """def determineVal(hierarchy):\n
+        if hierarchy == 1:\n
+            return 2\n
+        else:\n
+            return 5\n"""
+    )
+
+    arcpy.management.CalculateField(
+        in_table=bygningspunkt_pre_symbology,
+        field="hierarchy",
+        expression="determineVal(!hierarchy!)",
+        expression_type="PYTHON3",
+        code_block=code_block_hierarchy,
+    )
+
+main()
