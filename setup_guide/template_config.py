@@ -41,3 +41,5 @@ symbology_n100_veg_sti = r"C:\path\to\symbology\layer.lyrx"
 symbology_n100_begrensningskurve = r"C:\path\to\symbology\layer.lyrx"
 symbology_n100_bygningspunkt = r"C:\path\to\symbology\layer.lyrx"
 symbology_n100_grunnriss = r"C:\path\to\symbology\layer.lyrx"
+
+symbology_output_folder = r"C:\path\to\output\folder"

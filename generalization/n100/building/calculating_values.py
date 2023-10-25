@@ -32,14 +32,14 @@ def table_management():
     Also adds additional information such as source information making it possible to know if a point was added from grunnriss or not.
     """
 
-    # Creating a dummy point file as a placeholder for points added from grunnriss generalization
-    dummy_point = "dummy_point"
-    print("Important! Remember to update the placeholder Dummy point at a later point!")
-    custom_arcpy.select_attribute_and_make_permanent_feature(
-        input_layer=input_n100.BygningsPunkt,
-        expression="OBJECTID=1",
-        output_name=dummy_point,
-    )
+    # # Creating a dummy point file as a placeholder for points added from grunnriss generalization
+    # dummy_point = "dummy_point"
+    # print("Important! Remember to update the placeholder Dummy point at a later point!")
+    # custom_arcpy.select_attribute_and_make_permanent_feature(
+    #     input_layer=input_n100.BygningsPunkt,
+    #     expression="OBJECTID=1",
+    #     output_name=dummy_point,
+    # )
 
     # Define the output name
     merged_bygningspunkt_matrikkel = "merged_bygningspunkt_matrikkel"
@@ -62,14 +62,15 @@ def table_management():
         expression="0",
     )
 
+    points_created_from_grunnriss = TemporaryFiles.merged_points_final.value
     # Adding a field to indicate that points resulting from grunnriss is tracked
     arcpy.AddField_management(
-        in_table=dummy_point,
+        in_table=points_created_from_grunnriss,
         field_name="grunnriss",
         field_type="LONG",
     )
     arcpy.CalculateField_management(
-        in_table=dummy_point,
+        in_table=points_created_from_grunnriss,
         field="grunnriss",
         expression="1",
     )
@@ -79,7 +80,7 @@ def table_management():
 
     # Merge the bygningspunkt and matrikkel
     arcpy.management.Merge(
-        inputs=[merged_bygningspunkt_matrikkel, dummy_point],
+        inputs=[merged_bygningspunkt_matrikkel, points_created_from_grunnriss],
         output=merged_points,
     )
 
@@ -184,4 +185,3 @@ def table_management():
         code_block=code_block_hierarchy,
     )
 
-main()
