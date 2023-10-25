@@ -173,7 +173,6 @@ def resolve_building_conflicts():
     )
 
 
-main()
 
 # # Defining variables for Resolve Building Conflicts
 # input_buildings = [selection_grunnriss, selection_bygningspunkt]
