@@ -35,6 +35,71 @@ def simplify_building_polygon():
     Note that the function doesn't take any explicit parameters as inputs but relies on predefined input data and parameters.
 
     """
+    """
+    # Aggregate 1
+
+    print("1: Aggregating building polygons")
+
+    output_aggregated1 = "aggregate_1"
+
+    arcpy.cartography.AggregatePolygons(
+        in_features=TemporaryFiles.grunnriss_selection_n50.value,
+        out_feature_class=output_aggregated1,
+        aggregation_distance="4 Meters",
+        minimum_area="3200 SquareMeters",
+        minimum_hole_size="0 SquareMeters",
+        orthogonality_option="ORTHOGONAL",
+        barrier_features=[
+            TemporaryFiles.unsplit_veg_sti_n100.value
+        ],  
+        out_table="aggregate_1_TBL",
+        aggregate_field="")
+    print("1: Aggregating building polygons completed.")
+
+    # Aggregate 2 
+
+    print("2: Aggregating building polygons")
+
+    output_aggregated2 = "aggregate_2"
+
+    arcpy.cartography.AggregatePolygons(
+        in_features=output_aggregated1,
+        out_feature_class=output_aggregated2,
+        aggregation_distance="2 Meters",
+        minimum_area="3200 SquareMeters",
+        minimum_hole_size="0 SquareMeters",
+        orthogonality_option="NON_ORTHOGONAL",
+        barrier_features=[
+            TemporaryFiles.unsplit_veg_sti_n100.value
+        ],  
+        out_table="aggregate_2_TBL",
+        aggregate_field="",
+    )
+    print("2: Aggregating building polygons completed.")
+
+    # Aggregate 3 
+
+    print("3: Aggregating building polygons")
+
+    output_aggregated3 = "aggregate_3"
+
+    arcpy.cartography.AggregatePolygons(
+        in_features=output_aggregated2,
+        out_feature_class=output_aggregated3,
+        aggregation_distance="2 Meters",
+        minimum_area="3200 SquareMeters",
+        minimum_hole_size="2000 SquareMeters",
+        orthogonality_option="ORTHOGONAL",
+        barrier_features=[
+            TemporaryFiles.unsplit_veg_sti_n100.value
+        ],  
+        out_table="aggregate_3_TBL",
+        aggregate_field="",
+    )
+    print("3: Aggregating building polygons completed.")
+
+"""
+
 
     # Aggregating building polygons
 
@@ -50,11 +115,13 @@ def simplify_building_polygon():
         orthogonality_option="ORTHOGONAL",
         barrier_features=[
             TemporaryFiles.unsplit_veg_sti_n100.value
-        ],  # Add more barriers ??
+        ],  
         out_table="grunnriss_n50_aggregated_tbl",
         aggregate_field="BYGGTYP_NBR",
     )
     print("Aggregating building polygons completed.")
+
+    
 
     # Simplifying building polygons
 
@@ -156,9 +223,5 @@ def simplify_building_polygon():
     # Making a copy of the feature class
 
     print("Making a copy of the feature class...")
-
-    spatial_join_output = TemporaryFiles.simplified_grunnriss_n50.value
-    arcpy.management.CopyFeatures(output_spatial_join, spatial_join_output)
+    arcpy.management.CopyFeatures(output_spatial_join, "simplified_grunnriss_n100")
     print("Copy completed.")
-
-
