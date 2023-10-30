@@ -222,6 +222,8 @@ def simplify_building_polygon():
 
     # Making a copy of the feature class
 
+    simplified_grunnriss_n100 = TemporaryFiles.simplified_grunnriss_n100.value
+
     print("Making a copy of the feature class...")
-    arcpy.management.CopyFeatures(output_spatial_join, "simplified_grunnriss_n100")
+    arcpy.management.CopyFeatures(output_spatial_join, simplified_grunnriss_n100)
     print("Copy completed.")

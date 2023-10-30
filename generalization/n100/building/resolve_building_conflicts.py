@@ -32,7 +32,7 @@ def resolve_building_conflicts():
     selection_grunnriss = "grunnriss_selection_pre_rbc"
 
     custom_arcpy.select_location_and_make_permanent_feature(
-        input_layer=TemporaryFiles.simplified_grunnriss_n50.value,
+        input_layer=TemporaryFiles.simplified_grunnriss_n100.value,
         overlap_type=custom_arcpy.OverlapType.INTERSECT,
         select_features=output_name_admin_flate,
         output_name=selection_grunnriss,
@@ -193,3 +193,6 @@ def resolve_building_conflicts():
 #     minimum_size="15 meters",
 #     hierarchy_field="hierarchy",
 # )
+
+
+

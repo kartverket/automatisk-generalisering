@@ -28,3 +28,4 @@ def main():
     resolve_building_conflicts.main()
 
 main()
+
