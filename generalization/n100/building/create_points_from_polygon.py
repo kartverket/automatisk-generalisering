@@ -83,6 +83,48 @@ def create_points_from_polygon():
 
     print("Spatial joins completed.")
 
+    # Reducing hospital and church points clusters 
+
+
+    # Input layer 
+
+    n50_points = input_n50.BygningsPunkt
+
+    # Output layers
+
+    sykehus_points = "sykehus_points"
+    kirke_points = "kirke_points"
+
+    # SQL-expressions 
+
+    sql_sykehus = "BYGGTYP_NBR IN (970, 719)"
+    sql_kirke = "BYGGTYP_NBR = 671"
+    
+
+
+    # Hospitals
+
+    custom_arcpy.select_attribute_and_make_feature_layer(
+        n50_points,
+        sql_sykehus,
+        sykehus_points)
+    
+    # Selecting all churches 
+
+    custom_arcpy.select_attribute_and_make_feature_layer(
+        n50_points,
+        sql_kirke,
+        kirke_points)
+
+    
+
+    
+ 
+    
+    
+
+
+
     # 4: Preparing for Merge - collecting layers
     small_grunnriss_points = TemporaryFiles.small_grunnriss_points_n50.value 
     grunnriss_sykehus_kirke_points = TemporaryFiles.kirke_sykehus_points_n50.value                                               
