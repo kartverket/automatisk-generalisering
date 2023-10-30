@@ -19,6 +19,8 @@ def main():
 
 
 def resolve_building_conflicts():
+
+    # Choosing study area 
     sql_expression_admin_flate = "NAVN = 'Asker'"
     output_name_admin_flate = "admin_flate_selection"
     custom_arcpy.select_attribute_and_make_permanent_feature(
@@ -26,7 +28,7 @@ def resolve_building_conflicts():
         expression=sql_expression_admin_flate,
         output_name=output_name_admin_flate,
     )
-
+    # Making selections based on spatial relation to study area 
     selection_grunnriss = "grunnriss_selection_pre_rbc"
 
     custom_arcpy.select_location_and_make_permanent_feature(
@@ -99,6 +101,7 @@ def resolve_building_conflicts():
         out_layer=feature_selection_bygningspunkt,
     )
 
+    # Apply symbology from layer 
     arcpy.management.ApplySymbologyFromLayer(
         in_layer=selection_veg_sti,
         in_symbology_layer=symbology_veg_sti,
