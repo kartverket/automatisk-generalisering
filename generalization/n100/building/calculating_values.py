@@ -48,7 +48,6 @@ def table_management():
         code_block=code_block_hospital,
     )
 
-
     # Define the output name
     merged_bygningspunkt_matrikkel = "merged_bygningspunkt_matrikkel"
 
@@ -186,19 +185,21 @@ def table_management():
         fields=fields_to_calculate,
     )
 
-    code_block_hierarchy = """def determineVal(hierarchy):\n
-        if hierarchy == 1:\n
+    code_block_hierarchy = """def determineHierarchy(symbol_val):\n
+        if symbol_val in [1, 2, 3]:\n
+            return 1\n
+        elif symbol_val == 6:\n
             return 2\n
         else:\n
-            return 5\n"""
+            return 3\n"""
 
+    # Then run CalculateField with the new code block
     arcpy.management.CalculateField(
         in_table=bygningspunkt_pre_symbology,
         field="hierarchy",
-        expression="determineVal(!hierarchy!)",
+        expression="determineHierarchy(!symbol_val!)",
         expression_type="PYTHON3",
         code_block=code_block_hierarchy,
     )
 
 
-main()

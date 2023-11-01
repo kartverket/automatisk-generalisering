@@ -176,13 +176,20 @@ def resolve_building_conflicts():
             output_name=symbology_config["output_name"],
         )
 
-
-
     # Resolve Building Conflicts
-    print("Starting Resolve Building Conflicts")
-    # Defining variables for Resolve Building Conflicts
+    print("Starting Resolve Building Conflicts 1")
     arcpy.env.referenceScale = "100000"
-    input_buildings = [lyrx_bygningspunkt, lyrx_grunnriss]
+
+    fields_to_calculate_first = [["hierarchy", "1"], ["invisibility", "0"]]
+
+    arcpy.management.CalculateFields(
+        in_table=selection_grunnriss,
+        expression_type="PYTHON3",
+        fields=fields_to_calculate_first,
+    )
+
+    # Defining variables for Resolve Building Conflicts
+    input_buildings = [lyrx_grunnriss]
 
     input_barriers = [
         [lyrx_veg_sti, "false", "0 Meters"],
@@ -198,28 +205,77 @@ def resolve_building_conflicts():
         hierarchy_field="hierarchy",
     )
 
+    fields_to_calculate = [["hierarchy", "0"], ["invisibility", "0"]]
 
-# # Defining variables for Resolve Building Conflicts
-# input_buildings = [selection_grunnriss, selection_bygningspunkt]
-#
-# input_barriers = [
-#     [selection_veg_sti, False, "0 Meters"],
-#     [selection_begrensningskurve, False, "0 Meters"],
-# ]
-#
-# arcpy.cartography.ResolveBuildingConflicts(
-#     in_buildings=input_buildings,
-#     invisibility_field="invisibility",
-#     in_barriers=input_barriers,
-#     building_gap="10 meters",
-#     minimum_size="15 meters",
-#     hierarchy_field="hierarchy",
-# )
+    arcpy.management.CalculateFields(
+        in_table=selection_grunnriss,
+        expression_type="PYTHON3",
+        fields=fields_to_calculate,
+    )
+
+    print("Starting Resolve Building Conflicts 2")
+    # Defining variables for Resolve Building Conflicts
+    input_buildings2 = [lyrx_bygningspunkt, lyrx_grunnriss]
+
+    arcpy.cartography.ResolveBuildingConflicts(
+        in_buildings=input_buildings2,
+        invisibility_field="invisibility",
+        in_barriers=input_barriers,
+        building_gap="25 meters",
+        minimum_size="10 meters",
+        hierarchy_field="hierarchy",
+    )
+
+    sql_expression_resolve_building_conflicts = "(invisibility = 0) OR (symbol_val = 1)"
+    resolve_building_conflicts_bygningspunkt_result_1 = (
+        "resolve_building_conflicts_bygningspunkt_result_1"
+    )
+    custom_arcpy.select_attribute_and_make_permanent_feature(
+        input_layer=selection_bygningspunkt,
+        expression=sql_expression_resolve_building_conflicts,
+        output_name=resolve_building_conflicts_bygningspunkt_result_1,
+    )
+
+    code_block_hierarchy = """def determineHierarchy(symbol_val):\n
+        if symbol_val in [1, 2, 3]:\n
+            return 1\n
+        elif symbol_val == 6:\n
+            return 2\n
+        else:\n
+            return 3\n"""
+
+    # Then run CalculateField with the new code block
+    arcpy.management.CalculateField(
+        in_table=resolve_building_conflicts_bygningspunkt_result_1,
+        field="hierarchy",
+        expression="determineHierarchy(!symbol_val!)",
+        expression_type="PYTHON3",
+        code_block=code_block_hierarchy,
+    )
+
+    arcpy.management.CalculateFields(
+        in_table=selection_grunnriss,
+        expression_type="PYTHON3",
+        fields=fields_to_calculate,
+    )
+
+    custom_arcpy.apply_symbology(
+        input_layer=resolve_building_conflicts_bygningspunkt_result_1,
+        in_symbology_layer=symbology_bygningspunkt,
+        output_name=lyrx_bygningspunkt,
+    )
+
+    print("Starting Resolve Building Conflicts 3")
+    # Defining variables for Resolve Building Conflicts
+    input_buildings3 = [lyrx_bygningspunkt, lyrx_grunnriss]
+    arcpy.cartography.ResolveBuildingConflicts(
+        in_buildings=input_buildings3,
+        invisibility_field="invisibility",
+        in_barriers=input_barriers,
+        building_gap="75 meters",
+        minimum_size="10 meters",
+        hierarchy_field="hierarchy",
+    )
 
 
-# custom_arcpy.apply_symbology(
-#     input_layer="aaaaaaaaaaaaaa_FeatureToPoin",
-#     in_symbology_layer=SymbologyN100.bygningspunkt.value,
-#     output_name=r"C:\GIS_Files\symbology\test\sykehus_test.lyrx",
-# )
 main()
