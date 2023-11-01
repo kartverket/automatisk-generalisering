@@ -32,14 +32,22 @@ def table_management():
     Also adds additional information such as source information making it possible to know if a point was added from grunnriss or not.
     """
 
-    # # Creating a dummy point file as a placeholder for points added from grunnriss generalization
-    # dummy_point = "dummy_point"
-    # print("Important! Remember to update the placeholder Dummy point at a later point!")
-    # custom_arcpy.select_attribute_and_make_permanent_feature(
-    #     input_layer=input_n100.BygningsPunkt,
-    #     expression="OBJECTID=1",
-    #     output_name=dummy_point,
-    # )
+    # Reclassify the sykehus from matrikkel to another NBR value
+    code_block_hospital = (
+        "def hospital_nbr(nbr):\n"
+        "    mapping = {970: 729, 719: 729}\n"
+        "    return mapping.get(nbr, nbr)"
+    )
+
+    # Reclassify the sykehus from grunnriss to another NBR value
+    arcpy.CalculateField_management(
+        in_table=TemporaryFiles.matrikkel_bygningspunkt.value,
+        field="BYGGTYP_NBR",
+        expression="hospital_nbr(!BYGGTYP_NBR!)",
+        expression_type="PYTHON3",
+        code_block=code_block_hospital,
+    )
+
 
     # Define the output name
     merged_bygningspunkt_matrikkel = "merged_bygningspunkt_matrikkel"
@@ -73,6 +81,15 @@ def table_management():
         in_table=points_created_from_grunnriss,
         field="grunnriss",
         expression="1",
+    )
+
+    # Reclassify the sykehus from grunnriss to another NBR value
+    arcpy.CalculateField_management(
+        in_table=points_created_from_grunnriss,
+        field="BYGGTYP_NBR",
+        expression="hospital_nbr(!BYGGTYP_NBR!)",
+        expression_type="PYTHON3",
+        code_block=code_block_hospital,
     )
 
     # Define the output name
@@ -169,13 +186,11 @@ def table_management():
         fields=fields_to_calculate,
     )
 
-    code_block_hierarchy = (
-    """def determineVal(hierarchy):\n
+    code_block_hierarchy = """def determineVal(hierarchy):\n
         if hierarchy == 1:\n
             return 2\n
         else:\n
             return 5\n"""
-    )
 
     arcpy.management.CalculateField(
         in_table=bygningspunkt_pre_symbology,
@@ -185,3 +200,5 @@ def table_management():
         code_block=code_block_hierarchy,
     )
 
+
+main()
