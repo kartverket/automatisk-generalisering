@@ -119,13 +119,35 @@ def create_points_from_polygon():
         n50_points,
         sql_kirke,
         kirke_points)
+    
+    # Finding hospital clusters 
 
-    
+    hospital_clusters = "hospital clusters"
 
+    arcpy.gapro.FindPointClusters(
+        input_points=sykehus_points, 
+        out_feature_class=hospital_clusters, 
+        clustering_method="DBSCAN", 
+        minimum_points="2", 
+        search_distance="100 Meters")
     
- 
-    
-    
+    if min
+        arcpy.management.MinimumBoundingGeometry(
+            in_features, 
+            out_feature_class, 
+            {geometry_type}, 
+            {group_option}, 
+            {group_field}, 
+            {mbg_fields_option})
+
+
+
+
+
+
+
+
+
 
 
 
