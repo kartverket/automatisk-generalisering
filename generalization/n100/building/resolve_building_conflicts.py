@@ -19,8 +19,74 @@ def main():
 
 
 def resolve_building_conflicts():
+    ####################################################
+    # Working iterator ove study areas using admin flate
+    ####################################################
 
-    # Choosing study area 
+    # # Define your initial data
+    # input_polygon_layer = input_n100.AdminFlate
+    # id_field = "OBJECTID"
+    # unique_ids = []
+    #
+    # selection_grunnriss = "grunnriss_selection_pre_rbc"
+    # selection_veg_sti = "veg_sti_selection_pre_rbc"
+    # selection_bygningspunkt = "bygningspunkt_selection_pre_rbc"
+    # selection_begrensningskurve = "begrensningskurve_selection_pre_rbc"
+    #
+    # # Create a SearchCursor to loop through the polygon layer and collect unique IDs
+    # with arcpy.da.SearchCursor(input_polygon_layer, [id_field]) as cursor:
+    #     for row in cursor:
+    #         unique_ids.append(row[0])
+    #
+    # # Loop through each unique ID to perform the selections
+    # for unique_id in unique_ids:
+    #     sql_expression_admin_flate = f"{id_field} = {unique_id}"
+    #     output_name_admin_flate = f"admin_flate_selection_{unique_id}"
+    #
+    #     custom_arcpy.select_attribute_and_make_permanent_feature(
+    #         input_layer=input_polygon_layer,
+    #         expression=sql_expression_admin_flate,
+    #         output_name=output_name_admin_flate,
+    #     )
+    #
+    #     selections = [
+    #         {
+    #             "input_layer": TemporaryFiles.simplified_grunnriss_n100.value,
+    #             "output_name": f"{selection_grunnriss}_{unique_id}",
+    #         },
+    #         {
+    #             "input_layer": TemporaryFiles.unsplit_veg_sti_n100.value,
+    #             "output_name": f"{selection_veg_sti}_{unique_id}",
+    #         },
+    #         {
+    #             "input_layer": TemporaryFiles.bygningspunkt_pre_symbology.value,
+    #             "output_name": f"{selection_bygningspunkt}_{unique_id}",
+    #         },
+    #         {
+    #             "input_layer": TemporaryFiles.begrensningskurve_buffer_waterfeatures.value,
+    #             "output_name": f"{selection_begrensningskurve}_{unique_id}",
+    #         },
+    #     ]
+    #
+    #     for selection in selections:
+    #         custom_arcpy.select_location_and_make_permanent_feature(
+    #             input_layer=selection["input_layer"],
+    #             overlap_type=custom_arcpy.OverlapType.INTERSECT,
+    #             select_features=output_name_admin_flate,
+    #             output_name=selection["output_name"],
+    #         )
+    #         print(f"{selection['output_name']} created.")
+    #         arcpy.management.Delete(selection["output_name"])
+    #
+    #     arcpy.management.Delete(in_data=output_name_admin_flate)
+    #
+    # exit()
+
+    #####################################################
+    # Testing Resolve Building Conflicts for know area
+    #####################################################
+
+    # Choosing study area
     sql_expression_admin_flate = "NAVN = 'Asker'"
     output_name_admin_flate = "admin_flate_selection"
     custom_arcpy.select_attribute_and_make_permanent_feature(
@@ -28,42 +94,40 @@ def resolve_building_conflicts():
         expression=sql_expression_admin_flate,
         output_name=output_name_admin_flate,
     )
-    # Making selections based on spatial relation to study area 
+
     selection_grunnriss = "grunnriss_selection_pre_rbc"
-
-    custom_arcpy.select_location_and_make_permanent_feature(
-        input_layer=TemporaryFiles.simplified_grunnriss_n100.value,
-        overlap_type=custom_arcpy.OverlapType.INTERSECT,
-        select_features=output_name_admin_flate,
-        output_name=selection_grunnriss,
-    )
-
     selection_veg_sti = "veg_sti_selection_pre_rbc"
-
-    custom_arcpy.select_location_and_make_permanent_feature(
-        input_layer=TemporaryFiles.unsplit_veg_sti_n100.value,
-        overlap_type=custom_arcpy.OverlapType.INTERSECT,
-        select_features=output_name_admin_flate,
-        output_name=selection_veg_sti,
-    )
-
     selection_bygningspunkt = "bygningspunkt_selection_pre_rbc"
-
-    custom_arcpy.select_location_and_make_permanent_feature(
-        input_layer=TemporaryFiles.bygningspunkt_pre_symbology.value,
-        overlap_type=custom_arcpy.OverlapType.INTERSECT,
-        select_features=output_name_admin_flate,
-        output_name=selection_bygningspunkt,
-    )
-
     selection_begrensningskurve = "begrensningskurve_selection_pre_rbc"
 
-    custom_arcpy.select_location_and_make_permanent_feature(
-        input_layer=TemporaryFiles.begrensningskurve_buffer_waterfeatures.value,
-        overlap_type=custom_arcpy.OverlapType.INTERSECT,
-        select_features=output_name_admin_flate,
-        output_name=selection_begrensningskurve,
-    )
+    # List of dictionaries containing parameters for each selection
+    selections = [
+        {
+            "input_layer": TemporaryFiles.simplified_grunnriss_n100.value,
+            "output_name": selection_grunnriss,
+        },
+        {
+            "input_layer": TemporaryFiles.unsplit_veg_sti_n100.value,
+            "output_name": selection_veg_sti,
+        },
+        {
+            "input_layer": TemporaryFiles.bygningspunkt_pre_symbology.value,
+            "output_name": selection_bygningspunkt,
+        },
+        {
+            "input_layer": TemporaryFiles.begrensningskurve_buffer_waterfeatures.value,
+            "output_name": selection_begrensningskurve,
+        },
+    ]
+
+    # Loop over the selections and apply the function
+    for selection in selections:
+        custom_arcpy.select_location_and_make_permanent_feature(
+            input_layer=selection["input_layer"],
+            overlap_type=custom_arcpy.OverlapType.INTERSECT,  # Assuming all use INTERSECT
+            select_features=output_name_admin_flate,
+            output_name=selection["output_name"],
+        )
 
     # Defining symbology layers
     symbology_veg_sti = SymbologyN100.veg_sti.value
@@ -71,95 +135,61 @@ def resolve_building_conflicts():
     symbology_bygningspunkt = SymbologyN100.bygningspunkt.value
     symbology_grunnriss = SymbologyN100.grunnriss.value
 
-    feature_selection_veg_sti = (
-        selection_veg_sti  # "veg_sti_selection_pre_rbc_feature_layer"
-    )
-    arcpy.management.MakeFeatureLayer(
-        in_features=selection_veg_sti,
-        out_layer=feature_selection_veg_sti,
-    )
-
-    feature_selection_begrensningskurve = selection_begrensningskurve  # "begrensningskurve_selection_pre_rbc_feature_layer"
-    arcpy.management.MakeFeatureLayer(
-        in_features=selection_begrensningskurve,
-        out_layer=feature_selection_begrensningskurve,
-    )
-
-    feature_selection_grunnriss = (
-        selection_grunnriss  # "grunnriss_selection_pre_rbc_feature_layer"
-    )
-    arcpy.management.MakeFeatureLayer(
-        in_features=selection_grunnriss,
-        out_layer=feature_selection_grunnriss,
-    )
-
-    feature_selection_bygningspunkt = (
-        selection_bygningspunkt  # "bygningspunkt_selection_pre_rbc_feature_layer"
-    )
-    arcpy.management.MakeFeatureLayer(
-        in_features=selection_bygningspunkt,
-        out_layer=feature_selection_bygningspunkt,
-    )
-
-    # Apply symbology from layer 
-    arcpy.management.ApplySymbologyFromLayer(
-        in_layer=selection_veg_sti,
-        in_symbology_layer=symbology_veg_sti,
-        update_symbology="MAINTAIN",
-    )
-
-    arcpy.management.ApplySymbologyFromLayer(
-        in_layer=selection_begrensningskurve,
-        in_symbology_layer=symbology_begrensnings_kurve,
-        update_symbology="MAINTAIN",
-    )
-
-    arcpy.management.ApplySymbologyFromLayer(
-        in_layer=selection_bygningspunkt,
-        in_symbology_layer=symbology_bygningspunkt,
-        update_symbology="MAINTAIN",
-    )
-
-    arcpy.management.ApplySymbologyFromLayer(
-        in_layer=selection_grunnriss,
-        in_symbology_layer=symbology_grunnriss,
-        update_symbology="MAINTAIN",
-    )
+    # Apply symbology to selections
 
     lyrx_bygningspunkt = rf"{config.symbology_output_folder}\lyrx_bygningspunkt.lyrx"
-    arcpy.SaveToLayerFile_management(
-        in_layer=selection_bygningspunkt,
-        out_layer=lyrx_bygningspunkt,
-        is_relative_path="ABSOLUTE",
-    )
-
+    lyrx_grunnriss = rf"{config.symbology_output_folder}\lyrx_grunnriss.lyrx"
     lyrx_veg_sti = rf"{config.symbology_output_folder}\lyrx_veg_sti.lyrx"
-    arcpy.SaveToLayerFile_management(
-        in_layer=selection_veg_sti,
-        out_layer=lyrx_veg_sti,
-        is_relative_path="ABSOLUTE",
-    )
-
     lyrx_begrensnings_kurve = (
         rf"{config.symbology_output_folder}\lyrx_begrensnings_kurve.lyrx"
     )
-    arcpy.SaveToLayerFile_management(
-        in_layer=selection_begrensningskurve,
-        out_layer=lyrx_begrensnings_kurve,
-        is_relative_path="ABSOLUTE",
-    )
 
-    lyrx_grunnriss = rf"{config.symbology_output_folder}\lyrx_grunnriss.lyrx"
-    arcpy.SaveToLayerFile_management(
-        in_layer=selection_grunnriss,
-        out_layer=lyrx_grunnriss,
-        is_relative_path="ABSOLUTE",
-    )
+    # List of dictionaries containing parameters for each symbology application
+    symbology_configs = [
+        {
+            "input_layer": selection_bygningspunkt,
+            "in_symbology_layer": symbology_bygningspunkt,
+            "output_name": lyrx_bygningspunkt,
+        },
+        {
+            "input_layer": selection_grunnriss,
+            "in_symbology_layer": symbology_grunnriss,
+            "output_name": lyrx_grunnriss,
+        },
+        {
+            "input_layer": selection_veg_sti,
+            "in_symbology_layer": symbology_veg_sti,
+            "output_name": lyrx_veg_sti,
+        },
+        {
+            "input_layer": selection_begrensningskurve,
+            "in_symbology_layer": symbology_begrensnings_kurve,
+            "output_name": lyrx_begrensnings_kurve,
+        },
+    ]
 
-    print("Starting Resolve Building Conflicts")
-    # Defining variables for Resolve Building Conflicts
+    # Loop over the symbology configurations and apply the function
+    for symbology_config in symbology_configs:
+        custom_arcpy.apply_symbology(
+            input_layer=symbology_config["input_layer"],
+            in_symbology_layer=symbology_config["in_symbology_layer"],
+            output_name=symbology_config["output_name"],
+        )
+
+    # Resolve Building Conflicts
+    print("Starting Resolve Building Conflicts 1")
     arcpy.env.referenceScale = "100000"
-    input_buildings = [lyrx_bygningspunkt, lyrx_grunnriss]
+
+    fields_to_calculate_first = [["hierarchy", "1"], ["invisibility", "0"]]
+
+    arcpy.management.CalculateFields(
+        in_table=selection_grunnriss,
+        expression_type="PYTHON3",
+        fields=fields_to_calculate_first,
+    )
+
+    # Defining variables for Resolve Building Conflicts
+    input_buildings = [lyrx_grunnriss]
 
     input_barriers = [
         [lyrx_veg_sti, "false", "0 Meters"],
@@ -175,24 +205,77 @@ def resolve_building_conflicts():
         hierarchy_field="hierarchy",
     )
 
+    fields_to_calculate = [["hierarchy", "0"], ["invisibility", "0"]]
+
+    arcpy.management.CalculateFields(
+        in_table=selection_grunnriss,
+        expression_type="PYTHON3",
+        fields=fields_to_calculate,
+    )
+
+    print("Starting Resolve Building Conflicts 2")
+    # Defining variables for Resolve Building Conflicts
+    input_buildings2 = [lyrx_bygningspunkt, lyrx_grunnriss]
+
+    arcpy.cartography.ResolveBuildingConflicts(
+        in_buildings=input_buildings2,
+        invisibility_field="invisibility",
+        in_barriers=input_barriers,
+        building_gap="25 meters",
+        minimum_size="10 meters",
+        hierarchy_field="hierarchy",
+    )
+
+    sql_expression_resolve_building_conflicts = "(invisibility = 0) OR (symbol_val = 1)"
+    resolve_building_conflicts_bygningspunkt_result_1 = (
+        "resolve_building_conflicts_bygningspunkt_result_1"
+    )
+    custom_arcpy.select_attribute_and_make_permanent_feature(
+        input_layer=selection_bygningspunkt,
+        expression=sql_expression_resolve_building_conflicts,
+        output_name=resolve_building_conflicts_bygningspunkt_result_1,
+    )
+
+    code_block_hierarchy = """def determineHierarchy(symbol_val):\n
+        if symbol_val in [1, 2, 3]:\n
+            return 1\n
+        elif symbol_val == 6:\n
+            return 2\n
+        else:\n
+            return 3\n"""
+
+    # Then run CalculateField with the new code block
+    arcpy.management.CalculateField(
+        in_table=resolve_building_conflicts_bygningspunkt_result_1,
+        field="hierarchy",
+        expression="determineHierarchy(!symbol_val!)",
+        expression_type="PYTHON3",
+        code_block=code_block_hierarchy,
+    )
+
+    arcpy.management.CalculateFields(
+        in_table=selection_grunnriss,
+        expression_type="PYTHON3",
+        fields=fields_to_calculate,
+    )
+
+    custom_arcpy.apply_symbology(
+        input_layer=resolve_building_conflicts_bygningspunkt_result_1,
+        in_symbology_layer=symbology_bygningspunkt,
+        output_name=lyrx_bygningspunkt,
+    )
+
+    print("Starting Resolve Building Conflicts 3")
+    # Defining variables for Resolve Building Conflicts
+    input_buildings3 = [lyrx_bygningspunkt, lyrx_grunnriss]
+    arcpy.cartography.ResolveBuildingConflicts(
+        in_buildings=input_buildings3,
+        invisibility_field="invisibility",
+        in_barriers=input_barriers,
+        building_gap="75 meters",
+        minimum_size="10 meters",
+        hierarchy_field="hierarchy",
+    )
 
 
-# # Defining variables for Resolve Building Conflicts
-# input_buildings = [selection_grunnriss, selection_bygningspunkt]
-#
-# input_barriers = [
-#     [selection_veg_sti, False, "0 Meters"],
-#     [selection_begrensningskurve, False, "0 Meters"],
-# ]
-#
-# arcpy.cartography.ResolveBuildingConflicts(
-#     in_buildings=input_buildings,
-#     invisibility_field="invisibility",
-#     in_barriers=input_barriers,
-#     building_gap="10 meters",
-#     minimum_size="15 meters",
-#     hierarchy_field="hierarchy",
-# )
-
-
-
+main()
