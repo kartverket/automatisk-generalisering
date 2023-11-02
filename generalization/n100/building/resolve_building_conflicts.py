@@ -226,7 +226,11 @@ def resolve_building_conflicts():
         hierarchy_field="hierarchy",
     )
 
-    sql_expression_resolve_building_conflicts = "(invisibility = 0) OR (symbol_val = 1)"
+    # Sql expression to bring along bygningspunkt which are kept + church and hospital
+    sql_expression_resolve_building_conflicts = (
+        "(invisibility = 0) OR (symbol_val IN (1, 2, 3))"
+    )
+
     resolve_building_conflicts_bygningspunkt_result_1 = (
         "resolve_building_conflicts_bygningspunkt_result_1"
     )
