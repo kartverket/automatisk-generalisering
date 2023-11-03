@@ -280,6 +280,3 @@ def resolve_building_conflicts():
         minimum_size="10 meters",
         hierarchy_field="hierarchy",
     )
-
-
-main()
