@@ -87,70 +87,7 @@ def create_points_from_polygon():
 
     print("Spatial joins completed.")
 
-    # Reducing hospital and church points clusters 
-
-
-    # Input layer 
-
-    n50_points = input_n50.BygningsPunkt
-
-    # Output layers
-
-    sykehus_points = "sykehus_points"
-    kirke_points = "kirke_points"
-
-    # SQL-expressions 
-
-    sql_sykehus = "BYGGTYP_NBR IN (970, 719)"
-    sql_kirke = "BYGGTYP_NBR = 671"
     
-
-
-    # Hospitals
-
-    custom_arcpy.select_attribute_and_make_feature_layer(
-        n50_points,
-        sql_sykehus,
-        sykehus_points)
-    
-    # Selecting all churches 
-
-    custom_arcpy.select_attribute_and_make_feature_layer(
-        n50_points,
-        sql_kirke,
-        kirke_points)
-    
-    # Finding hospital clusters 
-
-    hospital_clusters = "hospital clusters"
-
-    arcpy.gapro.FindPointClusters(
-        input_points=sykehus_points, 
-        out_feature_class=hospital_clusters, 
-        clustering_method="DBSCAN", 
-        minimum_points="2", 
-        search_distance="100 Meters")
-    
-    if min
-        arcpy.management.MinimumBoundingGeometry(
-            in_features, 
-            out_feature_class, 
-            {geometry_type}, 
-            {group_option}, 
-            {group_field}, 
-            {mbg_fields_option})
-
-
-
-
-
-
-
-
-
-
-
-
     # 4: Preparing for Merge - collecting layers
     small_grunnriss_points = TemporaryFiles.small_grunnriss_points_n50.value
     grunnriss_sykehus_kirke_points = TemporaryFiles.kirke_sykehus_points_n50.value
@@ -183,5 +120,48 @@ def create_points_from_polygon():
     )
 
     print("Copy completed.")
+
+    # 4: Finding hospital and church cluters of 2 - X meters
+
+    # Input layer 
+
+    n50_points = input_n50.BygningsPunkt
+
+    # Output layers
+
+    sykehus_points = "sykehus_points"
+    kirke_points = "kirke_points"
+
+    # SQL-expressions 
+
+    sql_sykehus = "BYGGTYP_NBR IN (970, 719)"
+    sql_kirke = "BYGGTYP_NBR = 671"
+    
+
+
+    # Selecting all Hospitals and making feature layer 
+
+    custom_arcpy.select_attribute_and_make_feature_layer(
+        n50_points,
+        sql_sykehus,
+        sykehus_points)
+    
+    # Selecting all Churches and making feature layer
+
+    custom_arcpy.select_attribute_and_make_feature_layer(
+        n50_points,
+        sql_kirke,
+        kirke_points)
+    
+    # Finding hospital clusters 
+
+    hospital_clusters = "hospital clusters"
+
+    arcpy.gapro.FindPointClusters(
+        input_points=sykehus_points, 
+        out_feature_class=hospital_clusters, 
+        clustering_method="DBSCAN", 
+        minimum_points="2", 
+        search_distance="100 Meters")
 
 
