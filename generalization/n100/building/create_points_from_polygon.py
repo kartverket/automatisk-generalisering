@@ -121,47 +121,232 @@ def create_points_from_polygon():
 
     print("Copy completed.")
 
-    # 4: Finding hospital and church cluters of 2 - X meters
+    # 4: Finding hospital and church clusters
 
     # Input layer 
 
-    n50_points = input_n50.BygningsPunkt
+    bygningspunkt_pre_symbology = TemporaryFiles.bygningspunkt_pre_symbology.value
 
-    # Output layers
+    # Working layers 
 
-    sykehus_points = "sykehus_points"
-    kirke_points = "kirke_points"
+    hospital_points = "hospital_points"
+    church_points = "kirke_points"
 
     # SQL-expressions 
 
     sql_sykehus = "BYGGTYP_NBR IN (970, 719)"
     sql_kirke = "BYGGTYP_NBR = 671"
-    
-
 
     # Selecting all Hospitals and making feature layer 
 
     custom_arcpy.select_attribute_and_make_feature_layer(
-        n50_points,
+        bygningspunkt_pre_symbology,
         sql_sykehus,
-        sykehus_points)
+        hospital_points)
     
     # Selecting all Churches and making feature layer
 
     custom_arcpy.select_attribute_and_make_feature_layer(
-        n50_points,
+        bygningspunkt_pre_symbology,
         sql_kirke,
-        kirke_points)
+        church_points)
     
-    # Finding hospital clusters 
+    # Finding hospital and church clusters
 
-    hospital_clusters = "hospital clusters"
+    hospital_clusters = "hospital_clusters"
+    church_clusters = "kirke_clusters"
+    
+    # Hospital
 
     arcpy.gapro.FindPointClusters(
-        input_points=sykehus_points, 
+        input_points=hospital_points, 
         out_feature_class=hospital_clusters, 
         clustering_method="DBSCAN", 
         minimum_points="2", 
-        search_distance="100 Meters")
+        search_distance="200 Meters")
+    
+    # Church 
+
+    arcpy.gapro.FindPointClusters(
+        input_points=church_points, 
+        out_feature_class=church_clusters, 
+        clustering_method="DBSCAN", 
+        minimum_points="2", 
+        search_distance="200 Meters")
+    
+     # Join CLUSTER_ID to feature classes
+
+    # Hospital
+
+    arcpy.management.JoinField(
+        in_data=hospital_points, 
+        in_field="OBJECTID", 
+        join_table=hospital_clusters, 
+        join_field="OBJECTID", 
+        fields="CLUSTER_ID")
+    
+    # Church 
+    
+    arcpy.management.JoinField(
+        in_data=church_points, 
+        in_field="OBJECTID", 
+        join_table=church_clusters, 
+        join_field="OBJECTID", 
+        fields="CLUSTER_ID")
+
+
+    # Create an empty dictionary to store cluster information
+    cluster_info_hospital = {}
+
+    field_name = "CLUSTER_ID"
+
+    # Create a SearchCursor to iterate through the "CLUSTER_ID" field
+    with arcpy.da.SearchCursor(hospital_points, field_name) as cursor:
+        
+        for row in cursor:
+            cluster_id = row[field_name]
+
+            # Skip clusters with a single feature
+            if cluster_id < 0: 
+                continue
+
+            # Update the dictionary to store the cluster information
+            if cluster_id in cluster_info_hospital:
+                cluster_info_hospital[cluster_id] += 1
+
+            else:
+                cluster_info_hospital[cluster_id] = 1
+
+
+    # Clean up, release the cursor
+    del cursor
+
+    # Picking out hospital-clusters of 2 and 2+
+        
+    hospital_clusters_of_2_list = []
+    hospital_clusters_of_3_or_more_list = []
+
+    for cluster_id in cluster_info_hospital:
+        if cluster_info_hospital[cluster_id] == 2: 
+            hospital_clusters_of_2_list.append(cluster_id)
+        elif cluster_info_hospital[cluster_id] >= 3: 
+            hospital_clusters_of_3_or_more_list.append(cluster_id)
+
+
+    # Create an empty dictionary to store cluster information
+    cluster_info_church = {}
+
+    # Create a SearchCursor to iterate through the "CLUSTER_ID" field
+    with arcpy.da.SearchCursor(church_points, ["CLUSTER_ID"]) as cursor:
+        for row in cursor:
+            cluster_id = row[0]  # Access the "CLUSTER_ID" field
+
+            # Skip clusters with a single feature or cluster_id <= 0
+            if cluster_id <= 1:
+                continue
+
+            # Update the dictionary to store the cluster information
+            if cluster_id in cluster_info_church:
+                cluster_info_church[cluster_id] += 1
+
+    # Clean up, release the cursor
+    del cursor
+
+
+    # Picking out church-clusters of 2 and 2+
+
+    church_clusters_of_2_list = []
+    church_clusters_of_3_or_more_list = []
+   
+    for cluster_id in cluster_info_church: 
+        if cluster_info_church[cluster_id] == 2: 
+            church_clusters_of_2_list.append(cluster_id)
+        elif cluster_info_church[cluster_id] >= 3: 
+            church_clusters_of_3_or_more_list.append(cluster_id)
+
+
+    ######################## Minimum Bounding Geometry tool - for clusters over 2 points #########################
+   
+    # Hospital 
+
+    hospital_clusters_of_more_than_3 = "hospital_clusters_of_more_than_3"
+
+    custom_arcpy.select_attribute_and_make_feature_layer(
+        input_layer=hospital_points,
+        expression=f"CLUSTER_ID in {tuple(hospital_clusters_of_3_or_more_list)}",
+        output_name=hospital_clusters_of_more_than_3,
+        selection_type="NEW_SELECTION",
+        inverted=False)
+    
+    hospital_clusters_output_minimum_bounding_geometry = "hospital_clusters_output_minimum_bounding_geometry"
+
+    arcpy.management.MinimumBoundingGeometry(
+        in_features=hospital_clusters_of_more_than_3, 
+        out_feature_class=hospital_clusters_output_minimum_bounding_geometry, 
+        geometry_type="RECTANGLE_BY_AREA", 
+        group_option="LIST",
+        group_field="CLUSTER_ID")
+    
+    hospital_feature_to_point = "hospital_feature_to_point"
+    
+    arcpy.management.FeatureToPoint(
+        in_features=hospital_clusters_output_minimum_bounding_geometry, 
+        out_feature_class=hospital_feature_to_point)
+    
+    selected_hospital_from_cluster = "selected_hospital_from_cluster"
+
+    custom_arcpy.select_location_and_make_feature_layer(
+        input_layer=hospital_points,
+        overlap_type="INTERSECT",
+        select_features=hospital_feature_to_point, 
+        output_name=selected_hospital_from_cluster)
+
+
+    # Church 
+
+    church_clusters_of_more_than_3 = "church_clusters_of_more_than_3"
+
+    custom_arcpy.select_attribute_and_make_feature_layer(
+        input_layer=hospital_points,
+        expression=f"CLUSTER_ID in {tuple(church_clusters_of_3_or_more_list)}",
+        output_name=church_clusters_of_more_than_3,
+        selection_type="NEW_SELECTION",
+        inverted=False)
+    
+    church_clusters_output_minimum_bounding_geometry = "church_clusters_output_minimum_bounding_geometry"
+
+    arcpy.management.MinimumBoundingGeometry(
+        in_features=church_clusters_of_more_than_3, 
+        out_feature_class=church_clusters_output_minimum_bounding_geometry, 
+        geometry_type="RECTANGLE_BY_AREA", 
+        group_option="LIST",
+        group_field="CLUSTER_ID")
+    
+    church_feature_to_point = "church_feature_to_point"
+    
+    arcpy.management.FeatureToPoint(
+        in_features=church_clusters_output_minimum_bounding_geometry, 
+        out_feature_class=church_feature_to_point)
+
+    # Find point closest to this point 
+
+
+    
+
+
+
+    # Near tool - for clusters with 2 points 
+    
+    
+    
+        
+
+
+
+        
+
+
+
+         
 
 
