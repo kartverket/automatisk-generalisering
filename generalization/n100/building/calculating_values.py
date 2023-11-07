@@ -13,7 +13,7 @@ import arcpy
 
 # Importing environment
 environment_setup.setup(
-    workspace=config.n100_building_workspace, cpu_percentage=config.cpu_percentage
+    workspace=config.n100_building_workspace
 )
 
 
