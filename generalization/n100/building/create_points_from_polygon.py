@@ -292,14 +292,19 @@ def create_points_from_polygon():
     arcpy.management.FeatureToPoint(
         in_features=hospital_clusters_output_minimum_bounding_geometry, 
         out_feature_class=hospital_feature_to_point)
-    
-    selected_hospital_from_cluster = "selected_hospital_from_cluster"
 
-    custom_arcpy.select_location_and_make_feature_layer(
-        input_layer=hospital_points,
-        overlap_type="INTERSECT",
-        select_features=hospital_feature_to_point, 
-        output_name=selected_hospital_from_cluster)
+
+    # Find point closest to this point 
+
+    arcpy.analysis.Near(
+        in_features, 
+        near_features, 
+        {search_radius}, 
+        {location}, 
+        {angle}, 
+        {method}, 
+        {field_names}, 
+        {distance_unit})
 
 
     # Church 
@@ -330,7 +335,15 @@ def create_points_from_polygon():
 
     # Find point closest to this point 
 
-
+    arcpy.analysis.Near(
+        in_features, 
+        near_features, 
+        {search_radius}, 
+        {location}, 
+        {angle}, 
+        {method}, 
+        {field_names}, 
+        {distance_unit})
     
 
 
