@@ -854,7 +854,7 @@ def resolve_building_conflicts():
         building_gap="150 meters",
         minimum_size="10 meters",
         hierarchy_field="hierarchy",
-    )
+   
 
     resolve_building_conflicts_bygningspunkt_result_3 = (
         "resolve_building_conflicts_bygningspunkt_result_3"
