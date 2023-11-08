@@ -17,14 +17,15 @@ start_time = time.time()
 # Importing environment
 environment_setup.setup(workspace=config.n100_building_workspace)
 
-iteration_fc = r"C:\Users\oftell\Documents\ArcGIS\Projects\ArcPy_Bygning_Generalisering\ArcPy_Bygning_Generalisering.gdb\test_fishnet"
+iteration_fc = config.resolve_building_conflicts_iteration_feature
 
 
 def main():
     # creating_append_layers()
     # pre_calculation()
-    iterate_through_selections()
-    rbc_iteration()
+    # iterate_through_selections()
+    # rbc_iteration()
+    resolve_building_conflicts()
 
 
 def creating_append_layers():
