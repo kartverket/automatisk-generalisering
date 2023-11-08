@@ -18,7 +18,7 @@ from generalization.n100.building import create_points_from_polygon
 from generalization.n100.building import resolve_building_conflicts
 
 # Importing environment
-environment_setup.setup(workspace=config.n100_building_workspace)
+environment_setup.general_setup()
 
 def main():
     building_data_preparation.main()

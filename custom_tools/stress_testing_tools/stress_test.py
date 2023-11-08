@@ -4,7 +4,7 @@ import config
 import logging
 from custom_tools import custom_arcpy
 
-environment_setup.setup(workspace=config.n100_building_workspace)
+environment_setup.general_setup()
 
 
 def stress_test_select_location_and_make_permanent_feature():
