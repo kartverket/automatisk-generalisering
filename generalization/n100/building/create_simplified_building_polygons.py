@@ -101,6 +101,8 @@ def simplify_building_polygon():
 """
 
 
+
+
     # Aggregating building polygons
 
     print("Aggregating building polygons...")

@@ -19,9 +19,12 @@ def main():
     create_points_from_polygon()
 
 
+
 # Function that creates one feature class of all points
 def create_points_from_polygon():
+
     """
+
     Creates a feature class of points by performing the following steps:
 
     1. Utilizes a custom tool to select features by location and make a feature layer that intersects
@@ -32,7 +35,7 @@ def create_points_from_polygon():
     4. Merges 5 point layers into a single feature class using the 'Merge' tool.
     5. Copies the final merged feature class
 
-    """
+    """    
 
     # 1: Custom tool: Select By Location and Make Feature Layer
     intersect_aggregated_and_original = "intersect_aggregated_and_original"
@@ -125,36 +128,45 @@ def create_points_from_polygon():
 
     # Input layer 
 
+
+def test():
+
+    # Input layers 
+    
     bygningspunkt_pre_symbology = TemporaryFiles.bygningspunkt_pre_symbology.value
 
     # Working layers 
 
     hospital_points = "hospital_points"
-    church_points = "kirke_points"
+    church_points = "church_points"
 
     # SQL-expressions 
 
     sql_sykehus = "BYGGTYP_NBR IN (970, 719)"
-    sql_kirke = "BYGGTYP_NBR = 671"
+    sql_church = "BYGGTYP_NBR = 671"
 
-    # Selecting all Hospitals and making feature layer 
+     # Selecting all Hospitals and making feature layer 
 
-    custom_arcpy.select_attribute_and_make_feature_layer(
-        bygningspunkt_pre_symbology,
-        sql_sykehus,
-        hospital_points)
+    custom_arcpy.select_attribute_and_make_permanent_feature(
+        input_layer=bygningspunkt_pre_symbology,
+        expression=sql_sykehus,
+        output_name=hospital_points,
+        selection_type=custom_arcpy.SelectionType.NEW_SELECTION,
+        inverted=False)
     
     # Selecting all Churches and making feature layer
-
-    custom_arcpy.select_attribute_and_make_feature_layer(
-        bygningspunkt_pre_symbology,
-        sql_kirke,
-        church_points)
+    
+    custom_arcpy.select_attribute_and_make_permanent_feature(
+        input_layer=bygningspunkt_pre_symbology,
+        expression=sql_church,
+        output_name=church_points,
+        selection_type=custom_arcpy.SelectionType.NEW_SELECTION,
+        inverted=False)
     
     # Finding hospital and church clusters
 
     hospital_clusters = "hospital_clusters"
-    church_clusters = "kirke_clusters"
+    church_clusters = "church_clusters"
     
     # Hospital
 
@@ -174,7 +186,9 @@ def create_points_from_polygon():
         minimum_points="2", 
         search_distance="200 Meters")
     
-     # Join CLUSTER_ID to feature classes
+    """
+    
+    # Join CLUSTER_ID field to hospital and church feature classes
 
     # Hospital
 
@@ -198,22 +212,19 @@ def create_points_from_polygon():
     # Create an empty dictionary to store cluster information
     cluster_info_hospital = {}
 
-    field_name = "CLUSTER_ID"
+    field_name = ["CLUSTER_ID"]
 
-    # Create a SearchCursor to iterate through the "CLUSTER_ID" field
     with arcpy.da.SearchCursor(hospital_points, field_name) as cursor:
-        
         for row in cursor:
-            cluster_id = row[field_name]
+            cluster_id = row[0]  # Access the first (and only) field in the list
 
             # Skip clusters with a single feature
-            if cluster_id < 0: 
+            if cluster_id < 0:
                 continue
 
             # Update the dictionary to store the cluster information
             if cluster_id in cluster_info_hospital:
                 cluster_info_hospital[cluster_id] += 1
-
             else:
                 cluster_info_hospital[cluster_id] = 1
 
@@ -221,7 +232,8 @@ def create_points_from_polygon():
     # Clean up, release the cursor
     del cursor
 
-    # Picking out hospital-clusters of 2 and 2+
+    # Picking out hospital-clusters of 2
+    # Picking out hospital-clusters of 3 or more
         
     hospital_clusters_of_2_list = []
     hospital_clusters_of_3_or_more_list = []
@@ -237,12 +249,12 @@ def create_points_from_polygon():
     cluster_info_church = {}
 
     # Create a SearchCursor to iterate through the "CLUSTER_ID" field
-    with arcpy.da.SearchCursor(church_points, ["CLUSTER_ID"]) as cursor:
+    with arcpy.da.SearchCursor(church_points, field_name) as cursor:
         for row in cursor:
             cluster_id = row[0]  # Access the "CLUSTER_ID" field
 
             # Skip clusters with a single feature or cluster_id <= 0
-            if cluster_id <= 1:
+            if cluster_id < 1:
                 continue
 
             # Update the dictionary to store the cluster information
@@ -253,7 +265,8 @@ def create_points_from_polygon():
     del cursor
 
 
-    # Picking out church-clusters of 2 and 2+
+    # Picking out church-clusters of 2
+    # Picking out church-clusters of 3 or more
 
     church_clusters_of_2_list = []
     church_clusters_of_3_or_more_list = []
@@ -297,14 +310,29 @@ def create_points_from_polygon():
     # Find point closest to this point 
 
     arcpy.analysis.Near(
-        in_features, 
-        near_features, 
-        {search_radius}, 
-        {location}, 
-        {angle}, 
-        {method}, 
-        {field_names}, 
-        {distance_unit})
+        in_features=hospital_feature_to_point, # points from polygon 
+        near_features=hospital_points, # all hospital points 
+        search_radius=None)
+    
+    field_near_fid = ["NEAR_FID"]
+    near_fid_list = []
+
+    with arcpy.da.SearchCursor(hospital_feature_to_point, field_near_fid) as cursor:
+        for row in cursor:
+            near_fid = row[field_near_fid]
+            near_fid_list.append(near_fid)
+
+    SQL_expression = "OBJECTID IN (" + ",".join(map(str, near_fid_list)) + ") OR CLUSTER_ID < 0"
+    selected_hospitals = "selected_hospitals"
+
+    custom_arcpy.select_attribute_and_make_feature_layer(
+        input_layer=hospital_points,
+        expression=SQL_expression,
+        output_name=selected_hospitals,
+        selection_type="NEW_SELECTION",
+        inverted=False)
+    
+
 
 
     # Church 
@@ -349,17 +377,5 @@ def create_points_from_polygon():
 
 
     # Near tool - for clusters with 2 points 
-    
-    
-    
-        
-
-
-
-        
-
-
-
-         
-
-
+"""
+test()
