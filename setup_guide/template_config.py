@@ -13,7 +13,7 @@ cpu_percentage = "90%"
 ###########################
 # Workspace environment paths
 ###########################
-n100_building_workspace = r"path\to\workspace.gdb"
+default_project_workspace = r"path\to\workspace.gdb"
 
 
 ###########################
@@ -42,4 +42,8 @@ symbology_n100_begrensningskurve = r"C:\path\to\symbology\layer.lyrx"
 symbology_n100_bygningspunkt = r"C:\path\to\symbology\layer.lyrx"
 symbology_n100_grunnriss = r"C:\path\to\symbology\layer.lyrx"
 
+# Folder for where outputs for Resolve Building Conflicts will be stored
 symbology_output_folder = r"C:\path\to\output\folder"
+
+# This is temporary for RBC iteration testing (not required)
+resolve_building_conflicts_iteration_feature = r"C:\path\to\test\feature"

@@ -4,7 +4,7 @@ import config
 import arcpy
 
 
-def setup(workspace=config.n100_building_workspace, cpu_percentage=config.cpu_percentage):
+def general_setup():
     """Set up the ArcGIS Pro environment.
 
     Parameters:
@@ -13,8 +13,12 @@ def setup(workspace=config.n100_building_workspace, cpu_percentage=config.cpu_pe
     """
 
     arcpy.env.overwriteOutput = True
-    arcpy.env.workspace = workspace
+    arcpy.env.workspace = config.default_project_workspace
     arcpy.env.outputCoordinateSystem = arcpy.SpatialReference(3045)
-    arcpy.env.parallelProcessingFactor = cpu_percentage
+    arcpy.env.parallelProcessingFactor = config.cpu_percentage
 
-    print(f"Workspace environment set up with workspace: {workspace}")
+    print(f"Workspace environment set up with workspace: {config.default_project_workspace}")
+
+
+def resolve_building_conflicts_setup():
+    pass

@@ -12,9 +12,7 @@ from file_manager.n100.file_manager_buildings import PermanentFiles
 import arcpy
 
 # Importing environment
-environment_setup.setup(
-    workspace=config.n100_building_workspace
-)
+environment_setup.general_setup()
 
 
 def main():

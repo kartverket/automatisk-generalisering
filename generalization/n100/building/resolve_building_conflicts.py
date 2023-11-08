@@ -15,7 +15,7 @@ from file_manager.n100.file_manager_buildings import TemporaryFiles
 start_time = time.time()
 
 # Importing environment
-environment_setup.setup(workspace=config.n100_building_workspace)
+environment_setup.general_setup()
 
 iteration_fc = config.resolve_building_conflicts_iteration_feature
 
@@ -35,13 +35,13 @@ def creating_append_layers():
 
     # Create a new feature class using the original one as a template
     arcpy.CreateFeatureclass_management(
-        out_path=config.n100_building_workspace,
+        out_path=config.default_project_workspace,
         out_name=byggningspunkt_append,
         template=TemporaryFiles.bygningspunkt_pre_symbology.value,
     )
 
     arcpy.CreateFeatureclass_management(
-        out_path=config.n100_building_workspace,
+        out_path=config.default_project_workspace,
         out_name=grunriss_append,
         template=TemporaryFiles.simplified_grunnriss_n100.value,
     )
