@@ -132,8 +132,6 @@ def test():
     # Input layers 
 
     bygningspunkt_pre_symbology = TemporaryFiles.bygningspunkt_pre_symbology.value
-    merged_points_final = TemporaryFiles.merged_points_final.value
-    kirke_sykehus_points_n50 = TemporaryFiles.kirke_sykehus_points_n50.value
 
     # Working layers 
 
@@ -148,7 +146,7 @@ def test():
      # Selecting all Hospitals and making feature layer 
 
     custom_arcpy.select_attribute_and_make_permanent_feature(
-        input_layer=kirke_sykehus_points_n50,
+        input_layer=bygningspunkt_pre_symbology,
         expression=sql_sykehus,
         output_name=hospital_points,
         selection_type=custom_arcpy.SelectionType.NEW_SELECTION,
@@ -157,7 +155,7 @@ def test():
     # Selecting all Churches and making feature layer
     
     custom_arcpy.select_attribute_and_make_permanent_feature(
-        input_layer=kirke_sykehus_points_n50,
+        input_layer=bygningspunkt_pre_symbology,
         expression=sql_church,
         output_name=church_points,
         selection_type=custom_arcpy.SelectionType.NEW_SELECTION,
