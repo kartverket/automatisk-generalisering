@@ -32,6 +32,8 @@ class TemporaryFiles(Enum):
 
     merged_points_final ="merged_points_final"
 
+    reduced_hospital_church_points = "reduced_hospital_church_points"
+
 class PermanentFiles(Enum):
     n100_building_points_undefined_nbr_values = (
         "n100_building_points_undefined_nbr_values"
