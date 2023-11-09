@@ -467,9 +467,3 @@ def create_points_from_polygon():
     
     print(f"Merge between potentially reduced hospital and churches, layer name {reduced_hospital_church_points} finished.")
     
-
-
-
-
-
-test()
