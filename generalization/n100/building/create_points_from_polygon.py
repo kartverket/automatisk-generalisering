@@ -95,14 +95,12 @@ def create_points_from_polygon():
     small_grunnriss_points = TemporaryFiles.small_grunnriss_points_n50.value
     grunnriss_sykehus_kirke_points = TemporaryFiles.kirke_sykehus_points_n50.value
     points_from_aggregation = feature_to_point
-    n50_points = input_n50.BygningsPunkt
 
     # List of all point layers to be merged
     all_point_layers = [
         small_grunnriss_points,
         grunnriss_sykehus_kirke_points,
         points_from_aggregation,
-        n50_points,
     ] + output_spatial_joins
 
     print("Preparing for merge...")
@@ -132,8 +130,10 @@ def create_points_from_polygon():
 def test():
 
     # Input layers 
-    
+
     bygningspunkt_pre_symbology = TemporaryFiles.bygningspunkt_pre_symbology.value
+    merged_points_final = TemporaryFiles.merged_points_final.value
+    kirke_sykehus_points_n50 = TemporaryFiles.kirke_sykehus_points_n50.value
 
     # Working layers 
 
@@ -148,7 +148,7 @@ def test():
      # Selecting all Hospitals and making feature layer 
 
     custom_arcpy.select_attribute_and_make_permanent_feature(
-        input_layer=bygningspunkt_pre_symbology,
+        input_layer=kirke_sykehus_points_n50,
         expression=sql_sykehus,
         output_name=hospital_points,
         selection_type=custom_arcpy.SelectionType.NEW_SELECTION,
@@ -157,16 +157,20 @@ def test():
     # Selecting all Churches and making feature layer
     
     custom_arcpy.select_attribute_and_make_permanent_feature(
-        input_layer=bygningspunkt_pre_symbology,
+        input_layer=kirke_sykehus_points_n50,
         expression=sql_church,
         output_name=church_points,
         selection_type=custom_arcpy.SelectionType.NEW_SELECTION,
         inverted=False)
     
+    print("Finished making hospital and church layers.")
+    
     # Finding hospital and church clusters
 
     hospital_clusters = "hospital_clusters"
     church_clusters = "church_clusters"
+
+    print("Finding hospital and church clusters...")
     
     # Hospital
 
@@ -186,9 +190,9 @@ def test():
         minimum_points="2", 
         search_distance="200 Meters")
     
-    """
-    
     # Join CLUSTER_ID field to hospital and church feature classes
+    
+    print("Joining fields...")
 
     # Hospital
 
@@ -216,7 +220,7 @@ def test():
 
     with arcpy.da.SearchCursor(hospital_points, field_name) as cursor:
         for row in cursor:
-            cluster_id = row[0]  # Access the first (and only) field in the list
+            cluster_id = row[0]  
 
             # Skip clusters with a single feature
             if cluster_id < 0:
@@ -232,16 +236,17 @@ def test():
     # Clean up, release the cursor
     del cursor
 
-    # Picking out hospital-clusters of 2
-    # Picking out hospital-clusters of 3 or more
+    # Picking out hospital-clusters of  & picking out hospital-clusters of 3 or more
         
     hospital_clusters_of_2_list = []
     hospital_clusters_of_3_or_more_list = []
 
     for cluster_id in cluster_info_hospital:
-        if cluster_info_hospital[cluster_id] == 2: 
-            hospital_clusters_of_2_list.append(cluster_id)
-        elif cluster_info_hospital[cluster_id] >= 3: 
+        #if cluster_info_hospital[cluster_id] == 2: 
+            #hospital_clusters_of_2_list.append(cluster_id)
+        #elif cluster_info_hospital[cluster_id] >= 3: 
+            #hospital_clusters_of_3_or_more_list.append(cluster_id)
+        if cluster_info_hospital[cluster_id] >= 2: 
             hospital_clusters_of_3_or_more_list.append(cluster_id)
 
 
@@ -265,117 +270,213 @@ def test():
     del cursor
 
 
-    # Picking out church-clusters of 2
-    # Picking out church-clusters of 3 or more
+    # Picking out church-clusters of 2 & picking out church-clusters of 3 or more
 
     church_clusters_of_2_list = []
     church_clusters_of_3_or_more_list = []
    
     for cluster_id in cluster_info_church: 
-        if cluster_info_church[cluster_id] == 2: 
-            church_clusters_of_2_list.append(cluster_id)
-        elif cluster_info_church[cluster_id] >= 3: 
-            church_clusters_of_3_or_more_list.append(cluster_id)
+        #if cluster_info_church[cluster_id] == 2: 
+            #church_clusters_of_2_list.append(cluster_id)
+        #elif cluster_info_church[cluster_id] >= 3: 
+            #church_clusters_of_3_or_more_list.append(cluster_id)
+        if cluster_info_hospital[cluster_id] >= 2: 
+            hospital_clusters_of_3_or_more_list.append(cluster_id)
 
 
     ######################## Minimum Bounding Geometry tool - for clusters over 2 points #########################
    
+
+    # List of layers to merge 
+
+    merge_list = []
+
+
     # Hospital 
 
-    hospital_clusters_of_more_than_3 = "hospital_clusters_of_more_than_3"
+    if len(hospital_clusters_of_3_or_more_list) > 0:
 
-    custom_arcpy.select_attribute_and_make_feature_layer(
-        input_layer=hospital_points,
-        expression=f"CLUSTER_ID in {tuple(hospital_clusters_of_3_or_more_list)}",
-        output_name=hospital_clusters_of_more_than_3,
-        selection_type="NEW_SELECTION",
-        inverted=False)
+        print("Selecting hospital clusters of 3 or more points")
+
+        hospital_clusters_of_3_and_more = "hospital_clusters_of_3_and_more"
+        expression_hospital = "CLUSTER_ID IN ({})".format(",".join(map(str, hospital_clusters_of_3_or_more_list)))
+
     
-    hospital_clusters_output_minimum_bounding_geometry = "hospital_clusters_output_minimum_bounding_geometry"
+        custom_arcpy.select_attribute_and_make_permanent_feature(
+            input_layer=hospital_points,
+            expression=expression_hospital,
+            output_name=hospital_clusters_of_3_and_more,
+            selection_type=custom_arcpy.SelectionType.NEW_SELECTION,
+            inverted=False)
+        
+        # Check if any features were selected
+        if arcpy.management.GetCount(hospital_clusters_of_3_and_more)[0] == '0':
+            print("No features match the specified criteria.")
+        
+        hospital_clusters_output_minimum_bounding_geometry = "hospital_clusters_output_minimum_bounding_geometry"
 
-    arcpy.management.MinimumBoundingGeometry(
-        in_features=hospital_clusters_of_more_than_3, 
-        out_feature_class=hospital_clusters_output_minimum_bounding_geometry, 
-        geometry_type="RECTANGLE_BY_AREA", 
-        group_option="LIST",
-        group_field="CLUSTER_ID")
+        print("Starting Minimum Bounding Geometry for hospital clusters...")
+
+        arcpy.management.MinimumBoundingGeometry(
+            in_features=hospital_clusters_of_3_and_more, 
+            out_feature_class=hospital_clusters_output_minimum_bounding_geometry, 
+            geometry_type="RECTANGLE_BY_AREA", 
+            group_option="LIST",
+            group_field="CLUSTER_ID")
+        
+        hospital_feature_to_point = "hospital_feature_to_point"
+
+        print("Starting feature to point...")
+        
+        arcpy.management.FeatureToPoint(
+            in_features=hospital_clusters_output_minimum_bounding_geometry, 
+            out_feature_class=hospital_feature_to_point)
+
+
+        # Find hospital point closest to feature to point
+
+        print("Near analysis...")
+
+        arcpy.analysis.Near(
+            in_features=hospital_feature_to_point, 
+            near_features=hospital_points, 
+            search_radius=None)
+        
+        field_near_fid = "NEAR_FID"
+
+        near_fid_list = []
+
+        with arcpy.da.SearchCursor(hospital_feature_to_point, [field_near_fid]) as cursor:
+            for row in cursor:
+                near_fid = row[0]
+                near_fid_list.append(near_fid)
+        
+        # Clean up, release the cursor
+        del cursor
+
+        SQL_expression = f"OBJECTID IN ({','.join(map(str, near_fid_list))}) OR CLUSTER_ID < 0"
+        selected_hospitals = "selected_hospitals"
+
+        print(f"Making permanent feature {selected_hospitals}...")
+
+        custom_arcpy.select_attribute_and_make_permanent_feature(
+            input_layer=hospital_points,
+            expression=SQL_expression,
+            output_name=selected_hospitals,
+            selection_type=custom_arcpy.SelectionType.NEW_SELECTION,
+            inverted=False)
+        
+        merge_list.append(selected_hospitals)
+
+        # Check if any features were selected
+        if arcpy.management.GetCount(selected_hospitals)[0] == '0':
+            print("No features match the specified criteria.")
+
     
-    hospital_feature_to_point = "hospital_feature_to_point"
+    else: 
+        print(f"No hospital clusters of 3 or more points were found in the dataset {hospital_points}")
+        merge_list.append(hospital_points)
     
-    arcpy.management.FeatureToPoint(
-        in_features=hospital_clusters_output_minimum_bounding_geometry, 
-        out_feature_class=hospital_feature_to_point)
-
-
-    # Find point closest to this point 
-
-    arcpy.analysis.Near(
-        in_features=hospital_feature_to_point, # points from polygon 
-        near_features=hospital_points, # all hospital points 
-        search_radius=None)
-    
-    field_near_fid = ["NEAR_FID"]
-    near_fid_list = []
-
-    with arcpy.da.SearchCursor(hospital_feature_to_point, field_near_fid) as cursor:
-        for row in cursor:
-            near_fid = row[field_near_fid]
-            near_fid_list.append(near_fid)
-
-    SQL_expression = "OBJECTID IN (" + ",".join(map(str, near_fid_list)) + ") OR CLUSTER_ID < 0"
-    selected_hospitals = "selected_hospitals"
-
-    custom_arcpy.select_attribute_and_make_feature_layer(
-        input_layer=hospital_points,
-        expression=SQL_expression,
-        output_name=selected_hospitals,
-        selection_type="NEW_SELECTION",
-        inverted=False)
-    
-
-
 
     # Church 
 
-    church_clusters_of_more_than_3 = "church_clusters_of_more_than_3"
+    if len(church_clusters_of_3_or_more_list) > 0: 
+        print("Church clusters of 3 or more were found...")
 
-    custom_arcpy.select_attribute_and_make_feature_layer(
-        input_layer=hospital_points,
-        expression=f"CLUSTER_ID in {tuple(church_clusters_of_3_or_more_list)}",
-        output_name=church_clusters_of_more_than_3,
-        selection_type="NEW_SELECTION",
-        inverted=False)
+        print("Selecting church clusters of 3 or more points")
+
+        church_clusters_of_3_and_more = "church_clusters_of_3_and_more"
+        
+        expression_church = "CLUSTER_ID IN ({})".format(",".join(map(str, church_clusters_of_3_or_more_list))) 
+
+        custom_arcpy.select_attribute_and_make_permanent_feature(
+            input_layer=church_points,
+            expression=expression_church,
+            output_name=church_clusters_of_3_and_more,
+            selection_type=custom_arcpy.SelectionType.NEW_SELECTION,
+            inverted=False)
     
-    church_clusters_output_minimum_bounding_geometry = "church_clusters_output_minimum_bounding_geometry"
-
-    arcpy.management.MinimumBoundingGeometry(
-        in_features=church_clusters_of_more_than_3, 
-        out_feature_class=church_clusters_output_minimum_bounding_geometry, 
-        geometry_type="RECTANGLE_BY_AREA", 
-        group_option="LIST",
-        group_field="CLUSTER_ID")
+        # Check if any features were selected
+        if arcpy.management.GetCount(church_clusters_of_3_and_more)[0] == '0':
+            print("No features match the specified criteria.")
     
-    church_feature_to_point = "church_feature_to_point"
+        church_clusters_output_minimum_bounding_geometry = "church_clusters_output_minimum_bounding_geometry"
+
+        print("Starting Minimum Bounding Geometry for church clusters...")
+
+        arcpy.management.MinimumBoundingGeometry(
+            in_features=church_clusters_of_3_and_more, 
+            out_feature_class=church_clusters_output_minimum_bounding_geometry, 
+            geometry_type="RECTANGLE_BY_AREA", 
+            group_option="LIST",
+            group_field="CLUSTER_ID")
+        
+        church_feature_to_point = "church_feature_to_point"
+
+        print("Starting feature to point...")
+        
+        arcpy.management.FeatureToPoint(
+            in_features=church_clusters_output_minimum_bounding_geometry, 
+            out_feature_class=church_feature_to_point)
+
+
+        # Find church point closest to feature to point  
+
+        print("Near analysis...")
+
+        arcpy.analysis.Near(
+            in_features=church_feature_to_point, 
+            near_features=church_points, 
+            search_radius=None)
+        
+        field_near_fid = "NEAR_FID"
+
+        near_fid_list = []
+
+        with arcpy.da.SearchCursor(church_feature_to_point, [field_near_fid]) as cursor:
+            for row in cursor:
+                near_fid = row[0]
+                near_fid_list.append(near_fid)
+        
+        # Clean up, release the cursor
+        del cursor
+
+        SQL_expression = f"OBJECTID IN ({','.join(map(str, near_fid_list))}) OR CLUSTER_ID < 0"
+        selected_churches = "selected_churches"
+
+        print(f"Making permanent feature {selected_churches}...")
+
+        custom_arcpy.select_attribute_and_make_permanent_feature(
+            input_layer=church_points,
+            expression=SQL_expression,
+            output_name=selected_churches,
+            selection_type=custom_arcpy.SelectionType.NEW_SELECTION,
+            inverted=False)
+        
+        merge_list.append(selected_churches)
+
+        # Check if any features were selected
+        if arcpy.management.GetCount(selected_churches)[0] == '0':
+            print("No features match the specified criteria.")
+
+    else: 
+        print(f"No church clusters of 3 or more points were found in the dataset {church_points}")
+        merge_list.append(church_points)
+
+                
+    # Merge the final hospital and church layers 
+
+    reduced_hospital_church_points = TemporaryFiles.reduced_hospital_church_points.value
+
+    arcpy.management.Merge(
+        inputs=merge_list, 
+        output=reduced_hospital_church_points)
     
-    arcpy.management.FeatureToPoint(
-        in_features=church_clusters_output_minimum_bounding_geometry, 
-        out_feature_class=church_feature_to_point)
-
-    # Find point closest to this point 
-
-    arcpy.analysis.Near(
-        in_features, 
-        near_features, 
-        {search_radius}, 
-        {location}, 
-        {angle}, 
-        {method}, 
-        {field_names}, 
-        {distance_unit})
+    print(f"Merge between potentially reduced hospital and churches, layer name {reduced_hospital_church_points} finished.")
     
 
 
 
-    # Near tool - for clusters with 2 points 
-"""
+
+
 test()
