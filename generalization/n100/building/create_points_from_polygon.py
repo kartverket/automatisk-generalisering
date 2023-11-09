@@ -122,14 +122,9 @@ def create_points_from_polygon():
 
     print("Copy completed.")
 
-    # 4: Finding hospital and church clusters
+    #####################  Finding hospital and church clusters  #######################
 
     # Input layer 
-
-
-def test():
-
-    # Input layers 
 
     bygningspunkt_pre_symbology = TemporaryFiles.bygningspunkt_pre_symbology.value
 
