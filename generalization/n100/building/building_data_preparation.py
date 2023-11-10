@@ -297,6 +297,7 @@ def check_for_duplicates_grunnriss_matrikkel_n50_bygningspunkt():
         overlap_type=custom_arcpy.OverlapType.WITHIN,
         select_features=input_n50.Grunnriss,
         output_name="check_where_duplicate_points_from_grunnriss_come_from",
+        inverted=True,
     )
 
     custom_arcpy.select_location_and_make_permanent_feature(
@@ -304,6 +305,7 @@ def check_for_duplicates_grunnriss_matrikkel_n50_bygningspunkt():
         overlap_type=custom_arcpy.OverlapType.WITHIN,
         select_features=input_n50.Grunnriss,
         output_name="check_where_duplicate_points_from_matrikkel_come_from",
+        inverted=True,
     )
 
 
