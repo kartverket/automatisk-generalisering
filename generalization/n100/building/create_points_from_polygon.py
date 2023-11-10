@@ -453,7 +453,7 @@ def create_points_from_polygon():
             print("No features match the specified criteria.")
 
     else: 
-        print(f"No church clusters of 3 or more points were found in the dataset {church_points}")
+        print(f"No church clusters of 3 or more points were found in the dataset {church_points}") 
         merge_list.append(church_points)
 
                 
