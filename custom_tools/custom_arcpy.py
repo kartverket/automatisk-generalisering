@@ -136,7 +136,6 @@ def select_location_and_make_feature_layer(
         print(f"Error occurred: {e}")
 
 
-
 def select_location_and_make_permanent_feature(
     input_layer,
     overlap_type,
@@ -184,9 +183,8 @@ def select_location_and_make_permanent_feature(
         arcpy.management.Delete("temp_layer")
         print(f"{output_name} created temporarily.")
 
+
 def apply_symbology(input_layer, in_symbology_layer, output_name):
-
-
     arcpy.management.MakeFeatureLayer(
         in_features=input_layer,
         out_layer=input_layer,

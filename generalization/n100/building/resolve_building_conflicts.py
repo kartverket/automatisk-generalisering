@@ -333,8 +333,6 @@ def rbc_iteration():
     # )
 
 
-
-
 def resolve_building_conflicts():
     ####################################################
     # Working iterator ove study areas using admin flate
@@ -823,7 +821,6 @@ def resolve_building_conflicts():
         hierarchy_field="hierarchy",
     )
 
-
     resolve_building_conflicts_bygningspunkt_result_2 = (
         "resolve_building_conflicts_bygningspunkt_result_2"
     )
@@ -855,7 +852,6 @@ def resolve_building_conflicts():
         minimum_size="10 meters",
         hierarchy_field="hierarchy",
     )
-   
 
     resolve_building_conflicts_bygningspunkt_result_3 = (
         "resolve_building_conflicts_bygningspunkt_result_3"
@@ -873,11 +869,9 @@ def resolve_building_conflicts():
     )
 
 
-
 # resolve_building_conflicts()
 
 # main()
-
 
 
 # End timing

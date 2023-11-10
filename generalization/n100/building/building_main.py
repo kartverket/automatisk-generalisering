@@ -20,6 +20,7 @@ from generalization.n100.building import resolve_building_conflicts
 # Importing environment
 environment_setup.general_setup()
 
+
 def main():
     building_data_preparation.main()
     create_simplified_building_polygons.main()
@@ -27,5 +28,5 @@ def main():
     calculating_values.main()
     resolve_building_conflicts.main()
 
-main()
 
+main()

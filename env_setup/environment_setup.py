@@ -1,5 +1,6 @@
 # Importing custom files relative to the root path
 import config
+
 # Importing general packages
 import arcpy
 
@@ -17,7 +18,9 @@ def general_setup():
     arcpy.env.outputCoordinateSystem = arcpy.SpatialReference(3045)
     arcpy.env.parallelProcessingFactor = config.cpu_percentage
 
-    print(f"Workspace environment set up with workspace: {config.default_project_workspace}")
+    print(
+        f"Workspace environment set up with workspace: {config.default_project_workspace}"
+    )
 
 
 def resolve_building_conflicts_setup():
