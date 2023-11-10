@@ -17,7 +17,7 @@ environment_setup.general_setup()
 
 def main():
     """
-    Adding required fields for bygningspunkt for symbology and resolve building conflicts: angle, hierarchy and invisibility.
+    Adding required fields for all point files from different sources (grunnriss, matrikkel, n50_bygningspunkt) for symbology and resolve building conflicts: angle, hierarchy and invisibility.
     And adding additional information such as source information making it possible to know if a point was added from grunnriss or not.
     """
     table_management()
@@ -46,12 +46,15 @@ def table_management():
         code_block=code_block_hospital,
     )
 
+    # Input layers:
+    n50_bygningspunkt = input_n50.BygningsPunkt
+    matrikkel_bygningspunkt = TemporaryFiles.matrikkel_bygningspunkt.value
     # Define the output name
     merged_bygningspunkt_matrikkel = "merged_bygningspunkt_matrikkel"
 
     # Merge the bygningspunkt and matrikkel
     arcpy.management.Merge(
-        inputs=[input_n50.BygningsPunkt, TemporaryFiles.matrikkel_bygningspunkt.value],
+        inputs=[n50_bygningspunkt, matrikkel_bygningspunkt],
         output=merged_bygningspunkt_matrikkel,
     )
 
