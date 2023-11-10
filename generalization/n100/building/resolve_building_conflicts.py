@@ -874,12 +874,9 @@ def resolve_building_conflicts():
 
 
 
-resolve_building_conflicts()
+# resolve_building_conflicts()
 
 # main()
-
-
-
 
 
 
