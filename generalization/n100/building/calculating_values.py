@@ -202,5 +202,3 @@ def table_management():
         expression_type="PYTHON3",
         code_block=code_block_hierarchy,
     )
-
-

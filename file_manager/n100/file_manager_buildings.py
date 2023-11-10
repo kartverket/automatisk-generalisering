@@ -12,7 +12,6 @@ class TemporaryFiles(Enum):
     bygningspunkt_pre_symbology = "bygningspunkt_pre_symbology"
     small_grunnriss_points_n50 = "small_grunnriss_points_n50"
 
-
     # create_simplified_building_polygons
 
     output_aggregate_polygon = "aggregated_polygon"
@@ -30,9 +29,10 @@ class TemporaryFiles(Enum):
 
     # create_points_from_polygon
 
-    merged_points_final ="merged_points_final"
+    merged_points_final = "merged_points_final"
 
     reduced_hospital_church_points = "reduced_hospital_church_points"
+
 
 class PermanentFiles(Enum):
     n100_building_points_undefined_nbr_values = (

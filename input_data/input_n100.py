@@ -3,40 +3,40 @@ from config import n100_path
 import arcpy
 
 # Defining universal paths for n100 regardless of local path env_setup
-AdminFlate = fr"{n100_path}\AdminFlate"
-AdminGrense = fr"{n100_path}\AdminGrense"
-AdminGrensePunkt = fr"{n100_path}\AdminGrensePunkt"
-Alpinbakke = fr"{n100_path}\Alpinbakke"
-AnleggsLinje = fr"{n100_path}\AnleggsLinje"
-AnleggsPunkt = fr"{n100_path}\AnleggsPunkt"
-ArealdekkeFlate = fr"{n100_path}\ArealdekkeFlate"
-Bane = fr"{n100_path}\Bane"
-BegrensningsKurve = fr"{n100_path}\BegrensningsKurve"
-BygningsPunkt = fr"{n100_path}\BygningsPunkt"
-ElvBekk = fr"{n100_path}\ElvBekk"
-Ferge = fr"{n100_path}\Ferge"
-Foss = fr"{n100_path}\Foss"
-Golfbane = fr"{n100_path}\Golfbane"
-Grunnlinje = fr"{n100_path}\Grunnlinje"
-Grunnriss = fr"{n100_path}\Grunnriss"
-HoydeKontur = fr"{n100_path}\HoydeKontur"
-HoydePunkt = fr"{n100_path}\HoydePunkt"
-HoydeTall = fr"{n100_path}\HoydeTall"
-JernbaneStasjon = fr"{n100_path}\JernbaneStasjon"
-LufthavnPunkt = fr"{n100_path}\LufthavnPunkt"
-Navn = fr"{n100_path}\Navn"
-OmrissLinje = fr"{n100_path}\OmrissLinje"
-Piktogram = fr"{n100_path}\Piktogram"
-Rullebane = fr"{n100_path}\Rullebane"
-Rutenett = fr"{n100_path}\Rutenett"
-Skjaer = fr"{n100_path}\Skjaer"
-SkyteFelt = fr"{n100_path}\SkyteFelt"
-StatsAllmenning = fr"{n100_path}\StatsAllmenning"
-Tile = fr"{n100_path}\Tile"
-Tile_Kant = fr"{n100_path}\Tile_Kant"
-TuristHytte = fr"{n100_path}\TuristHytte"
-VegSti = fr"{n100_path}\VegSti"
-VerneOmrade = fr"{n100_path}\VerneOmrade"
+AdminFlate = rf"{n100_path}\AdminFlate"
+AdminGrense = rf"{n100_path}\AdminGrense"
+AdminGrensePunkt = rf"{n100_path}\AdminGrensePunkt"
+Alpinbakke = rf"{n100_path}\Alpinbakke"
+AnleggsLinje = rf"{n100_path}\AnleggsLinje"
+AnleggsPunkt = rf"{n100_path}\AnleggsPunkt"
+ArealdekkeFlate = rf"{n100_path}\ArealdekkeFlate"
+Bane = rf"{n100_path}\Bane"
+BegrensningsKurve = rf"{n100_path}\BegrensningsKurve"
+BygningsPunkt = rf"{n100_path}\BygningsPunkt"
+ElvBekk = rf"{n100_path}\ElvBekk"
+Ferge = rf"{n100_path}\Ferge"
+Foss = rf"{n100_path}\Foss"
+Golfbane = rf"{n100_path}\Golfbane"
+Grunnlinje = rf"{n100_path}\Grunnlinje"
+Grunnriss = rf"{n100_path}\Grunnriss"
+HoydeKontur = rf"{n100_path}\HoydeKontur"
+HoydePunkt = rf"{n100_path}\HoydePunkt"
+HoydeTall = rf"{n100_path}\HoydeTall"
+JernbaneStasjon = rf"{n100_path}\JernbaneStasjon"
+LufthavnPunkt = rf"{n100_path}\LufthavnPunkt"
+Navn = rf"{n100_path}\Navn"
+OmrissLinje = rf"{n100_path}\OmrissLinje"
+Piktogram = rf"{n100_path}\Piktogram"
+Rullebane = rf"{n100_path}\Rullebane"
+Rutenett = rf"{n100_path}\Rutenett"
+Skjaer = rf"{n100_path}\Skjaer"
+SkyteFelt = rf"{n100_path}\SkyteFelt"
+StatsAllmenning = rf"{n100_path}\StatsAllmenning"
+Tile = rf"{n100_path}\Tile"
+Tile_Kant = rf"{n100_path}\Tile_Kant"
+TuristHytte = rf"{n100_path}\TuristHytte"
+VegSti = rf"{n100_path}\VegSti"
+VerneOmrade = rf"{n100_path}\VerneOmrade"
 
 # Defining datasets to test paths are set up correctly later
 n100_datasets = [
@@ -76,6 +76,7 @@ n100_datasets = [
     VerneOmrade,
 ]
 
+
 # Looping through all paths to check if they are formatted correctly
 def check_paths():
     for dataset in n100_datasets:
@@ -86,5 +87,3 @@ def check_paths():
             print(f"Failed on {dataset}: {e}")
         else:
             print(f"Success on {dataset}")
-
-

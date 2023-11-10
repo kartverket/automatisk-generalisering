@@ -212,7 +212,6 @@ def selecting_grunnriss_for_generalization():
         "    return mapping.get(nbr, nbr)"
     )
 
-
     # Reclassify the sykehus from grunnriss to another NBR value
     arcpy.CalculateField_management(
         in_table=input_n50.Grunnriss,
@@ -228,8 +227,6 @@ def selecting_grunnriss_for_generalization():
 
     # Defining output names
     grunnriss_selection_not_church = "grunnriss_selection_not_church"
-
-
 
     # Selecting grunnriss which are not churches or hospitals using inverted selection
     custom_arcpy.select_attribute_and_make_permanent_feature(
@@ -295,7 +292,6 @@ def selecting_grunnriss_for_generalization():
 
 
 def check_for_duplicates_grunnriss_matrikkel_n50_bygningspunkt():
-
     custom_arcpy.select_location_and_make_permanent_feature(
         input_layer=input_n50.BygningsPunkt,
         overlap_type=custom_arcpy.OverlapType.WITHIN,
@@ -311,7 +307,8 @@ def check_for_duplicates_grunnriss_matrikkel_n50_bygningspunkt():
     )
 
 
-
-from generalization.n100.building.create_points_from_polygon import create_points_from_polygon
+from generalization.n100.building.create_points_from_polygon import (
+    create_points_from_polygon,
+)
 
 # create_points_from_polygon()
