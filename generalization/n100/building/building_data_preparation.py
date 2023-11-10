@@ -189,6 +189,9 @@ def adding_matrikkel_as_points():
     )
 
     ###### NEED TO REMEBER TO REMOVE NBR VALUES NOT WANTED TO BE DELIVERED############
+    print(
+        " ###### NEED TO REMEBER TO REMOVE NBR VALUES NOT WANTED TO BE DELIVERED############"
+    )
 
 
 def selecting_grunnriss_for_generalization():
@@ -202,28 +205,51 @@ def selecting_grunnriss_for_generalization():
     These points are used for point generalization.
     """
 
+    # Reclassify the sykehus from grunnriss to another NBR value
+    code_block_hospital = (
+        "def hospital_nbr(nbr):\n"
+        "    mapping = {970: 729, 719: 729}\n"
+        "    return mapping.get(nbr, nbr)"
+    )
+
+
+    # Reclassify the sykehus from grunnriss to another NBR value
+    arcpy.CalculateField_management(
+        in_table=input_n50.Grunnriss,
+        field="BYGGTYP_NBR",
+        expression="hospital_nbr(!BYGGTYP_NBR!)",
+        expression_type="PYTHON3",
+        code_block=code_block_hospital,
+    )
+
     # Expression to be able to select churchs and hospitals
-    grunnriss_nbr_sql_expr = "BYGGTYP_NBR IN (970, 719, 671)"
+    sql_nrb_code_sykehus = "BYGGTYP_NBR IN (970, 719)"
+    sql_nbr_code_kirke = "BYGGTYP_NBR IN (671)"
 
     # Defining output names
-    grunnriss_selection_not_church_hospital = "grunnriss_selection_not_church_hospital"
+    grunnriss_selection_not_church = "grunnriss_selection_not_church"
+
+
 
     # Selecting grunnriss which are not churches or hospitals using inverted selection
     custom_arcpy.select_attribute_and_make_permanent_feature(
         input_layer=input_n50.Grunnriss,
-        expression=grunnriss_nbr_sql_expr,
-        output_name=grunnriss_selection_not_church_hospital,
+        expression=sql_nbr_code_kirke,
+        output_name=grunnriss_selection_not_church,
         selection_type=custom_arcpy.SelectionType.NEW_SELECTION,
         inverted=True,
     )
 
     # Output feature name definition
     grunnriss_selection_n50 = TemporaryFiles.grunnriss_selection_n50.value
-    sql_expression_too_small_grunnriss = "Shape_Area >= 1500"
+
+    grunnriss_minimum_size = 1500
+    sql_expression_too_small_grunnriss = f"Shape_Area < {grunnriss_minimum_size}"
+    sql_expression_correct_size_grunnriss = f"Shape_Area >= {grunnriss_minimum_size}"
 
     custom_arcpy.select_attribute_and_make_permanent_feature(
-        input_layer=grunnriss_selection_not_church_hospital,
-        expression=sql_expression_too_small_grunnriss,
+        input_layer=grunnriss_selection_not_church,
+        expression=sql_expression_correct_size_grunnriss,
         output_name=grunnriss_selection_n50,
     )
 
@@ -231,14 +257,13 @@ def selecting_grunnriss_for_generalization():
     too_small_grunnriss = "too_small_grunnriss"
 
     custom_arcpy.select_attribute_and_make_feature_layer(
-        input_layer=grunnriss_selection_not_church_hospital,
+        input_layer=grunnriss_selection_not_church,
         expression=sql_expression_too_small_grunnriss,
         output_name=too_small_grunnriss,
         selection_type=custom_arcpy.SelectionType.NEW_SELECTION,
-        inverted=True,
     )
 
-    #Defining output feature name
+    # Defining output feature name
     small_grunnriss_points_n50 = TemporaryFiles.small_grunnriss_points_n50.value
 
     # Transforming selected churches and hospitals into points
@@ -254,7 +279,7 @@ def selecting_grunnriss_for_generalization():
     # Selecting grunnriss features not inverted based on sql expression above to select churches and hospitals
     custom_arcpy.select_attribute_and_make_feature_layer(
         input_layer=input_n50.Grunnriss,
-        expression=grunnriss_nbr_sql_expr,
+        expression=sql_nrb_code_sykehus,
         output_name=kirke_sykehus_grunnriss_n50,
     )
 
@@ -268,3 +293,25 @@ def selecting_grunnriss_for_generalization():
         point_location="CENTROID",
     )
 
+
+def check_for_duplicates_grunnriss_matrikkel_n50_bygningspunkt():
+
+    custom_arcpy.select_location_and_make_permanent_feature(
+        input_layer=input_n50.BygningsPunkt,
+        overlap_type=custom_arcpy.OverlapType.WITHIN,
+        select_features=input_n50.Grunnriss,
+        output_name="check_where_duplicate_points_from_grunnriss_come_from",
+    )
+
+    custom_arcpy.select_location_and_make_permanent_feature(
+        input_layer=TemporaryFiles.matrikkel_bygningspunkt.value,
+        overlap_type=custom_arcpy.OverlapType.WITHIN,
+        select_features=input_n50.Grunnriss,
+        output_name="check_where_duplicate_points_from_matrikkel_come_from",
+    )
+
+
+
+from generalization.n100.building.create_points_from_polygon import create_points_from_polygon
+
+# create_points_from_polygon()
