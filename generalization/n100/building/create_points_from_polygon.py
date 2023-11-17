@@ -16,30 +16,22 @@ environment_setup.general_setup()
 
 # Main function
 def main():
-    create_points_from_polygon()
+    grunnriss_to_point()
 
 
-# Function that creates one feature class of all points
-def create_points_from_polygon():
+def grunnriss_to_point():
     """
+    This function creates points from small grunnriss lost during aggregation, and merges
+    them together with collapsed points from the tools simplify building and simplify polygon.
 
-    Creates a feature class of points by performing the following steps:
+    Input data:
 
-    1. Utilizes a custom tool to select features by location and make a feature layer that intersects
-    the aggregated and original building polygons.
-    2. Converts the selected features to points using the 'Feature To Point' tool.
-    3. Conducts a spatial join operation between multiple point layers and the 'grunnriss' layer to retrieve
-    attribute values based on their spatial relationships.
-    4. Merges 5 point layers into a single feature class using the 'Merge' tool.
-    5. Copies the final merged feature class
+    Output data:
 
     """
 
-    # 1: Custom tool: Select By Location and Make Feature Layer
+    # Find aggregated buildings that do not intersect with the original grunnriss feature class
     intersect_aggregated_and_original = "intersect_aggregated_and_original"
-    print(
-        "Creating intersected feature layer using Select By Location and Make Feature Layer..."
-    )
 
     custom_arcpy.select_location_and_make_feature_layer(
         input_layer=TemporaryFiles.grunnriss_selection_n50.value,
@@ -49,28 +41,22 @@ def create_points_from_polygon():
         inverted=True,
     )
 
-    print("Custom tool completed.")
-
-    # 2: Feature to point
+    # Make these features to points
     feature_to_point = "feature_to_point"
-    print("Converting selected features to points using Feature To Point...")
 
     arcpy.management.FeatureToPoint(
         in_features=intersect_aggregated_and_original,
         out_feature_class=feature_to_point,
     )
 
-    print("Feature to Point completed.")
-
-    # 3: Spatial join
+    # Collecting all collapsed points (from create_simplified_building_polygons)
     simplified_building_points = [
         TemporaryFiles.output_collapsed_points_simplified_building.value,
         TemporaryFiles.output_collapsed_points_simplified_polygon.value,
         TemporaryFiles.output_collapsed_points_simplified_building2.value,
     ]
-    print("Performing spatial joins...")
 
-    # List of all point layers that were spatially joined
+    # List that will include all spatially joined points
     output_spatial_joins = []
 
     for index, point_layer in enumerate(simplified_building_points):
@@ -119,8 +105,8 @@ def create_points_from_polygon():
 
     print("Copy completed.")
 
-    #####################  Finding hospital and church clusters  #######################
 
+def find_point_clusters():
     # Input layer
 
     bygningspunkt_pre_symbology = TemporaryFiles.bygningspunkt_pre_symbology.value
@@ -274,8 +260,6 @@ def create_points_from_polygon():
         # church_clusters_of_3_or_more_list.append(cluster_id)
         if cluster_info_hospital[cluster_id] >= 2:
             hospital_clusters_of_3_or_more_list.append(cluster_id)
-
-    ######################## Minimum Bounding Geometry tool - for clusters over 2 points #########################
 
     # List of layers to merge
 
