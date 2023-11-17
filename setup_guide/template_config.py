@@ -12,6 +12,7 @@ cpu_percentage = "90%"
 # Workspace environment paths
 ###########################
 default_project_workspace = r"path\to\workspace.gdb"
+output_folder = r"C:\path\to\folder\you\want\your\outputs\in"
 
 
 ###########################
