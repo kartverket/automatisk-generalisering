@@ -1,5 +1,21 @@
 from enum import Enum
+import  config
 
+relative_path = rf"{config.output_folder}\n100\building.gdb"
+scale = "n100"
+
+def generate_file_name(function_name, description, scale):
+    return rf"{relative_path}\{function_name}__{description}__{scale}"
+
+# Function name definition:
+selecting_grunnriss_for_generalization = "selecting_grunnriss_for_generalization"
+
+class Building_N100(Enum):
+    selecting_grunnriss_for_generalization__grunnriss_selection_not_church__n100 = generate_file_name(
+        function_name=selecting_grunnriss_for_generalization,
+        description="grunnriss_selection_not_church",
+        scale= scale
+    )
 
 class TemporaryFiles(Enum):
     begrensningskurve_buffer_waterfeatures = (
