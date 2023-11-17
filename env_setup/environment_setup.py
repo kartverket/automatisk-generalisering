@@ -15,7 +15,7 @@ def general_setup():
 
     arcpy.env.overwriteOutput = True
     arcpy.env.workspace = config.default_project_workspace
-    arcpy.env.outputCoordinateSystem = arcpy.SpatialReference(3045)
+    arcpy.env.outputCoordinateSystem = arcpy.SpatialReference(25833)
     arcpy.env.parallelProcessingFactor = config.cpu_percentage
 
     print(
