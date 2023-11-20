@@ -9,7 +9,7 @@ from env_setup import environment_setup
 from input_data import input_n50
 from input_data import input_n100
 from input_data.input_symbology import SymbologyN100
-from file_manager.n100.file_manager_buildings import TemporaryFiles
+from file_manager.n100.file_manager_buildings import Building_N100
 
 # Start timing
 start_time = time.time()
@@ -37,13 +37,13 @@ def creating_append_layers():
     arcpy.CreateFeatureclass_management(
         out_path=config.default_project_workspace,
         out_name=byggningspunkt_append,
-        template=TemporaryFiles.bygningspunkt_pre_symbology.value,
+        template=Building_N100.bygningspunkt_pre_symbology.value,
     )
 
     arcpy.CreateFeatureclass_management(
         out_path=config.default_project_workspace,
         out_name=grunriss_append,
-        template=TemporaryFiles.simplified_grunnriss_n100.value,
+        template=Building_N100.simplified_grunnriss_n100.value,
     )
 
 
@@ -51,7 +51,7 @@ def pre_calculation():
     fields_to_calculate_first = [["hierarchy", "1"], ["invisibility", "0"]]
 
     arcpy.management.CalculateFields(
-        in_table=TemporaryFiles.simplified_grunnriss_n100.value,
+        in_table=Building_N100.simplified_grunnriss_n100.value,
         expression_type="PYTHON3",
         fields=fields_to_calculate_first,
     )
@@ -64,7 +64,7 @@ def pre_calculation():
 
     # Then run CalculateField with the new code block
     arcpy.management.CalculateField(
-        in_table=TemporaryFiles.bygningspunkt_pre_symbology.value,
+        in_table=Building_N100.bygningspunkt_pre_symbology.value,
         field="hierarchy",
         expression="determineHierarchy(!symbol_val!)",
         expression_type="PYTHON3",
@@ -100,19 +100,19 @@ def iterate_through_selections():
         # Define selections for this unique_id
         selections = [
             {
-                "input_layer": TemporaryFiles.simplified_grunnriss_n100.value,
+                "input_layer": Building_N100.simplified_grunnriss_n100.value,
                 "output_name": selection_grunnriss,
             },
             {
-                "input_layer": TemporaryFiles.unsplit_veg_sti_n100.value,
+                "input_layer": Building_N100.unsplit_veg_sti_n100.value,
                 "output_name": selection_veg_sti,
             },
             {
-                "input_layer": TemporaryFiles.bygningspunkt_pre_symbology.value,
+                "input_layer": Building_N100.bygningspunkt_pre_symbology.value,
                 "output_name": selection_bygningspunkt,
             },
             {
-                "input_layer": TemporaryFiles.begrensningskurve_buffer_waterfeatures.value,
+                "input_layer": Building_N100.preparation_begrensningskurve__begrensningskurve_buffer_waterfeatures__n100.value,
                 "output_name": selection_begrensningskurve,
             },
         ]
@@ -609,19 +609,19 @@ def resolve_building_conflicts():
     # List of dictionaries containing parameters for each selection
     selections = [
         {
-            "input_layer": TemporaryFiles.simplified_grunnriss_n100.value,
+            "input_layer": Building_N100.simplified_grunnriss_n100.value,
             "output_name": selection_grunnriss,
         },
         {
-            "input_layer": TemporaryFiles.unsplit_veg_sti_n100.value,
+            "input_layer": Building_N100.unsplit_veg_sti_n100.value,
             "output_name": selection_veg_sti,
         },
         {
-            "input_layer": TemporaryFiles.bygningspunkt_pre_symbology.value,
+            "input_layer": Building_N100.bygningspunkt_pre_symbology.value,
             "output_name": selection_bygningspunkt,
         },
         {
-            "input_layer": TemporaryFiles.begrensningskurve_buffer_waterfeatures.value,
+            "input_layer": Building_N100.preparation_begrensningskurve__begrensningskurve_buffer_waterfeatures__n100.value,
             "output_name": selection_begrensningskurve,
         },
     ]

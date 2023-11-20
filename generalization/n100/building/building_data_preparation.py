@@ -5,7 +5,8 @@ from env_setup import environment_setup
 from input_data import input_n50
 from input_data import input_n100
 from input_data import input_other
-from file_manager.n100.file_manager_buildings import TemporaryFiles
+from file_manager.n100.file_manager_buildings import Building_N100
+
 
 # Importing general packages
 import arcpy
@@ -38,48 +39,37 @@ def preparation_begrensningskurve():
     # Defining the SQL selection expression for water features for begrensningskurve
     sql_expr_begrensningskurve_waterfeatures = "OBJTYPE = 'ElvBekkKant' Or OBJTYPE = 'Innsjøkant' Or OBJTYPE = 'InnsjøkantRegulert' Or OBJTYPE = 'Kystkontur'"
 
-    # Defining the output name
-    output_name_begrensningskurve_waterfeatures = "begrensningskurve_waterfeatures"
-
     # Creating a temporary feature of water features from begrensningskurve
     custom_arcpy.select_attribute_and_make_feature_layer(
         input_layer=input_n100.BegrensningsKurve,
         expression=sql_expr_begrensningskurve_waterfeatures,
-        output_name=output_name_begrensningskurve_waterfeatures,
-    )
-
-    # Defining the buffer distance used for the buffer of begrensningskurve water features
-    buffer_distance_begrensningskurve_waterfeatures = "20 Meters"
-
-    # Defining the output name
-    begrensningskurve_buffer_waterfeatures = (
-        TemporaryFiles.begrensningskurve_buffer_waterfeatures.value
+        output_name=Building_N100.preparation_begrensningskurve__selected_waterfeatures_from_begrensningskurve__n100.value,
     )
 
     # Creating a buffer of the water features begrensningskurve to take into account symbology of the water features
     arcpy.analysis.PairwiseBuffer(
-        in_features=output_name_begrensningskurve_waterfeatures,
-        out_feature_class=begrensningskurve_buffer_waterfeatures,
-        buffer_distance_or_field=buffer_distance_begrensningskurve_waterfeatures,
+        in_features=Building_N100.preparation_begrensningskurve__selected_waterfeatures_from_begrensningskurve__n100.value,
+        out_feature_class=Building_N100.preparation_begrensningskurve__begrensningskurve_buffer_waterfeatures__n100.value,
+        buffer_distance_or_field="20 Meters",
         dissolve_option="NONE",
         dissolve_field=None,
         method="PLANAR",
     )
 
-    # Adding hierarchy and invisibility fields to the begrensningskurve_waterfeatures_buffer and setting them to 0
+    # Adding hierarchy and invisibility fields to the preparation_begrensningskurve__begrensningskurve_buffer_waterfeatures__n100 and setting them to 0
     # Define field information
     fields_to_add = [["hierarchy", "LONG"], ["invisibility", "LONG"]]
     fields_to_calculate = [["hierarchy", "0"], ["invisibility", "0"]]
 
     # Add fields
     arcpy.management.AddFields(
-        in_table=begrensningskurve_buffer_waterfeatures,
+        in_table=Building_N100.preparation_begrensningskurve__begrensningskurve_buffer_waterfeatures__n100.value,
         field_description=fields_to_add,
     )
 
     # Calculate fields
     arcpy.management.CalculateFields(
-        in_table=begrensningskurve_buffer_waterfeatures,
+        in_table=Building_N100.preparation_begrensningskurve__begrensningskurve_buffer_waterfeatures__n100.value,
         expression_type="PYTHON3",
         fields=fields_to_calculate,
     )
@@ -95,7 +85,7 @@ def preperation_vegsti():
         output_feature_class (str): The name of the output feature class to be created.
         fields (List[str]): The list of fields to use for unsplitting the lines.
     """
-    unsplit_veg_sti_n100 = TemporaryFiles.unsplit_veg_sti_n100.value
+    unsplit_veg_sti_n100 = Building_N100.unsplit_veg_sti_n100.value
     arcpy.UnsplitLine_management(
         in_features=input_n100.VegSti,
         out_feature_class=unsplit_veg_sti_n100,
@@ -162,7 +152,7 @@ def adding_matrikkel_as_points():
     )
 
     # Defining output names
-    matrikkel_bygningspunkt = TemporaryFiles.matrikkel_bygningspunkt.value
+    matrikkel_bygningspunkt = Building_N100.matrikkel_bygningspunkt.value
 
     # Selecting matrikkel bygningspunkter based on this new urban selection layer
     custom_arcpy.select_location_and_make_permanent_feature(
@@ -238,7 +228,7 @@ def selecting_grunnriss_for_generalization():
     )
 
     # Output feature name definition
-    grunnriss_selection_n50 = TemporaryFiles.grunnriss_selection_n50.value
+    grunnriss_selection_n50 = Building_N100.grunnriss_selection_n50.value
 
     grunnriss_minimum_size = 1500
     sql_expression_too_small_grunnriss = f"Shape_Area < {grunnriss_minimum_size}"
@@ -261,7 +251,7 @@ def selecting_grunnriss_for_generalization():
     )
 
     # Defining output feature name
-    small_grunnriss_points_n50 = TemporaryFiles.small_grunnriss_points_n50.value
+    small_grunnriss_points_n50 = Building_N100.small_grunnriss_points_n50.value
 
     # Transforming selected churches and hospitals into points
     arcpy.FeatureToPoint_management(
@@ -281,7 +271,7 @@ def selecting_grunnriss_for_generalization():
     )
 
     # Defining output feature name
-    kirke_sykehus_points_n50 = TemporaryFiles.kirke_sykehus_points_n50.value
+    kirke_sykehus_points_n50 = Building_N100.kirke_sykehus_points_n50.value
 
     # Transforming selected churches and hospitals into points
     arcpy.FeatureToPoint_management(
@@ -291,19 +281,23 @@ def selecting_grunnriss_for_generalization():
     )
 
 
-def check_for_duplicates_grunnriss_matrikkel_n50_bygningspunkt():
+def removing_overlapping_byggningspunkt_and_grunnriss_matrikkel():
     custom_arcpy.select_location_and_make_permanent_feature(
         input_layer=input_n50.BygningsPunkt,
         overlap_type=custom_arcpy.OverlapType.WITHIN,
         select_features=input_n50.Grunnriss,
-        output_name="check_where_duplicate_points_from_grunnriss_come_from",
+        output_name="NEEDS UPDATE",
         inverted=True,
     )
 
     custom_arcpy.select_location_and_make_permanent_feature(
-        input_layer=TemporaryFiles.matrikkel_bygningspunkt.value,
+        input_layer=Building_N100.matrikkel_bygningspunkt.value,
         overlap_type=custom_arcpy.OverlapType.WITHIN,
         select_features=input_n50.Grunnriss,
-        output_name="check_where_duplicate_points_from_matrikkel_come_from",
+        output_name="NEEDS UPDATE",
         inverted=True,
     )
+
+
+# removing_overlapping_byggningspunkt_and_grunnriss_matrikkel()
+preparation_begrensningskurve()

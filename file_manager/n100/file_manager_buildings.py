@@ -1,8 +1,14 @@
 from enum import Enum
 import config
+from env_setup import setup_directory_structure
 
-relative_path = rf"{config.output_folder}\n100\building.gdb"
-scale = "n100"
+scale = setup_directory_structure.scale_n100
+object = setup_directory_structure.object_byggning
+
+
+relative_path = (
+    rf"{config.output_folder}\automatic_generalization_outputs\{scale}\{object}.gdb"
+)
 
 
 def generate_file_name(function_name, description, scale):
@@ -11,21 +17,22 @@ def generate_file_name(function_name, description, scale):
 
 # Function name definition:
 selecting_grunnriss_for_generalization = "selecting_grunnriss_for_generalization"
+preparation_begrensningskurve = "preparation_begrensningskurve"
 
 
 class Building_N100(Enum):
-    selecting_grunnriss_for_generalization__grunnriss_selection_not_church__n100 = (
-        generate_file_name(
-            function_name=selecting_grunnriss_for_generalization,
-            description="grunnriss_selection_not_church",
-            scale=scale,
-        )
+    preparation_begrensningskurve__selected_waterfeatures_from_begrensningskurve__n100 = generate_file_name(
+        function_name=preparation_begrensningskurve,
+        description="selected_waterfeatures_from_begrensningskurve",
+        scale=scale,
     )
 
-
-class TemporaryFiles(Enum):
-    begrensningskurve_buffer_waterfeatures = (
-        "begrensningskurve_waterfeatures_20m_buffer"
+    preparation_begrensningskurve__begrensningskurve_buffer_waterfeatures__n100 = (
+        generate_file_name(
+            function_name=preparation_begrensningskurve,
+            description="begrensningskurve_buffer_waterfeatures",
+            scale=scale,
+        )
     )
     unsplit_veg_sti_n100 = "unsplit_veg_sti_n100"
     matrikkel_bygningspunkt = "matrikkel_bygningspunkt"

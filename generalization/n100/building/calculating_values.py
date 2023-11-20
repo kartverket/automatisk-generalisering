@@ -5,7 +5,7 @@ from env_setup import environment_setup
 from input_data import input_n50
 from input_data import input_n100
 from input_data import input_other
-from file_manager.n100.file_manager_buildings import TemporaryFiles
+from file_manager.n100.file_manager_buildings import Building_N100
 from file_manager.n100.file_manager_buildings import PermanentFiles
 
 # Importing general packages
@@ -39,7 +39,7 @@ def table_management():
 
     # Reclassify the sykehus from grunnriss to another NBR value
     arcpy.CalculateField_management(
-        in_table=TemporaryFiles.matrikkel_bygningspunkt.value,
+        in_table=Building_N100.matrikkel_bygningspunkt.value,
         field="BYGGTYP_NBR",
         expression="hospital_nbr(!BYGGTYP_NBR!)",
         expression_type="PYTHON3",
@@ -48,7 +48,7 @@ def table_management():
 
     # Input layers:
     n50_bygningspunkt = input_n50.BygningsPunkt
-    matrikkel_bygningspunkt = TemporaryFiles.matrikkel_bygningspunkt.value
+    matrikkel_bygningspunkt = Building_N100.matrikkel_bygningspunkt.value
     # Define the output name
     merged_bygningspunkt_matrikkel = "merged_bygningspunkt_matrikkel"
 
@@ -70,7 +70,7 @@ def table_management():
         expression="0",
     )
 
-    points_created_from_grunnriss = TemporaryFiles.merged_points_final.value
+    points_created_from_grunnriss = Building_N100.merged_points_final.value
     # Adding a field to indicate that points resulting from grunnriss is tracked
     arcpy.AddField_management(
         in_table=points_created_from_grunnriss,
@@ -157,7 +157,7 @@ def table_management():
     )
 
     # Define output name
-    bygningspunkt_pre_symbology = TemporaryFiles.bygningspunkt_pre_symbology.value
+    bygningspunkt_pre_symbology = Building_N100.bygningspunkt_pre_symbology.value
 
     # Selecting defined NBR values
     custom_arcpy.select_attribute_and_make_permanent_feature(
