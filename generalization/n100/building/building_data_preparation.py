@@ -307,10 +307,3 @@ def check_for_duplicates_grunnriss_matrikkel_n50_bygningspunkt():
         output_name="check_where_duplicate_points_from_matrikkel_come_from",
         inverted=True,
     )
-
-
-from generalization.n100.building.create_points_from_polygon import (
-    create_points_from_polygon,
-)
-
-# create_points_from_polygon()
