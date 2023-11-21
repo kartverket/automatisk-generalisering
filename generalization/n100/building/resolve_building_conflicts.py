@@ -104,7 +104,7 @@ def iterate_through_selections():
                 "output_name": selection_grunnriss,
             },
             {
-                "input_layer": Building_N100.unsplit_veg_sti_n100.value,
+                "input_layer": Building_N100.preperation_veg_sti__unsplit_veg_sti__n100.value,
                 "output_name": selection_veg_sti,
             },
             {
@@ -613,7 +613,7 @@ def resolve_building_conflicts():
             "output_name": selection_grunnriss,
         },
         {
-            "input_layer": Building_N100.unsplit_veg_sti_n100.value,
+            "input_layer": Building_N100.preperation_veg_sti__unsplit_veg_sti__n100.value,
             "output_name": selection_veg_sti,
         },
         {

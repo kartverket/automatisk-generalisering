@@ -34,7 +34,7 @@ def grunnriss_to_point():
     intersect_aggregated_and_original = "intersect_aggregated_and_original"
 
     custom_arcpy.select_location_and_make_feature_layer(
-        input_layer=Building_N100.grunnriss_selection_n50.value,
+        input_layer=Building_N100.selecting_grunnriss_for_generalization__large_enough_grunnriss__n100.value,
         overlap_type=custom_arcpy.OverlapType.INTERSECT,
         select_features=Building_N100.output_aggregate_polygon.value,
         output_name=intersect_aggregated_and_original,
@@ -64,7 +64,7 @@ def grunnriss_to_point():
 
         arcpy.analysis.SpatialJoin(
             target_features=point_layer,
-            join_features=Building_N100.grunnriss_selection_n50.value,
+            join_features=Building_N100.selecting_grunnriss_for_generalization__large_enough_grunnriss__n100.value,
             out_feature_class=output_spatial_join,
             join_operation="JOIN_ONE_TO_ONE",
             match_option="INTERSECT",
@@ -75,8 +75,12 @@ def grunnriss_to_point():
     print("Spatial joins completed.")
 
     # 4: Preparing for Merge - collecting layers
-    small_grunnriss_points = Building_N100.small_grunnriss_points_n50.value
-    grunnriss_sykehus_kirke_points = Building_N100.kirke_sykehus_points_n50.value
+    small_grunnriss_points = (
+        Building_N100.selecting_grunnriss_for_generalization__points_created_from_small_grunnriss__n100.value
+    )
+    grunnriss_sykehus_kirke_points = (
+        Building_N100.selecting_grunnriss_for_generalization__kirke_points_created_from_grunnriss__n100.value
+    )
     points_from_aggregation = feature_to_point
 
     # List of all point layers to be merged

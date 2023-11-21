@@ -24,7 +24,7 @@ def main():
     - Grunnriss selection for generalization and transforming church and hospital grunnriss to points.
     """
     preparation_begrensningskurve()
-    preperation_vegsti()
+    preperation_veg_sti()
     adding_matrikkel_as_points()
     selecting_grunnriss_for_generalization()
 
@@ -75,7 +75,7 @@ def preparation_begrensningskurve():
     )
 
 
-def preperation_vegsti():
+def preperation_veg_sti():
     """
     Unsplit the lines in the specified feature class based on the given fields, to speed up future processing speed
     when using this as a barrier.
@@ -85,10 +85,9 @@ def preperation_vegsti():
         output_feature_class (str): The name of the output feature class to be created.
         fields (List[str]): The list of fields to use for unsplitting the lines.
     """
-    unsplit_veg_sti_n100 = Building_N100.unsplit_veg_sti_n100.value
     arcpy.UnsplitLine_management(
         in_features=input_n100.VegSti,
-        out_feature_class=unsplit_veg_sti_n100,
+        out_feature_class=Building_N100.preperation_veg_sti__unsplit_veg_sti__n100.value,
         dissolve_field=["subtypekode", "motorvegtype", "UTTEGNING"],
     )
 
@@ -108,72 +107,61 @@ def adding_matrikkel_as_points():
     # Defining sql expression to select urban areas
     urban_areas_sql_expr = "OBJTYPE = 'Tettbebyggelse' Or OBJTYPE = 'Industriområde' Or OBJTYPE = 'BymessigBebyggelse'"
 
-    # Defining output names
-    urban_selection_n100 = "urban_selection_n100"
-
     # Selecting urban areas from n100 using sql expression
     custom_arcpy.select_attribute_and_make_feature_layer(
         input_layer=input_n100.ArealdekkeFlate,
         expression=urban_areas_sql_expr,
-        output_name=urban_selection_n100,
+        output_name=Building_N100.adding_matrikkel_as_points__urban_area_selection_n100__n100.value,
     )
-
-    # Defining output names
-    urban_selection_n50 = "urban_selection_n50"
 
     # Selecting urban areas from n50 using sql expression
     custom_arcpy.select_attribute_and_make_feature_layer(
         input_layer=input_n50.ArealdekkeFlate,
         expression=urban_areas_sql_expr,
-        output_name=urban_selection_n50,
+        output_name=Building_N100.adding_matrikkel_as_points__urban_area_selection_n50__n100.value,
     )
-
-    # Defining output names
-    urban_selection_n100_buffer = "urban_selection_n100_buffer"
 
     # Creating a buffer of the urban selection of n100 to take into account symbology
     arcpy.PairwiseBuffer_analysis(
-        in_features=urban_selection_n100,
-        out_feature_class=urban_selection_n100_buffer,
+        in_features=Building_N100.adding_matrikkel_as_points__urban_area_selection_n100__n100.value,
+        out_feature_class=Building_N100.adding_matrikkel_as_points__urban_area_selection_n100_buffer__n100.value,
         buffer_distance_or_field="50 Meters",
         dissolve_option="NONE",
         dissolve_field=None,
         method="PLANAR",
     )
 
-    # Defining output names
-    no_longer_urban_n100 = "no_longer_urban_n100"
-
     # Removing areas from n50 urban areas from the buffer of n100 urban areas resulting in areas in n100 which no longer are urban
     arcpy.PairwiseErase_analysis(
-        in_features=urban_selection_n50,
-        erase_features=urban_selection_n100_buffer,
-        out_feature_class=no_longer_urban_n100,
+        in_features=Building_N100.adding_matrikkel_as_points__urban_area_selection_n50__n100.value,
+        erase_features=Building_N100.adding_matrikkel_as_points__urban_area_selection_n100_buffer__n100.value,
+        out_feature_class=Building_N100.adding_matrikkel_as_points__no_longer_urban_areas__n100.value,
     )
-
-    # Defining output names
-    matrikkel_bygningspunkt = Building_N100.matrikkel_bygningspunkt.value
 
     # Selecting matrikkel bygningspunkter based on this new urban selection layer
     custom_arcpy.select_location_and_make_permanent_feature(
         input_layer=input_other.matrikkel_bygningspunkt,
         overlap_type=custom_arcpy.OverlapType.INTERSECT,
-        select_features=no_longer_urban_n100,
-        output_name=matrikkel_bygningspunkt,
+        select_features=Building_N100.adding_matrikkel_as_points__no_longer_urban_areas__n100.value,
+        output_name=Building_N100.adding_matrikkel_as_points__matrikkel_bygningspunkt__n100.value,
     )
 
-    # Deleting temporary files no longer needed
-    arcpy.Delete_management(urban_selection_n100_buffer)
-    arcpy.Delete_management(no_longer_urban_n100)
+    # # Deleting temporary files no longer needed
+    # arcpy.Delete_management(
+    #     Building_N100.adding_matrikkel_as_points__urban_area_selection_n100_buffer__n100.value
+    # )
+    # arcpy.Delete_management(
+    #     Building_N100.adding_matrikkel_as_points__no_longer_urban_areas__n100.value
+    # )
 
     # Adding transferring the NBR value to the matrikkel_bygningspunkt
     arcpy.AddField_management(
-        in_table=matrikkel_bygningspunkt,
+        in_table=Building_N100.adding_matrikkel_as_points__matrikkel_bygningspunkt__n100.value,
         field_name="BYGGTYP_NBR",
         field_type="LONG",
     )
     arcpy.CalculateField_management(
-        in_table=matrikkel_bygningspunkt,
+        in_table=Building_N100.adding_matrikkel_as_points__matrikkel_bygningspunkt__n100.value,
         field="BYGGTYP_NBR",
         expression="!bygningstype!",
     )
@@ -215,68 +203,51 @@ def selecting_grunnriss_for_generalization():
     sql_nrb_code_sykehus = "BYGGTYP_NBR IN (970, 719)"
     sql_nbr_code_kirke = "BYGGTYP_NBR IN (671)"
 
-    # Defining output names
-    grunnriss_selection_not_church = "grunnriss_selection_not_church"
-
     # Selecting grunnriss which are not churches or hospitals using inverted selection
     custom_arcpy.select_attribute_and_make_permanent_feature(
         input_layer=input_n50.Grunnriss,
         expression=sql_nbr_code_kirke,
-        output_name=grunnriss_selection_not_church,
+        output_name=Building_N100.selecting_grunnriss_for_generalization__selected_grunnriss_not_church__n100.value,
         selection_type=custom_arcpy.SelectionType.NEW_SELECTION,
         inverted=True,
     )
 
-    # Output feature name definition
-    grunnriss_selection_n50 = Building_N100.grunnriss_selection_n50.value
-
+    # Selecting grunnriss which are large enough
     grunnriss_minimum_size = 1500
     sql_expression_too_small_grunnriss = f"Shape_Area < {grunnriss_minimum_size}"
     sql_expression_correct_size_grunnriss = f"Shape_Area >= {grunnriss_minimum_size}"
 
     custom_arcpy.select_attribute_and_make_permanent_feature(
-        input_layer=grunnriss_selection_not_church,
+        input_layer=Building_N100.selecting_grunnriss_for_generalization__selected_grunnriss_not_church__n100.value,
         expression=sql_expression_correct_size_grunnriss,
-        output_name=grunnriss_selection_n50,
+        output_name=Building_N100.selecting_grunnriss_for_generalization__large_enough_grunnriss__n100.value,
     )
 
-    # Define output feature name
-    too_small_grunnriss = "too_small_grunnriss"
-
     custom_arcpy.select_attribute_and_make_feature_layer(
-        input_layer=grunnriss_selection_not_church,
+        input_layer=Building_N100.selecting_grunnriss_for_generalization__selected_grunnriss_not_church__n100.value,
         expression=sql_expression_too_small_grunnriss,
-        output_name=too_small_grunnriss,
+        output_name=Building_N100.selecting_grunnriss_for_generalization__too_small_grunnriss__n100.value,
         selection_type=custom_arcpy.SelectionType.NEW_SELECTION,
     )
 
-    # Defining output feature name
-    small_grunnriss_points_n50 = Building_N100.small_grunnriss_points_n50.value
-
-    # Transforming selected churches and hospitals into points
+    # Transforming small grunnriss features into points
     arcpy.FeatureToPoint_management(
-        in_features=too_small_grunnriss,
-        out_feature_class=small_grunnriss_points_n50,
+        in_features=Building_N100.selecting_grunnriss_for_generalization__too_small_grunnriss__n100.value,
+        out_feature_class=Building_N100.selecting_grunnriss_for_generalization__points_created_from_small_grunnriss__n100.value,
         point_location="CENTROID",
     )
-
-    # Output feeature name definition
-    kirke_sykehus_grunnriss_n50 = "kirke_sykehus_grunnriss_n50"
 
     # Selecting grunnriss features not inverted based on sql expression above to select churches and hospitals
     custom_arcpy.select_attribute_and_make_feature_layer(
         input_layer=input_n50.Grunnriss,
-        expression=sql_nrb_code_sykehus,
-        output_name=kirke_sykehus_grunnriss_n50,
+        expression=sql_nbr_code_kirke,
+        output_name=Building_N100.selecting_grunnriss_for_generalization__grunnriss_kirke__n100.value,
     )
-
-    # Defining output feature name
-    kirke_sykehus_points_n50 = Building_N100.kirke_sykehus_points_n50.value
 
     # Transforming selected churches and hospitals into points
     arcpy.FeatureToPoint_management(
-        in_features=kirke_sykehus_grunnriss_n50,
-        out_feature_class=kirke_sykehus_points_n50,
+        in_features=Building_N100.selecting_grunnriss_for_generalization__grunnriss_kirke__n100.value,
+        out_feature_class=Building_N100.selecting_grunnriss_for_generalization__kirke_points_created_from_grunnriss__n100.value,
         point_location="CENTROID",
     )
 
@@ -291,7 +262,7 @@ def removing_overlapping_byggningspunkt_and_grunnriss_matrikkel():
     )
 
     custom_arcpy.select_location_and_make_permanent_feature(
-        input_layer=Building_N100.matrikkel_bygningspunkt.value,
+        input_layer=Building_N100.adding_matrikkel_as_points__matrikkel_bygningspunkt__n100.value,
         overlap_type=custom_arcpy.OverlapType.WITHIN,
         select_features=input_n50.Grunnriss,
         output_name="NEEDS UPDATE",
@@ -300,4 +271,4 @@ def removing_overlapping_byggningspunkt_and_grunnriss_matrikkel():
 
 
 # removing_overlapping_byggningspunkt_and_grunnriss_matrikkel()
-preparation_begrensningskurve()
+main()

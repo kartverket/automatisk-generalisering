@@ -16,8 +16,10 @@ def generate_file_name(function_name, description, scale):
 
 
 # Function name definition:
-selecting_grunnriss_for_generalization = "selecting_grunnriss_for_generalization"
 preparation_begrensningskurve = "preparation_begrensningskurve"
+preperation_veg_sti = "preperation_veg_sti"
+adding_matrikkel_as_points = "adding_matrikkel_as_points"
+selecting_grunnriss_for_generalization = "selecting_grunnriss_for_generalization"
 
 
 class Building_N100(Enum):
@@ -34,12 +36,88 @@ class Building_N100(Enum):
             scale=scale,
         )
     )
-    unsplit_veg_sti_n100 = "unsplit_veg_sti_n100"
-    matrikkel_bygningspunkt = "matrikkel_bygningspunkt"
-    grunnriss_selection_n50 = "grunnriss_selection_n50"
-    kirke_sykehus_points_n50 = "kirke_sykehus_points_n50"
+
+    preperation_veg_sti__unsplit_veg_sti__n100 = generate_file_name(
+        function_name=preperation_veg_sti,
+        description="unsplit_veg_sti",
+        scale=scale,
+    )
+
+    adding_matrikkel_as_points__urban_area_selection_n100__n100 = generate_file_name(
+        function_name=adding_matrikkel_as_points,
+        description="urban_area_selection_n100",
+        scale=scale,
+    )
+
+    adding_matrikkel_as_points__urban_area_selection_n50__n100 = generate_file_name(
+        function_name=adding_matrikkel_as_points,
+        description="urban_area_selection_n50",
+        scale=scale,
+    )
+
+    adding_matrikkel_as_points__urban_area_selection_n100_buffer__n100 = (
+        generate_file_name(
+            function_name=adding_matrikkel_as_points,
+            description="urban_area_selection_n100_buffer",
+            scale=scale,
+        )
+    )
+
+    adding_matrikkel_as_points__no_longer_urban_areas__n100 = generate_file_name(
+        function_name=adding_matrikkel_as_points,
+        description="no_longer_urban_areas",
+        scale=scale,
+    )
+
+    adding_matrikkel_as_points__matrikkel_bygningspunkt__n100 = generate_file_name(
+        function_name=adding_matrikkel_as_points,
+        description="matrikkel_bygningspunkt",
+        scale=scale,
+    )
+
+    selecting_grunnriss_for_generalization__selected_grunnriss_not_church__n100 = (
+        generate_file_name(
+            function_name=selecting_grunnriss_for_generalization,
+            description="selected_grunnriss_not_church",
+            scale=scale,
+        )
+    )
+
+    selecting_grunnriss_for_generalization__large_enough_grunnriss__n100 = (
+        generate_file_name(
+            function_name=selecting_grunnriss_for_generalization,
+            description="large_enough_grunnriss",
+            scale=scale,
+        )
+    )
+
+    selecting_grunnriss_for_generalization__too_small_grunnriss__n100 = (
+        generate_file_name(
+            function_name=selecting_grunnriss_for_generalization,
+            description="too_small_grunnriss",
+            scale=scale,
+        )
+    )
+
+    selecting_grunnriss_for_generalization__points_created_from_small_grunnriss__n100 = generate_file_name(
+        function_name=selecting_grunnriss_for_generalization,
+        description="points_created_from_small_grunnriss",
+        scale=scale,
+    )
+
+    selecting_grunnriss_for_generalization__grunnriss_kirke__n100 = generate_file_name(
+        function_name=selecting_grunnriss_for_generalization,
+        description="grunnriss_kirke",
+        scale=scale,
+    )
+
+    selecting_grunnriss_for_generalization__kirke_points_created_from_grunnriss__n100 = generate_file_name(
+        function_name=selecting_grunnriss_for_generalization,
+        description="kirke_points_created_from_grunnriss",
+        scale=scale,
+    )
+
     bygningspunkt_pre_symbology = "bygningspunkt_pre_symbology"
-    small_grunnriss_points_n50 = "small_grunnriss_points_n50"
 
     # create_simplified_building_polygons
 

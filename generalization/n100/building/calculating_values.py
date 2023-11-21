@@ -39,7 +39,7 @@ def table_management():
 
     # Reclassify the sykehus from grunnriss to another NBR value
     arcpy.CalculateField_management(
-        in_table=Building_N100.matrikkel_bygningspunkt.value,
+        in_table=Building_N100.adding_matrikkel_as_points__matrikkel_bygningspunkt__n100.value,
         field="BYGGTYP_NBR",
         expression="hospital_nbr(!BYGGTYP_NBR!)",
         expression_type="PYTHON3",
@@ -48,7 +48,9 @@ def table_management():
 
     # Input layers:
     n50_bygningspunkt = input_n50.BygningsPunkt
-    matrikkel_bygningspunkt = Building_N100.matrikkel_bygningspunkt.value
+    matrikkel_bygningspunkt = (
+        Building_N100.adding_matrikkel_as_points__matrikkel_bygningspunkt__n100.value
+    )
     # Define the output name
     merged_bygningspunkt_matrikkel = "merged_bygningspunkt_matrikkel"
 

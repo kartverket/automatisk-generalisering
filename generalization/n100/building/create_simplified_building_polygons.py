@@ -106,13 +106,15 @@ def simplify_building_polygon():
     output_aggregate_polygon = Building_N100.output_aggregate_polygon.value
 
     arcpy.cartography.AggregatePolygons(
-        in_features=Building_N100.grunnriss_selection_n50.value,
+        in_features=Building_N100.selecting_grunnriss_for_generalization__large_enough_grunnriss__n100.value,
         out_feature_class=output_aggregate_polygon,
         aggregation_distance="15 Meters",
         minimum_area="3200 SquareMeters",
         minimum_hole_size="10000 SquareMeters",
         orthogonality_option="ORTHOGONAL",
-        barrier_features=[Building_N100.unsplit_veg_sti_n100.value],
+        barrier_features=[
+            Building_N100.preperation_veg_sti__unsplit_veg_sti__n100.value
+        ],
         out_table="grunnriss_n50_aggregated_tbl",
         aggregate_field="BYGGTYP_NBR",
     )
