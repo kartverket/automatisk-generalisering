@@ -30,30 +30,24 @@ def grunnriss_to_point():
 
     """
 
-    # Find aggregated buildings that do not intersect with the original grunnriss feature class
-    intersect_aggregated_and_original = "intersect_aggregated_and_original"
-
     custom_arcpy.select_location_and_make_feature_layer(
         input_layer=Building_N100.selecting_grunnriss_for_generalization__large_enough_grunnriss__n100.value,
         overlap_type=custom_arcpy.OverlapType.INTERSECT,
-        select_features=Building_N100.output_aggregate_polygon.value,
-        output_name=intersect_aggregated_and_original,
+        select_features=Building_N100.grunnriss_to_point__aggregated_polygon__n100.value,
+        output_name=Building_N100.grunnriss_to_point__intersect_aggregated_and_original__n100.value,
         inverted=True,
     )
 
-    # Make these features to points
-    feature_to_point = "feature_to_point"
-
     arcpy.management.FeatureToPoint(
-        in_features=intersect_aggregated_and_original,
-        out_feature_class=feature_to_point,
+        in_features=Building_N100.grunnriss_to_point__intersect_aggregated_and_original__n100.value,
+        out_feature_class=Building_N100.grunnriss_to_point__grunnriss_feature_to_point__n100.value,
     )
 
     # Collecting all collapsed points (from create_simplified_building_polygons)
     simplified_building_points = [
-        Building_N100.output_collapsed_points_simplified_building.value,
-        Building_N100.output_collapsed_points_simplified_polygon.value,
-        Building_N100.output_collapsed_points_simplified_building2.value,
+        Building_N100.grunnriss_to_point__simplified_building_points_simplified_building_1__n100.value,
+        Building_N100.grunnriss_to_point__collapsed_points_simplified_polygon__n100.value,
+        Building_N100.grunnriss_to_point__simplified_building_points_simplified_building_2__n100.value,
     ]
 
     # List that will include all spatially joined points
@@ -81,30 +75,29 @@ def grunnriss_to_point():
     grunnriss_sykehus_kirke_points = (
         Building_N100.selecting_grunnriss_for_generalization__kirke_points_created_from_grunnriss__n100.value
     )
-    points_from_aggregation = feature_to_point
 
     # List of all point layers to be merged
     all_point_layers = [
         small_grunnriss_points,
         grunnriss_sykehus_kirke_points,
-        points_from_aggregation,
+        Building_N100.grunnriss_to_point__grunnriss_feature_to_point__n100.value,
     ] + output_spatial_joins
 
     print("Preparing for merge...")
 
-    output_merge = "merged_points"
-
     # 5: Merging points together into one feature class - total 6 point layers
-    arcpy.management.Merge(inputs=all_point_layers, output=output_merge)
+    arcpy.management.Merge(
+        inputs=all_point_layers,
+        output=Building_N100.grunnriss_to_point__merged_points_created_from_grunnriss__n100.value,
+    )
 
     print("Merge completed.")
 
-    # Copying the layer
-    merged_points_final = Building_N100.merged_points_final.value
     print("Copying the merged layer...")
 
     arcpy.management.CopyFeatures(
-        in_features=output_merge, out_feature_class=merged_points_final
+        in_features=Building_N100.grunnriss_to_point__merged_points_created_from_grunnriss__n100.value,
+        out_feature_class=Building_N100.merged_points_final.value,
     )
 
     print("Copy completed.")

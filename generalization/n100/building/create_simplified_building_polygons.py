@@ -103,7 +103,9 @@ def simplify_building_polygon():
     # Aggregating building polygons
 
     print("Aggregating building polygons...")
-    output_aggregate_polygon = Building_N100.output_aggregate_polygon.value
+    output_aggregate_polygon = (
+        Building_N100.grunnriss_to_point__aggregated_polygon__n100.value
+    )
 
     arcpy.cartography.AggregatePolygons(
         in_features=Building_N100.selecting_grunnriss_for_generalization__large_enough_grunnriss__n100.value,
@@ -137,7 +139,7 @@ def simplify_building_polygon():
     # Creating points to permanently store auto generated points from simplified building polygons to a specified path
     auto_generated_points = f"{output_simplify_building}_Pnt"
     output_collapsed_points_simplified_building = (
-        Building_N100.output_collapsed_points_simplified_building.value
+        Building_N100.grunnriss_to_point__simplified_building_points_simplified_building_1__n100.value
     )
     arcpy.management.CopyFeatures(
         auto_generated_points, output_collapsed_points_simplified_building
@@ -162,7 +164,7 @@ def simplify_building_polygon():
     # Creating points to permanently store auto generated points from simplified polygon to a specified path
     auto_generated_points2 = f"{output_simplify_polygon}_Pnt"
     output_collapsed_points_simplified_polygon = (
-        Building_N100.output_collapsed_points_simplified_polygon.value
+        Building_N100.grunnriss_to_point__collapsed_points_simplified_polygon__n100.value
     )
     arcpy.management.CopyFeatures(
         auto_generated_points2, output_collapsed_points_simplified_polygon
@@ -186,7 +188,7 @@ def simplify_building_polygon():
     # Creating points to permanently store auto generated points from simplified polygon to a specified path
     auto_generated_points3 = f"{output_simplify_building2}_Pnt"
     output_collapsed_points_simplified_building2 = (
-        Building_N100.output_collapsed_points_simplified_building2.value
+        Building_N100.grunnriss_to_point__simplified_building_points_simplified_building_2__n100.value
     )
     arcpy.management.CopyFeatures(
         auto_generated_points3, output_collapsed_points_simplified_building2

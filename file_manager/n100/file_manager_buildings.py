@@ -21,6 +21,7 @@ preperation_veg_sti = "preperation_veg_sti"
 adding_matrikkel_as_points = "adding_matrikkel_as_points"
 selecting_grunnriss_for_generalization = "selecting_grunnriss_for_generalization"
 table_management = "table_management"
+grunnriss_to_point = "grunnriss_to_point"
 
 
 class Building_N100(Enum):
@@ -139,17 +140,49 @@ class Building_N100(Enum):
     )
     # create_simplified_building_polygons
 
-    output_aggregate_polygon = "aggregated_polygon"
+    grunnriss_to_point__intersect_aggregated_and_original__n100 = generate_file_name(
+        function_name=grunnriss_to_point,
+        description="intersect_aggregated_and_original",
+        scale=scale,
+    )
 
-    output_collapsed_points_simplified_building = (
-        "simplified_building_points_simplified_building"
+    grunnriss_to_point__aggregated_polygon__n100 = generate_file_name(
+        function_name=grunnriss_to_point,
+        description="aggregated_polygon",
+        scale=scale,
     )
-    output_collapsed_points_simplified_building2 = (
-        "simplified_building_points_simplified_building2"
+    grunnriss_to_point__grunnriss_feature_to_point__n100 = generate_file_name(
+        function_name=grunnriss_to_point,
+        description="grunnriss_feature_to_point",
+        scale=scale,
     )
-    output_collapsed_points_simplified_polygon = (
-        "simplified_building_points_simplified_polygon"
+
+    grunnriss_to_point__simplified_building_points_simplified_building_1__n100 = (
+        generate_file_name(
+            function_name=grunnriss_to_point,
+            description="simplified_building_points_simplified_building_1",
+            scale=scale,
+        )
     )
+    grunnriss_to_point__simplified_building_points_simplified_building_2__n100 = (
+        generate_file_name(
+            function_name=grunnriss_to_point,
+            description="simplified_building_points_simplified_building_2",
+            scale=scale,
+        )
+    )
+    grunnriss_to_point__collapsed_points_simplified_polygon__n100 = generate_file_name(
+        function_name=grunnriss_to_point,
+        description="collapsed_points_simplified_polygon",
+        scale=scale,
+    )
+
+    grunnriss_to_point__merged_points_created_from_grunnriss__n100 = generate_file_name(
+        function_name=grunnriss_to_point,
+        description="merged_points_created_from_grunnriss",
+        scale=scale,
+    )
+
     simplified_grunnriss_n100 = "simplified_grunnriss_n100"
 
     # create_points_from_polygon
