@@ -93,15 +93,6 @@ def grunnriss_to_point():
 
     print("Merge completed.")
 
-    print("Copying the merged layer...")
-
-    arcpy.management.CopyFeatures(
-        in_features=Building_N100.grunnriss_to_point__merged_points_created_from_grunnriss__n100.value,
-        out_feature_class=Building_N100.merged_points_final.value,
-    )
-
-    print("Copy completed.")
-
 
 def find_point_clusters():
     # Input layer
@@ -459,10 +450,11 @@ def find_point_clusters():
 
     # Merge the final hospital and church layers
 
-    reduced_hospital_church_points = Building_N100.reduced_hospital_church_points.value
-
-    arcpy.management.Merge(inputs=merge_list, output=reduced_hospital_church_points)
+    arcpy.management.Merge(
+        inputs=merge_list,
+        output=Building_N100.find_point_clusters__reduced_hospital_church_points__n100.value,
+    )
 
     print(
-        f"Merge between potentially reduced hospital and churches, layer name {reduced_hospital_church_points} finished."
+        f"Merge between potentially reduced hospital and churches, layer name {Building_N100.find_point_clusters__reduced_hospital_church_points__n100.value} finished."
     )

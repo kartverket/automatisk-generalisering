@@ -43,7 +43,7 @@ def creating_append_layers():
     arcpy.CreateFeatureclass_management(
         out_path=config.default_project_workspace,
         out_name=grunriss_append,
-        template=Building_N100.simplified_grunnriss_n100.value,
+        template=Building_N100.simplify_building_polygons__simplified_grunnriss__n100.value,
     )
 
 
@@ -51,7 +51,7 @@ def pre_calculation():
     fields_to_calculate_first = [["hierarchy", "1"], ["invisibility", "0"]]
 
     arcpy.management.CalculateFields(
-        in_table=Building_N100.simplified_grunnriss_n100.value,
+        in_table=Building_N100.simplify_building_polygons__simplified_grunnriss__n100.value,
         expression_type="PYTHON3",
         fields=fields_to_calculate_first,
     )
@@ -100,7 +100,7 @@ def iterate_through_selections():
         # Define selections for this unique_id
         selections = [
             {
-                "input_layer": Building_N100.simplified_grunnriss_n100.value,
+                "input_layer": Building_N100.simplify_building_polygons__simplified_grunnriss__n100.value,
                 "output_name": selection_grunnriss,
             },
             {
@@ -609,7 +609,7 @@ def resolve_building_conflicts():
     # List of dictionaries containing parameters for each selection
     selections = [
         {
-            "input_layer": Building_N100.simplified_grunnriss_n100.value,
+            "input_layer": Building_N100.simplify_building_polygons__simplified_grunnriss__n100.value,
             "output_name": selection_grunnriss,
         },
         {
