@@ -15,14 +15,17 @@ def generate_file_name(function_name, description, scale):
     return rf"{relative_path}\{function_name}__{description}__{scale}"
 
 
-# Function name definition:
-preparation_begrensningskurve = "preparation_begrensningskurve"
-preperation_veg_sti = "preperation_veg_sti"
-adding_matrikkel_as_points = "adding_matrikkel_as_points"
-selecting_grunnriss_for_generalization = "selecting_grunnriss_for_generalization"
-
-
 class Building_N100(Enum):
+    #################### building_data_preparation ####################
+
+    # Functions:
+    preparation_begrensningskurve = "preparation_begrensningskurve"
+    preperation_veg_sti = "preperation_veg_sti"
+    adding_matrikkel_as_points = "adding_matrikkel_as_points"
+    selecting_grunnriss_for_generalization = "selecting_grunnriss_for_generalization"
+
+    # preparation_begrensningskurve
+
     preparation_begrensningskurve__selected_waterfeatures_from_begrensningskurve__n100 = generate_file_name(
         function_name=preparation_begrensningskurve,
         description="selected_waterfeatures_from_begrensningskurve",
@@ -37,11 +40,15 @@ class Building_N100(Enum):
         )
     )
 
+    # preparation_veg_sti
+
     preperation_veg_sti__unsplit_veg_sti__n100 = generate_file_name(
         function_name=preperation_veg_sti,
         description="unsplit_veg_sti",
         scale=scale,
     )
+
+    # adding_matrikkel_as_points
 
     adding_matrikkel_as_points__urban_area_selection_n100__n100 = generate_file_name(
         function_name=adding_matrikkel_as_points,
@@ -74,6 +81,8 @@ class Building_N100(Enum):
         description="matrikkel_bygningspunkt",
         scale=scale,
     )
+
+    # selecting_grunnriss_for_generalization
 
     selecting_grunnriss_for_generalization__selected_grunnriss_not_church__n100 = (
         generate_file_name(
@@ -117,9 +126,11 @@ class Building_N100(Enum):
         scale=scale,
     )
 
-    bygningspunkt_pre_symbology = "bygningspunkt_pre_symbology"
+    bygningspunkt_pre_symbology = (
+        "bygningspunkt_pre_symbology"  # Missing doing formatting on this one?
+    )
 
-    # create_simplified_building_polygons
+    #################### create_simplified_building_polygons ####################
 
     output_aggregate_polygon = "aggregated_polygon"
 
@@ -134,7 +145,7 @@ class Building_N100(Enum):
     )
     simplified_grunnriss_n100 = "simplified_grunnriss_n100"
 
-    # create_points_from_polygon
+    #################### create_points_from_polygon ####################
 
     merged_points_final = "merged_points_final"
 
