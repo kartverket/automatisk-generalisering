@@ -45,29 +45,27 @@ def table_management():
         expression_type="PYTHON3",
         code_block=code_block_hospital,
     )
-
-    # Input layers:
-    n50_bygningspunkt = input_n50.BygningsPunkt
-    matrikkel_bygningspunkt = (
-        Building_N100.adding_matrikkel_as_points__matrikkel_bygningspunkt__n100.value
+    print(
+        "#######################NEEDS TO IMPLEMENT LATEST LOGIC FROM DATA PREPERATION! #######################"
     )
-    # Define the output name
-    merged_bygningspunkt_matrikkel = "merged_bygningspunkt_matrikkel"
 
-    # Merge the bygningspunkt and matrikkel
+    # Merge the n50 bygningspunkt and matrikkel
     arcpy.management.Merge(
-        inputs=[n50_bygningspunkt, matrikkel_bygningspunkt],
-        output=merged_bygningspunkt_matrikkel,
+        inputs=[
+            input_n50.BygningsPunkt,
+            Building_N100.adding_matrikkel_as_points__matrikkel_bygningspunkt__n100.value,
+        ],
+        output=Building_N100.table_management__merged_bygningspunkt_n50_matrikkel__n100.value,
     )
 
     # Adding a field to indicate that the merged bygningspunkt and matrikkel does not come from grunnriss
     arcpy.AddField_management(
-        in_table=merged_bygningspunkt_matrikkel,
+        in_table=Building_N100.table_management__merged_bygningspunkt_n50_matrikkel__n100.value,
         field_name="grunnriss",
         field_type="LONG",
     )
     arcpy.CalculateField_management(
-        in_table=merged_bygningspunkt_matrikkel,
+        in_table=Building_N100.table_management__merged_bygningspunkt_n50_matrikkel__n100.value,
         field="grunnriss",
         expression="0",
     )
@@ -94,18 +92,18 @@ def table_management():
         code_block=code_block_hospital,
     )
 
-    # Define the output name
-    merged_points = "merged_points"
-
-    # Merge the bygningspunkt and matrikkel
+    # Merge the merged bygningspunkt from n50 and matrikkel with points created from grunnriss
     arcpy.management.Merge(
-        inputs=[merged_bygningspunkt_matrikkel, points_created_from_grunnriss],
-        output=merged_points,
+        inputs=[
+            Building_N100.table_management__merged_bygningspunkt_n50_matrikkel__n100.value,
+            points_created_from_grunnriss,
+        ],
+        output=Building_N100.table_management__merged_bygningspunkt_matrikkel_collapsed_grunnriss_points_matrikkel__n100.value,
     )
 
     # Adding a symbology value field based on NBR values
     arcpy.AddField_management(
-        in_table=merged_points,
+        in_table=Building_N100.table_management__merged_bygningspunkt_matrikkel_collapsed_grunnriss_points_matrikkel__n100.value,
         field_name="symbol_val",
         field_type="LONG",
     )
@@ -135,7 +133,7 @@ def table_management():
     )
 
     arcpy.CalculateField_management(
-        in_table=merged_points,
+        in_table=Building_N100.table_management__merged_bygningspunkt_matrikkel_collapsed_grunnriss_points_matrikkel__n100.value,
         field="symbol_val",
         expression="determineVal(!BYGGTYP_NBR!)",
         expression_type="PYTHON3",
@@ -151,21 +149,18 @@ def table_management():
 
     # Selecting undefined NBR values and make a permanent feature of them
     custom_arcpy.select_attribute_and_make_permanent_feature(
-        input_layer=merged_points,
+        input_layer=Building_N100.table_management__merged_bygningspunkt_matrikkel_collapsed_grunnriss_points_matrikkel__n100.value,
         expression=expression_no_nbr,
         output_name=undefined_nbr_values,
         selection_type=custom_arcpy.SelectionType.NEW_SELECTION,
         inverted=False,
     )
 
-    # Define output name
-    bygningspunkt_pre_symbology = Building_N100.bygningspunkt_pre_symbology.value
-
     # Selecting defined NBR values
     custom_arcpy.select_attribute_and_make_permanent_feature(
-        input_layer=merged_points,
+        input_layer=Building_N100.table_management__merged_bygningspunkt_matrikkel_collapsed_grunnriss_points_matrikkel__n100.value,
         expression=expression_no_nbr,
-        output_name=bygningspunkt_pre_symbology,
+        output_name=Building_N100.table_management__bygningspunkt_pre_resolve_building_conflicts__n100.value,
         selection_type=custom_arcpy.SelectionType.NEW_SELECTION,
         inverted=True,
     )
@@ -177,13 +172,13 @@ def table_management():
 
     # Add fields
     arcpy.management.AddFields(
-        in_table=bygningspunkt_pre_symbology,
+        in_table=Building_N100.table_management__bygningspunkt_pre_resolve_building_conflicts__n100.value,
         field_description=fields_to_add,
     )
 
     # Calculate fields
     arcpy.management.CalculateFields(
-        in_table=bygningspunkt_pre_symbology,
+        in_table=Building_N100.table_management__bygningspunkt_pre_resolve_building_conflicts__n100.value,
         expression_type="PYTHON3",
         fields=fields_to_calculate,
     )
@@ -198,7 +193,7 @@ def table_management():
 
     # Then run CalculateField with the new code block
     arcpy.management.CalculateField(
-        in_table=bygningspunkt_pre_symbology,
+        in_table=Building_N100.table_management__bygningspunkt_pre_resolve_building_conflicts__n100.value,
         field="hierarchy",
         expression="determineHierarchy(!symbol_val!)",
         expression_type="PYTHON3",
