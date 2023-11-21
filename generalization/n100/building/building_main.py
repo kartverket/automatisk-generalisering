@@ -5,7 +5,8 @@ from env_setup import environment_setup
 from input_data import input_n50
 from input_data import input_n100
 from generalization.n100.building import building_data_preparation
-from file_manager.n100.file_manager_buildings import TemporaryFiles
+from file_manager.n100.file_manager_buildings import Building_N100
+from env_setup import setup_directory_structure
 
 # Importing general packages
 import arcpy
@@ -19,6 +20,7 @@ from generalization.n100.building import resolve_building_conflicts
 
 # Importing environment
 environment_setup.general_setup()
+setup_directory_structure.main()
 
 
 def main():
