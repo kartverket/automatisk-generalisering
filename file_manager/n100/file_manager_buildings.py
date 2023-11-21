@@ -48,6 +48,8 @@ class Building_N100(Enum):
         scale=scale,
     )
 
+    # adding_matrikkel_as_points
+
     adding_matrikkel_as_points__urban_area_selection_n100__n100 = generate_file_name(
         function_name=adding_matrikkel_as_points,
         description="urban_area_selection_n100",
@@ -78,6 +80,8 @@ class Building_N100(Enum):
         description="matrikkel_bygningspunkt",
         scale=scale,
     )
+
+    # selecting_grunnriss_for_generalization
 
     selecting_grunnriss_for_generalization__selected_grunnriss_not_church__n100 = generate_file_name(
             function_name=selecting_grunnriss_for_generalization,
