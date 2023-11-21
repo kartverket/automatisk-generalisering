@@ -8,7 +8,7 @@ from input_data import input_n50
 from input_data import input_n100
 
 # Importing temporary files
-from file_manager.n100.file_manager_buildings import TemporaryFiles
+from file_manager.n100.file_manager_buildings import Building_N100
 
 # Importing environment
 environment_setup.general_setup()
@@ -34,9 +34,9 @@ def grunnriss_to_point():
     intersect_aggregated_and_original = "intersect_aggregated_and_original"
 
     custom_arcpy.select_location_and_make_feature_layer(
-        input_layer=TemporaryFiles.grunnriss_selection_n50.value,
+        input_layer=Building_N100.selecting_grunnriss_for_generalization__large_enough_grunnriss__n100.value,
         overlap_type=custom_arcpy.OverlapType.INTERSECT,
-        select_features=TemporaryFiles.output_aggregate_polygon.value,
+        select_features=Building_N100.output_aggregate_polygon.value,
         output_name=intersect_aggregated_and_original,
         inverted=True,
     )
@@ -51,9 +51,9 @@ def grunnriss_to_point():
 
     # Collecting all collapsed points (from create_simplified_building_polygons)
     simplified_building_points = [
-        TemporaryFiles.output_collapsed_points_simplified_building.value,
-        TemporaryFiles.output_collapsed_points_simplified_polygon.value,
-        TemporaryFiles.output_collapsed_points_simplified_building2.value,
+        Building_N100.output_collapsed_points_simplified_building.value,
+        Building_N100.output_collapsed_points_simplified_polygon.value,
+        Building_N100.output_collapsed_points_simplified_building2.value,
     ]
 
     # List that will include all spatially joined points
@@ -64,7 +64,7 @@ def grunnriss_to_point():
 
         arcpy.analysis.SpatialJoin(
             target_features=point_layer,
-            join_features=TemporaryFiles.grunnriss_selection_n50.value,
+            join_features=Building_N100.selecting_grunnriss_for_generalization__large_enough_grunnriss__n100.value,
             out_feature_class=output_spatial_join,
             join_operation="JOIN_ONE_TO_ONE",
             match_option="INTERSECT",
@@ -75,8 +75,12 @@ def grunnriss_to_point():
     print("Spatial joins completed.")
 
     # 4: Preparing for Merge - collecting layers
-    small_grunnriss_points = TemporaryFiles.small_grunnriss_points_n50.value
-    grunnriss_sykehus_kirke_points = TemporaryFiles.kirke_sykehus_points_n50.value
+    small_grunnriss_points = (
+        Building_N100.selecting_grunnriss_for_generalization__points_created_from_small_grunnriss__n100.value
+    )
+    grunnriss_sykehus_kirke_points = (
+        Building_N100.selecting_grunnriss_for_generalization__kirke_points_created_from_grunnriss__n100.value
+    )
     points_from_aggregation = feature_to_point
 
     # List of all point layers to be merged
@@ -96,7 +100,7 @@ def grunnriss_to_point():
     print("Merge completed.")
 
     # Copying the layer
-    merged_points_final = TemporaryFiles.merged_points_final.value
+    merged_points_final = Building_N100.merged_points_final.value
     print("Copying the merged layer...")
 
     arcpy.management.CopyFeatures(
@@ -109,7 +113,7 @@ def grunnriss_to_point():
 def find_point_clusters():
     # Input layer
 
-    bygningspunkt_pre_symbology = TemporaryFiles.bygningspunkt_pre_symbology.value
+    bygningspunkt_pre_symbology = Building_N100.bygningspunkt_pre_symbology.value
 
     # Working layers
 
@@ -460,7 +464,7 @@ def find_point_clusters():
 
     # Merge the final hospital and church layers
 
-    reduced_hospital_church_points = TemporaryFiles.reduced_hospital_church_points.value
+    reduced_hospital_church_points = Building_N100.reduced_hospital_church_points.value
 
     arcpy.management.Merge(inputs=merge_list, output=reduced_hospital_church_points)
 
