@@ -271,4 +271,4 @@ def removing_overlapping_byggningspunkt_and_grunnriss_matrikkel():
 
 
 # removing_overlapping_byggningspunkt_and_grunnriss_matrikkel()
-main()
+# main()

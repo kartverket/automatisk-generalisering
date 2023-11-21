@@ -20,6 +20,7 @@ preparation_begrensningskurve = "preparation_begrensningskurve"
 preperation_veg_sti = "preperation_veg_sti"
 adding_matrikkel_as_points = "adding_matrikkel_as_points"
 selecting_grunnriss_for_generalization = "selecting_grunnriss_for_generalization"
+table_management = "table_management"
 
 
 class Building_N100(Enum):
@@ -117,8 +118,25 @@ class Building_N100(Enum):
         scale=scale,
     )
 
-    bygningspunkt_pre_symbology = "bygningspunkt_pre_symbology"
+    table_management__merged_bygningspunkt_n50_matrikkel__n100 = generate_file_name(
+        function_name=table_management,
+        description="merged_bygningspunkt_n50_matrikkel",
+        scale=scale,
+    )
 
+    table_management__merged_bygningspunkt_matrikkel_collapsed_grunnriss_points_matrikkel__n100 = generate_file_name(
+        function_name=table_management,
+        description="merged_bygningspunkt_matrikkel_collapsed_grunnriss_points",
+        scale=scale,
+    )
+
+    table_management__bygningspunkt_pre_resolve_building_conflicts__n100 = (
+        generate_file_name(
+            function_name=table_management,
+            description="bygningspunkt_pre_resolve_building_conflicts",
+            scale=scale,
+        )
+    )
     # create_simplified_building_polygons
 
     output_aggregate_polygon = "aggregated_polygon"

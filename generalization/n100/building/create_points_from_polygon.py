@@ -113,7 +113,9 @@ def grunnriss_to_point():
 def find_point_clusters():
     # Input layer
 
-    bygningspunkt_pre_symbology = Building_N100.bygningspunkt_pre_symbology.value
+    bygningspunkt_pre_symbology = (
+        Building_N100.table_management__bygningspunkt_pre_resolve_building_conflicts__n100.value
+    )
 
     # Working layers
 
