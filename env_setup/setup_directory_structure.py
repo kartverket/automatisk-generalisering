@@ -45,7 +45,7 @@ scale_n500 = "n500"
 
 object_admin = "admin"
 object_arealdekke_flate = "arealdekke_flate"
-object_byggning = "byggning"
+object_bygning = "byggning"
 object_elv_bekk = "elv_bekk"
 object_veg_sti = "veg_sti"
 
@@ -54,7 +54,7 @@ sub_directories = [scale_n50, scale_n100, scale_n250, scale_n500]
 gdb_names = [
     object_admin,
     object_arealdekke_flate,
-    object_byggning,
+    object_bygning,
     object_elv_bekk,
     object_veg_sti,
 ]

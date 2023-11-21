@@ -3,7 +3,7 @@ import config
 from env_setup import setup_directory_structure
 
 scale = setup_directory_structure.scale_n100
-object = setup_directory_structure.object_byggning
+object = setup_directory_structure.object_bygning
 
 
 relative_path = (
