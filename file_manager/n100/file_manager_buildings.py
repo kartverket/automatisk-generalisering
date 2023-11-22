@@ -242,6 +242,30 @@ class Building_N100(Enum):
 
     ########### RESOLVE BUILDING CONFLICTS ###########
 
+    resolve_building_conflicts__conflicts_bygningspunkt_result_1__n100 = (
+        generate_file_name(
+            function_name=resolve_building_conflicts,
+            description="conflicts_bygningspunkt_result_1",
+            scale=scale,
+        )
+    )
+
+    resolve_building_conflicts__conflicts_bygningspunkt_result_2__n100 = (
+        generate_file_name(
+            function_name=resolve_building_conflicts,
+            description="conflicts_bygningspunkt_result_2",
+            scale=scale,
+        )
+    )
+
+    resolve_building_conflicts__conflicts_bygningspunkt_result_3__n100 = (
+        generate_file_name(
+            function_name=resolve_building_conflicts,
+            description="conflicts_bygningspunkt_result_3",
+            scale=scale,
+        )
+    )
+
 
 class PermanentFiles(Enum):
     n100_building_points_undefined_nbr_values = (
