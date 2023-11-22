@@ -103,7 +103,6 @@ def simplify_building_polygon():
     # Aggregating building polygons
 
     print("Aggregating building polygons...")
-
     arcpy.cartography.AggregatePolygons(
         in_features=Building_N100.selecting_grunnriss_for_generalization__large_enough_grunnriss__n100.value,
         out_feature_class=Building_N100.grunnriss_to_point__aggregated_polygon__n100.value,
@@ -114,7 +113,7 @@ def simplify_building_polygon():
         barrier_features=[
             Building_N100.preperation_veg_sti__unsplit_veg_sti__n100.value
         ],
-        out_table="grunnriss_n50_aggregated_tbl",
+        out_table=f"{Building_N100.grunnriss_to_point__aggregated_polygon__n100.value}_table",
         aggregate_field="BYGGTYP_NBR",
     )
     print("Aggregating building polygons completed.")

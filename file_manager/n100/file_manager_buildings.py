@@ -24,7 +24,7 @@ preperation_veg_sti = "preperation_veg_sti"
 adding_matrikkel_as_points = "adding_matrikkel_as_points"
 selecting_grunnriss_for_generalization = "selecting_grunnriss_for_generalization"
 table_management = "table_management"
-grunnriss_to_point = "grunnriss to point"
+grunnriss_to_point = "grunnriss_to_point"
 simplify_building_polygons = "simplify_building_polygons"
 find_point_clusters = "find_point_clusters"
 
