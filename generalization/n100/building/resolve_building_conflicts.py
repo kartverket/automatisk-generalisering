@@ -10,6 +10,7 @@ from input_data import input_n50
 from input_data import input_n100
 from input_data.input_symbology import SymbologyN100
 from file_manager.n100.file_manager_buildings import Building_N100
+from env_setup import setup_directory_structure
 
 # Start timing
 start_time = time.time()

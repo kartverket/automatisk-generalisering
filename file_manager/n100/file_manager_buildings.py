@@ -27,6 +27,7 @@ table_management = "table_management"
 grunnriss_to_point = "grunnriss_to_point"
 simplify_building_polygons = "simplify_building_polygons"
 find_point_clusters = "find_point_clusters"
+resolve_building_conflicts = "resolve_building_conflicts"
 
 
 class Building_N100(Enum):
@@ -238,6 +239,8 @@ class Building_N100(Enum):
         description="reduced_hospital_church_points",
         scale=scale,
     )
+
+    ########### RESOLVE BUILDING CONFLICTS ###########
 
 
 class PermanentFiles(Enum):
