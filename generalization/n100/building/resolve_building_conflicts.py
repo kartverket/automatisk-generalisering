@@ -10,6 +10,7 @@ from input_data import input_n50
 from input_data import input_n100
 from input_data.input_symbology import SymbologyN100
 from file_manager.n100.file_manager_buildings import Building_N100
+from env_setup import setup_directory_structure
 
 # Start timing
 start_time = time.time()
@@ -643,12 +644,10 @@ def resolve_building_conflicts():
 
     # Apply symbology to selections
 
-    lyrx_bygningspunkt = rf"{config.symbology_output_folder}\lyrx_bygningspunkt.lyrx"
-    lyrx_grunnriss = rf"{config.symbology_output_folder}\lyrx_grunnriss.lyrx"
-    lyrx_veg_sti = rf"{config.symbology_output_folder}\lyrx_veg_sti.lyrx"
-    lyrx_begrensnings_kurve = (
-        rf"{config.symbology_output_folder}\lyrx_begrensnings_kurve.lyrx"
-    )
+    lyrx_bygningspunkt = rf"{config.output_folder}\automatic_generalization_outputs\{setup_directory_structure.lyrx_directory_name}\{setup_directory_structure.scale_n100}\lyrx_bygningspunkt.lyrx"
+    lyrx_grunnriss = rf"{config.output_folder}\automatic_generalization_outputs\{setup_directory_structure.lyrx_directory_name}\{setup_directory_structure.scale_n100}\lyrx_grunnriss.lyrx"
+    lyrx_veg_sti = rf"{config.output_folder}\automatic_generalization_outputs\{setup_directory_structure.lyrx_directory_name}\{setup_directory_structure.scale_n100}\lyrx_veg_sti.lyrx"
+    lyrx_begrensnings_kurve = rf"{config.output_folder}\automatic_generalization_outputs\{setup_directory_structure.lyrx_directory_name}\{setup_directory_structure.scale_n100}\lyrx_begrensnings_kurve.lyrx"
 
     # List of dictionaries containing parameters for each symbology application
     symbology_configs = [
@@ -766,13 +765,10 @@ def resolve_building_conflicts():
         "(invisibility = 0) OR (symbol_val IN (1, 2, 3))"
     )
 
-    resolve_building_conflicts_bygningspunkt_result_1 = (
-        "resolve_building_conflicts_bygningspunkt_result_1"
-    )
     custom_arcpy.select_attribute_and_make_permanent_feature(
         input_layer=selection_bygningspunkt,
         expression=sql_expression_resolve_building_conflicts,
-        output_name=resolve_building_conflicts_bygningspunkt_result_1,
+        output_name=Building_N100.resolve_building_conflicts__conflicts_bygningspunkt_result_1__n100.value,
     )
 
     # code_block_hierarchy = """def determineHierarchy(symbol_val):\n
@@ -799,7 +795,7 @@ def resolve_building_conflicts():
     # )
 
     custom_arcpy.apply_symbology(
-        input_layer=resolve_building_conflicts_bygningspunkt_result_1,
+        input_layer=Building_N100.resolve_building_conflicts__conflicts_bygningspunkt_result_1__n100.value,
         in_symbology_layer=symbology_bygningspunkt,
         output_name=lyrx_bygningspunkt,
     )
@@ -821,17 +817,14 @@ def resolve_building_conflicts():
         hierarchy_field="hierarchy",
     )
 
-    resolve_building_conflicts_bygningspunkt_result_2 = (
-        "resolve_building_conflicts_bygningspunkt_result_2"
-    )
     custom_arcpy.select_attribute_and_make_permanent_feature(
-        input_layer=resolve_building_conflicts_bygningspunkt_result_1,
+        input_layer=Building_N100.resolve_building_conflicts__conflicts_bygningspunkt_result_1__n100.value,
         expression=sql_expression_resolve_building_conflicts,
-        output_name=resolve_building_conflicts_bygningspunkt_result_2,
+        output_name=Building_N100.resolve_building_conflicts__conflicts_bygningspunkt_result_2__n100.value,
     )
 
     custom_arcpy.apply_symbology(
-        input_layer=resolve_building_conflicts_bygningspunkt_result_2,
+        input_layer=Building_N100.resolve_building_conflicts__conflicts_bygningspunkt_result_2__n100.value,
         in_symbology_layer=symbology_bygningspunkt,
         output_name=lyrx_bygningspunkt,
     )
@@ -853,17 +846,14 @@ def resolve_building_conflicts():
         hierarchy_field="hierarchy",
     )
 
-    resolve_building_conflicts_bygningspunkt_result_3 = (
-        "resolve_building_conflicts_bygningspunkt_result_3"
-    )
     custom_arcpy.select_attribute_and_make_permanent_feature(
-        input_layer=resolve_building_conflicts_bygningspunkt_result_2,
+        input_layer=Building_N100.resolve_building_conflicts__conflicts_bygningspunkt_result_2__n100.value,
         expression=sql_expression_resolve_building_conflicts,
-        output_name=resolve_building_conflicts_bygningspunkt_result_3,
+        output_name=Building_N100.resolve_building_conflicts__conflicts_bygningspunkt_result_3__n100.value,
     )
 
     custom_arcpy.apply_symbology(
-        input_layer=resolve_building_conflicts_bygningspunkt_result_3,
+        input_layer=Building_N100.resolve_building_conflicts__conflicts_bygningspunkt_result_3__n100.value,
         in_symbology_layer=symbology_bygningspunkt,
         output_name=lyrx_bygningspunkt,
     )
@@ -871,7 +861,7 @@ def resolve_building_conflicts():
 
 # resolve_building_conflicts()
 
-# main()
+main()
 
 
 # End timing

@@ -27,6 +27,7 @@ table_management = "table_management"
 grunnriss_to_point = "grunnriss_to_point"
 simplify_building_polygons = "simplify_building_polygons"
 find_point_clusters = "find_point_clusters"
+resolve_building_conflicts = "resolve_building_conflicts"
 
 
 class Building_N100(Enum):
@@ -237,6 +238,32 @@ class Building_N100(Enum):
         function_name=find_point_clusters,
         description="reduced_hospital_church_points",
         scale=scale,
+    )
+
+    ########### RESOLVE BUILDING CONFLICTS ###########
+
+    resolve_building_conflicts__conflicts_bygningspunkt_result_1__n100 = (
+        generate_file_name(
+            function_name=resolve_building_conflicts,
+            description="conflicts_bygningspunkt_result_1",
+            scale=scale,
+        )
+    )
+
+    resolve_building_conflicts__conflicts_bygningspunkt_result_2__n100 = (
+        generate_file_name(
+            function_name=resolve_building_conflicts,
+            description="conflicts_bygningspunkt_result_2",
+            scale=scale,
+        )
+    )
+
+    resolve_building_conflicts__conflicts_bygningspunkt_result_3__n100 = (
+        generate_file_name(
+            function_name=resolve_building_conflicts,
+            description="conflicts_bygningspunkt_result_3",
+            scale=scale,
+        )
     )
 
 
