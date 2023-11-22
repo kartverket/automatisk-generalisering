@@ -24,7 +24,9 @@ preperation_veg_sti = "preperation_veg_sti"
 adding_matrikkel_as_points = "adding_matrikkel_as_points"
 selecting_grunnriss_for_generalization = "selecting_grunnriss_for_generalization"
 table_management = "table_management"
-grunnriss_to_point = "grunnriss to point"
+grunnriss_to_point = "grunnriss_to_point"
+simplify_building_polygons = "simplify_building_polygons"
+find_point_clusters = "find_point_clusters"
 
 
 class Building_N100(Enum):
@@ -199,11 +201,43 @@ class Building_N100(Enum):
 
     ########### CREATE SIMPLIFIED BUILDING POLYGONS ###########
 
-    simplified_grunnriss_n100 = "simplified_grunnriss_n100"
+    simplify_building_polygons__simplified_building_1__n100 = generate_file_name(
+        function_name=simplify_building_polygons,
+        description="simplified_building_1",
+        scale=scale,
+    )
 
-    merged_points_final = "merged_points_final"
+    simplify_building_polygons__simplified_building_2__n100 = generate_file_name(
+        function_name=simplify_building_polygons,
+        description="simplified_building_2",
+        scale=scale,
+    )
 
-    reduced_hospital_church_points = "reduced_hospital_church_points"
+    simplify_building_polygons__simplified_polygon__n100 = generate_file_name(
+        function_name=simplify_building_polygons,
+        description="simplified_polygon",
+        scale=scale,
+    )
+
+    simplify_building_polygons__simplified_grunnriss__n100 = generate_file_name(
+        function_name=simplify_building_polygons,
+        description="simplified_grunnriss",
+        scale=scale,
+    )
+
+    simplify_building_polygons__spatial_joined_polygon__n100 = generate_file_name(
+        function_name=simplify_building_polygons,
+        description="spatial_joined_polygon",
+        scale=scale,
+    )
+
+    ########### FIND POINT CLUSTERS ###########
+
+    find_point_clusters__reduced_hospital_church_points__n100 = generate_file_name(
+        function_name=find_point_clusters,
+        description="reduced_hospital_church_points",
+        scale=scale,
+    )
 
 
 class PermanentFiles(Enum):
