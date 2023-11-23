@@ -16,20 +16,25 @@ environment_setup.general_setup()
 
 # Main function
 def main():
-    grunnriss_to_point()
+    small_grunnriss_to_point()
+    find_point_clusters()
 
 
-def grunnriss_to_point():
+def small_grunnriss_to_point():
     """
     This function creates points from small grunnriss lost during aggregation, and merges
     them together with collapsed points from the tools simplify building and simplify polygon.
 
     Input data:
+    - Points generated from....
+    - Small grunnriss that are....
 
     Output data:
+    - Merged feature class of ....
 
     """
 
+    # Find grunnriss that disappeared during aggregation due to being below minimum size
     custom_arcpy.select_location_and_make_feature_layer(
         input_layer=Building_N100.selecting_grunnriss_for_generalization__large_enough_grunnriss__n100.value,
         overlap_type=custom_arcpy.OverlapType.INTERSECT,
@@ -38,22 +43,24 @@ def grunnriss_to_point():
         inverted=True,
     )
 
+    # Transform these grunnriss to points
     arcpy.management.FeatureToPoint(
         in_features=Building_N100.grunnriss_to_point__intersect_aggregated_and_original__n100.value,
         out_feature_class=Building_N100.grunnriss_to_point__grunnriss_feature_to_point__n100.value,
     )
 
     # Collecting all collapsed points (from create_simplified_building_polygons)
-    simplified_building_points = [
+    points_from_simplify_tools = [
         Building_N100.grunnriss_to_point__simplified_building_points_simplified_building_1__n100.value,
-        Building_N100.grunnriss_to_point__collapsed_points_simplified_polygon__n100.value,
+        Building_N100.grunnriss_to_point__simplified_polygon_points__n100.value,
         Building_N100.grunnriss_to_point__simplified_building_points_simplified_building_2__n100.value,
     ]
 
-    # List that will include all spatially joined points
-    output_spatial_joins = []
+    # Make a list that will include all spatially joined points
+    spatially_joined_points_list = []
 
-    for index, point_layer in enumerate(simplified_building_points):
+    # Looping through the points from the simplify tools and peforming spatial join with original grunnriss
+    for index, point_layer in enumerate(points_from_simplify_tools):
         output_spatial_join = f"spatial_join_points_{index + 1}"
 
         arcpy.analysis.SpatialJoin(
@@ -64,7 +71,8 @@ def grunnriss_to_point():
             match_option="INTERSECT",
         )
 
-        output_spatial_joins.append(output_spatial_join)
+        # Storing the spatially joined point layers in the list
+        spatially_joined_points_list.append(output_spatial_join)
 
     print("Spatial joins completed.")
 
@@ -81,7 +89,7 @@ def grunnriss_to_point():
         small_grunnriss_points,
         grunnriss_sykehus_kirke_points,
         Building_N100.grunnriss_to_point__grunnriss_feature_to_point__n100.value,
-    ] + output_spatial_joins
+    ] + spatially_joined_points_list
 
     print("Preparing for merge...")
 
@@ -95,6 +103,16 @@ def grunnriss_to_point():
 
 
 def find_point_clusters():
+    """
+    This function finds two types of point clusters for hospital and church: (1) The function finds clusters of only 2 points,
+    and chooses to only keep the point furthest away from a road. The function also finds clusters of 3 or more points, here it chooses
+
+    Input data:
+
+    Output data:
+
+    """
+
     # Input layer
 
     bygningspunkt_pre_symbology = (
