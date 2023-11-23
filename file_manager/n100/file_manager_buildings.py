@@ -24,10 +24,23 @@ preperation_veg_sti = "preperation_veg_sti"
 adding_matrikkel_as_points = "adding_matrikkel_as_points"
 selecting_grunnriss_for_generalization = "selecting_grunnriss_for_generalization"
 table_management = "table_management"
-grunnriss_to_point = "grunnriss_to_point"
-simplify_building_polygons = "simplify_building_polygons"
+small_grunnriss_to_point = "small_grunnriss_to_point"
 find_point_clusters = "find_point_clusters"
+simplify_building_polygons = "simplify_building_polygons"
 resolve_building_conflicts = "resolve_building_conflicts"
+
+file_function = {
+    "building_data_preparation": [
+        preparation_begrensningskurve,
+        preperation_veg_sti,
+        adding_matrikkel_as_points,
+        selecting_grunnriss_for_generalization,
+    ],
+    "create_simplified_building_polygons": [simplify_building_polygons],
+    "create_points_from_polygon": [small_grunnriss_to_point, find_point_clusters],
+    "calculating_values": [table_management],
+    "resolve_building_conflicts": [resolve_building_conflicts],
+}
 
 
 class Building_N100(Enum):
@@ -188,9 +201,9 @@ class Building_N100(Enum):
         )
     )
 
-    grunnriss_to_point__collapsed_points_simplified_polygon__n100 = generate_file_name(
+    grunnriss_to_point__simplified_polygon_points__n100 = generate_file_name(
         function_name=grunnriss_to_point,
-        description="collapsed_points_simplified_polygon",
+        description="simplified_polygon_points",
         scale=scale,
     )
 
