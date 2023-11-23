@@ -196,7 +196,7 @@ def apply_symbology(input_layer, in_symbology_layer, output_name):
         update_symbology="MAINTAIN",
     )
 
-    arcpy.SaveToLayerFile_management(
+    arcpy.management.SaveToLayerFile(
         in_layer=input_layer,
         out_layer=output_name,
         is_relative_path="ABSOLUTE",
