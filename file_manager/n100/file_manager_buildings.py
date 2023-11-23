@@ -13,12 +13,23 @@ relative_path = (
     rf"{config.output_folder}\automatic_generalization_outputs\{scale}\{object}.gdb"
 )
 
+order = None
+
 
 # Creating file names based on set standard
 def generate_file_name(function_name, description, scale):
-    return rf"{relative_path}\{function_name}__{description}__{scale}"
+    return rf"{relative_path}\{order}_{function_name}___{description}___{scale}"
 
 
+# Files
+building_data_preparation = "building_data_preparation"
+create_simplified_building_polygons = "create_simplified_building_polygons"
+create_points_from_polygon = "create_points_from_polygon"
+calculating_values = "calculating_values"
+resolve_building_conflicts = "resolve_building_conflicts"
+
+
+# Functions
 preparation_begrensningskurve = "preparation_begrensningskurve"
 preperation_veg_sti = "preperation_veg_sti"
 adding_matrikkel_as_points = "adding_matrikkel_as_points"
@@ -28,6 +39,7 @@ small_grunnriss_to_point = "small_grunnriss_to_point"
 find_point_clusters = "find_point_clusters"
 simplify_building_polygons = "simplify_building_polygons"
 resolve_building_conflicts = "resolve_building_conflicts"
+
 
 file_function = {
     "building_data_preparation": [
@@ -168,49 +180,53 @@ class Building_N100(Enum):
 
     ########### CREATE POINTS FROM POLYGON ###########
 
-    grunnriss_to_point__intersect_aggregated_and_original__n100 = generate_file_name(
-        function_name=grunnriss_to_point,
-        description="intersect_aggregated_and_original",
-        scale=scale,
+    small_grunnriss_to_point__intersect_aggregated_and_original__n100 = (
+        generate_file_name(
+            function_name=small_grunnriss_to_point,
+            description="intersect_aggregated_and_original",
+            scale=scale,
+        )
     )
 
-    grunnriss_to_point__aggregated_polygon__n100 = generate_file_name(
-        function_name=grunnriss_to_point,
+    small_grunnriss_to_point__aggregated_polygon__n100 = generate_file_name(
+        function_name=small_grunnriss_to_point,
         description="aggregated_polygon",
         scale=scale,
     )
-    grunnriss_to_point__grunnriss_feature_to_point__n100 = generate_file_name(
-        function_name=grunnriss_to_point,
+    small_grunnriss_to_point__grunnriss_feature_to_point__n100 = generate_file_name(
+        function_name=small_grunnriss_to_point,
         description="grunnriss_feature_to_point",
         scale=scale,
     )
 
-    grunnriss_to_point__simplified_building_points_simplified_building_1__n100 = (
+    small_grunnriss_to_point__simplified_building_points_simplified_building_1__n100 = (
         generate_file_name(
-            function_name=grunnriss_to_point,
+            function_name=small_grunnriss_to_point,
             description="simplified_building_points_simplified_building_1",
             scale=scale,
         )
     )
 
-    grunnriss_to_point__simplified_building_points_simplified_building_2__n100 = (
+    small_grunnriss_to_point__simplified_building_points_simplified_building_2__n100 = (
         generate_file_name(
-            function_name=grunnriss_to_point,
+            function_name=small_grunnriss_to_point,
             description="simplified_building_points_simplified_building_2",
             scale=scale,
         )
     )
 
-    grunnriss_to_point__simplified_polygon_points__n100 = generate_file_name(
-        function_name=grunnriss_to_point,
+    small_grunnriss_to_point__simplified_polygon_points__n100 = generate_file_name(
+        function_name=small_grunnriss_to_point,
         description="simplified_polygon_points",
         scale=scale,
     )
 
-    grunnriss_to_point__merged_points_created_from_grunnriss__n100 = generate_file_name(
-        function_name=grunnriss_to_point,
-        description="merged_points_created_from_grunnriss",
-        scale=scale,
+    small_grunnriss_to_point__merged_points_created_from_grunnriss__n100 = (
+        generate_file_name(
+            function_name=small_grunnriss_to_point,
+            description="merged_points_created_from_grunnriss",
+            scale=scale,
+        )
     )
 
     ########### CREATE SIMPLIFIED BUILDING POLYGONS ###########
