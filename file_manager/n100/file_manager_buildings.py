@@ -29,6 +29,19 @@ simplify_building_polygons = "simplify_building_polygons"
 find_point_clusters = "find_point_clusters"
 resolve_building_conflicts = "resolve_building_conflicts"
 
+file_function = {
+    "building_data_preparation": [
+        preparation_begrensningskurve,
+        preperation_veg_sti,
+        adding_matrikkel_as_points,
+        selecting_grunnriss_for_generalization,
+    ],
+    "create_simplified_building_polygons": [simplify_building_polygons],
+    "create_points_from_polygon": [grunnriss_to_point, find_point_clusters],
+    "calculating_values": [table_management],
+    "resolve_building_conflicts": [resolve_building_conflicts],
+}
+
 
 class Building_N100(Enum):
     ########### BUILDING DATA PREPARATION ###########
