@@ -168,7 +168,7 @@ def simplify_building_polygon():
     print("Simplifying building polygons...")
 
     arcpy.cartography.SimplifyBuilding(
-        in_features=Building_N100.grunnriss_to_point__aggregated_polygon__n100.value,
+        in_features=Building_N100.simplify_building_polygons__simplified_building_1__n100.value,
         out_feature_class=Building_N100.simplify_building_polygons__simplified_building_2__n100.value,
         simplification_tolerance="75",
         minimum_area="3200 SquareMeters",
@@ -227,3 +227,6 @@ def simplify_building_polygon():
         Building_N100.simplify_building_polygons__simplified_grunnriss__n100.value,
     )
     print("Copy completed.")
+
+
+main()

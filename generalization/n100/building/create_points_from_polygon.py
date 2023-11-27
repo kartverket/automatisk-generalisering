@@ -43,55 +43,100 @@ def grunnriss_to_point():
         out_feature_class=Building_N100.grunnriss_to_point__grunnriss_feature_to_point__n100.value,
     )
 
-    # Collecting all collapsed points (from create_simplified_building_polygons)
-    simplified_building_points = [
-        Building_N100.grunnriss_to_point__simplified_building_points_simplified_building_1__n100.value,
-        Building_N100.grunnriss_to_point__collapsed_points_simplified_polygon__n100.value,
-        Building_N100.grunnriss_to_point__simplified_building_points_simplified_building_2__n100.value,
-    ]
-
-    # List that will include all spatially joined points
-    output_spatial_joins = []
-
-    for index, point_layer in enumerate(simplified_building_points):
-        output_spatial_join = f"spatial_join_points_{index + 1}"
-
-        arcpy.analysis.SpatialJoin(
-            target_features=point_layer,
-            join_features=Building_N100.selecting_grunnriss_for_generalization__large_enough_grunnriss__n100.value,
-            out_feature_class=output_spatial_join,
-            join_operation="JOIN_ONE_TO_ONE",
-            match_option="INTERSECT",
-        )
-
-        output_spatial_joins.append(output_spatial_join)
-
-    print("Spatial joins completed.")
-
-    # 4: Preparing for Merge - collecting layers
-    small_grunnriss_points = (
-        Building_N100.selecting_grunnriss_for_generalization__points_created_from_small_grunnriss__n100.value
+    # Testing if manual works
+    print("############## TESTING MANUAL ##############")
+    arcpy.analysis.SpatialJoin(
+        target_features=Building_N100.grunnriss_to_point__collapsed_points_simplified_polygon__n100.value,
+        join_features=Building_N100.selecting_grunnriss_for_generalization__large_enough_grunnriss__n100.value,
+        out_feature_class=Building_N100.grunnriss_to_point__spatial_join_points_1__n100.value,
+        join_operation="JOIN_ONE_TO_ONE",
+        match_option="INTERSECT",
     )
-    grunnriss_sykehus_kirke_points = (
-        Building_N100.selecting_grunnriss_for_generalization__kirke_points_created_from_grunnriss__n100.value
+    print("join 1 done")
+    arcpy.analysis.SpatialJoin(
+        target_features=Building_N100.grunnriss_to_point__simplified_building_points_simplified_building_1__n100.value,
+        join_features=Building_N100.selecting_grunnriss_for_generalization__large_enough_grunnriss__n100.value,
+        out_feature_class=Building_N100.grunnriss_to_point__spatial_join_points_2__n100.value,
+        join_operation="JOIN_ONE_TO_ONE",
+        match_option="INTERSECT",
     )
+    print("join 2 done")
 
-    # List of all point layers to be merged
-    all_point_layers = [
-        small_grunnriss_points,
-        grunnriss_sykehus_kirke_points,
-        Building_N100.grunnriss_to_point__grunnriss_feature_to_point__n100.value,
-    ] + output_spatial_joins
+    arcpy.analysis.SpatialJoin(
+        target_features=Building_N100.grunnriss_to_point__simplified_building_points_simplified_building_2__n100.value,
+        join_features=Building_N100.selecting_grunnriss_for_generalization__large_enough_grunnriss__n100.value,
+        out_feature_class=Building_N100.grunnriss_to_point__spatial_join_points_3__n100.value,
+        join_operation="JOIN_ONE_TO_ONE",
+        match_option="INTERSECT",
+    )
+    print("join 3 done")
 
-    print("Preparing for merge...")
-
-    # 5: Merging points together into one feature class - total 6 point layers
     arcpy.management.Merge(
-        inputs=all_point_layers,
+        inputs=[
+            Building_N100.selecting_grunnriss_for_generalization__points_created_from_small_grunnriss__n100.value,
+            Building_N100.selecting_grunnriss_for_generalization__kirke_points_created_from_grunnriss__n100.value,
+            Building_N100.grunnriss_to_point__grunnriss_feature_to_point__n100.value,
+            Building_N100.grunnriss_to_point__spatial_join_points_1__n100.value,
+            Building_N100.grunnriss_to_point__spatial_join_points_2__n100.value,
+            Building_N100.grunnriss_to_point__spatial_join_points_3__n100.value,
+        ],
         output=Building_N100.grunnriss_to_point__merged_points_created_from_grunnriss__n100.value,
     )
+    print("merge done")
 
-    print("Merge completed.")
+    ######## OLD LOGIC ########
+    #
+    # # Collecting all collapsed points (from create_simplified_building_polygons)
+    # simplified_building_points = [
+    #     Building_N100.grunnriss_to_point__simplified_building_points_simplified_building_1__n100.value,
+    #     Building_N100.grunnriss_to_point__collapsed_points_simplified_polygon__n100.value,
+    #     Building_N100.grunnriss_to_point__simplified_building_points_simplified_building_2__n100.value,
+    # ]
+    #
+    # # List that will include all spatially joined points
+    # output_spatial_joins = []
+    #
+    # for index, point_layer in enumerate(simplified_building_points):
+    #     output_spatial_join = f"spatial_join_points_{index + 1}"
+    #
+    #     arcpy.analysis.SpatialJoin(
+    #         target_features=point_layer,
+    #         join_features=Building_N100.selecting_grunnriss_for_generalization__large_enough_grunnriss__n100.value,
+    #         out_feature_class=output_spatial_join,
+    #         join_operation="JOIN_ONE_TO_ONE",
+    #         match_option="INTERSECT",
+    #     )
+    #
+    #     output_spatial_joins.append(output_spatial_join)
+    #
+    # print("Spatial joins completed.")
+    #
+    # # 4: Preparing for Merge - collecting layers
+    # small_grunnriss_points = (
+    #     Building_N100.selecting_grunnriss_for_generalization__points_created_from_small_grunnriss__n100.value
+    # )
+    # grunnriss_sykehus_kirke_points = (
+    #     Building_N100.selecting_grunnriss_for_generalization__kirke_points_created_from_grunnriss__n100.value
+    # )
+    #
+    # # List of all point layers to be merged
+    # all_point_layers = [
+    #     small_grunnriss_points,
+    #     grunnriss_sykehus_kirke_points,
+    #     Building_N100.grunnriss_to_point__grunnriss_feature_to_point__n100.value,
+    # ] + output_spatial_joins
+    #
+    # print("Preparing for merge...")
+    #
+    # ######## OLD LOGIC ########
+    #
+    # # 5: Merging points together into one feature class - total 6 point layers
+    # arcpy.management.Merge(
+    #     inputs=all_point_layers,
+    #     output=Building_N100.grunnriss_to_point__merged_points_created_from_grunnriss__n100.value,
+    # )
+    #
+    # print("Merge completed.")
 
 
 def find_point_clusters():

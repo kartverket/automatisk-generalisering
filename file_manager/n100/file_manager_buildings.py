@@ -185,6 +185,24 @@ class Building_N100(Enum):
         scale=scale,
     )
 
+    grunnriss_to_point__spatial_join_points_1__n100 = generate_file_name(
+        function_name=grunnriss_to_point,
+        description="spatial_join_points_1",
+        scale=scale,
+    )
+
+    grunnriss_to_point__spatial_join_points_2__n100 = generate_file_name(
+        function_name=grunnriss_to_point,
+        description="spatial_join_points_2",
+        scale=scale,
+    )
+
+    grunnriss_to_point__spatial_join_points_3__n100 = generate_file_name(
+        function_name=grunnriss_to_point,
+        description="spatial_join_points_3",
+        scale=scale,
+    )
+
     grunnriss_to_point__simplified_building_points_simplified_building_1__n100 = (
         generate_file_name(
             function_name=grunnriss_to_point,
