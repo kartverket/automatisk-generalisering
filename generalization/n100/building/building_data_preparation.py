@@ -40,20 +40,10 @@ def preparation_begrensningskurve():
     sql_expr_begrensningskurve_waterfeatures = "OBJTYPE = 'ElvBekkKant' Or OBJTYPE = 'Innsjøkant' Or OBJTYPE = 'InnsjøkantRegulert' Or OBJTYPE = 'Kystkontur'"
 
     # Creating a temporary feature of water features from begrensningskurve
-    custom_arcpy.select_attribute_and_make_feature_layer(
+    custom_arcpy.select_attribute_and_make_permanent_feature(
         input_layer=input_n100.BegrensningsKurve,
         expression=sql_expr_begrensningskurve_waterfeatures,
         output_name=Building_N100.preparation_begrensningskurve__selected_waterfeatures_from_begrensningskurve__n100.value,
-    )
-
-    # Creating a buffer of the water features begrensningskurve to take into account symbology of the water features
-    arcpy.analysis.PairwiseBuffer(
-        in_features=Building_N100.preparation_begrensningskurve__selected_waterfeatures_from_begrensningskurve__n100.value,
-        out_feature_class=Building_N100.preparation_begrensningskurve__begrensningskurve_buffer_waterfeatures__n100.value,
-        buffer_distance_or_field="20 Meters",
-        dissolve_option="NONE",
-        dissolve_field=None,
-        method="PLANAR",
     )
 
     # Adding hierarchy and invisibility fields to the preparation_begrensningskurve__begrensningskurve_buffer_waterfeatures__n100 and setting them to 0
@@ -63,13 +53,13 @@ def preparation_begrensningskurve():
 
     # Add fields
     arcpy.management.AddFields(
-        in_table=Building_N100.preparation_begrensningskurve__begrensningskurve_buffer_waterfeatures__n100.value,
+        in_table=Building_N100.preparation_begrensningskurve__selected_waterfeatures_from_begrensningskurve__n100.value,
         field_description=fields_to_add,
     )
 
     # Calculate fields
     arcpy.management.CalculateFields(
-        in_table=Building_N100.preparation_begrensningskurve__begrensningskurve_buffer_waterfeatures__n100.value,
+        in_table=Building_N100.preparation_begrensningskurve__selected_waterfeatures_from_begrensningskurve__n100.value,
         expression_type="PYTHON3",
         fields=fields_to_calculate,
     )

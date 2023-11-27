@@ -52,14 +52,6 @@ class Building_N100(Enum):
         scale=scale,
     )
 
-    preparation_begrensningskurve__begrensningskurve_buffer_waterfeatures__n100 = (
-        generate_file_name(
-            function_name=preparation_begrensningskurve,
-            description="begrensningskurve_buffer_waterfeatures",
-            scale=scale,
-        )
-    )
-
     preperation_veg_sti__unsplit_veg_sti__n100 = generate_file_name(
         function_name=preperation_veg_sti,
         description="unsplit_veg_sti",
@@ -185,21 +177,9 @@ class Building_N100(Enum):
         scale=scale,
     )
 
-    grunnriss_to_point__spatial_join_points_1__n100 = generate_file_name(
+    grunnriss_to_point__spatial_join_points__n100 = generate_file_name(
         function_name=grunnriss_to_point,
-        description="spatial_join_points_1",
-        scale=scale,
-    )
-
-    grunnriss_to_point__spatial_join_points_2__n100 = generate_file_name(
-        function_name=grunnriss_to_point,
-        description="spatial_join_points_2",
-        scale=scale,
-    )
-
-    grunnriss_to_point__spatial_join_points_3__n100 = generate_file_name(
-        function_name=grunnriss_to_point,
-        description="spatial_join_points_3",
+        description="spatial_join_points",
         scale=scale,
     )
 
@@ -293,6 +273,14 @@ class Building_N100(Enum):
         generate_file_name(
             function_name=resolve_building_conflicts,
             description="conflicts_bygningspunkt_result_3",
+            scale=scale,
+        )
+    )
+
+    resolve_building_conflicts__transform_points_to_square_polygons__n100 = (
+        generate_file_name(
+            function_name=resolve_building_conflicts,
+            description="transform_points_to_square_polygons",
             scale=scale,
         )
     )
