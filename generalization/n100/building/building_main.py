@@ -1,21 +1,14 @@
-# Importing custom files relative to the root path
-from custom_tools import custom_arcpy
-import config
+# Importing environment and directory structure modules
 from env_setup import environment_setup
-from input_data import input_n50
-from input_data import input_n100
-from generalization.n100.building import building_data_preparation
-from file_manager.n100.file_manager_buildings import Building_N100
 from env_setup import setup_directory_structure
 
-# Importing general packages
-import arcpy
 
 # Importing sub models
 from generalization.n100.building import building_data_preparation
 from generalization.n100.building import calculating_values
 from generalization.n100.building import create_simplified_building_polygons
 from generalization.n100.building import create_points_from_polygon
+from generalization.n100.building import points_to_polygon
 from generalization.n100.building import resolve_building_conflicts
 
 # Importing environment
@@ -28,7 +21,9 @@ def main():
     create_simplified_building_polygons.main()
     create_points_from_polygon.main()
     calculating_values.main()
+    points_to_polygon.main()
     resolve_building_conflicts.main()
 
 
-main()
+if __name__ == "__main__":
+    main()
