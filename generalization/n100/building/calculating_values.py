@@ -259,3 +259,7 @@ def clean_up_fields_delete():
             print(arcpy.GetMessages(2))
     else:
         print("No fields to keep.")
+
+
+if __name__ == "__main__":
+    main()
