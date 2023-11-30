@@ -26,7 +26,9 @@ selecting_grunnriss_for_generalization = "selecting_grunnriss_for_generalization
 table_management = "table_management"
 grunnriss_to_point = "grunnriss_to_point"
 simplify_building_polygons = "simplify_building_polygons"
+points_to_polygon = "points_to_polygon"
 find_point_clusters = "find_point_clusters"
+
 resolve_building_conflicts = "resolve_building_conflicts"
 
 file_function = {
@@ -250,6 +252,13 @@ class Building_N100(Enum):
         description="reduced_hospital_church_points",
         scale=scale,
     )
+    ########### POINTS TO POLYGON ###########
+
+    points_to_polygon__transform_points_to_square_polygons__n100 = generate_file_name(
+        function_name=points_to_polygon,
+        description="transform_points_to_square_polygons",
+        scale=scale,
+    )
 
     ########### RESOLVE BUILDING CONFLICTS ###########
 
@@ -273,14 +282,6 @@ class Building_N100(Enum):
         generate_file_name(
             function_name=resolve_building_conflicts,
             description="conflicts_bygningspunkt_result_3",
-            scale=scale,
-        )
-    )
-
-    resolve_building_conflicts__transform_points_to_square_polygons__n100 = (
-        generate_file_name(
-            function_name=resolve_building_conflicts,
-            description="transform_points_to_square_polygons",
             scale=scale,
         )
     )
