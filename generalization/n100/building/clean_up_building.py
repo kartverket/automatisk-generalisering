@@ -19,20 +19,20 @@ def main():
 
 def clean_up_fields_delete():
     # Provide the path to your feature class
-    feature_class_to_clean_up = (f"
-        {Building_N100.grunnriss_to_point__grunnriss_feature_to_point__n100.value}" # Switch out to correct feature class 
-    )
+    feature_class_to_clean_up = (
+        Building_N100.grunnriss_to_point__grunnriss_feature_to_point__n100.value
+    )  # Switch out to correct feature class
 
     # List of field names to delete
     fields_to_delete = [
         "CLUSTER_ID",
         "COLOR_ID",
         "symbol_val",
-        "angle",                # Add all fields you want to delete
+        "angle",  # Add all fields you want to delete
         "hierarchy",
         "invisibility",
         "ORIG_FID",
-    ]                 
+    ]
 
     # Get a list of all fields in the feature class
     all_fields = [field.name for field in arcpy.ListFields(feature_class_to_clean_up)]
@@ -54,4 +54,4 @@ def clean_up_fields_delete():
         print("No fields to keep.")
 
 
-#clean_up_fields_delete()
+# clean_up_fields_delete()
