@@ -10,6 +10,7 @@ from file_manager.n100.file_manager_buildings import PermanentFiles
 
 # Importing general packages
 import arcpy
+from collections import Counter
 
 # Importing environment
 environment_setup.general_setup()
@@ -97,14 +98,17 @@ def table_management():
             Building_N100.table_management__merged_bygningspunkt_n50_matrikkel__n100.value,
             Building_N100.grunnriss_to_point__merged_points_created_from_grunnriss__n100.value,
         ],
-        output=Building_N100.table_management__merged_bygningspunkt_matrikkel_collapsed_grunnriss_points_matrikkel__n100.value,
+        output=Building_N100.table_management__bygningspunkt_pre_resolve_building_conflicts__n100.value,
     )
 
     # Adding a symbology value field based on NBR values
     arcpy.AddField_management(
-        in_table=Building_N100.table_management__merged_bygningspunkt_matrikkel_collapsed_grunnriss_points_matrikkel__n100.value,
+        in_table=Building_N100.table_management__bygningspunkt_pre_resolve_building_conflicts__n100.value,
         field_name="symbol_val",
         field_type="LONG",
+    )
+    print(
+        f"{Building_N100.table_management__bygningspunkt_pre_resolve_building_conflicts__n100.value} merged"
     )
 
     code_block = (
@@ -132,36 +136,74 @@ def table_management():
     )
 
     arcpy.CalculateField_management(
-        in_table=Building_N100.table_management__merged_bygningspunkt_matrikkel_collapsed_grunnriss_points_matrikkel__n100.value,
+        in_table=Building_N100.table_management__bygningspunkt_pre_resolve_building_conflicts__n100.value,
         field="symbol_val",
         expression="determineVal(!BYGGTYP_NBR!)",
         expression_type="PYTHON3",
         code_block=code_block,
     )
 
-    # Define output name
-    undefined_nbr_values = (
-        PermanentFiles.n100_building_points_undefined_nbr_values.value
+    # Counter to store the count of each unique BYGGTYP_NBR
+    nbr_counter = Counter()
+
+    # Iterate over the rows in the feature class
+    with arcpy.da.SearchCursor(
+        Building_N100.table_management__bygningspunkt_pre_resolve_building_conflicts__n100.value,
+        ["BYGGTYP_NBR", "symbol_val"],
+    ) as cursor:
+        for nbr, symbol_val in cursor:
+            if symbol_val == -99:
+                nbr_counter[nbr] += 1
+
+    # Calculate the total count
+    total_count = sum(nbr_counter.values())
+
+    # Writing the counts to a log file
+    with open(
+        Building_N100.table_management__building_points_with_undefined_nbr_values__n100.value,
+        "w",
+    ) as log_file:
+        for nbr, count in nbr_counter.items():
+            log_file.write(f"BYGGTYP_NBR: {nbr}, Count: {count}\n")
+        # Write the total count at the end
+        log_file.write(f"Total Rows without defined symbology: {total_count}\n")
+
+    print(
+        f"Log file created at: {Building_N100.table_management__building_points_with_undefined_nbr_values__n100.value}"
     )
 
-    expression_no_nbr = "symbol_val = -99"
-
-    # Selecting undefined NBR values and make a permanent feature of them
-    custom_arcpy.select_attribute_and_make_permanent_feature(
-        input_layer=Building_N100.table_management__merged_bygningspunkt_matrikkel_collapsed_grunnriss_points_matrikkel__n100.value,
-        expression=expression_no_nbr,
-        output_name=undefined_nbr_values,
-        selection_type=custom_arcpy.SelectionType.NEW_SELECTION,
-        inverted=False,
+    # Function to handle symbol_val logic for BYGGTYP_NBR
+    code_block_symbol_val_to_nbr = (
+        "def symbol_val_to_nbr(symbol_val):\n"
+        "    if symbol_val == -99:\n"
+        "        return 729\n"
+        "    return symbol_val"
     )
 
-    # Selecting defined NBR values
-    custom_arcpy.select_attribute_and_make_permanent_feature(
-        input_layer=Building_N100.table_management__merged_bygningspunkt_matrikkel_collapsed_grunnriss_points_matrikkel__n100.value,
-        expression=expression_no_nbr,
-        output_name=Building_N100.table_management__bygningspunkt_pre_resolve_building_conflicts__n100.value,
-        selection_type=custom_arcpy.SelectionType.NEW_SELECTION,
-        inverted=True,
+    # Function to update symbol_val to 8 if it's -99
+    code_block_update_symbol_val = (
+        "def update_symbol_val(symbol_val):\n"
+        "    if symbol_val == -99:\n"
+        "        return 8\n"
+        "    return symbol_val"
+    )
+
+    # Applying the symbol_val_to_nbr logic
+    arcpy.CalculateField_management(
+        in_table=Building_N100.table_management__bygningspunkt_pre_resolve_building_conflicts__n100.value,
+        field="BYGGTYP_NBR",
+        expression="symbol_val_to_nbr(!symbol_val!)",
+        expression_type="PYTHON3",
+        code_block=code_block_symbol_val_to_nbr,
+    )
+
+    # Applying the update_symbol_val logic
+    arcpy.CalculateField_management(
+        in_table=Building_N100.table_management__bygningspunkt_pre_resolve_building_conflicts__n100.value,
+        field="symbol_val",
+        expression="update_symbol_val(!symbol_val!)",
+        expression_type="PYTHON3",
+        code_block=code_block_update_symbol_val,
     )
 
     # Adding agnle, hierarchy and invisibility fields to the bygningspunkt pre symbology and setting them to 0
