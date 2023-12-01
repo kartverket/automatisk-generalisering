@@ -14,9 +14,9 @@ relative_path_gdb = (
 )
 
 # Relative path to geodatabase
-relative_path_sub_dir = (
-    rf"{config.output_folder}\automatic_generalization_outputs\{scale}"
-)
+relative_path_general_files = rf"{config.output_folder}\automatic_generalization_outputs\{scale}\{setup_directory_structure.general_files_name}"
+
+relative_path_lyrx = rf"{config.output_folder}\automatic_generalization_outputs\{scale}\{setup_directory_structure.lyrx_directory_name}"
 
 
 # Creating file names based on set standard
@@ -24,10 +24,8 @@ def generate_file_name_gdb(function_name, description, scale):
     return rf"{relative_path_gdb}\{function_name}__{description}__{scale}"
 
 
-def generate_file_name_sub_dir(function_name, description, scale, file_type):
-    return (
-        rf"{relative_path_sub_dir}\{function_name}__{description}__{scale}.{file_type}"
-    )
+def generate_file_name_general_files(function_name, description, scale, file_type):
+    return rf"{relative_path_general_files}\{function_name}__{description}__{scale}.{file_type}"
 
 
 preparation_begrensningskurve = "preparation_begrensningskurve"
@@ -178,7 +176,7 @@ class Building_N100(Enum):
     )
 
     table_management__building_points_with_undefined_nbr_values__n100 = (
-        generate_file_name_sub_dir(
+        generate_file_name_general_files(
             function_name=table_management,
             description="building_points_with_undefined_nbr_values",
             scale=scale,
