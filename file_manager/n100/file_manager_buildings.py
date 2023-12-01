@@ -39,6 +39,7 @@ grunnriss_to_point = "grunnriss_to_point"
 simplify_building_polygons = "simplify_building_polygons"
 points_to_polygon = "points_to_polygon"
 hospital_church_selections = "hospital_church_selections"
+find_clusters = "find_clusters"
 resolve_building_conflicts = "resolve_building_conflicts"
 
 
@@ -271,14 +272,36 @@ class Building_N100(Enum):
 
     ########### HOSPITAL AND CHURCH CLUSTERS ###########
 
-    o = generate_file_name_gdb(
-        function_name=, 
-        description="hospital_points", 
-        scale=scale, 
+    # Functon: hospital_church_selections
+
+    hospital_church_selections__hospital_points__n100 = generate_file_name_gdb(
+        function_name=hospital_church_selections,
+        description="hospital_points",
+        scale=scale,
+    )
+
+    hospital_church_selections__church_points__n100 = generate_file_name_gdb(
+        function_name=hospital_church_selections,
+        description="church_points",
+        scale=scale,
+    )
+
+    # Function: find_clusters
+
+    find_clusters__all_hospital_clusters__n100 = generate_file_name_gdb(
+        function_name=find_clusters,
+        description="all_hospital_clusters",
+        scale=scale,
+    )
+
+    find_clusters__all_church_clusters__n100 = generate_file_name_gdb(
+        function_name=find_clusters,
+        description="all_church_clusters",
+        scale=scale,
     )
 
     find_point_clusters__reduced_hospital_church_points__n100 = generate_file_name_gdb(
-        function_name=find_point_clusters,
+        function_name=hospital_church_selections,
         description="reduced_hospital_church_points",
         scale=scale,
     )
