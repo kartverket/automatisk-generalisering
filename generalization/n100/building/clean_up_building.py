@@ -54,4 +54,5 @@ def clean_up_fields_delete():
         print("No fields to keep.")
 
 
-# clean_up_fields_delete()
+if __name__ == "__main__":
+    main()
