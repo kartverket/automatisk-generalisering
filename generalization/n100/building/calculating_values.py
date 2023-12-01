@@ -148,7 +148,6 @@ def table_management():
         expression="symbol_val = -99",
         output_name=Building_N100.table_management__selection_bygningspunkt_with_undefined_nbr_values__n100.value,
     )
-    print("start cursor")
 
     # Counter to store the count of each unique BYGGTYP_NBR
     nbr_counter = Counter()
@@ -247,3 +246,7 @@ def table_management():
         expression_type="PYTHON3",
         code_block=code_block_hierarchy,
     )
+
+
+if __name__ == "__main__":
+    main()
