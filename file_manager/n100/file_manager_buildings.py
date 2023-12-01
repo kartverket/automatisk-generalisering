@@ -169,6 +169,14 @@ class Building_N100(Enum):
         )
     )
 
+    table_management__selection_bygningspunkt_with_undefined_nbr_values__n100 = (
+        generate_file_name_gdb(
+            function_name=table_management,
+            description="selection_bygningspunkt_with_undefined_nbr_values",
+            scale=scale,
+        )
+    )
+
     table_management__building_points_with_undefined_nbr_values__n100 = (
         generate_file_name_sub_dir(
             function_name=table_management,

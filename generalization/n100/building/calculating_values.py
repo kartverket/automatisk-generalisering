@@ -143,12 +143,19 @@ def table_management():
         code_block=code_block,
     )
 
+    custom_arcpy.select_attribute_and_make_feature_layer(
+        input_layer=Building_N100.table_management__bygningspunkt_pre_resolve_building_conflicts__n100.value,
+        expression="symbol_val = -99",
+        output_name=Building_N100.table_management__selection_bygningspunkt_with_undefined_nbr_values__n100.value,
+    )
+    print("start cursor")
+
     # Counter to store the count of each unique BYGGTYP_NBR
     nbr_counter = Counter()
 
     # Iterate over the rows in the feature class
     with arcpy.da.SearchCursor(
-        Building_N100.table_management__bygningspunkt_pre_resolve_building_conflicts__n100.value,
+        Building_N100.table_management__selection_bygningspunkt_with_undefined_nbr_values__n100.value,
         ["BYGGTYP_NBR", "symbol_val"],
     ) as cursor:
         for nbr, symbol_val in cursor:
@@ -172,7 +179,7 @@ def table_management():
         f"Log file created at: {Building_N100.table_management__building_points_with_undefined_nbr_values__n100.value}"
     )
 
-    # Function to handle symbol_val logic for BYGGTYP_NBR
+    # Code block to transform BYGGTYP_NBR values without symbology to other buildings (729)
     code_block_symbol_val_to_nbr = (
         "def symbol_val_to_nbr(symbol_val):\n"
         "    if symbol_val == -99:\n"
@@ -180,7 +187,7 @@ def table_management():
         "    return symbol_val"
     )
 
-    # Function to update symbol_val to 8 if it's -99
+    # Code block to update the symbol_val to reflect the new BYGGTYP_NBR
     code_block_update_symbol_val = (
         "def update_symbol_val(symbol_val):\n"
         "    if symbol_val == -99:\n"
