@@ -23,5 +23,5 @@ def general_setup():
     )
 
 
-def resolve_building_conflicts_setup():
-    pass
+if __name__ == "__main__":
+    general_setup()

@@ -227,3 +227,7 @@ def simplify_building_polygon():
         Building_N100.simplify_building_polygons__simplified_grunnriss__n100.value,
     )
     print("Copy completed.")
+
+
+if __name__ == "__main__":
+    main()

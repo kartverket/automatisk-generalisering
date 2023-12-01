@@ -458,3 +458,7 @@ def find_point_clusters():
     print(
         f"Merge between potentially reduced hospital and churches, layer name {Building_N100.find_point_clusters__reduced_hospital_church_points__n100.value} finished."
     )
+
+
+if __name__ == "__main__":
+    main()

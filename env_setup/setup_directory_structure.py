@@ -122,4 +122,5 @@ gdb_names = [
 
 # Base directory defined in config.py
 base_directory = config.output_folder
-main()
+if __name__ == "__main__":
+    main()

@@ -260,5 +260,5 @@ def removing_overlapping_byggningspunkt_and_grunnriss_matrikkel():
     )
 
 
-# removing_overlapping_byggningspunkt_and_grunnriss_matrikkel()
-# main()
+if __name__ == "__main__":
+    main()

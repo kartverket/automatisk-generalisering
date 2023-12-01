@@ -880,3 +880,6 @@ time_str = "{:02} hours, {:02} minutes, {:.2f} seconds".format(
 )
 
 print(f"The script took {time_str} to complete.")
+
+if __name__ == "__main__":
+    main()
