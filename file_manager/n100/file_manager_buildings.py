@@ -20,12 +20,29 @@ relative_path_lyrx = rf"{config.output_folder}\automatic_generalization_outputs\
 
 
 # Creating file names based on set standard
-def generate_file_name_gdb(function_name, description, scale):
+def generate_file_name_gdb(
+    function_name,
+    description,
+    scale,
+):
     return rf"{relative_path_gdb}\{function_name}__{description}__{scale}"
 
 
-def generate_file_name_general_files(function_name, description, scale, file_type):
+def generate_file_name_general_files(
+    function_name,
+    description,
+    scale,
+    file_type,
+):
     return rf"{relative_path_general_files}\{function_name}__{description}__{scale}.{file_type}"
+
+
+def generate_file_name_lyrx(
+    function_name,
+    description,
+    scale,
+):
+    return rf"{relative_path_lyrx}\{function_name}__{description}__{scale}.lyrx"
 
 
 preparation_begrensningskurve = "preparation_begrensningskurve"
@@ -36,22 +53,9 @@ table_management = "table_management"
 grunnriss_to_point = "grunnriss_to_point"
 simplify_building_polygons = "simplify_building_polygons"
 points_to_polygon = "points_to_polygon"
-find_point_clusters = "find_point_clusters"
-
+hospital_church_selections = "hospital_church_selections"
+find_clusters = "find_clusters"
 resolve_building_conflicts = "resolve_building_conflicts"
-
-file_function = {
-    "building_data_preparation": [
-        preparation_begrensningskurve,
-        preperation_veg_sti,
-        adding_matrikkel_as_points,
-        selecting_grunnriss_for_generalization,
-    ],
-    "create_simplified_building_polygons": [simplify_building_polygons],
-    "create_points_from_polygon": [grunnriss_to_point, find_point_clusters],
-    "calculating_values": [table_management],
-    "resolve_building_conflicts": [resolve_building_conflicts],
-}
 
 
 class Building_N100(Enum):
@@ -69,7 +73,7 @@ class Building_N100(Enum):
         scale=scale,
     )
 
-    # adding_matrikkel_as_points
+    # Function: adding_matrikkel_as_points
 
     adding_matrikkel_as_points__urban_area_selection_n100__n100 = (
         generate_file_name_gdb(
@@ -105,7 +109,7 @@ class Building_N100(Enum):
         scale=scale,
     )
 
-    # selecting_grunnriss_for_generalization
+    # Function: selecting_grunnriss_for_generalization
 
     selecting_grunnriss_for_generalization__selected_grunnriss_not_church__n100 = (
         generate_file_name_gdb(
@@ -153,6 +157,8 @@ class Building_N100(Enum):
 
     ########### CALCULATING VALUES ###########
 
+    # Function: table_management
+
     table_management__merged_bygningspunkt_n50_matrikkel__n100 = generate_file_name_gdb(
         function_name=table_management,
         description="merged_bygningspunkt_n50_matrikkel",
@@ -185,6 +191,8 @@ class Building_N100(Enum):
     )
 
     ########### CREATE POINTS FROM POLYGON ###########
+
+    # Function: grunnriss_to_point
 
     grunnriss_to_point__intersect_aggregated_and_original__n100 = (
         generate_file_name_gdb(
@@ -245,6 +253,8 @@ class Building_N100(Enum):
 
     ########### CREATE SIMPLIFIED BUILDING POLYGONS ###########
 
+    # Function: simplify_building_polygons
+
     simplify_building_polygons__simplified_building_1__n100 = generate_file_name_gdb(
         function_name=simplify_building_polygons,
         description="simplified_building_1",
@@ -275,13 +285,42 @@ class Building_N100(Enum):
         scale=scale,
     )
 
-    ########### FIND POINT CLUSTERS ###########
+    ########### HOSPITAL AND CHURCH CLUSTERS ###########
+
+    # Functon: hospital_church_selections
+
+    hospital_church_selections__hospital_points__n100 = generate_file_name_gdb(
+        function_name=hospital_church_selections,
+        description="hospital_points",
+        scale=scale,
+    )
+
+    hospital_church_selections__church_points__n100 = generate_file_name_gdb(
+        function_name=hospital_church_selections,
+        description="church_points",
+        scale=scale,
+    )
+
+    # Function: find_clusters
+
+    find_clusters__all_hospital_clusters__n100 = generate_file_name_gdb(
+        function_name=find_clusters,
+        description="all_hospital_clusters",
+        scale=scale,
+    )
+
+    find_clusters__all_church_clusters__n100 = generate_file_name_gdb(
+        function_name=find_clusters,
+        description="all_church_clusters",
+        scale=scale,
+    )
 
     find_point_clusters__reduced_hospital_church_points__n100 = generate_file_name_gdb(
-        function_name=find_point_clusters,
+        function_name=hospital_church_selections,
         description="reduced_hospital_church_points",
         scale=scale,
     )
+
     ########### POINTS TO POLYGON ###########
 
     points_to_polygon__transform_points_to_square_polygons__n100 = (
@@ -293,6 +332,14 @@ class Building_N100(Enum):
     )
 
     ########### RESOLVE BUILDING CONFLICTS ###########
+
+    resolve_building_conflicts__selection_area_resolve_building_conflicts__n100 = (
+        generate_file_name_gdb(
+            function_name=resolve_building_conflicts,
+            description="selection_area_resolve_building_conflicts",
+            scale=scale,
+        )
+    )
 
     resolve_building_conflicts__conflicts_bygningspunkt_result_1__n100 = (
         generate_file_name_gdb(
@@ -316,10 +363,4 @@ class Building_N100(Enum):
             description="conflicts_bygningspunkt_result_3",
             scale=scale,
         )
-    )
-
-
-class PermanentFiles(Enum):
-    n100_building_points_undefined_nbr_values = (
-        "n100_building_points_undefined_nbr_values"
     )
