@@ -156,11 +156,6 @@ def adding_matrikkel_as_points():
         expression="!bygningstype!",
     )
 
-    ###### NEED TO REMEBER TO REMOVE NBR VALUES NOT WANTED TO BE DELIVERED############
-    print(
-        " ###### NEED TO REMEBER TO REMOVE NBR VALUES NOT WANTED TO BE DELIVERED############"
-    )
-
 
 def selecting_grunnriss_for_generalization():
     """

@@ -107,6 +107,20 @@ def create_output_feature_class_if_not_exists(output_path, spatial_reference):
             "POLYGON",
             spatial_reference=spatial_reference,
         )
+        arcpy.management.AddField(
+            in_table=output_path,
+            field_name="origin_id",
+            field_type="LONG",
+        )
+
+
+def add_fields_with_join():
+    arcpy.management.JoinField(
+        in_data=output_polygon_feature_class,
+        in_field="origin_id",
+        join_table=input_building_points,
+        join_field="OBJECTID",
+    )
 
 
 def main():
@@ -128,7 +142,7 @@ def main():
         for index, row in enumerate(input_data_array)
     ]
 
-    number_of_cores = int(cpu_count() * 1.0)
+    number_of_cores = int(cpu_count() * PERCENTAGE_OF_CPU_CORES)
     with Pool(processes=number_of_cores) as processing_pool:
         well_known_text_data = processing_pool.map(
             calculate_well_known_text_polygon, data_to_be_processed
@@ -137,6 +151,8 @@ def main():
     process_data_in_batches(
         well_known_text_data, spatial_reference_system, output_polygon_feature_class
     )
+    print(f"Output feature class: {output_polygon_feature_class} completed.")
+    add_fields_with_join()
 
 
 # Constants and configurations
@@ -144,6 +160,7 @@ IN_MEMORY_WORKSPACE = "in_memory"
 TEMPORARY_FEATURE_CLASS_NAME = "temporary_polygon_feature_class"
 BATCH_PERCENTAGE = 0.02
 NUMBER_OF_SUBSETS = 5
+PERCENTAGE_OF_CPU_CORES = 1.0
 
 # Input and output paths
 input_building_points = (
