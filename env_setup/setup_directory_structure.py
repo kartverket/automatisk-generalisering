@@ -22,6 +22,12 @@ def main():
         main_directory_name,
         lyrx_directory_name,
     )
+    create_general_files_structure(
+        base_directory,
+        sub_directories,
+        main_directory_name,
+        general_files_name,
+    )
 
 
 def create_directory_structure(
@@ -72,27 +78,55 @@ def create_lyrx_directory_structure(
     main_directory_name,
     lyrx_directory_name,
 ):
+    # Iterate over each subdirectory to create 'lyrx_outputs' folder
+    for subdir in sub_directories:
+        lyrx_directory_path = os.path.join(
+            base_directory,
+            main_directory_name,
+            subdir,
+            lyrx_directory_name,
+        )
+        os.makedirs(
+            lyrx_directory_path,
+            exist_ok=True,
+        )
+        print(f"Created directory: {lyrx_directory_path}")
+
+
+def create_general_files_structure(
+    base_directory,
+    sub_directories,
+    main_directory_name,
+    general_files_name,
+):
     # Create the main directory
     main_directory = os.path.join(
         base_directory,
         main_directory_name,
-        lyrx_directory_name,
     )
     os.makedirs(
         main_directory,
         exist_ok=True,
     )
 
-    # Create each subdirectory
+    # Create 'general_files' folder in each subdirectory
     for subdir in sub_directories:
-        path = os.path.join(main_directory, subdir)
-        os.makedirs(path, exist_ok=True)
-        print(f"Created directory: {path}")
+        general_files_path = os.path.join(
+            main_directory,
+            subdir,
+            general_files_name,
+        )
+        os.makedirs(
+            general_files_path,
+            exist_ok=True,
+        )
+        print(f"Created 'general_files' folder: {general_files_path}")
 
 
 main_directory_name = "automatic_generalization_outputs"
 
 lyrx_directory_name = "lyrx_outputs"
+general_files_name = "general_files"
 
 scale_n50 = "n50"
 scale_n100 = "n100"
