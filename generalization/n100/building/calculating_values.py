@@ -179,10 +179,10 @@ def table_management():
 
     # Code block to transform BYGGTYP_NBR values without symbology to other buildings (729)
     code_block_symbol_val_to_nbr = (
-        "def symbol_val_to_nbr(symbol_val):\n"
+        "def symbol_val_to_nbr(symbol_val, byggtyp_nbr):\n"
         "    if symbol_val == -99:\n"
         "        return 729\n"
-        "    return symbol_val"
+        "    return byggtyp_nbr"
     )
 
     # Code block to update the symbol_val to reflect the new BYGGTYP_NBR
@@ -197,7 +197,7 @@ def table_management():
     arcpy.CalculateField_management(
         in_table=Building_N100.table_management__bygningspunkt_pre_resolve_building_conflicts__n100.value,
         field="BYGGTYP_NBR",
-        expression="symbol_val_to_nbr(!symbol_val!)",
+        expression="symbol_val_to_nbr(!symbol_val!, !BYGGTYP_NBR!)",
         expression_type="PYTHON3",
         code_block=code_block_symbol_val_to_nbr,
     )

@@ -9,3 +9,4 @@ class SymbologyN100(Enum):
     begrensnings_kurve = config.symbology_n100_begrensningskurve
     bygningspunkt = config.symbology_n100_bygningspunkt
     grunnriss = config.symbology_n100_grunnriss
+    drawn_plygon = config.symbology_n100_drawn_plygon
