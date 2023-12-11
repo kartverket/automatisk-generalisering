@@ -413,26 +413,24 @@ class Building_N100(Enum):
         scale=scale,
     )
 
-    resolve_building_conflicts__conflicts_bygningspunkt_result_1__n100 = (
-        generate_file_name_gdb(
+    resolve_building_conflicts__drawn_polygon_RBC_result_1__n100_lyrx = (
+        generate_file_name_lyrx(
             function_name=resolve_building_conflicts,
-            description="conflicts_bygningspunkt_result_1",
+            description="drawn_polygon_RBC_result_1",
             scale=scale,
         )
     )
 
-    resolve_building_conflicts__conflicts_bygningspunkt_result_2__n100 = (
-        generate_file_name_gdb(
-            function_name=resolve_building_conflicts,
-            description="conflicts_bygningspunkt_result_2",
-            scale=scale,
-        )
+    resolve_building_conflicts__drawn_polygons_result_2__n100 = generate_file_name_gdb(
+        function_name=resolve_building_conflicts,
+        description="drawn_polygons_result_2",
+        scale=scale,
     )
 
-    resolve_building_conflicts__conflicts_bygningspunkt_result_3__n100 = (
-        generate_file_name_gdb(
+    resolve_building_conflicts__drawn_polygon_RBC_result_2__n100_lyrx = (
+        generate_file_name_lyrx(
             function_name=resolve_building_conflicts,
-            description="conflicts_bygningspunkt_result_3",
+            description="drawn_polygon_RBC_result_2",
             scale=scale,
         )
     )
