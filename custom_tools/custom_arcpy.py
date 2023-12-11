@@ -184,20 +184,45 @@ def select_location_and_make_permanent_feature(
         print(f"{output_name} created temporarily.")
 
 
+# def apply_symbology(input_layer, in_symbology_layer, output_name):
+#     arcpy.management.MakeFeatureLayer(
+#         in_features=input_layer,
+#         out_layer=input_layer,
+#     )
+#
+#     arcpy.management.ApplySymbologyFromLayer(
+#         in_layer=input_layer,
+#         in_symbology_layer=in_symbology_layer,
+#         update_symbology="MAINTAIN",
+#     )
+#
+#     arcpy.management.SaveToLayerFile(
+#         in_layer=input_layer,
+#         out_layer=output_name,
+#         is_relative_path="ABSOLUTE",
+#     )
+
+
 def apply_symbology(input_layer, in_symbology_layer, output_name):
     arcpy.management.MakeFeatureLayer(
         in_features=input_layer,
-        out_layer=input_layer,
+        out_layer=f"{input_layer}_tmp",
     )
 
     arcpy.management.ApplySymbologyFromLayer(
-        in_layer=input_layer,
+        in_layer=f"{input_layer}_tmp",
         in_symbology_layer=in_symbology_layer,
         update_symbology="MAINTAIN",
     )
 
     arcpy.management.SaveToLayerFile(
-        in_layer=input_layer,
+        in_layer=f"{input_layer}_tmp",
         out_layer=output_name,
         is_relative_path="ABSOLUTE",
     )
+
+    arcpy.management.Delete(
+        f"{input_layer}_tmp",
+    )
+
+    print(f"{output_name} lyrx file created.")

@@ -55,6 +55,8 @@ simplify_building_polygons = "simplify_building_polygons"
 points_to_polygon = "points_to_polygon"
 hospital_church_selections = "hospital_church_selections"
 find_clusters = "find_clusters"
+rbc_selection = "rbc_selection"
+apply_symbology = "apply_symbology"
 resolve_building_conflicts = "resolve_building_conflicts"
 
 
@@ -331,36 +333,104 @@ class Building_N100(Enum):
         )
     )
 
-    ########### RESOLVE BUILDING CONFLICTS ###########
+    ########### RBC SELECTION  ###########
 
-    resolve_building_conflicts__selection_area_resolve_building_conflicts__n100 = (
+    rbc_selection__selection_area_resolve_building_conflicts__n100 = (
         generate_file_name_gdb(
-            function_name=resolve_building_conflicts,
+            function_name=rbc_selection,
             description="selection_area_resolve_building_conflicts",
             scale=scale,
         )
     )
 
-    resolve_building_conflicts__conflicts_bygningspunkt_result_1__n100 = (
-        generate_file_name_gdb(
+    rbc_selection__grunnriss_selection_rbc__n100 = generate_file_name_gdb(
+        function_name=rbc_selection,
+        description="grunnriss_selection_rbc",
+        scale=scale,
+    )
+
+    rbc_selection__veg_sti_selection_rbc_rbc__n100 = generate_file_name_gdb(
+        function_name=rbc_selection,
+        description="veg_sti_selection_rbc",
+        scale=scale,
+    )
+
+    rbc_selection__bygningspunkt_selection_rbc__n100 = generate_file_name_gdb(
+        function_name=rbc_selection,
+        description="bygningspunkt_selection_rbc",
+        scale=scale,
+    )
+
+    rbc_selection__begrensningskurve_selection_rbc__n100 = generate_file_name_gdb(
+        function_name=rbc_selection,
+        description="begrensningskurve_selection_rbc",
+        scale=scale,
+    )
+
+    rbc_selection__drawn_polygon_selection_rbc__n100 = generate_file_name_gdb(
+        function_name=rbc_selection,
+        description="drawn_polygon_selection_rbc",
+        scale=scale,
+    )
+
+    ############### APPLY SYMBOLOGY ###############
+
+    apply_symbology__bygningspunkt_selection__n100_lyrx = generate_file_name_lyrx(
+        function_name=apply_symbology,
+        description="bygningspunkt_selection",
+        scale=scale,
+    )
+
+    apply_symbology__grunnriss_selection__n100_lyrx = generate_file_name_lyrx(
+        function_name=apply_symbology,
+        description="grunnriss_selection",
+        scale=scale,
+    )
+
+    apply_symbology__veg_sti_selection__n100_lyrx = generate_file_name_lyrx(
+        function_name=apply_symbology,
+        description="veg_sti_selection",
+        scale=scale,
+    )
+
+    apply_symbology__begrensningskurve_selection__n100_lyrx = generate_file_name_lyrx(
+        function_name=apply_symbology,
+        description="begrensningskurve_selection",
+        scale=scale,
+    )
+
+    apply_symbology__drawn_polygon_selection__n100_lyrx = generate_file_name_lyrx(
+        function_name=apply_symbology,
+        description="drawn_polygon_selection",
+        scale=scale,
+    )
+
+    ########### RESOLVE BUILDING CONFLICTS ###########
+
+    resolve_building_conflicts__drawn_polygons_result_1__n100 = generate_file_name_gdb(
+        function_name=resolve_building_conflicts,
+        description="drawn_polygons_result_1",
+        scale=scale,
+    )
+
+    resolve_building_conflicts__drawn_polygon_RBC_result_1__n100_lyrx = (
+        generate_file_name_lyrx(
             function_name=resolve_building_conflicts,
-            description="conflicts_bygningspunkt_result_1",
+            description="drawn_polygon_RBC_result_1",
             scale=scale,
         )
     )
 
-    resolve_building_conflicts__conflicts_bygningspunkt_result_2__n100 = (
-        generate_file_name_gdb(
-            function_name=resolve_building_conflicts,
-            description="conflicts_bygningspunkt_result_2",
-            scale=scale,
-        )
+    resolve_building_conflicts__drawn_polygons_result_2__n100 = generate_file_name_gdb(
+        function_name=resolve_building_conflicts,
+        description="drawn_polygons_result_2",
+        scale=scale,
     )
 
-    resolve_building_conflicts__conflicts_bygningspunkt_result_3__n100 = (
-        generate_file_name_gdb(
+    resolve_building_conflicts__drawn_polygon_RBC_result_2__n100_lyrx = (
+        generate_file_name_lyrx(
             function_name=resolve_building_conflicts,
-            description="conflicts_bygningspunkt_result_3",
+            description="drawn_polygon_RBC_result_2",
             scale=scale,
         )
     )
