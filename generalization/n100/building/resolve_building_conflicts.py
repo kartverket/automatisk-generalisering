@@ -177,6 +177,11 @@ def resolve_building_conflicts():
             "45 Meters",
         ],
         [
+            config.simple_road_symbology,
+            "false",
+            "55 Meters",
+        ],
+        [
             Building_N100.apply_symbology__begrensningskurve_selection__n100_lyrx.value,
             "false",
             "25 Meters",
