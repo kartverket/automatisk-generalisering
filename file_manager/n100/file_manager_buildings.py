@@ -45,6 +45,7 @@ def generate_file_name_lyrx(
     return rf"{relative_path_lyrx}\{function_name}__{description}__{scale}.lyrx"
 
 
+# All function names in correct order
 preparation_begrensningskurve = "preparation_begrensningskurve"
 preperation_veg_sti = "preperation_veg_sti"
 adding_matrikkel_as_points = "adding_matrikkel_as_points"
@@ -54,7 +55,7 @@ grunnriss_to_point = "grunnriss_to_point"
 simplify_building_polygons = "simplify_building_polygons"
 points_to_polygon = "points_to_polygon"
 hospital_church_selections = "hospital_church_selections"
-find_clusters = "find_clusters"
+find_reduce_clusters = "find_clusters"
 resolve_building_conflicts = "resolve_building_conflicts"
 
 
@@ -301,19 +302,69 @@ class Building_N100(Enum):
         scale=scale,
     )
 
+    hospital_church_selections__hospital_clusters_3_or_more__n100 = (
+        generate_file_name_gdb(
+            function_name=find_clusters,
+            description="hospital_clusters_3_or_more",
+            scale=scale,
+        )
+    )
+
     # Function: find_clusters
 
-    find_clusters__all_hospital_clusters__n100 = generate_file_name_gdb(
-        function_name=find_clusters,
+    find_reduce_clusters__all_hospital_clusters__n100 = generate_file_name_gdb(
+        function_name=find_reduce_clusters,
         description="all_hospital_clusters",
         scale=scale,
     )
 
-    find_clusters__all_church_clusters__n100 = generate_file_name_gdb(
-        function_name=find_clusters,
+    find_reduce_clusters__all_church_clusters__n100 = generate_file_name_gdb(
+        function_name=find_reduce_clusters,
         description="all_church_clusters",
         scale=scale,
     )
+
+    find_reduce_clusters__church_clusters_3_or_more__n100 = generate_file_name_gdb(
+        function_name=find_reduce_clusters,
+        description="church_clusters_3_or_more",
+        scale=scale,
+    )
+
+    find_reduce_clusters__hospital_minimum_bounding_geometry__n100 = (
+        generate_file_name_gdb(
+            function_name=find_reduce_clusters,
+            description="hospital_minimum_bounding_geometry",
+            scale=scale,
+        )
+    )
+
+    find_reduce_clusters__feature_to_point_hospital__n100 = generate_file_name_gdb(
+        function_name=find_reduce_clusters,
+        description="feature_to_point_hospital",
+        scale=scale,
+    )
+
+    find_reduce_clusters__feature_to_point_church__n100 = generate_file_name_gdb(
+        function_name=find_reduce_clusters,
+        description="feature_to_point_church",
+        scale=scale,
+    )
+
+    find_reduce_clusters__selected_hospitals__n100 = generate_file_name_gdb(
+        function_name=find_reduce_clusters,
+        description="selected_hospitals",
+        scale=scale,
+    )
+
+    find_reduce_clusters__church_minimum_bounding_geometry__n100 = (
+        generate_file_name_gdb(
+            function_name=find_reduce_clusters,
+            description="church_minimum_bounding_geometry",
+            scale=scale,
+        )
+    )
+
+    # SISTE LAG
 
     find_point_clusters__reduced_hospital_church_points__n100 = generate_file_name_gdb(
         function_name=hospital_church_selections,
