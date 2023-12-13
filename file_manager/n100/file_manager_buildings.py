@@ -45,6 +45,7 @@ def generate_file_name_lyrx(
     return rf"{relative_path_lyrx}\{function_name}__{description}__{scale}.lyrx"
 
 
+# All function names in correct order
 preparation_begrensningskurve = "preparation_begrensningskurve"
 preperation_veg_sti = "preperation_veg_sti"
 adding_matrikkel_as_points = "adding_matrikkel_as_points"
@@ -54,14 +55,27 @@ grunnriss_to_point = "grunnriss_to_point"
 simplify_building_polygons = "simplify_building_polygons"
 points_to_polygon = "points_to_polygon"
 hospital_church_selections = "hospital_church_selections"
-find_clusters = "find_clusters"
+find_and_remove_clusters = "find_and_remove_clusters"
 rbc_selection = "rbc_selection"
 apply_symbology = "apply_symbology"
 resolve_building_conflicts = "resolve_building_conflicts"
 
 
 class Building_N100(Enum):
+
+    """
+    This class stores all the file names used when generalizing buildings
+
+    File-names for are built up of:
+    - Function name
+    - Description of what is being done / tool
+    - Scale we are generalizing to
+
+    """
+
+    #################################################
     ########### BUILDING DATA PREPARATION ###########
+    #################################################
 
     preparation_begrensningskurve__selected_waterfeatures_from_begrensningskurve__n100 = generate_file_name_gdb(
         function_name=preparation_begrensningskurve,
@@ -157,7 +171,9 @@ class Building_N100(Enum):
         scale=scale,
     )
 
+    ##########################################
     ########### CALCULATING VALUES ###########
+    ##########################################
 
     # Function: table_management
 
@@ -192,7 +208,9 @@ class Building_N100(Enum):
         )
     )
 
+    ##################################################
     ########### CREATE POINTS FROM POLYGON ###########
+    ##################################################
 
     # Function: grunnriss_to_point
 
@@ -253,7 +271,9 @@ class Building_N100(Enum):
         )
     )
 
+    ###########################################################
     ########### CREATE SIMPLIFIED BUILDING POLYGONS ###########
+    ###########################################################
 
     # Function: simplify_building_polygons
 
@@ -287,7 +307,9 @@ class Building_N100(Enum):
         scale=scale,
     )
 
+    ####################################################
     ########### HOSPITAL AND CHURCH CLUSTERS ###########
+    ####################################################
 
     # Functon: hospital_church_selections
 
@@ -303,27 +325,71 @@ class Building_N100(Enum):
         scale=scale,
     )
 
-    # Function: find_clusters
+    hospital_church_selections__hospital_clusters_3_or_more__n100 = (
+        generate_file_name_gdb(
+            function_name=find_and_remove_clusters,
+            description="hospital_clusters_3_or_more",
+            scale=scale,
+        )
+    )
 
-    find_clusters__all_hospital_clusters__n100 = generate_file_name_gdb(
-        function_name=find_clusters,
+    # Function: find_and_remove_clusters
+
+    find_and_remove_clusters__all_hospital_clusters__n100 = generate_file_name_gdb(
+        function_name=find_and_remove_clusters,
         description="all_hospital_clusters",
         scale=scale,
     )
 
-    find_clusters__all_church_clusters__n100 = generate_file_name_gdb(
-        function_name=find_clusters,
+    find_and_remove_clusters__all_church_clusters__n100 = generate_file_name_gdb(
+        function_name=find_and_remove_clusters,
         description="all_church_clusters",
         scale=scale,
     )
 
-    find_point_clusters__reduced_hospital_church_points__n100 = generate_file_name_gdb(
-        function_name=hospital_church_selections,
-        description="reduced_hospital_church_points",
+    find_and_remove_clusters__church_clusters_3_or_more__n100 = generate_file_name_gdb(
+        function_name=find_and_remove_clusters,
+        description="church_clusters_3_or_more",
         scale=scale,
     )
 
+    find_and_remove_clusters__hospital_minimum_bounding_geometry__n100 = (
+        generate_file_name_gdb(
+            function_name=find_and_remove_clusters,
+            description="hospital_minimum_bounding_geometry",
+            scale=scale,
+        )
+    )
+
+    find_and_remove_clusters__feature_to_point_hospital__n100 = generate_file_name_gdb(
+        function_name=find_and_remove_clusters,
+        description="feature_to_point_hospital",
+        scale=scale,
+    )
+
+    find_and_remove_clusters__feature_to_point_church__n100 = generate_file_name_gdb(
+        function_name=find_and_remove_clusters,
+        description="feature_to_point_church",
+        scale=scale,
+    )
+
+    find_and_remove_clusters__selected_hospitals__n100 = generate_file_name_gdb(
+        function_name=find_and_remove_clusters,
+        description="selected_hospitals",
+        scale=scale,
+    )
+
+    find_and_remove_clusters__church_minimum_bounding_geometry__n100 = (
+        generate_file_name_gdb(
+            function_name=find_and_remove_clusters,
+            description="church_minimum_bounding_geometry",
+            scale=scale,
+        )
+    )
+
+    #########################################
     ########### POINTS TO POLYGON ###########
+    #########################################
 
     points_to_polygon__transform_points_to_square_polygons__n100 = (
         generate_file_name_gdb(
@@ -333,7 +399,11 @@ class Building_N100(Enum):
         )
     )
 
-    ########### RBC SELECTION  ###########
+    ###################################################
+    ########### RESOLVE BUILDING CONFLICTS  ###########
+    ###################################################
+
+    # Function: rbc_selection
 
     rbc_selection__selection_area_resolve_building_conflicts__n100 = (
         generate_file_name_gdb(
@@ -373,7 +443,7 @@ class Building_N100(Enum):
         scale=scale,
     )
 
-    ############### APPLY SYMBOLOGY ###############
+    # Function: apply symbology
 
     apply_symbology__bygningspunkt_selection__n100_lyrx = generate_file_name_lyrx(
         function_name=apply_symbology,
@@ -405,7 +475,7 @@ class Building_N100(Enum):
         scale=scale,
     )
 
-    ########### RESOLVE BUILDING CONFLICTS ###########
+    # Function: resolve_building_conflicts
 
     resolve_building_conflicts__drawn_polygons_result_1__n100 = generate_file_name_gdb(
         function_name=resolve_building_conflicts,
