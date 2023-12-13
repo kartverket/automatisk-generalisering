@@ -306,7 +306,7 @@ class Building_N100(Enum):
 
     hospital_church_selections__hospital_clusters_3_or_more__n100 = (
         generate_file_name_gdb(
-            function_name=find_clusters,
+            function_name=find_reduce_clusters,
             description="hospital_clusters_3_or_more",
             scale=scale,
         )
