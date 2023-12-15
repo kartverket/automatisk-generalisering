@@ -129,11 +129,12 @@ def resolve_building_conflicts():
 
     print("Starting Resolve Building Conflicts 1 for drawn polygons")
     # Define input barriers
+
     input_barriers_1 = [
         [
             Building_N100.apply_symbology__veg_sti_selection__n100_lyrx.value,
             "false",
-            "10 Meters",
+            "100 Meters",
         ],
         [
             Building_N100.apply_symbology__begrensningskurve_selection__n100_lyrx.value,
@@ -170,16 +171,12 @@ def resolve_building_conflicts():
 
     print("Starting Resolve Building Conflicts 2 for drawn polygons")
     # Define input barriers
+
     input_barriers_2 = [
         [
             Building_N100.apply_symbology__veg_sti_selection__n100_lyrx.value,
             "false",
             "45 Meters",
-        ],
-        [
-            config.simple_road_symbology,
-            "false",
-            "55 Meters",
         ],
         [
             Building_N100.apply_symbology__begrensningskurve_selection__n100_lyrx.value,

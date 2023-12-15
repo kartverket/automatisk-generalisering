@@ -54,6 +54,7 @@ table_management = "table_management"
 grunnriss_to_point = "grunnriss_to_point"
 simplify_building_polygons = "simplify_building_polygons"
 points_to_polygon = "points_to_polygon"
+roads_to_polygon = "roads_to_polygon"
 hospital_church_selections = "hospital_church_selections"
 find_and_remove_clusters = "find_and_remove_clusters"
 rbc_selection = "rbc_selection"
@@ -397,6 +398,22 @@ class Building_N100(Enum):
             description="transform_points_to_square_polygons",
             scale=scale,
         )
+    )
+
+    #########################################
+    ########### ROADS TO POLYGON ###########
+    ########################################
+
+    roads_to_polygon__selection_large_roads__n100 = generate_file_name_gdb(
+        function_name=roads_to_polygon,
+        description="selection_large_roads",
+        scale=scale,
+    )
+
+    roads_to_polygon__roads_buffer__n100 = generate_file_name_gdb(
+        function_name=roads_to_polygon,
+        description="roads_buffer",
+        scale=scale,
     )
 
     ###################################################
