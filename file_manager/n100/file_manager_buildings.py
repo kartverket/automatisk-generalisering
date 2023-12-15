@@ -1,3 +1,4 @@
+# Imports
 from enum import Enum
 import config
 from env_setup import setup_directory_structure
@@ -8,15 +9,17 @@ scale = setup_directory_structure.scale_n100
 # Object name
 object = setup_directory_structure.object_bygning
 
-# Relative path to geodatabase
+# Relative paths to geodatabase
 relative_path_gdb = (
     rf"{config.output_folder}\automatic_generalization_outputs\{scale}\{object}.gdb"
 )
 
-# Relative path to geodatabase
 relative_path_general_files = rf"{config.output_folder}\automatic_generalization_outputs\{scale}\{setup_directory_structure.general_files_name}"
 
 relative_path_lyrx = rf"{config.output_folder}\automatic_generalization_outputs\{scale}\{setup_directory_structure.lyrx_directory_name}"
+
+
+##############################################################################################################################################
 
 
 # Creating file names based on set standard
@@ -45,6 +48,8 @@ def generate_file_name_lyrx(
     return rf"{relative_path_lyrx}\{function_name}__{description}__{scale}.lyrx"
 
 
+##############################################################################################################################################
+
 # All function names in correct order
 preparation_begrensningskurve = "preparation_begrensningskurve"
 preperation_veg_sti = "preperation_veg_sti"
@@ -59,6 +64,8 @@ find_and_remove_clusters = "find_and_remove_clusters"
 rbc_selection = "rbc_selection"
 apply_symbology = "apply_symbology"
 resolve_building_conflicts = "resolve_building_conflicts"
+
+##############################################################################################################################################
 
 
 class Building_N100(Enum):
@@ -379,10 +386,36 @@ class Building_N100(Enum):
         scale=scale,
     )
 
+    find_and_remove_clusters__hospital_clusters_of_2__n100 = generate_file_name_gdb(
+        function_name=find_and_remove_clusters,
+        description="hospital_clusters_of_2",
+        scale=scale,
+    )
+
     find_and_remove_clusters__church_minimum_bounding_geometry__n100 = (
         generate_file_name_gdb(
             function_name=find_and_remove_clusters,
             description="church_minimum_bounding_geometry",
+            scale=scale,
+        )
+    )
+
+    find_and_remove_clusters__selected_churches__n100 = generate_file_name_gdb(
+        function_name=find_and_remove_clusters,
+        description="selected_churches",
+        scale=scale,
+    )
+
+    find_and_remove_clusters__church_clusters_of_2__n100 = generate_file_name_gdb(
+        function_name=find_and_remove_clusters,
+        description="church_clusters_of_2",
+        scale=scale,
+    )
+
+    find_and_remove_clusters__reduced_hospital_and_church_points__n100 = (
+        generate_file_name_gdb(
+            function_name=find_and_remove_clusters,
+            description="reduced_hospital_and_church_points",
             scale=scale,
         )
     )
@@ -443,7 +476,7 @@ class Building_N100(Enum):
         scale=scale,
     )
 
-    # Function: apply symbology
+    # Function: apply_symbology
 
     apply_symbology__bygningspunkt_selection__n100_lyrx = generate_file_name_lyrx(
         function_name=apply_symbology,
