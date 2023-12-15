@@ -9,7 +9,7 @@ scale = setup_directory_structure.scale_n100
 # Object name
 object = setup_directory_structure.object_bygning
 
-# Relative paths to geodatabase
+# Relative paths
 relative_path_gdb = (
     rf"{config.output_folder}\automatic_generalization_outputs\{scale}\{object}.gdb"
 )
@@ -50,17 +50,27 @@ def generate_file_name_lyrx(
 
 ##############################################################################################################################################
 
-# All function names in correct order
+# All file and function names in correct order
+
+# building_data_preparation.py
 preparation_begrensningskurve = "preparation_begrensningskurve"
 preperation_veg_sti = "preperation_veg_sti"
 adding_matrikkel_as_points = "adding_matrikkel_as_points"
 selecting_grunnriss_for_generalization = "selecting_grunnriss_for_generalization"
 table_management = "table_management"
 grunnriss_to_point = "grunnriss_to_point"
+
+# create_simplified_building_polygons.py
 simplify_building_polygons = "simplify_building_polygons"
+
+# create_points_from_polygon.py
 points_to_polygon = "points_to_polygon"
+
+# hospital_church_clusters.py
 hospital_church_selections = "hospital_church_selections"
 find_and_remove_clusters = "find_and_remove_clusters"
+
+# resolve_building_conflicts.py
 rbc_selection = "rbc_selection"
 apply_symbology = "apply_symbology"
 resolve_building_conflicts = "resolve_building_conflicts"
