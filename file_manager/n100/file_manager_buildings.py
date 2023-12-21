@@ -69,6 +69,11 @@ points_to_polygon = "points_to_polygon"
 # roads_to_polygon.py
 roads_to_polygon = "roads_to_polygon"
 
+# propagate_displacement.py
+propagate_displacement_selection = "propagate_displacement_selection"
+propagate_displacement_copy = "propagate_displacement_copy"
+propagate_displacement = "propagate_displacement"
+
 # hospital_church_clusters.py
 hospital_church_selections = "hospital_church_selections"
 find_and_remove_clusters = "find_and_remove_clusters"
@@ -449,9 +454,9 @@ class Building_N100(Enum):
     ########### ROADS TO POLYGON ###########
     ########################################
 
-    roads_to_polygon__selection_large_roads__n100 = generate_file_name_gdb(
+    roads_to_polygon__selection_roads__n100 = generate_file_name_gdb(
         function_name=roads_to_polygon,
-        description="selection_large_roads",
+        description="selection_roads",
         scale=scale,
     )
 
@@ -461,6 +466,43 @@ class Building_N100(Enum):
         scale=scale,
     )
 
+    roads_to_polygon__roads_buffer_appended__n100 = generate_file_name_gdb(
+        function_name=roads_to_polygon,
+        description="roads_buffer_appended",
+        scale=scale,
+    )
+
+    roads_to_polygon__building_polygon_erased__n100 = generate_file_name_gdb(
+        function_name=roads_to_polygon,
+        description="building_polygon_erased",
+        scale=scale,
+    )
+
+    #########################################
+    ######## PROPAGATE DISPLACEMENT  ########
+    #########################################
+
+    propagate_displacement_selection__displacement_feature_selection__n100 = (
+        generate_file_name_gdb(
+            function_name=propagate_displacement_selection,
+            description="displacement_feature_selection",
+            scale=scale,
+        )
+    )
+
+    propagate_displacement_copy__drawn_polygon__n100 = generate_file_name_gdb(
+        function_name=propagate_displacement_copy,
+        description="drawn_polygon",
+        scale=scale,
+    )
+
+    propagate_displacement__displacement_feature_selection__n100 = (
+        generate_file_name_gdb(
+            function_name=propagate_displacement,
+            description="displacement_feature",
+            scale=scale,
+        )
+    )
     ###################################################
     ########### RESOLVE BUILDING CONFLICTS  ###########
     ###################################################
