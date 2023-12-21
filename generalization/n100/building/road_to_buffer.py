@@ -1,4 +1,3 @@
-import numpy as np
 import arcpy
 import os
 
@@ -9,13 +8,8 @@ from file_manager.n100.file_manager_buildings import Building_N100
 
 def main():
     setup_arcpy_environment()
-    # selecting_raod_segments()
+
     creating_raod_buffer()
-
-
-# Path to your input feature class
-# input_feature_class = Building_N100.preperation_veg_sti__unsplit_veg_sti__n100.value
-input_feature_class = Building_N100.rbc_selection__veg_sti_selection_rbc_rbc__n100.value
 
 
 def setup_arcpy_environment():
@@ -25,47 +19,109 @@ def setup_arcpy_environment():
     environment_setup.general_setup()
 
 
-#
-# field_value_to_width = {
-#     1.1: 20,
-#     1.2: 30,
-#     2: 27.5,
-#     3: 22.5,
-#     4: 27.5,
-#     5: 20,
-#     6: 20,
-#     7: 7.5,
-#     8: 7.5,
-#     9: 20,
-#     10: 7.5,
-#     11: 7.5,
-# }
+def pre_create_template_feature_class():
+    # Select a query and buffer width to create a template feature class
+    template_query = "MOTORVEGTYPE = 'Motorveg'"
+    template_buffer_width = 42.5
+
+    selection_output_name = (
+        f"{Building_N100.roads_to_polygon__selection_roads__n100.value}_template"
+    )
+    buffer_output_name = (
+        f"{Building_N100.roads_to_polygon__roads_buffer__n100.value}_template"
+    )
+
+    custom_arcpy.select_attribute_and_make_feature_layer(
+        input_layer=Building_N100.preperation_veg_sti__unsplit_veg_sti__n100.value,
+        expression=template_query,
+        output_name=selection_output_name,
+    )
+
+    arcpy.analysis.PairwiseBuffer(
+        in_features=selection_output_name,
+        out_feature_class=buffer_output_name,
+        buffer_distance_or_field=f"{template_buffer_width} Meters",
+    )
+
+    return buffer_output_name
 
 
-def selecting_raod_segments():
-    # Construct the SQL queries
-    sql_europa_veg = """ "subtypekode" = 4 AND "motorvegtype" = 'Motorveg' AND "UTTEGNING" IS NULL """
-    sql_4_motorveg_nedklassifisert = """ "subtypekode" = 4 AND "motorvegtype" = 'Motorveg' AND "UTTEGNING" = 'nedklassifisering' """
-    sql_riksveg_motorveg = """ "subtypekode" = 4 AND "motorvegtype" = 'Riksveg' """
+def create_or_clear_output_feature_class(template_feature_class):
+    output_fc = Building_N100.roads_to_polygon__roads_buffer_appended__n100.value
 
-    # Width of road segments
-    sql_europa_veg_width = 42.5
-    sql_4_motorveg_nedklassifisert = 22.5
+    # Delete the existing output feature class if it exists
+    if arcpy.Exists(output_fc):
+        arcpy.management.Delete(output_fc)
 
-    custom_arcpy.select_attribute_and_make_permanent_feature(
-        input_layer="feature_layer",
-        expression=sql_4_motorveg_nedklassifisert,
-        output_name=Building_N100.roads_to_polygon__selection_large_roads__n100.value,
+    # Create a new feature class
+    output_workspace, output_class_name = os.path.split(output_fc)
+    arcpy.CreateFeatureclass_management(
+        out_path=output_workspace,
+        out_name=output_class_name,
+        template=template_feature_class,
+        spatial_reference=environment_setup.project_spatial_reference,
     )
 
 
 def creating_raod_buffer():
-    arcpy.analysis.PairwiseBuffer(
-        in_features=input_feature_class,
-        out_feature_class=Building_N100.roads_to_polygon__roads_buffer__n100.value,
-        buffer_distance_or_field="35.0 Meters",
-        # dissolve_option="ALL",
-    )
+    # Define the SQL queries and their corresponding buffer widths
+    sql_queries = {
+        "MOTORVEGTYPE = 'Motorveg'": 42.5,
+        """ 
+        SUBTYPEKODE = 3 
+        Or MOTORVEGTYPE = 'Motortrafikkveg' 
+        Or (SUBTYPEKODE = 2 And MOTORVEGTYPE = 'Motortrafikkveg') 
+        Or (SUBTYPEKODE = 2 And MOTORVEGTYPE = 'Ikke motorveg') 
+        Or (SUBTYPEKODE = 4 And MOTORVEGTYPE = 'Ikke motorveg') 
+        """: 22.5,
+        """
+        SUBTYPEKODE = 1
+        Or SUBTYPEKODE = 5
+        Or SUBTYPEKODE = 6
+        Or SUBTYPEKODE = 9
+        """: 20,
+        """
+        SUBTYPEKODE = 7
+        Or SUBTYPEKODE = 8
+        Or SUBTYPEKODE = 10
+        Or SUBTYPEKODE =11
+        """: 7.5,
+    }
+
+    feature_selection = Building_N100.roads_to_polygon__selection_roads__n100.value
+    buffer_feature = Building_N100.roads_to_polygon__roads_buffer__n100.value
+    counter = 1
+
+    # Pre-create a template feature class
+    template_feature_class = pre_create_template_feature_class()
+
+    # Create or clear the output feature class
+    create_or_clear_output_feature_class(template_feature_class)
+
+    # Loop through each SQL query and create a buffer
+    for sql_query, buffer_width in sql_queries.items():
+        buffer_width_str = str(buffer_width).replace(".", "_")
+        selection_output_name = f"{feature_selection}_selection_{counter}"
+        buffer_output_name = f"{buffer_feature}_{buffer_width_str}m_{counter}"
+
+        custom_arcpy.select_attribute_and_make_feature_layer(
+            input_layer=Building_N100.preperation_veg_sti__unsplit_veg_sti__n100.value,
+            expression=sql_query,
+            output_name=selection_output_name,
+        )
+
+        arcpy.analysis.PairwiseBuffer(
+            in_features=selection_output_name,
+            out_feature_class=buffer_output_name,
+            buffer_distance_or_field=f"{buffer_width} Meters",
+        )
+
+        arcpy.management.Append(
+            inputs=buffer_output_name,
+            target=Building_N100.roads_to_polygon__roads_buffer_appended__n100.value,
+        )
+
+        counter += 1
 
 
 if __name__ == "__main__":
