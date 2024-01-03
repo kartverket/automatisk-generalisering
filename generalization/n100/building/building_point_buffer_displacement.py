@@ -1,5 +1,6 @@
 import arcpy
 import os
+import time
 
 from env_setup import environment_setup
 from custom_tools import custom_arcpy
@@ -10,7 +11,9 @@ from custom_tools.polygon_processor import PolygonProcessor
 def main():
     setup_arcpy_environment()
 
-    creating_raod_buffer()
+    # creating_raod_buffer()
+    last_output_feature = creating_raod_buffer()
+    copy_output_feature(last_output_feature)
 
 
 def setup_arcpy_environment():
@@ -25,12 +28,8 @@ def pre_create_template_feature_class():
     template_query = "MOTORVEGTYPE = 'Motorveg'"
     template_buffer_width = 42.5
 
-    selection_output_name = (
-        f"{Building_N100.roads_to_polygon__selection_roads__n100.value}_template"
-    )
-    buffer_output_name = (
-        f"{Building_N100.roads_to_polygon__roads_buffer__n100.value}_template"
-    )
+    selection_output_name = f"{Building_N100.building_point_buffer_displacement__selection_roads__n100.value}_template"
+    buffer_output_name = f"{Building_N100.building_point_buffer_displacement__roads_buffer__n100.value}_template"
 
     custom_arcpy.select_attribute_and_make_feature_layer(
         input_layer=Building_N100.preperation_veg_sti__unsplit_veg_sti__n100.value,
@@ -62,6 +61,59 @@ def create_or_clear_output_feature_class(template_feature_class, output_fc):
     )
 
 
+def create_feature_class_with_same_schema(source_fc, template_fc, output_fc):
+    """
+    Creates a new feature class with the same schema as the template and
+    transfers only the geometry from the source feature class.
+    """
+    # Create a new feature class using the template
+    output_workspace, output_class_name = os.path.split(output_fc)
+    arcpy.CreateFeatureclass_management(
+        output_workspace,
+        output_class_name,
+        "POLYGON",  # Assuming the geometry type is polygon
+        template_fc,
+        spatial_reference=arcpy.Describe(template_fc).spatialReference,
+    )
+
+    # Transfer geometry from source to the new feature class
+    with arcpy.da.SearchCursor(
+        source_fc, ["SHAPE@"]
+    ) as s_cursor, arcpy.da.InsertCursor(output_fc, ["SHAPE@"]) as i_cursor:
+        for row in s_cursor:
+            i_cursor.insertRow(row)
+
+
+def align_schema_to_template():
+    """
+    Creates a new feature class with the same schema as the template and
+    transfers only the geometry from the preparation_begrensningskurve feature class.
+    """
+    template_feature_class = pre_create_template_feature_class()
+    preparation_fc_modified = (
+        Building_N100.building_point_buffer_displacement__align_buffer_schema_to_template__n100.value
+    )
+
+    create_feature_class_with_same_schema(
+        Building_N100.preparation_begrensningskurve__begrensningskurve_buffer_erase_2__n100.value,
+        template_feature_class,
+        preparation_fc_modified,
+    )
+
+    return preparation_fc_modified
+
+
+def delete_lock_files(directory):
+    for file in os.listdir(directory):
+        if file.endswith(".lock"):
+            lock_file_path = os.path.join(directory, file)
+            try:
+                os.remove(lock_file_path)
+                print(f"Deleted lock file: {lock_file_path}")
+            except Exception as e:
+                print(f"Error deleting file {lock_file_path}: {e}")
+
+
 def creating_raod_buffer():
     # Define the SQL queries and their corresponding buffer widths
     sql_queries = {
@@ -87,9 +139,11 @@ def creating_raod_buffer():
         """: 7.5,
     }
 
-    feature_selection = Building_N100.roads_to_polygon__selection_roads__n100.value
+    feature_selection = (
+        Building_N100.building_point_buffer_displacement__selection_roads__n100.value
+    )
     buffer_feature_base = (
-        Building_N100.roads_to_polygon__roads_buffer_appended__n100.value
+        Building_N100.building_point_buffer_displacement__roads_buffer_appended__n100.value
     )
 
     # Define buffer factors and corresponding output feature classes
@@ -98,6 +152,7 @@ def creating_raod_buffer():
 
     # Pre-create a template feature class
     template_feature_class = pre_create_template_feature_class()
+    preparation_fc_modified = align_schema_to_template()
 
     # Create or clear output feature classes for each buffer factor
     for factor in buffer_factors:
@@ -136,7 +191,10 @@ def creating_raod_buffer():
 
             output_fc = output_feature_classes[factor]
             arcpy.management.Append(
-                inputs=buffer_output_name,
+                inputs=[
+                    buffer_output_name,
+                    preparation_fc_modified,
+                ],
                 target=output_fc,
             )
             print(f"Appended {buffer_output_name} to {output_fc} completed.")
@@ -156,23 +214,41 @@ def creating_raod_buffer():
         print("Polygon Processor started...")
         polygon_processor = PolygonProcessor(
             input_building_points=current_building_points,
-            output_polygon_feature_class=Building_N100.points_to_polygon__transform_points_to_square_polygons__n100.value,
+            output_polygon_feature_class=f"{Building_N100.building_point_buffer_displacement__iteration_points_to_square_polygons__n100.value}_{counter}",
             building_symbol_dimensions=building_symbol_dimensions,
             symbol_field_name="symbol_val",
             index_field_name="OBJECTID",
         )
         polygon_processor.run()
 
+        print("TESTING DATASOURCE ISSUE")
+
+        arcpy.management.Copy(
+            in_data=output_fc,
+            out_data=f"{output_fc}_{counter}_copy",
+        )
+        print("output_fc copied")
+
+        arcpy.management.Copy(
+            in_data=f"{Building_N100.building_point_buffer_displacement__iteration_points_to_square_polygons__n100.value}_{counter}",
+            out_data=f"{Building_N100.building_point_buffer_displacement__iteration_points_to_square_polygons__n100.value}_{counter}_copy",
+        )
+        print(
+            "building_point_buffer_displacement__iteration_points_to_square_polygons__n100 copied"
+        )
+
+        # time.sleep(600)
+
         # Perform Erase and FeatureToPoint operations
         output_feature_to_point = f"{Building_N100.table_management__bygningspunkt_pre_resolve_building_conflicts__n100.value}_{counter}"
         arcpy.analysis.PairwiseErase(
-            in_features=Building_N100.points_to_polygon__transform_points_to_square_polygons__n100.value,
-            erase_features=output_fc,
-            out_feature_class=Building_N100.roads_to_polygon__building_polygon_erased__n100.value,
+            in_features=f"{Building_N100.building_point_buffer_displacement__iteration_points_to_square_polygons__n100.value}_{counter}_copy",
+            erase_features=f"{output_fc}_{counter}_copy",
+            out_feature_class=f"{Building_N100.building_point_buffer_displacement__building_polygon_erased__n100.value}_{counter}",
         )
 
         arcpy.management.FeatureToPoint(
-            in_features=Building_N100.roads_to_polygon__building_polygon_erased__n100.value,
+            in_features=f"{Building_N100.building_point_buffer_displacement__building_polygon_erased__n100.value}_{counter}",
             out_feature_class=output_feature_to_point,
             point_location="INSIDE",
         )
@@ -180,7 +256,18 @@ def creating_raod_buffer():
         # Update current_building_points for the next iteration
         current_building_points = output_feature_to_point
 
+        last_output_feature_to_point = output_feature_to_point
+
         counter += 1
+
+    return last_output_feature_to_point
+
+
+def copy_output_feature(last_output_feature_to_point):
+    arcpy.management.Copy(
+        in_data=last_output_feature_to_point,
+        out_data=Building_N100.building_point_buffer_displacement__displaced_building_points__n100.value,
+    )
 
 
 if __name__ == "__main__":
