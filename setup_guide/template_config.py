@@ -31,6 +31,8 @@ n100_path = r"path\to\n100.gdb"
 ###########################
 matrikkel_path = r"path\to\matrikkel.gdb"
 
+displacement_feature = r"path\to\displacement_feature.gdb\displacement_feature"
+
 
 ###########################
 # Symbology path locations
@@ -40,9 +42,11 @@ symbology_n100_veg_sti = r"C:\path\to\symbology\layer.lyrx"
 symbology_n100_begrensningskurve = r"C:\path\to\symbology\layer.lyrx"
 symbology_n100_bygningspunkt = r"C:\path\to\symbology\layer.lyrx"
 symbology_n100_grunnriss = r"C:\path\to\symbology\layer.lyrx"
+symbology_n100_drawn_plygon = r"C:\path\to\symbology\layer.lyrx"
+simple_road_symbology = r"C:\path\to\symbology\layer.lyrx"
 
-# Folder for where outputs for Resolve Building Conflicts will be stored
+# This is no longer used by main script
 symbology_output_folder = r"C:\path\to\output\folder"
 
-# This is temporary for RBC iteration testing (not required)
+# This is no longer used by main script
 resolve_building_conflicts_iteration_feature = r"C:\path\to\test\feature"

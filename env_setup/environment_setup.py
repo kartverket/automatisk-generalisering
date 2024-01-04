@@ -4,6 +4,8 @@ import config
 # Importing general packages
 import arcpy
 
+project_spatial_reference = 25833
+
 
 def general_setup():
     """Set up the ArcGIS Pro environment.
@@ -15,7 +17,7 @@ def general_setup():
 
     arcpy.env.overwriteOutput = True
     arcpy.env.workspace = config.default_project_workspace
-    arcpy.env.outputCoordinateSystem = arcpy.SpatialReference(25833)
+    arcpy.env.outputCoordinateSystem = arcpy.SpatialReference(project_spatial_reference)
     arcpy.env.parallelProcessingFactor = config.cpu_percentage
 
     print(
