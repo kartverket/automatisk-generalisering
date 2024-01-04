@@ -63,6 +63,12 @@ grunnriss_to_point = "grunnriss_to_point"
 # create_simplified_building_polygons.py
 simplify_building_polygons = "simplify_building_polygons"
 
+# propagate_displacement.py
+propagate_displacement = "propagate_displacement"
+
+# building_point_buffer_displacement.py
+building_point_buffer_displacement = "building_point_buffer_displacement"
+
 # create_points_from_polygon.py
 points_to_polygon = "points_to_polygon"
 
@@ -94,10 +100,56 @@ class Building_N100(Enum):
     ########### BUILDING DATA PREPARATION ###########
     #################################################
 
-    preparation_begrensningskurve__selected_waterfeatures_from_begrensningskurve__n100 = generate_file_name_gdb(
+    preparation_preparation_begrensningskurve__selected_waterfeatures_from_begrensningskurve__n100 = generate_file_name_gdb(
         function_name=preparation_begrensningskurve,
         description="selected_waterfeatures_from_begrensningskurve",
         scale=scale,
+    )
+
+    preparation_begrensningskurve__selected_land_features_area__n100 = (
+        generate_file_name_gdb(
+            function_name=preparation_begrensningskurve,
+            description="selected_land_features_area",
+            scale=scale,
+        )
+    )
+
+    preparation_begrensningskurve__land_features_near_water__n100 = (
+        generate_file_name_gdb(
+            function_name=preparation_begrensningskurve,
+            description="land_features_near_water",
+            scale=scale,
+        )
+    )
+
+    preparation_begrensningskurve__begrensningskurve_waterfeatures_buffer__n100 = (
+        generate_file_name_gdb(
+            function_name=preparation_begrensningskurve,
+            description="begrensningskurve_waterfeatures_buffer",
+            scale=scale,
+        )
+    )
+
+    preparation_begrensningskurve__land_features_buffer__n100 = generate_file_name_gdb(
+        function_name=preparation_begrensningskurve,
+        description="land_features_buffer",
+        scale=scale,
+    )
+
+    preparation_begrensningskurve__begrensningskurve_buffer_erase_1__n100 = (
+        generate_file_name_gdb(
+            function_name=preparation_begrensningskurve,
+            description="begrensningskurve_buffer_erase_1",
+            scale=scale,
+        )
+    )
+
+    preparation_begrensningskurve__begrensningskurve_buffer_erase_2__n100 = (
+        generate_file_name_gdb(
+            function_name=preparation_begrensningskurve,
+            description="begrensningskurve_buffer_erase_2",
+            scale=scale,
+        )
     )
 
     preperation_veg_sti__unsplit_veg_sti__n100 = generate_file_name_gdb(
@@ -435,6 +487,96 @@ class Building_N100(Enum):
     )
 
     #########################################
+    ######## PROPAGATE DISPLACEMENT  ########
+    #########################################
+
+    propagate_displacement__bygningspunkt_pre_displacement__n100 = (
+        generate_file_name_gdb(
+            function_name=propagate_displacement,
+            description="bygningspunkt_pre_displacement",
+            scale=scale,
+        )
+    )
+
+    #########################################
+    ########### ROADS TO POLYGON ###########
+    ########################################
+
+    building_point_buffer_displacement__roads_study_area__n100 = generate_file_name_gdb(
+        function_name=building_point_buffer_displacement,
+        description="roads_study_area",
+        scale=scale,
+    )
+
+    building_point_buffer_displacement__begrensningskurve_study_area__n100 = (
+        generate_file_name_gdb(
+            function_name=building_point_buffer_displacement,
+            description="begrensningskurve_study_area",
+            scale=scale,
+        )
+    )
+
+    building_point_buffer_displacement__buildings_study_area__n100 = (
+        generate_file_name_gdb(
+            function_name=building_point_buffer_displacement,
+            description="buildings_study_area",
+            scale=scale,
+        )
+    )
+
+    building_point_buffer_displacement__selection_roads__n100 = generate_file_name_gdb(
+        function_name=building_point_buffer_displacement,
+        description="selection_roads",
+        scale=scale,
+    )
+
+    building_point_buffer_displacement__align_buffer_schema_to_template__n100 = (
+        generate_file_name_gdb(
+            function_name=building_point_buffer_displacement,
+            description="align_buffer_schema_to_template",
+            scale=scale,
+        )
+    )
+
+    building_point_buffer_displacement__roads_buffer__n100 = generate_file_name_gdb(
+        function_name=building_point_buffer_displacement,
+        description="roads_buffer",
+        scale=scale,
+    )
+
+    building_point_buffer_displacement__roads_buffer_appended__n100 = (
+        generate_file_name_gdb(
+            function_name=building_point_buffer_displacement,
+            description="roads_buffer_appended",
+            scale=scale,
+        )
+    )
+
+    building_point_buffer_displacement__iteration_points_to_square_polygons__n100 = (
+        generate_file_name_gdb(
+            function_name=building_point_buffer_displacement,
+            description="iteration_points_to_square_polygons",
+            scale=scale,
+        )
+    )
+
+    building_point_buffer_displacement__building_polygon_erased__n100 = (
+        generate_file_name_gdb(
+            function_name=building_point_buffer_displacement,
+            description="building_polygon_erased",
+            scale=scale,
+        )
+    )
+
+    building_point_buffer_displacement__displaced_building_points__n100 = (
+        generate_file_name_gdb(
+            function_name=building_point_buffer_displacement,
+            description="displaced_building_points",
+            scale=scale,
+        )
+    )
+
+    #########################################
     ########### POINTS TO POLYGON ###########
     #########################################
 
@@ -534,6 +676,38 @@ class Building_N100(Enum):
         generate_file_name_lyrx(
             function_name=resolve_building_conflicts,
             description="drawn_polygon_RBC_result_1",
+            scale=scale,
+        )
+    )
+
+    resolve_building_conflicts__building_points_RBC_result_1__n100 = (
+        generate_file_name_gdb(
+            function_name=resolve_building_conflicts,
+            description="building_points_RBC_result_1",
+            scale=scale,
+        )
+    )
+
+    resolve_building_conflicts__building_points_RBC_result_2__n100 = (
+        generate_file_name_gdb(
+            function_name=resolve_building_conflicts,
+            description="building_points_RBC_result_2",
+            scale=scale,
+        )
+    )
+
+    resolve_building_conflicts__building_points_RBC_result_1__n100_lyrx = (
+        generate_file_name_lyrx(
+            function_name=resolve_building_conflicts,
+            description="building_points_RBC_result_1",
+            scale=scale,
+        )
+    )
+
+    resolve_building_conflicts__building_points_RBC_result_2__n100_lyrx = (
+        generate_file_name_lyrx(
+            function_name=resolve_building_conflicts,
+            description="building_points_RBC_result_2",
             scale=scale,
         )
     )

@@ -49,7 +49,52 @@ def preparation_begrensningskurve():
     custom_arcpy.select_attribute_and_make_permanent_feature(
         input_layer=input_n100.BegrensningsKurve,
         expression=sql_expr_begrensningskurve_waterfeatures,
-        output_name=Building_N100.preparation_begrensningskurve__selected_waterfeatures_from_begrensningskurve__n100.value,
+        output_name=Building_N100.preparation_preparation_begrensningskurve__selected_waterfeatures_from_begrensningskurve__n100.value,
+    )
+
+    custom_arcpy.select_attribute_and_make_permanent_feature(
+        input_layer=input_n100.ArealdekkeFlate,
+        expression="""OBJTYPE NOT IN ('ElvBekk', 'Havflate', 'Innsjø', 'InnsjøRegulert')""",
+        output_name=Building_N100.preparation_begrensningskurve__selected_land_features_area__n100.value,
+    )
+
+    custom_arcpy.select_location_and_make_permanent_feature(
+        input_layer=Building_N100.preparation_begrensningskurve__selected_land_features_area__n100.value,
+        overlap_type=custom_arcpy.OverlapType.BOUNDARY_TOUCHES.value,
+        select_features=Building_N100.preparation_preparation_begrensningskurve__selected_waterfeatures_from_begrensningskurve__n100.value,
+        output_name=Building_N100.preparation_begrensningskurve__land_features_near_water__n100.value,
+    )
+
+    arcpy.analysis.PairwiseBuffer(
+        in_features=Building_N100.preparation_begrensningskurve__land_features_near_water__n100.value,
+        out_feature_class=Building_N100.preparation_begrensningskurve__land_features_buffer__n100.value,
+        buffer_distance_or_field="15 Meters",
+    )
+    print("Buffered land features created")
+
+    arcpy.analysis.PairwiseBuffer(
+        in_features=Building_N100.preparation_preparation_begrensningskurve__selected_waterfeatures_from_begrensningskurve__n100.value,
+        out_feature_class=Building_N100.preparation_begrensningskurve__begrensningskurve_waterfeatures_buffer__n100.value,
+        buffer_distance_or_field="45 Meters",
+    )
+    print("Buffered water features created")
+
+    arcpy.analysis.PairwiseErase(
+        in_features=Building_N100.preparation_begrensningskurve__begrensningskurve_waterfeatures_buffer__n100.value,
+        erase_features=Building_N100.preparation_begrensningskurve__selected_land_features_area__n100.value,
+        out_feature_class=Building_N100.preparation_begrensningskurve__begrensningskurve_buffer_erase_1__n100.value,
+    )
+    print(
+        f"Erased 1 completed {Building_N100.preparation_begrensningskurve__begrensningskurve_buffer_erase_1__n100.value} created"
+    )
+
+    arcpy.analysis.PairwiseErase(
+        in_features=Building_N100.preparation_begrensningskurve__begrensningskurve_buffer_erase_1__n100.value,
+        erase_features=Building_N100.preparation_begrensningskurve__land_features_buffer__n100.value,
+        out_feature_class=Building_N100.preparation_begrensningskurve__begrensningskurve_buffer_erase_2__n100.value,
+    )
+    print(
+        f"Erased 2 completed {Building_N100.preparation_begrensningskurve__begrensningskurve_buffer_erase_2__n100.value} created"
     )
 
     # Adding hierarchy and invisibility fields to the preparation_begrensningskurve__begrensningskurve_buffer_waterfeatures__n100 and setting them to 0
@@ -59,13 +104,13 @@ def preparation_begrensningskurve():
 
     # Add fields
     arcpy.management.AddFields(
-        in_table=Building_N100.preparation_begrensningskurve__selected_waterfeatures_from_begrensningskurve__n100.value,
+        in_table=Building_N100.preparation_begrensningskurve__begrensningskurve_buffer_erase_2__n100.value,
         field_description=fields_to_add,
     )
 
     # Calculate fields
     arcpy.management.CalculateFields(
-        in_table=Building_N100.preparation_begrensningskurve__selected_waterfeatures_from_begrensningskurve__n100.value,
+        in_table=Building_N100.preparation_begrensningskurve__begrensningskurve_buffer_erase_2__n100.value,
         expression_type="PYTHON3",
         fields=fields_to_calculate,
     )

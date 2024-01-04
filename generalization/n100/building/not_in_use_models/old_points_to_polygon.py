@@ -167,7 +167,7 @@ input_building_points = (
     Building_N100.table_management__bygningspunkt_pre_resolve_building_conflicts__n100.value
 )
 output_polygon_feature_class = (
-    Building_N100.points_to_polygon__transform_points_to_square_polygons__n100.value
+    Building_N100.building_point_buffer_displacement__iteration_points_to_square_polygons__n100.value
 )
 spatial_reference_system = arcpy.SpatialReference(25833)
 
@@ -184,14 +184,5 @@ building_symbol_dimensions = {
     9: (53, 45),
 }
 
-polygon_processor = PolygonProcessor(
-    input_building_points=Building_N100.building_point_buffer_displacement__displaced_building_points__n100.value,
-    output_polygon_feature_class=Building_N100.points_to_polygon__transform_points_to_square_polygons__n100.value,
-    building_symbol_dimensions=building_symbol_dimensions,
-    symbol_field_name="symbol_val",
-    index_field_name="OBJECTID",
-)
-
-
 if __name__ == "__main__":
-    polygon_processor.run()
+    main()
