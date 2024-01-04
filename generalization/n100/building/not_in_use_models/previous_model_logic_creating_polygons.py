@@ -10,7 +10,7 @@ start_time = time.time()
 input_buildings = (
     Building_N100.table_management__bygningspunkt_pre_resolve_building_conflicts__n100.value
 )
-out_feature_path = f"{Building_N100.points_to_polygon__transform_points_to_square_polygons__n100.value}_2"
+out_feature_path = f"{Building_N100.building_point_buffer_displacement__iteration_points_to_square_polygons__n100.value}_2"
 
 # Define sizes for each symbol_val as (width, height)
 symbol_sizes = {

@@ -5,8 +5,10 @@ from tqdm import tqdm
 import random
 from multiprocessing import Pool, cpu_count
 
+import config
 from env_setup import environment_setup
 from file_manager.n100.file_manager_buildings import Building_N100
+from env_setup import setup_directory_structure
 
 
 class PolygonProcessor:
@@ -82,17 +84,14 @@ class PolygonProcessor:
     ):
         self.input_building_points = input_building_points
         self.output_polygon_feature_class = output_polygon_feature_class
-        self.spatial_reference_system = arcpy.SpatialReference(
-            environment_setup.project_spatial_reference
-        )
         self.building_symbol_dimensions = building_symbol_dimensions
         self.symbol_field_name = symbol_field_name
         self.index_field_name = index_field_name
-        self.origin_id_field = self.generate_unique_field_name(
-            input_building_points, "match_id"
-        )
+        # Delay initialization of attributes that depend on external resources
+        self.spatial_reference_system = None
+        self.origin_id_field = None
         # Constants and configurations
-        self.IN_MEMORY_WORKSPACE = "in_memory"
+        self.IN_MEMORY_WORKSPACE = config.default_project_workspace
         self.TEMPORARY_FEATURE_CLASS_NAME = "temporary_polygon_feature_class"
         self.BATCH_PERCENTAGE = 0.02
         self.NUMBER_OF_SUBSETS = 5
@@ -156,6 +155,7 @@ class PolygonProcessor:
             "POLYGON",
             spatial_reference=self.spatial_reference_system,
         )
+
         arcpy.management.AddField(
             in_table=self.output_polygon_feature_class,
             field_name=self.origin_id_field,
@@ -242,7 +242,15 @@ class PolygonProcessor:
         """
         Orchestrates the process of converting building points to polygons.
         """
+        self.spatial_reference_system = arcpy.SpatialReference(
+            environment_setup.project_spatial_reference
+        )
+        self.origin_id_field = self.generate_unique_field_name(
+            self.input_building_points, "match_id"
+        )
+
         self.create_output_feature_class_if_not_exists()
+        # Initialize attributes that depend on external resources here
 
         # Preparing data for processing
         input_data_array = arcpy.da.FeatureClassToNumPyArray(
@@ -290,7 +298,7 @@ if __name__ == "__main__":
         Building_N100.table_management__bygningspunkt_pre_resolve_building_conflicts__n100.value
     )
     output_polygon_feature_class = (
-        Building_N100.points_to_polygon__transform_points_to_square_polygons__n100.value
+        Building_N100.building_point_buffer_displacement__iteration_points_to_square_polygons__n100.value
     )
     building_symbol_dimensions = {
         1: (145, 145),

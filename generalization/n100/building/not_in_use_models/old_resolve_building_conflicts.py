@@ -114,7 +114,7 @@ def iterate_through_selections():
                 "output_name": selection_bygningspunkt,
             },
             {
-                "input_layer": Building_N100.preparation_begrensningskurve__selected_waterfeatures_from_begrensningskurve__n100.value,
+                "input_layer": Building_N100.preparation_begrensningskurve__begrensningskurve_buffer_erase_2__n100.value,
                 "output_name": selection_begrensningskurve,
             },
         ]

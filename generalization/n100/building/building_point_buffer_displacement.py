@@ -11,6 +11,7 @@ from custom_tools.polygon_processor import PolygonProcessor
 
 def main():
     setup_arcpy_environment()
+    selection()
 
     last_output_feature = creating_raod_buffer()
     copy_output_feature(last_output_feature)
@@ -124,7 +125,7 @@ def align_schema_to_template():
     )
 
     create_feature_class_with_same_schema(
-        Building_N100.preparation_begrensningskurve__begrensningskurve_buffer_erase_2__n100.value,
+        Building_N100.building_point_buffer_displacement__begrensningskurve_study_area__n100.value,
         template_feature_class,
         preparation_fc_modified,
     )
@@ -182,7 +183,7 @@ def creating_raod_buffer():
 
     # Initial input for the PolygonProcessor
     current_building_points = (
-        Building_N100.table_management__bygningspunkt_pre_resolve_building_conflicts__n100.value
+        Building_N100.building_point_buffer_displacement__buildings_study_area__n100.value
     )
 
     for factor in buffer_factors:
@@ -193,7 +194,7 @@ def creating_raod_buffer():
         for sql_query, original_width in sql_queries.items():
             selection_output_name = f"{feature_selection}_selection_{counter}"
             custom_arcpy.select_attribute_and_make_feature_layer(
-                input_layer=Building_N100.preperation_veg_sti__unsplit_veg_sti__n100.value,
+                input_layer=Building_N100.building_point_buffer_displacement__roads_study_area__n100.value,
                 expression=sql_query,
                 output_name=selection_output_name,
             )
