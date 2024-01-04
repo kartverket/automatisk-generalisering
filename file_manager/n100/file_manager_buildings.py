@@ -394,14 +394,6 @@ class Building_N100(Enum):
         scale=scale,
     )
 
-    hospital_church_selections__hospital_clusters_3_or_more__n100 = (
-        generate_file_name_gdb(
-            function_name=find_and_remove_clusters,
-            description="hospital_clusters_3_or_more",
-            scale=scale,
-        )
-    )
-
     # Function: find_and_remove_clusters
 
     find_and_remove_clusters__all_hospital_clusters__n100 = generate_file_name_gdb(
@@ -416,16 +408,36 @@ class Building_N100(Enum):
         scale=scale,
     )
 
-    find_and_remove_clusters__church_clusters_3_or_more__n100 = generate_file_name_gdb(
+    find_and_remove_clusters_hospital_points_not_in_cluster_n100 = (
+        generate_file_name_gdb(
+            function_name=find_and_remove_clusters,
+            description="hospital_points_not_in_cluster",
+            scale=scale,
+        )
+    )
+
+    find_and_remove_clusters_hospital_points_in_cluster_n100 = generate_file_name_gdb(
         function_name=find_and_remove_clusters,
-        description="church_clusters_3_or_more",
+        description="hospital_points_in_cluster",
         scale=scale,
     )
 
-    find_and_remove_clusters__hospital_minimum_bounding_geometry__n100 = (
+    find_and_remove_clusters_church_points_not_in_cluster_n100 = generate_file_name_gdb(
+        function_name=find_and_remove_clusters,
+        description="church_points_not_in_cluster",
+        scale=scale,
+    )
+
+    find_and_remove_clusters_church_points_in_cluster_n100 = generate_file_name_gdb(
+        function_name=find_and_remove_clusters,
+        description="church_points_in_cluster",
+        scale=scale,
+    )
+
+    find_and_remove_clusters__minimum_bounding_geometry_hospital__n100 = (
         generate_file_name_gdb(
             function_name=find_and_remove_clusters,
-            description="hospital_minimum_bounding_geometry",
+            description="minimum_bounding_geometry_hospital",
             scale=scale,
         )
     )
@@ -436,48 +448,40 @@ class Building_N100(Enum):
         scale=scale,
     )
 
+    find_and_remove_clusters__minimum_bounding_geometry_church__n100 = (
+        generate_file_name_gdb(
+            function_name=find_and_remove_clusters,
+            description="minimum_bounding_geometry_church",
+            scale=scale,
+        )
+    )
+
     find_and_remove_clusters__feature_to_point_church__n100 = generate_file_name_gdb(
         function_name=find_and_remove_clusters,
         description="feature_to_point_church",
         scale=scale,
     )
 
-    find_and_remove_clusters__selected_hospitals__n100 = generate_file_name_gdb(
-        function_name=find_and_remove_clusters,
-        description="selected_hospitals",
-        scale=scale,
-    )
-
-    find_and_remove_clusters__hospital_clusters_of_2__n100 = generate_file_name_gdb(
-        function_name=find_and_remove_clusters,
-        description="hospital_clusters_of_2",
-        scale=scale,
-    )
-
-    find_and_remove_clusters__church_minimum_bounding_geometry__n100 = (
+    find_and_remove_clusters__chosen_hospitals_from_cluster__n100 = (
         generate_file_name_gdb(
             function_name=find_and_remove_clusters,
-            description="church_minimum_bounding_geometry",
+            description="chosen_hospitals_from_cluster",
             scale=scale,
         )
     )
 
-    find_and_remove_clusters__selected_churches__n100 = generate_file_name_gdb(
-        function_name=find_and_remove_clusters,
-        description="selected_churches",
-        scale=scale,
-    )
-
-    find_and_remove_clusters__church_clusters_of_2__n100 = generate_file_name_gdb(
-        function_name=find_and_remove_clusters,
-        description="church_clusters_of_2",
-        scale=scale,
-    )
-
-    find_and_remove_clusters__reduced_hospital_and_church_points__n100 = (
+    find_and_remove_clusters__chosen_churches_from_cluster__n100 = (
         generate_file_name_gdb(
             function_name=find_and_remove_clusters,
-            description="reduced_hospital_and_church_points",
+            description="chosen_churches_from_cluster",
+            scale=scale,
+        )
+    )
+
+    find_and_remove_clusters__reduced_hospital_and_church_points_2__n100 = (
+        generate_file_name_gdb(
+            function_name=find_and_remove_clusters,
+            description="reduced_hospital_and_church_points_2",
             scale=scale,
         )
     )
