@@ -1,8 +1,9 @@
+# Importing modules
 import arcpy
 import os
 import time
 
-# Importing custom files relative to the root path
+# Importing custom files
 import config
 from custom_tools import custom_arcpy
 from env_setup import environment_setup
@@ -20,6 +21,9 @@ iteration_fc = config.resolve_building_conflicts_iteration_feature
 
 
 def main():
+    """
+    This script resolves building conflicts, both building polygons and points
+    """
     # Start timing
     start_time = time.time()
     rbc_selection()
@@ -41,7 +45,7 @@ def main():
         int(hours), int(minutes), seconds
     )
 
-    print(f"The script took {time_str} to complete.")
+    print(f"resolve_building_conflicts took {time_str} to complete.")
 
 
 def rbc_selection():

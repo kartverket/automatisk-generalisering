@@ -1,18 +1,21 @@
 # Importing modules
 import arcpy
 import os
+import time
 
-# Importing custom files
+# Importing custom modules
 import config
 from custom_tools import custom_arcpy
-from env_setup import environment_setup
 from input_data import input_n50
 from input_data import input_n100
 
-# Importing file manager files
+# Importing file manager
 from file_manager.n100.file_manager_buildings import Building_N100
 
 # Importing environment setup
+from env_setup import environment_setup
+
+# Environment setup
 environment_setup.general_setup()
 
 
@@ -23,14 +26,33 @@ def main():
     A cluster is by our definition points that are closer together than 200 meters.
 
     """
+    # Start timing
+    start_time = time.time()
+
     hospital_church_selections()
     find_and_remove_clusters()
 
+    # End timing
+    end_time = time.time()
 
-#######################################################################################################################################################
+    # Calculate elapsed time
+    elapsed_time = end_time - start_time
+
+    # Convert to hours, minutes, and seconds
+    hours, remainder = divmod(elapsed_time, 3600)
+    minutes, seconds = divmod(remainder, 60)
+
+    # Format as string
+    time_str = "{:02} hours, {:02} minutes, {:.2f} seconds".format(
+        int(hours), int(minutes), seconds
+    )
+
+    print(f"hospital_church_clusters took {time_str} to complete.")
 
 
-# Selecting hospital and churches from all building points
+###################################### Selecting hospital and churches from all building points ################################################
+
+
 def hospital_church_selections():
     """
     The function selects hospital and churches and makes two separate feature classes for each
@@ -68,6 +90,10 @@ def hospital_church_selections():
 
 # Finding and removing hospital and church clusters
 def find_and_remove_clusters():
+    """
+    This function finds clusters in the hospital and church layers.
+    After this,
+    """
     print("Finding hospital and church clusters...")
 
     # Finding hospital clusters
@@ -108,45 +134,41 @@ def find_and_remove_clusters():
         fields="CLUSTER_ID",
     )
 
-    ###################################### Selecting features in a cluster and features not in a cluster ################################################
+    ######################################  Making feature classes from hospital and church points that are in a cluster and not in a cluster ################################################
 
     expression_cluster = "CLUSTER_ID > 0"
     expression_not_cluster = "CLUSTER_ID < 0"
 
-    # Making layer of hospital points NOT in a cluster
+    # Making feature class of hospital points NOT in a cluster
     custom_arcpy.select_attribute_and_make_permanent_feature(
         input_layer=Building_N100.hospital_church_selections__hospital_points__n100.value,
         expression=expression_not_cluster,
         output_name=Building_N100.find_and_remove_clusters_hospital_points_not_in_cluster_n100.value,
         selection_type=custom_arcpy.SelectionType.NEW_SELECTION,
-        inverted=False,
     )
 
-    # Making layer of hospital points in a cluster
+    # Making feature class of hospital points in a cluster
     custom_arcpy.select_attribute_and_make_permanent_feature(
         input_layer=Building_N100.hospital_church_selections__hospital_points__n100.value,
         expression=expression_cluster,
         output_name=Building_N100.find_and_remove_clusters_hospital_points_in_cluster_n100.value,
         selection_type=custom_arcpy.SelectionType.NEW_SELECTION,
-        inverted=False,
     )
 
-    # Making layer of church points NOT in a cluster
+    # Making feature class of church points NOT in a cluster
     custom_arcpy.select_attribute_and_make_permanent_feature(
         input_layer=Building_N100.hospital_church_selections__church_points__n100.value,
         expression=expression_not_cluster,
         output_name=Building_N100.find_and_remove_clusters_church_points_not_in_cluster_n100.value,
         selection_type=custom_arcpy.SelectionType.NEW_SELECTION,
-        inverted=False,
     )
 
-    # Making layer of church points in a cluster
+    # Making feature class of church points in a cluster
     custom_arcpy.select_attribute_and_make_permanent_feature(
         input_layer=Building_N100.hospital_church_selections__church_points__n100.value,
         expression=expression_cluster,
         output_name=Building_N100.find_and_remove_clusters_church_points_in_cluster_n100.value,
         selection_type=custom_arcpy.SelectionType.NEW_SELECTION,
-        inverted=False,
     )
 
     ###################################### Creating a merge list & adding all hospital and church features not a part of a cluster ################################################

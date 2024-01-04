@@ -1,11 +1,18 @@
+# Importing modules
 import numpy as np
 import arcpy
 import os
 from tqdm import tqdm
 from multiprocessing import Pool, cpu_count
+import time
 
+# Importing environment setup
 from env_setup import environment_setup
+
+# Importing building file manager
 from file_manager.n100.file_manager_buildings import Building_N100
+
+#######################################################################################################################################################
 
 
 def setup_arcpy_environment():
@@ -13,6 +20,9 @@ def setup_arcpy_environment():
     Sets up the ArcPy environment based on predefined settings.
     """
     environment_setup.general_setup()
+
+
+#######################################################################################################################################################
 
 
 def calculate_well_known_text_polygon(arguments):
@@ -36,6 +46,9 @@ def calculate_well_known_text_polygon(arguments):
     return object_id, convert_corners_to_wkt(polygon_corners)
 
 
+#######################################################################################################################################################
+
+
 def convert_corners_to_wkt(polygon_corners):
     """
     Converts a list of polygon corner coordinates to a Well-Known Text (WKT) string.
@@ -46,6 +59,9 @@ def convert_corners_to_wkt(polygon_corners):
     """
     coordinate_strings = ", ".join(f"{x} {y}" for x, y in polygon_corners)
     return f"POLYGON (({coordinate_strings}))"
+
+
+#######################################################################################################################################################
 
 
 def process_data_in_batches(well_known_text_data, spatial_reference, output_path):
@@ -92,6 +108,9 @@ def process_data_in_batches(well_known_text_data, spatial_reference, output_path
         arcpy.DeleteRows_management(temporary_feature_class)
 
 
+#######################################################################################################################################################
+
+
 def create_output_feature_class_if_not_exists(output_path, spatial_reference):
     """
     Creates an output feature class if it does not already exist.
@@ -114,6 +133,9 @@ def create_output_feature_class_if_not_exists(output_path, spatial_reference):
         )
 
 
+#######################################################################################################################################################
+
+
 def add_fields_with_join():
     arcpy.management.JoinField(
         in_data=output_polygon_feature_class,
@@ -123,12 +145,19 @@ def add_fields_with_join():
     )
 
 
+#######################################################################################################################################################
+
+
 def main():
     """
     Main function to execute the process of converting building points to polygons.
     IMPORTANT: Make sure that this function is called in an if __name__ == "__main__": block.
     Due to parallel processing this deos not work when called without the if __name__ == "__main__": block.
     """
+
+    # Start timing
+    start_time = time.time()
+
     setup_arcpy_environment()
     create_output_feature_class_if_not_exists(
         output_polygon_feature_class, spatial_reference_system
@@ -154,6 +183,25 @@ def main():
     print(f"Output feature class: {output_polygon_feature_class} completed.")
     add_fields_with_join()
 
+    # End timing
+    end_time = time.time()
+
+    # Calculate elapsed time
+    elapsed_time = end_time - start_time
+
+    # Convert to hours, minutes, and seconds
+    hours, remainder = divmod(elapsed_time, 3600)
+    minutes, seconds = divmod(remainder, 60)
+
+    # Format as string
+    time_str = "{:02} hours, {:02} minutes, {:.2f} seconds".format(
+        int(hours), int(minutes), seconds
+    )
+
+    print(f"create_simplified_building_polygons took {time_str} to complete.")
+
+
+#######################################################################################################################################################
 
 # Constants and configurations
 IN_MEMORY_WORKSPACE = "in_memory"
