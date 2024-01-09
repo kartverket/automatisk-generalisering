@@ -63,6 +63,9 @@ grunnriss_to_point = "grunnriss_to_point"
 # create_simplified_building_polygons.py
 simplify_building_polygons = "simplify_building_polygons"
 
+# create_cartographic_partitions.py
+create_cartographic_partitions = "create_cartographic_partitions"
+
 # propagate_displacement.py
 propagate_displacement = "propagate_displacement"
 
@@ -373,6 +376,32 @@ class Building_N100(Enum):
     simplify_building_polygons__spatial_joined_polygon__n100 = generate_file_name_gdb(
         function_name=simplify_building_polygons,
         description="spatial_joined_polygon",
+        scale=scale,
+    )
+
+    ##############################################
+    ######## CREATE CARTOGRAPHIC PARTITIONS ########
+    ##############################################
+
+    create_cartographic_partitions__cartographic_partitions__n100 = (
+        generate_file_name_gdb(
+            function_name=create_cartographic_partitions,
+            description="cartographic_partitions",
+            scale=scale,
+        )
+    )
+
+    create_cartographic_partitions__cartographic_partitions_buffer__n100 = (
+        generate_file_name_gdb(
+            function_name=create_cartographic_partitions,
+            description="cartographic_partitions_buffer",
+            scale=scale,
+        )
+    )
+
+    create_cartographic_partitions__buffer_erased__n100 = generate_file_name_gdb(
+        function_name=create_cartographic_partitions,
+        description="buffer_erased",
         scale=scale,
     )
 
