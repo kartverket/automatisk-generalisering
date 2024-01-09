@@ -1,6 +1,4 @@
-import numpy as np
 import arcpy
-import os
 
 import config
 from env_setup import environment_setup
