@@ -181,7 +181,7 @@ def select_location_and_make_permanent_feature(
 
     finally:
         arcpy.management.Delete("temp_layer")
-        print(f"{output_name} created temporarily.")
+        print(f"{output_name} created permanently.")
 
 
 def apply_symbology(input_layer, in_symbology_layer, output_name):
