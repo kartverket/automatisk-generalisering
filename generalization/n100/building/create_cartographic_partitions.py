@@ -31,8 +31,8 @@ def create_cartographic_partitions():
             Building_N100.preparation_begrensningskurve__begrensningskurve_buffer_erase_2__n100.value,
         ],
         out_features=Building_N100.create_cartographic_partitions__cartographic_partitions__n100.value,
-        feature_count="150000",
-        partition_method="VERTICES",
+        feature_count="15000",
+        partition_method="FEATURES",
     )
 
     print(
@@ -43,12 +43,6 @@ def create_cartographic_partitions():
         in_features=Building_N100.create_cartographic_partitions__cartographic_partitions__n100.value,
         out_feature_class=Building_N100.create_cartographic_partitions__cartographic_partitions_buffer__n100.value,
         buffer_distance_or_field="500 Meters",
-    )
-
-    arcpy.analysis.PairwiseErase(
-        in_features=Building_N100.create_cartographic_partitions__cartographic_partitions_buffer__n100.value,
-        erase_features=Building_N100.create_cartographic_partitions__cartographic_partitions__n100.value,
-        out_feature_class=Building_N100.create_cartographic_partitions__buffer_erased__n100.value,
     )
 
 
@@ -70,12 +64,8 @@ def create_erased_features():
 
     # Iterate over each object in the buffer feature class
     with arcpy.da.SearchCursor(buffer_fc, ["OBJECTID"]) as buffer_cursor:
-        for i, buffer_row in enumerate(buffer_cursor):
+        for buffer_row in buffer_cursor:
             buffer_object_id = buffer_row[0]
-            # Force garbage collection every 50 iterations
-            if i % 10 == 0:
-                gc.collect()
-                print(f"Garbage collection forced at iteration {i}")
 
             # Select the individual buffer object by OBJECTID
             iteration_buffer = f"in_memory\\buffer_{buffer_object_id}"
@@ -116,7 +106,6 @@ def create_erased_features():
                 target=final_output_fc,
                 schema_type="NO_TEST",
             )
-            # print(f"Itertaion: {buffer_object_id} completed")
 
             # Clean up in_memory feature classes
             arcpy.management.Delete(iteration_buffer)

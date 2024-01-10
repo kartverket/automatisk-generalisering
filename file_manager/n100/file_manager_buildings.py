@@ -66,6 +66,9 @@ simplify_building_polygons = "simplify_building_polygons"
 # create_cartographic_partitions.py
 create_cartographic_partitions = "create_cartographic_partitions"
 
+# iteration.py
+iteration = "iteration"
+
 # propagate_displacement.py
 propagate_displacement = "propagate_displacement"
 
@@ -402,6 +405,52 @@ class Building_N100(Enum):
     create_cartographic_partitions__buffer_erased__n100 = generate_file_name_gdb(
         function_name=create_cartographic_partitions,
         description="buffer_erased",
+        scale=scale,
+    )
+
+    ##################################
+    ############ ITERATION ############
+    ##################################
+
+    iteration__iteration_partition__n100 = generate_file_name_gdb(
+        function_name=iteration,
+        description="iteration_partition",
+        scale=scale,
+    )
+
+    iteration__iteration_buffer__n100 = generate_file_name_gdb(
+        function_name=iteration,
+        description="iteration_buffer",
+        scale=scale,
+    )
+
+    iteration__iteration_erased_buffer__n100 = generate_file_name_gdb(
+        function_name=iteration,
+        description="iteration_erased_buffer",
+        scale=scale,
+    )
+
+    iteration__append_feature_building_point__n100 = generate_file_name_gdb(
+        function_name=iteration,
+        description="append_feature_building_point",
+        scale=scale,
+    )
+
+    iteration__append_feature_building_polygon__n100 = generate_file_name_gdb(
+        function_name=iteration,
+        description="append_feature_building_polygon",
+        scale=scale,
+    )
+
+    iteration__building_points_partition_selection__n100 = generate_file_name_gdb(
+        function_name=iteration,
+        description="building_points_partition_selection",
+        scale=scale,
+    )
+
+    iteration__building_polygon_partition_selection__n100 = generate_file_name_gdb(
+        function_name=iteration,
+        description="building_polygon_partition_selection",
         scale=scale,
     )
 
