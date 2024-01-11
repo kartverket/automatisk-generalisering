@@ -1,17 +1,20 @@
-# Importing custom files relative to the root path
+# Importing modules
+import arcpy
+
+# Importing custom files
 from custom_tools import custom_arcpy
 import config
-from env_setup import environment_setup
 from input_data import input_n50
 from input_data import input_n100
 from input_data import input_other
+
+# Importing file manager
 from file_manager.n100.file_manager_buildings import Building_N100
 
-
-# Importing general packages
-import arcpy
-
 # Importing environment
+from env_setup import environment_setup
+
+# Environment setup
 environment_setup.general_setup()
 
 
@@ -27,6 +30,9 @@ def main():
     preperation_veg_sti()
     adding_matrikkel_as_points()
     selecting_grunnriss_for_generalization()
+
+
+###################################### Preparing begrensningskurve (limitation curve) ################################################
 
 
 def preparation_begrensningskurve():
@@ -110,6 +116,9 @@ def preparation_begrensningskurve():
     )
 
 
+###################################### Preparing roads ################################################
+
+
 def preperation_veg_sti():
     """
     Unsplit the lines in the specified feature class based on the given fields, to speed up future processing speed
@@ -125,6 +134,9 @@ def preperation_veg_sti():
         out_feature_class=Building_N100.preperation_veg_sti__unsplit_veg_sti__n100.value,
         dissolve_field=["subtypekode", "motorvegtype", "UTTEGNING"],
     )
+
+
+###################################### Adding matrikkel-points (cadastre) for areas which are no longer urban ################################################
 
 
 def adding_matrikkel_as_points():
@@ -181,14 +193,6 @@ def adding_matrikkel_as_points():
         output_name=Building_N100.adding_matrikkel_as_points__matrikkel_bygningspunkt__n100.value,
     )
 
-    # # Deleting temporary files no longer needed
-    # arcpy.Delete_management(
-    #     Building_N100.adding_matrikkel_as_points__urban_area_selection_n100_buffer__n100.value
-    # )
-    # arcpy.Delete_management(
-    #     Building_N100.adding_matrikkel_as_points__no_longer_urban_areas__n100.value
-    # )
-
     # Adding transferring the NBR value to the matrikkel_bygningspunkt
     arcpy.AddField_management(
         in_table=Building_N100.adding_matrikkel_as_points__matrikkel_bygningspunkt__n100.value,
@@ -200,6 +204,9 @@ def adding_matrikkel_as_points():
         field="BYGGTYP_NBR",
         expression="!bygningstype!",
     )
+
+
+###################################### Transforms hospitals and churches polygons to points ################################################
 
 
 def selecting_grunnriss_for_generalization():
@@ -280,6 +287,9 @@ def selecting_grunnriss_for_generalization():
         out_feature_class=Building_N100.selecting_grunnriss_for_generalization__kirke_points_created_from_grunnriss__n100.value,
         point_location="CENTROID",
     )
+
+
+###################################### FILL ################################################
 
 
 def removing_overlapping_byggningspunkt_and_grunnriss_matrikkel():
