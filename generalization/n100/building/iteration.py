@@ -18,18 +18,34 @@ def main():
         erased_edge_buffer,
     ) = pre_iteration()
 
-    (
-        append_building_points,
-        append_building_polygon,
-    ) = create_append_feature_class()
+    # (
+    #     append_building_points,
+    #     append_building_polygon,
+    # ) = create_append_feature_class()
+    #
+    # iterate_partition(
+    #     max_object_id,
+    #     partition_polygon,
+    #     partition_buffer,
+    #     erased_edge_buffer,
+    #     append_building_points,
+    #     append_building_polygon,
+    # )
 
-    iterate_partition(
+    (
+        append_building_points_2,
+        append_building_polygon_2,
+        input_building_points,
+        input_building_polygon,
+    ) = create_append_feature_class_2()
+
+    iteration_partition_2(
         max_object_id,
         partition_polygon,
-        partition_buffer,
-        erased_edge_buffer,
-        append_building_points,
-        append_building_polygon,
+        append_building_points_2,
+        append_building_polygon_2,
+        input_building_points,
+        input_building_polygon,
     )
 
 
@@ -59,6 +75,25 @@ def pre_iteration():
     ).next()[0]
 
     return max_object_id, partition_polygon, partition_buffer, erased_edge_buffer
+
+
+def move_edge_objects(partition_polygon):
+    arcpy.management.Copy(
+        in_data=Building_N100.table_management__bygningspunkt_pre_resolve_building_conflicts__n100.value,
+        out_data=f"{Building_N100.table_management__bygningspunkt_pre_resolve_building_conflicts__n100.value}_copy",
+    )
+
+    arcpy.management.SelectLayerByLocation(
+        in_layer=f"{Building_N100.table_management__bygningspunkt_pre_resolve_building_conflicts__n100.value}_copy",
+        overlap_type=custom_arcpy.OverlapType.BOUNDARY_TOUCHES,
+    )
+
+    custom_arcpy.select_location_and_make_feature_layer(
+        input_layer=f"{Building_N100.table_management__bygningspunkt_pre_resolve_building_conflicts__n100.value}_copy",
+        overlap_type=custom_arcpy.OverlapType.BOUNDARY_TOUCHES,
+        select_features=partition_polygon,
+        output_name=f"{Building_N100.table_management__bygningspunkt_pre_resolve_building_conflicts__n100.value}_copy",
+    )
 
 
 def create_append_feature_class():
@@ -96,6 +131,152 @@ def create_append_feature_class():
         print(f"Created {append_building_polygon}")
 
     return append_building_points, append_building_polygon
+
+
+def create_append_feature_class_2():
+    append_building_points_2 = (
+        f"{Building_N100.iteration__append_feature_building_point__n100.value}_2"
+    )
+
+    append_building_polygon_2 = (
+        f"{Building_N100.iteration__append_feature_building_polygon__n100.value}_2"
+    )
+
+    input_building_points = f"{Building_N100.table_management__bygningspunkt_pre_resolve_building_conflicts__n100.value}_copy"
+    arcpy.management.Copy(
+        in_data=Building_N100.table_management__bygningspunkt_pre_resolve_building_conflicts__n100.value,
+        out_data=input_building_points,
+    )
+    partition_field = "partition_selection"
+    arcpy.AddField_management(
+        in_table=input_building_points,
+        field_name=partition_field,
+        field_type="LONG",
+    )
+
+    input_building_polygon = f"{Building_N100.iteration__building_polygon_partition_selection__n100.value}_copy"
+    arcpy.management.Copy(
+        in_data=Building_N100.simplify_building_polygons__simplified_grunnriss__n100.value,
+        out_data=input_building_polygon,
+    )
+    partition_field = "partition_selection"
+    arcpy.AddField_management(
+        in_table=input_building_polygon,
+        field_name=partition_field,
+        field_type="LONG",
+    )
+
+    # Check and delete the final output feature class if it exists
+    if arcpy.Exists(append_building_points_2):
+        arcpy.management.Delete(append_building_points_2)
+
+    # Check and delete the final output feature class if it exists
+    if arcpy.Exists(append_building_polygon_2):
+        arcpy.management.Delete(append_building_polygon_2)
+
+    if not arcpy.Exists(append_building_points_2):
+        # Create the final output feature class using the schema of the first erased feature
+        arcpy.management.CreateFeatureclass(
+            out_path=os.path.dirname(append_building_points_2),
+            out_name=os.path.basename(append_building_points_2),
+            template=input_building_points,
+        )
+        print(f"Created {append_building_points_2}")
+
+    if not arcpy.Exists(append_building_polygon_2):
+        # Create the final output feature class using the schema of the first erased feature
+        arcpy.management.CreateFeatureclass(
+            out_path=os.path.dirname(append_building_polygon_2),
+            out_name=os.path.basename(append_building_polygon_2),
+            template=Building_N100.simplify_building_polygons__simplified_grunnriss__n100.value,
+        )
+        print(f"Created {append_building_polygon_2}")
+
+    return (
+        append_building_points_2,
+        append_building_polygon_2,
+        input_building_points,
+        input_building_polygon,
+    )
+
+
+def iteration_partition_2(
+    max_object_id,
+    partition_polygon,
+    append_building_points_2,
+    append_building_polygon_2,
+    input_building_points,
+    input_building_polygon,
+):
+    for object_id in range(1, max_object_id + 1):
+        iteration_partition = (
+            f"{Building_N100.iteration__iteration_partition__n100.value}_{object_id}"
+        )
+        custom_arcpy.select_attribute_and_make_feature_layer(
+            input_layer=partition_polygon,
+            expression=f"OBJECTID = {object_id}",
+            output_name=iteration_partition,
+        )
+        building_points_partition_selection_2 = f"{Building_N100.iteration__building_points_partition_selection__n100.value}_{object_id}"
+        arcpy.management.MakeFeatureLayer(
+            input_building_points,
+            building_points_partition_selection_2,
+        )
+
+        arcpy.management.SelectLayerByLocation(
+            in_layer=building_points_partition_selection_2,
+            overlap_type="WITHIN_A_DISTANCE",
+            select_features=partition_polygon,
+            search_distance="500 Meters",
+            selection_type="NEW_SELECTION",
+        )
+
+        arcpy.management.SelectLayerByLocation(
+            in_layer=building_points_partition_selection_2,
+            overlap_type="HAVE_THEIR_CENTER_IN",
+            select_features=partition_polygon,
+            selection_type="REMOVE_FROM_SELECTION",
+        )
+
+        arcpy.management.Append(
+            inputs=building_points_partition_selection_2,
+            target=append_building_points_2,
+            schema_type="NO_TEST",
+        )
+
+        building_polygon_partition_selection_2 = f"{Building_N100.iteration__building_polygon_partition_selection__n100.value}_{object_id}"
+        arcpy.management.MakeFeatureLayer(
+            input_building_polygon,
+            building_polygon_partition_selection_2,
+        )
+
+        arcpy.management.SelectLayerByLocation(
+            in_layer=building_polygon_partition_selection_2,
+            overlap_type="WITHIN_A_DISTANCE",
+            select_features=partition_polygon,
+            search_distance="500 Meters",
+            selection_type="NEW_SELECTION",
+        )
+
+        arcpy.management.SelectLayerByLocation(
+            in_layer=building_polygon_partition_selection_2,
+            overlap_type="HAVE_THEIR_CENTER_IN",
+            select_features=partition_polygon,
+            selection_type="REMOVE_FROM_SELECTION",
+        )
+
+        arcpy.management.Append(
+            inputs=building_polygon_partition_selection_2,
+            target=append_building_polygon_2,
+            schema_type="NO_TEST",
+        )
+
+        # Clean up iteration features
+        arcpy.management.Delete(iteration_partition)
+        arcpy.management.Delete(building_points_partition_selection_2)
+        arcpy.management.Delete(building_polygon_partition_selection_2)
+
+        print(f"iteration {object_id} done")
 
 
 def iterate_partition(
