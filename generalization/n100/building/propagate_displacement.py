@@ -1,7 +1,6 @@
 # Importing modules
 import numpy as np
 import arcpy
-import os
 
 # Importing custom modules
 import config

@@ -135,7 +135,7 @@ scale_n500 = "n500"
 
 object_admin = "admin"
 object_arealdekke_flate = "arealdekke_flate"
-object_bygning = "byggning"
+object_bygning = "bygning"
 object_elv_bekk = "elv_bekk"
 object_veg_sti = "veg_sti"
 
