@@ -134,7 +134,7 @@ def resolve_building_conflicts():
     print("Starting Resolve Building Conflicts 1 for drawn polygons")
     # Define input barriers
 
-    input_barriers_1 = [
+    input_barriers_1 = [  # NB: confusing name?? input_barriers_1
         [
             Building_N100.apply_symbology__veg_sti_selection__n100_lyrx.value,
             "false",
@@ -195,6 +195,17 @@ def resolve_building_conflicts():
         minimum_size="1 meters",
         hierarchy_field="hierarchy",
     )
+
+    """
+    arcpy.cartography.ResolveBuildingConflicts(
+        in_buildings=Building_N100.resolve_building_conflicts__building_points_RBC_result_1__n100_lyrx.value,
+        invisibility_field="invisibility",
+        in_barriers=input_barriers_1,
+        building_gap="15 meters",
+        minimum_size="1 meters",
+        hierarchy_field="hierarchy",
+    )
+    """
 
     custom_arcpy.select_attribute_and_make_permanent_feature(
         input_layer=Building_N100.resolve_building_conflicts__building_points_RBC_result_1__n100.value,
