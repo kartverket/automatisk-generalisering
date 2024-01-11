@@ -2,7 +2,7 @@
 import arcpy
 import time
 
-# Importing custom files
+# Importing custom modules
 import config
 from custom_tools import custom_arcpy
 from env_setup import environment_setup
