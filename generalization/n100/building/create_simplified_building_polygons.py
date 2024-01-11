@@ -1,6 +1,8 @@
+# Importing modules
 import arcpy
+import time
 
-# Importing custom files relative to the root path
+# Importing custom modules
 import config
 from custom_tools import custom_arcpy
 from env_setup import environment_setup
@@ -14,12 +16,30 @@ environment_setup.general_setup()
 
 # Main function
 def main():
+    # Start timing
+    start_time = time.time()
+
     simplify_building_polygon()
+
+    # End timing
+    end_time = time.time()
+
+    # Calculate elapsed time
+    elapsed_time = end_time - start_time
+
+    # Convert to hours, minutes, and seconds
+    hours, remainder = divmod(elapsed_time, 3600)
+    minutes, seconds = divmod(remainder, 60)
+
+    # Format as string
+    time_str = "{:02} hours, {:02} minutes, {:.2f} seconds".format(
+        int(hours), int(minutes), seconds
+    )
+
+    print(f"create_simplified_building_polygons took {time_str} to complete.")
 
 
 # Simplify building polygons and create points where buildings are too small
-
-
 def simplify_building_polygon():
     # Aggregating building polygons
 
