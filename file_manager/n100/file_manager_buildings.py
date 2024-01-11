@@ -364,16 +364,42 @@ class Building_N100(Enum):
         scale=scale,
     )
 
+    simplify_building_polygons__spatial_joined_polygon__n100 = generate_file_name_gdb(
+        function_name=simplify_building_polygons,
+        description="spatial_joined_polygon",
+        scale=scale,
+    )
+
     simplify_building_polygons__simplified_grunnriss__n100 = generate_file_name_gdb(
         function_name=simplify_building_polygons,
         description="simplified_grunnriss",
         scale=scale,
     )
 
-    simplify_building_polygons__spatial_joined_polygon__n100 = generate_file_name_gdb(
-        function_name=simplify_building_polygons,
-        description="spatial_joined_polygon",
-        scale=scale,
+    ####################################################
+    ########### BUILDING POLYGON DISPLACEMENT ##########
+    ####################################################
+
+    # Function propagate_displacement_building_polygons
+    # Function creating_road_buffer
+    # Function resolve_building_conflict_building_polygon
+    # Function erasing_building_polygons_with_buffer
+    # Function small_building_polygons_to_point
+
+    propagate_displacement__building_polygon_pre_propogate_displacement__n100 = (
+        generate_file_name_gdb(
+            function_name=propagate_displacement,
+            description="building_polygon_pre_propogate_displacement",
+            scale=scale,
+        )
+    )
+
+    propagate_displacement__building_polygon_after_propogate_displacement__n100 = (
+        generate_file_name_gdb(
+            function_name=propagate_displacement,
+            description="building_polygon_after_propogate_displacement",
+            scale=scale,
+        )
     )
 
     ####################################################
@@ -490,10 +516,10 @@ class Building_N100(Enum):
     ######## PROPAGATE DISPLACEMENT  ########
     #########################################
 
-    propagate_displacement__bygningspunkt_pre_displacement__n100 = (
+    propagate_displacement__bygningspunkt_pre_propogate_displacement__n100 = (
         generate_file_name_gdb(
             function_name=propagate_displacement,
-            description="bygningspunkt_pre_displacement",
+            description="bygningspunkt_pre_propogate_displacement",
             scale=scale,
         )
     )
