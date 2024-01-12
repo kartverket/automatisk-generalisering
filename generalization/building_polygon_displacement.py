@@ -148,7 +148,7 @@ def resolve_building_conflict_building_polygon():
         invisibility_field="invisibility",
         in_barriers=[
             input_n100.VegSti,
-            Building_N100.preparation_preparation_begrensningskurve__selected_waterfeatures_from_begrensningskurve__n100.value,
+            Building_N100.preparation_begrensningskurve__selected_waterfeatures_from_begrensningskurve__n100.value,
         ],
         building_gap="15 meters",
         minimum_size="1 meters",
