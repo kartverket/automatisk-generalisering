@@ -490,6 +490,12 @@ class Building_N100(Enum):
         scale=scale,
     )
 
+    iteration__building_polygon_present_partition__n100 = generate_file_name_gdb(
+        function_name=iteration,
+        description="building_polygon_present_partition",
+        scale=scale,
+    )
+
     iteration__building_points_base_partition_selection__n100 = generate_file_name_gdb(
         function_name=iteration,
         description="building_points_base_partition_selection",

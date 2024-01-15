@@ -193,12 +193,8 @@ def iteration_partition(
 
         building_points_base_partition_selection = f"{Building_N100.iteration__building_points_base_partition_selection__n100.value}_{object_id}"
         building_points_present_partition = f"{Building_N100.iteration__building_points_present_partition__n100.value}_{object_id}"
-        # arcpy.management.MakeFeatureLayer(
-        #     input_building_points,
-        #     building_points_base_partition_selection,
-        # )
 
-        custom_arcpy.select_location_and_make_permanent_feature(
+        custom_arcpy.select_location_and_make_feature_layer(
             input_layer=input_building_points,
             overlap_type=custom_arcpy.OverlapType.HAVE_THEIR_CENTER_IN.value,
             select_features=iteration_partition,
@@ -211,6 +207,7 @@ def iteration_partition(
         )
         if count_points > 0:
             points_exist = True
+            print(f"iteration partition {object_id} has {count_points} building points")
 
             arcpy.CalculateField_management(
                 in_table=building_points_present_partition,
@@ -229,20 +226,15 @@ def iteration_partition(
                 overlap_type=custom_arcpy.OverlapType.WITHIN_A_DISTANCE,
                 select_features=iteration_partition,
                 output_name=building_points_base_partition_selection,
-                selection_type=custom_arcpy.SelectionType.NEW_SELECTION,
+                selection_type=custom_arcpy.SelectionType.NEW_SELECTION.value,
                 search_distance="500 Meters",
             )
-            #
-            # arcpy.management.MakeFeatureLayer(
-            #     building_points_base_partition_selection,
-            #     building_points_base_partition_selection,
-            # )
-            #
+
             arcpy.management.SelectLayerByLocation(
                 in_layer=building_points_base_partition_selection,
                 overlap_type="HAVE_THEIR_CENTER_IN",
                 select_features=iteration_partition,
-                selection_type=custom_arcpy.SelectionType.REMOVE_FROM_SELECTION.value,
+                selection_type="REMOVE_FROM_SELECTION",
             )
 
             arcpy.CalculateField_management(
@@ -270,66 +262,50 @@ def iteration_partition(
                 target=append_feature_building_points,
                 schema_type="NO_TEST",
             )
-            #############################################
+            arcpy.management.Delete(selected_points_from_partition)
 
-            #
-            # print("Next line is sql syntax \n")
-            # print(f"{partition_field} = 1")
-            #
-            # arcpy.management.CopyFeatures(
-            #     building_points_base_partition_selection,
-            #     f"{building_points_base_partition_selection}_temp",
-            # )
-            # print(f"created {building_points_base_partition_selection}_temp")
-            #
-            # arcpy.management.CopyFeatures(
-            #     iteration_append_point_feature,
-            #     f"{iteration_append_point_feature}_temp",
-            # )
-            # print(f"created {iteration_append_point_feature}_temp")
-            #
-            # selected_points_from_partition = f"{iteration_append_point_feature}_temp"
-            # custom_arcpy.select_attribute_and_make_permanent_feature(
-            #     input_layer=iteration_append_point_feature,
-            #     expression=f"{partition_field} = 1",
-            #     output_name=selected_points_from_partition,
-            # )
-            #
-            # arcpy.management.Append(
-            #     inputs=selected_points_from_partition,
-            #     target=append_feature_building_points,
-            #     schema_type="NO_TEST",
-            # )
             print(f"appended selected points to {append_feature_building_points}")
-        if count_points > 0:
-            break
 
         building_polygon_base_partition_selection = f"{Building_N100.iteration__building_polygon_base_partition_selection__n100.value}_{object_id}"
-        arcpy.management.MakeFeatureLayer(
-            input_building_polygon,
-            building_polygon_base_partition_selection,
-        )
+        building_polygon_present_partition = f"{Building_N100.iteration__building_points_base_partition_selection__n100.value}_{object_id}"
 
-        arcpy.management.SelectLayerByLocation(
-            in_layer=building_polygon_base_partition_selection,
-            overlap_type="WITHIN_A_DISTANCE",
+        custom_arcpy.select_location_and_make_feature_layer(
+            input_layer=input_building_polygon,
+            overlap_type=custom_arcpy.OverlapType.HAVE_THEIR_CENTER_IN.value,
             select_features=iteration_partition,
-            search_distance="500 Meters",
-            selection_type="NEW_SELECTION",
+            output_name=building_polygon_present_partition,
         )
 
         # Check for building polygons in this partition
         count_polygons = int(
-            arcpy.management.GetCount(
-                building_polygon_base_partition_selection
-            ).getOutput(0)
+            arcpy.management.GetCount(building_polygon_present_partition).getOutput(0)
         )
         if count_polygons > 0:
             polygons_exist = True
-            # arcpy.management.Copy(
-            #     in_data=building_polygon_base_partition_selection,
-            #     out_data=f"{building_polygon_base_partition_selection}_{object_id}",
-            # )
+            print(
+                f"iteration partition {object_id} has {count_polygons} building polygons"
+            )
+
+            arcpy.CalculateField_management(
+                in_table=building_polygon_present_partition,
+                field=partition_field,
+                expression="1",
+            )
+
+            arcpy.management.Append(
+                inputs=building_polygon_present_partition,
+                target=iteration_append_polygon_feature,
+                schema_type="NO_TEST",
+            )
+
+            custom_arcpy.select_location_and_make_feature_layer(
+                input_layer=input_building_polygon,
+                overlap_type=custom_arcpy.OverlapType.WITHIN_A_DISTANCE,
+                select_features=iteration_partition,
+                output_name=building_polygon_base_partition_selection,
+                selection_type=custom_arcpy.SelectionType.NEW_SELECTION.value,
+                search_distance="500 Meters",
+            )
 
             arcpy.management.SelectLayerByLocation(
                 in_layer=building_polygon_base_partition_selection,
@@ -350,26 +326,8 @@ def iteration_partition(
                 schema_type="NO_TEST",
             )
 
-            arcpy.management.SelectLayerByLocation(
-                in_layer=building_polygon_base_partition_selection,
-                overlap_type="HAVE_THEIR_CENTER_IN",
-                select_features=partition_polygon,
-                selection_type="NEW_SELECTION",
-            )
-
-            arcpy.CalculateField_management(
-                in_table=building_polygon_base_partition_selection,
-                field=partition_field,
-                expression="1",
-            )
-
-            arcpy.management.Append(
-                inputs=building_polygon_base_partition_selection,
-                target=iteration_append_polygon_feature,
-                schema_type="NO_TEST",
-            )
-
             selected_polygon_from_partition = f"{iteration_append_polygon_feature}_temp"
+
             custom_arcpy.select_attribute_and_make_feature_layer(
                 input_layer=iteration_append_polygon_feature,
                 expression=f"{partition_field} = 1",
@@ -381,15 +339,16 @@ def iteration_partition(
                 target=append_feature_building_polygon,
                 schema_type="NO_TEST",
             )
+            arcpy.management.Delete(selected_polygon_from_partition)
 
-            print(f"appended selected polygon to {append_feature_building_polygon}")
+            print(f"appended selected points to {append_feature_building_polygon}")
 
         # Clean up iteration features
         try:
             arcpy.management.Delete(iteration_partition)
             arcpy.management.Delete(iteration_append_point_feature)
             arcpy.management.Delete(iteration_append_polygon_feature)
-            # arcpy.management.Delete(selected_points_from_partition)
+            arcpy.management.Delete(selected_points_from_partition)
             arcpy.management.Delete(selected_polygon_from_partition)
             arcpy.management.Delete(building_points_base_partition_selection)
             arcpy.management.Delete(building_polygon_base_partition_selection)
