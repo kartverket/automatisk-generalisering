@@ -96,6 +96,8 @@ def preparation_begrensningskurve():
     print(
         f"Erased 2 completed {Building_N100.preparation_begrensningskurve__begrensningskurve_buffer_erase_2__n100.value} created"
     )
+    print("Need to apply better logic for rivers separatly at a later point")
+    # Needs to use a different logic for narrow rivers, and instead use the centerline and a small buffer around it which is added to the feature class
 
     # Adding hierarchy and invisibility fields to the preparation_begrensningskurve__begrensningskurve_buffer_waterfeatures__n100 and setting them to 0
     # Define field information
