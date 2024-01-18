@@ -116,7 +116,7 @@ class Building_N100(Enum):
     ########### BUILDING DATA PREPARATION ###########
     #################################################
 
-    preparation_preparation_begrensningskurve__selected_waterfeatures_from_begrensningskurve__n100 = generate_file_name_gdb(
+    preparation_begrensningskurve__selected_waterfeatures_from_begrensningskurve__n100 = generate_file_name_gdb(
         function_name=preparation_begrensningskurve,
         description="selected_waterfeatures_from_begrensningskurve",
         scale=scale,
@@ -602,15 +602,43 @@ class Building_N100(Enum):
         scale=scale,
     )
 
-    iteration__building_points_partition_selection__n100 = generate_file_name_gdb(
+    iteration__building_points_iteration_selection_append__n100 = (
+        generate_file_name_gdb(
+            function_name=iteration,
+            description="building_points_iteration_selection_append",
+            scale=scale,
+        )
+    )
+
+    iteration__building_polygon_iteration_selection_append__n100 = (
+        generate_file_name_gdb(
+            function_name=iteration,
+            description="building_polygon_iteration_selection_append",
+            scale=scale,
+        )
+    )
+
+    iteration__building_points_present_partition__n100 = generate_file_name_gdb(
         function_name=iteration,
-        description="building_points_partition_selection",
+        description="building_points_present_partition",
         scale=scale,
     )
 
-    iteration__building_polygon_partition_selection__n100 = generate_file_name_gdb(
+    iteration__building_polygon_present_partition__n100 = generate_file_name_gdb(
         function_name=iteration,
-        description="building_polygon_partition_selection",
+        description="building_polygon_present_partition",
+        scale=scale,
+    )
+
+    iteration__building_points_base_partition_selection__n100 = generate_file_name_gdb(
+        function_name=iteration,
+        description="building_points_base_partition_selection",
+        scale=scale,
+    )
+
+    iteration__building_polygon_base_partition_selection__n100 = generate_file_name_gdb(
+        function_name=iteration,
+        description="building_polygon_base_partition_selection",
         scale=scale,
     )
 

@@ -47,17 +47,32 @@ def select_attribute_and_make_feature_layer(
     - selection_type: The type of selection to perform. Defaults to "NEW_SELECTION".
     - inverted: A boolean flag to indicate if the selection should be inverted.
     """
-    selected_type = (
-        SelectionType[selection_type].value
-        if selection_type in SelectionType.__members__
-        else "NEW_SELECTION"
+
+    # Function to resolve selection_type to the correct enum member
+    def resolve_enum(enum_class, value):
+        if isinstance(value, enum_class):
+            return value
+        elif isinstance(value, str):
+            if value in enum_class.__members__:
+                return enum_class[value]
+            for member in enum_class:
+                if member.value == value:
+                    return member
+        return None
+
+    # Resolve selection_type
+    selection_type = (
+        resolve_enum(SelectionType, selection_type) or SelectionType.NEW_SELECTION
     )
+
     # Create a temporary feature layer from the input layer
     arcpy.management.MakeFeatureLayer(input_layer, output_name)
+
     # Perform the attribute selection on the temporary layer
     arcpy.management.SelectLayerByAttribute(
-        output_name, selected_type, expression, invert_where_clause=inverted
+        output_name, selection_type.value, expression, invert_where_clause=inverted
     )
+
     print(f"{output_name} created temporarily.")
 
 
@@ -74,19 +89,35 @@ def select_attribute_and_make_permanent_feature(
     - selection_type: The type of selection to perform. Defaults to "NEW_SELECTION".
     - inverted: A boolean flag to indicate if the selection should be inverted.
     """
-    selected_type = (
-        SelectionType[selection_type].value
-        if selection_type in SelectionType.__members__
-        else "NEW_SELECTION"
+
+    # Function to resolve selection_type to the correct enum member
+    def resolve_enum(enum_class, value):
+        if isinstance(value, enum_class):
+            return value
+        elif isinstance(value, str):
+            if value in enum_class.__members__:
+                return enum_class[value]
+            for member in enum_class:
+                if member.value == value:
+                    return member
+        return None
+
+    # Resolve selection_type
+    selection_type = (
+        resolve_enum(SelectionType, selection_type) or SelectionType.NEW_SELECTION
     )
+
     # Create a temporary feature layer from the input layer
     arcpy.management.MakeFeatureLayer(input_layer, "temp_layer")
+
     # Perform the attribute selection on the temporary layer
     arcpy.management.SelectLayerByAttribute(
-        "temp_layer", selected_type, expression, invert_where_clause=inverted
+        "temp_layer", selection_type.value, expression, invert_where_clause=inverted
     )
+
     # Copy only the selected features from the temporary layer into a new feature class
     arcpy.management.CopyFeatures("temp_layer", output_name)
+
     # Delete the temporary layer to clean up
     arcpy.management.Delete("temp_layer")
     print(f"{output_name} created permanently.")
@@ -102,12 +133,23 @@ def select_location_and_make_feature_layer(
     inverted=False,
     search_distance=None,
 ):
-    # Convert string to Enum value or set default
-    if not isinstance(overlap_type, OverlapType):
-        overlap_type = OverlapType.INTERSECT
+    # Function to resolve overlap_type and selection_type to the correct enum member
+    def resolve_enum(enum_class, value):
+        if isinstance(value, enum_class):
+            return value
+        elif isinstance(value, str):
+            if value in enum_class.__members__:
+                return enum_class[value]
+            for member in enum_class:
+                if member.value == value:
+                    return member
+        return None
 
-    if not isinstance(selection_type, SelectionType):
-        selection_type = SelectionType.NEW_SELECTION
+    # Resolve overlap_type and selection_type
+    overlap_type = resolve_enum(OverlapType, overlap_type) or OverlapType.INTERSECT
+    selection_type = (
+        resolve_enum(SelectionType, selection_type) or SelectionType.NEW_SELECTION
+    )
 
     arcpy.management.MakeFeatureLayer(input_layer, output_name)
 
@@ -145,11 +187,22 @@ def select_location_and_make_permanent_feature(
     inverted=False,
     search_distance=None,
 ):
-    if not isinstance(overlap_type, OverlapType):
-        overlap_type = OverlapType.INTERSECT
+    def resolve_enum(enum_class, value):
+        if isinstance(value, enum_class):
+            return value
+        elif isinstance(value, str):
+            if value in enum_class.__members__:
+                return enum_class[value]
+            for member in enum_class:
+                if member.value == value:
+                    return member
+        return None
 
-    if not isinstance(selection_type, SelectionType):
-        selection_type = SelectionType.NEW_SELECTION
+    # Resolve overlap_type and selection_type
+    overlap_type = resolve_enum(OverlapType, overlap_type) or OverlapType.INTERSECT
+    selection_type = (
+        resolve_enum(SelectionType, selection_type) or SelectionType.NEW_SELECTION
+    )
 
     arcpy.management.MakeFeatureLayer(input_layer, "temp_layer")
 
@@ -177,7 +230,7 @@ def select_location_and_make_permanent_feature(
         arcpy.management.CopyFeatures("temp_layer", output_name)
 
     except Exception as e:
-        print(f"Error occurred: {e}")  # Here's the added logic for the exception block
+        print(f"Error occurred: {e}")
 
     finally:
         arcpy.management.Delete("temp_layer")

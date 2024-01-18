@@ -49,7 +49,7 @@ def preparation_begrensningskurve():
     custom_arcpy.select_attribute_and_make_permanent_feature(
         input_layer=input_n100.BegrensningsKurve,
         expression=sql_expr_begrensningskurve_waterfeatures,
-        output_name=Building_N100.preparation_preparation_begrensningskurve__selected_waterfeatures_from_begrensningskurve__n100.value,
+        output_name=Building_N100.preparation_begrensningskurve__selected_waterfeatures_from_begrensningskurve__n100.value,
     )
 
     custom_arcpy.select_attribute_and_make_permanent_feature(
@@ -61,7 +61,7 @@ def preparation_begrensningskurve():
     custom_arcpy.select_location_and_make_permanent_feature(
         input_layer=Building_N100.preparation_begrensningskurve__selected_land_features_area__n100.value,
         overlap_type=custom_arcpy.OverlapType.BOUNDARY_TOUCHES.value,
-        select_features=Building_N100.preparation_preparation_begrensningskurve__selected_waterfeatures_from_begrensningskurve__n100.value,
+        select_features=Building_N100.preparation_begrensningskurve__selected_waterfeatures_from_begrensningskurve__n100.value,
         output_name=Building_N100.preparation_begrensningskurve__land_features_near_water__n100.value,
     )
 
@@ -73,7 +73,7 @@ def preparation_begrensningskurve():
     print("Buffered land features created")
 
     arcpy.analysis.PairwiseBuffer(
-        in_features=Building_N100.preparation_preparation_begrensningskurve__selected_waterfeatures_from_begrensningskurve__n100.value,
+        in_features=Building_N100.preparation_begrensningskurve__selected_waterfeatures_from_begrensningskurve__n100.value,
         out_feature_class=Building_N100.preparation_begrensningskurve__begrensningskurve_waterfeatures_buffer__n100.value,
         buffer_distance_or_field="45 Meters",
     )
@@ -96,6 +96,8 @@ def preparation_begrensningskurve():
     print(
         f"Erased 2 completed {Building_N100.preparation_begrensningskurve__begrensningskurve_buffer_erase_2__n100.value} created"
     )
+    print("Need to apply better logic for rivers separatly at a later point")
+    # Needs to use a different logic for narrow rivers, and instead use the centerline and a small buffer around it which is added to the feature class
 
     # Adding hierarchy and invisibility fields to the preparation_begrensningskurve__begrensningskurve_buffer_waterfeatures__n100 and setting them to 0
     # Define field information
