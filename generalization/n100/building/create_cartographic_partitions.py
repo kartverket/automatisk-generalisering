@@ -1,12 +1,9 @@
 import arcpy
 import os
-import gc
 
-import config
 from env_setup import environment_setup
 from custom_tools import custom_arcpy
 from file_manager.n100.file_manager_buildings import Building_N100
-from input_data import input_n100
 
 
 def main():
