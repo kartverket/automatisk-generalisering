@@ -97,6 +97,9 @@ rbc_selection = "rbc_selection"
 apply_symbology = "apply_symbology"
 resolve_building_conflicts = "resolve_building_conflicts"
 
+
+displacement_feature_asker = "displacement_feature_asker"
+
 ##############################################################################################################################################
 
 
@@ -111,6 +114,14 @@ class Building_N100(Enum):
     - Scale we are generalizing to
 
     """
+
+    displacement_feature_asker__displacement_feature_asker__n100 = (
+        generate_file_name_gdb(
+            function_name=displacement_feature_asker,
+            description="displacement_feature_asker",
+            scale=scale,
+        )
+    )
 
     #################################################
     ########### BUILDING DATA PREPARATION ###########
@@ -410,6 +421,12 @@ class Building_N100(Enum):
             description="building_polygons_after_propogate_displacement",
             scale=scale,
         )
+    )
+
+    propagate_displacement_building_polygons__displacement_feature_1000_m_from_building_polygon__n100 = generate_file_name_gdb(
+        function_name=propagate_displacement_building_polygons,
+        description="displacement_feature_1000_m_from_building_polygon",
+        scale=scale,
     )
 
     # features_500_m_from_building_polygons
