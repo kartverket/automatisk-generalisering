@@ -249,25 +249,8 @@ def iteration_partition(
                 schema_type="NO_TEST",
             )
 
-            selected_points_from_partition = f"{iteration_append_point_feature}_temp"
-
-            custom_arcpy.select_attribute_and_make_feature_layer(
-                input_layer=iteration_append_point_feature,
-                expression=f"{partition_field} = 1",
-                output_name=selected_points_from_partition,
-            )
-
-            arcpy.management.Append(
-                inputs=selected_points_from_partition,
-                target=append_feature_building_points,
-                schema_type="NO_TEST",
-            )
-            arcpy.management.Delete(selected_points_from_partition)
-
-            print(f"appended selected points to {append_feature_building_points}")
-
         building_polygon_base_partition_selection = f"{Building_N100.iteration__building_polygon_base_partition_selection__n100.value}_{object_id}"
-        building_polygon_present_partition = f"{Building_N100.iteration__building_points_base_partition_selection__n100.value}_{object_id}"
+        building_polygon_present_partition = f"{Building_N100.iteration__building_polygon_present_partition__n100.value}_{object_id}"
 
         custom_arcpy.select_location_and_make_feature_layer(
             input_layer=input_building_polygon,
@@ -325,6 +308,27 @@ def iteration_partition(
                 target=iteration_append_polygon_feature,
                 schema_type="NO_TEST",
             )
+
+            selected_points_from_partition = f"{iteration_append_point_feature}_temp"
+
+            #######################################
+            # HERE I WOULD PUT LOGIC TO PROCESS ON building_points_base_partition_selection and building_polygon_base_partition_selection
+            #######################################
+
+            custom_arcpy.select_attribute_and_make_feature_layer(
+                input_layer=iteration_append_point_feature,
+                expression=f"{partition_field} = 1",
+                output_name=selected_points_from_partition,
+            )
+
+            arcpy.management.Append(
+                inputs=selected_points_from_partition,
+                target=append_feature_building_points,
+                schema_type="NO_TEST",
+            )
+            arcpy.management.Delete(selected_points_from_partition)
+
+            print(f"appended selected points to {append_feature_building_points}")
 
             selected_polygon_from_partition = f"{iteration_append_polygon_feature}_temp"
 

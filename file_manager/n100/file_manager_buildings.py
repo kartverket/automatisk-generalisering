@@ -589,6 +589,18 @@ class Building_N100(Enum):
     ############ ITERATION ############
     ##################################
 
+    iteration__partition_iterator__n100 = generate_file_name_gdb(
+        function_name=iteration,
+        description="partition_iterator",
+        scale=scale,
+    )
+
+    iteration__partition_iterator_final_output__n100 = generate_file_name_gdb(
+        function_name=iteration,
+        description="partition_iterator_final_output",
+        scale=scale,
+    )
+
     iteration__iteration_partition__n100 = generate_file_name_gdb(
         function_name=iteration,
         description="iteration_partition",
