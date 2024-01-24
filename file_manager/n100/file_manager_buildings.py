@@ -90,7 +90,8 @@ points_to_polygon = "points_to_polygon"
 
 # hospital_church_clusters.py
 hospital_church_selections = "hospital_church_selections"
-find_and_remove_clusters = "find_and_remove_clusters"
+find_clusters = "find_clusters"
+reducing_clusters = "reducing_clusters"
 
 # resolve_building_conflicts.py
 rbc_selection = "rbc_selection"
@@ -671,9 +672,9 @@ class Building_N100(Enum):
         scale=scale,
     )
 
-    ####################################################
+    ###################################################
     ########### HOSPITAL AND CHURCH CLUSTERS ###########
-    ####################################################
+    ###################################################
 
     # Functon: hospital_church_selections
 
@@ -689,101 +690,92 @@ class Building_N100(Enum):
         scale=scale,
     )
 
-    # Function: find_and_remove_clusters
+    # Function: find_clusters
 
-    find_and_remove_clusters__all_hospital_clusters__n100 = generate_file_name_gdb(
-        function_name=find_and_remove_clusters,
+    find_clusters__all_hospital_clusters__n100 = generate_file_name_gdb(
+        function_name=find_clusters,
         description="all_hospital_clusters",
         scale=scale,
     )
 
-    find_and_remove_clusters__all_church_clusters__n100 = generate_file_name_gdb(
-        function_name=find_and_remove_clusters,
+    find_clusters__all_church_clusters__n100 = generate_file_name_gdb(
+        function_name=find_clusters,
         description="all_church_clusters",
         scale=scale,
     )
 
-    find_and_remove_clusters_hospital_points_not_in_cluster_n100 = (
-        generate_file_name_gdb(
-            function_name=find_and_remove_clusters,
-            description="hospital_points_not_in_cluster",
-            scale=scale,
-        )
+    find_clusters__hospital_points_not_in_cluster__n100 = generate_file_name_gdb(
+        function_name=find_clusters,
+        description="hospital_points_not_in_cluster",
+        scale=scale,
     )
 
-    find_and_remove_clusters_hospital_points_in_cluster_n100 = generate_file_name_gdb(
-        function_name=find_and_remove_clusters,
+    find_clusters__hospital_points_in_cluster__n100 = generate_file_name_gdb(
+        function_name=find_clusters,
         description="hospital_points_in_cluster",
         scale=scale,
     )
 
-    find_and_remove_clusters_church_points_not_in_cluster_n100 = generate_file_name_gdb(
-        function_name=find_and_remove_clusters,
+    find_clusters__church_points_not_in_cluster__n100 = generate_file_name_gdb(
+        function_name=find_clusters,
         description="church_points_not_in_cluster",
         scale=scale,
     )
 
-    find_and_remove_clusters_church_points_in_cluster_n100 = generate_file_name_gdb(
-        function_name=find_and_remove_clusters,
+    find_clusters__church_points_in_cluster__n100 = generate_file_name_gdb(
+        function_name=find_clusters,
         description="church_points_in_cluster",
         scale=scale,
     )
 
-    find_and_remove_clusters__minimum_bounding_geometry_hospital__n100 = (
+    # Function: reducing_clusters
+    reducing_clusters__minimum_bounding_geometry_hospital__n100 = (
         generate_file_name_gdb(
-            function_name=find_and_remove_clusters,
+            function_name=reducing_clusters,
             description="minimum_bounding_geometry_hospital",
             scale=scale,
         )
     )
-
-    find_and_remove_clusters__feature_to_point_hospital__n100 = generate_file_name_gdb(
-        function_name=find_and_remove_clusters,
+    reducing_clusters__feature_to_point_hospital__n100 = generate_file_name_gdb(
+        function_name=reducing_clusters,
         description="feature_to_point_hospital",
         scale=scale,
     )
 
-    find_and_remove_clusters__minimum_bounding_geometry_church__n100 = (
-        generate_file_name_gdb(
-            function_name=find_and_remove_clusters,
-            description="minimum_bounding_geometry_church",
-            scale=scale,
-        )
+    reducing_clusters__minimum_bounding_geometry_church__n100 = generate_file_name_gdb(
+        function_name=reducing_clusters,
+        description="minimum_bounding_geometry_church",
+        scale=scale,
     )
 
-    find_and_remove_clusters__feature_to_point_church__n100 = generate_file_name_gdb(
-        function_name=find_and_remove_clusters,
+    reducing_clusters__feature_to_point_church__n100 = generate_file_name_gdb(
+        function_name=reducing_clusters,
         description="feature_to_point_church",
         scale=scale,
     )
 
-    find_and_remove_clusters__chosen_hospitals_from_cluster__n100 = (
-        generate_file_name_gdb(
-            function_name=find_and_remove_clusters,
-            description="chosen_hospitals_from_cluster",
-            scale=scale,
-        )
+    reducing_clusters__chosen_hospitals_from_cluster__n100 = generate_file_name_gdb(
+        function_name=reducing_clusters,
+        description="chosen_hospitals_from_cluster",
+        scale=scale,
+    )
+    reducing_clusters__chosen_churches_from_cluster__n100 = generate_file_name_gdb(
+        function_name=reducing_clusters,
+        description="chosen_churches_from_cluster",
+        scale=scale,
     )
 
-    find_and_remove_clusters__chosen_churches_from_cluster__n100 = (
+    reducing_clusters__reduced_hospital_and_church_points_2__n100 = (
         generate_file_name_gdb(
-            function_name=find_and_remove_clusters,
-            description="chosen_churches_from_cluster",
-            scale=scale,
-        )
-    )
-
-    find_and_remove_clusters__reduced_hospital_and_church_points_2__n100 = (
-        generate_file_name_gdb(
-            function_name=find_and_remove_clusters,
+            function_name=reducing_clusters,
             description="reduced_hospital_and_church_points_2",
             scale=scale,
         )
     )
 
-    #########################################
+    ########################################
     ######## PROPAGATE DISPLACEMENT  ########
-    #########################################
+    ########################################
 
     propagate_displacement__bygningspunkt_pre_propogate_displacement__n100 = (
         generate_file_name_gdb(
@@ -793,7 +785,7 @@ class Building_N100(Enum):
         )
     )
 
-    #########################################
+    ########################################
     ########### ROADS TO POLYGON ###########
     ########################################
 
