@@ -1,0 +1,417 @@
+<!DOCTYPE html>
+
+<html lang="en" data-content_root="../../">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>custom_tools.partition_iterator &#8212; Automatisk Generalisering 0.0.1 documentation</title>
+    <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=d1102ebc" />
+    <link rel="stylesheet" type="text/css" href="../../_static/alabaster.css?v=12dfc556" />
+    <script src="../../_static/documentation_options.js?v=d45e8c67"></script>
+    <script src="../../_static/doctools.js?v=888ff710"></script>
+    <script src="../../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" />
+   
+  <link rel="stylesheet" href="../../_static/custom.css" type="text/css" />
+  
+
+  
+  
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <h1>Source code for custom_tools.partition_iterator</h1><div class="highlight"><pre>
+<span></span><span class="kn">import</span> <span class="nn">arcpy</span>
+<span class="kn">import</span> <span class="nn">os</span>
+<span class="kn">import</span> <span class="nn">logging</span>
+<span class="kn">import</span> <span class="nn">random</span>
+
+<span class="kn">from</span> <span class="nn">env_setup</span> <span class="kn">import</span> <span class="n">environment_setup</span>
+<span class="kn">from</span> <span class="nn">custom_tools</span> <span class="kn">import</span> <span class="n">custom_arcpy</span>
+<span class="kn">from</span> <span class="nn">env_setup</span> <span class="kn">import</span> <span class="n">setup_directory_structure</span>
+<span class="kn">from</span> <span class="nn">file_manager.n100.file_manager_buildings</span> <span class="kn">import</span> <span class="n">Building_N100</span>
+
+
+<div class="viewcode-block" id="PartitionIterator">
+<a class="viewcode-back" href="../../generated_docs/custom_tools.html#custom_tools.partition_iterator.PartitionIterator">[docs]</a>
+<span class="k">class</span> <span class="nc">PartitionIterator</span><span class="p">:</span>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">inputs</span><span class="p">,</span>
+        <span class="n">root_file_partition_iterator</span><span class="p">,</span>
+        <span class="n">scale</span><span class="p">,</span>
+        <span class="n">output_feature_class</span><span class="p">,</span>
+        <span class="n">custom_functions</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+        <span class="n">feature_count</span><span class="o">=</span><span class="s2">&quot;15000&quot;</span><span class="p">,</span>
+        <span class="n">partition_method</span><span class="o">=</span><span class="s2">&quot;FEATURES&quot;</span><span class="p">,</span>
+    <span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Initialize the PartitionIterator with input datasets for partitioning and processing.</span>
+
+<span class="sd">        :param inputs: A dictionary of input feature class paths with their aliases.</span>
+<span class="sd">        :param root_file_partition_iterator: Base path for in progress outputs.</span>
+<span class="sd">        :param scale: Scale for the partitions.</span>
+<span class="sd">        :param output_feature_class: The output feature class for final results.</span>
+<span class="sd">        :param feature_count: Feature count for cartographic partitioning.</span>
+<span class="sd">        :param partition_method: Method used for creating cartographic partitions.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">inputs</span> <span class="o">=</span> <span class="n">inputs</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">root_file_partition_iterator</span> <span class="o">=</span> <span class="n">root_file_partition_iterator</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">scale</span> <span class="o">=</span> <span class="n">scale</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">output_feature_class</span> <span class="o">=</span> <span class="n">output_feature_class</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">feature_count</span> <span class="o">=</span> <span class="n">feature_count</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">partition_method</span> <span class="o">=</span> <span class="n">partition_method</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">partition_feature</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">root_file_partition_iterator</span><span class="si">}</span><span class="s2">_partition_feature_</span><span class="si">{</span><span class="n">scale</span><span class="si">}</span><span class="s2">&quot;</span>
+        <span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">custom_functions</span> <span class="o">=</span> <span class="n">custom_functions</span> <span class="ow">or</span> <span class="p">[]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">file_mapping</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">alias</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">inputs</span><span class="o">.</span><span class="n">keys</span><span class="p">())</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">original_input_path</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">inputs</span><span class="o">.</span><span class="n">values</span><span class="p">())</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">final_append_feature</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">root_file_partition_iterator</span><span class="si">}</span><span class="s2">_</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">alias</span><span class="si">}</span><span class="s2">_final_append_feature_</span><span class="si">{</span><span class="n">scale</span><span class="si">}</span><span class="s2">&quot;</span>
+        <span class="p">)</span>
+
+<div class="viewcode-block" id="PartitionIterator.setup_arcpy_environment">
+<a class="viewcode-back" href="../../generated_docs/custom_tools.html#custom_tools.partition_iterator.PartitionIterator.setup_arcpy_environment">[docs]</a>
+    <span class="k">def</span> <span class="nf">setup_arcpy_environment</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="c1"># Set up the ArcPy environment</span>
+        <span class="n">environment_setup</span><span class="o">.</span><span class="n">general_setup</span><span class="p">()</span></div>
+
+
+<div class="viewcode-block" id="PartitionIterator.create_cartographic_partitions">
+<a class="viewcode-back" href="../../generated_docs/custom_tools.html#custom_tools.partition_iterator.PartitionIterator.create_cartographic_partitions">[docs]</a>
+    <span class="k">def</span> <span class="nf">create_cartographic_partitions</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Creates cartographic partitions based on the input feature classes.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">arcpy</span><span class="o">.</span><span class="n">cartography</span><span class="o">.</span><span class="n">CreateCartographicPartitions</span><span class="p">(</span>
+            <span class="n">in_features</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">original_input_path</span><span class="p">,</span>
+            <span class="n">out_features</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">partition_feature</span><span class="p">,</span>
+            <span class="n">feature_count</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">feature_count</span><span class="p">,</span>
+            <span class="n">partition_method</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">partition_method</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Created partitions in </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">partition_feature</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="PartitionIterator.pre_iteration">
+<a class="viewcode-back" href="../../generated_docs/custom_tools.html#custom_tools.partition_iterator.PartitionIterator.pre_iteration">[docs]</a>
+    <span class="k">def</span> <span class="nf">pre_iteration</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Determine the maximum OBJECTID for partitioning.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="c1"># Use a search cursor to find the maximum OBJECTID</span>
+            <span class="k">with</span> <span class="n">arcpy</span><span class="o">.</span><span class="n">da</span><span class="o">.</span><span class="n">SearchCursor</span><span class="p">(</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">partition_feature</span><span class="p">,</span>
+                <span class="p">[</span><span class="s2">&quot;OBJECTID&quot;</span><span class="p">],</span>
+                <span class="n">sql_clause</span><span class="o">=</span><span class="p">(</span><span class="kc">None</span><span class="p">,</span> <span class="s2">&quot;ORDER BY OBJECTID DESC&quot;</span><span class="p">),</span>
+            <span class="p">)</span> <span class="k">as</span> <span class="n">cursor</span><span class="p">:</span>
+                <span class="n">max_object_id</span> <span class="o">=</span> <span class="nb">next</span><span class="p">(</span><span class="n">cursor</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
+
+            <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Maximum OBJECTID found: </span><span class="si">{</span><span class="n">max_object_id</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+
+            <span class="c1"># Handle the error or raise it</span>
+
+            <span class="k">for</span> <span class="n">alias</span><span class="p">,</span> <span class="n">input_feature</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">alias</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">original_input_path</span><span class="p">):</span>
+                <span class="k">if</span> <span class="n">arcpy</span><span class="o">.</span><span class="n">Exists</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">final_append_feature</span><span class="p">):</span>
+                    <span class="n">arcpy</span><span class="o">.</span><span class="n">management</span><span class="o">.</span><span class="n">Delete</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">final_append_feature</span><span class="p">)</span>
+            <span class="k">return</span> <span class="n">max_object_id</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">final_append_feature</span>
+        <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+            <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Error in finding max OBJECTID: </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="PartitionIterator.prepare_input_data">
+<a class="viewcode-back" href="../../generated_docs/custom_tools.html#custom_tools.partition_iterator.PartitionIterator.prepare_input_data">[docs]</a>
+    <span class="k">def</span> <span class="nf">prepare_input_data</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">for</span> <span class="n">alias</span><span class="p">,</span> <span class="n">input_feature</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">alias</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">original_input_path</span><span class="p">):</span>
+            <span class="c1"># Copy the input feature class to a new location</span>
+            <span class="n">input_data_copy</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">root_file_partition_iterator</span><span class="si">}</span><span class="s2">_</span><span class="si">{</span><span class="n">alias</span><span class="si">}</span><span class="s2">_input_copy&quot;</span>
+            <span class="n">arcpy</span><span class="o">.</span><span class="n">management</span><span class="o">.</span><span class="n">Copy</span><span class="p">(</span><span class="n">in_data</span><span class="o">=</span><span class="n">input_feature</span><span class="p">,</span> <span class="n">out_data</span><span class="o">=</span><span class="n">input_data_copy</span><span class="p">)</span>
+            <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Copied </span><span class="si">{</span><span class="n">input_data_copy</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+
+            <span class="c1"># Add a partition selection field to the copied feature class</span>
+            <span class="n">partition_field</span> <span class="o">=</span> <span class="s2">&quot;partition_select&quot;</span>
+            <span class="n">arcpy</span><span class="o">.</span><span class="n">AddField_management</span><span class="p">(</span>
+                <span class="n">in_table</span><span class="o">=</span><span class="n">input_data_copy</span><span class="p">,</span> <span class="n">field_name</span><span class="o">=</span><span class="n">partition_field</span><span class="p">,</span> <span class="n">field_type</span><span class="o">=</span><span class="s2">&quot;LONG&quot;</span>
+            <span class="p">)</span>
+            <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Added field </span><span class="si">{</span><span class="n">partition_field</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+
+            <span class="c1"># Add a unique ID field to the copied feature class, ensuring it&#39;s a new field</span>
+            <span class="n">existing_field_names</span> <span class="o">=</span> <span class="p">[</span>
+                <span class="n">field</span><span class="o">.</span><span class="n">name</span> <span class="k">for</span> <span class="n">field</span> <span class="ow">in</span> <span class="n">arcpy</span><span class="o">.</span><span class="n">ListFields</span><span class="p">(</span><span class="n">input_data_copy</span><span class="p">)</span>
+            <span class="p">]</span>
+            <span class="n">orig_id_field</span> <span class="o">=</span> <span class="s2">&quot;id_field&quot;</span>
+            <span class="k">while</span> <span class="n">orig_id_field</span> <span class="ow">in</span> <span class="n">existing_field_names</span><span class="p">:</span>
+                <span class="n">orig_id_field</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">orig_id_field</span><span class="si">}</span><span class="s2">_</span><span class="si">{</span><span class="n">random</span><span class="o">.</span><span class="n">randint</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span><span class="w"> </span><span class="mi">9</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span>
+            <span class="n">arcpy</span><span class="o">.</span><span class="n">AddField_management</span><span class="p">(</span>
+                <span class="n">in_table</span><span class="o">=</span><span class="n">input_data_copy</span><span class="p">,</span> <span class="n">field_name</span><span class="o">=</span><span class="n">orig_id_field</span><span class="p">,</span> <span class="n">field_type</span><span class="o">=</span><span class="s2">&quot;LONG&quot;</span>
+            <span class="p">)</span>
+            <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Added field </span><span class="si">{</span><span class="n">orig_id_field</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+
+            <span class="c1"># Update file mapping for the input feature class</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">file_mapping</span><span class="p">[</span><span class="n">alias</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;current_output&quot;</span><span class="p">:</span> <span class="n">input_data_copy</span><span class="p">}</span></div>
+
+
+<div class="viewcode-block" id="PartitionIterator.custom_function">
+<a class="viewcode-back" href="../../generated_docs/custom_tools.html#custom_tools.partition_iterator.PartitionIterator.custom_function">[docs]</a>
+    <span class="k">def</span> <span class="nf">custom_function</span><span class="p">(</span><span class="n">inputs</span><span class="p">):</span>
+        <span class="n">outputs</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">return</span> <span class="n">outputs</span></div>
+
+
+<div class="viewcode-block" id="PartitionIterator.partition_iteration">
+<a class="viewcode-back" href="../../generated_docs/custom_tools.html#custom_tools.partition_iterator.PartitionIterator.partition_iteration">[docs]</a>
+    <span class="k">def</span> <span class="nf">partition_iteration</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">input_data_copy</span><span class="p">,</span>
+        <span class="n">partition_feature</span><span class="p">,</span>
+        <span class="n">max_object_id</span><span class="p">,</span>
+        <span class="n">root_file_partition_iterator</span><span class="p">,</span>
+        <span class="n">scale</span><span class="p">,</span>
+        <span class="n">partition_field</span><span class="p">,</span>
+        <span class="n">orig_id_field</span><span class="p">,</span>
+        <span class="n">final_append_feature</span><span class="p">,</span>
+    <span class="p">):</span>
+        <span class="k">for</span> <span class="n">object_id</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">max_object_id</span> <span class="o">+</span> <span class="mi">1</span><span class="p">):</span>
+            <span class="n">iteration_partition</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">partition_feature</span><span class="si">}</span><span class="s2">_</span><span class="si">{</span><span class="n">object_id</span><span class="si">}</span><span class="s2">&quot;</span>
+
+            <span class="n">custom_arcpy</span><span class="o">.</span><span class="n">select_attribute_and_make_permanent_feature</span><span class="p">(</span>
+                <span class="n">input_layer</span><span class="o">=</span><span class="n">partition_feature</span><span class="p">,</span>
+                <span class="n">expression</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;OBJECTID = </span><span class="si">{</span><span class="n">object_id</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span>
+                <span class="n">output_name</span><span class="o">=</span><span class="n">iteration_partition</span><span class="p">,</span>
+            <span class="p">)</span>
+
+            <span class="k">for</span> <span class="n">alias</span><span class="p">,</span> <span class="n">input_feature</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">alias</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">original_input_path</span><span class="p">):</span>
+                <span class="n">iteration_append_feature</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">root_file_partition_iterator</span><span class="si">}</span><span class="s2">_</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">alias</span><span class="si">}</span><span class="s2">_iteration_append_feature_</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">scale</span><span class="si">}</span><span class="s2">&quot;</span>
+                <span class="k">if</span> <span class="n">arcpy</span><span class="o">.</span><span class="n">Exists</span><span class="p">(</span><span class="n">iteration_append_feature</span><span class="p">):</span>
+                    <span class="n">arcpy</span><span class="o">.</span><span class="n">management</span><span class="o">.</span><span class="n">Delete</span><span class="p">(</span><span class="n">iteration_append_feature</span><span class="p">)</span>
+
+                <span class="n">arcpy</span><span class="o">.</span><span class="n">management</span><span class="o">.</span><span class="n">CreateFeatureclass</span><span class="p">(</span>
+                    <span class="n">out_path</span><span class="o">=</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">dirname</span><span class="p">(</span><span class="n">iteration_append_feature</span><span class="p">),</span>
+                    <span class="n">out_name</span><span class="o">=</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">basename</span><span class="p">(</span><span class="n">iteration_append_feature</span><span class="p">),</span>
+                    <span class="n">template</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">input_data_copy</span><span class="p">,</span>
+                <span class="p">)</span>
+                <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Created </span><span class="si">{</span><span class="n">iteration_append_feature</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+
+                <span class="n">feature_present_in_partition</span> <span class="o">=</span> <span class="kc">False</span>
+
+                <span class="n">base_partition_selection</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">root_file_partition_iterator</span><span class="si">}</span><span class="s2">_</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">alias</span><span class="si">}</span><span class="s2">_partition_base_select_</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">scale</span><span class="si">}</span><span class="s2">&quot;</span>
+
+                <span class="n">custom_arcpy</span><span class="o">.</span><span class="n">select_location_and_make_feature_layer</span><span class="p">(</span>
+                    <span class="n">input_layer</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">input_data_copy</span><span class="p">,</span>
+                    <span class="n">overlap_type</span><span class="o">=</span><span class="n">custom_arcpy</span><span class="o">.</span><span class="n">OverlapType</span><span class="o">.</span><span class="n">HAVE_THEIR_CENTER_IN</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
+                    <span class="n">select_features</span><span class="o">=</span><span class="n">iteration_partition</span><span class="p">,</span>
+                    <span class="n">output_name</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">base_partition_selection</span><span class="p">,</span>
+                <span class="p">)</span>
+
+                <span class="n">count_points</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span>
+                    <span class="n">arcpy</span><span class="o">.</span><span class="n">management</span><span class="o">.</span><span class="n">GetCount</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">base_partition_selection</span><span class="p">)</span><span class="o">.</span><span class="n">getOutput</span><span class="p">(</span>
+                        <span class="mi">0</span>
+                    <span class="p">)</span>
+                <span class="p">)</span>
+                <span class="k">if</span> <span class="n">feature_present_in_partition</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+                    <span class="n">points_exist</span> <span class="o">=</span> <span class="kc">True</span>
+                    <span class="nb">print</span><span class="p">(</span>
+                        <span class="sa">f</span><span class="s2">&quot;iteration partition </span><span class="si">{</span><span class="n">object_id</span><span class="si">}</span><span class="s2"> has </span><span class="si">{</span><span class="n">feature_present_in_partition</span><span class="si">}</span><span class="s2"> building points&quot;</span>
+                    <span class="p">)</span>
+
+                    <span class="n">arcpy</span><span class="o">.</span><span class="n">CalculateField_management</span><span class="p">(</span>
+                        <span class="n">in_table</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">base_partition_selection</span><span class="p">,</span>
+                        <span class="n">field</span><span class="o">=</span><span class="n">partition_field</span><span class="p">,</span>
+                        <span class="n">expression</span><span class="o">=</span><span class="s2">&quot;1&quot;</span><span class="p">,</span>
+                    <span class="p">)</span>
+
+                    <span class="n">arcpy</span><span class="o">.</span><span class="n">management</span><span class="o">.</span><span class="n">Append</span><span class="p">(</span>
+                        <span class="n">inputs</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">base_partition_selection</span><span class="p">,</span>
+                        <span class="n">target</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">iteration_append_feature</span><span class="p">,</span>
+                        <span class="n">schema_type</span><span class="o">=</span><span class="s2">&quot;NO_TEST&quot;</span><span class="p">,</span>
+                    <span class="p">)</span>
+
+                    <span class="n">base_partition_selection_2</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">root_file_partition_iterator</span><span class="si">}</span><span class="s2">_</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">alias</span><span class="si">}</span><span class="s2">_partition_base_select_2_</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">scale</span><span class="si">}</span><span class="s2">&quot;</span>
+
+                    <span class="n">custom_arcpy</span><span class="o">.</span><span class="n">select_location_and_make_feature_layer</span><span class="p">(</span>
+                        <span class="n">input_layer</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">input_data_copy</span><span class="p">,</span>
+                        <span class="n">overlap_type</span><span class="o">=</span><span class="n">custom_arcpy</span><span class="o">.</span><span class="n">OverlapType</span><span class="o">.</span><span class="n">WITHIN_A_DISTANCE</span><span class="p">,</span>
+                        <span class="n">select_features</span><span class="o">=</span><span class="n">iteration_partition</span><span class="p">,</span>
+                        <span class="n">output_name</span><span class="o">=</span><span class="n">base_partition_selection_2</span><span class="p">,</span>
+                        <span class="n">selection_type</span><span class="o">=</span><span class="n">custom_arcpy</span><span class="o">.</span><span class="n">SelectionType</span><span class="o">.</span><span class="n">NEW_SELECTION</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
+                        <span class="n">search_distance</span><span class="o">=</span><span class="s2">&quot;500 Meters&quot;</span><span class="p">,</span>
+                    <span class="p">)</span>
+
+                    <span class="n">arcpy</span><span class="o">.</span><span class="n">management</span><span class="o">.</span><span class="n">SelectLayerByLocation</span><span class="p">(</span>
+                        <span class="n">in_layer</span><span class="o">=</span><span class="n">base_partition_selection_2</span><span class="p">,</span>
+                        <span class="n">overlap_type</span><span class="o">=</span><span class="s2">&quot;HAVE_THEIR_CENTER_IN&quot;</span><span class="p">,</span>
+                        <span class="n">select_features</span><span class="o">=</span><span class="n">iteration_partition</span><span class="p">,</span>
+                        <span class="n">selection_type</span><span class="o">=</span><span class="s2">&quot;REMOVE_FROM_SELECTION&quot;</span><span class="p">,</span>
+                    <span class="p">)</span>
+
+                    <span class="n">arcpy</span><span class="o">.</span><span class="n">CalculateField_management</span><span class="p">(</span>
+                        <span class="n">in_table</span><span class="o">=</span><span class="n">base_partition_selection_2</span><span class="p">,</span>
+                        <span class="n">field</span><span class="o">=</span><span class="n">partition_field</span><span class="p">,</span>
+                        <span class="n">expression</span><span class="o">=</span><span class="s2">&quot;0&quot;</span><span class="p">,</span>
+                    <span class="p">)</span>
+
+                    <span class="n">arcpy</span><span class="o">.</span><span class="n">management</span><span class="o">.</span><span class="n">Append</span><span class="p">(</span>
+                        <span class="n">inputs</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">base_partition_selection_2</span><span class="p">,</span>
+                        <span class="n">target</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">iteration_append_feature</span><span class="p">,</span>
+                        <span class="n">schema_type</span><span class="o">=</span><span class="s2">&quot;NO_TEST&quot;</span><span class="p">,</span>
+                    <span class="p">)</span>
+
+                    <span class="k">for</span> <span class="n">func</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">custom_functions</span><span class="p">:</span>
+                        <span class="c1"># Determine inputs for the current function</span>
+                        <span class="n">inputs</span> <span class="o">=</span> <span class="p">[</span>
+                            <span class="bp">self</span><span class="o">.</span><span class="n">file_mapping</span><span class="p">[</span><span class="n">fc</span><span class="p">][</span><span class="s2">&quot;current_output&quot;</span><span class="p">]</span> <span class="ow">or</span> <span class="n">fc</span>
+                            <span class="k">for</span> <span class="n">fc</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">input_feature_classes</span>
+                        <span class="p">]</span>
+
+                        <span class="c1"># Call the function and get outputs</span>
+                        <span class="n">outputs</span> <span class="o">=</span> <span class="n">func</span><span class="p">(</span><span class="n">inputs</span><span class="p">)</span>
+
+                        <span class="c1"># Update file mapping with the outputs</span>
+                        <span class="k">for</span> <span class="n">fc</span><span class="p">,</span> <span class="n">output</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">input_feature_classes</span><span class="p">,</span> <span class="n">outputs</span><span class="p">):</span>
+                            <span class="bp">self</span><span class="o">.</span><span class="n">file_mapping</span><span class="p">[</span><span class="n">fc</span><span class="p">][</span><span class="s2">&quot;current_output&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">output</span>
+
+                    <span class="k">if</span> <span class="ow">not</span> <span class="n">arcpy</span><span class="o">.</span><span class="n">Exists</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">final_append_feature</span><span class="p">):</span>
+                        <span class="c1"># Create the final output feature class using the schema of the first erased feature</span>
+                        <span class="n">arcpy</span><span class="o">.</span><span class="n">management</span><span class="o">.</span><span class="n">CreateFeatureclass</span><span class="p">(</span>
+                            <span class="n">out_path</span><span class="o">=</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">dirname</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">final_append_feature</span><span class="p">),</span>
+                            <span class="n">out_name</span><span class="o">=</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">basename</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">final_append_feature</span><span class="p">),</span>
+                            <span class="n">template</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">iteration_append_feature</span><span class="p">,</span>
+                        <span class="p">)</span>
+                        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Created </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">final_append_feature</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+                    <span class="n">selected_features_from_partition</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">root_file_partition_iterator</span><span class="si">}</span><span class="s2">_</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">alias</span><span class="si">}</span><span class="s2">_iteration_select_feature_from_partition_</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">scale</span><span class="si">}</span><span class="s2">&quot;</span>
+                    <span class="n">custom_arcpy</span><span class="o">.</span><span class="n">select_attribute_and_make_feature_layer</span><span class="p">(</span>
+                        <span class="n">input_layer</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">iteration_append_featur</span><span class="p">,</span>
+                        <span class="n">expression</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">partition_field</span><span class="si">}</span><span class="s2"> = 1&quot;</span><span class="p">,</span>
+                        <span class="n">output_name</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">selected_features_from_partition</span><span class="p">,</span>
+                    <span class="p">)</span>
+
+                    <span class="n">arcpy</span><span class="o">.</span><span class="n">management</span><span class="o">.</span><span class="n">Append</span><span class="p">(</span>
+                        <span class="n">inputs</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">selected_features_from_partition</span><span class="p">,</span>
+                        <span class="n">target</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">final_append_feature</span><span class="p">,</span>
+                        <span class="n">schema_type</span><span class="o">=</span><span class="s2">&quot;NO_TEST&quot;</span><span class="p">,</span>
+                    <span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="PartitionIterator.run">
+<a class="viewcode-back" href="../../generated_docs/custom_tools.html#custom_tools.partition_iterator.PartitionIterator.run">[docs]</a>
+    <span class="k">def</span> <span class="nf">run</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">setup_arcpy_environment</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">create_cartographic_partitions</span><span class="p">()</span>
+
+        <span class="n">max_object_id</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">pre_iteration</span><span class="p">()</span>
+
+        <span class="c1"># Initialize the file mapping for each alias</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">file_mapping</span> <span class="o">=</span> <span class="p">{</span><span class="n">alias</span><span class="p">:</span> <span class="p">{</span><span class="s2">&quot;current_output&quot;</span><span class="p">:</span> <span class="kc">None</span><span class="p">}</span> <span class="k">for</span> <span class="n">alias</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">alias</span><span class="p">}</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">prepare_input_data</span><span class="p">()</span>
+
+        <span class="c1"># Partition iteration for each object ID</span>
+        <span class="k">for</span> <span class="n">alias</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">alias</span><span class="p">:</span>
+            <span class="n">current_output</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">file_mapping</span><span class="p">[</span><span class="n">alias</span><span class="p">][</span><span class="s2">&quot;current_output&quot;</span><span class="p">]</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">partition_iteration</span><span class="p">(</span>
+                <span class="n">current_output</span><span class="p">,</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">partition_feature</span><span class="p">,</span>
+                <span class="n">max_object_id</span><span class="p">,</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">root_file_partition_iterator</span><span class="p">,</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">scale</span><span class="p">,</span>
+                <span class="s2">&quot;partition_select&quot;</span><span class="p">,</span>  <span class="c1"># Assuming this is the partition field</span>
+                <span class="s2">&quot;id_field&quot;</span><span class="p">,</span>  <span class="c1"># Assuming this is the original ID field</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">final_append_feature</span><span class="p">,</span>
+            <span class="p">)</span></div>
+</div>
+
+
+
+<span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s2">&quot;__main__&quot;</span><span class="p">:</span>
+    <span class="c1"># Define your input feature classes and their aliases</span>
+    <span class="n">inputs</span> <span class="o">=</span> <span class="p">{</span>
+        <span class="s2">&quot;building_points&quot;</span><span class="p">:</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">Building_N100</span><span class="o">.</span><span class="n">table_management__bygningspunkt_pre_resolve_building_conflicts__n100</span><span class="o">.</span><span class="n">value</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;building_polygons&quot;</span><span class="p">:</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">Building_N100</span><span class="o">.</span><span class="n">simplify_building_polygons__simplified_grunnriss__n100</span><span class="o">.</span><span class="n">value</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span>
+    <span class="p">}</span>
+
+    <span class="c1"># Instantiate PartitionIterator with necessary parameters</span>
+    <span class="n">partition_iterator</span> <span class="o">=</span> <span class="n">PartitionIterator</span><span class="p">(</span>
+        <span class="n">inputs</span><span class="o">=</span><span class="n">inputs</span><span class="p">,</span>
+        <span class="n">root_file_partition_iterator</span><span class="o">=</span><span class="n">Building_N100</span><span class="o">.</span><span class="n">iteration__partition_iterator__n100</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
+        <span class="n">scale</span><span class="o">=</span><span class="n">setup_directory_structure</span><span class="o">.</span><span class="n">scale_n100</span><span class="p">,</span>
+        <span class="n">output_feature_class</span><span class="o">=</span><span class="n">Building_N100</span><span class="o">.</span><span class="n">iteration__partition_iterator_final_output__n100</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
+        <span class="c1"># Add other parameters like custom_functions if you have any</span>
+    <span class="p">)</span>
+
+    <span class="c1"># Run the partition iterator</span>
+    <span class="n">partition_iterator</span><span class="o">.</span><span class="n">run</span><span class="p">()</span>
+</pre></div>
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="../../index.html">Automatisk Generalisering</a></h1>
+
+
+
+
+
+
+
+
+<h3>Navigation</h3>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../../index.html">Documentation overview</a><ul>
+  <li><a href="../index.html">Module code</a><ul>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"/>
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>document.getElementById('searchbox').style.display = "block"</script>
+
+
+
+
+
+
+
+
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &#169;2024, Kartverket.
+      
+      |
+      Powered by <a href="https://www.sphinx-doc.org/">Sphinx 7.2.6</a>
+      &amp; <a href="https://alabaster.readthedocs.io">Alabaster 0.7.16</a>
+      
+    </div>
+
+    
+
+    
+  </body>
+</html>

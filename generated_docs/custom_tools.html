@@ -35,11 +35,222 @@
 <section id="submodules">
 <h2>Submodules<a class="headerlink" href="#submodules" title="Link to this heading">¶</a></h2>
 </section>
-<section id="custom-tools-custom-arcpy-module">
-<h2>custom_tools.custom_arcpy module<a class="headerlink" href="#custom-tools-custom-arcpy-module" title="Link to this heading">¶</a></h2>
+<section id="module-custom_tools.custom_arcpy">
+<span id="custom-tools-custom-arcpy-module"></span><h2>custom_tools.custom_arcpy module<a class="headerlink" href="#module-custom_tools.custom_arcpy" title="Link to this heading">¶</a></h2>
+<dl class="py class">
+<dt class="sig sig-object py" id="custom_tools.custom_arcpy.OverlapType">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">custom_tools.custom_arcpy.</span></span><span class="sig-name descname"><span class="pre">OverlapType</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">value</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">names</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">values</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">module</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">qualname</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">type</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">start</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">boundary</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/custom_tools/custom_arcpy.html#OverlapType"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#custom_tools.custom_arcpy.OverlapType" title="Link to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">Enum</span></code></p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="custom_tools.custom_arcpy.OverlapType.ARE_IDENTICAL_TO">
+<span class="sig-name descname"><span class="pre">ARE_IDENTICAL_TO</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'ARE_IDENTICAL_TO'</span></em><a class="headerlink" href="#custom_tools.custom_arcpy.OverlapType.ARE_IDENTICAL_TO" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="custom_tools.custom_arcpy.OverlapType.BOUNDARY_TOUCHES">
+<span class="sig-name descname"><span class="pre">BOUNDARY_TOUCHES</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'BOUNDARY_TOUCHES'</span></em><a class="headerlink" href="#custom_tools.custom_arcpy.OverlapType.BOUNDARY_TOUCHES" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="custom_tools.custom_arcpy.OverlapType.COMPLETELY_CONTAINS">
+<span class="sig-name descname"><span class="pre">COMPLETELY_CONTAINS</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'COMPLETELY_CONTAINS'</span></em><a class="headerlink" href="#custom_tools.custom_arcpy.OverlapType.COMPLETELY_CONTAINS" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="custom_tools.custom_arcpy.OverlapType.COMPLETELY_WITHIN">
+<span class="sig-name descname"><span class="pre">COMPLETELY_WITHIN</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'COMPLETELY_WITHIN'</span></em><a class="headerlink" href="#custom_tools.custom_arcpy.OverlapType.COMPLETELY_WITHIN" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="custom_tools.custom_arcpy.OverlapType.CONTAINS">
+<span class="sig-name descname"><span class="pre">CONTAINS</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'CONTAINS'</span></em><a class="headerlink" href="#custom_tools.custom_arcpy.OverlapType.CONTAINS" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="custom_tools.custom_arcpy.OverlapType.CONTAINS_CLEMENTINI">
+<span class="sig-name descname"><span class="pre">CONTAINS_CLEMENTINI</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'CONTAINS_CLEMENTINI'</span></em><a class="headerlink" href="#custom_tools.custom_arcpy.OverlapType.CONTAINS_CLEMENTINI" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="custom_tools.custom_arcpy.OverlapType.CROSSED_BY_THE_OUTLINE_OF">
+<span class="sig-name descname"><span class="pre">CROSSED_BY_THE_OUTLINE_OF</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'CROSSED_BY_THE_OUTLINE_OF'</span></em><a class="headerlink" href="#custom_tools.custom_arcpy.OverlapType.CROSSED_BY_THE_OUTLINE_OF" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="custom_tools.custom_arcpy.OverlapType.HAVE_THEIR_CENTER_IN">
+<span class="sig-name descname"><span class="pre">HAVE_THEIR_CENTER_IN</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'HAVE_THEIR_CENTER_IN'</span></em><a class="headerlink" href="#custom_tools.custom_arcpy.OverlapType.HAVE_THEIR_CENTER_IN" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="custom_tools.custom_arcpy.OverlapType.INTERSECT">
+<span class="sig-name descname"><span class="pre">INTERSECT</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'INTERSECT'</span></em><a class="headerlink" href="#custom_tools.custom_arcpy.OverlapType.INTERSECT" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="custom_tools.custom_arcpy.OverlapType.INTERSECT_3D">
+<span class="sig-name descname"><span class="pre">INTERSECT_3D</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'INTERSECT_3D'</span></em><a class="headerlink" href="#custom_tools.custom_arcpy.OverlapType.INTERSECT_3D" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="custom_tools.custom_arcpy.OverlapType.INTERSECT_DBMS">
+<span class="sig-name descname"><span class="pre">INTERSECT_DBMS</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'INTERSECT_DBMS'</span></em><a class="headerlink" href="#custom_tools.custom_arcpy.OverlapType.INTERSECT_DBMS" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="custom_tools.custom_arcpy.OverlapType.SHARE_A_LINE_SEGMENT_WITH">
+<span class="sig-name descname"><span class="pre">SHARE_A_LINE_SEGMENT_WITH</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'SHARE_A_LINE_SEGMENT_WITH'</span></em><a class="headerlink" href="#custom_tools.custom_arcpy.OverlapType.SHARE_A_LINE_SEGMENT_WITH" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="custom_tools.custom_arcpy.OverlapType.WITHIN">
+<span class="sig-name descname"><span class="pre">WITHIN</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'WITHIN'</span></em><a class="headerlink" href="#custom_tools.custom_arcpy.OverlapType.WITHIN" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="custom_tools.custom_arcpy.OverlapType.WITHIN_A_DISTANCE">
+<span class="sig-name descname"><span class="pre">WITHIN_A_DISTANCE</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'WITHIN_A_DISTANCE'</span></em><a class="headerlink" href="#custom_tools.custom_arcpy.OverlapType.WITHIN_A_DISTANCE" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="custom_tools.custom_arcpy.OverlapType.WITHIN_A_DISTANCE_3D">
+<span class="sig-name descname"><span class="pre">WITHIN_A_DISTANCE_3D</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'WITHIN_A_DISTANCE_3D'</span></em><a class="headerlink" href="#custom_tools.custom_arcpy.OverlapType.WITHIN_A_DISTANCE_3D" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="custom_tools.custom_arcpy.OverlapType.WITHIN_A_DISTANCE_GEODESIC">
+<span class="sig-name descname"><span class="pre">WITHIN_A_DISTANCE_GEODESIC</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'WITHIN_A_DISTANCE_GEODESIC'</span></em><a class="headerlink" href="#custom_tools.custom_arcpy.OverlapType.WITHIN_A_DISTANCE_GEODESIC" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="custom_tools.custom_arcpy.OverlapType.WITHIN_CLEMENTINI">
+<span class="sig-name descname"><span class="pre">WITHIN_CLEMENTINI</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'WITHIN_CLEMENTINI'</span></em><a class="headerlink" href="#custom_tools.custom_arcpy.OverlapType.WITHIN_CLEMENTINI" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="custom_tools.custom_arcpy.SelectionType">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">custom_tools.custom_arcpy.</span></span><span class="sig-name descname"><span class="pre">SelectionType</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">value</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">names</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">values</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">module</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">qualname</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">type</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">start</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">boundary</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/custom_tools/custom_arcpy.html#SelectionType"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#custom_tools.custom_arcpy.SelectionType" title="Link to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">Enum</span></code></p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="custom_tools.custom_arcpy.SelectionType.ADD_TO_SELECTION">
+<span class="sig-name descname"><span class="pre">ADD_TO_SELECTION</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'ADD_TO_SELECTION'</span></em><a class="headerlink" href="#custom_tools.custom_arcpy.SelectionType.ADD_TO_SELECTION" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="custom_tools.custom_arcpy.SelectionType.CLEAR_SELECTION">
+<span class="sig-name descname"><span class="pre">CLEAR_SELECTION</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'CLEAR_SELECTION'</span></em><a class="headerlink" href="#custom_tools.custom_arcpy.SelectionType.CLEAR_SELECTION" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="custom_tools.custom_arcpy.SelectionType.NEW_SELECTION">
+<span class="sig-name descname"><span class="pre">NEW_SELECTION</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'NEW_SELECTION'</span></em><a class="headerlink" href="#custom_tools.custom_arcpy.SelectionType.NEW_SELECTION" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="custom_tools.custom_arcpy.SelectionType.REMOVE_FROM_SELECTION">
+<span class="sig-name descname"><span class="pre">REMOVE_FROM_SELECTION</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'REMOVE_FROM_SELECTION'</span></em><a class="headerlink" href="#custom_tools.custom_arcpy.SelectionType.REMOVE_FROM_SELECTION" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="custom_tools.custom_arcpy.SelectionType.SUBSET_SELECTION">
+<span class="sig-name descname"><span class="pre">SUBSET_SELECTION</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'SUBSET_SELECTION'</span></em><a class="headerlink" href="#custom_tools.custom_arcpy.SelectionType.SUBSET_SELECTION" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="custom_tools.custom_arcpy.SelectionType.SWITCH_SELECTION">
+<span class="sig-name descname"><span class="pre">SWITCH_SELECTION</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'SWITCH_SELECTION'</span></em><a class="headerlink" href="#custom_tools.custom_arcpy.SelectionType.SWITCH_SELECTION" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="custom_tools.custom_arcpy.apply_symbology">
+<span class="sig-prename descclassname"><span class="pre">custom_tools.custom_arcpy.</span></span><span class="sig-name descname"><span class="pre">apply_symbology</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">input_layer</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">in_symbology_layer</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">output_name</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/custom_tools/custom_arcpy.html#apply_symbology"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#custom_tools.custom_arcpy.apply_symbology" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="custom_tools.custom_arcpy.select_attribute_and_make_feature_layer">
+<span class="sig-prename descclassname"><span class="pre">custom_tools.custom_arcpy.</span></span><span class="sig-name descname"><span class="pre">select_attribute_and_make_feature_layer</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">input_layer</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">expression</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">output_name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">selection_type</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'NEW_SELECTION'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">inverted</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/custom_tools/custom_arcpy.html#select_attribute_and_make_feature_layer"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#custom_tools.custom_arcpy.select_attribute_and_make_feature_layer" title="Link to this definition">¶</a></dt>
+<dd><p>Selects features based on attribute and creates a new feature layer.
+then it uses the selection in the feature layer to store it permanently using copy features.</p>
+<p>Parameters:
+- input_layer: The input feature layer for selection.
+- expression: The SQL expression to use for selection.
+- output_name: The name of the output feature layer.
+- selection_type: The type of selection to perform. Defaults to “NEW_SELECTION”.
+- inverted: A boolean flag to indicate if the selection should be inverted.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="custom_tools.custom_arcpy.select_attribute_and_make_permanent_feature">
+<span class="sig-prename descclassname"><span class="pre">custom_tools.custom_arcpy.</span></span><span class="sig-name descname"><span class="pre">select_attribute_and_make_permanent_feature</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">input_layer</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">expression</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">output_name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">selection_type</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'NEW_SELECTION'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">inverted</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/custom_tools/custom_arcpy.html#select_attribute_and_make_permanent_feature"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#custom_tools.custom_arcpy.select_attribute_and_make_permanent_feature" title="Link to this definition">¶</a></dt>
+<dd><p>Selects features based on attribute and creates a new feature layer.
+then it uses the selection in the feature layer to store it permanently using copy features.</p>
+<p>Parameters:
+- input_layer: The input feature layer for selection.
+- expression: The SQL expression to use for selection.
+- output_name: The name of the output feature layer.
+- selection_type: The type of selection to perform. Defaults to “NEW_SELECTION”.
+- inverted: A boolean flag to indicate if the selection should be inverted.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="custom_tools.custom_arcpy.select_location_and_make_feature_layer">
+<span class="sig-prename descclassname"><span class="pre">custom_tools.custom_arcpy.</span></span><span class="sig-name descname"><span class="pre">select_location_and_make_feature_layer</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">input_layer</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">overlap_type</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">select_features</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">output_name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">selection_type</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">SelectionType.NEW_SELECTION</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">inverted</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">search_distance</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/custom_tools/custom_arcpy.html#select_location_and_make_feature_layer"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#custom_tools.custom_arcpy.select_location_and_make_feature_layer" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="custom_tools.custom_arcpy.select_location_and_make_permanent_feature">
+<span class="sig-prename descclassname"><span class="pre">custom_tools.custom_arcpy.</span></span><span class="sig-name descname"><span class="pre">select_location_and_make_permanent_feature</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">input_layer</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">overlap_type</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">select_features</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">output_name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">selection_type</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">SelectionType.NEW_SELECTION</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">inverted</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">search_distance</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/custom_tools/custom_arcpy.html#select_location_and_make_permanent_feature"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#custom_tools.custom_arcpy.select_location_and_make_permanent_feature" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
 </section>
-<section id="custom-tools-partition-iterator-module">
-<h2>custom_tools.partition_iterator module<a class="headerlink" href="#custom-tools-partition-iterator-module" title="Link to this heading">¶</a></h2>
+<section id="module-custom_tools.partition_iterator">
+<span id="custom-tools-partition-iterator-module"></span><h2>custom_tools.partition_iterator module<a class="headerlink" href="#module-custom_tools.partition_iterator" title="Link to this heading">¶</a></h2>
+<dl class="py class">
+<dt class="sig sig-object py" id="custom_tools.partition_iterator.PartitionIterator">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">custom_tools.partition_iterator.</span></span><span class="sig-name descname"><span class="pre">PartitionIterator</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">inputs</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">root_file_partition_iterator</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">scale</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">output_feature_class</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">custom_functions</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">feature_count</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'15000'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">partition_method</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'FEATURES'</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/custom_tools/partition_iterator.html#PartitionIterator"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#custom_tools.partition_iterator.PartitionIterator" title="Link to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<dl class="py method">
+<dt class="sig sig-object py" id="custom_tools.partition_iterator.PartitionIterator.create_cartographic_partitions">
+<span class="sig-name descname"><span class="pre">create_cartographic_partitions</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/custom_tools/partition_iterator.html#PartitionIterator.create_cartographic_partitions"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#custom_tools.partition_iterator.PartitionIterator.create_cartographic_partitions" title="Link to this definition">¶</a></dt>
+<dd><p>Creates cartographic partitions based on the input feature classes.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="custom_tools.partition_iterator.PartitionIterator.custom_function">
+<span class="sig-name descname"><span class="pre">custom_function</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/custom_tools/partition_iterator.html#PartitionIterator.custom_function"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#custom_tools.partition_iterator.PartitionIterator.custom_function" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="custom_tools.partition_iterator.PartitionIterator.partition_iteration">
+<span class="sig-name descname"><span class="pre">partition_iteration</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">input_data_copy</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">partition_feature</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">max_object_id</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">root_file_partition_iterator</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">scale</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">partition_field</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">orig_id_field</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">final_append_feature</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/custom_tools/partition_iterator.html#PartitionIterator.partition_iteration"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#custom_tools.partition_iterator.PartitionIterator.partition_iteration" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="custom_tools.partition_iterator.PartitionIterator.pre_iteration">
+<span class="sig-name descname"><span class="pre">pre_iteration</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/custom_tools/partition_iterator.html#PartitionIterator.pre_iteration"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#custom_tools.partition_iterator.PartitionIterator.pre_iteration" title="Link to this definition">¶</a></dt>
+<dd><p>Determine the maximum OBJECTID for partitioning.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="custom_tools.partition_iterator.PartitionIterator.prepare_input_data">
+<span class="sig-name descname"><span class="pre">prepare_input_data</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/custom_tools/partition_iterator.html#PartitionIterator.prepare_input_data"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#custom_tools.partition_iterator.PartitionIterator.prepare_input_data" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="custom_tools.partition_iterator.PartitionIterator.run">
+<span class="sig-name descname"><span class="pre">run</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/custom_tools/partition_iterator.html#PartitionIterator.run"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#custom_tools.partition_iterator.PartitionIterator.run" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="custom_tools.partition_iterator.PartitionIterator.setup_arcpy_environment">
+<span class="sig-name descname"><span class="pre">setup_arcpy_environment</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/custom_tools/partition_iterator.html#PartitionIterator.setup_arcpy_environment"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#custom_tools.partition_iterator.PartitionIterator.setup_arcpy_environment" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
 </section>
 <section id="custom-tools-polygon-processor-module">
 <h2>custom_tools.polygon_processor module<a class="headerlink" href="#custom-tools-polygon-processor-module" title="Link to this heading">¶</a></h2>

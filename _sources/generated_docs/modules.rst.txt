@@ -5,6 +5,7 @@ automatisk-generalisering
    :maxdepth: 4
 
    conf
+   config
    custom_tools
    env_setup
    file_manager

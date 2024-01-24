@@ -1,0 +1,497 @@
+<!DOCTYPE html>
+
+<html lang="en" data-content_root="../../../../">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>generalization.n100.building.building_polygon_displacement &#8212; Automatisk Generalisering 0.0.1 documentation</title>
+    <link rel="stylesheet" type="text/css" href="../../../../_static/pygments.css?v=d1102ebc" />
+    <link rel="stylesheet" type="text/css" href="../../../../_static/alabaster.css?v=12dfc556" />
+    <script src="../../../../_static/documentation_options.js?v=d45e8c67"></script>
+    <script src="../../../../_static/doctools.js?v=888ff710"></script>
+    <script src="../../../../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <link rel="index" title="Index" href="../../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../../search.html" />
+   
+  <link rel="stylesheet" href="../../../../_static/custom.css" type="text/css" />
+  
+
+  
+  
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <h1>Source code for generalization.n100.building.building_polygon_displacement</h1><div class="highlight"><pre>
+<span></span><span class="c1"># Importing modules</span>
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<span class="kn">import</span> <span class="nn">arcpy</span>
+<span class="kn">import</span> <span class="nn">os</span>
+
+<span class="c1"># Importing custom modules</span>
+<span class="kn">import</span> <span class="nn">config</span>
+<span class="kn">from</span> <span class="nn">input_data</span> <span class="kn">import</span> <span class="n">input_n100</span>
+<span class="kn">from</span> <span class="nn">custom_tools</span> <span class="kn">import</span> <span class="n">custom_arcpy</span>
+
+<span class="c1"># Importing environment settings</span>
+<span class="kn">from</span> <span class="nn">env_setup</span> <span class="kn">import</span> <span class="n">environment_setup</span>
+
+<span class="n">environment_setup</span><span class="o">.</span><span class="n">general_setup</span><span class="p">()</span>
+
+<span class="c1"># Importing file manager</span>
+<span class="kn">from</span> <span class="nn">file_manager.n100.file_manager_buildings</span> <span class="kn">import</span> <span class="n">Building_N100</span>
+
+
+<div class="viewcode-block" id="main">
+<a class="viewcode-back" href="../../../../generated_docs/generalization.n100.building.html#generalization.n100.building.building_polygon_displacement.main">[docs]</a>
+<span class="k">def</span> <span class="nf">main</span><span class="p">():</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    replace with docstring</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="c1"># propagate_displacement_building_polygons()</span>
+    <span class="c1"># features_500_m_from_building_polygons()</span>
+    <span class="c1"># apply_symbology_to_layers()</span>
+    <span class="c1"># rbc_selection()</span>
+    <span class="n">resolve_building_conflict_building_polygon</span><span class="p">()</span></div>
+
+    <span class="c1"># creating_road_buffer()</span>
+    <span class="c1"># erasing_building_polygons_with_road_buffer()</span>
+    <span class="c1"># small_building_polygons_to_point()</span>
+
+
+<div class="viewcode-block" id="propagate_displacement_building_polygons">
+<a class="viewcode-back" href="../../../../generated_docs/generalization.n100.building.html#generalization.n100.building.building_polygon_displacement.propagate_displacement_building_polygons">[docs]</a>
+<span class="k">def</span> <span class="nf">propagate_displacement_building_polygons</span><span class="p">():</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    replace with docstring</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Propogate displacement ...&quot;</span><span class="p">)</span>
+    <span class="c1"># Copying layer so no changes are made to the original</span>
+    <span class="n">arcpy</span><span class="o">.</span><span class="n">management</span><span class="o">.</span><span class="n">Copy</span><span class="p">(</span>
+        <span class="n">in_data</span><span class="o">=</span><span class="n">Building_N100</span><span class="o">.</span><span class="n">simplify_building_polygons__simplified_grunnriss__n100</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
+        <span class="n">out_data</span><span class="o">=</span><span class="n">Building_N100</span><span class="o">.</span><span class="n">propagate_displacement_building_polygons__building_polygon_pre_propogate_displacement__n100</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
+    <span class="p">)</span>
+
+    <span class="c1"># Selecting propogate displacement features 500 meter from building polgyons</span>
+    <span class="n">custom_arcpy</span><span class="o">.</span><span class="n">select_location_and_make_permanent_feature</span><span class="p">(</span>
+        <span class="n">input_layer</span><span class="o">=</span><span class="n">config</span><span class="o">.</span><span class="n">displacement_feature</span><span class="p">,</span>
+        <span class="n">overlap_type</span><span class="o">=</span><span class="n">custom_arcpy</span><span class="o">.</span><span class="n">OverlapType</span><span class="o">.</span><span class="n">WITHIN_A_DISTANCE</span><span class="p">,</span>
+        <span class="n">select_features</span><span class="o">=</span><span class="n">Building_N100</span><span class="o">.</span><span class="n">propagate_displacement_building_polygons__building_polygon_pre_propogate_displacement__n100</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
+        <span class="n">output_name</span><span class="o">=</span><span class="n">Building_N100</span><span class="o">.</span><span class="n">propagate_displacement_building_polygons__displacement_feature_1000_m_from_building_polygon__n100</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
+        <span class="n">search_distance</span><span class="o">=</span><span class="s2">&quot;1000 Meters&quot;</span><span class="p">,</span>
+    <span class="p">)</span>
+
+    <span class="c1"># Running propogate displacement for building polygons</span>
+    <span class="n">arcpy</span><span class="o">.</span><span class="n">cartography</span><span class="o">.</span><span class="n">PropagateDisplacement</span><span class="p">(</span>
+        <span class="n">in_features</span><span class="o">=</span><span class="n">Building_N100</span><span class="o">.</span><span class="n">propagate_displacement_building_polygons__building_polygon_pre_propogate_displacement__n100</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
+        <span class="n">displacement_features</span><span class="o">=</span><span class="n">Building_N100</span><span class="o">.</span><span class="n">propagate_displacement_building_polygons__displacement_feature_1000_m_from_building_polygon__n100</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
+        <span class="n">adjustment_style</span><span class="o">=</span><span class="s2">&quot;SOLID&quot;</span><span class="p">,</span>
+    <span class="p">)</span>
+
+    <span class="c1"># Copying and assigning new name to layer</span>
+    <span class="n">arcpy</span><span class="o">.</span><span class="n">management</span><span class="o">.</span><span class="n">Copy</span><span class="p">(</span>
+        <span class="n">in_data</span><span class="o">=</span><span class="n">Building_N100</span><span class="o">.</span><span class="n">propagate_displacement_building_polygons__building_polygon_pre_propogate_displacement__n100</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
+        <span class="n">out_data</span><span class="o">=</span><span class="n">Building_N100</span><span class="o">.</span><span class="n">propagate_displacement_building_polygons__after_propogate_displacement__n100</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
+    <span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="features_500_m_from_building_polygons">
+<a class="viewcode-back" href="../../../../generated_docs/generalization.n100.building.html#generalization.n100.building.building_polygon_displacement.features_500_m_from_building_polygons">[docs]</a>
+<span class="k">def</span> <span class="nf">features_500_m_from_building_polygons</span><span class="p">():</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    replace with docstring</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Selecting features 500 meter from building polygon ...&quot;</span><span class="p">)</span>
+    <span class="c1"># Selecting begrensningskurve 500 meters from building polygons</span>
+    <span class="n">custom_arcpy</span><span class="o">.</span><span class="n">select_location_and_make_permanent_feature</span><span class="p">(</span>
+        <span class="n">input_layer</span><span class="o">=</span><span class="n">Building_N100</span><span class="o">.</span><span class="n">preparation_begrensningskurve__selected_waterfeatures_from_begrensningskurve__n100</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
+        <span class="n">overlap_type</span><span class="o">=</span><span class="n">custom_arcpy</span><span class="o">.</span><span class="n">OverlapType</span><span class="o">.</span><span class="n">WITHIN_A_DISTANCE</span><span class="p">,</span>
+        <span class="n">select_features</span><span class="o">=</span><span class="n">Building_N100</span><span class="o">.</span><span class="n">propagate_displacement_building_polygons__after_propogate_displacement__n100</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
+        <span class="n">output_name</span><span class="o">=</span><span class="n">Building_N100</span><span class="o">.</span><span class="n">features_500_m_from_building_polygons__selected_begrensningskurve__n100</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
+        <span class="n">search_distance</span><span class="o">=</span><span class="s2">&quot;500 Meters&quot;</span><span class="p">,</span>
+    <span class="p">)</span>
+
+    <span class="c1"># Selecting roads 500 meters from building polygons</span>
+    <span class="n">custom_arcpy</span><span class="o">.</span><span class="n">select_location_and_make_permanent_feature</span><span class="p">(</span>
+        <span class="n">input_layer</span><span class="o">=</span><span class="n">Building_N100</span><span class="o">.</span><span class="n">preperation_veg_sti__unsplit_veg_sti__n100</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
+        <span class="n">overlap_type</span><span class="o">=</span><span class="n">custom_arcpy</span><span class="o">.</span><span class="n">OverlapType</span><span class="o">.</span><span class="n">WITHIN_A_DISTANCE</span><span class="p">,</span>
+        <span class="n">select_features</span><span class="o">=</span><span class="n">Building_N100</span><span class="o">.</span><span class="n">simplify_building_polygons__simplified_grunnriss__n100</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
+        <span class="n">output_name</span><span class="o">=</span><span class="n">Building_N100</span><span class="o">.</span><span class="n">features_500_m_from_building_polygons__selected_roads__n100</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
+        <span class="n">search_distance</span><span class="o">=</span><span class="s2">&quot;500 Meters&quot;</span><span class="p">,</span>
+    <span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="rbc_selection">
+<a class="viewcode-back" href="../../../../generated_docs/generalization.n100.building.html#generalization.n100.building.building_polygon_displacement.rbc_selection">[docs]</a>
+<span class="k">def</span> <span class="nf">rbc_selection</span><span class="p">():</span>
+    <span class="n">custom_arcpy</span><span class="o">.</span><span class="n">select_attribute_and_make_permanent_feature</span><span class="p">(</span>
+        <span class="n">input_layer</span><span class="o">=</span><span class="n">input_n100</span><span class="o">.</span><span class="n">AdminFlate</span><span class="p">,</span>
+        <span class="n">expression</span><span class="o">=</span><span class="s2">&quot;NAVN = &#39;Asker&#39;&quot;</span><span class="p">,</span>
+        <span class="n">output_name</span><span class="o">=</span><span class="n">Building_N100</span><span class="o">.</span><span class="n">rbc_selection__selection_area_resolve_building_conflicts__n100</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
+    <span class="p">)</span>
+
+    <span class="c1"># List of dictionaries containing parameters for each selection</span>
+    <span class="n">selections</span> <span class="o">=</span> <span class="p">[</span>
+        <span class="p">{</span>
+            <span class="s2">&quot;input_layer&quot;</span><span class="p">:</span> <span class="n">Building_N100</span><span class="o">.</span><span class="n">propagate_displacement_building_polygons__after_propogate_displacement__n100</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
+            <span class="s2">&quot;output_name&quot;</span><span class="p">:</span> <span class="n">Building_N100</span><span class="o">.</span><span class="n">rbc_selection__grunnriss_selection_rbc__n100</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
+        <span class="p">},</span>
+        <span class="p">{</span>
+            <span class="s2">&quot;input_layer&quot;</span><span class="p">:</span> <span class="n">Building_N100</span><span class="o">.</span><span class="n">features_500_m_from_building_polygons__selected_roads__n100</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
+            <span class="s2">&quot;output_name&quot;</span><span class="p">:</span> <span class="n">Building_N100</span><span class="o">.</span><span class="n">rbc_selection__veg_sti_selection_rbc_rbc__n100</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
+        <span class="p">},</span>
+        <span class="p">{</span>
+            <span class="s2">&quot;input_layer&quot;</span><span class="p">:</span> <span class="n">Building_N100</span><span class="o">.</span><span class="n">features_500_m_from_building_polygons__selected_begrensningskurve__n100</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
+            <span class="s2">&quot;output_name&quot;</span><span class="p">:</span> <span class="n">Building_N100</span><span class="o">.</span><span class="n">rbc_selection__begrensningskurve_selection_rbc__n100</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
+        <span class="p">},</span>
+    <span class="p">]</span>
+
+    <span class="c1"># Loop over the selections and apply the function</span>
+    <span class="k">for</span> <span class="n">selection</span> <span class="ow">in</span> <span class="n">selections</span><span class="p">:</span>
+        <span class="n">custom_arcpy</span><span class="o">.</span><span class="n">select_location_and_make_permanent_feature</span><span class="p">(</span>
+            <span class="n">input_layer</span><span class="o">=</span><span class="n">selection</span><span class="p">[</span><span class="s2">&quot;input_layer&quot;</span><span class="p">],</span>
+            <span class="n">overlap_type</span><span class="o">=</span><span class="n">custom_arcpy</span><span class="o">.</span><span class="n">OverlapType</span><span class="o">.</span><span class="n">INTERSECT</span><span class="p">,</span>
+            <span class="n">select_features</span><span class="o">=</span><span class="n">Building_N100</span><span class="o">.</span><span class="n">rbc_selection__selection_area_resolve_building_conflicts__n100</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
+            <span class="n">output_name</span><span class="o">=</span><span class="n">selection</span><span class="p">[</span><span class="s2">&quot;output_name&quot;</span><span class="p">],</span>
+        <span class="p">)</span></div>
+
+
+
+<span class="sd">&quot;&quot;&quot;&quot;</span>
+<span class="sd">def apply_symbology_to_layers():</span>
+<span class="sd">    print(&quot;Applying symbology ...&quot;)</span>
+<span class="sd">    # Applying symbology to building polygons</span>
+<span class="sd">    custom_arcpy.apply_symbology(</span>
+<span class="sd">        input_layer=Building_N100.propagate_displacement_building_polygons__after_propogate_displacement__n100.value,</span>
+<span class="sd">        in_symbology_layer=config.symbology_n100_grunnriss,</span>
+<span class="sd">        output_name=Building_N100.apply_symbology_to_layers__building_polygon__n100__lyrx.value,</span>
+<span class="sd">    )</span>
+<span class="sd">    # Applying symbology to roads</span>
+<span class="sd">    custom_arcpy.apply_symbology(</span>
+<span class="sd">        input_layer=Building_N100.features_500_m_from_building_polygons__selected_roads__n100.value,</span>
+<span class="sd">        in_symbology_layer=config.symbology_n100_veg_sti,</span>
+<span class="sd">        output_name=Building_N100.apply_symbology_to_layers__roads__n100__lyrx.value,</span>
+<span class="sd">    )</span>
+
+<span class="sd">    # Applying symbology to begrensningskurve (limiting curve)</span>
+<span class="sd">    custom_arcpy.apply_symbology(</span>
+<span class="sd">        input_layer=Building_N100.preparation_begrensningskurve__begrensningskurve_buffer_erase_2__n100.value,</span>
+<span class="sd">        in_symbology_layer=config.symbology_n100_begrensningskurve,</span>
+<span class="sd">        output_name=Building_N100.apply_symbology_to_layers__begrensningskurve__n100__lyrx.value,</span>
+<span class="sd">    )</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+
+
+<div class="viewcode-block" id="apply_symbology_to_layers">
+<a class="viewcode-back" href="../../../../generated_docs/generalization.n100.building.html#generalization.n100.building.building_polygon_displacement.apply_symbology_to_layers">[docs]</a>
+<span class="k">def</span> <span class="nf">apply_symbology_to_layers</span><span class="p">():</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    replace with docstring</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Applying symbology ...&quot;</span><span class="p">)</span>
+    <span class="c1"># Applying symbology to building polygons</span>
+    <span class="n">custom_arcpy</span><span class="o">.</span><span class="n">apply_symbology</span><span class="p">(</span>
+        <span class="n">input_layer</span><span class="o">=</span><span class="n">Building_N100</span><span class="o">.</span><span class="n">rbc_selection__grunnriss_selection_rbc__n100</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
+        <span class="n">in_symbology_layer</span><span class="o">=</span><span class="n">config</span><span class="o">.</span><span class="n">symbology_n100_grunnriss</span><span class="p">,</span>
+        <span class="n">output_name</span><span class="o">=</span><span class="n">Building_N100</span><span class="o">.</span><span class="n">apply_symbology_to_layers__building_polygon__n100__lyrx</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="c1"># Applying symbology to roads</span>
+    <span class="n">custom_arcpy</span><span class="o">.</span><span class="n">apply_symbology</span><span class="p">(</span>
+        <span class="n">input_layer</span><span class="o">=</span><span class="n">Building_N100</span><span class="o">.</span><span class="n">rbc_selection__veg_sti_selection_rbc_rbc__n100</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
+        <span class="n">in_symbology_layer</span><span class="o">=</span><span class="n">config</span><span class="o">.</span><span class="n">symbology_n100_veg_sti</span><span class="p">,</span>
+        <span class="n">output_name</span><span class="o">=</span><span class="n">Building_N100</span><span class="o">.</span><span class="n">apply_symbology_to_layers__roads__n100__lyrx</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
+    <span class="p">)</span>
+
+    <span class="c1"># Applying symbology to begrensningskurve (limiting curve)</span>
+    <span class="n">custom_arcpy</span><span class="o">.</span><span class="n">apply_symbology</span><span class="p">(</span>
+        <span class="n">input_layer</span><span class="o">=</span><span class="n">Building_N100</span><span class="o">.</span><span class="n">rbc_selection__begrensningskurve_selection_rbc__n100</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
+        <span class="n">in_symbology_layer</span><span class="o">=</span><span class="n">config</span><span class="o">.</span><span class="n">symbology_n100_begrensningskurve</span><span class="p">,</span>
+        <span class="n">output_name</span><span class="o">=</span><span class="n">Building_N100</span><span class="o">.</span><span class="n">apply_symbology_to_layers__begrensningskurve__n100__lyrx</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
+    <span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="resolve_building_conflict_building_polygon">
+<a class="viewcode-back" href="../../../../generated_docs/generalization.n100.building.html#generalization.n100.building.building_polygon_displacement.resolve_building_conflict_building_polygon">[docs]</a>
+<span class="k">def</span> <span class="nf">resolve_building_conflict_building_polygon</span><span class="p">():</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    replace with docstring</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Resolving building conflicts ...&quot;</span><span class="p">)</span>
+    <span class="c1"># Setting scale to 1: 100 000</span>
+    <span class="n">arcpy</span><span class="o">.</span><span class="n">env</span><span class="o">.</span><span class="n">referenceScale</span> <span class="o">=</span> <span class="s2">&quot;100000&quot;</span>
+
+    <span class="n">test_barriers</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="p">[</span>
+            <span class="n">Building_N100</span><span class="o">.</span><span class="n">apply_symbology_to_layers__roads__n100__lyrx</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
+            <span class="s2">&quot;false&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;15 meters&quot;</span><span class="p">,</span>
+        <span class="p">],</span>
+    <span class="p">)</span>
+
+    <span class="c1"># Resolve Building Polygon with roads and begrensningskurve as barriers</span>
+    <span class="n">arcpy</span><span class="o">.</span><span class="n">cartography</span><span class="o">.</span><span class="n">ResolveBuildingConflicts</span><span class="p">(</span>
+        <span class="n">in_buildings</span><span class="o">=</span><span class="n">Building_N100</span><span class="o">.</span><span class="n">apply_symbology_to_layers__building_polygon__n100__lyrx</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
+        <span class="n">invisibility_field</span><span class="o">=</span><span class="s2">&quot;invisibility&quot;</span><span class="p">,</span>
+        <span class="n">in_barriers</span><span class="o">=</span><span class="n">test_barriers</span><span class="p">,</span>
+        <span class="n">building_gap</span><span class="o">=</span><span class="s2">&quot;30 meters&quot;</span><span class="p">,</span>
+        <span class="n">minimum_size</span><span class="o">=</span><span class="s2">&quot;1 meters&quot;</span><span class="p">,</span>
+    <span class="p">)</span>
+
+    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Finished&quot;</span><span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="creating_road_buffer">
+<a class="viewcode-back" href="../../../../generated_docs/generalization.n100.building.html#generalization.n100.building.building_polygon_displacement.creating_road_buffer">[docs]</a>
+<span class="k">def</span> <span class="nf">creating_road_buffer</span><span class="p">():</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    replace with docstring</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Creating road buffers ...&quot;</span><span class="p">)</span>
+    <span class="c1"># Dictionary with SQL queries and their corresponding buffer widths</span>
+    <span class="n">sql_queries</span> <span class="o">=</span> <span class="p">{</span>
+        <span class="s2">&quot;MOTORVEGTYPE = &#39;Motorveg&#39;&quot;</span><span class="p">:</span> <span class="mf">42.5</span><span class="p">,</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot; </span>
+<span class="sd">        SUBTYPEKODE = 3 </span>
+<span class="sd">        Or MOTORVEGTYPE = &#39;Motortrafikkveg&#39; </span>
+<span class="sd">        Or (SUBTYPEKODE = 2 And MOTORVEGTYPE = &#39;Motortrafikkveg&#39;) </span>
+<span class="sd">        Or (SUBTYPEKODE = 2 And MOTORVEGTYPE = &#39;Ikke motorveg&#39;) </span>
+<span class="sd">        Or (SUBTYPEKODE = 4 And MOTORVEGTYPE = &#39;Ikke motorveg&#39;) </span>
+<span class="sd">        &quot;&quot;&quot;</span><span class="p">:</span> <span class="mf">22.5</span><span class="p">,</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        SUBTYPEKODE = 1</span>
+<span class="sd">        Or SUBTYPEKODE = 5</span>
+<span class="sd">        Or SUBTYPEKODE = 6</span>
+<span class="sd">        Or SUBTYPEKODE = 9</span>
+<span class="sd">        &quot;&quot;&quot;</span><span class="p">:</span> <span class="mi">20</span><span class="p">,</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        SUBTYPEKODE = 7</span>
+<span class="sd">        Or SUBTYPEKODE = 8</span>
+<span class="sd">        Or SUBTYPEKODE = 10</span>
+<span class="sd">        Or SUBTYPEKODE =11</span>
+<span class="sd">        &quot;&quot;&quot;</span><span class="p">:</span> <span class="mf">7.5</span><span class="p">,</span>
+    <span class="p">}</span>
+
+    <span class="n">selection_name_base</span> <span class="o">=</span> <span class="n">Building_N100</span><span class="o">.</span><span class="n">creating_road_buffer__selection__n100</span><span class="o">.</span><span class="n">value</span>
+    <span class="n">buffer_name_base</span> <span class="o">=</span> <span class="n">Building_N100</span><span class="o">.</span><span class="n">creating_road_buffer__buffers__n100</span><span class="o">.</span><span class="n">value</span>
+
+    <span class="c1"># List to store the road buffer outputs</span>
+    <span class="n">road_buffer_output_names</span> <span class="o">=</span> <span class="p">[]</span>
+
+    <span class="c1"># Counter for naming the individual road type selections</span>
+    <span class="n">counter</span> <span class="o">=</span> <span class="mi">1</span>
+
+    <span class="c1"># Loop through the dictionary (Key: SQL query and Value: width) to create buffers around the different roads</span>
+    <span class="k">for</span> <span class="n">sql_query</span><span class="p">,</span> <span class="n">original_width</span> <span class="ow">in</span> <span class="n">sql_queries</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+        <span class="n">selection_output_name</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">selection_name_base</span><span class="si">}</span><span class="s2">_</span><span class="si">{</span><span class="n">counter</span><span class="si">}</span><span class="s2">&quot;</span>
+        <span class="n">buffer_width</span> <span class="o">=</span> <span class="n">original_width</span> <span class="o">+</span> <span class="mi">15</span>
+        <span class="n">buffer_output_name</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">buffer_name_base</span><span class="si">}</span><span class="s2">_</span><span class="si">{</span><span class="n">buffer_width</span><span class="si">}</span><span class="s2">m_</span><span class="si">{</span><span class="n">counter</span><span class="si">}</span><span class="s2">&quot;</span>
+
+        <span class="c1"># Selecting road types and making new feature layer based on SQL query</span>
+        <span class="n">custom_arcpy</span><span class="o">.</span><span class="n">select_attribute_and_make_feature_layer</span><span class="p">(</span>
+            <span class="n">input_layer</span><span class="o">=</span><span class="n">Building_N100</span><span class="o">.</span><span class="n">preperation_veg_sti__unsplit_veg_sti__n100</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
+            <span class="n">expression</span><span class="o">=</span><span class="n">sql_query</span><span class="p">,</span>
+            <span class="n">output_name</span><span class="o">=</span><span class="n">selection_output_name</span><span class="p">,</span>
+        <span class="p">)</span>
+
+        <span class="c1"># Making a buffer around each road type with specified width + 15 meters</span>
+        <span class="n">arcpy</span><span class="o">.</span><span class="n">analysis</span><span class="o">.</span><span class="n">PairwiseBuffer</span><span class="p">(</span>
+            <span class="n">in_features</span><span class="o">=</span><span class="n">selection_output_name</span><span class="p">,</span>
+            <span class="n">out_feature_class</span><span class="o">=</span><span class="n">buffer_output_name</span><span class="p">,</span>
+            <span class="n">buffer_distance_or_field</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">buffer_width</span><span class="si">}</span><span class="s2"> Meters&quot;</span><span class="p">,</span>
+        <span class="p">)</span>
+
+        <span class="c1"># Add buffer output names to list</span>
+        <span class="n">road_buffer_output_names</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">buffer_output_name</span><span class="p">)</span>
+        <span class="c1"># Increase the counter by 1</span>
+        <span class="n">counter</span> <span class="o">+=</span> <span class="mi">1</span>
+
+    <span class="c1"># Merge all buffers into a single feature class</span>
+    <span class="n">arcpy</span><span class="o">.</span><span class="n">management</span><span class="o">.</span><span class="n">Merge</span><span class="p">(</span>
+        <span class="n">inputs</span><span class="o">=</span><span class="n">road_buffer_output_names</span><span class="p">,</span>
+        <span class="n">output</span><span class="o">=</span><span class="n">Building_N100</span><span class="o">.</span><span class="n">creating_road_buffer__merged_road_buffers__n100</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
+    <span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="erasing_building_polygons_with_road_buffer">
+<a class="viewcode-back" href="../../../../generated_docs/generalization.n100.building.html#generalization.n100.building.building_polygon_displacement.erasing_building_polygons_with_road_buffer">[docs]</a>
+<span class="k">def</span> <span class="nf">erasing_building_polygons_with_road_buffer</span><span class="p">():</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    replace with docstring</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Erasing building polygons with road buffer ...&quot;</span><span class="p">)</span>
+    <span class="c1"># Erasing building polygons with buffer</span>
+    <span class="n">arcpy</span><span class="o">.</span><span class="n">analysis</span><span class="o">.</span><span class="n">Erase</span><span class="p">(</span>
+        <span class="n">in_features</span><span class="o">=</span><span class="n">Building_N100</span><span class="o">.</span><span class="n">propagate_displacement_building_polygons__after_propogate_displacement__n100</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
+        <span class="n">erase_features</span><span class="o">=</span><span class="n">Building_N100</span><span class="o">.</span><span class="n">creating_road_buffer__merged_road_buffers__n100</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
+        <span class="n">out_feature_class</span><span class="o">=</span><span class="n">Building_N100</span><span class="o">.</span><span class="n">erasing_building_polygons_with_road_buffer__erased_buildings__n100</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
+    <span class="p">)</span>
+
+    <span class="c1"># Multipart to singlepart to separate split parts of the building</span>
+    <span class="n">arcpy</span><span class="o">.</span><span class="n">management</span><span class="o">.</span><span class="n">MultipartToSinglepart</span><span class="p">(</span>
+        <span class="n">in_features</span><span class="o">=</span><span class="n">Building_N100</span><span class="o">.</span><span class="n">erasing_building_polygons_with_road_buffer__erased_buildings__n100</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
+        <span class="n">out_feature_class</span><span class="o">=</span><span class="n">Building_N100</span><span class="o">.</span><span class="n">erasing_building_polygons_with_road_buffer__after_multipart_to_singlepart__n100</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
+    <span class="p">)</span>
+
+    <span class="c1"># Create a dictionary to store the OBJECT_ID of the feature with the largest Shape_area for each ORIG_FID</span>
+    <span class="n">largest_object_ids</span> <span class="o">=</span> <span class="p">{}</span>
+
+    <span class="c1"># Iterate through the features and store the OBJECT_ID of the largest Shape_area for each ORIG_FID</span>
+    <span class="k">with</span> <span class="n">arcpy</span><span class="o">.</span><span class="n">da</span><span class="o">.</span><span class="n">SearchCursor</span><span class="p">(</span>
+        <span class="n">Building_N100</span><span class="o">.</span><span class="n">erasing_building_polygons_with_road_buffer__after_multipart_to_singlepart__n100</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
+        <span class="p">[</span><span class="s2">&quot;ORIG_FID&quot;</span><span class="p">,</span> <span class="s2">&quot;OBJECTID&quot;</span><span class="p">,</span> <span class="s2">&quot;Shape_Area&quot;</span><span class="p">],</span>
+    <span class="p">)</span> <span class="k">as</span> <span class="n">cursor</span><span class="p">:</span>
+        <span class="k">for</span> <span class="n">row</span> <span class="ow">in</span> <span class="n">cursor</span><span class="p">:</span>
+            <span class="n">orig_fid</span><span class="p">,</span> <span class="n">object_id</span><span class="p">,</span> <span class="n">shape_area</span> <span class="o">=</span> <span class="n">row</span>
+            <span class="k">if</span> <span class="p">(</span>
+                <span class="n">orig_fid</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">largest_object_ids</span>
+                <span class="ow">or</span> <span class="n">shape_area</span> <span class="o">&gt;</span> <span class="n">largest_object_ids</span><span class="p">[</span><span class="n">orig_fid</span><span class="p">][</span><span class="mi">1</span><span class="p">]</span>
+            <span class="p">):</span>
+                <span class="n">largest_object_ids</span><span class="p">[</span><span class="n">orig_fid</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="n">object_id</span><span class="p">,</span> <span class="n">shape_area</span><span class="p">)</span>
+
+    <span class="c1"># Create a list of OBJECTIDs for the features with the largest Shape_Area</span>
+    <span class="n">selected_object_ids</span> <span class="o">=</span> <span class="p">[</span><span class="n">record</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="k">for</span> <span class="n">record</span> <span class="ow">in</span> <span class="n">largest_object_ids</span><span class="o">.</span><span class="n">values</span><span class="p">()]</span>
+
+    <span class="c1"># Construct the SQL query using the list of OBJECTIDs</span>
+    <span class="n">selected_object_ids_query</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="sa">f</span><span class="s2">&quot;OBJECTID IN (</span><span class="si">{</span><span class="s1">&#39;, &#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="nb">map</span><span class="p">(</span><span class="nb">str</span><span class="p">,</span><span class="w"> </span><span class="n">selected_object_ids</span><span class="p">))</span><span class="si">}</span><span class="s2">)&quot;</span>
+    <span class="p">)</span>
+
+    <span class="c1"># Keeping all building parts with biggest Shape_Area</span>
+    <span class="n">custom_arcpy</span><span class="o">.</span><span class="n">select_attribute_and_make_feature_layer</span><span class="p">(</span>
+        <span class="n">input_layer</span><span class="o">=</span><span class="n">Building_N100</span><span class="o">.</span><span class="n">erasing_building_polygons_with_road_buffer__after_multipart_to_singlepart__n100</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
+        <span class="n">expression</span><span class="o">=</span><span class="n">selected_object_ids_query</span><span class="p">,</span>
+        <span class="n">output_name</span><span class="o">=</span><span class="n">Building_N100</span><span class="o">.</span><span class="n">erasing_building_polygons_with_road_buffer__selected_building_parts__n100</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
+    <span class="p">)</span>
+
+    <span class="c1"># Selecting buildings that are no longer going to be included</span>
+    <span class="n">custom_arcpy</span><span class="o">.</span><span class="n">select_location_and_make_permanent_feature</span><span class="p">(</span>
+        <span class="n">input_layer</span><span class="o">=</span><span class="n">Building_N100</span><span class="o">.</span><span class="n">erasing_building_polygons_with_road_buffer__erased_buildings__n100</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
+        <span class="n">overlap_type</span><span class="o">=</span><span class="n">custom_arcpy</span><span class="o">.</span><span class="n">OverlapType</span><span class="o">.</span><span class="n">INTERSECT</span><span class="p">,</span>
+        <span class="n">select_features</span><span class="o">=</span><span class="n">Building_N100</span><span class="o">.</span><span class="n">erasing_building_polygons_with_road_buffer__selected_building_parts__n100</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
+        <span class="n">output_name</span><span class="o">=</span><span class="n">Building_N100</span><span class="o">.</span><span class="n">erasing_building_polygons_with_road_buffer__building_polygons_erased_and_reduced__n100</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
+        <span class="n">inverted</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Merging polygons layers ...&quot;</span><span class="p">)</span>
+    <span class="c1"># Merging building parts and</span>
+    <span class="n">arcpy</span><span class="o">.</span><span class="n">management</span><span class="o">.</span><span class="n">Merge</span><span class="p">(</span>
+        <span class="n">inputs</span><span class="o">=</span><span class="p">[</span>
+            <span class="n">Building_N100</span><span class="o">.</span><span class="n">erasing_building_polygons_with_road_buffer__selected_building_parts__n100</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
+            <span class="n">Building_N100</span><span class="o">.</span><span class="n">erasing_building_polygons_with_road_buffer__building_polygons_erased_and_reduced__n100</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
+        <span class="p">],</span>
+        <span class="n">output</span><span class="o">=</span><span class="n">Building_N100</span><span class="o">.</span><span class="n">erasing_building_polygons_with_road_buffer__reduced_building_polygons__n100</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
+    <span class="p">)</span>
+
+    <span class="c1"># Selecting building polygons that are to kept as polygons</span>
+    <span class="n">custom_arcpy</span><span class="o">.</span><span class="n">select_attribute_and_make_feature_layer</span><span class="p">(</span>
+        <span class="n">input_layer</span><span class="o">=</span><span class="n">Building_N100</span><span class="o">.</span><span class="n">erasing_building_polygons_with_road_buffer__reduced_building_polygons__n100</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
+        <span class="n">expression</span><span class="o">=</span><span class="s2">&quot;Shape_Area &gt;= 3200&quot;</span><span class="p">,</span>
+        <span class="n">output_name</span><span class="o">=</span><span class="n">Building_N100</span><span class="o">.</span><span class="n">erasing_building_polygons_with_road_buffer__building_polygons_erased_final__n100</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
+    <span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="small_building_polygons_to_point">
+<a class="viewcode-back" href="../../../../generated_docs/generalization.n100.building.html#generalization.n100.building.building_polygon_displacement.small_building_polygons_to_point">[docs]</a>
+<span class="k">def</span> <span class="nf">small_building_polygons_to_point</span><span class="p">():</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    replace with docstring</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Transforming small polygons to points ...&quot;</span><span class="p">)</span>
+    <span class="c1"># Selecting building polygons that are too small</span>
+    <span class="n">custom_arcpy</span><span class="o">.</span><span class="n">select_attribute_and_make_feature_layer</span><span class="p">(</span>
+        <span class="n">input_layer</span><span class="o">=</span><span class="n">Building_N100</span><span class="o">.</span><span class="n">erasing_building_polygons_with_road_buffer__reduced_building_polygons__n100</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
+        <span class="n">expression</span><span class="o">=</span><span class="s2">&quot;Shape_Area &lt; 3200&quot;</span><span class="p">,</span>
+        <span class="n">output_name</span><span class="o">=</span><span class="n">Building_N100</span><span class="o">.</span><span class="n">small_building_polygons_to_point__building_polygons_too_small__n100</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
+    <span class="p">)</span>
+
+    <span class="c1"># Polygon to point</span>
+    <span class="n">arcpy</span><span class="o">.</span><span class="n">management</span><span class="o">.</span><span class="n">FeatureToPoint</span><span class="p">(</span>
+        <span class="n">in_features</span><span class="o">=</span><span class="n">Building_N100</span><span class="o">.</span><span class="n">small_building_polygons_to_point__building_polygons_too_small__n100</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
+        <span class="n">out_feature_class</span><span class="o">=</span><span class="n">Building_N100</span><span class="o">.</span><span class="n">small_building_polygons_to_point__building_points__n100</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
+    <span class="p">)</span>
+
+    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Script finished.&quot;</span><span class="p">)</span></div>
+
+
+
+<span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s2">&quot;__main__&quot;</span><span class="p">:</span>
+    <span class="n">main</span><span class="p">()</span>
+</pre></div>
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="../../../../index.html">Automatisk Generalisering</a></h1>
+
+
+
+
+
+
+
+
+<h3>Navigation</h3>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../../../../index.html">Documentation overview</a><ul>
+  <li><a href="../../../index.html">Module code</a><ul>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../../../../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"/>
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>document.getElementById('searchbox').style.display = "block"</script>
+
+
+
+
+
+
+
+
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &#169;2024, Kartverket.
+      
+      |
+      Powered by <a href="https://www.sphinx-doc.org/">Sphinx 7.2.6</a>
+      &amp; <a href="https://alabaster.readthedocs.io">Alabaster 0.7.16</a>
+      
+    </div>
+
+    
+
+    
+  </body>
+</html>

@@ -1,0 +1,379 @@
+<!DOCTYPE html>
+
+<html lang="en" data-content_root="../../">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>custom_tools.custom_arcpy &#8212; Automatisk Generalisering 0.0.1 documentation</title>
+    <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=d1102ebc" />
+    <link rel="stylesheet" type="text/css" href="../../_static/alabaster.css?v=12dfc556" />
+    <script src="../../_static/documentation_options.js?v=d45e8c67"></script>
+    <script src="../../_static/doctools.js?v=888ff710"></script>
+    <script src="../../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" />
+   
+  <link rel="stylesheet" href="../../_static/custom.css" type="text/css" />
+  
+
+  
+  
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <h1>Source code for custom_tools.custom_arcpy</h1><div class="highlight"><pre>
+<span></span><span class="kn">import</span> <span class="nn">arcpy</span>
+<span class="kn">from</span> <span class="nn">enum</span> <span class="kn">import</span> <span class="n">Enum</span>
+
+
+<span class="c1"># Selection Type definition used for select by attribute functions</span>
+<span class="c1"># Define your enums at the module level</span>
+<div class="viewcode-block" id="SelectionType">
+<a class="viewcode-back" href="../../generated_docs/custom_tools.html#custom_tools.custom_arcpy.SelectionType">[docs]</a>
+<span class="k">class</span> <span class="nc">SelectionType</span><span class="p">(</span><span class="n">Enum</span><span class="p">):</span>
+    <span class="n">NEW_SELECTION</span> <span class="o">=</span> <span class="s2">&quot;NEW_SELECTION&quot;</span>
+    <span class="n">ADD_TO_SELECTION</span> <span class="o">=</span> <span class="s2">&quot;ADD_TO_SELECTION&quot;</span>
+    <span class="n">REMOVE_FROM_SELECTION</span> <span class="o">=</span> <span class="s2">&quot;REMOVE_FROM_SELECTION&quot;</span>
+    <span class="n">SUBSET_SELECTION</span> <span class="o">=</span> <span class="s2">&quot;SUBSET_SELECTION&quot;</span>
+    <span class="n">SWITCH_SELECTION</span> <span class="o">=</span> <span class="s2">&quot;SWITCH_SELECTION&quot;</span>
+    <span class="n">CLEAR_SELECTION</span> <span class="o">=</span> <span class="s2">&quot;CLEAR_SELECTION&quot;</span></div>
+
+
+
+<div class="viewcode-block" id="OverlapType">
+<a class="viewcode-back" href="../../generated_docs/custom_tools.html#custom_tools.custom_arcpy.OverlapType">[docs]</a>
+<span class="k">class</span> <span class="nc">OverlapType</span><span class="p">(</span><span class="n">Enum</span><span class="p">):</span>
+    <span class="n">INTERSECT</span> <span class="o">=</span> <span class="s2">&quot;INTERSECT&quot;</span>
+    <span class="n">INTERSECT_3D</span> <span class="o">=</span> <span class="s2">&quot;INTERSECT_3D&quot;</span>
+    <span class="n">INTERSECT_DBMS</span> <span class="o">=</span> <span class="s2">&quot;INTERSECT_DBMS&quot;</span>
+    <span class="n">WITHIN_A_DISTANCE</span> <span class="o">=</span> <span class="s2">&quot;WITHIN_A_DISTANCE&quot;</span>
+    <span class="n">WITHIN_A_DISTANCE_3D</span> <span class="o">=</span> <span class="s2">&quot;WITHIN_A_DISTANCE_3D&quot;</span>
+    <span class="n">WITHIN_A_DISTANCE_GEODESIC</span> <span class="o">=</span> <span class="s2">&quot;WITHIN_A_DISTANCE_GEODESIC&quot;</span>
+    <span class="n">CONTAINS</span> <span class="o">=</span> <span class="s2">&quot;CONTAINS&quot;</span>
+    <span class="n">COMPLETELY_CONTAINS</span> <span class="o">=</span> <span class="s2">&quot;COMPLETELY_CONTAINS&quot;</span>
+    <span class="n">CONTAINS_CLEMENTINI</span> <span class="o">=</span> <span class="s2">&quot;CONTAINS_CLEMENTINI&quot;</span>
+    <span class="n">WITHIN</span> <span class="o">=</span> <span class="s2">&quot;WITHIN&quot;</span>
+    <span class="n">COMPLETELY_WITHIN</span> <span class="o">=</span> <span class="s2">&quot;COMPLETELY_WITHIN&quot;</span>
+    <span class="n">WITHIN_CLEMENTINI</span> <span class="o">=</span> <span class="s2">&quot;WITHIN_CLEMENTINI&quot;</span>
+    <span class="n">ARE_IDENTICAL_TO</span> <span class="o">=</span> <span class="s2">&quot;ARE_IDENTICAL_TO&quot;</span>
+    <span class="n">BOUNDARY_TOUCHES</span> <span class="o">=</span> <span class="s2">&quot;BOUNDARY_TOUCHES&quot;</span>
+    <span class="n">SHARE_A_LINE_SEGMENT_WITH</span> <span class="o">=</span> <span class="s2">&quot;SHARE_A_LINE_SEGMENT_WITH&quot;</span>
+    <span class="n">CROSSED_BY_THE_OUTLINE_OF</span> <span class="o">=</span> <span class="s2">&quot;CROSSED_BY_THE_OUTLINE_OF&quot;</span>
+    <span class="n">HAVE_THEIR_CENTER_IN</span> <span class="o">=</span> <span class="s2">&quot;HAVE_THEIR_CENTER_IN&quot;</span></div>
+
+
+
+<span class="c1"># Define your function using the above enum</span>
+<div class="viewcode-block" id="select_attribute_and_make_feature_layer">
+<a class="viewcode-back" href="../../generated_docs/custom_tools.html#custom_tools.custom_arcpy.select_attribute_and_make_feature_layer">[docs]</a>
+<span class="k">def</span> <span class="nf">select_attribute_and_make_feature_layer</span><span class="p">(</span>
+    <span class="n">input_layer</span><span class="p">,</span> <span class="n">expression</span><span class="p">,</span> <span class="n">output_name</span><span class="p">,</span> <span class="n">selection_type</span><span class="o">=</span><span class="s2">&quot;NEW_SELECTION&quot;</span><span class="p">,</span> <span class="n">inverted</span><span class="o">=</span><span class="kc">False</span>
+<span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Selects features based on attribute and creates a new feature layer.</span>
+<span class="sd">    then it uses the selection in the feature layer to store it permanently using copy features.</span>
+
+<span class="sd">    Parameters:</span>
+<span class="sd">    - input_layer: The input feature layer for selection.</span>
+<span class="sd">    - expression: The SQL expression to use for selection.</span>
+<span class="sd">    - output_name: The name of the output feature layer.</span>
+<span class="sd">    - selection_type: The type of selection to perform. Defaults to &quot;NEW_SELECTION&quot;.</span>
+<span class="sd">    - inverted: A boolean flag to indicate if the selection should be inverted.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="c1"># Function to resolve selection_type to the correct enum member</span>
+    <span class="k">def</span> <span class="nf">resolve_enum</span><span class="p">(</span><span class="n">enum_class</span><span class="p">,</span> <span class="n">value</span><span class="p">):</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="n">enum_class</span><span class="p">):</span>
+            <span class="k">return</span> <span class="n">value</span>
+        <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
+            <span class="k">if</span> <span class="n">value</span> <span class="ow">in</span> <span class="n">enum_class</span><span class="o">.</span><span class="n">__members__</span><span class="p">:</span>
+                <span class="k">return</span> <span class="n">enum_class</span><span class="p">[</span><span class="n">value</span><span class="p">]</span>
+            <span class="k">for</span> <span class="n">member</span> <span class="ow">in</span> <span class="n">enum_class</span><span class="p">:</span>
+                <span class="k">if</span> <span class="n">member</span><span class="o">.</span><span class="n">value</span> <span class="o">==</span> <span class="n">value</span><span class="p">:</span>
+                    <span class="k">return</span> <span class="n">member</span>
+        <span class="k">return</span> <span class="kc">None</span>
+
+    <span class="c1"># Resolve selection_type</span>
+    <span class="n">selection_type</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="n">resolve_enum</span><span class="p">(</span><span class="n">SelectionType</span><span class="p">,</span> <span class="n">selection_type</span><span class="p">)</span> <span class="ow">or</span> <span class="n">SelectionType</span><span class="o">.</span><span class="n">NEW_SELECTION</span>
+    <span class="p">)</span>
+
+    <span class="c1"># Create a temporary feature layer from the input layer</span>
+    <span class="n">arcpy</span><span class="o">.</span><span class="n">management</span><span class="o">.</span><span class="n">MakeFeatureLayer</span><span class="p">(</span><span class="n">input_layer</span><span class="p">,</span> <span class="n">output_name</span><span class="p">)</span>
+
+    <span class="c1"># Perform the attribute selection on the temporary layer</span>
+    <span class="n">arcpy</span><span class="o">.</span><span class="n">management</span><span class="o">.</span><span class="n">SelectLayerByAttribute</span><span class="p">(</span>
+        <span class="n">output_name</span><span class="p">,</span> <span class="n">selection_type</span><span class="o">.</span><span class="n">value</span><span class="p">,</span> <span class="n">expression</span><span class="p">,</span> <span class="n">invert_where_clause</span><span class="o">=</span><span class="n">inverted</span>
+    <span class="p">)</span>
+
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">output_name</span><span class="si">}</span><span class="s2"> created temporarily.&quot;</span><span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="select_attribute_and_make_permanent_feature">
+<a class="viewcode-back" href="../../generated_docs/custom_tools.html#custom_tools.custom_arcpy.select_attribute_and_make_permanent_feature">[docs]</a>
+<span class="k">def</span> <span class="nf">select_attribute_and_make_permanent_feature</span><span class="p">(</span>
+    <span class="n">input_layer</span><span class="p">,</span> <span class="n">expression</span><span class="p">,</span> <span class="n">output_name</span><span class="p">,</span> <span class="n">selection_type</span><span class="o">=</span><span class="s2">&quot;NEW_SELECTION&quot;</span><span class="p">,</span> <span class="n">inverted</span><span class="o">=</span><span class="kc">False</span>
+<span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Selects features based on attribute and creates a new feature layer.</span>
+<span class="sd">    then it uses the selection in the feature layer to store it permanently using copy features.</span>
+
+<span class="sd">    Parameters:</span>
+<span class="sd">    - input_layer: The input feature layer for selection.</span>
+<span class="sd">    - expression: The SQL expression to use for selection.</span>
+<span class="sd">    - output_name: The name of the output feature layer.</span>
+<span class="sd">    - selection_type: The type of selection to perform. Defaults to &quot;NEW_SELECTION&quot;.</span>
+<span class="sd">    - inverted: A boolean flag to indicate if the selection should be inverted.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="c1"># Function to resolve selection_type to the correct enum member</span>
+    <span class="k">def</span> <span class="nf">resolve_enum</span><span class="p">(</span><span class="n">enum_class</span><span class="p">,</span> <span class="n">value</span><span class="p">):</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="n">enum_class</span><span class="p">):</span>
+            <span class="k">return</span> <span class="n">value</span>
+        <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
+            <span class="k">if</span> <span class="n">value</span> <span class="ow">in</span> <span class="n">enum_class</span><span class="o">.</span><span class="n">__members__</span><span class="p">:</span>
+                <span class="k">return</span> <span class="n">enum_class</span><span class="p">[</span><span class="n">value</span><span class="p">]</span>
+            <span class="k">for</span> <span class="n">member</span> <span class="ow">in</span> <span class="n">enum_class</span><span class="p">:</span>
+                <span class="k">if</span> <span class="n">member</span><span class="o">.</span><span class="n">value</span> <span class="o">==</span> <span class="n">value</span><span class="p">:</span>
+                    <span class="k">return</span> <span class="n">member</span>
+        <span class="k">return</span> <span class="kc">None</span>
+
+    <span class="c1"># Resolve selection_type</span>
+    <span class="n">selection_type</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="n">resolve_enum</span><span class="p">(</span><span class="n">SelectionType</span><span class="p">,</span> <span class="n">selection_type</span><span class="p">)</span> <span class="ow">or</span> <span class="n">SelectionType</span><span class="o">.</span><span class="n">NEW_SELECTION</span>
+    <span class="p">)</span>
+
+    <span class="c1"># Create a temporary feature layer from the input layer</span>
+    <span class="n">arcpy</span><span class="o">.</span><span class="n">management</span><span class="o">.</span><span class="n">MakeFeatureLayer</span><span class="p">(</span><span class="n">input_layer</span><span class="p">,</span> <span class="s2">&quot;temp_layer&quot;</span><span class="p">)</span>
+
+    <span class="c1"># Perform the attribute selection on the temporary layer</span>
+    <span class="n">arcpy</span><span class="o">.</span><span class="n">management</span><span class="o">.</span><span class="n">SelectLayerByAttribute</span><span class="p">(</span>
+        <span class="s2">&quot;temp_layer&quot;</span><span class="p">,</span> <span class="n">selection_type</span><span class="o">.</span><span class="n">value</span><span class="p">,</span> <span class="n">expression</span><span class="p">,</span> <span class="n">invert_where_clause</span><span class="o">=</span><span class="n">inverted</span>
+    <span class="p">)</span>
+
+    <span class="c1"># Copy only the selected features from the temporary layer into a new feature class</span>
+    <span class="n">arcpy</span><span class="o">.</span><span class="n">management</span><span class="o">.</span><span class="n">CopyFeatures</span><span class="p">(</span><span class="s2">&quot;temp_layer&quot;</span><span class="p">,</span> <span class="n">output_name</span><span class="p">)</span>
+
+    <span class="c1"># Delete the temporary layer to clean up</span>
+    <span class="n">arcpy</span><span class="o">.</span><span class="n">management</span><span class="o">.</span><span class="n">Delete</span><span class="p">(</span><span class="s2">&quot;temp_layer&quot;</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">output_name</span><span class="si">}</span><span class="s2"> created permanently.&quot;</span><span class="p">)</span></div>
+
+
+
+<span class="c1"># Temporary Feature Layer with Location-based Selection</span>
+<div class="viewcode-block" id="select_location_and_make_feature_layer">
+<a class="viewcode-back" href="../../generated_docs/custom_tools.html#custom_tools.custom_arcpy.select_location_and_make_feature_layer">[docs]</a>
+<span class="k">def</span> <span class="nf">select_location_and_make_feature_layer</span><span class="p">(</span>
+    <span class="n">input_layer</span><span class="p">,</span>
+    <span class="n">overlap_type</span><span class="p">,</span>
+    <span class="n">select_features</span><span class="p">,</span>
+    <span class="n">output_name</span><span class="p">,</span>
+    <span class="n">selection_type</span><span class="o">=</span><span class="n">SelectionType</span><span class="o">.</span><span class="n">NEW_SELECTION</span><span class="p">,</span>
+    <span class="n">inverted</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+    <span class="n">search_distance</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+<span class="p">):</span>
+    <span class="c1"># Function to resolve overlap_type and selection_type to the correct enum member</span>
+    <span class="k">def</span> <span class="nf">resolve_enum</span><span class="p">(</span><span class="n">enum_class</span><span class="p">,</span> <span class="n">value</span><span class="p">):</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="n">enum_class</span><span class="p">):</span>
+            <span class="k">return</span> <span class="n">value</span>
+        <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
+            <span class="k">if</span> <span class="n">value</span> <span class="ow">in</span> <span class="n">enum_class</span><span class="o">.</span><span class="n">__members__</span><span class="p">:</span>
+                <span class="k">return</span> <span class="n">enum_class</span><span class="p">[</span><span class="n">value</span><span class="p">]</span>
+            <span class="k">for</span> <span class="n">member</span> <span class="ow">in</span> <span class="n">enum_class</span><span class="p">:</span>
+                <span class="k">if</span> <span class="n">member</span><span class="o">.</span><span class="n">value</span> <span class="o">==</span> <span class="n">value</span><span class="p">:</span>
+                    <span class="k">return</span> <span class="n">member</span>
+        <span class="k">return</span> <span class="kc">None</span>
+
+    <span class="c1"># Resolve overlap_type and selection_type</span>
+    <span class="n">overlap_type</span> <span class="o">=</span> <span class="n">resolve_enum</span><span class="p">(</span><span class="n">OverlapType</span><span class="p">,</span> <span class="n">overlap_type</span><span class="p">)</span> <span class="ow">or</span> <span class="n">OverlapType</span><span class="o">.</span><span class="n">INTERSECT</span>
+    <span class="n">selection_type</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="n">resolve_enum</span><span class="p">(</span><span class="n">SelectionType</span><span class="p">,</span> <span class="n">selection_type</span><span class="p">)</span> <span class="ow">or</span> <span class="n">SelectionType</span><span class="o">.</span><span class="n">NEW_SELECTION</span>
+    <span class="p">)</span>
+
+    <span class="n">arcpy</span><span class="o">.</span><span class="n">management</span><span class="o">.</span><span class="n">MakeFeatureLayer</span><span class="p">(</span><span class="n">input_layer</span><span class="p">,</span> <span class="n">output_name</span><span class="p">)</span>
+
+    <span class="k">try</span><span class="p">:</span>
+        <span class="c1"># If the overlap type requires a search distance and it&#39;s provided</span>
+        <span class="k">if</span> <span class="n">overlap_type</span> <span class="ow">in</span> <span class="p">[</span><span class="n">OverlapType</span><span class="o">.</span><span class="n">WITHIN_A_DISTANCE</span><span class="p">]</span> <span class="ow">and</span> <span class="n">search_distance</span><span class="p">:</span>
+            <span class="n">arcpy</span><span class="o">.</span><span class="n">management</span><span class="o">.</span><span class="n">SelectLayerByLocation</span><span class="p">(</span>
+                <span class="n">output_name</span><span class="p">,</span>
+                <span class="n">overlap_type</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
+                <span class="n">select_features</span><span class="p">,</span>
+                <span class="n">search_distance</span><span class="p">,</span>
+                <span class="n">selection_type</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
+                <span class="s2">&quot;INVERT&quot;</span> <span class="k">if</span> <span class="n">inverted</span> <span class="k">else</span> <span class="s2">&quot;NOT_INVERT&quot;</span><span class="p">,</span>
+            <span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">arcpy</span><span class="o">.</span><span class="n">management</span><span class="o">.</span><span class="n">SelectLayerByLocation</span><span class="p">(</span>
+                <span class="n">output_name</span><span class="p">,</span>
+                <span class="n">overlap_type</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
+                <span class="n">select_features</span><span class="p">,</span>
+                <span class="s2">&quot;&quot;</span><span class="p">,</span>
+                <span class="n">selection_type</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
+                <span class="s2">&quot;INVERT&quot;</span> <span class="k">if</span> <span class="n">inverted</span> <span class="k">else</span> <span class="s2">&quot;NOT_INVERT&quot;</span><span class="p">,</span>
+            <span class="p">)</span>
+        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">output_name</span><span class="si">}</span><span class="s2"> created temporarily.&quot;</span><span class="p">)</span>
+    <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Error occurred: </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="select_location_and_make_permanent_feature">
+<a class="viewcode-back" href="../../generated_docs/custom_tools.html#custom_tools.custom_arcpy.select_location_and_make_permanent_feature">[docs]</a>
+<span class="k">def</span> <span class="nf">select_location_and_make_permanent_feature</span><span class="p">(</span>
+    <span class="n">input_layer</span><span class="p">,</span>
+    <span class="n">overlap_type</span><span class="p">,</span>
+    <span class="n">select_features</span><span class="p">,</span>
+    <span class="n">output_name</span><span class="p">,</span>
+    <span class="n">selection_type</span><span class="o">=</span><span class="n">SelectionType</span><span class="o">.</span><span class="n">NEW_SELECTION</span><span class="p">,</span>
+    <span class="n">inverted</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+    <span class="n">search_distance</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+<span class="p">):</span>
+    <span class="k">def</span> <span class="nf">resolve_enum</span><span class="p">(</span><span class="n">enum_class</span><span class="p">,</span> <span class="n">value</span><span class="p">):</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="n">enum_class</span><span class="p">):</span>
+            <span class="k">return</span> <span class="n">value</span>
+        <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
+            <span class="k">if</span> <span class="n">value</span> <span class="ow">in</span> <span class="n">enum_class</span><span class="o">.</span><span class="n">__members__</span><span class="p">:</span>
+                <span class="k">return</span> <span class="n">enum_class</span><span class="p">[</span><span class="n">value</span><span class="p">]</span>
+            <span class="k">for</span> <span class="n">member</span> <span class="ow">in</span> <span class="n">enum_class</span><span class="p">:</span>
+                <span class="k">if</span> <span class="n">member</span><span class="o">.</span><span class="n">value</span> <span class="o">==</span> <span class="n">value</span><span class="p">:</span>
+                    <span class="k">return</span> <span class="n">member</span>
+        <span class="k">return</span> <span class="kc">None</span>
+
+    <span class="c1"># Resolve overlap_type and selection_type</span>
+    <span class="n">overlap_type</span> <span class="o">=</span> <span class="n">resolve_enum</span><span class="p">(</span><span class="n">OverlapType</span><span class="p">,</span> <span class="n">overlap_type</span><span class="p">)</span> <span class="ow">or</span> <span class="n">OverlapType</span><span class="o">.</span><span class="n">INTERSECT</span>
+    <span class="n">selection_type</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="n">resolve_enum</span><span class="p">(</span><span class="n">SelectionType</span><span class="p">,</span> <span class="n">selection_type</span><span class="p">)</span> <span class="ow">or</span> <span class="n">SelectionType</span><span class="o">.</span><span class="n">NEW_SELECTION</span>
+    <span class="p">)</span>
+
+    <span class="n">arcpy</span><span class="o">.</span><span class="n">management</span><span class="o">.</span><span class="n">MakeFeatureLayer</span><span class="p">(</span><span class="n">input_layer</span><span class="p">,</span> <span class="s2">&quot;temp_layer&quot;</span><span class="p">)</span>
+
+    <span class="k">try</span><span class="p">:</span>
+        <span class="c1"># If the overlap type requires a search distance and it&#39;s provided</span>
+        <span class="k">if</span> <span class="n">overlap_type</span> <span class="ow">in</span> <span class="p">[</span><span class="n">OverlapType</span><span class="o">.</span><span class="n">WITHIN_A_DISTANCE</span><span class="p">]</span> <span class="ow">and</span> <span class="n">search_distance</span><span class="p">:</span>
+            <span class="n">arcpy</span><span class="o">.</span><span class="n">management</span><span class="o">.</span><span class="n">SelectLayerByLocation</span><span class="p">(</span>
+                <span class="s2">&quot;temp_layer&quot;</span><span class="p">,</span>
+                <span class="n">overlap_type</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
+                <span class="n">select_features</span><span class="p">,</span>
+                <span class="n">search_distance</span><span class="p">,</span>
+                <span class="n">selection_type</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
+                <span class="s2">&quot;INVERT&quot;</span> <span class="k">if</span> <span class="n">inverted</span> <span class="k">else</span> <span class="s2">&quot;NOT_INVERT&quot;</span><span class="p">,</span>
+            <span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">arcpy</span><span class="o">.</span><span class="n">management</span><span class="o">.</span><span class="n">SelectLayerByLocation</span><span class="p">(</span>
+                <span class="s2">&quot;temp_layer&quot;</span><span class="p">,</span>
+                <span class="n">overlap_type</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
+                <span class="n">select_features</span><span class="p">,</span>
+                <span class="s2">&quot;&quot;</span><span class="p">,</span>
+                <span class="n">selection_type</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
+                <span class="s2">&quot;INVERT&quot;</span> <span class="k">if</span> <span class="n">inverted</span> <span class="k">else</span> <span class="s2">&quot;NOT_INVERT&quot;</span><span class="p">,</span>
+            <span class="p">)</span>
+
+        <span class="n">arcpy</span><span class="o">.</span><span class="n">management</span><span class="o">.</span><span class="n">CopyFeatures</span><span class="p">(</span><span class="s2">&quot;temp_layer&quot;</span><span class="p">,</span> <span class="n">output_name</span><span class="p">)</span>
+
+    <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Error occurred: </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+
+    <span class="k">finally</span><span class="p">:</span>
+        <span class="n">arcpy</span><span class="o">.</span><span class="n">management</span><span class="o">.</span><span class="n">Delete</span><span class="p">(</span><span class="s2">&quot;temp_layer&quot;</span><span class="p">)</span>
+        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">output_name</span><span class="si">}</span><span class="s2"> created permanently.&quot;</span><span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="apply_symbology">
+<a class="viewcode-back" href="../../generated_docs/custom_tools.html#custom_tools.custom_arcpy.apply_symbology">[docs]</a>
+<span class="k">def</span> <span class="nf">apply_symbology</span><span class="p">(</span><span class="n">input_layer</span><span class="p">,</span> <span class="n">in_symbology_layer</span><span class="p">,</span> <span class="n">output_name</span><span class="p">):</span>
+    <span class="n">arcpy</span><span class="o">.</span><span class="n">management</span><span class="o">.</span><span class="n">MakeFeatureLayer</span><span class="p">(</span>
+        <span class="n">in_features</span><span class="o">=</span><span class="n">input_layer</span><span class="p">,</span>
+        <span class="n">out_layer</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">input_layer</span><span class="si">}</span><span class="s2">_tmp&quot;</span><span class="p">,</span>
+    <span class="p">)</span>
+
+    <span class="n">arcpy</span><span class="o">.</span><span class="n">management</span><span class="o">.</span><span class="n">ApplySymbologyFromLayer</span><span class="p">(</span>
+        <span class="n">in_layer</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">input_layer</span><span class="si">}</span><span class="s2">_tmp&quot;</span><span class="p">,</span>
+        <span class="n">in_symbology_layer</span><span class="o">=</span><span class="n">in_symbology_layer</span><span class="p">,</span>
+        <span class="n">update_symbology</span><span class="o">=</span><span class="s2">&quot;MAINTAIN&quot;</span><span class="p">,</span>
+    <span class="p">)</span>
+
+    <span class="n">arcpy</span><span class="o">.</span><span class="n">management</span><span class="o">.</span><span class="n">SaveToLayerFile</span><span class="p">(</span>
+        <span class="n">in_layer</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">input_layer</span><span class="si">}</span><span class="s2">_tmp&quot;</span><span class="p">,</span>
+        <span class="n">out_layer</span><span class="o">=</span><span class="n">output_name</span><span class="p">,</span>
+        <span class="n">is_relative_path</span><span class="o">=</span><span class="s2">&quot;ABSOLUTE&quot;</span><span class="p">,</span>
+    <span class="p">)</span>
+
+    <span class="n">arcpy</span><span class="o">.</span><span class="n">management</span><span class="o">.</span><span class="n">Delete</span><span class="p">(</span>
+        <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">input_layer</span><span class="si">}</span><span class="s2">_tmp&quot;</span><span class="p">,</span>
+    <span class="p">)</span>
+
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">output_name</span><span class="si">}</span><span class="s2"> lyrx file created.&quot;</span><span class="p">)</span></div>
+
+</pre></div>
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="../../index.html">Automatisk Generalisering</a></h1>
+
+
+
+
+
+
+
+
+<h3>Navigation</h3>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../../index.html">Documentation overview</a><ul>
+  <li><a href="../index.html">Module code</a><ul>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"/>
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>document.getElementById('searchbox').style.display = "block"</script>
+
+
+
+
+
+
+
+
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &#169;2024, Kartverket.
+      
+      |
+      Powered by <a href="https://www.sphinx-doc.org/">Sphinx 7.2.6</a>
+      &amp; <a href="https://alabaster.readthedocs.io">Alabaster 0.7.16</a>
+      
+    </div>
+
+    
+
+    
+  </body>
+</html>

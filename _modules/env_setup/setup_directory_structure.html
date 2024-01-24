@@ -1,0 +1,271 @@
+<!DOCTYPE html>
+
+<html lang="en" data-content_root="../../">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>env_setup.setup_directory_structure &#8212; Automatisk Generalisering 0.0.1 documentation</title>
+    <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=d1102ebc" />
+    <link rel="stylesheet" type="text/css" href="../../_static/alabaster.css?v=12dfc556" />
+    <script src="../../_static/documentation_options.js?v=d45e8c67"></script>
+    <script src="../../_static/doctools.js?v=888ff710"></script>
+    <script src="../../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" />
+   
+  <link rel="stylesheet" href="../../_static/custom.css" type="text/css" />
+  
+
+  
+  
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <h1>Source code for env_setup.setup_directory_structure</h1><div class="highlight"><pre>
+<span></span><span class="kn">import</span> <span class="nn">arcpy</span>
+<span class="kn">import</span> <span class="nn">os</span>
+
+<span class="kn">import</span> <span class="nn">config</span>
+
+
+<div class="viewcode-block" id="main">
+<a class="viewcode-back" href="../../generated_docs/env_setup.html#env_setup.setup_directory_structure.main">[docs]</a>
+<span class="k">def</span> <span class="nf">main</span><span class="p">():</span>
+    <span class="c1"># Create directory structure and GDBs</span>
+    <span class="n">create_directory_structure</span><span class="p">(</span>
+        <span class="n">base_directory</span><span class="p">,</span>
+        <span class="n">sub_directories</span><span class="p">,</span>
+        <span class="n">main_directory_name</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="n">create_gdbs_in_subdirs</span><span class="p">(</span>
+        <span class="n">base_directory</span><span class="p">,</span>
+        <span class="n">sub_directories</span><span class="p">,</span>
+        <span class="n">gdb_names</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="n">create_lyrx_directory_structure</span><span class="p">(</span>
+        <span class="n">base_directory</span><span class="p">,</span>
+        <span class="n">sub_directories</span><span class="p">,</span>
+        <span class="n">main_directory_name</span><span class="p">,</span>
+        <span class="n">lyrx_directory_name</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="n">create_general_files_structure</span><span class="p">(</span>
+        <span class="n">base_directory</span><span class="p">,</span>
+        <span class="n">sub_directories</span><span class="p">,</span>
+        <span class="n">main_directory_name</span><span class="p">,</span>
+        <span class="n">general_files_name</span><span class="p">,</span>
+    <span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="create_directory_structure">
+<a class="viewcode-back" href="../../generated_docs/env_setup.html#env_setup.setup_directory_structure.create_directory_structure">[docs]</a>
+<span class="k">def</span> <span class="nf">create_directory_structure</span><span class="p">(</span>
+    <span class="n">base_directory</span><span class="p">,</span>
+    <span class="n">sub_directories</span><span class="p">,</span>
+    <span class="n">main_directory_name</span><span class="p">,</span>
+<span class="p">):</span>
+    <span class="c1"># Create the main directory</span>
+    <span class="n">main_directory</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">base_directory</span><span class="p">,</span> <span class="n">main_directory_name</span><span class="p">)</span>
+    <span class="n">os</span><span class="o">.</span><span class="n">makedirs</span><span class="p">(</span><span class="n">main_directory</span><span class="p">,</span> <span class="n">exist_ok</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+    <span class="c1"># Create each subdirectory</span>
+    <span class="k">for</span> <span class="n">subdir</span> <span class="ow">in</span> <span class="n">sub_directories</span><span class="p">:</span>
+        <span class="n">path</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">main_directory</span><span class="p">,</span> <span class="n">subdir</span><span class="p">)</span>
+        <span class="n">os</span><span class="o">.</span><span class="n">makedirs</span><span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="n">exist_ok</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Created directory: </span><span class="si">{</span><span class="n">path</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="create_gdbs_in_subdirs">
+<a class="viewcode-back" href="../../generated_docs/env_setup.html#env_setup.setup_directory_structure.create_gdbs_in_subdirs">[docs]</a>
+<span class="k">def</span> <span class="nf">create_gdbs_in_subdirs</span><span class="p">(</span>
+    <span class="n">base_directory</span><span class="p">,</span>
+    <span class="n">sub_directories</span><span class="p">,</span>
+    <span class="n">gdb_names</span><span class="p">,</span>
+<span class="p">):</span>
+    <span class="k">for</span> <span class="n">subdir</span> <span class="ow">in</span> <span class="n">sub_directories</span><span class="p">:</span>
+        <span class="n">subdir_path</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span>
+            <span class="n">base_directory</span><span class="p">,</span>
+            <span class="s2">&quot;automatic_generalization_outputs&quot;</span><span class="p">,</span>
+            <span class="n">subdir</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="k">for</span> <span class="n">gdb_name</span> <span class="ow">in</span> <span class="n">gdb_names</span><span class="p">:</span>
+            <span class="n">gdb_path</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span>
+                <span class="n">subdir_path</span><span class="p">,</span>
+                <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">gdb_name</span><span class="si">}</span><span class="s2">.gdb&quot;</span><span class="p">,</span>
+            <span class="p">)</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">arcpy</span><span class="o">.</span><span class="n">Exists</span><span class="p">(</span><span class="n">gdb_path</span><span class="p">):</span>
+                <span class="n">arcpy</span><span class="o">.</span><span class="n">CreateFileGDB_management</span><span class="p">(</span>
+                    <span class="n">out_folder_path</span><span class="o">=</span><span class="n">subdir_path</span><span class="p">,</span>
+                    <span class="n">out_name</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">gdb_name</span><span class="si">}</span><span class="s2">.gdb&quot;</span><span class="p">,</span>
+                <span class="p">)</span>
+                <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Created GDB: </span><span class="si">{</span><span class="n">gdb_path</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;GDB already exists: </span><span class="si">{</span><span class="n">gdb_path</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="create_lyrx_directory_structure">
+<a class="viewcode-back" href="../../generated_docs/env_setup.html#env_setup.setup_directory_structure.create_lyrx_directory_structure">[docs]</a>
+<span class="k">def</span> <span class="nf">create_lyrx_directory_structure</span><span class="p">(</span>
+    <span class="n">base_directory</span><span class="p">,</span>
+    <span class="n">sub_directories</span><span class="p">,</span>
+    <span class="n">main_directory_name</span><span class="p">,</span>
+    <span class="n">lyrx_directory_name</span><span class="p">,</span>
+<span class="p">):</span>
+    <span class="c1"># Iterate over each subdirectory to create &#39;lyrx_outputs&#39; folder</span>
+    <span class="k">for</span> <span class="n">subdir</span> <span class="ow">in</span> <span class="n">sub_directories</span><span class="p">:</span>
+        <span class="n">lyrx_directory_path</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span>
+            <span class="n">base_directory</span><span class="p">,</span>
+            <span class="n">main_directory_name</span><span class="p">,</span>
+            <span class="n">subdir</span><span class="p">,</span>
+            <span class="n">lyrx_directory_name</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="n">os</span><span class="o">.</span><span class="n">makedirs</span><span class="p">(</span>
+            <span class="n">lyrx_directory_path</span><span class="p">,</span>
+            <span class="n">exist_ok</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Created directory: </span><span class="si">{</span><span class="n">lyrx_directory_path</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="create_general_files_structure">
+<a class="viewcode-back" href="../../generated_docs/env_setup.html#env_setup.setup_directory_structure.create_general_files_structure">[docs]</a>
+<span class="k">def</span> <span class="nf">create_general_files_structure</span><span class="p">(</span>
+    <span class="n">base_directory</span><span class="p">,</span>
+    <span class="n">sub_directories</span><span class="p">,</span>
+    <span class="n">main_directory_name</span><span class="p">,</span>
+    <span class="n">general_files_name</span><span class="p">,</span>
+<span class="p">):</span>
+    <span class="c1"># Create the main directory</span>
+    <span class="n">main_directory</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span>
+        <span class="n">base_directory</span><span class="p">,</span>
+        <span class="n">main_directory_name</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="n">os</span><span class="o">.</span><span class="n">makedirs</span><span class="p">(</span>
+        <span class="n">main_directory</span><span class="p">,</span>
+        <span class="n">exist_ok</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+    <span class="p">)</span>
+
+    <span class="c1"># Create &#39;general_files&#39; folder in each subdirectory</span>
+    <span class="k">for</span> <span class="n">subdir</span> <span class="ow">in</span> <span class="n">sub_directories</span><span class="p">:</span>
+        <span class="n">general_files_path</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span>
+            <span class="n">main_directory</span><span class="p">,</span>
+            <span class="n">subdir</span><span class="p">,</span>
+            <span class="n">general_files_name</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="n">os</span><span class="o">.</span><span class="n">makedirs</span><span class="p">(</span>
+            <span class="n">general_files_path</span><span class="p">,</span>
+            <span class="n">exist_ok</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Created &#39;general_files&#39; folder: </span><span class="si">{</span><span class="n">general_files_path</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span></div>
+
+
+
+<span class="n">main_directory_name</span> <span class="o">=</span> <span class="s2">&quot;automatic_generalization_outputs&quot;</span>
+
+<span class="n">lyrx_directory_name</span> <span class="o">=</span> <span class="s2">&quot;lyrx_outputs&quot;</span>
+<span class="n">general_files_name</span> <span class="o">=</span> <span class="s2">&quot;general_files&quot;</span>
+
+<span class="n">scale_n50</span> <span class="o">=</span> <span class="s2">&quot;n50&quot;</span>
+<span class="n">scale_n100</span> <span class="o">=</span> <span class="s2">&quot;n100&quot;</span>
+<span class="n">scale_n250</span> <span class="o">=</span> <span class="s2">&quot;n250&quot;</span>
+<span class="n">scale_n500</span> <span class="o">=</span> <span class="s2">&quot;n500&quot;</span>
+
+<span class="n">object_admin</span> <span class="o">=</span> <span class="s2">&quot;admin&quot;</span>
+<span class="n">object_arealdekke_flate</span> <span class="o">=</span> <span class="s2">&quot;arealdekke_flate&quot;</span>
+<span class="n">object_bygning</span> <span class="o">=</span> <span class="s2">&quot;bygning&quot;</span>
+<span class="n">object_elv_bekk</span> <span class="o">=</span> <span class="s2">&quot;elv_bekk&quot;</span>
+<span class="n">object_veg_sti</span> <span class="o">=</span> <span class="s2">&quot;veg_sti&quot;</span>
+
+<span class="c1"># Subdirectories and GDB names</span>
+<span class="n">sub_directories</span> <span class="o">=</span> <span class="p">[</span>
+    <span class="n">scale_n50</span><span class="p">,</span>
+    <span class="n">scale_n100</span><span class="p">,</span>
+    <span class="n">scale_n250</span><span class="p">,</span>
+    <span class="n">scale_n500</span><span class="p">,</span>
+<span class="p">]</span>
+<span class="n">gdb_names</span> <span class="o">=</span> <span class="p">[</span>
+    <span class="n">object_admin</span><span class="p">,</span>
+    <span class="n">object_arealdekke_flate</span><span class="p">,</span>
+    <span class="n">object_bygning</span><span class="p">,</span>
+    <span class="n">object_elv_bekk</span><span class="p">,</span>
+    <span class="n">object_veg_sti</span><span class="p">,</span>
+<span class="p">]</span>
+
+<span class="c1"># Base directory defined in config.py</span>
+<span class="n">base_directory</span> <span class="o">=</span> <span class="n">config</span><span class="o">.</span><span class="n">output_folder</span>
+<span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s2">&quot;__main__&quot;</span><span class="p">:</span>
+    <span class="n">main</span><span class="p">()</span>
+</pre></div>
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="../../index.html">Automatisk Generalisering</a></h1>
+
+
+
+
+
+
+
+
+<h3>Navigation</h3>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../../index.html">Documentation overview</a><ul>
+  <li><a href="../index.html">Module code</a><ul>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"/>
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>document.getElementById('searchbox').style.display = "block"</script>
+
+
+
+
+
+
+
+
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &#169;2024, Kartverket.
+      
+      |
+      Powered by <a href="https://www.sphinx-doc.org/">Sphinx 7.2.6</a>
+      &amp; <a href="https://alabaster.readthedocs.io">Alabaster 0.7.16</a>
+      
+    </div>
+
+    
+
+    
+  </body>
+</html>

@@ -1,0 +1,509 @@
+<!DOCTYPE html>
+
+<html lang="en" data-content_root="../../../../">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>generalization.n100.building.iteration &#8212; Automatisk Generalisering 0.0.1 documentation</title>
+    <link rel="stylesheet" type="text/css" href="../../../../_static/pygments.css?v=d1102ebc" />
+    <link rel="stylesheet" type="text/css" href="../../../../_static/alabaster.css?v=12dfc556" />
+    <script src="../../../../_static/documentation_options.js?v=d45e8c67"></script>
+    <script src="../../../../_static/doctools.js?v=888ff710"></script>
+    <script src="../../../../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <link rel="index" title="Index" href="../../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../../search.html" />
+   
+  <link rel="stylesheet" href="../../../../_static/custom.css" type="text/css" />
+  
+
+  
+  
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <h1>Source code for generalization.n100.building.iteration</h1><div class="highlight"><pre>
+<span></span><span class="kn">import</span> <span class="nn">arcpy</span>
+<span class="kn">import</span> <span class="nn">os</span>
+
+<span class="kn">from</span> <span class="nn">env_setup</span> <span class="kn">import</span> <span class="n">environment_setup</span>
+<span class="kn">from</span> <span class="nn">custom_tools</span> <span class="kn">import</span> <span class="n">custom_arcpy</span>
+<span class="kn">from</span> <span class="nn">file_manager.n100.file_manager_buildings</span> <span class="kn">import</span> <span class="n">Building_N100</span>
+
+
+<div class="viewcode-block" id="main">
+<a class="viewcode-back" href="../../../../generated_docs/generalization.n100.building.html#generalization.n100.building.iteration.main">[docs]</a>
+<span class="k">def</span> <span class="nf">main</span><span class="p">():</span>
+    <span class="n">setup_arcpy_environment</span><span class="p">()</span>
+
+    <span class="p">(</span>
+        <span class="n">max_object_id</span><span class="p">,</span>
+        <span class="n">partition_polygon</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">=</span> <span class="n">pre_iteration</span><span class="p">()</span>
+
+    <span class="p">(</span>
+        <span class="n">append_feature_building_points</span><span class="p">,</span>
+        <span class="n">append_feature_building_polygon</span><span class="p">,</span>
+        <span class="n">partition_field</span><span class="p">,</span>
+        <span class="n">iteration_append_point_feature</span><span class="p">,</span>
+        <span class="n">iteration_append_polygon_feature</span><span class="p">,</span>
+        <span class="n">input_building_points</span><span class="p">,</span>
+        <span class="n">input_building_polygon</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">=</span> <span class="n">create_append_feature_class</span><span class="p">()</span>
+
+    <span class="n">iteration_partition</span><span class="p">(</span>
+        <span class="n">max_object_id</span><span class="p">,</span>
+        <span class="n">partition_polygon</span><span class="p">,</span>
+        <span class="n">append_feature_building_points</span><span class="p">,</span>
+        <span class="n">append_feature_building_polygon</span><span class="p">,</span>
+        <span class="n">iteration_append_point_feature</span><span class="p">,</span>
+        <span class="n">iteration_append_polygon_feature</span><span class="p">,</span>
+        <span class="n">input_building_points</span><span class="p">,</span>
+        <span class="n">input_building_polygon</span><span class="p">,</span>
+        <span class="n">partition_field</span><span class="p">,</span>
+    <span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="setup_arcpy_environment">
+<a class="viewcode-back" href="../../../../generated_docs/generalization.n100.building.html#generalization.n100.building.iteration.setup_arcpy_environment">[docs]</a>
+<span class="k">def</span> <span class="nf">setup_arcpy_environment</span><span class="p">():</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Sets up the ArcPy environment based on predefined settings.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">environment_setup</span><span class="o">.</span><span class="n">general_setup</span><span class="p">()</span></div>
+
+
+
+<div class="viewcode-block" id="pre_iteration">
+<a class="viewcode-back" href="../../../../generated_docs/generalization.n100.building.html#generalization.n100.building.iteration.pre_iteration">[docs]</a>
+<span class="k">def</span> <span class="nf">pre_iteration</span><span class="p">():</span>
+    <span class="n">partition_polygon</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="n">Building_N100</span><span class="o">.</span><span class="n">create_cartographic_partitions__cartographic_partitions__n100</span><span class="o">.</span><span class="n">value</span>
+    <span class="p">)</span>
+
+    <span class="c1"># Find the maximum OBJECTID in the feature class</span>
+    <span class="n">max_object_id</span> <span class="o">=</span> <span class="n">arcpy</span><span class="o">.</span><span class="n">da</span><span class="o">.</span><span class="n">SearchCursor</span><span class="p">(</span>
+        <span class="n">partition_polygon</span><span class="p">,</span> <span class="s2">&quot;OBJECTID&quot;</span><span class="p">,</span> <span class="n">sql_clause</span><span class="o">=</span><span class="p">(</span><span class="kc">None</span><span class="p">,</span> <span class="s2">&quot;ORDER BY OBJECTID DESC&quot;</span><span class="p">)</span>
+    <span class="p">)</span><span class="o">.</span><span class="n">next</span><span class="p">()[</span><span class="mi">0</span><span class="p">]</span>
+
+    <span class="k">return</span> <span class="p">(</span>
+        <span class="n">max_object_id</span><span class="p">,</span>
+        <span class="n">partition_polygon</span><span class="p">,</span>
+    <span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="create_append_feature_class">
+<a class="viewcode-back" href="../../../../generated_docs/generalization.n100.building.html#generalization.n100.building.iteration.create_append_feature_class">[docs]</a>
+<span class="k">def</span> <span class="nf">create_append_feature_class</span><span class="p">():</span>
+    <span class="n">append_feature_building_points</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="n">Building_N100</span><span class="o">.</span><span class="n">iteration__append_feature_building_point__n100</span><span class="o">.</span><span class="n">value</span>
+    <span class="p">)</span>
+    <span class="n">append_feature_building_polygon</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="n">Building_N100</span><span class="o">.</span><span class="n">iteration__append_feature_building_polygon__n100</span><span class="o">.</span><span class="n">value</span>
+    <span class="p">)</span>
+
+    <span class="n">iteration_append_point_feature</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="n">Building_N100</span><span class="o">.</span><span class="n">iteration__building_points_iteration_selection_append__n100</span><span class="o">.</span><span class="n">value</span>
+    <span class="p">)</span>
+    <span class="n">iteration_append_polygon_feature</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="n">Building_N100</span><span class="o">.</span><span class="n">iteration__building_polygon_iteration_selection_append__n100</span><span class="o">.</span><span class="n">value</span>
+    <span class="p">)</span>
+
+    <span class="n">input_building_points</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">Building_N100</span><span class="o">.</span><span class="n">table_management__bygningspunkt_pre_resolve_building_conflicts__n100</span><span class="o">.</span><span class="n">value</span><span class="si">}</span><span class="s2">_copy&quot;</span>
+    <span class="n">arcpy</span><span class="o">.</span><span class="n">management</span><span class="o">.</span><span class="n">Copy</span><span class="p">(</span>
+        <span class="n">in_data</span><span class="o">=</span><span class="n">Building_N100</span><span class="o">.</span><span class="n">table_management__bygningspunkt_pre_resolve_building_conflicts__n100</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
+        <span class="n">out_data</span><span class="o">=</span><span class="n">input_building_points</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;copied </span><span class="si">{</span><span class="n">input_building_points</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+
+    <span class="n">partition_field</span> <span class="o">=</span> <span class="s2">&quot;partition_select&quot;</span>
+    <span class="n">arcpy</span><span class="o">.</span><span class="n">AddField_management</span><span class="p">(</span>
+        <span class="n">in_table</span><span class="o">=</span><span class="n">input_building_points</span><span class="p">,</span>
+        <span class="n">field_name</span><span class="o">=</span><span class="n">partition_field</span><span class="p">,</span>
+        <span class="n">field_type</span><span class="o">=</span><span class="s2">&quot;LONG&quot;</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;added field </span><span class="si">{</span><span class="n">partition_field</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+
+    <span class="n">input_building_polygon</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">Building_N100</span><span class="o">.</span><span class="n">simplify_building_polygons__simplified_grunnriss__n100</span><span class="o">.</span><span class="n">value</span><span class="si">}</span><span class="s2">_copy&quot;</span>
+    <span class="n">arcpy</span><span class="o">.</span><span class="n">management</span><span class="o">.</span><span class="n">Copy</span><span class="p">(</span>
+        <span class="n">in_data</span><span class="o">=</span><span class="n">Building_N100</span><span class="o">.</span><span class="n">simplify_building_polygons__simplified_grunnriss__n100</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
+        <span class="n">out_data</span><span class="o">=</span><span class="n">input_building_polygon</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;copied </span><span class="si">{</span><span class="n">input_building_polygon</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+
+    <span class="n">arcpy</span><span class="o">.</span><span class="n">AddField_management</span><span class="p">(</span>
+        <span class="n">in_table</span><span class="o">=</span><span class="n">input_building_polygon</span><span class="p">,</span>
+        <span class="n">field_name</span><span class="o">=</span><span class="n">partition_field</span><span class="p">,</span>
+        <span class="n">field_type</span><span class="o">=</span><span class="s2">&quot;LONG&quot;</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;added field </span><span class="si">{</span><span class="n">partition_field</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+
+    <span class="c1"># Check and delete the final output feature class if it exists</span>
+    <span class="k">if</span> <span class="n">arcpy</span><span class="o">.</span><span class="n">Exists</span><span class="p">(</span><span class="n">append_feature_building_points</span><span class="p">):</span>
+        <span class="n">arcpy</span><span class="o">.</span><span class="n">management</span><span class="o">.</span><span class="n">Delete</span><span class="p">(</span><span class="n">append_feature_building_points</span><span class="p">)</span>
+
+    <span class="c1"># Check and delete the final output feature class if it exists</span>
+    <span class="k">if</span> <span class="n">arcpy</span><span class="o">.</span><span class="n">Exists</span><span class="p">(</span><span class="n">append_feature_building_polygon</span><span class="p">):</span>
+        <span class="n">arcpy</span><span class="o">.</span><span class="n">management</span><span class="o">.</span><span class="n">Delete</span><span class="p">(</span><span class="n">append_feature_building_polygon</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">arcpy</span><span class="o">.</span><span class="n">Exists</span><span class="p">(</span><span class="n">append_feature_building_points</span><span class="p">):</span>
+        <span class="c1"># Create the final output feature class using the schema of the first erased feature</span>
+        <span class="n">arcpy</span><span class="o">.</span><span class="n">management</span><span class="o">.</span><span class="n">CreateFeatureclass</span><span class="p">(</span>
+            <span class="n">out_path</span><span class="o">=</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">dirname</span><span class="p">(</span><span class="n">append_feature_building_points</span><span class="p">),</span>
+            <span class="n">out_name</span><span class="o">=</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">basename</span><span class="p">(</span><span class="n">append_feature_building_points</span><span class="p">),</span>
+            <span class="n">template</span><span class="o">=</span><span class="n">input_building_points</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Created </span><span class="si">{</span><span class="n">append_feature_building_points</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">arcpy</span><span class="o">.</span><span class="n">Exists</span><span class="p">(</span><span class="n">append_feature_building_polygon</span><span class="p">):</span>
+        <span class="c1"># Create the final output feature class using the schema of the first erased feature</span>
+        <span class="n">arcpy</span><span class="o">.</span><span class="n">management</span><span class="o">.</span><span class="n">CreateFeatureclass</span><span class="p">(</span>
+            <span class="n">out_path</span><span class="o">=</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">dirname</span><span class="p">(</span><span class="n">append_feature_building_polygon</span><span class="p">),</span>
+            <span class="n">out_name</span><span class="o">=</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">basename</span><span class="p">(</span><span class="n">append_feature_building_polygon</span><span class="p">),</span>
+            <span class="n">template</span><span class="o">=</span><span class="n">Building_N100</span><span class="o">.</span><span class="n">simplify_building_polygons__simplified_grunnriss__n100</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Created </span><span class="si">{</span><span class="n">append_feature_building_polygon</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="p">(</span>
+        <span class="n">append_feature_building_points</span><span class="p">,</span>
+        <span class="n">append_feature_building_polygon</span><span class="p">,</span>
+        <span class="n">partition_field</span><span class="p">,</span>
+        <span class="n">iteration_append_point_feature</span><span class="p">,</span>
+        <span class="n">iteration_append_polygon_feature</span><span class="p">,</span>
+        <span class="n">input_building_points</span><span class="p">,</span>
+        <span class="n">input_building_polygon</span><span class="p">,</span>
+    <span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="iteration_partition">
+<a class="viewcode-back" href="../../../../generated_docs/generalization.n100.building.html#generalization.n100.building.iteration.iteration_partition">[docs]</a>
+<span class="k">def</span> <span class="nf">iteration_partition</span><span class="p">(</span>
+    <span class="n">max_object_id</span><span class="p">,</span>
+    <span class="n">partition_polygon</span><span class="p">,</span>
+    <span class="n">append_feature_building_points</span><span class="p">,</span>
+    <span class="n">append_feature_building_polygon</span><span class="p">,</span>
+    <span class="n">iteration_append_point_feature</span><span class="p">,</span>
+    <span class="n">iteration_append_polygon_feature</span><span class="p">,</span>
+    <span class="n">input_building_points</span><span class="p">,</span>
+    <span class="n">input_building_polygon</span><span class="p">,</span>
+    <span class="n">partition_field</span><span class="p">,</span>
+<span class="p">):</span>
+    <span class="k">for</span> <span class="n">object_id</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">max_object_id</span> <span class="o">+</span> <span class="mi">1</span><span class="p">):</span>
+        <span class="n">iteration_partition</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">Building_N100</span><span class="o">.</span><span class="n">iteration__iteration_partition__n100</span><span class="o">.</span><span class="n">value</span><span class="si">}</span><span class="s2">_</span><span class="si">{</span><span class="n">object_id</span><span class="si">}</span><span class="s2">&quot;</span>
+        <span class="p">)</span>
+        <span class="n">custom_arcpy</span><span class="o">.</span><span class="n">select_attribute_and_make_permanent_feature</span><span class="p">(</span>
+            <span class="n">input_layer</span><span class="o">=</span><span class="n">partition_polygon</span><span class="p">,</span>
+            <span class="n">expression</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;OBJECTID = </span><span class="si">{</span><span class="n">object_id</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span>
+            <span class="n">output_name</span><span class="o">=</span><span class="n">iteration_partition</span><span class="p">,</span>
+        <span class="p">)</span>
+
+        <span class="n">points_exist</span> <span class="o">=</span> <span class="kc">False</span>
+        <span class="n">polygons_exist</span> <span class="o">=</span> <span class="kc">False</span>
+
+        <span class="c1"># Check and delete the final output feature class if it exists</span>
+        <span class="k">if</span> <span class="n">arcpy</span><span class="o">.</span><span class="n">Exists</span><span class="p">(</span><span class="n">iteration_append_point_feature</span><span class="p">):</span>
+            <span class="n">arcpy</span><span class="o">.</span><span class="n">management</span><span class="o">.</span><span class="n">Delete</span><span class="p">(</span><span class="n">iteration_append_point_feature</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">arcpy</span><span class="o">.</span><span class="n">Exists</span><span class="p">(</span><span class="n">iteration_append_point_feature</span><span class="p">):</span>
+            <span class="c1"># Create the final output feature class using the schema of the first erased feature</span>
+            <span class="n">arcpy</span><span class="o">.</span><span class="n">management</span><span class="o">.</span><span class="n">CreateFeatureclass</span><span class="p">(</span>
+                <span class="n">out_path</span><span class="o">=</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">dirname</span><span class="p">(</span><span class="n">iteration_append_point_feature</span><span class="p">),</span>
+                <span class="n">out_name</span><span class="o">=</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">basename</span><span class="p">(</span><span class="n">iteration_append_point_feature</span><span class="p">),</span>
+                <span class="n">template</span><span class="o">=</span><span class="n">input_building_points</span><span class="p">,</span>
+            <span class="p">)</span>
+            <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Created </span><span class="si">{</span><span class="n">iteration_append_point_feature</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+
+        <span class="c1"># Check and delete the final output feature class if it exists</span>
+        <span class="k">if</span> <span class="n">arcpy</span><span class="o">.</span><span class="n">Exists</span><span class="p">(</span><span class="n">iteration_append_polygon_feature</span><span class="p">):</span>
+            <span class="n">arcpy</span><span class="o">.</span><span class="n">management</span><span class="o">.</span><span class="n">Delete</span><span class="p">(</span><span class="n">iteration_append_polygon_feature</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">arcpy</span><span class="o">.</span><span class="n">Exists</span><span class="p">(</span><span class="n">iteration_append_polygon_feature</span><span class="p">):</span>
+            <span class="c1"># Create the final output feature class using the schema of the first erased feature</span>
+            <span class="n">arcpy</span><span class="o">.</span><span class="n">management</span><span class="o">.</span><span class="n">CreateFeatureclass</span><span class="p">(</span>
+                <span class="n">out_path</span><span class="o">=</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">dirname</span><span class="p">(</span><span class="n">iteration_append_polygon_feature</span><span class="p">),</span>
+                <span class="n">out_name</span><span class="o">=</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">basename</span><span class="p">(</span><span class="n">iteration_append_polygon_feature</span><span class="p">),</span>
+                <span class="n">template</span><span class="o">=</span><span class="n">input_building_polygon</span><span class="p">,</span>
+            <span class="p">)</span>
+            <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Created </span><span class="si">{</span><span class="n">iteration_append_polygon_feature</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+
+        <span class="n">building_points_base_partition_selection</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">Building_N100</span><span class="o">.</span><span class="n">iteration__building_points_base_partition_selection__n100</span><span class="o">.</span><span class="n">value</span><span class="si">}</span><span class="s2">_</span><span class="si">{</span><span class="n">object_id</span><span class="si">}</span><span class="s2">&quot;</span>
+        <span class="n">building_points_present_partition</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">Building_N100</span><span class="o">.</span><span class="n">iteration__building_points_present_partition__n100</span><span class="o">.</span><span class="n">value</span><span class="si">}</span><span class="s2">_</span><span class="si">{</span><span class="n">object_id</span><span class="si">}</span><span class="s2">&quot;</span>
+
+        <span class="n">custom_arcpy</span><span class="o">.</span><span class="n">select_location_and_make_feature_layer</span><span class="p">(</span>
+            <span class="n">input_layer</span><span class="o">=</span><span class="n">input_building_points</span><span class="p">,</span>
+            <span class="n">overlap_type</span><span class="o">=</span><span class="n">custom_arcpy</span><span class="o">.</span><span class="n">OverlapType</span><span class="o">.</span><span class="n">HAVE_THEIR_CENTER_IN</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
+            <span class="n">select_features</span><span class="o">=</span><span class="n">iteration_partition</span><span class="p">,</span>
+            <span class="n">output_name</span><span class="o">=</span><span class="n">building_points_present_partition</span><span class="p">,</span>
+        <span class="p">)</span>
+
+        <span class="c1"># Check for building points in this partition</span>
+        <span class="n">count_points</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span>
+            <span class="n">arcpy</span><span class="o">.</span><span class="n">management</span><span class="o">.</span><span class="n">GetCount</span><span class="p">(</span><span class="n">building_points_present_partition</span><span class="p">)</span><span class="o">.</span><span class="n">getOutput</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+        <span class="p">)</span>
+        <span class="k">if</span> <span class="n">count_points</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="n">points_exist</span> <span class="o">=</span> <span class="kc">True</span>
+            <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;iteration partition </span><span class="si">{</span><span class="n">object_id</span><span class="si">}</span><span class="s2"> has </span><span class="si">{</span><span class="n">count_points</span><span class="si">}</span><span class="s2"> building points&quot;</span><span class="p">)</span>
+
+            <span class="n">arcpy</span><span class="o">.</span><span class="n">CalculateField_management</span><span class="p">(</span>
+                <span class="n">in_table</span><span class="o">=</span><span class="n">building_points_present_partition</span><span class="p">,</span>
+                <span class="n">field</span><span class="o">=</span><span class="n">partition_field</span><span class="p">,</span>
+                <span class="n">expression</span><span class="o">=</span><span class="s2">&quot;1&quot;</span><span class="p">,</span>
+            <span class="p">)</span>
+
+            <span class="n">arcpy</span><span class="o">.</span><span class="n">management</span><span class="o">.</span><span class="n">Append</span><span class="p">(</span>
+                <span class="n">inputs</span><span class="o">=</span><span class="n">building_points_present_partition</span><span class="p">,</span>
+                <span class="n">target</span><span class="o">=</span><span class="n">iteration_append_point_feature</span><span class="p">,</span>
+                <span class="n">schema_type</span><span class="o">=</span><span class="s2">&quot;NO_TEST&quot;</span><span class="p">,</span>
+            <span class="p">)</span>
+
+            <span class="n">custom_arcpy</span><span class="o">.</span><span class="n">select_location_and_make_feature_layer</span><span class="p">(</span>
+                <span class="n">input_layer</span><span class="o">=</span><span class="n">input_building_points</span><span class="p">,</span>
+                <span class="n">overlap_type</span><span class="o">=</span><span class="n">custom_arcpy</span><span class="o">.</span><span class="n">OverlapType</span><span class="o">.</span><span class="n">WITHIN_A_DISTANCE</span><span class="p">,</span>
+                <span class="n">select_features</span><span class="o">=</span><span class="n">iteration_partition</span><span class="p">,</span>
+                <span class="n">output_name</span><span class="o">=</span><span class="n">building_points_base_partition_selection</span><span class="p">,</span>
+                <span class="n">selection_type</span><span class="o">=</span><span class="n">custom_arcpy</span><span class="o">.</span><span class="n">SelectionType</span><span class="o">.</span><span class="n">NEW_SELECTION</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
+                <span class="n">search_distance</span><span class="o">=</span><span class="s2">&quot;500 Meters&quot;</span><span class="p">,</span>
+            <span class="p">)</span>
+
+            <span class="n">arcpy</span><span class="o">.</span><span class="n">management</span><span class="o">.</span><span class="n">SelectLayerByLocation</span><span class="p">(</span>
+                <span class="n">in_layer</span><span class="o">=</span><span class="n">building_points_base_partition_selection</span><span class="p">,</span>
+                <span class="n">overlap_type</span><span class="o">=</span><span class="s2">&quot;HAVE_THEIR_CENTER_IN&quot;</span><span class="p">,</span>
+                <span class="n">select_features</span><span class="o">=</span><span class="n">iteration_partition</span><span class="p">,</span>
+                <span class="n">selection_type</span><span class="o">=</span><span class="s2">&quot;REMOVE_FROM_SELECTION&quot;</span><span class="p">,</span>
+            <span class="p">)</span>
+
+            <span class="n">arcpy</span><span class="o">.</span><span class="n">CalculateField_management</span><span class="p">(</span>
+                <span class="n">in_table</span><span class="o">=</span><span class="n">building_points_base_partition_selection</span><span class="p">,</span>
+                <span class="n">field</span><span class="o">=</span><span class="n">partition_field</span><span class="p">,</span>
+                <span class="n">expression</span><span class="o">=</span><span class="s2">&quot;0&quot;</span><span class="p">,</span>
+            <span class="p">)</span>
+
+            <span class="n">arcpy</span><span class="o">.</span><span class="n">management</span><span class="o">.</span><span class="n">Append</span><span class="p">(</span>
+                <span class="n">inputs</span><span class="o">=</span><span class="n">building_points_base_partition_selection</span><span class="p">,</span>
+                <span class="n">target</span><span class="o">=</span><span class="n">iteration_append_point_feature</span><span class="p">,</span>
+                <span class="n">schema_type</span><span class="o">=</span><span class="s2">&quot;NO_TEST&quot;</span><span class="p">,</span>
+            <span class="p">)</span>
+
+        <span class="n">building_polygon_base_partition_selection</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">Building_N100</span><span class="o">.</span><span class="n">iteration__building_polygon_base_partition_selection__n100</span><span class="o">.</span><span class="n">value</span><span class="si">}</span><span class="s2">_</span><span class="si">{</span><span class="n">object_id</span><span class="si">}</span><span class="s2">&quot;</span>
+        <span class="n">building_polygon_present_partition</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">Building_N100</span><span class="o">.</span><span class="n">iteration__building_polygon_present_partition__n100</span><span class="o">.</span><span class="n">value</span><span class="si">}</span><span class="s2">_</span><span class="si">{</span><span class="n">object_id</span><span class="si">}</span><span class="s2">&quot;</span>
+
+        <span class="n">custom_arcpy</span><span class="o">.</span><span class="n">select_location_and_make_feature_layer</span><span class="p">(</span>
+            <span class="n">input_layer</span><span class="o">=</span><span class="n">input_building_polygon</span><span class="p">,</span>
+            <span class="n">overlap_type</span><span class="o">=</span><span class="n">custom_arcpy</span><span class="o">.</span><span class="n">OverlapType</span><span class="o">.</span><span class="n">HAVE_THEIR_CENTER_IN</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
+            <span class="n">select_features</span><span class="o">=</span><span class="n">iteration_partition</span><span class="p">,</span>
+            <span class="n">output_name</span><span class="o">=</span><span class="n">building_polygon_present_partition</span><span class="p">,</span>
+        <span class="p">)</span>
+
+        <span class="c1"># Check for building polygons in this partition</span>
+        <span class="n">count_polygons</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span>
+            <span class="n">arcpy</span><span class="o">.</span><span class="n">management</span><span class="o">.</span><span class="n">GetCount</span><span class="p">(</span><span class="n">building_polygon_present_partition</span><span class="p">)</span><span class="o">.</span><span class="n">getOutput</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+        <span class="p">)</span>
+        <span class="k">if</span> <span class="n">count_polygons</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="n">polygons_exist</span> <span class="o">=</span> <span class="kc">True</span>
+            <span class="nb">print</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">&quot;iteration partition </span><span class="si">{</span><span class="n">object_id</span><span class="si">}</span><span class="s2"> has </span><span class="si">{</span><span class="n">count_polygons</span><span class="si">}</span><span class="s2"> building polygons&quot;</span>
+            <span class="p">)</span>
+
+            <span class="n">arcpy</span><span class="o">.</span><span class="n">CalculateField_management</span><span class="p">(</span>
+                <span class="n">in_table</span><span class="o">=</span><span class="n">building_polygon_present_partition</span><span class="p">,</span>
+                <span class="n">field</span><span class="o">=</span><span class="n">partition_field</span><span class="p">,</span>
+                <span class="n">expression</span><span class="o">=</span><span class="s2">&quot;1&quot;</span><span class="p">,</span>
+            <span class="p">)</span>
+
+            <span class="n">arcpy</span><span class="o">.</span><span class="n">management</span><span class="o">.</span><span class="n">Append</span><span class="p">(</span>
+                <span class="n">inputs</span><span class="o">=</span><span class="n">building_polygon_present_partition</span><span class="p">,</span>
+                <span class="n">target</span><span class="o">=</span><span class="n">iteration_append_polygon_feature</span><span class="p">,</span>
+                <span class="n">schema_type</span><span class="o">=</span><span class="s2">&quot;NO_TEST&quot;</span><span class="p">,</span>
+            <span class="p">)</span>
+
+            <span class="n">custom_arcpy</span><span class="o">.</span><span class="n">select_location_and_make_feature_layer</span><span class="p">(</span>
+                <span class="n">input_layer</span><span class="o">=</span><span class="n">input_building_polygon</span><span class="p">,</span>
+                <span class="n">overlap_type</span><span class="o">=</span><span class="n">custom_arcpy</span><span class="o">.</span><span class="n">OverlapType</span><span class="o">.</span><span class="n">WITHIN_A_DISTANCE</span><span class="p">,</span>
+                <span class="n">select_features</span><span class="o">=</span><span class="n">iteration_partition</span><span class="p">,</span>
+                <span class="n">output_name</span><span class="o">=</span><span class="n">building_polygon_base_partition_selection</span><span class="p">,</span>
+                <span class="n">selection_type</span><span class="o">=</span><span class="n">custom_arcpy</span><span class="o">.</span><span class="n">SelectionType</span><span class="o">.</span><span class="n">NEW_SELECTION</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
+                <span class="n">search_distance</span><span class="o">=</span><span class="s2">&quot;500 Meters&quot;</span><span class="p">,</span>
+            <span class="p">)</span>
+
+            <span class="n">arcpy</span><span class="o">.</span><span class="n">management</span><span class="o">.</span><span class="n">SelectLayerByLocation</span><span class="p">(</span>
+                <span class="n">in_layer</span><span class="o">=</span><span class="n">building_polygon_base_partition_selection</span><span class="p">,</span>
+                <span class="n">overlap_type</span><span class="o">=</span><span class="s2">&quot;HAVE_THEIR_CENTER_IN&quot;</span><span class="p">,</span>
+                <span class="n">select_features</span><span class="o">=</span><span class="n">partition_polygon</span><span class="p">,</span>
+                <span class="n">selection_type</span><span class="o">=</span><span class="s2">&quot;REMOVE_FROM_SELECTION&quot;</span><span class="p">,</span>
+            <span class="p">)</span>
+
+            <span class="n">arcpy</span><span class="o">.</span><span class="n">CalculateField_management</span><span class="p">(</span>
+                <span class="n">in_table</span><span class="o">=</span><span class="n">building_polygon_base_partition_selection</span><span class="p">,</span>
+                <span class="n">field</span><span class="o">=</span><span class="n">partition_field</span><span class="p">,</span>
+                <span class="n">expression</span><span class="o">=</span><span class="s2">&quot;0&quot;</span><span class="p">,</span>
+            <span class="p">)</span>
+
+            <span class="n">arcpy</span><span class="o">.</span><span class="n">management</span><span class="o">.</span><span class="n">Append</span><span class="p">(</span>
+                <span class="n">inputs</span><span class="o">=</span><span class="n">building_polygon_base_partition_selection</span><span class="p">,</span>
+                <span class="n">target</span><span class="o">=</span><span class="n">iteration_append_polygon_feature</span><span class="p">,</span>
+                <span class="n">schema_type</span><span class="o">=</span><span class="s2">&quot;NO_TEST&quot;</span><span class="p">,</span>
+            <span class="p">)</span>
+
+            <span class="n">selected_points_from_partition</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">iteration_append_point_feature</span><span class="si">}</span><span class="s2">_temp&quot;</span>
+
+            <span class="c1">#######################################</span>
+            <span class="c1"># HERE I WOULD PUT LOGIC TO PROCESS ON building_points_base_partition_selection and building_polygon_base_partition_selection</span>
+            <span class="c1">#######################################</span>
+
+            <span class="n">custom_arcpy</span><span class="o">.</span><span class="n">select_attribute_and_make_feature_layer</span><span class="p">(</span>
+                <span class="n">input_layer</span><span class="o">=</span><span class="n">iteration_append_point_feature</span><span class="p">,</span>
+                <span class="n">expression</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">partition_field</span><span class="si">}</span><span class="s2"> = 1&quot;</span><span class="p">,</span>
+                <span class="n">output_name</span><span class="o">=</span><span class="n">selected_points_from_partition</span><span class="p">,</span>
+            <span class="p">)</span>
+
+            <span class="n">arcpy</span><span class="o">.</span><span class="n">management</span><span class="o">.</span><span class="n">Append</span><span class="p">(</span>
+                <span class="n">inputs</span><span class="o">=</span><span class="n">selected_points_from_partition</span><span class="p">,</span>
+                <span class="n">target</span><span class="o">=</span><span class="n">append_feature_building_points</span><span class="p">,</span>
+                <span class="n">schema_type</span><span class="o">=</span><span class="s2">&quot;NO_TEST&quot;</span><span class="p">,</span>
+            <span class="p">)</span>
+            <span class="n">arcpy</span><span class="o">.</span><span class="n">management</span><span class="o">.</span><span class="n">Delete</span><span class="p">(</span><span class="n">selected_points_from_partition</span><span class="p">)</span>
+
+            <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;appended selected points to </span><span class="si">{</span><span class="n">append_feature_building_points</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+
+            <span class="n">selected_polygon_from_partition</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">iteration_append_polygon_feature</span><span class="si">}</span><span class="s2">_temp&quot;</span>
+
+            <span class="n">custom_arcpy</span><span class="o">.</span><span class="n">select_attribute_and_make_feature_layer</span><span class="p">(</span>
+                <span class="n">input_layer</span><span class="o">=</span><span class="n">iteration_append_polygon_feature</span><span class="p">,</span>
+                <span class="n">expression</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">partition_field</span><span class="si">}</span><span class="s2"> = 1&quot;</span><span class="p">,</span>
+                <span class="n">output_name</span><span class="o">=</span><span class="n">selected_polygon_from_partition</span><span class="p">,</span>
+            <span class="p">)</span>
+
+            <span class="n">arcpy</span><span class="o">.</span><span class="n">management</span><span class="o">.</span><span class="n">Append</span><span class="p">(</span>
+                <span class="n">inputs</span><span class="o">=</span><span class="n">selected_polygon_from_partition</span><span class="p">,</span>
+                <span class="n">target</span><span class="o">=</span><span class="n">append_feature_building_polygon</span><span class="p">,</span>
+                <span class="n">schema_type</span><span class="o">=</span><span class="s2">&quot;NO_TEST&quot;</span><span class="p">,</span>
+            <span class="p">)</span>
+            <span class="n">arcpy</span><span class="o">.</span><span class="n">management</span><span class="o">.</span><span class="n">Delete</span><span class="p">(</span><span class="n">selected_polygon_from_partition</span><span class="p">)</span>
+
+            <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;appended selected points to </span><span class="si">{</span><span class="n">append_feature_building_polygon</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+
+        <span class="c1"># Clean up iteration features</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">arcpy</span><span class="o">.</span><span class="n">management</span><span class="o">.</span><span class="n">Delete</span><span class="p">(</span><span class="n">iteration_partition</span><span class="p">)</span>
+            <span class="n">arcpy</span><span class="o">.</span><span class="n">management</span><span class="o">.</span><span class="n">Delete</span><span class="p">(</span><span class="n">iteration_append_point_feature</span><span class="p">)</span>
+            <span class="n">arcpy</span><span class="o">.</span><span class="n">management</span><span class="o">.</span><span class="n">Delete</span><span class="p">(</span><span class="n">iteration_append_polygon_feature</span><span class="p">)</span>
+            <span class="n">arcpy</span><span class="o">.</span><span class="n">management</span><span class="o">.</span><span class="n">Delete</span><span class="p">(</span><span class="n">selected_points_from_partition</span><span class="p">)</span>
+            <span class="n">arcpy</span><span class="o">.</span><span class="n">management</span><span class="o">.</span><span class="n">Delete</span><span class="p">(</span><span class="n">selected_polygon_from_partition</span><span class="p">)</span>
+            <span class="n">arcpy</span><span class="o">.</span><span class="n">management</span><span class="o">.</span><span class="n">Delete</span><span class="p">(</span><span class="n">building_points_base_partition_selection</span><span class="p">)</span>
+            <span class="n">arcpy</span><span class="o">.</span><span class="n">management</span><span class="o">.</span><span class="n">Delete</span><span class="p">(</span><span class="n">building_polygon_base_partition_selection</span><span class="p">)</span>
+        <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">points_exist</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">polygons_exist</span><span class="p">:</span>
+                <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;An error occurred: </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">points_exist</span><span class="p">:</span>
+                <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;No building points in selected partition&quot;</span><span class="p">)</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">polygons_exist</span><span class="p">:</span>
+                <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;No building polygons in selected partition&quot;</span><span class="p">)</span>
+
+        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;iteration </span><span class="si">{</span><span class="n">object_id</span><span class="si">}</span><span class="s2"> done&quot;</span><span class="p">)</span></div>
+
+
+
+<span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s2">&quot;__main__&quot;</span><span class="p">:</span>
+    <span class="n">main</span><span class="p">()</span>
+
+
+<span class="c1">###############################</span>
+<span class="c1"># LATER LOGIC GOES HERE</span>
+<span class="c1">###############################</span>
+
+
+<div class="viewcode-block" id="move_edge_objects">
+<a class="viewcode-back" href="../../../../generated_docs/generalization.n100.building.html#generalization.n100.building.iteration.move_edge_objects">[docs]</a>
+<span class="k">def</span> <span class="nf">move_edge_objects</span><span class="p">(</span><span class="n">partition_polygon</span><span class="p">):</span>
+    <span class="n">arcpy</span><span class="o">.</span><span class="n">management</span><span class="o">.</span><span class="n">Copy</span><span class="p">(</span>
+        <span class="n">in_data</span><span class="o">=</span><span class="n">Building_N100</span><span class="o">.</span><span class="n">table_management__bygningspunkt_pre_resolve_building_conflicts__n100</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
+        <span class="n">out_data</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">Building_N100</span><span class="o">.</span><span class="n">table_management__bygningspunkt_pre_resolve_building_conflicts__n100</span><span class="o">.</span><span class="n">value</span><span class="si">}</span><span class="s2">_copy&quot;</span><span class="p">,</span>
+    <span class="p">)</span>
+
+    <span class="n">arcpy</span><span class="o">.</span><span class="n">management</span><span class="o">.</span><span class="n">SelectLayerByLocation</span><span class="p">(</span>
+        <span class="n">in_layer</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">Building_N100</span><span class="o">.</span><span class="n">table_management__bygningspunkt_pre_resolve_building_conflicts__n100</span><span class="o">.</span><span class="n">value</span><span class="si">}</span><span class="s2">_copy&quot;</span><span class="p">,</span>
+        <span class="n">overlap_type</span><span class="o">=</span><span class="n">custom_arcpy</span><span class="o">.</span><span class="n">OverlapType</span><span class="o">.</span><span class="n">BOUNDARY_TOUCHES</span><span class="p">,</span>
+    <span class="p">)</span>
+
+    <span class="n">custom_arcpy</span><span class="o">.</span><span class="n">select_location_and_make_feature_layer</span><span class="p">(</span>
+        <span class="n">input_layer</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">Building_N100</span><span class="o">.</span><span class="n">table_management__bygningspunkt_pre_resolve_building_conflicts__n100</span><span class="o">.</span><span class="n">value</span><span class="si">}</span><span class="s2">_copy&quot;</span><span class="p">,</span>
+        <span class="n">overlap_type</span><span class="o">=</span><span class="n">custom_arcpy</span><span class="o">.</span><span class="n">OverlapType</span><span class="o">.</span><span class="n">BOUNDARY_TOUCHES</span><span class="p">,</span>
+        <span class="n">select_features</span><span class="o">=</span><span class="n">partition_polygon</span><span class="p">,</span>
+        <span class="n">output_name</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">Building_N100</span><span class="o">.</span><span class="n">table_management__bygningspunkt_pre_resolve_building_conflicts__n100</span><span class="o">.</span><span class="n">value</span><span class="si">}</span><span class="s2">_copy&quot;</span><span class="p">,</span>
+    <span class="p">)</span></div>
+
+</pre></div>
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="../../../../index.html">Automatisk Generalisering</a></h1>
+
+
+
+
+
+
+
+
+<h3>Navigation</h3>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../../../../index.html">Documentation overview</a><ul>
+  <li><a href="../../../index.html">Module code</a><ul>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../../../../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"/>
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>document.getElementById('searchbox').style.display = "block"</script>
+
+
+
+
+
+
+
+
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &#169;2024, Kartverket.
+      
+      |
+      Powered by <a href="https://www.sphinx-doc.org/">Sphinx 7.2.6</a>
+      &amp; <a href="https://alabaster.readthedocs.io">Alabaster 0.7.16</a>
+      
+    </div>
+
+    
+
+    
+  </body>
+</html>

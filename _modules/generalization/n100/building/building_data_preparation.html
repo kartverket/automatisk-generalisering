@@ -1,0 +1,430 @@
+<!DOCTYPE html>
+
+<html lang="en" data-content_root="../../../../">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>generalization.n100.building.building_data_preparation &#8212; Automatisk Generalisering 0.0.1 documentation</title>
+    <link rel="stylesheet" type="text/css" href="../../../../_static/pygments.css?v=d1102ebc" />
+    <link rel="stylesheet" type="text/css" href="../../../../_static/alabaster.css?v=12dfc556" />
+    <script src="../../../../_static/documentation_options.js?v=d45e8c67"></script>
+    <script src="../../../../_static/doctools.js?v=888ff710"></script>
+    <script src="../../../../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <link rel="index" title="Index" href="../../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../../search.html" />
+   
+  <link rel="stylesheet" href="../../../../_static/custom.css" type="text/css" />
+  
+
+  
+  
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <h1>Source code for generalization.n100.building.building_data_preparation</h1><div class="highlight"><pre>
+<span></span><span class="c1"># Importing modules</span>
+<span class="kn">import</span> <span class="nn">arcpy</span>
+
+<span class="c1"># Importing custom files</span>
+<span class="kn">from</span> <span class="nn">custom_tools</span> <span class="kn">import</span> <span class="n">custom_arcpy</span>
+<span class="kn">import</span> <span class="nn">config</span>
+<span class="kn">from</span> <span class="nn">input_data</span> <span class="kn">import</span> <span class="n">input_n50</span>
+<span class="kn">from</span> <span class="nn">input_data</span> <span class="kn">import</span> <span class="n">input_n100</span>
+<span class="kn">from</span> <span class="nn">input_data</span> <span class="kn">import</span> <span class="n">input_other</span>
+
+<span class="c1"># Importing file manager</span>
+<span class="kn">from</span> <span class="nn">file_manager.n100.file_manager_buildings</span> <span class="kn">import</span> <span class="n">Building_N100</span>
+
+<span class="c1"># Importing environment</span>
+<span class="kn">from</span> <span class="nn">env_setup</span> <span class="kn">import</span> <span class="n">environment_setup</span>
+
+<span class="c1"># Environment setup</span>
+<span class="n">environment_setup</span><span class="o">.</span><span class="n">general_setup</span><span class="p">()</span>
+
+
+<div class="viewcode-block" id="main">
+<a class="viewcode-back" href="../../../../generated_docs/generalization.n100.building.html#generalization.n100.building.building_data_preparation.main">[docs]</a>
+<span class="k">def</span> <span class="nf">main</span><span class="p">():</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    This function prepares data selection of the following features:</span>
+<span class="sd">    - Begrensningskurve water features to be used as a barrier</span>
+<span class="sd">    - Unsplit veg sti to be used as a barrier</span>
+<span class="sd">    - Matrikkel bygningspunkt to add building points removed by urban areas in n50</span>
+<span class="sd">    - Grunnriss selection for generalization and transforming church and hospital grunnriss to points.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">preparation_begrensningskurve</span><span class="p">()</span>
+    <span class="n">preperation_veg_sti</span><span class="p">()</span>
+    <span class="n">adding_matrikkel_as_points</span><span class="p">()</span>
+    <span class="n">selecting_grunnriss_for_generalization</span><span class="p">()</span></div>
+
+
+
+<span class="c1">###################################### Preparing begrensningskurve (limitation curve) ################################################</span>
+
+
+<div class="viewcode-block" id="preparation_begrensningskurve">
+<a class="viewcode-back" href="../../../../generated_docs/generalization.n100.building.html#generalization.n100.building.building_data_preparation.preparation_begrensningskurve">[docs]</a>
+<span class="k">def</span> <span class="nf">preparation_begrensningskurve</span><span class="p">():</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    A function that prepares the begrensningskurve by performing the following steps:</span>
+<span class="sd">    1. Defining the SQL selection expression for water features for begrensningskurve and creating a temporary feature layer.</span>
+<span class="sd">    2. Creating a buffer of the water features begrensningskurve to take into account symbology of the water features.</span>
+<span class="sd">    3. Adding hierarchy and invisibility fields to the begrensningskurve_waterfeatures_buffer and setting them to 0.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="c1"># Defining the SQL selection expression for water features for begrensningskurve</span>
+    <span class="n">sql_expr_begrensningskurve_waterfeatures</span> <span class="o">=</span> <span class="s2">&quot;OBJTYPE = &#39;ElvBekkKant&#39; Or OBJTYPE = &#39;Innsjøkant&#39; Or OBJTYPE = &#39;InnsjøkantRegulert&#39; Or OBJTYPE = &#39;Kystkontur&#39;&quot;</span>
+
+    <span class="c1"># Creating a temporary feature of water features from begrensningskurve</span>
+    <span class="n">custom_arcpy</span><span class="o">.</span><span class="n">select_attribute_and_make_permanent_feature</span><span class="p">(</span>
+        <span class="n">input_layer</span><span class="o">=</span><span class="n">input_n100</span><span class="o">.</span><span class="n">BegrensningsKurve</span><span class="p">,</span>
+        <span class="n">expression</span><span class="o">=</span><span class="n">sql_expr_begrensningskurve_waterfeatures</span><span class="p">,</span>
+        <span class="n">output_name</span><span class="o">=</span><span class="n">Building_N100</span><span class="o">.</span><span class="n">preparation_begrensningskurve__selected_waterfeatures_from_begrensningskurve__n100</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
+    <span class="p">)</span>
+
+    <span class="n">custom_arcpy</span><span class="o">.</span><span class="n">select_attribute_and_make_permanent_feature</span><span class="p">(</span>
+        <span class="n">input_layer</span><span class="o">=</span><span class="n">input_n100</span><span class="o">.</span><span class="n">ArealdekkeFlate</span><span class="p">,</span>
+        <span class="n">expression</span><span class="o">=</span><span class="s2">&quot;&quot;&quot;OBJTYPE NOT IN (&#39;ElvBekk&#39;, &#39;Havflate&#39;, &#39;Innsjø&#39;, &#39;InnsjøRegulert&#39;)&quot;&quot;&quot;</span><span class="p">,</span>
+        <span class="n">output_name</span><span class="o">=</span><span class="n">Building_N100</span><span class="o">.</span><span class="n">preparation_begrensningskurve__selected_land_features_area__n100</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
+    <span class="p">)</span>
+
+    <span class="n">custom_arcpy</span><span class="o">.</span><span class="n">select_location_and_make_permanent_feature</span><span class="p">(</span>
+        <span class="n">input_layer</span><span class="o">=</span><span class="n">Building_N100</span><span class="o">.</span><span class="n">preparation_begrensningskurve__selected_land_features_area__n100</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
+        <span class="n">overlap_type</span><span class="o">=</span><span class="n">custom_arcpy</span><span class="o">.</span><span class="n">OverlapType</span><span class="o">.</span><span class="n">BOUNDARY_TOUCHES</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
+        <span class="n">select_features</span><span class="o">=</span><span class="n">Building_N100</span><span class="o">.</span><span class="n">preparation_begrensningskurve__selected_waterfeatures_from_begrensningskurve__n100</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
+        <span class="n">output_name</span><span class="o">=</span><span class="n">Building_N100</span><span class="o">.</span><span class="n">preparation_begrensningskurve__land_features_near_water__n100</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
+    <span class="p">)</span>
+
+    <span class="n">arcpy</span><span class="o">.</span><span class="n">analysis</span><span class="o">.</span><span class="n">PairwiseBuffer</span><span class="p">(</span>
+        <span class="n">in_features</span><span class="o">=</span><span class="n">Building_N100</span><span class="o">.</span><span class="n">preparation_begrensningskurve__land_features_near_water__n100</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
+        <span class="n">out_feature_class</span><span class="o">=</span><span class="n">Building_N100</span><span class="o">.</span><span class="n">preparation_begrensningskurve__land_features_buffer__n100</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
+        <span class="n">buffer_distance_or_field</span><span class="o">=</span><span class="s2">&quot;15 Meters&quot;</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Buffered land features created&quot;</span><span class="p">)</span>
+
+    <span class="n">arcpy</span><span class="o">.</span><span class="n">analysis</span><span class="o">.</span><span class="n">PairwiseBuffer</span><span class="p">(</span>
+        <span class="n">in_features</span><span class="o">=</span><span class="n">Building_N100</span><span class="o">.</span><span class="n">preparation_begrensningskurve__selected_waterfeatures_from_begrensningskurve__n100</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
+        <span class="n">out_feature_class</span><span class="o">=</span><span class="n">Building_N100</span><span class="o">.</span><span class="n">preparation_begrensningskurve__begrensningskurve_waterfeatures_buffer__n100</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
+        <span class="n">buffer_distance_or_field</span><span class="o">=</span><span class="s2">&quot;45 Meters&quot;</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Buffered water features created&quot;</span><span class="p">)</span>
+
+    <span class="n">arcpy</span><span class="o">.</span><span class="n">analysis</span><span class="o">.</span><span class="n">PairwiseErase</span><span class="p">(</span>
+        <span class="n">in_features</span><span class="o">=</span><span class="n">Building_N100</span><span class="o">.</span><span class="n">preparation_begrensningskurve__begrensningskurve_waterfeatures_buffer__n100</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
+        <span class="n">erase_features</span><span class="o">=</span><span class="n">Building_N100</span><span class="o">.</span><span class="n">preparation_begrensningskurve__selected_land_features_area__n100</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
+        <span class="n">out_feature_class</span><span class="o">=</span><span class="n">Building_N100</span><span class="o">.</span><span class="n">preparation_begrensningskurve__begrensningskurve_buffer_erase_1__n100</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span>
+        <span class="sa">f</span><span class="s2">&quot;Erased 1 completed </span><span class="si">{</span><span class="n">Building_N100</span><span class="o">.</span><span class="n">preparation_begrensningskurve__begrensningskurve_buffer_erase_1__n100</span><span class="o">.</span><span class="n">value</span><span class="si">}</span><span class="s2"> created&quot;</span>
+    <span class="p">)</span>
+
+    <span class="n">arcpy</span><span class="o">.</span><span class="n">analysis</span><span class="o">.</span><span class="n">PairwiseErase</span><span class="p">(</span>
+        <span class="n">in_features</span><span class="o">=</span><span class="n">Building_N100</span><span class="o">.</span><span class="n">preparation_begrensningskurve__begrensningskurve_buffer_erase_1__n100</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
+        <span class="n">erase_features</span><span class="o">=</span><span class="n">Building_N100</span><span class="o">.</span><span class="n">preparation_begrensningskurve__land_features_buffer__n100</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
+        <span class="n">out_feature_class</span><span class="o">=</span><span class="n">Building_N100</span><span class="o">.</span><span class="n">preparation_begrensningskurve__begrensningskurve_buffer_erase_2__n100</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span>
+        <span class="sa">f</span><span class="s2">&quot;Erased 2 completed </span><span class="si">{</span><span class="n">Building_N100</span><span class="o">.</span><span class="n">preparation_begrensningskurve__begrensningskurve_buffer_erase_2__n100</span><span class="o">.</span><span class="n">value</span><span class="si">}</span><span class="s2"> created&quot;</span>
+    <span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Need to apply better logic for rivers separatly at a later point&quot;</span><span class="p">)</span>
+    <span class="c1"># Needs to use a different logic for narrow rivers, and instead use the centerline and a small buffer around it which is added to the feature class</span>
+
+    <span class="c1"># Adding hierarchy and invisibility fields to the preparation_begrensningskurve__begrensningskurve_buffer_waterfeatures__n100 and setting them to 0</span>
+    <span class="c1"># Define field information</span>
+    <span class="n">fields_to_add</span> <span class="o">=</span> <span class="p">[[</span><span class="s2">&quot;hierarchy&quot;</span><span class="p">,</span> <span class="s2">&quot;LONG&quot;</span><span class="p">],</span> <span class="p">[</span><span class="s2">&quot;invisibility&quot;</span><span class="p">,</span> <span class="s2">&quot;LONG&quot;</span><span class="p">]]</span>
+    <span class="n">fields_to_calculate</span> <span class="o">=</span> <span class="p">[[</span><span class="s2">&quot;hierarchy&quot;</span><span class="p">,</span> <span class="s2">&quot;0&quot;</span><span class="p">],</span> <span class="p">[</span><span class="s2">&quot;invisibility&quot;</span><span class="p">,</span> <span class="s2">&quot;0&quot;</span><span class="p">]]</span>
+
+    <span class="c1"># Add fields</span>
+    <span class="n">arcpy</span><span class="o">.</span><span class="n">management</span><span class="o">.</span><span class="n">AddFields</span><span class="p">(</span>
+        <span class="n">in_table</span><span class="o">=</span><span class="n">Building_N100</span><span class="o">.</span><span class="n">preparation_begrensningskurve__begrensningskurve_buffer_erase_2__n100</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
+        <span class="n">field_description</span><span class="o">=</span><span class="n">fields_to_add</span><span class="p">,</span>
+    <span class="p">)</span>
+
+    <span class="c1"># Calculate fields</span>
+    <span class="n">arcpy</span><span class="o">.</span><span class="n">management</span><span class="o">.</span><span class="n">CalculateFields</span><span class="p">(</span>
+        <span class="n">in_table</span><span class="o">=</span><span class="n">Building_N100</span><span class="o">.</span><span class="n">preparation_begrensningskurve__begrensningskurve_buffer_erase_2__n100</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
+        <span class="n">expression_type</span><span class="o">=</span><span class="s2">&quot;PYTHON3&quot;</span><span class="p">,</span>
+        <span class="n">fields</span><span class="o">=</span><span class="n">fields_to_calculate</span><span class="p">,</span>
+    <span class="p">)</span></div>
+
+
+
+<span class="c1">###################################### Preparing roads ################################################</span>
+
+
+<div class="viewcode-block" id="preperation_veg_sti">
+<a class="viewcode-back" href="../../../../generated_docs/generalization.n100.building.html#generalization.n100.building.building_data_preparation.preperation_veg_sti">[docs]</a>
+<span class="k">def</span> <span class="nf">preperation_veg_sti</span><span class="p">():</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Unsplit the lines in the specified feature class based on the given fields, to speed up future processing speed</span>
+<span class="sd">    when using this as a barrier.</span>
+
+<span class="sd">    Parameters:</span>
+<span class="sd">        input_n100 (str): The path to the input feature class containing the lines to be unsplit.</span>
+<span class="sd">        output_feature_class (str): The name of the output feature class to be created.</span>
+<span class="sd">        fields (List[str]): The list of fields to use for unsplitting the lines.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">arcpy</span><span class="o">.</span><span class="n">UnsplitLine_management</span><span class="p">(</span>
+        <span class="n">in_features</span><span class="o">=</span><span class="n">input_n100</span><span class="o">.</span><span class="n">VegSti</span><span class="p">,</span>
+        <span class="n">out_feature_class</span><span class="o">=</span><span class="n">Building_N100</span><span class="o">.</span><span class="n">preperation_veg_sti__unsplit_veg_sti__n100</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
+        <span class="n">dissolve_field</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;subtypekode&quot;</span><span class="p">,</span> <span class="s2">&quot;motorvegtype&quot;</span><span class="p">,</span> <span class="s2">&quot;UTTEGNING&quot;</span><span class="p">],</span>
+    <span class="p">)</span></div>
+
+
+
+<span class="c1">###################################### Adding matrikkel-points (cadastre) for areas which are no longer urban ################################################</span>
+
+
+<div class="viewcode-block" id="adding_matrikkel_as_points">
+<a class="viewcode-back" href="../../../../generated_docs/generalization.n100.building.html#generalization.n100.building.building_data_preparation.adding_matrikkel_as_points">[docs]</a>
+<span class="k">def</span> <span class="nf">adding_matrikkel_as_points</span><span class="p">():</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Adds building points from matrikkel for areas which no longer are urban areas.</span>
+
+<span class="sd">    This function performs the following steps:</span>
+<span class="sd">    1. Selects features and creates a layer from the input_n100.ArealdekkeFlate layer which are urban.</span>
+<span class="sd">    2. Selects features and creates a layer from the input_n50.ArealdekkeFlate layer which are urban.</span>
+<span class="sd">    3. Adds a buffer to the urban selection from n100 as a short hand for symbology.</span>
+<span class="sd">    4. Removes areas from n50 urban areas from the buffer of n|50 urban areas resulting in areas in n100 which no longer are urban.</span>
+<span class="sd">    5. Selects matrikkel bygningspunkter based on this new urban selection layer, and adds NBR values to the created points.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="c1"># Defining sql expression to select urban areas</span>
+    <span class="n">urban_areas_sql_expr</span> <span class="o">=</span> <span class="s2">&quot;OBJTYPE = &#39;Tettbebyggelse&#39; Or OBJTYPE = &#39;Industriområde&#39; Or OBJTYPE = &#39;BymessigBebyggelse&#39;&quot;</span>
+
+    <span class="c1"># Selecting urban areas from n100 using sql expression</span>
+    <span class="n">custom_arcpy</span><span class="o">.</span><span class="n">select_attribute_and_make_feature_layer</span><span class="p">(</span>
+        <span class="n">input_layer</span><span class="o">=</span><span class="n">input_n100</span><span class="o">.</span><span class="n">ArealdekkeFlate</span><span class="p">,</span>
+        <span class="n">expression</span><span class="o">=</span><span class="n">urban_areas_sql_expr</span><span class="p">,</span>
+        <span class="n">output_name</span><span class="o">=</span><span class="n">Building_N100</span><span class="o">.</span><span class="n">adding_matrikkel_as_points__urban_area_selection_n100__n100</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
+    <span class="p">)</span>
+
+    <span class="c1"># Selecting urban areas from n50 using sql expression</span>
+    <span class="n">custom_arcpy</span><span class="o">.</span><span class="n">select_attribute_and_make_feature_layer</span><span class="p">(</span>
+        <span class="n">input_layer</span><span class="o">=</span><span class="n">input_n50</span><span class="o">.</span><span class="n">ArealdekkeFlate</span><span class="p">,</span>
+        <span class="n">expression</span><span class="o">=</span><span class="n">urban_areas_sql_expr</span><span class="p">,</span>
+        <span class="n">output_name</span><span class="o">=</span><span class="n">Building_N100</span><span class="o">.</span><span class="n">adding_matrikkel_as_points__urban_area_selection_n50__n100</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
+    <span class="p">)</span>
+
+    <span class="c1"># Creating a buffer of the urban selection of n100 to take into account symbology</span>
+    <span class="n">arcpy</span><span class="o">.</span><span class="n">PairwiseBuffer_analysis</span><span class="p">(</span>
+        <span class="n">in_features</span><span class="o">=</span><span class="n">Building_N100</span><span class="o">.</span><span class="n">adding_matrikkel_as_points__urban_area_selection_n100__n100</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
+        <span class="n">out_feature_class</span><span class="o">=</span><span class="n">Building_N100</span><span class="o">.</span><span class="n">adding_matrikkel_as_points__urban_area_selection_n100_buffer__n100</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
+        <span class="n">buffer_distance_or_field</span><span class="o">=</span><span class="s2">&quot;50 Meters&quot;</span><span class="p">,</span>
+        <span class="n">dissolve_option</span><span class="o">=</span><span class="s2">&quot;NONE&quot;</span><span class="p">,</span>
+        <span class="n">dissolve_field</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+        <span class="n">method</span><span class="o">=</span><span class="s2">&quot;PLANAR&quot;</span><span class="p">,</span>
+    <span class="p">)</span>
+
+    <span class="c1"># Removing areas from n50 urban areas from the buffer of n100 urban areas resulting in areas in n100 which no longer are urban</span>
+    <span class="n">arcpy</span><span class="o">.</span><span class="n">PairwiseErase_analysis</span><span class="p">(</span>
+        <span class="n">in_features</span><span class="o">=</span><span class="n">Building_N100</span><span class="o">.</span><span class="n">adding_matrikkel_as_points__urban_area_selection_n50__n100</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
+        <span class="n">erase_features</span><span class="o">=</span><span class="n">Building_N100</span><span class="o">.</span><span class="n">adding_matrikkel_as_points__urban_area_selection_n100_buffer__n100</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
+        <span class="n">out_feature_class</span><span class="o">=</span><span class="n">Building_N100</span><span class="o">.</span><span class="n">adding_matrikkel_as_points__no_longer_urban_areas__n100</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
+    <span class="p">)</span>
+
+    <span class="c1"># Selecting matrikkel bygningspunkter based on this new urban selection layer</span>
+    <span class="n">custom_arcpy</span><span class="o">.</span><span class="n">select_location_and_make_permanent_feature</span><span class="p">(</span>
+        <span class="n">input_layer</span><span class="o">=</span><span class="n">input_other</span><span class="o">.</span><span class="n">matrikkel_bygningspunkt</span><span class="p">,</span>
+        <span class="n">overlap_type</span><span class="o">=</span><span class="n">custom_arcpy</span><span class="o">.</span><span class="n">OverlapType</span><span class="o">.</span><span class="n">INTERSECT</span><span class="p">,</span>
+        <span class="n">select_features</span><span class="o">=</span><span class="n">Building_N100</span><span class="o">.</span><span class="n">adding_matrikkel_as_points__no_longer_urban_areas__n100</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
+        <span class="n">output_name</span><span class="o">=</span><span class="n">Building_N100</span><span class="o">.</span><span class="n">adding_matrikkel_as_points__matrikkel_bygningspunkt__n100</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
+    <span class="p">)</span>
+
+    <span class="c1"># Adding transferring the NBR value to the matrikkel_bygningspunkt</span>
+    <span class="n">arcpy</span><span class="o">.</span><span class="n">AddField_management</span><span class="p">(</span>
+        <span class="n">in_table</span><span class="o">=</span><span class="n">Building_N100</span><span class="o">.</span><span class="n">adding_matrikkel_as_points__matrikkel_bygningspunkt__n100</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
+        <span class="n">field_name</span><span class="o">=</span><span class="s2">&quot;BYGGTYP_NBR&quot;</span><span class="p">,</span>
+        <span class="n">field_type</span><span class="o">=</span><span class="s2">&quot;LONG&quot;</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="n">arcpy</span><span class="o">.</span><span class="n">CalculateField_management</span><span class="p">(</span>
+        <span class="n">in_table</span><span class="o">=</span><span class="n">Building_N100</span><span class="o">.</span><span class="n">adding_matrikkel_as_points__matrikkel_bygningspunkt__n100</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
+        <span class="n">field</span><span class="o">=</span><span class="s2">&quot;BYGGTYP_NBR&quot;</span><span class="p">,</span>
+        <span class="n">expression</span><span class="o">=</span><span class="s2">&quot;!bygningstype!&quot;</span><span class="p">,</span>
+    <span class="p">)</span></div>
+
+
+
+<span class="c1">###################################### Transforms hospitals and churches polygons to points ################################################</span>
+
+
+<div class="viewcode-block" id="selecting_grunnriss_for_generalization">
+<a class="viewcode-back" href="../../../../generated_docs/generalization.n100.building.html#generalization.n100.building.building_data_preparation.selecting_grunnriss_for_generalization">[docs]</a>
+<span class="k">def</span> <span class="nf">selecting_grunnriss_for_generalization</span><span class="p">():</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Selects grunnriss features for generalization based on a given SQL expression.</span>
+
+<span class="sd">    This function first selects all grunnriss features that are not churches or hospitals based on the NBR values (970, 719, 671).</span>
+<span class="sd">    These selected features are then used for polygon generalization.</span>
+
+<span class="sd">    Additionally, this function transforms the selected hospitals and churches into points using the &#39;CENTROID&#39; method.</span>
+<span class="sd">    These points are used for point generalization.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="c1"># Reclassify the sykehus from grunnriss to another NBR value</span>
+    <span class="n">code_block_hospital</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="s2">&quot;def hospital_nbr(nbr):</span><span class="se">\n</span><span class="s2">&quot;</span>
+        <span class="s2">&quot;    mapping = {970: 729, 719: 729}</span><span class="se">\n</span><span class="s2">&quot;</span>
+        <span class="s2">&quot;    return mapping.get(nbr, nbr)&quot;</span>
+    <span class="p">)</span>
+
+    <span class="c1"># Reclassify the sykehus from grunnriss to another NBR value</span>
+    <span class="n">arcpy</span><span class="o">.</span><span class="n">CalculateField_management</span><span class="p">(</span>
+        <span class="n">in_table</span><span class="o">=</span><span class="n">input_n50</span><span class="o">.</span><span class="n">Grunnriss</span><span class="p">,</span>
+        <span class="n">field</span><span class="o">=</span><span class="s2">&quot;BYGGTYP_NBR&quot;</span><span class="p">,</span>
+        <span class="n">expression</span><span class="o">=</span><span class="s2">&quot;hospital_nbr(!BYGGTYP_NBR!)&quot;</span><span class="p">,</span>
+        <span class="n">expression_type</span><span class="o">=</span><span class="s2">&quot;PYTHON3&quot;</span><span class="p">,</span>
+        <span class="n">code_block</span><span class="o">=</span><span class="n">code_block_hospital</span><span class="p">,</span>
+    <span class="p">)</span>
+
+    <span class="c1"># Expression to be able to select churchs and hospitals</span>
+    <span class="n">sql_nrb_code_sykehus</span> <span class="o">=</span> <span class="s2">&quot;BYGGTYP_NBR IN (970, 719)&quot;</span>
+    <span class="n">sql_nbr_code_kirke</span> <span class="o">=</span> <span class="s2">&quot;BYGGTYP_NBR IN (671)&quot;</span>
+
+    <span class="c1"># Selecting grunnriss which are not churches or hospitals using inverted selection</span>
+    <span class="n">custom_arcpy</span><span class="o">.</span><span class="n">select_attribute_and_make_permanent_feature</span><span class="p">(</span>
+        <span class="n">input_layer</span><span class="o">=</span><span class="n">input_n50</span><span class="o">.</span><span class="n">Grunnriss</span><span class="p">,</span>
+        <span class="n">expression</span><span class="o">=</span><span class="n">sql_nbr_code_kirke</span><span class="p">,</span>
+        <span class="n">output_name</span><span class="o">=</span><span class="n">Building_N100</span><span class="o">.</span><span class="n">selecting_grunnriss_for_generalization__selected_grunnriss_not_church__n100</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
+        <span class="n">selection_type</span><span class="o">=</span><span class="n">custom_arcpy</span><span class="o">.</span><span class="n">SelectionType</span><span class="o">.</span><span class="n">NEW_SELECTION</span><span class="p">,</span>
+        <span class="n">inverted</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+    <span class="p">)</span>
+
+    <span class="c1"># Selecting grunnriss which are large enough</span>
+    <span class="n">grunnriss_minimum_size</span> <span class="o">=</span> <span class="mi">1500</span>
+    <span class="n">sql_expression_too_small_grunnriss</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;Shape_Area &lt; </span><span class="si">{</span><span class="n">grunnriss_minimum_size</span><span class="si">}</span><span class="s2">&quot;</span>
+    <span class="n">sql_expression_correct_size_grunnriss</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;Shape_Area &gt;= </span><span class="si">{</span><span class="n">grunnriss_minimum_size</span><span class="si">}</span><span class="s2">&quot;</span>
+
+    <span class="n">custom_arcpy</span><span class="o">.</span><span class="n">select_attribute_and_make_permanent_feature</span><span class="p">(</span>
+        <span class="n">input_layer</span><span class="o">=</span><span class="n">Building_N100</span><span class="o">.</span><span class="n">selecting_grunnriss_for_generalization__selected_grunnriss_not_church__n100</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
+        <span class="n">expression</span><span class="o">=</span><span class="n">sql_expression_correct_size_grunnriss</span><span class="p">,</span>
+        <span class="n">output_name</span><span class="o">=</span><span class="n">Building_N100</span><span class="o">.</span><span class="n">selecting_grunnriss_for_generalization__large_enough_grunnriss__n100</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
+    <span class="p">)</span>
+
+    <span class="n">custom_arcpy</span><span class="o">.</span><span class="n">select_attribute_and_make_feature_layer</span><span class="p">(</span>
+        <span class="n">input_layer</span><span class="o">=</span><span class="n">Building_N100</span><span class="o">.</span><span class="n">selecting_grunnriss_for_generalization__selected_grunnriss_not_church__n100</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
+        <span class="n">expression</span><span class="o">=</span><span class="n">sql_expression_too_small_grunnriss</span><span class="p">,</span>
+        <span class="n">output_name</span><span class="o">=</span><span class="n">Building_N100</span><span class="o">.</span><span class="n">selecting_grunnriss_for_generalization__too_small_grunnriss__n100</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
+        <span class="n">selection_type</span><span class="o">=</span><span class="n">custom_arcpy</span><span class="o">.</span><span class="n">SelectionType</span><span class="o">.</span><span class="n">NEW_SELECTION</span><span class="p">,</span>
+    <span class="p">)</span>
+
+    <span class="c1"># Transforming small grunnriss features into points</span>
+    <span class="n">arcpy</span><span class="o">.</span><span class="n">FeatureToPoint_management</span><span class="p">(</span>
+        <span class="n">in_features</span><span class="o">=</span><span class="n">Building_N100</span><span class="o">.</span><span class="n">selecting_grunnriss_for_generalization__too_small_grunnriss__n100</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
+        <span class="n">out_feature_class</span><span class="o">=</span><span class="n">Building_N100</span><span class="o">.</span><span class="n">selecting_grunnriss_for_generalization__points_created_from_small_grunnriss__n100</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
+        <span class="n">point_location</span><span class="o">=</span><span class="s2">&quot;CENTROID&quot;</span><span class="p">,</span>
+    <span class="p">)</span>
+
+    <span class="c1"># Selecting grunnriss features not inverted based on sql expression above to select churches and hospitals</span>
+    <span class="n">custom_arcpy</span><span class="o">.</span><span class="n">select_attribute_and_make_feature_layer</span><span class="p">(</span>
+        <span class="n">input_layer</span><span class="o">=</span><span class="n">input_n50</span><span class="o">.</span><span class="n">Grunnriss</span><span class="p">,</span>
+        <span class="n">expression</span><span class="o">=</span><span class="n">sql_nbr_code_kirke</span><span class="p">,</span>
+        <span class="n">output_name</span><span class="o">=</span><span class="n">Building_N100</span><span class="o">.</span><span class="n">selecting_grunnriss_for_generalization__grunnriss_kirke__n100</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
+    <span class="p">)</span>
+
+    <span class="c1"># Transforming selected churches and hospitals into points</span>
+    <span class="n">arcpy</span><span class="o">.</span><span class="n">FeatureToPoint_management</span><span class="p">(</span>
+        <span class="n">in_features</span><span class="o">=</span><span class="n">Building_N100</span><span class="o">.</span><span class="n">selecting_grunnriss_for_generalization__grunnriss_kirke__n100</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
+        <span class="n">out_feature_class</span><span class="o">=</span><span class="n">Building_N100</span><span class="o">.</span><span class="n">selecting_grunnriss_for_generalization__kirke_points_created_from_grunnriss__n100</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
+        <span class="n">point_location</span><span class="o">=</span><span class="s2">&quot;CENTROID&quot;</span><span class="p">,</span>
+    <span class="p">)</span></div>
+
+
+
+<span class="c1">###################################### FILL ################################################</span>
+
+
+<div class="viewcode-block" id="removing_overlapping_byggningspunkt_and_grunnriss_matrikkel">
+<a class="viewcode-back" href="../../../../generated_docs/generalization.n100.building.html#generalization.n100.building.building_data_preparation.removing_overlapping_byggningspunkt_and_grunnriss_matrikkel">[docs]</a>
+<span class="k">def</span> <span class="nf">removing_overlapping_byggningspunkt_and_grunnriss_matrikkel</span><span class="p">():</span>
+    <span class="n">custom_arcpy</span><span class="o">.</span><span class="n">select_location_and_make_permanent_feature</span><span class="p">(</span>
+        <span class="n">input_layer</span><span class="o">=</span><span class="n">input_n50</span><span class="o">.</span><span class="n">BygningsPunkt</span><span class="p">,</span>
+        <span class="n">overlap_type</span><span class="o">=</span><span class="n">custom_arcpy</span><span class="o">.</span><span class="n">OverlapType</span><span class="o">.</span><span class="n">WITHIN</span><span class="p">,</span>
+        <span class="n">select_features</span><span class="o">=</span><span class="n">input_n50</span><span class="o">.</span><span class="n">Grunnriss</span><span class="p">,</span>
+        <span class="n">output_name</span><span class="o">=</span><span class="s2">&quot;NEEDS UPDATE&quot;</span><span class="p">,</span>
+        <span class="n">inverted</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+    <span class="p">)</span>
+
+    <span class="n">custom_arcpy</span><span class="o">.</span><span class="n">select_location_and_make_permanent_feature</span><span class="p">(</span>
+        <span class="n">input_layer</span><span class="o">=</span><span class="n">Building_N100</span><span class="o">.</span><span class="n">adding_matrikkel_as_points__matrikkel_bygningspunkt__n100</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
+        <span class="n">overlap_type</span><span class="o">=</span><span class="n">custom_arcpy</span><span class="o">.</span><span class="n">OverlapType</span><span class="o">.</span><span class="n">WITHIN</span><span class="p">,</span>
+        <span class="n">select_features</span><span class="o">=</span><span class="n">input_n50</span><span class="o">.</span><span class="n">Grunnriss</span><span class="p">,</span>
+        <span class="n">output_name</span><span class="o">=</span><span class="s2">&quot;NEEDS UPDATE&quot;</span><span class="p">,</span>
+        <span class="n">inverted</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+    <span class="p">)</span></div>
+
+
+
+<span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s2">&quot;__main__&quot;</span><span class="p">:</span>
+    <span class="n">main</span><span class="p">()</span>
+</pre></div>
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="../../../../index.html">Automatisk Generalisering</a></h1>
+
+
+
+
+
+
+
+
+<h3>Navigation</h3>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../../../../index.html">Documentation overview</a><ul>
+  <li><a href="../../../index.html">Module code</a><ul>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../../../../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"/>
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>document.getElementById('searchbox').style.display = "block"</script>
+
+
+
+
+
+
+
+
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &#169;2024, Kartverket.
+      
+      |
+      Powered by <a href="https://www.sphinx-doc.org/">Sphinx 7.2.6</a>
+      &amp; <a href="https://alabaster.readthedocs.io">Alabaster 0.7.16</a>
+      
+    </div>
+
+    
+
+    
+  </body>
+</html>

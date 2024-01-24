@@ -19,6 +19,7 @@ Welcome to Automatisk Generalisering's documentation!
    generated_docs/input_data
    generated_docs/file_manager.n100
    generated_docs/modules
+   generated_docs/config
    generated_docs/file_manager
    generated_docs/update_index_rst
    generated_docs/generalization
