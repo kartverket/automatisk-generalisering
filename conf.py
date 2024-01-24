@@ -1,6 +1,10 @@
 import os
 import sys
 
+import setup_guide.template_config as config
+
+autodoc_mock_imports = ["arcpy"]
+
 sys.path.insert(0, os.path.abspath("."))
 
 # Configuration file for the Sphinx documentation builder.
