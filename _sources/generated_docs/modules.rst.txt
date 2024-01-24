@@ -11,4 +11,3 @@ automatisk-generalisering
    file_manager
    generalization
    input_data
-   update_index_rst
