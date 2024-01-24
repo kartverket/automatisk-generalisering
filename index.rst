@@ -7,17 +7,15 @@ Welcome to Automatisk Generalisering's documentation!
 =====================================================
 
 .. toctree::
+   :maxdepth: 2
+   :caption: Contents:
+
    generated_docs/custom_tools
    generated_docs/env_setup
    generated_docs/file_manager
    generated_docs/generalization.n100.building
    generated_docs/input_data
    generated_docs/modules
-   :maxdepth: 2
-   :caption: Contents:
-
-
-
 
 Indices and tables
 ==================
@@ -25,3 +23,4 @@ Indices and tables
 * :ref:`genindex`
 * :ref:`modindex`
 * :ref:`search`
+
