@@ -1,0 +1,13 @@
+automatisk-generalisering
+=========================
+
+.. toctree::
+   :maxdepth: 4
+
+   conf
+   custom_tools
+   env_setup
+   file_manager
+   generalization
+   input_data
+   update_index_rst

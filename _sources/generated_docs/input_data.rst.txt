@@ -1,0 +1,53 @@
+input\_data package
+===================
+
+Submodules
+----------
+
+input\_data.input\_fkb module
+-----------------------------
+
+.. automodule:: input_data.input_fkb
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+input\_data.input\_n100 module
+------------------------------
+
+.. automodule:: input_data.input_n100
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+input\_data.input\_n50 module
+-----------------------------
+
+.. automodule:: input_data.input_n50
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+input\_data.input\_other module
+-------------------------------
+
+.. automodule:: input_data.input_other
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+input\_data.input\_symbology module
+-----------------------------------
+
+.. automodule:: input_data.input_symbology
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+Module contents
+---------------
+
+.. automodule:: input_data
+   :members:
+   :undoc-members:
+   :show-inheritance:

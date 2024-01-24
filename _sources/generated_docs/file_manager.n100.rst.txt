@@ -1,0 +1,21 @@
+file\_manager.n100 package
+==========================
+
+Submodules
+----------
+
+file\_manager.n100.file\_manager\_buildings module
+--------------------------------------------------
+
+.. automodule:: file_manager.n100.file_manager_buildings
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+Module contents
+---------------
+
+.. automodule:: file_manager.n100
+   :members:
+   :undoc-members:
+   :show-inheritance:

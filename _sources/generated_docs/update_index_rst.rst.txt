@@ -1,0 +1,7 @@
+update\_index\_rst module
+=========================
+
+.. automodule:: update_index_rst
+   :members:
+   :undoc-members:
+   :show-inheritance:

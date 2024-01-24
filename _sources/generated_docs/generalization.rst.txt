@@ -1,0 +1,29 @@
+generalization package
+======================
+
+Subpackages
+-----------
+
+.. toctree::
+   :maxdepth: 4
+
+   generalization.n100
+
+Submodules
+----------
+
+generalization.building\_polygon\_displacement module
+-----------------------------------------------------
+
+.. automodule:: generalization.building_polygon_displacement
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+Module contents
+---------------
+
+.. automodule:: generalization
+   :members:
+   :undoc-members:
+   :show-inheritance:

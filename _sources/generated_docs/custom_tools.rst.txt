@@ -1,0 +1,37 @@
+custom\_tools package
+=====================
+
+Submodules
+----------
+
+custom\_tools.custom\_arcpy module
+----------------------------------
+
+.. automodule:: custom_tools.custom_arcpy
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+custom\_tools.partition\_iterator module
+----------------------------------------
+
+.. automodule:: custom_tools.partition_iterator
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+custom\_tools.polygon\_processor module
+---------------------------------------
+
+.. automodule:: custom_tools.polygon_processor
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+Module contents
+---------------
+
+.. automodule:: custom_tools
+   :members:
+   :undoc-members:
+   :show-inheritance:

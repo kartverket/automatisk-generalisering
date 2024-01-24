@@ -1,0 +1,18 @@
+file\_manager package
+=====================
+
+Subpackages
+-----------
+
+.. toctree::
+   :maxdepth: 4
+
+   file_manager.n100
+
+Module contents
+---------------
+
+.. automodule:: file_manager
+   :members:
+   :undoc-members:
+   :show-inheritance:

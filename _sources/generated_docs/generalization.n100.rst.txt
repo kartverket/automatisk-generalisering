@@ -1,0 +1,18 @@
+generalization.n100 package
+===========================
+
+Subpackages
+-----------
+
+.. toctree::
+   :maxdepth: 4
+
+   generalization.n100.building
+
+Module contents
+---------------
+
+.. automodule:: generalization.n100
+   :members:
+   :undoc-members:
+   :show-inheritance:
