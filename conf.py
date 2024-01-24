@@ -1,6 +1,7 @@
 import os
 import sys
-sys.path.insert(0, os.path.abspath('.'))
+
+sys.path.insert(0, os.path.abspath("."))
 
 # Configuration file for the Sphinx documentation builder.
 #
@@ -13,7 +14,7 @@ sys.path.insert(0, os.path.abspath('.'))
 project = "Automatisk Generalisering"
 copyright = "2024, Kartverket"
 author = "Kartverket"
-release = "0.1"
+release = "0.0.1"
 
 # -- General configuration ---------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#general-configuration
