@@ -27,7 +27,7 @@ jobs:
 
     - name: Update index.rst
       run: |
-        update_index_rst.py
+        python update_index_rst.py
 
     - name: Build Sphinx Documentation
       run: |
