@@ -25,10 +25,6 @@ jobs:
       run: |
         sphinx-apidoc -o generated_docs/ .
 
-    - name: Update index.rst
-      run: |
-        python update_index_rst.py
-
     - name: Build Sphinx Documentation
       run: |
         make html

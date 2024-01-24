@@ -7,20 +7,12 @@ Welcome to Automatisk Generalisering's documentation!
 =====================================================
 
 .. toctree::
-   # Start of auto-generated docs
-   generated_docs/config
    generated_docs/custom_tools
    generated_docs/env_setup
-   generated_docs/file_manager.n100
    generated_docs/file_manager
    generated_docs/generalization.n100.building
-   generated_docs/generalization.n100
-   generated_docs/generalization
    generated_docs/input_data
    generated_docs/modules
-   # End of auto-generated docs
-
-   # Manual documentation below
    :maxdepth: 2
    :caption: Contents:
 
