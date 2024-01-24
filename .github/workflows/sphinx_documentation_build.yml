@@ -20,6 +20,12 @@ jobs:
     - name: Install Dependencies
       run: |
         pip install sphinx
+        pip install arcpy
+        pip install numpy
+
+    - name: Prepare Config File
+      run: |
+        cp setup_guide/template_config.py config.py
 
     - name: Generate .rst files
       run: |
