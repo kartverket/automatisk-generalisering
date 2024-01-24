@@ -9,17 +9,6 @@ Subpackages
 
    generalization.n100
 
-Submodules
-----------
-
-generalization.building\_polygon\_displacement module
------------------------------------------------------
-
-.. automodule:: generalization.building_polygon_displacement
-   :members:
-   :undoc-members:
-   :show-inheritance:
-
 Module contents
 ---------------
 

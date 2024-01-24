@@ -28,6 +28,14 @@ generalization.n100.building.building\_point\_buffer\_displacement module
    :undoc-members:
    :show-inheritance:
 
+generalization.n100.building.building\_polygon\_displacement module
+-------------------------------------------------------------------
+
+.. automodule:: generalization.n100.building.building_polygon_displacement
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
 generalization.n100.building.calculating\_values module
 -------------------------------------------------------
 
