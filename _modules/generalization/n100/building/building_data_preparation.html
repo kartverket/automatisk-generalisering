@@ -100,12 +100,23 @@
 <a class="viewcode-back" href="../../../../generated_docs/generalization.n100.building.html#generalization.n100.building.building_data_preparation.main">[docs]</a>
 <span class="k">def</span> <span class="nf">main</span><span class="p">():</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">    This function prepares data selection of the following features:</span>
-<span class="sd">    - Begrensningskurve water features to be used as a barrier</span>
-<span class="sd">    - Unsplit veg sti to be used as a barrier</span>
-<span class="sd">    - Matrikkel bygningspunkt to add building points removed by urban areas in n50</span>
-<span class="sd">    - Grunnriss selection for generalization and transforming church and hospital grunnriss to points.</span>
+<span class="sd">    Summary:</span>
+<span class="sd">        This is the main function of building data preparation, which aims to prepare the data for future building generalization processing.</span>
+
+<span class="sd">    Details:</span>
+<span class="sd">        - Function 1: Create Water Feature Buffer</span>
+<span class="sd">            This function creates a buffer for water features using the &quot;begrensningskurve&quot; feature. It prepares the data for future building placement on the water&#39;s edge.</span>
+
+<span class="sd">        - Function 2: Unsplit Road Lines</span>
+<span class="sd">            This function unsplit a line feature of roads to reduce the number of objects in future processing.</span>
+
+<span class="sd">        - Function 3: Add Building Points from Matrikkel</span>
+<span class="sd">            This function adds building points from the matrikkel dataset for areas that are no longer considered urban after the generalization of &quot;arealdekke.&quot; It also adds the required fields and values for future analysis.</span>
+
+<span class="sd">        - Function 4: Select Building Polygons for Generalization</span>
+<span class="sd">            This function selects building polygons (grunnriss) to be generalized. Smaller polygons and churches or hospitals are excluded, transformed into points, and sent to building point generalization.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
+
     <span class="n">preparation_begrensningskurve</span><span class="p">()</span>
     <span class="n">preperation_veg_sti</span><span class="p">()</span>
     <span class="n">adding_matrikkel_as_points</span><span class="p">()</span>
@@ -120,11 +131,22 @@
 <a class="viewcode-back" href="../../../../generated_docs/generalization.n100.building.html#generalization.n100.building.building_data_preparation.preparation_begrensningskurve">[docs]</a>
 <span class="k">def</span> <span class="nf">preparation_begrensningskurve</span><span class="p">():</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">    A function that prepares the begrensningskurve by performing the following steps:</span>
-<span class="sd">    1. Defining the SQL selection expression for water features for begrensningskurve and creating a temporary feature layer.</span>
-<span class="sd">    2. Creating a buffer of the water features begrensningskurve to take into account symbology of the water features.</span>
-<span class="sd">    3. Adding hierarchy and invisibility fields to the begrensningskurve_waterfeatures_buffer and setting them to 0.</span>
+<span class="sd">    Summary:</span>
+<span class="sd">        This function creates a buffer for water features using the &quot;begrensningskurve&quot; feature. It prepares the data for future building placement on the water&#39;s edge.</span>
+
+<span class="sd">    Details:</span>
+<span class="sd">        - Define an SQL selection expression to identify water features of interest.</span>
+<span class="sd">        - Create a temporary feature of water features from the &quot;begrensningskurve&quot; using the defined SQL expression.</span>
+<span class="sd">        - Select land features that do not belong to specific categories (&#39;ElvBekk&#39;, &#39;Havflate&#39;, &#39;Innsjø&#39;, &#39;InnsjøRegulert&#39;).</span>
+<span class="sd">        - Identify land features near water features by selecting those that boundary-touch with water features.</span>
+<span class="sd">        - Apply a 15-meter buffer to the identified land features to create buffered land features.</span>
+<span class="sd">        - Apply a 45-meter buffer to the selected water features to create buffered water features.</span>
+<span class="sd">        - Erase buffered water features from the buffered land features to create a final set of land features.</span>
+
+<span class="sd">    Note:</span>
+<span class="sd">        - Additional logic may be required for rivers separately in future development.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
+
     <span class="c1"># Defining the SQL selection expression for water features for begrensningskurve</span>
     <span class="n">sql_expr_begrensningskurve_waterfeatures</span> <span class="o">=</span> <span class="s2">&quot;OBJTYPE = &#39;ElvBekkKant&#39; Or OBJTYPE = &#39;Innsjøkant&#39; Or OBJTYPE = &#39;InnsjøkantRegulert&#39; Or OBJTYPE = &#39;Kystkontur&#39;&quot;</span>
 
@@ -209,14 +231,14 @@
 <a class="viewcode-back" href="../../../../generated_docs/generalization.n100.building.html#generalization.n100.building.building_data_preparation.preperation_veg_sti">[docs]</a>
 <span class="k">def</span> <span class="nf">preperation_veg_sti</span><span class="p">():</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">    Unsplit the lines in the specified feature class based on the given fields, to speed up future processing speed</span>
-<span class="sd">    when using this as a barrier.</span>
+<span class="sd">    Summary:</span>
+<span class="sd">        This function unsplit a line feature of roads to reduce the number of objects in future processing.</span>
 
-<span class="sd">    Parameters:</span>
-<span class="sd">        input_n100 (str): The path to the input feature class containing the lines to be unsplit.</span>
-<span class="sd">        output_feature_class (str): The name of the output feature class to be created.</span>
-<span class="sd">        fields (List[str]): The list of fields to use for unsplitting the lines.</span>
+<span class="sd">    Details:</span>
+<span class="sd">        - It takes the input line feature `input_n100.VegSti` and removes any geometric splits.</span>
+<span class="sd">        - The feature is dissolved based on the fields &quot;subtypekode,&quot; &quot;motorvegtype,&quot; and &quot;UTTEGNING&quot; to merge segments with the same values in these fields.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
+
     <span class="n">arcpy</span><span class="o">.</span><span class="n">UnsplitLine_management</span><span class="p">(</span>
         <span class="n">in_features</span><span class="o">=</span><span class="n">input_n100</span><span class="o">.</span><span class="n">VegSti</span><span class="p">,</span>
         <span class="n">out_feature_class</span><span class="o">=</span><span class="n">Building_N100</span><span class="o">.</span><span class="n">preperation_veg_sti__unsplit_veg_sti__n100</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
@@ -232,14 +254,16 @@
 <a class="viewcode-back" href="../../../../generated_docs/generalization.n100.building.html#generalization.n100.building.building_data_preparation.adding_matrikkel_as_points">[docs]</a>
 <span class="k">def</span> <span class="nf">adding_matrikkel_as_points</span><span class="p">():</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">    Adds building points from matrikkel for areas which no longer are urban areas.</span>
+<span class="sd">    Summary:</span>
+<span class="sd">        This function adds building points from the matrikkel dataset for areas that are no longer considered urban after the generalization of &quot;arealdekke.&quot; It also adds the required fields and values for future analysis.</span>
 
-<span class="sd">    This function performs the following steps:</span>
-<span class="sd">    1. Selects features and creates a layer from the input_n100.ArealdekkeFlate layer which are urban.</span>
-<span class="sd">    2. Selects features and creates a layer from the input_n50.ArealdekkeFlate layer which are urban.</span>
-<span class="sd">    3. Adds a buffer to the urban selection from n100 as a short hand for symbology.</span>
-<span class="sd">    4. Removes areas from n50 urban areas from the buffer of n|50 urban areas resulting in areas in n100 which no longer are urban.</span>
-<span class="sd">    5. Selects matrikkel bygningspunkter based on this new urban selection layer, and adds NBR values to the created points.</span>
+<span class="sd">    Details:</span>
+<span class="sd">        - Define an SQL expression to select urban areas (&#39;Tettbebyggelse&#39;, &#39;Industriområde&#39;, &#39;BymessigBebyggelse&#39;) in the &quot;arealdekke&quot; dataset.</span>
+<span class="sd">        - Select urban areas from &quot;arealdekke&quot; in both n100 and n50 datasets using the defined SQL expression.</span>
+<span class="sd">        - Create a buffer of the selected urban areas from n100 to consider symbology using a 50-meter buffer distance.</span>
+<span class="sd">        - Remove areas from n50 urban areas that intersect with the buffer of n100 urban areas, resulting in areas in n100 that are no longer considered urban.</span>
+<span class="sd">        - Select matrikkel bygningspunkter based on the new urban selection layer.</span>
+<span class="sd">        - Transfer the NBR (building type) value to the matrikkel_bygningspunkt dataset by adding a new field &quot;BYGGTYP_NBR&quot; of type LONG and calculating its values from the &quot;bygningstype&quot; field.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="c1"># Defining sql expression to select urban areas</span>
@@ -305,13 +329,21 @@
 <a class="viewcode-back" href="../../../../generated_docs/generalization.n100.building.html#generalization.n100.building.building_data_preparation.selecting_grunnriss_for_generalization">[docs]</a>
 <span class="k">def</span> <span class="nf">selecting_grunnriss_for_generalization</span><span class="p">():</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">    Selects grunnriss features for generalization based on a given SQL expression.</span>
+<span class="sd">    Summary:</span>
+<span class="sd">        This function selects building polygons (grunnriss) to be generalized. Smaller polygons and churches or hospitals are excluded, transformed into points, and sent to building point generalization.</span>
 
-<span class="sd">    This function first selects all grunnriss features that are not churches or hospitals based on the NBR values (970, 719, 671).</span>
-<span class="sd">    These selected features are then used for polygon generalization.</span>
+<span class="sd">    Details:</span>
+<span class="sd">        - Reclassify &quot;sykehus&quot; from grunnriss to another NBR value.</span>
+<span class="sd">        - Calculate the new NBR values for &quot;sykehus&quot; using a Python code block.</span>
+<span class="sd">        - Define SQL expressions to select &quot;sykehus&quot; and churches (&quot;kirke&quot;) based on their NBR values.</span>
+<span class="sd">        - Select grunnriss that are not churches or hospitals using inverted selection.</span>
+<span class="sd">        - Select grunnriss that are large enough based on a minimum polygon size of 1500 square meters.</span>
+<span class="sd">        - Transform small grunnriss features into points by calculating centroids.</span>
+<span class="sd">        - Select grunnriss features that represent churches and hospitals.</span>
+<span class="sd">        - Transform selected church and hospital grunnriss features into points by calculating centroids.</span>
 
-<span class="sd">    Additionally, this function transforms the selected hospitals and churches into points using the &#39;CENTROID&#39; method.</span>
-<span class="sd">    These points are used for point generalization.</span>
+<span class="sd">    Parameters:</span>
+<span class="sd">        - Minimum polygon size (int): The minimum size of polygons are 1500 square meters.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="c1"># Reclassify the sykehus from grunnriss to another NBR value</span>

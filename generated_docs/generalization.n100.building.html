@@ -172,33 +172,69 @@
 <dl class="py function">
 <dt class="sig sig-object py" id="generalization.n100.building.building_data_preparation.main">
 <span class="sig-prename descclassname"><span class="pre">generalization.n100.building.building_data_preparation.</span></span><span class="sig-name descname"><span class="pre">main</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/generalization/n100/building/building_data_preparation.html#main"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#generalization.n100.building.building_data_preparation.main" title="Link to this definition"></a></dt>
-<dd><p>This function prepares data selection of the following features:
-- Begrensningskurve water features to be used as a barrier
-- Unsplit veg sti to be used as a barrier
-- Matrikkel bygningspunkt to add building points removed by urban areas in n50
-- Grunnriss selection for generalization and transforming church and hospital grunnriss to points.</p>
+<dd><dl class="simple">
+<dt>Summary:</dt><dd><p>This is the main function of building data preparation, which aims to prepare the data for future building generalization processing.</p>
+</dd>
+<dt>Details:</dt><dd><ul class="simple">
+<li><dl class="simple">
+<dt>Function 1: Create Water Feature Buffer</dt><dd><p>This function creates a buffer for water features using the “begrensningskurve” feature. It prepares the data for future building placement on the water’s edge.</p>
+</dd>
+</dl>
+</li>
+<li><dl class="simple">
+<dt>Function 2: Unsplit Road Lines</dt><dd><p>This function unsplit a line feature of roads to reduce the number of objects in future processing.</p>
+</dd>
+</dl>
+</li>
+<li><dl class="simple">
+<dt>Function 3: Add Building Points from Matrikkel</dt><dd><p>This function adds building points from the matrikkel dataset for areas that are no longer considered urban after the generalization of “arealdekke.” It also adds the required fields and values for future analysis.</p>
+</dd>
+</dl>
+</li>
+<li><dl class="simple">
+<dt>Function 4: Select Building Polygons for Generalization</dt><dd><p>This function selects building polygons (grunnriss) to be generalized. Smaller polygons and churches or hospitals are excluded, transformed into points, and sent to building point generalization.</p>
+</dd>
+</dl>
+</li>
+</ul>
+</dd>
+</dl>
 </dd></dl>
 
 <dl class="py function">
 <dt class="sig sig-object py" id="generalization.n100.building.building_data_preparation.preparation_begrensningskurve">
 <span class="sig-prename descclassname"><span class="pre">generalization.n100.building.building_data_preparation.</span></span><span class="sig-name descname"><span class="pre">preparation_begrensningskurve</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/generalization/n100/building/building_data_preparation.html#preparation_begrensningskurve"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#generalization.n100.building.building_data_preparation.preparation_begrensningskurve" title="Link to this definition"></a></dt>
-<dd><p>A function that prepares the begrensningskurve by performing the following steps:
-1. Defining the SQL selection expression for water features for begrensningskurve and creating a temporary feature layer.
-2. Creating a buffer of the water features begrensningskurve to take into account symbology of the water features.
-3. Adding hierarchy and invisibility fields to the begrensningskurve_waterfeatures_buffer and setting them to 0.</p>
+<dd><dl class="simple">
+<dt>Summary:</dt><dd><p>This function creates a buffer for water features using the “begrensningskurve” feature. It prepares the data for future building placement on the water’s edge.</p>
+</dd>
+<dt>Details:</dt><dd><ul class="simple">
+<li><p>Define an SQL selection expression to identify water features of interest.</p></li>
+<li><p>Create a temporary feature of water features from the “begrensningskurve” using the defined SQL expression.</p></li>
+<li><p>Select land features that do not belong to specific categories (‘ElvBekk’, ‘Havflate’, ‘Innsjø’, ‘InnsjøRegulert’).</p></li>
+<li><p>Identify land features near water features by selecting those that boundary-touch with water features.</p></li>
+<li><p>Apply a 15-meter buffer to the identified land features to create buffered land features.</p></li>
+<li><p>Apply a 45-meter buffer to the selected water features to create buffered water features.</p></li>
+<li><p>Erase buffered water features from the buffered land features to create a final set of land features.</p></li>
+</ul>
+</dd>
+</dl>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<ul class="simple">
+<li><p>Additional logic may be required for rivers separately in future development.</p></li>
+</ul>
+</div>
 </dd></dl>
 
 <dl class="py function">
 <dt class="sig sig-object py" id="generalization.n100.building.building_data_preparation.preperation_veg_sti">
 <span class="sig-prename descclassname"><span class="pre">generalization.n100.building.building_data_preparation.</span></span><span class="sig-name descname"><span class="pre">preperation_veg_sti</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/generalization/n100/building/building_data_preparation.html#preperation_veg_sti"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#generalization.n100.building.building_data_preparation.preperation_veg_sti" title="Link to this definition"></a></dt>
-<dd><p>Unsplit the lines in the specified feature class based on the given fields, to speed up future processing speed
-when using this as a barrier.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>input_n100</strong> (<em>str</em>) – The path to the input feature class containing the lines to be unsplit.</p></li>
-<li><p><strong>output_feature_class</strong> (<em>str</em>) – The name of the output feature class to be created.</p></li>
-<li><p><strong>fields</strong> (<em>List</em><em>[</em><em>str</em><em>]</em>) – The list of fields to use for unsplitting the lines.</p></li>
+<dd><dl class="simple">
+<dt>Summary:</dt><dd><p>This function unsplit a line feature of roads to reduce the number of objects in future processing.</p>
+</dd>
+<dt>Details:</dt><dd><ul class="simple">
+<li><p>It takes the input line feature <cite>input_n100.VegSti</cite> and removes any geometric splits.</p></li>
+<li><p>The feature is dissolved based on the fields “subtypekode,” “motorvegtype,” and “UTTEGNING” to merge segments with the same values in these fields.</p></li>
 </ul>
 </dd>
 </dl>
@@ -207,23 +243,44 @@ when using this as a barrier.</p>
 <dl class="py function">
 <dt class="sig sig-object py" id="generalization.n100.building.building_data_preparation.adding_matrikkel_as_points">
 <span class="sig-prename descclassname"><span class="pre">generalization.n100.building.building_data_preparation.</span></span><span class="sig-name descname"><span class="pre">adding_matrikkel_as_points</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/generalization/n100/building/building_data_preparation.html#adding_matrikkel_as_points"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#generalization.n100.building.building_data_preparation.adding_matrikkel_as_points" title="Link to this definition"></a></dt>
-<dd><p>Adds building points from matrikkel for areas which no longer are urban areas.</p>
-<p>This function performs the following steps:
-1. Selects features and creates a layer from the input_n100.ArealdekkeFlate layer which are urban.
-2. Selects features and creates a layer from the input_n50.ArealdekkeFlate layer which are urban.
-3. Adds a buffer to the urban selection from n100 as a short hand for symbology.
-4. Removes areas from n50 urban areas from the buffer of n|50 urban areas resulting in areas in n100 which no longer are urban.
-5. Selects matrikkel bygningspunkter based on this new urban selection layer, and adds NBR values to the created points.</p>
+<dd><dl class="simple">
+<dt>Summary:</dt><dd><p>This function adds building points from the matrikkel dataset for areas that are no longer considered urban after the generalization of “arealdekke.” It also adds the required fields and values for future analysis.</p>
+</dd>
+<dt>Details:</dt><dd><ul class="simple">
+<li><p>Define an SQL expression to select urban areas (‘Tettbebyggelse’, ‘Industriområde’, ‘BymessigBebyggelse’) in the “arealdekke” dataset.</p></li>
+<li><p>Select urban areas from “arealdekke” in both n100 and n50 datasets using the defined SQL expression.</p></li>
+<li><p>Create a buffer of the selected urban areas from n100 to consider symbology using a 50-meter buffer distance.</p></li>
+<li><p>Remove areas from n50 urban areas that intersect with the buffer of n100 urban areas, resulting in areas in n100 that are no longer considered urban.</p></li>
+<li><p>Select matrikkel bygningspunkter based on the new urban selection layer.</p></li>
+<li><p>Transfer the NBR (building type) value to the matrikkel_bygningspunkt dataset by adding a new field “BYGGTYP_NBR” of type LONG and calculating its values from the “bygningstype” field.</p></li>
+</ul>
+</dd>
+</dl>
 </dd></dl>
 
 <dl class="py function">
 <dt class="sig sig-object py" id="generalization.n100.building.building_data_preparation.selecting_grunnriss_for_generalization">
 <span class="sig-prename descclassname"><span class="pre">generalization.n100.building.building_data_preparation.</span></span><span class="sig-name descname"><span class="pre">selecting_grunnriss_for_generalization</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/generalization/n100/building/building_data_preparation.html#selecting_grunnriss_for_generalization"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#generalization.n100.building.building_data_preparation.selecting_grunnriss_for_generalization" title="Link to this definition"></a></dt>
-<dd><p>Selects grunnriss features for generalization based on a given SQL expression.</p>
-<p>This function first selects all grunnriss features that are not churches or hospitals based on the NBR values (970, 719, 671).
-These selected features are then used for polygon generalization.</p>
-<p>Additionally, this function transforms the selected hospitals and churches into points using the ‘CENTROID’ method.
-These points are used for point generalization.</p>
+<dd><dl class="simple">
+<dt>Summary:</dt><dd><p>This function selects building polygons (grunnriss) to be generalized. Smaller polygons and churches or hospitals are excluded, transformed into points, and sent to building point generalization.</p>
+</dd>
+<dt>Details:</dt><dd><ul class="simple">
+<li><p>Reclassify “sykehus” from grunnriss to another NBR value.</p></li>
+<li><p>Calculate the new NBR values for “sykehus” using a Python code block.</p></li>
+<li><p>Define SQL expressions to select “sykehus” and churches (“kirke”) based on their NBR values.</p></li>
+<li><p>Select grunnriss that are not churches or hospitals using inverted selection.</p></li>
+<li><p>Select grunnriss that are large enough based on a minimum polygon size of 1500 square meters.</p></li>
+<li><p>Transform small grunnriss features into points by calculating centroids.</p></li>
+<li><p>Select grunnriss features that represent churches and hospitals.</p></li>
+<li><p>Transform selected church and hospital grunnriss features into points by calculating centroids.</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>size</strong> (<em>- Minimum polygon</em>) – The minimum size of polygons are 1500 square meters.</p>
+</dd>
+</dl>
 </dd></dl>
 
 <dl class="py function">
