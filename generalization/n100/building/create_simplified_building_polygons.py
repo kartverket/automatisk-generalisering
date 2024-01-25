@@ -16,6 +16,18 @@ environment_setup.general_setup()
 
 # Main function
 def main():
+    """
+    # Summary:
+    Aggregates and simplifies building polygons, minimizing detailed parts of the building.
+
+    # Details:
+    - Hospitals are selected based on 'BYGGTYP_NBR' values 970 and 719.
+    - Churches are selected based on 'BYGGTYP_NBR' value 671.
+
+    # Parameters
+     The tool FindPointClusters have a search distance of 200 meters and minimum points of 2.
+
+    """
     # Start timing
     start_time = time.time()
 
@@ -41,6 +53,19 @@ def main():
 
 # Simplify building polygons and create points where buildings are too small
 def simplify_building_polygon():
+    """
+    # Summary:
+    Finds hospital and church clusters.
+    A cluster is defined as two or more points that are closer together than 200 meters.
+
+    # Details:
+    - Hospitals are selected based on 'BYGGTYP_NBR' values 970 and 719.
+    - Churches are selected based on 'BYGGTYP_NBR' value 671.
+
+    # Parameters
+     The tool FindPointClusters have a search distance of 200 meters and minimum points of 2.
+
+    """
     # Aggregating building polygons
 
     print("Aggregating building polygons...")
