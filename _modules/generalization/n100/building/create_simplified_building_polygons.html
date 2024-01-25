@@ -96,6 +96,18 @@
 <div class="viewcode-block" id="main">
 <a class="viewcode-back" href="../../../../generated_docs/generalization.n100.building.html#generalization.n100.building.create_simplified_building_polygons.main">[docs]</a>
 <span class="k">def</span> <span class="nf">main</span><span class="p">():</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    # Summary:</span>
+<span class="sd">    Aggregates and simplifies building polygons, minimizing detailed parts of the building.</span>
+
+<span class="sd">    # Details:</span>
+<span class="sd">    - Hospitals are selected based on &#39;BYGGTYP_NBR&#39; values 970 and 719.</span>
+<span class="sd">    - Churches are selected based on &#39;BYGGTYP_NBR&#39; value 671.</span>
+
+<span class="sd">    # Parameters</span>
+<span class="sd">     The tool FindPointClusters have a search distance of 200 meters and minimum points of 2.</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
     <span class="c1"># Start timing</span>
     <span class="n">start_time</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span>
 
@@ -124,6 +136,19 @@
 <div class="viewcode-block" id="simplify_building_polygon">
 <a class="viewcode-back" href="../../../../generated_docs/generalization.n100.building.html#generalization.n100.building.create_simplified_building_polygons.simplify_building_polygon">[docs]</a>
 <span class="k">def</span> <span class="nf">simplify_building_polygon</span><span class="p">():</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    # Summary:</span>
+<span class="sd">    Finds hospital and church clusters.</span>
+<span class="sd">    A cluster is defined as two or more points that are closer together than 200 meters.</span>
+
+<span class="sd">    # Details:</span>
+<span class="sd">    - Hospitals are selected based on &#39;BYGGTYP_NBR&#39; values 970 and 719.</span>
+<span class="sd">    - Churches are selected based on &#39;BYGGTYP_NBR&#39; value 671.</span>
+
+<span class="sd">    # Parameters</span>
+<span class="sd">     The tool FindPointClusters have a search distance of 200 meters and minimum points of 2.</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
     <span class="c1"># Aggregating building polygons</span>
 
     <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Aggregating building polygons...&quot;</span><span class="p">)</span>

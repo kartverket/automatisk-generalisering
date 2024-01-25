@@ -428,12 +428,31 @@ them together with collapsed points from the tools simplify building and simplif
 <dl class="py function">
 <dt class="sig sig-object py" id="generalization.n100.building.create_simplified_building_polygons.main">
 <span class="sig-prename descclassname"><span class="pre">generalization.n100.building.create_simplified_building_polygons.</span></span><span class="sig-name descname"><span class="pre">main</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/generalization/n100/building/create_simplified_building_polygons.html#main"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#generalization.n100.building.create_simplified_building_polygons.main" title="Link to this definition"></a></dt>
-<dd></dd></dl>
+<dd><p># Summary:
+Aggregates and simplifies building polygons, minimizing detailed parts of the building.</p>
+<p># Details:
+- Hospitals are selected based on ‘BYGGTYP_NBR’ values 970 and 719.
+- Churches are selected based on ‘BYGGTYP_NBR’ value 671.</p>
+<dl class="simple">
+<dt># Parameters</dt><dd><p>The tool FindPointClusters have a search distance of 200 meters and minimum points of 2.</p>
+</dd>
+</dl>
+</dd></dl>
 
 <dl class="py function">
 <dt class="sig sig-object py" id="generalization.n100.building.create_simplified_building_polygons.simplify_building_polygon">
 <span class="sig-prename descclassname"><span class="pre">generalization.n100.building.create_simplified_building_polygons.</span></span><span class="sig-name descname"><span class="pre">simplify_building_polygon</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/generalization/n100/building/create_simplified_building_polygons.html#simplify_building_polygon"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#generalization.n100.building.create_simplified_building_polygons.simplify_building_polygon" title="Link to this definition"></a></dt>
-<dd></dd></dl>
+<dd><p># Summary:
+Finds hospital and church clusters.
+A cluster is defined as two or more points that are closer together than 200 meters.</p>
+<p># Details:
+- Hospitals are selected based on ‘BYGGTYP_NBR’ values 970 and 719.
+- Churches are selected based on ‘BYGGTYP_NBR’ value 671.</p>
+<dl class="simple">
+<dt># Parameters</dt><dd><p>The tool FindPointClusters have a search distance of 200 meters and minimum points of 2.</p>
+</dd>
+</dl>
+</dd></dl>
 
 </section>
 <section id="module-generalization.n100.building.hospital_church_clusters">
@@ -441,20 +460,36 @@ them together with collapsed points from the tools simplify building and simplif
 <dl class="py function">
 <dt class="sig sig-object py" id="generalization.n100.building.hospital_church_clusters.main">
 <span class="sig-prename descclassname"><span class="pre">generalization.n100.building.hospital_church_clusters.</span></span><span class="sig-name descname"><span class="pre">main</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/generalization/n100/building/hospital_church_clusters.html#main"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#generalization.n100.building.hospital_church_clusters.main" title="Link to this definition"></a></dt>
-<dd><p># Summary:
-This script detects and reduces hospital and church clusters.</p>
-<p># Details:
-- <strong>Step 1:</strong> Selects hospitals and churches from the input point feature class
-- <strong>Step 2:</strong> Finds clusters in the hospital and church layers.
-- <strong>Step 3:</strong> Reduces clusters to one point for each cluster</p>
+<dd><dl class="simple">
+<dt>Summary:</dt><dd><p>This script detects and reduces hospital and church clusters.</p>
+</dd>
+<dt>Details:</dt><dd><ol class="arabic simple">
+<li><dl class="simple">
+<dt><cite>hospital_church_selections</cite>:</dt><dd><p>Selects hospitals and churches from the input point feature class.</p>
+</dd>
+</dl>
+</li>
+<li><dl class="simple">
+<dt><cite>find_clusters</cite>:</dt><dd><p>Finds clusters in the hospital and church layers.</p>
+</dd>
+</dl>
+</li>
+<li><dl class="simple">
+<dt><cite>reducing_clusters</cite>:</dt><dd><p>Reduces clusters to one point for each cluster.</p>
+</dd>
+</dl>
+</li>
+</ol>
+</dd>
+</dl>
 </dd></dl>
 
 <dl class="py function">
 <dt class="sig sig-object py" id="generalization.n100.building.hospital_church_clusters.hospital_church_selections">
 <span class="sig-prename descclassname"><span class="pre">generalization.n100.building.hospital_church_clusters.</span></span><span class="sig-name descname"><span class="pre">hospital_church_selections</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/generalization/n100/building/hospital_church_clusters.html#hospital_church_selections"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#generalization.n100.building.hospital_church_clusters.hospital_church_selections" title="Link to this definition"></a></dt>
-<dd><p># Summary:
+<dd><p>Summary:
 Selects hospitals and churches from the input point feature class, creating separate feature layers for each category.</p>
-<p># Details:
+<p>Details:
 - Hospitals are selected based on ‘BYGGTYP_NBR’ values 970 and 719.
 - Churches are selected based on ‘BYGGTYP_NBR’ value 671.</p>
 </dd></dl>
@@ -462,26 +497,30 @@ Selects hospitals and churches from the input point feature class, creating sepa
 <dl class="py function">
 <dt class="sig sig-object py" id="generalization.n100.building.hospital_church_clusters.find_clusters">
 <span class="sig-prename descclassname"><span class="pre">generalization.n100.building.hospital_church_clusters.</span></span><span class="sig-name descname"><span class="pre">find_clusters</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/generalization/n100/building/hospital_church_clusters.html#find_clusters"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#generalization.n100.building.hospital_church_clusters.find_clusters" title="Link to this definition"></a></dt>
-<dd><p># Summary:
+<dd><p>Summary:
 Finds hospital and church clusters.
 A cluster is defined as two or more points that are closer together than 200 meters.</p>
-<p># Details:
-- Hospitals are selected based on ‘BYGGTYP_NBR’ values 970 and 719.
-- Churches are selected based on ‘BYGGTYP_NBR’ value 671.</p>
-<p># Parameters
-- The tool FindPointClusters have a search distance of 200 meters and minimum points of 2.</p>
+<p>Details:
+- Clusters are found for both hospitals and churches by using the ‘FindPointClusters’ tool.
+- The CLUSTER_IDs are joined with the original hospital and churches feature classes.
+- Hospital and church points a part of a cluster is selected as new layers.
+- Hospital and church points NOT a part of a cluster i selected as new layers.</p>
+<p>Parameters:
+- The tool FindPointClusters has a search distance of <strong>‘200 Meters’</strong> and minimum of <strong>‘2 Points’</strong>.</p>
 </dd></dl>
 
 <dl class="py function">
 <dt class="sig sig-object py" id="generalization.n100.building.hospital_church_clusters.reducing_clusters">
 <span class="sig-prename descclassname"><span class="pre">generalization.n100.building.hospital_church_clusters.</span></span><span class="sig-name descname"><span class="pre">reducing_clusters</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/generalization/n100/building/hospital_church_clusters.html#reducing_clusters"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#generalization.n100.building.hospital_church_clusters.reducing_clusters" title="Link to this definition"></a></dt>
-<dd><p># Summary:
+<dd><p>Summary:
 Reduces hospital and church clusters by only keeping one point for each detected cluster.</p>
-<p># Details:
+<p>Details:
 - A minimum bounding polygon is created by the cluster points.
 - The same polygon is transformed to a centerpoint.
 - Only the cluster point nearest to the centerpoint is retained.
 - Hospital and church points not part of a cluster are merged together with the selected cluster points.</p>
+<p>Parameters:
+- Minimum Bounding Geometry is made by geometry type RECTANGLE BY AREA.</p>
 </dd></dl>
 
 </section>
