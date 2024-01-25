@@ -20,13 +20,18 @@ environment_setup.general_setup()
 def main():
 
     """
-    # Summary:
-    This script detects and reduces hospital and church clusters.
+    Summary:
+        This script detects and reduces hospital and church clusters.
 
-    # Details:
-    - **Step 1:** Selects hospitals and churches from the input point feature class
-    - **Step 2:** Finds clusters in the hospital and church layers.
-    - **Step 3:** Reduces clusters to one point for each cluster
+    Details:
+        1. `hospital_church_selections`:
+            Selects hospitals and churches from the input point feature class.
+
+        2. `find_clusters`:
+            Finds clusters in the hospital and church layers.
+
+        3. `reducing_clusters`:
+            Reduces clusters to one point for each cluster.
 
     """
 
@@ -60,10 +65,10 @@ def main():
 def hospital_church_selections():
 
     """
-    # Summary:
+    Summary:
     Selects hospitals and churches from the input point feature class, creating separate feature layers for each category.
 
-    # Details:
+    Details:
     - Hospitals are selected based on 'BYGGTYP_NBR' values 970 and 719.
     - Churches are selected based on 'BYGGTYP_NBR' value 671.
 
@@ -102,17 +107,18 @@ def hospital_church_selections():
 def find_clusters():
 
     """
-    # Summary:
+    Summary:
     Finds hospital and church clusters.
     A cluster is defined as two or more points that are closer together than 200 meters.
 
-    # Details:
-    - Hospitals are selected based on 'BYGGTYP_NBR' values 970 and 719.
-    - Churches are selected based on 'BYGGTYP_NBR' value 671.
+    Details:
+    - Clusters are found for both hospitals and churches by using the 'FindPointClusters' tool.
+    - The CLUSTER_IDs are joined with the original hospital and churches feature classes.
+    - Hospital and church points a part of a cluster is selected as new layers.
+    - Hospital and church points NOT a part of a cluster i selected as new layers.
 
-    # Parameters
-    - The tool FindPointClusters have a search distance of 200 meters and minimum points of 2.
-
+    Parameters:
+    - The tool FindPointClusters has a search distance of **'200 Meters'** and minimum of **'2 Points'**.
     """
 
     print("Finding hospital and church clusters...")
@@ -196,14 +202,17 @@ def find_clusters():
 def reducing_clusters():
 
     """
-    # Summary:
+    Summary:
     Reduces hospital and church clusters by only keeping one point for each detected cluster.
 
-    # Details:
+    Details:
     - A minimum bounding polygon is created by the cluster points.
     - The same polygon is transformed to a centerpoint.
     - Only the cluster point nearest to the centerpoint is retained.
     - Hospital and church points not part of a cluster are merged together with the selected cluster points.
+
+    Parameters:
+    - Minimum Bounding Geometry is made by geometry type RECTANGLE BY AREA.
     """
 
     # List of hospital and church layers to merge at the end
