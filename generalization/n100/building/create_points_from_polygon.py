@@ -58,7 +58,7 @@ def grunnriss_to_point():
     custom_arcpy.select_location_and_make_feature_layer(
         input_layer=Building_N100.selecting_grunnriss_for_generalization__large_enough_grunnriss__n100.value,
         overlap_type=custom_arcpy.OverlapType.INTERSECT,
-        select_features=Building_N100.grunnriss_to_point__aggregated_polygon__n100.value,
+        select_features=Building_N100.aggregate_building__polygon__n100.value,
         output_name=Building_N100.grunnriss_to_point__intersect_aggregated_and_original__n100.value,
         inverted=True,
     )
@@ -73,9 +73,9 @@ def grunnriss_to_point():
 
     # List of input features which will be spatially joined
     input_features = [
-        Building_N100.grunnriss_to_point__collapsed_points_simplified_polygon__n100.value,
-        Building_N100.grunnriss_to_point__simplified_building_points_simplified_building_1__n100.value,
-        Building_N100.grunnriss_to_point__simplified_building_points_simplified_building_2__n100.value,
+        Building_N100.simplify_polygons__points__n100.value,
+        Building_N100.simplify_buildings_1__points__n100.value,
+        Building_N100.simplify_buildings_2__points__n100.value,
     ]
 
     #  Feature with the field information which will be used for spatial join
