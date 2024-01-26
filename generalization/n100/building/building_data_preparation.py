@@ -24,16 +24,16 @@ def main():
         This is the main function of building data preparation, which aims to prepare the data for future building generalization processing.
 
     Details:
-        - Function 1: Create Water Feature Buffer
+        1. `preparation_begrensningskurve`:
             This function creates a buffer for water features using the "begrensningskurve" feature. It prepares the data for future building placement on the water's edge.
 
-        - Function 2: Unsplit Road Lines
+        2. `preperation_veg_sti`:
             This function unsplit a line feature of roads to reduce the number of objects in future processing.
 
-        - Function 3: Add Building Points from Matrikkel
+        3. `adding_matrikkel_as_points`:
             This function adds building points from the matrikkel dataset for areas that are no longer considered urban after the generalization of "arealdekke." It also adds the required fields and values for future analysis.
 
-        - Function 4: Select Building Polygons for Generalization
+        4. `selecting_grunnriss_for_generalization`:
             This function selects building polygons (grunnriss) to be generalized. Smaller polygons and churches or hospitals are excluded, transformed into points, and sent to building point generalization.
     """
 
@@ -52,16 +52,16 @@ def preparation_begrensningskurve():
         This function creates a buffer for water features using the "begrensningskurve" feature. It prepares the data for future building placement on the water's edge.
 
     Details:
-        - Define an SQL selection expression to identify water features of interest.
+        - Using the object types ('ElvBekk', 'Havflate', 'Innsjø', 'InnsjøRegulert') in the "begrensningskurve" feature in SQL expressions to select water features and in inverse to select land features.
         - Create a temporary feature of water features from the "begrensningskurve" using the defined SQL expression.
-        - Select land features that do not belong to specific categories ('ElvBekk', 'Havflate', 'Innsjø', 'InnsjøRegulert').
-        - Identify land features near water features by selecting those that boundary-touch with water features.
-        - Apply a 15-meter buffer to the identified land features to create buffered land features.
-        - Apply a 45-meter buffer to the selected water features to create buffered water features.
-        - Erase buffered water features from the buffered land features to create a final set of land features.
+        - Select land features using an inverted selection using the defined SQL expression.
+        - Identify land features near water features by selecting those that boundary-touch with water features to reduce the amount of processing.
+        - Apply a 15-meter buffer to the identified land features to create buffered land features, this is the distance objects is allowed to be overlapping water features in the final output.
+        - Apply a 45-meter buffer to the selected water features to create buffered water features, this is to make sure features are not going past the water barrier and is instead pushed towrds land instead of further inside waterfeatures.
+        - Erase buffered water features from the buffered land features to create a final set of waterfeature buffer which is used throughout this generalization of buildings.
 
     Note:
-        - Additional logic may be required for rivers separately in future development.
+        - Additional logic may be required for rivers separately in future development as narrow polygons gets completly removed due to the land buffer being to large for the rivers. In processes actually needing barriers this will allow objects to cross narrow rivers.
     """
 
     # Defining the SQL selection expression for water features for begrensningskurve
@@ -151,6 +151,8 @@ def preperation_veg_sti():
     Details:
         - It takes the input line feature `input_n100.VegSti` and removes any geometric splits.
         - The feature is dissolved based on the fields "subtypekode," "motorvegtype," and "UTTEGNING" to merge segments with the same values in these fields.
+    Note:
+        - In the future when the inputs makes spatial selections of the features used for context for processing like roads this step is redundant and will instead increase processing time.
     """
 
     arcpy.UnsplitLine_management(
@@ -166,15 +168,17 @@ def preperation_veg_sti():
 def adding_matrikkel_as_points():
     """
     Summary:
-        This function adds building points from the matrikkel dataset for areas that are no longer considered urban after the generalization of "arealdekke." It also adds the required fields and values for future analysis.
+        This function adds building points from the matrikkel dataset for areas that are no longer considered urban after the generalization of 'ArealdekkeFlate'. It also adds the required fields and values for future analysis.
 
     Details:
-        - Define an SQL expression to select urban areas ('Tettbebyggelse', 'Industriområde', 'BymessigBebyggelse') in the "arealdekke" dataset.
-        - Select urban areas from "arealdekke" in both n100 and n50 datasets using the defined SQL expression.
-        - Create a buffer of the selected urban areas from n100 to consider symbology using a 50-meter buffer distance.
+        - Define an SQL expression to select urban areas ('Tettbebyggelse', 'Industriområde', 'BymessigBebyggelse') in the 'ArealdekkeFlate' dataset.
+        - Select urban areas from 'ArealdekkeFlate' in both n100 and n50 datasets using the defined SQL expression.
+        - Create a buffer of the selected urban areas from n100 to take into consideration that points should not be too close to urban areas.
         - Remove areas from n50 urban areas that intersect with the buffer of n100 urban areas, resulting in areas in n100 that are no longer considered urban.
         - Select matrikkel bygningspunkter based on the new urban selection layer.
         - Transfer the NBR (building type) value to the matrikkel_bygningspunkt dataset by adding a new field "BYGGTYP_NBR" of type LONG and calculating its values from the "bygningstype" field.
+    Note:
+        - Should consider removing the logic of adding a buffer to the urban areas to prevent points to close to urban areas and instead using urban areas as a barrier feature in future processing.
     """
 
     # Defining sql expression to select urban areas
@@ -241,9 +245,7 @@ def selecting_grunnriss_for_generalization():
         This function selects building polygons (grunnriss) to be generalized. Smaller polygons and churches or hospitals are excluded, transformed into points, and sent to building point generalization.
 
     Details:
-        - Reclassify "sykehus" from grunnriss to another NBR value.
-        - Calculate the new NBR values for "sykehus" using a Python code block.
-        - Define SQL expressions to select "sykehus" and churches ("kirke") based on their NBR values.
+        - Reclassify hospitals and churches from polygons to 'NBR 729' (other buildings).
         - Select grunnriss that are not churches or hospitals using inverted selection.
         - Select grunnriss that are large enough based on a minimum polygon size of 1500 square meters.
         - Transform small grunnriss features into points by calculating centroids.
@@ -251,7 +253,7 @@ def selecting_grunnriss_for_generalization():
         - Transform selected church and hospital grunnriss features into points by calculating centroids.
 
     Parameters:
-        - Minimum polygon size (int): The minimum size of polygons are 1500 square meters.
+        - Minimum Polygon Size: The minimum size of polygons, in square meters. It currently at **'1500 Meters'**.
     """
 
     # Reclassify the sykehus from grunnriss to another NBR value

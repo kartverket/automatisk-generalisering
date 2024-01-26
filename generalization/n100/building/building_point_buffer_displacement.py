@@ -10,6 +10,27 @@ from custom_tools.polygon_processor import PolygonProcessor
 
 
 def main():
+    """
+    Summary:
+        This is the main function of building data preparation, which aims to prepare the data for future building generalization processing.
+
+    Details:
+        1. `setup_arcpy_environment`:
+            Sets up the ArcPy environment based on predefined settings defined in `general_setup`.
+            This function ensures that the ArcPy environment is properly configured for the specific project by utilizing
+            the `general_setup` function from the `environment_setup` module.
+
+        2. `selection`:
+            Makes the selection of the relevant input features using a sub selection since the operation is too processing heavy to be done for the global dataset. Small scale test logic untill this logic is made OOP.
+
+        3. `creating_raod_buffer`:
+            This function creates a buffered feature with a size corresponding to the road width in its symbology.
+            Then it iterates through the road features first creating a smaller buffer and gradually increasing the size.
+            For each iteration uses the erase tool to erase the polgon created from building points to gradually move it away from road features to prevent overlapp with road features.
+
+        4. `copy_output_feature`:
+            Copies the last output of the `creating_raod_buffer` iteration to be able to integrate it into our `file_manager` system.
+    """
     setup_arcpy_environment()
     selection()
 
@@ -19,12 +40,26 @@ def main():
 
 def setup_arcpy_environment():
     """
-    Sets up the ArcPy environment based on predefined settings.
+    Summary:
+        Sets up the ArcPy environment based on predefined settings defined in `general_setup`.
+        This function ensures that the ArcPy environment is properly configured for the specific project by utilizing
+        the `general_setup` function from the `environment_setup` module.
+
+    Details:
+        - It calls the `general_setup` function from the `environment_setup` module to set up the ArcPy environment based on predefined settings.
     """
     environment_setup.general_setup()
 
 
 def selection():
+    """
+    Summary:
+        Makes the selection of the relevant input features using a sub selection since the operation is too processing heavy to be done for the global dataset. Small scale test logic untill this logic is made OOP.
+
+    Details:
+        - Selects a region from the administrative boundary layer to be used as a selection feature.
+        - Then selects the input features that intersects with the selected region.
+    """
     custom_arcpy.select_attribute_and_make_permanent_feature(
         input_layer=input_n100.AdminFlate,
         expression="NAVN = 'Asker'",
@@ -54,6 +89,16 @@ def selection():
 
 
 def pre_create_template_feature_class():
+    """
+    Summary:
+        Creates a small selection of road features to be used as a template feature class.
+
+    Details:
+        - Defines a template query "MOTORVEGTYPE = 'Motorveg'" and buffer width of 42.5 meters to create a template feature class.
+        - Selects road features based on the template query and creates a selection output layer.
+        - Applies pairwise buffering to the selected road features, creating a buffer output feature class with the specified buffer width.
+    """
+
     # Select a query and buffer width to create a template feature class
     template_query = "MOTORVEGTYPE = 'Motorveg'"
     template_buffer_width = 42.5
@@ -77,6 +122,17 @@ def pre_create_template_feature_class():
 
 
 def create_or_clear_output_feature_class(template_feature_class, output_fc):
+    """
+    Summary:
+        Makes sure there are not an existing append feature class to prevent unintetional data duplication.
+        It checks if the feature class exist, deliting it if it does. Then it creates a new feature class.
+
+    Details:
+        - First it checks if the feature clas exists.
+        - If it exists it deletes it.
+        - Then it creates a new feature class.
+    """
+
     # Delete the existing output feature class if it exists
     if arcpy.Exists(output_fc):
         arcpy.management.Delete(output_fc)
@@ -93,9 +149,15 @@ def create_or_clear_output_feature_class(template_feature_class, output_fc):
 
 def create_feature_class_with_same_schema(source_fc, template_fc, output_fc):
     """
-    Creates a new feature class with the same schema as the template and
-    transfers only the geometry from the source feature class.
+    Summary:
+        The logic to create a new feature class with the same schema as the template feature class, then using cursor to extract the geometry from the source feature class and transfer it to the newly created feature class.
+
+    Details:
+        - Defines a new feature class in the specified output workspace using the provided template feature class.
+        - Ensures that the spatial reference of the new feature class matches that of the template feature class.
+        - Transfers the geometry from the source feature class to the newly created feature class.
     """
+
     # Create a new feature class using the template
     output_workspace, output_class_name = os.path.split(output_fc)
     arcpy.CreateFeatureclass_management(
@@ -116,9 +178,15 @@ def create_feature_class_with_same_schema(source_fc, template_fc, output_fc):
 
 def align_schema_to_template():
     """
-    Creates a new feature class with the same schema as the template and
-    transfers only the geometry from the preparation_begrensningskurve feature class.
+    Summary:
+        Creates a new feature class with the same schema as the template and transfers only the geometry from the `preparation_begrensningskurve` feature class.
+
+    Details:
+        - Retrieves the template feature class using the `pre_create_template_feature_class` function.
+        - Prepares the modified feature class for the building point buffer displacement process, obtaining its path from `Building_N100.building_point_buffer_displacement__align_buffer_schema_to_template__n100.value`.
+        - Utilizes the `create_feature_class_with_same_schema` function to create a feature class with the same schema as the template, copying only the geometry from the preparation_begrensningskurve feature class.
     """
+
     template_feature_class = pre_create_template_feature_class()
     preparation_fc_modified = (
         Building_N100.building_point_buffer_displacement__align_buffer_schema_to_template__n100.value
@@ -134,6 +202,22 @@ def align_schema_to_template():
 
 
 def creating_raod_buffer():
+    """
+    Summary:
+        This function creates a buffered feature with a size corresponding to the road width in its symbology.
+        Then it iterates through the road features first creating a smaller buffer and gradually increasing the size.
+        For each iteration uses the erase tool to erase the polgon created from building points to gradually move it away from road features to prevent overlapp with road features.
+
+    Details:
+        - This function creates a buffered feature with a size corresponding to the road width in its symbology.
+        - It begins by defining SQL queries and their corresponding buffer widths based on road attributes.
+        - The function then selects road features based on the SQL queries and creates buffers with varying sizes for each selection.
+        - The process is performed iteratively with different buffer factors to create multiple sets of buffered features.
+        - It uses the `
+        - For each buffer, it uses the erase tool to remove overlapping building points, gradually moving them away from road features.
+        - The final output contains the buffered features with gradually displaced building points to prevent overlap with road features.
+
+    """
     # Define the SQL queries and their corresponding buffer widths
     sql_queries = {
         "MOTORVEGTYPE = 'Motorveg'": 42.5,
@@ -267,6 +351,13 @@ def creating_raod_buffer():
 
 
 def copy_output_feature(last_output_feature_to_point):
+    """
+    Summary:
+        Copies the last output of the `creating_raod_buffer` iteration to be able to integrate it into our `file_manager` system.
+
+    Details:
+        - Uses the returned last output from `creating_raod_buffer` as input to copy the feature using `file_manager` system.
+    """
     arcpy.management.Copy(
         in_data=last_output_feature_to_point,
         out_data=Building_N100.building_point_buffer_displacement__displaced_building_points__n100.value,
