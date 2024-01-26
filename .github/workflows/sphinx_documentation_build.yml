@@ -35,6 +35,11 @@ jobs:
       run: |
         make html
 
+    - name: Copy Custom CSS
+      run: |
+        cp .github/custom_styles/custom.css _build/html/_static/
+
+
     - name: Deploy to GitHub Pages
       uses: peaceiris/actions-gh-pages@v3
       with:

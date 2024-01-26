@@ -1,0 +1,14 @@
+/* Changes the background color of the side navigation search area */
+div.wy-side-nav-search {
+    background-color: #1a833b; /* Green */
+}
+
+/* Changes the background color of the side navigation bar */
+.wy-nav-side {
+    background-color: #1a589f; /* Blue */
+}
+
+/* Changes the color of the caption text */
+span.caption-text {
+    color: #343131; /* Dark grey, as an example that should stand out against the blue */
+}
