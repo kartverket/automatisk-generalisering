@@ -112,7 +112,6 @@
 
 <span class="sd">        3. `reducing_clusters`:</span>
 <span class="sd">            Reduces clusters to one point for each cluster.</span>
-
 <span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="c1"># Start timing</span>
@@ -149,12 +148,11 @@
 
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Summary:</span>
-<span class="sd">    Selects hospitals and churches from the input point feature class, creating separate feature layers for each category.</span>
+<span class="sd">        Selects hospitals and churches from the input point feature class, creating separate feature layers for each category.</span>
 
 <span class="sd">    Details:</span>
-<span class="sd">    - Hospitals are selected based on &#39;BYGGTYP_NBR&#39; values 970 and 719.</span>
-<span class="sd">    - Churches are selected based on &#39;BYGGTYP_NBR&#39; value 671.</span>
-
+<span class="sd">        - Hospitals are selected based on &#39;BYGGTYP_NBR&#39; values 970 and 719.</span>
+<span class="sd">        - Churches are selected based on &#39;BYGGTYP_NBR&#39; value 671.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="c1"># Input feature class</span>
@@ -194,17 +192,17 @@
 
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Summary:</span>
-<span class="sd">    Finds hospital and church clusters.</span>
-<span class="sd">    A cluster is defined as two or more points that are closer together than 200 meters.</span>
+<span class="sd">        Finds hospital and church clusters.</span>
+<span class="sd">        A cluster is defined as two or more points that are closer together than 200 meters.</span>
 
 <span class="sd">    Details:</span>
-<span class="sd">    - Clusters are found for both hospitals and churches by using the &#39;FindPointClusters&#39; tool.</span>
-<span class="sd">    - The CLUSTER_IDs are joined with the original hospital and churches feature classes.</span>
-<span class="sd">    - Hospital and church points a part of a cluster is selected as new layers.</span>
-<span class="sd">    - Hospital and church points NOT a part of a cluster i selected as new layers.</span>
+<span class="sd">        - Clusters are found for both hospitals and churches using the &#39;FindPointClusters&#39; tool.</span>
+<span class="sd">        - The CLUSTER_IDs are joined with the original hospital and church feature classes.</span>
+<span class="sd">        - Points belonging to a hospital or church cluster are selected as new layers.</span>
+<span class="sd">        - Points not belonging to a cluster are selected as new layers.</span>
 
 <span class="sd">    Parameters:</span>
-<span class="sd">    - The tool FindPointClusters has a search distance of **&#39;200 Meters&#39;** and minimum of **&#39;2 Points&#39;**.</span>
+<span class="sd">        - The tool FindPointClusters has a search distance of **&#39;200 Meters&#39;** and a minimum of **&#39;2 Points&#39;**.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Finding hospital and church clusters...&quot;</span><span class="p">)</span>
@@ -292,16 +290,16 @@
 
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Summary:</span>
-<span class="sd">    Reduces hospital and church clusters by only keeping one point for each detected cluster.</span>
+<span class="sd">        Reduces hospital and church clusters by keeping only one point for each detected cluster.</span>
 
 <span class="sd">    Details:</span>
-<span class="sd">    - A minimum bounding polygon is created by the cluster points.</span>
-<span class="sd">    - The same polygon is transformed to a centerpoint.</span>
-<span class="sd">    - Only the cluster point nearest to the centerpoint is retained.</span>
-<span class="sd">    - Hospital and church points not part of a cluster are merged together with the selected cluster points.</span>
+<span class="sd">        - A minimum bounding polygon is created using the cluster points.</span>
+<span class="sd">        - The same polygon is transformed into a centerpoint.</span>
+<span class="sd">        - Only the cluster point nearest to the centerpoint is retained.</span>
+<span class="sd">        - Hospital and church points not part of a cluster are merged with the selected cluster points.</span>
 
 <span class="sd">    Parameters:</span>
-<span class="sd">    - Minimum Bounding Geometry is made by geometry type RECTANGLE BY AREA.</span>
+<span class="sd">        - Minimum Bounding Geometry is created with the geometry type RECTANGLE BY AREA.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="c1"># List of hospital and church layers to merge at the end</span>

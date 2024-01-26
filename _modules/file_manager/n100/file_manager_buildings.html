@@ -172,8 +172,13 @@
 <span class="n">table_management</span> <span class="o">=</span> <span class="s2">&quot;table_management&quot;</span>
 <span class="n">grunnriss_to_point</span> <span class="o">=</span> <span class="s2">&quot;grunnriss_to_point&quot;</span>
 
+
 <span class="c1"># create_simplified_building_polygons.py</span>
-<span class="n">simplify_building_polygons</span> <span class="o">=</span> <span class="s2">&quot;simplify_building_polygons&quot;</span>
+<span class="n">aggregate_polygons</span> <span class="o">=</span> <span class="s2">&quot;aggregate_building_polygons&quot;</span>
+<span class="n">simplify_buildings_1</span> <span class="o">=</span> <span class="s2">&quot;simplify_buildings_1&quot;</span>
+<span class="n">simplify_buildings_2</span> <span class="o">=</span> <span class="s2">&quot;simplify_buildings_2&quot;</span>
+<span class="n">simplify_polygons</span> <span class="o">=</span> <span class="s2">&quot;simplify_polygons&quot;</span>
+<span class="n">join_and_add_fields</span> <span class="o">=</span> <span class="s2">&quot;join_and_add_fields&quot;</span>
 
 <span class="c1"># create_cartographic_partitions.py</span>
 <span class="n">create_cartographic_partitions</span> <span class="o">=</span> <span class="s2">&quot;create_cartographic_partitions&quot;</span>
@@ -435,11 +440,6 @@
         <span class="p">)</span>
     <span class="p">)</span>
 
-    <span class="n">grunnriss_to_point__aggregated_polygon__n100</span> <span class="o">=</span> <span class="n">generate_file_name_gdb</span><span class="p">(</span>
-        <span class="n">function_name</span><span class="o">=</span><span class="n">grunnriss_to_point</span><span class="p">,</span>
-        <span class="n">description</span><span class="o">=</span><span class="s2">&quot;aggregated_polygon&quot;</span><span class="p">,</span>
-        <span class="n">scale</span><span class="o">=</span><span class="n">scale</span><span class="p">,</span>
-    <span class="p">)</span>
     <span class="n">grunnriss_to_point__grunnriss_feature_to_point__n100</span> <span class="o">=</span> <span class="n">generate_file_name_gdb</span><span class="p">(</span>
         <span class="n">function_name</span><span class="o">=</span><span class="n">grunnriss_to_point</span><span class="p">,</span>
         <span class="n">description</span><span class="o">=</span><span class="s2">&quot;grunnriss_feature_to_point&quot;</span><span class="p">,</span>
@@ -450,30 +450,6 @@
         <span class="n">function_name</span><span class="o">=</span><span class="n">grunnriss_to_point</span><span class="p">,</span>
         <span class="n">description</span><span class="o">=</span><span class="s2">&quot;spatial_join_points&quot;</span><span class="p">,</span>
         <span class="n">scale</span><span class="o">=</span><span class="n">scale</span><span class="p">,</span>
-    <span class="p">)</span>
-
-    <span class="n">grunnriss_to_point__simplified_building_points_simplified_building_1__n100</span> <span class="o">=</span> <span class="p">(</span>
-        <span class="n">generate_file_name_gdb</span><span class="p">(</span>
-            <span class="n">function_name</span><span class="o">=</span><span class="n">grunnriss_to_point</span><span class="p">,</span>
-            <span class="n">description</span><span class="o">=</span><span class="s2">&quot;simplified_building_points_simplified_building_1&quot;</span><span class="p">,</span>
-            <span class="n">scale</span><span class="o">=</span><span class="n">scale</span><span class="p">,</span>
-        <span class="p">)</span>
-    <span class="p">)</span>
-
-    <span class="n">grunnriss_to_point__simplified_building_points_simplified_building_2__n100</span> <span class="o">=</span> <span class="p">(</span>
-        <span class="n">generate_file_name_gdb</span><span class="p">(</span>
-            <span class="n">function_name</span><span class="o">=</span><span class="n">grunnriss_to_point</span><span class="p">,</span>
-            <span class="n">description</span><span class="o">=</span><span class="s2">&quot;simplified_building_points_simplified_building_2&quot;</span><span class="p">,</span>
-            <span class="n">scale</span><span class="o">=</span><span class="n">scale</span><span class="p">,</span>
-        <span class="p">)</span>
-    <span class="p">)</span>
-
-    <span class="n">grunnriss_to_point__collapsed_points_simplified_polygon__n100</span> <span class="o">=</span> <span class="p">(</span>
-        <span class="n">generate_file_name_gdb</span><span class="p">(</span>
-            <span class="n">function_name</span><span class="o">=</span><span class="n">grunnriss_to_point</span><span class="p">,</span>
-            <span class="n">description</span><span class="o">=</span><span class="s2">&quot;collapsed_points_simplified_polygon&quot;</span><span class="p">,</span>
-            <span class="n">scale</span><span class="o">=</span><span class="n">scale</span><span class="p">,</span>
-        <span class="p">)</span>
     <span class="p">)</span>
 
     <span class="n">grunnriss_to_point__merged_points_created_from_grunnriss__n100</span> <span class="o">=</span> <span class="p">(</span>
@@ -488,35 +464,66 @@
     <span class="c1">########### CREATE SIMPLIFIED BUILDING POLYGONS ###########</span>
     <span class="c1">###########################################################</span>
 
-    <span class="c1"># Function: simplify_building_polygons</span>
+    <span class="c1"># Function: aggregate_polygons</span>
 
-    <span class="n">simplify_building_polygons__simplified_building_1__n100</span> <span class="o">=</span> <span class="n">generate_file_name_gdb</span><span class="p">(</span>
-        <span class="n">function_name</span><span class="o">=</span><span class="n">simplify_building_polygons</span><span class="p">,</span>
-        <span class="n">description</span><span class="o">=</span><span class="s2">&quot;simplified_building_1&quot;</span><span class="p">,</span>
+    <span class="n">aggregate_polygons__fill_hole__n100</span> <span class="o">=</span> <span class="n">generate_file_name_gdb</span><span class="p">(</span>
+        <span class="n">function_name</span><span class="o">=</span><span class="n">aggregate_polygons</span><span class="p">,</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">&quot;fill_hole&quot;</span><span class="p">,</span>
         <span class="n">scale</span><span class="o">=</span><span class="n">scale</span><span class="p">,</span>
     <span class="p">)</span>
 
-    <span class="n">simplify_building_polygons__simplified_building_2__n100</span> <span class="o">=</span> <span class="n">generate_file_name_gdb</span><span class="p">(</span>
-        <span class="n">function_name</span><span class="o">=</span><span class="n">simplify_building_polygons</span><span class="p">,</span>
-        <span class="n">description</span><span class="o">=</span><span class="s2">&quot;simplified_building_2&quot;</span><span class="p">,</span>
+    <span class="c1"># Function: simplify_buildings_1</span>
+
+    <span class="n">simplify_buildings_1_simplifying__n100</span> <span class="o">=</span> <span class="n">generate_file_name_gdb</span><span class="p">(</span>
+        <span class="n">function_name</span><span class="o">=</span><span class="n">simplify_buildings_1</span><span class="p">,</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">&quot;simplifying&quot;</span><span class="p">,</span>
         <span class="n">scale</span><span class="o">=</span><span class="n">scale</span><span class="p">,</span>
     <span class="p">)</span>
 
-    <span class="n">simplify_building_polygons__simplified_polygon__n100</span> <span class="o">=</span> <span class="n">generate_file_name_gdb</span><span class="p">(</span>
-        <span class="n">function_name</span><span class="o">=</span><span class="n">simplify_building_polygons</span><span class="p">,</span>
-        <span class="n">description</span><span class="o">=</span><span class="s2">&quot;simplified_polygon&quot;</span><span class="p">,</span>
+    <span class="n">simplify_buildings_1__points__n100</span> <span class="o">=</span> <span class="n">generate_file_name_gdb</span><span class="p">(</span>
+        <span class="n">function_name</span><span class="o">=</span><span class="n">grunnriss_to_point</span><span class="p">,</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">&quot;points&quot;</span><span class="p">,</span>
         <span class="n">scale</span><span class="o">=</span><span class="n">scale</span><span class="p">,</span>
     <span class="p">)</span>
 
-    <span class="n">simplify_building_polygons__spatial_joined_polygon__n100</span> <span class="o">=</span> <span class="n">generate_file_name_gdb</span><span class="p">(</span>
-        <span class="n">function_name</span><span class="o">=</span><span class="n">simplify_building_polygons</span><span class="p">,</span>
-        <span class="n">description</span><span class="o">=</span><span class="s2">&quot;spatial_joined_polygon&quot;</span><span class="p">,</span>
+    <span class="c1"># Function: simplify_buildings_2</span>
+
+    <span class="n">simplify_buildings_2_simplifying__n100</span> <span class="o">=</span> <span class="n">generate_file_name_gdb</span><span class="p">(</span>
+        <span class="n">function_name</span><span class="o">=</span><span class="n">simplify_buildings_2</span><span class="p">,</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">&quot;simplifying&quot;</span><span class="p">,</span>
         <span class="n">scale</span><span class="o">=</span><span class="n">scale</span><span class="p">,</span>
     <span class="p">)</span>
 
-    <span class="n">simplify_building_polygons__simplified_grunnriss__n100</span> <span class="o">=</span> <span class="n">generate_file_name_gdb</span><span class="p">(</span>
-        <span class="n">function_name</span><span class="o">=</span><span class="n">simplify_building_polygons</span><span class="p">,</span>
-        <span class="n">description</span><span class="o">=</span><span class="s2">&quot;simplified_grunnriss&quot;</span><span class="p">,</span>
+    <span class="n">simplify_buildings_2__points__n100</span> <span class="o">=</span> <span class="n">generate_file_name_gdb</span><span class="p">(</span>
+        <span class="n">function_name</span><span class="o">=</span><span class="n">grunnriss_to_point</span><span class="p">,</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">&quot;points&quot;</span><span class="p">,</span>
+        <span class="n">scale</span><span class="o">=</span><span class="n">scale</span><span class="p">,</span>
+    <span class="p">)</span>
+
+    <span class="c1"># Function: simplify_polygons</span>
+    <span class="n">simplify_polygons__simplifying__n100</span> <span class="o">=</span> <span class="n">generate_file_name_gdb</span><span class="p">(</span>
+        <span class="n">function_name</span><span class="o">=</span><span class="n">simplify_polygons</span><span class="p">,</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">&quot;simplifying&quot;</span><span class="p">,</span>
+        <span class="n">scale</span><span class="o">=</span><span class="n">scale</span><span class="p">,</span>
+    <span class="p">)</span>
+
+    <span class="n">simplify_polygons__points__n100</span> <span class="o">=</span> <span class="n">generate_file_name_gdb</span><span class="p">(</span>
+        <span class="n">function_name</span><span class="o">=</span><span class="n">grunnriss_to_point</span><span class="p">,</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">&quot;points&quot;</span><span class="p">,</span>
+        <span class="n">scale</span><span class="o">=</span><span class="n">scale</span><span class="p">,</span>
+    <span class="p">)</span>
+
+    <span class="c1"># Function: join_and_add_fields</span>
+
+    <span class="n">join_and_add_fields__spatial_join_polygons__n100</span> <span class="o">=</span> <span class="n">generate_file_name_gdb</span><span class="p">(</span>
+        <span class="n">function_name</span><span class="o">=</span><span class="n">join_and_add_fields</span><span class="p">,</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">&quot;spatial_join_polygons&quot;</span><span class="p">,</span>
+        <span class="n">scale</span><span class="o">=</span><span class="n">scale</span><span class="p">,</span>
+    <span class="p">)</span>
+
+    <span class="n">join_and_add_fields__building_polygons_final__n100</span> <span class="o">=</span> <span class="n">generate_file_name_gdb</span><span class="p">(</span>
+        <span class="n">function_name</span><span class="o">=</span><span class="n">join_and_add_fields</span><span class="p">,</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">&quot;building_polygons_final&quot;</span><span class="p">,</span>
         <span class="n">scale</span><span class="o">=</span><span class="n">scale</span><span class="p">,</span>
     <span class="p">)</span>
 
