@@ -31,7 +31,7 @@ def generate_file_name_gdb(
 ):
     """
     Summary:
-        Genereates the full file path for files which can be stored in gdb's, where the files are generated to the bygning.gdb in the n100 subdirectory.
+        Generates the full file path for files which can be stored in gdb's, where the files are generated to the bygning.gdb in the n100 subdirectory.
 
     Details:
         - The path is generated using the relative path to the bygning.gdb in the n100 subdirectory.
@@ -48,7 +48,7 @@ def generate_file_name_general_files(
 ):
     """
     Summary:
-        Genereates the full file path for files which can not be stored in gdb's, but are stored in the general_files subdirectory for n100.
+        Generates the full file path for files which can not be stored in gdb's, but are stored in the general_files subdirectory for n100.
 
     Details:
         - The path is generated using the relative path to the genral_files subdirectory.
@@ -64,7 +64,7 @@ def generate_file_name_lyrx(
 ):
     """
     Summary:
-        Genereates the full file path for lyrx files which can not be stored in gdb's. The lyrx files are generated to the lyrx_outputs subdirectory for n100.
+        Generates the full file path for lyrx files which can not be stored in gdb's. The lyrx files are generated to the lyrx_outputs subdirectory for n100.
 
     Details:
         - The path is generated using the relative path to the lyrx_outputs subdirectory.
