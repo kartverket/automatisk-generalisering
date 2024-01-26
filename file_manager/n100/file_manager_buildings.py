@@ -3,6 +3,7 @@ from enum import Enum
 import config
 from env_setup import setup_directory_structure
 
+
 # Scale name
 scale = setup_directory_structure.scale_n100
 
@@ -28,6 +29,14 @@ def generate_file_name_gdb(
     description,
     scale,
 ):
+    """
+    Summary:
+        Genereates the full file path for files which can be stored in gdb's, where the files are generated to the bygning.gdb in the n100 subdirectory.
+
+    Details:
+        - The path is generated using the relative path to the bygning.gdb in the n100 subdirectory.
+        - The file name is generated using the function name, description, and scale.
+    """
     return rf"{relative_path_gdb}\{function_name}__{description}__{scale}"
 
 
@@ -37,6 +46,14 @@ def generate_file_name_general_files(
     scale,
     file_type,
 ):
+    """
+    Summary:
+        Genereates the full file path for files which can not be stored in gdb's, but are stored in the general_files subdirectory for n100.
+
+    Details:
+        - The path is generated using the relative path to the genral_files subdirectory.
+        - The file name is generated using the function name, description, and scale.
+    """
     return rf"{relative_path_general_files}\{function_name}__{description}__{scale}.{file_type}"
 
 
@@ -45,6 +62,14 @@ def generate_file_name_lyrx(
     description,
     scale,
 ):
+    """
+    Summary:
+        Genereates the full file path for lyrx files which can not be stored in gdb's. The lyrx files are generated to the lyrx_outputs subdirectory for n100.
+
+    Details:
+        - The path is generated using the relative path to the lyrx_outputs subdirectory.
+        - The file name is generated using the function name, description, and scale.
+    """
     return rf"{relative_path_lyrx}\{function_name}__{description}__{scale}.lyrx"
 
 
@@ -107,13 +132,15 @@ displacement_feature_asker = "displacement_feature_asker"
 class Building_N100(Enum):
 
     """
-    This class stores all the file names used when generalizing buildings
+    Summary:
+        The class `Building_N100`is the file manager used for the Building generalization. It is used to build and hold the full output paths for files in our project.
+        The way the paths are generated they work in any directive setup for different systems, and can handle files
+        which can be stored in gdb's and files which can not be stored in gdb's. It uses the direcory structure created by `setup_directory_structure.py`.
 
-    File-names for are built up of:
-    - Function name
-    - Description of what is being done / tool
-    - Scale we are generalizing to
-
+    Details:
+        - generate_file_name_gdb: Genereates the full file path for files which can be stored in gdb's, where the files are generated to the bygning.gdb in the n100 subdirectory.
+        - generate_file_name_general_files: Genereates the full file path for files which can not be stored in gdb's, but are stored in the general_files subdirectory for n100.
+        - generate_file_name_lyrx: Genereates the full file path for lyrx files which can not be stored in gdb's. The lyrx files are generated to the lyrx_outputs subdirectory for n100.
     """
 
     displacement_feature_asker__displacement_feature_asker__n100 = (
