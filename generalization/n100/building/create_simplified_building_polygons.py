@@ -19,7 +19,7 @@ def main():
 
     """
     Summary:
-        - This script aggregates and simplifies building polygons, minimizing detailed parts of the building.
+        This script aggregates and simplifies building polygons, minimizing detailed parts of the building.
 
     Details:
         1. `aggregate_building_polygons`:
@@ -55,7 +55,7 @@ def main():
 def aggregate_polygons():
     """
     Summary:
-    - Aggregates small gaps between building polygons of the same type and fills in holes within building polygons.
+        Aggregates small gaps between building polygons of the same type and fills in holes within building polygons.
 
     Details:
     - the AggregatePolygon tool is used
@@ -87,7 +87,7 @@ def aggregate_polygons():
 def simplify_buildings_1():
     """
     Summary:
-        - Simplifies building polygons to optimize for a 1:100,000 map scale. Building polygons that are under the minimum area value will be transformed to points.
+        Simplifies building polygons to optimize for a 1:100,000 map scale. Building polygons that are under the minimum area value will be transformed to points.
 
     Details:
         - The SimplifyBuilding tool is employed to reduce the complexity of building polygons, specifically tailored for the 1:100,000 map scale.
@@ -127,7 +127,7 @@ def simplify_polygons():
 
     """
     Summary:
-        - Reduces the complexity of building polygons even more to optimize for a 1:100,000 map scale,
+        Reduces the complexity of building polygons even more to optimize for a 1:100,000 map scale,
         where small details of buildings may be perrceived as background noise.
 
     Details:
@@ -166,6 +166,21 @@ def simplify_polygons():
 
 # Second round of simplify buildings
 def simplify_buildings_2():
+    """
+    Summary:
+        Simplifies building polygons to optimize for a 1:100,000 map scale. Building polygons that are under the minimum area value will be transformed to points.
+
+    Details:
+        - The SimplifyBuilding tool is employed to reduce the complexity of building polygons, specifically tailored for the 1:100,000 map scale.
+            It is used to decrease the number of vertices in building polygons, aiming to maintain essential features, but removing details
+            for a smoother representation at the 1:100,000 scale.
+
+    Parameters:
+        - Simplification Tolerance is **`75 Meters`**: Controls the distance at which vertices are removed during the simplification process.
+        - Minimum Area is **`3200 Square Meters`**: Specifies the minimum area a simplified building polygon should have.
+        - Minimum Hole Size is **`10,000 Square Meters`**: Sets the minimum size for holes within the building polygons to be retained.
+    """
+
     arcpy.cartography.SimplifyBuilding(
         in_features=Building_N100.simplify_buildings_1_simplifying__n100.value,
         out_feature_class=Building_N100.simplify_buildings_2_simplifying__n100.value,
@@ -190,8 +205,8 @@ def simplify_buildings_2():
 def join_and_add_fields():
     """
     Summary:
-        - Performs spatial join between simplified building polygons and original building polygons.
-        - Adds specific fields and assigns values to the building polygons, which will be useful for later in Resolve Building Conflict
+        Performs spatial join between simplified building polygons and original building polygons.
+        Adds specific fields and assigns values to the building polygons, which will be useful for later in Resolve Building Conflict
 
     Details:
         - This function executes a spatial join between the simplified building polygons and the original building polygons.
