@@ -15,18 +15,45 @@ from file_manager.n100.file_manager_buildings import Building_N100
 
 
 def main():
+    """
+    Summary:
+        Makes sure that the building points are moved correspondingly to the displacement the road features have been moved during its generalization.
+
+    Details:
+        1. `setup_arcpy_environment`:
+            Sets up the ArcPy environment based on predefined settings defined in `general_setup`.
+
+        2. `propagate_displacement_building_points`:
+            Makes sure that the building points are moved correspondingly to the displacement the road features have been moved during its generalization.
+    """
     setup_arcpy_environment()
     propagate_displacement_building_points()
 
 
 def setup_arcpy_environment():
     """
-    Sets up the ArcPy environment based on predefined settings.
+    Summary:
+        Sets up the ArcPy environment based on predefined settings defined in `general_setup`.
+        This function ensures that the ArcPy environment is properly configured for the specific project by utilizing
+        the `general_setup` function from the `environment_setup` module.
+
+    Details:
+        - It calls the `general_setup` function from the `environment_setup` module to set up the ArcPy environment based on predefined settings.
     """
+
     environment_setup.general_setup()
 
 
 def propagate_displacement_building_points():
+    """
+    Summary:
+        Makes sure that the building points are moved correspondingly to the displacement the road features have been moved during its generalization.
+
+    Details:
+        - It copies the original dataset to prevent overwriting the data since PropagateDisplacement modifiy the input data.
+        - When using Propagate Displacement, the adjustment style chosen for this process is "SOLID" to prevent the change of shape of input polygons (though not relevant for building points).
+    """
+
     arcpy.management.Copy(
         in_data=Building_N100.table_management__bygningspunkt_pre_resolve_building_conflicts__n100.value,
         out_data=Building_N100.propagate_displacement__bygningspunkt_pre_propogate_displacement__n100.value,

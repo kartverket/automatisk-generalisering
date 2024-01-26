@@ -17,17 +17,37 @@ environment_setup.general_setup()
 
 def main():
     """
-    Adding required fields for all point files from different sources (grunnriss, matrikkel, n50_bygningspunkt) for symbology and resolve building conflicts: angle, hierarchy and invisibility.
-    And adding additional information such as source information making it possible to know if a point was added from grunnriss or not.
+    Summary:
+        Adds required fields for bygningspunkt for symbology and resolves building conflicts: angle, hierarchy, and invisibility.
+
+    Details:
+        1. `table_management`:
+            Adds required fields for bygningspunkt for symbology and resolves building conflicts: angle, hierarchy, and invisibility. Creates a symbology value field based on NBR values and logs undefined NBR values, reclassifying them to 729. Ensures that building types which should not be delivered are correctly reclassified.
     """
     table_management()
 
 
 def table_management():
     """
-    Adding required fields for bygningspunkt for symbology and resolve building conflicts: angle, hierarchy and invisibility.
-    Creates a symbology value field based on NBR values
-    Also adds additional information such as source information making it possible to know if a point was added from grunnriss or not.
+    Summary:
+        Adds required fields for bygningspunkt for symbology and resolves building conflicts: angle, hierarchy, and invisibility.
+        Creates a symbology value field based on NBR values and logs undefined NBR values, reclassifying them to 729.
+        Ensures that building types which should not be delivered are correctly reclassified.
+
+    Details:
+        - Reclassify the sykehus from matrikkel to another NBR value.
+        - Reclassify the sykehus from grunnriss to another NBR value.
+        - Merge the n50 bygningspunkt and points added from matrikkel.
+        - Adding a field to indicate that the merged bygningspunkt and matrikkel does not come from grunnriss.
+        - Adding a field to indicate that points resulting from grunnriss are tracked.
+        - Reclassify the sykehus from grunnriss to another NBR value.
+        - Merge the merged bygningspunkt from n50 and matrikkel with points created from grunnriss.
+        - Adding a symbology value field based on NBR values.
+        - Code block to transform BYGGTYP_NBR values without symbology to other buildings (729).
+        - Code block to update the symbol_val to reflect the new BYGGTYP_NBR.
+        - Adding angle, hierarchy, and invisibility fields to the bygningspunkt pre symbology and setting them to 0.
+        - Calculate fields.
+        - Code block hierarchy logic where churches and hospitals have hierarchy of 1, farms have hierarchy of 2 and the rest of the hierarchy is 3.
     """
 
     # Reclassify the sykehus from matrikkel to another NBR value
