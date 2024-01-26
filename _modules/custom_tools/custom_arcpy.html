@@ -85,6 +85,11 @@
 <div class="viewcode-block" id="SelectionType">
 <a class="viewcode-back" href="../../generated_docs/custom_tools.html#custom_tools.custom_arcpy.SelectionType">[docs]</a>
 <span class="k">class</span> <span class="nc">SelectionType</span><span class="p">(</span><span class="n">Enum</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Summary:</span>
+<span class="sd">        Enum class that holds the strings for the selection types.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
     <span class="n">NEW_SELECTION</span> <span class="o">=</span> <span class="s2">&quot;NEW_SELECTION&quot;</span>
     <span class="n">ADD_TO_SELECTION</span> <span class="o">=</span> <span class="s2">&quot;ADD_TO_SELECTION&quot;</span>
     <span class="n">REMOVE_FROM_SELECTION</span> <span class="o">=</span> <span class="s2">&quot;REMOVE_FROM_SELECTION&quot;</span>
@@ -97,6 +102,11 @@
 <div class="viewcode-block" id="OverlapType">
 <a class="viewcode-back" href="../../generated_docs/custom_tools.html#custom_tools.custom_arcpy.OverlapType">[docs]</a>
 <span class="k">class</span> <span class="nc">OverlapType</span><span class="p">(</span><span class="n">Enum</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Summary:</span>
+<span class="sd">        Enum class that holds the strings for overlap types for select by location.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
     <span class="n">INTERSECT</span> <span class="o">=</span> <span class="s2">&quot;INTERSECT&quot;</span>
     <span class="n">INTERSECT_3D</span> <span class="o">=</span> <span class="s2">&quot;INTERSECT_3D&quot;</span>
     <span class="n">INTERSECT_DBMS</span> <span class="o">=</span> <span class="s2">&quot;INTERSECT_DBMS&quot;</span>
@@ -117,34 +127,64 @@
 
 
 
+<div class="viewcode-block" id="resolve_enum">
+<a class="viewcode-back" href="../../generated_docs/custom_tools.html#custom_tools.custom_arcpy.resolve_enum">[docs]</a>
+<span class="k">def</span> <span class="nf">resolve_enum</span><span class="p">(</span><span class="n">enum_class</span><span class="p">,</span> <span class="n">value</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Resolves various types of inputs to their corresponding enum member within a specified enumeration class.</span>
+
+<span class="sd">    This function is designed to enhance flexibility in function arguments, allowing the use of enum members,</span>
+<span class="sd">    their string names, or their values interchangeably. This is particularly useful in scenarios where function parameters might be specified in different formats,</span>
+<span class="sd">    ensuring compatibility and ease of use.</span>
+
+<span class="sd">    Parameters:</span>
+<span class="sd">        enum_class (Enum): The enumeration class to which the value is supposed to belong.</span>
+<span class="sd">        value (str, Enum, or any): The input value to resolve. This can be the enum member itself, its string name,</span>
+<span class="sd">        or its associated value. The function is designed to handle these various formats gracefully.</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="n">enum_class</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">value</span>
+    <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">value</span> <span class="ow">in</span> <span class="n">enum_class</span><span class="o">.</span><span class="n">__members__</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">enum_class</span><span class="p">[</span><span class="n">value</span><span class="p">]</span>
+        <span class="k">for</span> <span class="n">member</span> <span class="ow">in</span> <span class="n">enum_class</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">member</span><span class="o">.</span><span class="n">value</span> <span class="o">==</span> <span class="n">value</span><span class="p">:</span>
+                <span class="k">return</span> <span class="n">member</span>
+    <span class="k">return</span> <span class="kc">None</span></div>
+
+
+
 <span class="c1"># Define your function using the above enum</span>
 <div class="viewcode-block" id="select_attribute_and_make_feature_layer">
 <a class="viewcode-back" href="../../generated_docs/custom_tools.html#custom_tools.custom_arcpy.select_attribute_and_make_feature_layer">[docs]</a>
 <span class="k">def</span> <span class="nf">select_attribute_and_make_feature_layer</span><span class="p">(</span>
     <span class="n">input_layer</span><span class="p">,</span> <span class="n">expression</span><span class="p">,</span> <span class="n">output_name</span><span class="p">,</span> <span class="n">selection_type</span><span class="o">=</span><span class="s2">&quot;NEW_SELECTION&quot;</span><span class="p">,</span> <span class="n">inverted</span><span class="o">=</span><span class="kc">False</span>
 <span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Selects features based on attribute and creates a new feature layer.</span>
-<span class="sd">    then it uses the selection in the feature layer to store it permanently using copy features.</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Summary:</span>
+<span class="sd">        Selects features based on an attribute query and creates a new feature layer with the selected features.</span>
+
+<span class="sd">    Details:</span>
+<span class="sd">        - A temporary feature layer is created from the `input_layer`.</span>
+<span class="sd">        - The selection type, defined by `selection_type`, is applied to this layer.</span>
+<span class="sd">        - The selected features are stored in a new temporary feature layer</span>
 
 <span class="sd">    Parameters:</span>
-<span class="sd">    - input_layer: The input feature layer for selection.</span>
-<span class="sd">    - expression: The SQL expression to use for selection.</span>
-<span class="sd">    - output_name: The name of the output feature layer.</span>
-<span class="sd">    - selection_type: The type of selection to perform. Defaults to &quot;NEW_SELECTION&quot;.</span>
-<span class="sd">    - inverted: A boolean flag to indicate if the selection should be inverted.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">        input_layer (str): The path or name of the input feature layer.</span>
+<span class="sd">        expression (str): The SQL expression for selecting features.</span>
+<span class="sd">        output_name (str): The name of the output feature layer.</span>
+<span class="sd">        selection_type (str, optional): Type of selection (e.g., &quot;NEW_SELECTION&quot;). Defaults to &quot;NEW_SELECTION&quot;.</span>
+<span class="sd">        inverted (bool, optional): If True, inverts the selection. Defaults to False.</span>
 
-    <span class="c1"># Function to resolve selection_type to the correct enum member</span>
-    <span class="k">def</span> <span class="nf">resolve_enum</span><span class="p">(</span><span class="n">enum_class</span><span class="p">,</span> <span class="n">value</span><span class="p">):</span>
-        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="n">enum_class</span><span class="p">):</span>
-            <span class="k">return</span> <span class="n">value</span>
-        <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
-            <span class="k">if</span> <span class="n">value</span> <span class="ow">in</span> <span class="n">enum_class</span><span class="o">.</span><span class="n">__members__</span><span class="p">:</span>
-                <span class="k">return</span> <span class="n">enum_class</span><span class="p">[</span><span class="n">value</span><span class="p">]</span>
-            <span class="k">for</span> <span class="n">member</span> <span class="ow">in</span> <span class="n">enum_class</span><span class="p">:</span>
-                <span class="k">if</span> <span class="n">member</span><span class="o">.</span><span class="n">value</span> <span class="o">==</span> <span class="n">value</span><span class="p">:</span>
-                    <span class="k">return</span> <span class="n">member</span>
-        <span class="k">return</span> <span class="kc">None</span>
+<span class="sd">    Example:</span>
+<span class="sd">        &gt;&gt;&gt; custom_arcpy.select_attribute_and_make_feature_layer(</span>
+<span class="sd">        ...     input_layer=input_n100.ArealdekkeFlate,</span>
+<span class="sd">        ...     expression=urban_areas_sql_expr,</span>
+<span class="sd">        ...     output_name=Building_N100.adding_matrikkel_as_points__urban_area_selection_n100__n100.value,</span>
+<span class="sd">        ... )</span>
+<span class="sd">        &#39;Building_N100.adding_matrikkel_as_points__urban_area_selection_n100__n100&#39; created temporarily.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="c1"># Resolve selection_type</span>
     <span class="n">selection_type</span> <span class="o">=</span> <span class="p">(</span>
@@ -168,28 +208,32 @@
 <span class="k">def</span> <span class="nf">select_attribute_and_make_permanent_feature</span><span class="p">(</span>
     <span class="n">input_layer</span><span class="p">,</span> <span class="n">expression</span><span class="p">,</span> <span class="n">output_name</span><span class="p">,</span> <span class="n">selection_type</span><span class="o">=</span><span class="s2">&quot;NEW_SELECTION&quot;</span><span class="p">,</span> <span class="n">inverted</span><span class="o">=</span><span class="kc">False</span>
 <span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Selects features based on attribute and creates a new feature layer.</span>
-<span class="sd">    then it uses the selection in the feature layer to store it permanently using copy features.</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Summary:</span>
+<span class="sd">        Selects features based on an attribute query and creates a new feature layer,</span>
+<span class="sd">        then stores the selected features permanently in the specified output feature class.</span>
+
+<span class="sd">    Details:</span>
+<span class="sd">        - A temporary feature layer is created from the `input_layer`.</span>
+<span class="sd">        - The `selection_type` determines how the selection is applied to this layer. If `inverted` is True, the selection is inverted.</span>
+<span class="sd">        - The selection is done on the feature layer using the `expression`.</span>
+<span class="sd">        - The selected features are stored permanently in a new feature class specified by `output_name` using copy features.</span>
 
 <span class="sd">    Parameters:</span>
-<span class="sd">    - input_layer: The input feature layer for selection.</span>
-<span class="sd">    - expression: The SQL expression to use for selection.</span>
-<span class="sd">    - output_name: The name of the output feature layer.</span>
-<span class="sd">    - selection_type: The type of selection to perform. Defaults to &quot;NEW_SELECTION&quot;.</span>
-<span class="sd">    - inverted: A boolean flag to indicate if the selection should be inverted.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">        input_layer (str): The path or name of the input feature layer for selection.</span>
+<span class="sd">        expression (str): The SQL expression used for selecting features.</span>
+<span class="sd">        output_name (str): The name for the new, permanent output feature class.</span>
+<span class="sd">        selection_type (str, optional): Specifies the type of selection. Defaults to &quot;NEW_SELECTION&quot;.</span>
+<span class="sd">        inverted (bool, optional): If set to True, inverts the selection. Defaults to False.</span>
 
-    <span class="c1"># Function to resolve selection_type to the correct enum member</span>
-    <span class="k">def</span> <span class="nf">resolve_enum</span><span class="p">(</span><span class="n">enum_class</span><span class="p">,</span> <span class="n">value</span><span class="p">):</span>
-        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="n">enum_class</span><span class="p">):</span>
-            <span class="k">return</span> <span class="n">value</span>
-        <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
-            <span class="k">if</span> <span class="n">value</span> <span class="ow">in</span> <span class="n">enum_class</span><span class="o">.</span><span class="n">__members__</span><span class="p">:</span>
-                <span class="k">return</span> <span class="n">enum_class</span><span class="p">[</span><span class="n">value</span><span class="p">]</span>
-            <span class="k">for</span> <span class="n">member</span> <span class="ow">in</span> <span class="n">enum_class</span><span class="p">:</span>
-                <span class="k">if</span> <span class="n">member</span><span class="o">.</span><span class="n">value</span> <span class="o">==</span> <span class="n">value</span><span class="p">:</span>
-                    <span class="k">return</span> <span class="n">member</span>
-        <span class="k">return</span> <span class="kc">None</span>
+<span class="sd">    Example:</span>
+<span class="sd">        &gt;&gt;&gt; custom_arcpy.select_attribute_and_make_permanent_feature(</span>
+<span class="sd">        ...     input_layer=input_n100.ArealdekkeFlate,</span>
+<span class="sd">        ...     expression=urban_areas_sql_expr,</span>
+<span class="sd">        ...     output_name=Building_N100.adding_matrikkel_as_points__urban_area_selection_n100__permanent,</span>
+<span class="sd">        ... )</span>
+<span class="sd">        &#39;Building_N100.adding_matrikkel_as_points__urban_area_selection_n100__permanent&#39; created permanently.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="c1"># Resolve selection_type</span>
     <span class="n">selection_type</span> <span class="o">=</span> <span class="p">(</span>
@@ -225,18 +269,37 @@
     <span class="n">inverted</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
     <span class="n">search_distance</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
 <span class="p">):</span>
-    <span class="c1"># Function to resolve overlap_type and selection_type to the correct enum member</span>
-    <span class="k">def</span> <span class="nf">resolve_enum</span><span class="p">(</span><span class="n">enum_class</span><span class="p">,</span> <span class="n">value</span><span class="p">):</span>
-        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="n">enum_class</span><span class="p">):</span>
-            <span class="k">return</span> <span class="n">value</span>
-        <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
-            <span class="k">if</span> <span class="n">value</span> <span class="ow">in</span> <span class="n">enum_class</span><span class="o">.</span><span class="n">__members__</span><span class="p">:</span>
-                <span class="k">return</span> <span class="n">enum_class</span><span class="p">[</span><span class="n">value</span><span class="p">]</span>
-            <span class="k">for</span> <span class="n">member</span> <span class="ow">in</span> <span class="n">enum_class</span><span class="p">:</span>
-                <span class="k">if</span> <span class="n">member</span><span class="o">.</span><span class="n">value</span> <span class="o">==</span> <span class="n">value</span><span class="p">:</span>
-                    <span class="k">return</span> <span class="n">member</span>
-        <span class="k">return</span> <span class="kc">None</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Summary:</span>
+<span class="sd">        Selects features based from the input layer based on their spatial relationship to the selection features</span>
+<span class="sd">        and creates a new, temporary feature layer as an output.</span>
 
+<span class="sd">    Details:</span>
+<span class="sd">        - Creates a feature layer from the `input_layer`.</span>
+<span class="sd">        - Depending on the `overlap_type`, features in `input_layer` that spatially relate to `select_features` are selected.</span>
+<span class="sd">        - If `overlap_type` requires a `search_distance` and it is provided, the distance is used in the selection.</span>
+<span class="sd">        - The selection can be inverted if `inverted` is set to True.</span>
+<span class="sd">        - The selected features are stored in a new temporary feature layer named `output_name`.</span>
+
+<span class="sd">    Parameters:</span>
+<span class="sd">        input_layer (str): The path or name of the input feature layer.</span>
+<span class="sd">        overlap_type (str or OverlapType): The spatial relationship type to use for selecting features.</span>
+<span class="sd">        select_features (str): The path or name of the feature layer used to select features from the `input_layer`.</span>
+<span class="sd">        output_name (str): The name of the output feature layer.</span>
+<span class="sd">        selection_type (SelectionType, optional): Specifies the type of selection. Defaults to SelectionType.NEW_SELECTION.</span>
+<span class="sd">        inverted (bool, optional): If True, inverts the selection. Defaults to False.</span>
+<span class="sd">        search_distance (str, optional): A distance value that defines the proximity for selecting features. Required for certain `overlap_type` values.</span>
+
+<span class="sd">    Example:</span>
+<span class="sd">        &gt;&gt;&gt; custom_arcpy.select_location_and_make_feature_layer(</span>
+<span class="sd">        ...     input_layer=Building_N100.selecting_grunnriss_for_generalization__large_enough_grunnriss__n100.value,</span>
+<span class="sd">        ...     overlap_type=custom_arcpy.OverlapType.INTERSECT.value,</span>
+<span class="sd">        ...     select_features=Building_N100.grunnriss_to_point__aggregated_polygon__n100.value,</span>
+<span class="sd">        ...      output_name=Building_N100.grunnriss_to_point__intersect_aggregated_and_original__n100.value,</span>
+<span class="sd">        ...     inverted=True,</span>
+<span class="sd">        ... )</span>
+<span class="sd">        &#39;grunnriss_to_point__intersect_aggregated_and_original__n100&#39; created temporarily.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
     <span class="c1"># Resolve overlap_type and selection_type</span>
     <span class="n">overlap_type</span> <span class="o">=</span> <span class="n">resolve_enum</span><span class="p">(</span><span class="n">OverlapType</span><span class="p">,</span> <span class="n">overlap_type</span><span class="p">)</span> <span class="ow">or</span> <span class="n">OverlapType</span><span class="o">.</span><span class="n">INTERSECT</span>
     <span class="n">selection_type</span> <span class="o">=</span> <span class="p">(</span>
@@ -282,17 +345,38 @@
     <span class="n">inverted</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
     <span class="n">search_distance</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
 <span class="p">):</span>
-    <span class="k">def</span> <span class="nf">resolve_enum</span><span class="p">(</span><span class="n">enum_class</span><span class="p">,</span> <span class="n">value</span><span class="p">):</span>
-        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="n">enum_class</span><span class="p">):</span>
-            <span class="k">return</span> <span class="n">value</span>
-        <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
-            <span class="k">if</span> <span class="n">value</span> <span class="ow">in</span> <span class="n">enum_class</span><span class="o">.</span><span class="n">__members__</span><span class="p">:</span>
-                <span class="k">return</span> <span class="n">enum_class</span><span class="p">[</span><span class="n">value</span><span class="p">]</span>
-            <span class="k">for</span> <span class="n">member</span> <span class="ow">in</span> <span class="n">enum_class</span><span class="p">:</span>
-                <span class="k">if</span> <span class="n">member</span><span class="o">.</span><span class="n">value</span> <span class="o">==</span> <span class="n">value</span><span class="p">:</span>
-                    <span class="k">return</span> <span class="n">member</span>
-        <span class="k">return</span> <span class="kc">None</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Summary:</span>
+<span class="sd">        Selects features based from the input layer based on their spatial relationship to the selection features</span>
+<span class="sd">        and creates a new, permanent feature class as an output.</span>
 
+<span class="sd">    Details:</span>
+<span class="sd">        - Initiates by creating a temporary feature layer from `input_layer`.</span>
+<span class="sd">        - Applies a spatial selection based on `overlap_type` between the `input_layer` and `select_features`.</span>
+<span class="sd">        - Utilizes `search_distance` if required by the `overlap_type` and provided, to define the proximity for selection.</span>
+<span class="sd">        - The selection can be inverted if `inverted` is set to True, meaning it will select all features not meeting the spatial relationship criteria.</span>
+<span class="sd">        - The selected features are stored permanently in a new feature class specified by `output_name`.</span>
+<span class="sd">        - Cleans up by deleting the temporary feature layer to maintain a tidy workspace.</span>
+
+<span class="sd">    Parameters:</span>
+<span class="sd">        input_layer (str): The path or name of the input feature layer.</span>
+<span class="sd">        overlap_type (str or OverlapType): The type of spatial relationship to use for feature selection.</span>
+<span class="sd">        select_features (str): The feature layer used as a reference for spatial selection.</span>
+<span class="sd">        output_name (str): The name for the new, permanent feature class to store selected features.</span>
+<span class="sd">        selection_type (SelectionType, optional): The method of selection to apply. Defaults to SelectionType.NEW_SELECTION.</span>
+<span class="sd">        inverted (bool, optional): If set to True, the selection will be inverted. Defaults to False.</span>
+<span class="sd">        search_distance (str, optional): The distance within which to select features, necessary for certain types of spatial selections like WITHIN_A_DISTANCE.</span>
+
+<span class="sd">    Example:</span>
+<span class="sd">        &gt;&gt;&gt; custom_arcpy.select_location_and_make_permanent_feature(</span>
+<span class="sd">        ...     input_layer=Building_N100.preparation_begrensningskurve__selected_waterfeatures_from_begrensningskurve__n100.value,</span>
+<span class="sd">        ...     overlap_type=OverlapType.WITHIN_A_DISTANCE.value,</span>
+<span class="sd">        ...     select_features=Building_N100.propagate_displacement_building_polygons__after_propogate_displacement__n100.value,</span>
+<span class="sd">        ...     output_name=Building_N100.features_500_m_from_building_polygons__selected_begrensningskurve__n100.value,</span>
+<span class="sd">        ...     search_distance=&quot;500 Meters&quot;,</span>
+<span class="sd">        ... )</span>
+<span class="sd">        &#39;features_500_m_from_building_polygons__selected_begrensningskurve__n100&#39; created permanently.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
     <span class="c1"># Resolve overlap_type and selection_type</span>
     <span class="n">overlap_type</span> <span class="o">=</span> <span class="n">resolve_enum</span><span class="p">(</span><span class="n">OverlapType</span><span class="p">,</span> <span class="n">overlap_type</span><span class="p">)</span> <span class="ow">or</span> <span class="n">OverlapType</span><span class="o">.</span><span class="n">INTERSECT</span>
     <span class="n">selection_type</span> <span class="o">=</span> <span class="p">(</span>
@@ -335,7 +419,36 @@
 
 <div class="viewcode-block" id="apply_symbology">
 <a class="viewcode-back" href="../../generated_docs/custom_tools.html#custom_tools.custom_arcpy.apply_symbology">[docs]</a>
-<span class="k">def</span> <span class="nf">apply_symbology</span><span class="p">(</span><span class="n">input_layer</span><span class="p">,</span> <span class="n">in_symbology_layer</span><span class="p">,</span> <span class="n">output_name</span><span class="p">):</span>
+<span class="k">def</span> <span class="nf">apply_symbology</span><span class="p">(</span>
+    <span class="n">input_layer</span><span class="p">,</span>
+    <span class="n">in_symbology_layer</span><span class="p">,</span>
+    <span class="n">output_name</span><span class="p">,</span>
+<span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Summary:</span>
+<span class="sd">        Applies symbology from a specified lyrx file to an input feature layer and saves the result as a new lyrx file.</span>
+
+<span class="sd">    Details:</span>
+<span class="sd">        - Creates a temporary feature layer from the `input_layer`.</span>
+<span class="sd">        - Applies symbology to the temporary layer using the symbology defined in `in_symbology_layer`.</span>
+<span class="sd">        - The symbology settings are maintained as they are in the symbology layer file.</span>
+<span class="sd">        - Saves the temporary layer with the applied symbology to a new layer file specified by `output_name`.</span>
+<span class="sd">        - Deletes the temporary layer to clean up the workspace.</span>
+<span class="sd">        - A confirmation message is printed indicating the successful creation of the output layer file.</span>
+
+<span class="sd">    Parameters:</span>
+<span class="sd">        input_layer (str): The path or name of the input feature layer to which symbology will be applied.</span>
+<span class="sd">        in_symbology_layer (str): The path to the layer file (.lyrx) containing the desired symbology settings.</span>
+<span class="sd">        output_name (str): The name (including path) for the output layer file (.lyrx) with the applied symbology.</span>
+
+<span class="sd">    Example:</span>
+<span class="sd">        &gt;&gt;&gt; custom_arcpy.apply_symbology(</span>
+<span class="sd">        ...     input_layer=Building_N100.rbc_selection__grunnriss_selection_rbc__n100.value,</span>
+<span class="sd">        ...     in_symbology_layer=config.symbology_n100_grunnriss,</span>
+<span class="sd">        ...     output_name=Building_N100.apply_symbology_to_layers__building_polygon__n100__lyrx.value,</span>
+<span class="sd">        ... )</span>
+<span class="sd">        &#39;apply_symbology_to_layers__building_polygon__n100__lyrx.lyrx file created.&#39;</span>
+<span class="sd">    &quot;&quot;&quot;</span>
     <span class="n">arcpy</span><span class="o">.</span><span class="n">management</span><span class="o">.</span><span class="n">MakeFeatureLayer</span><span class="p">(</span>
         <span class="n">in_features</span><span class="o">=</span><span class="n">input_layer</span><span class="p">,</span>
         <span class="n">out_layer</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">input_layer</span><span class="si">}</span><span class="s2">_tmp&quot;</span><span class="p">,</span>
