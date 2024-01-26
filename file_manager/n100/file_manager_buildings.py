@@ -85,8 +85,13 @@ selecting_grunnriss_for_generalization = "selecting_grunnriss_for_generalization
 table_management = "table_management"
 grunnriss_to_point = "grunnriss_to_point"
 
+
 # create_simplified_building_polygons.py
-simplify_building_polygons = "simplify_building_polygons"
+aggregate_polygons = "aggregate_building_polygons"
+simplify_buildings_1 = "simplify_buildings_1"
+simplify_buildings_2 = "simplify_buildings_2"
+simplify_polygons = "simplify_polygons"
+join_and_add_fields = "join_and_add_fields"
 
 # create_cartographic_partitions.py
 create_cartographic_partitions = "create_cartographic_partitions"
@@ -346,11 +351,6 @@ class Building_N100(Enum):
         )
     )
 
-    grunnriss_to_point__aggregated_polygon__n100 = generate_file_name_gdb(
-        function_name=grunnriss_to_point,
-        description="aggregated_polygon",
-        scale=scale,
-    )
     grunnriss_to_point__grunnriss_feature_to_point__n100 = generate_file_name_gdb(
         function_name=grunnriss_to_point,
         description="grunnriss_feature_to_point",
@@ -361,30 +361,6 @@ class Building_N100(Enum):
         function_name=grunnriss_to_point,
         description="spatial_join_points",
         scale=scale,
-    )
-
-    grunnriss_to_point__simplified_building_points_simplified_building_1__n100 = (
-        generate_file_name_gdb(
-            function_name=grunnriss_to_point,
-            description="simplified_building_points_simplified_building_1",
-            scale=scale,
-        )
-    )
-
-    grunnriss_to_point__simplified_building_points_simplified_building_2__n100 = (
-        generate_file_name_gdb(
-            function_name=grunnriss_to_point,
-            description="simplified_building_points_simplified_building_2",
-            scale=scale,
-        )
-    )
-
-    grunnriss_to_point__collapsed_points_simplified_polygon__n100 = (
-        generate_file_name_gdb(
-            function_name=grunnriss_to_point,
-            description="collapsed_points_simplified_polygon",
-            scale=scale,
-        )
     )
 
     grunnriss_to_point__merged_points_created_from_grunnriss__n100 = (
@@ -399,35 +375,66 @@ class Building_N100(Enum):
     ########### CREATE SIMPLIFIED BUILDING POLYGONS ###########
     ###########################################################
 
-    # Function: simplify_building_polygons
+    # Function: aggregate_polygons
 
-    simplify_building_polygons__simplified_building_1__n100 = generate_file_name_gdb(
-        function_name=simplify_building_polygons,
-        description="simplified_building_1",
+    aggregate_polygons__fill_hole__n100 = generate_file_name_gdb(
+        function_name=aggregate_polygons,
+        description="fill_hole",
         scale=scale,
     )
 
-    simplify_building_polygons__simplified_building_2__n100 = generate_file_name_gdb(
-        function_name=simplify_building_polygons,
-        description="simplified_building_2",
+    # Function: simplify_buildings_1
+
+    simplify_buildings_1_simplifying__n100 = generate_file_name_gdb(
+        function_name=simplify_buildings_1,
+        description="simplifying",
         scale=scale,
     )
 
-    simplify_building_polygons__simplified_polygon__n100 = generate_file_name_gdb(
-        function_name=simplify_building_polygons,
-        description="simplified_polygon",
+    simplify_buildings_1__points__n100 = generate_file_name_gdb(
+        function_name=grunnriss_to_point,
+        description="points",
         scale=scale,
     )
 
-    simplify_building_polygons__spatial_joined_polygon__n100 = generate_file_name_gdb(
-        function_name=simplify_building_polygons,
-        description="spatial_joined_polygon",
+    # Function: simplify_buildings_2
+
+    simplify_buildings_2_simplifying__n100 = generate_file_name_gdb(
+        function_name=simplify_buildings_2,
+        description="simplifying",
         scale=scale,
     )
 
-    simplify_building_polygons__simplified_grunnriss__n100 = generate_file_name_gdb(
-        function_name=simplify_building_polygons,
-        description="simplified_grunnriss",
+    simplify_buildings_2__points__n100 = generate_file_name_gdb(
+        function_name=grunnriss_to_point,
+        description="points",
+        scale=scale,
+    )
+
+    # Function: simplify_polygons
+    simplify_polygons__simplifying__n100 = generate_file_name_gdb(
+        function_name=simplify_polygons,
+        description="simplifying",
+        scale=scale,
+    )
+
+    simplify_polygons__points__n100 = generate_file_name_gdb(
+        function_name=grunnriss_to_point,
+        description="points",
+        scale=scale,
+    )
+
+    # Function: join_and_add_fields
+
+    join_and_add_fields__spatial_join_polygons__n100 = generate_file_name_gdb(
+        function_name=join_and_add_fields,
+        description="spatial_join_polygons",
+        scale=scale,
+    )
+
+    join_and_add_fields__building_polygons_final__n100 = generate_file_name_gdb(
+        function_name=join_and_add_fields,
+        description="building_polygons_final",
         scale=scale,
     )
 
