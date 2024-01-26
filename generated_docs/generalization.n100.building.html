@@ -175,28 +175,28 @@
 <dd><dl class="simple">
 <dt>Summary:</dt><dd><p>This is the main function of building data preparation, which aims to prepare the data for future building generalization processing.</p>
 </dd>
-<dt>Details:</dt><dd><ul class="simple">
+<dt>Details:</dt><dd><ol class="arabic simple">
 <li><dl class="simple">
-<dt>Function 1: Create Water Feature Buffer</dt><dd><p>This function creates a buffer for water features using the “begrensningskurve” feature. It prepares the data for future building placement on the water’s edge.</p>
+<dt><cite>preparation_begrensningskurve</cite>:</dt><dd><p>This function creates a buffer for water features using the “begrensningskurve” feature. It prepares the data for future building placement on the water’s edge.</p>
 </dd>
 </dl>
 </li>
 <li><dl class="simple">
-<dt>Function 2: Unsplit Road Lines</dt><dd><p>This function unsplit a line feature of roads to reduce the number of objects in future processing.</p>
+<dt><cite>preperation_veg_sti</cite>:</dt><dd><p>This function unsplit a line feature of roads to reduce the number of objects in future processing.</p>
 </dd>
 </dl>
 </li>
 <li><dl class="simple">
-<dt>Function 3: Add Building Points from Matrikkel</dt><dd><p>This function adds building points from the matrikkel dataset for areas that are no longer considered urban after the generalization of “arealdekke.” It also adds the required fields and values for future analysis.</p>
+<dt><cite>adding_matrikkel_as_points</cite>:</dt><dd><p>This function adds building points from the matrikkel dataset for areas that are no longer considered urban after the generalization of “arealdekke.” It also adds the required fields and values for future analysis.</p>
 </dd>
 </dl>
 </li>
 <li><dl class="simple">
-<dt>Function 4: Select Building Polygons for Generalization</dt><dd><p>This function selects building polygons (grunnriss) to be generalized. Smaller polygons and churches or hospitals are excluded, transformed into points, and sent to building point generalization.</p>
+<dt><cite>selecting_grunnriss_for_generalization</cite>:</dt><dd><p>This function selects building polygons (grunnriss) to be generalized. Smaller polygons and churches or hospitals are excluded, transformed into points, and sent to building point generalization.</p>
 </dd>
 </dl>
 </li>
-</ul>
+</ol>
 </dd>
 </dl>
 </dd></dl>
@@ -208,20 +208,20 @@
 <dt>Summary:</dt><dd><p>This function creates a buffer for water features using the “begrensningskurve” feature. It prepares the data for future building placement on the water’s edge.</p>
 </dd>
 <dt>Details:</dt><dd><ul class="simple">
-<li><p>Define an SQL selection expression to identify water features of interest.</p></li>
+<li><p>Using the object types (‘ElvBekk’, ‘Havflate’, ‘Innsjø’, ‘InnsjøRegulert’) in the “begrensningskurve” feature in SQL expressions to select water features and in inverse to select land features.</p></li>
 <li><p>Create a temporary feature of water features from the “begrensningskurve” using the defined SQL expression.</p></li>
-<li><p>Select land features that do not belong to specific categories (‘ElvBekk’, ‘Havflate’, ‘Innsjø’, ‘InnsjøRegulert’).</p></li>
-<li><p>Identify land features near water features by selecting those that boundary-touch with water features.</p></li>
-<li><p>Apply a 15-meter buffer to the identified land features to create buffered land features.</p></li>
-<li><p>Apply a 45-meter buffer to the selected water features to create buffered water features.</p></li>
-<li><p>Erase buffered water features from the buffered land features to create a final set of land features.</p></li>
+<li><p>Select land features using an inverted selection using the defined SQL expression.</p></li>
+<li><p>Identify land features near water features by selecting those that boundary-touch with water features to reduce the amount of processing.</p></li>
+<li><p>Apply a 15-meter buffer to the identified land features to create buffered land features, this is the distance objects is allowed to be overlapping water features in the final output.</p></li>
+<li><p>Apply a 45-meter buffer to the selected water features to create buffered water features, this is to make sure features are not going past the water barrier and is instead pushed towrds land instead of further inside waterfeatures.</p></li>
+<li><p>Erase buffered water features from the buffered land features to create a final set of waterfeature buffer which is used throughout this generalization of buildings.</p></li>
 </ul>
 </dd>
 </dl>
 <div class="admonition note">
 <p class="admonition-title">Note</p>
 <ul class="simple">
-<li><p>Additional logic may be required for rivers separately in future development.</p></li>
+<li><p>Additional logic may be required for rivers separately in future development as narrow polygons gets completly removed due to the land buffer being to large for the rivers. In processes actually needing barriers this will allow objects to cross narrow rivers.</p></li>
 </ul>
 </div>
 </dd></dl>
@@ -238,24 +238,36 @@
 </ul>
 </dd>
 </dl>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<ul class="simple">
+<li><p>In the future when the inputs makes spatial selections of the features used for context for processing like roads this step is redundant and will instead increase processing time.</p></li>
+</ul>
+</div>
 </dd></dl>
 
 <dl class="py function">
 <dt class="sig sig-object py" id="generalization.n100.building.building_data_preparation.adding_matrikkel_as_points">
 <span class="sig-prename descclassname"><span class="pre">generalization.n100.building.building_data_preparation.</span></span><span class="sig-name descname"><span class="pre">adding_matrikkel_as_points</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/generalization/n100/building/building_data_preparation.html#adding_matrikkel_as_points"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#generalization.n100.building.building_data_preparation.adding_matrikkel_as_points" title="Link to this definition"></a></dt>
 <dd><dl class="simple">
-<dt>Summary:</dt><dd><p>This function adds building points from the matrikkel dataset for areas that are no longer considered urban after the generalization of “arealdekke.” It also adds the required fields and values for future analysis.</p>
+<dt>Summary:</dt><dd><p>This function adds building points from the matrikkel dataset for areas that are no longer considered urban after the generalization of ‘ArealdekkeFlate’. It also adds the required fields and values for future analysis.</p>
 </dd>
 <dt>Details:</dt><dd><ul class="simple">
-<li><p>Define an SQL expression to select urban areas (‘Tettbebyggelse’, ‘Industriområde’, ‘BymessigBebyggelse’) in the “arealdekke” dataset.</p></li>
-<li><p>Select urban areas from “arealdekke” in both n100 and n50 datasets using the defined SQL expression.</p></li>
-<li><p>Create a buffer of the selected urban areas from n100 to consider symbology using a 50-meter buffer distance.</p></li>
+<li><p>Define an SQL expression to select urban areas (‘Tettbebyggelse’, ‘Industriområde’, ‘BymessigBebyggelse’) in the ‘ArealdekkeFlate’ dataset.</p></li>
+<li><p>Select urban areas from ‘ArealdekkeFlate’ in both n100 and n50 datasets using the defined SQL expression.</p></li>
+<li><p>Create a buffer of the selected urban areas from n100 to take into consideration that points should not be too close to urban areas.</p></li>
 <li><p>Remove areas from n50 urban areas that intersect with the buffer of n100 urban areas, resulting in areas in n100 that are no longer considered urban.</p></li>
 <li><p>Select matrikkel bygningspunkter based on the new urban selection layer.</p></li>
 <li><p>Transfer the NBR (building type) value to the matrikkel_bygningspunkt dataset by adding a new field “BYGGTYP_NBR” of type LONG and calculating its values from the “bygningstype” field.</p></li>
 </ul>
 </dd>
 </dl>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<ul class="simple">
+<li><p>Should consider removing the logic of adding a buffer to the urban areas to prevent points to close to urban areas and instead using urban areas as a barrier feature in future processing.</p></li>
+</ul>
+</div>
 </dd></dl>
 
 <dl class="py function">
@@ -265,9 +277,7 @@
 <dt>Summary:</dt><dd><p>This function selects building polygons (grunnriss) to be generalized. Smaller polygons and churches or hospitals are excluded, transformed into points, and sent to building point generalization.</p>
 </dd>
 <dt>Details:</dt><dd><ul class="simple">
-<li><p>Reclassify “sykehus” from grunnriss to another NBR value.</p></li>
-<li><p>Calculate the new NBR values for “sykehus” using a Python code block.</p></li>
-<li><p>Define SQL expressions to select “sykehus” and churches (“kirke”) based on their NBR values.</p></li>
+<li><p>Reclassify hospitals and churches from polygons to ‘NBR 729’ (other buildings).</p></li>
 <li><p>Select grunnriss that are not churches or hospitals using inverted selection.</p></li>
 <li><p>Select grunnriss that are large enough based on a minimum polygon size of 1500 square meters.</p></li>
 <li><p>Transform small grunnriss features into points by calculating centroids.</p></li>
@@ -278,7 +288,7 @@
 </dl>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>size</strong> (<em>- Minimum polygon</em>) – The minimum size of polygons are 1500 square meters.</p>
+<dd class="field-odd"><p><strong>Size</strong> (<em>- Minimum Polygon</em>) – The minimum size of polygons, in square meters. It currently at <strong>‘1500 Meters’</strong>.</p>
 </dd>
 </dl>
 </dd></dl>
@@ -356,16 +366,45 @@
 <dl class="py function">
 <dt class="sig sig-object py" id="generalization.n100.building.calculating_values.main">
 <span class="sig-prename descclassname"><span class="pre">generalization.n100.building.calculating_values.</span></span><span class="sig-name descname"><span class="pre">main</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/generalization/n100/building/calculating_values.html#main"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#generalization.n100.building.calculating_values.main" title="Link to this definition"></a></dt>
-<dd><p>Adding required fields for all point files from different sources (grunnriss, matrikkel, n50_bygningspunkt) for symbology and resolve building conflicts: angle, hierarchy and invisibility.
-And adding additional information such as source information making it possible to know if a point was added from grunnriss or not.</p>
+<dd><dl class="simple">
+<dt>Summary:</dt><dd><p>Adds required fields for bygningspunkt for symbology and resolves building conflicts: angle, hierarchy, and invisibility.</p>
+</dd>
+<dt>Details:</dt><dd><ol class="arabic simple">
+<li><dl class="simple">
+<dt><cite>table_management</cite>:</dt><dd><p>Adds required fields for bygningspunkt for symbology and resolves building conflicts: angle, hierarchy, and invisibility. Creates a symbology value field based on NBR values and logs undefined NBR values, reclassifying them to 729. Ensures that building types which should not be delivered are correctly reclassified.</p>
+</dd>
+</dl>
+</li>
+</ol>
+</dd>
+</dl>
 </dd></dl>
 
 <dl class="py function">
 <dt class="sig sig-object py" id="generalization.n100.building.calculating_values.table_management">
 <span class="sig-prename descclassname"><span class="pre">generalization.n100.building.calculating_values.</span></span><span class="sig-name descname"><span class="pre">table_management</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/generalization/n100/building/calculating_values.html#table_management"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#generalization.n100.building.calculating_values.table_management" title="Link to this definition"></a></dt>
-<dd><p>Adding required fields for bygningspunkt for symbology and resolve building conflicts: angle, hierarchy and invisibility.
-Creates a symbology value field based on NBR values
-Also adds additional information such as source information making it possible to know if a point was added from grunnriss or not.</p>
+<dd><dl class="simple">
+<dt>Summary:</dt><dd><p>Adds required fields for bygningspunkt for symbology and resolves building conflicts: angle, hierarchy, and invisibility.
+Creates a symbology value field based on NBR values and logs undefined NBR values, reclassifying them to 729.
+Ensures that building types which should not be delivered are correctly reclassified.</p>
+</dd>
+<dt>Details:</dt><dd><ul class="simple">
+<li><p>Reclassify the sykehus from matrikkel to another NBR value.</p></li>
+<li><p>Reclassify the sykehus from grunnriss to another NBR value.</p></li>
+<li><p>Merge the n50 bygningspunkt and points added from matrikkel.</p></li>
+<li><p>Adding a field to indicate that the merged bygningspunkt and matrikkel does not come from grunnriss.</p></li>
+<li><p>Adding a field to indicate that points resulting from grunnriss are tracked.</p></li>
+<li><p>Reclassify the sykehus from grunnriss to another NBR value.</p></li>
+<li><p>Merge the merged bygningspunkt from n50 and matrikkel with points created from grunnriss.</p></li>
+<li><p>Adding a symbology value field based on NBR values.</p></li>
+<li><p>Code block to transform BYGGTYP_NBR values without symbology to other buildings (729).</p></li>
+<li><p>Code block to update the symbol_val to reflect the new BYGGTYP_NBR.</p></li>
+<li><p>Adding angle, hierarchy, and invisibility fields to the bygningspunkt pre symbology and setting them to 0.</p></li>
+<li><p>Calculate fields.</p></li>
+<li><p>Code block hierarchy logic where churches and hospitals have hierarchy of 1, farms have hierarchy of 2 and the rest of the hierarchy is 3.</p></li>
+</ul>
+</dd>
+</dl>
 </dd></dl>
 
 </section>
@@ -566,18 +605,53 @@ Reduces hospital and church clusters by only keeping one point for each detected
 <dl class="py function">
 <dt class="sig sig-object py" id="generalization.n100.building.propagate_displacement.main">
 <span class="sig-prename descclassname"><span class="pre">generalization.n100.building.propagate_displacement.</span></span><span class="sig-name descname"><span class="pre">main</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/generalization/n100/building/propagate_displacement.html#main"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#generalization.n100.building.propagate_displacement.main" title="Link to this definition"></a></dt>
-<dd></dd></dl>
+<dd><dl class="simple">
+<dt>Summary:</dt><dd><p>Makes sure that the building points are moved correspondingly to the displacement the road features have been moved during its generalization.</p>
+</dd>
+<dt>Details:</dt><dd><ol class="arabic simple">
+<li><dl class="simple">
+<dt><cite>setup_arcpy_environment</cite>:</dt><dd><p>Sets up the ArcPy environment based on predefined settings defined in <cite>general_setup</cite>.</p>
+</dd>
+</dl>
+</li>
+<li><dl class="simple">
+<dt><cite>propagate_displacement_building_points</cite>:</dt><dd><p>Makes sure that the building points are moved correspondingly to the displacement the road features have been moved during its generalization.</p>
+</dd>
+</dl>
+</li>
+</ol>
+</dd>
+</dl>
+</dd></dl>
 
 <dl class="py function">
 <dt class="sig sig-object py" id="generalization.n100.building.propagate_displacement.setup_arcpy_environment">
 <span class="sig-prename descclassname"><span class="pre">generalization.n100.building.propagate_displacement.</span></span><span class="sig-name descname"><span class="pre">setup_arcpy_environment</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/generalization/n100/building/propagate_displacement.html#setup_arcpy_environment"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#generalization.n100.building.propagate_displacement.setup_arcpy_environment" title="Link to this definition"></a></dt>
-<dd><p>Sets up the ArcPy environment based on predefined settings.</p>
+<dd><dl class="simple">
+<dt>Summary:</dt><dd><p>Sets up the ArcPy environment based on predefined settings defined in <cite>general_setup</cite>.
+This function ensures that the ArcPy environment is properly configured for the specific project by utilizing
+the <cite>general_setup</cite> function from the <cite>environment_setup</cite> module.</p>
+</dd>
+<dt>Details:</dt><dd><ul class="simple">
+<li><p>It calls the <cite>general_setup</cite> function from the <cite>environment_setup</cite> module to set up the ArcPy environment based on predefined settings.</p></li>
+</ul>
+</dd>
+</dl>
 </dd></dl>
 
 <dl class="py function">
 <dt class="sig sig-object py" id="generalization.n100.building.propagate_displacement.propagate_displacement_building_points">
 <span class="sig-prename descclassname"><span class="pre">generalization.n100.building.propagate_displacement.</span></span><span class="sig-name descname"><span class="pre">propagate_displacement_building_points</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/generalization/n100/building/propagate_displacement.html#propagate_displacement_building_points"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#generalization.n100.building.propagate_displacement.propagate_displacement_building_points" title="Link to this definition"></a></dt>
-<dd></dd></dl>
+<dd><dl class="simple">
+<dt>Summary:</dt><dd><p>Makes sure that the building points are moved correspondingly to the displacement the road features have been moved during its generalization.</p>
+</dd>
+<dt>Details:</dt><dd><ul class="simple">
+<li><p>It copies the original dataset to prevent overwriting the data since PropagateDisplacement modifiy the input data.</p></li>
+<li><p>When using Propagate Displacement, the adjustment style chosen for this process is “SOLID” to prevent the change of shape of input polygons (though not relevant for building points).</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
 
 </section>
 <section id="module-generalization.n100.building.resolve_building_conflicts">

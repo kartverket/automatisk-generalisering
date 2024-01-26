@@ -97,8 +97,12 @@
 <a class="viewcode-back" href="../../../../generated_docs/generalization.n100.building.html#generalization.n100.building.calculating_values.main">[docs]</a>
 <span class="k">def</span> <span class="nf">main</span><span class="p">():</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">    Adding required fields for all point files from different sources (grunnriss, matrikkel, n50_bygningspunkt) for symbology and resolve building conflicts: angle, hierarchy and invisibility.</span>
-<span class="sd">    And adding additional information such as source information making it possible to know if a point was added from grunnriss or not.</span>
+<span class="sd">    Summary:</span>
+<span class="sd">        Adds required fields for bygningspunkt for symbology and resolves building conflicts: angle, hierarchy, and invisibility.</span>
+
+<span class="sd">    Details:</span>
+<span class="sd">        1. `table_management`:</span>
+<span class="sd">            Adds required fields for bygningspunkt for symbology and resolves building conflicts: angle, hierarchy, and invisibility. Creates a symbology value field based on NBR values and logs undefined NBR values, reclassifying them to 729. Ensures that building types which should not be delivered are correctly reclassified.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="n">table_management</span><span class="p">()</span></div>
 
@@ -108,9 +112,25 @@
 <a class="viewcode-back" href="../../../../generated_docs/generalization.n100.building.html#generalization.n100.building.calculating_values.table_management">[docs]</a>
 <span class="k">def</span> <span class="nf">table_management</span><span class="p">():</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">    Adding required fields for bygningspunkt for symbology and resolve building conflicts: angle, hierarchy and invisibility.</span>
-<span class="sd">    Creates a symbology value field based on NBR values</span>
-<span class="sd">    Also adds additional information such as source information making it possible to know if a point was added from grunnriss or not.</span>
+<span class="sd">    Summary:</span>
+<span class="sd">        Adds required fields for bygningspunkt for symbology and resolves building conflicts: angle, hierarchy, and invisibility.</span>
+<span class="sd">        Creates a symbology value field based on NBR values and logs undefined NBR values, reclassifying them to 729.</span>
+<span class="sd">        Ensures that building types which should not be delivered are correctly reclassified.</span>
+
+<span class="sd">    Details:</span>
+<span class="sd">        - Reclassify the sykehus from matrikkel to another NBR value.</span>
+<span class="sd">        - Reclassify the sykehus from grunnriss to another NBR value.</span>
+<span class="sd">        - Merge the n50 bygningspunkt and points added from matrikkel.</span>
+<span class="sd">        - Adding a field to indicate that the merged bygningspunkt and matrikkel does not come from grunnriss.</span>
+<span class="sd">        - Adding a field to indicate that points resulting from grunnriss are tracked.</span>
+<span class="sd">        - Reclassify the sykehus from grunnriss to another NBR value.</span>
+<span class="sd">        - Merge the merged bygningspunkt from n50 and matrikkel with points created from grunnriss.</span>
+<span class="sd">        - Adding a symbology value field based on NBR values.</span>
+<span class="sd">        - Code block to transform BYGGTYP_NBR values without symbology to other buildings (729).</span>
+<span class="sd">        - Code block to update the symbol_val to reflect the new BYGGTYP_NBR.</span>
+<span class="sd">        - Adding angle, hierarchy, and invisibility fields to the bygningspunkt pre symbology and setting them to 0.</span>
+<span class="sd">        - Calculate fields.</span>
+<span class="sd">        - Code block hierarchy logic where churches and hospitals have hierarchy of 1, farms have hierarchy of 2 and the rest of the hierarchy is 3.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="c1"># Reclassify the sykehus from matrikkel to another NBR value</span>

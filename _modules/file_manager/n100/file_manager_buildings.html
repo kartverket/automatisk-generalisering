@@ -81,6 +81,7 @@
 <span class="kn">import</span> <span class="nn">config</span>
 <span class="kn">from</span> <span class="nn">env_setup</span> <span class="kn">import</span> <span class="n">setup_directory_structure</span>
 
+
 <span class="c1"># Scale name</span>
 <span class="n">scale</span> <span class="o">=</span> <span class="n">setup_directory_structure</span><span class="o">.</span><span class="n">scale_n100</span>
 
@@ -108,6 +109,14 @@
     <span class="n">description</span><span class="p">,</span>
     <span class="n">scale</span><span class="p">,</span>
 <span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Summary:</span>
+<span class="sd">        Genereates the full file path for files which can be stored in gdb&#39;s, where the files are generated to the bygning.gdb in the n100 subdirectory.</span>
+
+<span class="sd">    Details:</span>
+<span class="sd">        - The path is generated using the relative path to the bygning.gdb in the n100 subdirectory.</span>
+<span class="sd">        - The file name is generated using the function name, description, and scale.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
     <span class="k">return</span> <span class="sa">rf</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">relative_path_gdb</span><span class="si">}</span><span class="s2">\</span><span class="si">{</span><span class="n">function_name</span><span class="si">}</span><span class="s2">__</span><span class="si">{</span><span class="n">description</span><span class="si">}</span><span class="s2">__</span><span class="si">{</span><span class="n">scale</span><span class="si">}</span><span class="s2">&quot;</span></div>
 
 
@@ -120,6 +129,14 @@
     <span class="n">scale</span><span class="p">,</span>
     <span class="n">file_type</span><span class="p">,</span>
 <span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Summary:</span>
+<span class="sd">        Genereates the full file path for files which can not be stored in gdb&#39;s, but are stored in the general_files subdirectory for n100.</span>
+
+<span class="sd">    Details:</span>
+<span class="sd">        - The path is generated using the relative path to the genral_files subdirectory.</span>
+<span class="sd">        - The file name is generated using the function name, description, and scale.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
     <span class="k">return</span> <span class="sa">rf</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">relative_path_general_files</span><span class="si">}</span><span class="s2">\</span><span class="si">{</span><span class="n">function_name</span><span class="si">}</span><span class="s2">__</span><span class="si">{</span><span class="n">description</span><span class="si">}</span><span class="s2">__</span><span class="si">{</span><span class="n">scale</span><span class="si">}</span><span class="s2">.</span><span class="si">{</span><span class="n">file_type</span><span class="si">}</span><span class="s2">&quot;</span></div>
 
 
@@ -131,6 +148,14 @@
     <span class="n">description</span><span class="p">,</span>
     <span class="n">scale</span><span class="p">,</span>
 <span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Summary:</span>
+<span class="sd">        Genereates the full file path for lyrx files which can not be stored in gdb&#39;s. The lyrx files are generated to the lyrx_outputs subdirectory for n100.</span>
+
+<span class="sd">    Details:</span>
+<span class="sd">        - The path is generated using the relative path to the lyrx_outputs subdirectory.</span>
+<span class="sd">        - The file name is generated using the function name, description, and scale.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
     <span class="k">return</span> <span class="sa">rf</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">relative_path_lyrx</span><span class="si">}</span><span class="s2">\</span><span class="si">{</span><span class="n">function_name</span><span class="si">}</span><span class="s2">__</span><span class="si">{</span><span class="n">description</span><span class="si">}</span><span class="s2">__</span><span class="si">{</span><span class="n">scale</span><span class="si">}</span><span class="s2">.lyrx&quot;</span></div>
 
 
@@ -196,13 +221,15 @@
 <span class="k">class</span> <span class="nc">Building_N100</span><span class="p">(</span><span class="n">Enum</span><span class="p">):</span>
 
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">    This class stores all the file names used when generalizing buildings</span>
+<span class="sd">    Summary:</span>
+<span class="sd">        The class `Building_N100`is the file manager used for the Building generalization. It is used to build and hold the full output paths for files in our project.</span>
+<span class="sd">        The way the paths are generated they work in any directive setup for different systems, and can handle files</span>
+<span class="sd">        which can be stored in gdb&#39;s and files which can not be stored in gdb&#39;s. It uses the direcory structure created by `setup_directory_structure.py`.</span>
 
-<span class="sd">    File-names for are built up of:</span>
-<span class="sd">    - Function name</span>
-<span class="sd">    - Description of what is being done / tool</span>
-<span class="sd">    - Scale we are generalizing to</span>
-
+<span class="sd">    Details:</span>
+<span class="sd">        - generate_file_name_gdb: Genereates the full file path for files which can be stored in gdb&#39;s, where the files are generated to the bygning.gdb in the n100 subdirectory.</span>
+<span class="sd">        - generate_file_name_general_files: Genereates the full file path for files which can not be stored in gdb&#39;s, but are stored in the general_files subdirectory for n100.</span>
+<span class="sd">        - generate_file_name_lyrx: Genereates the full file path for lyrx files which can not be stored in gdb&#39;s. The lyrx files are generated to the lyrx_outputs subdirectory for n100.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="n">displacement_feature_asker__displacement_feature_asker__n100</span> <span class="o">=</span> <span class="p">(</span>

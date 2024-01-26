@@ -95,6 +95,17 @@
 <div class="viewcode-block" id="main">
 <a class="viewcode-back" href="../../../../generated_docs/generalization.n100.building.html#generalization.n100.building.propagate_displacement.main">[docs]</a>
 <span class="k">def</span> <span class="nf">main</span><span class="p">():</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Summary:</span>
+<span class="sd">        Makes sure that the building points are moved correspondingly to the displacement the road features have been moved during its generalization.</span>
+
+<span class="sd">    Details:</span>
+<span class="sd">        1. `setup_arcpy_environment`:</span>
+<span class="sd">            Sets up the ArcPy environment based on predefined settings defined in `general_setup`.</span>
+
+<span class="sd">        2. `propagate_displacement_building_points`:</span>
+<span class="sd">            Makes sure that the building points are moved correspondingly to the displacement the road features have been moved during its generalization.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
     <span class="n">setup_arcpy_environment</span><span class="p">()</span>
     <span class="n">propagate_displacement_building_points</span><span class="p">()</span></div>
 
@@ -104,8 +115,15 @@
 <a class="viewcode-back" href="../../../../generated_docs/generalization.n100.building.html#generalization.n100.building.propagate_displacement.setup_arcpy_environment">[docs]</a>
 <span class="k">def</span> <span class="nf">setup_arcpy_environment</span><span class="p">():</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">    Sets up the ArcPy environment based on predefined settings.</span>
+<span class="sd">    Summary:</span>
+<span class="sd">        Sets up the ArcPy environment based on predefined settings defined in `general_setup`.</span>
+<span class="sd">        This function ensures that the ArcPy environment is properly configured for the specific project by utilizing</span>
+<span class="sd">        the `general_setup` function from the `environment_setup` module.</span>
+
+<span class="sd">    Details:</span>
+<span class="sd">        - It calls the `general_setup` function from the `environment_setup` module to set up the ArcPy environment based on predefined settings.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
+
     <span class="n">environment_setup</span><span class="o">.</span><span class="n">general_setup</span><span class="p">()</span></div>
 
 
@@ -113,6 +131,15 @@
 <div class="viewcode-block" id="propagate_displacement_building_points">
 <a class="viewcode-back" href="../../../../generated_docs/generalization.n100.building.html#generalization.n100.building.propagate_displacement.propagate_displacement_building_points">[docs]</a>
 <span class="k">def</span> <span class="nf">propagate_displacement_building_points</span><span class="p">():</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Summary:</span>
+<span class="sd">        Makes sure that the building points are moved correspondingly to the displacement the road features have been moved during its generalization.</span>
+
+<span class="sd">    Details:</span>
+<span class="sd">        - It copies the original dataset to prevent overwriting the data since PropagateDisplacement modifiy the input data.</span>
+<span class="sd">        - When using Propagate Displacement, the adjustment style chosen for this process is &quot;SOLID&quot; to prevent the change of shape of input polygons (though not relevant for building points).</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
     <span class="n">arcpy</span><span class="o">.</span><span class="n">management</span><span class="o">.</span><span class="n">Copy</span><span class="p">(</span>
         <span class="n">in_data</span><span class="o">=</span><span class="n">Building_N100</span><span class="o">.</span><span class="n">table_management__bygningspunkt_pre_resolve_building_conflicts__n100</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
         <span class="n">out_data</span><span class="o">=</span><span class="n">Building_N100</span><span class="o">.</span><span class="n">propagate_displacement__bygningspunkt_pre_propogate_displacement__n100</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>

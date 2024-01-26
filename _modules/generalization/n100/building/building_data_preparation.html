@@ -104,16 +104,16 @@
 <span class="sd">        This is the main function of building data preparation, which aims to prepare the data for future building generalization processing.</span>
 
 <span class="sd">    Details:</span>
-<span class="sd">        - Function 1: Create Water Feature Buffer</span>
+<span class="sd">        1. `preparation_begrensningskurve`:</span>
 <span class="sd">            This function creates a buffer for water features using the &quot;begrensningskurve&quot; feature. It prepares the data for future building placement on the water&#39;s edge.</span>
 
-<span class="sd">        - Function 2: Unsplit Road Lines</span>
+<span class="sd">        2. `preperation_veg_sti`:</span>
 <span class="sd">            This function unsplit a line feature of roads to reduce the number of objects in future processing.</span>
 
-<span class="sd">        - Function 3: Add Building Points from Matrikkel</span>
+<span class="sd">        3. `adding_matrikkel_as_points`:</span>
 <span class="sd">            This function adds building points from the matrikkel dataset for areas that are no longer considered urban after the generalization of &quot;arealdekke.&quot; It also adds the required fields and values for future analysis.</span>
 
-<span class="sd">        - Function 4: Select Building Polygons for Generalization</span>
+<span class="sd">        4. `selecting_grunnriss_for_generalization`:</span>
 <span class="sd">            This function selects building polygons (grunnriss) to be generalized. Smaller polygons and churches or hospitals are excluded, transformed into points, and sent to building point generalization.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
@@ -135,16 +135,16 @@
 <span class="sd">        This function creates a buffer for water features using the &quot;begrensningskurve&quot; feature. It prepares the data for future building placement on the water&#39;s edge.</span>
 
 <span class="sd">    Details:</span>
-<span class="sd">        - Define an SQL selection expression to identify water features of interest.</span>
+<span class="sd">        - Using the object types (&#39;ElvBekk&#39;, &#39;Havflate&#39;, &#39;Innsjø&#39;, &#39;InnsjøRegulert&#39;) in the &quot;begrensningskurve&quot; feature in SQL expressions to select water features and in inverse to select land features.</span>
 <span class="sd">        - Create a temporary feature of water features from the &quot;begrensningskurve&quot; using the defined SQL expression.</span>
-<span class="sd">        - Select land features that do not belong to specific categories (&#39;ElvBekk&#39;, &#39;Havflate&#39;, &#39;Innsjø&#39;, &#39;InnsjøRegulert&#39;).</span>
-<span class="sd">        - Identify land features near water features by selecting those that boundary-touch with water features.</span>
-<span class="sd">        - Apply a 15-meter buffer to the identified land features to create buffered land features.</span>
-<span class="sd">        - Apply a 45-meter buffer to the selected water features to create buffered water features.</span>
-<span class="sd">        - Erase buffered water features from the buffered land features to create a final set of land features.</span>
+<span class="sd">        - Select land features using an inverted selection using the defined SQL expression.</span>
+<span class="sd">        - Identify land features near water features by selecting those that boundary-touch with water features to reduce the amount of processing.</span>
+<span class="sd">        - Apply a 15-meter buffer to the identified land features to create buffered land features, this is the distance objects is allowed to be overlapping water features in the final output.</span>
+<span class="sd">        - Apply a 45-meter buffer to the selected water features to create buffered water features, this is to make sure features are not going past the water barrier and is instead pushed towrds land instead of further inside waterfeatures.</span>
+<span class="sd">        - Erase buffered water features from the buffered land features to create a final set of waterfeature buffer which is used throughout this generalization of buildings.</span>
 
 <span class="sd">    Note:</span>
-<span class="sd">        - Additional logic may be required for rivers separately in future development.</span>
+<span class="sd">        - Additional logic may be required for rivers separately in future development as narrow polygons gets completly removed due to the land buffer being to large for the rivers. In processes actually needing barriers this will allow objects to cross narrow rivers.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="c1"># Defining the SQL selection expression for water features for begrensningskurve</span>
@@ -237,6 +237,8 @@
 <span class="sd">    Details:</span>
 <span class="sd">        - It takes the input line feature `input_n100.VegSti` and removes any geometric splits.</span>
 <span class="sd">        - The feature is dissolved based on the fields &quot;subtypekode,&quot; &quot;motorvegtype,&quot; and &quot;UTTEGNING&quot; to merge segments with the same values in these fields.</span>
+<span class="sd">    Note:</span>
+<span class="sd">        - In the future when the inputs makes spatial selections of the features used for context for processing like roads this step is redundant and will instead increase processing time.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="n">arcpy</span><span class="o">.</span><span class="n">UnsplitLine_management</span><span class="p">(</span>
@@ -255,15 +257,17 @@
 <span class="k">def</span> <span class="nf">adding_matrikkel_as_points</span><span class="p">():</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Summary:</span>
-<span class="sd">        This function adds building points from the matrikkel dataset for areas that are no longer considered urban after the generalization of &quot;arealdekke.&quot; It also adds the required fields and values for future analysis.</span>
+<span class="sd">        This function adds building points from the matrikkel dataset for areas that are no longer considered urban after the generalization of &#39;ArealdekkeFlate&#39;. It also adds the required fields and values for future analysis.</span>
 
 <span class="sd">    Details:</span>
-<span class="sd">        - Define an SQL expression to select urban areas (&#39;Tettbebyggelse&#39;, &#39;Industriområde&#39;, &#39;BymessigBebyggelse&#39;) in the &quot;arealdekke&quot; dataset.</span>
-<span class="sd">        - Select urban areas from &quot;arealdekke&quot; in both n100 and n50 datasets using the defined SQL expression.</span>
-<span class="sd">        - Create a buffer of the selected urban areas from n100 to consider symbology using a 50-meter buffer distance.</span>
+<span class="sd">        - Define an SQL expression to select urban areas (&#39;Tettbebyggelse&#39;, &#39;Industriområde&#39;, &#39;BymessigBebyggelse&#39;) in the &#39;ArealdekkeFlate&#39; dataset.</span>
+<span class="sd">        - Select urban areas from &#39;ArealdekkeFlate&#39; in both n100 and n50 datasets using the defined SQL expression.</span>
+<span class="sd">        - Create a buffer of the selected urban areas from n100 to take into consideration that points should not be too close to urban areas.</span>
 <span class="sd">        - Remove areas from n50 urban areas that intersect with the buffer of n100 urban areas, resulting in areas in n100 that are no longer considered urban.</span>
 <span class="sd">        - Select matrikkel bygningspunkter based on the new urban selection layer.</span>
 <span class="sd">        - Transfer the NBR (building type) value to the matrikkel_bygningspunkt dataset by adding a new field &quot;BYGGTYP_NBR&quot; of type LONG and calculating its values from the &quot;bygningstype&quot; field.</span>
+<span class="sd">    Note:</span>
+<span class="sd">        - Should consider removing the logic of adding a buffer to the urban areas to prevent points to close to urban areas and instead using urban areas as a barrier feature in future processing.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="c1"># Defining sql expression to select urban areas</span>
@@ -333,9 +337,7 @@
 <span class="sd">        This function selects building polygons (grunnriss) to be generalized. Smaller polygons and churches or hospitals are excluded, transformed into points, and sent to building point generalization.</span>
 
 <span class="sd">    Details:</span>
-<span class="sd">        - Reclassify &quot;sykehus&quot; from grunnriss to another NBR value.</span>
-<span class="sd">        - Calculate the new NBR values for &quot;sykehus&quot; using a Python code block.</span>
-<span class="sd">        - Define SQL expressions to select &quot;sykehus&quot; and churches (&quot;kirke&quot;) based on their NBR values.</span>
+<span class="sd">        - Reclassify hospitals and churches from polygons to &#39;NBR 729&#39; (other buildings).</span>
 <span class="sd">        - Select grunnriss that are not churches or hospitals using inverted selection.</span>
 <span class="sd">        - Select grunnriss that are large enough based on a minimum polygon size of 1500 square meters.</span>
 <span class="sd">        - Transform small grunnriss features into points by calculating centroids.</span>
@@ -343,7 +345,7 @@
 <span class="sd">        - Transform selected church and hospital grunnriss features into points by calculating centroids.</span>
 
 <span class="sd">    Parameters:</span>
-<span class="sd">        - Minimum polygon size (int): The minimum size of polygons are 1500 square meters.</span>
+<span class="sd">        - Minimum Polygon Size: The minimum size of polygons, in square meters. It currently at **&#39;1500 Meters&#39;**.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="c1"># Reclassify the sykehus from grunnriss to another NBR value</span>
