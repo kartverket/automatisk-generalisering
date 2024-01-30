@@ -76,10 +76,45 @@ def generate_file_name_lyrx(
 ##############################################################################################################################################
 
 # All file and function names in correct order
-
+unconnected_river_geometry = "unconnected_river_geometry"
 
 ##############################################################################################################################################
 
 
 class River_N100(Enum):
-    pass
+    unconnected_river_geometry__unsplit_river_features__n100 = generate_file_name_gdb(
+        function_name=unconnected_river_geometry,
+        description="unsplit_river_features",
+        scale=scale,
+    )
+
+    unconnected_river_geometry__water_area_features__n100 = generate_file_name_gdb(
+        function_name=unconnected_river_geometry,
+        description="water_area_features",
+        scale=scale,
+    )
+
+    unconnected_river_geometry__water_area_features_selected__n100 = (
+        generate_file_name_gdb(
+            function_name=unconnected_river_geometry,
+            description="water_area_features_selected",
+            scale=scale,
+        )
+    )
+
+    unconnected_river_geometry__river_dangles__n100 = generate_file_name_gdb(
+        function_name=unconnected_river_geometry,
+        description="river_dangles",
+        scale=scale,
+    )
+
+    unconnected_river_geometry__river_end_points__n100 = generate_file_name_gdb(
+        function_name=unconnected_river_geometry,
+        description="river_end_points",
+        scale=scale,
+    )
+    unconnected_river_geometry__river_dangles_buffer__n100 = generate_file_name_gdb(
+        function_name=unconnected_river_geometry,
+        description="river_dangles_buffer",
+        scale=scale,
+    )
