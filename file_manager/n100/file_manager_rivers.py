@@ -118,3 +118,17 @@ class River_N100(Enum):
         description="river_dangles_buffer",
         scale=scale,
     )
+
+    unconnected_river_geometry__problematic_river_lines__n100 = generate_file_name_gdb(
+        function_name=unconnected_river_geometry,
+        description="problematic_river_lines",
+        scale=scale,
+    )
+
+    unconnected_river_geometry__problematic_river_dangles__n100 = (
+        generate_file_name_gdb(
+            function_name=unconnected_river_geometry,
+            description="problematic_river_dangles",
+            scale=scale,
+        )
+    )

@@ -1,6 +1,6 @@
 import arcpy
 import multiprocessing
-from multiprocessing import Pool
+from multiprocessing import Pool, Manager
 from tqdm import tqdm
 
 import config
@@ -50,12 +50,50 @@ def main():
         for start in range(0, total_buffers, batch_size)
     ]
 
-    # Use multiprocessing Pool to process each batch in parallel
-    with Pool(processes=num_cores) as pool:
-        results = pool.starmap(process_batch, batch_args)
+    with Manager() as manager:
+        queue = manager.Queue()  # Create a Manager Queue
+        args_with_queue = [
+            (
+                start,
+                end,
+                line_fc,
+                polygon_fc,
+                point_fc,
+                buffer_fc,
+                id_field,
+                geomotry_search_tolerance,
+                queue,
+            )
+            for (
+                start,
+                end,
+                line_fc,
+                polygon_fc,
+                point_fc,
+                buffer_fc,
+                id_field,
+                geomotry_search_tolerance,
+            ) in batch_args
+        ]
+
+        # Start processing using Pool
+        with Pool(processes=num_cores) as pool:
+            result_objects = [
+                pool.apply_async(process_batch, args) for args in args_with_queue
+            ]
+
+            # Track progress with tqdm
+            with tqdm(total=len(batch_args)) as pbar:
+                for _ in range(len(batch_args)):
+                    pbar.update(
+                        queue.get()
+                    )  # Update progress bar when a task is completed
+
+        results = [r.get() for r in result_objects]
 
     # Combine results from all batches
     all_problematic_ids = [item for sublist in results for item in sublist]
+    resolve_geometry(id_field, all_problematic_ids)
 
 
 def setup_arcpy_environment():
@@ -143,6 +181,7 @@ def process_batch(
     point_fc,
     buffer_fc,
     id_field,
+    queue,
     geomotry_search_tolerance,
 ):
     # List to store buffer IDs for this batch
@@ -211,8 +250,40 @@ def process_batch(
             if buffer_intersects:
                 problematic_ids.append(buffer_id)
                 print(f"all conditions met for {buffer_id}")
+    queue.put(1)
     return problematic_ids
+
+
+def resolve_geometry(
+    id_field,
+    all_problematic_ids,
+):
+    # Check if the list is empty
+    if not all_problematic_ids:
+        print("No problematic IDs found.")
+        return
+
+    # Convert list of IDs to a comma-separated string
+    ids_string = ", ".join(map(str, all_problematic_ids))
+
+    # Construct the SQL query
+    sql_problematic_ids = f"{id_field} IN ({ids_string})"
+
+    # Proceed with the selection and creation of features
+    custom_arcpy.select_attribute_and_make_permanent_feature(
+        input_data=River_N100.unconnected_river_geometry__unsplit_river_features__n100.value,
+        expression=sql_problematic_ids,
+        output_name=River_N100.unconnected_river_geometry__problematic_river_lines__n100.value,
+    )
+
+    custom_arcpy.select_attribute_and_make_permanent_feature(
+        input_data=River_N100.unconnected_river_geometry__river_dangles__n100.value,
+        expression=sql_problematic_ids,
+        output_name=River_N100.unconnected_river_geometry__problematic_river_dangles__n100.value,
+    )
 
 
 if __name__ == "__main__":
     main()
+
+"orig_ob_id IN (311, 421, 567)"
