@@ -77,11 +77,17 @@ def generate_file_name_lyrx(
 
 # All file and function names in correct order
 unconnected_river_geometry = "unconnected_river_geometry"
+river_centerline = "river_centerline"
+centerline_pruning = "centerline_pruning"
 
 ##############################################################################################################################################
 
 
 class River_N100(Enum):
+    #################################################
+    ########### UNCONNECTED RIVER GEOMETRY  ###########
+    #################################################
+
     unconnected_river_geometry__unsplit_river_features__n100 = generate_file_name_gdb(
         function_name=unconnected_river_geometry,
         description="unsplit_river_features",
@@ -108,6 +114,12 @@ class River_N100(Enum):
         scale=scale,
     )
 
+    unconnected_river_selected_river_dangles__n100 = generate_file_name_gdb(
+        function_name=unconnected_river_geometry,
+        description="selected_river_dangles",
+        scale=scale,
+    )
+
     unconnected_river_geometry__river_end_points__n100 = generate_file_name_gdb(
         function_name=unconnected_river_geometry,
         description="river_end_points",
@@ -131,4 +143,61 @@ class River_N100(Enum):
             description="problematic_river_dangles",
             scale=scale,
         )
+    )
+
+    #################################################
+    ########### RIVER CENTERLINE ###########
+    #################################################
+
+    river_centerline__rivers_near_waterfeatures__n100 = generate_file_name_gdb(
+        function_name=river_centerline,
+        description="rivers_near_waterfeatures",
+        scale=scale,
+    )
+
+    river_centerline__rivers_near_waterfeatures_erased__n100 = generate_file_name_gdb(
+        function_name=river_centerline,
+        description="rivers_near_waterfeatures_erased",
+        scale=scale,
+    )
+
+    short__water_feature__n100 = generate_file_name_gdb(
+        function_name="short",
+        description="water_feature",
+        scale=scale,
+    )
+
+    river_centerline__water_feature_centerline__n100 = generate_file_name_gdb(
+        function_name=river_centerline,
+        description="water_feature_centerline",
+        scale=scale,
+    )
+
+    river_centerline__study_lake__n100 = generate_file_name_gdb(
+        function_name=river_centerline,
+        description="study_lake",
+        scale=scale,
+    )
+
+    river_centerline__study_rivers__n100 = generate_file_name_gdb(
+        function_name=river_centerline,
+        description="study_rivers",
+        scale=scale,
+    )
+
+    river_centerline__study_centerline__n100 = generate_file_name_gdb(
+        function_name=river_centerline,
+        description="study_centerline",
+        scale=scale,
+    )
+    river_centerline__study_dangles__n100 = generate_file_name_gdb(
+        function_name=river_centerline,
+        description="study_dangles",
+        scale=scale,
+    )
+
+    centerline_pruning__pruned_centerline__n100 = generate_file_name_gdb(
+        function_name=centerline_pruning,
+        description="pruned_centerline",
+        scale=scale,
     )
