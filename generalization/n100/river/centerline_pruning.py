@@ -12,19 +12,17 @@ from file_manager.n100.file_manager_rivers import River_N100
 def main():
     setup_arcpy_environment()
     print("Pruning centerline...")
+
+    # Load the network and the connection nodes
     G = load_network_from_features(centerline_feature)
-    start_nodes = load_start_nodes(connection_node_feature)
+    connection_nodes = load_start_nodes(connection_node_feature)
 
-    # Find all shortest paths between start nodes in the original network
-    paths_graph = find_shortest_paths(G, start_nodes)
+    # Compute the heuristic Steiner Tree
+    steiner_tree = heuristic_steiner_tree(G, connection_nodes)
 
-    # Compute the MST of the graph that includes all shortest paths
-    mst = compute_mst(paths_graph)
-
-    # Prune the MST to remove unnecessary edges
-    pruned_mst = prune_mst(mst, start_nodes)
+    # Save the pruned network
     print("Saving pruned network...")
-    save_pruned_network(pruned_mst, pruned_centerline_output, G)
+    save_pruned_network(steiner_tree, pruned_centerline_output, G)
 
 
 def setup_arcpy_environment():
@@ -82,62 +80,37 @@ def load_start_nodes(connection_node_feature):
     return start_nodes
 
 
-def find_shortest_paths(G, start_nodes):
-    # Create a new graph to hold all shortest paths
-    paths_graph = nx.Graph()
+def heuristic_steiner_tree(G, terminal_nodes):
+    # G is the full graph, terminal_nodes are the nodes that must be connected (red points in your case)
+    # Create a graph that includes only the terminal nodes and the lines that directly connect them
+    steiner_tree = nx.Graph()
 
-    # Find all shortest paths between start nodes
-    for node1, node2 in combinations(start_nodes, 2):
-        if nx.has_path(G, node1, node2):
-            path = nx.shortest_path(G, source=node1, target=node2)
-            nx.add_path(paths_graph, path)
+    # Add all terminal nodes to the Steiner Tree
+    for node in terminal_nodes:
+        steiner_tree.add_node(node)
 
-    return paths_graph
+    # Find all shortest paths between pairs of terminal nodes and add them to the Steiner Tree
+    for node1 in terminal_nodes:
+        for node2 in terminal_nodes:
+            if node1 != node2 and not steiner_tree.has_edge(node1, node2):
+                # Find the shortest path in the original graph
+                path = nx.shortest_path(G, source=node1, target=node2)
+                # Add the edges of this path to the Steiner Tree
+                nx.add_path(steiner_tree, path)
 
+    # Now remove edges that are not necessary to maintain connectivity between terminal nodes
+    edges_to_remove = []
+    for u, v in steiner_tree.edges():
+        steiner_tree.remove_edge(u, v)
+        if not nx.is_connected(steiner_tree.subgraph(terminal_nodes)):
+            # If removing this edge disconnects any two terminal nodes, we must keep it
+            steiner_tree.add_edge(u, v)
+        else:
+            # Otherwise, this edge is redundant and can be removed
+            edges_to_remove.append((u, v))
+    steiner_tree.remove_edges_from(edges_to_remove)
 
-def compute_mst(H):
-    # Compute the MST of the graph with all shortest paths
-    return nx.minimum_spanning_tree(H)
-
-
-def prune_mst(mst, start_nodes):
-    # Convert start_nodes to a set for faster lookup
-    start_nodes_set = set(start_nodes)
-    # Copy MST to avoid modifying it while iterating
-    pruned_mst = mst.copy()
-    # Remove leaf nodes that are not in start_nodes
-    for node in list(pruned_mst.nodes):  # List to make a copy of nodes for iteration
-        if node not in start_nodes_set and pruned_mst.degree(node) == 1:
-            pruned_mst.remove_node(node)
-    return pruned_mst
-
-
-def prune_network_with_mst(G, start_nodes):
-    # Create a complete graph for the start nodes
-    complete_graph = nx.complete_graph(start_nodes)
-
-    # Initialize H as an empty graph
-    H = nx.Graph()
-
-    # For each edge in the complete graph, check if there is a path in G
-    for u, v in complete_graph.edges():
-        if u != v and nx.has_path(G, u, v):
-            # If a path exists, find the shortest path and add all its edges to H
-            path = nx.shortest_path(G, source=u, target=v)
-            # Get the positions to calculate the weight
-            positions = nx.get_node_attributes(G, "pos")
-            for i in range(len(path) - 1):
-                # Calculate the weight as the Euclidean distance between points
-                weight = math.hypot(
-                    positions[path[i + 1]][0] - positions[path[i]][0],
-                    positions[path[i + 1]][1] - positions[path[i]][1],
-                )
-                H.add_edge(path[i], path[i + 1], weight=weight)
-
-    # Now H is a graph where all start nodes are connected if a path exists in G
-    # Find the Minimum Spanning Tree of this new graph
-    mst = nx.minimum_spanning_tree(H, weight="weight")
-    return mst
+    return steiner_tree
 
 
 def save_pruned_network(pruned_network, pruned_centerline_output, G):
@@ -163,14 +136,16 @@ def save_pruned_network(pruned_network, pruned_centerline_output, G):
     # Insert the pruned edges into the new feature class
     with arcpy.da.InsertCursor(pruned_centerline_output, ["SHAPE@"]) as cursor:
         for u, v in pruned_network.edges():
-            # Retrieve the path as a list of points from the original graph G
-            path = nx.shortest_path(G, source=u, target=v)
-            points = [
-                arcpy.Point(G.nodes[p]["pos"][0], G.nodes[p]["pos"][1]) for p in path
-            ]
-            # Create a polyline from the ordered list of points
-            line = arcpy.Polyline(arcpy.Array(points), sr)
-            cursor.insertRow([line])
+            # Make sure to check if the path exists before trying to retrieve it
+            if nx.has_path(G, u, v):
+                path = nx.shortest_path(G, source=u, target=v)
+                points = [
+                    arcpy.Point(G.nodes[p]["pos"][0], G.nodes[p]["pos"][1])
+                    for p in path
+                ]
+                # Create a polyline from the ordered list of points
+                line = arcpy.Polyline(arcpy.Array(points), sr)
+                cursor.insertRow([line])
 
 
 if __name__ == "__main__":
