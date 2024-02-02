@@ -12,8 +12,9 @@ from file_manager.n100.file_manager_rivers import River_N100
 
 
 def main():
-    geomotry_search_tolerance = 30
+    geomotry_search_tolerance = 15
     id_field = "orig_ob_id"
+    dangle_id_field = "dang_id"
     cpu_usage_percentage = 0.9
     num_cores = int(multiprocessing.cpu_count() * cpu_usage_percentage)
     setup_arcpy_environment()
@@ -43,10 +44,12 @@ def main():
             polygon_fc,
             buffer_fc,
             id_field,
+            dangle_id_field,
         )
         for start in range(0, total_buffers, batch_size)
     ]
 
+    print("starting processing unconnected river geometry loop...")
     with Manager() as manager:
         shared_results = manager.list()  # Shared list for results
         queue = manager.Queue()  # Manager Queue for progress tracking
@@ -61,7 +64,7 @@ def main():
         print("All problematic IDs:", all_problematic_ids)
 
     try:
-        resolve_geometry(id_field, all_problematic_ids)
+        resolve_geometry(id_field, dangle_id_field, all_problematic_ids)
     except Exception as e:
         print("Error in resolve_geometry:", e)
 
@@ -125,6 +128,20 @@ def copy_input_features(geomotry_search_tolerance):
     )
     print(f"Created {River_N100.unconnected_river_geometry__river_dangles__n100.value}")
 
+    dangle_id_field = "dang_id"
+    # Adding transferring the NBR value to the matrikkel_bygningspunkt
+    arcpy.AddField_management(
+        in_table=River_N100.unconnected_river_geometry__river_dangles__n100.value,
+        field_name=dangle_id_field,
+        field_type="LONG",
+    )
+    arcpy.CalculateField_management(
+        in_table=River_N100.unconnected_river_geometry__river_dangles__n100.value,
+        field=dangle_id_field,
+        expression="!OBJECTID!",
+    )
+    print(f"Added field dang_id")
+
     custom_arcpy.select_location_and_make_permanent_feature(
         input_layer=River_N100.unconnected_river_geometry__river_dangles__n100.value,
         overlap_type=custom_arcpy.OverlapType.INTERSECT.value,
@@ -158,6 +175,7 @@ def process_batch(
     polygon_fc,
     buffer_fc,
     id_field,
+    dangle_id_field,
     shared_results,
     queue,
 ):
@@ -168,10 +186,10 @@ def process_batch(
 
     query = f"OBJECTID >= {start} AND OBJECTID < {end}"
     with arcpy.da.SearchCursor(
-        buffer_fc, [id_field, "SHAPE@"], where_clause=query
+        buffer_fc, [id_field, dangle_id_field, "SHAPE@"], where_clause=query
     ) as buffer_cursor:
         for buffer_row in buffer_cursor:
-            buffer_id, buffer_geom = buffer_row
+            buffer_id, dangle_id, buffer_geom = buffer_row
 
             line_intersect = any(
                 line_id != buffer_id
@@ -188,13 +206,15 @@ def process_batch(
             )
 
             if line_intersect or polygon_intersect:
-                shared_results.append(buffer_id)  # Directly append to the shared list
+                buffer_id, dangle_id, buffer_geom = buffer_row
+                shared_results.append((buffer_id, dangle_id))
 
     queue.put(1)
 
 
 def resolve_geometry(
     id_field,
+    dangle_id_field,
     all_problematic_ids,
 ):
     # Check if the list is empty
@@ -202,26 +222,41 @@ def resolve_geometry(
         print("No problematic IDs found.")
         return
 
-    # Convert list of IDs to a comma-separated string
-    ids_string = ", ".join(map(str, all_problematic_ids))
-    print("SQL Query String:", ids_string)
+    # Separate id_field and dangle_id_field values
+    line_ids = {item[0] for item in all_problematic_ids}  # Extract unique line IDs
+    dangle_ids = {item[1] for item in all_problematic_ids}  # Extract unique dangle IDs
 
-    # Construct the SQL query
-    sql_problematic_ids = f"{id_field} IN ({ids_string})"
-    print("SQL Query:", sql_problematic_ids)
+    # Convert list of line IDs to a comma-separated string
+    line_ids_string = ", ".join(map(str, line_ids))
+    print("Line IDs SQL Query String:", line_ids_string)
 
-    # Proceed with the selection and creation of features
-    custom_arcpy.select_attribute_and_make_permanent_feature(
-        input_layer=River_N100.unconnected_river_geometry__unsplit_river_features__n100.value,
-        expression=sql_problematic_ids,
-        output_name=River_N100.unconnected_river_geometry__problematic_river_lines__n100.value,
-    )
+    # Construct the SQL query for line IDs
+    sql_line_problematic_ids = f"{id_field} IN ({line_ids_string})"
+    print("Line IDs SQL Query:", sql_line_problematic_ids)
 
-    custom_arcpy.select_attribute_and_make_permanent_feature(
-        input_layer=River_N100.unconnected_river_geometry__river_dangles__n100.value,
-        expression=sql_problematic_ids,
-        output_name=River_N100.unconnected_river_geometry__problematic_river_dangles__n100.value,
-    )
+    # Convert list of dangle IDs to a comma-separated string
+    dangle_ids_string = ", ".join(map(str, dangle_ids))
+    print("Dangle IDs SQL Query String:", dangle_ids_string)
+
+    # Construct the SQL query for dangle IDs
+    sql_dangle_problematic_ids = f"{dangle_id_field} IN ({dangle_ids_string})"
+    print("Dangle IDs SQL Query:", sql_dangle_problematic_ids)
+
+    # Proceed with the selection and creation of features for lines
+    if line_ids:
+        custom_arcpy.select_attribute_and_make_permanent_feature(
+            input_layer=River_N100.unconnected_river_geometry__unsplit_river_features__n100.value,
+            expression=sql_line_problematic_ids,
+            output_name=River_N100.unconnected_river_geometry__problematic_river_lines__n100.value,
+        )
+
+    # Proceed with the selection and creation of features for dangles
+    if dangle_ids:
+        custom_arcpy.select_attribute_and_make_permanent_feature(
+            input_layer=River_N100.unconnected_river_geometry__river_dangles__n100.value,
+            expression=sql_dangle_problematic_ids,
+            output_name=River_N100.unconnected_river_geometry__problematic_river_dangles__n100.value,
+        )
 
 
 if __name__ == "__main__":
