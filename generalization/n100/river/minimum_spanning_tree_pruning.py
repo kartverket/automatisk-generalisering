@@ -17,7 +17,7 @@ def main():
     G = load_network_from_features(centerline_feature)
     connection_nodes = load_start_nodes(connection_node_feature)
 
-    # Compute the heuristic Steiner Tree
+    # Compute minimum spanning tree
     mst_tree = minimum_spanning_tree_for_terminals(G, connection_nodes)
 
     # Save the pruned network
@@ -33,9 +33,16 @@ def setup_arcpy_environment():
         out_feature_class=f"{River_N100.river_centerline__study_centerline__n100.value}_copy",
     )
 
+    arcpy.management.CopyFeatures(
+        in_features=River_N100.river_centerline__study_lake_collapsed__n100.value,
+        out_feature_class=f"{River_N100.river_centerline__study_lake_collapsed__n100.value}_copy",
+    )
+
 
 lake_feature = River_N100.river_centerline__study_lake__n100.value
-centerline_feature = f"{River_N100.river_centerline__study_centerline__n100.value}_copy"
+centerline_feature = (
+    f"{River_N100.river_centerline__study_lake_collapsed__n100.value}_copy"
+)
 river_feature = River_N100.river_centerline__study_rivers__n100.value
 connection_node_feature = River_N100.river_centerline__study_dangles__n100.value
 pruned_centerline_output = River_N100.centerline_pruning__pruned_centerline__n100.value

@@ -53,6 +53,16 @@ def prepare_data():
         f"Created {River_N100.river_centerline__rivers_near_waterfeatures_erased__n100.value}"
     )
 
+    # In the future implement a logic which could use the centroid of the lake to create lines for more center logic
+    arcpy.management.FeatureToPoint(
+        in_features=River_N100.river_centerline__rivers_near_waterfeatures__n100.value,
+        out_feature_class=River_N100.short__water_feature_centroid__n100.value,
+        point_location="INSIDE",
+    )
+    print(
+        "In the future implement a logic which could use the centroid of the lake to create lines for more center logic"
+    )
+
     arcpy.topographic.PolygonToCenterline(
         in_features=River_N100.short__water_feature__n100.value,
         out_feature_class=River_N100.river_centerline__water_feature_centerline__n100.value,
@@ -61,6 +71,13 @@ def prepare_data():
     print(
         f"Created {River_N100.river_centerline__water_feature_centerline__n100.value}"
     )
+
+    arcpy.cartography.CollapseHydroPolygon(
+        in_features=River_N100.short__water_feature__n100.value,
+        out_line_feature_class=River_N100.river_centerline__water_feature_collapsed__n100.value,
+        connecting_features=River_N100.river_centerline__rivers_near_waterfeatures_erased__n100.value,
+    )
+    print(f"Created {River_N100.river_centerline__water_feature_collapsed__n100.value}")
 
 
 def create_dangles():
@@ -82,6 +99,13 @@ def create_dangles():
         overlap_type=custom_arcpy.OverlapType.INTERSECT.value,
         select_features=River_N100.river_centerline__study_lake__n100.value,
         output_name=River_N100.river_centerline__study_centerline__n100.value,
+    )
+
+    custom_arcpy.select_location_and_make_permanent_feature(
+        input_layer=River_N100.river_centerline__water_feature_collapsed__n100.value,
+        overlap_type=custom_arcpy.OverlapType.INTERSECT.value,
+        select_features=River_N100.river_centerline__study_lake__n100.value,
+        output_name=River_N100.river_centerline__study_lake_collapsed__n100.value,
     )
 
     arcpy.management.FeatureVerticesToPoints(

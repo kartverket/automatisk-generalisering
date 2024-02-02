@@ -167,9 +167,21 @@ class River_N100(Enum):
         scale=scale,
     )
 
+    short__water_feature_centroid__n100 = generate_file_name_gdb(
+        function_name="short",
+        description="water_feature_centroid",
+        scale=scale,
+    )
+
     river_centerline__water_feature_centerline__n100 = generate_file_name_gdb(
         function_name=river_centerline,
         description="water_feature_centerline",
+        scale=scale,
+    )
+
+    river_centerline__water_feature_collapsed__n100 = generate_file_name_gdb(
+        function_name=river_centerline,
+        description="water_feature_collapsed",
         scale=scale,
     )
 
@@ -188,6 +200,12 @@ class River_N100(Enum):
     river_centerline__study_centerline__n100 = generate_file_name_gdb(
         function_name=river_centerline,
         description="study_centerline",
+        scale=scale,
+    )
+
+    river_centerline__study_lake_collapsed__n100 = generate_file_name_gdb(
+        function_name=river_centerline,
+        description="study_lake_collapsed",
         scale=scale,
     )
     river_centerline__study_dangles__n100 = generate_file_name_gdb(
