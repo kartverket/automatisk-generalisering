@@ -13,7 +13,7 @@ from file_manager.n100.file_manager_rivers import River_N100
 
 def main():
     setup_arcpy_environment()
-    # prepare_data()
+    prepare_data()
     create_dangles()
 
 
