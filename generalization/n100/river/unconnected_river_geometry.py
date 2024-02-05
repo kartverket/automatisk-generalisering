@@ -259,5 +259,22 @@ def resolve_geometry(
         )
 
 
+def connect_unconnected_features():
+    problematic_dangles = (
+        River_N100.unconnected_river_geometry__problematic_river_dangles__n100.value
+    )
+    problematic_rivers = (
+        River_N100.unconnected_river_geometry__problematic_river_lines__n100.value
+    )
+    all_rivers = (
+        River_N100.unconnected_river_geometry__unsplit_river_features__n100.value
+    )
+    water_polygon = (
+        River_N100.unconnected_river_geometry__water_area_features_selected__n100.value
+    )
+
+    pass
+
+
 if __name__ == "__main__":
     main()
