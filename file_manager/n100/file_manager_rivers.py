@@ -2,8 +2,12 @@
 from enum import Enum
 import config
 import env_setup.global_config
-from env_setup import setup_directory_structure
 
+# Local root directory
+local_root_directory = config.output_folder
+
+# Project root directory
+project_root_directory = env_setup.global_config.main_directory_name
 
 # Scale name
 scale = env_setup.global_config.scale_n100
@@ -11,14 +15,22 @@ scale = env_setup.global_config.scale_n100
 # Object name
 object = env_setup.global_config.object_elv_bekk
 
-# Relative paths
+# General files directory name
+general_files_directory_name = env_setup.global_config.general_files_name
+
+# Lyrx directory name
+lyrx_directory_name = env_setup.global_config.lyrx_directory_name
+
+# Relative paths constructor
 relative_path_gdb = (
-    rf"{config.output_folder}\automatic_generalization_outputs\{scale}\{object}.gdb"
+    rf"{local_root_directory}\{project_root_directory}\{scale}\{object}.gdb"
 )
 
-relative_path_general_files = rf"{config.output_folder}\automatic_generalization_outputs\{scale}\{env_setup.global_config.general_files_name}"
+relative_path_general_files = rf"{local_root_directory}\{project_root_directory}\{scale}\{general_files_directory_name}"
 
-relative_path_lyrx = rf"{config.output_folder}\automatic_generalization_outputs\{scale}\{env_setup.global_config.lyrx_directory_name}"
+relative_path_lyrx = (
+    rf"{local_root_directory}\{project_root_directory}\{scale}\{lyrx_directory_name}"
+)
 
 
 ##############################################################################################################################################
