@@ -1,23 +1,24 @@
 # Imports
 from enum import Enum
 import config
+import env_setup.global_config
 from env_setup import setup_directory_structure
 
 
 # Scale name
-scale = setup_directory_structure.scale_n100
+scale = env_setup.global_config.scale_n100
 
 # Object name
-object = setup_directory_structure.object_elv_bekk
+object = env_setup.global_config.object_elv_bekk
 
 # Relative paths
 relative_path_gdb = (
     rf"{config.output_folder}\automatic_generalization_outputs\{scale}\{object}.gdb"
 )
 
-relative_path_general_files = rf"{config.output_folder}\automatic_generalization_outputs\{scale}\{setup_directory_structure.general_files_name}"
+relative_path_general_files = rf"{config.output_folder}\automatic_generalization_outputs\{scale}\{env_setup.global_config.general_files_name}"
 
-relative_path_lyrx = rf"{config.output_folder}\automatic_generalization_outputs\{scale}\{setup_directory_structure.lyrx_directory_name}"
+relative_path_lyrx = rf"{config.output_folder}\automatic_generalization_outputs\{scale}\{env_setup.global_config.lyrx_directory_name}"
 
 
 ##############################################################################################################################################

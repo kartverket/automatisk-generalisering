@@ -3,6 +3,7 @@ import os
 import logging
 import random
 
+import env_setup.global_config
 from env_setup import environment_setup
 from custom_tools import custom_arcpy
 from env_setup import setup_directory_structure
@@ -288,7 +289,7 @@ if __name__ == "__main__":
     partition_iterator = PartitionIterator(
         inputs=inputs,
         root_file_partition_iterator=Building_N100.iteration__partition_iterator__n100.value,
-        scale=setup_directory_structure.scale_n100,
+        scale=env_setup.global_config.scale_n100,
         output_feature_class=Building_N100.iteration__partition_iterator_final_output__n100.value,
         # Add other parameters like custom_functions if you have any
     )

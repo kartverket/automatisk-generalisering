@@ -2,6 +2,20 @@ import arcpy
 import os
 
 import config
+from env_setup.global_config import (
+    scale_n50,
+    scale_n100,
+    scale_n250,
+    scale_n500,
+    object_admin,
+    object_arealdekke_flate,
+    object_bygning,
+    object_elv_bekk,
+    object_veg_sti,
+    main_directory_name,
+    lyrx_directory_name,
+    general_files_name,
+)
 
 
 def main():
@@ -122,22 +136,6 @@ def create_general_files_structure(
         )
         print(f"Created 'general_files' folder: {general_files_path}")
 
-
-main_directory_name = "automatic_generalization_outputs"
-
-lyrx_directory_name = "lyrx_outputs"
-general_files_name = "general_files"
-
-scale_n50 = "n50"
-scale_n100 = "n100"
-scale_n250 = "n250"
-scale_n500 = "n500"
-
-object_admin = "admin"
-object_arealdekke_flate = "arealdekke_flate"
-object_bygning = "bygning"
-object_elv_bekk = "elv_bekk"
-object_veg_sti = "veg_sti"
 
 # Subdirectories and GDB names
 sub_directories = [
