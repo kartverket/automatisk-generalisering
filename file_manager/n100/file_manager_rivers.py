@@ -90,6 +90,7 @@ def generate_file_name_lyrx(
 
 # All file and function names in correct order
 unconnected_river_geometry = "unconnected_river_geometry"
+extending_river_geometry = "extending_river_geometry"
 river_centerline = "river_centerline"
 centerline_pruning = "centerline_pruning"
 
@@ -156,6 +157,40 @@ class River_N100(Enum):
             description="problematic_river_dangles",
             scale=scale,
         )
+    )
+
+    #################################################
+    ########### EXTENDING RIVER LINES ###########
+    #################################################
+
+    extending_river_geometry__input_rivers_copy__n100 = generate_file_name_gdb(
+        function_name=extending_river_geometry,
+        description="input_rivers_copy",
+        scale=scale,
+    )
+
+    extending_river_geometry__exluded_objects__n100 = generate_file_name_gdb(
+        function_name=extending_river_geometry,
+        description="exluded_objects",
+        scale=scale,
+    )
+
+    extending_river_geometry__near_table__n100 = generate_file_name_gdb(
+        function_name=extending_river_geometry,
+        description="near_table",
+        scale=scale,
+    )
+
+    extending_river_geometry__new_lines__n100 = generate_file_name_gdb(
+        function_name=extending_river_geometry,
+        description="new_lines",
+        scale=scale,
+    )
+
+    extending_river_geometry__merged_lines__n100 = generate_file_name_gdb(
+        function_name=extending_river_geometry,
+        description="merged_lines",
+        scale=scale,
     )
 
     #################################################
