@@ -31,9 +31,7 @@ def main():
 
             # Proceed with excluding the originating line and generating near table
             near_features = exclude_originating_line(all_rivers, dangle_oid, id_field)
-            near_table = generate_near_table(
-                dangle_geom, near_features
-            )  # Adjust this function to accept geometry
+            near_table = generate_near_table(dangle_geom, near_features, water_polygon)
             coordinate_pairs = get_xy_coordinates(near_table)
             line_points.extend(coordinate_pairs)
             print(f"Processed dangle {dangle_oid}")
@@ -67,15 +65,28 @@ def processing_preparation():
         out_feature_class=f"{River_N100.unconnected_river_geometry__problematic_river_dangles__n100.value}_copy",
     )
 
-    problematic_dangles = (
-        River_N100.unconnected_river_geometry__problematic_river_dangles__n100.value
+    arcpy.analysis.PairwiseBuffer(
+        in_features=River_N100.unconnected_river_geometry__problematic_river_dangles__n100.value,
+        out_feature_class=f"{River_N100.unconnected_river_geometry__problematic_river_dangles__n100.value}_buffer",
+        buffer_distance_or_field="31 Meters",
     )
+    print(
+        f"Created {River_N100.unconnected_river_geometry__problematic_river_dangles__n100.value}_buffer"
+    )
+    arcpy.analysis.PairwiseClip(
+        in_features=River_N100.unconnected_river_geometry__water_area_features_selected__n100.value,
+        clip_features=f"{River_N100.unconnected_river_geometry__problematic_river_dangles__n100.value}_buffer",
+        out_feature_class=f"{River_N100.unconnected_river_geometry__water_area_features_selected__n100.value}_clipped",
+    )
+    print(
+        f"Created {River_N100.unconnected_river_geometry__water_area_features_selected__n100.value}_clipped"
+    )
+
+    problematic_dangles = f"{River_N100.unconnected_river_geometry__problematic_river_dangles__n100.value}_copy"
     all_rivers = (
         River_N100.unconnected_river_geometry__unsplit_river_features__n100.value
     )
-    water_polygon = (
-        River_N100.unconnected_river_geometry__water_area_features_selected__n100.value
-    )
+    water_polygon = f"{River_N100.unconnected_river_geometry__water_area_features_selected__n100.value}_clipped"
 
     return problematic_dangles, all_rivers, water_polygon
 
@@ -97,32 +108,37 @@ def exclude_originating_line(all_rivers, dangle_oid, id_field):
     return excluded_rivers_layer
 
 
-def generate_near_table(dangle, near_features):
+def generate_near_table(dangle, near_features, water_polygon):
     """
-    Generate a near table for a dangle point to find the nearest feature's closest point.
+    Generate a near table for a dangle point to find the nearest feature's closest point,
+    considering both river and water polygon features.
 
     :param dangle: A point geometry representing the dangle.
-    :param near_features: The feature class to search within.
+    :param excluded_rivers_layer: The feature layer containing all river line features excluding the originating line.
+    :param water_polygon: The feature class containing water polygon features.
     :return: The path to the near table generated.
     """
-    # Create a temporary in-memory feature class for the dangle point
-    dangle_feature_class = f"{River_N100.unconnected_river_geometry__problematic_river_dangles__n100.value}_copy"
-    arcpy.CopyFeatures_management(dangle, dangle_feature_class)
+    # Ensure dangle is a feature class or layer; if it's a geometry, you'll need to create a temporary feature class/layer
+    dangle_feature_class = "in_memory/dangle_point"
+    arcpy.CopyFeatures_management([dangle], dangle_feature_class)
 
     # Set up the near table path
     near_table = "in_memory/near_table"
 
+    # Combine both feature classes into a list for the near_features parameter
+    all_near_features = [near_features, water_polygon]
+
     # Generate the near table
     arcpy.GenerateNearTable_analysis(
         in_features=dangle_feature_class,
-        near_features=near_features,
+        near_features=all_near_features,
         out_table=near_table,
         closest="CLOSEST",
         location="LOCATION",
         method="PLANAR",
     )
 
-    # Clean up the temporary dangle point feature class
+    # Clean up the temporary dangle point feature class if needed
     arcpy.Delete_management(dangle_feature_class)
 
     return near_table
