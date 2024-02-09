@@ -8,6 +8,7 @@ Subpackages
    :maxdepth: 4
 
    generalization.n100.building
+   generalization.n100.river
 
 Module contents
 ---------------

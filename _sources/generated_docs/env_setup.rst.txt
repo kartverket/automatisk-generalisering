@@ -12,6 +12,14 @@ env\_setup.environment\_setup module
    :undoc-members:
    :show-inheritance:
 
+env\_setup.global\_config module
+--------------------------------
+
+.. automodule:: env_setup.global_config
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
 env\_setup.setup\_directory\_structure module
 ---------------------------------------------
 

@@ -1,0 +1,408 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../../">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>file_manager.n100.file_manager_rivers &mdash; Automatisk Generalisering 0.0.1 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=80d5e7a1" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/css/theme.css?v=19f00094" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/custom.css" />
+
+  
+  <!--[if lt IE 9]>
+    <script src="../../../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script src="../../../_static/jquery.js?v=5d32c60e"></script>
+        <script src="../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+        <script src="../../../_static/documentation_options.js?v=d45e8c67"></script>
+        <script src="../../../_static/doctools.js?v=888ff710"></script>
+        <script src="../../../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../index.html" class="icon icon-home">
+            Automatisk Generalisering
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../generated_docs/custom_tools.html">custom_tools package</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../generated_docs/env_setup.html">env_setup package</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../generated_docs/file_manager.html">file_manager package</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../generated_docs/generalization.n100.building.html">generalization.n100.building package</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../generated_docs/input_data.html">input_data package</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../generated_docs/modules.html">automatisk-generalisering</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../index.html">Automatisk Generalisering</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">file_manager.n100.file_manager_rivers</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for file_manager.n100.file_manager_rivers</h1><div class="highlight"><pre>
+<span></span><span class="c1"># Imports</span>
+<span class="kn">from</span> <span class="nn">enum</span> <span class="kn">import</span> <span class="n">Enum</span>
+<span class="kn">import</span> <span class="nn">config</span>
+<span class="kn">import</span> <span class="nn">env_setup.global_config</span>
+
+<span class="c1"># Local root directory</span>
+<span class="n">local_root_directory</span> <span class="o">=</span> <span class="n">config</span><span class="o">.</span><span class="n">output_folder</span>
+
+<span class="c1"># Project root directory</span>
+<span class="n">project_root_directory</span> <span class="o">=</span> <span class="n">env_setup</span><span class="o">.</span><span class="n">global_config</span><span class="o">.</span><span class="n">main_directory_name</span>
+
+<span class="c1"># Scale name</span>
+<span class="n">scale</span> <span class="o">=</span> <span class="n">env_setup</span><span class="o">.</span><span class="n">global_config</span><span class="o">.</span><span class="n">scale_n100</span>
+
+<span class="c1"># Object name</span>
+<span class="nb">object</span> <span class="o">=</span> <span class="n">env_setup</span><span class="o">.</span><span class="n">global_config</span><span class="o">.</span><span class="n">object_elv_bekk</span>
+
+<span class="c1"># General files directory name</span>
+<span class="n">general_files_directory_name</span> <span class="o">=</span> <span class="n">env_setup</span><span class="o">.</span><span class="n">global_config</span><span class="o">.</span><span class="n">general_files_name</span>
+
+<span class="c1"># Lyrx directory name</span>
+<span class="n">lyrx_directory_name</span> <span class="o">=</span> <span class="n">env_setup</span><span class="o">.</span><span class="n">global_config</span><span class="o">.</span><span class="n">lyrx_directory_name</span>
+
+<span class="c1"># Relative paths constructor</span>
+<span class="n">relative_path_gdb</span> <span class="o">=</span> <span class="p">(</span>
+    <span class="sa">rf</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">local_root_directory</span><span class="si">}</span><span class="s2">\</span><span class="si">{</span><span class="n">project_root_directory</span><span class="si">}</span><span class="s2">\</span><span class="si">{</span><span class="n">scale</span><span class="si">}</span><span class="s2">\</span><span class="si">{</span><span class="nb">object</span><span class="si">}</span><span class="s2">.gdb&quot;</span>
+<span class="p">)</span>
+
+<span class="n">relative_path_general_files</span> <span class="o">=</span> <span class="sa">rf</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">local_root_directory</span><span class="si">}</span><span class="s2">\</span><span class="si">{</span><span class="n">project_root_directory</span><span class="si">}</span><span class="s2">\</span><span class="si">{</span><span class="n">scale</span><span class="si">}</span><span class="s2">\</span><span class="si">{</span><span class="n">general_files_directory_name</span><span class="si">}</span><span class="s2">&quot;</span>
+
+<span class="n">relative_path_lyrx</span> <span class="o">=</span> <span class="p">(</span>
+    <span class="sa">rf</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">local_root_directory</span><span class="si">}</span><span class="s2">\</span><span class="si">{</span><span class="n">project_root_directory</span><span class="si">}</span><span class="s2">\</span><span class="si">{</span><span class="n">scale</span><span class="si">}</span><span class="s2">\</span><span class="si">{</span><span class="n">lyrx_directory_name</span><span class="si">}</span><span class="s2">&quot;</span>
+<span class="p">)</span>
+
+
+<span class="c1">##############################################################################################################################################</span>
+
+
+<span class="c1"># Creating file names based on set standard</span>
+<div class="viewcode-block" id="generate_file_name_gdb">
+<a class="viewcode-back" href="../../../generated_docs/file_manager.n100.html#file_manager.n100.file_manager_rivers.generate_file_name_gdb">[docs]</a>
+<span class="k">def</span> <span class="nf">generate_file_name_gdb</span><span class="p">(</span>
+    <span class="n">function_name</span><span class="p">,</span>
+    <span class="n">description</span><span class="p">,</span>
+    <span class="n">scale</span><span class="p">,</span>
+<span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Summary:</span>
+<span class="sd">        Generates the full file path for files which can be stored in gdb&#39;s, where the files are generated to the river.gdb in the n100 subdirectory.</span>
+
+<span class="sd">    Details:</span>
+<span class="sd">        - The path is generated using the relative path to the bygning.gdb in the n100 subdirectory.</span>
+<span class="sd">        - The file name is generated using the function name, description, and scale.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="sa">rf</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">relative_path_gdb</span><span class="si">}</span><span class="s2">\</span><span class="si">{</span><span class="n">function_name</span><span class="si">}</span><span class="s2">__</span><span class="si">{</span><span class="n">description</span><span class="si">}</span><span class="s2">__</span><span class="si">{</span><span class="n">scale</span><span class="si">}</span><span class="s2">&quot;</span></div>
+
+
+
+<div class="viewcode-block" id="generate_file_name_general_files">
+<a class="viewcode-back" href="../../../generated_docs/file_manager.n100.html#file_manager.n100.file_manager_rivers.generate_file_name_general_files">[docs]</a>
+<span class="k">def</span> <span class="nf">generate_file_name_general_files</span><span class="p">(</span>
+    <span class="n">function_name</span><span class="p">,</span>
+    <span class="n">description</span><span class="p">,</span>
+    <span class="n">scale</span><span class="p">,</span>
+    <span class="n">file_type</span><span class="p">,</span>
+<span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Summary:</span>
+<span class="sd">        Generates the full file path for files which can not be stored in gdb&#39;s, but are stored in the general_files subdirectory for n100.</span>
+
+<span class="sd">    Details:</span>
+<span class="sd">        - The path is generated using the relative path to the genral_files subdirectory.</span>
+<span class="sd">        - The file name is generated using the function name, description, and scale.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="sa">rf</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">relative_path_general_files</span><span class="si">}</span><span class="s2">\</span><span class="si">{</span><span class="n">function_name</span><span class="si">}</span><span class="s2">__</span><span class="si">{</span><span class="n">description</span><span class="si">}</span><span class="s2">__</span><span class="si">{</span><span class="n">scale</span><span class="si">}</span><span class="s2">.</span><span class="si">{</span><span class="n">file_type</span><span class="si">}</span><span class="s2">&quot;</span></div>
+
+
+
+<div class="viewcode-block" id="generate_file_name_lyrx">
+<a class="viewcode-back" href="../../../generated_docs/file_manager.n100.html#file_manager.n100.file_manager_rivers.generate_file_name_lyrx">[docs]</a>
+<span class="k">def</span> <span class="nf">generate_file_name_lyrx</span><span class="p">(</span>
+    <span class="n">function_name</span><span class="p">,</span>
+    <span class="n">description</span><span class="p">,</span>
+    <span class="n">scale</span><span class="p">,</span>
+<span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Summary:</span>
+<span class="sd">        Generates the full file path for lyrx files which can not be stored in gdb&#39;s. The lyrx files are generated to the lyrx_outputs subdirectory for n100.</span>
+
+<span class="sd">    Details:</span>
+<span class="sd">        - The path is generated using the relative path to the lyrx_outputs subdirectory.</span>
+<span class="sd">        - The file name is generated using the function name, description, and scale.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="sa">rf</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">relative_path_lyrx</span><span class="si">}</span><span class="s2">\</span><span class="si">{</span><span class="n">function_name</span><span class="si">}</span><span class="s2">__</span><span class="si">{</span><span class="n">description</span><span class="si">}</span><span class="s2">__</span><span class="si">{</span><span class="n">scale</span><span class="si">}</span><span class="s2">.lyrx&quot;</span></div>
+
+
+
+<span class="c1">##############################################################################################################################################</span>
+
+<span class="c1"># All file and function names in correct order</span>
+<span class="n">unconnected_river_geometry</span> <span class="o">=</span> <span class="s2">&quot;unconnected_river_geometry&quot;</span>
+<span class="n">extending_river_geometry</span> <span class="o">=</span> <span class="s2">&quot;extending_river_geometry&quot;</span>
+<span class="n">river_centerline</span> <span class="o">=</span> <span class="s2">&quot;river_centerline&quot;</span>
+<span class="n">centerline_pruning</span> <span class="o">=</span> <span class="s2">&quot;centerline_pruning&quot;</span>
+
+<span class="c1">##############################################################################################################################################</span>
+
+
+<div class="viewcode-block" id="River_N100">
+<a class="viewcode-back" href="../../../generated_docs/file_manager.n100.html#file_manager.n100.file_manager_rivers.River_N100">[docs]</a>
+<span class="k">class</span> <span class="nc">River_N100</span><span class="p">(</span><span class="n">Enum</span><span class="p">):</span>
+    <span class="c1">#################################################</span>
+    <span class="c1">########### UNCONNECTED RIVER GEOMETRY  ###########</span>
+    <span class="c1">#################################################</span>
+
+    <span class="n">unconnected_river_geometry__river_area_selection__n100</span> <span class="o">=</span> <span class="n">generate_file_name_gdb</span><span class="p">(</span>
+        <span class="n">function_name</span><span class="o">=</span><span class="n">unconnected_river_geometry</span><span class="p">,</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">&quot;river_area_selection&quot;</span><span class="p">,</span>
+        <span class="n">scale</span><span class="o">=</span><span class="n">scale</span><span class="p">,</span>
+    <span class="p">)</span>
+
+    <span class="n">unconnected_river_geometry__unsplit_river_features__n100</span> <span class="o">=</span> <span class="n">generate_file_name_gdb</span><span class="p">(</span>
+        <span class="n">function_name</span><span class="o">=</span><span class="n">unconnected_river_geometry</span><span class="p">,</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">&quot;unsplit_river_features&quot;</span><span class="p">,</span>
+        <span class="n">scale</span><span class="o">=</span><span class="n">scale</span><span class="p">,</span>
+    <span class="p">)</span>
+
+    <span class="n">unconnected_river_geometry__water_area_features__n100</span> <span class="o">=</span> <span class="n">generate_file_name_gdb</span><span class="p">(</span>
+        <span class="n">function_name</span><span class="o">=</span><span class="n">unconnected_river_geometry</span><span class="p">,</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">&quot;water_area_features&quot;</span><span class="p">,</span>
+        <span class="n">scale</span><span class="o">=</span><span class="n">scale</span><span class="p">,</span>
+    <span class="p">)</span>
+
+    <span class="n">unconnected_river_geometry__water_area_features_selected__n100</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="n">generate_file_name_gdb</span><span class="p">(</span>
+            <span class="n">function_name</span><span class="o">=</span><span class="n">unconnected_river_geometry</span><span class="p">,</span>
+            <span class="n">description</span><span class="o">=</span><span class="s2">&quot;water_area_features_selected&quot;</span><span class="p">,</span>
+            <span class="n">scale</span><span class="o">=</span><span class="n">scale</span><span class="p">,</span>
+        <span class="p">)</span>
+    <span class="p">)</span>
+
+    <span class="n">unconnected_river_geometry__river_dangles__n100</span> <span class="o">=</span> <span class="n">generate_file_name_gdb</span><span class="p">(</span>
+        <span class="n">function_name</span><span class="o">=</span><span class="n">unconnected_river_geometry</span><span class="p">,</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">&quot;river_dangles&quot;</span><span class="p">,</span>
+        <span class="n">scale</span><span class="o">=</span><span class="n">scale</span><span class="p">,</span>
+    <span class="p">)</span>
+
+    <span class="n">unconnected_river_selected_river_dangles__n100</span> <span class="o">=</span> <span class="n">generate_file_name_gdb</span><span class="p">(</span>
+        <span class="n">function_name</span><span class="o">=</span><span class="n">unconnected_river_geometry</span><span class="p">,</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">&quot;selected_river_dangles&quot;</span><span class="p">,</span>
+        <span class="n">scale</span><span class="o">=</span><span class="n">scale</span><span class="p">,</span>
+    <span class="p">)</span>
+
+    <span class="n">unconnected_river_geometry__river_end_points__n100</span> <span class="o">=</span> <span class="n">generate_file_name_gdb</span><span class="p">(</span>
+        <span class="n">function_name</span><span class="o">=</span><span class="n">unconnected_river_geometry</span><span class="p">,</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">&quot;river_end_points&quot;</span><span class="p">,</span>
+        <span class="n">scale</span><span class="o">=</span><span class="n">scale</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="n">unconnected_river_geometry__river_dangles_buffer__n100</span> <span class="o">=</span> <span class="n">generate_file_name_gdb</span><span class="p">(</span>
+        <span class="n">function_name</span><span class="o">=</span><span class="n">unconnected_river_geometry</span><span class="p">,</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">&quot;river_dangles_buffer&quot;</span><span class="p">,</span>
+        <span class="n">scale</span><span class="o">=</span><span class="n">scale</span><span class="p">,</span>
+    <span class="p">)</span>
+
+    <span class="n">unconnected_river_geometry__problematic_river_lines__n100</span> <span class="o">=</span> <span class="n">generate_file_name_gdb</span><span class="p">(</span>
+        <span class="n">function_name</span><span class="o">=</span><span class="n">unconnected_river_geometry</span><span class="p">,</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">&quot;problematic_river_lines&quot;</span><span class="p">,</span>
+        <span class="n">scale</span><span class="o">=</span><span class="n">scale</span><span class="p">,</span>
+    <span class="p">)</span>
+
+    <span class="n">unconnected_river_geometry__problematic_river_dangles__n100</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="n">generate_file_name_gdb</span><span class="p">(</span>
+            <span class="n">function_name</span><span class="o">=</span><span class="n">unconnected_river_geometry</span><span class="p">,</span>
+            <span class="n">description</span><span class="o">=</span><span class="s2">&quot;problematic_river_dangles&quot;</span><span class="p">,</span>
+            <span class="n">scale</span><span class="o">=</span><span class="n">scale</span><span class="p">,</span>
+        <span class="p">)</span>
+    <span class="p">)</span>
+
+    <span class="c1">#################################################</span>
+    <span class="c1">########### EXTENDING RIVER LINES ###########</span>
+    <span class="c1">#################################################</span>
+
+    <span class="n">extending_river_geometry__input_rivers_copy__n100</span> <span class="o">=</span> <span class="n">generate_file_name_gdb</span><span class="p">(</span>
+        <span class="n">function_name</span><span class="o">=</span><span class="n">extending_river_geometry</span><span class="p">,</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">&quot;input_rivers_copy&quot;</span><span class="p">,</span>
+        <span class="n">scale</span><span class="o">=</span><span class="n">scale</span><span class="p">,</span>
+    <span class="p">)</span>
+
+    <span class="n">extending_river_geometry__exluded_objects__n100</span> <span class="o">=</span> <span class="n">generate_file_name_gdb</span><span class="p">(</span>
+        <span class="n">function_name</span><span class="o">=</span><span class="n">extending_river_geometry</span><span class="p">,</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">&quot;exluded_objects&quot;</span><span class="p">,</span>
+        <span class="n">scale</span><span class="o">=</span><span class="n">scale</span><span class="p">,</span>
+    <span class="p">)</span>
+
+    <span class="n">extending_river_geometry__near_table__n100</span> <span class="o">=</span> <span class="n">generate_file_name_gdb</span><span class="p">(</span>
+        <span class="n">function_name</span><span class="o">=</span><span class="n">extending_river_geometry</span><span class="p">,</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">&quot;near_table&quot;</span><span class="p">,</span>
+        <span class="n">scale</span><span class="o">=</span><span class="n">scale</span><span class="p">,</span>
+    <span class="p">)</span>
+
+    <span class="n">extending_river_geometry__new_lines__n100</span> <span class="o">=</span> <span class="n">generate_file_name_gdb</span><span class="p">(</span>
+        <span class="n">function_name</span><span class="o">=</span><span class="n">extending_river_geometry</span><span class="p">,</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">&quot;new_lines&quot;</span><span class="p">,</span>
+        <span class="n">scale</span><span class="o">=</span><span class="n">scale</span><span class="p">,</span>
+    <span class="p">)</span>
+
+    <span class="n">extending_river_geometry__unsplit_new_lines__n100</span> <span class="o">=</span> <span class="n">generate_file_name_gdb</span><span class="p">(</span>
+        <span class="n">function_name</span><span class="o">=</span><span class="n">extending_river_geometry</span><span class="p">,</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">&quot;unsplit_new_lines&quot;</span><span class="p">,</span>
+        <span class="n">scale</span><span class="o">=</span><span class="n">scale</span><span class="p">,</span>
+    <span class="p">)</span>
+
+    <span class="n">extending_river_geometry__merged_lines__n100</span> <span class="o">=</span> <span class="n">generate_file_name_gdb</span><span class="p">(</span>
+        <span class="n">function_name</span><span class="o">=</span><span class="n">extending_river_geometry</span><span class="p">,</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">&quot;merged_lines&quot;</span><span class="p">,</span>
+        <span class="n">scale</span><span class="o">=</span><span class="n">scale</span><span class="p">,</span>
+    <span class="p">)</span>
+
+    <span class="n">extending_river_geometry__unsplit_merged_lines__n100</span> <span class="o">=</span> <span class="n">generate_file_name_gdb</span><span class="p">(</span>
+        <span class="n">function_name</span><span class="o">=</span><span class="n">extending_river_geometry</span><span class="p">,</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">&quot;unsplit_merged_lines&quot;</span><span class="p">,</span>
+        <span class="n">scale</span><span class="o">=</span><span class="n">scale</span><span class="p">,</span>
+    <span class="p">)</span>
+
+    <span class="c1">#################################################</span>
+    <span class="c1">########### RIVER CENTERLINE ###########</span>
+    <span class="c1">#################################################</span>
+
+    <span class="n">river_centerline__rivers_near_waterfeatures__n100</span> <span class="o">=</span> <span class="n">generate_file_name_gdb</span><span class="p">(</span>
+        <span class="n">function_name</span><span class="o">=</span><span class="n">river_centerline</span><span class="p">,</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">&quot;rivers_near_waterfeatures&quot;</span><span class="p">,</span>
+        <span class="n">scale</span><span class="o">=</span><span class="n">scale</span><span class="p">,</span>
+    <span class="p">)</span>
+
+    <span class="n">river_centerline__rivers_near_waterfeatures_erased__n100</span> <span class="o">=</span> <span class="n">generate_file_name_gdb</span><span class="p">(</span>
+        <span class="n">function_name</span><span class="o">=</span><span class="n">river_centerline</span><span class="p">,</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">&quot;rivers_near_waterfeatures_erased&quot;</span><span class="p">,</span>
+        <span class="n">scale</span><span class="o">=</span><span class="n">scale</span><span class="p">,</span>
+    <span class="p">)</span>
+
+    <span class="n">short__water_feature__n100</span> <span class="o">=</span> <span class="n">generate_file_name_gdb</span><span class="p">(</span>
+        <span class="n">function_name</span><span class="o">=</span><span class="s2">&quot;short&quot;</span><span class="p">,</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">&quot;water_feature&quot;</span><span class="p">,</span>
+        <span class="n">scale</span><span class="o">=</span><span class="n">scale</span><span class="p">,</span>
+    <span class="p">)</span>
+
+    <span class="n">short__water_feature_centroid__n100</span> <span class="o">=</span> <span class="n">generate_file_name_gdb</span><span class="p">(</span>
+        <span class="n">function_name</span><span class="o">=</span><span class="s2">&quot;short&quot;</span><span class="p">,</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">&quot;water_feature_centroid&quot;</span><span class="p">,</span>
+        <span class="n">scale</span><span class="o">=</span><span class="n">scale</span><span class="p">,</span>
+    <span class="p">)</span>
+
+    <span class="n">river_centerline__water_feature_centerline__n100</span> <span class="o">=</span> <span class="n">generate_file_name_gdb</span><span class="p">(</span>
+        <span class="n">function_name</span><span class="o">=</span><span class="n">river_centerline</span><span class="p">,</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">&quot;water_feature_centerline&quot;</span><span class="p">,</span>
+        <span class="n">scale</span><span class="o">=</span><span class="n">scale</span><span class="p">,</span>
+    <span class="p">)</span>
+
+    <span class="n">river_centerline__water_feature_collapsed__n100</span> <span class="o">=</span> <span class="n">generate_file_name_gdb</span><span class="p">(</span>
+        <span class="n">function_name</span><span class="o">=</span><span class="n">river_centerline</span><span class="p">,</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">&quot;water_feature_collapsed&quot;</span><span class="p">,</span>
+        <span class="n">scale</span><span class="o">=</span><span class="n">scale</span><span class="p">,</span>
+    <span class="p">)</span>
+
+    <span class="n">river_centerline__study_lake__n100</span> <span class="o">=</span> <span class="n">generate_file_name_gdb</span><span class="p">(</span>
+        <span class="n">function_name</span><span class="o">=</span><span class="n">river_centerline</span><span class="p">,</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">&quot;study_lake&quot;</span><span class="p">,</span>
+        <span class="n">scale</span><span class="o">=</span><span class="n">scale</span><span class="p">,</span>
+    <span class="p">)</span>
+
+    <span class="n">river_centerline__study_rivers__n100</span> <span class="o">=</span> <span class="n">generate_file_name_gdb</span><span class="p">(</span>
+        <span class="n">function_name</span><span class="o">=</span><span class="n">river_centerline</span><span class="p">,</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">&quot;study_rivers&quot;</span><span class="p">,</span>
+        <span class="n">scale</span><span class="o">=</span><span class="n">scale</span><span class="p">,</span>
+    <span class="p">)</span>
+
+    <span class="n">river_centerline__study_centerline__n100</span> <span class="o">=</span> <span class="n">generate_file_name_gdb</span><span class="p">(</span>
+        <span class="n">function_name</span><span class="o">=</span><span class="n">river_centerline</span><span class="p">,</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">&quot;study_centerline&quot;</span><span class="p">,</span>
+        <span class="n">scale</span><span class="o">=</span><span class="n">scale</span><span class="p">,</span>
+    <span class="p">)</span>
+
+    <span class="n">river_centerline__study_lake_collapsed__n100</span> <span class="o">=</span> <span class="n">generate_file_name_gdb</span><span class="p">(</span>
+        <span class="n">function_name</span><span class="o">=</span><span class="n">river_centerline</span><span class="p">,</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">&quot;study_lake_collapsed&quot;</span><span class="p">,</span>
+        <span class="n">scale</span><span class="o">=</span><span class="n">scale</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="n">river_centerline__study_dangles__n100</span> <span class="o">=</span> <span class="n">generate_file_name_gdb</span><span class="p">(</span>
+        <span class="n">function_name</span><span class="o">=</span><span class="n">river_centerline</span><span class="p">,</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">&quot;study_dangles&quot;</span><span class="p">,</span>
+        <span class="n">scale</span><span class="o">=</span><span class="n">scale</span><span class="p">,</span>
+    <span class="p">)</span>
+
+    <span class="n">centerline_pruning__pruned_centerline__n100</span> <span class="o">=</span> <span class="n">generate_file_name_gdb</span><span class="p">(</span>
+        <span class="n">function_name</span><span class="o">=</span><span class="n">centerline_pruning</span><span class="p">,</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">&quot;pruned_centerline&quot;</span><span class="p">,</span>
+        <span class="n">scale</span><span class="o">=</span><span class="n">scale</span><span class="p">,</span>
+    <span class="p">)</span></div>
+
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2024, Kartverket.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

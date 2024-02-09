@@ -54,6 +54,7 @@
 <li class="toctree-l3 current"><a class="current reference internal" href="#">file_manager.n100 package</a><ul>
 <li class="toctree-l4"><a class="reference internal" href="#submodules">Submodules</a></li>
 <li class="toctree-l4"><a class="reference internal" href="#module-file_manager.n100.file_manager_buildings">file_manager.n100.file_manager_buildings module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#module-file_manager.n100.file_manager_rivers">file_manager.n100.file_manager_rivers module</a></li>
 <li class="toctree-l4"><a class="reference internal" href="#module-file_manager.n100">Module contents</a></li>
 </ul>
 </li>
@@ -750,6 +751,202 @@ which can be stored in gdb’s and files which can not be stored in gdb’s. It 
 <dl class="py attribute">
 <dt class="sig sig-object py" id="file_manager.n100.file_manager_buildings.Building_N100.resolve_building_conflicts__drawn_polygon_RBC_result_2__n100_lyrx">
 <span class="sig-name descname"><span class="pre">resolve_building_conflicts__drawn_polygon_RBC_result_2__n100_lyrx</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'C:\\path\\to\\folder\\you\\want\\your\\outputs\\in\\automatic_generalization_outputs\\n100\\lyrx_outputs\\resolve_building_conflicts__drawn_polygon_RBC_result_2__n100.lyrx'</span></em><a class="headerlink" href="#file_manager.n100.file_manager_buildings.Building_N100.resolve_building_conflicts__drawn_polygon_RBC_result_2__n100_lyrx" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+</section>
+<section id="module-file_manager.n100.file_manager_rivers">
+<span id="file-manager-n100-file-manager-rivers-module"></span><h2>file_manager.n100.file_manager_rivers module<a class="headerlink" href="#module-file_manager.n100.file_manager_rivers" title="Link to this heading"></a></h2>
+<dl class="py function">
+<dt class="sig sig-object py" id="file_manager.n100.file_manager_rivers.generate_file_name_gdb">
+<span class="sig-prename descclassname"><span class="pre">file_manager.n100.file_manager_rivers.</span></span><span class="sig-name descname"><span class="pre">generate_file_name_gdb</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">function_name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">description</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">scale</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/file_manager/n100/file_manager_rivers.html#generate_file_name_gdb"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#file_manager.n100.file_manager_rivers.generate_file_name_gdb" title="Link to this definition"></a></dt>
+<dd><dl class="simple">
+<dt>Summary:</dt><dd><p>Generates the full file path for files which can be stored in gdb’s, where the files are generated to the river.gdb in the n100 subdirectory.</p>
+</dd>
+<dt>Details:</dt><dd><ul class="simple">
+<li><p>The path is generated using the relative path to the bygning.gdb in the n100 subdirectory.</p></li>
+<li><p>The file name is generated using the function name, description, and scale.</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="file_manager.n100.file_manager_rivers.generate_file_name_general_files">
+<span class="sig-prename descclassname"><span class="pre">file_manager.n100.file_manager_rivers.</span></span><span class="sig-name descname"><span class="pre">generate_file_name_general_files</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">function_name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">description</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">scale</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">file_type</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/file_manager/n100/file_manager_rivers.html#generate_file_name_general_files"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#file_manager.n100.file_manager_rivers.generate_file_name_general_files" title="Link to this definition"></a></dt>
+<dd><dl class="simple">
+<dt>Summary:</dt><dd><p>Generates the full file path for files which can not be stored in gdb’s, but are stored in the general_files subdirectory for n100.</p>
+</dd>
+<dt>Details:</dt><dd><ul class="simple">
+<li><p>The path is generated using the relative path to the genral_files subdirectory.</p></li>
+<li><p>The file name is generated using the function name, description, and scale.</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="file_manager.n100.file_manager_rivers.generate_file_name_lyrx">
+<span class="sig-prename descclassname"><span class="pre">file_manager.n100.file_manager_rivers.</span></span><span class="sig-name descname"><span class="pre">generate_file_name_lyrx</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">function_name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">description</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">scale</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/file_manager/n100/file_manager_rivers.html#generate_file_name_lyrx"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#file_manager.n100.file_manager_rivers.generate_file_name_lyrx" title="Link to this definition"></a></dt>
+<dd><dl class="simple">
+<dt>Summary:</dt><dd><p>Generates the full file path for lyrx files which can not be stored in gdb’s. The lyrx files are generated to the lyrx_outputs subdirectory for n100.</p>
+</dd>
+<dt>Details:</dt><dd><ul class="simple">
+<li><p>The path is generated using the relative path to the lyrx_outputs subdirectory.</p></li>
+<li><p>The file name is generated using the function name, description, and scale.</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="file_manager.n100.file_manager_rivers.River_N100">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">file_manager.n100.file_manager_rivers.</span></span><span class="sig-name descname"><span class="pre">River_N100</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">value</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">names</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">values</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">module</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">qualname</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">type</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">start</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">boundary</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/file_manager/n100/file_manager_rivers.html#River_N100"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#file_manager.n100.file_manager_rivers.River_N100" title="Link to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">Enum</span></code></p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="file_manager.n100.file_manager_rivers.River_N100.unconnected_river_geometry__river_area_selection__n100">
+<span class="sig-name descname"><span class="pre">unconnected_river_geometry__river_area_selection__n100</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'C:\\path\\to\\folder\\you\\want\\your\\outputs\\in\\automatic_generalization_outputs\\n100\\elv_bekk.gdb\\unconnected_river_geometry__river_area_selection__n100'</span></em><a class="headerlink" href="#file_manager.n100.file_manager_rivers.River_N100.unconnected_river_geometry__river_area_selection__n100" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="file_manager.n100.file_manager_rivers.River_N100.unconnected_river_geometry__unsplit_river_features__n100">
+<span class="sig-name descname"><span class="pre">unconnected_river_geometry__unsplit_river_features__n100</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'C:\\path\\to\\folder\\you\\want\\your\\outputs\\in\\automatic_generalization_outputs\\n100\\elv_bekk.gdb\\unconnected_river_geometry__unsplit_river_features__n100'</span></em><a class="headerlink" href="#file_manager.n100.file_manager_rivers.River_N100.unconnected_river_geometry__unsplit_river_features__n100" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="file_manager.n100.file_manager_rivers.River_N100.unconnected_river_geometry__water_area_features__n100">
+<span class="sig-name descname"><span class="pre">unconnected_river_geometry__water_area_features__n100</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'C:\\path\\to\\folder\\you\\want\\your\\outputs\\in\\automatic_generalization_outputs\\n100\\elv_bekk.gdb\\unconnected_river_geometry__water_area_features__n100'</span></em><a class="headerlink" href="#file_manager.n100.file_manager_rivers.River_N100.unconnected_river_geometry__water_area_features__n100" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="file_manager.n100.file_manager_rivers.River_N100.unconnected_river_geometry__water_area_features_selected__n100">
+<span class="sig-name descname"><span class="pre">unconnected_river_geometry__water_area_features_selected__n100</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'C:\\path\\to\\folder\\you\\want\\your\\outputs\\in\\automatic_generalization_outputs\\n100\\elv_bekk.gdb\\unconnected_river_geometry__water_area_features_selected__n100'</span></em><a class="headerlink" href="#file_manager.n100.file_manager_rivers.River_N100.unconnected_river_geometry__water_area_features_selected__n100" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="file_manager.n100.file_manager_rivers.River_N100.unconnected_river_geometry__river_dangles__n100">
+<span class="sig-name descname"><span class="pre">unconnected_river_geometry__river_dangles__n100</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'C:\\path\\to\\folder\\you\\want\\your\\outputs\\in\\automatic_generalization_outputs\\n100\\elv_bekk.gdb\\unconnected_river_geometry__river_dangles__n100'</span></em><a class="headerlink" href="#file_manager.n100.file_manager_rivers.River_N100.unconnected_river_geometry__river_dangles__n100" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="file_manager.n100.file_manager_rivers.River_N100.unconnected_river_selected_river_dangles__n100">
+<span class="sig-name descname"><span class="pre">unconnected_river_selected_river_dangles__n100</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'C:\\path\\to\\folder\\you\\want\\your\\outputs\\in\\automatic_generalization_outputs\\n100\\elv_bekk.gdb\\unconnected_river_geometry__selected_river_dangles__n100'</span></em><a class="headerlink" href="#file_manager.n100.file_manager_rivers.River_N100.unconnected_river_selected_river_dangles__n100" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="file_manager.n100.file_manager_rivers.River_N100.unconnected_river_geometry__river_end_points__n100">
+<span class="sig-name descname"><span class="pre">unconnected_river_geometry__river_end_points__n100</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'C:\\path\\to\\folder\\you\\want\\your\\outputs\\in\\automatic_generalization_outputs\\n100\\elv_bekk.gdb\\unconnected_river_geometry__river_end_points__n100'</span></em><a class="headerlink" href="#file_manager.n100.file_manager_rivers.River_N100.unconnected_river_geometry__river_end_points__n100" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="file_manager.n100.file_manager_rivers.River_N100.unconnected_river_geometry__river_dangles_buffer__n100">
+<span class="sig-name descname"><span class="pre">unconnected_river_geometry__river_dangles_buffer__n100</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'C:\\path\\to\\folder\\you\\want\\your\\outputs\\in\\automatic_generalization_outputs\\n100\\elv_bekk.gdb\\unconnected_river_geometry__river_dangles_buffer__n100'</span></em><a class="headerlink" href="#file_manager.n100.file_manager_rivers.River_N100.unconnected_river_geometry__river_dangles_buffer__n100" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="file_manager.n100.file_manager_rivers.River_N100.unconnected_river_geometry__problematic_river_lines__n100">
+<span class="sig-name descname"><span class="pre">unconnected_river_geometry__problematic_river_lines__n100</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'C:\\path\\to\\folder\\you\\want\\your\\outputs\\in\\automatic_generalization_outputs\\n100\\elv_bekk.gdb\\unconnected_river_geometry__problematic_river_lines__n100'</span></em><a class="headerlink" href="#file_manager.n100.file_manager_rivers.River_N100.unconnected_river_geometry__problematic_river_lines__n100" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="file_manager.n100.file_manager_rivers.River_N100.unconnected_river_geometry__problematic_river_dangles__n100">
+<span class="sig-name descname"><span class="pre">unconnected_river_geometry__problematic_river_dangles__n100</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'C:\\path\\to\\folder\\you\\want\\your\\outputs\\in\\automatic_generalization_outputs\\n100\\elv_bekk.gdb\\unconnected_river_geometry__problematic_river_dangles__n100'</span></em><a class="headerlink" href="#file_manager.n100.file_manager_rivers.River_N100.unconnected_river_geometry__problematic_river_dangles__n100" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="file_manager.n100.file_manager_rivers.River_N100.extending_river_geometry__input_rivers_copy__n100">
+<span class="sig-name descname"><span class="pre">extending_river_geometry__input_rivers_copy__n100</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'C:\\path\\to\\folder\\you\\want\\your\\outputs\\in\\automatic_generalization_outputs\\n100\\elv_bekk.gdb\\extending_river_geometry__input_rivers_copy__n100'</span></em><a class="headerlink" href="#file_manager.n100.file_manager_rivers.River_N100.extending_river_geometry__input_rivers_copy__n100" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="file_manager.n100.file_manager_rivers.River_N100.extending_river_geometry__exluded_objects__n100">
+<span class="sig-name descname"><span class="pre">extending_river_geometry__exluded_objects__n100</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'C:\\path\\to\\folder\\you\\want\\your\\outputs\\in\\automatic_generalization_outputs\\n100\\elv_bekk.gdb\\extending_river_geometry__exluded_objects__n100'</span></em><a class="headerlink" href="#file_manager.n100.file_manager_rivers.River_N100.extending_river_geometry__exluded_objects__n100" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="file_manager.n100.file_manager_rivers.River_N100.extending_river_geometry__near_table__n100">
+<span class="sig-name descname"><span class="pre">extending_river_geometry__near_table__n100</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'C:\\path\\to\\folder\\you\\want\\your\\outputs\\in\\automatic_generalization_outputs\\n100\\elv_bekk.gdb\\extending_river_geometry__near_table__n100'</span></em><a class="headerlink" href="#file_manager.n100.file_manager_rivers.River_N100.extending_river_geometry__near_table__n100" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="file_manager.n100.file_manager_rivers.River_N100.extending_river_geometry__new_lines__n100">
+<span class="sig-name descname"><span class="pre">extending_river_geometry__new_lines__n100</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'C:\\path\\to\\folder\\you\\want\\your\\outputs\\in\\automatic_generalization_outputs\\n100\\elv_bekk.gdb\\extending_river_geometry__new_lines__n100'</span></em><a class="headerlink" href="#file_manager.n100.file_manager_rivers.River_N100.extending_river_geometry__new_lines__n100" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="file_manager.n100.file_manager_rivers.River_N100.extending_river_geometry__unsplit_new_lines__n100">
+<span class="sig-name descname"><span class="pre">extending_river_geometry__unsplit_new_lines__n100</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'C:\\path\\to\\folder\\you\\want\\your\\outputs\\in\\automatic_generalization_outputs\\n100\\elv_bekk.gdb\\extending_river_geometry__unsplit_new_lines__n100'</span></em><a class="headerlink" href="#file_manager.n100.file_manager_rivers.River_N100.extending_river_geometry__unsplit_new_lines__n100" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="file_manager.n100.file_manager_rivers.River_N100.extending_river_geometry__merged_lines__n100">
+<span class="sig-name descname"><span class="pre">extending_river_geometry__merged_lines__n100</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'C:\\path\\to\\folder\\you\\want\\your\\outputs\\in\\automatic_generalization_outputs\\n100\\elv_bekk.gdb\\extending_river_geometry__merged_lines__n100'</span></em><a class="headerlink" href="#file_manager.n100.file_manager_rivers.River_N100.extending_river_geometry__merged_lines__n100" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="file_manager.n100.file_manager_rivers.River_N100.extending_river_geometry__unsplit_merged_lines__n100">
+<span class="sig-name descname"><span class="pre">extending_river_geometry__unsplit_merged_lines__n100</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'C:\\path\\to\\folder\\you\\want\\your\\outputs\\in\\automatic_generalization_outputs\\n100\\elv_bekk.gdb\\extending_river_geometry__unsplit_merged_lines__n100'</span></em><a class="headerlink" href="#file_manager.n100.file_manager_rivers.River_N100.extending_river_geometry__unsplit_merged_lines__n100" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="file_manager.n100.file_manager_rivers.River_N100.river_centerline__rivers_near_waterfeatures__n100">
+<span class="sig-name descname"><span class="pre">river_centerline__rivers_near_waterfeatures__n100</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'C:\\path\\to\\folder\\you\\want\\your\\outputs\\in\\automatic_generalization_outputs\\n100\\elv_bekk.gdb\\river_centerline__rivers_near_waterfeatures__n100'</span></em><a class="headerlink" href="#file_manager.n100.file_manager_rivers.River_N100.river_centerline__rivers_near_waterfeatures__n100" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="file_manager.n100.file_manager_rivers.River_N100.river_centerline__rivers_near_waterfeatures_erased__n100">
+<span class="sig-name descname"><span class="pre">river_centerline__rivers_near_waterfeatures_erased__n100</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'C:\\path\\to\\folder\\you\\want\\your\\outputs\\in\\automatic_generalization_outputs\\n100\\elv_bekk.gdb\\river_centerline__rivers_near_waterfeatures_erased__n100'</span></em><a class="headerlink" href="#file_manager.n100.file_manager_rivers.River_N100.river_centerline__rivers_near_waterfeatures_erased__n100" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="file_manager.n100.file_manager_rivers.River_N100.short__water_feature__n100">
+<span class="sig-name descname"><span class="pre">short__water_feature__n100</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'C:\\path\\to\\folder\\you\\want\\your\\outputs\\in\\automatic_generalization_outputs\\n100\\elv_bekk.gdb\\short__water_feature__n100'</span></em><a class="headerlink" href="#file_manager.n100.file_manager_rivers.River_N100.short__water_feature__n100" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="file_manager.n100.file_manager_rivers.River_N100.short__water_feature_centroid__n100">
+<span class="sig-name descname"><span class="pre">short__water_feature_centroid__n100</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'C:\\path\\to\\folder\\you\\want\\your\\outputs\\in\\automatic_generalization_outputs\\n100\\elv_bekk.gdb\\short__water_feature_centroid__n100'</span></em><a class="headerlink" href="#file_manager.n100.file_manager_rivers.River_N100.short__water_feature_centroid__n100" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="file_manager.n100.file_manager_rivers.River_N100.river_centerline__water_feature_centerline__n100">
+<span class="sig-name descname"><span class="pre">river_centerline__water_feature_centerline__n100</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'C:\\path\\to\\folder\\you\\want\\your\\outputs\\in\\automatic_generalization_outputs\\n100\\elv_bekk.gdb\\river_centerline__water_feature_centerline__n100'</span></em><a class="headerlink" href="#file_manager.n100.file_manager_rivers.River_N100.river_centerline__water_feature_centerline__n100" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="file_manager.n100.file_manager_rivers.River_N100.river_centerline__water_feature_collapsed__n100">
+<span class="sig-name descname"><span class="pre">river_centerline__water_feature_collapsed__n100</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'C:\\path\\to\\folder\\you\\want\\your\\outputs\\in\\automatic_generalization_outputs\\n100\\elv_bekk.gdb\\river_centerline__water_feature_collapsed__n100'</span></em><a class="headerlink" href="#file_manager.n100.file_manager_rivers.River_N100.river_centerline__water_feature_collapsed__n100" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="file_manager.n100.file_manager_rivers.River_N100.river_centerline__study_lake__n100">
+<span class="sig-name descname"><span class="pre">river_centerline__study_lake__n100</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'C:\\path\\to\\folder\\you\\want\\your\\outputs\\in\\automatic_generalization_outputs\\n100\\elv_bekk.gdb\\river_centerline__study_lake__n100'</span></em><a class="headerlink" href="#file_manager.n100.file_manager_rivers.River_N100.river_centerline__study_lake__n100" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="file_manager.n100.file_manager_rivers.River_N100.river_centerline__study_rivers__n100">
+<span class="sig-name descname"><span class="pre">river_centerline__study_rivers__n100</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'C:\\path\\to\\folder\\you\\want\\your\\outputs\\in\\automatic_generalization_outputs\\n100\\elv_bekk.gdb\\river_centerline__study_rivers__n100'</span></em><a class="headerlink" href="#file_manager.n100.file_manager_rivers.River_N100.river_centerline__study_rivers__n100" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="file_manager.n100.file_manager_rivers.River_N100.river_centerline__study_centerline__n100">
+<span class="sig-name descname"><span class="pre">river_centerline__study_centerline__n100</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'C:\\path\\to\\folder\\you\\want\\your\\outputs\\in\\automatic_generalization_outputs\\n100\\elv_bekk.gdb\\river_centerline__study_centerline__n100'</span></em><a class="headerlink" href="#file_manager.n100.file_manager_rivers.River_N100.river_centerline__study_centerline__n100" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="file_manager.n100.file_manager_rivers.River_N100.river_centerline__study_lake_collapsed__n100">
+<span class="sig-name descname"><span class="pre">river_centerline__study_lake_collapsed__n100</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'C:\\path\\to\\folder\\you\\want\\your\\outputs\\in\\automatic_generalization_outputs\\n100\\elv_bekk.gdb\\river_centerline__study_lake_collapsed__n100'</span></em><a class="headerlink" href="#file_manager.n100.file_manager_rivers.River_N100.river_centerline__study_lake_collapsed__n100" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="file_manager.n100.file_manager_rivers.River_N100.river_centerline__study_dangles__n100">
+<span class="sig-name descname"><span class="pre">river_centerline__study_dangles__n100</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'C:\\path\\to\\folder\\you\\want\\your\\outputs\\in\\automatic_generalization_outputs\\n100\\elv_bekk.gdb\\river_centerline__study_dangles__n100'</span></em><a class="headerlink" href="#file_manager.n100.file_manager_rivers.River_N100.river_centerline__study_dangles__n100" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="file_manager.n100.file_manager_rivers.River_N100.centerline_pruning__pruned_centerline__n100">
+<span class="sig-name descname"><span class="pre">centerline_pruning__pruned_centerline__n100</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'C:\\path\\to\\folder\\you\\want\\your\\outputs\\in\\automatic_generalization_outputs\\n100\\elv_bekk.gdb\\centerline_pruning__pruned_centerline__n100'</span></em><a class="headerlink" href="#file_manager.n100.file_manager_rivers.River_N100.centerline_pruning__pruned_centerline__n100" title="Link to this definition"></a></dt>
 <dd></dd></dl>
 
 </dd></dl>

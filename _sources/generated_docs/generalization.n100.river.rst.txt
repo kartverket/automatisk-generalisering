@@ -1,0 +1,45 @@
+generalization.n100.river package
+=================================
+
+Submodules
+----------
+
+generalization.n100.river.extend\_river\_line module
+----------------------------------------------------
+
+.. automodule:: generalization.n100.river.extend_river_line
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+generalization.n100.river.minimum\_spanning\_tree\_pruning module
+-----------------------------------------------------------------
+
+.. automodule:: generalization.n100.river.minimum_spanning_tree_pruning
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+generalization.n100.river.river\_centerline module
+--------------------------------------------------
+
+.. automodule:: generalization.n100.river.river_centerline
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+generalization.n100.river.unconnected\_river\_geometry module
+-------------------------------------------------------------
+
+.. automodule:: generalization.n100.river.unconnected_river_geometry
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+Module contents
+---------------
+
+.. automodule:: generalization.n100.river
+   :members:
+   :undoc-members:
+   :show-inheritance:

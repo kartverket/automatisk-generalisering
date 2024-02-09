@@ -81,6 +81,20 @@
 <span class="kn">import</span> <span class="nn">os</span>
 
 <span class="kn">import</span> <span class="nn">config</span>
+<span class="kn">from</span> <span class="nn">env_setup.global_config</span> <span class="kn">import</span> <span class="p">(</span>
+    <span class="n">scale_n50</span><span class="p">,</span>
+    <span class="n">scale_n100</span><span class="p">,</span>
+    <span class="n">scale_n250</span><span class="p">,</span>
+    <span class="n">scale_n500</span><span class="p">,</span>
+    <span class="n">object_admin</span><span class="p">,</span>
+    <span class="n">object_arealdekke_flate</span><span class="p">,</span>
+    <span class="n">object_bygning</span><span class="p">,</span>
+    <span class="n">object_elv_bekk</span><span class="p">,</span>
+    <span class="n">object_veg_sti</span><span class="p">,</span>
+    <span class="n">main_directory_name</span><span class="p">,</span>
+    <span class="n">lyrx_directory_name</span><span class="p">,</span>
+    <span class="n">general_files_name</span><span class="p">,</span>
+<span class="p">)</span>
 
 
 <div class="viewcode-block" id="main">
@@ -216,22 +230,6 @@
         <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Created &#39;general_files&#39; folder: </span><span class="si">{</span><span class="n">general_files_path</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span></div>
 
 
-
-<span class="n">main_directory_name</span> <span class="o">=</span> <span class="s2">&quot;automatic_generalization_outputs&quot;</span>
-
-<span class="n">lyrx_directory_name</span> <span class="o">=</span> <span class="s2">&quot;lyrx_outputs&quot;</span>
-<span class="n">general_files_name</span> <span class="o">=</span> <span class="s2">&quot;general_files&quot;</span>
-
-<span class="n">scale_n50</span> <span class="o">=</span> <span class="s2">&quot;n50&quot;</span>
-<span class="n">scale_n100</span> <span class="o">=</span> <span class="s2">&quot;n100&quot;</span>
-<span class="n">scale_n250</span> <span class="o">=</span> <span class="s2">&quot;n250&quot;</span>
-<span class="n">scale_n500</span> <span class="o">=</span> <span class="s2">&quot;n500&quot;</span>
-
-<span class="n">object_admin</span> <span class="o">=</span> <span class="s2">&quot;admin&quot;</span>
-<span class="n">object_arealdekke_flate</span> <span class="o">=</span> <span class="s2">&quot;arealdekke_flate&quot;</span>
-<span class="n">object_bygning</span> <span class="o">=</span> <span class="s2">&quot;bygning&quot;</span>
-<span class="n">object_elv_bekk</span> <span class="o">=</span> <span class="s2">&quot;elv_bekk&quot;</span>
-<span class="n">object_veg_sti</span> <span class="o">=</span> <span class="s2">&quot;veg_sti&quot;</span>
 
 <span class="c1"># Subdirectories and GDB names</span>
 <span class="n">sub_directories</span> <span class="o">=</span> <span class="p">[</span>

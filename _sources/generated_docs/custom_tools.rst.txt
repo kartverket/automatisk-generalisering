@@ -28,6 +28,14 @@ custom\_tools.polygon\_processor module
    :undoc-members:
    :show-inheritance:
 
+custom\_tools.print\_logger module
+----------------------------------
+
+.. automodule:: custom_tools.print_logger
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
 Module contents
 ---------------
 

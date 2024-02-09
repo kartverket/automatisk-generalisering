@@ -101,6 +101,15 @@
 </ul>
 </li>
 <li class="toctree-l2"><a class="reference internal" href="#custom-tools-polygon-processor-module">custom_tools.polygon_processor module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#module-custom_tools.print_logger">custom_tools.print_logger module</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#custom_tools.print_logger.LogPath"><code class="docutils literal notranslate"><span class="pre">LogPath</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#custom_tools.print_logger.LogPath.N100Building"><code class="docutils literal notranslate"><span class="pre">LogPath.N100Building</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#custom_tools.print_logger.LogPath.N100River"><code class="docutils literal notranslate"><span class="pre">LogPath.N100River</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="#custom_tools.print_logger.setup_logger"><code class="docutils literal notranslate"><span class="pre">setup_logger()</span></code></a></li>
+</ul>
+</li>
 <li class="toctree-l2"><a class="reference internal" href="#module-custom_tools">Module contents</a></li>
 </ul>
 </li>
@@ -495,6 +504,7 @@ and creates a new, permanent feature class as an output.</p>
 <dt class="sig sig-object py" id="custom_tools.partition_iterator.PartitionIterator">
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">custom_tools.partition_iterator.</span></span><span class="sig-name descname"><span class="pre">PartitionIterator</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">inputs</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">root_file_partition_iterator</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">scale</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">output_feature_class</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">custom_functions</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">feature_count</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'15000'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">partition_method</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'FEATURES'</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/custom_tools/partition_iterator.html#PartitionIterator"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#custom_tools.partition_iterator.PartitionIterator" title="Link to this definition"></a></dt>
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<p>THIS IS WORK IN PROGRESS NOT READY FOR USE</p>
 <dl class="py method">
 <dt class="sig sig-object py" id="custom_tools.partition_iterator.PartitionIterator.setup_arcpy_environment">
 <span class="sig-name descname"><span class="pre">setup_arcpy_environment</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/custom_tools/partition_iterator.html#PartitionIterator.setup_arcpy_environment"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#custom_tools.partition_iterator.PartitionIterator.setup_arcpy_environment" title="Link to this definition"></a></dt>
@@ -537,6 +547,46 @@ and creates a new, permanent feature class as an output.</p>
 </section>
 <section id="custom-tools-polygon-processor-module">
 <h2>custom_tools.polygon_processor module<a class="headerlink" href="#custom-tools-polygon-processor-module" title="Link to this heading"></a></h2>
+</section>
+<section id="module-custom_tools.print_logger">
+<span id="custom-tools-print-logger-module"></span><h2>custom_tools.print_logger module<a class="headerlink" href="#module-custom_tools.print_logger" title="Link to this heading"></a></h2>
+<dl class="py class">
+<dt class="sig sig-object py" id="custom_tools.print_logger.LogPath">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">custom_tools.print_logger.</span></span><span class="sig-name descname"><span class="pre">LogPath</span></span><a class="reference internal" href="../_modules/custom_tools/print_logger.html#LogPath"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#custom_tools.print_logger.LogPath" title="Link to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="custom_tools.print_logger.LogPath.N100Building">
+<span class="sig-name descname"><span class="pre">N100Building</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'C:\\path\\to\\folder\\you\\want\\your\\outputs\\in\\automatic_generalization_outputs\\n100\\bygning\\general_files\\app.log'</span></em><a class="headerlink" href="#custom_tools.print_logger.LogPath.N100Building" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="custom_tools.print_logger.LogPath.N100River">
+<span class="sig-name descname"><span class="pre">N100River</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'C:\\path\\to\\folder\\you\\want\\your\\outputs\\in\\automatic_generalization_outputs\\n100\\elv_bekk\\general_files\\app.log'</span></em><a class="headerlink" href="#custom_tools.print_logger.LogPath.N100River" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="custom_tools.print_logger.setup_logger">
+<span class="sig-prename descclassname"><span class="pre">custom_tools.print_logger.</span></span><span class="sig-name descname"><span class="pre">setup_logger</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">scale</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">object_type</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">log_directory</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'logs'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">filename</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'app.log'</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/custom_tools/print_logger.html#setup_logger"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#custom_tools.print_logger.setup_logger" title="Link to this definition"></a></dt>
+<dd><p>WORK IN PROGRESS NOT DONE
+Creates a logger for the specified scale and object type.
+Log files will be stored in a directory structure matching the scale and object type.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>scale</strong> – The scale for the log (e.g., ‘n100’).</p></li>
+<li><p><strong>object_type</strong> – The object type for the log (e.g., ‘bygning’).</p></li>
+<li><p><strong>log_directory</strong> – Base directory for logs. Defaults to ‘logs’.</p></li>
+<li><p><strong>filename</strong> – Default filename for the log. Defaults to ‘app.log’.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Logger instance for the specified scale and object type.</p>
+</dd>
+</dl>
+</dd></dl>
+
 </section>
 <section id="module-custom_tools">
 <span id="module-contents"></span><h2>Module contents<a class="headerlink" href="#module-custom_tools" title="Link to this heading"></a></h2>

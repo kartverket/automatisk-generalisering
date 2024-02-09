@@ -99,6 +99,8 @@
     <span class="n">arcpy</span><span class="o">.</span><span class="n">env</span><span class="o">.</span><span class="n">overwriteOutput</span> <span class="o">=</span> <span class="kc">True</span>
     <span class="n">arcpy</span><span class="o">.</span><span class="n">env</span><span class="o">.</span><span class="n">workspace</span> <span class="o">=</span> <span class="n">config</span><span class="o">.</span><span class="n">default_project_workspace</span>
     <span class="n">arcpy</span><span class="o">.</span><span class="n">env</span><span class="o">.</span><span class="n">outputCoordinateSystem</span> <span class="o">=</span> <span class="n">arcpy</span><span class="o">.</span><span class="n">SpatialReference</span><span class="p">(</span><span class="n">project_spatial_reference</span><span class="p">)</span>
+    <span class="n">arcpy</span><span class="o">.</span><span class="n">env</span><span class="o">.</span><span class="n">XYTolerance</span> <span class="o">=</span> <span class="s2">&quot;0.02 Meters&quot;</span>
+    <span class="n">arcpy</span><span class="o">.</span><span class="n">env</span><span class="o">.</span><span class="n">XYResolution</span> <span class="o">=</span> <span class="s2">&quot;0.01 Meters&quot;</span>
     <span class="n">arcpy</span><span class="o">.</span><span class="n">env</span><span class="o">.</span><span class="n">parallelProcessingFactor</span> <span class="o">=</span> <span class="n">config</span><span class="o">.</span><span class="n">cpu_percentage</span>
 
     <span class="nb">print</span><span class="p">(</span>
