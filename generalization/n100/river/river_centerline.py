@@ -32,7 +32,7 @@ def setup_arcpy_environment():
 
 def prepare_data():
     custom_arcpy.select_location_and_make_permanent_feature(
-        input_layer=config.river_sprint_feature,
+        input_layer=River_N100.unconnected_river_geometry__river_area_selection__n100.value,
         overlap_type=custom_arcpy.OverlapType.BOUNDARY_TOUCHES.value,
         select_features=River_N100.unconnected_river_geometry__water_area_features_selected__n100.value,
         output_name=River_N100.river_centerline__rivers_near_waterfeatures__n100.value,
@@ -83,7 +83,7 @@ def prepare_data():
 def create_dangles():
     custom_arcpy.select_attribute_and_make_permanent_feature(
         input_layer=River_N100.unconnected_river_geometry__water_area_features_selected__n100.value,
-        expression="OBJECTID = 13466",
+        expression="OBJECTID = 12719",
         output_name=River_N100.river_centerline__study_lake__n100.value,
     )
 

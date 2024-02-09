@@ -102,6 +102,12 @@ class River_N100(Enum):
     ########### UNCONNECTED RIVER GEOMETRY  ###########
     #################################################
 
+    unconnected_river_geometry__river_area_selection__n100 = generate_file_name_gdb(
+        function_name=unconnected_river_geometry,
+        description="river_area_selection",
+        scale=scale,
+    )
+
     unconnected_river_geometry__unsplit_river_features__n100 = generate_file_name_gdb(
         function_name=unconnected_river_geometry,
         description="unsplit_river_features",
@@ -187,9 +193,21 @@ class River_N100(Enum):
         scale=scale,
     )
 
+    extending_river_geometry__unsplit_new_lines__n100 = generate_file_name_gdb(
+        function_name=extending_river_geometry,
+        description="unsplit_new_lines",
+        scale=scale,
+    )
+
     extending_river_geometry__merged_lines__n100 = generate_file_name_gdb(
         function_name=extending_river_geometry,
         description="merged_lines",
+        scale=scale,
+    )
+
+    extending_river_geometry__unsplit_merged_lines__n100 = generate_file_name_gdb(
+        function_name=extending_river_geometry,
+        description="unsplit_merged_lines",
         scale=scale,
     )
 

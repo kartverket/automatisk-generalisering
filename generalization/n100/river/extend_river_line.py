@@ -57,7 +57,7 @@ def setup_arcpy_environment():
 
 def processing_preparation():
     arcpy.management.CopyFeatures(
-        in_features=config.river_sprint_feature,
+        in_features=River_N100.unconnected_river_geometry__river_area_selection__n100.value,
         out_feature_class=River_N100.extending_river_geometry__input_rivers_copy__n100.value,
     )
     arcpy.management.CopyFeatures(
@@ -174,9 +174,9 @@ def create_lines_from_coordinates(line_points, all_rivers):
     :return: A list of arcpy.Polyline objects representing the new lines.
     """
     new_lines = []
-    spatial_reference = arcpy.Describe(
-        all_rivers
-    ).spatialReference  # Assuming all_rivers has the desired spatial reference
+    # spatial_reference = arcpy.Describe(
+    #     all_rivers
+    # ).spatialReference  # Assuming all_rivers has the desired spatial reference
 
     for line_start, line_end in line_points:
         # Create arcpy.Point objects from the coordinates
@@ -184,7 +184,10 @@ def create_lines_from_coordinates(line_points, all_rivers):
         end_point = arcpy.Point(*line_end)
 
         # Create a line from the start point to the end point
-        line = arcpy.Polyline(arcpy.Array([start_point, end_point]), spatial_reference)
+        line = arcpy.Polyline(
+            arcpy.Array([start_point, end_point]),
+            environment_setup.project_spatial_reference,
+        )
         new_lines.append(line)
 
     return new_lines
@@ -201,14 +204,41 @@ def process_new_lines(new_lines, all_rivers):
     # Create an in-memory feature class to hold the new lines
     new_lines_feature_class = River_N100.extending_river_geometry__new_lines__n100.value
     arcpy.CopyFeatures_management(new_lines, new_lines_feature_class)
+    print("Created new lines to the river network")
+    arcpy.UnsplitLine_management(
+        in_features=new_lines_feature_class,
+        out_feature_class=River_N100.extending_river_geometry__unsplit_new_lines__n100.value,
+    )
+    print("Unsplit the new lines")
 
     # Merge the new lines with the existing river features
     merged_rivers = River_N100.extending_river_geometry__merged_lines__n100.value
-    arcpy.Merge_management([all_rivers, new_lines_feature_class], merged_rivers)
+    arcpy.Merge_management(
+        inputs=[all_rivers, new_lines_feature_class],
+        output=merged_rivers,
+    )
+    print("Merged the new lines with the river network")
 
-    # Here you would implement any logic needed to remove duplicate lines
-    # For now, let's assume that's done and we just return the merged rivers
-    final_rivers = merged_rivers  # Placeholder for actual deduplication logic
+    finnished_rivers = (
+        River_N100.extending_river_geometry__unsplit_merged_lines__n100.value
+    )
+    arcpy.UnsplitLine_management(
+        in_features=merged_rivers,
+        out_feature_class=River_N100.extending_river_geometry__unsplit_merged_lines__n100.value,
+    )
+    print("Unsplit the merged lines")
+
+    arcpy.management.AddSpatialJoin(
+        target_features=River_N100.extending_river_geometry__unsplit_merged_lines__n100.value,
+        join_features=River_N100.extending_river_geometry__input_rivers_copy__n100.value,
+        join_operation=None,
+        join_type="KEEP_ALL",
+        match_option="LARGEST_OVERLAP",
+        permanent_join="PERMANENT_FIELDS",
+    )
+    print("Added spatial join")
+
+    final_rivers = finnished_rivers
 
     return final_rivers
 

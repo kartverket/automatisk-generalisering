@@ -69,37 +69,6 @@ def main():
     except Exception as e:
         print("Error in resolve_geometry:", e)
 
-    problematic_dangles, all_rivers, water_polygon = connect_unconnected_features()
-
-    # Ensure all_rivers and water_polygon are accessible for find_closest_feature function
-    search_features = [
-        all_rivers,
-        water_polygon,
-    ]  # This may need adjustment based on actual implementation
-
-    # Iterate through problematic dangles
-    with arcpy.da.SearchCursor(problematic_dangles, ["SHAPE@"]) as dangle_cursor:
-        for dangle_row in dangle_cursor:
-            dangle_point = dangle_row[0]
-            oid, matching_vertex = get_matching_vertex(all_rivers, dangle_point)
-            if oid and matching_vertex:
-                # Note: find_closest_feature function may need to be adjusted to accept a point geometry directly
-                closest_feature_point, _ = find_closest_feature(
-                    oid, search_features, dangle_point
-                )
-                if closest_feature_point:
-                    # Calculate extension distance and direction
-                    angle, distance = calculate_extension_direction_and_distance(
-                        matching_vertex, closest_feature_point
-                    )
-                    extend_line_vertex(
-                        all_rivers,
-                        oid,
-                        distance,
-                        matching_vertex,
-                        closest_feature_point,
-                    )
-
 
 def setup_arcpy_environment():
     """
@@ -115,8 +84,16 @@ def setup_arcpy_environment():
 
 
 def copy_input_features(geomotry_search_tolerance):
+    custom_arcpy.select_location_and_make_permanent_feature(
+        input_layer=input_n50.ElvBekk,
+        overlap_type=custom_arcpy.OverlapType.WITHIN_A_DISTANCE.value,
+        select_features=config.river_sprint_feature,
+        output_name=River_N100.unconnected_river_geometry__river_area_selection__n100.value,
+        search_distance="500 Meters",
+    )
+
     arcpy.UnsplitLine_management(
-        in_features=config.river_sprint_feature,
+        in_features=River_N100.unconnected_river_geometry__river_area_selection__n100.value,
         out_feature_class=River_N100.unconnected_river_geometry__unsplit_river_features__n100.value,
     )
 
@@ -289,125 +266,6 @@ def resolve_geometry(
             expression=sql_dangle_problematic_ids,
             output_name=River_N100.unconnected_river_geometry__problematic_river_dangles__n100.value,
         )
-
-
-def connect_unconnected_features():
-    arcpy.management.CopyFeatures(
-        in_features=River_N100.unconnected_river_geometry__unsplit_river_features__n100.value,
-        out_feature_class=f"{River_N100.unconnected_river_geometry__unsplit_river_features__n100.value}_copy",
-    )
-
-    problematic_dangles = (
-        River_N100.unconnected_river_geometry__problematic_river_dangles__n100.value
-    )
-    all_rivers = f"{River_N100.unconnected_river_geometry__unsplit_river_features__n100.value}_copy"
-    water_polygon = (
-        River_N100.unconnected_river_geometry__water_area_features_selected__n100.value
-    )
-    return problematic_dangles, all_rivers, water_polygon
-
-
-def get_matching_vertex(line_feature_class, dangle_point):
-    """
-    Find the line and vertex in line_feature_class that matches the dangle_point location.
-    Returns the line OID and the matching vertex as an arcpy.Point object.
-    """
-    with arcpy.da.SearchCursor(line_feature_class, ["OID@", "SHAPE@"]) as cursor:
-        for oid, shape in cursor:
-            for part in shape:
-                for vertex in part:
-                    if vertex.equals(dangle_point):
-                        return oid, vertex
-    return None, None
-
-
-import arcpy
-
-
-def find_closest_feature(exclude_oid, search_features, search_point):
-    """
-    Find the closest feature to search_point in search_features, excluding the feature with exclude_oid.
-    :param exclude_oid: OID of the feature to exclude from the search.
-    :param search_features: List of feature classes to search within.
-    :param search_point: The point geometry from which to find the nearest feature.
-    :return: Tuple containing the geometry of the closest point and its OID.
-    """
-    # Create an in-memory feature layer excluding the feature with exclude_oid
-    temp_layer = "tempLayer"
-    arcpy.MakeFeatureLayer_management(search_features, temp_layer)
-    arcpy.SelectLayerByAttribute_management(
-        temp_layer, "NEW_SELECTION", f"OBJECTID <> {exclude_oid}"
-    )
-
-    # Use Generate Near Table to find the closest feature
-    near_table = arcpy.GenerateNearTable_analysis(
-        search_point,
-        temp_layer,
-        "in_memory\\near_table",
-        closest="ONLY",
-        location="LOCATION",
-        method="PLANAR",
-    )
-
-    # Fetch the results from the near table
-    with arcpy.da.SearchCursor(near_table, ["NEAR_X", "NEAR_Y", "NEAR_FID"]) as cursor:
-        for row in cursor:
-            closest_point = arcpy.Point(row[0], row[1])
-            closest_fid = row[2]
-            return closest_point, closest_fid
-    return None, None
-
-
-def calculate_extension_direction_and_distance(vertex, target_point):
-    """
-    Calculate the direction and distance from the vertex to the target_point.
-    """
-    dx = target_point.X - vertex.X
-    dy = target_point.Y - vertex.Y
-    distance = sqrt(dx**2 + dy**2)
-    angle = atan2(dy, dx)
-    return angle, distance
-
-
-def extend_line_to_point(line, point, extension_distance):
-    """
-    Extends a line geometry towards a point by a specified distance.
-    """
-    # Calculate bearing from line's end to point
-    line_end = line.lastPoint
-    dy = point.Y - line_end.Y
-    dx = point.X - line_end.X
-    angle = atan2(dy, dx)
-
-    # Calculate new end point based on bearing and distance
-    new_x = line_end.X + (extension_distance * cos(angle))
-    new_y = line_end.Y + (extension_distance * sin(angle))
-    new_point = arcpy.Point(new_x, new_y)
-
-    # Create new line by appending new point to existing line
-    new_line_points = arcpy.Array([line.firstPoint, line.lastPoint, new_point])
-    extended_line = arcpy.Polyline(new_line_points, line.spatialReference)
-
-    return extended_line
-
-
-def extend_line_vertex(
-    line_feature_class, line_oid, distance, vertex_to_extend, extend_to_point
-):
-    """
-    Extend the specified vertex of the line with line_oid in line_feature_class towards extend_to_point.
-    """
-    # Fetch the line geometry
-    with arcpy.da.UpdateCursor(
-        line_feature_class, ["SHAPE@"], f"OBJECTID = {line_oid}"
-    ) as cursor:
-        for row in cursor:
-            line_geom = row[0]
-            # Assuming extend_to_point is the target geometry to extend towards
-            # You may calculate the extension distance based on specific logic
-            extended_line = extend_line_to_point(line_geom, extend_to_point, distance)
-            row[0] = extended_line
-            cursor.updateRow(row)
 
 
 if __name__ == "__main__":
