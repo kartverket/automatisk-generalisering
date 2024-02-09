@@ -20,10 +20,26 @@ generalization.n100.river.minimum\_spanning\_tree\_pruning module
    :undoc-members:
    :show-inheritance:
 
+generalization.n100.river.preparing\_river\_network module
+----------------------------------------------------------
+
+.. automodule:: generalization.n100.river.preparing_river_network
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
 generalization.n100.river.river\_centerline module
 --------------------------------------------------
 
 .. automodule:: generalization.n100.river.river_centerline
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+generalization.n100.river.river\_data\_preparation module
+---------------------------------------------------------
+
+.. automodule:: generalization.n100.river.river_data_preparation
    :members:
    :undoc-members:
    :show-inheritance:

@@ -99,6 +99,10 @@
 <div class="viewcode-block" id="main">
 <a class="viewcode-back" href="../../../../generated_docs/generalization.n100.building.html#generalization.n100.building.create_points_from_polygon.main">[docs]</a>
 <span class="k">def</span> <span class="nf">main</span><span class="p">():</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    This function creates points from small grunnriss lost during aggregation, and merges</span>
+<span class="sd">    them together with collapsed points from the tools simplify building and simplify polygon.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
     <span class="c1"># Start timing</span>
     <span class="n">start_time</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span>
 
@@ -130,19 +134,15 @@
 <a class="viewcode-back" href="../../../../generated_docs/generalization.n100.building.html#generalization.n100.building.create_points_from_polygon.grunnriss_to_point">[docs]</a>
 <span class="k">def</span> <span class="nf">grunnriss_to_point</span><span class="p">():</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">    This function creates points from small grunnriss lost during aggregation, and merges</span>
-<span class="sd">    them together with collapsed points from the tools simplify building and simplify polygon.</span>
-
-<span class="sd">    Input data:</span>
-
-<span class="sd">    Output data:</span>
+<span class="sd">    Summary:</span>
+<span class="sd">        Transforms building polygons that are too small to points</span>
 
 <span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="n">custom_arcpy</span><span class="o">.</span><span class="n">select_location_and_make_feature_layer</span><span class="p">(</span>
         <span class="n">input_layer</span><span class="o">=</span><span class="n">Building_N100</span><span class="o">.</span><span class="n">selecting_grunnriss_for_generalization__large_enough_grunnriss__n100</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
         <span class="n">overlap_type</span><span class="o">=</span><span class="n">custom_arcpy</span><span class="o">.</span><span class="n">OverlapType</span><span class="o">.</span><span class="n">INTERSECT</span><span class="p">,</span>
-        <span class="n">select_features</span><span class="o">=</span><span class="n">Building_N100</span><span class="o">.</span><span class="n">aggregate_building__polygon__n100</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
+        <span class="n">select_features</span><span class="o">=</span><span class="n">Building_N100</span><span class="o">.</span><span class="n">aggregate_polygons__fill_hole__n100</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
         <span class="n">output_name</span><span class="o">=</span><span class="n">Building_N100</span><span class="o">.</span><span class="n">grunnriss_to_point__intersect_aggregated_and_original__n100</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
         <span class="n">inverted</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
     <span class="p">)</span>

@@ -177,10 +177,13 @@
 <span class="c1">##############################################################################################################################################</span>
 
 <span class="c1"># All file and function names in correct order</span>
+
+<span class="n">selecting_water_polygons</span> <span class="o">=</span> <span class="s2">&quot;selecting_water_polygons&quot;</span>
 <span class="n">unconnected_river_geometry</span> <span class="o">=</span> <span class="s2">&quot;unconnected_river_geometry&quot;</span>
 <span class="n">extending_river_geometry</span> <span class="o">=</span> <span class="s2">&quot;extending_river_geometry&quot;</span>
 <span class="n">river_centerline</span> <span class="o">=</span> <span class="s2">&quot;river_centerline&quot;</span>
 <span class="n">centerline_pruning</span> <span class="o">=</span> <span class="s2">&quot;centerline_pruning&quot;</span>
+<span class="n">thin_hydrology_lines</span> <span class="o">=</span> <span class="s2">&quot;thin_hydrology_lines&quot;</span>
 
 <span class="c1">##############################################################################################################################################</span>
 
@@ -188,8 +191,25 @@
 <div class="viewcode-block" id="River_N100">
 <a class="viewcode-back" href="../../../generated_docs/file_manager.n100.html#file_manager.n100.file_manager_rivers.River_N100">[docs]</a>
 <span class="k">class</span> <span class="nc">River_N100</span><span class="p">(</span><span class="n">Enum</span><span class="p">):</span>
+
+    <span class="c1">###########################################</span>
+    <span class="c1">########### RIVER DATA PREPARATION ##########</span>
+    <span class="c1">###########################################</span>
+
+    <span class="n">selecting_water_polygons__centerline__n100</span> <span class="o">=</span> <span class="n">generate_file_name_gdb</span><span class="p">(</span>
+        <span class="n">function_name</span><span class="o">=</span><span class="n">selecting_water_polygons</span><span class="p">,</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">&quot;centerline&quot;</span><span class="p">,</span>
+        <span class="n">scale</span><span class="o">=</span><span class="n">scale</span><span class="p">,</span>
+    <span class="p">)</span>
+
+    <span class="n">selecting_water_polygons__geometry_gaps__n100</span> <span class="o">=</span> <span class="n">generate_file_name_gdb</span><span class="p">(</span>
+        <span class="n">function_name</span><span class="o">=</span><span class="n">selecting_water_polygons</span><span class="p">,</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">&quot;geometry_gaps&quot;</span><span class="p">,</span>
+        <span class="n">scale</span><span class="o">=</span><span class="n">scale</span><span class="p">,</span>
+    <span class="p">)</span>
+
     <span class="c1">#################################################</span>
-    <span class="c1">########### UNCONNECTED RIVER GEOMETRY  ###########</span>
+    <span class="c1">########### UNCONNECTED RIVER GEOMETRY  #########</span>
     <span class="c1">#################################################</span>
 
     <span class="n">unconnected_river_geometry__river_area_selection__n100</span> <span class="o">=</span> <span class="n">generate_file_name_gdb</span><span class="p">(</span>
@@ -255,9 +275,9 @@
         <span class="p">)</span>
     <span class="p">)</span>
 
-    <span class="c1">#################################################</span>
-    <span class="c1">########### EXTENDING RIVER LINES ###########</span>
-    <span class="c1">#################################################</span>
+    <span class="c1">###########################################</span>
+    <span class="c1">########### EXTENDING RIVER LINES  ###########</span>
+    <span class="c1">###########################################</span>
 
     <span class="n">extending_river_geometry__input_rivers_copy__n100</span> <span class="o">=</span> <span class="n">generate_file_name_gdb</span><span class="p">(</span>
         <span class="n">function_name</span><span class="o">=</span><span class="n">extending_river_geometry</span><span class="p">,</span>
@@ -301,9 +321,9 @@
         <span class="n">scale</span><span class="o">=</span><span class="n">scale</span><span class="p">,</span>
     <span class="p">)</span>
 
-    <span class="c1">#################################################</span>
+    <span class="c1">######################################</span>
     <span class="c1">########### RIVER CENTERLINE ###########</span>
-    <span class="c1">#################################################</span>
+    <span class="c1">######################################</span>
 
     <span class="n">river_centerline__rivers_near_waterfeatures__n100</span> <span class="o">=</span> <span class="n">generate_file_name_gdb</span><span class="p">(</span>
         <span class="n">function_name</span><span class="o">=</span><span class="n">river_centerline</span><span class="p">,</span>
@@ -373,6 +393,16 @@
     <span class="n">centerline_pruning__pruned_centerline__n100</span> <span class="o">=</span> <span class="n">generate_file_name_gdb</span><span class="p">(</span>
         <span class="n">function_name</span><span class="o">=</span><span class="n">centerline_pruning</span><span class="p">,</span>
         <span class="n">description</span><span class="o">=</span><span class="s2">&quot;pruned_centerline&quot;</span><span class="p">,</span>
+        <span class="n">scale</span><span class="o">=</span><span class="n">scale</span><span class="p">,</span>
+    <span class="p">)</span>
+
+    <span class="c1">######################################</span>
+    <span class="c1">######### THIN HYDROLOGY LINES ########</span>
+    <span class="c1">######################################</span>
+
+    <span class="n">thin_hydrology_lines__visible_streams__n100</span> <span class="o">=</span> <span class="n">generate_file_name_gdb</span><span class="p">(</span>
+        <span class="n">function_name</span><span class="o">=</span><span class="n">thin_hydrology_lines</span><span class="p">,</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">&quot;visible_streams&quot;</span><span class="p">,</span>
         <span class="n">scale</span><span class="o">=</span><span class="n">scale</span><span class="p">,</span>
     <span class="p">)</span></div>
 
