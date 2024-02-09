@@ -18,6 +18,8 @@ def general_setup():
     arcpy.env.overwriteOutput = True
     arcpy.env.workspace = config.default_project_workspace
     arcpy.env.outputCoordinateSystem = arcpy.SpatialReference(project_spatial_reference)
+    arcpy.env.XYTolerance = "0.02 Meters"
+    arcpy.env.XYResolution = "0.01 Meters"
     arcpy.env.parallelProcessingFactor = config.cpu_percentage
 
     print(

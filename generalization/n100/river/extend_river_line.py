@@ -1,4 +1,5 @@
 import arcpy
+import os
 import multiprocessing
 from multiprocessing import Pool, Manager
 from math import atan2, sin, cos, sqrt
@@ -174,9 +175,6 @@ def create_lines_from_coordinates(line_points, all_rivers):
     :return: A list of arcpy.Polyline objects representing the new lines.
     """
     new_lines = []
-    # spatial_reference = arcpy.Describe(
-    #     all_rivers
-    # ).spatialReference  # Assuming all_rivers has the desired spatial reference
 
     for line_start, line_end in line_points:
         # Create arcpy.Point objects from the coordinates
@@ -204,6 +202,19 @@ def process_new_lines(new_lines, all_rivers):
     # Create an in-memory feature class to hold the new lines
     new_lines_feature_class = River_N100.extending_river_geometry__new_lines__n100.value
     arcpy.CopyFeatures_management(new_lines, new_lines_feature_class)
+
+    # if arcpy.Exists(new_lines_feature_class):
+    #     arcpy.management.Delete(new_lines_feature_class)
+    #
+    # arcpy.CreateFeatureclass_management(
+    #     out_path=os.path.dirname(new_lines_feature_class),
+    #     out_name=os.path.basename(new_lines_feature_class),
+    #     geometry_type="POLYLINE",
+    #     spatial_reference=environment_setup.project_spatial_reference,
+    #     xytolerance="0.02 Meters",
+    #     xy_resolution="0.01 Meters",
+    # )
+
     print("Created new lines to the river network")
     arcpy.UnsplitLine_management(
         in_features=new_lines_feature_class,

@@ -102,7 +102,7 @@ def copy_input_features(geomotry_search_tolerance):
     )
 
     id_field = "orig_ob_id"
-    # Adding transferring the NBR value to the matrikkel_bygningspunkt
+
     arcpy.AddField_management(
         in_table=River_N100.unconnected_river_geometry__unsplit_river_features__n100.value,
         field_name=id_field,
@@ -138,7 +138,7 @@ def copy_input_features(geomotry_search_tolerance):
     print(f"Created {River_N100.unconnected_river_geometry__river_dangles__n100.value}")
 
     dangle_id_field = "dang_id"
-    # Adding transferring the NBR value to the matrikkel_bygningspunkt
+
     arcpy.AddField_management(
         in_table=River_N100.unconnected_river_geometry__river_dangles__n100.value,
         field_name=dangle_id_field,
@@ -251,7 +251,7 @@ def resolve_geometry(
     sql_dangle_problematic_ids = f"{dangle_id_field} IN ({dangle_ids_string})"
     print("Dangle IDs SQL Query:", sql_dangle_problematic_ids)
 
-    # Proceed with the selection and creation of features for lines
+    # Selection and creation of features for flagged problematic geometry
     if line_ids:
         custom_arcpy.select_attribute_and_make_permanent_feature(
             input_layer=River_N100.unconnected_river_geometry__unsplit_river_features__n100.value,

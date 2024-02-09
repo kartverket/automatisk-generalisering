@@ -54,22 +54,13 @@ def prepare_data():
     )
 
     # In the future implement a logic which could use the centroid of the lake to create lines for more center logic
-    arcpy.management.FeatureToPoint(
-        in_features=River_N100.river_centerline__rivers_near_waterfeatures__n100.value,
-        out_feature_class=River_N100.short__water_feature_centroid__n100.value,
-        point_location="INSIDE",
-    )
+    # arcpy.management.FeatureToPoint(
+    #     in_features=River_N100.river_centerline__rivers_near_waterfeatures__n100.value,
+    #     out_feature_class=River_N100.short__water_feature_centroid__n100.value,
+    #     point_location="INSIDE",
+    # )
     print(
         "In the future implement a logic which could use the centroid of the lake to create lines for more center logic"
-    )
-
-    arcpy.topographic.PolygonToCenterline(
-        in_features=River_N100.short__water_feature__n100.value,
-        out_feature_class=River_N100.river_centerline__water_feature_centerline__n100.value,
-        connecting_features=River_N100.river_centerline__rivers_near_waterfeatures_erased__n100.value,
-    )
-    print(
-        f"Created {River_N100.river_centerline__water_feature_centerline__n100.value}"
     )
 
     arcpy.cartography.CollapseHydroPolygon(
@@ -83,7 +74,7 @@ def prepare_data():
 def create_dangles():
     custom_arcpy.select_attribute_and_make_permanent_feature(
         input_layer=River_N100.unconnected_river_geometry__water_area_features_selected__n100.value,
-        expression="OBJECTID = 12719",
+        expression="OBJECTID = 4703",
         output_name=River_N100.river_centerline__study_lake__n100.value,
     )
 
@@ -92,13 +83,6 @@ def create_dangles():
         overlap_type=custom_arcpy.OverlapType.BOUNDARY_TOUCHES.value,
         select_features=River_N100.river_centerline__study_lake__n100.value,
         output_name=River_N100.river_centerline__study_rivers__n100.value,
-    )
-
-    custom_arcpy.select_location_and_make_permanent_feature(
-        input_layer=River_N100.river_centerline__water_feature_centerline__n100.value,
-        overlap_type=custom_arcpy.OverlapType.INTERSECT.value,
-        select_features=River_N100.river_centerline__study_lake__n100.value,
-        output_name=River_N100.river_centerline__study_centerline__n100.value,
     )
 
     custom_arcpy.select_location_and_make_permanent_feature(

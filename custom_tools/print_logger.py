@@ -18,14 +18,13 @@ logging_file_name = "app.log"
 
 
 class LogPath:
-    # Predefined class attributes for each scale-object combination
-    # These should be replaced with actual paths constructed from your project's structure
     N100Building = rf"{local_root_directory}\{project_root_directory}\{env_setup.global_config.scale_n100}\{env_setup.global_config.object_bygning}\{general_files_directory_name}\{logging_file_name}"
     N100River = rf"{local_root_directory}\{project_root_directory}\{env_setup.global_config.scale_n100}\{env_setup.global_config.object_elv_bekk}\{general_files_directory_name}\{logging_file_name}"
 
 
 def setup_logger(scale, object_type, log_directory="logs", filename=logging_file_name):
     """
+    WORK IN PROGRESS NOT DONE
     Creates a logger for the specified scale and object type.
     Log files will be stored in a directory structure matching the scale and object type.
 
@@ -49,7 +48,7 @@ def setup_logger(scale, object_type, log_directory="logs", filename=logging_file
 
     # Configure logger
     logger = logging.getLogger(f"{scale}_{object_type}")
-    if not logger.handlers:  # Avoid adding handlers multiple times
+    if not logger.handlers:  # Avoiding adding handlers multiple times
         logger.setLevel(logging.INFO)
         file_handler = logging.FileHandler(full_log_path)
         formatter = logging.Formatter(

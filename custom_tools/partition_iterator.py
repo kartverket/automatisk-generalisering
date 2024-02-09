@@ -9,8 +9,12 @@ from custom_tools import custom_arcpy
 from env_setup import setup_directory_structure
 from file_manager.n100.file_manager_buildings import Building_N100
 
+# THIS IS WORK IN PROGRESS NOT READY FOR USE
+
 
 class PartitionIterator:
+    """THIS IS WORK IN PROGRESS NOT READY FOR USE"""
+
     def __init__(
         self,
         inputs,

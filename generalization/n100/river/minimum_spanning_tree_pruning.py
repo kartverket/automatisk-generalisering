@@ -17,7 +17,7 @@ def main():
     G = load_network_from_features(centerline_feature)
     connection_nodes = load_start_nodes(connection_node_feature)
 
-    # Compute minimum spanning tree
+    # Compute minimum spanning tree for collapsed network
     mst_tree = minimum_spanning_tree_for_terminals(G, connection_nodes)
 
     # Save the pruned network
@@ -102,8 +102,7 @@ def minimum_spanning_tree_for_terminals(G, terminal_nodes):
         print(
             f"Warning: The following terminal nodes are in isolated subgraphs and cannot be connected: {isolated_terminals}"
         )
-        # Handle isolated terminals here (e.g., connect them to the nearest node in connected_terminals)
-        # For now, we'll just exclude them from the MST calculation
+        # To handle potential nodes which can not be connected
 
     # Create a complete graph for the connected terminal nodes with the shortest path distance as edge weight
     complete_graph = nx.Graph()
