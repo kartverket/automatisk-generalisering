@@ -50,3 +50,9 @@ symbology_output_folder = r"C:\path\to\output\folder"
 
 # This is no longer used by main script
 resolve_building_conflicts_iteration_feature = r"C:\path\to\test\feature"
+
+###########################
+# River
+###########################
+
+filled_dtm = r"C:\path\to\gdb\dtm"
