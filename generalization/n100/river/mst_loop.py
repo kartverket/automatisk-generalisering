@@ -11,6 +11,7 @@ from file_manager.n100.file_manager_rivers import River_N100
 
 def main():
     setup_arcpy_environment()
+
     filter_complicated_lakes()
 
 
@@ -40,6 +41,10 @@ def setup_arcpy_environment():
         select_features=f"{River_N100.unconnected_river_geometry__water_area_features_selected__n100.value}_copy",
         output_name=f"{River_N100.unconnected_river_geometry__river_area_selection__n100.value}_copy",
     )
+
+
+def prepare_data():
+    pass
 
 
 def filter_complicated_lakes():
@@ -102,40 +107,30 @@ def filter_complicated_lakes():
 
     target_features = input_water_polygon
     join_features_1 = (
-        River_N100.centerline_pruning_loop__centerline_intersection_vertex__n100.value
-    )
-    join_features_2 = (
         River_N100.centerline_pruning_loop__river_inlet_dangles__n100.value
     )
+    join_features_2 = (
+        River_N100.centerline_pruning_loop__centerline_intersection_vertex__n100.value
+    )
 
-    # Create a new FieldMappings object and add both the target and join feature classes to it
+    # First Spatial Join - Adding river inlet data
     field_mappings = arcpy.FieldMappings()
     field_mappings.addTable(target_features)
     field_mappings.addTable(join_features_1)
 
-    # Find the index of the intersection_field in the field mappings
-    intersection_field_index = field_mappings.findFieldMapIndex(intersection_field)
-
-    # If the field exists, modify its properties
-    if intersection_field_index != -1:
-        # Get the specific FieldMap object
-        field_map = field_mappings.getFieldMap(intersection_field_index)
-
-        # Get the output field's properties as a Field object
+    # Setup field mapping for river_inlet_field (assuming sum_inlets is the intended outcome)
+    # Note: Corrected to ensure we're modifying the correct field mapping
+    inlet_field_index = field_mappings.findFieldMapIndex(river_inlet_field)
+    if inlet_field_index != -1:
+        field_map = field_mappings.getFieldMap(inlet_field_index)
         field = field_map.outputField
-
-        # Optionally, rename the output field to reflect its aggregated nature, e.g., sum_intersection
-        field.name = "sum_intersection"
-        field.aliasName = "Sum of Intersection"
+        field.name = "sum_inlets"
+        field.aliasName = "Sum of Inlets"
         field_map.outputField = field
-
-        # Set the merge rule to sum to aggregate the values
         field_map.mergeRule = "Sum"
+        field_mappings.replaceFieldMap(inlet_field_index, field_map)
 
-        # Replace the old field map in the FieldMappings object with the updated one
-        field_mappings.replaceFieldMap(intersection_field_index, field_map)
-
-    # Perform the Add Spatial Join with the updated field mappings
+    # Execute the first spatial join
     arcpy.analysis.SpatialJoin(
         target_features=target_features,
         join_features=join_features_1,
@@ -146,27 +141,24 @@ def filter_complicated_lakes():
         match_option="INTERSECT",
     )
 
-    # Prepare for the second join operation
+    # Second Spatial Join - Adding intersection data
     field_mappings_2 = arcpy.FieldMappings()
-    field_mappings_2.addTable(
-        f"{target_features}_add_join_1"
-    )  # The output of the first join as input
+    field_mappings_2.addTable(f"{target_features}_add_join_1")
     field_mappings_2.addTable(join_features_2)
 
-    # Find the index of the river_inlet_field in the field mappings
-    river_inlet_field_index = field_mappings_2.findFieldMapIndex(river_inlet_field)
-
-    # If the field exists, modify its properties
-    if river_inlet_field_index != -1:
-        field_map = field_mappings_2.getFieldMap(river_inlet_field_index)
+    # Setup field mapping for intersection_field (assuming sum_intersection is the intended outcome)
+    # Corrected to focus on intersection_field
+    intersection_field_index = field_mappings_2.findFieldMapIndex(intersection_field)
+    if intersection_field_index != -1:
+        field_map = field_mappings_2.getFieldMap(intersection_field_index)
         field = field_map.outputField
-        field.name = "sum_inlets"
-        field.aliasName = "Sum of Inlets"
+        field.name = "sum_intersection"
+        field.aliasName = "Sum of Intersection"
         field_map.outputField = field
         field_map.mergeRule = "Sum"
-        field_mappings_2.replaceFieldMap(river_inlet_field_index, field_map)
+        field_mappings_2.replaceFieldMap(intersection_field_index, field_map)
 
-    # Perform the second Add Spatial Join with the updated field mappings for river_inlet_field
+    # Execute the second spatial join
     arcpy.analysis.SpatialJoin(
         target_features=f"{target_features}_add_join_1",
         join_features=join_features_2,
@@ -177,17 +169,27 @@ def filter_complicated_lakes():
         match_option="INTERSECT",
     )
 
-    sql_simple_water_features = "sum_intersection < sum_inlets"
+    # Use CalculateField to set null ("sum_intersection" = <NULL>) values to 0
+    arcpy.CalculateField_management(
+        in_table=River_N100.centerline_pruning_loop__water_feature_summarized__n100.value,
+        field="sum_intersection",
+        expression="0 if !sum_intersection! is None else !sum_intersection!",
+        expression_type="PYTHON3",
+    )
+
+    sql_simple_water_features = (
+        "(sum_intersection < sum_inlets) OR (sum_intersection = 1 AND sum_inlets = 1)"
+    )
     custom_arcpy.select_attribute_and_make_permanent_feature(
         input_layer=River_N100.centerline_pruning_loop__water_feature_summarized__n100.value,
         expression=sql_simple_water_features,
         output_name=River_N100.centerline_pruning_loop__simple_water_features__n100.value,
     )
 
-    sql_complex_water_features = "sum_intersection >= sum_inlets"
+    sql_complex_water_features = "(sum_intersection >= sum_inlets) AND (sum_intersection <> 1 OR sum_inlets <> 1)"
     custom_arcpy.select_attribute_and_make_permanent_feature(
         input_layer=River_N100.centerline_pruning_loop__water_feature_summarized__n100.value,
-        expression=sql_simple_water_features,
+        expression=sql_complex_water_features,
         output_name=River_N100.centerline_pruning_loop__complex_water_features__n100.value,
     )
 
