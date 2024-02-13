@@ -93,6 +93,7 @@ unconnected_river_geometry = "unconnected_river_geometry"
 extending_river_geometry = "extending_river_geometry"
 river_centerline = "river_centerline"
 centerline_pruning = "centerline_pruning"
+centerline_pruning_loop = "centerline_pruning_loop"
 
 ##############################################################################################################################################
 
@@ -283,5 +284,47 @@ class River_N100(Enum):
     centerline_pruning__pruned_centerline__n100 = generate_file_name_gdb(
         function_name=centerline_pruning,
         description="pruned_centerline",
+        scale=scale,
+    )
+
+    #################################################
+    ########### RIVER CENTERLINE PROONING LOOP ###########
+    #################################################
+
+    centerline_pruning_loop__centerline_start_end_vertex__n100 = generate_file_name_gdb(
+        function_name=centerline_pruning_loop,
+        description="centerline_start_end_vertex",
+        scale=scale,
+    )
+
+    centerline_pruning_loop__centerline_intersection_vertex__n100 = (
+        generate_file_name_gdb(
+            function_name=centerline_pruning_loop,
+            description="centerline_intersection_vertex",
+            scale=scale,
+        )
+    )
+
+    centerline_pruning_loop__river_inlet_dangles__n100 = generate_file_name_gdb(
+        function_name=centerline_pruning_loop,
+        description="river_inlet_dangles",
+        scale=scale,
+    )
+
+    centerline_pruning_loop__water_feature_summarized__n100 = generate_file_name_gdb(
+        function_name=centerline_pruning_loop,
+        description="water_feature_summarized",
+        scale=scale,
+    )
+
+    centerline_pruning_loop__simple_water_features__n100 = generate_file_name_gdb(
+        function_name=centerline_pruning_loop,
+        description="simple_water_features",
+        scale=scale,
+    )
+
+    centerline_pruning_loop__complex_water_features__n100 = generate_file_name_gdb(
+        function_name=centerline_pruning_loop,
+        description="complex_water_features",
         scale=scale,
     )
