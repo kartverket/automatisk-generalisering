@@ -13,8 +13,9 @@ from input_data import input_n50
 def main():
     setup_arcpy_environment()
     prepare_data()
+    create_collapsed_centerline()
 
-    # filter_complicated_lakes()
+    filter_complicated_lakes()
 
 
 input_water_polygon = River_N100.centerline_pruning_loop__lake_features__n100.value
@@ -22,7 +23,7 @@ input_centerline = River_N100.river_centerline__water_feature_collapsed__n100.va
 input_rivers = River_N100.unconnected_river_geometry__river_area_selection__n100.value
 
 water_polygon = f"{River_N100.unconnected_river_geometry__water_area_features_selected__n100.value}_copy"
-centerline = f"{River_N100.river_centerline__water_feature_collapsed__n100.value}_copy"
+centerline = River_N100.centerline_pruning_loop__collapsed_hydropolygon__n100.value
 rivers = River_N100.unconnected_river_geometry__river_area_selection__n100.value
 
 
@@ -94,6 +95,52 @@ def prepare_data():
     )
 
 
+def create_collapsed_centerline():
+    custom_arcpy.select_location_and_make_permanent_feature(
+        input_layer=input_rivers,
+        overlap_type=custom_arcpy.OverlapType.BOUNDARY_TOUCHES.value,
+        select_features=River_N100.centerline_pruning_loop__water_features_river_final_selection__n100.value,
+        output_name=River_N100.centerline_pruning_loop__river_inlets__n100.value,
+    )
+
+    arcpy.analysis.PairwiseErase(
+        in_features=River_N100.centerline_pruning_loop__river_inlets__n100.value,
+        erase_features=River_N100.centerline_pruning_loop__water_features_river_final_selection__n100.value,
+        out_feature_class=River_N100.centerline_pruning_loop__river_inlets_erased__n100.value,
+    )
+    print(
+        f"Created {River_N100.river_centerline__rivers_near_waterfeatures_erased__n100.value}"
+    )
+
+    # Copy to rename the file to have less characters in the name since the name needs to fit inside a field in CollapseHydroPolygon
+    arcpy.management.CopyFeatures(
+        in_features=River_N100.centerline_pruning_loop__water_features_river_final_selection__n100.value,
+        out_feature_class=River_N100.short_name__water__n100.value,
+    )
+    print(f"Created {River_N100.short_name__water__n100.value}")
+
+    arcpy.cartography.CollapseHydroPolygon(
+        in_features=River_N100.short_name__water__n100.value,
+        out_line_feature_class=River_N100.centerline_pruning_loop__collapsed_hydropolygon__n100.value,
+        connecting_features=River_N100.centerline_pruning_loop__river_inlets_erased__n100.value,
+        merge_adjacent_input_polygons="MERGE_ADJACENT",
+    )
+    print(
+        f"Created {River_N100.centerline_pruning_loop__collapsed_hydropolygon__n100.value}"
+    )
+
+    arcpy.edit.Snap(
+        in_features=River_N100.centerline_pruning_loop__shared_boundaries_midpoint__n100.value,
+        snap_environment=[
+            [
+                River_N100.centerline_pruning_loop__collapsed_hydropolygon__n100.value,
+                "END",
+                "100 Meters",
+            ]
+        ],
+    )
+
+
 def filter_complicated_lakes():
     arcpy.management.FeatureVerticesToPoints(
         in_features=centerline,
@@ -119,6 +166,14 @@ def filter_complicated_lakes():
         output_name=River_N100.centerline_pruning_loop__river_inlet_dangles__n100.value,
     )
 
+    arcpy.management.Merge(
+        inputs=[
+            River_N100.centerline_pruning_loop__shared_boundaries_midpoint__n100.value,
+            River_N100.centerline_pruning_loop__river_inlet_dangles__n100.value,
+        ],
+        output=River_N100.centerline_pruning_loop__river_inlets_points_merged__n100.value,
+    )
+
     custom_arcpy.select_location_and_make_permanent_feature(
         input_layer=River_N100.centerline_pruning_loop__centerline_start_end_vertex__n100.value,
         overlap_type=custom_arcpy.OverlapType.INTERSECT.value,
@@ -142,19 +197,19 @@ def filter_complicated_lakes():
     )
 
     arcpy.AddField_management(
-        in_table=River_N100.centerline_pruning_loop__river_inlet_dangles__n100.value,
+        in_table=River_N100.centerline_pruning_loop__river_inlets_points_merged__n100.value,
         field_name=river_inlet_field,
         field_type="LONG",
     )
     arcpy.CalculateField_management(
-        in_table=River_N100.centerline_pruning_loop__river_inlet_dangles__n100.value,
+        in_table=River_N100.centerline_pruning_loop__river_inlets_points_merged__n100.value,
         field=river_inlet_field,
         expression=1,
     )
 
     target_features = water_polygon
     join_features_1 = (
-        River_N100.centerline_pruning_loop__river_inlet_dangles__n100.value
+        River_N100.centerline_pruning_loop__river_inlets_points_merged__n100.value
     )
     join_features_2 = (
         River_N100.centerline_pruning_loop__centerline_intersection_vertex__n100.value

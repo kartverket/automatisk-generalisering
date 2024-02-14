@@ -102,7 +102,6 @@ centerline_pruning_loop = "centerline_pruning_loop"
 
 
 class River_N100(Enum):
-
     ###########################################
     ########### RIVER DATA PREPARATION ##########
     ###########################################
@@ -378,6 +377,36 @@ class River_N100(Enum):
     centerline_pruning_loop__shared_boundaries_midpoint__n100 = generate_file_name_gdb(
         function_name=centerline_pruning_loop,
         description="shared_boundaries_midpoint",
+        scale=scale,
+    )
+
+    centerline_pruning_loop__river_inlets__n100 = generate_file_name_gdb(
+        function_name=centerline_pruning_loop,
+        description="river_inlets",
+        scale=scale,
+    )
+
+    centerline_pruning_loop__river_inlets_erased__n100 = generate_file_name_gdb(
+        function_name=centerline_pruning_loop,
+        description="river_inlets_erased",
+        scale=scale,
+    )
+
+    centerline_pruning_loop__river_inlets_points_merged__n100 = generate_file_name_gdb(
+        function_name=centerline_pruning_loop,
+        description="river_inlets_points_merged",
+        scale=scale,
+    )
+
+    short_name__water__n100 = generate_file_name_gdb(
+        function_name="short_name",
+        description="water",
+        scale=scale,
+    )
+
+    centerline_pruning_loop__collapsed_hydropolygon__n100 = generate_file_name_gdb(
+        function_name=centerline_pruning_loop,
+        description="collapsed_hydropolygon",
         scale=scale,
     )
 
