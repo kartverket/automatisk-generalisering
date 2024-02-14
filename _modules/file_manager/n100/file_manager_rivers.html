@@ -184,6 +184,7 @@
 <span class="n">river_centerline</span> <span class="o">=</span> <span class="s2">&quot;river_centerline&quot;</span>
 <span class="n">centerline_pruning</span> <span class="o">=</span> <span class="s2">&quot;centerline_pruning&quot;</span>
 <span class="n">thin_hydrology_lines</span> <span class="o">=</span> <span class="s2">&quot;thin_hydrology_lines&quot;</span>
+<span class="n">centerline_pruning_loop</span> <span class="o">=</span> <span class="s2">&quot;centerline_pruning_loop&quot;</span>
 
 <span class="c1">##############################################################################################################################################</span>
 
@@ -191,7 +192,6 @@
 <div class="viewcode-block" id="River_N100">
 <a class="viewcode-back" href="../../../generated_docs/file_manager.n100.html#file_manager.n100.file_manager_rivers.River_N100">[docs]</a>
 <span class="k">class</span> <span class="nc">River_N100</span><span class="p">(</span><span class="n">Enum</span><span class="p">):</span>
-
     <span class="c1">###########################################</span>
     <span class="c1">########### RIVER DATA PREPARATION ##########</span>
     <span class="c1">###########################################</span>
@@ -209,7 +209,7 @@
     <span class="p">)</span>
 
     <span class="c1">#################################################</span>
-    <span class="c1">########### UNCONNECTED RIVER GEOMETRY  #########</span>
+    <span class="c1">########### UNCONNECTED RIVER GEOMETRY  ###########</span>
     <span class="c1">#################################################</span>
 
     <span class="n">unconnected_river_geometry__river_area_selection__n100</span> <span class="o">=</span> <span class="n">generate_file_name_gdb</span><span class="p">(</span>
@@ -403,6 +403,170 @@
     <span class="n">thin_hydrology_lines__visible_streams__n100</span> <span class="o">=</span> <span class="n">generate_file_name_gdb</span><span class="p">(</span>
         <span class="n">function_name</span><span class="o">=</span><span class="n">thin_hydrology_lines</span><span class="p">,</span>
         <span class="n">description</span><span class="o">=</span><span class="s2">&quot;visible_streams&quot;</span><span class="p">,</span>
+        <span class="n">scale</span><span class="o">=</span><span class="n">scale</span><span class="p">,</span>
+    <span class="p">)</span>
+
+    <span class="c1">#################################################</span>
+    <span class="c1">########### RIVER CENTERLINE PROONING LOOP ###########</span>
+    <span class="c1">#################################################</span>
+
+    <span class="n">centerline_pruning_loop__lake_features__n100</span> <span class="o">=</span> <span class="n">generate_file_name_gdb</span><span class="p">(</span>
+        <span class="n">function_name</span><span class="o">=</span><span class="n">centerline_pruning_loop</span><span class="p">,</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">&quot;lake_features&quot;</span><span class="p">,</span>
+        <span class="n">scale</span><span class="o">=</span><span class="n">scale</span><span class="p">,</span>
+    <span class="p">)</span>
+
+    <span class="n">centerline_pruning_loop__rivers_erased_with_lake_features__n100</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="n">generate_file_name_gdb</span><span class="p">(</span>
+            <span class="n">function_name</span><span class="o">=</span><span class="n">centerline_pruning_loop</span><span class="p">,</span>
+            <span class="n">description</span><span class="o">=</span><span class="s2">&quot;rivers_erased_with_lake_features&quot;</span><span class="p">,</span>
+            <span class="n">scale</span><span class="o">=</span><span class="n">scale</span><span class="p">,</span>
+        <span class="p">)</span>
+    <span class="p">)</span>
+
+    <span class="n">centerline_pruning_loop__study_area__n100</span> <span class="o">=</span> <span class="n">generate_file_name_gdb</span><span class="p">(</span>
+        <span class="n">function_name</span><span class="o">=</span><span class="n">centerline_pruning_loop</span><span class="p">,</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">&quot;study_area&quot;</span><span class="p">,</span>
+        <span class="n">scale</span><span class="o">=</span><span class="n">scale</span><span class="p">,</span>
+    <span class="p">)</span>
+
+    <span class="n">centerline_pruning_loop__water_features_study_area__n100</span> <span class="o">=</span> <span class="n">generate_file_name_gdb</span><span class="p">(</span>
+        <span class="n">function_name</span><span class="o">=</span><span class="n">centerline_pruning_loop</span><span class="p">,</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">&quot;water_features_study_area&quot;</span><span class="p">,</span>
+        <span class="n">scale</span><span class="o">=</span><span class="n">scale</span><span class="p">,</span>
+    <span class="p">)</span>
+
+    <span class="n">centerline_pruning_loop__water_features_dissolved__n100</span> <span class="o">=</span> <span class="n">generate_file_name_gdb</span><span class="p">(</span>
+        <span class="n">function_name</span><span class="o">=</span><span class="n">centerline_pruning_loop</span><span class="p">,</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">&quot;water_features_dissolved&quot;</span><span class="p">,</span>
+        <span class="n">scale</span><span class="o">=</span><span class="n">scale</span><span class="p">,</span>
+    <span class="p">)</span>
+
+    <span class="n">centerline_pruning_loop__water_features_dissolved_river_intersect__n100</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="n">generate_file_name_gdb</span><span class="p">(</span>
+            <span class="n">function_name</span><span class="o">=</span><span class="n">centerline_pruning_loop</span><span class="p">,</span>
+            <span class="n">description</span><span class="o">=</span><span class="s2">&quot;water_features_dissolved_river_intersect&quot;</span><span class="p">,</span>
+            <span class="n">scale</span><span class="o">=</span><span class="n">scale</span><span class="p">,</span>
+        <span class="p">)</span>
+    <span class="p">)</span>
+
+    <span class="n">centerline_pruning_loop__water_features_river_final_selection__n100</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="n">generate_file_name_gdb</span><span class="p">(</span>
+            <span class="n">function_name</span><span class="o">=</span><span class="n">centerline_pruning_loop</span><span class="p">,</span>
+            <span class="n">description</span><span class="o">=</span><span class="s2">&quot;water_features_river_final_selection&quot;</span><span class="p">,</span>
+            <span class="n">scale</span><span class="o">=</span><span class="n">scale</span><span class="p">,</span>
+        <span class="p">)</span>
+    <span class="p">)</span>
+
+    <span class="n">centerline_pruning_loop__polygon_to_line__n100</span> <span class="o">=</span> <span class="n">generate_file_name_gdb</span><span class="p">(</span>
+        <span class="n">function_name</span><span class="o">=</span><span class="n">centerline_pruning_loop</span><span class="p">,</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">&quot;polygon_to_line&quot;</span><span class="p">,</span>
+        <span class="n">scale</span><span class="o">=</span><span class="n">scale</span><span class="p">,</span>
+    <span class="p">)</span>
+
+    <span class="n">centerline_pruning_loop__water_features_shared_boundaries__n100</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="n">generate_file_name_gdb</span><span class="p">(</span>
+            <span class="n">function_name</span><span class="o">=</span><span class="n">centerline_pruning_loop</span><span class="p">,</span>
+            <span class="n">description</span><span class="o">=</span><span class="s2">&quot;water_features_shared_boundaries&quot;</span><span class="p">,</span>
+            <span class="n">scale</span><span class="o">=</span><span class="n">scale</span><span class="p">,</span>
+        <span class="p">)</span>
+    <span class="p">)</span>
+
+    <span class="n">centerline_pruning_loop__shared_boundaries_midpoint__n100</span> <span class="o">=</span> <span class="n">generate_file_name_gdb</span><span class="p">(</span>
+        <span class="n">function_name</span><span class="o">=</span><span class="n">centerline_pruning_loop</span><span class="p">,</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">&quot;shared_boundaries_midpoint&quot;</span><span class="p">,</span>
+        <span class="n">scale</span><span class="o">=</span><span class="n">scale</span><span class="p">,</span>
+    <span class="p">)</span>
+
+    <span class="n">centerline_pruning_loop__river_inlets__n100</span> <span class="o">=</span> <span class="n">generate_file_name_gdb</span><span class="p">(</span>
+        <span class="n">function_name</span><span class="o">=</span><span class="n">centerline_pruning_loop</span><span class="p">,</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">&quot;river_inlets&quot;</span><span class="p">,</span>
+        <span class="n">scale</span><span class="o">=</span><span class="n">scale</span><span class="p">,</span>
+    <span class="p">)</span>
+
+    <span class="n">centerline_pruning_loop__river_inlets_erased__n100</span> <span class="o">=</span> <span class="n">generate_file_name_gdb</span><span class="p">(</span>
+        <span class="n">function_name</span><span class="o">=</span><span class="n">centerline_pruning_loop</span><span class="p">,</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">&quot;river_inlets_erased&quot;</span><span class="p">,</span>
+        <span class="n">scale</span><span class="o">=</span><span class="n">scale</span><span class="p">,</span>
+    <span class="p">)</span>
+
+    <span class="n">centerline_pruning_loop__river_inlets_points_merged__n100</span> <span class="o">=</span> <span class="n">generate_file_name_gdb</span><span class="p">(</span>
+        <span class="n">function_name</span><span class="o">=</span><span class="n">centerline_pruning_loop</span><span class="p">,</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">&quot;river_inlets_points_merged&quot;</span><span class="p">,</span>
+        <span class="n">scale</span><span class="o">=</span><span class="n">scale</span><span class="p">,</span>
+    <span class="p">)</span>
+
+    <span class="n">short_name__water__n100</span> <span class="o">=</span> <span class="n">generate_file_name_gdb</span><span class="p">(</span>
+        <span class="n">function_name</span><span class="o">=</span><span class="s2">&quot;short_name&quot;</span><span class="p">,</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">&quot;water&quot;</span><span class="p">,</span>
+        <span class="n">scale</span><span class="o">=</span><span class="n">scale</span><span class="p">,</span>
+    <span class="p">)</span>
+
+    <span class="n">centerline_pruning_loop__collapsed_hydropolygon__n100</span> <span class="o">=</span> <span class="n">generate_file_name_gdb</span><span class="p">(</span>
+        <span class="n">function_name</span><span class="o">=</span><span class="n">centerline_pruning_loop</span><span class="p">,</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">&quot;collapsed_hydropolygon&quot;</span><span class="p">,</span>
+        <span class="n">scale</span><span class="o">=</span><span class="n">scale</span><span class="p">,</span>
+    <span class="p">)</span>
+
+    <span class="n">centerline_pruning_loop__closed_centerline_lines__n100</span> <span class="o">=</span> <span class="n">generate_file_name_gdb</span><span class="p">(</span>
+        <span class="n">function_name</span><span class="o">=</span><span class="n">centerline_pruning_loop</span><span class="p">,</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">&quot;closed_centerline_lines&quot;</span><span class="p">,</span>
+        <span class="n">scale</span><span class="o">=</span><span class="n">scale</span><span class="p">,</span>
+    <span class="p">)</span>
+
+    <span class="n">centerline_pruning_loop__closed_centerline_point__n100</span> <span class="o">=</span> <span class="n">generate_file_name_gdb</span><span class="p">(</span>
+        <span class="n">function_name</span><span class="o">=</span><span class="n">centerline_pruning_loop</span><span class="p">,</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">&quot;closed_centerline_point&quot;</span><span class="p">,</span>
+        <span class="n">scale</span><span class="o">=</span><span class="n">scale</span><span class="p">,</span>
+    <span class="p">)</span>
+
+    <span class="n">centerline_pruning_loop__intersection_points_merged__n100</span> <span class="o">=</span> <span class="n">generate_file_name_gdb</span><span class="p">(</span>
+        <span class="n">function_name</span><span class="o">=</span><span class="n">centerline_pruning_loop</span><span class="p">,</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">&quot;intersection_points_merged&quot;</span><span class="p">,</span>
+        <span class="n">scale</span><span class="o">=</span><span class="n">scale</span><span class="p">,</span>
+    <span class="p">)</span>
+
+    <span class="n">centerline_pruning_loop__centerline_start_end_vertex__n100</span> <span class="o">=</span> <span class="n">generate_file_name_gdb</span><span class="p">(</span>
+        <span class="n">function_name</span><span class="o">=</span><span class="n">centerline_pruning_loop</span><span class="p">,</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">&quot;centerline_start_end_vertex&quot;</span><span class="p">,</span>
+        <span class="n">scale</span><span class="o">=</span><span class="n">scale</span><span class="p">,</span>
+    <span class="p">)</span>
+
+    <span class="n">centerline_pruning_loop__centerline_intersection_vertex__n100</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="n">generate_file_name_gdb</span><span class="p">(</span>
+            <span class="n">function_name</span><span class="o">=</span><span class="n">centerline_pruning_loop</span><span class="p">,</span>
+            <span class="n">description</span><span class="o">=</span><span class="s2">&quot;centerline_intersection_vertex&quot;</span><span class="p">,</span>
+            <span class="n">scale</span><span class="o">=</span><span class="n">scale</span><span class="p">,</span>
+        <span class="p">)</span>
+    <span class="p">)</span>
+
+    <span class="n">centerline_pruning_loop__river_inlet_dangles__n100</span> <span class="o">=</span> <span class="n">generate_file_name_gdb</span><span class="p">(</span>
+        <span class="n">function_name</span><span class="o">=</span><span class="n">centerline_pruning_loop</span><span class="p">,</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">&quot;river_inlet_dangles&quot;</span><span class="p">,</span>
+        <span class="n">scale</span><span class="o">=</span><span class="n">scale</span><span class="p">,</span>
+    <span class="p">)</span>
+
+    <span class="c1"># centerline_pruning_loop__river_inlet_dangles_merged__n100 = generate_file_name_gdb(</span>
+    <span class="c1">#     function_name=centerline_pruning_loop,</span>
+    <span class="c1">#     description=&quot;river_inlet_dangles_merged&quot;,</span>
+    <span class="c1">#     scale=scale,</span>
+    <span class="c1"># )</span>
+
+    <span class="n">centerline_pruning_loop__water_feature_summarized__n100</span> <span class="o">=</span> <span class="n">generate_file_name_gdb</span><span class="p">(</span>
+        <span class="n">function_name</span><span class="o">=</span><span class="n">centerline_pruning_loop</span><span class="p">,</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">&quot;water_feature_summarized&quot;</span><span class="p">,</span>
+        <span class="n">scale</span><span class="o">=</span><span class="n">scale</span><span class="p">,</span>
+    <span class="p">)</span>
+
+    <span class="n">centerline_pruning_loop__simple_water_features__n100</span> <span class="o">=</span> <span class="n">generate_file_name_gdb</span><span class="p">(</span>
+        <span class="n">function_name</span><span class="o">=</span><span class="n">centerline_pruning_loop</span><span class="p">,</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">&quot;simple_water_features&quot;</span><span class="p">,</span>
+        <span class="n">scale</span><span class="o">=</span><span class="n">scale</span><span class="p">,</span>
+    <span class="p">)</span>
+
+    <span class="n">centerline_pruning_loop__complex_water_features__n100</span> <span class="o">=</span> <span class="n">generate_file_name_gdb</span><span class="p">(</span>
+        <span class="n">function_name</span><span class="o">=</span><span class="n">centerline_pruning_loop</span><span class="p">,</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">&quot;complex_water_features&quot;</span><span class="p">,</span>
         <span class="n">scale</span><span class="o">=</span><span class="n">scale</span><span class="p">,</span>
     <span class="p">)</span></div>
 

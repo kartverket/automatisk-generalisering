@@ -20,6 +20,14 @@ generalization.n100.river.minimum\_spanning\_tree\_pruning module
    :undoc-members:
    :show-inheritance:
 
+generalization.n100.river.mst\_loop module
+------------------------------------------
+
+.. automodule:: generalization.n100.river.mst_loop
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
 generalization.n100.river.preparing\_river\_network module
 ----------------------------------------------------------
 
