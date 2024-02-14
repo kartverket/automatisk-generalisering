@@ -326,6 +326,14 @@ class River_N100(Enum):
         scale=scale,
     )
 
+    centerline_pruning_loop__rivers_erased_with_lake_features__n100 = (
+        generate_file_name_gdb(
+            function_name=centerline_pruning_loop,
+            description="rivers_erased_with_lake_features",
+            scale=scale,
+        )
+    )
+
     centerline_pruning_loop__study_area__n100 = generate_file_name_gdb(
         function_name=centerline_pruning_loop,
         description="study_area",
@@ -410,6 +418,24 @@ class River_N100(Enum):
         scale=scale,
     )
 
+    centerline_pruning_loop__closed_centerline_lines__n100 = generate_file_name_gdb(
+        function_name=centerline_pruning_loop,
+        description="closed_centerline_lines",
+        scale=scale,
+    )
+
+    centerline_pruning_loop__closed_centerline_point__n100 = generate_file_name_gdb(
+        function_name=centerline_pruning_loop,
+        description="closed_centerline_point",
+        scale=scale,
+    )
+
+    centerline_pruning_loop__intersection_points_merged__n100 = generate_file_name_gdb(
+        function_name=centerline_pruning_loop,
+        description="intersection_points_merged",
+        scale=scale,
+    )
+
     centerline_pruning_loop__centerline_start_end_vertex__n100 = generate_file_name_gdb(
         function_name=centerline_pruning_loop,
         description="centerline_start_end_vertex",
@@ -429,6 +455,12 @@ class River_N100(Enum):
         description="river_inlet_dangles",
         scale=scale,
     )
+
+    # centerline_pruning_loop__river_inlet_dangles_merged__n100 = generate_file_name_gdb(
+    #     function_name=centerline_pruning_loop,
+    #     description="river_inlet_dangles_merged",
+    #     scale=scale,
+    # )
 
     centerline_pruning_loop__water_feature_summarized__n100 = generate_file_name_gdb(
         function_name=centerline_pruning_loop,
