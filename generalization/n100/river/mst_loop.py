@@ -221,7 +221,7 @@ def create_collapsed_centerline():
 
 def filter_complicated_lakes():
     arcpy.management.FeatureVerticesToPoints(
-        in_features=centerline,
+        in_features=River_N100.centerline_pruning_loop__collapsed_hydropolygon__n100.value,
         out_feature_class=River_N100.centerline_pruning_loop__centerline_start_end_vertex__n100.value,
         point_location="BOTH_ENDS",
     )
@@ -232,7 +232,7 @@ def filter_complicated_lakes():
     )
 
     arcpy.management.FeatureVerticesToPoints(
-        in_features=centerline,
+        in_features=River_N100.centerline_pruning_loop__collapsed_hydropolygon__n100.value,
         out_feature_class=f"{River_N100.centerline_pruning_loop__river_inlet_dangles__n100.value}_not_selected",
         point_location="DANGLE",
     )
@@ -240,29 +240,9 @@ def filter_complicated_lakes():
     custom_arcpy.select_location_and_make_permanent_feature(
         input_layer=f"{River_N100.centerline_pruning_loop__river_inlet_dangles__n100.value}_not_selected",
         overlap_type=custom_arcpy.OverlapType.INTERSECT.value,
-        select_features=rivers,
+        select_features=River_N100.centerline_pruning_loop__river_inlets_erased__n100.value,
         output_name=River_N100.centerline_pruning_loop__river_inlet_dangles__n100.value,
     )
-
-    # custom_arcpy.select_location_and_make_permanent_feature(
-    #     input_layer=f"{River_N100.centerline_pruning_loop__river_inlet_dangles__n100.value}_not_selected",
-    #     overlap_type=custom_arcpy.OverlapType.BOUNDARY_TOUCHES.value,
-    #     select_features=rivers,
-    #     output_name=f"{River_N100.centerline_pruning_loop__river_inlet_dangles__n100.value}_boundary_touches",
-    # )
-
-    # arcpy.management.Merge(
-    #     inputs=[
-    #         f"{River_N100.centerline_pruning_loop__river_inlet_dangles__n100.value}_not_selected",
-    #         f"{River_N100.centerline_pruning_loop__river_inlet_dangles__n100.value}_boundary_touches",
-    #     ],
-    #     output=River_N100.centerline_pruning_loop__river_inlet_dangles_merged__n100.value,
-    # )
-    #
-    # arcpy.management.DeleteIdentical(
-    #     in_dataset=River_N100.centerline_pruning_loop__river_inlet_dangles_merged__n100.value,
-    #     fields="Shape",
-    # )
 
     arcpy.management.Merge(
         inputs=[

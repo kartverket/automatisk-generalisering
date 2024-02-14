@@ -13,7 +13,7 @@ from file_manager.n100.file_manager_rivers import River_N100
 
 
 def main():
-    geomotry_search_tolerance = 5
+    geomotry_search_tolerance = 15
     id_field = "orig_ob_id"
     dangle_id_field = "dang_id"
     cpu_usage_percentage = 0.9

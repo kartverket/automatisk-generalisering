@@ -456,12 +456,6 @@ class River_N100(Enum):
         scale=scale,
     )
 
-    # centerline_pruning_loop__river_inlet_dangles_merged__n100 = generate_file_name_gdb(
-    #     function_name=centerline_pruning_loop,
-    #     description="river_inlet_dangles_merged",
-    #     scale=scale,
-    # )
-
     centerline_pruning_loop__water_feature_summarized__n100 = generate_file_name_gdb(
         function_name=centerline_pruning_loop,
         description="water_feature_summarized",
