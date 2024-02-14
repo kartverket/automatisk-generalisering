@@ -96,12 +96,12 @@ extending_river_geometry = "extending_river_geometry"
 river_centerline = "river_centerline"
 centerline_pruning = "centerline_pruning"
 thin_hydrology_lines = "thin_hydrology_lines"
+centerline_pruning_loop = "centerline_pruning_loop"
 
 ##############################################################################################################################################
 
 
 class River_N100(Enum):
-
     ###########################################
     ########### RIVER DATA PREPARATION ##########
     ###########################################
@@ -119,7 +119,7 @@ class River_N100(Enum):
     )
 
     #################################################
-    ########### UNCONNECTED RIVER GEOMETRY  #########
+    ########### UNCONNECTED RIVER GEOMETRY  ###########
     #################################################
 
     unconnected_river_geometry__river_area_selection__n100 = generate_file_name_gdb(
@@ -313,5 +313,169 @@ class River_N100(Enum):
     thin_hydrology_lines__visible_streams__n100 = generate_file_name_gdb(
         function_name=thin_hydrology_lines,
         description="visible_streams",
+        scale=scale,
+    )
+
+    #################################################
+    ########### RIVER CENTERLINE PROONING LOOP ###########
+    #################################################
+
+    centerline_pruning_loop__lake_features__n100 = generate_file_name_gdb(
+        function_name=centerline_pruning_loop,
+        description="lake_features",
+        scale=scale,
+    )
+
+    centerline_pruning_loop__rivers_erased_with_lake_features__n100 = (
+        generate_file_name_gdb(
+            function_name=centerline_pruning_loop,
+            description="rivers_erased_with_lake_features",
+            scale=scale,
+        )
+    )
+
+    centerline_pruning_loop__study_area__n100 = generate_file_name_gdb(
+        function_name=centerline_pruning_loop,
+        description="study_area",
+        scale=scale,
+    )
+
+    centerline_pruning_loop__water_features_study_area__n100 = generate_file_name_gdb(
+        function_name=centerline_pruning_loop,
+        description="water_features_study_area",
+        scale=scale,
+    )
+
+    centerline_pruning_loop__water_features_dissolved__n100 = generate_file_name_gdb(
+        function_name=centerline_pruning_loop,
+        description="water_features_dissolved",
+        scale=scale,
+    )
+
+    centerline_pruning_loop__water_features_dissolved_river_intersect__n100 = (
+        generate_file_name_gdb(
+            function_name=centerline_pruning_loop,
+            description="water_features_dissolved_river_intersect",
+            scale=scale,
+        )
+    )
+
+    centerline_pruning_loop__water_features_river_final_selection__n100 = (
+        generate_file_name_gdb(
+            function_name=centerline_pruning_loop,
+            description="water_features_river_final_selection",
+            scale=scale,
+        )
+    )
+
+    centerline_pruning_loop__polygon_to_line__n100 = generate_file_name_gdb(
+        function_name=centerline_pruning_loop,
+        description="polygon_to_line",
+        scale=scale,
+    )
+
+    centerline_pruning_loop__water_features_shared_boundaries__n100 = (
+        generate_file_name_gdb(
+            function_name=centerline_pruning_loop,
+            description="water_features_shared_boundaries",
+            scale=scale,
+        )
+    )
+
+    centerline_pruning_loop__shared_boundaries_midpoint__n100 = generate_file_name_gdb(
+        function_name=centerline_pruning_loop,
+        description="shared_boundaries_midpoint",
+        scale=scale,
+    )
+
+    centerline_pruning_loop__river_inlets__n100 = generate_file_name_gdb(
+        function_name=centerline_pruning_loop,
+        description="river_inlets",
+        scale=scale,
+    )
+
+    centerline_pruning_loop__river_inlets_erased__n100 = generate_file_name_gdb(
+        function_name=centerline_pruning_loop,
+        description="river_inlets_erased",
+        scale=scale,
+    )
+
+    centerline_pruning_loop__river_inlets_points_merged__n100 = generate_file_name_gdb(
+        function_name=centerline_pruning_loop,
+        description="river_inlets_points_merged",
+        scale=scale,
+    )
+
+    short_name__water__n100 = generate_file_name_gdb(
+        function_name="short_name",
+        description="water",
+        scale=scale,
+    )
+
+    centerline_pruning_loop__collapsed_hydropolygon__n100 = generate_file_name_gdb(
+        function_name=centerline_pruning_loop,
+        description="collapsed_hydropolygon",
+        scale=scale,
+    )
+
+    centerline_pruning_loop__closed_centerline_lines__n100 = generate_file_name_gdb(
+        function_name=centerline_pruning_loop,
+        description="closed_centerline_lines",
+        scale=scale,
+    )
+
+    centerline_pruning_loop__closed_centerline_point__n100 = generate_file_name_gdb(
+        function_name=centerline_pruning_loop,
+        description="closed_centerline_point",
+        scale=scale,
+    )
+
+    centerline_pruning_loop__intersection_points_merged__n100 = generate_file_name_gdb(
+        function_name=centerline_pruning_loop,
+        description="intersection_points_merged",
+        scale=scale,
+    )
+
+    centerline_pruning_loop__centerline_start_end_vertex__n100 = generate_file_name_gdb(
+        function_name=centerline_pruning_loop,
+        description="centerline_start_end_vertex",
+        scale=scale,
+    )
+
+    centerline_pruning_loop__centerline_intersection_vertex__n100 = (
+        generate_file_name_gdb(
+            function_name=centerline_pruning_loop,
+            description="centerline_intersection_vertex",
+            scale=scale,
+        )
+    )
+
+    centerline_pruning_loop__river_inlet_dangles__n100 = generate_file_name_gdb(
+        function_name=centerline_pruning_loop,
+        description="river_inlet_dangles",
+        scale=scale,
+    )
+
+    # centerline_pruning_loop__river_inlet_dangles_merged__n100 = generate_file_name_gdb(
+    #     function_name=centerline_pruning_loop,
+    #     description="river_inlet_dangles_merged",
+    #     scale=scale,
+    # )
+
+    centerline_pruning_loop__water_feature_summarized__n100 = generate_file_name_gdb(
+        function_name=centerline_pruning_loop,
+        description="water_feature_summarized",
+        scale=scale,
+    )
+
+    centerline_pruning_loop__simple_water_features__n100 = generate_file_name_gdb(
+        function_name=centerline_pruning_loop,
+        description="simple_water_features",
+        scale=scale,
+    )
+
+    centerline_pruning_loop__complex_water_features__n100 = generate_file_name_gdb(
+        function_name=centerline_pruning_loop,
+        description="complex_water_features",
         scale=scale,
     )
