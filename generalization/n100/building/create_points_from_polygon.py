@@ -18,6 +18,10 @@ environment_setup.general_setup()
 
 # Main function
 def main():
+    """
+    This function creates points from small grunnriss lost during aggregation, and merges
+    them together with collapsed points from the tools simplify building and simplify polygon.
+    """
     # Start timing
     start_time = time.time()
 
@@ -46,19 +50,15 @@ def main():
 
 def grunnriss_to_point():
     """
-    This function creates points from small grunnriss lost during aggregation, and merges
-    them together with collapsed points from the tools simplify building and simplify polygon.
-
-    Input data:
-
-    Output data:
+    Summary:
+        Transforms building polygons that are too small to points
 
     """
 
     custom_arcpy.select_location_and_make_feature_layer(
         input_layer=Building_N100.selecting_grunnriss_for_generalization__large_enough_grunnriss__n100.value,
         overlap_type=custom_arcpy.OverlapType.INTERSECT,
-        select_features=Building_N100.aggregate_building__polygon__n100.value,
+        select_features=Building_N100.aggregate_polygons__fill_hole__n100.value,
         output_name=Building_N100.grunnriss_to_point__intersect_aggregated_and_original__n100.value,
         inverted=True,
     )

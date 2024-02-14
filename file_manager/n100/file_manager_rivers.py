@@ -89,16 +89,36 @@ def generate_file_name_lyrx(
 ##############################################################################################################################################
 
 # All file and function names in correct order
+
+selecting_water_polygons = "selecting_water_polygons"
 unconnected_river_geometry = "unconnected_river_geometry"
 extending_river_geometry = "extending_river_geometry"
 river_centerline = "river_centerline"
 centerline_pruning = "centerline_pruning"
+thin_hydrology_lines = "thin_hydrology_lines"
 centerline_pruning_loop = "centerline_pruning_loop"
 
 ##############################################################################################################################################
 
 
 class River_N100(Enum):
+
+    ###########################################
+    ########### RIVER DATA PREPARATION ##########
+    ###########################################
+
+    selecting_water_polygons__centerline__n100 = generate_file_name_gdb(
+        function_name=selecting_water_polygons,
+        description="centerline",
+        scale=scale,
+    )
+
+    selecting_water_polygons__geometry_gaps__n100 = generate_file_name_gdb(
+        function_name=selecting_water_polygons,
+        description="geometry_gaps",
+        scale=scale,
+    )
+
     #################################################
     ########### UNCONNECTED RIVER GEOMETRY  ###########
     #################################################
@@ -166,9 +186,9 @@ class River_N100(Enum):
         )
     )
 
-    #################################################
-    ########### EXTENDING RIVER LINES ###########
-    #################################################
+    ###########################################
+    ########### EXTENDING RIVER LINES  ###########
+    ###########################################
 
     extending_river_geometry__input_rivers_copy__n100 = generate_file_name_gdb(
         function_name=extending_river_geometry,
@@ -212,9 +232,9 @@ class River_N100(Enum):
         scale=scale,
     )
 
-    #################################################
+    ######################################
     ########### RIVER CENTERLINE ###########
-    #################################################
+    ######################################
 
     river_centerline__rivers_near_waterfeatures__n100 = generate_file_name_gdb(
         function_name=river_centerline,
@@ -284,6 +304,16 @@ class River_N100(Enum):
     centerline_pruning__pruned_centerline__n100 = generate_file_name_gdb(
         function_name=centerline_pruning,
         description="pruned_centerline",
+        scale=scale,
+    )
+
+    ######################################
+    ######### THIN HYDROLOGY LINES ########
+    ######################################
+
+    thin_hydrology_lines__visible_streams__n100 = generate_file_name_gdb(
+        function_name=thin_hydrology_lines,
+        description="visible_streams",
         scale=scale,
     )
 
