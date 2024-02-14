@@ -7,49 +7,96 @@ import math
 from env_setup import environment_setup
 from custom_tools import custom_arcpy
 from file_manager.n100.file_manager_rivers import River_N100
+from input_data import input_n50
 
 
 def main():
     setup_arcpy_environment()
+    prepare_data()
 
-    filter_complicated_lakes()
+    # filter_complicated_lakes()
 
 
-input_water_polygon = f"{River_N100.unconnected_river_geometry__water_area_features_selected__n100.value}_copy"
-input_centerline = (
-    f"{River_N100.river_centerline__water_feature_collapsed__n100.value}_copy"
-)
+input_water_polygon = River_N100.centerline_pruning_loop__lake_features__n100.value
+input_centerline = River_N100.river_centerline__water_feature_collapsed__n100.value
 input_rivers = River_N100.unconnected_river_geometry__river_area_selection__n100.value
+
+water_polygon = f"{River_N100.unconnected_river_geometry__water_area_features_selected__n100.value}_copy"
+centerline = f"{River_N100.river_centerline__water_feature_collapsed__n100.value}_copy"
+rivers = River_N100.unconnected_river_geometry__river_area_selection__n100.value
 
 
 def setup_arcpy_environment():
     environment_setup.general_setup()
 
-    arcpy.management.CopyFeatures(
-        in_features=River_N100.unconnected_river_geometry__water_area_features_selected__n100.value,
-        out_feature_class=f"{River_N100.unconnected_river_geometry__water_area_features_selected__n100.value}_copy",
+
+def prepare_data():
+    sql_expression_water_features = "OBJTYPE = 'FerskvannTørrfall' Or OBJTYPE = 'Innsjø' Or OBJTYPE = 'InnsjøRegulert' Or OBJTYPE = 'ElvBekk'"
+    custom_arcpy.select_attribute_and_make_permanent_feature(
+        input_layer=input_n50.ArealdekkeFlate,
+        expression=sql_expression_water_features,
+        output_name=River_N100.centerline_pruning_loop__lake_features__n100.value,
     )
 
-    arcpy.management.CopyFeatures(
-        in_features=River_N100.river_centerline__water_feature_collapsed__n100.value,
-        out_feature_class=f"{River_N100.river_centerline__water_feature_collapsed__n100.value}_copy",
+    arcpy.analysis.PairwiseBuffer(
+        in_features=input_rivers,
+        out_feature_class=River_N100.centerline_pruning_loop__study_area__n100.value,
+        buffer_distance_or_field="5 Kilometers",
+        dissolve_option="ALL",
+    )
+    print("Created study area buffer")
+
+    custom_arcpy.select_location_and_make_permanent_feature(
+        input_layer=input_water_polygon,
+        overlap_type=custom_arcpy.OverlapType.INTERSECT.value,
+        select_features=River_N100.centerline_pruning_loop__study_area__n100.value,
+        output_name=River_N100.centerline_pruning_loop__water_features_study_area__n100.value,
+    )
+
+    arcpy.gapro.DissolveBoundaries(
+        input_layer=River_N100.centerline_pruning_loop__water_features_study_area__n100.value,
+        out_feature_class=River_N100.centerline_pruning_loop__water_features_dissolved__n100.value,
+    )
+
+    print("Dissolved water features boundaries")
+
+    custom_arcpy.select_location_and_make_permanent_feature(
+        input_layer=River_N100.centerline_pruning_loop__water_features_dissolved__n100.value,
+        overlap_type=custom_arcpy.OverlapType.INTERSECT.value,
+        select_features=input_rivers,
+        output_name=River_N100.centerline_pruning_loop__water_features_dissolved_river_intersect__n100.value,
     )
 
     custom_arcpy.select_location_and_make_permanent_feature(
-        input_layer=River_N100.unconnected_river_geometry__river_area_selection__n100.value,
+        input_layer=input_water_polygon,
         overlap_type=custom_arcpy.OverlapType.INTERSECT.value,
-        select_features=f"{River_N100.unconnected_river_geometry__water_area_features_selected__n100.value}_copy",
-        output_name=f"{River_N100.unconnected_river_geometry__river_area_selection__n100.value}_copy",
+        select_features=River_N100.centerline_pruning_loop__water_features_dissolved_river_intersect__n100.value,
+        output_name=River_N100.centerline_pruning_loop__water_features_river_final_selection__n100.value,
     )
 
+    arcpy.PolygonToLine_management(
+        in_features=River_N100.centerline_pruning_loop__water_features_river_final_selection__n100.value,
+        out_feature_class=River_N100.centerline_pruning_loop__polygon_to_line__n100.value,
+        neighbor_option="IDENTIFY_NEIGHBORS",
+    )
 
-def prepare_data():
-    pass
+    sql_expression_boundaries = "LEFT_FID <> -1 Or RIGHT_FID = -1"
+    custom_arcpy.select_attribute_and_make_permanent_feature(
+        input_layer=River_N100.centerline_pruning_loop__polygon_to_line__n100.value,
+        expression=sql_expression_boundaries,
+        output_name=River_N100.centerline_pruning_loop__water_features_shared_boundaries__n100.value,
+    )
+
+    arcpy.management.FeatureVerticesToPoints(
+        in_features=River_N100.centerline_pruning_loop__water_features_shared_boundaries__n100.value,
+        out_feature_class=River_N100.centerline_pruning_loop__shared_boundaries_midpoint__n100.value,
+        point_location="MID",
+    )
 
 
 def filter_complicated_lakes():
     arcpy.management.FeatureVerticesToPoints(
-        in_features=input_centerline,
+        in_features=centerline,
         out_feature_class=River_N100.centerline_pruning_loop__centerline_start_end_vertex__n100.value,
         point_location="BOTH_ENDS",
     )
@@ -60,7 +107,7 @@ def filter_complicated_lakes():
     )
 
     arcpy.management.FeatureVerticesToPoints(
-        in_features=input_centerline,
+        in_features=centerline,
         out_feature_class=f"{River_N100.centerline_pruning_loop__river_inlet_dangles__n100.value}_not_selected",
         point_location="DANGLE",
     )
@@ -68,7 +115,7 @@ def filter_complicated_lakes():
     custom_arcpy.select_location_and_make_permanent_feature(
         input_layer=f"{River_N100.centerline_pruning_loop__river_inlet_dangles__n100.value}_not_selected",
         overlap_type=custom_arcpy.OverlapType.BOUNDARY_TOUCHES.value,
-        select_features=input_rivers,
+        select_features=rivers,
         output_name=River_N100.centerline_pruning_loop__river_inlet_dangles__n100.value,
     )
 
@@ -105,7 +152,7 @@ def filter_complicated_lakes():
         expression=1,
     )
 
-    target_features = input_water_polygon
+    target_features = water_polygon
     join_features_1 = (
         River_N100.centerline_pruning_loop__river_inlet_dangles__n100.value
     )

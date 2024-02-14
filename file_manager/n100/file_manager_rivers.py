@@ -291,6 +291,66 @@ class River_N100(Enum):
     ########### RIVER CENTERLINE PROONING LOOP ###########
     #################################################
 
+    centerline_pruning_loop__lake_features__n100 = generate_file_name_gdb(
+        function_name=centerline_pruning_loop,
+        description="lake_features",
+        scale=scale,
+    )
+
+    centerline_pruning_loop__study_area__n100 = generate_file_name_gdb(
+        function_name=centerline_pruning_loop,
+        description="study_area",
+        scale=scale,
+    )
+
+    centerline_pruning_loop__water_features_study_area__n100 = generate_file_name_gdb(
+        function_name=centerline_pruning_loop,
+        description="water_features_study_area",
+        scale=scale,
+    )
+
+    centerline_pruning_loop__water_features_dissolved__n100 = generate_file_name_gdb(
+        function_name=centerline_pruning_loop,
+        description="water_features_dissolved",
+        scale=scale,
+    )
+
+    centerline_pruning_loop__water_features_dissolved_river_intersect__n100 = (
+        generate_file_name_gdb(
+            function_name=centerline_pruning_loop,
+            description="water_features_dissolved_river_intersect",
+            scale=scale,
+        )
+    )
+
+    centerline_pruning_loop__water_features_river_final_selection__n100 = (
+        generate_file_name_gdb(
+            function_name=centerline_pruning_loop,
+            description="water_features_river_final_selection",
+            scale=scale,
+        )
+    )
+
+    centerline_pruning_loop__polygon_to_line__n100 = generate_file_name_gdb(
+        function_name=centerline_pruning_loop,
+        description="polygon_to_line",
+        scale=scale,
+    )
+
+    centerline_pruning_loop__water_features_shared_boundaries__n100 = (
+        generate_file_name_gdb(
+            function_name=centerline_pruning_loop,
+            description="water_features_shared_boundaries",
+            scale=scale,
+        )
+    )
+
+    centerline_pruning_loop__shared_boundaries_midpoint__n100 = generate_file_name_gdb(
+        function_name=centerline_pruning_loop,
+        description="shared_boundaries_midpoint",
+        scale=scale,
+    )
+
     centerline_pruning_loop__centerline_start_end_vertex__n100 = generate_file_name_gdb(
         function_name=centerline_pruning_loop,
         description="centerline_start_end_vertex",
