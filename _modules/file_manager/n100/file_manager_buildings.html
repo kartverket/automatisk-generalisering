@@ -202,11 +202,11 @@
 <span class="n">propagate_displacement_building_polygons</span> <span class="o">=</span> <span class="s2">&quot;propagate_displacement_building_polygons&quot;</span>
 <span class="n">features_500_m_from_building_polygons</span> <span class="o">=</span> <span class="s2">&quot;features_500_m_from_building_polygons&quot;</span>
 <span class="n">apply_symbology_to_layers</span> <span class="o">=</span> <span class="s2">&quot;apply_symbology_to_layers&quot;</span>
-<span class="n">creating_road_buffer</span> <span class="o">=</span> <span class="s2">&quot;creating_road_buffer&quot;</span>
-<span class="n">erasing_building_polygons_with_road_buffer</span> <span class="o">=</span> <span class="p">(</span>
-    <span class="s2">&quot;erasing_building_polygons_with_road_buffer&quot;</span>
+<span class="n">resolve_building_conflict_building_polygon</span> <span class="o">=</span> <span class="p">(</span>
+    <span class="s2">&quot;resolve_building_conflict_building_polygon&quot;</span>
 <span class="p">)</span>
-<span class="n">small_building_polygons_to_point</span> <span class="o">=</span> <span class="s2">&quot;small_building_polygons_to_point&quot;</span>
+<span class="n">invisible_building_polygons_to_point</span> <span class="o">=</span> <span class="s2">&quot;invisible_building_polygons_to_point&quot;</span>
+
 
 <span class="c1"># iteration.py</span>
 <span class="n">iteration</span> <span class="o">=</span> <span class="s2">&quot;iteration&quot;</span>
@@ -573,14 +573,14 @@
     <span class="n">features_500_m_from_building_polygons__selected_begrensningskurve__n100</span> <span class="o">=</span> <span class="p">(</span>
         <span class="n">generate_file_name_gdb</span><span class="p">(</span>
             <span class="n">function_name</span><span class="o">=</span><span class="n">features_500_m_from_building_polygons</span><span class="p">,</span>
-            <span class="n">description</span><span class="o">=</span><span class="s2">&quot;selected_begrensningskurve__n100&quot;</span><span class="p">,</span>
+            <span class="n">description</span><span class="o">=</span><span class="s2">&quot;selected_begrensningskurve&quot;</span><span class="p">,</span>
             <span class="n">scale</span><span class="o">=</span><span class="n">scale</span><span class="p">,</span>
         <span class="p">)</span>
     <span class="p">)</span>
     <span class="n">features_500_m_from_building_polygons__selected_roads__n100</span> <span class="o">=</span> <span class="p">(</span>
         <span class="n">generate_file_name_gdb</span><span class="p">(</span>
             <span class="n">function_name</span><span class="o">=</span><span class="n">features_500_m_from_building_polygons</span><span class="p">,</span>
-            <span class="n">description</span><span class="o">=</span><span class="s2">&quot;selected_roads__n100&quot;</span><span class="p">,</span>
+            <span class="n">description</span><span class="o">=</span><span class="s2">&quot;selected_roads&quot;</span><span class="p">,</span>
             <span class="n">scale</span><span class="o">=</span><span class="n">scale</span><span class="p">,</span>
         <span class="p">)</span>
     <span class="p">)</span>
@@ -606,96 +606,30 @@
     <span class="p">)</span>
     <span class="c1"># Function: resolve_building_conflict_building_polygon</span>
 
-    <span class="c1"># Function: creating_road_buffer</span>
-
-    <span class="n">creating_road_buffer__merged_road_buffers__n100</span> <span class="o">=</span> <span class="n">generate_file_name_gdb</span><span class="p">(</span>
-        <span class="n">function_name</span><span class="o">=</span><span class="n">creating_road_buffer</span><span class="p">,</span>
-        <span class="n">description</span><span class="o">=</span><span class="s2">&quot;merged_road_buffers&quot;</span><span class="p">,</span>
-        <span class="n">scale</span><span class="o">=</span><span class="n">scale</span><span class="p">,</span>
-    <span class="p">)</span>
-
-    <span class="n">creating_road_buffer__selection__n100</span> <span class="o">=</span> <span class="n">generate_file_name_gdb</span><span class="p">(</span>
-        <span class="n">function_name</span><span class="o">=</span><span class="n">creating_road_buffer</span><span class="p">,</span>
-        <span class="n">description</span><span class="o">=</span><span class="s2">&quot;selection&quot;</span><span class="p">,</span>
-        <span class="n">scale</span><span class="o">=</span><span class="n">scale</span><span class="p">,</span>
-    <span class="p">)</span>
-
-    <span class="n">creating_road_buffer__buffers__n100</span> <span class="o">=</span> <span class="n">generate_file_name_gdb</span><span class="p">(</span>
-        <span class="n">function_name</span><span class="o">=</span><span class="n">creating_road_buffer</span><span class="p">,</span>
-        <span class="n">description</span><span class="o">=</span><span class="s2">&quot;buffers&quot;</span><span class="p">,</span>
-        <span class="n">scale</span><span class="o">=</span><span class="n">scale</span><span class="p">,</span>
-    <span class="p">)</span>
-
-    <span class="c1"># Function: erasing_building_polygons_with_road_buffer</span>
-
-    <span class="n">erasing_building_polygons_with_road_buffer__erased_buildings__n100</span> <span class="o">=</span> <span class="p">(</span>
+    <span class="n">resolve_building_conflict_building_polygon__after_RBC__n100</span> <span class="o">=</span> <span class="p">(</span>
         <span class="n">generate_file_name_gdb</span><span class="p">(</span>
-            <span class="n">function_name</span><span class="o">=</span><span class="n">erasing_building_polygons_with_road_buffer</span><span class="p">,</span>
-            <span class="n">description</span><span class="o">=</span><span class="s2">&quot;erased_buildings&quot;</span><span class="p">,</span>
+            <span class="n">function_name</span><span class="o">=</span><span class="n">resolve_building_conflict_building_polygon</span><span class="p">,</span>
+            <span class="n">description</span><span class="o">=</span><span class="s2">&quot;after_RBC&quot;</span><span class="p">,</span>
             <span class="n">scale</span><span class="o">=</span><span class="n">scale</span><span class="p">,</span>
         <span class="p">)</span>
     <span class="p">)</span>
 
-    <span class="n">erasing_building_polygons_with_road_buffer__after_multipart_to_singlepart__n100</span> <span class="o">=</span> <span class="p">(</span>
+    <span class="c1"># Function: invisible_building_polygons_to_point</span>
+
+    <span class="n">invisible_building_polygons_to_point__invisible_polygons__n100</span> <span class="o">=</span> <span class="p">(</span>
         <span class="n">generate_file_name_gdb</span><span class="p">(</span>
-            <span class="n">function_name</span><span class="o">=</span><span class="n">erasing_building_polygons_with_road_buffer</span><span class="p">,</span>
-            <span class="n">description</span><span class="o">=</span><span class="s2">&quot;after_multipart_to_singlepart&quot;</span><span class="p">,</span>
+            <span class="n">function_name</span><span class="o">=</span><span class="n">invisible_building_polygons_to_point</span><span class="p">,</span>
+            <span class="n">description</span><span class="o">=</span><span class="s2">&quot;invisible_polygons&quot;</span><span class="p">,</span>
             <span class="n">scale</span><span class="o">=</span><span class="n">scale</span><span class="p">,</span>
         <span class="p">)</span>
     <span class="p">)</span>
 
-    <span class="n">erasing_building_polygons_with_road_buffer__selected_building_parts__n100</span> <span class="o">=</span> <span class="p">(</span>
+    <span class="n">invisible_building_polygons_to_point__invisible_polygons_to_points__n100</span> <span class="o">=</span> <span class="p">(</span>
         <span class="n">generate_file_name_gdb</span><span class="p">(</span>
-            <span class="n">function_name</span><span class="o">=</span><span class="n">erasing_building_polygons_with_road_buffer</span><span class="p">,</span>
-            <span class="n">description</span><span class="o">=</span><span class="s2">&quot;selected_building_parts&quot;</span><span class="p">,</span>
+            <span class="n">function_name</span><span class="o">=</span><span class="n">invisible_building_polygons_to_point</span><span class="p">,</span>
+            <span class="n">description</span><span class="o">=</span><span class="s2">&quot;invisible_polygons_to_points&quot;</span><span class="p">,</span>
             <span class="n">scale</span><span class="o">=</span><span class="n">scale</span><span class="p">,</span>
         <span class="p">)</span>
-    <span class="p">)</span>
-
-    <span class="n">erasing_building_polygons_with_road_buffer__building_polygons_erased_and_reduced__n100</span> <span class="o">=</span> <span class="n">generate_file_name_gdb</span><span class="p">(</span>
-        <span class="n">function_name</span><span class="o">=</span><span class="n">erasing_building_polygons_with_road_buffer</span><span class="p">,</span>
-        <span class="n">description</span><span class="o">=</span><span class="s2">&quot;building_polygons_erased_and_reduced&quot;</span><span class="p">,</span>
-        <span class="n">scale</span><span class="o">=</span><span class="n">scale</span><span class="p">,</span>
-    <span class="p">)</span>
-
-    <span class="n">erasing_building_polygons_with_road_buffer__reduced_building_polygons__n100</span> <span class="o">=</span> <span class="p">(</span>
-        <span class="n">generate_file_name_gdb</span><span class="p">(</span>
-            <span class="n">function_name</span><span class="o">=</span><span class="n">erasing_building_polygons_with_road_buffer</span><span class="p">,</span>
-            <span class="n">description</span><span class="o">=</span><span class="s2">&quot;reduced_building_polygons&quot;</span><span class="p">,</span>
-            <span class="n">scale</span><span class="o">=</span><span class="n">scale</span><span class="p">,</span>
-        <span class="p">)</span>
-    <span class="p">)</span>
-
-    <span class="n">erasing_building_polygons_with_road_buffer__building_polygons_too_small_n100</span> <span class="o">=</span> <span class="p">(</span>
-        <span class="n">generate_file_name_gdb</span><span class="p">(</span>
-            <span class="n">function_name</span><span class="o">=</span><span class="n">erasing_building_polygons_with_road_buffer</span><span class="p">,</span>
-            <span class="n">description</span><span class="o">=</span><span class="s2">&quot;building_polygons_too_small&quot;</span><span class="p">,</span>
-            <span class="n">scale</span><span class="o">=</span><span class="n">scale</span><span class="p">,</span>
-        <span class="p">)</span>
-    <span class="p">)</span>
-
-    <span class="n">erasing_building_polygons_with_road_buffer__building_polygons_erased_final__n100</span> <span class="o">=</span> <span class="p">(</span>
-        <span class="n">generate_file_name_gdb</span><span class="p">(</span>
-            <span class="n">function_name</span><span class="o">=</span><span class="n">erasing_building_polygons_with_road_buffer</span><span class="p">,</span>
-            <span class="n">description</span><span class="o">=</span><span class="s2">&quot;building_polygons_erased_final&quot;</span><span class="p">,</span>
-            <span class="n">scale</span><span class="o">=</span><span class="n">scale</span><span class="p">,</span>
-        <span class="p">)</span>
-    <span class="p">)</span>
-
-    <span class="c1"># Function: small_building_polygons_to_point</span>
-
-    <span class="n">small_building_polygons_to_point__building_polygons_too_small__n100</span> <span class="o">=</span> <span class="p">(</span>
-        <span class="n">generate_file_name_gdb</span><span class="p">(</span>
-            <span class="n">function_name</span><span class="o">=</span><span class="n">small_building_polygons_to_point</span><span class="p">,</span>
-            <span class="n">description</span><span class="o">=</span><span class="s2">&quot;building_polygons_too_small&quot;</span><span class="p">,</span>
-            <span class="n">scale</span><span class="o">=</span><span class="n">scale</span><span class="p">,</span>
-        <span class="p">)</span>
-    <span class="p">)</span>
-
-    <span class="n">small_building_polygons_to_point__building_points__n100</span> <span class="o">=</span> <span class="n">generate_file_name_gdb</span><span class="p">(</span>
-        <span class="n">function_name</span><span class="o">=</span><span class="n">small_building_polygons_to_point</span><span class="p">,</span>
-        <span class="n">description</span><span class="o">=</span><span class="s2">&quot;building_points&quot;</span><span class="p">,</span>
-        <span class="n">scale</span><span class="o">=</span><span class="n">scale</span><span class="p">,</span>
     <span class="p">)</span>
 
     <span class="c1">##############################################</span>
