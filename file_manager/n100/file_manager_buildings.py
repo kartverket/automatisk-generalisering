@@ -114,11 +114,11 @@ create_cartographic_partitions = "create_cartographic_partitions"
 propagate_displacement_building_polygons = "propagate_displacement_building_polygons"
 features_500_m_from_building_polygons = "features_500_m_from_building_polygons"
 apply_symbology_to_layers = "apply_symbology_to_layers"
-creating_road_buffer = "creating_road_buffer"
-erasing_building_polygons_with_road_buffer = (
-    "erasing_building_polygons_with_road_buffer"
+resolve_building_conflict_building_polygon = (
+    "resolve_building_conflict_building_polygon"
 )
-small_building_polygons_to_point = "small_building_polygons_to_point"
+invisible_building_polygons_to_point = "invisible_building_polygons_to_point"
+
 
 # iteration.py
 iteration = "iteration"
@@ -483,14 +483,14 @@ class Building_N100(Enum):
     features_500_m_from_building_polygons__selected_begrensningskurve__n100 = (
         generate_file_name_gdb(
             function_name=features_500_m_from_building_polygons,
-            description="selected_begrensningskurve__n100",
+            description="selected_begrensningskurve",
             scale=scale,
         )
     )
     features_500_m_from_building_polygons__selected_roads__n100 = (
         generate_file_name_gdb(
             function_name=features_500_m_from_building_polygons,
-            description="selected_roads__n100",
+            description="selected_roads",
             scale=scale,
         )
     )
@@ -516,96 +516,30 @@ class Building_N100(Enum):
     )
     # Function: resolve_building_conflict_building_polygon
 
-    # Function: creating_road_buffer
-
-    creating_road_buffer__merged_road_buffers__n100 = generate_file_name_gdb(
-        function_name=creating_road_buffer,
-        description="merged_road_buffers",
-        scale=scale,
-    )
-
-    creating_road_buffer__selection__n100 = generate_file_name_gdb(
-        function_name=creating_road_buffer,
-        description="selection",
-        scale=scale,
-    )
-
-    creating_road_buffer__buffers__n100 = generate_file_name_gdb(
-        function_name=creating_road_buffer,
-        description="buffers",
-        scale=scale,
-    )
-
-    # Function: erasing_building_polygons_with_road_buffer
-
-    erasing_building_polygons_with_road_buffer__erased_buildings__n100 = (
+    resolve_building_conflict_building_polygon__after_RBC__n100 = (
         generate_file_name_gdb(
-            function_name=erasing_building_polygons_with_road_buffer,
-            description="erased_buildings",
+            function_name=resolve_building_conflict_building_polygon,
+            description="after_RBC",
             scale=scale,
         )
     )
 
-    erasing_building_polygons_with_road_buffer__after_multipart_to_singlepart__n100 = (
+    # Function: invisible_building_polygons_to_point
+
+    invisible_building_polygons_to_point__invisible_polygons__n100 = (
         generate_file_name_gdb(
-            function_name=erasing_building_polygons_with_road_buffer,
-            description="after_multipart_to_singlepart",
+            function_name=invisible_building_polygons_to_point,
+            description="invisible_polygons",
             scale=scale,
         )
     )
 
-    erasing_building_polygons_with_road_buffer__selected_building_parts__n100 = (
+    invisible_building_polygons_to_point__invisible_polygons_to_points__n100 = (
         generate_file_name_gdb(
-            function_name=erasing_building_polygons_with_road_buffer,
-            description="selected_building_parts",
+            function_name=invisible_building_polygons_to_point,
+            description="invisible_polygons_to_points",
             scale=scale,
         )
-    )
-
-    erasing_building_polygons_with_road_buffer__building_polygons_erased_and_reduced__n100 = generate_file_name_gdb(
-        function_name=erasing_building_polygons_with_road_buffer,
-        description="building_polygons_erased_and_reduced",
-        scale=scale,
-    )
-
-    erasing_building_polygons_with_road_buffer__reduced_building_polygons__n100 = (
-        generate_file_name_gdb(
-            function_name=erasing_building_polygons_with_road_buffer,
-            description="reduced_building_polygons",
-            scale=scale,
-        )
-    )
-
-    erasing_building_polygons_with_road_buffer__building_polygons_too_small_n100 = (
-        generate_file_name_gdb(
-            function_name=erasing_building_polygons_with_road_buffer,
-            description="building_polygons_too_small",
-            scale=scale,
-        )
-    )
-
-    erasing_building_polygons_with_road_buffer__building_polygons_erased_final__n100 = (
-        generate_file_name_gdb(
-            function_name=erasing_building_polygons_with_road_buffer,
-            description="building_polygons_erased_final",
-            scale=scale,
-        )
-    )
-
-    # Function: small_building_polygons_to_point
-
-    small_building_polygons_to_point__building_polygons_too_small__n100 = (
-        generate_file_name_gdb(
-            function_name=small_building_polygons_to_point,
-            description="building_polygons_too_small",
-            scale=scale,
-        )
-    )
-
-    small_building_polygons_to_point__building_points__n100 = generate_file_name_gdb(
-        function_name=small_building_polygons_to_point,
-        description="building_points",
-        scale=scale,
     )
 
     ##############################################
