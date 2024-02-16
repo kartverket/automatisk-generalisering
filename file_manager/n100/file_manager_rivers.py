@@ -473,3 +473,15 @@ class River_N100(Enum):
         description="complex_water_features",
         scale=scale,
     )
+
+    centerline_pruning_loop__simple_centerlines__n100 = generate_file_name_gdb(
+        function_name=centerline_pruning_loop,
+        description="simple_centerlines",
+        scale=scale,
+    )
+
+    centerline_pruning_loop__complex_centerlines__n100 = generate_file_name_gdb(
+        function_name=centerline_pruning_loop,
+        description="complex_centerlines",
+        scale=scale,
+    )

@@ -24,9 +24,21 @@ input_rivers = (
     River_N100.centerline_pruning_loop__rivers_erased_with_lake_features__n100.value
 )
 
-water_polygon = River_N100.centerline_pruning_loop__lake_features__n100.value
+water_polygon = (
+    River_N100.centerline_pruning_loop__water_features_river_final_selection__n100.value
+)
 centerline = River_N100.centerline_pruning_loop__collapsed_hydropolygon__n100.value
 rivers = River_N100.centerline_pruning_loop__river_inlets_erased__n100.value
+
+complex_lakes = River_N100.centerline_pruning_loop__complex_water_features__n100.value
+simple_lakes = River_N100.centerline_pruning_loop__simple_water_features__n100.value
+river_inlet_nodes = (
+    River_N100.centerline_pruning_loop__river_inlets_points_merged__n100.value
+)
+complex_centerlines = (
+    River_N100.centerline_pruning_loop__complex_centerlines__n100.value
+)
+simple_centerlines = River_N100.centerline_pruning_loop__simple_centerlines__n100.value
 
 
 def setup_arcpy_environment():
@@ -382,6 +394,43 @@ def filter_complicated_lakes():
         expression=sql_complex_water_features,
         output_name=River_N100.centerline_pruning_loop__complex_water_features__n100.value,
     )
+
+    custom_arcpy.select_location_and_make_permanent_feature(
+        input_layer=centerline,
+        overlap_type=custom_arcpy.OverlapType.INTERSECT.value,
+        select_features=River_N100.centerline_pruning_loop__simple_water_features__n100.value,
+        output_name=River_N100.centerline_pruning_loop__simple_centerlines__n100.value,
+    )
+
+    custom_arcpy.select_location_and_make_permanent_feature(
+        input_layer=centerline,
+        overlap_type=custom_arcpy.OverlapType.INTERSECT.value,
+        select_features=River_N100.centerline_pruning_loop__complex_water_features__n100.value,
+        output_name=River_N100.centerline_pruning_loop__complex_centerlines__n100.value,
+    )
+
+
+def create_feature_class_with_same_schema_and_append_geometry(
+    input_fc,
+    template_fc,
+    output_fc,
+):
+    # Create a new feature class using the template
+    output_workspace, output_class_name = os.path.split(output_fc)
+    arcpy.CreateFeatureclass_management(
+        output_workspace,
+        output_class_name,
+        "POLYGON",  # Assuming the geometry type is polygon
+        template_fc,
+        spatial_reference=arcpy.Describe(template_fc).spatialReference,
+    )
+
+    # Transfer geometry from source to the new feature class
+    with arcpy.da.SearchCursor(input_fc, ["SHAPE@"]) as s_cursor, arcpy.da.InsertCursor(
+        output_fc, ["SHAPE@"]
+    ) as i_cursor:
+        for row in s_cursor:
+            i_cursor.insertRow(row)
 
 
 if __name__ == "__main__":
