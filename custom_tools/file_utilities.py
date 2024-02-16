@@ -45,18 +45,31 @@ class FeatureClassCreator:
         """
         Executes the process of creating a new feature class and appending geometry from the input feature class.
         """
-        # Check for existing output and handle based on configuration
         if arcpy.Exists(self.output_fc):
             if self.delete_existing:
+                # Deletes the output file if it exists and delete_existing boolean is set to True
                 arcpy.Delete_management(self.output_fc)
+                print(f"Deleted existing feature class: {self.output_fc}")
+                # Creates a new feature class after deletion
+                self._create_feature_class()
             else:
+                # If output exists and delete_existing is set to False, just append data.
                 print(
                     f"Output feature class {self.output_fc} already exists. Appending data."
                 )
-                # Implement appending logic here if necessary
-                return
+        else:
+            if self.delete_existing:
+                print("Output feature class does not exist, so it was not deleted.")
+            # If output does not exist, create a new feature class
+            self._create_feature_class()
 
-        # Create a new feature class using the template and specified object type
+        # Append geometry as the final step, occurring in all scenarios.
+        self._append_geometry()
+
+    def _create_feature_class(self):
+        """
+        Creates a new feature class using the specified template and object type.
+        """
         output_workspace, output_class_name = os.path.split(self.output_fc)
         arcpy.CreateFeatureclass_management(
             output_workspace,
@@ -65,10 +78,16 @@ class FeatureClassCreator:
             self.template_fc,
             spatial_reference=arcpy.Describe(self.template_fc).spatialReference,
         )
+        print(f"Created new feature class: {self.output_fc}")
 
-        # Transfer geometry from source to the new feature class
+    def _append_geometry(self):
+        """
+        Appends geometry from the input feature class to the output feature class.
+        This method assumes the output feature class already exists or was just created.
+        """
         with arcpy.da.SearchCursor(
             self.input_fc, ["SHAPE@"]
         ) as s_cursor, arcpy.da.InsertCursor(self.output_fc, ["SHAPE@"]) as i_cursor:
             for row in s_cursor:
                 i_cursor.insertRow(row)
+        print("Appended geometry to the feature class.")

@@ -13,10 +13,12 @@ from custom_tools.file_utilities import FeatureClassCreator
 
 def main():
     setup_arcpy_environment()
-    prepare_data()
-    create_collapsed_centerline()
+    # prepare_data()
+    # create_collapsed_centerline()
+    #
+    # filter_complicated_lakes()
 
-    filter_complicated_lakes()
+    create_feature_class()
 
 
 input_water_polygon = River_N100.centerline_pruning_loop__lake_features__n100.value
@@ -410,6 +412,17 @@ def filter_complicated_lakes():
         output_name=River_N100.centerline_pruning_loop__complex_centerlines__n100.value,
     )
 
+    create_lake_centerline_feature = FeatureClassCreator(
+        template_fc=input_rivers,
+        input_fc=River_N100.centerline_pruning_loop__simple_centerlines__n100.value,
+        output_fc=River_N100.centerline_pruning_loop__finnished_centerlines__n100.value,
+        object_type="POLYLINE",
+        delete_existing=True,
+    )
+    create_lake_centerline_feature.run()
+
+
+def create_feature_class():
     create_lake_centerline_feature = FeatureClassCreator(
         template_fc=input_rivers,
         input_fc=River_N100.centerline_pruning_loop__simple_centerlines__n100.value,
