@@ -418,6 +418,22 @@ class River_N100(Enum):
         scale=scale,
     )
 
+    centerline_pruning_loop__collapsed_hydropolygon_points__n100 = (
+        generate_file_name_gdb(
+            function_name=centerline_pruning_loop,
+            description="collapsed_hydropolygon_points",
+            scale=scale,
+        )
+    )
+
+    centerline_pruning_loop__collapsed_hydropolygon_points_selected__n100 = (
+        generate_file_name_gdb(
+            function_name=centerline_pruning_loop,
+            description="collapsed_hydropolygon_points_selected",
+            scale=scale,
+        )
+    )
+
     centerline_pruning_loop__closed_centerline_lines__n100 = generate_file_name_gdb(
         function_name=centerline_pruning_loop,
         description="closed_centerline_lines",
