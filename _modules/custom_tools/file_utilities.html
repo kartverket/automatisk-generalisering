@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>custom_tools.file_utilities &mdash; Automatisk Generalisering 0.0.1 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=80d5e7a1" />
+      <link rel="stylesheet" type="text/css" href="../../_static/css/theme.css?v=19f00094" />
+      <link rel="stylesheet" type="text/css" href="../../_static/custom.css" />
+
+  
+  <!--[if lt IE 9]>
+    <script src="../../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script src="../../_static/jquery.js?v=5d32c60e"></script>
+        <script src="../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+        <script src="../../_static/documentation_options.js?v=d45e8c67"></script>
+        <script src="../../_static/doctools.js?v=888ff710"></script>
+        <script src="../../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../index.html" class="icon icon-home">
+            Automatisk Generalisering
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../generated_docs/custom_tools.html">custom_tools package</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../generated_docs/env_setup.html">env_setup package</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../generated_docs/file_manager.html">file_manager package</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../generated_docs/generalization.n100.building.html">generalization.n100.building package</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../generated_docs/input_data.html">input_data package</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../generated_docs/modules.html">automatisk-generalisering</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../index.html">Automatisk Generalisering</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">custom_tools.file_utilities</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for custom_tools.file_utilities</h1><div class="highlight"><pre>
+<span></span><span class="kn">import</span> <span class="nn">arcpy</span>
+<span class="kn">import</span> <span class="nn">os</span>
+
+
+<div class="viewcode-block" id="FeatureClassCreator">
+<a class="viewcode-back" href="../../generated_docs/custom_tools.html#custom_tools.file_utilities.FeatureClassCreator">[docs]</a>
+<span class="k">class</span> <span class="nc">FeatureClassCreator</span><span class="p">:</span>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">template_fc</span><span class="p">,</span>
+        <span class="n">input_fc</span><span class="p">,</span>
+        <span class="n">output_fc</span><span class="p">,</span>
+        <span class="n">object_type</span><span class="o">=</span><span class="s2">&quot;POLYGON&quot;</span><span class="p">,</span>
+        <span class="n">delete_existing</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+    <span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Initializes the FeatureClassCreator with required parameters.</span>
+
+<span class="sd">        Parameters:</span>
+<span class="sd">        - template_fc (str): The path to the template feature class used to define the schema.</span>
+<span class="sd">        - input_fc (str): The path to the input feature class from which to append the geometry.</span>
+<span class="sd">        - output_fc (str): The path to the output feature class to create and append to.</span>
+<span class="sd">        - object_type (str): The type of geometry for the new feature class (&quot;POINT&quot;, &quot;MULTIPOINT&quot;, &quot;LINE&quot;, &quot;POLYLINE&quot;, &quot;POLYGON&quot;, or &quot;MULTIPATCH&quot;).</span>
+<span class="sd">        - delete_existing (bool): Whether to delete the existing output feature class if it exists. If set to False the geometry will be appended to the existing output feature class.</span>
+
+<span class="sd">        Example Usage:</span>
+<span class="sd">        --------------</span>
+<span class="sd">        &gt;&gt;&gt; feature_creator = FeatureClassCreator(</span>
+<span class="sd">        ...     template_fc=&#39;path/to/template_feature_class&#39;,</span>
+<span class="sd">        ...     input_fc=&#39;path/to/input_feature_class&#39;,</span>
+<span class="sd">        ...     output_fc=&#39;path/to/output_feature_class&#39;,</span>
+<span class="sd">        ...     object_type=&#39;POLYGON&#39;,</span>
+<span class="sd">        ...     delete_existing=True</span>
+<span class="sd">        ... )</span>
+<span class="sd">        &gt;&gt;&gt; feature_creator.run()</span>
+
+<span class="sd">        This initializes the creator with all parameters and creates a new feature class based on the provided template,</span>
+<span class="sd">        optionally deleting any existing feature class at the output path, and appends the geometry from the input feature class.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">template_fc</span> <span class="o">=</span> <span class="n">template_fc</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">input_fc</span> <span class="o">=</span> <span class="n">input_fc</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">output_fc</span> <span class="o">=</span> <span class="n">output_fc</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">object_type</span> <span class="o">=</span> <span class="n">object_type</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">delete_existing</span> <span class="o">=</span> <span class="n">delete_existing</span>
+
+<div class="viewcode-block" id="FeatureClassCreator.run">
+<a class="viewcode-back" href="../../generated_docs/custom_tools.html#custom_tools.file_utilities.FeatureClassCreator.run">[docs]</a>
+    <span class="k">def</span> <span class="nf">run</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Executes the process of creating a new feature class and appending geometry from the input feature class.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="n">arcpy</span><span class="o">.</span><span class="n">Exists</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">output_fc</span><span class="p">):</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">delete_existing</span><span class="p">:</span>
+                <span class="c1"># Deletes the output file if it exists and delete_existing boolean is set to True</span>
+                <span class="n">arcpy</span><span class="o">.</span><span class="n">Delete_management</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">output_fc</span><span class="p">)</span>
+                <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Deleted existing feature class: </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">output_fc</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+                <span class="c1"># Creates a new feature class after deletion</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_create_feature_class</span><span class="p">()</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="c1"># If output exists and delete_existing is set to False, just append data.</span>
+                <span class="nb">print</span><span class="p">(</span>
+                    <span class="sa">f</span><span class="s2">&quot;Output feature class </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">output_fc</span><span class="si">}</span><span class="s2"> already exists. Appending data.&quot;</span>
+                <span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">delete_existing</span><span class="p">:</span>
+                <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Output feature class does not exist, so it was not deleted.&quot;</span><span class="p">)</span>
+            <span class="c1"># If output does not exist, create a new feature class</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_create_feature_class</span><span class="p">()</span>
+
+        <span class="c1"># Append geometry as the final step, occurring in all scenarios.</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_append_geometry</span><span class="p">()</span></div>
+
+
+    <span class="k">def</span> <span class="nf">_create_feature_class</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Creates a new feature class using the specified template and object type.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">output_workspace</span><span class="p">,</span> <span class="n">output_class_name</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">output_fc</span><span class="p">)</span>
+        <span class="n">arcpy</span><span class="o">.</span><span class="n">CreateFeatureclass_management</span><span class="p">(</span>
+            <span class="n">output_workspace</span><span class="p">,</span>
+            <span class="n">output_class_name</span><span class="p">,</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">object_type</span><span class="p">,</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">template_fc</span><span class="p">,</span>
+            <span class="n">spatial_reference</span><span class="o">=</span><span class="n">arcpy</span><span class="o">.</span><span class="n">Describe</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">template_fc</span><span class="p">)</span><span class="o">.</span><span class="n">spatialReference</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Created new feature class: </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">output_fc</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">_append_geometry</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Appends geometry from the input feature class to the output feature class.</span>
+<span class="sd">        This method assumes the output feature class already exists or was just created.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">with</span> <span class="n">arcpy</span><span class="o">.</span><span class="n">da</span><span class="o">.</span><span class="n">SearchCursor</span><span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">input_fc</span><span class="p">,</span> <span class="p">[</span><span class="s2">&quot;SHAPE@&quot;</span><span class="p">]</span>
+        <span class="p">)</span> <span class="k">as</span> <span class="n">s_cursor</span><span class="p">,</span> <span class="n">arcpy</span><span class="o">.</span><span class="n">da</span><span class="o">.</span><span class="n">InsertCursor</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">output_fc</span><span class="p">,</span> <span class="p">[</span><span class="s2">&quot;SHAPE@&quot;</span><span class="p">])</span> <span class="k">as</span> <span class="n">i_cursor</span><span class="p">:</span>
+            <span class="k">for</span> <span class="n">row</span> <span class="ow">in</span> <span class="n">s_cursor</span><span class="p">:</span>
+                <span class="n">i_cursor</span><span class="o">.</span><span class="n">insertRow</span><span class="p">(</span><span class="n">row</span><span class="p">)</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Appended geometry to the feature class.&quot;</span><span class="p">)</span></div>
+
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2024, Kartverket.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

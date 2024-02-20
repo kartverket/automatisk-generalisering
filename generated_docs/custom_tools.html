@@ -87,6 +87,13 @@
 <li class="toctree-l3"><a class="reference internal" href="#custom_tools.custom_arcpy.apply_symbology"><code class="docutils literal notranslate"><span class="pre">apply_symbology()</span></code></a></li>
 </ul>
 </li>
+<li class="toctree-l2"><a class="reference internal" href="#module-custom_tools.file_utilities">custom_tools.file_utilities module</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#custom_tools.file_utilities.FeatureClassCreator"><code class="docutils literal notranslate"><span class="pre">FeatureClassCreator</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#custom_tools.file_utilities.FeatureClassCreator.run"><code class="docutils literal notranslate"><span class="pre">FeatureClassCreator.run()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
 <li class="toctree-l2"><a class="reference internal" href="#module-custom_tools.partition_iterator">custom_tools.partition_iterator module</a><ul>
 <li class="toctree-l3"><a class="reference internal" href="#custom_tools.partition_iterator.PartitionIterator"><code class="docutils literal notranslate"><span class="pre">PartitionIterator</span></code></a><ul>
 <li class="toctree-l4"><a class="reference internal" href="#custom_tools.partition_iterator.PartitionIterator.setup_arcpy_environment"><code class="docutils literal notranslate"><span class="pre">PartitionIterator.setup_arcpy_environment()</span></code></a></li>
@@ -495,6 +502,21 @@ and creates a new, permanent feature class as an output.</p>
 <span class="go">&#39;apply_symbology_to_layers__building_polygon__n100__lyrx.lyrx file created.&#39;</span>
 </pre></div>
 </div>
+</dd></dl>
+
+</section>
+<section id="module-custom_tools.file_utilities">
+<span id="custom-tools-file-utilities-module"></span><h2>custom_tools.file_utilities module<a class="headerlink" href="#module-custom_tools.file_utilities" title="Link to this heading"></a></h2>
+<dl class="py class">
+<dt class="sig sig-object py" id="custom_tools.file_utilities.FeatureClassCreator">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">custom_tools.file_utilities.</span></span><span class="sig-name descname"><span class="pre">FeatureClassCreator</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">template_fc</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">input_fc</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">output_fc</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">object_type</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'POLYGON'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">delete_existing</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/custom_tools/file_utilities.html#FeatureClassCreator"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#custom_tools.file_utilities.FeatureClassCreator" title="Link to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<dl class="py method">
+<dt class="sig sig-object py" id="custom_tools.file_utilities.FeatureClassCreator.run">
+<span class="sig-name descname"><span class="pre">run</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/custom_tools/file_utilities.html#FeatureClassCreator.run"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#custom_tools.file_utilities.FeatureClassCreator.run" title="Link to this definition"></a></dt>
+<dd><p>Executes the process of creating a new feature class and appending geometry from the input feature class.</p>
+</dd></dl>
+
 </dd></dl>
 
 </section>

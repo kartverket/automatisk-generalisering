@@ -12,6 +12,14 @@ custom\_tools.custom\_arcpy module
    :undoc-members:
    :show-inheritance:
 
+custom\_tools.file\_utilities module
+------------------------------------
+
+.. automodule:: custom_tools.file_utilities
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
 custom\_tools.partition\_iterator module
 ----------------------------------------
 
