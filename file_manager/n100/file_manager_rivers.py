@@ -368,6 +368,12 @@ class River_N100(Enum):
         )
     )
 
+    centerline_pruning_loop__water_features_processed__n100 = generate_file_name_gdb(
+        function_name=centerline_pruning_loop,
+        description="water_features_processed",
+        scale=scale,
+    )
+
     centerline_pruning_loop__polygon_to_line__n100 = generate_file_name_gdb(
         function_name=centerline_pruning_loop,
         description="polygon_to_line",
@@ -416,6 +422,22 @@ class River_N100(Enum):
         function_name=centerline_pruning_loop,
         description="collapsed_hydropolygon",
         scale=scale,
+    )
+
+    centerline_pruning_loop__collapsed_hydropolygon_points__n100 = (
+        generate_file_name_gdb(
+            function_name=centerline_pruning_loop,
+            description="collapsed_hydropolygon_points",
+            scale=scale,
+        )
+    )
+
+    centerline_pruning_loop__collapsed_hydropolygon_points_selected__n100 = (
+        generate_file_name_gdb(
+            function_name=centerline_pruning_loop,
+            description="collapsed_hydropolygon_points_selected",
+            scale=scale,
+        )
     )
 
     centerline_pruning_loop__closed_centerline_lines__n100 = generate_file_name_gdb(
@@ -471,5 +493,23 @@ class River_N100(Enum):
     centerline_pruning_loop__complex_water_features__n100 = generate_file_name_gdb(
         function_name=centerline_pruning_loop,
         description="complex_water_features",
+        scale=scale,
+    )
+
+    centerline_pruning_loop__simple_centerlines__n100 = generate_file_name_gdb(
+        function_name=centerline_pruning_loop,
+        description="simple_centerlines",
+        scale=scale,
+    )
+
+    centerline_pruning_loop__complex_centerlines__n100 = generate_file_name_gdb(
+        function_name=centerline_pruning_loop,
+        description="complex_centerlines",
+        scale=scale,
+    )
+
+    centerline_pruning_loop__finnished_centerlines__n100 = generate_file_name_gdb(
+        function_name=centerline_pruning_loop,
+        description="finnished_centerlines",
         scale=scale,
     )
