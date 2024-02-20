@@ -368,6 +368,12 @@ class River_N100(Enum):
         )
     )
 
+    centerline_pruning_loop__water_features_processed__n100 = generate_file_name_gdb(
+        function_name=centerline_pruning_loop,
+        description="water_features_processed",
+        scale=scale,
+    )
+
     centerline_pruning_loop__polygon_to_line__n100 = generate_file_name_gdb(
         function_name=centerline_pruning_loop,
         description="polygon_to_line",

@@ -27,9 +27,7 @@ input_rivers = (
     River_N100.centerline_pruning_loop__rivers_erased_with_lake_features__n100.value
 )
 
-water_polygon = (
-    River_N100.centerline_pruning_loop__water_features_river_final_selection__n100.value
-)
+water_polygon = River_N100.centerline_pruning_loop__water_features_processed__n100.value
 centerline = River_N100.centerline_pruning_loop__collapsed_hydropolygon__n100.value
 rivers = River_N100.centerline_pruning_loop__river_inlets_erased__n100.value
 
@@ -132,19 +130,19 @@ def prepare_data():
 
     arcpy.Eliminate_management(
         in_features=f"{River_N100.centerline_pruning_loop__water_features_river_final_selection__n100.value}_small_features",
-        out_feature_class=f"{River_N100.centerline_pruning_loop__water_features_river_final_selection__n100.value}_eliminate",
+        out_feature_class=River_N100.centerline_pruning_loop__water_features_processed__n100.value,
         selection="LENGTH",
     )
 
     arcpy.PolygonToLine_management(
-        in_features=River_N100.centerline_pruning_loop__water_features_river_final_selection__n100.value,
+        in_features=River_N100.centerline_pruning_loop__water_features_processed__n100.value,
         out_feature_class=River_N100.centerline_pruning_loop__polygon_to_line__n100.value,
         neighbor_option="IDENTIFY_NEIGHBORS",
     )
 
     arcpy.management.AddSpatialJoin(
         target_features=River_N100.centerline_pruning_loop__polygon_to_line__n100.value,
-        join_features=River_N100.centerline_pruning_loop__water_features_river_final_selection__n100.value,
+        join_features=River_N100.centerline_pruning_loop__water_features_processed__n100.value,
         join_operation=None,
         join_type="KEEP_ALL",
         match_option="LARGEST_OVERLAP",
@@ -225,13 +223,13 @@ def create_collapsed_centerline():
     custom_arcpy.select_location_and_make_permanent_feature(
         input_layer=input_rivers,
         overlap_type=custom_arcpy.OverlapType.BOUNDARY_TOUCHES.value,
-        select_features=River_N100.centerline_pruning_loop__water_features_river_final_selection__n100.value,
+        select_features=River_N100.centerline_pruning_loop__water_features_processed__n100.value,
         output_name=River_N100.centerline_pruning_loop__river_inlets__n100.value,
     )
 
     arcpy.analysis.PairwiseErase(
         in_features=River_N100.centerline_pruning_loop__river_inlets__n100.value,
-        erase_features=River_N100.centerline_pruning_loop__water_features_river_final_selection__n100.value,
+        erase_features=River_N100.centerline_pruning_loop__water_features_processed__n100.value,
         out_feature_class=River_N100.centerline_pruning_loop__river_inlets_erased__n100.value,
     )
     print(
@@ -240,7 +238,7 @@ def create_collapsed_centerline():
 
     # Copy to rename the file to have less characters in the name since the name needs to fit inside a field in CollapseHydroPolygon
     arcpy.management.CopyFeatures(
-        in_features=River_N100.centerline_pruning_loop__water_features_river_final_selection__n100.value,
+        in_features=River_N100.centerline_pruning_loop__water_features_processed__n100.value,
         out_feature_class=River_N100.short_name__water__n100.value,
     )
     print(f"Created {River_N100.short_name__water__n100.value}")
@@ -373,7 +371,7 @@ def filter_complicated_lakes():
     )
 
     target_features = (
-        River_N100.centerline_pruning_loop__water_features_river_final_selection__n100.value
+        River_N100.centerline_pruning_loop__water_features_processed__n100.value
     )
     join_features_1 = (
         River_N100.centerline_pruning_loop__river_inlets_points_merged__n100.value
@@ -497,7 +495,7 @@ def create_feature_class():
     # create_lake_centerline_feature.run()
 
     input_feature_class = (
-        River_N100.centerline_pruning_loop__water_features_river_final_selection__n100.value
+        River_N100.centerline_pruning_loop__water_features_processed__n100.value
     )
 
     dissolve_output = f"{input_feature_class}_dissolved"
