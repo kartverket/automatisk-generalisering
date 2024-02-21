@@ -26,6 +26,7 @@ def main():
     features_500_m_from_building_polygons()
     apply_symbology_to_layers()
     resolve_building_conflict_building_polygon()
+    creating_road_buffer()
     invisible_building_polygons_to_point()
     intersecting_building_polygons_to_point()
     merging_points_invisible_and_intersecting_building_polygons()
@@ -175,7 +176,7 @@ def resolve_building_conflict_building_polygon():
         Building_N100.resolve_building_conflict_building_selected_hospital_church_points__n100.value
     )
     output_polygon_feature_class = (
-        Building_N100.resolve_building_conflict_building_polygon__hospital_church_polygons__n100.value,
+        Building_N100.resolve_building_conflict_building_polygon__hospital_church_polygons__n100.value
     )
     building_symbol_dimensions = {
         1: (145, 145),
