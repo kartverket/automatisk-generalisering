@@ -43,15 +43,15 @@ def main():
 
     building_data_preparation.main()
     create_simplified_building_polygons.main()
-    building_polygon_displacement.main()
-    # create_points_from_polygon.main()
-    # calculating_values.main()
-    # propagate_displacement.main()
-    # building_point_buffer_displacement.main()
-    # hospital_church_clusters.main()
-    # points_to_polygon.main()
-    # resolve_building_conflicts.main()
-    # clean_up_building.main()
+    building_polygon_displacement_rbc.main()
+    create_points_from_polygon.main()
+    calculating_values.main()
+    propagate_displacement.main()
+    building_point_buffer_displacement.main()
+    hospital_church_clusters.main()
+    points_to_polygon.main()
+    resolve_building_conflicts.main()
+    clean_up_building.main()
 
 
 if __name__ == "__main__":
