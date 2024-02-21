@@ -39,7 +39,8 @@ displacement_feature = r"path\to\displacement_feature.gdb\displacement_feature"
 ###########################
 
 symbology_n100_veg_sti = r"C:\path\to\symbology\layer.lyrx"
-symbology_n100_begrensningskurve = r"C:\path\to\symbology\layer.lyrx"
+symbology_n100_begrensningskurve_buffer = r"C:\path\to\symbology\layer.lyrx"
+symbology_n100_begrensningskurve_line = r"C:\path\to\symbology\layer.lyrx"
 symbology_n100_bygningspunkt = r"C:\path\to\symbology\layer.lyrx"
 symbology_n100_grunnriss = r"C:\path\to\symbology\layer.lyrx"
 symbology_n100_drawn_plygon = r"C:\path\to\symbology\layer.lyrx"

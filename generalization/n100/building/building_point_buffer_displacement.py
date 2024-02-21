@@ -34,7 +34,7 @@ def main():
     setup_arcpy_environment()
     selection()
 
-    last_output_feature = creating_raod_buffer()
+    last_output_feature = creating_road_buffer()
     copy_output_feature(last_output_feature)
 
 
@@ -201,7 +201,7 @@ def align_schema_to_template():
     return preparation_fc_modified
 
 
-def creating_raod_buffer():
+def creating_road_buffer():
     """
     Summary:
         This function creates a buffered feature with a size corresponding to the road width in its symbology.

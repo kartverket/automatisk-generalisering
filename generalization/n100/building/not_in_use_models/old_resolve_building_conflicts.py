@@ -164,7 +164,7 @@ def rbc_iteration():
 
         # Defining symbology layers
         symbology_veg_sti = SymbologyN100.veg_sti.value
-        symbology_begrensnings_kurve = SymbologyN100.begrensnings_kurve.value
+        symbology_begrensnings_kurve = SymbologyN100.begrensnings_kurve_buffer.value
         symbology_bygningspunkt = SymbologyN100.bygningspunkt.value
         symbology_grunnriss = SymbologyN100.grunnriss.value
 

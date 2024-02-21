@@ -120,7 +120,6 @@ def apply_symbology_to_layers():
 
 
 def resolve_building_conflict_building_polygon():
-
     """
     replace with docstring
     """
@@ -344,7 +343,6 @@ def creating_road_buffer():
 
 
 def intersecting_building_polygons_to_point():
-
     print("Finding intersecting points... ")
 
     # Selecting buildings that DO NOT overlap with road buffer layer and will be kept as polygons
@@ -373,7 +371,6 @@ def intersecting_building_polygons_to_point():
 
 
 def merging_points_invisible_and_intersecting_building_polygons():
-
     print("Merging points...")
     arcpy.management.Merge(
         inputs=[
