@@ -109,7 +109,7 @@ def apply_symbology():
         },
         {
             "input_layer": Building_N100.rbc_selection__begrensningskurve_selection_rbc__n100.value,
-            "in_symbology_layer": SymbologyN100.begrensnings_kurve.value,
+            "in_symbology_layer": SymbologyN100.begrensnings_kurve_buffer.value,
             "output_name": Building_N100.apply_symbology__begrensningskurve_selection__n100_lyrx.value,
         },
         {
