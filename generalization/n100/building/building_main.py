@@ -11,6 +11,7 @@ setup_directory_structure.main()
 from generalization.n100.building import building_data_preparation
 from generalization.n100.building import calculating_values
 from generalization.n100.building import create_simplified_building_polygons
+from generalization.n100.building import building_polygon_displacement_rbc
 from generalization.n100.building import create_points_from_polygon
 from generalization.n100.building import hospital_church_clusters
 from generalization.n100.building import propagate_displacement
@@ -18,7 +19,6 @@ from generalization.n100.building import building_point_buffer_displacement
 from generalization.n100.building import points_to_polygon
 from generalization.n100.building import resolve_building_conflicts
 from generalization.n100.building import clean_up_building
-from generalization.n100.building import building_polygon_displacement_rbc
 
 
 # Main function that runs all the building scripts
@@ -43,15 +43,15 @@ def main():
 
     building_data_preparation.main()
     create_simplified_building_polygons.main()
-    building_polygon_displacement.main()
-    # create_points_from_polygon.main()
-    # calculating_values.main()
-    # propagate_displacement.main()
-    # building_point_buffer_displacement.main()
-    # hospital_church_clusters.main()
-    # points_to_polygon.main()
-    # resolve_building_conflicts.main()
-    # clean_up_building.main()
+    building_polygon_displacement_rbc.main()
+    create_points_from_polygon.main()
+    calculating_values.main()
+    propagate_displacement.main()
+    building_point_buffer_displacement.main()
+    hospital_church_clusters.main()
+    points_to_polygon.main()
+    resolve_building_conflicts.main()
+    clean_up_building.main()
 
 
 if __name__ == "__main__":

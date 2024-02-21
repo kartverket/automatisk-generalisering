@@ -119,7 +119,6 @@ def apply_symbology_to_layers():
 
 
 def resolve_building_conflict_building_polygon():
-
     """
     replace with docstring
     """
@@ -175,7 +174,7 @@ def resolve_building_conflict_building_polygon():
         Building_N100.resolve_building_conflict_building_selected_hospital_church_points__n100.value
     )
     output_polygon_feature_class = (
-        Building_N100.resolve_building_conflict_building_polygon__hospital_church_polygons__n100.value,
+        Building_N100.resolve_building_conflict_building_polygon__hospital_church_polygons__n100.value
     )
     building_symbol_dimensions = {
         1: (145, 145),
@@ -343,7 +342,6 @@ def creating_road_buffer():
 
 
 def intersecting_building_polygons_to_point():
-
     print("Finding intersecting points... ")
 
     # Selecting buildings that DO NOT overlap with road buffer layer and will be kept as polygons
@@ -372,7 +370,6 @@ def intersecting_building_polygons_to_point():
 
 
 def merging_points_invisible_and_intersecting_building_polygons():
-
     print("Merging points...")
     arcpy.management.Merge(
         inputs=[
