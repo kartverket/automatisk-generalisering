@@ -183,8 +183,10 @@ def create_lines_from_coordinates(line_points, all_rivers):
 
         # Create a line from the start point to the end point
         line = arcpy.Polyline(
-            arcpy.Array([start_point, end_point]),
-            environment_setup.project_spatial_reference,
+            arcpy.Array(
+                [start_point, end_point],
+            ),
+            # spatial_reference=environment_setup.project_spatial_reference,
         )
         new_lines.append(line)
 
@@ -201,19 +203,26 @@ def process_new_lines(new_lines, all_rivers):
     """
     # Create an in-memory feature class to hold the new lines
     new_lines_feature_class = River_N100.extending_river_geometry__new_lines__n100.value
-    arcpy.CopyFeatures_management(new_lines, new_lines_feature_class)
+    # arcpy.CopyFeatures_management(new_lines, new_lines_feature_class)
 
-    # if arcpy.Exists(new_lines_feature_class):
-    #     arcpy.management.Delete(new_lines_feature_class)
-    #
-    # arcpy.CreateFeatureclass_management(
-    #     out_path=os.path.dirname(new_lines_feature_class),
-    #     out_name=os.path.basename(new_lines_feature_class),
-    #     geometry_type="POLYLINE",
-    #     spatial_reference=environment_setup.project_spatial_reference,
-    #     xytolerance="0.02 Meters",
-    #     xy_resolution="0.01 Meters",
-    # )
+    # Check if the feature class already exists, and if so, delete it
+    if arcpy.Exists(new_lines_feature_class):
+        arcpy.management.Delete(new_lines_feature_class)
+
+    sr = arcpy.Describe(
+        River_N100.unconnected_river_geometry__unsplit_river_features__n100.value
+    ).spatialReference
+    # Create a new feature class with the correct spatial reference, resolution, and tolerance
+    arcpy.CreateFeatureclass_management(
+        out_path=os.path.dirname(new_lines_feature_class),
+        out_name=os.path.basename(new_lines_feature_class),
+        geometry_type="POLYLINE",
+        spatial_reference=sr,
+    )
+    arcpy.management.Append(
+        inputs=new_lines,
+        target=new_lines_feature_class,
+    )
 
     print("Created new lines to the river network")
     arcpy.UnsplitLine_management(
@@ -256,3 +265,9 @@ def process_new_lines(new_lines, all_rivers):
 
 if __name__ == "__main__":
     main()
+
+
+"""
+Tested a lot of things regarding the Resolution and Tolerance issues. Current theory is that it is somewhere in
+ the creation of line in "create_lines_from_coordinates". Or perhaps an issue with the near table itself. 
+"""
