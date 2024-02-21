@@ -110,14 +110,19 @@ join_and_add_fields = "join_and_add_fields"
 # create_cartographic_partitions.py
 create_cartographic_partitions = "create_cartographic_partitions"
 
-# building_polygon_displacement.py
+# building_polygon_displacement_rbc.py
 propagate_displacement_building_polygons = "propagate_displacement_building_polygons"
 features_500_m_from_building_polygons = "features_500_m_from_building_polygons"
 apply_symbology_to_layers = "apply_symbology_to_layers"
 resolve_building_conflict_building_polygon = (
     "resolve_building_conflict_building_polygon"
 )
+creating_road_buffer = "creating_road_buffer"
 invisible_building_polygons_to_point = "invisible_building_polygons_to_point"
+intersecting_building_polygons_to_point = "intersecting_building_polygons_to_point"
+merging_points_invisible_and_intersecting_building_polygons = (
+    " merging_points_invisible_and_intersecting_building_polygons"
+)
 
 
 # iteration.py
@@ -524,6 +529,22 @@ class Building_N100(Enum):
         )
     )
 
+    resolve_building_conflict_building_selected_hospital_church_points__n100 = (
+        generate_file_name_gdb(
+            function_name=resolve_building_conflict_building_polygon,
+            description="selected_hospital_church_points",
+            scale=scale,
+        )
+    )
+
+    resolve_building_conflict_building_polygon__hospital_church_polygons__n100 = (
+        generate_file_name_gdb(
+            function_name=resolve_building_conflict_building_polygon,
+            description="hospital_church_polygons",
+            scale=scale,
+        )
+    )
+
     # Function: invisible_building_polygons_to_point
 
     invisible_building_polygons_to_point__invisible_polygons__n100 = (
@@ -534,12 +555,72 @@ class Building_N100(Enum):
         )
     )
 
+    invisible_building_polygons_to_point__not_invisible_polygons__n100 = (
+        generate_file_name_gdb(
+            function_name=invisible_building_polygons_to_point,
+            description="not_invisible_polygons",
+            scale=scale,
+        )
+    )
+
     invisible_building_polygons_to_point__invisible_polygons_to_points__n100 = (
         generate_file_name_gdb(
             function_name=invisible_building_polygons_to_point,
             description="invisible_polygons_to_points",
             scale=scale,
         )
+    )
+
+    # Function: creating_road_buffer
+
+    creating_road_buffer__selection__n100 = generate_file_name_gdb(
+        function_name=creating_road_buffer,
+        description="selection",
+        scale=scale,
+    )
+
+    creating_road_buffer__buffers__n100 = generate_file_name_gdb(
+        function_name=creating_road_buffer,
+        description="buffers",
+        scale=scale,
+    )
+
+    creating_road_buffer__merged_buffers__n100 = generate_file_name_gdb(
+        function_name=creating_road_buffer,
+        description="merged_buffers",
+        scale=scale,
+    )
+
+    # Function: intersecting_building_polygons_to_point
+
+    intersecting_building_polygons_to_point__final_building_polygons__n100 = (
+        generate_file_name_gdb(
+            function_name=intersecting_building_polygons_to_point,
+            description="final_building_polgyons",
+            scale=scale,
+        )
+    )
+
+    intersecting_building_polygons_to_point__building_polygons_intersecting__n100 = (
+        generate_file_name_gdb(
+            function_name=intersecting_building_polygons_to_point,
+            description="building_polygons_intersecting",
+            scale=scale,
+        )
+    )
+
+    intersecting_building_polygons_to_point__building_points__n100 = (
+        generate_file_name_gdb(
+            function_name=intersecting_building_polygons_to_point,
+            description="building_points",
+            scale=scale,
+        )
+    )
+
+    merging_points_invisible_and_intersecting_building_polygons__final_building_points__n100 = generate_file_name_gdb(
+        function_name=merging_points_invisible_and_intersecting_building_polygons,
+        description="final_building_points",
+        scale=scale,
     )
 
     ##############################################
