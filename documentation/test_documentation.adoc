@@ -1,0 +1,7 @@
+= This is a test
+
+If this documentation style works
+
+== Lets use a list
+ - Step 1
+ - Step 2
