@@ -34,28 +34,8 @@ def main():
             Reduces clusters to one point for each cluster.
     """
 
-    # Start timing
-    start_time = time.time()
-
     hospital_church_selections()
     find_clusters()
-
-    # End timing
-    end_time = time.time()
-
-    # Calculate elapsed time
-    elapsed_time = end_time - start_time
-
-    # Convert to hours, minutes, and seconds
-    hours, remainder = divmod(elapsed_time, 3600)
-    minutes, seconds = divmod(remainder, 60)
-
-    # Format as string
-    time_str = "{:02} hours, {:02} minutes, {:.2f} seconds".format(
-        int(hours), int(minutes), seconds
-    )
-
-    print(f"hospital_church_clusters took {time_str} to complete.")
 
 
 ###################################### Selecting hospital and churches from all building points ################################################

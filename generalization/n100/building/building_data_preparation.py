@@ -25,16 +25,17 @@ def main():
 
     Details:
         1. `preparation_begrensningskurve`:
-            This function creates a buffer for water features using the "begrensningskurve" feature. It prepares the data for future building placement on the water's edge.
+            This function creates a buffer for water features using the water features (begrensningskurve for vann). It prepares the data for future building placement on the water features edge.
 
         2. `preperation_veg_sti`:
-            This function unsplit a line feature of roads to reduce the number of objects in future processing.
+            This function unsplits a line feature of roads to reduce the number of objects in future processing.
 
         3. `adding_matrikkel_as_points`:
-            This function adds building points from the matrikkel dataset for areas that are no longer considered urban after the generalization of "arealdekke." It also adds the required fields and values for future analysis.
+            This function adds building points from the cadastre (matrikkel) for areas that are no longer considered urban after the generalization of land cover (arealdekke).
+            It also adds the required fields and values for future analysis.
 
         4. `selecting_grunnriss_for_generalization`:
-            This function selects building polygons (grunnriss) to be generalized. Smaller polygons and churches or hospitals are excluded, transformed into points, and sent to building point generalization.
+            This function selects building polygons (grunnriss) to be generalized. Smaller polygons, churches and hospitals are excluded, transformed into points, and sent to building point generalization.
     """
 
     preparation_begrensningskurve()
