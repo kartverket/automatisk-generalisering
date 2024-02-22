@@ -12,7 +12,7 @@ from custom_tools.polygon_processor import PolygonProcessor
 def main():
     """
     Summary:
-        This is the main function of building data preparation, which aims to prepare the data for future building generalization processing.
+        Needs summary
 
     Details:
         1. `setup_arcpy_environment`:
