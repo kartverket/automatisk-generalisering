@@ -6,6 +6,7 @@ import random
 import env_setup.global_config
 from env_setup import environment_setup
 from custom_tools import custom_arcpy
+from input_data import input_n50
 from env_setup import setup_directory_structure
 from file_manager.n100.file_manager_buildings import Building_N100
 
@@ -260,7 +261,7 @@ class PartitionIterator:
         self.setup_arcpy_environment()
         self.create_cartographic_partitions()
 
-        max_object_id = self.pre_iteration()
+        max_object_id, final_append_feature = self.pre_iteration()
 
         # Initialize the file mapping for each alias
         self.file_mapping = {alias: {"current_output": None} for alias in self.alias}
@@ -286,7 +287,7 @@ if __name__ == "__main__":
     # Define your input feature classes and their aliases
     inputs = {
         "building_points": f"{Building_N100.table_management__bygningspunkt_pre_resolve_building_conflicts__n100.value}",
-        "building_polygons": f"{Building_N100.simplify_building_polygons__simplified_grunnriss__n100.value}",
+        "building_polygons": f"{input_n50.Grunnriss}",
     }
 
     # Instantiate PartitionIterator with necessary parameters
