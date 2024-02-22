@@ -20,8 +20,46 @@ from file_manager.n100.file_manager_buildings import Building_N100
 
 def main():
     """
-    replace with docstring
+    Summary:
+        This script first propagates displacement for building polygons to ensure their alignment with roads
+        at a scale of 1:100,000. Next, it resolves conflicts among all building polygons in Norway,
+        considering various barriers such as roads, waterfeatures, hospital and churches, ensuring proper placement and scaling.
+
+        Following conflict resolution, the script transforms building polygons marked as invisible into points.
+        It also identifies visible building polygons that intersect roads and transforms them into points.
+        Building polygons that do not intersect roads remain unchanged.
+
+        The final output consists of two layers: a building polygon layer and a building point layer.
+
+    Details:
+
+        1. `propagate_displacement_building_polygons`:
+            Copies building polygons and propagates displacement based on nearby generalized road features, moving the buildings.
+
+        2. `features_500_m_from_building_polygons`:
+            Identifies and selects water features and roads within a 500-meter radius of building polygons, making sure only necessary data is processed.
+
+        3. `apply_symbology_to_layers`:
+            Applies N100 symbology to building polygons, roads, and water features
+
+        4. `resolve_building_conflict_building_polygon`:
+            Resolves conflicts among building polygons, using roads, water features, hospital and churches as barriers
+
+        5. `creating_road_buffer`:
+            Generates buffer zones around various road types based on the thickness of their symbology
+
+        6. `invisible_building_polygons_to_point`:
+            Converts invisible building polygons into points
+
+        7. `intersecting_building_polygons_to_point`:
+            Identifies intersecting building polygons and converts them into points.
+            Building polygons that are not made invisible by the previous function,
+            nor intersecting roads will be kept as they are.
+
+        8. `merging_invisible_intersecting_points`:
+            Combines points derived from invisible and intersecting building polygons.
     """
+
     propagate_displacement_building_polygons()
     features_500_m_from_building_polygons()
     apply_symbology_to_layers()
@@ -29,16 +67,25 @@ def main():
     creating_road_buffer()
     invisible_building_polygons_to_point()
     intersecting_building_polygons_to_point()
-    merging_points_invisible_and_intersecting_building_polygons()
+    merging_invisible_intersecting_points()
 
 
 def propagate_displacement_building_polygons():
     """
-    replace with docstring
+    Summary:
+        Selects displacement features located within a 500-meter radius from building polygons
+        and propagates displacement for the building polygons.
+
+    Details:
+        This function selects displacement features within a specified distance (500 meters) from the building polygons
+        and applies a displacement operation to ensure the building polygons align appropriately with surrounding features,
+        such as roads or other structures.
     """
+
     print(
-        "REMEMBER TO  SWITCH TO NEW DISPLACEMENT FEATURE AFTER GENERALIZATION OF ROADS"
+        "Before executing this function, ensure to switch to the new displacement feature"
     )
+
     print("Propogate displacement ...")
     # Copying layer so no changes are made to the original
     arcpy.management.Copy(
@@ -71,7 +118,12 @@ def propagate_displacement_building_polygons():
 
 def features_500_m_from_building_polygons():
     """
-    replace with docstring
+    Summary:
+        Selects waterfeatures and roads located 500 meters from building polygons.
+
+    Details:
+        **`Search distance is 500 Meters`**
+
     """
     print("Selecting features 500 meter from building polygon ...")
     # Selecting begrensningskurve 500 meters from building polygons
@@ -95,7 +147,9 @@ def features_500_m_from_building_polygons():
 
 def apply_symbology_to_layers():
     """
-    replace with docstring
+    Summary:
+        Applies symbology (lyrx files) to building polygons, roads, and water barriers.
+
     """
     print("Applying symbology ...")
     # Applying symbology to building polygons
@@ -114,14 +168,20 @@ def apply_symbology_to_layers():
     # Applying symbology to begrensningskurve (limiting curve)
     custom_arcpy.apply_symbology(
         input_layer=Building_N100.features_500_m_from_building_polygons__selected_begrensningskurve__n100.value,
-        in_symbology_layer=input_symbology.SymbologyN100.begrensnings_kurve.value,
+        in_symbology_layer=input_symbology.SymbologyN100.begrensnings_kurve_line.value,
         output_name=Building_N100.apply_symbology_to_layers__begrensningskurve__n100__lyrx.value,
     )
 
 
 def resolve_building_conflict_building_polygon():
     """
-    replace with docstring
+    Summary:
+        Resolves conflicts among building polygons considering roads, water features, hospitals, and churches as barriers.
+
+    Details:
+        This function resolves conflicts among building polygons by taking into account various barriers such as roads,
+        water features, hospitals, and churches. To incorporate hospital and church points as barriers, these points are first
+        transformed into polygons using the dimensions of their symbology.
     """
 
     # Selecting hospital and churches from n50
@@ -242,51 +302,28 @@ def resolve_building_conflict_building_polygon():
     print("Finished")
 
 
-def invisible_building_polygons_to_point():
-    """
-    replace with docstring
-    """
-    print("Transforming polygons marked with invisibility 1 to points ...")
-
-    # Making new feature layer of polygons that is invisible
-    custom_arcpy.select_attribute_and_make_permanent_feature(
-        input_layer=Building_N100.resolve_building_conflict_building_polygon__after_RBC__n100.value,
-        expression="invisibility = 1",
-        output_name=Building_N100.invisible_building_polygons_to_point__invisible_polygons__n100.value,
-    )
-
-    # Making new feature layer of polygons that is NOT invisible
-    custom_arcpy.select_attribute_and_make_permanent_feature(
-        input_layer=Building_N100.resolve_building_conflict_building_polygon__after_RBC__n100.value,
-        expression="invisibility = 0",
-        output_name=Building_N100.invisible_building_polygons_to_point__not_invisible_polygons__n100.value,
-    )
-
-    # Polygon to point
-    arcpy.management.FeatureToPoint(
-        in_features=Building_N100.invisible_building_polygons_to_point__invisible_polygons__n100.value,
-        out_feature_class=Building_N100.invisible_building_polygons_to_point__invisible_polygons_to_points__n100.value,
-    )
-
-    print("Finished.")
-
-
 def creating_road_buffer():
     """
-    replace with docstring
+    Summary:
+        Creates buffers around different types of roads based on specified criteria, and merges all the buffers into one single layer.
+
+    Details:
+        This function generates buffers around various types of roads by applying predefined SQL queries
+        to select specific road types and associated buffer widths. Each SQL query corresponds to a particular
+        road type, and the resulting buffers provide spatial context and aid in urban infrastructure analysis.
     """
 
     print("Creating road buffer ...")
     # Dictionary with SQL queries and their corresponding buffer widths
     sql_queries = {
-        "MOTORVEGTYPE = 'Motorveg'": 42.5,
+        "MOTORVEGTYPE = 'Motorveg'": 43,
         """ 
         SUBTYPEKODE = 3 
         Or MOTORVEGTYPE = 'Motortrafikkveg' 
         Or (SUBTYPEKODE = 2 And MOTORVEGTYPE = 'Motortrafikkveg') 
         Or (SUBTYPEKODE = 2 And MOTORVEGTYPE = 'Ikke motorveg') 
         Or (SUBTYPEKODE = 4 And MOTORVEGTYPE = 'Ikke motorveg') 
-        """: 22.5,
+        """: 23,
         """
         SUBTYPEKODE = 1
         Or SUBTYPEKODE = 5
@@ -298,7 +335,7 @@ def creating_road_buffer():
         Or SUBTYPEKODE = 8
         Or SUBTYPEKODE = 10
         Or SUBTYPEKODE =11
-        """: 7.5,
+        """: 8,
     }
 
     selection_name_base = Building_N100.creating_road_buffer__selection__n100.value
@@ -315,6 +352,9 @@ def creating_road_buffer():
         selection_output_name = f"{selection_name_base}_{counter}"
         buffer_width = original_width + 15
         buffer_output_name = f"{buffer_name_base}_{buffer_width}m_{counter}"
+
+        print(selection_output_name)
+        print(buffer_output_name)
 
         # Selecting road types and making new feature layer based on SQL query
         custom_arcpy.select_attribute_and_make_feature_layer(
@@ -342,7 +382,55 @@ def creating_road_buffer():
     )
 
 
+def invisible_building_polygons_to_point():
+    """
+    Summary:
+        Converts invisible building polygons to points and separates them from non-invisible polygons.
+
+    Details:
+        This function identifies building polygons marked as invisible (invisibility = 1) within the building
+        polygon layer resulting from the conflict resolution process. It creates a new feature layer containing
+        these invisible polygons and another layer for non-invisible polygons (invisibility = 0). Subsequently,
+        the invisible polygons are transformed into points to represent their locations more accurately. The final
+        output consists of two layers: one with invisible polygons transformed into points and another with non-invisible
+        polygons.
+    """
+    print("Transforming polygons marked with invisibility 1 to points ...")
+
+    # Making new feature layer of polygons that is invisible
+    custom_arcpy.select_attribute_and_make_permanent_feature(
+        input_layer=Building_N100.resolve_building_conflict_building_polygon__after_RBC__n100.value,
+        expression="invisibility = 1",
+        output_name=Building_N100.invisible_building_polygons_to_point__invisible_polygons__n100.value,
+    )
+
+    # Making new feature layer of polygons that is NOT invisible
+    custom_arcpy.select_attribute_and_make_permanent_feature(
+        input_layer=Building_N100.resolve_building_conflict_building_polygon__after_RBC__n100.value,
+        expression="invisibility = 0",
+        output_name=Building_N100.invisible_building_polygons_to_point__not_invisible_polygons__n100.value,
+    )
+
+    # Polygon to point
+    arcpy.management.FeatureToPoint(
+        in_features=Building_N100.invisible_building_polygons_to_point__invisible_polygons__n100.value,
+        out_feature_class=Building_N100.invisible_building_polygons_to_point__invisible_polygons_to_points__n100.value,
+    )
+
+    print("Finished.")
+
+
 def intersecting_building_polygons_to_point():
+    """
+    Summary:
+        Identifies ibuilding polygons that intersects road and converts them into points.
+
+    Details:
+        This function first identifies building polygons that intersect with the road buffer layer and selects
+        them for transformation into points. It performs two selection operations based on intersection with
+        the road buffer layer: one for buildings that do not overlap (inverted=True) and will be retained as
+        polygons, and another for buildings that do overlap (inverted=False) and will be transformed into points.
+    """
     print("Finding intersecting points... ")
 
     # Selecting buildings that DO NOT overlap with road buffer layer and will be kept as polygons
@@ -370,14 +458,23 @@ def intersecting_building_polygons_to_point():
     )
 
 
-def merging_points_invisible_and_intersecting_building_polygons():
+def merging_invisible_intersecting_points():
+    """
+    Summary:
+        Merges points representing intersecting building polygons and invisible polygons.
+
+    Details:
+        This function merges two sets of points: one set representing building polygons that intersect with roads,
+        and another set representing invisible building polygons transformed into points. It combines these points
+        into a single feature class.
+    """
     print("Merging points...")
     arcpy.management.Merge(
         inputs=[
             Building_N100.intersecting_building_polygons_to_point__building_points__n100.value,
             Building_N100.invisible_building_polygons_to_point__invisible_polygons_to_points__n100.value,
         ],
-        output=Building_N100.merging_points_invisible_and_intersecting_building_polygons__final_building_points__n100.value,
+        output=Building_N100.merging_invisible_intersecting_points__final__n100.value,
     )
 
 
