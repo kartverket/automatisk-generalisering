@@ -107,6 +107,7 @@ def grunnriss_to_point():
         Building_N100.selecting_grunnriss_for_generalization__points_created_from_small_grunnriss__n100.value,
         Building_N100.selecting_grunnriss_for_generalization__kirke_points_created_from_grunnriss__n100.value,
         Building_N100.grunnriss_to_point__grunnriss_feature_to_point__n100.value,
+        Building_N100.merging_invisible_intersecting_points__final__n100.value,
     ]
     # Complete list of inputs for the merge
     merge_inputs = additional_inputs + output_paths
