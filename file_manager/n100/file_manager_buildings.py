@@ -126,7 +126,7 @@ merging_invisible_intersecting_points = "merging_invisible_intersecting_points"
 # iteration.py
 iteration = "iteration"
 
-# propagate_displacement.py
+# building_points_propagate_displacement.py
 propagate_displacement = "propagate_displacement"
 
 # building_point_buffer_displacement.py
@@ -135,7 +135,7 @@ building_point_buffer_displacement = "building_point_buffer_displacement"
 # create_points_from_polygon.py
 points_to_polygon = "points_to_polygon"
 
-# hospital_church_clusters.py
+# reducing_hospital_church_clusters.py
 hospital_church_selections = "hospital_church_selections"
 find_clusters = "find_clusters"
 reducing_clusters = "reducing_clusters"
