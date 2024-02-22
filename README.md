@@ -3,7 +3,7 @@
 This is the collection of scripts used to automatically generalize geodata into smaller cartographic scales.
 
 ### Automatisk Generalisering documentation
-- Our documentation can be viewed `here` [(link)](https://kartverket.github.io/automatisk-generalisering/index.html)
+- Our documentation can be viewed here: [(link)](https://kartverket.github.io/automatisk-generalisering/index.html)
 
 ### Open the folder `setup_guide` [(link)](https://github.com/kartverket/automatisk-generalisering/tree/main/setup_guide) and read the following documents:
 
