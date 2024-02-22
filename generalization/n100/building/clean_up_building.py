@@ -28,10 +28,14 @@ def clean_up_fields_delete():
         "CLUSTER_ID",
         "COLOR_ID",
         "symbol_val",
-        "angle",  # Add all fields you want to delete
+        "angle",
         "hierarchy",
         "invisibility",
         "ORIG_FID",
+        "InBld_FID" "TARGET_FID",
+        "BLD_STATUS",
+        "InBld_FID_1",
+        "BLD_STATUS_1",
     ]
 
     # Get a list of all fields in the feature class
