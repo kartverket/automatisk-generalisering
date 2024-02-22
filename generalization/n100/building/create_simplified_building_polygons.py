@@ -34,22 +34,6 @@ def main():
         3. `joining_and_adding_fields`:
             Reduces clusters to one point for each cluster.
     """
-    # Timing how long each functions takes to run
-    timer = Timer()
-
-    functions_to_run = [
-        aggregate_polygons,
-        simplify_buildings_1,
-        simplify_polygons,
-        simplify_buildings_2,
-        join_and_add_fields,
-    ]
-
-    for func in functions_to_run:
-        with timer:
-            func()
-
-    timer.print_overview()
 
 
 def aggregate_polygons():
