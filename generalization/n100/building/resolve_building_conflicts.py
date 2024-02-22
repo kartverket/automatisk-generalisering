@@ -114,7 +114,7 @@ def apply_symbology():
         },
         {
             "input_layer": Building_N100.rbc_selection__drawn_polygon_selection_rbc__n100.value,
-            "in_symbology_layer": SymbologyN100.drawn_plygon.value,
+            "in_symbology_layer": SymbologyN100.drawn_polygon.value,
             "output_name": Building_N100.apply_symbology__drawn_polygon_selection__n100_lyrx.value,
         },
     ]
