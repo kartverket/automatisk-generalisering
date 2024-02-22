@@ -120,9 +120,7 @@ resolve_building_conflict_building_polygon = (
 creating_road_buffer = "creating_road_buffer"
 invisible_building_polygons_to_point = "invisible_building_polygons_to_point"
 intersecting_building_polygons_to_point = "intersecting_building_polygons_to_point"
-merging_points_invisible_and_intersecting_building_polygons = (
-    " merging_points_invisible_and_intersecting_building_polygons"
-)
+merging_invisible_intersecting_points = "merging_invisible_intersecting_points"
 
 
 # iteration.py
@@ -617,9 +615,11 @@ class Building_N100(Enum):
         )
     )
 
-    merging_points_invisible_and_intersecting_building_polygons__final_building_points__n100 = generate_file_name_gdb(
-        function_name=merging_points_invisible_and_intersecting_building_polygons,
-        description="final_building_points",
+    # Function: merging_invisible_intersecting_points
+
+    merging_invisible_intersecting_points__final__n100 = generate_file_name_gdb(
+        function_name=merging_invisible_intersecting_points,
+        description="final",
         scale=scale,
     )
 
