@@ -4,6 +4,14 @@ generalization.n100.building package
 Submodules
 ----------
 
+generalization.n100.building.building\_clean\_up module
+-------------------------------------------------------
+
+.. automodule:: generalization.n100.building.building_clean_up
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
 generalization.n100.building.building\_data\_preparation module
 ---------------------------------------------------------------
 
@@ -28,6 +36,22 @@ generalization.n100.building.building\_point\_buffer\_displacement module
    :undoc-members:
    :show-inheritance:
 
+generalization.n100.building.building\_points\_propagate\_displacement module
+-----------------------------------------------------------------------------
+
+.. automodule:: generalization.n100.building.building_points_propagate_displacement
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+generalization.n100.building.building\_points\_to\_polygon module
+-----------------------------------------------------------------
+
+.. automodule:: generalization.n100.building.building_points_to_polygon
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
 generalization.n100.building.building\_polygon\_displacement\_rbc module
 ------------------------------------------------------------------------
 
@@ -40,22 +64,6 @@ generalization.n100.building.calculating\_values module
 -------------------------------------------------------
 
 .. automodule:: generalization.n100.building.calculating_values
-   :members:
-   :undoc-members:
-   :show-inheritance:
-
-generalization.n100.building.clean\_up\_building module
--------------------------------------------------------
-
-.. automodule:: generalization.n100.building.clean_up_building
-   :members:
-   :undoc-members:
-   :show-inheritance:
-
-generalization.n100.building.create\_cartographic\_partitions module
---------------------------------------------------------------------
-
-.. automodule:: generalization.n100.building.create_cartographic_partitions
    :members:
    :undoc-members:
    :show-inheritance:
@@ -76,34 +84,10 @@ generalization.n100.building.create\_simplified\_building\_polygons module
    :undoc-members:
    :show-inheritance:
 
-generalization.n100.building.hospital\_church\_clusters module
---------------------------------------------------------------
+generalization.n100.building.reducing\_hospital\_church\_clusters module
+------------------------------------------------------------------------
 
-.. automodule:: generalization.n100.building.hospital_church_clusters
-   :members:
-   :undoc-members:
-   :show-inheritance:
-
-generalization.n100.building.iteration module
----------------------------------------------
-
-.. automodule:: generalization.n100.building.iteration
-   :members:
-   :undoc-members:
-   :show-inheritance:
-
-generalization.n100.building.points\_to\_polygon module
--------------------------------------------------------
-
-.. automodule:: generalization.n100.building.points_to_polygon
-   :members:
-   :undoc-members:
-   :show-inheritance:
-
-generalization.n100.building.propagate\_displacement module
------------------------------------------------------------
-
-.. automodule:: generalization.n100.building.propagate_displacement
+.. automodule:: generalization.n100.building.reducing_hospital_church_clusters
    :members:
    :undoc-members:
    :show-inheritance:

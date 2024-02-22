@@ -52,6 +52,11 @@
 <li class="toctree-l1"><a class="reference internal" href="file_manager.html">file_manager package</a></li>
 <li class="toctree-l1 current"><a class="current reference internal" href="#">generalization.n100.building package</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="#submodules">Submodules</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#module-generalization.n100.building.building_clean_up">generalization.n100.building.building_clean_up module</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#generalization.n100.building.building_clean_up.main"><code class="docutils literal notranslate"><span class="pre">main()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#generalization.n100.building.building_clean_up.clean_up_fields_delete"><code class="docutils literal notranslate"><span class="pre">clean_up_fields_delete()</span></code></a></li>
+</ul>
+</li>
 <li class="toctree-l2"><a class="reference internal" href="#module-generalization.n100.building.building_data_preparation">generalization.n100.building.building_data_preparation module</a><ul>
 <li class="toctree-l3"><a class="reference internal" href="#generalization.n100.building.building_data_preparation.main"><code class="docutils literal notranslate"><span class="pre">main()</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="#generalization.n100.building.building_data_preparation.preparation_begrensningskurve"><code class="docutils literal notranslate"><span class="pre">preparation_begrensningskurve()</span></code></a></li>
@@ -63,22 +68,17 @@
 </li>
 <li class="toctree-l2"><a class="reference internal" href="#generalization-n100-building-building-main-module">generalization.n100.building.building_main module</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#generalization-n100-building-building-point-buffer-displacement-module">generalization.n100.building.building_point_buffer_displacement module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#module-generalization.n100.building.building_points_propagate_displacement">generalization.n100.building.building_points_propagate_displacement module</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#generalization.n100.building.building_points_propagate_displacement.main"><code class="docutils literal notranslate"><span class="pre">main()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#generalization.n100.building.building_points_propagate_displacement.setup_arcpy_environment"><code class="docutils literal notranslate"><span class="pre">setup_arcpy_environment()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#generalization.n100.building.building_points_propagate_displacement.propagate_displacement_building_points"><code class="docutils literal notranslate"><span class="pre">propagate_displacement_building_points()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#generalization-n100-building-building-points-to-polygon-module">generalization.n100.building.building_points_to_polygon module</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#generalization-n100-building-building-polygon-displacement-rbc-module">generalization.n100.building.building_polygon_displacement_rbc module</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#module-generalization.n100.building.calculating_values">generalization.n100.building.calculating_values module</a><ul>
 <li class="toctree-l3"><a class="reference internal" href="#generalization.n100.building.calculating_values.main"><code class="docutils literal notranslate"><span class="pre">main()</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="#generalization.n100.building.calculating_values.table_management"><code class="docutils literal notranslate"><span class="pre">table_management()</span></code></a></li>
-</ul>
-</li>
-<li class="toctree-l2"><a class="reference internal" href="#module-generalization.n100.building.clean_up_building">generalization.n100.building.clean_up_building module</a><ul>
-<li class="toctree-l3"><a class="reference internal" href="#generalization.n100.building.clean_up_building.main"><code class="docutils literal notranslate"><span class="pre">main()</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="#generalization.n100.building.clean_up_building.clean_up_fields_delete"><code class="docutils literal notranslate"><span class="pre">clean_up_fields_delete()</span></code></a></li>
-</ul>
-</li>
-<li class="toctree-l2"><a class="reference internal" href="#module-generalization.n100.building.create_cartographic_partitions">generalization.n100.building.create_cartographic_partitions module</a><ul>
-<li class="toctree-l3"><a class="reference internal" href="#generalization.n100.building.create_cartographic_partitions.main"><code class="docutils literal notranslate"><span class="pre">main()</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="#generalization.n100.building.create_cartographic_partitions.setup_arcpy_environment"><code class="docutils literal notranslate"><span class="pre">setup_arcpy_environment()</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="#generalization.n100.building.create_cartographic_partitions.create_cartographic_partitions"><code class="docutils literal notranslate"><span class="pre">create_cartographic_partitions()</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="#generalization.n100.building.create_cartographic_partitions.create_erased_features"><code class="docutils literal notranslate"><span class="pre">create_erased_features()</span></code></a></li>
 </ul>
 </li>
 <li class="toctree-l2"><a class="reference internal" href="#module-generalization.n100.building.create_points_from_polygon">generalization.n100.building.create_points_from_polygon module</a><ul>
@@ -87,27 +87,11 @@
 </ul>
 </li>
 <li class="toctree-l2"><a class="reference internal" href="#generalization-n100-building-create-simplified-building-polygons-module">generalization.n100.building.create_simplified_building_polygons module</a></li>
-<li class="toctree-l2"><a class="reference internal" href="#module-generalization.n100.building.hospital_church_clusters">generalization.n100.building.hospital_church_clusters module</a><ul>
-<li class="toctree-l3"><a class="reference internal" href="#generalization.n100.building.hospital_church_clusters.main"><code class="docutils literal notranslate"><span class="pre">main()</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="#generalization.n100.building.hospital_church_clusters.hospital_church_selections"><code class="docutils literal notranslate"><span class="pre">hospital_church_selections()</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="#generalization.n100.building.hospital_church_clusters.find_clusters"><code class="docutils literal notranslate"><span class="pre">find_clusters()</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="#generalization.n100.building.hospital_church_clusters.reducing_clusters"><code class="docutils literal notranslate"><span class="pre">reducing_clusters()</span></code></a></li>
-</ul>
-</li>
-<li class="toctree-l2"><a class="reference internal" href="#module-generalization.n100.building.iteration">generalization.n100.building.iteration module</a><ul>
-<li class="toctree-l3"><a class="reference internal" href="#generalization.n100.building.iteration.main"><code class="docutils literal notranslate"><span class="pre">main()</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="#generalization.n100.building.iteration.setup_arcpy_environment"><code class="docutils literal notranslate"><span class="pre">setup_arcpy_environment()</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="#generalization.n100.building.iteration.pre_iteration"><code class="docutils literal notranslate"><span class="pre">pre_iteration()</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="#generalization.n100.building.iteration.create_append_feature_class"><code class="docutils literal notranslate"><span class="pre">create_append_feature_class()</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="#generalization.n100.building.iteration.iteration_partition"><code class="docutils literal notranslate"><span class="pre">iteration_partition()</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="#generalization.n100.building.iteration.move_edge_objects"><code class="docutils literal notranslate"><span class="pre">move_edge_objects()</span></code></a></li>
-</ul>
-</li>
-<li class="toctree-l2"><a class="reference internal" href="#generalization-n100-building-points-to-polygon-module">generalization.n100.building.points_to_polygon module</a></li>
-<li class="toctree-l2"><a class="reference internal" href="#module-generalization.n100.building.propagate_displacement">generalization.n100.building.propagate_displacement module</a><ul>
-<li class="toctree-l3"><a class="reference internal" href="#generalization.n100.building.propagate_displacement.main"><code class="docutils literal notranslate"><span class="pre">main()</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="#generalization.n100.building.propagate_displacement.setup_arcpy_environment"><code class="docutils literal notranslate"><span class="pre">setup_arcpy_environment()</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="#generalization.n100.building.propagate_displacement.propagate_displacement_building_points"><code class="docutils literal notranslate"><span class="pre">propagate_displacement_building_points()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#module-generalization.n100.building.reducing_hospital_church_clusters">generalization.n100.building.reducing_hospital_church_clusters module</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#generalization.n100.building.reducing_hospital_church_clusters.main"><code class="docutils literal notranslate"><span class="pre">main()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#generalization.n100.building.reducing_hospital_church_clusters.hospital_church_selections"><code class="docutils literal notranslate"><span class="pre">hospital_church_selections()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#generalization.n100.building.reducing_hospital_church_clusters.find_clusters"><code class="docutils literal notranslate"><span class="pre">find_clusters()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#generalization.n100.building.reducing_hospital_church_clusters.reducing_clusters"><code class="docutils literal notranslate"><span class="pre">reducing_clusters()</span></code></a></li>
 </ul>
 </li>
 <li class="toctree-l2"><a class="reference internal" href="#module-generalization.n100.building.resolve_building_conflicts">generalization.n100.building.resolve_building_conflicts module</a><ul>
@@ -160,6 +144,19 @@
 <section id="submodules">
 <h2>Submodules<a class="headerlink" href="#submodules" title="Link to this heading"></a></h2>
 </section>
+<section id="module-generalization.n100.building.building_clean_up">
+<span id="generalization-n100-building-building-clean-up-module"></span><h2>generalization.n100.building.building_clean_up module<a class="headerlink" href="#module-generalization.n100.building.building_clean_up" title="Link to this heading"></a></h2>
+<dl class="py function">
+<dt class="sig sig-object py" id="generalization.n100.building.building_clean_up.main">
+<span class="sig-prename descclassname"><span class="pre">generalization.n100.building.building_clean_up.</span></span><span class="sig-name descname"><span class="pre">main</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/generalization/n100/building/building_clean_up.html#main"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#generalization.n100.building.building_clean_up.main" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="generalization.n100.building.building_clean_up.clean_up_fields_delete">
+<span class="sig-prename descclassname"><span class="pre">generalization.n100.building.building_clean_up.</span></span><span class="sig-name descname"><span class="pre">clean_up_fields_delete</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/generalization/n100/building/building_clean_up.html#clean_up_fields_delete"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#generalization.n100.building.building_clean_up.clean_up_fields_delete" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+</section>
 <section id="module-generalization.n100.building.building_data_preparation">
 <span id="generalization-n100-building-building-data-preparation-module"></span><h2>generalization.n100.building.building_data_preparation module<a class="headerlink" href="#module-generalization.n100.building.building_data_preparation" title="Link to this heading"></a></h2>
 <dl class="py function">
@@ -170,22 +167,23 @@
 </dd>
 <dt>Details:</dt><dd><ol class="arabic simple">
 <li><dl class="simple">
-<dt><cite>preparation_begrensningskurve</cite>:</dt><dd><p>This function creates a buffer for water features using the “begrensningskurve” feature. It prepares the data for future building placement on the water’s edge.</p>
+<dt><cite>preparation_begrensningskurve</cite>:</dt><dd><p>This function creates a buffer for water features using the water features (begrensningskurve for vann). It prepares the data for future building placement on the water features edge.</p>
 </dd>
 </dl>
 </li>
 <li><dl class="simple">
-<dt><cite>preperation_veg_sti</cite>:</dt><dd><p>This function unsplit a line feature of roads to reduce the number of objects in future processing.</p>
+<dt><cite>preperation_veg_sti</cite>:</dt><dd><p>This function unsplits a line feature of roads to reduce the number of objects in future processing.</p>
 </dd>
 </dl>
 </li>
 <li><dl class="simple">
-<dt><cite>adding_matrikkel_as_points</cite>:</dt><dd><p>This function adds building points from the matrikkel dataset for areas that are no longer considered urban after the generalization of “arealdekke.” It also adds the required fields and values for future analysis.</p>
+<dt><cite>adding_matrikkel_as_points</cite>:</dt><dd><p>This function adds building points from the cadastre (matrikkel) for areas that are no longer considered urban after the generalization of land cover (arealdekke).
+It also adds the required fields and values for future analysis.</p>
 </dd>
 </dl>
 </li>
 <li><dl class="simple">
-<dt><cite>selecting_grunnriss_for_generalization</cite>:</dt><dd><p>This function selects building polygons (grunnriss) to be generalized. Smaller polygons and churches or hospitals are excluded, transformed into points, and sent to building point generalization.</p>
+<dt><cite>selecting_grunnriss_for_generalization</cite>:</dt><dd><p>This function selects building polygons (grunnriss) to be generalized. Smaller polygons, churches and hospitals are excluded, transformed into points, and sent to building point generalization.</p>
 </dd>
 </dl>
 </li>
@@ -298,6 +296,63 @@
 <section id="generalization-n100-building-building-point-buffer-displacement-module">
 <h2>generalization.n100.building.building_point_buffer_displacement module<a class="headerlink" href="#generalization-n100-building-building-point-buffer-displacement-module" title="Link to this heading"></a></h2>
 </section>
+<section id="module-generalization.n100.building.building_points_propagate_displacement">
+<span id="generalization-n100-building-building-points-propagate-displacement-module"></span><h2>generalization.n100.building.building_points_propagate_displacement module<a class="headerlink" href="#module-generalization.n100.building.building_points_propagate_displacement" title="Link to this heading"></a></h2>
+<dl class="py function">
+<dt class="sig sig-object py" id="generalization.n100.building.building_points_propagate_displacement.main">
+<span class="sig-prename descclassname"><span class="pre">generalization.n100.building.building_points_propagate_displacement.</span></span><span class="sig-name descname"><span class="pre">main</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/generalization/n100/building/building_points_propagate_displacement.html#main"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#generalization.n100.building.building_points_propagate_displacement.main" title="Link to this definition"></a></dt>
+<dd><dl class="simple">
+<dt>Summary:</dt><dd><p>Makes sure that the building points are moved correspondingly to the displacement the road features have been moved during its generalization.</p>
+</dd>
+<dt>Details:</dt><dd><ol class="arabic simple">
+<li><dl class="simple">
+<dt><cite>setup_arcpy_environment</cite>:</dt><dd><p>Sets up the ArcPy environment based on predefined settings defined in <cite>general_setup</cite>.</p>
+</dd>
+</dl>
+</li>
+<li><dl class="simple">
+<dt><cite>propagate_displacement_building_points</cite>:</dt><dd><p>Makes sure that the building points are moved correspondingly to the displacement the road features have been moved during its generalization.</p>
+</dd>
+</dl>
+</li>
+</ol>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="generalization.n100.building.building_points_propagate_displacement.setup_arcpy_environment">
+<span class="sig-prename descclassname"><span class="pre">generalization.n100.building.building_points_propagate_displacement.</span></span><span class="sig-name descname"><span class="pre">setup_arcpy_environment</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/generalization/n100/building/building_points_propagate_displacement.html#setup_arcpy_environment"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#generalization.n100.building.building_points_propagate_displacement.setup_arcpy_environment" title="Link to this definition"></a></dt>
+<dd><dl class="simple">
+<dt>Summary:</dt><dd><p>Sets up the ArcPy environment based on predefined settings defined in <cite>general_setup</cite>.
+This function ensures that the ArcPy environment is properly configured for the specific project by utilizing
+the <cite>general_setup</cite> function from the <cite>environment_setup</cite> module.</p>
+</dd>
+<dt>Details:</dt><dd><ul class="simple">
+<li><p>It calls the <cite>general_setup</cite> function from the <cite>environment_setup</cite> module to set up the ArcPy environment based on predefined settings.</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="generalization.n100.building.building_points_propagate_displacement.propagate_displacement_building_points">
+<span class="sig-prename descclassname"><span class="pre">generalization.n100.building.building_points_propagate_displacement.</span></span><span class="sig-name descname"><span class="pre">propagate_displacement_building_points</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/generalization/n100/building/building_points_propagate_displacement.html#propagate_displacement_building_points"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#generalization.n100.building.building_points_propagate_displacement.propagate_displacement_building_points" title="Link to this definition"></a></dt>
+<dd><dl class="simple">
+<dt>Summary:</dt><dd><p>Makes sure that the building points are moved correspondingly to the displacement the road features have been moved during its generalization.</p>
+</dd>
+<dt>Details:</dt><dd><ul class="simple">
+<li><p>It copies the original dataset to prevent overwriting the data since PropagateDisplacement modifiy the input data.</p></li>
+<li><p>When using Propagate Displacement, the adjustment style chosen for this process is “SOLID” to prevent the change of shape of input polygons (though not relevant for building points).</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+</section>
+<section id="generalization-n100-building-building-points-to-polygon-module">
+<h2>generalization.n100.building.building_points_to_polygon module<a class="headerlink" href="#generalization-n100-building-building-points-to-polygon-module" title="Link to this heading"></a></h2>
+</section>
 <section id="generalization-n100-building-building-polygon-displacement-rbc-module">
 <h2>generalization.n100.building.building_polygon_displacement_rbc module<a class="headerlink" href="#generalization-n100-building-building-polygon-displacement-rbc-module" title="Link to this heading"></a></h2>
 </section>
@@ -348,43 +403,6 @@ Ensures that building types which should not be delivered are correctly reclassi
 </dd></dl>
 
 </section>
-<section id="module-generalization.n100.building.clean_up_building">
-<span id="generalization-n100-building-clean-up-building-module"></span><h2>generalization.n100.building.clean_up_building module<a class="headerlink" href="#module-generalization.n100.building.clean_up_building" title="Link to this heading"></a></h2>
-<dl class="py function">
-<dt class="sig sig-object py" id="generalization.n100.building.clean_up_building.main">
-<span class="sig-prename descclassname"><span class="pre">generalization.n100.building.clean_up_building.</span></span><span class="sig-name descname"><span class="pre">main</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/generalization/n100/building/clean_up_building.html#main"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#generalization.n100.building.clean_up_building.main" title="Link to this definition"></a></dt>
-<dd></dd></dl>
-
-<dl class="py function">
-<dt class="sig sig-object py" id="generalization.n100.building.clean_up_building.clean_up_fields_delete">
-<span class="sig-prename descclassname"><span class="pre">generalization.n100.building.clean_up_building.</span></span><span class="sig-name descname"><span class="pre">clean_up_fields_delete</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/generalization/n100/building/clean_up_building.html#clean_up_fields_delete"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#generalization.n100.building.clean_up_building.clean_up_fields_delete" title="Link to this definition"></a></dt>
-<dd></dd></dl>
-
-</section>
-<section id="module-generalization.n100.building.create_cartographic_partitions">
-<span id="generalization-n100-building-create-cartographic-partitions-module"></span><h2>generalization.n100.building.create_cartographic_partitions module<a class="headerlink" href="#module-generalization.n100.building.create_cartographic_partitions" title="Link to this heading"></a></h2>
-<dl class="py function">
-<dt class="sig sig-object py" id="generalization.n100.building.create_cartographic_partitions.main">
-<span class="sig-prename descclassname"><span class="pre">generalization.n100.building.create_cartographic_partitions.</span></span><span class="sig-name descname"><span class="pre">main</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/generalization/n100/building/create_cartographic_partitions.html#main"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#generalization.n100.building.create_cartographic_partitions.main" title="Link to this definition"></a></dt>
-<dd></dd></dl>
-
-<dl class="py function">
-<dt class="sig sig-object py" id="generalization.n100.building.create_cartographic_partitions.setup_arcpy_environment">
-<span class="sig-prename descclassname"><span class="pre">generalization.n100.building.create_cartographic_partitions.</span></span><span class="sig-name descname"><span class="pre">setup_arcpy_environment</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/generalization/n100/building/create_cartographic_partitions.html#setup_arcpy_environment"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#generalization.n100.building.create_cartographic_partitions.setup_arcpy_environment" title="Link to this definition"></a></dt>
-<dd><p>Sets up the ArcPy environment based on predefined settings.</p>
-</dd></dl>
-
-<dl class="py function">
-<dt class="sig sig-object py" id="generalization.n100.building.create_cartographic_partitions.create_cartographic_partitions">
-<span class="sig-prename descclassname"><span class="pre">generalization.n100.building.create_cartographic_partitions.</span></span><span class="sig-name descname"><span class="pre">create_cartographic_partitions</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/generalization/n100/building/create_cartographic_partitions.html#create_cartographic_partitions"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#generalization.n100.building.create_cartographic_partitions.create_cartographic_partitions" title="Link to this definition"></a></dt>
-<dd></dd></dl>
-
-<dl class="py function">
-<dt class="sig sig-object py" id="generalization.n100.building.create_cartographic_partitions.create_erased_features">
-<span class="sig-prename descclassname"><span class="pre">generalization.n100.building.create_cartographic_partitions.</span></span><span class="sig-name descname"><span class="pre">create_erased_features</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/generalization/n100/building/create_cartographic_partitions.html#create_erased_features"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#generalization.n100.building.create_cartographic_partitions.create_erased_features" title="Link to this definition"></a></dt>
-<dd></dd></dl>
-
-</section>
 <section id="module-generalization.n100.building.create_points_from_polygon">
 <span id="generalization-n100-building-create-points-from-polygon-module"></span><h2>generalization.n100.building.create_points_from_polygon module<a class="headerlink" href="#module-generalization.n100.building.create_points_from_polygon" title="Link to this heading"></a></h2>
 <dl class="py function">
@@ -407,11 +425,11 @@ them together with collapsed points from the tools simplify building and simplif
 <section id="generalization-n100-building-create-simplified-building-polygons-module">
 <h2>generalization.n100.building.create_simplified_building_polygons module<a class="headerlink" href="#generalization-n100-building-create-simplified-building-polygons-module" title="Link to this heading"></a></h2>
 </section>
-<section id="module-generalization.n100.building.hospital_church_clusters">
-<span id="generalization-n100-building-hospital-church-clusters-module"></span><h2>generalization.n100.building.hospital_church_clusters module<a class="headerlink" href="#module-generalization.n100.building.hospital_church_clusters" title="Link to this heading"></a></h2>
+<section id="module-generalization.n100.building.reducing_hospital_church_clusters">
+<span id="generalization-n100-building-reducing-hospital-church-clusters-module"></span><h2>generalization.n100.building.reducing_hospital_church_clusters module<a class="headerlink" href="#module-generalization.n100.building.reducing_hospital_church_clusters" title="Link to this heading"></a></h2>
 <dl class="py function">
-<dt class="sig sig-object py" id="generalization.n100.building.hospital_church_clusters.main">
-<span class="sig-prename descclassname"><span class="pre">generalization.n100.building.hospital_church_clusters.</span></span><span class="sig-name descname"><span class="pre">main</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/generalization/n100/building/hospital_church_clusters.html#main"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#generalization.n100.building.hospital_church_clusters.main" title="Link to this definition"></a></dt>
+<dt class="sig sig-object py" id="generalization.n100.building.reducing_hospital_church_clusters.main">
+<span class="sig-prename descclassname"><span class="pre">generalization.n100.building.reducing_hospital_church_clusters.</span></span><span class="sig-name descname"><span class="pre">main</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/generalization/n100/building/reducing_hospital_church_clusters.html#main"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#generalization.n100.building.reducing_hospital_church_clusters.main" title="Link to this definition"></a></dt>
 <dd><dl class="simple">
 <dt>Summary:</dt><dd><p>This script detects and reduces hospital and church clusters.</p>
 </dd>
@@ -437,8 +455,8 @@ them together with collapsed points from the tools simplify building and simplif
 </dd></dl>
 
 <dl class="py function">
-<dt class="sig sig-object py" id="generalization.n100.building.hospital_church_clusters.hospital_church_selections">
-<span class="sig-prename descclassname"><span class="pre">generalization.n100.building.hospital_church_clusters.</span></span><span class="sig-name descname"><span class="pre">hospital_church_selections</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/generalization/n100/building/hospital_church_clusters.html#hospital_church_selections"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#generalization.n100.building.hospital_church_clusters.hospital_church_selections" title="Link to this definition"></a></dt>
+<dt class="sig sig-object py" id="generalization.n100.building.reducing_hospital_church_clusters.hospital_church_selections">
+<span class="sig-prename descclassname"><span class="pre">generalization.n100.building.reducing_hospital_church_clusters.</span></span><span class="sig-name descname"><span class="pre">hospital_church_selections</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/generalization/n100/building/reducing_hospital_church_clusters.html#hospital_church_selections"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#generalization.n100.building.reducing_hospital_church_clusters.hospital_church_selections" title="Link to this definition"></a></dt>
 <dd><dl class="simple">
 <dt>Summary:</dt><dd><p>Selects hospitals and churches from the input point feature class, creating separate feature layers for each category.</p>
 </dd>
@@ -451,8 +469,8 @@ them together with collapsed points from the tools simplify building and simplif
 </dd></dl>
 
 <dl class="py function">
-<dt class="sig sig-object py" id="generalization.n100.building.hospital_church_clusters.find_clusters">
-<span class="sig-prename descclassname"><span class="pre">generalization.n100.building.hospital_church_clusters.</span></span><span class="sig-name descname"><span class="pre">find_clusters</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/generalization/n100/building/hospital_church_clusters.html#find_clusters"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#generalization.n100.building.hospital_church_clusters.find_clusters" title="Link to this definition"></a></dt>
+<dt class="sig sig-object py" id="generalization.n100.building.reducing_hospital_church_clusters.find_clusters">
+<span class="sig-prename descclassname"><span class="pre">generalization.n100.building.reducing_hospital_church_clusters.</span></span><span class="sig-name descname"><span class="pre">find_clusters</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/generalization/n100/building/reducing_hospital_church_clusters.html#find_clusters"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#generalization.n100.building.reducing_hospital_church_clusters.find_clusters" title="Link to this definition"></a></dt>
 <dd><dl class="simple">
 <dt>Summary:</dt><dd><p>Finds hospital and church clusters.
 A cluster is defined as two or more points that are closer together than 200 meters.</p>
@@ -473,8 +491,8 @@ A cluster is defined as two or more points that are closer together than 200 met
 </dd></dl>
 
 <dl class="py function">
-<dt class="sig sig-object py" id="generalization.n100.building.hospital_church_clusters.reducing_clusters">
-<span class="sig-prename descclassname"><span class="pre">generalization.n100.building.hospital_church_clusters.</span></span><span class="sig-name descname"><span class="pre">reducing_clusters</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/generalization/n100/building/hospital_church_clusters.html#reducing_clusters"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#generalization.n100.building.hospital_church_clusters.reducing_clusters" title="Link to this definition"></a></dt>
+<dt class="sig sig-object py" id="generalization.n100.building.reducing_hospital_church_clusters.reducing_clusters">
+<span class="sig-prename descclassname"><span class="pre">generalization.n100.building.reducing_hospital_church_clusters.</span></span><span class="sig-name descname"><span class="pre">reducing_clusters</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/generalization/n100/building/reducing_hospital_church_clusters.html#reducing_clusters"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#generalization.n100.building.reducing_hospital_church_clusters.reducing_clusters" title="Link to this definition"></a></dt>
 <dd><dl class="simple">
 <dt>Summary:</dt><dd><p>Reduces hospital and church clusters by keeping only one point for each detected cluster.</p>
 </dd>
@@ -489,97 +507,6 @@ A cluster is defined as two or more points that are closer together than 200 met
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><p><strong>AREA.</strong> (<em>- Minimum Bounding Geometry is created with the geometry type RECTANGLE BY</em>) – </p>
-</dd>
-</dl>
-</dd></dl>
-
-</section>
-<section id="module-generalization.n100.building.iteration">
-<span id="generalization-n100-building-iteration-module"></span><h2>generalization.n100.building.iteration module<a class="headerlink" href="#module-generalization.n100.building.iteration" title="Link to this heading"></a></h2>
-<dl class="py function">
-<dt class="sig sig-object py" id="generalization.n100.building.iteration.main">
-<span class="sig-prename descclassname"><span class="pre">generalization.n100.building.iteration.</span></span><span class="sig-name descname"><span class="pre">main</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/generalization/n100/building/iteration.html#main"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#generalization.n100.building.iteration.main" title="Link to this definition"></a></dt>
-<dd></dd></dl>
-
-<dl class="py function">
-<dt class="sig sig-object py" id="generalization.n100.building.iteration.setup_arcpy_environment">
-<span class="sig-prename descclassname"><span class="pre">generalization.n100.building.iteration.</span></span><span class="sig-name descname"><span class="pre">setup_arcpy_environment</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/generalization/n100/building/iteration.html#setup_arcpy_environment"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#generalization.n100.building.iteration.setup_arcpy_environment" title="Link to this definition"></a></dt>
-<dd><p>Sets up the ArcPy environment based on predefined settings.</p>
-</dd></dl>
-
-<dl class="py function">
-<dt class="sig sig-object py" id="generalization.n100.building.iteration.pre_iteration">
-<span class="sig-prename descclassname"><span class="pre">generalization.n100.building.iteration.</span></span><span class="sig-name descname"><span class="pre">pre_iteration</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/generalization/n100/building/iteration.html#pre_iteration"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#generalization.n100.building.iteration.pre_iteration" title="Link to this definition"></a></dt>
-<dd></dd></dl>
-
-<dl class="py function">
-<dt class="sig sig-object py" id="generalization.n100.building.iteration.create_append_feature_class">
-<span class="sig-prename descclassname"><span class="pre">generalization.n100.building.iteration.</span></span><span class="sig-name descname"><span class="pre">create_append_feature_class</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/generalization/n100/building/iteration.html#create_append_feature_class"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#generalization.n100.building.iteration.create_append_feature_class" title="Link to this definition"></a></dt>
-<dd></dd></dl>
-
-<dl class="py function">
-<dt class="sig sig-object py" id="generalization.n100.building.iteration.iteration_partition">
-<span class="sig-prename descclassname"><span class="pre">generalization.n100.building.iteration.</span></span><span class="sig-name descname"><span class="pre">iteration_partition</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">max_object_id</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">partition_polygon</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">append_feature_building_points</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">append_feature_building_polygon</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">iteration_append_point_feature</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">iteration_append_polygon_feature</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">input_building_points</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">input_building_polygon</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">partition_field</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/generalization/n100/building/iteration.html#iteration_partition"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#generalization.n100.building.iteration.iteration_partition" title="Link to this definition"></a></dt>
-<dd></dd></dl>
-
-<dl class="py function">
-<dt class="sig sig-object py" id="generalization.n100.building.iteration.move_edge_objects">
-<span class="sig-prename descclassname"><span class="pre">generalization.n100.building.iteration.</span></span><span class="sig-name descname"><span class="pre">move_edge_objects</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">partition_polygon</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/generalization/n100/building/iteration.html#move_edge_objects"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#generalization.n100.building.iteration.move_edge_objects" title="Link to this definition"></a></dt>
-<dd></dd></dl>
-
-</section>
-<section id="generalization-n100-building-points-to-polygon-module">
-<h2>generalization.n100.building.points_to_polygon module<a class="headerlink" href="#generalization-n100-building-points-to-polygon-module" title="Link to this heading"></a></h2>
-</section>
-<section id="module-generalization.n100.building.propagate_displacement">
-<span id="generalization-n100-building-propagate-displacement-module"></span><h2>generalization.n100.building.propagate_displacement module<a class="headerlink" href="#module-generalization.n100.building.propagate_displacement" title="Link to this heading"></a></h2>
-<dl class="py function">
-<dt class="sig sig-object py" id="generalization.n100.building.propagate_displacement.main">
-<span class="sig-prename descclassname"><span class="pre">generalization.n100.building.propagate_displacement.</span></span><span class="sig-name descname"><span class="pre">main</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/generalization/n100/building/propagate_displacement.html#main"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#generalization.n100.building.propagate_displacement.main" title="Link to this definition"></a></dt>
-<dd><dl class="simple">
-<dt>Summary:</dt><dd><p>Makes sure that the building points are moved correspondingly to the displacement the road features have been moved during its generalization.</p>
-</dd>
-<dt>Details:</dt><dd><ol class="arabic simple">
-<li><dl class="simple">
-<dt><cite>setup_arcpy_environment</cite>:</dt><dd><p>Sets up the ArcPy environment based on predefined settings defined in <cite>general_setup</cite>.</p>
-</dd>
-</dl>
-</li>
-<li><dl class="simple">
-<dt><cite>propagate_displacement_building_points</cite>:</dt><dd><p>Makes sure that the building points are moved correspondingly to the displacement the road features have been moved during its generalization.</p>
-</dd>
-</dl>
-</li>
-</ol>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="py function">
-<dt class="sig sig-object py" id="generalization.n100.building.propagate_displacement.setup_arcpy_environment">
-<span class="sig-prename descclassname"><span class="pre">generalization.n100.building.propagate_displacement.</span></span><span class="sig-name descname"><span class="pre">setup_arcpy_environment</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/generalization/n100/building/propagate_displacement.html#setup_arcpy_environment"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#generalization.n100.building.propagate_displacement.setup_arcpy_environment" title="Link to this definition"></a></dt>
-<dd><dl class="simple">
-<dt>Summary:</dt><dd><p>Sets up the ArcPy environment based on predefined settings defined in <cite>general_setup</cite>.
-This function ensures that the ArcPy environment is properly configured for the specific project by utilizing
-the <cite>general_setup</cite> function from the <cite>environment_setup</cite> module.</p>
-</dd>
-<dt>Details:</dt><dd><ul class="simple">
-<li><p>It calls the <cite>general_setup</cite> function from the <cite>environment_setup</cite> module to set up the ArcPy environment based on predefined settings.</p></li>
-</ul>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="py function">
-<dt class="sig sig-object py" id="generalization.n100.building.propagate_displacement.propagate_displacement_building_points">
-<span class="sig-prename descclassname"><span class="pre">generalization.n100.building.propagate_displacement.</span></span><span class="sig-name descname"><span class="pre">propagate_displacement_building_points</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/generalization/n100/building/propagate_displacement.html#propagate_displacement_building_points"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#generalization.n100.building.propagate_displacement.propagate_displacement_building_points" title="Link to this definition"></a></dt>
-<dd><dl class="simple">
-<dt>Summary:</dt><dd><p>Makes sure that the building points are moved correspondingly to the displacement the road features have been moved during its generalization.</p>
-</dd>
-<dt>Details:</dt><dd><ul class="simple">
-<li><p>It copies the original dataset to prevent overwriting the data since PropagateDisplacement modifiy the input data.</p></li>
-<li><p>When using Propagate Displacement, the adjustment style chosen for this process is “SOLID” to prevent the change of shape of input polygons (though not relevant for building points).</p></li>
-</ul>
 </dd>
 </dl>
 </dd></dl>

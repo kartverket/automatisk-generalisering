@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>generalization.n100.building.hospital_church_clusters &mdash; Automatisk Generalisering 0.0.1 documentation</title>
+  <title>generalization.n100.building.reducing_hospital_church_clusters &mdash; Automatisk Generalisering 0.0.1 documentation</title>
       <link rel="stylesheet" type="text/css" href="../../../../_static/pygments.css?v=80d5e7a1" />
       <link rel="stylesheet" type="text/css" href="../../../../_static/css/theme.css?v=19f00094" />
       <link rel="stylesheet" type="text/css" href="../../../../_static/custom.css" />
@@ -67,7 +67,7 @@
   <ul class="wy-breadcrumbs">
       <li><a href="../../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
           <li class="breadcrumb-item"><a href="../../../index.html">Module code</a></li>
-      <li class="breadcrumb-item active">generalization.n100.building.hospital_church_clusters</li>
+      <li class="breadcrumb-item active">generalization.n100.building.reducing_hospital_church_clusters</li>
       <li class="wy-breadcrumbs-aside">
       </li>
   </ul>
@@ -76,7 +76,7 @@
           <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
            <div itemprop="articleBody">
              
-  <h1>Source code for generalization.n100.building.hospital_church_clusters</h1><div class="highlight"><pre>
+  <h1>Source code for generalization.n100.building.reducing_hospital_church_clusters</h1><div class="highlight"><pre>
 <span></span><span class="c1"># Importing modules</span>
 <span class="kn">import</span> <span class="nn">arcpy</span>
 <span class="kn">import</span> <span class="nn">os</span>
@@ -97,7 +97,7 @@
 
 <span class="c1"># Main function</span>
 <div class="viewcode-block" id="main">
-<a class="viewcode-back" href="../../../../generated_docs/generalization.n100.building.html#generalization.n100.building.hospital_church_clusters.main">[docs]</a>
+<a class="viewcode-back" href="../../../../generated_docs/generalization.n100.building.html#generalization.n100.building.reducing_hospital_church_clusters.main">[docs]</a>
 <span class="k">def</span> <span class="nf">main</span><span class="p">():</span>
 
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
@@ -115,28 +115,8 @@
 <span class="sd">            Reduces clusters to one point for each cluster.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
-    <span class="c1"># Start timing</span>
-    <span class="n">start_time</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span>
-
     <span class="n">hospital_church_selections</span><span class="p">()</span>
-    <span class="n">find_clusters</span><span class="p">()</span>
-
-    <span class="c1"># End timing</span>
-    <span class="n">end_time</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span>
-
-    <span class="c1"># Calculate elapsed time</span>
-    <span class="n">elapsed_time</span> <span class="o">=</span> <span class="n">end_time</span> <span class="o">-</span> <span class="n">start_time</span>
-
-    <span class="c1"># Convert to hours, minutes, and seconds</span>
-    <span class="n">hours</span><span class="p">,</span> <span class="n">remainder</span> <span class="o">=</span> <span class="nb">divmod</span><span class="p">(</span><span class="n">elapsed_time</span><span class="p">,</span> <span class="mi">3600</span><span class="p">)</span>
-    <span class="n">minutes</span><span class="p">,</span> <span class="n">seconds</span> <span class="o">=</span> <span class="nb">divmod</span><span class="p">(</span><span class="n">remainder</span><span class="p">,</span> <span class="mi">60</span><span class="p">)</span>
-
-    <span class="c1"># Format as string</span>
-    <span class="n">time_str</span> <span class="o">=</span> <span class="s2">&quot;</span><span class="si">{:02}</span><span class="s2"> hours, </span><span class="si">{:02}</span><span class="s2"> minutes, </span><span class="si">{:.2f}</span><span class="s2"> seconds&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span>
-        <span class="nb">int</span><span class="p">(</span><span class="n">hours</span><span class="p">),</span> <span class="nb">int</span><span class="p">(</span><span class="n">minutes</span><span class="p">),</span> <span class="n">seconds</span>
-    <span class="p">)</span>
-
-    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;hospital_church_clusters took </span><span class="si">{</span><span class="n">time_str</span><span class="si">}</span><span class="s2"> to complete.&quot;</span><span class="p">)</span></div>
+    <span class="n">find_clusters</span><span class="p">()</span></div>
 
 
 
@@ -144,7 +124,7 @@
 
 
 <div class="viewcode-block" id="hospital_church_selections">
-<a class="viewcode-back" href="../../../../generated_docs/generalization.n100.building.html#generalization.n100.building.hospital_church_clusters.hospital_church_selections">[docs]</a>
+<a class="viewcode-back" href="../../../../generated_docs/generalization.n100.building.html#generalization.n100.building.reducing_hospital_church_clusters.hospital_church_selections">[docs]</a>
 <span class="k">def</span> <span class="nf">hospital_church_selections</span><span class="p">():</span>
 
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
@@ -188,7 +168,7 @@
 
 <span class="c1"># Finding and removing hospital and church clusters</span>
 <div class="viewcode-block" id="find_clusters">
-<a class="viewcode-back" href="../../../../generated_docs/generalization.n100.building.html#generalization.n100.building.hospital_church_clusters.find_clusters">[docs]</a>
+<a class="viewcode-back" href="../../../../generated_docs/generalization.n100.building.html#generalization.n100.building.reducing_hospital_church_clusters.find_clusters">[docs]</a>
 <span class="k">def</span> <span class="nf">find_clusters</span><span class="p">():</span>
 
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
@@ -286,7 +266,7 @@
 
 
 <div class="viewcode-block" id="reducing_clusters">
-<a class="viewcode-back" href="../../../../generated_docs/generalization.n100.building.html#generalization.n100.building.hospital_church_clusters.reducing_clusters">[docs]</a>
+<a class="viewcode-back" href="../../../../generated_docs/generalization.n100.building.html#generalization.n100.building.reducing_hospital_church_clusters.reducing_clusters">[docs]</a>
 <span class="k">def</span> <span class="nf">reducing_clusters</span><span class="p">():</span>
 
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>

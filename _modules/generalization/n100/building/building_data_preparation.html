@@ -106,16 +106,17 @@
 
 <span class="sd">    Details:</span>
 <span class="sd">        1. `preparation_begrensningskurve`:</span>
-<span class="sd">            This function creates a buffer for water features using the &quot;begrensningskurve&quot; feature. It prepares the data for future building placement on the water&#39;s edge.</span>
+<span class="sd">            This function creates a buffer for water features using the water features (begrensningskurve for vann). It prepares the data for future building placement on the water features edge.</span>
 
 <span class="sd">        2. `preperation_veg_sti`:</span>
-<span class="sd">            This function unsplit a line feature of roads to reduce the number of objects in future processing.</span>
+<span class="sd">            This function unsplits a line feature of roads to reduce the number of objects in future processing.</span>
 
 <span class="sd">        3. `adding_matrikkel_as_points`:</span>
-<span class="sd">            This function adds building points from the matrikkel dataset for areas that are no longer considered urban after the generalization of &quot;arealdekke.&quot; It also adds the required fields and values for future analysis.</span>
+<span class="sd">            This function adds building points from the cadastre (matrikkel) for areas that are no longer considered urban after the generalization of land cover (arealdekke).</span>
+<span class="sd">            It also adds the required fields and values for future analysis.</span>
 
 <span class="sd">        4. `selecting_grunnriss_for_generalization`:</span>
-<span class="sd">            This function selects building polygons (grunnriss) to be generalized. Smaller polygons and churches or hospitals are excluded, transformed into points, and sent to building point generalization.</span>
+<span class="sd">            This function selects building polygons (grunnriss) to be generalized. Smaller polygons, churches and hospitals are excluded, transformed into points, and sent to building point generalization.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="n">preparation_begrensningskurve</span><span class="p">()</span>
