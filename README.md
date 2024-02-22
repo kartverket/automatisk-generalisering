@@ -1,6 +1,6 @@
 # Automatisk Generalisering
 
-This is the collection of script used to automatically generalize geodata into lower cartographic scales.
+This is the collection of scripts used to automatically generalize geodata into smaller cartographic scales.
 
 ### Automatisk Generalisering documentation
 - Our documentation can be viewed `here` [(link)](https://kartverket.github.io/automatisk-generalisering/index.html)
