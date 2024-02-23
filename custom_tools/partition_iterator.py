@@ -114,7 +114,7 @@ class PartitionIterator:
             existing_field_names = [
                 field.name for field in arcpy.ListFields(input_data_copy)
             ]
-            orig_id_field = "id_field"
+            orig_id_field = "orig_id_field"
             while orig_id_field in existing_field_names:
                 orig_id_field = f"{orig_id_field}_{random.randint(0, 9)}"
             arcpy.AddField_management(
@@ -200,75 +200,79 @@ class PartitionIterator:
                         schema_type="NO_TEST",
                     )
 
-                base_partition_selection_2 = (
-                    f"{alias}_partition_base_select_2_{self.scale}"
-                )
-                custom_arcpy.select_location_and_make_feature_layer(
-                    input_layer=input_data_copy,
-                    overlap_type=custom_arcpy.OverlapType.WITHIN_A_DISTANCE,
-                    select_features=iteration_partition,
-                    output_name=base_partition_selection_2,
-                    selection_type=custom_arcpy.SelectionType.NEW_SELECTION.value,
-                    search_distance="500 Meters",
-                )
-
-                arcpy.management.SelectLayerByLocation(
-                    in_layer=base_partition_selection_2,
-                    overlap_type="HAVE_THEIR_CENTER_IN",
-                    select_features=iteration_partition,
-                    selection_type="REMOVE_FROM_SELECTION",
-                )
-
-                arcpy.CalculateField_management(
-                    in_table=base_partition_selection_2,
-                    field=partition_field,
-                    expression="0",
-                )
-
-                arcpy.management.Append(
-                    inputs=base_partition_selection_2,
-                    target=iteration_append_feature,
-                    schema_type="NO_TEST",
-                )
-
-                print(
-                    f"iteration partition {base_partition_selection_2} appended to {iteration_append_feature}"
-                )
-
-                for func in self.custom_functions:
-                    # Determine inputs for the current function
-                    inputs = [
-                        self.file_mapping[fc]["current_output"] or fc
-                        for fc in self.input_feature_classes
-                    ]
-
-                    # Call the function and get outputs
-                    outputs = func(inputs)
-
-                    # Update file mapping with the outputs
-                    for fc, output in zip(self.input_feature_classes, outputs):
-                        self.file_mapping[fc]["current_output"] = output
-
-                if not arcpy.Exists(self.final_append_feature):
-                    # Create the final output feature class using the schema of the first erased feature
-                    arcpy.management.CreateFeatureclass(
-                        out_path=os.path.dirname(self.final_append_feature),
-                        out_name=os.path.basename(self.final_append_feature),
-                        template=self.iteration_append_feature,
+                    base_partition_selection_2 = (
+                        f"{alias}_partition_base_select_2_{self.scale}"
                     )
-                    print(f"Created {self.final_append_feature}")
-                selected_features_from_partition = f"{self.root_file_partition_iterator}_{self.alias}_iteration_select_feature_from_partition_{self.scale}"
-                custom_arcpy.select_attribute_and_make_feature_layer(
-                    input_layer=self.iteration_append_featur,
-                    expression=f"{partition_field} = 1",
-                    output_name=self.selected_features_from_partition,
-                )
+                    custom_arcpy.select_location_and_make_feature_layer(
+                        input_layer=input_data_copy,
+                        overlap_type=custom_arcpy.OverlapType.WITHIN_A_DISTANCE,
+                        select_features=iteration_partition,
+                        output_name=base_partition_selection_2,
+                        selection_type=custom_arcpy.SelectionType.NEW_SELECTION.value,
+                        search_distance="500 Meters",
+                    )
 
-                arcpy.management.Append(
-                    inputs=self.selected_features_from_partition,
-                    target=self.final_append_feature,
-                    schema_type="NO_TEST",
+                    arcpy.management.SelectLayerByLocation(
+                        in_layer=base_partition_selection_2,
+                        overlap_type="HAVE_THEIR_CENTER_IN",
+                        select_features=iteration_partition,
+                        selection_type="REMOVE_FROM_SELECTION",
+                    )
+
+                    arcpy.CalculateField_management(
+                        in_table=base_partition_selection_2,
+                        field=partition_field,
+                        expression="0",
+                    )
+
+                    arcpy.management.Append(
+                        inputs=base_partition_selection_2,
+                        target=iteration_append_feature,
+                        schema_type="NO_TEST",
+                    )
+
+                    print(
+                        f"iteration partition {base_partition_selection_2} appended to {iteration_append_feature}"
+                    )
+                else:
+                    print(
+                        f"iteration partition {object_id} has no features for {alias} in the partition feature"
+                    )
+
+            for func in self.custom_functions:
+                # Determine inputs for the current function
+                inputs = [
+                    self.file_mapping[fc]["current_output"] or fc
+                    for fc in self.input_feature_classes
+                ]
+
+                # Call the function and get outputs
+                outputs = func(inputs)
+
+                # Update file mapping with the outputs
+                for fc, output in zip(self.input_feature_classes, outputs):
+                    self.file_mapping[fc]["current_output"] = output
+
+            if not arcpy.Exists(self.final_append_feature):
+                # Create the final output feature class using the schema of the first erased feature
+                arcpy.management.CreateFeatureclass(
+                    out_path=os.path.dirname(self.final_append_feature),
+                    out_name=os.path.basename(self.final_append_feature),
+                    template=self.iteration_append_feature,
                 )
+                print(f"Created {self.final_append_feature}")
+            selected_features_from_partition = f"{self.root_file_partition_iterator}_{self.alias}_iteration_select_feature_from_partition_{self.scale}"
+            custom_arcpy.select_attribute_and_make_feature_layer(
+                input_layer=self.iteration_append_featur,
+                expression=f"{partition_field} = 1",
+                output_name=self.selected_features_from_partition,
+            )
+
+            arcpy.management.Append(
+                inputs=self.selected_features_from_partition,
+                target=self.final_append_feature,
+                schema_type="NO_TEST",
+            )
 
     def run(self):
         self.setup_arcpy_environment()
@@ -284,7 +288,9 @@ class PartitionIterator:
         # Partition iteration for each object ID
         for alias in self.alias:
             current_output = self.file_mapping[alias]["current_output"]
-            final_append_feature_path = self.final_append_features.get(alias)
+            final_append_feature_path = self.final_append_features.get(
+                alias
+            )  # Correctly retrieve the path
             if final_append_feature_path:
                 self.partition_iteration(
                     current_output,
@@ -294,7 +300,7 @@ class PartitionIterator:
                     self.scale,
                     "partition_select",
                     "id_field",
-                    final_append_feature_path,
+                    final_append_feature_path,  # Correctly pass the path
                 )
 
 
