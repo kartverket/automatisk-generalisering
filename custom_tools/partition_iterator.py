@@ -118,9 +118,18 @@ class PartitionIterator:
             while orig_id_field in existing_field_names:
                 orig_id_field = f"{orig_id_field}_{random.randint(0, 9)}"
             arcpy.AddField_management(
-                in_table=input_data_copy, field_name=orig_id_field, field_type="LONG"
+                in_table=input_data_copy,
+                field_name=orig_id_field,
+                field_type="LONG",
             )
             print(f"Added field {orig_id_field}")
+
+            arcpy.CalculateField_management(
+                in_table=input_data_copy,
+                field=orig_id_field,
+                expression="!OBJECTID!",
+            )
+            print(f"Calculated field {orig_id_field}")
 
             # Update file mapping for the input feature class
             self.file_mapping[alias] = {"current_output": input_data_copy}
