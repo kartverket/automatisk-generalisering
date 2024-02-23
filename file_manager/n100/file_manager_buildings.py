@@ -120,15 +120,13 @@ resolve_building_conflict_building_polygon = (
 creating_road_buffer = "creating_road_buffer"
 invisible_building_polygons_to_point = "invisible_building_polygons_to_point"
 intersecting_building_polygons_to_point = "intersecting_building_polygons_to_point"
-merging_points_invisible_and_intersecting_building_polygons = (
-    " merging_points_invisible_and_intersecting_building_polygons"
-)
+merging_invisible_intersecting_points = "merging_invisible_intersecting_points"
 
 
 # iteration.py
 iteration = "iteration"
 
-# propagate_displacement.py
+# building_points_propagate_displacement.py
 propagate_displacement = "propagate_displacement"
 
 # building_point_buffer_displacement.py
@@ -137,7 +135,7 @@ building_point_buffer_displacement = "building_point_buffer_displacement"
 # create_points_from_polygon.py
 points_to_polygon = "points_to_polygon"
 
-# hospital_church_clusters.py
+# reducing_hospital_church_clusters.py
 hospital_church_selections = "hospital_church_selections"
 find_clusters = "find_clusters"
 reducing_clusters = "reducing_clusters"
@@ -617,9 +615,11 @@ class Building_N100(Enum):
         )
     )
 
-    merging_points_invisible_and_intersecting_building_polygons__final_building_points__n100 = generate_file_name_gdb(
-        function_name=merging_points_invisible_and_intersecting_building_polygons,
-        description="final_building_points",
+    # Function: merging_invisible_intersecting_points
+
+    merging_invisible_intersecting_points__final__n100 = generate_file_name_gdb(
+        function_name=merging_invisible_intersecting_points,
+        description="final",
         scale=scale,
     )
 

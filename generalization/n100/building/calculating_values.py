@@ -120,12 +120,17 @@ def table_management():
         output=Building_N100.table_management__bygningspunkt_pre_resolve_building_conflicts__n100.value,
     )
 
-    # Adding a symbology value field based on NBR values
-    arcpy.AddField_management(
-        in_table=Building_N100.table_management__bygningspunkt_pre_resolve_building_conflicts__n100.value,
-        field_name="symbol_val",
-        field_type="LONG",
-    )
+    try:
+        # Attempt to add the field
+        arcpy.AddField_management(
+            in_table=Building_N100.table_management__bygningspunkt_pre_resolve_building_conflicts__n100.value,
+            field_name="symbol_val",
+            field_type="LONG",
+        )
+        print("Field 'symbol_val' added successfully.")
+    except arcpy.ExecuteError:
+        print("Field 'symbol_val' already exists.")
+
     print(
         f"{Building_N100.table_management__bygningspunkt_pre_resolve_building_conflicts__n100.value} merged"
     )
