@@ -49,9 +49,7 @@ class PartitionIterator:
         self.file_mapping = None
         self.alias = list(self.inputs.keys())
         self.original_input_path = list(self.inputs.values())
-        self.final_append_feature = (
-            f"{root_file_partition_iterator}_{self.alias}_final_append_feature_{scale}"
-        )
+        self.final_append_features = {}
 
     def setup_arcpy_environment(self):
         # Set up the ArcPy environment
@@ -84,12 +82,17 @@ class PartitionIterator:
 
             print(f"Maximum OBJECTID found: {max_object_id}")
 
-            # Handle the error or raise it
+            for alias in self.alias:
+                # Dynamically generate the path for each alias
+                final_append_feature_path = f"{self.root_file_partition_iterator}_{alias}_final_append_feature_{self.scale}"
+                # Store or use this path as needed, for example:
+                self.final_append_features[alias] = final_append_feature_path
 
-            for alias, input_feature in zip(self.alias, self.original_input_path):
-                if arcpy.Exists(self.final_append_feature):
-                    arcpy.management.Delete(self.final_append_feature)
-            return max_object_id, self.final_append_feature
+            for alias, path in self.final_append_features.items():
+                if arcpy.Exists(path):
+                    arcpy.management.Delete(path)
+
+            return max_object_id
         except Exception as e:
             print(f"Error in finding max OBJECTID: {e}")
 
@@ -147,121 +150,122 @@ class PartitionIterator:
             )
 
             for alias, input_feature in zip(self.alias, self.original_input_path):
-                iteration_append_feature = f"{self.root_file_partition_iterator}_{self.alias}_iteration_append_feature_{self.scale}"
+                iteration_append_feature = f"{self.root_file_partition_iterator}_{alias}_iteration_append_feature_{self.scale}"
                 if arcpy.Exists(iteration_append_feature):
                     arcpy.management.Delete(iteration_append_feature)
 
                 arcpy.management.CreateFeatureclass(
                     out_path=os.path.dirname(iteration_append_feature),
                     out_name=os.path.basename(iteration_append_feature),
-                    template=self.input_data_copy,
+                    template=input_data_copy,
                 )
                 print(f"Created {iteration_append_feature}")
 
-                feature_present_in_partition = False
-
-                base_partition_selection = f"{self.root_file_partition_iterator}_{self.alias}_partition_base_select_{self.scale}"
+                base_partition_selection = f"{alias}_partition_base_select_{self.scale}"
+                print(f"base partition selection: {base_partition_selection}")
 
                 custom_arcpy.select_location_and_make_feature_layer(
-                    input_layer=self.input_data_copy,
+                    input_layer=input_data_copy,
                     overlap_type=custom_arcpy.OverlapType.HAVE_THEIR_CENTER_IN.value,
                     select_features=iteration_partition,
-                    output_name=self.base_partition_selection,
+                    output_name=base_partition_selection,
                 )
 
                 count_points = int(
-                    arcpy.management.GetCount(self.base_partition_selection).getOutput(
-                        0
-                    )
+                    arcpy.management.GetCount(base_partition_selection).getOutput(0)
                 )
-                if feature_present_in_partition > 0:
-                    points_exist = True
+                if count_points > 0:
                     print(
-                        f"iteration partition {object_id} has {feature_present_in_partition} building points"
+                        f"iteration partition {object_id} has {count_points} features for alias {alias}"
                     )
 
                     arcpy.CalculateField_management(
-                        in_table=self.base_partition_selection,
+                        in_table=base_partition_selection,
                         field=partition_field,
                         expression="1",
                     )
 
                     arcpy.management.Append(
-                        inputs=self.base_partition_selection,
-                        target=self.iteration_append_feature,
+                        inputs=base_partition_selection,
+                        target=iteration_append_feature,
                         schema_type="NO_TEST",
                     )
 
-                    base_partition_selection_2 = f"{self.root_file_partition_iterator}_{self.alias}_partition_base_select_2_{self.scale}"
+                base_partition_selection_2 = (
+                    f"{alias}_partition_base_select_2_{self.scale}"
+                )
+                custom_arcpy.select_location_and_make_feature_layer(
+                    input_layer=input_data_copy,
+                    overlap_type=custom_arcpy.OverlapType.WITHIN_A_DISTANCE,
+                    select_features=iteration_partition,
+                    output_name=base_partition_selection_2,
+                    selection_type=custom_arcpy.SelectionType.NEW_SELECTION.value,
+                    search_distance="500 Meters",
+                )
 
-                    custom_arcpy.select_location_and_make_feature_layer(
-                        input_layer=self.input_data_copy,
-                        overlap_type=custom_arcpy.OverlapType.WITHIN_A_DISTANCE,
-                        select_features=iteration_partition,
-                        output_name=base_partition_selection_2,
-                        selection_type=custom_arcpy.SelectionType.NEW_SELECTION.value,
-                        search_distance="500 Meters",
+                arcpy.management.SelectLayerByLocation(
+                    in_layer=base_partition_selection_2,
+                    overlap_type="HAVE_THEIR_CENTER_IN",
+                    select_features=iteration_partition,
+                    selection_type="REMOVE_FROM_SELECTION",
+                )
+
+                arcpy.CalculateField_management(
+                    in_table=base_partition_selection_2,
+                    field=partition_field,
+                    expression="0",
+                )
+
+                arcpy.management.Append(
+                    inputs=base_partition_selection_2,
+                    target=iteration_append_feature,
+                    schema_type="NO_TEST",
+                )
+
+                print(
+                    f"iteration partition {base_partition_selection_2} appended to {iteration_append_feature}"
+                )
+
+                for func in self.custom_functions:
+                    # Determine inputs for the current function
+                    inputs = [
+                        self.file_mapping[fc]["current_output"] or fc
+                        for fc in self.input_feature_classes
+                    ]
+
+                    # Call the function and get outputs
+                    outputs = func(inputs)
+
+                    # Update file mapping with the outputs
+                    for fc, output in zip(self.input_feature_classes, outputs):
+                        self.file_mapping[fc]["current_output"] = output
+
+                if not arcpy.Exists(self.final_append_feature):
+                    # Create the final output feature class using the schema of the first erased feature
+                    arcpy.management.CreateFeatureclass(
+                        out_path=os.path.dirname(self.final_append_feature),
+                        out_name=os.path.basename(self.final_append_feature),
+                        template=self.iteration_append_feature,
                     )
+                    print(f"Created {self.final_append_feature}")
+                selected_features_from_partition = f"{self.root_file_partition_iterator}_{self.alias}_iteration_select_feature_from_partition_{self.scale}"
+                custom_arcpy.select_attribute_and_make_feature_layer(
+                    input_layer=self.iteration_append_featur,
+                    expression=f"{partition_field} = 1",
+                    output_name=self.selected_features_from_partition,
+                )
 
-                    arcpy.management.SelectLayerByLocation(
-                        in_layer=base_partition_selection_2,
-                        overlap_type="HAVE_THEIR_CENTER_IN",
-                        select_features=iteration_partition,
-                        selection_type="REMOVE_FROM_SELECTION",
-                    )
-
-                    arcpy.CalculateField_management(
-                        in_table=base_partition_selection_2,
-                        field=partition_field,
-                        expression="0",
-                    )
-
-                    arcpy.management.Append(
-                        inputs=self.base_partition_selection_2,
-                        target=self.iteration_append_feature,
-                        schema_type="NO_TEST",
-                    )
-
-                    for func in self.custom_functions:
-                        # Determine inputs for the current function
-                        inputs = [
-                            self.file_mapping[fc]["current_output"] or fc
-                            for fc in self.input_feature_classes
-                        ]
-
-                        # Call the function and get outputs
-                        outputs = func(inputs)
-
-                        # Update file mapping with the outputs
-                        for fc, output in zip(self.input_feature_classes, outputs):
-                            self.file_mapping[fc]["current_output"] = output
-
-                    if not arcpy.Exists(self.final_append_feature):
-                        # Create the final output feature class using the schema of the first erased feature
-                        arcpy.management.CreateFeatureclass(
-                            out_path=os.path.dirname(self.final_append_feature),
-                            out_name=os.path.basename(self.final_append_feature),
-                            template=self.iteration_append_feature,
-                        )
-                        print(f"Created {self.final_append_feature}")
-                    selected_features_from_partition = f"{self.root_file_partition_iterator}_{self.alias}_iteration_select_feature_from_partition_{self.scale}"
-                    custom_arcpy.select_attribute_and_make_feature_layer(
-                        input_layer=self.iteration_append_featur,
-                        expression=f"{partition_field} = 1",
-                        output_name=self.selected_features_from_partition,
-                    )
-
-                    arcpy.management.Append(
-                        inputs=self.selected_features_from_partition,
-                        target=self.final_append_feature,
-                        schema_type="NO_TEST",
-                    )
+                arcpy.management.Append(
+                    inputs=self.selected_features_from_partition,
+                    target=self.final_append_feature,
+                    schema_type="NO_TEST",
+                )
 
     def run(self):
         self.setup_arcpy_environment()
         self.create_cartographic_partitions()
 
-        max_object_id, final_append_feature = self.pre_iteration()
+        max_object_id = self.pre_iteration()
 
         # Initialize the file mapping for each alias
         self.file_mapping = {alias: {"current_output": None} for alias in self.alias}
@@ -271,16 +275,18 @@ class PartitionIterator:
         # Partition iteration for each object ID
         for alias in self.alias:
             current_output = self.file_mapping[alias]["current_output"]
-            self.partition_iteration(
-                current_output,
-                self.partition_feature,
-                max_object_id,
-                self.root_file_partition_iterator,
-                self.scale,
-                "partition_select",  # Assuming this is the partition field
-                "id_field",  # Assuming this is the original ID field
-                self.final_append_feature,
-            )
+            final_append_feature_path = self.final_append_features.get(alias)
+            if final_append_feature_path:
+                self.partition_iteration(
+                    current_output,
+                    self.partition_feature,
+                    max_object_id,
+                    self.root_file_partition_iterator,
+                    self.scale,
+                    "partition_select",
+                    "id_field",
+                    final_append_feature_path,
+                )
 
 
 if __name__ == "__main__":
