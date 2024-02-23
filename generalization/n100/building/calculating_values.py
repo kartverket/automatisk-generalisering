@@ -18,11 +18,11 @@ environment_setup.general_setup()
 def main():
     """
     Summary:
-        Adds required fields for bygningspunkt for symbology and resolves building conflicts: angle, hierarchy, and invisibility.
+        Adds required fields for building point for symbology and resolves building conflicts: angle, hierarchy, and invisibility.
 
     Details:
         1. `table_management`:
-            Adds required fields for bygningspunkt for symbology and resolves building conflicts: angle, hierarchy, and invisibility. Creates a symbology value field based on NBR values and logs undefined NBR values, reclassifying them to 729. Ensures that building types which should not be delivered are correctly reclassified.
+            Adds required fields for building point for symbology and resolves building conflicts: angle, hierarchy, and invisibility. Creates a symbology value field based on NBR values and logs undefined NBR values, reclassifying them to 729. Ensures that building types which should not be delivered are correctly reclassified.
     """
     table_management()
 
@@ -30,22 +30,22 @@ def main():
 def table_management():
     """
     Summary:
-        Adds required fields for bygningspunkt for symbology and resolves building conflicts: angle, hierarchy, and invisibility.
+        Adds required fields for building point for symbology and resolves building conflicts: angle, hierarchy, and invisibility.
         Creates a symbology value field based on NBR values and logs undefined NBR values, reclassifying them to 729.
         Ensures that building types which should not be delivered are correctly reclassified.
 
     Details:
         - Reclassify the sykehus from matrikkel to another NBR value.
         - Reclassify the sykehus from grunnriss to another NBR value.
-        - Merge the n50 bygningspunkt and points added from matrikkel.
-        - Adding a field to indicate that the merged bygningspunkt and matrikkel does not come from grunnriss.
+        - Merge the n50 building point and points added from matrikkel.
+        - Adding a field to indicate that the merged building point and matrikkel does not come from grunnriss.
         - Adding a field to indicate that points resulting from grunnriss are tracked.
         - Reclassify the sykehus from grunnriss to another NBR value.
-        - Merge the merged bygningspunkt from n50 and matrikkel with points created from grunnriss.
+        - Merge the merged building point from n50 and matrikkel with points created from grunnriss.
         - Adding a symbology value field based on NBR values.
         - Code block to transform BYGGTYP_NBR values without symbology to other buildings (729).
         - Code block to update the symbol_val to reflect the new BYGGTYP_NBR.
-        - Adding angle, hierarchy, and invisibility fields to the bygningspunkt pre symbology and setting them to 0.
+        - Adding angle, hierarchy, and invisibility fields to the building point pre symbology and setting them to 0.
         - Calculate fields.
         - Code block hierarchy logic where churches and hospitals have hierarchy of 1, farms have hierarchy of 2 and the rest of the hierarchy is 3.
     """
@@ -69,7 +69,7 @@ def table_management():
         "#######################NEEDS TO IMPLEMENT LATEST LOGIC FROM DATA PREPERATION! #######################"
     )
 
-    # Merge the n50 bygningspunkt and matrikkel
+    # Merge the n50 building point and matrikkel
     arcpy.management.Merge(
         inputs=[
             input_n50.BygningsPunkt,
@@ -78,7 +78,7 @@ def table_management():
         output=Building_N100.table_management__merged_bygningspunkt_n50_matrikkel__n100.value,
     )
 
-    # Adding a field to indicate that the merged bygningspunkt and matrikkel does not come from grunnriss
+    # Adding a field to indicate that the merged building point and matrikkel does not come from grunnriss
     arcpy.AddField_management(
         in_table=Building_N100.table_management__merged_bygningspunkt_n50_matrikkel__n100.value,
         field_name="grunnriss",
@@ -111,7 +111,7 @@ def table_management():
         code_block=code_block_hospital,
     )
 
-    # Merge the merged bygningspunkt from n50 and matrikkel with points created from grunnriss
+    # Merge the merged building point from n50 and matrikkel with points created from grunnriss
     arcpy.management.Merge(
         inputs=[
             Building_N100.table_management__merged_bygningspunkt_n50_matrikkel__n100.value,
@@ -236,7 +236,7 @@ def table_management():
         code_block=code_block_update_symbol_val,
     )
 
-    # Adding agnle, hierarchy and invisibility fields to the bygningspunkt pre symbology and setting them to 0
+    # Adding agnle, hierarchy and invisibility fields to the building point pre symbology and setting them to 0
     # Define field information
     fields_to_add = [["angle", "LONG"], ["hierarchy", "LONG"], ["invisibility", "LONG"]]
     fields_to_calculate = [["angle", "0"], ["hierarchy", "0"], ["invisibility", "0"]]
