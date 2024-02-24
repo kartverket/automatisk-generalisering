@@ -19,6 +19,7 @@ class PartitionIterator:
     def __init__(
         self,
         inputs,
+        outputs,
         root_file_partition_iterator,
         scale,
         output_feature_class,
@@ -37,6 +38,7 @@ class PartitionIterator:
         :param partition_method: Method used for creating cartographic partitions.
         """
         self.inputs = inputs
+        self.outputs = outputs
         self.root_file_partition_iterator = root_file_partition_iterator
         self.scale = scale
         self.output_feature_class = output_feature_class
@@ -159,7 +161,7 @@ class PartitionIterator:
             )
 
             for alias, input_feature in zip(self.alias, self.original_input_path):
-                iteration_append_feature = f"{self.root_file_partition_iterator}_{alias}_iteration_append_feature_{self.scale}"
+                iteration_append_feature = f"{root_file_partition_iterator}_{alias}_iteration_append_feature_{scale}"
                 if arcpy.Exists(iteration_append_feature):
                     arcpy.management.Delete(iteration_append_feature)
 
@@ -170,7 +172,9 @@ class PartitionIterator:
                 )
                 print(f"Created {iteration_append_feature}")
 
-                base_partition_selection = f"{alias}_partition_base_select_{self.scale}"
+                base_partition_selection = (
+                    f"in_memory/{alias}_partition_base_select_{self.scale}"
+                )
                 print(f"base partition selection: {base_partition_selection}")
 
                 custom_arcpy.select_location_and_make_feature_layer(
@@ -201,7 +205,7 @@ class PartitionIterator:
                     )
 
                     base_partition_selection_2 = (
-                        f"{alias}_partition_base_select_2_{self.scale}"
+                        f"in_memory/{alias}_partition_base_select_2_{scale}"
                     )
                     custom_arcpy.select_location_and_make_feature_layer(
                         input_layer=input_data_copy,
@@ -240,39 +244,59 @@ class PartitionIterator:
                     )
 
             for func in self.custom_functions:
-                # Determine inputs for the current function
-                inputs = [
-                    self.file_mapping[fc]["current_output"] or fc
-                    for fc in self.input_feature_classes
-                ]
+                try:
+                    # Determine inputs for the current function
+                    inputs = [
+                        self.file_mapping[fc]["current_output"] or fc
+                        for fc in self.input_feature_classes
+                    ]
 
-                # Call the function and get outputs
-                outputs = func(inputs)
+                    # Call the function and get outputs
+                    outputs = func(inputs)
 
-                # Update file mapping with the outputs
-                for fc, output in zip(self.input_feature_classes, outputs):
-                    self.file_mapping[fc]["current_output"] = output
+                    # Update file mapping with the outputs
+                    for fc, output in zip(self.input_feature_classes, outputs):
+                        self.file_mapping[fc]["current_output"] = output
+                except:
+                    print(f"Error in custom function: {func}")
 
-            if not arcpy.Exists(self.final_append_feature):
-                # Create the final output feature class using the schema of the first erased feature
-                arcpy.management.CreateFeatureclass(
-                    out_path=os.path.dirname(self.final_append_feature),
-                    out_name=os.path.basename(self.final_append_feature),
-                    template=self.iteration_append_feature,
+            # Process each alias after custom functions
+            for alias in self.alias:
+                # Retrieve the output path for the current alias
+                output_path = self.outputs.get(alias)
+
+                if object_id == 1:
+                    # Check if the output path exists and delete if it does but only first iteration
+                    if arcpy.Exists(output_path):
+                        arcpy.Delete_management(output_path)
+                        print(f"Deleted existing output: {output_path}")
+
+                    # Create a new feature class at the output path
+                    arcpy.CreateFeatureclass_management(
+                        out_path=os.path.dirname(output_path),
+                        out_name=os.path.basename(output_path),
+                        template=iteration_append_feature,
+                    )
+                    print(f"Created new feature class: {output_path}")
+
+                partition_target_selection = (
+                    f"in_memory/{alias}_partition_target_selection_{scale}"
                 )
-                print(f"Created {self.final_append_feature}")
-            selected_features_from_partition = f"{self.root_file_partition_iterator}_{self.alias}_iteration_select_feature_from_partition_{self.scale}"
-            custom_arcpy.select_attribute_and_make_feature_layer(
-                input_layer=self.iteration_append_featur,
-                expression=f"{partition_field} = 1",
-                output_name=self.selected_features_from_partition,
-            )
+                custom_arcpy.select_location_and_make_feature_layer(
+                    input_layer=iteration_append_feature,
+                    expression=f"{partition_field} = 1",
+                    output_name=partition_target_selection,
+                )
 
-            arcpy.management.Append(
-                inputs=self.selected_features_from_partition,
-                target=self.final_append_feature,
-                schema_type="NO_TEST",
-            )
+                arcpy.management.Append(
+                    inputs=partition_target_selection,
+                    target=output_path,
+                    schema_type="NO_TEST",
+                )
+            arcpy.Delete_management(base_partition_selection)
+            arcpy.Delete_management(base_partition_selection_2)
+            arcpy.Delete_management(partition_target_selection)
+            arcpy.Delete_management(iteration_partition)
 
     def run(self):
         self.setup_arcpy_environment()
@@ -306,14 +330,23 @@ class PartitionIterator:
 
 if __name__ == "__main__":
     # Define your input feature classes and their aliases
+    building_points = "building_points"
+    building_polygons = "building_polygons"
+
     inputs = {
-        "building_points": f"{Building_N100.table_management__bygningspunkt_pre_resolve_building_conflicts__n100.value}",
-        "building_polygons": f"{input_n50.Grunnriss}",
+        building_points: Building_N100.table_management__bygningspunkt_pre_resolve_building_conflicts__n100.value,
+        building_polygons: input_n50.Grunnriss,
+    }
+
+    outputs = {
+        building_points: Building_N100.iteration__partition_iterator_final_output_points__n100.value,
+        building_polygons: Building_N100.iteration__partition_iterator_final_output_polygons__n100.value,
     }
 
     # Instantiate PartitionIterator with necessary parameters
     partition_iterator = PartitionIterator(
         inputs=inputs,
+        outputs=outputs,
         root_file_partition_iterator=Building_N100.iteration__partition_iterator__n100.value,
         scale=env_setup.global_config.scale_n100,
         output_feature_class=Building_N100.iteration__partition_iterator_final_output__n100.value,
