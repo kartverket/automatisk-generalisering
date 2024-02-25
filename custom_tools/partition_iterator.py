@@ -282,7 +282,7 @@ class PartitionIterator:
                 partition_target_selection = (
                     f"in_memory/{alias}_partition_target_selection_{scale}"
                 )
-                custom_arcpy.select_location_and_make_feature_layer(
+                custom_arcpy.select_attribute_and_make_feature_layer(
                     input_layer=iteration_append_feature,
                     expression=f"{partition_field} = 1",
                     output_name=partition_target_selection,
@@ -293,10 +293,14 @@ class PartitionIterator:
                     target=output_path,
                     schema_type="NO_TEST",
                 )
-            arcpy.Delete_management(base_partition_selection)
-            arcpy.Delete_management(base_partition_selection_2)
-            arcpy.Delete_management(partition_target_selection)
-            arcpy.Delete_management(iteration_partition)
+
+            try:
+                arcpy.Delete_management(base_partition_selection)
+                arcpy.Delete_management(base_partition_selection_2)
+                arcpy.Delete_management(partition_target_selection)
+                arcpy.Delete_management(iteration_partition)
+            except:
+                pass
 
     def run(self):
         self.setup_arcpy_environment()
