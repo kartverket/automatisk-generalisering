@@ -24,7 +24,7 @@ class PartitionIterator:
         scale,
         output_feature_class,
         custom_functions=None,
-        feature_count="15000",
+        feature_count="150000",
         partition_method="FEATURES",
     ):
         """
@@ -284,92 +284,92 @@ class PartitionIterator:
                     )
 
                 # If no aliases had features, skip the rest of the processing for this object_id
-                if aliases_with_features == 0:
-                    for alias in self.alias:
-                        try:
-                            pass
-                            # arcpy.Delete_management(base_partition_selection)
-                            # arcpy.Delete_management(base_partition_selection_2)
-                            # arcpy.Delete_management(partition_target_selection)
-                            # arcpy.Delete_management(iteration_partition)
-                        except:
-                            pass
-
-                    print(
-                        f"No features found in any alias for OBJECTID {object_id}, moving to the next iteration."
-                    )
-                    continue
-
-                for func in self.custom_functions:
+            if aliases_with_features == 0:
+                for alias in self.alias:
                     try:
                         pass
-                        # Determine inputs for the current function
-                        # inputs = [
-                        #     self.file_mapping[fc]["func_output"] or fc
-                        #     for fc in self.input_feature_classes
-                        # ]
-
-                        # Call the function and get outputs
-                        outputs = func(inputs)
-
-                        # Update file mapping with the outputs
-                        for fc, output in zip(self.input_feature_classes, outputs):
-                            self.file_mapping[fc]["current_output"] = output
+                        # arcpy.Delete_management(base_partition_selection)
+                        # arcpy.Delete_management(base_partition_selection_2)
+                        # arcpy.Delete_management(partition_target_selection)
+                        # arcpy.Delete_management(iteration_partition)
                     except:
-                        print(f"Error in custom function: {func}")
+                        pass
+
+                print(
+                    f"No features found in any alias for OBJECTID {object_id}, moving to the next iteration."
+                )
+                continue
+
+            for func in self.custom_functions:
+                try:
+                    pass
+                    # Determine inputs for the current function
+                    # inputs = [
+                    #     self.file_mapping[fc]["func_output"] or fc
+                    #     for fc in self.input_feature_classes
+                    # ]
+
+                    # Call the function and get outputs
+                    outputs = func(inputs)
+
+                    # Update file mapping with the outputs
+                    for fc, output in zip(self.input_feature_classes, outputs):
+                        self.file_mapping[fc]["current_output"] = output
+                except:
+                    print(f"Error in custom function: {func}")
 
                 # Process each alias after custom functions
-                for alias in self.alias:
-                    if aliases_feature_counts[alias] > 0:
-                        # Retrieve the output path for the current alias
-                        output_path = self.outputs.get(alias)
-                        iteration_append_feature = f"{root_file_partition_iterator}_{alias}_iteration_append_feature_{scale}"
-                        # iteration_append_feature = self.file_mapping[alias][
-                        #     "iteration_selection_output"
-                        # ]
-                        # iteration_append_feature = f"{root_file_partition_iterator}_{alias}_iteration_append_feature_{scale}"
+            for alias in self.alias:
+                if aliases_feature_counts[alias] > 0:
+                    # Retrieve the output path for the current alias
+                    output_path = self.outputs.get(alias)
+                    iteration_append_feature = f"{root_file_partition_iterator}_{alias}_iteration_append_feature_{scale}"
+                    # iteration_append_feature = self.file_mapping[alias][
+                    #     "iteration_selection_output"
+                    # ]
+                    # iteration_append_feature = f"{root_file_partition_iterator}_{alias}_iteration_append_feature_{scale}"
 
-                        if not arcpy.Exists(output_path):
-                            print(f"template feature: \n{iteration_append_feature}")
-                            # Create a new feature class at the output path
-                            arcpy.CreateFeatureclass_management(
-                                out_path=os.path.dirname(output_path),
-                                out_name=os.path.basename(output_path),
-                                template=iteration_append_feature,
-                            )
-                            print(f"Created new feature class: {output_path}")
-
-                        partition_target_selection = f"{root_file_partition_iterator}_{alias}_partition_target_selection_{scale}"
-
-                        # partition_target_selection = (
-                        #     f"in_memory/{alias}_partition_target_selection_{scale}"
-                        # )
-                        custom_arcpy.select_attribute_and_make_permanent_feature(
-                            input_layer=iteration_append_feature,
-                            expression=f"{partition_field} = 1",
-                            output_name=partition_target_selection,
+                    if not arcpy.Exists(output_path):
+                        print(f"template feature: \n{iteration_append_feature}")
+                        # Create a new feature class at the output path
+                        arcpy.CreateFeatureclass_management(
+                            out_path=os.path.dirname(output_path),
+                            out_name=os.path.basename(output_path),
+                            template=iteration_append_feature,
                         )
+                        print(f"Created new feature class: {output_path}")
 
-                        # if arcpy.Exists(partition_target_selection):
-                        #     desc = arcpy.Describe(partition_target_selection)
-                        #     print(
-                        #         f"Exists: {partition_target_selection}, Type: {desc.datasetType}"
-                        #     )
-                        # else:
-                        #     print(f"Does not exist: {partition_target_selection}")
-                        print(
-                            f"for {alias} in {iteration_append_feature} \nThe input is: {partition_target_selection}\nAppending to {output_path}"
-                        )
+                    partition_target_selection = f"{root_file_partition_iterator}_{alias}_partition_target_selection_{scale}"
 
-                        arcpy.management.Append(
-                            inputs=partition_target_selection,
-                            target=output_path,
-                            schema_type="NO_TEST",
-                        )
-                    else:
-                        print(
-                            f"No features found in {alias} for OBJECTID {object_id} to append to {output_path}"
-                        )
+                    # partition_target_selection = (
+                    #     f"in_memory/{alias}_partition_target_selection_{scale}"
+                    # )
+                    custom_arcpy.select_attribute_and_make_permanent_feature(
+                        input_layer=iteration_append_feature,
+                        expression=f"{partition_field} = 1",
+                        output_name=partition_target_selection,
+                    )
+
+                    # if arcpy.Exists(partition_target_selection):
+                    #     desc = arcpy.Describe(partition_target_selection)
+                    #     print(
+                    #         f"Exists: {partition_target_selection}, Type: {desc.datasetType}"
+                    #     )
+                    # else:
+                    #     print(f"Does not exist: {partition_target_selection}")
+                    print(
+                        f"for {alias} in {iteration_append_feature} \nThe input is: {partition_target_selection}\nAppending to {output_path}"
+                    )
+
+                    arcpy.management.Append(
+                        inputs=partition_target_selection,
+                        target=output_path,
+                        schema_type="NO_TEST",
+                    )
+                else:
+                    print(
+                        f"No features found in {alias} for OBJECTID {object_id} to append to {output_path}"
+                    )
 
         for alias in self.alias:
             # base_partition_selection = f"{root_file_partition_iterator}_{alias}_partition_base_select_1_{scale}_{object_id}"
@@ -417,23 +417,24 @@ class PartitionIterator:
 
         self.prepare_input_data()
 
-        # Partition iteration for each object ID
-        for alias in self.alias:
-            current_output = self.file_mapping[alias]["current_output"]
-            final_append_feature_path = self.final_append_features.get(
-                alias
-            )  # Correctly retrieve the path
-            if final_append_feature_path:
-                self.partition_iteration(
-                    current_output,
-                    self.partition_feature,
-                    max_object_id,
-                    self.root_file_partition_iterator,
-                    self.scale,
-                    "partition_select",
-                    "id_field",
-                    final_append_feature_path,  # Correctly pass the path
-                )
+        # Call partition_iteration without looping over each alias here.
+        # Ensure partition_iteration is designed to handle all aliases internally.
+        self.partition_iteration(
+            # Assuming partition_iteration is adjusted to accept a list of current_outputs and final_append_feature_paths
+            # You may need to adjust how you pass parameters based on the actual requirements of partition_iteration.
+            [
+                self.file_mapping[alias]["current_output"] for alias in self.alias
+            ],  # List of current outputs for all aliases
+            self.partition_feature,
+            max_object_id,
+            self.root_file_partition_iterator,
+            self.scale,
+            "partition_select",
+            "id_field",
+            [
+                self.final_append_features.get(alias) for alias in self.alias
+            ],  # List of final append feature paths for all aliases
+        )
 
 
 if __name__ == "__main__":
