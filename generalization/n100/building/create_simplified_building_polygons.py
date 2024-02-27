@@ -1,20 +1,20 @@
 # Importing modules
 import arcpy
-from timer import Timer
 
 # Importing custom modules
-import config
-from custom_tools import custom_arcpy
 from env_setup import environment_setup
 from input_data import input_n50
-from input_data import input_n100
 from file_manager.n100.file_manager_buildings import Building_N100
 
 # Importing environment
 environment_setup.general_setup()
 
+# Importing timing decorator
+from custom_tools.timing_decorator import timing_decorator
+
 
 # Main function
+@timing_decorator("create_simplified_building_polgyons.py")
 def main():
 
     """
@@ -36,6 +36,7 @@ def main():
     """
 
 
+@timing_decorator()
 def aggregate_polygons():
     """
     Summary:
@@ -68,6 +69,7 @@ def aggregate_polygons():
 
 
 # Simplifying building polygons
+@timing_decorator()
 def simplify_buildings_1():
     """
     Summary:
@@ -107,6 +109,7 @@ def simplify_buildings_1():
 
 
 # Simplifying polygons
+@timing_decorator()
 def simplify_polygons():
 
     """
@@ -149,6 +152,7 @@ def simplify_polygons():
 
 
 # Second round of simplify buildings
+@timing_decorator()
 def simplify_buildings_2():
     """
     Summary:
@@ -186,6 +190,7 @@ def simplify_buildings_2():
 
 
 # Spatial join and adding fields to polygons
+@timing_decorator()
 def join_and_add_fields():
     """
     Summary:

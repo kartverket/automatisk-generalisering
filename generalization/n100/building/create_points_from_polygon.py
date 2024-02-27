@@ -3,11 +3,8 @@ import arcpy
 import time
 
 # Importing custom files
-import config
 from custom_tools import custom_arcpy
 from env_setup import environment_setup
-from input_data import input_n50
-from input_data import input_n100
 
 # Importing temporary files
 from file_manager.n100.file_manager_buildings import Building_N100
@@ -15,8 +12,11 @@ from file_manager.n100.file_manager_buildings import Building_N100
 # Importing environment
 environment_setup.general_setup()
 
+# Importing timing decorator
+from custom_tools.timing_decorator import timing_decorator
 
-# Main function
+
+@timing_decorator("creating_points_from_polygon.py")
 def main():
     """
     This function creates points from small grunnriss lost during aggregation, and merges
@@ -48,6 +48,7 @@ def main():
 #######################################################################################################################################################
 
 
+@timing_decorator()
 def grunnriss_to_point():
     """
     Summary:

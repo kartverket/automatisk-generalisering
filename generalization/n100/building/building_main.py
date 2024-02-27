@@ -20,8 +20,12 @@ from generalization.n100.building import building_points_to_polygon
 from generalization.n100.building import resolve_building_conflicts
 from generalization.n100.building import building_clean_up
 
+# Importing timing decorator
+from custom_tools.timing_decorator import timing_decorator
+
 
 # Main function that runs all the building scripts
+@timing_decorator
 def main():
     """
     This is the main function that runs all the building scripts.

@@ -1,7 +1,6 @@
 # Importing modules
 import arcpy
 import os
-import time
 
 # Importing custom modules
 from custom_tools import custom_arcpy
@@ -15,8 +14,12 @@ from env_setup import environment_setup
 # Environment setup
 environment_setup.general_setup()
 
+# Importing timing decorator
+from custom_tools.timing_decorator import timing_decorator
+
 
 # Main function
+@timing_decorator("reducing_hospital_church_clusters.py")
 def main():
 
     """
@@ -41,6 +44,7 @@ def main():
 ###################################### Selecting hospital and churches from all building points ################################################
 
 
+@timing_decorator()
 def hospital_church_selections():
 
     """
@@ -82,6 +86,7 @@ def hospital_church_selections():
 
 
 # Finding and removing hospital and church clusters
+@timing_decorator()
 def find_clusters():
 
     """
@@ -177,6 +182,7 @@ def find_clusters():
     )
 
 
+@timing_decorator()
 def reducing_clusters():
 
     """

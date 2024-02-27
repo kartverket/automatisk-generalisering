@@ -1,11 +1,8 @@
 # Importing modules
-import numpy as np
 import arcpy
 
 # Importing custom modules
 import config
-from input_data import input_n100
-from custom_tools import custom_arcpy
 
 # Importing environment settings
 from env_setup import environment_setup
@@ -13,7 +10,11 @@ from env_setup import environment_setup
 # Importing file manager
 from file_manager.n100.file_manager_buildings import Building_N100
 
+# Importing timing decorator
+from custom_tools.timing_decorator import timing_decorator
 
+
+@timing_decorator("building_points_propogate_displacement.py")
 def main():
     """
     Summary:
@@ -30,6 +31,7 @@ def main():
     propagate_displacement_building_points()
 
 
+@timing_decorator()
 def setup_arcpy_environment():
     """
     Summary:
@@ -44,6 +46,7 @@ def setup_arcpy_environment():
     environment_setup.general_setup()
 
 
+@timing_decorator()
 def propagate_displacement_building_points():
     """
     Summary:

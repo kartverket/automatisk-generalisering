@@ -1,10 +1,7 @@
 # Importing custom files relative to the root path
 from custom_tools import custom_arcpy
-import config
 from env_setup import environment_setup
 from input_data import input_n50
-from input_data import input_n100
-from input_data import input_other
 from file_manager.n100.file_manager_buildings import Building_N100
 
 # Importing general packages
@@ -14,7 +11,11 @@ from collections import Counter
 # Importing environment
 environment_setup.general_setup()
 
+# Importing timing decorator
+from custom_tools.timing_decorator import timing_decorator
 
+
+@timing_decorator("calculating_values.py")
 def main():
     """
     Summary:
@@ -27,6 +28,7 @@ def main():
     table_management()
 
 
+@timing_decorator()
 def table_management():
     """
     Summary:

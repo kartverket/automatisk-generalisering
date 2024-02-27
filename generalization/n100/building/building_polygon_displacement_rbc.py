@@ -1,7 +1,6 @@
 # Importing modules
 import arcpy
 
-
 # Importing custom modules
 import config
 import input_data.input_n50
@@ -17,7 +16,11 @@ environment_setup.general_setup()
 # Importing file manager
 from file_manager.n100.file_manager_buildings import Building_N100
 
+# Importing timing decorator
+from custom_tools.timing_decorator import timing_decorator
 
+
+@timing_decorator("building_polygon_displacement_rbc.py")
 def main():
     """
     Summary:
@@ -70,6 +73,7 @@ def main():
     merging_invisible_intersecting_points()
 
 
+@timing_decorator()
 def propagate_displacement_building_polygons():
     """
     Summary:
@@ -116,6 +120,7 @@ def propagate_displacement_building_polygons():
     )
 
 
+@timing_decorator()
 def features_500_m_from_building_polygons():
     """
     Summary:
@@ -145,6 +150,7 @@ def features_500_m_from_building_polygons():
     )
 
 
+@timing_decorator()
 def apply_symbology_to_layers():
     """
     Summary:
@@ -173,6 +179,7 @@ def apply_symbology_to_layers():
     )
 
 
+@timing_decorator()
 def resolve_building_conflict_building_polygon():
     """
     Summary:
@@ -302,6 +309,7 @@ def resolve_building_conflict_building_polygon():
     print("Finished")
 
 
+@timing_decorator()
 def creating_road_buffer():
     """
     Summary:
@@ -382,6 +390,7 @@ def creating_road_buffer():
     )
 
 
+@timing_decorator()
 def invisible_building_polygons_to_point():
     """
     Summary:
@@ -420,6 +429,7 @@ def invisible_building_polygons_to_point():
     print("Finished.")
 
 
+@timing_decorator()
 def intersecting_building_polygons_to_point():
     """
     Summary:
@@ -458,6 +468,7 @@ def intersecting_building_polygons_to_point():
     )
 
 
+@timing_decorator()
 def merging_invisible_intersecting_points():
     """
     Summary:
