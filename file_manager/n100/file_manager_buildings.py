@@ -665,6 +665,18 @@ class Building_N100(Enum):
         scale=scale,
     )
 
+    iteration__partition_iterator_final_output_points__n100 = generate_file_name_gdb(
+        function_name=iteration,
+        description="partition_iterator_final_output_points",
+        scale=scale,
+    )
+
+    iteration__partition_iterator_final_output_polygons__n100 = generate_file_name_gdb(
+        function_name=iteration,
+        description="partition_iterator_final_output_polygons",
+        scale=scale,
+    )
+
     iteration__iteration_partition__n100 = generate_file_name_gdb(
         function_name=iteration,
         description="iteration_partition",
