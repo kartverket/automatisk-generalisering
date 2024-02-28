@@ -10,11 +10,11 @@ from input_data import input_n50
 from env_setup import setup_directory_structure
 from file_manager.n100.file_manager_buildings import Building_N100
 
-# THIS IS WORK IN PROGRESS NOT READY FOR USE
+# THIS IS WORK IN PROGRESS NOT READY FOR USE YET
 
 
 class PartitionIterator:
-    """THIS IS WORK IN PROGRESS NOT READY FOR USE"""
+    """THIS IS WORK IN PROGRESS NOT READY FOR USE YET"""
 
     def __init__(
         self,
@@ -191,7 +191,6 @@ class PartitionIterator:
                 base_partition_selection = (
                     f"in_memory/{alias}_partition_base_select_{scale}"
                 )
-                # base_partition_selection = f"{root_file_partition_iterator}_{alias}_partition_base_select_1_{scale}_{object_id}"
 
                 custom_arcpy.select_location_and_make_feature_layer(
                     input_layer=input_data_copy,
@@ -268,17 +267,10 @@ class PartitionIterator:
                         schema_type="NO_TEST",
                     )
 
-                    # self.file_mapping[alias] = {
-                    #     "iteration_selection_output": iteration_append_feature
-                    # }
                     print(
                         f"iteration partition {base_partition_selection_2} appended to {iteration_append_feature}"
                     )
                 else:
-                    # print(f"attempting to map {alias} to {dummy_iteration_feature}")
-                    # self.file_mapping[alias] = {
-                    #     "iteration_selection_output": dummy_iteration_feature
-                    # }
                     print(
                         f"iteration partition {object_id} has no features for {alias} in the partition feature"
                     )
@@ -286,7 +278,6 @@ class PartitionIterator:
                 # If no aliases had features, skip the rest of the processing for this object_id
             if aliases_with_features == 0:
                 for alias in self.alias:
-                    # base_partition_selection = f"{root_file_partition_iterator}_{alias}_partition_base_select_1_{scale}_{object_id}"
                     partition_target_selection = f"{root_file_partition_iterator}_{alias}_partition_target_selection_{scale}"
 
                     base_partition_selection = (
@@ -295,15 +286,12 @@ class PartitionIterator:
                     base_partition_selection_2 = (
                         f"in_memory/{alias}_partition_base_select_2_{scale}"
                     )
-                    # partition_target_selection = (
-                    #     f"in_memory/{alias}_partition_target_selection_{scale}"
-                    # )
-                    # iteration_partition = f"{partition_feature}_{object_id}"
+
                     try:
                         arcpy.Delete_management(base_partition_selection)
                         arcpy.Delete_management(base_partition_selection_2)
                         arcpy.Delete_management(partition_target_selection)
-                        # arcpy.Delete_management(iteration_partition)
+
                     except:
                         pass
                 try:
@@ -338,10 +326,6 @@ class PartitionIterator:
                     # Retrieve the output path for the current alias
                     output_path = self.outputs.get(alias)
                     iteration_append_feature = f"{root_file_partition_iterator}_{alias}_iteration_append_feature_{scale}"
-                    # iteration_append_feature = self.file_mapping[alias][
-                    #     "iteration_selection_output"
-                    # ]
-                    # iteration_append_feature = f"{root_file_partition_iterator}_{alias}_iteration_append_feature_{scale}"
 
                     if not arcpy.Exists(output_path):
                         print(f"template feature: \n{iteration_append_feature}")
@@ -353,8 +337,6 @@ class PartitionIterator:
                         )
                         print(f"Created new feature class: {output_path}")
 
-                    # partition_target_selection = f"{root_file_partition_iterator}_{alias}_partition_target_selection_{scale}"
-
                     partition_target_selection = (
                         f"in_memory/{alias}_partition_target_selection_{scale}"
                     )
@@ -364,13 +346,6 @@ class PartitionIterator:
                         output_name=partition_target_selection,
                     )
 
-                    # if arcpy.Exists(partition_target_selection):
-                    #     desc = arcpy.Describe(partition_target_selection)
-                    #     print(
-                    #         f"Exists: {partition_target_selection}, Type: {desc.datasetType}"
-                    #     )
-                    # else:
-                    #     print(f"Does not exist: {partition_target_selection}")
                     print(
                         f"for {alias} in {iteration_append_feature} \nThe input is: {partition_target_selection}\nAppending to {output_path}"
                     )
@@ -386,9 +361,6 @@ class PartitionIterator:
                     )
 
             for alias in self.alias:
-                # base_partition_selection = f"{root_file_partition_iterator}_{alias}_partition_base_select_1_{scale}_{object_id}"
-                # partition_target_selection = f"{root_file_partition_iterator}_{alias}_partition_target_selection_{scale}"
-
                 base_partition_selection = (
                     f"in_memory/{alias}_partition_base_select_{scale}"
                 )
@@ -398,12 +370,12 @@ class PartitionIterator:
                 partition_target_selection = (
                     f"in_memory/{alias}_partition_target_selection_{scale}"
                 )
-                # iteration_partition = f"{partition_feature}_{object_id}"
+
                 try:
                     arcpy.Delete_management(base_partition_selection)
                     arcpy.Delete_management(base_partition_selection_2)
                     arcpy.Delete_management(partition_target_selection)
-                    # arcpy.Delete_management(iteration_partition)
+
                 except:
                     pass
             try:
@@ -431,23 +403,15 @@ class PartitionIterator:
 
         self.prepare_input_data()
 
-        # Call partition_iteration without looping over each alias here.
-        # Ensure partition_iteration is designed to handle all aliases internally.
         self.partition_iteration(
-            # Assuming partition_iteration is adjusted to accept a list of current_outputs and final_append_feature_paths
-            # You may need to adjust how you pass parameters based on the actual requirements of partition_iteration.
-            [
-                self.file_mapping[alias]["current_output"] for alias in self.alias
-            ],  # List of current outputs for all aliases
+            [self.file_mapping[alias]["current_output"] for alias in self.alias],
             self.partition_feature,
             max_object_id,
             self.root_file_partition_iterator,
             self.scale,
             "partition_select",
             "id_field",
-            [
-                self.final_append_features.get(alias) for alias in self.alias
-            ],  # List of final append feature paths for all aliases
+            [self.final_append_features.get(alias) for alias in self.alias],
         )
 
 
@@ -478,15 +442,3 @@ if __name__ == "__main__":
 
     # Run the partition iterator
     partition_iterator.run()
-
-
-"""
-Needs to look closer at defining varaibles inside local loops
-Need to look closer at unpacking self in variables and potentially loops:
-
-
-            for alias, input_feature in zip(self.alias, self.original_input_path):
-                input_data_copy = (
-                    f"{self.root_file_partition_iterator}_{alias}_input_copy"
-                )
-"""
