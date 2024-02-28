@@ -53,7 +53,7 @@ def setup_arcpy_environment():
     Details:
         - It calls the `general_setup` function from the `environment_setup` module to set up the ArcPy environment based on predefined settings.
     """
-    environment_setup.general_setup()
+    environment_setup.main()
 
 
 def processing_preparation():

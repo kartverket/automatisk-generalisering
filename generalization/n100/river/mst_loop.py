@@ -43,7 +43,7 @@ simple_centerlines = River_N100.centerline_pruning_loop__simple_centerlines__n10
 
 
 def setup_arcpy_environment():
-    environment_setup.general_setup()
+    environment_setup.main()
 
 
 def prepare_data():

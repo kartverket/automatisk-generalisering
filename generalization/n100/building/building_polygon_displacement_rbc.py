@@ -11,7 +11,7 @@ from input_data import input_symbology
 # Importing environment settings
 from env_setup import environment_setup
 
-environment_setup.general_setup()
+environment_setup.main()
 
 # Importing file manager
 from file_manager.n100.file_manager_buildings import Building_N100

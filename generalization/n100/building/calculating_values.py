@@ -9,7 +9,7 @@ import arcpy
 from collections import Counter
 
 # Importing environment
-environment_setup.general_setup()
+environment_setup.main()
 
 # Importing timing decorator
 from custom_tools.timing_decorator import timing_decorator

@@ -15,7 +15,7 @@ from custom_tools.timing_decorator import timing_decorator
 
 
 # Importing environment
-environment_setup.general_setup()
+environment_setup.main()
 
 iteration_fc = config.resolve_building_conflicts_iteration_feature
 

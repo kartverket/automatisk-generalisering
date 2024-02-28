@@ -16,7 +16,7 @@ from env_setup import setup_directory_structure
 start_time = time.time()
 
 # Importing environment
-environment_setup.general_setup()
+environment_setup.main()
 
 iteration_fc = config.resolve_building_conflicts_iteration_feature
 

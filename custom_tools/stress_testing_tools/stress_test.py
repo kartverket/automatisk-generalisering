@@ -4,7 +4,7 @@ import config
 import logging
 from custom_tools import custom_arcpy
 
-environment_setup.general_setup()
+environment_setup.main()
 
 
 def stress_test_select_location_and_make_permanent_feature():

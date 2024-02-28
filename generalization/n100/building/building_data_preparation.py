@@ -14,7 +14,7 @@ from file_manager.n100.file_manager_buildings import Building_N100
 from env_setup import environment_setup
 
 # Environment setup
-environment_setup.general_setup()
+environment_setup.main()
 
 # Importing timing decorator
 from custom_tools.timing_decorator import timing_decorator

@@ -4,7 +4,7 @@ from input_data import input_n50
 from input_data import input_n100
 
 # Importing environment
-environment_setup.general_setup()
+environment_setup.main()
 
 input_n50.check_paths()
 input_n100.check_paths()

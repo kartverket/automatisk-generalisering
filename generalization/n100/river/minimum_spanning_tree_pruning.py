@@ -26,7 +26,7 @@ def main():
 
 
 def setup_arcpy_environment():
-    environment_setup.general_setup()
+    environment_setup.main()
 
     arcpy.management.CopyFeatures(
         in_features=River_N100.river_centerline__study_centerline__n100.value,

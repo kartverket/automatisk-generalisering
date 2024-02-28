@@ -58,7 +58,7 @@ class PartitionIterator:
 
     def setup_arcpy_environment(self):
         # Set up the ArcPy environment
-        environment_setup.general_setup()
+        environment_setup.main()
 
     def create_cartographic_partitions(self):
         """

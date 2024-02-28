@@ -84,8 +84,6 @@ class ProjectDirectorySetup:
             print(f"Created 'general_files' folder: {general_files_path}")
 
 
-# Base directory defined in config.py
-base_directory = config.output_folder
 if __name__ == "__main__":
-    setup_instance = ProjectDirectorySetup()
-    setup_instance.setup()
+    directory_setup_instance = ProjectDirectorySetup()
+    directory_setup_instance.setup()
