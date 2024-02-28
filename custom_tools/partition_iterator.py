@@ -93,12 +93,17 @@ class PartitionIterator:
             out_name (str): The name of the new feature class.
             template_feature (str): The path to the template feature class.
         """
-        full_out_path = os.path.join(out_path, out_name)
+        full_out_path = os.path.join(
+            out_path,
+            out_name,
+        )
         if arcpy.Exists(full_out_path):
             arcpy.management.Delete(full_out_path)
             print(f"Deleted existing feature class: {full_out_path}")
         arcpy.management.CreateFeatureclass(
-            out_path=out_path, out_name=out_name, template=template_feature
+            out_path=out_path,
+            out_name=out_name,
+            template=template_feature,
         )
         print(f"Created feature class: {full_out_path}")
 
@@ -179,17 +184,16 @@ class PartitionIterator:
         orig_id_field,
         final_append_feature,
     ):
-        for alias, input_feature in zip(self.alias, self.original_input_path):
+        for alias, input_feature in zip(
+            self.alias,
+            self.original_input_path,
+        ):
             dummy_iteration_feature = f"{root_file_partition_iterator}_{alias}_dummy_iteration_feature_{scale}"
-            if arcpy.Exists(dummy_iteration_feature):
-                arcpy.management.Delete(dummy_iteration_feature)
-
-            arcpy.management.CreateFeatureclass(
+            self.create_feature_class(
                 out_path=os.path.dirname(dummy_iteration_feature),
                 out_name=os.path.basename(dummy_iteration_feature),
-                template=input_data_copy,
+                template_feature=input_data_copy,
             )
-            print(f"Created {dummy_iteration_feature}")
 
         aliases_feature_counts = {alias: 0 for alias in self.alias}
 
@@ -199,10 +203,7 @@ class PartitionIterator:
                 output_path = self.outputs.get(alias)
 
                 if object_id == 1:
-                    # Check if the output path exists and delete if it does but only first iteration
-                    if arcpy.Exists(output_path):
-                        arcpy.Delete_management(output_path)
-                        print(f"Deleted existing output: {output_path}")
+                    self.delete_feature_class(output_path)
 
             print(f"\nProcessing OBJECTID {object_id}")
             iteration_partition = f"{partition_feature}_{object_id}"
@@ -242,15 +243,11 @@ class PartitionIterator:
                     aliases_with_features += 1
 
                     iteration_append_feature = f"{root_file_partition_iterator}_{alias}_iteration_append_feature_{scale}"
-                    if arcpy.Exists(iteration_append_feature):
-                        arcpy.management.Delete(iteration_append_feature)
-
-                    arcpy.management.CreateFeatureclass(
+                    self.create_feature_class(
                         out_path=os.path.dirname(iteration_append_feature),
                         out_name=os.path.basename(iteration_append_feature),
-                        template=input_data_copy,
+                        template_feature=input_data_copy,
                     )
-                    print(f"Created {iteration_append_feature}")
 
                     arcpy.CalculateField_management(
                         in_table=base_partition_selection,
@@ -356,14 +353,11 @@ class PartitionIterator:
                     iteration_append_feature = f"{root_file_partition_iterator}_{alias}_iteration_append_feature_{scale}"
 
                     if not arcpy.Exists(output_path):
-                        print(f"template feature: \n{iteration_append_feature}")
-                        # Create a new feature class at the output path
-                        arcpy.CreateFeatureclass_management(
+                        self.create_feature_class(
                             out_path=os.path.dirname(output_path),
                             out_name=os.path.basename(output_path),
-                            template=iteration_append_feature,
+                            template_feature=iteration_append_feature,
                         )
-                        print(f"Created new feature class: {output_path}")
 
                     partition_target_selection = (
                         f"in_memory/{alias}_partition_target_selection_{scale}"
