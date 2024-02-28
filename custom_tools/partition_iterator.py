@@ -24,7 +24,7 @@ class PartitionIterator:
         scale,
         output_feature_class,
         custom_functions=None,
-        feature_count="150000",
+        feature_count="15000",
         partition_method="FEATURES",
     ):
         """
@@ -286,18 +286,32 @@ class PartitionIterator:
                 # If no aliases had features, skip the rest of the processing for this object_id
             if aliases_with_features == 0:
                 for alias in self.alias:
+                    # base_partition_selection = f"{root_file_partition_iterator}_{alias}_partition_base_select_1_{scale}_{object_id}"
+                    partition_target_selection = f"{root_file_partition_iterator}_{alias}_partition_target_selection_{scale}"
+
+                    base_partition_selection = (
+                        f"in_memory/{alias}_partition_base_select_{scale}"
+                    )
+                    base_partition_selection_2 = (
+                        f"in_memory/{alias}_partition_base_select_2_{scale}"
+                    )
+                    # partition_target_selection = (
+                    #     f"in_memory/{alias}_partition_target_selection_{scale}"
+                    # )
+                    # iteration_partition = f"{partition_feature}_{object_id}"
                     try:
-                        pass
-                        # arcpy.Delete_management(base_partition_selection)
-                        # arcpy.Delete_management(base_partition_selection_2)
-                        # arcpy.Delete_management(partition_target_selection)
+                        arcpy.Delete_management(base_partition_selection)
+                        arcpy.Delete_management(base_partition_selection_2)
+                        arcpy.Delete_management(partition_target_selection)
                         # arcpy.Delete_management(iteration_partition)
                     except:
                         pass
-
-                print(
-                    f"No features found in any alias for OBJECTID {object_id}, moving to the next iteration."
-                )
+                try:
+                    iteration_partition = f"{partition_feature}_{object_id}"
+                    arcpy.Delete_management(iteration_partition)
+                except:
+                    pass
+                print(f"Finished iteration {object_id}")
                 continue
 
             for func in self.custom_functions:
@@ -371,33 +385,33 @@ class PartitionIterator:
                         f"No features found in {alias} for OBJECTID {object_id} to append to {output_path}"
                     )
 
-        for alias in self.alias:
-            # base_partition_selection = f"{root_file_partition_iterator}_{alias}_partition_base_select_1_{scale}_{object_id}"
-            partition_target_selection = f"{root_file_partition_iterator}_{alias}_partition_target_selection_{scale}"
+            for alias in self.alias:
+                # base_partition_selection = f"{root_file_partition_iterator}_{alias}_partition_base_select_1_{scale}_{object_id}"
+                partition_target_selection = f"{root_file_partition_iterator}_{alias}_partition_target_selection_{scale}"
 
-            base_partition_selection = (
-                f"in_memory/{alias}_partition_base_select_{scale}"
-            )
-            base_partition_selection_2 = (
-                f"in_memory/{alias}_partition_base_select_2_{scale}"
-            )
-            # partition_target_selection = (
-            #     f"in_memory/{alias}_partition_target_selection_{scale}"
-            # )
-            # iteration_partition = f"{partition_feature}_{object_id}"
+                base_partition_selection = (
+                    f"in_memory/{alias}_partition_base_select_{scale}"
+                )
+                base_partition_selection_2 = (
+                    f"in_memory/{alias}_partition_base_select_2_{scale}"
+                )
+                # partition_target_selection = (
+                #     f"in_memory/{alias}_partition_target_selection_{scale}"
+                # )
+                # iteration_partition = f"{partition_feature}_{object_id}"
+                try:
+                    arcpy.Delete_management(base_partition_selection)
+                    arcpy.Delete_management(base_partition_selection_2)
+                    arcpy.Delete_management(partition_target_selection)
+                    # arcpy.Delete_management(iteration_partition)
+                except:
+                    pass
             try:
-                arcpy.Delete_management(base_partition_selection)
-                arcpy.Delete_management(base_partition_selection_2)
-                arcpy.Delete_management(partition_target_selection)
-                # arcpy.Delete_management(iteration_partition)
+                iteration_partition = f"{partition_feature}_{object_id}"
+                arcpy.Delete_management(iteration_partition)
             except:
                 pass
-        try:
-            iteration_partition = f"{partition_feature}_{object_id}"
-            arcpy.Delete_management(iteration_partition)
-        except:
-            pass
-        print(f"Finished iteration {object_id}")
+            print(f"Finished iteration {object_id}")
 
     def run(self):
         self.setup_arcpy_environment()
@@ -443,7 +457,7 @@ if __name__ == "__main__":
     building_polygons = "building_polygons"
 
     inputs = {
-        building_points: Building_N100.table_management__bygningspunkt_pre_resolve_building_conflicts__n100.value,
+        building_points: Building_N100.adding_matrikkel_as_points__matrikkel_bygningspunkt__n100.value,
         building_polygons: input_n50.Grunnriss,
     }
 
