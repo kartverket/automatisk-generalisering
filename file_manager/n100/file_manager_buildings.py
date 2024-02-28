@@ -457,6 +457,11 @@ class Building_N100(Enum):
         )
     )
 
+    resolve_building_conflict_building_polygon__polygonprocessor_symbology__n100__lyrx = file_manager.generate_file_name_lyrx(
+        script_source_name=resolve_building_conflict_building_polygon,
+        description="polygonprocessor_symbology",
+    )
+
     # Function: invisible_building_polygons_to_point
 
     invisible_building_polygons_to_point__invisible_polygons__n100 = (
