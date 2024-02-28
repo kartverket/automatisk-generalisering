@@ -67,6 +67,41 @@ class PartitionIterator:
         )
         print(f"Created partitions in {self.partition_feature}")
 
+    def delete_feature_class(
+        self,
+        feature_class_path,
+    ):
+        """Deletes a feature class if it exists.
+
+        Args:
+            feature_class_path (str): The path to the feature class to be deleted.
+        """
+        if arcpy.Exists(feature_class_path):
+            arcpy.management.Delete(feature_class_path)
+            print(f"Deleted feature class: {feature_class_path}")
+
+    def create_feature_class(
+        self,
+        out_path,
+        out_name,
+        template_feature,
+    ):
+        """Creates a new feature class from a template feature class.
+
+        Args:
+            out_path (str): The output path where the feature class will be created.
+            out_name (str): The name of the new feature class.
+            template_feature (str): The path to the template feature class.
+        """
+        full_out_path = os.path.join(out_path, out_name)
+        if arcpy.Exists(full_out_path):
+            arcpy.management.Delete(full_out_path)
+            print(f"Deleted existing feature class: {full_out_path}")
+        arcpy.management.CreateFeatureclass(
+            out_path=out_path, out_name=out_name, template=template_feature
+        )
+        print(f"Created feature class: {full_out_path}")
+
     def pre_iteration(self):
         """
         Determine the maximum OBJECTID for partitioning.
@@ -82,16 +117,6 @@ class PartitionIterator:
 
             print(f"Maximum OBJECTID found: {max_object_id}")
 
-            for alias in self.alias:
-                # Dynamically generate the path for each alias
-                final_append_feature_path = f"{self.root_file_partition_iterator}_{alias}_final_append_feature_{self.scale}"
-                # Store or use this path as needed, for example:
-                self.final_append_features[alias] = final_append_feature_path
-
-            for alias, path in self.final_append_features.items():
-                if arcpy.Exists(path):
-                    arcpy.management.Delete(path)
-
             return max_object_id
         except Exception as e:
             print(f"Error in finding max OBJECTID: {e}")
@@ -100,13 +125,18 @@ class PartitionIterator:
         for alias, input_feature in zip(self.alias, self.original_input_path):
             # Copy the input feature class to a new location
             input_data_copy = f"{self.root_file_partition_iterator}_{alias}_input_copy"
-            arcpy.management.Copy(in_data=input_feature, out_data=input_data_copy)
+            arcpy.management.Copy(
+                in_data=input_feature,
+                out_data=input_data_copy,
+            )
             print(f"Copied {input_data_copy}")
 
             # Add a partition selection field to the copied feature class
             partition_field = "partition_select"
             arcpy.AddField_management(
-                in_table=input_data_copy, field_name=partition_field, field_type="LONG"
+                in_table=input_data_copy,
+                field_name=partition_field,
+                field_type="LONG",
             )
             print(f"Added field {partition_field}")
 
