@@ -49,6 +49,7 @@ class PartitionIterator:
         self.file_mapping = None
         self.alias = list(self.inputs.keys())
         self.original_input_path = list(self.inputs.values())
+        self.iteration_file_paths = []
         self.final_append_features = {}
 
     def setup_arcpy_environment(self):
@@ -212,6 +213,7 @@ class PartitionIterator:
         aliases_feature_counts = {alias: 0 for alias in self.alias}
 
         for object_id in range(1, max_object_id + 1):
+            self.iteration_file_paths.clear()
             for alias in self.alias:
                 # Retrieve the output path for the current alias
                 output_path = self.outputs.get(alias)
@@ -221,6 +223,7 @@ class PartitionIterator:
 
             print(f"\nProcessing OBJECTID {object_id}")
             iteration_partition = f"{partition_feature}_{object_id}"
+            self.iteration_file_paths.append(iteration_partition)
 
             custom_arcpy.select_attribute_and_make_permanent_feature(
                 input_layer=partition_feature,
@@ -234,6 +237,7 @@ class PartitionIterator:
                 base_partition_selection = (
                     f"in_memory/{alias}_partition_base_select_{scale}"
                 )
+                self.iteration_file_paths.append(base_partition_selection)
 
                 custom_arcpy.select_location_and_make_feature_layer(
                     input_layer=input_data_copy,
@@ -257,6 +261,8 @@ class PartitionIterator:
                     aliases_with_features += 1
 
                     iteration_append_feature = f"{root_file_partition_iterator}_{alias}_iteration_append_feature_{scale}"
+                    self.iteration_file_paths.append(iteration_append_feature)
+
                     self.create_feature_class(
                         out_path=os.path.dirname(iteration_append_feature),
                         out_name=os.path.basename(iteration_append_feature),
@@ -278,6 +284,8 @@ class PartitionIterator:
                     base_partition_selection_2 = (
                         f"in_memory/{alias}_partition_base_select_2_{scale}"
                     )
+                    self.iteration_file_paths.append(base_partition_selection_2)
+
                     custom_arcpy.select_location_and_make_feature_layer(
                         input_layer=input_data_copy,
                         overlap_type=custom_arcpy.OverlapType.WITHIN_A_DISTANCE,
@@ -317,12 +325,7 @@ class PartitionIterator:
                 # If no aliases had features, skip the rest of the processing for this object_id
             if aliases_with_features == 0:
                 for alias in self.alias:
-                    self.delete_iteration_files(
-                        base_partition_selection,
-                        base_partition_selection_2,
-                        partition_target_selection,
-                        iteration_partition,
-                    )
+                    self.delete_iteration_files(*self.iteration_file_paths)
                 continue
 
             for func in self.custom_functions:
@@ -360,6 +363,8 @@ class PartitionIterator:
                     partition_target_selection = (
                         f"in_memory/{alias}_partition_target_selection_{scale}"
                     )
+                    self.iteration_file_paths.append(partition_target_selection)
+
                     custom_arcpy.select_attribute_and_make_permanent_feature(
                         input_layer=iteration_append_feature,
                         expression=f"{partition_field} = 1",
@@ -381,12 +386,7 @@ class PartitionIterator:
                     )
 
             for alias in self.alias:
-                self.delete_iteration_files(
-                    base_partition_selection,
-                    base_partition_selection_2,
-                    partition_target_selection,
-                    iteration_partition,
-                )
+                self.delete_iteration_files(*self.iteration_file_paths)
             print(f"Finished iteration {object_id}")
 
     def run(self):
