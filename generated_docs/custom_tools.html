@@ -98,6 +98,9 @@
 <li class="toctree-l3"><a class="reference internal" href="#custom_tools.partition_iterator.PartitionIterator"><code class="docutils literal notranslate"><span class="pre">PartitionIterator</span></code></a><ul>
 <li class="toctree-l4"><a class="reference internal" href="#custom_tools.partition_iterator.PartitionIterator.setup_arcpy_environment"><code class="docutils literal notranslate"><span class="pre">PartitionIterator.setup_arcpy_environment()</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="#custom_tools.partition_iterator.PartitionIterator.create_cartographic_partitions"><code class="docutils literal notranslate"><span class="pre">PartitionIterator.create_cartographic_partitions()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#custom_tools.partition_iterator.PartitionIterator.delete_feature_class"><code class="docutils literal notranslate"><span class="pre">PartitionIterator.delete_feature_class()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#custom_tools.partition_iterator.PartitionIterator.create_feature_class"><code class="docutils literal notranslate"><span class="pre">PartitionIterator.create_feature_class()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#custom_tools.partition_iterator.PartitionIterator.delete_iteration_files"><code class="docutils literal notranslate"><span class="pre">PartitionIterator.delete_iteration_files()</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="#custom_tools.partition_iterator.PartitionIterator.pre_iteration"><code class="docutils literal notranslate"><span class="pre">PartitionIterator.pre_iteration()</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="#custom_tools.partition_iterator.PartitionIterator.prepare_input_data"><code class="docutils literal notranslate"><span class="pre">PartitionIterator.prepare_input_data()</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="#custom_tools.partition_iterator.PartitionIterator.custom_function"><code class="docutils literal notranslate"><span class="pre">PartitionIterator.custom_function()</span></code></a></li>
@@ -528,9 +531,9 @@ and creates a new, permanent feature class as an output.</p>
 <span id="custom-tools-partition-iterator-module"></span><h2>custom_tools.partition_iterator module<a class="headerlink" href="#module-custom_tools.partition_iterator" title="Link to this heading"></a></h2>
 <dl class="py class">
 <dt class="sig sig-object py" id="custom_tools.partition_iterator.PartitionIterator">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">custom_tools.partition_iterator.</span></span><span class="sig-name descname"><span class="pre">PartitionIterator</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">inputs</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">outputs</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">root_file_partition_iterator</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">scale</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">output_feature_class</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">custom_functions</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">feature_count</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'150000'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">partition_method</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'FEATURES'</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/custom_tools/partition_iterator.html#PartitionIterator"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#custom_tools.partition_iterator.PartitionIterator" title="Link to this definition"></a></dt>
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">custom_tools.partition_iterator.</span></span><span class="sig-name descname"><span class="pre">PartitionIterator</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">inputs</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">outputs</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">root_file_partition_iterator</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">scale</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">output_feature_class</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">custom_functions</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">feature_count</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'15000'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">partition_method</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'FEATURES'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">search_distance</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'500</span> <span class="pre">Meters'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">object_id_field</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'OBJECTID'</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/custom_tools/partition_iterator.html#PartitionIterator"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#custom_tools.partition_iterator.PartitionIterator" title="Link to this definition"></a></dt>
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
-<p>THIS IS WORK IN PROGRESS NOT READY FOR USE</p>
+<p>THIS IS WORK IN PROGRESS NOT READY FOR USE YET</p>
 <dl class="py method">
 <dt class="sig sig-object py" id="custom_tools.partition_iterator.PartitionIterator.setup_arcpy_environment">
 <span class="sig-name descname"><span class="pre">setup_arcpy_environment</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/custom_tools/partition_iterator.html#PartitionIterator.setup_arcpy_environment"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#custom_tools.partition_iterator.PartitionIterator.setup_arcpy_environment" title="Link to this definition"></a></dt>
@@ -540,6 +543,43 @@ and creates a new, permanent feature class as an output.</p>
 <dt class="sig sig-object py" id="custom_tools.partition_iterator.PartitionIterator.create_cartographic_partitions">
 <span class="sig-name descname"><span class="pre">create_cartographic_partitions</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/custom_tools/partition_iterator.html#PartitionIterator.create_cartographic_partitions"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#custom_tools.partition_iterator.PartitionIterator.create_cartographic_partitions" title="Link to this definition"></a></dt>
 <dd><p>Creates cartographic partitions based on the input feature classes.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="custom_tools.partition_iterator.PartitionIterator.delete_feature_class">
+<span class="sig-name descname"><span class="pre">delete_feature_class</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">feature_class_path</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/custom_tools/partition_iterator.html#PartitionIterator.delete_feature_class"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#custom_tools.partition_iterator.PartitionIterator.delete_feature_class" title="Link to this definition"></a></dt>
+<dd><p>Deletes a feature class if it exists.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>feature_class_path</strong> (<em>str</em>) – The path to the feature class to be deleted.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="custom_tools.partition_iterator.PartitionIterator.create_feature_class">
+<span class="sig-name descname"><span class="pre">create_feature_class</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">out_path</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">out_name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">template_feature</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/custom_tools/partition_iterator.html#PartitionIterator.create_feature_class"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#custom_tools.partition_iterator.PartitionIterator.create_feature_class" title="Link to this definition"></a></dt>
+<dd><p>Creates a new feature class from a template feature class.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>out_path</strong> (<em>str</em>) – The output path where the feature class will be created.</p></li>
+<li><p><strong>out_name</strong> (<em>str</em>) – The name of the new feature class.</p></li>
+<li><p><strong>template_feature</strong> (<em>str</em>) – The path to the template feature class.</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="custom_tools.partition_iterator.PartitionIterator.delete_iteration_files">
+<span class="sig-name descname"><span class="pre">delete_iteration_files</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">file_paths</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/custom_tools/partition_iterator.html#PartitionIterator.delete_iteration_files"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#custom_tools.partition_iterator.PartitionIterator.delete_iteration_files" title="Link to this definition"></a></dt>
+<dd><p>Deletes multiple feature classes or files.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>*file_paths</strong> – A variable number of file paths to delete.</p>
+</dd>
+</dl>
 </dd></dl>
 
 <dl class="py method">
