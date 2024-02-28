@@ -1,13 +1,11 @@
 import arcpy
 import os
-import logging
 import random
 
 import env_setup.global_config
 from env_setup import environment_setup
 from custom_tools import custom_arcpy
 from input_data import input_n50
-from env_setup import setup_directory_structure
 from file_manager.n100.file_manager_buildings import Building_N100
 
 # THIS IS WORK IN PROGRESS NOT READY FOR USE YET
