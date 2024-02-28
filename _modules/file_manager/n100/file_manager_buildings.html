@@ -80,99 +80,14 @@
 <span></span><span class="c1"># Imports</span>
 <span class="kn">from</span> <span class="nn">enum</span> <span class="kn">import</span> <span class="n">Enum</span>
 <span class="kn">import</span> <span class="nn">config</span>
-<span class="kn">import</span> <span class="nn">env_setup.global_config</span>
-
-<span class="c1"># Local root directory</span>
-<span class="n">local_root_directory</span> <span class="o">=</span> <span class="n">config</span><span class="o">.</span><span class="n">output_folder</span>
-
-<span class="c1"># Project root directory</span>
-<span class="n">project_root_directory</span> <span class="o">=</span> <span class="n">env_setup</span><span class="o">.</span><span class="n">global_config</span><span class="o">.</span><span class="n">main_directory_name</span>
-
-<span class="c1"># Scale name</span>
-<span class="n">scale</span> <span class="o">=</span> <span class="n">env_setup</span><span class="o">.</span><span class="n">global_config</span><span class="o">.</span><span class="n">scale_n100</span>
-
-<span class="c1"># Object name</span>
-<span class="nb">object</span> <span class="o">=</span> <span class="n">env_setup</span><span class="o">.</span><span class="n">global_config</span><span class="o">.</span><span class="n">object_bygning</span>
-
-<span class="c1"># General files directory name</span>
-<span class="n">general_files_directory_name</span> <span class="o">=</span> <span class="n">env_setup</span><span class="o">.</span><span class="n">global_config</span><span class="o">.</span><span class="n">general_files_name</span>
-
-<span class="c1"># Lyrx directory name</span>
-<span class="n">lyrx_directory_name</span> <span class="o">=</span> <span class="n">env_setup</span><span class="o">.</span><span class="n">global_config</span><span class="o">.</span><span class="n">lyrx_directory_name</span>
+<span class="kn">from</span> <span class="nn">env_setup</span> <span class="kn">import</span> <span class="n">global_config</span>
+<span class="kn">from</span> <span class="nn">file_manager.base_file_manager</span> <span class="kn">import</span> <span class="n">BaseFileManager</span>
 
 
-<span class="c1"># Relative paths constructor</span>
-<span class="n">relative_path_gdb</span> <span class="o">=</span> <span class="p">(</span>
-    <span class="sa">rf</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">local_root_directory</span><span class="si">}</span><span class="s2">\</span><span class="si">{</span><span class="n">project_root_directory</span><span class="si">}</span><span class="s2">\</span><span class="si">{</span><span class="n">scale</span><span class="si">}</span><span class="s2">\</span><span class="si">{</span><span class="nb">object</span><span class="si">}</span><span class="s2">.gdb&quot;</span>
-<span class="p">)</span>
-
-<span class="n">relative_path_general_files</span> <span class="o">=</span> <span class="sa">rf</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">local_root_directory</span><span class="si">}</span><span class="s2">\</span><span class="si">{</span><span class="n">project_root_directory</span><span class="si">}</span><span class="s2">\</span><span class="si">{</span><span class="n">scale</span><span class="si">}</span><span class="s2">\</span><span class="si">{</span><span class="n">general_files_directory_name</span><span class="si">}</span><span class="s2">&quot;</span>
-
-<span class="n">relative_path_lyrx</span> <span class="o">=</span> <span class="p">(</span>
-    <span class="sa">rf</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">local_root_directory</span><span class="si">}</span><span class="s2">\</span><span class="si">{</span><span class="n">project_root_directory</span><span class="si">}</span><span class="s2">\</span><span class="si">{</span><span class="n">scale</span><span class="si">}</span><span class="s2">\</span><span class="si">{</span><span class="n">lyrx_directory_name</span><span class="si">}</span><span class="s2">&quot;</span>
-<span class="p">)</span>
-
-
-<span class="c1">##############################################################################################################################################</span>
-
-
-<span class="c1"># Creating file names based on set standard</span>
-<div class="viewcode-block" id="generate_file_name_gdb">
-<a class="viewcode-back" href="../../../generated_docs/file_manager.n100.html#file_manager.n100.file_manager_buildings.generate_file_name_gdb">[docs]</a>
-<span class="k">def</span> <span class="nf">generate_file_name_gdb</span><span class="p">(</span>
-    <span class="n">function_name</span><span class="p">,</span>
-    <span class="n">description</span><span class="p">,</span>
-    <span class="n">scale</span><span class="p">,</span>
-<span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">    Summary:</span>
-<span class="sd">        Generates the full file path for files which can be stored in gdb&#39;s, where the files are generated to the bygning.gdb in the n100 subdirectory.</span>
-
-<span class="sd">    Details:</span>
-<span class="sd">        - The path is generated using the relative path to the bygning.gdb in the n100 subdirectory.</span>
-<span class="sd">        - The file name is generated using the function name, description, and scale.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
-    <span class="k">return</span> <span class="sa">rf</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">relative_path_gdb</span><span class="si">}</span><span class="s2">\</span><span class="si">{</span><span class="n">function_name</span><span class="si">}</span><span class="s2">__</span><span class="si">{</span><span class="n">description</span><span class="si">}</span><span class="s2">__</span><span class="si">{</span><span class="n">scale</span><span class="si">}</span><span class="s2">&quot;</span></div>
-
-
-
-<div class="viewcode-block" id="generate_file_name_general_files">
-<a class="viewcode-back" href="../../../generated_docs/file_manager.n100.html#file_manager.n100.file_manager_buildings.generate_file_name_general_files">[docs]</a>
-<span class="k">def</span> <span class="nf">generate_file_name_general_files</span><span class="p">(</span>
-    <span class="n">function_name</span><span class="p">,</span>
-    <span class="n">description</span><span class="p">,</span>
-    <span class="n">scale</span><span class="p">,</span>
-    <span class="n">file_type</span><span class="p">,</span>
-<span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">    Summary:</span>
-<span class="sd">        Generates the full file path for files which can not be stored in gdb&#39;s, but are stored in the general_files subdirectory for n100.</span>
-
-<span class="sd">    Details:</span>
-<span class="sd">        - The path is generated using the relative path to the genral_files subdirectory.</span>
-<span class="sd">        - The file name is generated using the function name, description, and scale.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
-    <span class="k">return</span> <span class="sa">rf</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">relative_path_general_files</span><span class="si">}</span><span class="s2">\</span><span class="si">{</span><span class="n">function_name</span><span class="si">}</span><span class="s2">__</span><span class="si">{</span><span class="n">description</span><span class="si">}</span><span class="s2">__</span><span class="si">{</span><span class="n">scale</span><span class="si">}</span><span class="s2">.</span><span class="si">{</span><span class="n">file_type</span><span class="si">}</span><span class="s2">&quot;</span></div>
-
-
-
-<div class="viewcode-block" id="generate_file_name_lyrx">
-<a class="viewcode-back" href="../../../generated_docs/file_manager.n100.html#file_manager.n100.file_manager_buildings.generate_file_name_lyrx">[docs]</a>
-<span class="k">def</span> <span class="nf">generate_file_name_lyrx</span><span class="p">(</span>
-    <span class="n">function_name</span><span class="p">,</span>
-    <span class="n">description</span><span class="p">,</span>
-    <span class="n">scale</span><span class="p">,</span>
-<span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">    Summary:</span>
-<span class="sd">        Generates the full file path for lyrx files which can not be stored in gdb&#39;s. The lyrx files are generated to the lyrx_outputs subdirectory for n100.</span>
-
-<span class="sd">    Details:</span>
-<span class="sd">        - The path is generated using the relative path to the lyrx_outputs subdirectory.</span>
-<span class="sd">        - The file name is generated using the function name, description, and scale.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
-    <span class="k">return</span> <span class="sa">rf</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">relative_path_lyrx</span><span class="si">}</span><span class="s2">\</span><span class="si">{</span><span class="n">function_name</span><span class="si">}</span><span class="s2">__</span><span class="si">{</span><span class="n">description</span><span class="si">}</span><span class="s2">__</span><span class="si">{</span><span class="n">scale</span><span class="si">}</span><span class="s2">.lyrx&quot;</span></div>
-
+<span class="c1"># Initialize BaseFileManager</span>
+<span class="n">scale</span> <span class="o">=</span> <span class="n">global_config</span><span class="o">.</span><span class="n">scale_n100</span>
+<span class="n">object_name</span> <span class="o">=</span> <span class="n">global_config</span><span class="o">.</span><span class="n">object_bygning</span>
+<span class="n">file_manager</span> <span class="o">=</span> <span class="n">BaseFileManager</span><span class="p">(</span><span class="n">scale</span><span class="o">=</span><span class="n">scale</span><span class="p">,</span> <span class="n">object_name</span><span class="o">=</span><span class="n">object_name</span><span class="p">)</span>
 
 
 <span class="c1">##############################################################################################################################################</span>
@@ -244,22 +159,39 @@
 <span class="k">class</span> <span class="nc">Building_N100</span><span class="p">(</span><span class="n">Enum</span><span class="p">):</span>
 
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">    Summary:</span>
-<span class="sd">        The class `Building_N100`is the file manager used for the Building generalization. It is used to build and hold the full output paths for files in our project.</span>
-<span class="sd">        The way the paths are generated they work in any directive setup for different systems, and can handle files</span>
-<span class="sd">        which can be stored in gdb&#39;s and files which can not be stored in gdb&#39;s. It uses the direcory structure created by `setup_directory_structure.py`.</span>
+<span class="sd">    An enumeration for river-related geospatial data file paths within the N100 scale and bygning object context.</span>
 
-<span class="sd">    Details:</span>
-<span class="sd">        - generate_file_name_gdb: Genereates the full file path for files which can be stored in gdb&#39;s, where the files are generated to the bygning.gdb in the n100 subdirectory.</span>
-<span class="sd">        - generate_file_name_general_files: Genereates the full file path for files which can not be stored in gdb&#39;s, but are stored in the general_files subdirectory for n100.</span>
-<span class="sd">        - generate_file_name_lyrx: Genereates the full file path for lyrx files which can not be stored in gdb&#39;s. The lyrx files are generated to the lyrx_outputs subdirectory for n100.</span>
+<span class="sd">    Utilizes the BaseFileManager to generate standardized file paths for geodatabase files, general files, and layer files,</span>
+<span class="sd">    tailored to river data preparation and analysis tasks.</span>
+
+<span class="sd">    Example Syntaxes:</span>
+<span class="sd">        - For Geodatabase (.gdb) Files:</span>
+<span class="sd">            the_file_name_of_the_script___the_description_of_the_file___n100_bygning = file_manager.generate_file_name_gdb(</span>
+<span class="sd">                script_source_name=&quot;the_file_name_of_the_script&quot;,</span>
+<span class="sd">                description=&quot;the_description_of_the_file&quot;,</span>
+<span class="sd">            )</span>
+
+<span class="sd">        - For General Files (e.g., .txt, .csv):</span>
+<span class="sd">            the_file_name_of_the_script___the_description_of_the_file___n100_bygning_filetype_extension = file_manager.generate_file_name_general_files(</span>
+<span class="sd">                script_source_name=&quot;the_file_name_of_the_script&quot;,</span>
+<span class="sd">                description=&quot;the_description_of_the_file&quot;,</span>
+<span class="sd">                file_type=&quot;filetype_extension&quot;,</span>
+<span class="sd">            )</span>
+
+<span class="sd">        - For ArcGIS Layer Files (.lyrx):</span>
+<span class="sd">            the_file_name_of_the_script___the_description_of_the_file___n100_bygning_lyrx = file_manager.generate_file_name_lyrx(</span>
+<span class="sd">                script_source_name=&quot;the_file_name_of_the_script&quot;,</span>
+<span class="sd">                description=&quot;the_description_of_the_file&quot;,</span>
+<span class="sd">            )</span>
+
+<span class="sd">    These examples show how to utilize the BaseFileManager&#39;s methods to generate file paths for different types of files,</span>
+<span class="sd">    reflecting the specific needs and naming conventions of river data management within the project.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="n">displacement_feature_asker__displacement_feature_asker__n100</span> <span class="o">=</span> <span class="p">(</span>
-        <span class="n">generate_file_name_gdb</span><span class="p">(</span>
-            <span class="n">function_name</span><span class="o">=</span><span class="n">displacement_feature_asker</span><span class="p">,</span>
+        <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_gdb</span><span class="p">(</span>
+            <span class="n">script_source_name</span><span class="o">=</span><span class="n">displacement_feature_asker</span><span class="p">,</span>
             <span class="n">description</span><span class="o">=</span><span class="s2">&quot;displacement_feature_asker&quot;</span><span class="p">,</span>
-            <span class="n">scale</span><span class="o">=</span><span class="n">scale</span><span class="p">,</span>
         <span class="p">)</span>
     <span class="p">)</span>
 
@@ -267,144 +199,133 @@
     <span class="c1">########### BUILDING DATA PREPARATION ###########</span>
     <span class="c1">#################################################</span>
 
-    <span class="n">preparation_begrensningskurve__selected_waterfeatures_from_begrensningskurve__n100</span> <span class="o">=</span> <span class="n">generate_file_name_gdb</span><span class="p">(</span>
-        <span class="n">function_name</span><span class="o">=</span><span class="n">preparation_begrensningskurve</span><span class="p">,</span>
+    <span class="n">preparation_begrensningskurve__selected_waterfeatures_from_begrensningskurve__n100</span> <span class="o">=</span> <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_gdb</span><span class="p">(</span>
+        <span class="n">script_source_name</span><span class="o">=</span><span class="n">preparation_begrensningskurve</span><span class="p">,</span>
         <span class="n">description</span><span class="o">=</span><span class="s2">&quot;selected_waterfeatures_from_begrensningskurve&quot;</span><span class="p">,</span>
-        <span class="n">scale</span><span class="o">=</span><span class="n">scale</span><span class="p">,</span>
     <span class="p">)</span>
 
     <span class="n">preparation_begrensningskurve__selected_land_features_area__n100</span> <span class="o">=</span> <span class="p">(</span>
-        <span class="n">generate_file_name_gdb</span><span class="p">(</span>
-            <span class="n">function_name</span><span class="o">=</span><span class="n">preparation_begrensningskurve</span><span class="p">,</span>
+        <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_gdb</span><span class="p">(</span>
+            <span class="n">script_source_name</span><span class="o">=</span><span class="n">preparation_begrensningskurve</span><span class="p">,</span>
             <span class="n">description</span><span class="o">=</span><span class="s2">&quot;selected_land_features_area&quot;</span><span class="p">,</span>
-            <span class="n">scale</span><span class="o">=</span><span class="n">scale</span><span class="p">,</span>
         <span class="p">)</span>
     <span class="p">)</span>
 
     <span class="n">preparation_begrensningskurve__land_features_near_water__n100</span> <span class="o">=</span> <span class="p">(</span>
-        <span class="n">generate_file_name_gdb</span><span class="p">(</span>
-            <span class="n">function_name</span><span class="o">=</span><span class="n">preparation_begrensningskurve</span><span class="p">,</span>
+        <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_gdb</span><span class="p">(</span>
+            <span class="n">script_source_name</span><span class="o">=</span><span class="n">preparation_begrensningskurve</span><span class="p">,</span>
             <span class="n">description</span><span class="o">=</span><span class="s2">&quot;land_features_near_water&quot;</span><span class="p">,</span>
-            <span class="n">scale</span><span class="o">=</span><span class="n">scale</span><span class="p">,</span>
         <span class="p">)</span>
     <span class="p">)</span>
 
     <span class="n">preparation_begrensningskurve__begrensningskurve_waterfeatures_buffer__n100</span> <span class="o">=</span> <span class="p">(</span>
-        <span class="n">generate_file_name_gdb</span><span class="p">(</span>
-            <span class="n">function_name</span><span class="o">=</span><span class="n">preparation_begrensningskurve</span><span class="p">,</span>
+        <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_gdb</span><span class="p">(</span>
+            <span class="n">script_source_name</span><span class="o">=</span><span class="n">preparation_begrensningskurve</span><span class="p">,</span>
             <span class="n">description</span><span class="o">=</span><span class="s2">&quot;begrensningskurve_waterfeatures_buffer&quot;</span><span class="p">,</span>
-            <span class="n">scale</span><span class="o">=</span><span class="n">scale</span><span class="p">,</span>
         <span class="p">)</span>
     <span class="p">)</span>
 
-    <span class="n">preparation_begrensningskurve__land_features_buffer__n100</span> <span class="o">=</span> <span class="n">generate_file_name_gdb</span><span class="p">(</span>
-        <span class="n">function_name</span><span class="o">=</span><span class="n">preparation_begrensningskurve</span><span class="p">,</span>
-        <span class="n">description</span><span class="o">=</span><span class="s2">&quot;land_features_buffer&quot;</span><span class="p">,</span>
-        <span class="n">scale</span><span class="o">=</span><span class="n">scale</span><span class="p">,</span>
+    <span class="n">preparation_begrensningskurve__land_features_buffer__n100</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_gdb</span><span class="p">(</span>
+            <span class="n">script_source_name</span><span class="o">=</span><span class="n">preparation_begrensningskurve</span><span class="p">,</span>
+            <span class="n">description</span><span class="o">=</span><span class="s2">&quot;land_features_buffer&quot;</span><span class="p">,</span>
+        <span class="p">)</span>
     <span class="p">)</span>
 
     <span class="n">preparation_begrensningskurve__begrensningskurve_buffer_erase_1__n100</span> <span class="o">=</span> <span class="p">(</span>
-        <span class="n">generate_file_name_gdb</span><span class="p">(</span>
-            <span class="n">function_name</span><span class="o">=</span><span class="n">preparation_begrensningskurve</span><span class="p">,</span>
+        <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_gdb</span><span class="p">(</span>
+            <span class="n">script_source_name</span><span class="o">=</span><span class="n">preparation_begrensningskurve</span><span class="p">,</span>
             <span class="n">description</span><span class="o">=</span><span class="s2">&quot;begrensningskurve_buffer_erase_1&quot;</span><span class="p">,</span>
-            <span class="n">scale</span><span class="o">=</span><span class="n">scale</span><span class="p">,</span>
         <span class="p">)</span>
     <span class="p">)</span>
 
     <span class="n">preparation_begrensningskurve__begrensningskurve_buffer_erase_2__n100</span> <span class="o">=</span> <span class="p">(</span>
-        <span class="n">generate_file_name_gdb</span><span class="p">(</span>
-            <span class="n">function_name</span><span class="o">=</span><span class="n">preparation_begrensningskurve</span><span class="p">,</span>
+        <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_gdb</span><span class="p">(</span>
+            <span class="n">script_source_name</span><span class="o">=</span><span class="n">preparation_begrensningskurve</span><span class="p">,</span>
             <span class="n">description</span><span class="o">=</span><span class="s2">&quot;begrensningskurve_buffer_erase_2&quot;</span><span class="p">,</span>
-            <span class="n">scale</span><span class="o">=</span><span class="n">scale</span><span class="p">,</span>
         <span class="p">)</span>
     <span class="p">)</span>
 
-    <span class="n">preperation_veg_sti__unsplit_veg_sti__n100</span> <span class="o">=</span> <span class="n">generate_file_name_gdb</span><span class="p">(</span>
-        <span class="n">function_name</span><span class="o">=</span><span class="n">preperation_veg_sti</span><span class="p">,</span>
+    <span class="n">preperation_veg_sti__unsplit_veg_sti__n100</span> <span class="o">=</span> <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_gdb</span><span class="p">(</span>
+        <span class="n">script_source_name</span><span class="o">=</span><span class="n">preperation_veg_sti</span><span class="p">,</span>
         <span class="n">description</span><span class="o">=</span><span class="s2">&quot;unsplit_veg_sti&quot;</span><span class="p">,</span>
-        <span class="n">scale</span><span class="o">=</span><span class="n">scale</span><span class="p">,</span>
     <span class="p">)</span>
 
     <span class="c1"># Function: adding_matrikkel_as_points</span>
 
     <span class="n">adding_matrikkel_as_points__urban_area_selection_n100__n100</span> <span class="o">=</span> <span class="p">(</span>
-        <span class="n">generate_file_name_gdb</span><span class="p">(</span>
-            <span class="n">function_name</span><span class="o">=</span><span class="n">adding_matrikkel_as_points</span><span class="p">,</span>
+        <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_gdb</span><span class="p">(</span>
+            <span class="n">script_source_name</span><span class="o">=</span><span class="n">adding_matrikkel_as_points</span><span class="p">,</span>
             <span class="n">description</span><span class="o">=</span><span class="s2">&quot;urban_area_selection_n100&quot;</span><span class="p">,</span>
-            <span class="n">scale</span><span class="o">=</span><span class="n">scale</span><span class="p">,</span>
         <span class="p">)</span>
     <span class="p">)</span>
 
-    <span class="n">adding_matrikkel_as_points__urban_area_selection_n50__n100</span> <span class="o">=</span> <span class="n">generate_file_name_gdb</span><span class="p">(</span>
-        <span class="n">function_name</span><span class="o">=</span><span class="n">adding_matrikkel_as_points</span><span class="p">,</span>
-        <span class="n">description</span><span class="o">=</span><span class="s2">&quot;urban_area_selection_n50&quot;</span><span class="p">,</span>
-        <span class="n">scale</span><span class="o">=</span><span class="n">scale</span><span class="p">,</span>
+    <span class="n">adding_matrikkel_as_points__urban_area_selection_n50__n100</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_gdb</span><span class="p">(</span>
+            <span class="n">script_source_name</span><span class="o">=</span><span class="n">adding_matrikkel_as_points</span><span class="p">,</span>
+            <span class="n">description</span><span class="o">=</span><span class="s2">&quot;urban_area_selection_n50&quot;</span><span class="p">,</span>
+        <span class="p">)</span>
     <span class="p">)</span>
 
     <span class="n">adding_matrikkel_as_points__urban_area_selection_n100_buffer__n100</span> <span class="o">=</span> <span class="p">(</span>
-        <span class="n">generate_file_name_gdb</span><span class="p">(</span>
-            <span class="n">function_name</span><span class="o">=</span><span class="n">adding_matrikkel_as_points</span><span class="p">,</span>
+        <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_gdb</span><span class="p">(</span>
+            <span class="n">script_source_name</span><span class="o">=</span><span class="n">adding_matrikkel_as_points</span><span class="p">,</span>
             <span class="n">description</span><span class="o">=</span><span class="s2">&quot;urban_area_selection_n100_buffer&quot;</span><span class="p">,</span>
-            <span class="n">scale</span><span class="o">=</span><span class="n">scale</span><span class="p">,</span>
         <span class="p">)</span>
     <span class="p">)</span>
 
-    <span class="n">adding_matrikkel_as_points__no_longer_urban_areas__n100</span> <span class="o">=</span> <span class="n">generate_file_name_gdb</span><span class="p">(</span>
-        <span class="n">function_name</span><span class="o">=</span><span class="n">adding_matrikkel_as_points</span><span class="p">,</span>
-        <span class="n">description</span><span class="o">=</span><span class="s2">&quot;no_longer_urban_areas&quot;</span><span class="p">,</span>
-        <span class="n">scale</span><span class="o">=</span><span class="n">scale</span><span class="p">,</span>
+    <span class="n">adding_matrikkel_as_points__no_longer_urban_areas__n100</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_gdb</span><span class="p">(</span>
+            <span class="n">script_source_name</span><span class="o">=</span><span class="n">adding_matrikkel_as_points</span><span class="p">,</span>
+            <span class="n">description</span><span class="o">=</span><span class="s2">&quot;no_longer_urban_areas&quot;</span><span class="p">,</span>
+        <span class="p">)</span>
     <span class="p">)</span>
 
-    <span class="n">adding_matrikkel_as_points__matrikkel_bygningspunkt__n100</span> <span class="o">=</span> <span class="n">generate_file_name_gdb</span><span class="p">(</span>
-        <span class="n">function_name</span><span class="o">=</span><span class="n">adding_matrikkel_as_points</span><span class="p">,</span>
-        <span class="n">description</span><span class="o">=</span><span class="s2">&quot;matrikkel_bygningspunkt&quot;</span><span class="p">,</span>
-        <span class="n">scale</span><span class="o">=</span><span class="n">scale</span><span class="p">,</span>
+    <span class="n">adding_matrikkel_as_points__matrikkel_bygningspunkt__n100</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_gdb</span><span class="p">(</span>
+            <span class="n">script_source_name</span><span class="o">=</span><span class="n">adding_matrikkel_as_points</span><span class="p">,</span>
+            <span class="n">description</span><span class="o">=</span><span class="s2">&quot;matrikkel_bygningspunkt&quot;</span><span class="p">,</span>
+        <span class="p">)</span>
     <span class="p">)</span>
 
     <span class="c1"># Function: selecting_grunnriss_for_generalization</span>
 
     <span class="n">selecting_grunnriss_for_generalization__selected_grunnriss_not_church__n100</span> <span class="o">=</span> <span class="p">(</span>
-        <span class="n">generate_file_name_gdb</span><span class="p">(</span>
-            <span class="n">function_name</span><span class="o">=</span><span class="n">selecting_grunnriss_for_generalization</span><span class="p">,</span>
+        <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_gdb</span><span class="p">(</span>
+            <span class="n">script_source_name</span><span class="o">=</span><span class="n">selecting_grunnriss_for_generalization</span><span class="p">,</span>
             <span class="n">description</span><span class="o">=</span><span class="s2">&quot;selected_grunnriss_not_church&quot;</span><span class="p">,</span>
-            <span class="n">scale</span><span class="o">=</span><span class="n">scale</span><span class="p">,</span>
         <span class="p">)</span>
     <span class="p">)</span>
 
     <span class="n">selecting_grunnriss_for_generalization__large_enough_grunnriss__n100</span> <span class="o">=</span> <span class="p">(</span>
-        <span class="n">generate_file_name_gdb</span><span class="p">(</span>
-            <span class="n">function_name</span><span class="o">=</span><span class="n">selecting_grunnriss_for_generalization</span><span class="p">,</span>
+        <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_gdb</span><span class="p">(</span>
+            <span class="n">script_source_name</span><span class="o">=</span><span class="n">selecting_grunnriss_for_generalization</span><span class="p">,</span>
             <span class="n">description</span><span class="o">=</span><span class="s2">&quot;large_enough_grunnriss&quot;</span><span class="p">,</span>
-            <span class="n">scale</span><span class="o">=</span><span class="n">scale</span><span class="p">,</span>
         <span class="p">)</span>
     <span class="p">)</span>
 
     <span class="n">selecting_grunnriss_for_generalization__too_small_grunnriss__n100</span> <span class="o">=</span> <span class="p">(</span>
-        <span class="n">generate_file_name_gdb</span><span class="p">(</span>
-            <span class="n">function_name</span><span class="o">=</span><span class="n">selecting_grunnriss_for_generalization</span><span class="p">,</span>
+        <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_gdb</span><span class="p">(</span>
+            <span class="n">script_source_name</span><span class="o">=</span><span class="n">selecting_grunnriss_for_generalization</span><span class="p">,</span>
             <span class="n">description</span><span class="o">=</span><span class="s2">&quot;too_small_grunnriss&quot;</span><span class="p">,</span>
-            <span class="n">scale</span><span class="o">=</span><span class="n">scale</span><span class="p">,</span>
         <span class="p">)</span>
     <span class="p">)</span>
 
-    <span class="n">selecting_grunnriss_for_generalization__points_created_from_small_grunnriss__n100</span> <span class="o">=</span> <span class="n">generate_file_name_gdb</span><span class="p">(</span>
-        <span class="n">function_name</span><span class="o">=</span><span class="n">selecting_grunnriss_for_generalization</span><span class="p">,</span>
+    <span class="n">selecting_grunnriss_for_generalization__points_created_from_small_grunnriss__n100</span> <span class="o">=</span> <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_gdb</span><span class="p">(</span>
+        <span class="n">script_source_name</span><span class="o">=</span><span class="n">selecting_grunnriss_for_generalization</span><span class="p">,</span>
         <span class="n">description</span><span class="o">=</span><span class="s2">&quot;points_created_from_small_grunnriss&quot;</span><span class="p">,</span>
-        <span class="n">scale</span><span class="o">=</span><span class="n">scale</span><span class="p">,</span>
     <span class="p">)</span>
 
     <span class="n">selecting_grunnriss_for_generalization__grunnriss_kirke__n100</span> <span class="o">=</span> <span class="p">(</span>
-        <span class="n">generate_file_name_gdb</span><span class="p">(</span>
-            <span class="n">function_name</span><span class="o">=</span><span class="n">selecting_grunnriss_for_generalization</span><span class="p">,</span>
+        <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_gdb</span><span class="p">(</span>
+            <span class="n">script_source_name</span><span class="o">=</span><span class="n">selecting_grunnriss_for_generalization</span><span class="p">,</span>
             <span class="n">description</span><span class="o">=</span><span class="s2">&quot;grunnriss_kirke&quot;</span><span class="p">,</span>
-            <span class="n">scale</span><span class="o">=</span><span class="n">scale</span><span class="p">,</span>
         <span class="p">)</span>
     <span class="p">)</span>
 
-    <span class="n">selecting_grunnriss_for_generalization__kirke_points_created_from_grunnriss__n100</span> <span class="o">=</span> <span class="n">generate_file_name_gdb</span><span class="p">(</span>
-        <span class="n">function_name</span><span class="o">=</span><span class="n">selecting_grunnriss_for_generalization</span><span class="p">,</span>
+    <span class="n">selecting_grunnriss_for_generalization__kirke_points_created_from_grunnriss__n100</span> <span class="o">=</span> <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_gdb</span><span class="p">(</span>
+        <span class="n">script_source_name</span><span class="o">=</span><span class="n">selecting_grunnriss_for_generalization</span><span class="p">,</span>
         <span class="n">description</span><span class="o">=</span><span class="s2">&quot;kirke_points_created_from_grunnriss&quot;</span><span class="p">,</span>
-        <span class="n">scale</span><span class="o">=</span><span class="n">scale</span><span class="p">,</span>
     <span class="p">)</span>
 
     <span class="c1">##########################################</span>
@@ -413,33 +334,31 @@
 
     <span class="c1"># Function: table_management</span>
 
-    <span class="n">table_management__merged_bygningspunkt_n50_matrikkel__n100</span> <span class="o">=</span> <span class="n">generate_file_name_gdb</span><span class="p">(</span>
-        <span class="n">function_name</span><span class="o">=</span><span class="n">table_management</span><span class="p">,</span>
-        <span class="n">description</span><span class="o">=</span><span class="s2">&quot;merged_bygningspunkt_n50_matrikkel&quot;</span><span class="p">,</span>
-        <span class="n">scale</span><span class="o">=</span><span class="n">scale</span><span class="p">,</span>
+    <span class="n">table_management__merged_bygningspunkt_n50_matrikkel__n100</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_gdb</span><span class="p">(</span>
+            <span class="n">script_source_name</span><span class="o">=</span><span class="n">table_management</span><span class="p">,</span>
+            <span class="n">description</span><span class="o">=</span><span class="s2">&quot;merged_bygningspunkt_n50_matrikkel&quot;</span><span class="p">,</span>
+        <span class="p">)</span>
     <span class="p">)</span>
 
     <span class="n">table_management__bygningspunkt_pre_resolve_building_conflicts__n100</span> <span class="o">=</span> <span class="p">(</span>
-        <span class="n">generate_file_name_gdb</span><span class="p">(</span>
-            <span class="n">function_name</span><span class="o">=</span><span class="n">table_management</span><span class="p">,</span>
+        <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_gdb</span><span class="p">(</span>
+            <span class="n">script_source_name</span><span class="o">=</span><span class="n">table_management</span><span class="p">,</span>
             <span class="n">description</span><span class="o">=</span><span class="s2">&quot;bygningspunkt_pre_resolve_building_conflicts&quot;</span><span class="p">,</span>
-            <span class="n">scale</span><span class="o">=</span><span class="n">scale</span><span class="p">,</span>
         <span class="p">)</span>
     <span class="p">)</span>
 
     <span class="n">table_management__selection_bygningspunkt_with_undefined_nbr_values__n100</span> <span class="o">=</span> <span class="p">(</span>
-        <span class="n">generate_file_name_gdb</span><span class="p">(</span>
-            <span class="n">function_name</span><span class="o">=</span><span class="n">table_management</span><span class="p">,</span>
+        <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_gdb</span><span class="p">(</span>
+            <span class="n">script_source_name</span><span class="o">=</span><span class="n">table_management</span><span class="p">,</span>
             <span class="n">description</span><span class="o">=</span><span class="s2">&quot;selection_bygningspunkt_with_undefined_nbr_values&quot;</span><span class="p">,</span>
-            <span class="n">scale</span><span class="o">=</span><span class="n">scale</span><span class="p">,</span>
         <span class="p">)</span>
     <span class="p">)</span>
 
     <span class="n">table_management__building_points_with_undefined_nbr_values__n100</span> <span class="o">=</span> <span class="p">(</span>
-        <span class="n">generate_file_name_general_files</span><span class="p">(</span>
-            <span class="n">function_name</span><span class="o">=</span><span class="n">table_management</span><span class="p">,</span>
+        <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_general_files</span><span class="p">(</span>
+            <span class="n">script_source_name</span><span class="o">=</span><span class="n">table_management</span><span class="p">,</span>
             <span class="n">description</span><span class="o">=</span><span class="s2">&quot;building_points_with_undefined_nbr_values&quot;</span><span class="p">,</span>
-            <span class="n">scale</span><span class="o">=</span><span class="n">scale</span><span class="p">,</span>
             <span class="n">file_type</span><span class="o">=</span><span class="s2">&quot;txt&quot;</span><span class="p">,</span>
         <span class="p">)</span>
     <span class="p">)</span>
@@ -451,30 +370,28 @@
     <span class="c1"># Function: grunnriss_to_point</span>
 
     <span class="n">grunnriss_to_point__intersect_aggregated_and_original__n100</span> <span class="o">=</span> <span class="p">(</span>
-        <span class="n">generate_file_name_gdb</span><span class="p">(</span>
-            <span class="n">function_name</span><span class="o">=</span><span class="n">grunnriss_to_point</span><span class="p">,</span>
+        <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_gdb</span><span class="p">(</span>
+            <span class="n">script_source_name</span><span class="o">=</span><span class="n">grunnriss_to_point</span><span class="p">,</span>
             <span class="n">description</span><span class="o">=</span><span class="s2">&quot;intersect_aggregated_and_original&quot;</span><span class="p">,</span>
-            <span class="n">scale</span><span class="o">=</span><span class="n">scale</span><span class="p">,</span>
         <span class="p">)</span>
     <span class="p">)</span>
 
-    <span class="n">grunnriss_to_point__grunnriss_feature_to_point__n100</span> <span class="o">=</span> <span class="n">generate_file_name_gdb</span><span class="p">(</span>
-        <span class="n">function_name</span><span class="o">=</span><span class="n">grunnriss_to_point</span><span class="p">,</span>
-        <span class="n">description</span><span class="o">=</span><span class="s2">&quot;grunnriss_feature_to_point&quot;</span><span class="p">,</span>
-        <span class="n">scale</span><span class="o">=</span><span class="n">scale</span><span class="p">,</span>
+    <span class="n">grunnriss_to_point__grunnriss_feature_to_point__n100</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_gdb</span><span class="p">(</span>
+            <span class="n">script_source_name</span><span class="o">=</span><span class="n">grunnriss_to_point</span><span class="p">,</span>
+            <span class="n">description</span><span class="o">=</span><span class="s2">&quot;grunnriss_feature_to_point&quot;</span><span class="p">,</span>
+        <span class="p">)</span>
     <span class="p">)</span>
 
-    <span class="n">grunnriss_to_point__spatial_join_points__n100</span> <span class="o">=</span> <span class="n">generate_file_name_gdb</span><span class="p">(</span>
-        <span class="n">function_name</span><span class="o">=</span><span class="n">grunnriss_to_point</span><span class="p">,</span>
+    <span class="n">grunnriss_to_point__spatial_join_points__n100</span> <span class="o">=</span> <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_gdb</span><span class="p">(</span>
+        <span class="n">script_source_name</span><span class="o">=</span><span class="n">grunnriss_to_point</span><span class="p">,</span>
         <span class="n">description</span><span class="o">=</span><span class="s2">&quot;spatial_join_points&quot;</span><span class="p">,</span>
-        <span class="n">scale</span><span class="o">=</span><span class="n">scale</span><span class="p">,</span>
     <span class="p">)</span>
 
     <span class="n">grunnriss_to_point__merged_points_created_from_grunnriss__n100</span> <span class="o">=</span> <span class="p">(</span>
-        <span class="n">generate_file_name_gdb</span><span class="p">(</span>
-            <span class="n">function_name</span><span class="o">=</span><span class="n">grunnriss_to_point</span><span class="p">,</span>
+        <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_gdb</span><span class="p">(</span>
+            <span class="n">script_source_name</span><span class="o">=</span><span class="n">grunnriss_to_point</span><span class="p">,</span>
             <span class="n">description</span><span class="o">=</span><span class="s2">&quot;merged_points_created_from_grunnriss&quot;</span><span class="p">,</span>
-            <span class="n">scale</span><span class="o">=</span><span class="n">scale</span><span class="p">,</span>
         <span class="p">)</span>
     <span class="p">)</span>
 
@@ -484,65 +401,60 @@
 
     <span class="c1"># Function: aggregate_polygons</span>
 
-    <span class="n">aggregate_polygons__fill_hole__n100</span> <span class="o">=</span> <span class="n">generate_file_name_gdb</span><span class="p">(</span>
-        <span class="n">function_name</span><span class="o">=</span><span class="n">aggregate_polygons</span><span class="p">,</span>
+    <span class="n">aggregate_polygons__fill_hole__n100</span> <span class="o">=</span> <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_gdb</span><span class="p">(</span>
+        <span class="n">script_source_name</span><span class="o">=</span><span class="n">aggregate_polygons</span><span class="p">,</span>
         <span class="n">description</span><span class="o">=</span><span class="s2">&quot;fill_hole&quot;</span><span class="p">,</span>
-        <span class="n">scale</span><span class="o">=</span><span class="n">scale</span><span class="p">,</span>
     <span class="p">)</span>
 
     <span class="c1"># Function: simplify_buildings_1</span>
 
-    <span class="n">simplify_buildings_1_simplifying__n100</span> <span class="o">=</span> <span class="n">generate_file_name_gdb</span><span class="p">(</span>
-        <span class="n">function_name</span><span class="o">=</span><span class="n">simplify_buildings_1</span><span class="p">,</span>
+    <span class="n">simplify_buildings_1_simplifying__n100</span> <span class="o">=</span> <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_gdb</span><span class="p">(</span>
+        <span class="n">script_source_name</span><span class="o">=</span><span class="n">simplify_buildings_1</span><span class="p">,</span>
         <span class="n">description</span><span class="o">=</span><span class="s2">&quot;simplifying&quot;</span><span class="p">,</span>
-        <span class="n">scale</span><span class="o">=</span><span class="n">scale</span><span class="p">,</span>
     <span class="p">)</span>
 
-    <span class="n">simplify_buildings_1__points__n100</span> <span class="o">=</span> <span class="n">generate_file_name_gdb</span><span class="p">(</span>
-        <span class="n">function_name</span><span class="o">=</span><span class="n">grunnriss_to_point</span><span class="p">,</span>
+    <span class="n">simplify_buildings_1__points__n100</span> <span class="o">=</span> <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_gdb</span><span class="p">(</span>
+        <span class="n">script_source_name</span><span class="o">=</span><span class="n">grunnriss_to_point</span><span class="p">,</span>
         <span class="n">description</span><span class="o">=</span><span class="s2">&quot;points&quot;</span><span class="p">,</span>
-        <span class="n">scale</span><span class="o">=</span><span class="n">scale</span><span class="p">,</span>
     <span class="p">)</span>
 
     <span class="c1"># Function: simplify_buildings_2</span>
 
-    <span class="n">simplify_buildings_2_simplifying__n100</span> <span class="o">=</span> <span class="n">generate_file_name_gdb</span><span class="p">(</span>
-        <span class="n">function_name</span><span class="o">=</span><span class="n">simplify_buildings_2</span><span class="p">,</span>
+    <span class="n">simplify_buildings_2_simplifying__n100</span> <span class="o">=</span> <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_gdb</span><span class="p">(</span>
+        <span class="n">script_source_name</span><span class="o">=</span><span class="n">simplify_buildings_2</span><span class="p">,</span>
         <span class="n">description</span><span class="o">=</span><span class="s2">&quot;simplifying&quot;</span><span class="p">,</span>
-        <span class="n">scale</span><span class="o">=</span><span class="n">scale</span><span class="p">,</span>
     <span class="p">)</span>
 
-    <span class="n">simplify_buildings_2__points__n100</span> <span class="o">=</span> <span class="n">generate_file_name_gdb</span><span class="p">(</span>
-        <span class="n">function_name</span><span class="o">=</span><span class="n">grunnriss_to_point</span><span class="p">,</span>
+    <span class="n">simplify_buildings_2__points__n100</span> <span class="o">=</span> <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_gdb</span><span class="p">(</span>
+        <span class="n">script_source_name</span><span class="o">=</span><span class="n">grunnriss_to_point</span><span class="p">,</span>
         <span class="n">description</span><span class="o">=</span><span class="s2">&quot;points&quot;</span><span class="p">,</span>
-        <span class="n">scale</span><span class="o">=</span><span class="n">scale</span><span class="p">,</span>
     <span class="p">)</span>
 
     <span class="c1"># Function: simplify_polygons</span>
-    <span class="n">simplify_polygons__simplifying__n100</span> <span class="o">=</span> <span class="n">generate_file_name_gdb</span><span class="p">(</span>
-        <span class="n">function_name</span><span class="o">=</span><span class="n">simplify_polygons</span><span class="p">,</span>
+    <span class="n">simplify_polygons__simplifying__n100</span> <span class="o">=</span> <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_gdb</span><span class="p">(</span>
+        <span class="n">script_source_name</span><span class="o">=</span><span class="n">simplify_polygons</span><span class="p">,</span>
         <span class="n">description</span><span class="o">=</span><span class="s2">&quot;simplifying&quot;</span><span class="p">,</span>
-        <span class="n">scale</span><span class="o">=</span><span class="n">scale</span><span class="p">,</span>
     <span class="p">)</span>
 
-    <span class="n">simplify_polygons__points__n100</span> <span class="o">=</span> <span class="n">generate_file_name_gdb</span><span class="p">(</span>
-        <span class="n">function_name</span><span class="o">=</span><span class="n">grunnriss_to_point</span><span class="p">,</span>
+    <span class="n">simplify_polygons__points__n100</span> <span class="o">=</span> <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_gdb</span><span class="p">(</span>
+        <span class="n">script_source_name</span><span class="o">=</span><span class="n">grunnriss_to_point</span><span class="p">,</span>
         <span class="n">description</span><span class="o">=</span><span class="s2">&quot;points&quot;</span><span class="p">,</span>
-        <span class="n">scale</span><span class="o">=</span><span class="n">scale</span><span class="p">,</span>
     <span class="p">)</span>
 
     <span class="c1"># Function: join_and_add_fields</span>
 
-    <span class="n">join_and_add_fields__spatial_join_polygons__n100</span> <span class="o">=</span> <span class="n">generate_file_name_gdb</span><span class="p">(</span>
-        <span class="n">function_name</span><span class="o">=</span><span class="n">join_and_add_fields</span><span class="p">,</span>
-        <span class="n">description</span><span class="o">=</span><span class="s2">&quot;spatial_join_polygons&quot;</span><span class="p">,</span>
-        <span class="n">scale</span><span class="o">=</span><span class="n">scale</span><span class="p">,</span>
+    <span class="n">join_and_add_fields__spatial_join_polygons__n100</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_gdb</span><span class="p">(</span>
+            <span class="n">script_source_name</span><span class="o">=</span><span class="n">join_and_add_fields</span><span class="p">,</span>
+            <span class="n">description</span><span class="o">=</span><span class="s2">&quot;spatial_join_polygons&quot;</span><span class="p">,</span>
+        <span class="p">)</span>
     <span class="p">)</span>
 
-    <span class="n">join_and_add_fields__building_polygons_final__n100</span> <span class="o">=</span> <span class="n">generate_file_name_gdb</span><span class="p">(</span>
-        <span class="n">function_name</span><span class="o">=</span><span class="n">join_and_add_fields</span><span class="p">,</span>
-        <span class="n">description</span><span class="o">=</span><span class="s2">&quot;building_polygons_final&quot;</span><span class="p">,</span>
-        <span class="n">scale</span><span class="o">=</span><span class="n">scale</span><span class="p">,</span>
+    <span class="n">join_and_add_fields__building_polygons_final__n100</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_gdb</span><span class="p">(</span>
+            <span class="n">script_source_name</span><span class="o">=</span><span class="n">join_and_add_fields</span><span class="p">,</span>
+            <span class="n">description</span><span class="o">=</span><span class="s2">&quot;building_polygons_final&quot;</span><span class="p">,</span>
+        <span class="p">)</span>
     <span class="p">)</span>
 
     <span class="c1">####################################################</span>
@@ -551,166 +463,151 @@
 
     <span class="c1"># Function: propagate_displacement_building_polygons</span>
 
-    <span class="n">propagate_displacement_building_polygons__building_polygon_pre_propogate_displacement__n100</span> <span class="o">=</span> <span class="n">generate_file_name_gdb</span><span class="p">(</span>
-        <span class="n">function_name</span><span class="o">=</span><span class="n">propagate_displacement_building_polygons</span><span class="p">,</span>
+    <span class="n">propagate_displacement_building_polygons__building_polygon_pre_propogate_displacement__n100</span> <span class="o">=</span> <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_gdb</span><span class="p">(</span>
+        <span class="n">script_source_name</span><span class="o">=</span><span class="n">propagate_displacement_building_polygons</span><span class="p">,</span>
         <span class="n">description</span><span class="o">=</span><span class="s2">&quot;building_polygons_pre_propogate_displacement&quot;</span><span class="p">,</span>
-        <span class="n">scale</span><span class="o">=</span><span class="n">scale</span><span class="p">,</span>
     <span class="p">)</span>
 
     <span class="n">propagate_displacement_building_polygons__after_propogate_displacement__n100</span> <span class="o">=</span> <span class="p">(</span>
-        <span class="n">generate_file_name_gdb</span><span class="p">(</span>
-            <span class="n">function_name</span><span class="o">=</span><span class="n">propagate_displacement_building_polygons</span><span class="p">,</span>
+        <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_gdb</span><span class="p">(</span>
+            <span class="n">script_source_name</span><span class="o">=</span><span class="n">propagate_displacement_building_polygons</span><span class="p">,</span>
             <span class="n">description</span><span class="o">=</span><span class="s2">&quot;building_polygons_after_propogate_displacement&quot;</span><span class="p">,</span>
-            <span class="n">scale</span><span class="o">=</span><span class="n">scale</span><span class="p">,</span>
         <span class="p">)</span>
     <span class="p">)</span>
 
-    <span class="n">propagate_displacement_building_polygons__displacement_feature_1000_m_from_building_polygon__n100</span> <span class="o">=</span> <span class="n">generate_file_name_gdb</span><span class="p">(</span>
-        <span class="n">function_name</span><span class="o">=</span><span class="n">propagate_displacement_building_polygons</span><span class="p">,</span>
+    <span class="n">propagate_displacement_building_polygons__displacement_feature_1000_m_from_building_polygon__n100</span> <span class="o">=</span> <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_gdb</span><span class="p">(</span>
+        <span class="n">script_source_name</span><span class="o">=</span><span class="n">propagate_displacement_building_polygons</span><span class="p">,</span>
         <span class="n">description</span><span class="o">=</span><span class="s2">&quot;displacement_feature_1000_m_from_building_polygon&quot;</span><span class="p">,</span>
-        <span class="n">scale</span><span class="o">=</span><span class="n">scale</span><span class="p">,</span>
     <span class="p">)</span>
 
     <span class="c1"># features_500_m_from_building_polygons</span>
 
     <span class="n">features_500_m_from_building_polygons__selected_begrensningskurve__n100</span> <span class="o">=</span> <span class="p">(</span>
-        <span class="n">generate_file_name_gdb</span><span class="p">(</span>
-            <span class="n">function_name</span><span class="o">=</span><span class="n">features_500_m_from_building_polygons</span><span class="p">,</span>
+        <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_gdb</span><span class="p">(</span>
+            <span class="n">script_source_name</span><span class="o">=</span><span class="n">features_500_m_from_building_polygons</span><span class="p">,</span>
             <span class="n">description</span><span class="o">=</span><span class="s2">&quot;selected_begrensningskurve&quot;</span><span class="p">,</span>
-            <span class="n">scale</span><span class="o">=</span><span class="n">scale</span><span class="p">,</span>
         <span class="p">)</span>
     <span class="p">)</span>
     <span class="n">features_500_m_from_building_polygons__selected_roads__n100</span> <span class="o">=</span> <span class="p">(</span>
-        <span class="n">generate_file_name_gdb</span><span class="p">(</span>
-            <span class="n">function_name</span><span class="o">=</span><span class="n">features_500_m_from_building_polygons</span><span class="p">,</span>
+        <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_gdb</span><span class="p">(</span>
+            <span class="n">script_source_name</span><span class="o">=</span><span class="n">features_500_m_from_building_polygons</span><span class="p">,</span>
             <span class="n">description</span><span class="o">=</span><span class="s2">&quot;selected_roads&quot;</span><span class="p">,</span>
-            <span class="n">scale</span><span class="o">=</span><span class="n">scale</span><span class="p">,</span>
         <span class="p">)</span>
     <span class="p">)</span>
 
     <span class="c1"># Function: apply_symbology_to_layers</span>
 
-    <span class="n">apply_symbology_to_layers__building_polygon__n100__lyrx</span> <span class="o">=</span> <span class="n">generate_file_name_lyrx</span><span class="p">(</span>
-        <span class="n">function_name</span><span class="o">=</span><span class="n">apply_symbology_to_layers</span><span class="p">,</span>
-        <span class="n">description</span><span class="o">=</span><span class="s2">&quot;building_polygon&quot;</span><span class="p">,</span>
-        <span class="n">scale</span><span class="o">=</span><span class="n">scale</span><span class="p">,</span>
+    <span class="n">apply_symbology_to_layers__building_polygon__n100__lyrx</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_lyrx</span><span class="p">(</span>
+            <span class="n">script_source_name</span><span class="o">=</span><span class="n">apply_symbology_to_layers</span><span class="p">,</span>
+            <span class="n">description</span><span class="o">=</span><span class="s2">&quot;building_polygon&quot;</span><span class="p">,</span>
+        <span class="p">)</span>
     <span class="p">)</span>
 
-    <span class="n">apply_symbology_to_layers__roads__n100__lyrx</span> <span class="o">=</span> <span class="n">generate_file_name_lyrx</span><span class="p">(</span>
-        <span class="n">function_name</span><span class="o">=</span><span class="n">apply_symbology_to_layers</span><span class="p">,</span>
+    <span class="n">apply_symbology_to_layers__roads__n100__lyrx</span> <span class="o">=</span> <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_lyrx</span><span class="p">(</span>
+        <span class="n">script_source_name</span><span class="o">=</span><span class="n">apply_symbology_to_layers</span><span class="p">,</span>
         <span class="n">description</span><span class="o">=</span><span class="s2">&quot;roads&quot;</span><span class="p">,</span>
-        <span class="n">scale</span><span class="o">=</span><span class="n">scale</span><span class="p">,</span>
     <span class="p">)</span>
 
-    <span class="n">apply_symbology_to_layers__begrensningskurve__n100__lyrx</span> <span class="o">=</span> <span class="n">generate_file_name_lyrx</span><span class="p">(</span>
-        <span class="n">function_name</span><span class="o">=</span><span class="n">apply_symbology_to_layers</span><span class="p">,</span>
-        <span class="n">description</span><span class="o">=</span><span class="s2">&quot;begrensningskurve&quot;</span><span class="p">,</span>
-        <span class="n">scale</span><span class="o">=</span><span class="n">scale</span><span class="p">,</span>
+    <span class="n">apply_symbology_to_layers__begrensningskurve__n100__lyrx</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_lyrx</span><span class="p">(</span>
+            <span class="n">script_source_name</span><span class="o">=</span><span class="n">apply_symbology_to_layers</span><span class="p">,</span>
+            <span class="n">description</span><span class="o">=</span><span class="s2">&quot;begrensningskurve&quot;</span><span class="p">,</span>
+        <span class="p">)</span>
     <span class="p">)</span>
     <span class="c1"># Function: resolve_building_conflict_building_polygon</span>
 
     <span class="n">resolve_building_conflict_building_polygon__after_RBC__n100</span> <span class="o">=</span> <span class="p">(</span>
-        <span class="n">generate_file_name_gdb</span><span class="p">(</span>
-            <span class="n">function_name</span><span class="o">=</span><span class="n">resolve_building_conflict_building_polygon</span><span class="p">,</span>
+        <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_gdb</span><span class="p">(</span>
+            <span class="n">script_source_name</span><span class="o">=</span><span class="n">resolve_building_conflict_building_polygon</span><span class="p">,</span>
             <span class="n">description</span><span class="o">=</span><span class="s2">&quot;after_RBC&quot;</span><span class="p">,</span>
-            <span class="n">scale</span><span class="o">=</span><span class="n">scale</span><span class="p">,</span>
         <span class="p">)</span>
     <span class="p">)</span>
 
     <span class="n">resolve_building_conflict_building_selected_hospital_church_points__n100</span> <span class="o">=</span> <span class="p">(</span>
-        <span class="n">generate_file_name_gdb</span><span class="p">(</span>
-            <span class="n">function_name</span><span class="o">=</span><span class="n">resolve_building_conflict_building_polygon</span><span class="p">,</span>
+        <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_gdb</span><span class="p">(</span>
+            <span class="n">script_source_name</span><span class="o">=</span><span class="n">resolve_building_conflict_building_polygon</span><span class="p">,</span>
             <span class="n">description</span><span class="o">=</span><span class="s2">&quot;selected_hospital_church_points&quot;</span><span class="p">,</span>
-            <span class="n">scale</span><span class="o">=</span><span class="n">scale</span><span class="p">,</span>
         <span class="p">)</span>
     <span class="p">)</span>
 
     <span class="n">resolve_building_conflict_building_polygon__hospital_church_polygons__n100</span> <span class="o">=</span> <span class="p">(</span>
-        <span class="n">generate_file_name_gdb</span><span class="p">(</span>
-            <span class="n">function_name</span><span class="o">=</span><span class="n">resolve_building_conflict_building_polygon</span><span class="p">,</span>
+        <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_gdb</span><span class="p">(</span>
+            <span class="n">script_source_name</span><span class="o">=</span><span class="n">resolve_building_conflict_building_polygon</span><span class="p">,</span>
             <span class="n">description</span><span class="o">=</span><span class="s2">&quot;hospital_church_polygons&quot;</span><span class="p">,</span>
-            <span class="n">scale</span><span class="o">=</span><span class="n">scale</span><span class="p">,</span>
         <span class="p">)</span>
     <span class="p">)</span>
 
     <span class="c1"># Function: invisible_building_polygons_to_point</span>
 
     <span class="n">invisible_building_polygons_to_point__invisible_polygons__n100</span> <span class="o">=</span> <span class="p">(</span>
-        <span class="n">generate_file_name_gdb</span><span class="p">(</span>
-            <span class="n">function_name</span><span class="o">=</span><span class="n">invisible_building_polygons_to_point</span><span class="p">,</span>
+        <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_gdb</span><span class="p">(</span>
+            <span class="n">script_source_name</span><span class="o">=</span><span class="n">invisible_building_polygons_to_point</span><span class="p">,</span>
             <span class="n">description</span><span class="o">=</span><span class="s2">&quot;invisible_polygons&quot;</span><span class="p">,</span>
-            <span class="n">scale</span><span class="o">=</span><span class="n">scale</span><span class="p">,</span>
         <span class="p">)</span>
     <span class="p">)</span>
 
     <span class="n">invisible_building_polygons_to_point__not_invisible_polygons__n100</span> <span class="o">=</span> <span class="p">(</span>
-        <span class="n">generate_file_name_gdb</span><span class="p">(</span>
-            <span class="n">function_name</span><span class="o">=</span><span class="n">invisible_building_polygons_to_point</span><span class="p">,</span>
+        <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_gdb</span><span class="p">(</span>
+            <span class="n">script_source_name</span><span class="o">=</span><span class="n">invisible_building_polygons_to_point</span><span class="p">,</span>
             <span class="n">description</span><span class="o">=</span><span class="s2">&quot;not_invisible_polygons&quot;</span><span class="p">,</span>
-            <span class="n">scale</span><span class="o">=</span><span class="n">scale</span><span class="p">,</span>
         <span class="p">)</span>
     <span class="p">)</span>
 
     <span class="n">invisible_building_polygons_to_point__invisible_polygons_to_points__n100</span> <span class="o">=</span> <span class="p">(</span>
-        <span class="n">generate_file_name_gdb</span><span class="p">(</span>
-            <span class="n">function_name</span><span class="o">=</span><span class="n">invisible_building_polygons_to_point</span><span class="p">,</span>
+        <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_gdb</span><span class="p">(</span>
+            <span class="n">script_source_name</span><span class="o">=</span><span class="n">invisible_building_polygons_to_point</span><span class="p">,</span>
             <span class="n">description</span><span class="o">=</span><span class="s2">&quot;invisible_polygons_to_points&quot;</span><span class="p">,</span>
-            <span class="n">scale</span><span class="o">=</span><span class="n">scale</span><span class="p">,</span>
         <span class="p">)</span>
     <span class="p">)</span>
 
     <span class="c1"># Function: creating_road_buffer</span>
 
-    <span class="n">creating_road_buffer__selection__n100</span> <span class="o">=</span> <span class="n">generate_file_name_gdb</span><span class="p">(</span>
-        <span class="n">function_name</span><span class="o">=</span><span class="n">creating_road_buffer</span><span class="p">,</span>
+    <span class="n">creating_road_buffer__selection__n100</span> <span class="o">=</span> <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_gdb</span><span class="p">(</span>
+        <span class="n">script_source_name</span><span class="o">=</span><span class="n">creating_road_buffer</span><span class="p">,</span>
         <span class="n">description</span><span class="o">=</span><span class="s2">&quot;selection&quot;</span><span class="p">,</span>
-        <span class="n">scale</span><span class="o">=</span><span class="n">scale</span><span class="p">,</span>
     <span class="p">)</span>
 
-    <span class="n">creating_road_buffer__buffers__n100</span> <span class="o">=</span> <span class="n">generate_file_name_gdb</span><span class="p">(</span>
-        <span class="n">function_name</span><span class="o">=</span><span class="n">creating_road_buffer</span><span class="p">,</span>
+    <span class="n">creating_road_buffer__buffers__n100</span> <span class="o">=</span> <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_gdb</span><span class="p">(</span>
+        <span class="n">script_source_name</span><span class="o">=</span><span class="n">creating_road_buffer</span><span class="p">,</span>
         <span class="n">description</span><span class="o">=</span><span class="s2">&quot;buffers&quot;</span><span class="p">,</span>
-        <span class="n">scale</span><span class="o">=</span><span class="n">scale</span><span class="p">,</span>
     <span class="p">)</span>
 
-    <span class="n">creating_road_buffer__merged_buffers__n100</span> <span class="o">=</span> <span class="n">generate_file_name_gdb</span><span class="p">(</span>
-        <span class="n">function_name</span><span class="o">=</span><span class="n">creating_road_buffer</span><span class="p">,</span>
+    <span class="n">creating_road_buffer__merged_buffers__n100</span> <span class="o">=</span> <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_gdb</span><span class="p">(</span>
+        <span class="n">script_source_name</span><span class="o">=</span><span class="n">creating_road_buffer</span><span class="p">,</span>
         <span class="n">description</span><span class="o">=</span><span class="s2">&quot;merged_buffers&quot;</span><span class="p">,</span>
-        <span class="n">scale</span><span class="o">=</span><span class="n">scale</span><span class="p">,</span>
     <span class="p">)</span>
 
     <span class="c1"># Function: intersecting_building_polygons_to_point</span>
 
     <span class="n">intersecting_building_polygons_to_point__final_building_polygons__n100</span> <span class="o">=</span> <span class="p">(</span>
-        <span class="n">generate_file_name_gdb</span><span class="p">(</span>
-            <span class="n">function_name</span><span class="o">=</span><span class="n">intersecting_building_polygons_to_point</span><span class="p">,</span>
+        <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_gdb</span><span class="p">(</span>
+            <span class="n">script_source_name</span><span class="o">=</span><span class="n">intersecting_building_polygons_to_point</span><span class="p">,</span>
             <span class="n">description</span><span class="o">=</span><span class="s2">&quot;final_building_polgyons&quot;</span><span class="p">,</span>
-            <span class="n">scale</span><span class="o">=</span><span class="n">scale</span><span class="p">,</span>
         <span class="p">)</span>
     <span class="p">)</span>
 
     <span class="n">intersecting_building_polygons_to_point__building_polygons_intersecting__n100</span> <span class="o">=</span> <span class="p">(</span>
-        <span class="n">generate_file_name_gdb</span><span class="p">(</span>
-            <span class="n">function_name</span><span class="o">=</span><span class="n">intersecting_building_polygons_to_point</span><span class="p">,</span>
+        <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_gdb</span><span class="p">(</span>
+            <span class="n">script_source_name</span><span class="o">=</span><span class="n">intersecting_building_polygons_to_point</span><span class="p">,</span>
             <span class="n">description</span><span class="o">=</span><span class="s2">&quot;building_polygons_intersecting&quot;</span><span class="p">,</span>
-            <span class="n">scale</span><span class="o">=</span><span class="n">scale</span><span class="p">,</span>
         <span class="p">)</span>
     <span class="p">)</span>
 
     <span class="n">intersecting_building_polygons_to_point__building_points__n100</span> <span class="o">=</span> <span class="p">(</span>
-        <span class="n">generate_file_name_gdb</span><span class="p">(</span>
-            <span class="n">function_name</span><span class="o">=</span><span class="n">intersecting_building_polygons_to_point</span><span class="p">,</span>
+        <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_gdb</span><span class="p">(</span>
+            <span class="n">script_source_name</span><span class="o">=</span><span class="n">intersecting_building_polygons_to_point</span><span class="p">,</span>
             <span class="n">description</span><span class="o">=</span><span class="s2">&quot;building_points&quot;</span><span class="p">,</span>
-            <span class="n">scale</span><span class="o">=</span><span class="n">scale</span><span class="p">,</span>
         <span class="p">)</span>
     <span class="p">)</span>
 
     <span class="c1"># Function: merging_invisible_intersecting_points</span>
 
-    <span class="n">merging_invisible_intersecting_points__final__n100</span> <span class="o">=</span> <span class="n">generate_file_name_gdb</span><span class="p">(</span>
-        <span class="n">function_name</span><span class="o">=</span><span class="n">merging_invisible_intersecting_points</span><span class="p">,</span>
-        <span class="n">description</span><span class="o">=</span><span class="s2">&quot;final&quot;</span><span class="p">,</span>
-        <span class="n">scale</span><span class="o">=</span><span class="n">scale</span><span class="p">,</span>
+    <span class="n">merging_invisible_intersecting_points__final__n100</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_gdb</span><span class="p">(</span>
+            <span class="n">script_source_name</span><span class="o">=</span><span class="n">merging_invisible_intersecting_points</span><span class="p">,</span>
+            <span class="n">description</span><span class="o">=</span><span class="s2">&quot;final&quot;</span><span class="p">,</span>
+        <span class="p">)</span>
     <span class="p">)</span>
 
     <span class="c1">##############################################</span>
@@ -718,123 +615,125 @@
     <span class="c1">##############################################</span>
 
     <span class="n">create_cartographic_partitions__cartographic_partitions__n100</span> <span class="o">=</span> <span class="p">(</span>
-        <span class="n">generate_file_name_gdb</span><span class="p">(</span>
-            <span class="n">function_name</span><span class="o">=</span><span class="n">create_cartographic_partitions</span><span class="p">,</span>
+        <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_gdb</span><span class="p">(</span>
+            <span class="n">script_source_name</span><span class="o">=</span><span class="n">create_cartographic_partitions</span><span class="p">,</span>
             <span class="n">description</span><span class="o">=</span><span class="s2">&quot;cartographic_partitions&quot;</span><span class="p">,</span>
-            <span class="n">scale</span><span class="o">=</span><span class="n">scale</span><span class="p">,</span>
         <span class="p">)</span>
     <span class="p">)</span>
 
     <span class="n">create_cartographic_partitions__cartographic_partitions_buffer__n100</span> <span class="o">=</span> <span class="p">(</span>
-        <span class="n">generate_file_name_gdb</span><span class="p">(</span>
-            <span class="n">function_name</span><span class="o">=</span><span class="n">create_cartographic_partitions</span><span class="p">,</span>
+        <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_gdb</span><span class="p">(</span>
+            <span class="n">script_source_name</span><span class="o">=</span><span class="n">create_cartographic_partitions</span><span class="p">,</span>
             <span class="n">description</span><span class="o">=</span><span class="s2">&quot;cartographic_partitions_buffer&quot;</span><span class="p">,</span>
-            <span class="n">scale</span><span class="o">=</span><span class="n">scale</span><span class="p">,</span>
         <span class="p">)</span>
     <span class="p">)</span>
 
-    <span class="n">create_cartographic_partitions__buffer_erased__n100</span> <span class="o">=</span> <span class="n">generate_file_name_gdb</span><span class="p">(</span>
-        <span class="n">function_name</span><span class="o">=</span><span class="n">create_cartographic_partitions</span><span class="p">,</span>
-        <span class="n">description</span><span class="o">=</span><span class="s2">&quot;buffer_erased&quot;</span><span class="p">,</span>
-        <span class="n">scale</span><span class="o">=</span><span class="n">scale</span><span class="p">,</span>
+    <span class="n">create_cartographic_partitions__buffer_erased__n100</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_gdb</span><span class="p">(</span>
+            <span class="n">script_source_name</span><span class="o">=</span><span class="n">create_cartographic_partitions</span><span class="p">,</span>
+            <span class="n">description</span><span class="o">=</span><span class="s2">&quot;buffer_erased&quot;</span><span class="p">,</span>
+        <span class="p">)</span>
     <span class="p">)</span>
 
     <span class="c1">##################################</span>
     <span class="c1">############ ITERATION ############</span>
     <span class="c1">##################################</span>
 
-    <span class="n">iteration__partition_iterator__n100</span> <span class="o">=</span> <span class="n">generate_file_name_gdb</span><span class="p">(</span>
-        <span class="n">function_name</span><span class="o">=</span><span class="n">iteration</span><span class="p">,</span>
+    <span class="n">iteration__partition_iterator__n100</span> <span class="o">=</span> <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_gdb</span><span class="p">(</span>
+        <span class="n">script_source_name</span><span class="o">=</span><span class="n">iteration</span><span class="p">,</span>
         <span class="n">description</span><span class="o">=</span><span class="s2">&quot;partition_iterator&quot;</span><span class="p">,</span>
-        <span class="n">scale</span><span class="o">=</span><span class="n">scale</span><span class="p">,</span>
     <span class="p">)</span>
 
-    <span class="n">iteration__partition_iterator_final_output__n100</span> <span class="o">=</span> <span class="n">generate_file_name_gdb</span><span class="p">(</span>
-        <span class="n">function_name</span><span class="o">=</span><span class="n">iteration</span><span class="p">,</span>
-        <span class="n">description</span><span class="o">=</span><span class="s2">&quot;partition_iterator_final_output&quot;</span><span class="p">,</span>
-        <span class="n">scale</span><span class="o">=</span><span class="n">scale</span><span class="p">,</span>
+    <span class="n">iteration__partition_iterator_final_output__n100</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_gdb</span><span class="p">(</span>
+            <span class="n">script_source_name</span><span class="o">=</span><span class="n">iteration</span><span class="p">,</span>
+            <span class="n">description</span><span class="o">=</span><span class="s2">&quot;partition_iterator_final_output&quot;</span><span class="p">,</span>
+        <span class="p">)</span>
     <span class="p">)</span>
 
-    <span class="n">iteration__partition_iterator_final_output_points__n100</span> <span class="o">=</span> <span class="n">generate_file_name_gdb</span><span class="p">(</span>
-        <span class="n">function_name</span><span class="o">=</span><span class="n">iteration</span><span class="p">,</span>
-        <span class="n">description</span><span class="o">=</span><span class="s2">&quot;partition_iterator_final_output_points&quot;</span><span class="p">,</span>
-        <span class="n">scale</span><span class="o">=</span><span class="n">scale</span><span class="p">,</span>
+    <span class="n">iteration__partition_iterator_final_output_points__n100</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_gdb</span><span class="p">(</span>
+            <span class="n">script_source_name</span><span class="o">=</span><span class="n">iteration</span><span class="p">,</span>
+            <span class="n">description</span><span class="o">=</span><span class="s2">&quot;partition_iterator_final_output_points&quot;</span><span class="p">,</span>
+        <span class="p">)</span>
     <span class="p">)</span>
 
-    <span class="n">iteration__partition_iterator_final_output_polygons__n100</span> <span class="o">=</span> <span class="n">generate_file_name_gdb</span><span class="p">(</span>
-        <span class="n">function_name</span><span class="o">=</span><span class="n">iteration</span><span class="p">,</span>
-        <span class="n">description</span><span class="o">=</span><span class="s2">&quot;partition_iterator_final_output_polygons&quot;</span><span class="p">,</span>
-        <span class="n">scale</span><span class="o">=</span><span class="n">scale</span><span class="p">,</span>
+    <span class="n">iteration__partition_iterator_final_output_polygons__n100</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_gdb</span><span class="p">(</span>
+            <span class="n">script_source_name</span><span class="o">=</span><span class="n">iteration</span><span class="p">,</span>
+            <span class="n">description</span><span class="o">=</span><span class="s2">&quot;partition_iterator_final_output_polygons&quot;</span><span class="p">,</span>
+        <span class="p">)</span>
     <span class="p">)</span>
 
-    <span class="n">iteration__iteration_partition__n100</span> <span class="o">=</span> <span class="n">generate_file_name_gdb</span><span class="p">(</span>
-        <span class="n">function_name</span><span class="o">=</span><span class="n">iteration</span><span class="p">,</span>
+    <span class="n">iteration__iteration_partition__n100</span> <span class="o">=</span> <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_gdb</span><span class="p">(</span>
+        <span class="n">script_source_name</span><span class="o">=</span><span class="n">iteration</span><span class="p">,</span>
         <span class="n">description</span><span class="o">=</span><span class="s2">&quot;iteration_partition&quot;</span><span class="p">,</span>
-        <span class="n">scale</span><span class="o">=</span><span class="n">scale</span><span class="p">,</span>
     <span class="p">)</span>
 
-    <span class="n">iteration__iteration_buffer__n100</span> <span class="o">=</span> <span class="n">generate_file_name_gdb</span><span class="p">(</span>
-        <span class="n">function_name</span><span class="o">=</span><span class="n">iteration</span><span class="p">,</span>
+    <span class="n">iteration__iteration_buffer__n100</span> <span class="o">=</span> <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_gdb</span><span class="p">(</span>
+        <span class="n">script_source_name</span><span class="o">=</span><span class="n">iteration</span><span class="p">,</span>
         <span class="n">description</span><span class="o">=</span><span class="s2">&quot;iteration_buffer&quot;</span><span class="p">,</span>
-        <span class="n">scale</span><span class="o">=</span><span class="n">scale</span><span class="p">,</span>
     <span class="p">)</span>
 
-    <span class="n">iteration__iteration_erased_buffer__n100</span> <span class="o">=</span> <span class="n">generate_file_name_gdb</span><span class="p">(</span>
-        <span class="n">function_name</span><span class="o">=</span><span class="n">iteration</span><span class="p">,</span>
+    <span class="n">iteration__iteration_erased_buffer__n100</span> <span class="o">=</span> <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_gdb</span><span class="p">(</span>
+        <span class="n">script_source_name</span><span class="o">=</span><span class="n">iteration</span><span class="p">,</span>
         <span class="n">description</span><span class="o">=</span><span class="s2">&quot;iteration_erased_buffer&quot;</span><span class="p">,</span>
-        <span class="n">scale</span><span class="o">=</span><span class="n">scale</span><span class="p">,</span>
     <span class="p">)</span>
 
-    <span class="n">iteration__append_feature_building_point__n100</span> <span class="o">=</span> <span class="n">generate_file_name_gdb</span><span class="p">(</span>
-        <span class="n">function_name</span><span class="o">=</span><span class="n">iteration</span><span class="p">,</span>
-        <span class="n">description</span><span class="o">=</span><span class="s2">&quot;append_feature_building_point&quot;</span><span class="p">,</span>
-        <span class="n">scale</span><span class="o">=</span><span class="n">scale</span><span class="p">,</span>
+    <span class="n">iteration__append_feature_building_point__n100</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_gdb</span><span class="p">(</span>
+            <span class="n">script_source_name</span><span class="o">=</span><span class="n">iteration</span><span class="p">,</span>
+            <span class="n">description</span><span class="o">=</span><span class="s2">&quot;append_feature_building_point&quot;</span><span class="p">,</span>
+        <span class="p">)</span>
     <span class="p">)</span>
 
-    <span class="n">iteration__append_feature_building_polygon__n100</span> <span class="o">=</span> <span class="n">generate_file_name_gdb</span><span class="p">(</span>
-        <span class="n">function_name</span><span class="o">=</span><span class="n">iteration</span><span class="p">,</span>
-        <span class="n">description</span><span class="o">=</span><span class="s2">&quot;append_feature_building_polygon&quot;</span><span class="p">,</span>
-        <span class="n">scale</span><span class="o">=</span><span class="n">scale</span><span class="p">,</span>
+    <span class="n">iteration__append_feature_building_polygon__n100</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_gdb</span><span class="p">(</span>
+            <span class="n">script_source_name</span><span class="o">=</span><span class="n">iteration</span><span class="p">,</span>
+            <span class="n">description</span><span class="o">=</span><span class="s2">&quot;append_feature_building_polygon&quot;</span><span class="p">,</span>
+        <span class="p">)</span>
     <span class="p">)</span>
 
     <span class="n">iteration__building_points_iteration_selection_append__n100</span> <span class="o">=</span> <span class="p">(</span>
-        <span class="n">generate_file_name_gdb</span><span class="p">(</span>
-            <span class="n">function_name</span><span class="o">=</span><span class="n">iteration</span><span class="p">,</span>
+        <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_gdb</span><span class="p">(</span>
+            <span class="n">script_source_name</span><span class="o">=</span><span class="n">iteration</span><span class="p">,</span>
             <span class="n">description</span><span class="o">=</span><span class="s2">&quot;building_points_iteration_selection_append&quot;</span><span class="p">,</span>
-            <span class="n">scale</span><span class="o">=</span><span class="n">scale</span><span class="p">,</span>
         <span class="p">)</span>
     <span class="p">)</span>
 
     <span class="n">iteration__building_polygon_iteration_selection_append__n100</span> <span class="o">=</span> <span class="p">(</span>
-        <span class="n">generate_file_name_gdb</span><span class="p">(</span>
-            <span class="n">function_name</span><span class="o">=</span><span class="n">iteration</span><span class="p">,</span>
+        <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_gdb</span><span class="p">(</span>
+            <span class="n">script_source_name</span><span class="o">=</span><span class="n">iteration</span><span class="p">,</span>
             <span class="n">description</span><span class="o">=</span><span class="s2">&quot;building_polygon_iteration_selection_append&quot;</span><span class="p">,</span>
-            <span class="n">scale</span><span class="o">=</span><span class="n">scale</span><span class="p">,</span>
         <span class="p">)</span>
     <span class="p">)</span>
 
-    <span class="n">iteration__building_points_present_partition__n100</span> <span class="o">=</span> <span class="n">generate_file_name_gdb</span><span class="p">(</span>
-        <span class="n">function_name</span><span class="o">=</span><span class="n">iteration</span><span class="p">,</span>
-        <span class="n">description</span><span class="o">=</span><span class="s2">&quot;building_points_present_partition&quot;</span><span class="p">,</span>
-        <span class="n">scale</span><span class="o">=</span><span class="n">scale</span><span class="p">,</span>
+    <span class="n">iteration__building_points_present_partition__n100</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_gdb</span><span class="p">(</span>
+            <span class="n">script_source_name</span><span class="o">=</span><span class="n">iteration</span><span class="p">,</span>
+            <span class="n">description</span><span class="o">=</span><span class="s2">&quot;building_points_present_partition&quot;</span><span class="p">,</span>
+        <span class="p">)</span>
     <span class="p">)</span>
 
-    <span class="n">iteration__building_polygon_present_partition__n100</span> <span class="o">=</span> <span class="n">generate_file_name_gdb</span><span class="p">(</span>
-        <span class="n">function_name</span><span class="o">=</span><span class="n">iteration</span><span class="p">,</span>
-        <span class="n">description</span><span class="o">=</span><span class="s2">&quot;building_polygon_present_partition&quot;</span><span class="p">,</span>
-        <span class="n">scale</span><span class="o">=</span><span class="n">scale</span><span class="p">,</span>
+    <span class="n">iteration__building_polygon_present_partition__n100</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_gdb</span><span class="p">(</span>
+            <span class="n">script_source_name</span><span class="o">=</span><span class="n">iteration</span><span class="p">,</span>
+            <span class="n">description</span><span class="o">=</span><span class="s2">&quot;building_polygon_present_partition&quot;</span><span class="p">,</span>
+        <span class="p">)</span>
     <span class="p">)</span>
 
-    <span class="n">iteration__building_points_base_partition_selection__n100</span> <span class="o">=</span> <span class="n">generate_file_name_gdb</span><span class="p">(</span>
-        <span class="n">function_name</span><span class="o">=</span><span class="n">iteration</span><span class="p">,</span>
-        <span class="n">description</span><span class="o">=</span><span class="s2">&quot;building_points_base_partition_selection&quot;</span><span class="p">,</span>
-        <span class="n">scale</span><span class="o">=</span><span class="n">scale</span><span class="p">,</span>
+    <span class="n">iteration__building_points_base_partition_selection__n100</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_gdb</span><span class="p">(</span>
+            <span class="n">script_source_name</span><span class="o">=</span><span class="n">iteration</span><span class="p">,</span>
+            <span class="n">description</span><span class="o">=</span><span class="s2">&quot;building_points_base_partition_selection&quot;</span><span class="p">,</span>
+        <span class="p">)</span>
     <span class="p">)</span>
 
-    <span class="n">iteration__building_polygon_base_partition_selection__n100</span> <span class="o">=</span> <span class="n">generate_file_name_gdb</span><span class="p">(</span>
-        <span class="n">function_name</span><span class="o">=</span><span class="n">iteration</span><span class="p">,</span>
-        <span class="n">description</span><span class="o">=</span><span class="s2">&quot;building_polygon_base_partition_selection&quot;</span><span class="p">,</span>
-        <span class="n">scale</span><span class="o">=</span><span class="n">scale</span><span class="p">,</span>
+    <span class="n">iteration__building_polygon_base_partition_selection__n100</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_gdb</span><span class="p">(</span>
+            <span class="n">script_source_name</span><span class="o">=</span><span class="n">iteration</span><span class="p">,</span>
+            <span class="n">description</span><span class="o">=</span><span class="s2">&quot;building_polygon_base_partition_selection&quot;</span><span class="p">,</span>
+        <span class="p">)</span>
     <span class="p">)</span>
 
     <span class="c1">###################################################</span>
@@ -843,98 +742,103 @@
 
     <span class="c1"># Functon: hospital_church_selections</span>
 
-    <span class="n">hospital_church_selections__hospital_points__n100</span> <span class="o">=</span> <span class="n">generate_file_name_gdb</span><span class="p">(</span>
-        <span class="n">function_name</span><span class="o">=</span><span class="n">hospital_church_selections</span><span class="p">,</span>
-        <span class="n">description</span><span class="o">=</span><span class="s2">&quot;hospital_points&quot;</span><span class="p">,</span>
-        <span class="n">scale</span><span class="o">=</span><span class="n">scale</span><span class="p">,</span>
+    <span class="n">hospital_church_selections__hospital_points__n100</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_gdb</span><span class="p">(</span>
+            <span class="n">script_source_name</span><span class="o">=</span><span class="n">hospital_church_selections</span><span class="p">,</span>
+            <span class="n">description</span><span class="o">=</span><span class="s2">&quot;hospital_points&quot;</span><span class="p">,</span>
+        <span class="p">)</span>
     <span class="p">)</span>
 
-    <span class="n">hospital_church_selections__church_points__n100</span> <span class="o">=</span> <span class="n">generate_file_name_gdb</span><span class="p">(</span>
-        <span class="n">function_name</span><span class="o">=</span><span class="n">hospital_church_selections</span><span class="p">,</span>
-        <span class="n">description</span><span class="o">=</span><span class="s2">&quot;church_points&quot;</span><span class="p">,</span>
-        <span class="n">scale</span><span class="o">=</span><span class="n">scale</span><span class="p">,</span>
+    <span class="n">hospital_church_selections__church_points__n100</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_gdb</span><span class="p">(</span>
+            <span class="n">script_source_name</span><span class="o">=</span><span class="n">hospital_church_selections</span><span class="p">,</span>
+            <span class="n">description</span><span class="o">=</span><span class="s2">&quot;church_points&quot;</span><span class="p">,</span>
+        <span class="p">)</span>
     <span class="p">)</span>
 
     <span class="c1"># Function: find_clusters</span>
 
-    <span class="n">find_clusters__all_hospital_clusters__n100</span> <span class="o">=</span> <span class="n">generate_file_name_gdb</span><span class="p">(</span>
-        <span class="n">function_name</span><span class="o">=</span><span class="n">find_clusters</span><span class="p">,</span>
+    <span class="n">find_clusters__all_hospital_clusters__n100</span> <span class="o">=</span> <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_gdb</span><span class="p">(</span>
+        <span class="n">script_source_name</span><span class="o">=</span><span class="n">find_clusters</span><span class="p">,</span>
         <span class="n">description</span><span class="o">=</span><span class="s2">&quot;all_hospital_clusters&quot;</span><span class="p">,</span>
-        <span class="n">scale</span><span class="o">=</span><span class="n">scale</span><span class="p">,</span>
     <span class="p">)</span>
 
-    <span class="n">find_clusters__all_church_clusters__n100</span> <span class="o">=</span> <span class="n">generate_file_name_gdb</span><span class="p">(</span>
-        <span class="n">function_name</span><span class="o">=</span><span class="n">find_clusters</span><span class="p">,</span>
+    <span class="n">find_clusters__all_church_clusters__n100</span> <span class="o">=</span> <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_gdb</span><span class="p">(</span>
+        <span class="n">script_source_name</span><span class="o">=</span><span class="n">find_clusters</span><span class="p">,</span>
         <span class="n">description</span><span class="o">=</span><span class="s2">&quot;all_church_clusters&quot;</span><span class="p">,</span>
-        <span class="n">scale</span><span class="o">=</span><span class="n">scale</span><span class="p">,</span>
     <span class="p">)</span>
 
-    <span class="n">find_clusters__hospital_points_not_in_cluster__n100</span> <span class="o">=</span> <span class="n">generate_file_name_gdb</span><span class="p">(</span>
-        <span class="n">function_name</span><span class="o">=</span><span class="n">find_clusters</span><span class="p">,</span>
-        <span class="n">description</span><span class="o">=</span><span class="s2">&quot;hospital_points_not_in_cluster&quot;</span><span class="p">,</span>
-        <span class="n">scale</span><span class="o">=</span><span class="n">scale</span><span class="p">,</span>
+    <span class="n">find_clusters__hospital_points_not_in_cluster__n100</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_gdb</span><span class="p">(</span>
+            <span class="n">script_source_name</span><span class="o">=</span><span class="n">find_clusters</span><span class="p">,</span>
+            <span class="n">description</span><span class="o">=</span><span class="s2">&quot;hospital_points_not_in_cluster&quot;</span><span class="p">,</span>
+        <span class="p">)</span>
     <span class="p">)</span>
 
-    <span class="n">find_clusters__hospital_points_in_cluster__n100</span> <span class="o">=</span> <span class="n">generate_file_name_gdb</span><span class="p">(</span>
-        <span class="n">function_name</span><span class="o">=</span><span class="n">find_clusters</span><span class="p">,</span>
-        <span class="n">description</span><span class="o">=</span><span class="s2">&quot;hospital_points_in_cluster&quot;</span><span class="p">,</span>
-        <span class="n">scale</span><span class="o">=</span><span class="n">scale</span><span class="p">,</span>
+    <span class="n">find_clusters__hospital_points_in_cluster__n100</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_gdb</span><span class="p">(</span>
+            <span class="n">script_source_name</span><span class="o">=</span><span class="n">find_clusters</span><span class="p">,</span>
+            <span class="n">description</span><span class="o">=</span><span class="s2">&quot;hospital_points_in_cluster&quot;</span><span class="p">,</span>
+        <span class="p">)</span>
     <span class="p">)</span>
 
-    <span class="n">find_clusters__church_points_not_in_cluster__n100</span> <span class="o">=</span> <span class="n">generate_file_name_gdb</span><span class="p">(</span>
-        <span class="n">function_name</span><span class="o">=</span><span class="n">find_clusters</span><span class="p">,</span>
-        <span class="n">description</span><span class="o">=</span><span class="s2">&quot;church_points_not_in_cluster&quot;</span><span class="p">,</span>
-        <span class="n">scale</span><span class="o">=</span><span class="n">scale</span><span class="p">,</span>
+    <span class="n">find_clusters__church_points_not_in_cluster__n100</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_gdb</span><span class="p">(</span>
+            <span class="n">script_source_name</span><span class="o">=</span><span class="n">find_clusters</span><span class="p">,</span>
+            <span class="n">description</span><span class="o">=</span><span class="s2">&quot;church_points_not_in_cluster&quot;</span><span class="p">,</span>
+        <span class="p">)</span>
     <span class="p">)</span>
 
-    <span class="n">find_clusters__church_points_in_cluster__n100</span> <span class="o">=</span> <span class="n">generate_file_name_gdb</span><span class="p">(</span>
-        <span class="n">function_name</span><span class="o">=</span><span class="n">find_clusters</span><span class="p">,</span>
+    <span class="n">find_clusters__church_points_in_cluster__n100</span> <span class="o">=</span> <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_gdb</span><span class="p">(</span>
+        <span class="n">script_source_name</span><span class="o">=</span><span class="n">find_clusters</span><span class="p">,</span>
         <span class="n">description</span><span class="o">=</span><span class="s2">&quot;church_points_in_cluster&quot;</span><span class="p">,</span>
-        <span class="n">scale</span><span class="o">=</span><span class="n">scale</span><span class="p">,</span>
     <span class="p">)</span>
 
     <span class="c1"># Function: reducing_clusters</span>
     <span class="n">reducing_clusters__minimum_bounding_geometry_hospital__n100</span> <span class="o">=</span> <span class="p">(</span>
-        <span class="n">generate_file_name_gdb</span><span class="p">(</span>
-            <span class="n">function_name</span><span class="o">=</span><span class="n">reducing_clusters</span><span class="p">,</span>
+        <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_gdb</span><span class="p">(</span>
+            <span class="n">script_source_name</span><span class="o">=</span><span class="n">reducing_clusters</span><span class="p">,</span>
             <span class="n">description</span><span class="o">=</span><span class="s2">&quot;minimum_bounding_geometry_hospital&quot;</span><span class="p">,</span>
-            <span class="n">scale</span><span class="o">=</span><span class="n">scale</span><span class="p">,</span>
         <span class="p">)</span>
     <span class="p">)</span>
-    <span class="n">reducing_clusters__feature_to_point_hospital__n100</span> <span class="o">=</span> <span class="n">generate_file_name_gdb</span><span class="p">(</span>
-        <span class="n">function_name</span><span class="o">=</span><span class="n">reducing_clusters</span><span class="p">,</span>
-        <span class="n">description</span><span class="o">=</span><span class="s2">&quot;feature_to_point_hospital&quot;</span><span class="p">,</span>
-        <span class="n">scale</span><span class="o">=</span><span class="n">scale</span><span class="p">,</span>
+    <span class="n">reducing_clusters__feature_to_point_hospital__n100</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_gdb</span><span class="p">(</span>
+            <span class="n">script_source_name</span><span class="o">=</span><span class="n">reducing_clusters</span><span class="p">,</span>
+            <span class="n">description</span><span class="o">=</span><span class="s2">&quot;feature_to_point_hospital&quot;</span><span class="p">,</span>
+        <span class="p">)</span>
     <span class="p">)</span>
 
-    <span class="n">reducing_clusters__minimum_bounding_geometry_church__n100</span> <span class="o">=</span> <span class="n">generate_file_name_gdb</span><span class="p">(</span>
-        <span class="n">function_name</span><span class="o">=</span><span class="n">reducing_clusters</span><span class="p">,</span>
-        <span class="n">description</span><span class="o">=</span><span class="s2">&quot;minimum_bounding_geometry_church&quot;</span><span class="p">,</span>
-        <span class="n">scale</span><span class="o">=</span><span class="n">scale</span><span class="p">,</span>
+    <span class="n">reducing_clusters__minimum_bounding_geometry_church__n100</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_gdb</span><span class="p">(</span>
+            <span class="n">script_source_name</span><span class="o">=</span><span class="n">reducing_clusters</span><span class="p">,</span>
+            <span class="n">description</span><span class="o">=</span><span class="s2">&quot;minimum_bounding_geometry_church&quot;</span><span class="p">,</span>
+        <span class="p">)</span>
     <span class="p">)</span>
 
-    <span class="n">reducing_clusters__feature_to_point_church__n100</span> <span class="o">=</span> <span class="n">generate_file_name_gdb</span><span class="p">(</span>
-        <span class="n">function_name</span><span class="o">=</span><span class="n">reducing_clusters</span><span class="p">,</span>
-        <span class="n">description</span><span class="o">=</span><span class="s2">&quot;feature_to_point_church&quot;</span><span class="p">,</span>
-        <span class="n">scale</span><span class="o">=</span><span class="n">scale</span><span class="p">,</span>
+    <span class="n">reducing_clusters__feature_to_point_church__n100</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_gdb</span><span class="p">(</span>
+            <span class="n">script_source_name</span><span class="o">=</span><span class="n">reducing_clusters</span><span class="p">,</span>
+            <span class="n">description</span><span class="o">=</span><span class="s2">&quot;feature_to_point_church&quot;</span><span class="p">,</span>
+        <span class="p">)</span>
     <span class="p">)</span>
 
-    <span class="n">reducing_clusters__chosen_hospitals_from_cluster__n100</span> <span class="o">=</span> <span class="n">generate_file_name_gdb</span><span class="p">(</span>
-        <span class="n">function_name</span><span class="o">=</span><span class="n">reducing_clusters</span><span class="p">,</span>
-        <span class="n">description</span><span class="o">=</span><span class="s2">&quot;chosen_hospitals_from_cluster&quot;</span><span class="p">,</span>
-        <span class="n">scale</span><span class="o">=</span><span class="n">scale</span><span class="p">,</span>
+    <span class="n">reducing_clusters__chosen_hospitals_from_cluster__n100</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_gdb</span><span class="p">(</span>
+            <span class="n">script_source_name</span><span class="o">=</span><span class="n">reducing_clusters</span><span class="p">,</span>
+            <span class="n">description</span><span class="o">=</span><span class="s2">&quot;chosen_hospitals_from_cluster&quot;</span><span class="p">,</span>
+        <span class="p">)</span>
     <span class="p">)</span>
-    <span class="n">reducing_clusters__chosen_churches_from_cluster__n100</span> <span class="o">=</span> <span class="n">generate_file_name_gdb</span><span class="p">(</span>
-        <span class="n">function_name</span><span class="o">=</span><span class="n">reducing_clusters</span><span class="p">,</span>
-        <span class="n">description</span><span class="o">=</span><span class="s2">&quot;chosen_churches_from_cluster&quot;</span><span class="p">,</span>
-        <span class="n">scale</span><span class="o">=</span><span class="n">scale</span><span class="p">,</span>
+    <span class="n">reducing_clusters__chosen_churches_from_cluster__n100</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_gdb</span><span class="p">(</span>
+            <span class="n">script_source_name</span><span class="o">=</span><span class="n">reducing_clusters</span><span class="p">,</span>
+            <span class="n">description</span><span class="o">=</span><span class="s2">&quot;chosen_churches_from_cluster&quot;</span><span class="p">,</span>
+        <span class="p">)</span>
     <span class="p">)</span>
 
     <span class="n">reducing_clusters__reduced_hospital_and_church_points_2__n100</span> <span class="o">=</span> <span class="p">(</span>
-        <span class="n">generate_file_name_gdb</span><span class="p">(</span>
-            <span class="n">function_name</span><span class="o">=</span><span class="n">reducing_clusters</span><span class="p">,</span>
+        <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_gdb</span><span class="p">(</span>
+            <span class="n">script_source_name</span><span class="o">=</span><span class="n">reducing_clusters</span><span class="p">,</span>
             <span class="n">description</span><span class="o">=</span><span class="s2">&quot;reduced_hospital_and_church_points_2&quot;</span><span class="p">,</span>
-            <span class="n">scale</span><span class="o">=</span><span class="n">scale</span><span class="p">,</span>
         <span class="p">)</span>
     <span class="p">)</span>
 
@@ -943,10 +847,9 @@
     <span class="c1">########################################</span>
 
     <span class="n">propagate_displacement__bygningspunkt_pre_propogate_displacement__n100</span> <span class="o">=</span> <span class="p">(</span>
-        <span class="n">generate_file_name_gdb</span><span class="p">(</span>
-            <span class="n">function_name</span><span class="o">=</span><span class="n">propagate_displacement</span><span class="p">,</span>
+        <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_gdb</span><span class="p">(</span>
+            <span class="n">script_source_name</span><span class="o">=</span><span class="n">propagate_displacement</span><span class="p">,</span>
             <span class="n">description</span><span class="o">=</span><span class="s2">&quot;bygningspunkt_pre_propogate_displacement&quot;</span><span class="p">,</span>
-            <span class="n">scale</span><span class="o">=</span><span class="n">scale</span><span class="p">,</span>
         <span class="p">)</span>
     <span class="p">)</span>
 
@@ -954,77 +857,73 @@
     <span class="c1">########### ROADS TO POLYGON ###########</span>
     <span class="c1">########################################</span>
 
-    <span class="n">building_point_buffer_displacement__roads_study_area__n100</span> <span class="o">=</span> <span class="n">generate_file_name_gdb</span><span class="p">(</span>
-        <span class="n">function_name</span><span class="o">=</span><span class="n">building_point_buffer_displacement</span><span class="p">,</span>
-        <span class="n">description</span><span class="o">=</span><span class="s2">&quot;roads_study_area&quot;</span><span class="p">,</span>
-        <span class="n">scale</span><span class="o">=</span><span class="n">scale</span><span class="p">,</span>
+    <span class="n">building_point_buffer_displacement__roads_study_area__n100</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_gdb</span><span class="p">(</span>
+            <span class="n">script_source_name</span><span class="o">=</span><span class="n">building_point_buffer_displacement</span><span class="p">,</span>
+            <span class="n">description</span><span class="o">=</span><span class="s2">&quot;roads_study_area&quot;</span><span class="p">,</span>
+        <span class="p">)</span>
     <span class="p">)</span>
 
     <span class="n">building_point_buffer_displacement__begrensningskurve_study_area__n100</span> <span class="o">=</span> <span class="p">(</span>
-        <span class="n">generate_file_name_gdb</span><span class="p">(</span>
-            <span class="n">function_name</span><span class="o">=</span><span class="n">building_point_buffer_displacement</span><span class="p">,</span>
+        <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_gdb</span><span class="p">(</span>
+            <span class="n">script_source_name</span><span class="o">=</span><span class="n">building_point_buffer_displacement</span><span class="p">,</span>
             <span class="n">description</span><span class="o">=</span><span class="s2">&quot;begrensningskurve_study_area&quot;</span><span class="p">,</span>
-            <span class="n">scale</span><span class="o">=</span><span class="n">scale</span><span class="p">,</span>
         <span class="p">)</span>
     <span class="p">)</span>
 
     <span class="n">building_point_buffer_displacement__buildings_study_area__n100</span> <span class="o">=</span> <span class="p">(</span>
-        <span class="n">generate_file_name_gdb</span><span class="p">(</span>
-            <span class="n">function_name</span><span class="o">=</span><span class="n">building_point_buffer_displacement</span><span class="p">,</span>
+        <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_gdb</span><span class="p">(</span>
+            <span class="n">script_source_name</span><span class="o">=</span><span class="n">building_point_buffer_displacement</span><span class="p">,</span>
             <span class="n">description</span><span class="o">=</span><span class="s2">&quot;buildings_study_area&quot;</span><span class="p">,</span>
-            <span class="n">scale</span><span class="o">=</span><span class="n">scale</span><span class="p">,</span>
         <span class="p">)</span>
     <span class="p">)</span>
 
-    <span class="n">building_point_buffer_displacement__selection_roads__n100</span> <span class="o">=</span> <span class="n">generate_file_name_gdb</span><span class="p">(</span>
-        <span class="n">function_name</span><span class="o">=</span><span class="n">building_point_buffer_displacement</span><span class="p">,</span>
-        <span class="n">description</span><span class="o">=</span><span class="s2">&quot;selection_roads&quot;</span><span class="p">,</span>
-        <span class="n">scale</span><span class="o">=</span><span class="n">scale</span><span class="p">,</span>
+    <span class="n">building_point_buffer_displacement__selection_roads__n100</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_gdb</span><span class="p">(</span>
+            <span class="n">script_source_name</span><span class="o">=</span><span class="n">building_point_buffer_displacement</span><span class="p">,</span>
+            <span class="n">description</span><span class="o">=</span><span class="s2">&quot;selection_roads&quot;</span><span class="p">,</span>
+        <span class="p">)</span>
     <span class="p">)</span>
 
     <span class="n">building_point_buffer_displacement__align_buffer_schema_to_template__n100</span> <span class="o">=</span> <span class="p">(</span>
-        <span class="n">generate_file_name_gdb</span><span class="p">(</span>
-            <span class="n">function_name</span><span class="o">=</span><span class="n">building_point_buffer_displacement</span><span class="p">,</span>
+        <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_gdb</span><span class="p">(</span>
+            <span class="n">script_source_name</span><span class="o">=</span><span class="n">building_point_buffer_displacement</span><span class="p">,</span>
             <span class="n">description</span><span class="o">=</span><span class="s2">&quot;align_buffer_schema_to_template&quot;</span><span class="p">,</span>
-            <span class="n">scale</span><span class="o">=</span><span class="n">scale</span><span class="p">,</span>
         <span class="p">)</span>
     <span class="p">)</span>
 
-    <span class="n">building_point_buffer_displacement__roads_buffer__n100</span> <span class="o">=</span> <span class="n">generate_file_name_gdb</span><span class="p">(</span>
-        <span class="n">function_name</span><span class="o">=</span><span class="n">building_point_buffer_displacement</span><span class="p">,</span>
-        <span class="n">description</span><span class="o">=</span><span class="s2">&quot;roads_buffer&quot;</span><span class="p">,</span>
-        <span class="n">scale</span><span class="o">=</span><span class="n">scale</span><span class="p">,</span>
+    <span class="n">building_point_buffer_displacement__roads_buffer__n100</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_gdb</span><span class="p">(</span>
+            <span class="n">script_source_name</span><span class="o">=</span><span class="n">building_point_buffer_displacement</span><span class="p">,</span>
+            <span class="n">description</span><span class="o">=</span><span class="s2">&quot;roads_buffer&quot;</span><span class="p">,</span>
+        <span class="p">)</span>
     <span class="p">)</span>
 
     <span class="n">building_point_buffer_displacement__roads_buffer_appended__n100</span> <span class="o">=</span> <span class="p">(</span>
-        <span class="n">generate_file_name_gdb</span><span class="p">(</span>
-            <span class="n">function_name</span><span class="o">=</span><span class="n">building_point_buffer_displacement</span><span class="p">,</span>
+        <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_gdb</span><span class="p">(</span>
+            <span class="n">script_source_name</span><span class="o">=</span><span class="n">building_point_buffer_displacement</span><span class="p">,</span>
             <span class="n">description</span><span class="o">=</span><span class="s2">&quot;roads_buffer_appended&quot;</span><span class="p">,</span>
-            <span class="n">scale</span><span class="o">=</span><span class="n">scale</span><span class="p">,</span>
         <span class="p">)</span>
     <span class="p">)</span>
 
     <span class="n">building_point_buffer_displacement__iteration_points_to_square_polygons__n100</span> <span class="o">=</span> <span class="p">(</span>
-        <span class="n">generate_file_name_gdb</span><span class="p">(</span>
-            <span class="n">function_name</span><span class="o">=</span><span class="n">building_point_buffer_displacement</span><span class="p">,</span>
+        <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_gdb</span><span class="p">(</span>
+            <span class="n">script_source_name</span><span class="o">=</span><span class="n">building_point_buffer_displacement</span><span class="p">,</span>
             <span class="n">description</span><span class="o">=</span><span class="s2">&quot;iteration_points_to_square_polygons&quot;</span><span class="p">,</span>
-            <span class="n">scale</span><span class="o">=</span><span class="n">scale</span><span class="p">,</span>
         <span class="p">)</span>
     <span class="p">)</span>
 
     <span class="n">building_point_buffer_displacement__building_polygon_erased__n100</span> <span class="o">=</span> <span class="p">(</span>
-        <span class="n">generate_file_name_gdb</span><span class="p">(</span>
-            <span class="n">function_name</span><span class="o">=</span><span class="n">building_point_buffer_displacement</span><span class="p">,</span>
+        <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_gdb</span><span class="p">(</span>
+            <span class="n">script_source_name</span><span class="o">=</span><span class="n">building_point_buffer_displacement</span><span class="p">,</span>
             <span class="n">description</span><span class="o">=</span><span class="s2">&quot;building_polygon_erased&quot;</span><span class="p">,</span>
-            <span class="n">scale</span><span class="o">=</span><span class="n">scale</span><span class="p">,</span>
         <span class="p">)</span>
     <span class="p">)</span>
 
     <span class="n">building_point_buffer_displacement__displaced_building_points__n100</span> <span class="o">=</span> <span class="p">(</span>
-        <span class="n">generate_file_name_gdb</span><span class="p">(</span>
-            <span class="n">function_name</span><span class="o">=</span><span class="n">building_point_buffer_displacement</span><span class="p">,</span>
+        <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_gdb</span><span class="p">(</span>
+            <span class="n">script_source_name</span><span class="o">=</span><span class="n">building_point_buffer_displacement</span><span class="p">,</span>
             <span class="n">description</span><span class="o">=</span><span class="s2">&quot;displaced_building_points&quot;</span><span class="p">,</span>
-            <span class="n">scale</span><span class="o">=</span><span class="n">scale</span><span class="p">,</span>
         <span class="p">)</span>
     <span class="p">)</span>
 
@@ -1033,10 +932,9 @@
     <span class="c1">#########################################</span>
 
     <span class="n">points_to_polygon__transform_points_to_square_polygons__n100</span> <span class="o">=</span> <span class="p">(</span>
-        <span class="n">generate_file_name_gdb</span><span class="p">(</span>
-            <span class="n">function_name</span><span class="o">=</span><span class="n">points_to_polygon</span><span class="p">,</span>
+        <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_gdb</span><span class="p">(</span>
+            <span class="n">script_source_name</span><span class="o">=</span><span class="n">points_to_polygon</span><span class="p">,</span>
             <span class="n">description</span><span class="o">=</span><span class="s2">&quot;transform_points_to_square_polygons&quot;</span><span class="p">,</span>
-            <span class="n">scale</span><span class="o">=</span><span class="n">scale</span><span class="p">,</span>
         <span class="p">)</span>
     <span class="p">)</span>
 
@@ -1047,134 +945,137 @@
     <span class="c1"># Function: rbc_selection</span>
 
     <span class="n">rbc_selection__selection_area_resolve_building_conflicts__n100</span> <span class="o">=</span> <span class="p">(</span>
-        <span class="n">generate_file_name_gdb</span><span class="p">(</span>
-            <span class="n">function_name</span><span class="o">=</span><span class="n">rbc_selection</span><span class="p">,</span>
+        <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_gdb</span><span class="p">(</span>
+            <span class="n">script_source_name</span><span class="o">=</span><span class="n">rbc_selection</span><span class="p">,</span>
             <span class="n">description</span><span class="o">=</span><span class="s2">&quot;selection_area_resolve_building_conflicts&quot;</span><span class="p">,</span>
-            <span class="n">scale</span><span class="o">=</span><span class="n">scale</span><span class="p">,</span>
         <span class="p">)</span>
     <span class="p">)</span>
 
-    <span class="n">rbc_selection__grunnriss_selection_rbc__n100</span> <span class="o">=</span> <span class="n">generate_file_name_gdb</span><span class="p">(</span>
-        <span class="n">function_name</span><span class="o">=</span><span class="n">rbc_selection</span><span class="p">,</span>
+    <span class="n">rbc_selection__grunnriss_selection_rbc__n100</span> <span class="o">=</span> <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_gdb</span><span class="p">(</span>
+        <span class="n">script_source_name</span><span class="o">=</span><span class="n">rbc_selection</span><span class="p">,</span>
         <span class="n">description</span><span class="o">=</span><span class="s2">&quot;grunnriss_selection_rbc&quot;</span><span class="p">,</span>
-        <span class="n">scale</span><span class="o">=</span><span class="n">scale</span><span class="p">,</span>
     <span class="p">)</span>
 
-    <span class="n">rbc_selection__veg_sti_selection_rbc_rbc__n100</span> <span class="o">=</span> <span class="n">generate_file_name_gdb</span><span class="p">(</span>
-        <span class="n">function_name</span><span class="o">=</span><span class="n">rbc_selection</span><span class="p">,</span>
-        <span class="n">description</span><span class="o">=</span><span class="s2">&quot;veg_sti_selection_rbc&quot;</span><span class="p">,</span>
-        <span class="n">scale</span><span class="o">=</span><span class="n">scale</span><span class="p">,</span>
+    <span class="n">rbc_selection__veg_sti_selection_rbc_rbc__n100</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_gdb</span><span class="p">(</span>
+            <span class="n">script_source_name</span><span class="o">=</span><span class="n">rbc_selection</span><span class="p">,</span>
+            <span class="n">description</span><span class="o">=</span><span class="s2">&quot;veg_sti_selection_rbc&quot;</span><span class="p">,</span>
+        <span class="p">)</span>
     <span class="p">)</span>
 
-    <span class="n">rbc_selection__bygningspunkt_selection_rbc__n100</span> <span class="o">=</span> <span class="n">generate_file_name_gdb</span><span class="p">(</span>
-        <span class="n">function_name</span><span class="o">=</span><span class="n">rbc_selection</span><span class="p">,</span>
-        <span class="n">description</span><span class="o">=</span><span class="s2">&quot;bygningspunkt_selection_rbc&quot;</span><span class="p">,</span>
-        <span class="n">scale</span><span class="o">=</span><span class="n">scale</span><span class="p">,</span>
+    <span class="n">rbc_selection__bygningspunkt_selection_rbc__n100</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_gdb</span><span class="p">(</span>
+            <span class="n">script_source_name</span><span class="o">=</span><span class="n">rbc_selection</span><span class="p">,</span>
+            <span class="n">description</span><span class="o">=</span><span class="s2">&quot;bygningspunkt_selection_rbc&quot;</span><span class="p">,</span>
+        <span class="p">)</span>
     <span class="p">)</span>
 
-    <span class="n">rbc_selection__begrensningskurve_selection_rbc__n100</span> <span class="o">=</span> <span class="n">generate_file_name_gdb</span><span class="p">(</span>
-        <span class="n">function_name</span><span class="o">=</span><span class="n">rbc_selection</span><span class="p">,</span>
-        <span class="n">description</span><span class="o">=</span><span class="s2">&quot;begrensningskurve_selection_rbc&quot;</span><span class="p">,</span>
-        <span class="n">scale</span><span class="o">=</span><span class="n">scale</span><span class="p">,</span>
+    <span class="n">rbc_selection__begrensningskurve_selection_rbc__n100</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_gdb</span><span class="p">(</span>
+            <span class="n">script_source_name</span><span class="o">=</span><span class="n">rbc_selection</span><span class="p">,</span>
+            <span class="n">description</span><span class="o">=</span><span class="s2">&quot;begrensningskurve_selection_rbc&quot;</span><span class="p">,</span>
+        <span class="p">)</span>
     <span class="p">)</span>
 
-    <span class="n">rbc_selection__drawn_polygon_selection_rbc__n100</span> <span class="o">=</span> <span class="n">generate_file_name_gdb</span><span class="p">(</span>
-        <span class="n">function_name</span><span class="o">=</span><span class="n">rbc_selection</span><span class="p">,</span>
-        <span class="n">description</span><span class="o">=</span><span class="s2">&quot;drawn_polygon_selection_rbc&quot;</span><span class="p">,</span>
-        <span class="n">scale</span><span class="o">=</span><span class="n">scale</span><span class="p">,</span>
+    <span class="n">rbc_selection__drawn_polygon_selection_rbc__n100</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_gdb</span><span class="p">(</span>
+            <span class="n">script_source_name</span><span class="o">=</span><span class="n">rbc_selection</span><span class="p">,</span>
+            <span class="n">description</span><span class="o">=</span><span class="s2">&quot;drawn_polygon_selection_rbc&quot;</span><span class="p">,</span>
+        <span class="p">)</span>
     <span class="p">)</span>
 
     <span class="c1"># Function: apply_symbology</span>
 
-    <span class="n">apply_symbology__bygningspunkt_selection__n100_lyrx</span> <span class="o">=</span> <span class="n">generate_file_name_lyrx</span><span class="p">(</span>
-        <span class="n">function_name</span><span class="o">=</span><span class="n">apply_symbology</span><span class="p">,</span>
-        <span class="n">description</span><span class="o">=</span><span class="s2">&quot;bygningspunkt_selection&quot;</span><span class="p">,</span>
-        <span class="n">scale</span><span class="o">=</span><span class="n">scale</span><span class="p">,</span>
+    <span class="n">apply_symbology__bygningspunkt_selection__n100_lyrx</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_lyrx</span><span class="p">(</span>
+            <span class="n">script_source_name</span><span class="o">=</span><span class="n">apply_symbology</span><span class="p">,</span>
+            <span class="n">description</span><span class="o">=</span><span class="s2">&quot;bygningspunkt_selection&quot;</span><span class="p">,</span>
+        <span class="p">)</span>
     <span class="p">)</span>
 
-    <span class="n">apply_symbology__grunnriss_selection__n100_lyrx</span> <span class="o">=</span> <span class="n">generate_file_name_lyrx</span><span class="p">(</span>
-        <span class="n">function_name</span><span class="o">=</span><span class="n">apply_symbology</span><span class="p">,</span>
-        <span class="n">description</span><span class="o">=</span><span class="s2">&quot;grunnriss_selection&quot;</span><span class="p">,</span>
-        <span class="n">scale</span><span class="o">=</span><span class="n">scale</span><span class="p">,</span>
+    <span class="n">apply_symbology__grunnriss_selection__n100_lyrx</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_lyrx</span><span class="p">(</span>
+            <span class="n">script_source_name</span><span class="o">=</span><span class="n">apply_symbology</span><span class="p">,</span>
+            <span class="n">description</span><span class="o">=</span><span class="s2">&quot;grunnriss_selection&quot;</span><span class="p">,</span>
+        <span class="p">)</span>
     <span class="p">)</span>
 
-    <span class="n">apply_symbology__veg_sti_selection__n100_lyrx</span> <span class="o">=</span> <span class="n">generate_file_name_lyrx</span><span class="p">(</span>
-        <span class="n">function_name</span><span class="o">=</span><span class="n">apply_symbology</span><span class="p">,</span>
-        <span class="n">description</span><span class="o">=</span><span class="s2">&quot;veg_sti_selection&quot;</span><span class="p">,</span>
-        <span class="n">scale</span><span class="o">=</span><span class="n">scale</span><span class="p">,</span>
+    <span class="n">apply_symbology__veg_sti_selection__n100_lyrx</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_lyrx</span><span class="p">(</span>
+            <span class="n">script_source_name</span><span class="o">=</span><span class="n">apply_symbology</span><span class="p">,</span>
+            <span class="n">description</span><span class="o">=</span><span class="s2">&quot;veg_sti_selection&quot;</span><span class="p">,</span>
+        <span class="p">)</span>
     <span class="p">)</span>
 
-    <span class="n">apply_symbology__begrensningskurve_selection__n100_lyrx</span> <span class="o">=</span> <span class="n">generate_file_name_lyrx</span><span class="p">(</span>
-        <span class="n">function_name</span><span class="o">=</span><span class="n">apply_symbology</span><span class="p">,</span>
-        <span class="n">description</span><span class="o">=</span><span class="s2">&quot;begrensningskurve_selection&quot;</span><span class="p">,</span>
-        <span class="n">scale</span><span class="o">=</span><span class="n">scale</span><span class="p">,</span>
+    <span class="n">apply_symbology__begrensningskurve_selection__n100_lyrx</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_lyrx</span><span class="p">(</span>
+            <span class="n">script_source_name</span><span class="o">=</span><span class="n">apply_symbology</span><span class="p">,</span>
+            <span class="n">description</span><span class="o">=</span><span class="s2">&quot;begrensningskurve_selection&quot;</span><span class="p">,</span>
+        <span class="p">)</span>
     <span class="p">)</span>
 
-    <span class="n">apply_symbology__drawn_polygon_selection__n100_lyrx</span> <span class="o">=</span> <span class="n">generate_file_name_lyrx</span><span class="p">(</span>
-        <span class="n">function_name</span><span class="o">=</span><span class="n">apply_symbology</span><span class="p">,</span>
-        <span class="n">description</span><span class="o">=</span><span class="s2">&quot;drawn_polygon_selection&quot;</span><span class="p">,</span>
-        <span class="n">scale</span><span class="o">=</span><span class="n">scale</span><span class="p">,</span>
+    <span class="n">apply_symbology__drawn_polygon_selection__n100_lyrx</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_lyrx</span><span class="p">(</span>
+            <span class="n">script_source_name</span><span class="o">=</span><span class="n">apply_symbology</span><span class="p">,</span>
+            <span class="n">description</span><span class="o">=</span><span class="s2">&quot;drawn_polygon_selection&quot;</span><span class="p">,</span>
+        <span class="p">)</span>
     <span class="p">)</span>
 
     <span class="c1"># Function: resolve_building_conflicts</span>
 
-    <span class="n">resolve_building_conflicts__drawn_polygons_result_1__n100</span> <span class="o">=</span> <span class="n">generate_file_name_gdb</span><span class="p">(</span>
-        <span class="n">function_name</span><span class="o">=</span><span class="n">resolve_building_conflicts</span><span class="p">,</span>
-        <span class="n">description</span><span class="o">=</span><span class="s2">&quot;drawn_polygons_result_1&quot;</span><span class="p">,</span>
-        <span class="n">scale</span><span class="o">=</span><span class="n">scale</span><span class="p">,</span>
+    <span class="n">resolve_building_conflicts__drawn_polygons_result_1__n100</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_gdb</span><span class="p">(</span>
+            <span class="n">script_source_name</span><span class="o">=</span><span class="n">resolve_building_conflicts</span><span class="p">,</span>
+            <span class="n">description</span><span class="o">=</span><span class="s2">&quot;drawn_polygons_result_1&quot;</span><span class="p">,</span>
+        <span class="p">)</span>
     <span class="p">)</span>
 
     <span class="n">resolve_building_conflicts__drawn_polygon_RBC_result_1__n100_lyrx</span> <span class="o">=</span> <span class="p">(</span>
-        <span class="n">generate_file_name_lyrx</span><span class="p">(</span>
-            <span class="n">function_name</span><span class="o">=</span><span class="n">resolve_building_conflicts</span><span class="p">,</span>
+        <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_lyrx</span><span class="p">(</span>
+            <span class="n">script_source_name</span><span class="o">=</span><span class="n">resolve_building_conflicts</span><span class="p">,</span>
             <span class="n">description</span><span class="o">=</span><span class="s2">&quot;drawn_polygon_RBC_result_1&quot;</span><span class="p">,</span>
-            <span class="n">scale</span><span class="o">=</span><span class="n">scale</span><span class="p">,</span>
         <span class="p">)</span>
     <span class="p">)</span>
 
     <span class="n">resolve_building_conflicts__building_points_RBC_result_1__n100</span> <span class="o">=</span> <span class="p">(</span>
-        <span class="n">generate_file_name_gdb</span><span class="p">(</span>
-            <span class="n">function_name</span><span class="o">=</span><span class="n">resolve_building_conflicts</span><span class="p">,</span>
+        <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_gdb</span><span class="p">(</span>
+            <span class="n">script_source_name</span><span class="o">=</span><span class="n">resolve_building_conflicts</span><span class="p">,</span>
             <span class="n">description</span><span class="o">=</span><span class="s2">&quot;building_points_RBC_result_1&quot;</span><span class="p">,</span>
-            <span class="n">scale</span><span class="o">=</span><span class="n">scale</span><span class="p">,</span>
         <span class="p">)</span>
     <span class="p">)</span>
 
     <span class="n">resolve_building_conflicts__building_points_RBC_result_2__n100</span> <span class="o">=</span> <span class="p">(</span>
-        <span class="n">generate_file_name_gdb</span><span class="p">(</span>
-            <span class="n">function_name</span><span class="o">=</span><span class="n">resolve_building_conflicts</span><span class="p">,</span>
+        <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_gdb</span><span class="p">(</span>
+            <span class="n">script_source_name</span><span class="o">=</span><span class="n">resolve_building_conflicts</span><span class="p">,</span>
             <span class="n">description</span><span class="o">=</span><span class="s2">&quot;building_points_RBC_result_2&quot;</span><span class="p">,</span>
-            <span class="n">scale</span><span class="o">=</span><span class="n">scale</span><span class="p">,</span>
         <span class="p">)</span>
     <span class="p">)</span>
 
     <span class="n">resolve_building_conflicts__building_points_RBC_result_1__n100_lyrx</span> <span class="o">=</span> <span class="p">(</span>
-        <span class="n">generate_file_name_lyrx</span><span class="p">(</span>
-            <span class="n">function_name</span><span class="o">=</span><span class="n">resolve_building_conflicts</span><span class="p">,</span>
+        <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_lyrx</span><span class="p">(</span>
+            <span class="n">script_source_name</span><span class="o">=</span><span class="n">resolve_building_conflicts</span><span class="p">,</span>
             <span class="n">description</span><span class="o">=</span><span class="s2">&quot;building_points_RBC_result_1&quot;</span><span class="p">,</span>
-            <span class="n">scale</span><span class="o">=</span><span class="n">scale</span><span class="p">,</span>
         <span class="p">)</span>
     <span class="p">)</span>
 
     <span class="n">resolve_building_conflicts__building_points_RBC_result_2__n100_lyrx</span> <span class="o">=</span> <span class="p">(</span>
-        <span class="n">generate_file_name_lyrx</span><span class="p">(</span>
-            <span class="n">function_name</span><span class="o">=</span><span class="n">resolve_building_conflicts</span><span class="p">,</span>
+        <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_lyrx</span><span class="p">(</span>
+            <span class="n">script_source_name</span><span class="o">=</span><span class="n">resolve_building_conflicts</span><span class="p">,</span>
             <span class="n">description</span><span class="o">=</span><span class="s2">&quot;building_points_RBC_result_2&quot;</span><span class="p">,</span>
-            <span class="n">scale</span><span class="o">=</span><span class="n">scale</span><span class="p">,</span>
         <span class="p">)</span>
     <span class="p">)</span>
 
-    <span class="n">resolve_building_conflicts__drawn_polygons_result_2__n100</span> <span class="o">=</span> <span class="n">generate_file_name_gdb</span><span class="p">(</span>
-        <span class="n">function_name</span><span class="o">=</span><span class="n">resolve_building_conflicts</span><span class="p">,</span>
-        <span class="n">description</span><span class="o">=</span><span class="s2">&quot;drawn_polygons_result_2&quot;</span><span class="p">,</span>
-        <span class="n">scale</span><span class="o">=</span><span class="n">scale</span><span class="p">,</span>
+    <span class="n">resolve_building_conflicts__drawn_polygons_result_2__n100</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_gdb</span><span class="p">(</span>
+            <span class="n">script_source_name</span><span class="o">=</span><span class="n">resolve_building_conflicts</span><span class="p">,</span>
+            <span class="n">description</span><span class="o">=</span><span class="s2">&quot;drawn_polygons_result_2&quot;</span><span class="p">,</span>
+        <span class="p">)</span>
     <span class="p">)</span>
 
     <span class="n">resolve_building_conflicts__drawn_polygon_RBC_result_2__n100_lyrx</span> <span class="o">=</span> <span class="p">(</span>
-        <span class="n">generate_file_name_lyrx</span><span class="p">(</span>
-            <span class="n">function_name</span><span class="o">=</span><span class="n">resolve_building_conflicts</span><span class="p">,</span>
+        <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_lyrx</span><span class="p">(</span>
+            <span class="n">script_source_name</span><span class="o">=</span><span class="n">resolve_building_conflicts</span><span class="p">,</span>
             <span class="n">description</span><span class="o">=</span><span class="s2">&quot;drawn_polygon_RBC_result_2&quot;</span><span class="p">,</span>
-            <span class="n">scale</span><span class="o">=</span><span class="n">scale</span><span class="p">,</span>
         <span class="p">)</span>
     <span class="p">)</span></div>
 

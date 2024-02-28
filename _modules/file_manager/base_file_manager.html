@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>file_manager.base_file_manager &mdash; Automatisk Generalisering 0.0.1 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=80d5e7a1" />
+      <link rel="stylesheet" type="text/css" href="../../_static/css/theme.css?v=19f00094" />
+      <link rel="stylesheet" type="text/css" href="../../_static/custom.css" />
+
+  
+  <!--[if lt IE 9]>
+    <script src="../../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script src="../../_static/jquery.js?v=5d32c60e"></script>
+        <script src="../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+        <script src="../../_static/documentation_options.js?v=d45e8c67"></script>
+        <script src="../../_static/doctools.js?v=888ff710"></script>
+        <script src="../../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../index.html" class="icon icon-home">
+            Automatisk Generalisering
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../generated_docs/custom_tools.html">custom_tools package</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../generated_docs/env_setup.html">env_setup package</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../generated_docs/file_manager.html">file_manager package</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../generated_docs/generalization.n100.building.html">generalization.n100.building package</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../generated_docs/input_data.html">input_data package</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../generated_docs/modules.html">automatisk-generalisering</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../index.html">Automatisk Generalisering</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">file_manager.base_file_manager</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for file_manager.base_file_manager</h1><div class="highlight"><pre>
+<span></span><span class="kn">import</span> <span class="nn">config</span>
+<span class="kn">import</span> <span class="nn">env_setup.global_config</span>
+
+
+<div class="viewcode-block" id="BaseFileManager">
+<a class="viewcode-back" href="../../generated_docs/file_manager.html#file_manager.base_file_manager.BaseFileManager">[docs]</a>
+<span class="k">class</span> <span class="nc">BaseFileManager</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    The core file manager class handles the creation of absolute paths across our project,</span>
+<span class="sd">    imported in different file managers.</span>
+
+<span class="sd">    Functions:</span>
+<span class="sd">        generate_file_name_gdb (str, str) -&gt; str:</span>
+<span class="sd">            Generates the absolute path for files that can be stored in geodatabases (gdb).</span>
+<span class="sd">        generate_file_name_general_files (str, str, str) -&gt; str:</span>
+<span class="sd">            Generates the absolute path for files that cannot be stored in geodatabases,</span>
+<span class="sd">            specifying its file type.</span>
+<span class="sd">        generate_file_name_lyrx (str, str) -&gt; str:</span>
+<span class="sd">            Generates the absolute path for ArcGIS layer files (.lyrx) that cannot be stored</span>
+<span class="sd">            in geodatabases.</span>
+
+<span class="sd">    Attributes:</span>
+<span class="sd">        local_root_directory (str): The local root directory for the project&#39;s output.</span>
+<span class="sd">        project_root_directory (str): The root directory name of the project.</span>
+<span class="sd">        general_files_directory_name (str): The directory name for storing general files.</span>
+<span class="sd">        lyrx_directory_name (str): The directory name for storing ArcGIS layer files (.lyrx).</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        scale (str): The scale of the geospatial data, used to differentiate directories and</span>
+<span class="sd">                     file names. Needs to be defined when imported.</span>
+<span class="sd">        object_name (str): The name of the geospatial object, used to differentiate directories</span>
+<span class="sd">                           and file names. Needs to be defined when imported.</span>
+
+<span class="sd">    This class provides methods to generate standardized absolute paths for geodatabase files,</span>
+<span class="sd">    general files, and layer files, using the project&#39;s naming conventions and directory structure.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="c1"># Define class-level attributes that are constant across instances</span>
+    <span class="n">local_root_directory</span> <span class="o">=</span> <span class="n">config</span><span class="o">.</span><span class="n">output_folder</span>
+    <span class="n">project_root_directory</span> <span class="o">=</span> <span class="n">env_setup</span><span class="o">.</span><span class="n">global_config</span><span class="o">.</span><span class="n">main_directory_name</span>
+    <span class="n">general_files_directory_name</span> <span class="o">=</span> <span class="n">env_setup</span><span class="o">.</span><span class="n">global_config</span><span class="o">.</span><span class="n">general_files_name</span>
+    <span class="n">lyrx_directory_name</span> <span class="o">=</span> <span class="n">env_setup</span><span class="o">.</span><span class="n">global_config</span><span class="o">.</span><span class="n">lyrx_directory_name</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">scale</span><span class="p">,</span> <span class="n">object_name</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Initializes the BaseFileManager with specific scale and object name.&quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">scale</span> <span class="o">=</span> <span class="n">scale</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">object</span> <span class="o">=</span> <span class="n">object_name</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">relative_path_gdb</span> <span class="o">=</span> <span class="sa">rf</span><span class="s2">&quot;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">local_root_directory</span><span class="si">}</span><span class="s2">\</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">project_root_directory</span><span class="si">}</span><span class="s2">\</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">scale</span><span class="si">}</span><span class="s2">\</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">object</span><span class="si">}</span><span class="s2">.gdb&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">relative_path_general_files</span> <span class="o">=</span> <span class="sa">rf</span><span class="s2">&quot;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">local_root_directory</span><span class="si">}</span><span class="s2">\</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">project_root_directory</span><span class="si">}</span><span class="s2">\</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">scale</span><span class="si">}</span><span class="s2">\</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">general_files_directory_name</span><span class="si">}</span><span class="s2">&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">relative_path_lyrx</span> <span class="o">=</span> <span class="sa">rf</span><span class="s2">&quot;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">local_root_directory</span><span class="si">}</span><span class="s2">\</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">project_root_directory</span><span class="si">}</span><span class="s2">\</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">scale</span><span class="si">}</span><span class="s2">\</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">lyrx_directory_name</span><span class="si">}</span><span class="s2">&quot;</span>
+
+<div class="viewcode-block" id="BaseFileManager.generate_file_name_gdb">
+<a class="viewcode-back" href="../../generated_docs/file_manager.html#file_manager.base_file_manager.BaseFileManager.generate_file_name_gdb">[docs]</a>
+    <span class="k">def</span> <span class="nf">generate_file_name_gdb</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">script_source_name</span><span class="p">,</span> <span class="n">description</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Generates a file path for geodatabase (.gdb) files.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            script_source_name (str): The name of the script or source generating the file.</span>
+<span class="sd">            description (str): A brief description of the file&#39;s purpose or contents.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            str: The absolute path for the .gdb file.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="sa">rf</span><span class="s2">&quot;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">relative_path_gdb</span><span class="si">}</span><span class="s2">\</span><span class="si">{</span><span class="n">script_source_name</span><span class="si">}</span><span class="s2">__</span><span class="si">{</span><span class="n">description</span><span class="si">}</span><span class="s2">__</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">scale</span><span class="si">}</span><span class="s2">_</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">object</span><span class="si">}</span><span class="s2">&quot;</span></div>
+
+
+<div class="viewcode-block" id="BaseFileManager.generate_file_name_general_files">
+<a class="viewcode-back" href="../../generated_docs/file_manager.html#file_manager.base_file_manager.BaseFileManager.generate_file_name_general_files">[docs]</a>
+    <span class="k">def</span> <span class="nf">generate_file_name_general_files</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">script_source_name</span><span class="p">,</span> <span class="n">description</span><span class="p">,</span> <span class="n">file_type</span>
+    <span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Generates a file path for general files (e.g., CSV, TXT).</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            script_source_name (str): The name of the script or source generating the file.</span>
+<span class="sd">            description (str): A brief description of the file&#39;s purpose or contents.</span>
+<span class="sd">            file_type (str): The filetype extension (without dot).</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            str: The absolute path for the general file, including the file extension.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="sa">rf</span><span class="s2">&quot;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">relative_path_general_files</span><span class="si">}</span><span class="s2">\</span><span class="si">{</span><span class="n">script_source_name</span><span class="si">}</span><span class="s2">__</span><span class="si">{</span><span class="n">description</span><span class="si">}</span><span class="s2">__</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">scale</span><span class="si">}</span><span class="s2">_</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">object</span><span class="si">}</span><span class="s2">.</span><span class="si">{</span><span class="n">file_type</span><span class="si">}</span><span class="s2">&quot;</span></div>
+
+
+<div class="viewcode-block" id="BaseFileManager.generate_file_name_lyrx">
+<a class="viewcode-back" href="../../generated_docs/file_manager.html#file_manager.base_file_manager.BaseFileManager.generate_file_name_lyrx">[docs]</a>
+    <span class="k">def</span> <span class="nf">generate_file_name_lyrx</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">script_source_name</span><span class="p">,</span> <span class="n">description</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Generates a file path for ArcGIS layer files (.lyrx).</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            script_source_name (str): The name of the script or source generating the file.</span>
+<span class="sd">            description (str): A brief description of the layer file&#39;s purpose or contents.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            str: The absolute path for the .lyrx file.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="sa">rf</span><span class="s2">&quot;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">relative_path_lyrx</span><span class="si">}</span><span class="s2">\</span><span class="si">{</span><span class="n">script_source_name</span><span class="si">}</span><span class="s2">__</span><span class="si">{</span><span class="n">description</span><span class="si">}</span><span class="s2">__</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">scale</span><span class="si">}</span><span class="s2">_</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">object</span><span class="si">}</span><span class="s2">.lyrx&quot;</span></div>
+</div>
+
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2024, Kartverket.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

@@ -9,6 +9,17 @@ Subpackages
 
    file_manager.n100
 
+Submodules
+----------
+
+file\_manager.base\_file\_manager module
+----------------------------------------
+
+.. automodule:: file_manager.base_file_manager
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
 Module contents
 ---------------
 
