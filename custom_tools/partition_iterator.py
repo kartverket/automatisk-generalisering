@@ -107,6 +107,20 @@ class PartitionIterator:
         )
         print(f"Created feature class: {full_out_path}")
 
+    def delete_iteration_files(self, *file_paths):
+        """Deletes multiple feature classes or files.
+
+        Args:
+            *file_paths: A variable number of file paths to delete.
+        """
+        for file_path in file_paths:
+            try:
+                if arcpy.Exists(file_path):
+                    arcpy.Delete_management(file_path)
+                    print(f"Deleted iteration file: {file_path}")
+            except Exception as e:
+                print(f"Error deleting {file_path}: {e}")
+
     def pre_iteration(self):
         """
         Determine the maximum OBJECTID for partitioning.
@@ -303,28 +317,12 @@ class PartitionIterator:
                 # If no aliases had features, skip the rest of the processing for this object_id
             if aliases_with_features == 0:
                 for alias in self.alias:
-                    partition_target_selection = f"{root_file_partition_iterator}_{alias}_partition_target_selection_{scale}"
-
-                    base_partition_selection = (
-                        f"in_memory/{alias}_partition_base_select_{scale}"
+                    self.delete_iteration_files(
+                        base_partition_selection,
+                        base_partition_selection_2,
+                        partition_target_selection,
+                        iteration_partition,
                     )
-                    base_partition_selection_2 = (
-                        f"in_memory/{alias}_partition_base_select_2_{scale}"
-                    )
-
-                    try:
-                        arcpy.Delete_management(base_partition_selection)
-                        arcpy.Delete_management(base_partition_selection_2)
-                        arcpy.Delete_management(partition_target_selection)
-
-                    except:
-                        pass
-                try:
-                    iteration_partition = f"{partition_feature}_{object_id}"
-                    arcpy.Delete_management(iteration_partition)
-                except:
-                    pass
-                print(f"Finished iteration {object_id}")
                 continue
 
             for func in self.custom_functions:
@@ -383,28 +381,12 @@ class PartitionIterator:
                     )
 
             for alias in self.alias:
-                base_partition_selection = (
-                    f"in_memory/{alias}_partition_base_select_{scale}"
+                self.delete_iteration_files(
+                    base_partition_selection,
+                    base_partition_selection_2,
+                    partition_target_selection,
+                    iteration_partition,
                 )
-                base_partition_selection_2 = (
-                    f"in_memory/{alias}_partition_base_select_2_{scale}"
-                )
-                partition_target_selection = (
-                    f"in_memory/{alias}_partition_target_selection_{scale}"
-                )
-
-                try:
-                    arcpy.Delete_management(base_partition_selection)
-                    arcpy.Delete_management(base_partition_selection_2)
-                    arcpy.Delete_management(partition_target_selection)
-
-                except:
-                    pass
-            try:
-                iteration_partition = f"{partition_feature}_{object_id}"
-                arcpy.Delete_management(iteration_partition)
-            except:
-                pass
             print(f"Finished iteration {object_id}")
 
     def run(self):
