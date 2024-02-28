@@ -250,7 +250,6 @@ class PolygonProcessor:
         )
 
         self.create_output_feature_class_if_not_exists()
-        # Initialize attributes that depend on external resources here
 
         # Preparing data for processing
         input_data_array = arcpy.da.FeatureClassToNumPyArray(
