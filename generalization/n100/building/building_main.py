@@ -1,10 +1,13 @@
 # Importing environment and directory structure
 from env_setup import environment_setup
-from env_setup import setup_directory_structure
+from env_setup.setup_directory_structure import ProjectDirectorySetup
+
 
 # Environment and directory structure setup
-environment_setup.general_setup()
-setup_directory_structure.main()
+def building_main_setup():
+    environment_setup.general_setup()
+    setup_instance = ProjectDirectorySetup()
+    setup_instance.setup()
 
 
 # Importing building scripts
@@ -58,6 +61,7 @@ def main():
 
     """
 
+    building_main_setup()
     building_data_preparation.main()
     create_simplified_building_polygons.main()
     building_polygon_displacement_rbc.main()
