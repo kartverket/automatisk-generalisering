@@ -44,6 +44,14 @@ custom\_tools.print\_logger module
    :undoc-members:
    :show-inheritance:
 
+custom\_tools.timing\_decorator module
+--------------------------------------
+
+.. automodule:: custom_tools.timing_decorator
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
 Module contents
 ---------------
 

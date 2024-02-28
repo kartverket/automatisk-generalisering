@@ -86,7 +86,15 @@
 <li class="toctree-l3"><a class="reference internal" href="#generalization.n100.building.create_points_from_polygon.grunnriss_to_point"><code class="docutils literal notranslate"><span class="pre">grunnriss_to_point()</span></code></a></li>
 </ul>
 </li>
-<li class="toctree-l2"><a class="reference internal" href="#generalization-n100-building-create-simplified-building-polygons-module">generalization.n100.building.create_simplified_building_polygons module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#module-generalization.n100.building.create_simplified_building_polygons">generalization.n100.building.create_simplified_building_polygons module</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#generalization.n100.building.create_simplified_building_polygons.main"><code class="docutils literal notranslate"><span class="pre">main()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#generalization.n100.building.create_simplified_building_polygons.aggregate_polygons"><code class="docutils literal notranslate"><span class="pre">aggregate_polygons()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#generalization.n100.building.create_simplified_building_polygons.simplify_buildings_1"><code class="docutils literal notranslate"><span class="pre">simplify_buildings_1()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#generalization.n100.building.create_simplified_building_polygons.simplify_polygons"><code class="docutils literal notranslate"><span class="pre">simplify_polygons()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#generalization.n100.building.create_simplified_building_polygons.simplify_buildings_2"><code class="docutils literal notranslate"><span class="pre">simplify_buildings_2()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#generalization.n100.building.create_simplified_building_polygons.join_and_add_fields"><code class="docutils literal notranslate"><span class="pre">join_and_add_fields()</span></code></a></li>
+</ul>
+</li>
 <li class="toctree-l2"><a class="reference internal" href="#module-generalization.n100.building.reducing_hospital_church_clusters">generalization.n100.building.reducing_hospital_church_clusters module</a><ul>
 <li class="toctree-l3"><a class="reference internal" href="#generalization.n100.building.reducing_hospital_church_clusters.main"><code class="docutils literal notranslate"><span class="pre">main()</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="#generalization.n100.building.reducing_hospital_church_clusters.hospital_church_selections"><code class="docutils literal notranslate"><span class="pre">hospital_church_selections()</span></code></a></li>
@@ -362,11 +370,11 @@ the <cite>general_setup</cite> function from the <cite>environment_setup</cite> 
 <dt class="sig sig-object py" id="generalization.n100.building.calculating_values.main">
 <span class="sig-prename descclassname"><span class="pre">generalization.n100.building.calculating_values.</span></span><span class="sig-name descname"><span class="pre">main</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/generalization/n100/building/calculating_values.html#main"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#generalization.n100.building.calculating_values.main" title="Link to this definition"></a></dt>
 <dd><dl class="simple">
-<dt>Summary:</dt><dd><p>Adds required fields for bygningspunkt for symbology and resolves building conflicts: angle, hierarchy, and invisibility.</p>
+<dt>Summary:</dt><dd><p>Adds required fields for building point for symbology and resolves building conflicts: angle, hierarchy, and invisibility.</p>
 </dd>
 <dt>Details:</dt><dd><ol class="arabic simple">
 <li><dl class="simple">
-<dt><cite>table_management</cite>:</dt><dd><p>Adds required fields for bygningspunkt for symbology and resolves building conflicts: angle, hierarchy, and invisibility. Creates a symbology value field based on NBR values and logs undefined NBR values, reclassifying them to 729. Ensures that building types which should not be delivered are correctly reclassified.</p>
+<dt><cite>table_management</cite>:</dt><dd><p>Adds required fields for building point for symbology and resolves building conflicts: angle, hierarchy, and invisibility. Creates a symbology value field based on NBR values and logs undefined NBR values, reclassifying them to 729. Ensures that building types which should not be delivered are correctly reclassified.</p>
 </dd>
 </dl>
 </li>
@@ -379,22 +387,22 @@ the <cite>general_setup</cite> function from the <cite>environment_setup</cite> 
 <dt class="sig sig-object py" id="generalization.n100.building.calculating_values.table_management">
 <span class="sig-prename descclassname"><span class="pre">generalization.n100.building.calculating_values.</span></span><span class="sig-name descname"><span class="pre">table_management</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/generalization/n100/building/calculating_values.html#table_management"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#generalization.n100.building.calculating_values.table_management" title="Link to this definition"></a></dt>
 <dd><dl class="simple">
-<dt>Summary:</dt><dd><p>Adds required fields for bygningspunkt for symbology and resolves building conflicts: angle, hierarchy, and invisibility.
+<dt>Summary:</dt><dd><p>Adds required fields for building point for symbology and resolves building conflicts: angle, hierarchy, and invisibility.
 Creates a symbology value field based on NBR values and logs undefined NBR values, reclassifying them to 729.
 Ensures that building types which should not be delivered are correctly reclassified.</p>
 </dd>
 <dt>Details:</dt><dd><ul class="simple">
 <li><p>Reclassify the sykehus from matrikkel to another NBR value.</p></li>
 <li><p>Reclassify the sykehus from grunnriss to another NBR value.</p></li>
-<li><p>Merge the n50 bygningspunkt and points added from matrikkel.</p></li>
-<li><p>Adding a field to indicate that the merged bygningspunkt and matrikkel does not come from grunnriss.</p></li>
+<li><p>Merge the n50 building point and points added from matrikkel.</p></li>
+<li><p>Adding a field to indicate that the merged building point and matrikkel does not come from grunnriss.</p></li>
 <li><p>Adding a field to indicate that points resulting from grunnriss are tracked.</p></li>
 <li><p>Reclassify the sykehus from grunnriss to another NBR value.</p></li>
-<li><p>Merge the merged bygningspunkt from n50 and matrikkel with points created from grunnriss.</p></li>
+<li><p>Merge the merged building point from n50 and matrikkel with points created from grunnriss.</p></li>
 <li><p>Adding a symbology value field based on NBR values.</p></li>
 <li><p>Code block to transform BYGGTYP_NBR values without symbology to other buildings (729).</p></li>
 <li><p>Code block to update the symbol_val to reflect the new BYGGTYP_NBR.</p></li>
-<li><p>Adding angle, hierarchy, and invisibility fields to the bygningspunkt pre symbology and setting them to 0.</p></li>
+<li><p>Adding angle, hierarchy, and invisibility fields to the building point pre symbology and setting them to 0.</p></li>
 <li><p>Calculate fields.</p></li>
 <li><p>Code block hierarchy logic where churches and hospitals have hierarchy of 1, farms have hierarchy of 2 and the rest of the hierarchy is 3.</p></li>
 </ul>
@@ -422,8 +430,161 @@ them together with collapsed points from the tools simplify building and simplif
 </dd></dl>
 
 </section>
-<section id="generalization-n100-building-create-simplified-building-polygons-module">
-<h2>generalization.n100.building.create_simplified_building_polygons module<a class="headerlink" href="#generalization-n100-building-create-simplified-building-polygons-module" title="Link to this heading"></a></h2>
+<section id="module-generalization.n100.building.create_simplified_building_polygons">
+<span id="generalization-n100-building-create-simplified-building-polygons-module"></span><h2>generalization.n100.building.create_simplified_building_polygons module<a class="headerlink" href="#module-generalization.n100.building.create_simplified_building_polygons" title="Link to this heading"></a></h2>
+<dl class="py function">
+<dt class="sig sig-object py" id="generalization.n100.building.create_simplified_building_polygons.main">
+<span class="sig-prename descclassname"><span class="pre">generalization.n100.building.create_simplified_building_polygons.</span></span><span class="sig-name descname"><span class="pre">main</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/generalization/n100/building/create_simplified_building_polygons.html#main"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#generalization.n100.building.create_simplified_building_polygons.main" title="Link to this definition"></a></dt>
+<dd><dl>
+<dt>Summary:</dt><dd><p>This script aggregates and simplifies building polygons, minimizing detailed parts of the building.</p>
+</dd>
+<dt>Details:</dt><dd><ol class="arabic simple">
+<li><dl class="simple">
+<dt><cite>aggregate_building_polygons</cite>:</dt><dd><p>Selects hospitals and churches from the input point feature class.</p>
+</dd>
+</dl>
+</li>
+<li><dl class="simple">
+<dt><cite>simplify_buildings</cite>:</dt><dd><p>Finds clusters in the hospital and church layers.</p>
+</dd>
+</dl>
+</li>
+<li><dl class="simple">
+<dt><cite>simplify_polygons</cite>:</dt><dd><p>Reduces clusters to one point for each cluster.</p>
+</dd>
+</dl>
+</li>
+</ol>
+<ol class="arabic simple" start="3">
+<li><dl class="simple">
+<dt><cite>joining_and_adding_fields</cite>:</dt><dd><p>Reduces clusters to one point for each cluster.</p>
+</dd>
+</dl>
+</li>
+</ol>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="generalization.n100.building.create_simplified_building_polygons.aggregate_polygons">
+<span class="sig-prename descclassname"><span class="pre">generalization.n100.building.create_simplified_building_polygons.</span></span><span class="sig-name descname"><span class="pre">aggregate_polygons</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/generalization/n100/building/create_simplified_building_polygons.html#aggregate_polygons"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#generalization.n100.building.create_simplified_building_polygons.aggregate_polygons" title="Link to this definition"></a></dt>
+<dd><dl class="simple">
+<dt>Summary:</dt><dd><p>Aggregates small gaps between building polygons of the same type and fills in holes within building polygons.</p>
+</dd>
+</dl>
+<p>Details:
+- the AggregatePolygon tool is used</p>
+<p>Parameters:
+- Aggregation distance is <strong>`4 Meters`</strong>
+- Minimum Area is <strong>`3200 Square Meters`</strong>
+- Minimum Hole Size is <strong>`10 000 Square Meters`</strong></p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="generalization.n100.building.create_simplified_building_polygons.simplify_buildings_1">
+<span class="sig-prename descclassname"><span class="pre">generalization.n100.building.create_simplified_building_polygons.</span></span><span class="sig-name descname"><span class="pre">simplify_buildings_1</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/generalization/n100/building/create_simplified_building_polygons.html#simplify_buildings_1"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#generalization.n100.building.create_simplified_building_polygons.simplify_buildings_1" title="Link to this definition"></a></dt>
+<dd><dl class="simple">
+<dt>Summary:</dt><dd><p>Simplifies building polygons to optimize for a 1:100,000 map scale. Building polygons that are under the minimum area value will be transformed to points.</p>
+</dd>
+<dt>Details:</dt><dd><ul class="simple">
+<li><dl class="simple">
+<dt>The SimplifyBuilding tool is employed to reduce the complexity of building polygons, specifically tailored for the 1:100,000 map scale.</dt><dd><p>It is used to decrease the number of vertices in building polygons, aiming to maintain essential features, but removing details
+for a smoother representation at the 1:100,000 scale.</p>
+</dd>
+</dl>
+</li>
+</ul>
+</dd>
+</dl>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>Meters`</strong> (<em>- Minimum Area is `3200 Square</em>) – Controls the distance at which vertices are removed during the simplification process.</p></li>
+<li><p><strong>Meters`</strong> – Specifies the minimum area a simplified building polygon should have.</p></li>
+<li><p><strong>**`10</strong> (<em>- Minimum Hole Size is</em>) – <p>Sets the minimum size for holes within the building polygons to be retained.</p>
+</p></li>
+<li><p><strong>Meters`**</strong> (<em>000 Square</em>) – Sets the minimum size for holes within the building polygons to be retained.</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="generalization.n100.building.create_simplified_building_polygons.simplify_polygons">
+<span class="sig-prename descclassname"><span class="pre">generalization.n100.building.create_simplified_building_polygons.</span></span><span class="sig-name descname"><span class="pre">simplify_polygons</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/generalization/n100/building/create_simplified_building_polygons.html#simplify_polygons"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#generalization.n100.building.create_simplified_building_polygons.simplify_polygons" title="Link to this definition"></a></dt>
+<dd><dl>
+<dt>Summary:</dt><dd><p>Reduces the complexity of building polygons even more to optimize for a 1:100,000 map scale,
+where small details of buildings may be perrceived as background noise.</p>
+</dd>
+<dt>Details:</dt><dd><ul class="simple">
+<li><p>This function simplifies the input building polygons even more to enhance visualization at the 1:100,000 map scale.</p></li>
+</ul>
+<p>It reduces the number of vertices. Auto-generated points from the simplified polygons are also saved separately.</p>
+</dd>
+</dl>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>`15`</strong> (<em>- Tolerance is</em>) – It controls the simplification distance.</p></li>
+<li><p><strong>Meters`</strong> (<em>- Minimum Area is `3200 Square</em>) – Specifies the minimum area a simplified building polygon should have.</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="generalization.n100.building.create_simplified_building_polygons.simplify_buildings_2">
+<span class="sig-prename descclassname"><span class="pre">generalization.n100.building.create_simplified_building_polygons.</span></span><span class="sig-name descname"><span class="pre">simplify_buildings_2</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/generalization/n100/building/create_simplified_building_polygons.html#simplify_buildings_2"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#generalization.n100.building.create_simplified_building_polygons.simplify_buildings_2" title="Link to this definition"></a></dt>
+<dd><dl class="simple">
+<dt>Summary:</dt><dd><p>Simplifies building polygons to optimize for a 1:100,000 map scale. Building polygons that are under the minimum area value will be transformed to points.</p>
+</dd>
+<dt>Details:</dt><dd><ul class="simple">
+<li><dl class="simple">
+<dt>The SimplifyBuilding tool is employed to reduce the complexity of building polygons, specifically tailored for the 1:100,000 map scale.</dt><dd><p>It is used to decrease the number of vertices in building polygons, aiming to maintain essential features, but removing details
+for a smoother representation at the 1:100,000 scale.</p>
+</dd>
+</dl>
+</li>
+</ul>
+</dd>
+</dl>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>Meters`</strong> (<em>- Minimum Area is `3200 Square</em>) – Controls the distance at which vertices are removed during the simplification process.</p></li>
+<li><p><strong>Meters`</strong> – Specifies the minimum area a simplified building polygon should have.</p></li>
+<li><p><strong>**`10</strong> (<em>- Minimum Hole Size is</em>) – <p>Sets the minimum size for holes within the building polygons to be retained.</p>
+</p></li>
+<li><p><strong>Meters`**</strong> (<em>000 Square</em>) – Sets the minimum size for holes within the building polygons to be retained.</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="generalization.n100.building.create_simplified_building_polygons.join_and_add_fields">
+<span class="sig-prename descclassname"><span class="pre">generalization.n100.building.create_simplified_building_polygons.</span></span><span class="sig-name descname"><span class="pre">join_and_add_fields</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/generalization/n100/building/create_simplified_building_polygons.html#join_and_add_fields"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#generalization.n100.building.create_simplified_building_polygons.join_and_add_fields" title="Link to this definition"></a></dt>
+<dd><dl class="simple">
+<dt>Summary:</dt><dd><p>Performs spatial join between simplified building polygons and original building polygons.
+Adds specific fields and assigns values to the building polygons, which will be useful for later in Resolve Building Conflict</p>
+</dd>
+<dt>Details:</dt><dd><ul class="simple">
+<li><p>This function executes a spatial join between the simplified building polygons and the original building polygons.</p></li>
+<li><p>The resulting feature class includes both the geometries and attributes of the input polygons, providing a unified dataset.</p></li>
+<li><p>Multiple fields, including ‘angle’, ‘hierarchy’, and ‘invisibility’, are added to the feature class.</p></li>
+<li><p>Default values of ‘0’ are assigned to these fields</p></li>
+<li><p>A copy of the feature class is then created for subsequent processing.</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>parameters</strong> (<em>- No specific</em>) – </p>
+</dd>
+</dl>
+</dd></dl>
+
 </section>
 <section id="module-generalization.n100.building.reducing_hospital_church_clusters">
 <span id="generalization-n100-building-reducing-hospital-church-clusters-module"></span><h2>generalization.n100.building.reducing_hospital_church_clusters module<a class="headerlink" href="#module-generalization.n100.building.reducing_hospital_church_clusters" title="Link to this heading"></a></h2>

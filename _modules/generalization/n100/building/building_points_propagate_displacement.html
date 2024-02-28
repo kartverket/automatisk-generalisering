@@ -78,13 +78,10 @@
              
   <h1>Source code for generalization.n100.building.building_points_propagate_displacement</h1><div class="highlight"><pre>
 <span></span><span class="c1"># Importing modules</span>
-<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
 <span class="kn">import</span> <span class="nn">arcpy</span>
 
 <span class="c1"># Importing custom modules</span>
 <span class="kn">import</span> <span class="nn">config</span>
-<span class="kn">from</span> <span class="nn">input_data</span> <span class="kn">import</span> <span class="n">input_n100</span>
-<span class="kn">from</span> <span class="nn">custom_tools</span> <span class="kn">import</span> <span class="n">custom_arcpy</span>
 
 <span class="c1"># Importing environment settings</span>
 <span class="kn">from</span> <span class="nn">env_setup</span> <span class="kn">import</span> <span class="n">environment_setup</span>
@@ -92,9 +89,13 @@
 <span class="c1"># Importing file manager</span>
 <span class="kn">from</span> <span class="nn">file_manager.n100.file_manager_buildings</span> <span class="kn">import</span> <span class="n">Building_N100</span>
 
+<span class="c1"># Importing timing decorator</span>
+<span class="kn">from</span> <span class="nn">custom_tools.timing_decorator</span> <span class="kn">import</span> <span class="n">timing_decorator</span>
+
 
 <div class="viewcode-block" id="main">
 <a class="viewcode-back" href="../../../../generated_docs/generalization.n100.building.html#generalization.n100.building.building_points_propagate_displacement.main">[docs]</a>
+<span class="nd">@timing_decorator</span><span class="p">(</span><span class="s2">&quot;building_points_propogate_displacement.py&quot;</span><span class="p">)</span>
 <span class="k">def</span> <span class="nf">main</span><span class="p">():</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Summary:</span>
@@ -114,6 +115,7 @@
 
 <div class="viewcode-block" id="setup_arcpy_environment">
 <a class="viewcode-back" href="../../../../generated_docs/generalization.n100.building.html#generalization.n100.building.building_points_propagate_displacement.setup_arcpy_environment">[docs]</a>
+<span class="nd">@timing_decorator</span>
 <span class="k">def</span> <span class="nf">setup_arcpy_environment</span><span class="p">():</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Summary:</span>
@@ -131,6 +133,7 @@
 
 <div class="viewcode-block" id="propagate_displacement_building_points">
 <a class="viewcode-back" href="../../../../generated_docs/generalization.n100.building.html#generalization.n100.building.building_points_propagate_displacement.propagate_displacement_building_points">[docs]</a>
+<span class="nd">@timing_decorator</span>
 <span class="k">def</span> <span class="nf">propagate_displacement_building_points</span><span class="p">():</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Summary:</span>

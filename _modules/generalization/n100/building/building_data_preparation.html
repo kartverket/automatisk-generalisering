@@ -82,7 +82,6 @@
 
 <span class="c1"># Importing custom files</span>
 <span class="kn">from</span> <span class="nn">custom_tools</span> <span class="kn">import</span> <span class="n">custom_arcpy</span>
-<span class="kn">import</span> <span class="nn">config</span>
 <span class="kn">from</span> <span class="nn">input_data</span> <span class="kn">import</span> <span class="n">input_n50</span>
 <span class="kn">from</span> <span class="nn">input_data</span> <span class="kn">import</span> <span class="n">input_n100</span>
 <span class="kn">from</span> <span class="nn">input_data</span> <span class="kn">import</span> <span class="n">input_other</span>
@@ -96,9 +95,13 @@
 <span class="c1"># Environment setup</span>
 <span class="n">environment_setup</span><span class="o">.</span><span class="n">general_setup</span><span class="p">()</span>
 
+<span class="c1"># Importing timing decorator</span>
+<span class="kn">from</span> <span class="nn">custom_tools.timing_decorator</span> <span class="kn">import</span> <span class="n">timing_decorator</span>
+
 
 <div class="viewcode-block" id="main">
 <a class="viewcode-back" href="../../../../generated_docs/generalization.n100.building.html#generalization.n100.building.building_data_preparation.main">[docs]</a>
+<span class="nd">@timing_decorator</span><span class="p">(</span><span class="s2">&quot;building_data_preparation.py&quot;</span><span class="p">)</span>
 <span class="k">def</span> <span class="nf">main</span><span class="p">():</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Summary:</span>
@@ -131,6 +134,7 @@
 
 <div class="viewcode-block" id="preparation_begrensningskurve">
 <a class="viewcode-back" href="../../../../generated_docs/generalization.n100.building.html#generalization.n100.building.building_data_preparation.preparation_begrensningskurve">[docs]</a>
+<span class="nd">@timing_decorator</span>
 <span class="k">def</span> <span class="nf">preparation_begrensningskurve</span><span class="p">():</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Summary:</span>
@@ -231,6 +235,7 @@
 
 <div class="viewcode-block" id="preperation_veg_sti">
 <a class="viewcode-back" href="../../../../generated_docs/generalization.n100.building.html#generalization.n100.building.building_data_preparation.preperation_veg_sti">[docs]</a>
+<span class="nd">@timing_decorator</span>
 <span class="k">def</span> <span class="nf">preperation_veg_sti</span><span class="p">():</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Summary:</span>
@@ -256,6 +261,7 @@
 
 <div class="viewcode-block" id="adding_matrikkel_as_points">
 <a class="viewcode-back" href="../../../../generated_docs/generalization.n100.building.html#generalization.n100.building.building_data_preparation.adding_matrikkel_as_points">[docs]</a>
+<span class="nd">@timing_decorator</span>
 <span class="k">def</span> <span class="nf">adding_matrikkel_as_points</span><span class="p">():</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Summary:</span>
@@ -333,6 +339,7 @@
 
 <div class="viewcode-block" id="selecting_grunnriss_for_generalization">
 <a class="viewcode-back" href="../../../../generated_docs/generalization.n100.building.html#generalization.n100.building.building_data_preparation.selecting_grunnriss_for_generalization">[docs]</a>
+<span class="nd">@timing_decorator</span>
 <span class="k">def</span> <span class="nf">selecting_grunnriss_for_generalization</span><span class="p">():</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Summary:</span>
@@ -425,6 +432,7 @@
 
 <div class="viewcode-block" id="removing_overlapping_byggningspunkt_and_grunnriss_matrikkel">
 <a class="viewcode-back" href="../../../../generated_docs/generalization.n100.building.html#generalization.n100.building.building_data_preparation.removing_overlapping_byggningspunkt_and_grunnriss_matrikkel">[docs]</a>
+<span class="nd">@timing_decorator</span>
 <span class="k">def</span> <span class="nf">removing_overlapping_byggningspunkt_and_grunnriss_matrikkel</span><span class="p">():</span>
     <span class="n">custom_arcpy</span><span class="o">.</span><span class="n">select_location_and_make_permanent_feature</span><span class="p">(</span>
         <span class="n">input_layer</span><span class="o">=</span><span class="n">input_n50</span><span class="o">.</span><span class="n">BygningsPunkt</span><span class="p">,</span>

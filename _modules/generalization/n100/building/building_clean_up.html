@@ -80,8 +80,6 @@
 <span></span><span class="kn">import</span> <span class="nn">arcpy</span>
 
 <span class="c1"># Importing custom files relative to the root path</span>
-<span class="kn">import</span> <span class="nn">config</span>
-<span class="kn">from</span> <span class="nn">custom_tools</span> <span class="kn">import</span> <span class="n">custom_arcpy</span>
 <span class="kn">from</span> <span class="nn">env_setup</span> <span class="kn">import</span> <span class="n">environment_setup</span>
 
 <span class="c1"># Importing temporary files</span>
@@ -90,6 +88,8 @@
 <span class="c1"># Importing environment</span>
 <span class="n">environment_setup</span><span class="o">.</span><span class="n">general_setup</span><span class="p">()</span>
 
+<span class="c1"># Importing timing decorator</span>
+<span class="kn">from</span> <span class="nn">custom_tools.timing_decorator</span> <span class="kn">import</span> <span class="n">timing_decorator</span>
 
 <span class="c1"># Main function</span>
 <div class="viewcode-block" id="main">
@@ -101,6 +101,7 @@
 
 <div class="viewcode-block" id="clean_up_fields_delete">
 <a class="viewcode-back" href="../../../../generated_docs/generalization.n100.building.html#generalization.n100.building.building_clean_up.clean_up_fields_delete">[docs]</a>
+<span class="nd">@timing_decorator</span>
 <span class="k">def</span> <span class="nf">clean_up_fields_delete</span><span class="p">():</span>
     <span class="c1"># Provide the path to your feature class</span>
     <span class="n">feature_class_to_clean_up</span> <span class="o">=</span> <span class="p">(</span>

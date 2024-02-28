@@ -80,7 +80,6 @@
 <span></span><span class="c1"># Importing modules</span>
 <span class="kn">import</span> <span class="nn">arcpy</span>
 <span class="kn">import</span> <span class="nn">os</span>
-<span class="kn">import</span> <span class="nn">time</span>
 
 <span class="c1"># Importing custom modules</span>
 <span class="kn">from</span> <span class="nn">custom_tools</span> <span class="kn">import</span> <span class="n">custom_arcpy</span>
@@ -94,10 +93,14 @@
 <span class="c1"># Environment setup</span>
 <span class="n">environment_setup</span><span class="o">.</span><span class="n">general_setup</span><span class="p">()</span>
 
+<span class="c1"># Importing timing decorator</span>
+<span class="kn">from</span> <span class="nn">custom_tools.timing_decorator</span> <span class="kn">import</span> <span class="n">timing_decorator</span>
+
 
 <span class="c1"># Main function</span>
 <div class="viewcode-block" id="main">
 <a class="viewcode-back" href="../../../../generated_docs/generalization.n100.building.html#generalization.n100.building.reducing_hospital_church_clusters.main">[docs]</a>
+<span class="nd">@timing_decorator</span><span class="p">(</span><span class="s2">&quot;reducing_hospital_church_clusters.py&quot;</span><span class="p">)</span>
 <span class="k">def</span> <span class="nf">main</span><span class="p">():</span>
 
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
@@ -125,6 +128,7 @@
 
 <div class="viewcode-block" id="hospital_church_selections">
 <a class="viewcode-back" href="../../../../generated_docs/generalization.n100.building.html#generalization.n100.building.reducing_hospital_church_clusters.hospital_church_selections">[docs]</a>
+<span class="nd">@timing_decorator</span>
 <span class="k">def</span> <span class="nf">hospital_church_selections</span><span class="p">():</span>
 
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
@@ -169,6 +173,7 @@
 <span class="c1"># Finding and removing hospital and church clusters</span>
 <div class="viewcode-block" id="find_clusters">
 <a class="viewcode-back" href="../../../../generated_docs/generalization.n100.building.html#generalization.n100.building.reducing_hospital_church_clusters.find_clusters">[docs]</a>
+<span class="nd">@timing_decorator</span>
 <span class="k">def</span> <span class="nf">find_clusters</span><span class="p">():</span>
 
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
@@ -267,6 +272,7 @@
 
 <div class="viewcode-block" id="reducing_clusters">
 <a class="viewcode-back" href="../../../../generated_docs/generalization.n100.building.html#generalization.n100.building.reducing_hospital_church_clusters.reducing_clusters">[docs]</a>
+<span class="nd">@timing_decorator</span>
 <span class="k">def</span> <span class="nf">reducing_clusters</span><span class="p">():</span>
 
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
