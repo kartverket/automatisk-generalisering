@@ -24,6 +24,8 @@ class PartitionIterator:
         custom_functions=None,
         feature_count="15000",
         partition_method="FEATURES",
+        search_distance="500 Meters",
+        object_id_field="OBJECTID",
     ):
         """
         Initialize the PartitionIterator with input datasets for partitioning and processing.
@@ -51,6 +53,8 @@ class PartitionIterator:
         self.original_input_path = list(self.inputs.values())
         self.iteration_file_paths = []
         self.final_append_features = {}
+        self.search_distance = search_distance
+        self.object_id_field = object_id_field
 
     def setup_arcpy_environment(self):
         # Set up the ArcPy environment
@@ -101,6 +105,7 @@ class PartitionIterator:
         if arcpy.Exists(full_out_path):
             arcpy.management.Delete(full_out_path)
             print(f"Deleted existing feature class: {full_out_path}")
+
         arcpy.management.CreateFeatureclass(
             out_path=out_path,
             out_name=out_name,
@@ -119,6 +124,7 @@ class PartitionIterator:
                 if arcpy.Exists(file_path):
                     arcpy.Delete_management(file_path)
                     print(f"Deleted iteration file: {file_path}")
+
             except Exception as e:
                 print(f"Error deleting {file_path}: {e}")
 
@@ -130,16 +136,16 @@ class PartitionIterator:
             # Use a search cursor to find the maximum OBJECTID
             with arcpy.da.SearchCursor(
                 self.partition_feature,
-                ["OBJECTID"],
-                sql_clause=(None, "ORDER BY OBJECTID DESC"),
+                self.object_id_field,
+                sql_clause=(None, f"ORDER BY {self.object_id_field} DESC"),
             ) as cursor:
                 max_object_id = next(cursor)[0]
 
-            print(f"Maximum OBJECTID found: {max_object_id}")
+            print(f"Maximum {self.object_id_field} found: {max_object_id}")
 
             return max_object_id
         except Exception as e:
-            print(f"Error in finding max OBJECTID: {e}")
+            print(f"Error in finding max {self.object_id_field}: {e}")
 
     def prepare_input_data(self):
         for alias, input_feature in zip(self.alias, self.original_input_path):
@@ -177,7 +183,7 @@ class PartitionIterator:
             arcpy.CalculateField_management(
                 in_table=input_data_copy,
                 field=orig_id_field,
-                expression="!OBJECTID!",
+                expression=f"!{self.object_id_field}!",
             )
             print(f"Calculated field {orig_id_field}")
 
@@ -221,13 +227,13 @@ class PartitionIterator:
                 if object_id == 1:
                     self.delete_feature_class(output_path)
 
-            print(f"\nProcessing OBJECTID {object_id}")
+            print(f"\nProcessing {self.object_id_field} {object_id}")
             iteration_partition = f"{partition_feature}_{object_id}"
             self.iteration_file_paths.append(iteration_partition)
 
             custom_arcpy.select_attribute_and_make_permanent_feature(
                 input_layer=partition_feature,
-                expression=f"OBJECTID = {object_id}",
+                expression=f"{self.object_id_field} = {object_id}",
                 output_name=iteration_partition,
             )
 
@@ -292,7 +298,7 @@ class PartitionIterator:
                         select_features=iteration_partition,
                         output_name=base_partition_selection_2,
                         selection_type=custom_arcpy.SelectionType.NEW_SELECTION.value,
-                        search_distance="500 Meters",
+                        search_distance=self.search_distance,
                     )
 
                     arcpy.management.SelectLayerByLocation(
@@ -382,7 +388,7 @@ class PartitionIterator:
                     )
                 else:
                     print(
-                        f"No features found in {alias} for OBJECTID {object_id} to append to {output_path}"
+                        f"No features found in {alias} for {self.object_id_field} {object_id} to append to {output_path}"
                     )
 
             for alias in self.alias:
