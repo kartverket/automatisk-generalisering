@@ -16,8 +16,8 @@ class PartitionIterator:
 
     def __init__(
         self,
-        inputs,
-        outputs,
+        alias_path_inputs,
+        alias_path_outputs,
         root_file_partition_iterator,
         scale,
         output_feature_class,
@@ -30,15 +30,15 @@ class PartitionIterator:
         """
         Initialize the PartitionIterator with input datasets for partitioning and processing.
 
-        :param inputs: A dictionary of input feature class paths with their aliases.
+        :param alias_path_inputs: A dictionary of input feature class paths with their aliases.
         :param root_file_partition_iterator: Base path for in progress outputs.
         :param scale: Scale for the partitions.
         :param output_feature_class: The output feature class for final results.
         :param feature_count: Feature count for cartographic partitioning.
         :param partition_method: Method used for creating cartographic partitions.
         """
-        self.inputs = inputs
-        self.outputs = outputs
+        self.inputs = alias_path_inputs
+        self.outputs = alias_path_outputs
         self.root_file_partition_iterator = root_file_partition_iterator
         self.scale = scale
         self.output_feature_class = output_feature_class
@@ -442,8 +442,8 @@ if __name__ == "__main__":
 
     # Instantiate PartitionIterator with necessary parameters
     partition_iterator = PartitionIterator(
-        inputs=inputs,
-        outputs=outputs,
+        alias_path_inputs=inputs,
+        alias_path_outputs=outputs,
         root_file_partition_iterator=Building_N100.iteration__partition_iterator__n100.value,
         scale=env_setup.global_config.scale_n100,
         output_feature_class=Building_N100.iteration__partition_iterator_final_output__n100.value,
