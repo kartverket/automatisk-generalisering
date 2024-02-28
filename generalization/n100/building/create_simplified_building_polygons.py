@@ -33,14 +33,10 @@ def main():
         3. `joining_and_adding_fields`:
             Reduces clusters to one point for each cluster.
     """
-    print(
-        "The Order here was removed it seems like, not sure which is the intended model. But needs to be looked at"
-    )
     aggregate_polygons()
     simplify_buildings_1()
     simplify_polygons()
     simplify_buildings_2()
-
     join_and_add_fields()
 
 

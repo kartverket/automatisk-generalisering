@@ -107,13 +107,6 @@ class Building_N100(Enum):
     reflecting the specific needs and naming conventions of river data management within the project.
     """
 
-    displacement_feature_asker__displacement_feature_asker__n100 = (
-        file_manager.generate_file_name_gdb(
-            script_source_name=displacement_feature_asker,
-            description="displacement_feature_asker",
-        )
-    )
-
     #################################################
     ########### BUILDING DATA PREPARATION ###########
     #################################################
