@@ -25,7 +25,7 @@ from custom_tools.timing_decorator import timing_decorator
 
 
 # Main function that runs all the building scripts
-@timing_decorator
+@timing_decorator("building_main.py")
 def main():
     """
     This is the main function that runs all the building scripts.

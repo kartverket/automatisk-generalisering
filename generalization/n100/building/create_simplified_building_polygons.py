@@ -36,7 +36,7 @@ def main():
     """
 
 
-@timing_decorator()
+@timing_decorator
 def aggregate_polygons():
     """
     Summary:
@@ -69,7 +69,7 @@ def aggregate_polygons():
 
 
 # Simplifying building polygons
-@timing_decorator()
+@timing_decorator
 def simplify_buildings_1():
     """
     Summary:
@@ -109,7 +109,7 @@ def simplify_buildings_1():
 
 
 # Simplifying polygons
-@timing_decorator()
+@timing_decorator
 def simplify_polygons():
 
     """
@@ -152,7 +152,7 @@ def simplify_polygons():
 
 
 # Second round of simplify buildings
-@timing_decorator()
+@timing_decorator
 def simplify_buildings_2():
     """
     Summary:
@@ -190,7 +190,7 @@ def simplify_buildings_2():
 
 
 # Spatial join and adding fields to polygons
-@timing_decorator()
+@timing_decorator
 def join_and_add_fields():
     """
     Summary:

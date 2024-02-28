@@ -17,7 +17,7 @@ def main():
     clean_up_fields_delete()
 
 
-@timing_decorator()
+@timing_decorator
 def clean_up_fields_delete():
     # Provide the path to your feature class
     feature_class_to_clean_up = (

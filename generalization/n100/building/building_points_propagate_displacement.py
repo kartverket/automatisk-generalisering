@@ -31,7 +31,7 @@ def main():
     propagate_displacement_building_points()
 
 
-@timing_decorator()
+@timing_decorator
 def setup_arcpy_environment():
     """
     Summary:
@@ -46,7 +46,7 @@ def setup_arcpy_environment():
     environment_setup.general_setup()
 
 
-@timing_decorator()
+@timing_decorator
 def propagate_displacement_building_points():
     """
     Summary:

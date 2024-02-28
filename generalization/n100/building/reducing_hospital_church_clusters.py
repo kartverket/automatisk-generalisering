@@ -44,7 +44,7 @@ def main():
 ###################################### Selecting hospital and churches from all building points ################################################
 
 
-@timing_decorator()
+@timing_decorator
 def hospital_church_selections():
 
     """
@@ -86,7 +86,7 @@ def hospital_church_selections():
 
 
 # Finding and removing hospital and church clusters
-@timing_decorator()
+@timing_decorator
 def find_clusters():
 
     """
@@ -182,7 +182,7 @@ def find_clusters():
     )
 
 
-@timing_decorator()
+@timing_decorator
 def reducing_clusters():
 
     """

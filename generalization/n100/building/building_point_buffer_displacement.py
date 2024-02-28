@@ -41,7 +41,7 @@ def main():
     copy_output_feature(last_output_feature)
 
 
-@timing_decorator()
+@timing_decorator
 def setup_arcpy_environment():
     """
     Summary:
@@ -55,7 +55,7 @@ def setup_arcpy_environment():
     environment_setup.general_setup()
 
 
-@timing_decorator()
+@timing_decorator
 def selection():
     """
     Summary:
@@ -93,7 +93,7 @@ def selection():
     )
 
 
-@timing_decorator()
+@timing_decorator
 def pre_create_template_feature_class():
     """
     Summary:
@@ -127,7 +127,7 @@ def pre_create_template_feature_class():
     return buffer_output_name
 
 
-@timing_decorator()
+@timing_decorator
 def create_or_clear_output_feature_class(template_feature_class, output_fc):
     """
     Summary:
@@ -154,7 +154,7 @@ def create_or_clear_output_feature_class(template_feature_class, output_fc):
     )
 
 
-@timing_decorator()
+@timing_decorator
 def create_feature_class_with_same_schema(source_fc, template_fc, output_fc):
     """
     Summary:
@@ -184,7 +184,7 @@ def create_feature_class_with_same_schema(source_fc, template_fc, output_fc):
             i_cursor.insertRow(row)
 
 
-@timing_decorator()
+@timing_decorator
 def align_schema_to_template():
     """
     Summary:
@@ -210,7 +210,7 @@ def align_schema_to_template():
     return preparation_fc_modified
 
 
-@timing_decorator()
+@timing_decorator
 def creating_road_buffer():
     """
     Summary:
@@ -360,7 +360,7 @@ def creating_road_buffer():
     return last_output_feature_to_point
 
 
-@timing_decorator()
+@timing_decorator
 def copy_output_feature(last_output_feature_to_point):
     """
     Summary:

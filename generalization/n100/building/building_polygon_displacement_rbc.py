@@ -73,7 +73,7 @@ def main():
     merging_invisible_intersecting_points()
 
 
-@timing_decorator()
+@timing_decorator
 def propagate_displacement_building_polygons():
     """
     Summary:
@@ -120,7 +120,7 @@ def propagate_displacement_building_polygons():
     )
 
 
-@timing_decorator()
+@timing_decorator
 def features_500_m_from_building_polygons():
     """
     Summary:
@@ -150,7 +150,7 @@ def features_500_m_from_building_polygons():
     )
 
 
-@timing_decorator()
+@timing_decorator
 def apply_symbology_to_layers():
     """
     Summary:
@@ -179,7 +179,7 @@ def apply_symbology_to_layers():
     )
 
 
-@timing_decorator()
+@timing_decorator
 def resolve_building_conflict_building_polygon():
     """
     Summary:
@@ -309,7 +309,7 @@ def resolve_building_conflict_building_polygon():
     print("Finished")
 
 
-@timing_decorator()
+@timing_decorator
 def creating_road_buffer():
     """
     Summary:
@@ -390,7 +390,7 @@ def creating_road_buffer():
     )
 
 
-@timing_decorator()
+@timing_decorator
 def invisible_building_polygons_to_point():
     """
     Summary:
@@ -429,7 +429,7 @@ def invisible_building_polygons_to_point():
     print("Finished.")
 
 
-@timing_decorator()
+@timing_decorator
 def intersecting_building_polygons_to_point():
     """
     Summary:
@@ -468,7 +468,7 @@ def intersecting_building_polygons_to_point():
     )
 
 
-@timing_decorator()
+@timing_decorator
 def merging_invisible_intersecting_points():
     """
     Summary:

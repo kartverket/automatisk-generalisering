@@ -28,7 +28,7 @@ def main():
     table_management()
 
 
-@timing_decorator()
+@timing_decorator
 def table_management():
     """
     Summary:
