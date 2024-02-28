@@ -1,6 +1,5 @@
 import arcpy
 import os
-import time
 
 from env_setup import environment_setup
 from input_data import input_n100
@@ -8,7 +7,11 @@ from custom_tools import custom_arcpy
 from file_manager.n100.file_manager_buildings import Building_N100
 from custom_tools.polygon_processor import PolygonProcessor
 
+# Importing timing decorator
+from custom_tools.timing_decorator import timing_decorator
 
+
+@timing_decorator("building_point_buffer_displacement.py")
 def main():
     """
     Summary:
@@ -38,6 +41,7 @@ def main():
     copy_output_feature(last_output_feature)
 
 
+@timing_decorator
 def setup_arcpy_environment():
     """
     Summary:
@@ -51,6 +55,7 @@ def setup_arcpy_environment():
     environment_setup.general_setup()
 
 
+@timing_decorator
 def selection():
     """
     Summary:
@@ -88,6 +93,7 @@ def selection():
     )
 
 
+@timing_decorator
 def pre_create_template_feature_class():
     """
     Summary:
@@ -121,6 +127,7 @@ def pre_create_template_feature_class():
     return buffer_output_name
 
 
+@timing_decorator
 def create_or_clear_output_feature_class(template_feature_class, output_fc):
     """
     Summary:
@@ -147,6 +154,7 @@ def create_or_clear_output_feature_class(template_feature_class, output_fc):
     )
 
 
+@timing_decorator
 def create_feature_class_with_same_schema(source_fc, template_fc, output_fc):
     """
     Summary:
@@ -176,6 +184,7 @@ def create_feature_class_with_same_schema(source_fc, template_fc, output_fc):
             i_cursor.insertRow(row)
 
 
+@timing_decorator
 def align_schema_to_template():
     """
     Summary:
@@ -201,6 +210,7 @@ def align_schema_to_template():
     return preparation_fc_modified
 
 
+@timing_decorator
 def creating_road_buffer():
     """
     Summary:
@@ -350,6 +360,7 @@ def creating_road_buffer():
     return last_output_feature_to_point
 
 
+@timing_decorator
 def copy_output_feature(last_output_feature_to_point):
     """
     Summary:

@@ -3,7 +3,6 @@ import arcpy
 
 # Importing custom files
 from custom_tools import custom_arcpy
-import config
 from input_data import input_n50
 from input_data import input_n100
 from input_data import input_other
@@ -17,7 +16,11 @@ from env_setup import environment_setup
 # Environment setup
 environment_setup.general_setup()
 
+# Importing timing decorator
+from custom_tools.timing_decorator import timing_decorator
 
+
+@timing_decorator("building_data_preparation.py")
 def main():
     """
     Summary:
@@ -47,6 +50,7 @@ def main():
 ###################################### Preparing begrensningskurve (limitation curve) ################################################
 
 
+@timing_decorator
 def preparation_begrensningskurve():
     """
     Summary:
@@ -144,6 +148,7 @@ def preparation_begrensningskurve():
 ###################################### Preparing roads ################################################
 
 
+@timing_decorator
 def preperation_veg_sti():
     """
     Summary:
@@ -166,6 +171,7 @@ def preperation_veg_sti():
 ###################################### Adding matrikkel-points (cadastre) for areas which are no longer urban ################################################
 
 
+@timing_decorator
 def adding_matrikkel_as_points():
     """
     Summary:
@@ -240,6 +246,7 @@ def adding_matrikkel_as_points():
 ###################################### Transforms hospitals and churches polygons to points ################################################
 
 
+@timing_decorator
 def selecting_grunnriss_for_generalization():
     """
     Summary:
@@ -329,6 +336,7 @@ def selecting_grunnriss_for_generalization():
 ###################################### FILL ################################################
 
 
+@timing_decorator
 def removing_overlapping_byggningspunkt_and_grunnriss_matrikkel():
     custom_arcpy.select_location_and_make_permanent_feature(
         input_layer=input_n50.BygningsPunkt,
