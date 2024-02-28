@@ -353,11 +353,11 @@ class PartitionIterator:
                         )
                         print(f"Created new feature class: {output_path}")
 
-                    partition_target_selection = f"{root_file_partition_iterator}_{alias}_partition_target_selection_{scale}"
+                    # partition_target_selection = f"{root_file_partition_iterator}_{alias}_partition_target_selection_{scale}"
 
-                    # partition_target_selection = (
-                    #     f"in_memory/{alias}_partition_target_selection_{scale}"
-                    # )
+                    partition_target_selection = (
+                        f"in_memory/{alias}_partition_target_selection_{scale}"
+                    )
                     custom_arcpy.select_attribute_and_make_permanent_feature(
                         input_layer=iteration_append_feature,
                         expression=f"{partition_field} = 1",
@@ -387,7 +387,7 @@ class PartitionIterator:
 
             for alias in self.alias:
                 # base_partition_selection = f"{root_file_partition_iterator}_{alias}_partition_base_select_1_{scale}_{object_id}"
-                partition_target_selection = f"{root_file_partition_iterator}_{alias}_partition_target_selection_{scale}"
+                # partition_target_selection = f"{root_file_partition_iterator}_{alias}_partition_target_selection_{scale}"
 
                 base_partition_selection = (
                     f"in_memory/{alias}_partition_base_select_{scale}"
@@ -395,9 +395,9 @@ class PartitionIterator:
                 base_partition_selection_2 = (
                     f"in_memory/{alias}_partition_base_select_2_{scale}"
                 )
-                # partition_target_selection = (
-                #     f"in_memory/{alias}_partition_target_selection_{scale}"
-                # )
+                partition_target_selection = (
+                    f"in_memory/{alias}_partition_target_selection_{scale}"
+                )
                 # iteration_partition = f"{partition_feature}_{object_id}"
                 try:
                     arcpy.Delete_management(base_partition_selection)
