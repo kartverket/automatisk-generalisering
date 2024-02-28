@@ -16,7 +16,6 @@ environment_setup.general_setup()
 
 # Main function
 def main():
-
     """
     Summary:
         This script aggregates and simplifies building polygons, minimizing detailed parts of the building.
@@ -34,6 +33,15 @@ def main():
         3. `joining_and_adding_fields`:
             Reduces clusters to one point for each cluster.
     """
+    print(
+        "The Order here was removed it seems like, not sure which is the intended model. But needs to be looked at"
+    )
+    aggregate_polygons()
+    simplify_buildings_1()
+    simplify_polygons()
+    simplify_buildings_2()
+
+    join_and_add_fields()
 
 
 def aggregate_polygons():
@@ -108,7 +116,6 @@ def simplify_buildings_1():
 
 # Simplifying polygons
 def simplify_polygons():
-
     """
     Summary:
         Reduces the complexity of building polygons even more to optimize for a 1:100,000 map scale,
