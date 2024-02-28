@@ -243,18 +243,33 @@ def table_management():
     fields_to_add = [["angle", "LONG"], ["hierarchy", "LONG"], ["invisibility", "LONG"]]
     fields_to_calculate = [["angle", "0"], ["hierarchy", "0"], ["invisibility", "0"]]
 
-    # Add fields
-    arcpy.management.AddFields(
-        in_table=Building_N100.table_management__bygningspunkt_pre_resolve_building_conflicts__n100.value,
-        field_description=fields_to_add,
+    # Feature class to check fields existence
+    point_feature_class = (
+        Building_N100.table_management__bygningspunkt_pre_resolve_building_conflicts__n100.value
     )
 
-    # Calculate fields
-    arcpy.management.CalculateFields(
-        in_table=Building_N100.table_management__bygningspunkt_pre_resolve_building_conflicts__n100.value,
-        expression_type="PYTHON3",
-        fields=fields_to_calculate,
-    )
+    # Check if fields already exist
+    existing_fields = arcpy.ListFields(point_feature_class)
+    existing_field_names = [field.name.lower() for field in existing_fields]
+    fields_to_add_names = [field[0].lower() for field in fields_to_add]
+
+    if not all(
+        field_name in existing_field_names for field_name in fields_to_add_names
+    ):
+        # Add fields
+        arcpy.management.AddFields(
+            in_table=point_feature_class,
+            field_description=fields_to_add,
+        )
+
+        # Calculate fields
+        arcpy.management.CalculateFields(
+            in_table=point_feature_class,
+            expression_type="PYTHON3",
+            fields=fields_to_calculate,
+        )
+    else:
+        print("Fields already exist. Skipping adding and calculating fields.")
 
     code_block_hierarchy = """def determineHierarchy(symbol_val):\n
         if symbol_val in [1, 2, 3]:\n
