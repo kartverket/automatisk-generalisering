@@ -1,8 +1,6 @@
 import arcpy
 
 # Importing custom files relative to the root path
-import config
-from custom_tools import custom_arcpy
 from env_setup import environment_setup
 
 # Importing temporary files
@@ -11,12 +9,15 @@ from file_manager.n100.file_manager_buildings import Building_N100
 # Importing environment
 environment_setup.general_setup()
 
+# Importing timing decorator
+from custom_tools.timing_decorator import timing_decorator
 
 # Main function
 def main():
     clean_up_fields_delete()
 
 
+@timing_decorator
 def clean_up_fields_delete():
     # Provide the path to your feature class
     feature_class_to_clean_up = (

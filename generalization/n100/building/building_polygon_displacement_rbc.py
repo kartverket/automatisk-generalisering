@@ -1,7 +1,6 @@
 # Importing modules
 import arcpy
 
-
 # Importing custom modules
 import config
 import input_data.input_n50
@@ -17,7 +16,11 @@ environment_setup.general_setup()
 # Importing file manager
 from file_manager.n100.file_manager_buildings import Building_N100
 
+# Importing timing decorator
+from custom_tools.timing_decorator import timing_decorator
 
+
+@timing_decorator("building_polygon_displacement_rbc.py")
 def main():
     """
     Summary:
@@ -70,6 +73,7 @@ def main():
     merging_invisible_intersecting_points()
 
 
+@timing_decorator
 def propagate_displacement_building_polygons():
     """
     Summary:
@@ -116,6 +120,7 @@ def propagate_displacement_building_polygons():
     )
 
 
+@timing_decorator
 def features_500_m_from_building_polygons():
     """
     Summary:
@@ -145,6 +150,7 @@ def features_500_m_from_building_polygons():
     )
 
 
+@timing_decorator
 def apply_symbology_to_layers():
     """
     Summary:
@@ -173,6 +179,7 @@ def apply_symbology_to_layers():
     )
 
 
+@timing_decorator
 def resolve_building_conflict_building_polygon():
     """
     Summary:
@@ -231,12 +238,6 @@ def resolve_building_conflict_building_polygon():
     )
     # Polygon prosessor
 
-    input_building_points = (
-        Building_N100.resolve_building_conflict_building_selected_hospital_church_points__n100.value
-    )
-    output_polygon_feature_class = (
-        Building_N100.resolve_building_conflict_building_polygon__hospital_church_polygons__n100.value
-    )
     building_symbol_dimensions = {
         1: (145, 145),
         2: (145, 145),
@@ -253,13 +254,20 @@ def resolve_building_conflict_building_polygon():
 
     print("Polygon prosessor...")
     polygon_process = PolygonProcessor(
-        input_building_points,
-        output_polygon_feature_class,
+        Building_N100.resolve_building_conflict_building_selected_hospital_church_points__n100.value,  # input
+        Building_N100.resolve_building_conflict_building_polygon__hospital_church_polygons__n100.value,  # output
         building_symbol_dimensions,
         symbol_field_name,
         index_field_name,
     )
     polygon_process.run()
+
+    # Applying symbology to polygonprocessed hospital and churches
+    custom_arcpy.apply_symbology(
+        input_layer=Building_N100.resolve_building_conflict_building_polygon__hospital_church_polygons__n100.value,
+        in_symbology_layer=input_symbology.SymbologyN100.grunnriss.value,
+        output_name=Building_N100.resolve_building_conflict_building_polygon__polygonprocessor_symbology__n100__lyrx.value,
+    )
 
     # Resolving Building Conflicts for building polygons
     print("Resolving building conflicts ...")
@@ -279,13 +287,13 @@ def resolve_building_conflict_building_polygon():
             "15 Meters",
         ],
         [
-            Building_N100.resolve_building_conflict_building_polygon__hospital_church_polygons__n100.value,
+            Building_N100.resolve_building_conflict_building_polygon__polygonprocessor_symbology__n100__lyrx.value,
             "false",
             "15 Meters",
         ],
     ]
 
-    # Resolve Building Polygon with the barriers
+    # Resolve Building Conflict with building polygons and barriers
     arcpy.cartography.ResolveBuildingConflicts(
         in_buildings=Building_N100.apply_symbology_to_layers__building_polygon__n100__lyrx.value,
         invisibility_field="invisibility",
@@ -302,6 +310,7 @@ def resolve_building_conflict_building_polygon():
     print("Finished")
 
 
+@timing_decorator
 def creating_road_buffer():
     """
     Summary:
@@ -382,6 +391,7 @@ def creating_road_buffer():
     )
 
 
+@timing_decorator
 def invisible_building_polygons_to_point():
     """
     Summary:
@@ -420,6 +430,7 @@ def invisible_building_polygons_to_point():
     print("Finished.")
 
 
+@timing_decorator
 def intersecting_building_polygons_to_point():
     """
     Summary:
@@ -458,6 +469,7 @@ def intersecting_building_polygons_to_point():
     )
 
 
+@timing_decorator
 def merging_invisible_intersecting_points():
     """
     Summary:
