@@ -86,9 +86,7 @@ def propagate_displacement_building_polygons():
         such as roads or other structures.
     """
 
-    print(
-        "Before executing this function, ensure to switch to the new displacement feature"
-    )
+    print("MAKE SURE TO SWITCH TO NEW DISPLACEMENT FEATURE (AFTER ROAD GENERALIZATION")
 
     print("Propogate displacement ...")
     # Copying layer so no changes are made to the original
