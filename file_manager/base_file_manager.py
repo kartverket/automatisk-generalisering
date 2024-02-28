@@ -48,7 +48,11 @@ class BaseFileManager:
         self.relative_path_general_files = rf"{self.local_root_directory}\{self.project_root_directory}\{self.scale}\{self.general_files_directory_name}"
         self.relative_path_lyrx = rf"{self.local_root_directory}\{self.project_root_directory}\{self.scale}\{self.lyrx_directory_name}"
 
-    def generate_file_name_gdb(self, script_source_name, description):
+    def generate_file_name_gdb(
+        self,
+        script_source_name,
+        description,
+    ):
         """
         Generates a file path for geodatabase (.gdb) files.
 
@@ -62,7 +66,10 @@ class BaseFileManager:
         return rf"{self.relative_path_gdb}\{script_source_name}__{description}__{self.scale}_{self.object}"
 
     def generate_file_name_general_files(
-        self, script_source_name, description, file_type
+        self,
+        script_source_name,
+        description,
+        file_type,
     ):
         """
         Generates a file path for general files (e.g., CSV, TXT).
@@ -77,7 +84,11 @@ class BaseFileManager:
         """
         return rf"{self.relative_path_general_files}\{script_source_name}__{description}__{self.scale}_{self.object}.{file_type}"
 
-    def generate_file_name_lyrx(self, script_source_name, description):
+    def generate_file_name_lyrx(
+        self,
+        script_source_name,
+        description,
+    ):
         """
         Generates a file path for ArcGIS layer files (.lyrx).
 
