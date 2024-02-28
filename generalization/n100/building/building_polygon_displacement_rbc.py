@@ -238,12 +238,6 @@ def resolve_building_conflict_building_polygon():
     )
     # Polygon prosessor
 
-    input_building_points = (
-        Building_N100.resolve_building_conflict_building_selected_hospital_church_points__n100.value
-    )
-    output_polygon_feature_class = (
-        Building_N100.resolve_building_conflict_building_polygon__hospital_church_polygons__n100.value
-    )
     building_symbol_dimensions = {
         1: (145, 145),
         2: (145, 145),
@@ -260,13 +254,20 @@ def resolve_building_conflict_building_polygon():
 
     print("Polygon prosessor...")
     polygon_process = PolygonProcessor(
-        input_building_points,
-        output_polygon_feature_class,
+        Building_N100.resolve_building_conflict_building_selected_hospital_church_points__n100.value,  # input
+        Building_N100.resolve_building_conflict_building_polygon__hospital_church_polygons__n100.value,  # output
         building_symbol_dimensions,
         symbol_field_name,
         index_field_name,
     )
     polygon_process.run()
+
+    # Applying symbology to polygonprocessed hospital and churches
+    custom_arcpy.apply_symbology(
+        input_layer=Building_N100.resolve_building_conflict_building_polygon__hospital_church_polygons__n100.value,
+        in_symbology_layer=input_symbology.SymbologyN100.grunnriss.value,
+        output_name=Building_N100.resolve_building_conflict_building_polygon__polygonprocessor_symbology__n100__lyrx.value,
+    )
 
     # Resolving Building Conflicts for building polygons
     print("Resolving building conflicts ...")
@@ -286,13 +287,13 @@ def resolve_building_conflict_building_polygon():
             "15 Meters",
         ],
         [
-            Building_N100.resolve_building_conflict_building_polygon__hospital_church_polygons__n100.value,
+            Building_N100.resolve_building_conflict_building_polygon__polygonprocessor_symbology__n100__lyrx.value,
             "false",
             "15 Meters",
         ],
     ]
 
-    # Resolve Building Polygon with the barriers
+    # Resolve Building Conflict with building polygons and barriers
     arcpy.cartography.ResolveBuildingConflicts(
         in_buildings=Building_N100.apply_symbology_to_layers__building_polygon__n100__lyrx.value,
         invisibility_field="invisibility",
