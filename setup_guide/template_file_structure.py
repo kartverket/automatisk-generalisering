@@ -1,18 +1,29 @@
 # DOCSTRING
 
 """
-    # Summary:
-    Finds hospital and church clusters.
-    A cluster is defined as two or more points that are closer together than 200 meters.
+MAIN
 
-    # Details:
-    - Hospitals are selected based on 'BYGGTYP_NBR' values 970 and 719.
-    - Churches are selected based on 'BYGGTYP_NBR' value 671.
+    Summary:
+        Makes sure that the building points are moved correspondingly to the displacement the road features have been moved during its generalization.
 
-    # Parameters
-     The tool FindPointClusters have a search distance of 200 meters and minimum points of 2.
+    Details:
+        1. `setup_arcpy_environment`:
+            Sets up the ArcPy environment based on predefined settings defined in `general_setup`.
 
-"""
+        2. `propagate_displacement_building_points`:
+            Makes sure that the building points are moved correspondingly to the displacement the road features have been moved during its generalization.
+
+SUBFUNCTIONS
+
+    Summary:
+        Sets up the ArcPy environment based on predefined settings defined in `general_setup`.
+        This function ensures that the ArcPy environment is properly configured for the specific project by utilizing
+        the `general_setup` function from the `environment_setup` module.
+
+    Details:
+        - It calls the `general_setup` function from the `environment_setup` module to set up the ArcPy environment based on predefined settings.
+
+    """
 
 # IMPORTS
 
