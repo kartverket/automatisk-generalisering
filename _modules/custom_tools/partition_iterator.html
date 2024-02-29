@@ -97,8 +97,8 @@
 
     <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
-        <span class="n">inputs</span><span class="p">,</span>
-        <span class="n">outputs</span><span class="p">,</span>
+        <span class="n">alias_path_inputs</span><span class="p">,</span>
+        <span class="n">alias_path_outputs</span><span class="p">,</span>
         <span class="n">root_file_partition_iterator</span><span class="p">,</span>
         <span class="n">scale</span><span class="p">,</span>
         <span class="n">output_feature_class</span><span class="p">,</span>
@@ -111,15 +111,15 @@
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Initialize the PartitionIterator with input datasets for partitioning and processing.</span>
 
-<span class="sd">        :param inputs: A dictionary of input feature class paths with their aliases.</span>
+<span class="sd">        :param alias_path_inputs: A dictionary of input feature class paths with their aliases.</span>
 <span class="sd">        :param root_file_partition_iterator: Base path for in progress outputs.</span>
 <span class="sd">        :param scale: Scale for the partitions.</span>
 <span class="sd">        :param output_feature_class: The output feature class for final results.</span>
 <span class="sd">        :param feature_count: Feature count for cartographic partitioning.</span>
 <span class="sd">        :param partition_method: Method used for creating cartographic partitions.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">inputs</span> <span class="o">=</span> <span class="n">inputs</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">outputs</span> <span class="o">=</span> <span class="n">outputs</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">inputs</span> <span class="o">=</span> <span class="n">alias_path_inputs</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">outputs</span> <span class="o">=</span> <span class="n">alias_path_outputs</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">root_file_partition_iterator</span> <span class="o">=</span> <span class="n">root_file_partition_iterator</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">scale</span> <span class="o">=</span> <span class="n">scale</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">output_feature_class</span> <span class="o">=</span> <span class="n">output_feature_class</span>
@@ -136,13 +136,6 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">final_append_features</span> <span class="o">=</span> <span class="p">{}</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">search_distance</span> <span class="o">=</span> <span class="n">search_distance</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">object_id_field</span> <span class="o">=</span> <span class="n">object_id_field</span>
-
-<div class="viewcode-block" id="PartitionIterator.setup_arcpy_environment">
-<a class="viewcode-back" href="../../generated_docs/custom_tools.html#custom_tools.partition_iterator.PartitionIterator.setup_arcpy_environment">[docs]</a>
-    <span class="k">def</span> <span class="nf">setup_arcpy_environment</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="c1"># Set up the ArcPy environment</span>
-        <span class="n">environment_setup</span><span class="o">.</span><span class="n">general_setup</span><span class="p">()</span></div>
-
 
 <div class="viewcode-block" id="PartitionIterator.create_cartographic_partitions">
 <a class="viewcode-back" href="../../generated_docs/custom_tools.html#custom_tools.partition_iterator.PartitionIterator.create_cartographic_partitions">[docs]</a>
@@ -506,7 +499,7 @@
 <div class="viewcode-block" id="PartitionIterator.run">
 <a class="viewcode-back" href="../../generated_docs/custom_tools.html#custom_tools.partition_iterator.PartitionIterator.run">[docs]</a>
     <span class="k">def</span> <span class="nf">run</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">setup_arcpy_environment</span><span class="p">()</span>
+        <span class="n">environment_setup</span><span class="o">.</span><span class="n">main</span><span class="p">()</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">create_cartographic_partitions</span><span class="p">()</span>
 
         <span class="n">max_object_id</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">pre_iteration</span><span class="p">()</span>
@@ -554,8 +547,8 @@
 
     <span class="c1"># Instantiate PartitionIterator with necessary parameters</span>
     <span class="n">partition_iterator</span> <span class="o">=</span> <span class="n">PartitionIterator</span><span class="p">(</span>
-        <span class="n">inputs</span><span class="o">=</span><span class="n">inputs</span><span class="p">,</span>
-        <span class="n">outputs</span><span class="o">=</span><span class="n">outputs</span><span class="p">,</span>
+        <span class="n">alias_path_inputs</span><span class="o">=</span><span class="n">inputs</span><span class="p">,</span>
+        <span class="n">alias_path_outputs</span><span class="o">=</span><span class="n">outputs</span><span class="p">,</span>
         <span class="n">root_file_partition_iterator</span><span class="o">=</span><span class="n">Building_N100</span><span class="o">.</span><span class="n">iteration__partition_iterator__n100</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
         <span class="n">scale</span><span class="o">=</span><span class="n">env_setup</span><span class="o">.</span><span class="n">global_config</span><span class="o">.</span><span class="n">scale_n100</span><span class="p">,</span>
         <span class="n">output_feature_class</span><span class="o">=</span><span class="n">Building_N100</span><span class="o">.</span><span class="n">iteration__partition_iterator_final_output__n100</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>

@@ -84,6 +84,7 @@
 
 <span class="c1"># Importing custom tools</span>
 <span class="kn">from</span> <span class="nn">custom_tools</span> <span class="kn">import</span> <span class="n">custom_arcpy</span>
+<span class="kn">from</span> <span class="nn">env_setup</span> <span class="kn">import</span> <span class="n">environment_setup</span>
 
 <span class="c1"># Importing file manager</span>
 <span class="kn">from</span> <span class="nn">file_manager.n100.file_manager_rivers</span> <span class="kn">import</span> <span class="n">River_N100</span>
@@ -105,6 +106,7 @@
 <span class="sd">            The function thins the river network, removing line segments based on hierarchy, direction, length and spacing between features</span>
 
 <span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">environment_setup</span><span class="o">.</span><span class="n">main</span><span class="p">()</span>
     <span class="n">set_line_direction</span><span class="p">()</span></div>
 
 
@@ -125,7 +127,6 @@
 <div class="viewcode-block" id="thin_hydrology_lines">
 <a class="viewcode-back" href="../../../../generated_docs/generalization.n100.river.html#generalization.n100.river.preparing_river_network.thin_hydrology_lines">[docs]</a>
 <span class="k">def</span> <span class="nf">thin_hydrology_lines</span><span class="p">():</span>
-
     <span class="n">arcpy</span><span class="o">.</span><span class="n">topographic</span><span class="o">.</span><span class="n">ThinHydrologyLines</span><span class="p">(</span>
         <span class="n">in_features</span><span class="o">=</span><span class="s2">&quot;placeholder_for_streamnetwork&quot;</span><span class="p">,</span>
         <span class="n">invisibility_field</span><span class="o">=</span><span class="s2">&quot;invisibility&quot;</span><span class="p">,</span>

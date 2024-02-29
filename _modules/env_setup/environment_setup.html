@@ -77,40 +77,223 @@
            <div itemprop="articleBody">
              
   <h1>Source code for env_setup.environment_setup</h1><div class="highlight"><pre>
-<span></span><span class="c1"># Importing custom files relative to the root path</span>
-<span class="kn">import</span> <span class="nn">config</span>
+<span></span><span class="kn">import</span> <span class="nn">arcpy</span>
+<span class="kn">import</span> <span class="nn">os</span>
 
-<span class="c1"># Importing general packages</span>
-<span class="kn">import</span> <span class="nn">arcpy</span>
+<span class="kn">import</span> <span class="nn">config</span>
+<span class="kn">from</span> <span class="nn">env_setup.global_config</span> <span class="kn">import</span> <span class="p">(</span>
+    <span class="n">scale_n50</span><span class="p">,</span>
+    <span class="n">scale_n100</span><span class="p">,</span>
+    <span class="n">scale_n250</span><span class="p">,</span>
+    <span class="n">scale_n500</span><span class="p">,</span>
+    <span class="n">object_admin</span><span class="p">,</span>
+    <span class="n">object_arealdekke_flate</span><span class="p">,</span>
+    <span class="n">object_bygning</span><span class="p">,</span>
+    <span class="n">object_elv_bekk</span><span class="p">,</span>
+    <span class="n">object_veg_sti</span><span class="p">,</span>
+    <span class="n">main_directory_name</span><span class="p">,</span>
+    <span class="n">lyrx_directory_name</span><span class="p">,</span>
+    <span class="n">general_files_name</span><span class="p">,</span>
+<span class="p">)</span>
 
 <span class="n">project_spatial_reference</span> <span class="o">=</span> <span class="mi">25833</span>
 
 
-<div class="viewcode-block" id="general_setup">
-<a class="viewcode-back" href="../../generated_docs/env_setup.html#env_setup.environment_setup.general_setup">[docs]</a>
-<span class="k">def</span> <span class="nf">general_setup</span><span class="p">():</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Set up the ArcGIS Pro environment.</span>
+<div class="viewcode-block" id="main">
+<a class="viewcode-back" href="../../generated_docs/env_setup.html#env_setup.environment_setup.main">[docs]</a>
+<span class="k">def</span> <span class="nf">main</span><span class="p">():</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Initializes and executes the setup for ArcGIS Pro environment and project directory structure.</span>
 
-<span class="sd">    Parameters:</span>
-<span class="sd">    - workspace (str): The workspace path. Defaults to what&#39;s set in the config.</span>
-<span class="sd">    - Spatial Reference EPSG 3045 = ETRS89 / UTM zone 33N</span>
+<span class="sd">    Summary:</span>
+<span class="sd">        This function performs the essential initialization tasks for setting up the ArcGIS Pro</span>
+<span class="sd">        environment and creating a predefined directory structure for the project.</span>
+
+<span class="sd">    Details:</span>
+<span class="sd">        - Initializes the ArcGIS environment setup by configuring workspace, output coordinate system (EPSG:25833),</span>
+<span class="sd">          xy tolerance (0.02 meters), and xy resolution (0.01 meters), parallel processing factor and set the overwrite output flag to True.</span>
+<span class="sd">        - Sets up the project directory structure, including creating geodatabases and layer files directories.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">arc_gis_environment_setup</span> <span class="o">=</span> <span class="n">ArcGisEnvironmentSetup</span><span class="p">()</span>
+    <span class="n">arc_gis_environment_setup</span><span class="o">.</span><span class="n">setup</span><span class="p">()</span>
+
+    <span class="n">directory_setup_instance</span> <span class="o">=</span> <span class="n">ProjectDirectorySetup</span><span class="p">()</span>
+    <span class="n">directory_setup_instance</span><span class="o">.</span><span class="n">setup</span><span class="p">()</span></div>
+
+
+
+<div class="viewcode-block" id="ArcGisEnvironmentSetup">
+<a class="viewcode-back" href="../../generated_docs/env_setup.html#env_setup.environment_setup.ArcGisEnvironmentSetup">[docs]</a>
+<span class="k">class</span> <span class="nc">ArcGisEnvironmentSetup</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Configures and initializes the ArcGIS Pro environment settings.</span>
+
+<span class="sd">    Summary:</span>
+<span class="sd">        Sets up the ArcGIS Pro environment with specified workspace and spatial reference. Ensures setup is performed only once globally.</span>
+
+<span class="sd">    Details:</span>
+<span class="sd">        - Checks if setup has already been done globally to avoid duplication.</span>
+<span class="sd">        - Sets `arcpy.env.overwriteOutput` to True, ensuring existing files can be overwritten.</span>
+<span class="sd">        - Configures `arcpy.env.workspace` with the specified workspace path.</span>
+<span class="sd">        - Sets the output coordinate system to the specified spatial reference (EPSG code).</span>
+<span class="sd">        - Establishes `arcpy.env.XYTolerance` and `arcpy.env.XYResolution` for geometric precision.</span>
+<span class="sd">        - Adjusts `arcpy.env.parallelProcessingFactor` according to CPU percentage configured, optimizing performance.</span>
+
+<span class="sd">    Attributes:</span>
+<span class="sd">        workspace (str): The directory path for the ArcGIS workspace.</span>
+<span class="sd">        spatial_reference (int): The EPSG code for the spatial reference, defaulting to 25833 (ETRS89 / UTM zone 33N).</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
-    <span class="n">arcpy</span><span class="o">.</span><span class="n">env</span><span class="o">.</span><span class="n">overwriteOutput</span> <span class="o">=</span> <span class="kc">True</span>
-    <span class="n">arcpy</span><span class="o">.</span><span class="n">env</span><span class="o">.</span><span class="n">workspace</span> <span class="o">=</span> <span class="n">config</span><span class="o">.</span><span class="n">default_project_workspace</span>
-    <span class="n">arcpy</span><span class="o">.</span><span class="n">env</span><span class="o">.</span><span class="n">outputCoordinateSystem</span> <span class="o">=</span> <span class="n">arcpy</span><span class="o">.</span><span class="n">SpatialReference</span><span class="p">(</span><span class="n">project_spatial_reference</span><span class="p">)</span>
-    <span class="n">arcpy</span><span class="o">.</span><span class="n">env</span><span class="o">.</span><span class="n">XYTolerance</span> <span class="o">=</span> <span class="s2">&quot;0.02 Meters&quot;</span>
-    <span class="n">arcpy</span><span class="o">.</span><span class="n">env</span><span class="o">.</span><span class="n">XYResolution</span> <span class="o">=</span> <span class="s2">&quot;0.01 Meters&quot;</span>
-    <span class="n">arcpy</span><span class="o">.</span><span class="n">env</span><span class="o">.</span><span class="n">parallelProcessingFactor</span> <span class="o">=</span> <span class="n">config</span><span class="o">.</span><span class="n">cpu_percentage</span>
+    <span class="n">_setup_done_globally</span> <span class="o">=</span> <span class="kc">False</span>
 
-    <span class="nb">print</span><span class="p">(</span>
-        <span class="sa">f</span><span class="s2">&quot;Workspace environment set up with workspace: </span><span class="si">{</span><span class="n">config</span><span class="o">.</span><span class="n">default_project_workspace</span><span class="si">}</span><span class="s2">&quot;</span>
-    <span class="p">)</span></div>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">workspace</span><span class="o">=</span><span class="n">config</span><span class="o">.</span><span class="n">default_project_workspace</span><span class="p">,</span>
+        <span class="n">spatial_reference</span><span class="o">=</span><span class="mi">25833</span><span class="p">,</span>
+    <span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">workspace</span> <span class="o">=</span> <span class="n">workspace</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">spatial_reference</span> <span class="o">=</span> <span class="n">spatial_reference</span>
+
+<div class="viewcode-block" id="ArcGisEnvironmentSetup.setup">
+<a class="viewcode-back" href="../../generated_docs/env_setup.html#env_setup.environment_setup.ArcGisEnvironmentSetup.setup">[docs]</a>
+    <span class="k">def</span> <span class="nf">setup</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">ArcGisEnvironmentSetup</span><span class="o">.</span><span class="n">_setup_done_globally</span><span class="p">:</span>
+            <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;ArcGIS Pro environment setup has already been completed. Skipping.&quot;</span><span class="p">)</span>
+            <span class="k">return</span>
+
+        <span class="n">arcpy</span><span class="o">.</span><span class="n">env</span><span class="o">.</span><span class="n">overwriteOutput</span> <span class="o">=</span> <span class="kc">True</span>
+        <span class="n">arcpy</span><span class="o">.</span><span class="n">env</span><span class="o">.</span><span class="n">workspace</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">workspace</span>
+        <span class="n">arcpy</span><span class="o">.</span><span class="n">env</span><span class="o">.</span><span class="n">outputCoordinateSystem</span> <span class="o">=</span> <span class="n">arcpy</span><span class="o">.</span><span class="n">SpatialReference</span><span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">spatial_reference</span>
+        <span class="p">)</span>
+        <span class="n">arcpy</span><span class="o">.</span><span class="n">env</span><span class="o">.</span><span class="n">XYTolerance</span> <span class="o">=</span> <span class="s2">&quot;0.02 Meters&quot;</span>
+        <span class="n">arcpy</span><span class="o">.</span><span class="n">env</span><span class="o">.</span><span class="n">XYResolution</span> <span class="o">=</span> <span class="s2">&quot;0.01 Meters&quot;</span>
+        <span class="n">arcpy</span><span class="o">.</span><span class="n">env</span><span class="o">.</span><span class="n">parallelProcessingFactor</span> <span class="o">=</span> <span class="n">config</span><span class="o">.</span><span class="n">cpu_percentage</span>
+
+        <span class="n">ArcGisEnvironmentSetup</span><span class="o">.</span><span class="n">_setup_done_globally</span> <span class="o">=</span> <span class="kc">True</span>
+
+        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;ArcGIS Pro environment setup completed with the following settings:&quot;</span><span class="p">)</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;- Overwrite Output: True&quot;</span><span class="p">)</span>
+        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;- Workspace: </span><span class="si">{</span><span class="n">arcpy</span><span class="o">.</span><span class="n">env</span><span class="o">.</span><span class="n">workspace</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;- Output Coordinate System: EPSG:</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">spatial_reference</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;- XY Tolerance: </span><span class="si">{</span><span class="n">arcpy</span><span class="o">.</span><span class="n">env</span><span class="o">.</span><span class="n">XYTolerance</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;- XY Resolution: </span><span class="si">{</span><span class="n">arcpy</span><span class="o">.</span><span class="n">env</span><span class="o">.</span><span class="n">XYResolution</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;- Parallel Processing Factor: </span><span class="si">{</span><span class="n">arcpy</span><span class="o">.</span><span class="n">env</span><span class="o">.</span><span class="n">parallelProcessingFactor</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;ArcGIS Pro environment setup completed.</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">)</span></div>
+</div>
+
+
+
+<div class="viewcode-block" id="ProjectDirectorySetup">
+<a class="viewcode-back" href="../../generated_docs/env_setup.html#env_setup.environment_setup.ProjectDirectorySetup">[docs]</a>
+<span class="k">class</span> <span class="nc">ProjectDirectorySetup</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Creates and configures the project directory structure and geodatabases.</span>
+
+<span class="sd">    Summary:</span>
+<span class="sd">        Establishes a predefined directory structure for project files and geodatabases, ensuring it&#39;s done only once globally.</span>
+
+<span class="sd">    Details:</span>
+<span class="sd">        - Checks if the global setup has already been completed to prevent redundancy.</span>
+<span class="sd">        - Creates a main directory and specified subdirectories for organizing project files.</span>
+<span class="sd">        - Generates geodatabases in the designated subdirectories for data storage.</span>
+<span class="sd">        - Sets up directories for layer files (`lyrx`) to organize map layer configurations.</span>
+<span class="sd">        - Creates a directory for general files, facilitating organized storage of miscellaneous project files.</span>
+
+<span class="sd">    Attributes:</span>
+<span class="sd">        base_directory (str): The root directory for the project structure.</span>
+<span class="sd">        sub_directories (list): A list of names for subdirectories to be created within the project structure.</span>
+<span class="sd">        gdb_names (list): Names of the geodatabases to be created in each subdirectory.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">_setup_done_globally</span> <span class="o">=</span> <span class="kc">False</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">base_directory</span><span class="o">=</span><span class="n">config</span><span class="o">.</span><span class="n">output_folder</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">base_directory</span> <span class="o">=</span> <span class="n">base_directory</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">sub_directories</span> <span class="o">=</span> <span class="p">[</span>
+            <span class="n">scale_n50</span><span class="p">,</span>
+            <span class="n">scale_n100</span><span class="p">,</span>
+            <span class="n">scale_n250</span><span class="p">,</span>
+            <span class="n">scale_n500</span><span class="p">,</span>
+        <span class="p">]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">gdb_names</span> <span class="o">=</span> <span class="p">[</span>
+            <span class="n">object_admin</span><span class="p">,</span>
+            <span class="n">object_arealdekke_flate</span><span class="p">,</span>
+            <span class="n">object_bygning</span><span class="p">,</span>
+            <span class="n">object_elv_bekk</span><span class="p">,</span>
+            <span class="n">object_veg_sti</span><span class="p">,</span>
+        <span class="p">]</span>
+
+<div class="viewcode-block" id="ProjectDirectorySetup.setup">
+<a class="viewcode-back" href="../../generated_docs/env_setup.html#env_setup.environment_setup.ProjectDirectorySetup.setup">[docs]</a>
+    <span class="k">def</span> <span class="nf">setup</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">ProjectDirectorySetup</span><span class="o">.</span><span class="n">_setup_done_globally</span><span class="p">:</span>
+            <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Global setup has already been completed. Skipping.&quot;</span><span class="p">)</span>
+            <span class="k">return</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">create_directory_structure</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">create_gdbs_in_subdirs</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">create_lyrx_directory_structure</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">create_general_files_structure</span><span class="p">()</span>
+
+        <span class="n">ProjectDirectorySetup</span><span class="o">.</span><span class="n">_setup_done_globally</span> <span class="o">=</span> <span class="kc">True</span></div>
+
+
+<div class="viewcode-block" id="ProjectDirectorySetup.create_directory_structure">
+<a class="viewcode-back" href="../../generated_docs/env_setup.html#env_setup.environment_setup.ProjectDirectorySetup.create_directory_structure">[docs]</a>
+    <span class="k">def</span> <span class="nf">create_directory_structure</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">main_directory</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">base_directory</span><span class="p">,</span> <span class="n">main_directory_name</span><span class="p">)</span>
+        <span class="n">os</span><span class="o">.</span><span class="n">makedirs</span><span class="p">(</span><span class="n">main_directory</span><span class="p">,</span> <span class="n">exist_ok</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">subdir</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">sub_directories</span><span class="p">:</span>
+            <span class="n">path</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">main_directory</span><span class="p">,</span> <span class="n">subdir</span><span class="p">)</span>
+            <span class="n">os</span><span class="o">.</span><span class="n">makedirs</span><span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="n">exist_ok</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+            <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Created directory: </span><span class="si">{</span><span class="n">path</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="ProjectDirectorySetup.create_gdbs_in_subdirs">
+<a class="viewcode-back" href="../../generated_docs/env_setup.html#env_setup.environment_setup.ProjectDirectorySetup.create_gdbs_in_subdirs">[docs]</a>
+    <span class="k">def</span> <span class="nf">create_gdbs_in_subdirs</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">for</span> <span class="n">subdir</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">sub_directories</span><span class="p">:</span>
+            <span class="n">subdir_path</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">base_directory</span><span class="p">,</span> <span class="s2">&quot;automatic_generalization_outputs&quot;</span><span class="p">,</span> <span class="n">subdir</span>
+            <span class="p">)</span>
+            <span class="k">for</span> <span class="n">gdb_name</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">gdb_names</span><span class="p">:</span>
+                <span class="n">gdb_path</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">subdir_path</span><span class="p">,</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">gdb_name</span><span class="si">}</span><span class="s2">.gdb&quot;</span><span class="p">)</span>
+                <span class="k">if</span> <span class="ow">not</span> <span class="n">arcpy</span><span class="o">.</span><span class="n">Exists</span><span class="p">(</span><span class="n">gdb_path</span><span class="p">):</span>
+                    <span class="n">arcpy</span><span class="o">.</span><span class="n">CreateFileGDB_management</span><span class="p">(</span><span class="n">subdir_path</span><span class="p">,</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">gdb_name</span><span class="si">}</span><span class="s2">.gdb&quot;</span><span class="p">)</span>
+                    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Created GDB: </span><span class="si">{</span><span class="n">gdb_path</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;GDB already exists: </span><span class="si">{</span><span class="n">gdb_path</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="ProjectDirectorySetup.create_lyrx_directory_structure">
+<a class="viewcode-back" href="../../generated_docs/env_setup.html#env_setup.environment_setup.ProjectDirectorySetup.create_lyrx_directory_structure">[docs]</a>
+    <span class="k">def</span> <span class="nf">create_lyrx_directory_structure</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">for</span> <span class="n">subdir</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">sub_directories</span><span class="p">:</span>
+            <span class="n">lyrx_directory_path</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">base_directory</span><span class="p">,</span> <span class="n">main_directory_name</span><span class="p">,</span> <span class="n">subdir</span><span class="p">,</span> <span class="n">lyrx_directory_name</span>
+            <span class="p">)</span>
+            <span class="n">os</span><span class="o">.</span><span class="n">makedirs</span><span class="p">(</span><span class="n">lyrx_directory_path</span><span class="p">,</span> <span class="n">exist_ok</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+            <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Created directory: </span><span class="si">{</span><span class="n">lyrx_directory_path</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="ProjectDirectorySetup.create_general_files_structure">
+<a class="viewcode-back" href="../../generated_docs/env_setup.html#env_setup.environment_setup.ProjectDirectorySetup.create_general_files_structure">[docs]</a>
+    <span class="k">def</span> <span class="nf">create_general_files_structure</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">main_directory</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">base_directory</span><span class="p">,</span> <span class="n">main_directory_name</span><span class="p">)</span>
+        <span class="n">os</span><span class="o">.</span><span class="n">makedirs</span><span class="p">(</span><span class="n">main_directory</span><span class="p">,</span> <span class="n">exist_ok</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">subdir</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">sub_directories</span><span class="p">:</span>
+            <span class="n">general_files_path</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span>
+                <span class="n">main_directory</span><span class="p">,</span> <span class="n">subdir</span><span class="p">,</span> <span class="n">general_files_name</span>
+            <span class="p">)</span>
+            <span class="n">os</span><span class="o">.</span><span class="n">makedirs</span><span class="p">(</span><span class="n">general_files_path</span><span class="p">,</span> <span class="n">exist_ok</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+            <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Created &#39;general_files&#39; folder: </span><span class="si">{</span><span class="n">general_files_path</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span></div>
+</div>
 
 
 
 <span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s2">&quot;__main__&quot;</span><span class="p">:</span>
-    <span class="n">general_setup</span><span class="p">()</span>
+    <span class="n">main</span><span class="p">()</span>
 </pre></div>
 
            </div>

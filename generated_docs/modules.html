@@ -143,7 +143,6 @@
 </li>
 <li class="toctree-l2"><a class="reference internal" href="custom_tools.html#module-custom_tools.partition_iterator">custom_tools.partition_iterator module</a><ul>
 <li class="toctree-l3"><a class="reference internal" href="custom_tools.html#custom_tools.partition_iterator.PartitionIterator"><code class="docutils literal notranslate"><span class="pre">PartitionIterator</span></code></a><ul>
-<li class="toctree-l4"><a class="reference internal" href="custom_tools.html#custom_tools.partition_iterator.PartitionIterator.setup_arcpy_environment"><code class="docutils literal notranslate"><span class="pre">PartitionIterator.setup_arcpy_environment()</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="custom_tools.html#custom_tools.partition_iterator.PartitionIterator.create_cartographic_partitions"><code class="docutils literal notranslate"><span class="pre">PartitionIterator.create_cartographic_partitions()</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="custom_tools.html#custom_tools.partition_iterator.PartitionIterator.delete_feature_class"><code class="docutils literal notranslate"><span class="pre">PartitionIterator.delete_feature_class()</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="custom_tools.html#custom_tools.partition_iterator.PartitionIterator.create_feature_class"><code class="docutils literal notranslate"><span class="pre">PartitionIterator.create_feature_class()</span></code></a></li>
@@ -174,18 +173,27 @@
 <li class="toctree-l1"><a class="reference internal" href="env_setup.html">env_setup package</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="env_setup.html#submodules">Submodules</a></li>
 <li class="toctree-l2"><a class="reference internal" href="env_setup.html#module-env_setup.environment_setup">env_setup.environment_setup module</a><ul>
-<li class="toctree-l3"><a class="reference internal" href="env_setup.html#env_setup.environment_setup.general_setup"><code class="docutils literal notranslate"><span class="pre">general_setup()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="env_setup.html#env_setup.environment_setup.main"><code class="docutils literal notranslate"><span class="pre">main()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="env_setup.html#env_setup.environment_setup.ArcGisEnvironmentSetup"><code class="docutils literal notranslate"><span class="pre">ArcGisEnvironmentSetup</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="env_setup.html#env_setup.environment_setup.ArcGisEnvironmentSetup.workspace"><code class="docutils literal notranslate"><span class="pre">ArcGisEnvironmentSetup.workspace</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="env_setup.html#env_setup.environment_setup.ArcGisEnvironmentSetup.spatial_reference"><code class="docutils literal notranslate"><span class="pre">ArcGisEnvironmentSetup.spatial_reference</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="env_setup.html#env_setup.environment_setup.ArcGisEnvironmentSetup.setup"><code class="docutils literal notranslate"><span class="pre">ArcGisEnvironmentSetup.setup()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="env_setup.html#env_setup.environment_setup.ProjectDirectorySetup"><code class="docutils literal notranslate"><span class="pre">ProjectDirectorySetup</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="env_setup.html#env_setup.environment_setup.ProjectDirectorySetup.base_directory"><code class="docutils literal notranslate"><span class="pre">ProjectDirectorySetup.base_directory</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="env_setup.html#env_setup.environment_setup.ProjectDirectorySetup.sub_directories"><code class="docutils literal notranslate"><span class="pre">ProjectDirectorySetup.sub_directories</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="env_setup.html#env_setup.environment_setup.ProjectDirectorySetup.gdb_names"><code class="docutils literal notranslate"><span class="pre">ProjectDirectorySetup.gdb_names</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="env_setup.html#env_setup.environment_setup.ProjectDirectorySetup.setup"><code class="docutils literal notranslate"><span class="pre">ProjectDirectorySetup.setup()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="env_setup.html#env_setup.environment_setup.ProjectDirectorySetup.create_directory_structure"><code class="docutils literal notranslate"><span class="pre">ProjectDirectorySetup.create_directory_structure()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="env_setup.html#env_setup.environment_setup.ProjectDirectorySetup.create_gdbs_in_subdirs"><code class="docutils literal notranslate"><span class="pre">ProjectDirectorySetup.create_gdbs_in_subdirs()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="env_setup.html#env_setup.environment_setup.ProjectDirectorySetup.create_lyrx_directory_structure"><code class="docutils literal notranslate"><span class="pre">ProjectDirectorySetup.create_lyrx_directory_structure()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="env_setup.html#env_setup.environment_setup.ProjectDirectorySetup.create_general_files_structure"><code class="docutils literal notranslate"><span class="pre">ProjectDirectorySetup.create_general_files_structure()</span></code></a></li>
+</ul>
+</li>
 </ul>
 </li>
 <li class="toctree-l2"><a class="reference internal" href="env_setup.html#module-env_setup.global_config">env_setup.global_config module</a></li>
-<li class="toctree-l2"><a class="reference internal" href="env_setup.html#module-env_setup.setup_directory_structure">env_setup.setup_directory_structure module</a><ul>
-<li class="toctree-l3"><a class="reference internal" href="env_setup.html#env_setup.setup_directory_structure.main"><code class="docutils literal notranslate"><span class="pre">main()</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="env_setup.html#env_setup.setup_directory_structure.create_directory_structure"><code class="docutils literal notranslate"><span class="pre">create_directory_structure()</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="env_setup.html#env_setup.setup_directory_structure.create_gdbs_in_subdirs"><code class="docutils literal notranslate"><span class="pre">create_gdbs_in_subdirs()</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="env_setup.html#env_setup.setup_directory_structure.create_lyrx_directory_structure"><code class="docutils literal notranslate"><span class="pre">create_lyrx_directory_structure()</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="env_setup.html#env_setup.setup_directory_structure.create_general_files_structure"><code class="docutils literal notranslate"><span class="pre">create_general_files_structure()</span></code></a></li>
-</ul>
-</li>
 <li class="toctree-l2"><a class="reference internal" href="env_setup.html#module-env_setup">Module contents</a></li>
 </ul>
 </li>

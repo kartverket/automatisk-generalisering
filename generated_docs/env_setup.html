@@ -51,18 +51,27 @@
 <li class="toctree-l1 current"><a class="current reference internal" href="#">env_setup package</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="#submodules">Submodules</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#module-env_setup.environment_setup">env_setup.environment_setup module</a><ul>
-<li class="toctree-l3"><a class="reference internal" href="#env_setup.environment_setup.general_setup"><code class="docutils literal notranslate"><span class="pre">general_setup()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#env_setup.environment_setup.main"><code class="docutils literal notranslate"><span class="pre">main()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#env_setup.environment_setup.ArcGisEnvironmentSetup"><code class="docutils literal notranslate"><span class="pre">ArcGisEnvironmentSetup</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#env_setup.environment_setup.ArcGisEnvironmentSetup.workspace"><code class="docutils literal notranslate"><span class="pre">ArcGisEnvironmentSetup.workspace</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#env_setup.environment_setup.ArcGisEnvironmentSetup.spatial_reference"><code class="docutils literal notranslate"><span class="pre">ArcGisEnvironmentSetup.spatial_reference</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#env_setup.environment_setup.ArcGisEnvironmentSetup.setup"><code class="docutils literal notranslate"><span class="pre">ArcGisEnvironmentSetup.setup()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="#env_setup.environment_setup.ProjectDirectorySetup"><code class="docutils literal notranslate"><span class="pre">ProjectDirectorySetup</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#env_setup.environment_setup.ProjectDirectorySetup.base_directory"><code class="docutils literal notranslate"><span class="pre">ProjectDirectorySetup.base_directory</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#env_setup.environment_setup.ProjectDirectorySetup.sub_directories"><code class="docutils literal notranslate"><span class="pre">ProjectDirectorySetup.sub_directories</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#env_setup.environment_setup.ProjectDirectorySetup.gdb_names"><code class="docutils literal notranslate"><span class="pre">ProjectDirectorySetup.gdb_names</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#env_setup.environment_setup.ProjectDirectorySetup.setup"><code class="docutils literal notranslate"><span class="pre">ProjectDirectorySetup.setup()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#env_setup.environment_setup.ProjectDirectorySetup.create_directory_structure"><code class="docutils literal notranslate"><span class="pre">ProjectDirectorySetup.create_directory_structure()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#env_setup.environment_setup.ProjectDirectorySetup.create_gdbs_in_subdirs"><code class="docutils literal notranslate"><span class="pre">ProjectDirectorySetup.create_gdbs_in_subdirs()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#env_setup.environment_setup.ProjectDirectorySetup.create_lyrx_directory_structure"><code class="docutils literal notranslate"><span class="pre">ProjectDirectorySetup.create_lyrx_directory_structure()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#env_setup.environment_setup.ProjectDirectorySetup.create_general_files_structure"><code class="docutils literal notranslate"><span class="pre">ProjectDirectorySetup.create_general_files_structure()</span></code></a></li>
+</ul>
+</li>
 </ul>
 </li>
 <li class="toctree-l2"><a class="reference internal" href="#module-env_setup.global_config">env_setup.global_config module</a></li>
-<li class="toctree-l2"><a class="reference internal" href="#module-env_setup.setup_directory_structure">env_setup.setup_directory_structure module</a><ul>
-<li class="toctree-l3"><a class="reference internal" href="#env_setup.setup_directory_structure.main"><code class="docutils literal notranslate"><span class="pre">main()</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="#env_setup.setup_directory_structure.create_directory_structure"><code class="docutils literal notranslate"><span class="pre">create_directory_structure()</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="#env_setup.setup_directory_structure.create_gdbs_in_subdirs"><code class="docutils literal notranslate"><span class="pre">create_gdbs_in_subdirs()</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="#env_setup.setup_directory_structure.create_lyrx_directory_structure"><code class="docutils literal notranslate"><span class="pre">create_lyrx_directory_structure()</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="#env_setup.setup_directory_structure.create_general_files_structure"><code class="docutils literal notranslate"><span class="pre">create_general_files_structure()</span></code></a></li>
-</ul>
-</li>
 <li class="toctree-l2"><a class="reference internal" href="#module-env_setup">Module contents</a></li>
 </ul>
 </li>
@@ -104,45 +113,149 @@
 <section id="module-env_setup.environment_setup">
 <span id="env-setup-environment-setup-module"></span><h2>env_setup.environment_setup module<a class="headerlink" href="#module-env_setup.environment_setup" title="Link to this heading"></a></h2>
 <dl class="py function">
-<dt class="sig sig-object py" id="env_setup.environment_setup.general_setup">
-<span class="sig-prename descclassname"><span class="pre">env_setup.environment_setup.</span></span><span class="sig-name descname"><span class="pre">general_setup</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/env_setup/environment_setup.html#general_setup"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#env_setup.environment_setup.general_setup" title="Link to this definition"></a></dt>
-<dd><p>Set up the ArcGIS Pro environment.</p>
-<p>Parameters:
-- workspace (str): The workspace path. Defaults to what’s set in the config.
-- Spatial Reference EPSG 3045 = ETRS89 / UTM zone 33N</p>
+<dt class="sig sig-object py" id="env_setup.environment_setup.main">
+<span class="sig-prename descclassname"><span class="pre">env_setup.environment_setup.</span></span><span class="sig-name descname"><span class="pre">main</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/env_setup/environment_setup.html#main"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#env_setup.environment_setup.main" title="Link to this definition"></a></dt>
+<dd><p>Initializes and executes the setup for ArcGIS Pro environment and project directory structure.</p>
+<dl class="simple">
+<dt>Summary:</dt><dd><p>This function performs the essential initialization tasks for setting up the ArcGIS Pro
+environment and creating a predefined directory structure for the project.</p>
+</dd>
+<dt>Details:</dt><dd><ul class="simple">
+<li><p>Initializes the ArcGIS environment setup by configuring workspace, output coordinate system (EPSG:25833),
+xy tolerance (0.02 meters), and xy resolution (0.01 meters), parallel processing factor and set the overwrite output flag to True.</p></li>
+<li><p>Sets up the project directory structure, including creating geodatabases and layer files directories.</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="env_setup.environment_setup.ArcGisEnvironmentSetup">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">env_setup.environment_setup.</span></span><span class="sig-name descname"><span class="pre">ArcGisEnvironmentSetup</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">workspace</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'path\\to\\workspace.gdb'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">spatial_reference</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">25833</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/env_setup/environment_setup.html#ArcGisEnvironmentSetup"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#env_setup.environment_setup.ArcGisEnvironmentSetup" title="Link to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<p>Configures and initializes the ArcGIS Pro environment settings.</p>
+<dl class="simple">
+<dt>Summary:</dt><dd><p>Sets up the ArcGIS Pro environment with specified workspace and spatial reference. Ensures setup is performed only once globally.</p>
+</dd>
+<dt>Details:</dt><dd><ul class="simple">
+<li><p>Checks if setup has already been done globally to avoid duplication.</p></li>
+<li><p>Sets <cite>arcpy.env.overwriteOutput</cite> to True, ensuring existing files can be overwritten.</p></li>
+<li><p>Configures <cite>arcpy.env.workspace</cite> with the specified workspace path.</p></li>
+<li><p>Sets the output coordinate system to the specified spatial reference (EPSG code).</p></li>
+<li><p>Establishes <cite>arcpy.env.XYTolerance</cite> and <cite>arcpy.env.XYResolution</cite> for geometric precision.</p></li>
+<li><p>Adjusts <cite>arcpy.env.parallelProcessingFactor</cite> according to CPU percentage configured, optimizing performance.</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="env_setup.environment_setup.ArcGisEnvironmentSetup.workspace">
+<span class="sig-name descname"><span class="pre">workspace</span></span><a class="headerlink" href="#env_setup.environment_setup.ArcGisEnvironmentSetup.workspace" title="Link to this definition"></a></dt>
+<dd><p>The directory path for the ArcGIS workspace.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>str</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="env_setup.environment_setup.ArcGisEnvironmentSetup.spatial_reference">
+<span class="sig-name descname"><span class="pre">spatial_reference</span></span><a class="headerlink" href="#env_setup.environment_setup.ArcGisEnvironmentSetup.spatial_reference" title="Link to this definition"></a></dt>
+<dd><p>The EPSG code for the spatial reference, defaulting to 25833 (ETRS89 / UTM zone 33N).</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>int</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="env_setup.environment_setup.ArcGisEnvironmentSetup.setup">
+<span class="sig-name descname"><span class="pre">setup</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/env_setup/environment_setup.html#ArcGisEnvironmentSetup.setup"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#env_setup.environment_setup.ArcGisEnvironmentSetup.setup" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="env_setup.environment_setup.ProjectDirectorySetup">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">env_setup.environment_setup.</span></span><span class="sig-name descname"><span class="pre">ProjectDirectorySetup</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">base_directory</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'C:\\path\\to\\folder\\you\\want\\your\\outputs\\in'</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/env_setup/environment_setup.html#ProjectDirectorySetup"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#env_setup.environment_setup.ProjectDirectorySetup" title="Link to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<p>Creates and configures the project directory structure and geodatabases.</p>
+<dl class="simple">
+<dt>Summary:</dt><dd><p>Establishes a predefined directory structure for project files and geodatabases, ensuring it’s done only once globally.</p>
+</dd>
+<dt>Details:</dt><dd><ul class="simple">
+<li><p>Checks if the global setup has already been completed to prevent redundancy.</p></li>
+<li><p>Creates a main directory and specified subdirectories for organizing project files.</p></li>
+<li><p>Generates geodatabases in the designated subdirectories for data storage.</p></li>
+<li><p>Sets up directories for layer files (<cite>lyrx</cite>) to organize map layer configurations.</p></li>
+<li><p>Creates a directory for general files, facilitating organized storage of miscellaneous project files.</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="env_setup.environment_setup.ProjectDirectorySetup.base_directory">
+<span class="sig-name descname"><span class="pre">base_directory</span></span><a class="headerlink" href="#env_setup.environment_setup.ProjectDirectorySetup.base_directory" title="Link to this definition"></a></dt>
+<dd><p>The root directory for the project structure.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>str</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="env_setup.environment_setup.ProjectDirectorySetup.sub_directories">
+<span class="sig-name descname"><span class="pre">sub_directories</span></span><a class="headerlink" href="#env_setup.environment_setup.ProjectDirectorySetup.sub_directories" title="Link to this definition"></a></dt>
+<dd><p>A list of names for subdirectories to be created within the project structure.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>list</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="env_setup.environment_setup.ProjectDirectorySetup.gdb_names">
+<span class="sig-name descname"><span class="pre">gdb_names</span></span><a class="headerlink" href="#env_setup.environment_setup.ProjectDirectorySetup.gdb_names" title="Link to this definition"></a></dt>
+<dd><p>Names of the geodatabases to be created in each subdirectory.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>list</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="env_setup.environment_setup.ProjectDirectorySetup.setup">
+<span class="sig-name descname"><span class="pre">setup</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/env_setup/environment_setup.html#ProjectDirectorySetup.setup"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#env_setup.environment_setup.ProjectDirectorySetup.setup" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="env_setup.environment_setup.ProjectDirectorySetup.create_directory_structure">
+<span class="sig-name descname"><span class="pre">create_directory_structure</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/env_setup/environment_setup.html#ProjectDirectorySetup.create_directory_structure"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#env_setup.environment_setup.ProjectDirectorySetup.create_directory_structure" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="env_setup.environment_setup.ProjectDirectorySetup.create_gdbs_in_subdirs">
+<span class="sig-name descname"><span class="pre">create_gdbs_in_subdirs</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/env_setup/environment_setup.html#ProjectDirectorySetup.create_gdbs_in_subdirs"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#env_setup.environment_setup.ProjectDirectorySetup.create_gdbs_in_subdirs" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="env_setup.environment_setup.ProjectDirectorySetup.create_lyrx_directory_structure">
+<span class="sig-name descname"><span class="pre">create_lyrx_directory_structure</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/env_setup/environment_setup.html#ProjectDirectorySetup.create_lyrx_directory_structure"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#env_setup.environment_setup.ProjectDirectorySetup.create_lyrx_directory_structure" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="env_setup.environment_setup.ProjectDirectorySetup.create_general_files_structure">
+<span class="sig-name descname"><span class="pre">create_general_files_structure</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/env_setup/environment_setup.html#ProjectDirectorySetup.create_general_files_structure"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#env_setup.environment_setup.ProjectDirectorySetup.create_general_files_structure" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
 </dd></dl>
 
 </section>
 <section id="module-env_setup.global_config">
 <span id="env-setup-global-config-module"></span><h2>env_setup.global_config module<a class="headerlink" href="#module-env_setup.global_config" title="Link to this heading"></a></h2>
-</section>
-<section id="module-env_setup.setup_directory_structure">
-<span id="env-setup-setup-directory-structure-module"></span><h2>env_setup.setup_directory_structure module<a class="headerlink" href="#module-env_setup.setup_directory_structure" title="Link to this heading"></a></h2>
-<dl class="py function">
-<dt class="sig sig-object py" id="env_setup.setup_directory_structure.main">
-<span class="sig-prename descclassname"><span class="pre">env_setup.setup_directory_structure.</span></span><span class="sig-name descname"><span class="pre">main</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/env_setup/setup_directory_structure.html#main"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#env_setup.setup_directory_structure.main" title="Link to this definition"></a></dt>
-<dd></dd></dl>
-
-<dl class="py function">
-<dt class="sig sig-object py" id="env_setup.setup_directory_structure.create_directory_structure">
-<span class="sig-prename descclassname"><span class="pre">env_setup.setup_directory_structure.</span></span><span class="sig-name descname"><span class="pre">create_directory_structure</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">base_directory</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sub_directories</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">main_directory_name</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/env_setup/setup_directory_structure.html#create_directory_structure"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#env_setup.setup_directory_structure.create_directory_structure" title="Link to this definition"></a></dt>
-<dd></dd></dl>
-
-<dl class="py function">
-<dt class="sig sig-object py" id="env_setup.setup_directory_structure.create_gdbs_in_subdirs">
-<span class="sig-prename descclassname"><span class="pre">env_setup.setup_directory_structure.</span></span><span class="sig-name descname"><span class="pre">create_gdbs_in_subdirs</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">base_directory</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sub_directories</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">gdb_names</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/env_setup/setup_directory_structure.html#create_gdbs_in_subdirs"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#env_setup.setup_directory_structure.create_gdbs_in_subdirs" title="Link to this definition"></a></dt>
-<dd></dd></dl>
-
-<dl class="py function">
-<dt class="sig sig-object py" id="env_setup.setup_directory_structure.create_lyrx_directory_structure">
-<span class="sig-prename descclassname"><span class="pre">env_setup.setup_directory_structure.</span></span><span class="sig-name descname"><span class="pre">create_lyrx_directory_structure</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">base_directory</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sub_directories</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">main_directory_name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">lyrx_directory_name</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/env_setup/setup_directory_structure.html#create_lyrx_directory_structure"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#env_setup.setup_directory_structure.create_lyrx_directory_structure" title="Link to this definition"></a></dt>
-<dd></dd></dl>
-
-<dl class="py function">
-<dt class="sig sig-object py" id="env_setup.setup_directory_structure.create_general_files_structure">
-<span class="sig-prename descclassname"><span class="pre">env_setup.setup_directory_structure.</span></span><span class="sig-name descname"><span class="pre">create_general_files_structure</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">base_directory</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sub_directories</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">main_directory_name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">general_files_name</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/env_setup/setup_directory_structure.html#create_general_files_structure"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#env_setup.setup_directory_structure.create_general_files_structure" title="Link to this definition"></a></dt>
-<dd></dd></dl>
-
 </section>
 <section id="module-env_setup">
 <span id="module-contents"></span><h2>Module contents<a class="headerlink" href="#module-env_setup" title="Link to this heading"></a></h2>

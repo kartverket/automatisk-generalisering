@@ -20,14 +20,6 @@ env\_setup.global\_config module
    :undoc-members:
    :show-inheritance:
 
-env\_setup.setup\_directory\_structure module
----------------------------------------------
-
-.. automodule:: env_setup.setup_directory_structure
-   :members:
-   :undoc-members:
-   :show-inheritance:
-
 Module contents
 ---------------
 
