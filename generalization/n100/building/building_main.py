@@ -3,17 +3,17 @@ from env_setup import environment_setup
 from custom_tools.timing_decorator import timing_decorator
 
 # Importing building scripts
-from generalization.n100.building import building_data_preparation
-from generalization.n100.building import calculating_values
-from generalization.n100.building import create_simplified_building_polygons
-from generalization.n100.building import building_polygon_displacement_rbc
-from generalization.n100.building import create_points_from_polygon
-from generalization.n100.building import reducing_hospital_church_clusters
-from generalization.n100.building import building_points_propagate_displacement
-from generalization.n100.building import building_point_buffer_displacement
-from generalization.n100.building import building_points_to_polygon
-from generalization.n100.building import resolve_building_conflicts
-from generalization.n100.building import building_clean_up
+from generalization.n100.building import data_preparation
+from generalization.n100.building import calculating_field_values
+from generalization.n100.building import simplify_polygons
+from generalization.n100.building import polygon_propogate_displacement
+from generalization.n100.building import polygon_to_point
+from generalization.n100.building import hospital_church_clusters
+from generalization.n100.building import point_propogate_displacement
+from generalization.n100.building import point_displacement_with_buffer
+from generalization.n100.building import points_to_squares
+from generalization.n100.building import resolve_building_conflicts_points
+from generalization.n100.building import data_clean_up
 
 
 # Main function that runs all the building scripts
@@ -52,17 +52,17 @@ def main():
 
     # building_main_setup()
     environment_setup.main()
-    building_data_preparation.main()
-    create_simplified_building_polygons.main()
-    building_polygon_displacement_rbc.main()
-    create_points_from_polygon.main()
-    calculating_values.main()
-    building_points_propagate_displacement.main()
-    reducing_hospital_church_clusters.main()
-    building_point_buffer_displacement.main()
-    building_points_to_polygon.main()
-    resolve_building_conflicts.main()
-    building_clean_up.main()
+    data_preparation.main()
+    simplify_polygons.main()
+    polygon_propogate_displacement.main()
+    polygon_to_point.main()
+    calculating_field_values.main()
+    point_propogate_displacement.main()
+    hospital_church_clusters.main()
+    point_displacement_with_buffer.main()
+    points_to_squares.main()
+    resolve_building_conflicts_points.main()
+    data_clean_up.main()
 
 
 if __name__ == "__main__":
