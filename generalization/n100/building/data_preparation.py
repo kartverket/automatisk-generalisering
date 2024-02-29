@@ -20,7 +20,7 @@ environment_setup.general_setup()
 from custom_tools.timing_decorator import timing_decorator
 
 
-@timing_decorator("building_data_preparation.py")
+@timing_decorator("data_preparation.py")
 def main():
     """
     Summary:

@@ -5,7 +5,7 @@ from custom_tools.polygon_processor import PolygonProcessor
 from custom_tools.timing_decorator import timing_decorator
 
 
-@timing_decorator("building_points_to_polygon.py")
+@timing_decorator("points_to_squares.py")
 def main():
     building_symbol_dimensions = {
         1: (145, 145),

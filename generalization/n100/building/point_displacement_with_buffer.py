@@ -11,7 +11,7 @@ from custom_tools.polygon_processor import PolygonProcessor
 from custom_tools.timing_decorator import timing_decorator
 
 
-@timing_decorator("building_point_buffer_displacement.py")
+@timing_decorator("point_displacement_with_buffer.py")
 def main():
     """
     Summary:

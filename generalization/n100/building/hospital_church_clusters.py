@@ -19,7 +19,7 @@ from custom_tools.timing_decorator import timing_decorator
 
 
 # Main function
-@timing_decorator("reducing_hospital_church_clusters.py")
+@timing_decorator("hospital_church_clusters.py")
 def main():
 
     """

@@ -15,7 +15,7 @@ environment_setup.general_setup()
 from custom_tools.timing_decorator import timing_decorator
 
 
-@timing_decorator("calculating_values.py")
+@timing_decorator("calculating_field_values.py")
 def main():
     """
     Summary:
