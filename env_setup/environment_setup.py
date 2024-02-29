@@ -72,7 +72,9 @@ class ArcGisEnvironmentSetup:
 
     def setup(self):
         if ArcGisEnvironmentSetup._setup_done_globally:
-            print("ArcGIS Pro environment setup has already been completed. Skipping.")
+            print(
+                "\nArcGIS Pro environment setup has already been completed. Skipping."
+            )
             return
 
         arcpy.env.overwriteOutput = True
@@ -86,7 +88,7 @@ class ArcGisEnvironmentSetup:
 
         ArcGisEnvironmentSetup._setup_done_globally = True
 
-        print("ArcGIS Pro environment setup completed with the following settings:")
+        print("\nArcGIS Pro environment setup completed with the following settings:")
         print("- Overwrite Output: True")
         print(f"- Workspace: {arcpy.env.workspace}")
         print(f"- Output Coordinate System: EPSG:{self.spatial_reference}")
@@ -136,13 +138,14 @@ class ProjectDirectorySetup:
 
     def setup(self):
         if ProjectDirectorySetup._setup_done_globally:
-            print("Global setup has already been completed. Skipping.")
+            print("Global setup has already been completed. Skipping.\n")
             return
 
         self.create_directory_structure()
         self.create_gdbs_in_subdirs()
         self.create_lyrx_directory_structure()
         self.create_general_files_structure()
+        print("Directory structure completed.\n")
 
         ProjectDirectorySetup._setup_done_globally = True
 
@@ -152,20 +155,18 @@ class ProjectDirectorySetup:
         for subdir in self.sub_directories:
             path = os.path.join(main_directory, subdir)
             os.makedirs(path, exist_ok=True)
-            print(f"Created directory: {path}")
 
     def create_gdbs_in_subdirs(self):
         for subdir in self.sub_directories:
             subdir_path = os.path.join(
-                self.base_directory, "automatic_generalization_outputs", subdir
+                self.base_directory,
+                "automatic_generalization_outputs",
+                subdir,
             )
             for gdb_name in self.gdb_names:
                 gdb_path = os.path.join(subdir_path, f"{gdb_name}.gdb")
                 if not arcpy.Exists(gdb_path):
                     arcpy.CreateFileGDB_management(subdir_path, f"{gdb_name}.gdb")
-                    print(f"Created GDB: {gdb_path}")
-                else:
-                    print(f"GDB already exists: {gdb_path}")
 
     def create_lyrx_directory_structure(self):
         for subdir in self.sub_directories:
@@ -173,7 +174,6 @@ class ProjectDirectorySetup:
                 self.base_directory, main_directory_name, subdir, lyrx_directory_name
             )
             os.makedirs(lyrx_directory_path, exist_ok=True)
-            print(f"Created directory: {lyrx_directory_path}")
 
     def create_general_files_structure(self):
         main_directory = os.path.join(self.base_directory, main_directory_name)
@@ -183,7 +183,6 @@ class ProjectDirectorySetup:
                 main_directory, subdir, general_files_name
             )
             os.makedirs(general_files_path, exist_ok=True)
-            print(f"Created 'general_files' folder: {general_files_path}")
 
 
 if __name__ == "__main__":
