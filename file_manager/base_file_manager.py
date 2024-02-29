@@ -63,7 +63,7 @@ class BaseFileManager:
         Returns:
             str: The absolute path for the .gdb file.
         """
-        return rf"{self.relative_path_gdb}\{script_source_name}__{description}__{self.scale}_{self.object}"
+        return rf"{self.relative_path_gdb}\{script_source_name}___{description}___{self.scale}_{self.object}"
 
     def generate_file_name_general_files(
         self,
@@ -82,7 +82,7 @@ class BaseFileManager:
         Returns:
             str: The absolute path for the general file, including the file extension.
         """
-        return rf"{self.relative_path_general_files}\{script_source_name}__{description}__{self.scale}_{self.object}.{file_type}"
+        return rf"{self.relative_path_general_files}\{script_source_name}___{description}___{self.scale}_{self.object}.{file_type}"
 
     def generate_file_name_lyrx(
         self,
@@ -99,4 +99,4 @@ class BaseFileManager:
         Returns:
             str: The absolute path for the .lyrx file.
         """
-        return rf"{self.relative_path_lyrx}\{script_source_name}__{description}__{self.scale}_{self.object}.lyrx"
+        return rf"{self.relative_path_lyrx}\{script_source_name}___{description}___{self.scale}_{self.object}.lyrx"
