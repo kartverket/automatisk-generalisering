@@ -1,6 +1,12 @@
 import time
 from functools import wraps
 
+# Importing temporary files
+from file_manager.n100.file_manager_buildings import Building_N100
+
+# List to store print statements
+print_output = []
+
 # Decorator to measure execution time of functions
 def timing_decorator(arg=None):
     if isinstance(arg, str):  # If arg is a string, use it as a custom name
@@ -15,9 +21,8 @@ def timing_decorator(arg=None):
                 elapsed_time = end_time - start_time
                 minutes = int(elapsed_time // 60)
                 seconds = elapsed_time % 60
-                print(
-                    f"{custom_name} execution time: {minutes} minutes {seconds:.2f} seconds"
-                )
+                output = f"{custom_name} execution time: {minutes} minutes {seconds:.2f} seconds"
+                print_output.append(output)  # Append to the list
                 return result
 
             return wrapper
@@ -34,9 +39,15 @@ def timing_decorator(arg=None):
             elapsed_time = end_time - start_time
             minutes = int(elapsed_time // 60)
             seconds = elapsed_time % 60
-            print(
-                f"{func.__name__} execution time: {minutes} minutes {seconds:.2f} seconds"
-            )
+            output = f"{func.__name__} execution time: {minutes} minutes {seconds:.2f} seconds"
+            print_output.append(output)  # Append to the list
             return result
 
         return wrapper
+
+
+# Write all print statements to a file
+output_file = Building_N100.overview__runtime_all_building_functions__n100.value
+with open(output_file, "w") as f:
+    for line in print_output:
+        f.write(line + "\n")
