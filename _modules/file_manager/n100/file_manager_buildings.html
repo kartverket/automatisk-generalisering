@@ -94,7 +94,9 @@
 
 <span class="c1"># All file and function names in correct order</span>
 
-<span class="c1"># building_data_preparation.py</span>
+<span class="n">overview</span> <span class="o">=</span> <span class="s2">&quot;overview&quot;</span>
+
+<span class="c1"># data_preparation.py</span>
 <span class="n">preparation_begrensningskurve</span> <span class="o">=</span> <span class="s2">&quot;preparation_begrensningskurve&quot;</span>
 <span class="n">preperation_veg_sti</span> <span class="o">=</span> <span class="s2">&quot;preperation_veg_sti&quot;</span>
 <span class="n">adding_matrikkel_as_points</span> <span class="o">=</span> <span class="s2">&quot;adding_matrikkel_as_points&quot;</span>
@@ -103,7 +105,7 @@
 <span class="n">grunnriss_to_point</span> <span class="o">=</span> <span class="s2">&quot;grunnriss_to_point&quot;</span>
 
 
-<span class="c1"># create_simplified_building_polygons.py</span>
+<span class="c1"># simplify_polygons.py</span>
 <span class="n">aggregate_polygons</span> <span class="o">=</span> <span class="s2">&quot;aggregate_building_polygons&quot;</span>
 <span class="n">simplify_buildings_1</span> <span class="o">=</span> <span class="s2">&quot;simplify_buildings_1&quot;</span>
 <span class="n">simplify_buildings_2</span> <span class="o">=</span> <span class="s2">&quot;simplify_buildings_2&quot;</span>
@@ -113,7 +115,7 @@
 <span class="c1"># create_cartographic_partitions.py</span>
 <span class="n">create_cartographic_partitions</span> <span class="o">=</span> <span class="s2">&quot;create_cartographic_partitions&quot;</span>
 
-<span class="c1"># building_polygon_displacement_rbc.py</span>
+<span class="c1"># polygon_propogate_displacement.py</span>
 <span class="n">propagate_displacement_building_polygons</span> <span class="o">=</span> <span class="s2">&quot;propagate_displacement_building_polygons&quot;</span>
 <span class="n">features_500_m_from_building_polygons</span> <span class="o">=</span> <span class="s2">&quot;features_500_m_from_building_polygons&quot;</span>
 <span class="n">apply_symbology_to_layers</span> <span class="o">=</span> <span class="s2">&quot;apply_symbology_to_layers&quot;</span>
@@ -129,21 +131,21 @@
 <span class="c1"># iteration.py</span>
 <span class="n">iteration</span> <span class="o">=</span> <span class="s2">&quot;iteration&quot;</span>
 
-<span class="c1"># building_points_propagate_displacement.py</span>
+<span class="c1"># point_propogate_displacement.py</span>
 <span class="n">propagate_displacement</span> <span class="o">=</span> <span class="s2">&quot;propagate_displacement&quot;</span>
 
-<span class="c1"># building_point_buffer_displacement.py</span>
+<span class="c1"># point_displacement_with_buffer.py</span>
 <span class="n">building_point_buffer_displacement</span> <span class="o">=</span> <span class="s2">&quot;building_point_buffer_displacement&quot;</span>
 
-<span class="c1"># create_points_from_polygon.py</span>
+<span class="c1"># polygon_to_point.py</span>
 <span class="n">points_to_polygon</span> <span class="o">=</span> <span class="s2">&quot;points_to_polygon&quot;</span>
 
-<span class="c1"># reducing_hospital_church_clusters.py</span>
+<span class="c1"># hospital_church_clusters.py</span>
 <span class="n">hospital_church_selections</span> <span class="o">=</span> <span class="s2">&quot;hospital_church_selections&quot;</span>
 <span class="n">find_clusters</span> <span class="o">=</span> <span class="s2">&quot;find_clusters&quot;</span>
 <span class="n">reducing_clusters</span> <span class="o">=</span> <span class="s2">&quot;reducing_clusters&quot;</span>
 
-<span class="c1"># resolve_building_conflicts.py</span>
+<span class="c1"># resolve_building_conflicts_points.py</span>
 <span class="n">rbc_selection</span> <span class="o">=</span> <span class="s2">&quot;rbc_selection&quot;</span>
 <span class="n">apply_symbology</span> <span class="o">=</span> <span class="s2">&quot;apply_symbology&quot;</span>
 <span class="n">resolve_building_conflicts</span> <span class="o">=</span> <span class="s2">&quot;resolve_building_conflicts&quot;</span>
@@ -186,7 +188,21 @@
 
 <span class="sd">    These examples show how to utilize the BaseFileManager&#39;s methods to generate file paths for different types of files,</span>
 <span class="sd">    reflecting the specific needs and naming conventions of river data management within the project.</span>
+
+
 <span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="c1">#################################################</span>
+    <span class="c1">########### RUN TIME OVERVIEW ####################</span>
+    <span class="c1">#################################################</span>
+
+    <span class="n">overview__runtime_all_building_functions__n100</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_general_files</span><span class="p">(</span>
+            <span class="n">script_source_name</span><span class="o">=</span><span class="n">overview</span><span class="p">,</span>
+            <span class="n">description</span><span class="o">=</span><span class="s2">&quot;runtime_all_building_functions&quot;</span><span class="p">,</span>
+            <span class="n">file_type</span><span class="o">=</span><span class="s2">&quot;txt&quot;</span><span class="p">,</span>
+        <span class="p">)</span>
+    <span class="p">)</span>
 
     <span class="c1">#################################################</span>
     <span class="c1">########### BUILDING DATA PREPARATION ###########</span>

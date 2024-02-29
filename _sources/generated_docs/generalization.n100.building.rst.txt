@@ -4,22 +4,6 @@ generalization.n100.building package
 Submodules
 ----------
 
-generalization.n100.building.building\_clean\_up module
--------------------------------------------------------
-
-.. automodule:: generalization.n100.building.building_clean_up
-   :members:
-   :undoc-members:
-   :show-inheritance:
-
-generalization.n100.building.building\_data\_preparation module
----------------------------------------------------------------
-
-.. automodule:: generalization.n100.building.building_data_preparation
-   :members:
-   :undoc-members:
-   :show-inheritance:
-
 generalization.n100.building.building\_main module
 --------------------------------------------------
 
@@ -28,74 +12,90 @@ generalization.n100.building.building\_main module
    :undoc-members:
    :show-inheritance:
 
-generalization.n100.building.building\_point\_buffer\_displacement module
--------------------------------------------------------------------------
+generalization.n100.building.calculating\_field\_values module
+--------------------------------------------------------------
 
-.. automodule:: generalization.n100.building.building_point_buffer_displacement
+.. automodule:: generalization.n100.building.calculating_field_values
    :members:
    :undoc-members:
    :show-inheritance:
 
-generalization.n100.building.building\_points\_propagate\_displacement module
------------------------------------------------------------------------------
+generalization.n100.building.data\_clean\_up module
+---------------------------------------------------
 
-.. automodule:: generalization.n100.building.building_points_propagate_displacement
+.. automodule:: generalization.n100.building.data_clean_up
    :members:
    :undoc-members:
    :show-inheritance:
 
-generalization.n100.building.building\_points\_to\_polygon module
------------------------------------------------------------------
+generalization.n100.building.data\_preparation module
+-----------------------------------------------------
 
-.. automodule:: generalization.n100.building.building_points_to_polygon
+.. automodule:: generalization.n100.building.data_preparation
    :members:
    :undoc-members:
    :show-inheritance:
 
-generalization.n100.building.building\_polygon\_displacement\_rbc module
-------------------------------------------------------------------------
+generalization.n100.building.hospital\_church\_clusters module
+--------------------------------------------------------------
 
-.. automodule:: generalization.n100.building.building_polygon_displacement_rbc
+.. automodule:: generalization.n100.building.hospital_church_clusters
    :members:
    :undoc-members:
    :show-inheritance:
 
-generalization.n100.building.calculating\_values module
+generalization.n100.building.point\_displacement\_with\_buffer module
+---------------------------------------------------------------------
+
+.. automodule:: generalization.n100.building.point_displacement_with_buffer
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+generalization.n100.building.point\_propogate\_displacement module
+------------------------------------------------------------------
+
+.. automodule:: generalization.n100.building.point_propogate_displacement
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+generalization.n100.building.points\_to\_squares module
 -------------------------------------------------------
 
-.. automodule:: generalization.n100.building.calculating_values
+.. automodule:: generalization.n100.building.points_to_squares
    :members:
    :undoc-members:
    :show-inheritance:
 
-generalization.n100.building.create\_points\_from\_polygon module
------------------------------------------------------------------
+generalization.n100.building.polygon\_propogate\_displacement module
+--------------------------------------------------------------------
 
-.. automodule:: generalization.n100.building.create_points_from_polygon
+.. automodule:: generalization.n100.building.polygon_propogate_displacement
    :members:
    :undoc-members:
    :show-inheritance:
 
-generalization.n100.building.create\_simplified\_building\_polygons module
---------------------------------------------------------------------------
+generalization.n100.building.polygon\_to\_point module
+------------------------------------------------------
 
-.. automodule:: generalization.n100.building.create_simplified_building_polygons
+.. automodule:: generalization.n100.building.polygon_to_point
    :members:
    :undoc-members:
    :show-inheritance:
 
-generalization.n100.building.reducing\_hospital\_church\_clusters module
+generalization.n100.building.resolve\_building\_conflicts\_points module
 ------------------------------------------------------------------------
 
-.. automodule:: generalization.n100.building.reducing_hospital_church_clusters
+.. automodule:: generalization.n100.building.resolve_building_conflicts_points
    :members:
    :undoc-members:
    :show-inheritance:
 
-generalization.n100.building.resolve\_building\_conflicts module
-----------------------------------------------------------------
+generalization.n100.building.simplify\_polygons module
+------------------------------------------------------
 
-.. automodule:: generalization.n100.building.resolve_building_conflicts
+.. automodule:: generalization.n100.building.simplify_polygons
    :members:
    :undoc-members:
    :show-inheritance:
