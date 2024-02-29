@@ -1,12 +1,12 @@
 from file_manager.n100.file_manager_buildings import Building_N100
 from custom_tools.polygon_processor import PolygonProcessor
-
-# Importing timing decorator
 from custom_tools.timing_decorator import timing_decorator
+from env_setup import environment_setup
 
 
 @timing_decorator("building_points_to_polygon.py")
 def main():
+    environment_setup.main()
     building_symbol_dimensions = {
         1: (145, 145),
         2: (145, 145),

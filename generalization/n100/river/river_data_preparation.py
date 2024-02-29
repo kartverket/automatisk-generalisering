@@ -23,11 +23,11 @@ def main():
             This function creates new feature classes based on SQL-expressions: the first one to be used to generate centerlines, while the second
             is used to fill geometry gaps in the river network.
     """
+    environment_setup.main()
     selecting_polygon_features()
 
 
 def selecting_polygon_features():
-
     custom_arcpy.select_attribute_and_make_permanent_feature(
         input_layer=input_n50.ArealdekkeFlate,
         expression="OBJTYPE IN ('FerskvannTørrfall', 'Innsjø', 'InnsjøRegulert', 'ElvBekk')",

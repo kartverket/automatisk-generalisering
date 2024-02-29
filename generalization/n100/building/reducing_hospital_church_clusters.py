@@ -11,8 +11,6 @@ from file_manager.n100.file_manager_buildings import Building_N100
 # Importing environment setup
 from env_setup import environment_setup
 
-# Environment setup
-environment_setup.main()
 
 # Importing timing decorator
 from custom_tools.timing_decorator import timing_decorator
@@ -36,6 +34,7 @@ def main():
             Reduces clusters to one point for each cluster.
     """
 
+    environment_setup.main()
     hospital_church_selections()
     find_clusters()
 

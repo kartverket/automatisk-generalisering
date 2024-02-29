@@ -12,7 +12,7 @@ from custom_tools.file_utilities import FeatureClassCreator
 
 
 def main():
-    setup_arcpy_environment()
+    environment_setup.main()
     prepare_data()
     create_collapsed_centerline()
 
@@ -40,10 +40,6 @@ complex_centerlines = (
     River_N100.centerline_pruning_loop__complex_centerlines__n100.value
 )
 simple_centerlines = River_N100.centerline_pruning_loop__simple_centerlines__n100.value
-
-
-def setup_arcpy_environment():
-    environment_setup.main()
 
 
 def prepare_data():

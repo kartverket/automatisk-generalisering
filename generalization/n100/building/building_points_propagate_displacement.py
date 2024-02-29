@@ -27,23 +27,8 @@ def main():
         2. `propagate_displacement_building_points`:
             Makes sure that the building points are moved correspondingly to the displacement the road features have been moved during its generalization.
     """
-    setup_arcpy_environment()
-    propagate_displacement_building_points()
-
-
-@timing_decorator
-def setup_arcpy_environment():
-    """
-    Summary:
-        Sets up the ArcPy environment based on predefined settings defined in `general_setup`.
-        This function ensures that the ArcPy environment is properly configured for the specific project by utilizing
-        the `general_setup` function from the `environment_setup` module.
-
-    Details:
-        - It calls the `general_setup` function from the `environment_setup` module to set up the ArcPy environment based on predefined settings.
-    """
-
     environment_setup.main()
+    propagate_displacement_building_points()
 
 
 @timing_decorator

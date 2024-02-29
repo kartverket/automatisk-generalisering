@@ -11,8 +11,6 @@ from input_data import input_symbology
 # Importing environment settings
 from env_setup import environment_setup
 
-environment_setup.main()
-
 # Importing file manager
 from file_manager.n100.file_manager_buildings import Building_N100
 
@@ -63,6 +61,7 @@ def main():
             Combines points derived from invisible and intersecting building polygons.
     """
 
+    environment_setup.main()
     propagate_displacement_building_polygons()
     features_500_m_from_building_polygons()
     apply_symbology_to_layers()

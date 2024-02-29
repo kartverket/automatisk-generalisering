@@ -8,9 +8,6 @@ from file_manager.n100.file_manager_buildings import Building_N100
 import arcpy
 from collections import Counter
 
-# Importing environment
-environment_setup.main()
-
 # Importing timing decorator
 from custom_tools.timing_decorator import timing_decorator
 
@@ -25,6 +22,7 @@ def main():
         1. `table_management`:
             Adds required fields for building point for symbology and resolves building conflicts: angle, hierarchy, and invisibility. Creates a symbology value field based on NBR values and logs undefined NBR values, reclassifying them to 729. Ensures that building types which should not be delivered are correctly reclassified.
     """
+    environment_setup.main()
     table_management()
 
 

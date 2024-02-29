@@ -1,14 +1,14 @@
+# Importing packages
 import arcpy
 import os
 
-from env_setup import environment_setup
 from input_data import input_n100
-from custom_tools import custom_arcpy
 from file_manager.n100.file_manager_buildings import Building_N100
-from custom_tools.polygon_processor import PolygonProcessor
 
-# Importing timing decorator
+from custom_tools.polygon_processor import PolygonProcessor
+from env_setup import environment_setup
 from custom_tools.timing_decorator import timing_decorator
+from custom_tools import custom_arcpy
 
 
 @timing_decorator("building_point_buffer_displacement.py")
@@ -34,25 +34,11 @@ def main():
         4. `copy_output_feature`:
             Copies the last output of the `creating_raod_buffer` iteration to be able to integrate it into our `file_manager` system.
     """
-    setup_arcpy_environment()
+    environment_setup.main()
     selection()
 
     last_output_feature = creating_road_buffer()
     copy_output_feature(last_output_feature)
-
-
-@timing_decorator
-def setup_arcpy_environment():
-    """
-    Summary:
-        Sets up the ArcPy environment based on predefined settings defined in `general_setup`.
-        This function ensures that the ArcPy environment is properly configured for the specific project by utilizing
-        the `general_setup` function from the `environment_setup` module.
-
-    Details:
-        - It calls the `general_setup` function from the `environment_setup` module to set up the ArcPy environment based on predefined settings.
-    """
-    environment_setup.main()
 
 
 @timing_decorator

@@ -56,10 +56,6 @@ class PartitionIterator:
         self.search_distance = search_distance
         self.object_id_field = object_id_field
 
-    def setup_arcpy_environment(self):
-        # Set up the ArcPy environment
-        environment_setup.main()
-
     def create_cartographic_partitions(self):
         """
         Creates cartographic partitions based on the input feature classes.
@@ -396,7 +392,7 @@ class PartitionIterator:
             print(f"Finished iteration {object_id}")
 
     def run(self):
-        self.setup_arcpy_environment()
+        environment_setup.main()
         self.create_cartographic_partitions()
 
         max_object_id = self.pre_iteration()

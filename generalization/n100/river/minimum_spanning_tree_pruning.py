@@ -10,7 +10,8 @@ from file_manager.n100.file_manager_rivers import River_N100
 
 
 def main():
-    setup_arcpy_environment()
+    environment_setup.main()
+    copy_input_featrues()
     print("Pruning centerline...")
 
     # Load the network and the connection nodes
@@ -25,9 +26,7 @@ def main():
     save_pruned_network(mst_tree, pruned_centerline_output, G)
 
 
-def setup_arcpy_environment():
-    environment_setup.main()
-
+def copy_input_featrues():
     arcpy.management.CopyFeatures(
         in_features=River_N100.river_centerline__study_centerline__n100.value,
         out_feature_class=f"{River_N100.river_centerline__study_centerline__n100.value}_copy",

@@ -14,9 +14,6 @@ from file_manager.n100.file_manager_buildings import Building_N100
 from custom_tools.timing_decorator import timing_decorator
 
 
-# Importing environment
-environment_setup.main()
-
 iteration_fc = config.resolve_building_conflicts_iteration_feature
 
 
@@ -24,6 +21,7 @@ def main():
     """
     This script resolves building conflicts, both building polygons and points
     """
+    environment_setup.main()
     # Start timing
     start_time = time.time()
     rbc_selection()

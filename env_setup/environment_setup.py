@@ -21,6 +21,18 @@ project_spatial_reference = 25833
 
 
 def main():
+    """
+    Initializes and executes the setup for ArcGIS Pro environment and project directory structure.
+
+    Summary:
+        This function performs the essential initialization tasks for setting up the ArcGIS Pro
+        environment and creating a predefined directory structure for the project.
+
+    Details:
+        - Initializes the ArcGIS environment setup by configuring workspace, output coordinate system (EPSG:25833),
+          xy tolerance (0.02 meters), and xy resolution (0.01 meters), parallel processing factor and set the overwrite output flag to True.
+        - Sets up the project directory structure, including creating geodatabases and layer files directories.
+    """
     arc_gis_environment_setup = ArcGisEnvironmentSetup()
     arc_gis_environment_setup.setup()
 
@@ -29,10 +41,31 @@ def main():
 
 
 class ArcGisEnvironmentSetup:
+    """
+    Configures and initializes the ArcGIS Pro environment settings.
+
+    Summary:
+        Sets up the ArcGIS Pro environment with specified workspace and spatial reference. Ensures setup is performed only once globally.
+
+    Details:
+        - Checks if setup has already been done globally to avoid duplication.
+        - Sets `arcpy.env.overwriteOutput` to True, ensuring existing files can be overwritten.
+        - Configures `arcpy.env.workspace` with the specified workspace path.
+        - Sets the output coordinate system to the specified spatial reference (EPSG code).
+        - Establishes `arcpy.env.XYTolerance` and `arcpy.env.XYResolution` for geometric precision.
+        - Adjusts `arcpy.env.parallelProcessingFactor` according to CPU percentage configured, optimizing performance.
+
+    Attributes:
+        workspace (str): The directory path for the ArcGIS workspace.
+        spatial_reference (int): The EPSG code for the spatial reference, defaulting to 25833 (ETRS89 / UTM zone 33N).
+    """
+
     _setup_done_globally = False
 
     def __init__(
-        self, workspace=config.default_project_workspace, spatial_reference=25833
+        self,
+        workspace=config.default_project_workspace,
+        spatial_reference=25833,
     ):
         self.workspace = workspace
         self.spatial_reference = spatial_reference
@@ -64,11 +97,35 @@ class ArcGisEnvironmentSetup:
 
 
 class ProjectDirectorySetup:
+    """
+    Creates and configures the project directory structure and geodatabases.
+
+    Summary:
+        Establishes a predefined directory structure for project files and geodatabases, ensuring it's done only once globally.
+
+    Details:
+        - Checks if the global setup has already been completed to prevent redundancy.
+        - Creates a main directory and specified subdirectories for organizing project files.
+        - Generates geodatabases in the designated subdirectories for data storage.
+        - Sets up directories for layer files (`lyrx`) to organize map layer configurations.
+        - Creates a directory for general files, facilitating organized storage of miscellaneous project files.
+
+    Attributes:
+        base_directory (str): The root directory for the project structure.
+        sub_directories (list): A list of names for subdirectories to be created within the project structure.
+        gdb_names (list): Names of the geodatabases to be created in each subdirectory.
+    """
+
     _setup_done_globally = False
 
     def __init__(self, base_directory=config.output_folder):
         self.base_directory = base_directory
-        self.sub_directories = [scale_n50, scale_n100, scale_n250, scale_n500]
+        self.sub_directories = [
+            scale_n50,
+            scale_n100,
+            scale_n250,
+            scale_n500,
+        ]
         self.gdb_names = [
             object_admin,
             object_arealdekke_flate,
