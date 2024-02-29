@@ -11,8 +11,6 @@ from file_manager.n100.file_manager_buildings import Building_N100
 # Importing environment setup
 from env_setup import environment_setup
 
-# Environment setup
-environment_setup.general_setup()
 
 # Importing timing decorator
 from custom_tools.timing_decorator import timing_decorator
@@ -21,7 +19,6 @@ from custom_tools.timing_decorator import timing_decorator
 # Main function
 @timing_decorator("reducing_hospital_church_clusters.py")
 def main():
-
     """
     Summary:
         This script detects and reduces hospital and church clusters.
@@ -37,6 +34,7 @@ def main():
             Reduces clusters to one point for each cluster.
     """
 
+    environment_setup.main()
     hospital_church_selections()
     find_clusters()
 
@@ -46,7 +44,6 @@ def main():
 
 @timing_decorator
 def hospital_church_selections():
-
     """
     Summary:
         Selects hospitals and churches from the input point feature class, creating separate feature layers for each category.
@@ -88,7 +85,6 @@ def hospital_church_selections():
 # Finding and removing hospital and church clusters
 @timing_decorator
 def find_clusters():
-
     """
     Summary:
         Finds hospital and church clusters.
@@ -184,7 +180,6 @@ def find_clusters():
 
 @timing_decorator
 def reducing_clusters():
-
     """
     Summary:
         Reduces hospital and church clusters by keeping only one point for each detected cluster.

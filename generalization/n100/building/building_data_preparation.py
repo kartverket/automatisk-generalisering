@@ -1,23 +1,16 @@
-# Importing modules
+# Importing packages
 import arcpy
 
-# Importing custom files
-from custom_tools import custom_arcpy
+# Importing custom input files modules
 from input_data import input_n50
 from input_data import input_n100
 from input_data import input_other
 
-# Importing file manager
+# Importing custom modules
 from file_manager.n100.file_manager_buildings import Building_N100
-
-# Importing environment
 from env_setup import environment_setup
-
-# Environment setup
-environment_setup.general_setup()
-
-# Importing timing decorator
 from custom_tools.timing_decorator import timing_decorator
+from custom_tools import custom_arcpy
 
 
 @timing_decorator("building_data_preparation.py")
@@ -41,6 +34,7 @@ def main():
             This function selects building polygons (grunnriss) to be generalized. Smaller polygons, churches and hospitals are excluded, transformed into points, and sent to building point generalization.
     """
 
+    environment_setup.main()
     preparation_begrensningskurve()
     preperation_veg_sti()
     adding_matrikkel_as_points()

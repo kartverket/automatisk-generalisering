@@ -41,7 +41,7 @@ def setup_arcpy_environment():
     """
     Sets up the ArcPy environment based on predefined settings.
     """
-    environment_setup.general_setup()
+    environment_setup.main()
 
 
 def pre_iteration():

@@ -12,22 +12,9 @@ from file_manager.n100.file_manager_rivers import River_N100
 
 
 def main():
-    setup_arcpy_environment()
+    environment_setup.main()
     prepare_data()
     create_dangles()
-
-
-def setup_arcpy_environment():
-    """
-    Summary:
-        Sets up the ArcPy environment based on predefined settings defined in `general_setup`.
-        This function ensures that the ArcPy environment is properly configured for the specific project by utilizing
-        the `general_setup` function from the `environment_setup` module.
-
-    Details:
-        - It calls the `general_setup` function from the `environment_setup` module to set up the ArcPy environment based on predefined settings.
-    """
-    environment_setup.general_setup()
 
 
 def prepare_data():

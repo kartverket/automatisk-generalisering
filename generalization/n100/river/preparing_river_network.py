@@ -5,6 +5,7 @@ import config
 
 # Importing custom tools
 from custom_tools import custom_arcpy
+from env_setup import environment_setup
 
 # Importing file manager
 from file_manager.n100.file_manager_rivers import River_N100
@@ -24,6 +25,7 @@ def main():
             The function thins the river network, removing line segments based on hierarchy, direction, length and spacing between features
 
     """
+    environment_setup.main()
     set_line_direction()
 
 
@@ -38,7 +40,6 @@ def set_line_direction():
 
 # This function thins the river network
 def thin_hydrology_lines():
-
     arcpy.topographic.ThinHydrologyLines(
         in_features="placeholder_for_streamnetwork",
         invisibility_field="invisibility",
