@@ -15,7 +15,9 @@ file_manager = BaseFileManager(scale=scale, object_name=object_name)
 
 # All file and function names in correct order
 
-# building_data_preparation.py
+overview = "overview"
+
+# data_preparation.py
 preparation_begrensningskurve = "preparation_begrensningskurve"
 preperation_veg_sti = "preperation_veg_sti"
 adding_matrikkel_as_points = "adding_matrikkel_as_points"
@@ -24,7 +26,7 @@ table_management = "table_management"
 grunnriss_to_point = "grunnriss_to_point"
 
 
-# create_simplified_building_polygons.py
+# simplify_polygons.py
 aggregate_polygons = "aggregate_building_polygons"
 simplify_buildings_1 = "simplify_buildings_1"
 simplify_buildings_2 = "simplify_buildings_2"
@@ -34,7 +36,7 @@ join_and_add_fields = "join_and_add_fields"
 # create_cartographic_partitions.py
 create_cartographic_partitions = "create_cartographic_partitions"
 
-# building_polygon_displacement_rbc.py
+# polygon_propogate_displacement.py
 propagate_displacement_building_polygons = "propagate_displacement_building_polygons"
 features_500_m_from_building_polygons = "features_500_m_from_building_polygons"
 apply_symbology_to_layers = "apply_symbology_to_layers"
@@ -50,21 +52,21 @@ merging_invisible_intersecting_points = "merging_invisible_intersecting_points"
 # iteration.py
 iteration = "iteration"
 
-# building_points_propagate_displacement.py
+# point_propogate_displacement.py
 propagate_displacement = "propagate_displacement"
 
-# building_point_buffer_displacement.py
+# point_displacement_with_buffer.py
 building_point_buffer_displacement = "building_point_buffer_displacement"
 
-# create_points_from_polygon.py
+# polygon_to_point.py
 points_to_polygon = "points_to_polygon"
 
-# reducing_hospital_church_clusters.py
+# hospital_church_clusters.py
 hospital_church_selections = "hospital_church_selections"
 find_clusters = "find_clusters"
 reducing_clusters = "reducing_clusters"
 
-# resolve_building_conflicts.py
+# resolve_building_conflicts_points.py
 rbc_selection = "rbc_selection"
 apply_symbology = "apply_symbology"
 resolve_building_conflicts = "resolve_building_conflicts"
@@ -105,7 +107,21 @@ class Building_N100(Enum):
 
     These examples show how to utilize the BaseFileManager's methods to generate file paths for different types of files,
     reflecting the specific needs and naming conventions of river data management within the project.
+
+
     """
+
+    #################################################
+    ########### RUN TIME OVERVIEW ####################
+    #################################################
+
+    overview__runtime_all_building_functions__n100 = (
+        file_manager.generate_file_name_general_files(
+            script_source_name=overview,
+            description="runtime_all_building_functions",
+            file_type="txt",
+        )
+    )
 
     #################################################
     ########### BUILDING DATA PREPARATION ###########

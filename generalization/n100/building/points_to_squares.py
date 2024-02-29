@@ -4,7 +4,7 @@ from custom_tools.timing_decorator import timing_decorator
 from env_setup import environment_setup
 
 
-@timing_decorator("building_points_to_polygon.py")
+@timing_decorator("points_to_squares.py")
 def main():
     environment_setup.main()
     building_symbol_dimensions = {

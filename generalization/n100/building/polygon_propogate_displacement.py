@@ -18,7 +18,7 @@ from file_manager.n100.file_manager_buildings import Building_N100
 from custom_tools.timing_decorator import timing_decorator
 
 
-@timing_decorator("building_polygon_displacement_rbc.py")
+@timing_decorator("polygon_propogate_displacement.py")
 def main():
     """
     Summary:
