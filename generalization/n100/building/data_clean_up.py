@@ -2,18 +2,15 @@ import arcpy
 
 # Importing custom files relative to the root path
 from env_setup import environment_setup
+from custom_tools.timing_decorator import timing_decorator
 
 # Importing temporary files
 from file_manager.n100.file_manager_buildings import Building_N100
 
-# Importing environment
-environment_setup.general_setup()
-
-# Importing timing decorator
-from custom_tools.timing_decorator import timing_decorator
 
 # Main function
 def main():
+    environment_setup.main()
     clean_up_fields_delete()
 
 

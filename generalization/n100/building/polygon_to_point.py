@@ -9,8 +9,6 @@ from env_setup import environment_setup
 # Importing temporary files
 from file_manager.n100.file_manager_buildings import Building_N100
 
-# Importing environment
-environment_setup.general_setup()
 
 # Importing timing decorator
 from custom_tools.timing_decorator import timing_decorator
@@ -23,6 +21,7 @@ def main():
     them together with collapsed points from the tools simplify building and simplify polygon.
     """
     # Start timing
+    environment_setup.main()
     start_time = time.time()
 
     grunnriss_to_point()

@@ -18,7 +18,7 @@ def main():
     dangle_id_field = "dang_id"
     cpu_usage_percentage = 0.9
     num_cores = int(multiprocessing.cpu_count() * cpu_usage_percentage)
-    setup_arcpy_environment()
+    environment_setup.main()
     copy_input_features(geomotry_search_tolerance)
 
     # Feature classes
@@ -68,19 +68,6 @@ def main():
         resolve_geometry(id_field, dangle_id_field, all_problematic_ids)
     except Exception as e:
         print("Error in resolve_geometry:", e)
-
-
-def setup_arcpy_environment():
-    """
-    Summary:
-        Sets up the ArcPy environment based on predefined settings defined in `general_setup`.
-        This function ensures that the ArcPy environment is properly configured for the specific project by utilizing
-        the `general_setup` function from the `environment_setup` module.
-
-    Details:
-        - It calls the `general_setup` function from the `environment_setup` module to set up the ArcPy environment based on predefined settings.
-    """
-    environment_setup.general_setup()
 
 
 def copy_input_features(geomotry_search_tolerance):

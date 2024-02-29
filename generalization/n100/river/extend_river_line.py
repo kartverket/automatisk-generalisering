@@ -14,8 +14,7 @@ from file_manager.n100.file_manager_rivers import River_N100
 
 
 def main():
-    setup_arcpy_environment()
-
+    environment_setup.main()
     problematic_dangles, all_rivers, water_polygon = processing_preparation()
 
     # Assume that the 'orig_ob_id' field in 'all_rivers' holds the original OID
@@ -41,19 +40,6 @@ def main():
 
     # Now, process these new lines to integrate them with the original river network
     final_river_network = process_new_lines(new_lines, all_rivers)
-
-
-def setup_arcpy_environment():
-    """
-    Summary:
-        Sets up the ArcPy environment based on predefined settings defined in `general_setup`.
-        This function ensures that the ArcPy environment is properly configured for the specific project by utilizing
-        the `general_setup` function from the `environment_setup` module.
-
-    Details:
-        - It calls the `general_setup` function from the `environment_setup` module to set up the ArcPy environment based on predefined settings.
-    """
-    environment_setup.general_setup()
 
 
 def processing_preparation():

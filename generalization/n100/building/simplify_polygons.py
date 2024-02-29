@@ -6,9 +6,6 @@ from env_setup import environment_setup
 from input_data import input_n50
 from file_manager.n100.file_manager_buildings import Building_N100
 
-# Importing environment
-environment_setup.general_setup()
-
 # Importing timing decorator
 from custom_tools.timing_decorator import timing_decorator
 
@@ -33,6 +30,7 @@ def main():
         3. `joining_and_adding_fields`:
             Reduces clusters to one point for each cluster.
     """
+    environment_setup.main()
     aggregate_polygons()
     simplify_buildings_1()
     simplify_polygons()

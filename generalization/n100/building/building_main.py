@@ -1,11 +1,6 @@
-# Importing environment and directory structure
+# Importing modules
 from env_setup import environment_setup
-from env_setup import setup_directory_structure
-
-# Environment and directory structure setup
-environment_setup.general_setup()
-setup_directory_structure.main()
-
+from custom_tools.timing_decorator import timing_decorator
 
 # Importing building scripts
 from generalization.n100.building import building_data_preparation
@@ -19,9 +14,6 @@ from generalization.n100.building import building_point_buffer_displacement
 from generalization.n100.building import building_points_to_polygon
 from generalization.n100.building import resolve_building_conflicts
 from generalization.n100.building import building_clean_up
-
-# Importing timing decorator
-from custom_tools.timing_decorator import timing_decorator
 
 
 # Main function that runs all the building scripts
@@ -58,6 +50,8 @@ def main():
 
     """
 
+    # building_main_setup()
+    environment_setup.main()
     building_data_preparation.main()
     create_simplified_building_polygons.main()
     building_polygon_displacement_rbc.main()
