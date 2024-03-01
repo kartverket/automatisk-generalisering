@@ -94,8 +94,7 @@ class ArcGisEnvironmentSetup:
         print(f"- Output Coordinate System: EPSG:{self.spatial_reference}")
         print(f"- XY Tolerance: {arcpy.env.XYTolerance}")
         print(f"- XY Resolution: {arcpy.env.XYResolution}")
-        print(f"- Parallel Processing Factor: {arcpy.env.parallelProcessingFactor}")
-        print("ArcGIS Pro environment setup completed.\n")
+        print(f"- Parallel Processing Factor: {arcpy.env.parallelProcessingFactor}\n")
 
 
 class ProjectDirectorySetup:
