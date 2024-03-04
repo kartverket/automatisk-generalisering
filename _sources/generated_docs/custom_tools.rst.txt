@@ -28,6 +28,14 @@ custom\_tools.partition\_iterator module
    :undoc-members:
    :show-inheritance:
 
+custom\_tools.partition\_iterator\_state\_based module
+------------------------------------------------------
+
+.. automodule:: custom_tools.partition_iterator_state_based
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
 custom\_tools.polygon\_processor module
 ---------------------------------------
 

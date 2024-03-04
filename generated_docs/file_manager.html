@@ -65,6 +65,9 @@
 <li class="toctree-l4"><a class="reference internal" href="#id1"><code class="docutils literal notranslate"><span class="pre">BaseFileManager.project_root_directory</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="#id2"><code class="docutils literal notranslate"><span class="pre">BaseFileManager.general_files_directory_name</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="#id3"><code class="docutils literal notranslate"><span class="pre">BaseFileManager.lyrx_directory_name</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#file_manager.base_file_manager.BaseFileManager.script_source_name"><code class="docutils literal notranslate"><span class="pre">BaseFileManager.script_source_name</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#file_manager.base_file_manager.BaseFileManager.description"><code class="docutils literal notranslate"><span class="pre">BaseFileManager.description</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#file_manager.base_file_manager.BaseFileManager.validate_name_and_description"><code class="docutils literal notranslate"><span class="pre">BaseFileManager.validate_name_and_description()</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="#file_manager.base_file_manager.BaseFileManager.generate_file_name_gdb"><code class="docutils literal notranslate"><span class="pre">BaseFileManager.generate_file_name_gdb()</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="#file_manager.base_file_manager.BaseFileManager.generate_file_name_general_files"><code class="docutils literal notranslate"><span class="pre">BaseFileManager.generate_file_name_general_files()</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="#file_manager.base_file_manager.BaseFileManager.generate_file_name_lyrx"><code class="docutils literal notranslate"><span class="pre">BaseFileManager.generate_file_name_lyrx()</span></code></a></li>
@@ -322,7 +325,7 @@
 <span id="file-manager-base-file-manager-module"></span><h2>file_manager.base_file_manager module<a class="headerlink" href="#module-file_manager.base_file_manager" title="Link to this heading"></a></h2>
 <dl class="py class">
 <dt class="sig sig-object py" id="file_manager.base_file_manager.BaseFileManager">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">file_manager.base_file_manager.</span></span><span class="sig-name descname"><span class="pre">BaseFileManager</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">scale</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">object_name</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/file_manager/base_file_manager.html#BaseFileManager"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#file_manager.base_file_manager.BaseFileManager" title="Link to this definition"></a></dt>
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">file_manager.base_file_manager.</span></span><span class="sig-name descname"><span class="pre">BaseFileManager</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">scale</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">object_name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">script_source_name</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">''</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">description</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">''</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/file_manager/base_file_manager.html#BaseFileManager"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#file_manager.base_file_manager.BaseFileManager" title="Link to this definition"></a></dt>
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
 <p>The core file manager class handles the creation of absolute paths across our project,
 imported in different file managers.</p>
@@ -415,10 +418,38 @@ general files, and layer files, using the project’s naming conventions and dir
 <span class="sig-name descname"><span class="pre">lyrx_directory_name</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'lyrx_outputs'</span></em><a class="headerlink" href="#id3" title="Link to this definition"></a></dt>
 <dd></dd></dl>
 
+<dl class="py property">
+<dt class="sig sig-object py" id="file_manager.base_file_manager.BaseFileManager.script_source_name">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">script_source_name</span></span><a class="headerlink" href="#file_manager.base_file_manager.BaseFileManager.script_source_name" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="file_manager.base_file_manager.BaseFileManager.description">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">description</span></span><a class="headerlink" href="#file_manager.base_file_manager.BaseFileManager.description" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="file_manager.base_file_manager.BaseFileManager.validate_name_and_description">
+<span class="sig-name descname"><span class="pre">validate_name_and_description</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">script_source_name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">description</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">file_type</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/file_manager/base_file_manager.html#BaseFileManager.validate_name_and_description"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#file_manager.base_file_manager.BaseFileManager.validate_name_and_description" title="Link to this definition"></a></dt>
+<dd><p>Validate the script source name and description.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>script_source_name</strong> (<em>str</em>) – The name of the script or source generating the file.</p></li>
+<li><p><strong>description</strong> (<em>str</em>) – A brief description of the file’s purpose or contents.</p></li>
+<li><p><strong>file_type</strong> (<em>str</em>) – file type extension.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Raises a ValueError if string contains spaces or dots.</p>
+</dd>
+</dl>
+</dd></dl>
+
 <dl class="py method">
 <dt class="sig sig-object py" id="file_manager.base_file_manager.BaseFileManager.generate_file_name_gdb">
-<span class="sig-name descname"><span class="pre">generate_file_name_gdb</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">script_source_name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">description</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/file_manager/base_file_manager.html#BaseFileManager.generate_file_name_gdb"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#file_manager.base_file_manager.BaseFileManager.generate_file_name_gdb" title="Link to this definition"></a></dt>
-<dd><p>Generates a file path for geodatabase (.gdb) files.</p>
+<span class="sig-name descname"><span class="pre">generate_file_name_gdb</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">script_source_name</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">description</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/file_manager/base_file_manager.html#BaseFileManager.generate_file_name_gdb"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#file_manager.base_file_manager.BaseFileManager.generate_file_name_gdb" title="Link to this definition"></a></dt>
+<dd><p>Generates a file path for geodatabase (.gdb) files. After validating the input.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
@@ -437,8 +468,8 @@ general files, and layer files, using the project’s naming conventions and dir
 
 <dl class="py method">
 <dt class="sig sig-object py" id="file_manager.base_file_manager.BaseFileManager.generate_file_name_general_files">
-<span class="sig-name descname"><span class="pre">generate_file_name_general_files</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">script_source_name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">description</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">file_type</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/file_manager/base_file_manager.html#BaseFileManager.generate_file_name_general_files"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#file_manager.base_file_manager.BaseFileManager.generate_file_name_general_files" title="Link to this definition"></a></dt>
-<dd><p>Generates a file path for general files (e.g., CSV, TXT).</p>
+<span class="sig-name descname"><span class="pre">generate_file_name_general_files</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">script_source_name</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">description</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">file_type</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/file_manager/base_file_manager.html#BaseFileManager.generate_file_name_general_files"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#file_manager.base_file_manager.BaseFileManager.generate_file_name_general_files" title="Link to this definition"></a></dt>
+<dd><p>Generates a file path for general files (e.g., CSV, TXT). After validating the input.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
@@ -458,8 +489,8 @@ general files, and layer files, using the project’s naming conventions and dir
 
 <dl class="py method">
 <dt class="sig sig-object py" id="file_manager.base_file_manager.BaseFileManager.generate_file_name_lyrx">
-<span class="sig-name descname"><span class="pre">generate_file_name_lyrx</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">script_source_name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">description</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/file_manager/base_file_manager.html#BaseFileManager.generate_file_name_lyrx"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#file_manager.base_file_manager.BaseFileManager.generate_file_name_lyrx" title="Link to this definition"></a></dt>
-<dd><p>Generates a file path for ArcGIS layer files (.lyrx).</p>
+<span class="sig-name descname"><span class="pre">generate_file_name_lyrx</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">script_source_name</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">description</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/file_manager/base_file_manager.html#BaseFileManager.generate_file_name_lyrx"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#file_manager.base_file_manager.BaseFileManager.generate_file_name_lyrx" title="Link to this definition"></a></dt>
+<dd><p>Generates a file path for ArcGIS layer files (.lyrx). After validating the input.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">

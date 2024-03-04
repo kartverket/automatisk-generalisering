@@ -129,7 +129,8 @@
 <span class="sd">    Configures and initializes the ArcGIS Pro environment settings.</span>
 
 <span class="sd">    Summary:</span>
-<span class="sd">        Sets up the ArcGIS Pro environment with specified workspace and spatial reference. Ensures setup is performed only once globally.</span>
+<span class="sd">        Sets up the ArcGIS Pro environment with specified workspace and spatial reference.</span>
+<span class="sd">        Ensures setup is performed only once globally.</span>
 
 <span class="sd">    Details:</span>
 <span class="sd">        - Checks if setup has already been done globally to avoid duplication.</span>
@@ -198,8 +199,8 @@
 <span class="sd">        - Checks if the global setup has already been completed to prevent redundancy.</span>
 <span class="sd">        - Creates a main directory and specified subdirectories for organizing project files.</span>
 <span class="sd">        - Generates geodatabases in the designated subdirectories for data storage.</span>
-<span class="sd">        - Sets up directories for layer files (`lyrx`) to organize map layer configurations.</span>
-<span class="sd">        - Creates a directory for general files, facilitating organized storage of miscellaneous project files.</span>
+<span class="sd">        - Sets up additional subdirectories within the subdirectories for miscellaneous files and layer configurations.</span>
+<span class="sd">        - A common method `create_subdir_structure` is introduced to handle the creation of additional subdirectories within the subdirectories.</span>
 
 <span class="sd">    Attributes:</span>
 <span class="sd">        base_directory (str): The root directory for the project structure.</span>
@@ -232,60 +233,69 @@
             <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Global setup has already been completed. Skipping.</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">)</span>
             <span class="k">return</span>
 
-        <span class="bp">self</span><span class="o">.</span><span class="n">create_directory_structure</span><span class="p">()</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">create_gdbs_in_subdirs</span><span class="p">()</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">create_lyrx_directory_structure</span><span class="p">()</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">create_general_files_structure</span><span class="p">()</span>
-        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Directory structure completed.</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">)</span>
+        <span class="n">main_directory_path</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">base_directory</span><span class="p">,</span> <span class="n">main_directory_name</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">create_directory_structure</span><span class="p">(</span><span class="n">main_directory_path</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">create_gdbs_in_subdirectories</span><span class="p">(</span><span class="n">main_directory_path</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">create_subdirectory_structure</span><span class="p">(</span>
+            <span class="n">main_directory_path</span><span class="p">,</span> <span class="n">subdir_structure</span><span class="o">=</span><span class="n">lyrx_directory_name</span>
+        <span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">create_subdirectory_structure</span><span class="p">(</span>
+            <span class="n">main_directory_path</span><span class="p">,</span> <span class="n">subdir_structure</span><span class="o">=</span><span class="n">general_files_name</span>
+        <span class="p">)</span>
 
+        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Directory structure completed.</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">)</span>
         <span class="n">ProjectDirectorySetup</span><span class="o">.</span><span class="n">_setup_done_globally</span> <span class="o">=</span> <span class="kc">True</span></div>
 
 
 <div class="viewcode-block" id="ProjectDirectorySetup.create_directory_structure">
 <a class="viewcode-back" href="../../generated_docs/env_setup.html#env_setup.environment_setup.ProjectDirectorySetup.create_directory_structure">[docs]</a>
-    <span class="k">def</span> <span class="nf">create_directory_structure</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="n">main_directory</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">base_directory</span><span class="p">,</span> <span class="n">main_directory_name</span><span class="p">)</span>
-        <span class="n">os</span><span class="o">.</span><span class="n">makedirs</span><span class="p">(</span><span class="n">main_directory</span><span class="p">,</span> <span class="n">exist_ok</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
-        <span class="k">for</span> <span class="n">subdir</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">sub_directories</span><span class="p">:</span>
-            <span class="n">path</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">main_directory</span><span class="p">,</span> <span class="n">subdir</span><span class="p">)</span>
+    <span class="k">def</span> <span class="nf">create_directory_structure</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">main_directory_path</span><span class="p">,</span>
+    <span class="p">):</span>
+        <span class="n">os</span><span class="o">.</span><span class="n">makedirs</span><span class="p">(</span><span class="n">main_directory_path</span><span class="p">,</span> <span class="n">exist_ok</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">sub_directory</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">sub_directories</span><span class="p">:</span>
+            <span class="n">path</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span>
+                <span class="n">main_directory_path</span><span class="p">,</span>
+                <span class="n">sub_directory</span><span class="p">,</span>
+            <span class="p">)</span>
             <span class="n">os</span><span class="o">.</span><span class="n">makedirs</span><span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="n">exist_ok</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span></div>
 
 
-<div class="viewcode-block" id="ProjectDirectorySetup.create_gdbs_in_subdirs">
-<a class="viewcode-back" href="../../generated_docs/env_setup.html#env_setup.environment_setup.ProjectDirectorySetup.create_gdbs_in_subdirs">[docs]</a>
-    <span class="k">def</span> <span class="nf">create_gdbs_in_subdirs</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="k">for</span> <span class="n">subdir</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">sub_directories</span><span class="p">:</span>
+<div class="viewcode-block" id="ProjectDirectorySetup.create_gdbs_in_subdirectories">
+<a class="viewcode-back" href="../../generated_docs/env_setup.html#env_setup.environment_setup.ProjectDirectorySetup.create_gdbs_in_subdirectories">[docs]</a>
+    <span class="k">def</span> <span class="nf">create_gdbs_in_subdirectories</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">main_directory_path</span><span class="p">,</span>
+    <span class="p">):</span>
+        <span class="k">for</span> <span class="n">sub_directory</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">sub_directories</span><span class="p">:</span>
             <span class="n">subdir_path</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span>
-                <span class="bp">self</span><span class="o">.</span><span class="n">base_directory</span><span class="p">,</span>
-                <span class="s2">&quot;automatic_generalization_outputs&quot;</span><span class="p">,</span>
-                <span class="n">subdir</span><span class="p">,</span>
+                <span class="n">main_directory_path</span><span class="p">,</span>
+                <span class="n">sub_directory</span><span class="p">,</span>
             <span class="p">)</span>
             <span class="k">for</span> <span class="n">gdb_name</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">gdb_names</span><span class="p">:</span>
                 <span class="n">gdb_path</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">subdir_path</span><span class="p">,</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">gdb_name</span><span class="si">}</span><span class="s2">.gdb&quot;</span><span class="p">)</span>
                 <span class="k">if</span> <span class="ow">not</span> <span class="n">arcpy</span><span class="o">.</span><span class="n">Exists</span><span class="p">(</span><span class="n">gdb_path</span><span class="p">):</span>
-                    <span class="n">arcpy</span><span class="o">.</span><span class="n">CreateFileGDB_management</span><span class="p">(</span><span class="n">subdir_path</span><span class="p">,</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">gdb_name</span><span class="si">}</span><span class="s2">.gdb&quot;</span><span class="p">)</span></div>
+                    <span class="n">arcpy</span><span class="o">.</span><span class="n">CreateFileGDB_management</span><span class="p">(</span>
+                        <span class="n">out_folder_path</span><span class="o">=</span><span class="n">subdir_path</span><span class="p">,</span>
+                        <span class="n">out_name</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">gdb_name</span><span class="si">}</span><span class="s2">.gdb&quot;</span><span class="p">,</span>
+                    <span class="p">)</span></div>
 
 
-<div class="viewcode-block" id="ProjectDirectorySetup.create_lyrx_directory_structure">
-<a class="viewcode-back" href="../../generated_docs/env_setup.html#env_setup.environment_setup.ProjectDirectorySetup.create_lyrx_directory_structure">[docs]</a>
-    <span class="k">def</span> <span class="nf">create_lyrx_directory_structure</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="k">for</span> <span class="n">subdir</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">sub_directories</span><span class="p">:</span>
-            <span class="n">lyrx_directory_path</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span>
-                <span class="bp">self</span><span class="o">.</span><span class="n">base_directory</span><span class="p">,</span> <span class="n">main_directory_name</span><span class="p">,</span> <span class="n">subdir</span><span class="p">,</span> <span class="n">lyrx_directory_name</span>
+<div class="viewcode-block" id="ProjectDirectorySetup.create_subdirectory_structure">
+<a class="viewcode-back" href="../../generated_docs/env_setup.html#env_setup.environment_setup.ProjectDirectorySetup.create_subdirectory_structure">[docs]</a>
+    <span class="k">def</span> <span class="nf">create_subdirectory_structure</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">main_directory_path</span><span class="p">,</span>
+        <span class="n">subdir_structure</span><span class="p">,</span>
+    <span class="p">):</span>
+        <span class="k">for</span> <span class="n">sub_directory</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">sub_directories</span><span class="p">:</span>
+            <span class="n">structure_path</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span>
+                <span class="n">main_directory_path</span><span class="p">,</span>
+                <span class="n">sub_directory</span><span class="p">,</span>
+                <span class="n">subdir_structure</span><span class="p">,</span>
             <span class="p">)</span>
-            <span class="n">os</span><span class="o">.</span><span class="n">makedirs</span><span class="p">(</span><span class="n">lyrx_directory_path</span><span class="p">,</span> <span class="n">exist_ok</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span></div>
-
-
-<div class="viewcode-block" id="ProjectDirectorySetup.create_general_files_structure">
-<a class="viewcode-back" href="../../generated_docs/env_setup.html#env_setup.environment_setup.ProjectDirectorySetup.create_general_files_structure">[docs]</a>
-    <span class="k">def</span> <span class="nf">create_general_files_structure</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="n">main_directory</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">base_directory</span><span class="p">,</span> <span class="n">main_directory_name</span><span class="p">)</span>
-        <span class="n">os</span><span class="o">.</span><span class="n">makedirs</span><span class="p">(</span><span class="n">main_directory</span><span class="p">,</span> <span class="n">exist_ok</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
-        <span class="k">for</span> <span class="n">subdir</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">sub_directories</span><span class="p">:</span>
-            <span class="n">general_files_path</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span>
-                <span class="n">main_directory</span><span class="p">,</span> <span class="n">subdir</span><span class="p">,</span> <span class="n">general_files_name</span>
-            <span class="p">)</span>
-            <span class="n">os</span><span class="o">.</span><span class="n">makedirs</span><span class="p">(</span><span class="n">general_files_path</span><span class="p">,</span> <span class="n">exist_ok</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span></div>
+            <span class="n">os</span><span class="o">.</span><span class="n">makedirs</span><span class="p">(</span><span class="n">structure_path</span><span class="p">,</span> <span class="n">exist_ok</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span></div>
 </div>
 
 
