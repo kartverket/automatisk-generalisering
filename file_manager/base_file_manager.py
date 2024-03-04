@@ -1,3 +1,5 @@
+import re
+
 import config
 import env_setup.global_config
 
@@ -39,22 +41,82 @@ class BaseFileManager:
     general_files_directory_name = env_setup.global_config.general_files_name
     lyrx_directory_name = env_setup.global_config.lyrx_directory_name
 
-    def __init__(self, scale, object_name):
+    def __init__(
+        self,
+        scale,
+        object_name,
+        script_source_name="",
+        description="",
+    ):
         """Initializes the BaseFileManager with specific scale and object name."""
         self.scale = scale
         self.object = object_name
+        self._script_source_name = ""
+        self._description = ""
+        self.script_source_name = script_source_name
+        self.description = description
 
         self.relative_path_gdb = rf"{self.local_root_directory}\{self.project_root_directory}\{self.scale}\{self.object}.gdb"
         self.relative_path_general_files = rf"{self.local_root_directory}\{self.project_root_directory}\{self.scale}\{self.general_files_directory_name}"
         self.relative_path_lyrx = rf"{self.local_root_directory}\{self.project_root_directory}\{self.scale}\{self.lyrx_directory_name}"
 
-    def generate_file_name_gdb(
+    @property
+    def script_source_name(self):
+        return self._script_source_name
+
+    @script_source_name.setter
+    def script_source_name(self, value):
+        if not self._validate_input(value):
+            raise ValueError("script_source_name must not contain spaces or dots.")
+        self._script_source_name = value
+
+    @property
+    def description(self):
+        return self._description
+
+    @description.setter
+    def description(self, value):
+        if not self._validate_input(value):
+            raise ValueError("description must not contain spaces or dots.")
+        self._description = value
+
+    @staticmethod
+    def _validate_input(value):
+        """Validate the input to ensure it does not contain spaces or dots."""
+        return not bool(re.search(r"[ .]", value))
+
+    def validate_name_and_description(
         self,
         script_source_name,
         description,
+        file_type=None,
     ):
         """
-        Generates a file path for geodatabase (.gdb) files.
+        Validate the script source name and description.
+
+        Args:
+            script_source_name (str): The name of the script or source generating the file.
+            description (str): A brief description of the file's purpose or contents.
+            file_type (str): file type extension.
+
+        Returns:
+            Raises a ValueError if string contains spaces or dots.
+        """
+
+        if not self._validate_input(script_source_name):
+            raise ValueError("script_source_name must not contain spaces or dots.")
+        if not self._validate_input(description):
+            raise ValueError("description must not contain spaces or dots.")
+        if file_type is not None and not self._validate_input(file_type):
+            raise ValueError("file_type must not contain spaces or dots.")
+
+    def generate_file_name_gdb(
+        self,
+        script_source_name: str,
+        description: str,
+    ):
+        """
+        Generates a file path for geodatabase (.gdb) files. After validating the input.
 
         Args:
             script_source_name (str): The name of the script or source generating the file.
@@ -63,16 +125,17 @@ class BaseFileManager:
         Returns:
             str: The absolute path for the .gdb file.
         """
+        self.validate_name_and_description(script_source_name, description)
         return rf"{self.relative_path_gdb}\{script_source_name}___{description}___{self.scale}_{self.object}"
 
     def generate_file_name_general_files(
         self,
-        script_source_name,
-        description,
-        file_type,
+        script_source_name: str,
+        description: str,
+        file_type: str,
     ):
         """
-        Generates a file path for general files (e.g., CSV, TXT).
+        Generates a file path for general files (e.g., CSV, TXT). After validating the input.
 
         Args:
             script_source_name (str): The name of the script or source generating the file.
@@ -82,15 +145,16 @@ class BaseFileManager:
         Returns:
             str: The absolute path for the general file, including the file extension.
         """
+        self.validate_name_and_description(script_source_name, description, file_type)
         return rf"{self.relative_path_general_files}\{script_source_name}___{description}___{self.scale}_{self.object}.{file_type}"
 
     def generate_file_name_lyrx(
         self,
-        script_source_name,
-        description,
+        script_source_name: str,
+        description: str,
     ):
         """
-        Generates a file path for ArcGIS layer files (.lyrx).
+        Generates a file path for ArcGIS layer files (.lyrx). After validating the input.
 
         Args:
             script_source_name (str): The name of the script or source generating the file.
@@ -99,4 +163,5 @@ class BaseFileManager:
         Returns:
             str: The absolute path for the .lyrx file.
         """
+        self.validate_name_and_description(script_source_name, description)
         return rf"{self.relative_path_lyrx}\{script_source_name}___{description}___{self.scale}_{self.object}.lyrx"
