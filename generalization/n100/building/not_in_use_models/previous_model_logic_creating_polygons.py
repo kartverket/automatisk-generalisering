@@ -8,7 +8,7 @@ start_time = time.time()
 
 # Define input and output paths
 input_buildings = (
-    Building_N100.table_management__bygningspunkt_pre_resolve_building_conflicts__n100.value
+    Building_N100.calculate_field_values___points_pre_resolve_building_conflicts___n100_building.value
 )
 out_feature_path = f"{Building_N100.building_point_buffer_displacement__iteration_points_to_square_polygons__n100.value}_2"
 

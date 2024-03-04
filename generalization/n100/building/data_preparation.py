@@ -70,52 +70,52 @@ def preparation_begrensningskurve():
     custom_arcpy.select_attribute_and_make_permanent_feature(
         input_layer=input_n100.BegrensningsKurve,
         expression=sql_expr_begrensningskurve_waterfeatures,
-        output_name=Building_N100.preparation_begrensningskurve__selected_waterfeatures_from_begrensningskurve__n100.value,
+        output_name=Building_N100.data_preperation___selected_waterfeatures_from_begrensningskurve___n100_building.value,
     )
 
     custom_arcpy.select_attribute_and_make_permanent_feature(
         input_layer=input_n100.ArealdekkeFlate,
         expression="""OBJTYPE NOT IN ('ElvBekk', 'Havflate', 'Innsjø', 'InnsjøRegulert')""",
-        output_name=Building_N100.preparation_begrensningskurve__selected_land_features_area__n100.value,
+        output_name=Building_N100.data_preparation___selected_land_features_area___n100_building.value,
     )
 
     custom_arcpy.select_location_and_make_permanent_feature(
-        input_layer=Building_N100.preparation_begrensningskurve__selected_land_features_area__n100.value,
+        input_layer=Building_N100.data_preparation___selected_land_features_area___n100_building.value,
         overlap_type=custom_arcpy.OverlapType.BOUNDARY_TOUCHES.value,
-        select_features=Building_N100.preparation_begrensningskurve__selected_waterfeatures_from_begrensningskurve__n100.value,
-        output_name=Building_N100.preparation_begrensningskurve__land_features_near_water__n100.value,
+        select_features=Building_N100.data_preperation___selected_waterfeatures_from_begrensningskurve___n100_building.value,
+        output_name=Building_N100.data_preparation___land_features_near_water___n100_building.value,
     )
 
     arcpy.analysis.PairwiseBuffer(
-        in_features=Building_N100.preparation_begrensningskurve__land_features_near_water__n100.value,
-        out_feature_class=Building_N100.preparation_begrensningskurve__land_features_buffer__n100.value,
+        in_features=Building_N100.data_preparation___land_features_near_water___n100_building.value,
+        out_feature_class=Building_N100.data_preparation___land_features_buffer___n100_building.value,
         buffer_distance_or_field="15 Meters",
     )
     print("Buffered land features created")
 
     arcpy.analysis.PairwiseBuffer(
-        in_features=Building_N100.preparation_begrensningskurve__selected_waterfeatures_from_begrensningskurve__n100.value,
-        out_feature_class=Building_N100.preparation_begrensningskurve__begrensningskurve_waterfeatures_buffer__n100.value,
+        in_features=Building_N100.data_preperation___selected_waterfeatures_from_begrensningskurve___n100_building.value,
+        out_feature_class=Building_N100.data_preparation___begrensningskurve_waterfeatures_buffer___n100_building.value,
         buffer_distance_or_field="45 Meters",
     )
     print("Buffered water features created")
 
     arcpy.analysis.PairwiseErase(
-        in_features=Building_N100.preparation_begrensningskurve__begrensningskurve_waterfeatures_buffer__n100.value,
-        erase_features=Building_N100.preparation_begrensningskurve__selected_land_features_area__n100.value,
-        out_feature_class=Building_N100.preparation_begrensningskurve__begrensningskurve_buffer_erase_1__n100.value,
+        in_features=Building_N100.data_preparation___begrensningskurve_waterfeatures_buffer___n100_building.value,
+        erase_features=Building_N100.data_preparation___selected_land_features_area___n100_building.value,
+        out_feature_class=Building_N100.data_preparation___begrensningskurve_buffer_erase_1___n100_building.value,
     )
     print(
-        f"Erased 1 completed {Building_N100.preparation_begrensningskurve__begrensningskurve_buffer_erase_1__n100.value} created"
+        f"Erased 1 completed {Building_N100.data_preparation___begrensningskurve_buffer_erase_1___n100_building.value} created"
     )
 
     arcpy.analysis.PairwiseErase(
-        in_features=Building_N100.preparation_begrensningskurve__begrensningskurve_buffer_erase_1__n100.value,
-        erase_features=Building_N100.preparation_begrensningskurve__land_features_buffer__n100.value,
-        out_feature_class=Building_N100.preparation_begrensningskurve__begrensningskurve_buffer_erase_2__n100.value,
+        in_features=Building_N100.data_preparation___begrensningskurve_buffer_erase_1___n100_building.value,
+        erase_features=Building_N100.data_preparation___land_features_buffer___n100_building.value,
+        out_feature_class=Building_N100.data_preparation___begrensningskurve_buffer_erase_2___n100_building.value,
     )
     print(
-        f"Erased 2 completed {Building_N100.preparation_begrensningskurve__begrensningskurve_buffer_erase_2__n100.value} created"
+        f"Erased 2 completed {Building_N100.data_preparation___begrensningskurve_buffer_erase_2___n100_building.value} created"
     )
     print("Need to apply better logic for rivers separatly at a later point")
     # Needs to use a different logic for narrow rivers, and instead use the centerline and a small buffer around it which is added to the feature class
@@ -127,13 +127,13 @@ def preparation_begrensningskurve():
 
     # Add fields
     arcpy.management.AddFields(
-        in_table=Building_N100.preparation_begrensningskurve__begrensningskurve_buffer_erase_2__n100.value,
+        in_table=Building_N100.data_preparation___begrensningskurve_buffer_erase_2___n100_building.value,
         field_description=fields_to_add,
     )
 
     # Calculate fields
     arcpy.management.CalculateFields(
-        in_table=Building_N100.preparation_begrensningskurve__begrensningskurve_buffer_erase_2__n100.value,
+        in_table=Building_N100.data_preparation___begrensningskurve_buffer_erase_2___n100_building.value,
         expression_type="PYTHON3",
         fields=fields_to_calculate,
     )
@@ -157,7 +157,7 @@ def preperation_veg_sti():
 
     arcpy.UnsplitLine_management(
         in_features=input_n100.VegSti,
-        out_feature_class=Building_N100.preperation_veg_sti__unsplit_veg_sti__n100.value,
+        out_feature_class=Building_N100.data_preparation___unsplit_veg_sti___n100_building.value,
         dissolve_field=["subtypekode", "motorvegtype", "UTTEGNING"],
     )
 
@@ -189,20 +189,20 @@ def adding_matrikkel_as_points():
     custom_arcpy.select_attribute_and_make_feature_layer(
         input_layer=input_n100.ArealdekkeFlate,
         expression=urban_areas_sql_expr,
-        output_name=Building_N100.adding_matrikkel_as_points__urban_area_selection_n100__n100.value,
+        output_name=Building_N100.data_preparation___urban_area_selection_n100___n100_building.value,
     )
 
     # Selecting urban areas from n50 using sql expression
     custom_arcpy.select_attribute_and_make_feature_layer(
         input_layer=input_n50.ArealdekkeFlate,
         expression=urban_areas_sql_expr,
-        output_name=Building_N100.adding_matrikkel_as_points__urban_area_selection_n50__n100.value,
+        output_name=Building_N100.data_preparation___urban_area_selection_n50___n100_building.value,
     )
 
     # Creating a buffer of the urban selection of n100 to take into account symbology
     arcpy.PairwiseBuffer_analysis(
-        in_features=Building_N100.adding_matrikkel_as_points__urban_area_selection_n100__n100.value,
-        out_feature_class=Building_N100.adding_matrikkel_as_points__urban_area_selection_n100_buffer__n100.value,
+        in_features=Building_N100.data_preparation___urban_area_selection_n100___n100_building.value,
+        out_feature_class=Building_N100.data_preparation___urban_area_selection_n100_buffer___n100_building.value,
         buffer_distance_or_field="50 Meters",
         dissolve_option="NONE",
         dissolve_field=None,
@@ -211,27 +211,27 @@ def adding_matrikkel_as_points():
 
     # Removing areas from n50 urban areas from the buffer of n100 urban areas resulting in areas in n100 which no longer are urban
     arcpy.PairwiseErase_analysis(
-        in_features=Building_N100.adding_matrikkel_as_points__urban_area_selection_n50__n100.value,
-        erase_features=Building_N100.adding_matrikkel_as_points__urban_area_selection_n100_buffer__n100.value,
-        out_feature_class=Building_N100.adding_matrikkel_as_points__no_longer_urban_areas__n100.value,
+        in_features=Building_N100.data_preparation___urban_area_selection_n50___n100_building.value,
+        erase_features=Building_N100.data_preparation___urban_area_selection_n100_buffer___n100_building.value,
+        out_feature_class=Building_N100.data_preparation___no_longer_urban_areas___n100_building.value,
     )
 
     # Selecting matrikkel bygningspunkter based on this new urban selection layer
     custom_arcpy.select_location_and_make_permanent_feature(
         input_layer=input_other.matrikkel_bygningspunkt,
         overlap_type=custom_arcpy.OverlapType.INTERSECT,
-        select_features=Building_N100.adding_matrikkel_as_points__no_longer_urban_areas__n100.value,
-        output_name=Building_N100.adding_matrikkel_as_points__matrikkel_bygningspunkt__n100.value,
+        select_features=Building_N100.data_preparation___no_longer_urban_areas___n100_building.value,
+        output_name=Building_N100.data_preparation___matrikkel_bygningspunkt___n100_building.value,
     )
 
     # Adding transferring the NBR value to the matrikkel_bygningspunkt
     arcpy.AddField_management(
-        in_table=Building_N100.adding_matrikkel_as_points__matrikkel_bygningspunkt__n100.value,
+        in_table=Building_N100.data_preparation___matrikkel_bygningspunkt___n100_building.value,
         field_name="BYGGTYP_NBR",
         field_type="LONG",
     )
     arcpy.CalculateField_management(
-        in_table=Building_N100.adding_matrikkel_as_points__matrikkel_bygningspunkt__n100.value,
+        in_table=Building_N100.data_preparation___matrikkel_bygningspunkt___n100_building.value,
         field="BYGGTYP_NBR",
         expression="!bygningstype!",
     )
@@ -282,7 +282,7 @@ def selecting_grunnriss_for_generalization():
     custom_arcpy.select_attribute_and_make_permanent_feature(
         input_layer=input_n50.Grunnriss,
         expression=sql_nbr_code_kirke,
-        output_name=Building_N100.selecting_grunnriss_for_generalization__selected_grunnriss_not_church__n100.value,
+        output_name=Building_N100.data_preparation___selected_polygon_not_church___n100_building.value,
         selection_type=custom_arcpy.SelectionType.NEW_SELECTION,
         inverted=True,
     )
@@ -293,22 +293,22 @@ def selecting_grunnriss_for_generalization():
     sql_expression_correct_size_grunnriss = f"Shape_Area >= {grunnriss_minimum_size}"
 
     custom_arcpy.select_attribute_and_make_permanent_feature(
-        input_layer=Building_N100.selecting_grunnriss_for_generalization__selected_grunnriss_not_church__n100.value,
+        input_layer=Building_N100.data_preparation___selected_polygon_not_church___n100_building.value,
         expression=sql_expression_correct_size_grunnriss,
-        output_name=Building_N100.selecting_grunnriss_for_generalization__large_enough_grunnriss__n100.value,
+        output_name=Building_N100.data_preparation___large_enough_polygon___n100_building.value,
     )
 
     custom_arcpy.select_attribute_and_make_feature_layer(
-        input_layer=Building_N100.selecting_grunnriss_for_generalization__selected_grunnriss_not_church__n100.value,
+        input_layer=Building_N100.data_preparation___selected_polygon_not_church___n100_building.value,
         expression=sql_expression_too_small_grunnriss,
-        output_name=Building_N100.selecting_grunnriss_for_generalization__too_small_grunnriss__n100.value,
+        output_name=Building_N100.data_preparation___too_small_polygon___n100_building.value,
         selection_type=custom_arcpy.SelectionType.NEW_SELECTION,
     )
 
     # Transforming small grunnriss features into points
     arcpy.FeatureToPoint_management(
-        in_features=Building_N100.selecting_grunnriss_for_generalization__too_small_grunnriss__n100.value,
-        out_feature_class=Building_N100.selecting_grunnriss_for_generalization__points_created_from_small_grunnriss__n100.value,
+        in_features=Building_N100.data_preparation___too_small_polygon___n100_building.value,
+        out_feature_class=Building_N100.data_preparation___points_created_from_small_polygon___n100_building.value,
         point_location="CENTROID",
     )
 
@@ -316,13 +316,13 @@ def selecting_grunnriss_for_generalization():
     custom_arcpy.select_attribute_and_make_feature_layer(
         input_layer=input_n50.Grunnriss,
         expression=sql_nbr_code_kirke,
-        output_name=Building_N100.selecting_grunnriss_for_generalization__grunnriss_kirke__n100.value,
+        output_name=Building_N100.data_preparation___church_polygon___n100_building.value,
     )
 
     # Transforming selected churches and hospitals into points
     arcpy.FeatureToPoint_management(
-        in_features=Building_N100.selecting_grunnriss_for_generalization__grunnriss_kirke__n100.value,
-        out_feature_class=Building_N100.selecting_grunnriss_for_generalization__kirke_points_created_from_grunnriss__n100.value,
+        in_features=Building_N100.data_preparation___church_polygon___n100_building.value,
+        out_feature_class=Building_N100.data_preparation___church_points_from_polygon___n100_building.value,
         point_location="CENTROID",
     )
 
@@ -341,7 +341,7 @@ def removing_overlapping_byggningspunkt_and_grunnriss_matrikkel():
     )
 
     custom_arcpy.select_location_and_make_permanent_feature(
-        input_layer=Building_N100.adding_matrikkel_as_points__matrikkel_bygningspunkt__n100.value,
+        input_layer=Building_N100.data_preparation___matrikkel_bygningspunkt___n100_building.value,
         overlap_type=custom_arcpy.OverlapType.WITHIN,
         select_features=input_n50.Grunnriss,
         output_name="NEEDS UPDATE",

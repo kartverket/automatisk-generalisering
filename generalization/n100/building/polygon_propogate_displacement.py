@@ -90,30 +90,30 @@ def propagate_displacement_building_polygons():
     print("Propogate displacement ...")
     # Copying layer so no changes are made to the original
     arcpy.management.Copy(
-        in_data=Building_N100.join_and_add_fields__building_polygons_final__n100.value,
-        out_data=Building_N100.propagate_displacement_building_polygons__building_polygon_pre_propogate_displacement__n100.value,
+        in_data=Building_N100.simplify_polygons___final___n100_building.value,
+        out_data=Building_N100.polygon_propogate_displacement___pre_displacement___n100_building.value,
     )
 
     # Selecting propogate displacement features 500 meters from building polgyons
     custom_arcpy.select_location_and_make_permanent_feature(
         input_layer=config.displacement_feature,
         overlap_type=custom_arcpy.OverlapType.WITHIN_A_DISTANCE,
-        select_features=Building_N100.propagate_displacement_building_polygons__building_polygon_pre_propogate_displacement__n100.value,
-        output_name=Building_N100.propagate_displacement_building_polygons__displacement_feature_1000_m_from_building_polygon__n100.value,
+        select_features=Building_N100.polygon_propogate_displacement___pre_displacement___n100_building.value,
+        output_name=Building_N100.polygon_propogate_displacement___displacement_feature_1000m_from_polygon___n100_building.value,
         search_distance="500 Meters",
     )
 
     # Running propogate displacement for building polygons
     arcpy.cartography.PropagateDisplacement(
-        in_features=Building_N100.propagate_displacement_building_polygons__building_polygon_pre_propogate_displacement__n100.value,
-        displacement_features=Building_N100.propagate_displacement_building_polygons__displacement_feature_1000_m_from_building_polygon__n100.value,
+        in_features=Building_N100.polygon_propogate_displacement___pre_displacement___n100_building.value,
+        displacement_features=Building_N100.polygon_propogate_displacement___displacement_feature_1000m_from_polygon___n100_building.value,
         adjustment_style="SOLID",
     )
 
     # Copying and assigning new name to layer
     arcpy.management.Copy(
-        in_data=Building_N100.propagate_displacement_building_polygons__building_polygon_pre_propogate_displacement__n100.value,
-        out_data=Building_N100.propagate_displacement_building_polygons__after_propogate_displacement__n100.value,
+        in_data=Building_N100.polygon_propogate_displacement___pre_displacement___n100_building.value,
+        out_data=Building_N100.polygon_propogate_displacement___after_displacement___n100_building.value,
     )
 
 
@@ -130,19 +130,19 @@ def features_500_m_from_building_polygons():
     print("Selecting features 500 meter from building polygon ...")
     # Selecting begrensningskurve 500 meters from building polygons
     custom_arcpy.select_location_and_make_permanent_feature(
-        input_layer=Building_N100.preparation_begrensningskurve__selected_waterfeatures_from_begrensningskurve__n100.value,
+        input_layer=Building_N100.data_preperation___selected_waterfeatures_from_begrensningskurve___n100_building.value,
         overlap_type=custom_arcpy.OverlapType.WITHIN_A_DISTANCE,
-        select_features=Building_N100.propagate_displacement_building_polygons__after_propogate_displacement__n100.value,
-        output_name=Building_N100.features_500_m_from_building_polygons__selected_begrensningskurve__n100.value,
+        select_features=Building_N100.polygon_propogate_displacement___after_displacement___n100_building.value,
+        output_name=Building_N100.polygon_propogate_displacement___begrensningskurve_500m_from_displaced_polygon___n100_building.value,
         search_distance="500 Meters",
     )
 
     # Selecting roads 500 meters from building polygons
     custom_arcpy.select_location_and_make_permanent_feature(
-        input_layer=Building_N100.preperation_veg_sti__unsplit_veg_sti__n100.value,
+        input_layer=Building_N100.data_preparation___unsplit_veg_sti___n100_building.value,
         overlap_type=custom_arcpy.OverlapType.WITHIN_A_DISTANCE,
-        select_features=Building_N100.propagate_displacement_building_polygons__after_propogate_displacement__n100.value,
-        output_name=Building_N100.features_500_m_from_building_polygons__selected_roads__n100.value,
+        select_features=Building_N100.polygon_propogate_displacement___after_displacement___n100_building.value,
+        output_name=Building_N100.polygon_propogate_displacement___roads_500m_from_displaced_polygon___n100_building.value,
         search_distance="500 Meters",
     )
 
@@ -157,22 +157,22 @@ def apply_symbology_to_layers():
     print("Applying symbology ...")
     # Applying symbology to building polygons
     custom_arcpy.apply_symbology(
-        input_layer=Building_N100.propagate_displacement_building_polygons__after_propogate_displacement__n100.value,
+        input_layer=Building_N100.polygon_propogate_displacement___after_displacement___n100_building.value,
         in_symbology_layer=input_symbology.SymbologyN100.grunnriss.value,
-        output_name=Building_N100.apply_symbology_to_layers__building_polygon__n100__lyrx.value,
+        output_name=Building_N100.polygon_propogate_displacement___building_polygon___n100_building_lyrx.value,
     )
     # Applying symbology to roads
     custom_arcpy.apply_symbology(
-        input_layer=Building_N100.features_500_m_from_building_polygons__selected_roads__n100.value,
+        input_layer=Building_N100.polygon_propogate_displacement___roads_500m_from_displaced_polygon___n100_building.value,
         in_symbology_layer=input_symbology.SymbologyN100.veg_sti.value,
-        output_name=Building_N100.apply_symbology_to_layers__roads__n100__lyrx.value,
+        output_name=Building_N100.polygon_propogate_displacement___roads___n100_building_lyrx.value,
     )
 
     # Applying symbology to begrensningskurve (limiting curve)
     custom_arcpy.apply_symbology(
-        input_layer=Building_N100.features_500_m_from_building_polygons__selected_begrensningskurve__n100.value,
+        input_layer=Building_N100.polygon_propogate_displacement___begrensningskurve_500m_from_displaced_polygon___n100_building.value,
         in_symbology_layer=input_symbology.SymbologyN100.begrensnings_kurve_line.value,
-        output_name=Building_N100.apply_symbology_to_layers__begrensningskurve__n100__lyrx.value,
+        output_name=Building_N100.polygon_propogate_displacement___begrensningskurve___n100_building_lyrx.value,
     )
 
 
@@ -252,7 +252,7 @@ def resolve_building_conflict_building_polygon():
     print("Polygon prosessor...")
     polygon_process = PolygonProcessor(
         Building_N100.resolve_building_conflict_building_selected_hospital_church_points__n100.value,  # input
-        Building_N100.resolve_building_conflict_building_polygon__hospital_church_polygons__n100.value,  # output
+        Building_N100.polygon_propogate_displacement___hospital_church_squares___n100_building.value,  # output
         building_symbol_dimensions,
         symbol_field_name,
         index_field_name,
@@ -261,9 +261,9 @@ def resolve_building_conflict_building_polygon():
 
     # Applying symbology to polygonprocessed hospital and churches
     custom_arcpy.apply_symbology(
-        input_layer=Building_N100.resolve_building_conflict_building_polygon__hospital_church_polygons__n100.value,
+        input_layer=Building_N100.polygon_propogate_displacement___hospital_church_squares___n100_building.value,
         in_symbology_layer=input_symbology.SymbologyN100.grunnriss.value,
-        output_name=Building_N100.resolve_building_conflict_building_polygon__polygonprocessor_symbology__n100__lyrx.value,
+        output_name=Building_N100.polygon_propogate_displacement___polygonprocessor_symbology___n100_building_lyrx.value,
     )
 
     # Resolving Building Conflicts for building polygons
@@ -274,17 +274,17 @@ def resolve_building_conflict_building_polygon():
     # Barriers: roads, begrensningskurve, hospital and church squares
     input_barriers = [
         [
-            Building_N100.apply_symbology_to_layers__roads__n100__lyrx.value,
+            Building_N100.polygon_propogate_displacement___roads___n100_building_lyrx.value,
             "false",
             "15 Meters",
         ],
         [
-            Building_N100.apply_symbology_to_layers__begrensningskurve__n100__lyrx.value,
+            Building_N100.polygon_propogate_displacement___begrensningskurve___n100_building_lyrx.value,
             "false",
             "15 Meters",
         ],
         [
-            Building_N100.resolve_building_conflict_building_polygon__polygonprocessor_symbology__n100__lyrx.value,
+            Building_N100.polygon_propogate_displacement___polygonprocessor_symbology___n100_building_lyrx.value,
             "false",
             "15 Meters",
         ],
@@ -292,7 +292,7 @@ def resolve_building_conflict_building_polygon():
 
     # Resolve Building Conflict with building polygons and barriers
     arcpy.cartography.ResolveBuildingConflicts(
-        in_buildings=Building_N100.apply_symbology_to_layers__building_polygon__n100__lyrx.value,
+        in_buildings=Building_N100.polygon_propogate_displacement___building_polygon___n100_building_lyrx.value,
         invisibility_field="invisibility",
         in_barriers=input_barriers,
         building_gap="30 meters",
@@ -301,8 +301,8 @@ def resolve_building_conflict_building_polygon():
 
     # Copying and assigning new name to layer
     arcpy.management.Copy(
-        in_data=Building_N100.propagate_displacement_building_polygons__after_propogate_displacement__n100.value,
-        out_data=Building_N100.resolve_building_conflict_building_polygon__after_RBC__n100.value,
+        in_data=Building_N100.polygon_propogate_displacement___after_displacement___n100_building.value,
+        out_data=Building_N100.polygon_propogate_displacement___after_rbc___n100_building.value,
     )
     print("Finished")
 
@@ -344,8 +344,12 @@ def creating_road_buffer():
         """: 8,
     }
 
-    selection_name_base = Building_N100.creating_road_buffer__selection__n100.value
-    buffer_name_base = Building_N100.creating_road_buffer__buffers__n100.value
+    selection_name_base = (
+        Building_N100.polygon_propogate_displacement___road_buffer_selection___n100_building.value
+    )
+    buffer_name_base = (
+        Building_N100.polygon_propogate_displacement___road_buffers___n100_building.value
+    )
 
     # List to store the road buffer outputs
     road_buffer_output_names = []
@@ -364,7 +368,7 @@ def creating_road_buffer():
 
         # Selecting road types and making new feature layer based on SQL query
         custom_arcpy.select_attribute_and_make_feature_layer(
-            input_layer=Building_N100.preperation_veg_sti__unsplit_veg_sti__n100.value,
+            input_layer=Building_N100.data_preparation___unsplit_veg_sti___n100_building.value,
             expression=sql_query,
             output_name=selection_output_name,
         )
@@ -384,7 +388,7 @@ def creating_road_buffer():
     # Merge all buffers into a single feature class
     arcpy.management.Merge(
         inputs=road_buffer_output_names,
-        output=Building_N100.creating_road_buffer__merged_buffers__n100.value,
+        output=Building_N100.polygon_propogate_displacement___merged_road_buffers___n100_building.value,
     )
 
 
@@ -406,22 +410,22 @@ def invisible_building_polygons_to_point():
 
     # Making new feature layer of polygons that is invisible
     custom_arcpy.select_attribute_and_make_permanent_feature(
-        input_layer=Building_N100.resolve_building_conflict_building_polygon__after_RBC__n100.value,
+        input_layer=Building_N100.polygon_propogate_displacement___after_rbc___n100_building.value,
         expression="invisibility = 1",
-        output_name=Building_N100.invisible_building_polygons_to_point__invisible_polygons__n100.value,
+        output_name=Building_N100.polygon_propogate_displacement___invisible_polygons_after_rbc___n100_building.value,
     )
 
     # Making new feature layer of polygons that is NOT invisible
     custom_arcpy.select_attribute_and_make_permanent_feature(
-        input_layer=Building_N100.resolve_building_conflict_building_polygon__after_RBC__n100.value,
+        input_layer=Building_N100.polygon_propogate_displacement___after_rbc___n100_building.value,
         expression="invisibility = 0",
-        output_name=Building_N100.invisible_building_polygons_to_point__not_invisible_polygons__n100.value,
+        output_name=Building_N100.polygon_propogate_displacement___not_invisible_polygons_after_rbc___n100_building.value,
     )
 
     # Polygon to point
     arcpy.management.FeatureToPoint(
-        in_features=Building_N100.invisible_building_polygons_to_point__invisible_polygons__n100.value,
-        out_feature_class=Building_N100.invisible_building_polygons_to_point__invisible_polygons_to_points__n100.value,
+        in_features=Building_N100.polygon_propogate_displacement___invisible_polygons_after_rbc___n100_building.value,
+        out_feature_class=Building_N100.polygon_propogate_displacement___invisible_polygons_to_points___n100_building.value,
     )
 
     print("Finished.")
@@ -443,26 +447,26 @@ def intersecting_building_polygons_to_point():
 
     # Selecting buildings that DO NOT overlap with road buffer layer and will be kept as polygons
     custom_arcpy.select_location_and_make_permanent_feature(
-        input_layer=Building_N100.invisible_building_polygons_to_point__not_invisible_polygons__n100.value,
+        input_layer=Building_N100.polygon_propogate_displacement___not_invisible_polygons_after_rbc___n100_building.value,
         overlap_type=custom_arcpy.OverlapType.INTERSECT,
-        select_features=Building_N100.creating_road_buffer__merged_buffers__n100.value,
+        select_features=Building_N100.polygon_propogate_displacement___merged_road_buffers___n100_building.value,
         inverted=True,
-        output_name=Building_N100.intersecting_building_polygons_to_point__final_building_polygons__n100.value,
+        output_name=Building_N100.polygon_propogate_displacement___final_building_polygons___n100_building.value,
     )
 
     # Selecting buildings that overlap with road buffer layer and will be transformed to points
     custom_arcpy.select_location_and_make_permanent_feature(
-        input_layer=Building_N100.invisible_building_polygons_to_point__not_invisible_polygons__n100.value,
+        input_layer=Building_N100.polygon_propogate_displacement___not_invisible_polygons_after_rbc___n100_building.value,
         overlap_type=custom_arcpy.OverlapType.INTERSECT,
-        select_features=Building_N100.creating_road_buffer__merged_buffers__n100.value,
+        select_features=Building_N100.polygon_propogate_displacement___merged_road_buffers___n100_building.value,
         inverted=False,
-        output_name=Building_N100.intersecting_building_polygons_to_point__building_polygons_intersecting__n100.value,
+        output_name=Building_N100.polygon_propogate_displacement___building_polygons_intersecting_road___n100_building.value,
     )
 
     # Transforming these polygons to points
     arcpy.management.FeatureToPoint(
-        in_features=Building_N100.intersecting_building_polygons_to_point__building_polygons_intersecting__n100.value,
-        out_feature_class=Building_N100.intersecting_building_polygons_to_point__building_points__n100.value,
+        in_features=Building_N100.polygon_propogate_displacement___building_polygons_intersecting_road___n100_building.value,
+        out_feature_class=Building_N100.polygon_propogate_displacement___intersecting_polygons_to_points___n100_building.value,
     )
 
 
@@ -480,10 +484,10 @@ def merging_invisible_intersecting_points():
     print("Merging points...")
     arcpy.management.Merge(
         inputs=[
-            Building_N100.intersecting_building_polygons_to_point__building_points__n100.value,
-            Building_N100.invisible_building_polygons_to_point__invisible_polygons_to_points__n100.value,
+            Building_N100.polygon_propogate_displacement___intersecting_polygons_to_points___n100_building.value,
+            Building_N100.polygon_propogate_displacement___invisible_polygons_to_points___n100_building.value,
         ],
-        output=Building_N100.merging_invisible_intersecting_points__final__n100.value,
+        output=Building_N100.polygon_propogate_displacement___final_merged_points___n100_building.value,
     )
 
 

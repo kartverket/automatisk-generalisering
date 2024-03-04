@@ -60,19 +60,19 @@ def rbc_selection():
             "output_name": Building_N100.rbc_selection__grunnriss_selection_rbc__n100.value,
         },
         {
-            "input_layer": Building_N100.preperation_veg_sti__unsplit_veg_sti__n100.value,
+            "input_layer": Building_N100.data_preparation___unsplit_veg_sti___n100_building.value,
             "output_name": Building_N100.rbc_selection__veg_sti_selection_rbc_rbc__n100.value,
         },
         {
-            "input_layer": Building_N100.table_management__bygningspunkt_pre_resolve_building_conflicts__n100.value,
+            "input_layer": Building_N100.calculate_field_values___points_pre_resolve_building_conflicts___n100_building.value,
             "output_name": Building_N100.rbc_selection__bygningspunkt_selection_rbc__n100.value,
         },
         {
-            "input_layer": Building_N100.preparation_begrensningskurve__begrensningskurve_buffer_erase_2__n100.value,
+            "input_layer": Building_N100.data_preparation___begrensningskurve_buffer_erase_2___n100_building.value,
             "output_name": Building_N100.rbc_selection__begrensningskurve_selection_rbc__n100.value,
         },
         {
-            "input_layer": Building_N100.points_to_polygon__transform_points_to_square_polygons__n100.value,
+            "input_layer": Building_N100.points_to_squares___transform_points_to_square_polygons___n100_building.value,
             "output_name": Building_N100.rbc_selection__drawn_polygon_selection_rbc__n100.value,
         },
     ]

@@ -1,6 +1,5 @@
 # Imports
 from enum import Enum
-import config
 from env_setup import global_config
 from file_manager.base_file_manager import BaseFileManager
 
@@ -13,107 +12,65 @@ file_manager = BaseFileManager(scale=scale, object_name=object_name)
 
 ##############################################################################################################################################
 
-# All file and function names in correct order
 
+# All scripts
+data_preparation = "data_preparation"
+simplify_polygons = " simplify_polygons"
+polygon_propogate_displacement = "polygon_propogate_displacement"
+polygon_to_point = "polygon_to_point"
+calculating_field_values = "calculating_field_values"
+point_propogate_displacement = "point_propogate_displacement"
+hospital_church_clusters = "hospital_church_clusters"
+point_displacement_with_buffer = "point_displacement_with_buffer"
+points_to_squares = "points_to_squares"
+resolve_building_conflicts_points = "resolve_building_conflicts_points"
+data_clean_up = "data_clean_up"
+
+# Additional names
 overview = "overview"
 
-# data_preparation.py
-preparation_begrensningskurve = "preparation_begrensningskurve"
-preperation_veg_sti = "preperation_veg_sti"
-adding_matrikkel_as_points = "adding_matrikkel_as_points"
-selecting_grunnriss_for_generalization = "selecting_grunnriss_for_generalization"
-table_management = "table_management"
-grunnriss_to_point = "grunnriss_to_point"
-
-
-# simplify_polygons.py
-aggregate_polygons = "aggregate_building_polygons"
-simplify_buildings_1 = "simplify_buildings_1"
-simplify_buildings_2 = "simplify_buildings_2"
-simplify_polygons = "simplify_polygons"
-join_and_add_fields = "join_and_add_fields"
-
-# create_cartographic_partitions.py
+# TO BE DELETED
 create_cartographic_partitions = "create_cartographic_partitions"
-
-# polygon_propogate_displacement.py
-propagate_displacement_building_polygons = "propagate_displacement_building_polygons"
-features_500_m_from_building_polygons = "features_500_m_from_building_polygons"
-apply_symbology_to_layers = "apply_symbology_to_layers"
-resolve_building_conflict_building_polygon = (
-    "resolve_building_conflict_building_polygon"
-)
-creating_road_buffer = "creating_road_buffer"
-invisible_building_polygons_to_point = "invisible_building_polygons_to_point"
-intersecting_building_polygons_to_point = "intersecting_building_polygons_to_point"
-merging_invisible_intersecting_points = "merging_invisible_intersecting_points"
-
-
-# iteration.py
 iteration = "iteration"
-
-# point_propogate_displacement.py
-propagate_displacement = "propagate_displacement"
-
-# point_displacement_with_buffer.py
-building_point_buffer_displacement = "building_point_buffer_displacement"
-
-# polygon_to_point.py
-points_to_polygon = "points_to_polygon"
-
-# hospital_church_clusters.py
-hospital_church_selections = "hospital_church_selections"
-find_clusters = "find_clusters"
-reducing_clusters = "reducing_clusters"
-
-# resolve_building_conflicts_points.py
-rbc_selection = "rbc_selection"
-apply_symbology = "apply_symbology"
-resolve_building_conflicts = "resolve_building_conflicts"
-
-
-displacement_feature_asker = "displacement_feature_asker"
-
-##############################################################################################################################################
 
 
 class Building_N100(Enum):
 
     """
-    An enumeration for river-related geospatial data file paths within the N100 scale and bygning object context.
+    An enumeration for building-related geospatial data file paths within the N100 scale and building object context.
 
     Utilizes the BaseFileManager to generate standardized file paths for geodatabase files, general files, and layer files,
-    tailored to river data preparation and analysis tasks.
+    tailored to building data preparation and analysis tasks.
 
     Example Syntaxes:
         - For Geodatabase (.gdb) Files:
-            the_file_name_of_the_script___the_description_of_the_file___n100_bygning = file_manager.generate_file_name_gdb(
+            the_file_name_of_the_script___the_description_of_the_file___n100_building = file_manager.generate_file_name_gdb(
                 script_source_name="the_file_name_of_the_script",
-                description="the_description_of_the_file",
+                description="the_description_of_the_file"
             )
 
         - For General Files (e.g., .txt, .csv):
-            the_file_name_of_the_script___the_description_of_the_file___n100_bygning_filetype_extension = file_manager.generate_file_name_general_files(
+            the_file_name_of_the_script___the_description_of_the_file___n100_building_filetype_extension = file_manager.generate_file_name_general_files(
                 script_source_name="the_file_name_of_the_script",
                 description="the_description_of_the_file",
-                file_type="filetype_extension",
+                file_type="filetype_extension"
             )
 
         - For ArcGIS Layer Files (.lyrx):
-            the_file_name_of_the_script___the_description_of_the_file___n100_bygning_lyrx = file_manager.generate_file_name_lyrx(
+            the_file_name_of_the_script___the_description_of_the_file___n100_building_lyrx = file_manager.generate_file_name_lyrx(
                 script_source_name="the_file_name_of_the_script",
-                description="the_description_of_the_file",
+                description="the_description_of_the_file"
             )
 
     These examples show how to utilize the BaseFileManager's methods to generate file paths for different types of files,
-    reflecting the specific needs and naming conventions of river data management within the project.
+    reflecting the specific needs and naming conventions of building data management within the project.
 
 
     """
 
-    #################################################
-    ########### RUN TIME OVERVIEW ####################
-    #################################################
+    # ========================================
+    #                                ADDITIONAL FILES
+    # ========================================
 
     overview__runtime_all_building_functions__n100 = (
         file_manager.generate_file_name_general_files(
@@ -123,425 +80,617 @@ class Building_N100(Enum):
         )
     )
 
-    #################################################
-    ########### BUILDING DATA PREPARATION ###########
-    #################################################
+    # ========================================
+    #                                DATA PREPARATION
+    # ========================================
 
-    preparation_begrensningskurve__selected_waterfeatures_from_begrensningskurve__n100 = file_manager.generate_file_name_gdb(
-        script_source_name=preparation_begrensningskurve,
-        description="selected_waterfeatures_from_begrensningskurve",
+    data_preperation___selected_waterfeatures_from_begrensningskurve___n100_building = (
+        file_manager.generate_file_name_gdb(
+            script_source_name=data_preparation,
+            description="selected_waterfeatures_from_begrensningskurve",
+        )
     )
 
-    preparation_begrensningskurve__selected_land_features_area__n100 = (
+    data_preparation___selected_land_features_area___n100_building = (
         file_manager.generate_file_name_gdb(
-            script_source_name=preparation_begrensningskurve,
+            script_source_name=data_preparation,
             description="selected_land_features_area",
         )
     )
 
-    preparation_begrensningskurve__land_features_near_water__n100 = (
+    data_preparation___land_features_near_water___n100_building = (
         file_manager.generate_file_name_gdb(
-            script_source_name=preparation_begrensningskurve,
+            script_source_name=data_preparation,
             description="land_features_near_water",
         )
     )
 
-    preparation_begrensningskurve__begrensningskurve_waterfeatures_buffer__n100 = (
+    data_preparation___begrensningskurve_waterfeatures_buffer___n100_building = (
         file_manager.generate_file_name_gdb(
-            script_source_name=preparation_begrensningskurve,
+            script_source_name=data_preparation,
             description="begrensningskurve_waterfeatures_buffer",
         )
     )
 
-    preparation_begrensningskurve__land_features_buffer__n100 = (
+    data_preparation___land_features_buffer___n100_building = (
         file_manager.generate_file_name_gdb(
-            script_source_name=preparation_begrensningskurve,
+            script_source_name=data_preparation,
             description="land_features_buffer",
         )
     )
 
-    preparation_begrensningskurve__begrensningskurve_buffer_erase_1__n100 = (
+    data_preparation___begrensningskurve_buffer_erase_1___n100_building = (
         file_manager.generate_file_name_gdb(
-            script_source_name=preparation_begrensningskurve,
+            script_source_name=data_preparation,
             description="begrensningskurve_buffer_erase_1",
         )
     )
 
-    preparation_begrensningskurve__begrensningskurve_buffer_erase_2__n100 = (
+    data_preparation___begrensningskurve_buffer_erase_2___n100_building = (
         file_manager.generate_file_name_gdb(
-            script_source_name=preparation_begrensningskurve,
+            script_source_name=data_preparation,
             description="begrensningskurve_buffer_erase_2",
         )
     )
 
-    preperation_veg_sti__unsplit_veg_sti__n100 = file_manager.generate_file_name_gdb(
-        script_source_name=preperation_veg_sti,
-        description="unsplit_veg_sti",
+    data_preparation___unsplit_veg_sti___n100_building = (
+        file_manager.generate_file_name_gdb(
+            script_source_name=data_preparation,
+            description="unsplit_veg_sti",
+        )
     )
 
-    # Function: adding_matrikkel_as_points
-
-    adding_matrikkel_as_points__urban_area_selection_n100__n100 = (
+    data_preparation___urban_area_selection_n100___n100_building = (
         file_manager.generate_file_name_gdb(
-            script_source_name=adding_matrikkel_as_points,
+            script_source_name=data_preparation,
             description="urban_area_selection_n100",
         )
     )
 
-    adding_matrikkel_as_points__urban_area_selection_n50__n100 = (
+    data_preparation___urban_area_selection_n50___n100_building = (
         file_manager.generate_file_name_gdb(
-            script_source_name=adding_matrikkel_as_points,
+            script_source_name=data_preparation,
             description="urban_area_selection_n50",
         )
     )
 
-    adding_matrikkel_as_points__urban_area_selection_n100_buffer__n100 = (
+    data_preparation___urban_area_selection_n100_buffer___n100_building = (
         file_manager.generate_file_name_gdb(
-            script_source_name=adding_matrikkel_as_points,
+            script_source_name=data_preparation,
             description="urban_area_selection_n100_buffer",
         )
     )
 
-    adding_matrikkel_as_points__no_longer_urban_areas__n100 = (
+    data_preparation___no_longer_urban_areas___n100_building = (
         file_manager.generate_file_name_gdb(
-            script_source_name=adding_matrikkel_as_points,
+            script_source_name=data_preparation,
             description="no_longer_urban_areas",
         )
     )
 
-    adding_matrikkel_as_points__matrikkel_bygningspunkt__n100 = (
+    data_preparation___matrikkel_bygningspunkt___n100_building = (
         file_manager.generate_file_name_gdb(
-            script_source_name=adding_matrikkel_as_points,
+            script_source_name=data_preparation,
             description="matrikkel_bygningspunkt",
         )
     )
 
-    # Function: selecting_grunnriss_for_generalization
-
-    selecting_grunnriss_for_generalization__selected_grunnriss_not_church__n100 = (
+    data_preparation___selected_polygon_not_church___n100_building = (
         file_manager.generate_file_name_gdb(
-            script_source_name=selecting_grunnriss_for_generalization,
-            description="selected_grunnriss_not_church",
+            script_source_name=data_preparation,
+            description="selected_polygon_not_church",
         )
     )
 
-    selecting_grunnriss_for_generalization__large_enough_grunnriss__n100 = (
+    data_preparation___large_enough_polygon___n100_building = (
         file_manager.generate_file_name_gdb(
-            script_source_name=selecting_grunnriss_for_generalization,
-            description="large_enough_grunnriss",
+            script_source_name=data_preparation,
+            description="large_enough_polygon",
         )
     )
 
-    selecting_grunnriss_for_generalization__too_small_grunnriss__n100 = (
+    data_preparation___too_small_polygon___n100_building = (
         file_manager.generate_file_name_gdb(
-            script_source_name=selecting_grunnriss_for_generalization,
-            description="too_small_grunnriss",
+            script_source_name=data_preparation,
+            description="too_small_polygon",
         )
     )
 
-    selecting_grunnriss_for_generalization__points_created_from_small_grunnriss__n100 = file_manager.generate_file_name_gdb(
-        script_source_name=selecting_grunnriss_for_generalization,
-        description="points_created_from_small_grunnriss",
-    )
-
-    selecting_grunnriss_for_generalization__grunnriss_kirke__n100 = (
+    data_preparation___points_created_from_small_polygon___n100_building = (
         file_manager.generate_file_name_gdb(
-            script_source_name=selecting_grunnriss_for_generalization,
-            description="grunnriss_kirke",
+            script_source_name=data_preparation,
+            description="points_created_from_small_polygon",
         )
     )
 
-    selecting_grunnriss_for_generalization__kirke_points_created_from_grunnriss__n100 = file_manager.generate_file_name_gdb(
-        script_source_name=selecting_grunnriss_for_generalization,
-        description="kirke_points_created_from_grunnriss",
-    )
-
-    ##########################################
-    ########### CALCULATING VALUES ###########
-    ##########################################
-
-    # Function: table_management
-
-    table_management__merged_bygningspunkt_n50_matrikkel__n100 = (
+    data_preparation___church_polygon___n100_building = (
         file_manager.generate_file_name_gdb(
-            script_source_name=table_management,
-            description="merged_bygningspunkt_n50_matrikkel",
+            script_source_name=data_preparation,
+            description="church_polygon",
         )
     )
 
-    table_management__bygningspunkt_pre_resolve_building_conflicts__n100 = (
+    data_preparation___church_points_from_polygon___n100_building = (
         file_manager.generate_file_name_gdb(
-            script_source_name=table_management,
-            description="bygningspunkt_pre_resolve_building_conflicts",
+            script_source_name=data_preparation,
+            description="church_points_from_polygon",
         )
     )
 
-    table_management__selection_bygningspunkt_with_undefined_nbr_values__n100 = (
+    # ========================================
+    #                      CALCULATING FIELD VALUES
+    # ========================================
+
+    calculating_field_values___merged_points_n50_matrikkel___n100_building = (
         file_manager.generate_file_name_gdb(
-            script_source_name=table_management,
-            description="selection_bygningspunkt_with_undefined_nbr_values",
+            script_source_name=calculating_field_values,
+            description="merged_points_n50_matrikkel",
         )
     )
 
-    table_management__building_points_with_undefined_nbr_values__n100 = (
-        file_manager.generate_file_name_general_files(
-            script_source_name=table_management,
-            description="building_points_with_undefined_nbr_values",
-            file_type="txt",
+    calculate_field_values___points_pre_resolve_building_conflicts___n100_building = (
+        file_manager.generate_file_name_gdb(
+            script_source_name=calculating_field_values,
+            description="points_pre_resolve_building_conflicts",
         )
     )
 
-    ##################################################
-    ########### CREATE POINTS FROM POLYGON ###########
-    ##################################################
+    calculating_field_values___selection_building_points_with_undefined_nbr_values___n100_building = file_manager.generate_file_name_gdb(
+        script_source_name=calculating_field_values,
+        description="selection_building_points_with_undefined_nbr_values",
+    )
 
-    # Function: grunnriss_to_point
+    calculating_field_values___building_points_with_undefined_nbr_values___n100_building = file_manager.generate_file_name_general_files(
+        script_source_name=calculating_field_values,
+        description="building_points_with_undefined_nbr_values",
+        file_type="txt",
+    )
 
-    grunnriss_to_point__intersect_aggregated_and_original__n100 = (
+    # ========================================
+    #                              POLYGON TO POINT
+    # ========================================
+
+    polygon_to_point___intersect_aggregated_and_original___n100_building = (
         file_manager.generate_file_name_gdb(
-            script_source_name=grunnriss_to_point,
+            script_source_name=polygon_to_point,
             description="intersect_aggregated_and_original",
         )
     )
 
-    grunnriss_to_point__grunnriss_feature_to_point__n100 = (
+    polygon_to_point___polygons_to_point___n100_building = (
         file_manager.generate_file_name_gdb(
-            script_source_name=grunnriss_to_point,
-            description="grunnriss_feature_to_point",
+            script_source_name=polygon_to_point,
+            description="polygons_to_point",
         )
     )
 
-    grunnriss_to_point__spatial_join_points__n100 = file_manager.generate_file_name_gdb(
-        script_source_name=grunnriss_to_point,
-        description="spatial_join_points",
-    )
-
-    grunnriss_to_point__merged_points_created_from_grunnriss__n100 = (
+    polygon_to_point___spatial_join_points___n100_building = (
         file_manager.generate_file_name_gdb(
-            script_source_name=grunnriss_to_point,
-            description="merged_points_created_from_grunnriss",
+            script_source_name=polygon_to_point,
+            description="spatial_join_points",
         )
     )
 
-    ###########################################################
-    ########### CREATE SIMPLIFIED BUILDING POLYGONS ###########
-    ###########################################################
-
-    # Function: aggregate_polygons
-
-    aggregate_polygons__fill_hole__n100 = file_manager.generate_file_name_gdb(
-        script_source_name=aggregate_polygons,
-        description="fill_hole",
+    polygon_to_point___merged_points_created_from_polygon___n100_building = (
+        file_manager.generate_file_name_gdb(
+            script_source_name=polygon_to_point,
+            description="merged_points_created_from_polygon",
+        )
     )
 
-    # Function: simplify_buildings_1
+    # ========================================
+    #                              SIMPLIFY POLYGONS
+    # ========================================
 
-    simplify_buildings_1_simplifying__n100 = file_manager.generate_file_name_gdb(
-        script_source_name=simplify_buildings_1,
-        description="simplifying",
+    simplify_polygons___small_gaps___n100_building = (
+        file_manager.generate_file_name_gdb(
+            script_source_name=simplify_polygons,
+            description="small_gaps",
+        )
     )
 
-    simplify_buildings_1__points__n100 = file_manager.generate_file_name_gdb(
-        script_source_name=grunnriss_to_point,
-        description="points",
+    simplify_polygons___simplify_building_1___n100_building = (
+        file_manager.generate_file_name_gdb(
+            script_source_name=simplify_polygons,
+            description="simplify_building_1",
+        )
     )
 
-    # Function: simplify_buildings_2
-
-    simplify_buildings_2_simplifying__n100 = file_manager.generate_file_name_gdb(
-        script_source_name=simplify_buildings_2,
-        description="simplifying",
+    simplify_polygons___simplify_building_1_points___n100_building = (
+        file_manager.generate_file_name_gdb(
+            script_source_name=simplify_polygons,
+            description="simplify_building_1_points",
+        )
     )
 
-    simplify_buildings_2__points__n100 = file_manager.generate_file_name_gdb(
-        script_source_name=grunnriss_to_point,
-        description="points",
+    simplify_polygons___simplify_building_2___n100_building = (
+        file_manager.generate_file_name_gdb(
+            script_source_name=simplify_polygons,
+            description="simplify_building_2",
+        )
     )
 
-    # Function: simplify_polygons
-    simplify_polygons__simplifying__n100 = file_manager.generate_file_name_gdb(
+    simplify_polygons___simplify_building_2_points___n100_building = (
+        file_manager.generate_file_name_gdb(
+            script_source_name=simplify_polygons,
+            description="_simplify_building_2_points",
+        )
+    )
+
+    simplify_polygons___polygons___n100_building = file_manager.generate_file_name_gdb(
         script_source_name=simplify_polygons,
-        description="simplifying",
+        description="polygons",
     )
 
-    simplify_polygons__points__n100 = file_manager.generate_file_name_gdb(
-        script_source_name=grunnriss_to_point,
+    simplify_polygons___points___n100_building = file_manager.generate_file_name_gdb(
+        script_source_name=simplify_polygons,
         description="points",
     )
 
-    # Function: join_and_add_fields
-
-    join_and_add_fields__spatial_join_polygons__n100 = (
+    simplify_polygons___spatial_join_polygons___n100_building = (
         file_manager.generate_file_name_gdb(
-            script_source_name=join_and_add_fields,
+            script_source_name=simplify_polygons,
             description="spatial_join_polygons",
         )
     )
 
-    join_and_add_fields__building_polygons_final__n100 = (
+    simplify_polygons___final___n100_building = file_manager.generate_file_name_gdb(
+        script_source_name=simplify_polygons,
+        description="final",
+    )
+
+    # ========================================
+    #                  POLYGON PROPOATE DISPLACEMENT
+    # ========================================
+
+    polygon_propogate_displacement___pre_displacement___n100_building = (
         file_manager.generate_file_name_gdb(
-            script_source_name=join_and_add_fields,
-            description="building_polygons_final",
+            script_source_name=polygon_propogate_displacement,
+            description="pre_displacement",
         )
     )
 
-    ####################################################
-    ########### BUILDING POLYGON DISPLACEMENT ##########
-    ####################################################
-
-    # Function: propagate_displacement_building_polygons
-
-    propagate_displacement_building_polygons__building_polygon_pre_propogate_displacement__n100 = file_manager.generate_file_name_gdb(
-        script_source_name=propagate_displacement_building_polygons,
-        description="building_polygons_pre_propogate_displacement",
-    )
-
-    propagate_displacement_building_polygons__after_propogate_displacement__n100 = (
+    polygon_propogate_displacement___after_displacement___n100_building = (
         file_manager.generate_file_name_gdb(
-            script_source_name=propagate_displacement_building_polygons,
-            description="building_polygons_after_propogate_displacement",
+            script_source_name=polygon_propogate_displacement,
+            description="after_displacement",
         )
     )
 
-    propagate_displacement_building_polygons__displacement_feature_1000_m_from_building_polygon__n100 = file_manager.generate_file_name_gdb(
-        script_source_name=propagate_displacement_building_polygons,
-        description="displacement_feature_1000_m_from_building_polygon",
+    polygon_propogate_displacement___displacement_feature_1000m_from_polygon___n100_building = file_manager.generate_file_name_gdb(
+        script_source_name=polygon_propogate_displacement,
+        description="displacement_feature_1000m_from_polygon",
     )
 
-    # features_500_m_from_building_polygons
-
-    features_500_m_from_building_polygons__selected_begrensningskurve__n100 = (
-        file_manager.generate_file_name_gdb(
-            script_source_name=features_500_m_from_building_polygons,
-            description="selected_begrensningskurve",
-        )
+    polygon_propogate_displacement___begrensningskurve_500m_from_displaced_polygon___n100_building = file_manager.generate_file_name_gdb(
+        script_source_name=polygon_propogate_displacement,
+        description="begrensningskurve_500m_from_displaced_polygon",
     )
-    features_500_m_from_building_polygons__selected_roads__n100 = (
-        file_manager.generate_file_name_gdb(
-            script_source_name=features_500_m_from_building_polygons,
-            description="selected_roads",
-        )
+    polygon_propogate_displacement___roads_500m_from_displaced_polygon___n100_building = file_manager.generate_file_name_gdb(
+        script_source_name=polygon_propogate_displacement,
+        description="roads_500m_from_displaced_polygon",
     )
 
-    # Function: apply_symbology_to_layers
-
-    apply_symbology_to_layers__building_polygon__n100__lyrx = (
+    polygon_propogate_displacement___building_polygon___n100_building_lyrx = (
         file_manager.generate_file_name_lyrx(
-            script_source_name=apply_symbology_to_layers,
+            script_source_name=polygon_propogate_displacement,
             description="building_polygon",
         )
     )
 
-    apply_symbology_to_layers__roads__n100__lyrx = file_manager.generate_file_name_lyrx(
-        script_source_name=apply_symbology_to_layers,
-        description="roads",
+    polygon_propogate_displacement___roads___n100_building_lyrx = (
+        file_manager.generate_file_name_lyrx(
+            script_source_name=polygon_propogate_displacement,
+            description="roads",
+        )
     )
 
-    apply_symbology_to_layers__begrensningskurve__n100__lyrx = (
+    polygon_propogate_displacement___begrensningskurve___n100_building_lyrx = (
         file_manager.generate_file_name_lyrx(
-            script_source_name=apply_symbology_to_layers,
+            script_source_name=polygon_propogate_displacement,
             description="begrensningskurve",
         )
     )
-    # Function: resolve_building_conflict_building_polygon
 
-    resolve_building_conflict_building_polygon__after_RBC__n100 = (
+    polygon_propogate_displacement___after_rbc___n100_building = (
         file_manager.generate_file_name_gdb(
-            script_source_name=resolve_building_conflict_building_polygon,
-            description="after_RBC",
+            script_source_name=polygon_propogate_displacement,
+            description="after_rbc",
         )
     )
 
-    resolve_building_conflict_building_selected_hospital_church_points__n100 = (
+    polygon_propogate_displacement___hospital_church_points___n100_building = (
         file_manager.generate_file_name_gdb(
-            script_source_name=resolve_building_conflict_building_polygon,
-            description="selected_hospital_church_points",
+            script_source_name=polygon_propogate_displacement,
+            description="hospital_church_points",
         )
     )
 
-    resolve_building_conflict_building_polygon__hospital_church_polygons__n100 = (
+    polygon_propogate_displacement___hospital_church_squares___n100_building = (
         file_manager.generate_file_name_gdb(
-            script_source_name=resolve_building_conflict_building_polygon,
-            description="hospital_church_polygons",
+            script_source_name=polygon_propogate_displacement,
+            description="hospital_church_squares",
         )
     )
 
-    resolve_building_conflict_building_polygon__polygonprocessor_symbology__n100__lyrx = file_manager.generate_file_name_lyrx(
-        script_source_name=resolve_building_conflict_building_polygon,
-        description="polygonprocessor_symbology",
-    )
-
-    # Function: invisible_building_polygons_to_point
-
-    invisible_building_polygons_to_point__invisible_polygons__n100 = (
-        file_manager.generate_file_name_gdb(
-            script_source_name=invisible_building_polygons_to_point,
-            description="invisible_polygons",
+    polygon_propogate_displacement___polygonprocessor_symbology___n100_building_lyrx = (
+        file_manager.generate_file_name_lyrx(
+            script_source_name=polygon_propogate_displacement,
+            description="polygonprocessor_symbology",
         )
     )
 
-    invisible_building_polygons_to_point__not_invisible_polygons__n100 = (
+    polygon_propogate_displacement___invisible_polygons_after_rbc___n100_building = (
         file_manager.generate_file_name_gdb(
-            script_source_name=invisible_building_polygons_to_point,
-            description="not_invisible_polygons",
+            script_source_name=polygon_propogate_displacement,
+            description="invisible_polygons_after_rbc",
         )
     )
 
-    invisible_building_polygons_to_point__invisible_polygons_to_points__n100 = (
+    polygon_propogate_displacement___not_invisible_polygons_after_rbc___n100_building = file_manager.generate_file_name_gdb(
+        script_source_name=polygon_propogate_displacement,
+        description="not_invisible_polygons_after_rbc",
+    )
+
+    polygon_propogate_displacement___invisible_polygons_to_points___n100_building = (
         file_manager.generate_file_name_gdb(
-            script_source_name=invisible_building_polygons_to_point,
+            script_source_name=polygon_propogate_displacement,
             description="invisible_polygons_to_points",
         )
     )
 
-    # Function: creating_road_buffer
-
-    creating_road_buffer__selection__n100 = file_manager.generate_file_name_gdb(
-        script_source_name=creating_road_buffer,
-        description="selection",
-    )
-
-    creating_road_buffer__buffers__n100 = file_manager.generate_file_name_gdb(
-        script_source_name=creating_road_buffer,
-        description="buffers",
-    )
-
-    creating_road_buffer__merged_buffers__n100 = file_manager.generate_file_name_gdb(
-        script_source_name=creating_road_buffer,
-        description="merged_buffers",
-    )
-
-    # Function: intersecting_building_polygons_to_point
-
-    intersecting_building_polygons_to_point__final_building_polygons__n100 = (
+    polygon_propogate_displacement___road_buffer_selection___n100_building = (
         file_manager.generate_file_name_gdb(
-            script_source_name=intersecting_building_polygons_to_point,
+            script_source_name=polygon_propogate_displacement,
+            description="road_buffer_selection",
+        )
+    )
+
+    polygon_propogate_displacement___road_buffers___n100_building = (
+        file_manager.generate_file_name_gdb(
+            script_source_name=polygon_propogate_displacement,
+            description="road_buffers",
+        )
+    )
+
+    polygon_propogate_displacement___merged_road_buffers___n100_building = (
+        file_manager.generate_file_name_gdb(
+            script_source_name=polygon_propogate_displacement,
+            description="merged_road_buffers",
+        )
+    )
+
+    polygon_propogate_displacement___final_building_polygons___n100_building = (
+        file_manager.generate_file_name_gdb(
+            script_source_name=polygon_propogate_displacement,
             description="final_building_polgyons",
         )
     )
 
-    intersecting_building_polygons_to_point__building_polygons_intersecting__n100 = (
+    polygon_propogate_displacement___building_polygons_intersecting_road___n100_building = file_manager.generate_file_name_gdb(
+        script_source_name=polygon_propogate_displacement,
+        description="building_polygons_intersecting_road",
+    )
+
+    polygon_propogate_displacement___intersecting_polygons_to_points___n100_building = (
         file_manager.generate_file_name_gdb(
-            script_source_name=intersecting_building_polygons_to_point,
-            description="building_polygons_intersecting",
+            script_source_name=polygon_propogate_displacement,
+            description="intersecting_polygons_to_points",
         )
     )
 
-    intersecting_building_polygons_to_point__building_points__n100 = (
+    polygon_propogate_displacement___final_merged_points___n100_building = (
         file_manager.generate_file_name_gdb(
-            script_source_name=intersecting_building_polygons_to_point,
-            description="building_points",
+            script_source_name=polygon_propogate_displacement,
+            description="final_merged_points",
         )
     )
 
-    # Function: merging_invisible_intersecting_points
+    ###################################################
+    ########### HOSPITAL AND CHURCH CLUSTERS ###########
+    ###################################################
 
-    merging_invisible_intersecting_points__final__n100 = (
+    hospital_church_clusters___hospital_points___n100_hospital = (
         file_manager.generate_file_name_gdb(
-            script_source_name=merging_invisible_intersecting_points,
-            description="final",
+            script_source_name=hospital_church_clusters,
+            description="hospital_points",
         )
     )
+
+    hospital_church_clusters___church_points___n100_hospital = (
+        file_manager.generate_file_name_gdb(
+            script_source_name=hospital_church_clusters,
+            description="church_points",
+        )
+    )
+
+    hospital_church_clusters___all_hospital_clusters___n100_building = (
+        file_manager.generate_file_name_gdb(
+            script_source_name=hospital_church_clusters,
+            description="all_hospital_clusters",
+        )
+    )
+
+    hospital_church_clusters___all_church_clusters___n100_building = (
+        file_manager.generate_file_name_gdb(
+            script_source_name=hospital_church_clusters,
+            description="all_church_clusters",
+        )
+    )
+
+    hospital_church_clusters___hospital_points_not_in_cluster___n100_building = (
+        file_manager.generate_file_name_gdb(
+            script_source_name=hospital_church_clusters,
+            description="hospital_points_not_in_cluster",
+        )
+    )
+
+    hospital_church_clusters___hospital_points_in_cluster___n100_building = (
+        file_manager.generate_file_name_gdb(
+            script_source_name=hospital_church_clusters,
+            description="hospital_points_in_cluster",
+        )
+    )
+
+    hospital_church_clusters___church_points_not_in_cluster___n100_building = (
+        file_manager.generate_file_name_gdb(
+            script_source_name=hospital_church_clusters,
+            description="church_points_not_in_cluster",
+        )
+    )
+
+    hospital_church_clusters___church_points_in_cluster___n100_building = (
+        file_manager.generate_file_name_gdb(
+            script_source_name=hospital_church_clusters,
+            description="church_points_in_cluster",
+        )
+    )
+
+    # Function: reducing_clusters
+    hospital_church_clusters___minimum_bounding_geometry_hospital___n100_hospital = (
+        file_manager.generate_file_name_gdb(
+            script_source_name=hospital_church_clusters,
+            description="minimum_bounding_geometry_hospital",
+        )
+    )
+    hospital_church_clusters___feature_to_point_hospital___n100_building = (
+        file_manager.generate_file_name_gdb(
+            script_source_name=hospital_church_clusters,
+            description="feature_to_point_hospital",
+        )
+    )
+
+    hospital_church_clusters___minimum_bounding_geometry_church___n100_building = (
+        file_manager.generate_file_name_gdb(
+            script_source_name=hospital_church_clusters,
+            description="minimum_bounding_geometry_church",
+        )
+    )
+
+    hospital_church_clusters___feature_to_point_church___n100_building = (
+        file_manager.generate_file_name_gdb(
+            script_source_name=hospital_church_clusters,
+            description="feature_to_point_church",
+        )
+    )
+
+    hospital_church_clusters___chosen_hospitals_from_cluster___n100_building = (
+        file_manager.generate_file_name_gdb(
+            script_source_name=hospital_church_clusters,
+            description="chosen_hospitals_from_cluster",
+        )
+    )
+    hospital_church_clusters___chosen_churches_from_cluster___n100_building = (
+        file_manager.generate_file_name_gdb(
+            script_source_name=hospital_church_clusters,
+            description="chosen_churches_from_cluster",
+        )
+    )
+
+    hospital_church_clusters___reduced_hospital_and_church_points_final___n100_building = file_manager.generate_file_name_gdb(
+        script_source_name=hospital_church_clusters,
+        description="reduced_hospital_and_church_points_final",
+    )
+
+    # ========================================
+    #                  POINT PROPOATE DISPLACEMENT
+    # ========================================
+
+    point_propogate_displacement___points_pre_propogate_displacement___n100_building = (
+        file_manager.generate_file_name_gdb(
+            script_source_name=point_propogate_displacement,
+            description="points_pre_propogate_displacement",
+        )
+    )
+
+    ############################################## NEEDS TO BE UPDATED ###########################################################
+
+    # ========================================
+    #                  POINT DISPLACEMENT WITH BUFFER
+    # ========================================
+
+    building_point_buffer_displacement__roads_study_area__n100 = (
+        file_manager.generate_file_name_gdb(
+            script_source_name=point_displacement_with_buffer,
+            description="roads_study_area",
+        )
+    )
+
+    building_point_buffer_displacement__begrensningskurve_study_area__n100 = (
+        file_manager.generate_file_name_gdb(
+            script_source_name=point_displacement_with_buffer,
+            description="begrensningskurve_study_area",
+        )
+    )
+
+    building_point_buffer_displacement__buildings_study_area__n100 = (
+        file_manager.generate_file_name_gdb(
+            script_source_name=point_displacement_with_buffer,
+            description="buildings_study_area",
+        )
+    )
+
+    building_point_buffer_displacement__selection_roads__n100 = (
+        file_manager.generate_file_name_gdb(
+            script_source_name=point_displacement_with_buffer,
+            description="selection_roads",
+        )
+    )
+
+    building_point_buffer_displacement__align_buffer_schema_to_template__n100 = (
+        file_manager.generate_file_name_gdb(
+            script_source_name=point_displacement_with_buffer,
+            description="align_buffer_schema_to_template",
+        )
+    )
+
+    building_point_buffer_displacement__roads_buffer__n100 = (
+        file_manager.generate_file_name_gdb(
+            script_source_name=point_displacement_with_buffer,
+            description="roads_buffer",
+        )
+    )
+
+    building_point_buffer_displacement__roads_buffer_appended__n100 = (
+        file_manager.generate_file_name_gdb(
+            script_source_name=point_displacement_with_buffer,
+            description="roads_buffer_appended",
+        )
+    )
+
+    building_point_buffer_displacement__iteration_points_to_square_polygons__n100 = (
+        file_manager.generate_file_name_gdb(
+            script_source_name=point_displacement_with_buffer,
+            description="iteration_points_to_square_polygons",
+        )
+    )
+
+    building_point_buffer_displacement__building_polygon_erased__n100 = (
+        file_manager.generate_file_name_gdb(
+            script_source_name=point_displacement_with_buffer,
+            description="building_polygon_erased",
+        )
+    )
+
+    building_point_buffer_displacement__displaced_building_points__n100 = (
+        file_manager.generate_file_name_gdb(
+            script_source_name=point_displacement_with_buffer,
+            description="displaced_building_points",
+        )
+    )
+
+    #########################################
+    ########### POINTS TO POLYGON ###########
+    #########################################
+
+    points_to_squares___transform_points_to_square_polygons___n100_building = (
+        file_manager.generate_file_name_gdb(
+            script_source_name=points_to_squares,
+            description="transform_points_to_square_polygons",
+        )
+    )
+
+    ############################################## NOT USED RIGHT NOW ###########################################################
 
     ##############################################
     ######## CREATE CARTOGRAPHIC PARTITIONS ########
@@ -670,208 +819,6 @@ class Building_N100(Enum):
     )
 
     ###################################################
-    ########### HOSPITAL AND CHURCH CLUSTERS ###########
-    ###################################################
-
-    # Functon: hospital_church_selections
-
-    hospital_church_selections__hospital_points__n100 = (
-        file_manager.generate_file_name_gdb(
-            script_source_name=hospital_church_selections,
-            description="hospital_points",
-        )
-    )
-
-    hospital_church_selections__church_points__n100 = (
-        file_manager.generate_file_name_gdb(
-            script_source_name=hospital_church_selections,
-            description="church_points",
-        )
-    )
-
-    # Function: find_clusters
-
-    find_clusters__all_hospital_clusters__n100 = file_manager.generate_file_name_gdb(
-        script_source_name=find_clusters,
-        description="all_hospital_clusters",
-    )
-
-    find_clusters__all_church_clusters__n100 = file_manager.generate_file_name_gdb(
-        script_source_name=find_clusters,
-        description="all_church_clusters",
-    )
-
-    find_clusters__hospital_points_not_in_cluster__n100 = (
-        file_manager.generate_file_name_gdb(
-            script_source_name=find_clusters,
-            description="hospital_points_not_in_cluster",
-        )
-    )
-
-    find_clusters__hospital_points_in_cluster__n100 = (
-        file_manager.generate_file_name_gdb(
-            script_source_name=find_clusters,
-            description="hospital_points_in_cluster",
-        )
-    )
-
-    find_clusters__church_points_not_in_cluster__n100 = (
-        file_manager.generate_file_name_gdb(
-            script_source_name=find_clusters,
-            description="church_points_not_in_cluster",
-        )
-    )
-
-    find_clusters__church_points_in_cluster__n100 = file_manager.generate_file_name_gdb(
-        script_source_name=find_clusters,
-        description="church_points_in_cluster",
-    )
-
-    # Function: reducing_clusters
-    reducing_clusters__minimum_bounding_geometry_hospital__n100 = (
-        file_manager.generate_file_name_gdb(
-            script_source_name=reducing_clusters,
-            description="minimum_bounding_geometry_hospital",
-        )
-    )
-    reducing_clusters__feature_to_point_hospital__n100 = (
-        file_manager.generate_file_name_gdb(
-            script_source_name=reducing_clusters,
-            description="feature_to_point_hospital",
-        )
-    )
-
-    reducing_clusters__minimum_bounding_geometry_church__n100 = (
-        file_manager.generate_file_name_gdb(
-            script_source_name=reducing_clusters,
-            description="minimum_bounding_geometry_church",
-        )
-    )
-
-    reducing_clusters__feature_to_point_church__n100 = (
-        file_manager.generate_file_name_gdb(
-            script_source_name=reducing_clusters,
-            description="feature_to_point_church",
-        )
-    )
-
-    reducing_clusters__chosen_hospitals_from_cluster__n100 = (
-        file_manager.generate_file_name_gdb(
-            script_source_name=reducing_clusters,
-            description="chosen_hospitals_from_cluster",
-        )
-    )
-    reducing_clusters__chosen_churches_from_cluster__n100 = (
-        file_manager.generate_file_name_gdb(
-            script_source_name=reducing_clusters,
-            description="chosen_churches_from_cluster",
-        )
-    )
-
-    reducing_clusters__reduced_hospital_and_church_points_2__n100 = (
-        file_manager.generate_file_name_gdb(
-            script_source_name=reducing_clusters,
-            description="reduced_hospital_and_church_points_2",
-        )
-    )
-
-    ########################################
-    ######## PROPAGATE DISPLACEMENT  ########
-    ########################################
-
-    propagate_displacement__bygningspunkt_pre_propogate_displacement__n100 = (
-        file_manager.generate_file_name_gdb(
-            script_source_name=propagate_displacement,
-            description="bygningspunkt_pre_propogate_displacement",
-        )
-    )
-
-    ########################################
-    ########### ROADS TO POLYGON ###########
-    ########################################
-
-    building_point_buffer_displacement__roads_study_area__n100 = (
-        file_manager.generate_file_name_gdb(
-            script_source_name=building_point_buffer_displacement,
-            description="roads_study_area",
-        )
-    )
-
-    building_point_buffer_displacement__begrensningskurve_study_area__n100 = (
-        file_manager.generate_file_name_gdb(
-            script_source_name=building_point_buffer_displacement,
-            description="begrensningskurve_study_area",
-        )
-    )
-
-    building_point_buffer_displacement__buildings_study_area__n100 = (
-        file_manager.generate_file_name_gdb(
-            script_source_name=building_point_buffer_displacement,
-            description="buildings_study_area",
-        )
-    )
-
-    building_point_buffer_displacement__selection_roads__n100 = (
-        file_manager.generate_file_name_gdb(
-            script_source_name=building_point_buffer_displacement,
-            description="selection_roads",
-        )
-    )
-
-    building_point_buffer_displacement__align_buffer_schema_to_template__n100 = (
-        file_manager.generate_file_name_gdb(
-            script_source_name=building_point_buffer_displacement,
-            description="align_buffer_schema_to_template",
-        )
-    )
-
-    building_point_buffer_displacement__roads_buffer__n100 = (
-        file_manager.generate_file_name_gdb(
-            script_source_name=building_point_buffer_displacement,
-            description="roads_buffer",
-        )
-    )
-
-    building_point_buffer_displacement__roads_buffer_appended__n100 = (
-        file_manager.generate_file_name_gdb(
-            script_source_name=building_point_buffer_displacement,
-            description="roads_buffer_appended",
-        )
-    )
-
-    building_point_buffer_displacement__iteration_points_to_square_polygons__n100 = (
-        file_manager.generate_file_name_gdb(
-            script_source_name=building_point_buffer_displacement,
-            description="iteration_points_to_square_polygons",
-        )
-    )
-
-    building_point_buffer_displacement__building_polygon_erased__n100 = (
-        file_manager.generate_file_name_gdb(
-            script_source_name=building_point_buffer_displacement,
-            description="building_polygon_erased",
-        )
-    )
-
-    building_point_buffer_displacement__displaced_building_points__n100 = (
-        file_manager.generate_file_name_gdb(
-            script_source_name=building_point_buffer_displacement,
-            description="displaced_building_points",
-        )
-    )
-
-    #########################################
-    ########### POINTS TO POLYGON ###########
-    #########################################
-
-    points_to_polygon__transform_points_to_square_polygons__n100 = (
-        file_manager.generate_file_name_gdb(
-            script_source_name=points_to_polygon,
-            description="transform_points_to_square_polygons",
-        )
-    )
-
-    ###################################################
     ########### RESOLVE BUILDING CONFLICTS  ###########
     ###################################################
 
@@ -879,40 +826,40 @@ class Building_N100(Enum):
 
     rbc_selection__selection_area_resolve_building_conflicts__n100 = (
         file_manager.generate_file_name_gdb(
-            script_source_name=rbc_selection,
+            script_source_name=resolve_building_conflicts_points,
             description="selection_area_resolve_building_conflicts",
         )
     )
 
     rbc_selection__grunnriss_selection_rbc__n100 = file_manager.generate_file_name_gdb(
-        script_source_name=rbc_selection,
+        script_source_name=resolve_building_conflicts_points,
         description="grunnriss_selection_rbc",
     )
 
     rbc_selection__veg_sti_selection_rbc_rbc__n100 = (
         file_manager.generate_file_name_gdb(
-            script_source_name=rbc_selection,
+            script_source_name=resolve_building_conflicts_points,
             description="veg_sti_selection_rbc",
         )
     )
 
     rbc_selection__bygningspunkt_selection_rbc__n100 = (
         file_manager.generate_file_name_gdb(
-            script_source_name=rbc_selection,
+            script_source_name=resolve_building_conflicts_points,
             description="bygningspunkt_selection_rbc",
         )
     )
 
     rbc_selection__begrensningskurve_selection_rbc__n100 = (
         file_manager.generate_file_name_gdb(
-            script_source_name=rbc_selection,
+            script_source_name=resolve_building_conflicts_points,
             description="begrensningskurve_selection_rbc",
         )
     )
 
     rbc_selection__drawn_polygon_selection_rbc__n100 = (
         file_manager.generate_file_name_gdb(
-            script_source_name=rbc_selection,
+            script_source_name=resolve_building_conflicts_points,
             description="drawn_polygon_selection_rbc",
         )
     )
@@ -921,35 +868,35 @@ class Building_N100(Enum):
 
     apply_symbology__bygningspunkt_selection__n100_lyrx = (
         file_manager.generate_file_name_lyrx(
-            script_source_name=apply_symbology,
+            script_source_name=resolve_building_conflicts_points,
             description="bygningspunkt_selection",
         )
     )
 
     apply_symbology__grunnriss_selection__n100_lyrx = (
         file_manager.generate_file_name_lyrx(
-            script_source_name=apply_symbology,
+            script_source_name=resolve_building_conflicts_points,
             description="grunnriss_selection",
         )
     )
 
     apply_symbology__veg_sti_selection__n100_lyrx = (
         file_manager.generate_file_name_lyrx(
-            script_source_name=apply_symbology,
+            script_source_name=resolve_building_conflicts_points,
             description="veg_sti_selection",
         )
     )
 
     apply_symbology__begrensningskurve_selection__n100_lyrx = (
         file_manager.generate_file_name_lyrx(
-            script_source_name=apply_symbology,
+            script_source_name=resolve_building_conflicts_points,
             description="begrensningskurve_selection",
         )
     )
 
     apply_symbology__drawn_polygon_selection__n100_lyrx = (
         file_manager.generate_file_name_lyrx(
-            script_source_name=apply_symbology,
+            script_source_name=resolve_building_conflicts_points,
             description="drawn_polygon_selection",
         )
     )
@@ -958,56 +905,56 @@ class Building_N100(Enum):
 
     resolve_building_conflicts__drawn_polygons_result_1__n100 = (
         file_manager.generate_file_name_gdb(
-            script_source_name=resolve_building_conflicts,
+            script_source_name=resolve_building_conflicts_points,
             description="drawn_polygons_result_1",
         )
     )
 
     resolve_building_conflicts__drawn_polygon_RBC_result_1__n100_lyrx = (
         file_manager.generate_file_name_lyrx(
-            script_source_name=resolve_building_conflicts,
+            script_source_name=resolve_building_conflicts_points,
             description="drawn_polygon_RBC_result_1",
         )
     )
 
     resolve_building_conflicts__building_points_RBC_result_1__n100 = (
         file_manager.generate_file_name_gdb(
-            script_source_name=resolve_building_conflicts,
+            script_source_name=resolve_building_conflicts_points,
             description="building_points_RBC_result_1",
         )
     )
 
     resolve_building_conflicts__building_points_RBC_result_2__n100 = (
         file_manager.generate_file_name_gdb(
-            script_source_name=resolve_building_conflicts,
+            script_source_name=resolve_building_conflicts_points,
             description="building_points_RBC_result_2",
         )
     )
 
     resolve_building_conflicts__building_points_RBC_result_1__n100_lyrx = (
         file_manager.generate_file_name_lyrx(
-            script_source_name=resolve_building_conflicts,
+            script_source_name=resolve_building_conflicts_points,
             description="building_points_RBC_result_1",
         )
     )
 
     resolve_building_conflicts__building_points_RBC_result_2__n100_lyrx = (
         file_manager.generate_file_name_lyrx(
-            script_source_name=resolve_building_conflicts,
+            script_source_name=resolve_building_conflicts_points,
             description="building_points_RBC_result_2",
         )
     )
 
     resolve_building_conflicts__drawn_polygons_result_2__n100 = (
         file_manager.generate_file_name_gdb(
-            script_source_name=resolve_building_conflicts,
+            script_source_name=resolve_building_conflicts_points,
             description="drawn_polygons_result_2",
         )
     )
 
     resolve_building_conflicts__drawn_polygon_RBC_result_2__n100_lyrx = (
         file_manager.generate_file_name_lyrx(
-            script_source_name=resolve_building_conflicts,
+            script_source_name=resolve_building_conflicts_points,
             description="drawn_polygon_RBC_result_2",
         )
     )

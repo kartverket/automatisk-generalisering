@@ -8,7 +8,6 @@ from multiprocessing import Pool, cpu_count
 import config
 from env_setup import environment_setup
 from file_manager.n100.file_manager_buildings import Building_N100
-from env_setup import setup_directory_structure
 
 
 class PolygonProcessor:
@@ -294,7 +293,7 @@ class PolygonProcessor:
 if __name__ == "__main__":
     # Example parameters - replace these with actual values suitable for your test
     input_building_points = (
-        Building_N100.table_management__bygningspunkt_pre_resolve_building_conflicts__n100.value
+        Building_N100.calculate_field_values___points_pre_resolve_building_conflicts___n100_building.value
     )
     output_polygon_feature_class = (
         Building_N100.building_point_buffer_displacement__iteration_points_to_square_polygons__n100.value
