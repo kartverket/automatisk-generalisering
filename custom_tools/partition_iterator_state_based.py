@@ -36,10 +36,12 @@ class PartitionIterator:
         :param feature_count: Feature count for cartographic partitioning.
         :param partition_method: Method used for creating cartographic partitions.
         """
-        self.data = {
-            alias: {"type": type_info, "path": path_info}
-            for alias, (type_info, path_info) in alias_path_data.items()
-        }
+        self.data = {}
+        for alias, info in alias_path_data.items():
+            type_info, path_info = info
+            if alias not in self.data:
+                self.data[alias] = {}
+            self.data[alias][type_info] = path_info
 
         self.root_file_partition_iterator = root_file_partition_iterator
         self.scale = scale
@@ -55,20 +57,51 @@ class PartitionIterator:
         self.search_distance = search_distance
         self.object_id_field = object_id_field
 
-    def create_cartographic_partitions(self):
-        """
-        Creates cartographic partitions based on all available feature classes,
-        including inputs and context features.
-        """
-        all_features = [details["path"] for alias, details in self.data.items()]
+    def integrate_initial_data(self, alias_path_data, custom_function_specs):
+        # Process initial alias_path_data for inputs and outputs
+        for alias, (type_info, path_info) in alias_path_data.items():
+            self.update_alias_state(alias, type_info, path_info)
 
-        arcpy.cartography.CreateCartographicPartitions(
-            in_features=all_features,
-            out_features=self.partition_feature,
-            feature_count=self.feature_count,
-            partition_method=self.partition_method,
-        )
-        print(f"Created partitions in {self.partition_feature}")
+        # Process custom function specifications
+        for func_name, specs in custom_function_specs.items():
+            for alias, type_info in specs["input"].items():
+                self.update_alias_state(alias, f"{func_name}_input", None)
+            for alias, type_info in specs["output"].items():
+                self.update_alias_state(alias, f"{func_name}_output", None)
+
+    def update_alias_state(self, alias, type_info, path=None):
+        if alias not in self.data:
+            self.data[alias] = {}
+        self.data[alias][type_info] = path
+
+    def create_new_alias(self, alias, initial_states):
+        if alias in self.data:
+            raise ValueError(f"Alias {alias} already exists.")
+        self.data[alias] = initial_states
+
+    def get_path_for_alias_and_type(self, alias, type_info):
+        return self.data.get(alias, {}).get(type_info)
+
+    def create_cartographic_partitions(self):
+        print("Debugging self.data before partition creation:", self.data)
+        all_features = [
+            path
+            for alias, types in self.data.items()
+            for type_key, path in types.items()
+            if type_key in ["input", "context"] and path is not None
+        ]
+
+        print(f"all_features: {all_features}")
+        if all_features:
+            arcpy.cartography.CreateCartographicPartitions(
+                in_features=all_features,
+                out_features=self.partition_feature,
+                feature_count=self.feature_count,
+                partition_method=self.partition_method,
+            )
+            print(f"Created partitions in {self.partition_feature}")
+        else:
+            print("No input or context features available for creating partitions.")
 
     def delete_feature_class(
         self,
@@ -526,20 +559,20 @@ class PartitionIterator:
         environment_setup.main()
         self.create_cartographic_partitions()
 
-        max_object_id = self.pre_iteration()
-
-        self.prepare_input_data()
-
-        self.partition_iteration(
-            [self.file_mapping[alias]["current_output"] for alias in self.alias],
-            self.partition_feature,
-            max_object_id,
-            self.root_file_partition_iterator,
-            self.scale,
-            "partition_select",
-            "id_field",
-            [self.final_append_features.get(alias) for alias in self.alias],
-        )
+        # max_object_id = self.pre_iteration()
+        #
+        # self.prepare_input_data()
+        #
+        # self.partition_iteration(
+        #     [self.file_mapping[alias]["current_output"] for alias in self.alias],
+        #     self.partition_feature,
+        #     max_object_id,
+        #     self.root_file_partition_iterator,
+        #     self.scale,
+        #     "partition_select",
+        #     "id_field",
+        #     [self.final_append_features.get(alias) for alias in self.alias],
+        # )
 
 
 if __name__ == "__main__":
@@ -559,8 +592,14 @@ if __name__ == "__main__":
     }
 
     outputs = {
-        building_points: Building_N100.iteration__partition_iterator_final_output_points__n100.value,
-        building_polygons: Building_N100.iteration__partition_iterator_final_output_polygons__n100.value,
+        building_points: [
+            "output",
+            Building_N100.iteration__partition_iterator_final_output_points__n100.value,
+        ],
+        building_polygons: [
+            "output",
+            Building_N100.iteration__partition_iterator_final_output_polygons__n100.value,
+        ],
     }
 
     # Instantiate PartitionIterator with necessary parameters
@@ -570,8 +609,28 @@ if __name__ == "__main__":
         root_file_partition_iterator=Building_N100.iteration__partition_iterator__n100.value,
         scale=env_setup.global_config.scale_n100,
         output_feature_class=Building_N100.iteration__partition_iterator_final_output__n100.value,
-        # Add other parameters like custom_functions if you have any
     )
 
     # Run the partition iterator
     partition_iterator.run()
+
+
+""""
+self.data = {
+    'alias_1': {
+        'type_1': 'file_path_1',
+        'type_2': 'file_path_2',
+        'type_3': 'file_path_3',
+    },
+
+
+custom_functions = {
+    "polygon_processor": {
+        "function": PolygonProcessor,  # Assuming this can be called directly or via a wrapper.
+        "inputs": ["alias_1", "alias_2"],  # Aliases for input data.
+        "additional_params": {
+            "building_symbol_dimensions": building_symbol_dimensions,
+            "symbol_field_name": "symbol_val",
+            "index_field_name": "OBJECTID",
+        },
+"""
