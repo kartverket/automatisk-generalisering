@@ -192,12 +192,12 @@ def resolve_building_conflict_building_polygon():
     custom_arcpy.select_attribute_and_make_permanent_feature(
         input_layer=input_data.input_n50.BygningsPunkt,
         expression="BYGGTYP_NBR IN (970, 719, 671)",
-        output_name=Building_N100.resolve_building_conflict_building_selected_hospital_church_points__n100.value,
+        output_name=Building_N100.polygon_propogate_displacement___hospital_church_points___n100_building.value,
     )
 
     # Adding a symbology value field based on NBR values
     arcpy.AddField_management(
-        in_table=Building_N100.resolve_building_conflict_building_selected_hospital_church_points__n100.value,
+        in_table=Building_N100.polygon_propogate_displacement___hospital_church_points___n100_building.value,
         field_name="symbol_val",
         field_type="LONG",
     )
@@ -227,7 +227,7 @@ def resolve_building_conflict_building_polygon():
         "        return -99\n"
     )
     arcpy.CalculateField_management(
-        in_table=Building_N100.resolve_building_conflict_building_selected_hospital_church_points__n100.value,
+        in_table=Building_N100.polygon_propogate_displacement___hospital_church_points___n100_building.value,
         field="symbol_val",
         expression="determineVal(!BYGGTYP_NBR!)",
         expression_type="PYTHON3",
@@ -251,7 +251,7 @@ def resolve_building_conflict_building_polygon():
 
     print("Polygon prosessor...")
     polygon_process = PolygonProcessor(
-        Building_N100.resolve_building_conflict_building_selected_hospital_church_points__n100.value,  # input
+        Building_N100.polygon_propogate_displacement___hospital_church_points___n100_building.value,  # input
         Building_N100.polygon_propogate_displacement___hospital_church_squares___n100_building.value,  # output
         building_symbol_dimensions,
         symbol_field_name,
