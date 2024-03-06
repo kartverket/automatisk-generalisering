@@ -100,14 +100,6 @@ generalization.n100.building.simplify\_polygons module
    :undoc-members:
    :show-inheritance:
 
-generalization.n100.building.timer module
------------------------------------------
-
-.. automodule:: generalization.n100.building.timer
-   :members:
-   :undoc-members:
-   :show-inheritance:
-
 Module contents
 ---------------
 

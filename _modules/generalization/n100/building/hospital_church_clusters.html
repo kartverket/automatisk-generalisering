@@ -148,7 +148,7 @@
     <span class="n">custom_arcpy</span><span class="o">.</span><span class="n">select_attribute_and_make_permanent_feature</span><span class="p">(</span>
         <span class="n">input_layer</span><span class="o">=</span><span class="n">input_for_selections</span><span class="p">,</span>
         <span class="n">expression</span><span class="o">=</span><span class="n">sql_select_all_hospital</span><span class="p">,</span>
-        <span class="n">output_name</span><span class="o">=</span><span class="n">Building_N100</span><span class="o">.</span><span class="n">hospital_church_selections__hospital_points__n100</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
+        <span class="n">output_name</span><span class="o">=</span><span class="n">Building_N100</span><span class="o">.</span><span class="n">hospital_church_clusters___hospital_points___n100_hospital</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
         <span class="n">selection_type</span><span class="o">=</span><span class="n">custom_arcpy</span><span class="o">.</span><span class="n">SelectionType</span><span class="o">.</span><span class="n">NEW_SELECTION</span><span class="p">,</span>
         <span class="n">inverted</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
     <span class="p">)</span>
@@ -157,7 +157,7 @@
     <span class="n">custom_arcpy</span><span class="o">.</span><span class="n">select_attribute_and_make_permanent_feature</span><span class="p">(</span>
         <span class="n">input_layer</span><span class="o">=</span><span class="n">input_for_selections</span><span class="p">,</span>
         <span class="n">expression</span><span class="o">=</span><span class="n">sql_select_all_church</span><span class="p">,</span>
-        <span class="n">output_name</span><span class="o">=</span><span class="n">Building_N100</span><span class="o">.</span><span class="n">hospital_church_selections__church_points__n100</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
+        <span class="n">output_name</span><span class="o">=</span><span class="n">Building_N100</span><span class="o">.</span><span class="n">hospital_church_clusters___church_points___n100_hospital</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
         <span class="n">selection_type</span><span class="o">=</span><span class="n">custom_arcpy</span><span class="o">.</span><span class="n">SelectionType</span><span class="o">.</span><span class="n">NEW_SELECTION</span><span class="p">,</span>
         <span class="n">inverted</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
     <span class="p">)</span></div>
@@ -191,8 +191,8 @@
 
     <span class="c1"># Finding hospital clusters</span>
     <span class="n">arcpy</span><span class="o">.</span><span class="n">gapro</span><span class="o">.</span><span class="n">FindPointClusters</span><span class="p">(</span>
-        <span class="n">input_points</span><span class="o">=</span><span class="n">Building_N100</span><span class="o">.</span><span class="n">hospital_church_selections__hospital_points__n100</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
-        <span class="n">out_feature_class</span><span class="o">=</span><span class="n">Building_N100</span><span class="o">.</span><span class="n">find_clusters__all_hospital_clusters__n100</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
+        <span class="n">input_points</span><span class="o">=</span><span class="n">Building_N100</span><span class="o">.</span><span class="n">hospital_church_clusters___hospital_points___n100_hospital</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
+        <span class="n">out_feature_class</span><span class="o">=</span><span class="n">Building_N100</span><span class="o">.</span><span class="n">hospital_church_clusters___all_hospital_clusters___n100_building</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
         <span class="n">clustering_method</span><span class="o">=</span><span class="s2">&quot;DBSCAN&quot;</span><span class="p">,</span>
         <span class="n">minimum_points</span><span class="o">=</span><span class="s2">&quot;2&quot;</span><span class="p">,</span>
         <span class="n">search_distance</span><span class="o">=</span><span class="s2">&quot;200 Meters&quot;</span><span class="p">,</span>
@@ -200,8 +200,8 @@
 
     <span class="c1"># Finding church clusters</span>
     <span class="n">arcpy</span><span class="o">.</span><span class="n">gapro</span><span class="o">.</span><span class="n">FindPointClusters</span><span class="p">(</span>
-        <span class="n">input_points</span><span class="o">=</span><span class="n">Building_N100</span><span class="o">.</span><span class="n">hospital_church_selections__church_points__n100</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
-        <span class="n">out_feature_class</span><span class="o">=</span><span class="n">Building_N100</span><span class="o">.</span><span class="n">find_clusters__all_church_clusters__n100</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
+        <span class="n">input_points</span><span class="o">=</span><span class="n">Building_N100</span><span class="o">.</span><span class="n">hospital_church_clusters___church_points___n100_hospital</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
+        <span class="n">out_feature_class</span><span class="o">=</span><span class="n">Building_N100</span><span class="o">.</span><span class="n">hospital_church_clusters___all_church_clusters___n100_building</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
         <span class="n">clustering_method</span><span class="o">=</span><span class="s2">&quot;DBSCAN&quot;</span><span class="p">,</span>
         <span class="n">minimum_points</span><span class="o">=</span><span class="s2">&quot;2&quot;</span><span class="p">,</span>
         <span class="n">search_distance</span><span class="o">=</span><span class="s2">&quot;200 Meters&quot;</span><span class="p">,</span>
@@ -211,18 +211,18 @@
 
     <span class="c1"># Join CLUSTER_ID to church points OBJECTID</span>
     <span class="n">arcpy</span><span class="o">.</span><span class="n">management</span><span class="o">.</span><span class="n">JoinField</span><span class="p">(</span>
-        <span class="n">in_data</span><span class="o">=</span><span class="n">Building_N100</span><span class="o">.</span><span class="n">hospital_church_selections__hospital_points__n100</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
+        <span class="n">in_data</span><span class="o">=</span><span class="n">Building_N100</span><span class="o">.</span><span class="n">hospital_church_clusters___hospital_points___n100_hospital</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
         <span class="n">in_field</span><span class="o">=</span><span class="s2">&quot;OBJECTID&quot;</span><span class="p">,</span>
-        <span class="n">join_table</span><span class="o">=</span><span class="n">Building_N100</span><span class="o">.</span><span class="n">find_clusters__all_hospital_clusters__n100</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
+        <span class="n">join_table</span><span class="o">=</span><span class="n">Building_N100</span><span class="o">.</span><span class="n">hospital_church_clusters___all_hospital_clusters___n100_building</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
         <span class="n">join_field</span><span class="o">=</span><span class="s2">&quot;OBJECTID&quot;</span><span class="p">,</span>
         <span class="n">fields</span><span class="o">=</span><span class="s2">&quot;CLUSTER_ID&quot;</span><span class="p">,</span>
     <span class="p">)</span>
 
     <span class="c1"># Join CLUSTER_ID to church points OBJECTID</span>
     <span class="n">arcpy</span><span class="o">.</span><span class="n">management</span><span class="o">.</span><span class="n">JoinField</span><span class="p">(</span>
-        <span class="n">in_data</span><span class="o">=</span><span class="n">Building_N100</span><span class="o">.</span><span class="n">hospital_church_selections__church_points__n100</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
+        <span class="n">in_data</span><span class="o">=</span><span class="n">Building_N100</span><span class="o">.</span><span class="n">hospital_church_clusters___church_points___n100_hospital</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
         <span class="n">in_field</span><span class="o">=</span><span class="s2">&quot;OBJECTID&quot;</span><span class="p">,</span>
-        <span class="n">join_table</span><span class="o">=</span><span class="n">Building_N100</span><span class="o">.</span><span class="n">find_clusters__all_church_clusters__n100</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
+        <span class="n">join_table</span><span class="o">=</span><span class="n">Building_N100</span><span class="o">.</span><span class="n">hospital_church_clusters___all_church_clusters___n100_building</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
         <span class="n">join_field</span><span class="o">=</span><span class="s2">&quot;OBJECTID&quot;</span><span class="p">,</span>
         <span class="n">fields</span><span class="o">=</span><span class="s2">&quot;CLUSTER_ID&quot;</span><span class="p">,</span>
     <span class="p">)</span>
@@ -234,33 +234,33 @@
 
     <span class="c1"># Making feature class of hospital points NOT in a cluster</span>
     <span class="n">custom_arcpy</span><span class="o">.</span><span class="n">select_attribute_and_make_permanent_feature</span><span class="p">(</span>
-        <span class="n">input_layer</span><span class="o">=</span><span class="n">Building_N100</span><span class="o">.</span><span class="n">hospital_church_selections__hospital_points__n100</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
+        <span class="n">input_layer</span><span class="o">=</span><span class="n">Building_N100</span><span class="o">.</span><span class="n">hospital_church_clusters___hospital_points___n100_hospital</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
         <span class="n">expression</span><span class="o">=</span><span class="n">expression_not_cluster</span><span class="p">,</span>
-        <span class="n">output_name</span><span class="o">=</span><span class="n">Building_N100</span><span class="o">.</span><span class="n">find_clusters__hospital_points_not_in_cluster__n100</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
+        <span class="n">output_name</span><span class="o">=</span><span class="n">Building_N100</span><span class="o">.</span><span class="n">hospital_church_clusters___hospital_points_not_in_cluster___n100_building</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
         <span class="n">selection_type</span><span class="o">=</span><span class="n">custom_arcpy</span><span class="o">.</span><span class="n">SelectionType</span><span class="o">.</span><span class="n">NEW_SELECTION</span><span class="p">,</span>
     <span class="p">)</span>
 
     <span class="c1"># Making feature class of hospital points in a cluster</span>
     <span class="n">custom_arcpy</span><span class="o">.</span><span class="n">select_attribute_and_make_permanent_feature</span><span class="p">(</span>
-        <span class="n">input_layer</span><span class="o">=</span><span class="n">Building_N100</span><span class="o">.</span><span class="n">hospital_church_selections__hospital_points__n100</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
+        <span class="n">input_layer</span><span class="o">=</span><span class="n">Building_N100</span><span class="o">.</span><span class="n">hospital_church_clusters___hospital_points___n100_hospital</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
         <span class="n">expression</span><span class="o">=</span><span class="n">expression_cluster</span><span class="p">,</span>
-        <span class="n">output_name</span><span class="o">=</span><span class="n">Building_N100</span><span class="o">.</span><span class="n">find_clusters__hospital_points_in_cluster__n100</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
+        <span class="n">output_name</span><span class="o">=</span><span class="n">Building_N100</span><span class="o">.</span><span class="n">hospital_church_clusters___hospital_points_in_cluster___n100_building</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
         <span class="n">selection_type</span><span class="o">=</span><span class="n">custom_arcpy</span><span class="o">.</span><span class="n">SelectionType</span><span class="o">.</span><span class="n">NEW_SELECTION</span><span class="p">,</span>
     <span class="p">)</span>
 
     <span class="c1"># Making feature class of church points NOT in a cluster</span>
     <span class="n">custom_arcpy</span><span class="o">.</span><span class="n">select_attribute_and_make_permanent_feature</span><span class="p">(</span>
-        <span class="n">input_layer</span><span class="o">=</span><span class="n">Building_N100</span><span class="o">.</span><span class="n">hospital_church_selections__church_points__n100</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
+        <span class="n">input_layer</span><span class="o">=</span><span class="n">Building_N100</span><span class="o">.</span><span class="n">hospital_church_clusters___church_points___n100_hospital</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
         <span class="n">expression</span><span class="o">=</span><span class="n">expression_not_cluster</span><span class="p">,</span>
-        <span class="n">output_name</span><span class="o">=</span><span class="n">Building_N100</span><span class="o">.</span><span class="n">find_clusters__church_points_not_in_cluster__n100</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
+        <span class="n">output_name</span><span class="o">=</span><span class="n">Building_N100</span><span class="o">.</span><span class="n">hospital_church_clusters___church_points_not_in_cluster___n100_building</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
         <span class="n">selection_type</span><span class="o">=</span><span class="n">custom_arcpy</span><span class="o">.</span><span class="n">SelectionType</span><span class="o">.</span><span class="n">NEW_SELECTION</span><span class="p">,</span>
     <span class="p">)</span>
 
     <span class="c1"># Making feature class of church points in a cluster</span>
     <span class="n">custom_arcpy</span><span class="o">.</span><span class="n">select_attribute_and_make_permanent_feature</span><span class="p">(</span>
-        <span class="n">input_layer</span><span class="o">=</span><span class="n">Building_N100</span><span class="o">.</span><span class="n">hospital_church_selections__church_points__n100</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
+        <span class="n">input_layer</span><span class="o">=</span><span class="n">Building_N100</span><span class="o">.</span><span class="n">hospital_church_clusters___church_points___n100_hospital</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
         <span class="n">expression</span><span class="o">=</span><span class="n">expression_cluster</span><span class="p">,</span>
-        <span class="n">output_name</span><span class="o">=</span><span class="n">Building_N100</span><span class="o">.</span><span class="n">find_clusters__church_points_in_cluster__n100</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
+        <span class="n">output_name</span><span class="o">=</span><span class="n">Building_N100</span><span class="o">.</span><span class="n">hospital_church_clusters___church_points_in_cluster___n100_building</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
         <span class="n">selection_type</span><span class="o">=</span><span class="n">custom_arcpy</span><span class="o">.</span><span class="n">SelectionType</span><span class="o">.</span><span class="n">NEW_SELECTION</span><span class="p">,</span>
     <span class="p">)</span></div>
 
@@ -286,13 +286,13 @@
 
     <span class="c1"># List of hospital and church layers to merge at the end</span>
     <span class="n">merge_hospitals_and_churches_list</span> <span class="o">=</span> <span class="p">[</span>
-        <span class="n">Building_N100</span><span class="o">.</span><span class="n">find_clusters__hospital_points_not_in_cluster__n100</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
-        <span class="n">Building_N100</span><span class="o">.</span><span class="n">find_clusters__church_points_not_in_cluster__n100</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
+        <span class="n">Building_N100</span><span class="o">.</span><span class="n">hospital_church_clusters___hospital_points_not_in_cluster___n100_building</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
+        <span class="n">Building_N100</span><span class="o">.</span><span class="n">hospital_church_clusters___church_points_not_in_cluster___n100_building</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
     <span class="p">]</span>
 
     <span class="c1"># Check if there are any features in the feature class</span>
     <span class="n">get_count_hospital</span> <span class="o">=</span> <span class="n">arcpy</span><span class="o">.</span><span class="n">management</span><span class="o">.</span><span class="n">GetCount</span><span class="p">(</span>
-        <span class="n">Building_N100</span><span class="o">.</span><span class="n">find_clusters__hospital_points_in_cluster__n100</span><span class="o">.</span><span class="n">value</span>
+        <span class="n">Building_N100</span><span class="o">.</span><span class="n">hospital_church_clusters___hospital_points_in_cluster___n100_building</span><span class="o">.</span><span class="n">value</span>
     <span class="p">)</span>
     <span class="n">count_hospital</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">get_count_hospital</span><span class="o">.</span><span class="n">getOutput</span><span class="p">(</span><span class="mi">0</span><span class="p">))</span>
 
@@ -302,8 +302,8 @@
 
         <span class="c1"># Finding minimum bounding geometry for hospital clusters</span>
         <span class="n">arcpy</span><span class="o">.</span><span class="n">management</span><span class="o">.</span><span class="n">MinimumBoundingGeometry</span><span class="p">(</span>
-            <span class="n">in_features</span><span class="o">=</span><span class="n">Building_N100</span><span class="o">.</span><span class="n">find_clusters__hospital_points_in_cluster__n100</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
-            <span class="n">out_feature_class</span><span class="o">=</span><span class="n">Building_N100</span><span class="o">.</span><span class="n">reducing_clusters__minimum_bounding_geometry_hospital__n100</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
+            <span class="n">in_features</span><span class="o">=</span><span class="n">Building_N100</span><span class="o">.</span><span class="n">hospital_church_clusters___hospital_points_in_cluster___n100_building</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
+            <span class="n">out_feature_class</span><span class="o">=</span><span class="n">Building_N100</span><span class="o">.</span><span class="n">hospital_church_clusters___minimum_bounding_geometry_hospital___n100_hospital</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
             <span class="n">geometry_type</span><span class="o">=</span><span class="s2">&quot;RECTANGLE_BY_AREA&quot;</span><span class="p">,</span>
             <span class="n">group_option</span><span class="o">=</span><span class="s2">&quot;LIST&quot;</span><span class="p">,</span>
             <span class="n">group_field</span><span class="o">=</span><span class="s2">&quot;CLUSTER_ID&quot;</span><span class="p">,</span>
@@ -313,16 +313,16 @@
 
         <span class="c1"># Transforming minimum bounding geometry for hospital clusters to center point</span>
         <span class="n">arcpy</span><span class="o">.</span><span class="n">management</span><span class="o">.</span><span class="n">FeatureToPoint</span><span class="p">(</span>
-            <span class="n">in_features</span><span class="o">=</span><span class="n">Building_N100</span><span class="o">.</span><span class="n">reducing_clusters__minimum_bounding_geometry_hospital__n100</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
-            <span class="n">out_feature_class</span><span class="o">=</span><span class="n">Building_N100</span><span class="o">.</span><span class="n">reducing_clusters__feature_to_point_hospital__n100</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
+            <span class="n">in_features</span><span class="o">=</span><span class="n">Building_N100</span><span class="o">.</span><span class="n">hospital_church_clusters___minimum_bounding_geometry_hospital___n100_hospital</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
+            <span class="n">out_feature_class</span><span class="o">=</span><span class="n">Building_N100</span><span class="o">.</span><span class="n">hospital_church_clusters___feature_to_point_hospital___n100_building</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
         <span class="p">)</span>
 
         <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Near...&quot;</span><span class="p">)</span>
 
         <span class="c1"># Find hospital point closest to the center point, Near fid is automatically added to hospital points attribute table</span>
         <span class="n">arcpy</span><span class="o">.</span><span class="n">analysis</span><span class="o">.</span><span class="n">Near</span><span class="p">(</span>
-            <span class="n">in_features</span><span class="o">=</span><span class="n">Building_N100</span><span class="o">.</span><span class="n">find_clusters__hospital_points_in_cluster__n100</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
-            <span class="n">near_features</span><span class="o">=</span><span class="n">Building_N100</span><span class="o">.</span><span class="n">reducing_clusters__feature_to_point_hospital__n100</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
+            <span class="n">in_features</span><span class="o">=</span><span class="n">Building_N100</span><span class="o">.</span><span class="n">hospital_church_clusters___hospital_points_in_cluster___n100_building</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
+            <span class="n">near_features</span><span class="o">=</span><span class="n">Building_N100</span><span class="o">.</span><span class="n">hospital_church_clusters___feature_to_point_hospital___n100_building</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
             <span class="n">search_radius</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
         <span class="p">)</span>
 
@@ -333,7 +333,7 @@
 
         <span class="c1"># Iterate through the feature class to find the minimum NEAR_DIST for each CLUSTER_ID</span>
         <span class="k">with</span> <span class="n">arcpy</span><span class="o">.</span><span class="n">da</span><span class="o">.</span><span class="n">SearchCursor</span><span class="p">(</span>
-            <span class="n">Building_N100</span><span class="o">.</span><span class="n">find_clusters__hospital_points_in_cluster__n100</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
+            <span class="n">Building_N100</span><span class="o">.</span><span class="n">hospital_church_clusters___hospital_points_in_cluster___n100_building</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
             <span class="p">[</span><span class="s2">&quot;CLUSTER_ID&quot;</span><span class="p">,</span> <span class="s2">&quot;NEAR_DIST&quot;</span><span class="p">,</span> <span class="s2">&quot;OBJECTID&quot;</span><span class="p">],</span>
         <span class="p">)</span> <span class="k">as</span> <span class="n">cursor</span><span class="p">:</span>
             <span class="k">for</span> <span class="n">row</span> <span class="ow">in</span> <span class="n">cursor</span><span class="p">:</span>
@@ -354,23 +354,23 @@
 
         <span class="c1"># Making new layer of hospital cluster points that we want to keep</span>
         <span class="n">custom_arcpy</span><span class="o">.</span><span class="n">select_attribute_and_make_permanent_feature</span><span class="p">(</span>
-            <span class="n">input_layer</span><span class="o">=</span><span class="n">Building_N100</span><span class="o">.</span><span class="n">find_clusters__hospital_points_in_cluster__n100</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
+            <span class="n">input_layer</span><span class="o">=</span><span class="n">Building_N100</span><span class="o">.</span><span class="n">hospital_church_clusters___hospital_points_in_cluster___n100_building</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
             <span class="n">expression</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;OBJECTID IN (</span><span class="si">{</span><span class="s1">&#39;,&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="nb">map</span><span class="p">(</span><span class="nb">str</span><span class="p">,</span><span class="w"> </span><span class="n">min_near_dist_object_ids_hospital</span><span class="p">))</span><span class="si">}</span><span class="s2">)&quot;</span><span class="p">,</span>
-            <span class="n">output_name</span><span class="o">=</span><span class="n">Building_N100</span><span class="o">.</span><span class="n">reducing_clusters__chosen_hospitals_from_cluster__n100</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
+            <span class="n">output_name</span><span class="o">=</span><span class="n">Building_N100</span><span class="o">.</span><span class="n">hospital_church_clusters___chosen_hospitals_from_cluster___n100_building</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
             <span class="n">selection_type</span><span class="o">=</span><span class="n">custom_arcpy</span><span class="o">.</span><span class="n">SelectionType</span><span class="o">.</span><span class="n">NEW_SELECTION</span><span class="p">,</span>
             <span class="n">inverted</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
         <span class="p">)</span>
 
         <span class="c1"># Adding selected hospitals to the merge list</span>
         <span class="n">merge_hospitals_and_churches_list</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
-            <span class="n">Building_N100</span><span class="o">.</span><span class="n">reducing_clusters__chosen_hospitals_from_cluster__n100</span><span class="o">.</span><span class="n">value</span>
+            <span class="n">Building_N100</span><span class="o">.</span><span class="n">hospital_church_clusters___chosen_hospitals_from_cluster___n100_building</span><span class="o">.</span><span class="n">value</span>
         <span class="p">)</span>
 
         <span class="c1">###################################### Reducing church clusters to only one point per cluster ################################################</span>
 
     <span class="c1"># Check if there are any church clusters</span>
     <span class="n">get_count_church</span> <span class="o">=</span> <span class="n">arcpy</span><span class="o">.</span><span class="n">management</span><span class="o">.</span><span class="n">GetCount</span><span class="p">(</span>
-        <span class="n">Building_N100</span><span class="o">.</span><span class="n">find_clusters__hospital_points_in_cluster__n100</span><span class="o">.</span><span class="n">value</span>
+        <span class="n">Building_N100</span><span class="o">.</span><span class="n">hospital_church_clusters___hospital_points_in_cluster___n100_building</span><span class="o">.</span><span class="n">value</span>
     <span class="p">)</span>
     <span class="n">count_church</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">get_count_church</span><span class="o">.</span><span class="n">getOutput</span><span class="p">(</span><span class="mi">0</span><span class="p">))</span>
 
@@ -379,8 +379,8 @@
         <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Minimum Bounding Geometry ...&quot;</span><span class="p">)</span>
         <span class="c1"># Finding minimum bounding geometry for church clusters</span>
         <span class="n">arcpy</span><span class="o">.</span><span class="n">management</span><span class="o">.</span><span class="n">MinimumBoundingGeometry</span><span class="p">(</span>
-            <span class="n">in_features</span><span class="o">=</span><span class="n">Building_N100</span><span class="o">.</span><span class="n">find_clusters__hospital_points_in_cluster__n100</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
-            <span class="n">out_feature_class</span><span class="o">=</span><span class="n">Building_N100</span><span class="o">.</span><span class="n">reducing_clusters__minimum_bounding_geometry_church__n100</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
+            <span class="n">in_features</span><span class="o">=</span><span class="n">Building_N100</span><span class="o">.</span><span class="n">hospital_church_clusters___hospital_points_in_cluster___n100_building</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
+            <span class="n">out_feature_class</span><span class="o">=</span><span class="n">Building_N100</span><span class="o">.</span><span class="n">hospital_church_clusters___minimum_bounding_geometry_church___n100_building</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
             <span class="n">geometry_type</span><span class="o">=</span><span class="s2">&quot;RECTANGLE_BY_AREA&quot;</span><span class="p">,</span>
             <span class="n">group_option</span><span class="o">=</span><span class="s2">&quot;LIST&quot;</span><span class="p">,</span>
             <span class="n">group_field</span><span class="o">=</span><span class="s2">&quot;CLUSTER_ID&quot;</span><span class="p">,</span>
@@ -390,14 +390,14 @@
 
         <span class="c1"># Transforming minimum bounding geometry for church clusters to center point</span>
         <span class="n">arcpy</span><span class="o">.</span><span class="n">management</span><span class="o">.</span><span class="n">FeatureToPoint</span><span class="p">(</span>
-            <span class="n">in_features</span><span class="o">=</span><span class="n">Building_N100</span><span class="o">.</span><span class="n">reducing_clusters__minimum_bounding_geometry_church__n100</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
-            <span class="n">out_feature_class</span><span class="o">=</span><span class="n">Building_N100</span><span class="o">.</span><span class="n">reducing_clusters__feature_to_point_church__n100</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
+            <span class="n">in_features</span><span class="o">=</span><span class="n">Building_N100</span><span class="o">.</span><span class="n">hospital_church_clusters___minimum_bounding_geometry_church___n100_building</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
+            <span class="n">out_feature_class</span><span class="o">=</span><span class="n">Building_N100</span><span class="o">.</span><span class="n">hospital_church_clusters___feature_to_point_church___n100_building</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
         <span class="p">)</span>
 
         <span class="c1"># Find church point closest to the center point, Near fid is automatically added to church points attribute table</span>
         <span class="n">arcpy</span><span class="o">.</span><span class="n">analysis</span><span class="o">.</span><span class="n">Near</span><span class="p">(</span>
-            <span class="n">in_features</span><span class="o">=</span><span class="n">Building_N100</span><span class="o">.</span><span class="n">find_clusters__church_points_in_cluster__n100</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
-            <span class="n">near_features</span><span class="o">=</span><span class="n">Building_N100</span><span class="o">.</span><span class="n">reducing_clusters__feature_to_point_church__n100</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
+            <span class="n">in_features</span><span class="o">=</span><span class="n">Building_N100</span><span class="o">.</span><span class="n">hospital_church_clusters___church_points_in_cluster___n100_building</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
+            <span class="n">near_features</span><span class="o">=</span><span class="n">Building_N100</span><span class="o">.</span><span class="n">hospital_church_clusters___feature_to_point_church___n100_building</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
             <span class="n">search_radius</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
         <span class="p">)</span>
 
@@ -406,7 +406,7 @@
 
         <span class="c1"># Iterate through the feature class to find the minimum NEAR_DIST for each CLUSTER_ID</span>
         <span class="k">with</span> <span class="n">arcpy</span><span class="o">.</span><span class="n">da</span><span class="o">.</span><span class="n">SearchCursor</span><span class="p">(</span>
-            <span class="n">Building_N100</span><span class="o">.</span><span class="n">find_clusters__hospital_points_not_in_cluster__n100</span><span class="p">,</span>
+            <span class="n">Building_N100</span><span class="o">.</span><span class="n">hospital_church_clusters___hospital_points_not_in_cluster___n100_building</span><span class="p">,</span>
             <span class="p">[</span><span class="s2">&quot;CLUSTER_ID&quot;</span><span class="p">,</span> <span class="s2">&quot;NEAR_DIST&quot;</span><span class="p">,</span> <span class="s2">&quot;OBJECTID&quot;</span><span class="p">],</span>
         <span class="p">)</span> <span class="k">as</span> <span class="n">cursor</span><span class="p">:</span>
             <span class="k">for</span> <span class="n">row</span> <span class="ow">in</span> <span class="n">cursor</span><span class="p">:</span>
@@ -427,16 +427,16 @@
 
         <span class="c1"># Making layer of church points in a cluster</span>
         <span class="n">custom_arcpy</span><span class="o">.</span><span class="n">select_attribute_and_make_permanent_feature</span><span class="p">(</span>
-            <span class="n">input_layer</span><span class="o">=</span><span class="n">Building_N100</span><span class="o">.</span><span class="n">find_clusters__hospital_points_in_cluster__n100</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
+            <span class="n">input_layer</span><span class="o">=</span><span class="n">Building_N100</span><span class="o">.</span><span class="n">hospital_church_clusters___hospital_points_in_cluster___n100_building</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
             <span class="n">expression</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;OBJECTID IN (</span><span class="si">{</span><span class="s1">&#39;,&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="nb">map</span><span class="p">(</span><span class="nb">str</span><span class="p">,</span><span class="w"> </span><span class="n">min_near_dist_object_ids_church</span><span class="p">))</span><span class="si">}</span><span class="s2">)&quot;</span><span class="p">,</span>
-            <span class="n">output_name</span><span class="o">=</span><span class="n">Building_N100</span><span class="o">.</span><span class="n">reducing_clusters__chosen_churches_from_cluster__n100</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
+            <span class="n">output_name</span><span class="o">=</span><span class="n">Building_N100</span><span class="o">.</span><span class="n">hospital_church_clusters___chosen_churches_from_cluster___n100_building</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
             <span class="n">selection_type</span><span class="o">=</span><span class="n">custom_arcpy</span><span class="o">.</span><span class="n">SelectionType</span><span class="o">.</span><span class="n">NEW_SELECTION</span><span class="p">,</span>
             <span class="n">inverted</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
         <span class="p">)</span>
 
         <span class="c1"># Adding selected churches to the merge list</span>
         <span class="n">merge_hospitals_and_churches_list</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
-            <span class="n">Building_N100</span><span class="o">.</span><span class="n">reducing_clusters__chosen_churches_from_cluster__n100</span><span class="o">.</span><span class="n">value</span>
+            <span class="n">Building_N100</span><span class="o">.</span><span class="n">hospital_church_clusters___chosen_churches_from_cluster___n100_building</span><span class="o">.</span><span class="n">value</span>
         <span class="p">)</span>
 
     <span class="c1">###################################### Merging all layers in the merge list ################################################</span>
@@ -444,11 +444,11 @@
     <span class="c1"># Merge the final hospital and church layers</span>
     <span class="n">arcpy</span><span class="o">.</span><span class="n">management</span><span class="o">.</span><span class="n">Merge</span><span class="p">(</span>
         <span class="n">inputs</span><span class="o">=</span><span class="n">merge_hospitals_and_churches_list</span><span class="p">,</span>
-        <span class="n">output</span><span class="o">=</span><span class="n">Building_N100</span><span class="o">.</span><span class="n">reducing_clusters__reduced_hospital_and_church_points_2__n100</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
+        <span class="n">output</span><span class="o">=</span><span class="n">Building_N100</span><span class="o">.</span><span class="n">hospital_church_clusters___reduced_hospital_and_church_points_final___n100_building</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
     <span class="p">)</span>
 
     <span class="nb">print</span><span class="p">(</span>
-        <span class="sa">f</span><span class="s2">&quot;Merge between potentially reduced hospital and churches, layer name </span><span class="si">{</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">basename</span><span class="p">(</span><span class="n">Building_N100</span><span class="o">.</span><span class="n">reducing_clusters__reduced_hospital_and_church_points_2__n100</span><span class="o">.</span><span class="n">value</span><span class="p">)</span><span class="si">}</span><span class="s2"> finished.&quot;</span>
+        <span class="sa">f</span><span class="s2">&quot;Merge between potentially reduced hospital and churches, layer name </span><span class="si">{</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">basename</span><span class="p">(</span><span class="n">Building_N100</span><span class="o">.</span><span class="n">hospital_church_clusters___reduced_hospital_and_church_points_final___n100_building</span><span class="o">.</span><span class="n">value</span><span class="p">)</span><span class="si">}</span><span class="s2"> finished.&quot;</span>
     <span class="p">)</span></div>
 
 

@@ -140,16 +140,16 @@
 
     <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Aggregating building polygons...&quot;</span><span class="p">)</span>
     <span class="n">arcpy</span><span class="o">.</span><span class="n">cartography</span><span class="o">.</span><span class="n">AggregatePolygons</span><span class="p">(</span>
-        <span class="n">in_features</span><span class="o">=</span><span class="n">Building_N100</span><span class="o">.</span><span class="n">selecting_grunnriss_for_generalization__large_enough_grunnriss__n100</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
-        <span class="n">out_feature_class</span><span class="o">=</span><span class="n">Building_N100</span><span class="o">.</span><span class="n">aggregate_polygons__fill_hole__n100</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
+        <span class="n">in_features</span><span class="o">=</span><span class="n">Building_N100</span><span class="o">.</span><span class="n">data_preparation___large_enough_polygon___n100_building</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
+        <span class="n">out_feature_class</span><span class="o">=</span><span class="n">Building_N100</span><span class="o">.</span><span class="n">simplify_polygons___small_gaps___n100_building</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
         <span class="n">aggregation_distance</span><span class="o">=</span><span class="s2">&quot;4&quot;</span><span class="p">,</span>
         <span class="n">minimum_area</span><span class="o">=</span><span class="s2">&quot;3200 SquareMeters&quot;</span><span class="p">,</span>
         <span class="n">minimum_hole_size</span><span class="o">=</span><span class="s2">&quot;10000 SquareMeters&quot;</span><span class="p">,</span>
         <span class="n">orthogonality_option</span><span class="o">=</span><span class="s2">&quot;ORTHOGONAL&quot;</span><span class="p">,</span>
         <span class="n">barrier_features</span><span class="o">=</span><span class="p">[</span>
-            <span class="n">Building_N100</span><span class="o">.</span><span class="n">preperation_veg_sti__unsplit_veg_sti__n100</span><span class="o">.</span><span class="n">value</span>
+            <span class="n">Building_N100</span><span class="o">.</span><span class="n">data_preparation___unsplit_veg_sti___n100_building</span><span class="o">.</span><span class="n">value</span>
         <span class="p">],</span>
-        <span class="n">out_table</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">Building_N100</span><span class="o">.</span><span class="n">aggregate_polygons__fill_hole__n100</span><span class="o">.</span><span class="n">value</span><span class="si">}</span><span class="s2">_table&quot;</span><span class="p">,</span>
+        <span class="n">out_table</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">Building_N100</span><span class="o">.</span><span class="n">simplify_polygons___small_gaps___n100_building</span><span class="o">.</span><span class="n">value</span><span class="si">}</span><span class="s2">_table&quot;</span><span class="p">,</span>
         <span class="n">aggregate_field</span><span class="o">=</span><span class="s2">&quot;BYGGTYP_NBR&quot;</span><span class="p">,</span>
     <span class="p">)</span></div>
 
@@ -178,21 +178,19 @@
     <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Simplifying building polygons...&quot;</span><span class="p">)</span>
 
     <span class="n">arcpy</span><span class="o">.</span><span class="n">cartography</span><span class="o">.</span><span class="n">SimplifyBuilding</span><span class="p">(</span>
-        <span class="n">in_features</span><span class="o">=</span><span class="n">Building_N100</span><span class="o">.</span><span class="n">aggregate_polygons__fill_hole__n100</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
-        <span class="n">out_feature_class</span><span class="o">=</span><span class="n">Building_N100</span><span class="o">.</span><span class="n">simplify_buildings_1_simplifying__n100</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
+        <span class="n">in_features</span><span class="o">=</span><span class="n">Building_N100</span><span class="o">.</span><span class="n">simplify_polygons___small_gaps___n100_building</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
+        <span class="n">out_feature_class</span><span class="o">=</span><span class="n">Building_N100</span><span class="o">.</span><span class="n">simplify_polygons___simplify_building_1___n100_building</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
         <span class="n">simplification_tolerance</span><span class="o">=</span><span class="s2">&quot;75&quot;</span><span class="p">,</span>
         <span class="n">minimum_area</span><span class="o">=</span><span class="s2">&quot;3200 SquareMeters&quot;</span><span class="p">,</span>
         <span class="n">collapsed_point_option</span><span class="o">=</span><span class="s2">&quot;KEEP_COLLAPSED_POINTS&quot;</span><span class="p">,</span>
     <span class="p">)</span>
 
     <span class="c1"># Creating points to permanently store auto generated points from simplified building polygons to a specified path</span>
-    <span class="n">auto_generated_points_1</span> <span class="o">=</span> <span class="p">(</span>
-        <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">Building_N100</span><span class="o">.</span><span class="n">simplify_buildings_1_simplifying__n100</span><span class="o">.</span><span class="n">value</span><span class="si">}</span><span class="s2">_Pnt&quot;</span>
-    <span class="p">)</span>
+    <span class="n">auto_generated_points_1</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">Building_N100</span><span class="o">.</span><span class="n">simplify_polygons___simplify_building_1___n100_building</span><span class="o">.</span><span class="n">value</span><span class="si">}</span><span class="s2">_Pnt&quot;</span>
 
     <span class="n">arcpy</span><span class="o">.</span><span class="n">management</span><span class="o">.</span><span class="n">CopyFeatures</span><span class="p">(</span>
         <span class="n">auto_generated_points_1</span><span class="p">,</span>
-        <span class="n">Building_N100</span><span class="o">.</span><span class="n">simplify_buildings_1__points__n100</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
+        <span class="n">Building_N100</span><span class="o">.</span><span class="n">simplify_polygons___simplify_building_1_points___n100_building</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
     <span class="p">)</span>
     <span class="n">arcpy</span><span class="o">.</span><span class="n">management</span><span class="o">.</span><span class="n">Delete</span><span class="p">(</span><span class="n">auto_generated_points_1</span><span class="p">)</span></div>
 
@@ -220,8 +218,8 @@
     <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Simplifying polygons...&quot;</span><span class="p">)</span>
 
     <span class="n">arcpy</span><span class="o">.</span><span class="n">cartography</span><span class="o">.</span><span class="n">SimplifyPolygon</span><span class="p">(</span>
-        <span class="n">in_features</span><span class="o">=</span><span class="n">Building_N100</span><span class="o">.</span><span class="n">simplify_buildings_1_simplifying__n100</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
-        <span class="n">out_feature_class</span><span class="o">=</span><span class="n">Building_N100</span><span class="o">.</span><span class="n">simplify_polygons__simplifying__n100</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
+        <span class="n">in_features</span><span class="o">=</span><span class="n">Building_N100</span><span class="o">.</span><span class="n">simplify_polygons___simplify_building_1___n100_building</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
+        <span class="n">out_feature_class</span><span class="o">=</span><span class="n">Building_N100</span><span class="o">.</span><span class="n">simplify_polygons___polygons___n100_building</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
         <span class="n">algorithm</span><span class="o">=</span><span class="s2">&quot;WEIGHTED_AREA&quot;</span><span class="p">,</span>
         <span class="n">tolerance</span><span class="o">=</span><span class="s2">&quot;15&quot;</span><span class="p">,</span>
         <span class="n">minimum_area</span><span class="o">=</span><span class="s2">&quot;3200 SquareMeters&quot;</span><span class="p">,</span>
@@ -230,12 +228,12 @@
 
     <span class="c1"># Creating points to permanently store auto generated points from simplified polygon to a specified path</span>
     <span class="n">auto_generated_points_2</span> <span class="o">=</span> <span class="p">(</span>
-        <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">Building_N100</span><span class="o">.</span><span class="n">simplify_polygons__simplifying__n100</span><span class="o">.</span><span class="n">value</span><span class="si">}</span><span class="s2">_Pnt&quot;</span>
+        <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">Building_N100</span><span class="o">.</span><span class="n">simplify_polygons___polygons___n100_building</span><span class="o">.</span><span class="n">value</span><span class="si">}</span><span class="s2">_Pnt&quot;</span>
     <span class="p">)</span>
 
     <span class="n">arcpy</span><span class="o">.</span><span class="n">management</span><span class="o">.</span><span class="n">CopyFeatures</span><span class="p">(</span>
         <span class="n">auto_generated_points_2</span><span class="p">,</span>
-        <span class="n">Building_N100</span><span class="o">.</span><span class="n">simplify_polygons__points__n100</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
+        <span class="n">Building_N100</span><span class="o">.</span><span class="n">simplify_polygons___points___n100_building</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
     <span class="p">)</span>
     <span class="n">arcpy</span><span class="o">.</span><span class="n">management</span><span class="o">.</span><span class="n">Delete</span><span class="p">(</span><span class="n">auto_generated_points_2</span><span class="p">)</span></div>
 
@@ -264,21 +262,19 @@
 <span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="n">arcpy</span><span class="o">.</span><span class="n">cartography</span><span class="o">.</span><span class="n">SimplifyBuilding</span><span class="p">(</span>
-        <span class="n">in_features</span><span class="o">=</span><span class="n">Building_N100</span><span class="o">.</span><span class="n">simplify_buildings_1_simplifying__n100</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
-        <span class="n">out_feature_class</span><span class="o">=</span><span class="n">Building_N100</span><span class="o">.</span><span class="n">simplify_buildings_2_simplifying__n100</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
+        <span class="n">in_features</span><span class="o">=</span><span class="n">Building_N100</span><span class="o">.</span><span class="n">simplify_polygons___simplify_building_1___n100_building</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
+        <span class="n">out_feature_class</span><span class="o">=</span><span class="n">Building_N100</span><span class="o">.</span><span class="n">simplify_polygons___simplify_building_2___n100_building</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
         <span class="n">simplification_tolerance</span><span class="o">=</span><span class="s2">&quot;75&quot;</span><span class="p">,</span>
         <span class="n">minimum_area</span><span class="o">=</span><span class="s2">&quot;3200 SquareMeters&quot;</span><span class="p">,</span>
         <span class="n">collapsed_point_option</span><span class="o">=</span><span class="s2">&quot;KEEP_COLLAPSED_POINTS&quot;</span><span class="p">,</span>
     <span class="p">)</span>
 
     <span class="c1"># Creating points to permanently store auto generated points from simplified polygon to a specified path</span>
-    <span class="n">auto_generated_points_3</span> <span class="o">=</span> <span class="p">(</span>
-        <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">Building_N100</span><span class="o">.</span><span class="n">simplify_buildings_2_simplifying__n100</span><span class="o">.</span><span class="n">value</span><span class="si">}</span><span class="s2">_Pnt&quot;</span>
-    <span class="p">)</span>
+    <span class="n">auto_generated_points_3</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">Building_N100</span><span class="o">.</span><span class="n">simplify_polygons___simplify_building_2___n100_building</span><span class="o">.</span><span class="n">value</span><span class="si">}</span><span class="s2">_Pnt&quot;</span>
 
     <span class="n">arcpy</span><span class="o">.</span><span class="n">management</span><span class="o">.</span><span class="n">CopyFeatures</span><span class="p">(</span>
         <span class="n">auto_generated_points_3</span><span class="p">,</span>
-        <span class="n">Building_N100</span><span class="o">.</span><span class="n">simplify_buildings_2__points__n100</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
+        <span class="n">Building_N100</span><span class="o">.</span><span class="n">simplify_polygons___simplify_building_2_points___n100_building</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
     <span class="p">)</span>
     <span class="n">arcpy</span><span class="o">.</span><span class="n">management</span><span class="o">.</span><span class="n">Delete</span><span class="p">(</span><span class="n">auto_generated_points_3</span><span class="p">)</span></div>
 
@@ -310,15 +306,15 @@
     <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Performing spatial join...&quot;</span><span class="p">)</span>
 
     <span class="n">arcpy</span><span class="o">.</span><span class="n">analysis</span><span class="o">.</span><span class="n">SpatialJoin</span><span class="p">(</span>
-        <span class="n">target_features</span><span class="o">=</span><span class="n">Building_N100</span><span class="o">.</span><span class="n">simplify_buildings_2_simplifying__n100</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
+        <span class="n">target_features</span><span class="o">=</span><span class="n">Building_N100</span><span class="o">.</span><span class="n">simplify_polygons___simplify_building_2___n100_building</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
         <span class="n">join_features</span><span class="o">=</span><span class="n">input_n50</span><span class="o">.</span><span class="n">Grunnriss</span><span class="p">,</span>
-        <span class="n">out_feature_class</span><span class="o">=</span><span class="n">Building_N100</span><span class="o">.</span><span class="n">join_and_add_fields__spatial_join_polygons__n100</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
+        <span class="n">out_feature_class</span><span class="o">=</span><span class="n">Building_N100</span><span class="o">.</span><span class="n">simplify_polygons___spatial_join_polygons___n100_building</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
     <span class="p">)</span>
 
     <span class="c1"># Adding multiple fields</span>
     <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Adding fields...&quot;</span><span class="p">)</span>
     <span class="n">arcpy</span><span class="o">.</span><span class="n">management</span><span class="o">.</span><span class="n">AddFields</span><span class="p">(</span>
-        <span class="n">in_table</span><span class="o">=</span><span class="n">Building_N100</span><span class="o">.</span><span class="n">join_and_add_fields__spatial_join_polygons__n100</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
+        <span class="n">in_table</span><span class="o">=</span><span class="n">Building_N100</span><span class="o">.</span><span class="n">simplify_polygons___spatial_join_polygons___n100_building</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
         <span class="n">field_description</span><span class="o">=</span><span class="p">[</span>
             <span class="p">[</span><span class="s2">&quot;angle&quot;</span><span class="p">,</span> <span class="s2">&quot;SHORT&quot;</span><span class="p">],</span>
             <span class="p">[</span><span class="s2">&quot;hierarchy&quot;</span><span class="p">,</span> <span class="s2">&quot;SHORT&quot;</span><span class="p">],</span>
@@ -329,7 +325,7 @@
     <span class="c1"># Assigning values to the fields</span>
     <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Assigning values to fields...&quot;</span><span class="p">)</span>
     <span class="n">arcpy</span><span class="o">.</span><span class="n">management</span><span class="o">.</span><span class="n">CalculateFields</span><span class="p">(</span>
-        <span class="n">in_table</span><span class="o">=</span><span class="n">Building_N100</span><span class="o">.</span><span class="n">join_and_add_fields__spatial_join_polygons__n100</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
+        <span class="n">in_table</span><span class="o">=</span><span class="n">Building_N100</span><span class="o">.</span><span class="n">simplify_polygons___spatial_join_polygons___n100_building</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
         <span class="n">expression_type</span><span class="o">=</span><span class="s2">&quot;PYTHON3&quot;</span><span class="p">,</span>
         <span class="n">fields</span><span class="o">=</span><span class="p">[[</span><span class="s2">&quot;angle&quot;</span><span class="p">,</span> <span class="s2">&quot;0&quot;</span><span class="p">],</span> <span class="p">[</span><span class="s2">&quot;hierarchy&quot;</span><span class="p">,</span> <span class="s2">&quot;0&quot;</span><span class="p">],</span> <span class="p">[</span><span class="s2">&quot;invisibility&quot;</span><span class="p">,</span> <span class="s2">&quot;0&quot;</span><span class="p">]],</span>
     <span class="p">)</span>
@@ -337,8 +333,8 @@
     <span class="c1"># Making a copy of the feature class</span>
     <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Making a copy of the feature class...&quot;</span><span class="p">)</span>
     <span class="n">arcpy</span><span class="o">.</span><span class="n">management</span><span class="o">.</span><span class="n">CopyFeatures</span><span class="p">(</span>
-        <span class="n">Building_N100</span><span class="o">.</span><span class="n">join_and_add_fields__spatial_join_polygons__n100</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
-        <span class="n">Building_N100</span><span class="o">.</span><span class="n">join_and_add_fields__building_polygons_final__n100</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
+        <span class="n">Building_N100</span><span class="o">.</span><span class="n">simplify_polygons___spatial_join_polygons___n100_building</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
+        <span class="n">Building_N100</span><span class="o">.</span><span class="n">simplify_polygons___final___n100_building</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
     <span class="p">)</span></div>
 
 

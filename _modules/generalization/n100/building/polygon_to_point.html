@@ -140,31 +140,33 @@
 <span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="n">custom_arcpy</span><span class="o">.</span><span class="n">select_location_and_make_feature_layer</span><span class="p">(</span>
-        <span class="n">input_layer</span><span class="o">=</span><span class="n">Building_N100</span><span class="o">.</span><span class="n">selecting_grunnriss_for_generalization__large_enough_grunnriss__n100</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
+        <span class="n">input_layer</span><span class="o">=</span><span class="n">Building_N100</span><span class="o">.</span><span class="n">data_preparation___large_enough_polygon___n100_building</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
         <span class="n">overlap_type</span><span class="o">=</span><span class="n">custom_arcpy</span><span class="o">.</span><span class="n">OverlapType</span><span class="o">.</span><span class="n">INTERSECT</span><span class="p">,</span>
-        <span class="n">select_features</span><span class="o">=</span><span class="n">Building_N100</span><span class="o">.</span><span class="n">aggregate_polygons__fill_hole__n100</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
-        <span class="n">output_name</span><span class="o">=</span><span class="n">Building_N100</span><span class="o">.</span><span class="n">grunnriss_to_point__intersect_aggregated_and_original__n100</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
+        <span class="n">select_features</span><span class="o">=</span><span class="n">Building_N100</span><span class="o">.</span><span class="n">simplify_polygons___small_gaps___n100_building</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
+        <span class="n">output_name</span><span class="o">=</span><span class="n">Building_N100</span><span class="o">.</span><span class="n">polygon_to_point___intersect_aggregated_and_original___n100_building</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
         <span class="n">inverted</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
     <span class="p">)</span>
 
     <span class="n">arcpy</span><span class="o">.</span><span class="n">management</span><span class="o">.</span><span class="n">FeatureToPoint</span><span class="p">(</span>
-        <span class="n">in_features</span><span class="o">=</span><span class="n">Building_N100</span><span class="o">.</span><span class="n">grunnriss_to_point__intersect_aggregated_and_original__n100</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
-        <span class="n">out_feature_class</span><span class="o">=</span><span class="n">Building_N100</span><span class="o">.</span><span class="n">grunnriss_to_point__grunnriss_feature_to_point__n100</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
+        <span class="n">in_features</span><span class="o">=</span><span class="n">Building_N100</span><span class="o">.</span><span class="n">polygon_to_point___intersect_aggregated_and_original___n100_building</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
+        <span class="n">out_feature_class</span><span class="o">=</span><span class="n">Building_N100</span><span class="o">.</span><span class="n">polygon_to_point___polygons_to_point___n100_building</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
     <span class="p">)</span>
 
     <span class="c1"># Base output which the for loop through for output creation</span>
-    <span class="n">base_output_path</span> <span class="o">=</span> <span class="n">Building_N100</span><span class="o">.</span><span class="n">grunnriss_to_point__spatial_join_points__n100</span><span class="o">.</span><span class="n">value</span>
+    <span class="n">base_output_path</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="n">Building_N100</span><span class="o">.</span><span class="n">polygon_to_point___spatial_join_points___n100_building</span><span class="o">.</span><span class="n">value</span>
+    <span class="p">)</span>
 
     <span class="c1"># List of input features which will be spatially joined</span>
     <span class="n">input_features</span> <span class="o">=</span> <span class="p">[</span>
-        <span class="n">Building_N100</span><span class="o">.</span><span class="n">simplify_polygons__points__n100</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
-        <span class="n">Building_N100</span><span class="o">.</span><span class="n">simplify_buildings_1__points__n100</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
-        <span class="n">Building_N100</span><span class="o">.</span><span class="n">simplify_buildings_2__points__n100</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
+        <span class="n">Building_N100</span><span class="o">.</span><span class="n">simplify_polygons___points___n100_building</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
+        <span class="n">Building_N100</span><span class="o">.</span><span class="n">simplify_polygons___simplify_building_1_points___n100_building</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
+        <span class="n">Building_N100</span><span class="o">.</span><span class="n">simplify_polygons___simplify_building_2_points___n100_building</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
     <span class="p">]</span>
 
     <span class="c1">#  Feature with the field information which will be used for spatial join</span>
     <span class="n">join_features</span> <span class="o">=</span> <span class="p">(</span>
-        <span class="n">Building_N100</span><span class="o">.</span><span class="n">selecting_grunnriss_for_generalization__large_enough_grunnriss__n100</span><span class="o">.</span><span class="n">value</span>
+        <span class="n">Building_N100</span><span class="o">.</span><span class="n">data_preparation___large_enough_polygon___n100_building</span><span class="o">.</span><span class="n">value</span>
     <span class="p">)</span>
 
     <span class="c1"># Looping through each Spatial Join operation</span>
@@ -188,10 +190,10 @@
 
     <span class="c1"># Additional inputs for the merge (if any)</span>
     <span class="n">additional_inputs</span> <span class="o">=</span> <span class="p">[</span>
-        <span class="n">Building_N100</span><span class="o">.</span><span class="n">selecting_grunnriss_for_generalization__points_created_from_small_grunnriss__n100</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
-        <span class="n">Building_N100</span><span class="o">.</span><span class="n">selecting_grunnriss_for_generalization__kirke_points_created_from_grunnriss__n100</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
-        <span class="n">Building_N100</span><span class="o">.</span><span class="n">grunnriss_to_point__grunnriss_feature_to_point__n100</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
-        <span class="n">Building_N100</span><span class="o">.</span><span class="n">merging_invisible_intersecting_points__final__n100</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
+        <span class="n">Building_N100</span><span class="o">.</span><span class="n">data_preparation___points_created_from_small_polygon___n100_building</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
+        <span class="n">Building_N100</span><span class="o">.</span><span class="n">data_preparation___church_points_from_polygon___n100_building</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
+        <span class="n">Building_N100</span><span class="o">.</span><span class="n">polygon_to_point___polygons_to_point___n100_building</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
+        <span class="n">Building_N100</span><span class="o">.</span><span class="n">polygon_propogate_displacement___final_merged_points___n100_building</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
     <span class="p">]</span>
     <span class="c1"># Complete list of inputs for the merge</span>
     <span class="n">merge_inputs</span> <span class="o">=</span> <span class="n">additional_inputs</span> <span class="o">+</span> <span class="n">output_paths</span>
@@ -199,7 +201,7 @@
     <span class="c1"># Perform the Merge operation</span>
     <span class="n">arcpy</span><span class="o">.</span><span class="n">management</span><span class="o">.</span><span class="n">Merge</span><span class="p">(</span>
         <span class="n">inputs</span><span class="o">=</span><span class="n">merge_inputs</span><span class="p">,</span>
-        <span class="n">output</span><span class="o">=</span><span class="n">Building_N100</span><span class="o">.</span><span class="n">grunnriss_to_point__merged_points_created_from_grunnriss__n100</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
+        <span class="n">output</span><span class="o">=</span><span class="n">Building_N100</span><span class="o">.</span><span class="n">polygon_to_point___merged_points_created_from_polygon___n100_building</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
     <span class="p">)</span>
     <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Merge completed&quot;</span><span class="p">)</span></div>
 
