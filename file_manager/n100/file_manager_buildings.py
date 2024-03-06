@@ -15,7 +15,7 @@ file_manager = BaseFileManager(scale=scale, object_name=object_name)
 
 # All scripts
 data_preparation = "data_preparation"
-simplify_polygons = " simplify_polygons"
+simplify_polygons = "simplify_polygons"
 polygon_propogate_displacement = "polygon_propogate_displacement"
 polygon_to_point = "polygon_to_point"
 calculating_field_values = "calculating_field_values"
