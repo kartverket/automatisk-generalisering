@@ -62,12 +62,10 @@ class PartitionIterator:
         for alias, (type_info, path_info) in alias_path_data.items():
             self.update_alias_state(alias, type_info, path_info)
 
-        # Process custom function specifications
-        for func_name, specs in custom_function_specs.items():
-            for alias, type_info in specs["input"].items():
-                self.update_alias_state(alias, f"{func_name}_input", None)
-            for alias, type_info in specs["output"].items():
-                self.update_alias_state(alias, f"{func_name}_output", None)
+            for func_name, specs in custom_function_specs.items():
+                for alias, types in specs.items():
+                    for type_info in types:
+                        self.update_alias_state(alias, type_info, None)
 
     def update_alias_state(self, alias, type_info, path=None):
         if alias not in self.data:
@@ -155,7 +153,8 @@ class PartitionIterator:
                 if arcpy.Exists(file_path):
                     arcpy.Delete_management(file_path)
                     print(f"Deleted iteration file: {file_path}")
-
+                if not arcpy.Exists(file_path):
+                    print(f"The file {file_path} does not exist.")
             except Exception as e:
                 print(f"Error deleting {file_path}: {e}")
 
@@ -179,19 +178,20 @@ class PartitionIterator:
             print(f"Error in finding max {self.object_id_field}: {e}")
 
     def prepare_input_data(self):
-        # Iterate only over 'input' type data in self.data
-        for alias, details in self.data.items():
-            if details["type"] == "input":
+        for alias, types in self.data.items():
+            if "input" in types:
+                input_data_path = types["input"]
                 input_data_copy = (
                     f"{self.root_file_partition_iterator}_{alias}_input_copy"
                 )
                 arcpy.management.Copy(
-                    in_data=details["path"],
+                    in_data=input_data_path,
                     out_data=input_data_copy,
                 )
                 print(f"Copied input data for: {alias}")
 
-                self.data[alias]["path"] = input_data_copy
+                # Update the path for 'input' type to the new copied path
+                self.update_alias_state(alias, "input", input_data_copy)
 
                 partition_field = "partition_select"
                 arcpy.AddField_management(
@@ -201,7 +201,6 @@ class PartitionIterator:
                 )
                 print(f"Added field {partition_field}")
 
-                # Add a unique ID field to the copied feature class, ensuring it's a new field
                 existing_field_names = [
                     field.name for field in arcpy.ListFields(input_data_copy)
                 ]
@@ -227,21 +226,36 @@ class PartitionIterator:
         return outputs
 
     def delete_existing_outputs(self):
-        for alias, details in self.data.items():
-            if details["type"] == "output":
-                output_path = details["path"]
-                self.delete_feature_class(output_path)
-                print(f"Deleted existing feature class: {output_path}")
+        for alias, types in self.data.items():
+            if "output" in types:
+                output_path = types["output"]
+                if output_path:  # Ensure there is a path to delete
+                    self.delete_feature_class(output_path)
+                    print(f"Deleted existing feature class: {output_path}")
 
-    def create_dummy_features(self, alias, details):
-        dummy_feature_path = (
-            f"{self.root_file_partition_iterator}_{alias}_dummy_{self.scale}"
-        )
-        self.create_feature_class(
-            out_path=os.path.dirname(dummy_feature_path),
-            out_name=os.path.basename(dummy_feature_path),
-            template_feature=details["path"],
-        )
+    def create_dummy_features(self, types_to_include=["input", "context"]):
+        """
+        Creates dummy features for aliases with specified types.
+
+        Args:
+            types_to_include (list): Types for which dummy features should be created.
+        """
+        for alias, types in self.data.items():
+            # Check if alias has any of the specified types with valid paths
+            for type_info, path in types.items():
+                if type_info in types_to_include and path:
+                    # Construct the dummy feature path
+                    dummy_feature_path = f"{self.root_file_partition_iterator}_{alias}_dummy_{self.scale}"
+                    self.create_feature_class(
+                        out_path=os.path.dirname(dummy_feature_path),
+                        out_name=os.path.basename(dummy_feature_path),
+                        template_feature=path,
+                    )
+                    print(
+                        f"Created dummy feature class for {alias} of type {type_info}: {dummy_feature_path}"
+                    )
+                    # Update alias state to include this new dummy type and its path
+                    self.update_alias_state(alias, "dummy", dummy_feature_path)
 
     def select_partition_feature(self, iteration_partition, object_id):
         """
@@ -255,40 +269,42 @@ class PartitionIterator:
         )
         print(f"Created partition selection for OBJECTID {object_id}")
 
-    def process_input_features(self, alias, details, iteration_partition):
+    def process_input_features(self, alias, iteration_partition):
         """
         Process input features for a given partition.
         """
-        input_features_partition_selection = (
-            f"in_memory/{alias}_partition_base_select_{self.scale}"
-        )
-        self.iteration_file_paths.append(input_features_partition_selection)
+        if "input" in self.data[alias]:
+            input_path = self.data[alias]["input"]
+            input_features_partition_selection = (
+                f"in_memory/{alias}_partition_base_select_{self.scale}"
+            )
+            self.iteration_file_paths.append(input_features_partition_selection)
 
-        input_feature_count = custom_arcpy.select_location_and_make_feature_layer(
-            input_layer=details["path"],
-            overlap_type=custom_arcpy.OverlapType.HAVE_THEIR_CENTER_IN.value,
-            select_features=iteration_partition,
-            output_name=input_features_partition_selection,
-        )
-        return input_feature_count > 0
+            input_feature_count = custom_arcpy.select_location_and_make_feature_layer(
+                input_layer=input_path,
+                overlap_type=custom_arcpy.OverlapType.HAVE_THEIR_CENTER_IN.value,
+                select_features=iteration_partition,
+                output_name=input_features_partition_selection,
+            )
+            return input_feature_count > 0
 
-    def process_context_features(self, alias, details, iteration_partition):
+    def process_context_features(self, alias, iteration_partition):
         """
         Process context features for a given partition if input features are present.
         """
-        context_selection_path = (
-            f"{self.root_file_partition_iterator}_{alias}_context_iteration_selection"
-        )
-        self.iteration_file_paths.append(context_selection_path)
+        if "context" in self.data[alias]:
+            context_path = self.data[alias]["context"]
+            context_selection_path = f"{self.root_file_partition_iterator}_{alias}_context_iteration_selection"
+            self.iteration_file_paths.append(context_selection_path)
 
-        custom_arcpy.select_location_and_make_permanent_feature(
-            input_layer=details["path"],
-            overlap_type=custom_arcpy.OverlapType.WITHIN_A_DISTANCE,
-            select_features=iteration_partition,
-            output_name=context_selection_path,
-            selection_type=custom_arcpy.SelectionType.NEW_SELECTION.value,
-            search_distance=self.search_distance,
-        )
+            custom_arcpy.select_location_and_make_permanent_feature(
+                input_layer=context_path,
+                overlap_type=custom_arcpy.OverlapType.WITHIN_A_DISTANCE,
+                select_features=iteration_partition,
+                output_name=context_selection_path,
+                selection_type=custom_arcpy.SelectionType.NEW_SELECTION.value,
+                search_distance=self.search_distance,
+            )
 
     def partition_iteration(
         self,
@@ -559,10 +575,10 @@ class PartitionIterator:
         environment_setup.main()
         self.create_cartographic_partitions()
 
-        # max_object_id = self.pre_iteration()
-        #
-        # self.prepare_input_data()
-        #
+        max_object_id = self.pre_iteration()
+
+        self.prepare_input_data()
+
         # self.partition_iteration(
         #     [self.file_mapping[alias]["current_output"] for alias in self.alias],
         #     self.partition_feature,
@@ -616,18 +632,39 @@ if __name__ == "__main__":
 
 
 """"
+Can I use pattern matching (match) to find the alias for each param?
+
+
+
 self.data = {
     'alias_1': {
-        'type_1': 'file_path_1',
-        'type_2': 'file_path_2',
-        'type_3': 'file_path_3',
+        'input': 'file_path_1',
+        'function_1': 'file_path_2',
+        'function_2': 'file_path_3',
+    },
+    
+    'alias_2': {
+        'context': 'file_path_4',
+        'function_1': 'file_path_5',
+        'function_2': 'file_path_6',
     },
 
 
 custom_functions = {
     "polygon_processor": {
-        "function": PolygonProcessor,  # Assuming this can be called directly or via a wrapper.
-        "inputs": ["alias_1", "alias_2"],  # Aliases for input data.
+        "function": PolygonProcessor,
+        "inputs": ["alias_1":input, "alias_2":context],
+        "outputs": ["alias_1":polygon_processor],
+        "additional_params": {
+            "building_symbol_dimensions": building_symbol_dimensions,
+            "symbol_field_name": "symbol_val",
+            "index_field_name": "OBJECTID",
+        },
+        
+    "polygon_processor": {
+        "function": PolygonProcessor,
+        "inputs": ["alias_1":polygon_processor, "alias_2":context],
+        "outputs": ["alias_1":polygon_processor_2],
         "additional_params": {
             "building_symbol_dimensions": building_symbol_dimensions,
             "symbol_field_name": "symbol_val",
