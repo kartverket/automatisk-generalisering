@@ -39,7 +39,7 @@ def creating_append_layers():
     arcpy.CreateFeatureclass_management(
         out_path=config.default_project_workspace,
         out_name=byggningspunkt_append,
-        template=Building_N100.table_management__bygningspunkt_pre_resolve_building_conflicts__n100.value,
+        template=Building_N100.calculate_field_values___points_pre_resolve_building_conflicts___n100_building.value,
     )
 
     arcpy.CreateFeatureclass_management(
@@ -66,7 +66,7 @@ def pre_calculation():
 
     # Then run CalculateField with the new code block
     arcpy.management.CalculateField(
-        in_table=Building_N100.table_management__bygningspunkt_pre_resolve_building_conflicts__n100.value,
+        in_table=Building_N100.calculate_field_values___points_pre_resolve_building_conflicts___n100_building.value,
         field="hierarchy",
         expression="determineHierarchy(!symbol_val!)",
         expression_type="PYTHON3",
@@ -106,15 +106,15 @@ def iterate_through_selections():
                 "output_name": selection_grunnriss,
             },
             {
-                "input_layer": Building_N100.preperation_veg_sti__unsplit_veg_sti__n100.value,
+                "input_layer": Building_N100.data_preparation___unsplit_veg_sti___n100_building.value,
                 "output_name": selection_veg_sti,
             },
             {
-                "input_layer": Building_N100.table_management__bygningspunkt_pre_resolve_building_conflicts__n100.value,
+                "input_layer": Building_N100.calculate_field_values___points_pre_resolve_building_conflicts___n100_building.value,
                 "output_name": selection_bygningspunkt,
             },
             {
-                "input_layer": Building_N100.preparation_begrensningskurve__begrensningskurve_buffer_erase_2__n100.value,
+                "input_layer": Building_N100.data_preparation___begrensningskurve_buffer_erase_2___n100_building.value,
                 "output_name": selection_begrensningskurve,
             },
         ]
@@ -615,15 +615,15 @@ def rbc_iteration():
 #         "output_name": selection_grunnriss,
 #     },
 #     {
-#         "input_layer": Building_N100.preperation_veg_sti__unsplit_veg_sti__n100.value,
+#         "input_layer": Building_N100.data_preparation___unsplit_veg_sti___n100_building.value,
 #         "output_name": selection_veg_sti,
 #     },
 #     {
-#         "input_layer": Building_N100.table_management__bygningspunkt_pre_resolve_building_conflicts__n100.value,
+#         "input_layer": Building_N100.calculate_field_values___points_pre_resolve_building_conflicts___n100_building.value,
 #         "output_name": selection_bygningspunkt,
 #     },
 #     {
-#         "input_layer": Building_N100.preparation_begrensningskurve__selected_waterfeatures_from_begrensningskurve__n100.value,
+#         "input_layer": Building_N100.data_preperation___selected_waterfeatures_from_begrensningskurve___n100_building.value,
 #         "output_name": selection_begrensningskurve,
 #     },
 # ]

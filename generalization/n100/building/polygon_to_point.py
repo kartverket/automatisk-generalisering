@@ -56,31 +56,33 @@ def grunnriss_to_point():
     """
 
     custom_arcpy.select_location_and_make_feature_layer(
-        input_layer=Building_N100.selecting_grunnriss_for_generalization__large_enough_grunnriss__n100.value,
+        input_layer=Building_N100.data_preparation___large_enough_polygon___n100_building.value,
         overlap_type=custom_arcpy.OverlapType.INTERSECT,
-        select_features=Building_N100.aggregate_polygons__fill_hole__n100.value,
-        output_name=Building_N100.grunnriss_to_point__intersect_aggregated_and_original__n100.value,
+        select_features=Building_N100.simplify_polygons___small_gaps___n100_building.value,
+        output_name=Building_N100.polygon_to_point___intersect_aggregated_and_original___n100_building.value,
         inverted=True,
     )
 
     arcpy.management.FeatureToPoint(
-        in_features=Building_N100.grunnriss_to_point__intersect_aggregated_and_original__n100.value,
-        out_feature_class=Building_N100.grunnriss_to_point__grunnriss_feature_to_point__n100.value,
+        in_features=Building_N100.polygon_to_point___intersect_aggregated_and_original___n100_building.value,
+        out_feature_class=Building_N100.polygon_to_point___polygons_to_point___n100_building.value,
     )
 
     # Base output which the for loop through for output creation
-    base_output_path = Building_N100.grunnriss_to_point__spatial_join_points__n100.value
+    base_output_path = (
+        Building_N100.polygon_to_point___spatial_join_points___n100_building.value
+    )
 
     # List of input features which will be spatially joined
     input_features = [
-        Building_N100.simplify_polygons__points__n100.value,
-        Building_N100.simplify_buildings_1__points__n100.value,
-        Building_N100.simplify_buildings_2__points__n100.value,
+        Building_N100.simplify_polygons___points___n100_building.value,
+        Building_N100.simplify_polygons___simplify_building_1_points___n100_building.value,
+        Building_N100.simplify_polygons___simplify_building_2_points___n100_building.value,
     ]
 
     #  Feature with the field information which will be used for spatial join
     join_features = (
-        Building_N100.selecting_grunnriss_for_generalization__large_enough_grunnriss__n100.value
+        Building_N100.data_preparation___large_enough_polygon___n100_building.value
     )
 
     # Looping through each Spatial Join operation
@@ -104,10 +106,10 @@ def grunnriss_to_point():
 
     # Additional inputs for the merge (if any)
     additional_inputs = [
-        Building_N100.selecting_grunnriss_for_generalization__points_created_from_small_grunnriss__n100.value,
-        Building_N100.selecting_grunnriss_for_generalization__kirke_points_created_from_grunnriss__n100.value,
-        Building_N100.grunnriss_to_point__grunnriss_feature_to_point__n100.value,
-        Building_N100.merging_invisible_intersecting_points__final__n100.value,
+        Building_N100.data_preparation___points_created_from_small_polygon___n100_building.value,
+        Building_N100.data_preparation___church_points_from_polygon___n100_building.value,
+        Building_N100.polygon_to_point___polygons_to_point___n100_building.value,
+        Building_N100.polygon_propogate_displacement___final_merged_points___n100_building.value,
     ]
     # Complete list of inputs for the merge
     merge_inputs = additional_inputs + output_paths
@@ -115,7 +117,7 @@ def grunnriss_to_point():
     # Perform the Merge operation
     arcpy.management.Merge(
         inputs=merge_inputs,
-        output=Building_N100.grunnriss_to_point__merged_points_created_from_grunnriss__n100.value,
+        output=Building_N100.polygon_to_point___merged_points_created_from_polygon___n100_building.value,
     )
     print("Merge completed")
 

@@ -75,9 +75,9 @@ def create_append_feature_class():
         Building_N100.iteration__building_polygon_iteration_selection_append__n100.value
     )
 
-    input_building_points = f"{Building_N100.table_management__bygningspunkt_pre_resolve_building_conflicts__n100.value}_copy"
+    input_building_points = f"{Building_N100.calculate_field_values___points_pre_resolve_building_conflicts___n100_building.value}_copy"
     arcpy.management.Copy(
-        in_data=Building_N100.table_management__bygningspunkt_pre_resolve_building_conflicts__n100.value,
+        in_data=Building_N100.calculate_field_values___points_pre_resolve_building_conflicts___n100_building.value,
         out_data=input_building_points,
     )
     print(f"copied {input_building_points}")
@@ -378,18 +378,18 @@ if __name__ == "__main__":
 
 def move_edge_objects(partition_polygon):
     arcpy.management.Copy(
-        in_data=Building_N100.table_management__bygningspunkt_pre_resolve_building_conflicts__n100.value,
-        out_data=f"{Building_N100.table_management__bygningspunkt_pre_resolve_building_conflicts__n100.value}_copy",
+        in_data=Building_N100.calculate_field_values___points_pre_resolve_building_conflicts___n100_building.value,
+        out_data=f"{Building_N100.calculate_field_values___points_pre_resolve_building_conflicts___n100_building.value}_copy",
     )
 
     arcpy.management.SelectLayerByLocation(
-        in_layer=f"{Building_N100.table_management__bygningspunkt_pre_resolve_building_conflicts__n100.value}_copy",
+        in_layer=f"{Building_N100.calculate_field_values___points_pre_resolve_building_conflicts___n100_building.value}_copy",
         overlap_type=custom_arcpy.OverlapType.BOUNDARY_TOUCHES,
     )
 
     custom_arcpy.select_location_and_make_feature_layer(
-        input_layer=f"{Building_N100.table_management__bygningspunkt_pre_resolve_building_conflicts__n100.value}_copy",
+        input_layer=f"{Building_N100.calculate_field_values___points_pre_resolve_building_conflicts___n100_building.value}_copy",
         overlap_type=custom_arcpy.OverlapType.BOUNDARY_TOUCHES,
         select_features=partition_polygon,
-        output_name=f"{Building_N100.table_management__bygningspunkt_pre_resolve_building_conflicts__n100.value}_copy",
+        output_name=f"{Building_N100.calculate_field_values___points_pre_resolve_building_conflicts___n100_building.value}_copy",
     )

@@ -21,7 +21,7 @@ def main():
 
     polygon_processor = PolygonProcessor(
         input_building_points=Building_N100.building_point_buffer_displacement__displaced_building_points__n100.value,
-        output_polygon_feature_class=Building_N100.points_to_polygon__transform_points_to_square_polygons__n100.value,
+        output_polygon_feature_class=Building_N100.points_to_squares___transform_points_to_square_polygons___n100_building.value,
         building_symbol_dimensions=building_symbol_dimensions,
         symbol_field_name="symbol_val",
         index_field_name="OBJECTID",
