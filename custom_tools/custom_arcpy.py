@@ -92,7 +92,7 @@ def select_attribute_and_make_feature_layer(
         >>> custom_arcpy.select_attribute_and_make_feature_layer(
         ...     input_layer=input_n100.ArealdekkeFlate,
         ...     expression=urban_areas_sql_expr,
-        ...     output_name=Building_N100.adding_matrikkel_as_points__urban_area_selection_n100__n100.value,
+        ...     output_name=Building_N100.data_preparation___urban_area_selection_n100___n100_building.value,
         ... )
         'Building_N100.adding_matrikkel_as_points__urban_area_selection_n100__n100' created temporarily.
     """
@@ -197,10 +197,10 @@ def select_location_and_make_feature_layer(
 
     Example:
         >>> custom_arcpy.select_location_and_make_feature_layer(
-        ...     input_layer=Building_N100.selecting_grunnriss_for_generalization__large_enough_grunnriss__n100.value,
+        ...     input_layer=Building_N100.data_preparation___large_enough_polygon___n100_building.value,
         ...     overlap_type=custom_arcpy.OverlapType.INTERSECT.value,
         ...     select_features=Building_N100.grunnriss_to_point__aggregated_polygon__n100.value,
-        ...      output_name=Building_N100.grunnriss_to_point__intersect_aggregated_and_original__n100.value,
+        ...      output_name=Building_N100.polygon_to_point___intersect_aggregated_and_original___n100_building.value,
         ...     inverted=True,
         ... )
         'grunnriss_to_point__intersect_aggregated_and_original__n100' created temporarily.
@@ -271,13 +271,13 @@ def select_location_and_make_permanent_feature(
 
     Example:
         >>> custom_arcpy.select_location_and_make_permanent_feature(
-        ...     input_layer=Building_N100.preparation_begrensningskurve__selected_waterfeatures_from_begrensningskurve__n100.value,
+        ...     input_layer=Building_N100.data_preperation___selected_waterfeatures_from_begrensningskurve___n100_building.value,
         ...     overlap_type=OverlapType.WITHIN_A_DISTANCE.value,
-        ...     select_features=Building_N100.propagate_displacement_building_polygons__after_propogate_displacement__n100.value,
-        ...     output_name=Building_N100.features_500_m_from_building_polygons__selected_begrensningskurve__n100.value,
+        ...     select_features=Building_N100.polygon_propogate_displacement___after_displacement___n100_building.value,
+        ...     output_name=Building_N100.polygon_propogate_displacement___begrensningskurve_500m_from_displaced_polygon___n100_building.value,
         ...     search_distance="500 Meters",
         ... )
-        'features_500_m_from_building_polygons__selected_begrensningskurve__n100' created permanently.
+        'polygon_propogate_displacement___begrensningskurve_500_m_from_displaced_polygon___n100_building' created permanently.
     """
     # Resolve overlap_type and selection_type
     overlap_type = resolve_enum(OverlapType, overlap_type) or OverlapType.INTERSECT
@@ -344,7 +344,7 @@ def apply_symbology(
         >>> custom_arcpy.apply_symbology(
         ...     input_layer=Building_N100.rbc_selection__grunnriss_selection_rbc__n100.value,
         ...     in_symbology_layer=config.symbology_n100_grunnriss,
-        ...     output_name=Building_N100.apply_symbology_to_layers__building_polygon__n100__lyrx.value,
+        ...     output_name=Building_N100.polygon_propogate_displacement___building_polygon___n100_building_lyrx.value,
         ... )
         'apply_symbology_to_layers__building_polygon__n100__lyrx.lyrx file created.'
     """

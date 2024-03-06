@@ -18,7 +18,7 @@ def main():
 def clean_up_fields_delete():
     # Provide the path to your feature class
     feature_class_to_clean_up = (
-        Building_N100.grunnriss_to_point__grunnriss_feature_to_point__n100.value
+        Building_N100.polygon_to_point___polygons_to_point___n100_building.value
     )  # Switch out to correct feature class
 
     # List of field names to delete

@@ -427,7 +427,7 @@ if __name__ == "__main__":
     building_polygons = "building_polygons"
 
     inputs = {
-        building_points: Building_N100.adding_matrikkel_as_points__matrikkel_bygningspunkt__n100.value,
+        building_points: Building_N100.data_preparation___matrikkel_bygningspunkt___n100_building.value,
         building_polygons: input_n50.Grunnriss,
     }
 

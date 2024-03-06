@@ -43,12 +43,12 @@ def propagate_displacement_building_points():
     """
 
     arcpy.management.Copy(
-        in_data=Building_N100.table_management__bygningspunkt_pre_resolve_building_conflicts__n100.value,
-        out_data=Building_N100.propagate_displacement__bygningspunkt_pre_propogate_displacement__n100.value,
+        in_data=Building_N100.calculate_field_values___points_pre_resolve_building_conflicts___n100_building.value,
+        out_data=Building_N100.point_propogate_displacement___points_pre_propogate_displacement___n100_building.value,
     )
 
     arcpy.cartography.PropagateDisplacement(
-        in_features=Building_N100.table_management__bygningspunkt_pre_resolve_building_conflicts__n100.value,
+        in_features=Building_N100.calculate_field_values___points_pre_resolve_building_conflicts___n100_building.value,
         displacement_features=config.displacement_feature,
         adjustment_style="SOLID",
     )

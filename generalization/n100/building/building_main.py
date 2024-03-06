@@ -50,7 +50,6 @@ def main():
 
     """
 
-    # building_main_setup()
     environment_setup.main()
     data_preparation.main()
     simplify_polygons.main()

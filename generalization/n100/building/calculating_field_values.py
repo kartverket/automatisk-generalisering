@@ -59,7 +59,7 @@ def table_management():
 
     # Reclassify the sykehus from grunnriss to another NBR value
     arcpy.CalculateField_management(
-        in_table=Building_N100.adding_matrikkel_as_points__matrikkel_bygningspunkt__n100.value,
+        in_table=Building_N100.data_preparation___matrikkel_bygningspunkt___n100_building.value,
         field="BYGGTYP_NBR",
         expression="hospital_nbr(!BYGGTYP_NBR!)",
         expression_type="PYTHON3",
@@ -73,38 +73,38 @@ def table_management():
     arcpy.management.Merge(
         inputs=[
             input_n50.BygningsPunkt,
-            Building_N100.adding_matrikkel_as_points__matrikkel_bygningspunkt__n100.value,
+            Building_N100.data_preparation___matrikkel_bygningspunkt___n100_building.value,
         ],
-        output=Building_N100.table_management__merged_bygningspunkt_n50_matrikkel__n100.value,
+        output=Building_N100.calculating_field_values___merged_points_n50_matrikkel___n100_building.value,
     )
 
     # Adding a field to indicate that the merged building point and matrikkel does not come from grunnriss
     arcpy.AddField_management(
-        in_table=Building_N100.table_management__merged_bygningspunkt_n50_matrikkel__n100.value,
+        in_table=Building_N100.calculating_field_values___merged_points_n50_matrikkel___n100_building.value,
         field_name="grunnriss",
         field_type="LONG",
     )
     arcpy.CalculateField_management(
-        in_table=Building_N100.table_management__merged_bygningspunkt_n50_matrikkel__n100.value,
+        in_table=Building_N100.calculating_field_values___merged_points_n50_matrikkel___n100_building.value,
         field="grunnriss",
         expression="0",
     )
 
     # Adding a field to indicate that points resulting from grunnriss is tracked
     arcpy.AddField_management(
-        in_table=Building_N100.grunnriss_to_point__merged_points_created_from_grunnriss__n100.value,
+        in_table=Building_N100.polygon_to_point___merged_points_created_from_polygon___n100_building.value,
         field_name="grunnriss",
         field_type="LONG",
     )
     arcpy.CalculateField_management(
-        in_table=Building_N100.grunnriss_to_point__merged_points_created_from_grunnriss__n100.value,
+        in_table=Building_N100.polygon_to_point___merged_points_created_from_polygon___n100_building.value,
         field="grunnriss",
         expression="1",
     )
 
     # Reclassify the sykehus from grunnriss to another NBR value
     arcpy.CalculateField_management(
-        in_table=Building_N100.grunnriss_to_point__merged_points_created_from_grunnriss__n100.value,
+        in_table=Building_N100.polygon_to_point___merged_points_created_from_polygon___n100_building.value,
         field="BYGGTYP_NBR",
         expression="hospital_nbr(!BYGGTYP_NBR!)",
         expression_type="PYTHON3",
@@ -114,16 +114,16 @@ def table_management():
     # Merge the merged building point from n50 and matrikkel with points created from grunnriss
     arcpy.management.Merge(
         inputs=[
-            Building_N100.table_management__merged_bygningspunkt_n50_matrikkel__n100.value,
-            Building_N100.grunnriss_to_point__merged_points_created_from_grunnriss__n100.value,
+            Building_N100.calculating_field_values___merged_points_n50_matrikkel___n100_building.value,
+            Building_N100.polygon_to_point___merged_points_created_from_polygon___n100_building.value,
         ],
-        output=Building_N100.table_management__bygningspunkt_pre_resolve_building_conflicts__n100.value,
+        output=Building_N100.calculate_field_values___points_pre_resolve_building_conflicts___n100_building.value,
     )
 
     try:
         # Attempt to add the field
         arcpy.AddField_management(
-            in_table=Building_N100.table_management__bygningspunkt_pre_resolve_building_conflicts__n100.value,
+            in_table=Building_N100.calculate_field_values___points_pre_resolve_building_conflicts___n100_building.value,
             field_name="symbol_val",
             field_type="LONG",
         )
@@ -132,7 +132,7 @@ def table_management():
         print("Field 'symbol_val' already exists.")
 
     print(
-        f"{Building_N100.table_management__bygningspunkt_pre_resolve_building_conflicts__n100.value} merged"
+        f"{Building_N100.calculate_field_values___points_pre_resolve_building_conflicts___n100_building.value} merged"
     )
 
     code_block = (
@@ -160,7 +160,7 @@ def table_management():
     )
 
     arcpy.CalculateField_management(
-        in_table=Building_N100.table_management__bygningspunkt_pre_resolve_building_conflicts__n100.value,
+        in_table=Building_N100.calculate_field_values___points_pre_resolve_building_conflicts___n100_building.value,
         field="symbol_val",
         expression="determineVal(!BYGGTYP_NBR!)",
         expression_type="PYTHON3",
@@ -168,9 +168,9 @@ def table_management():
     )
 
     custom_arcpy.select_attribute_and_make_feature_layer(
-        input_layer=Building_N100.table_management__bygningspunkt_pre_resolve_building_conflicts__n100.value,
+        input_layer=Building_N100.calculate_field_values___points_pre_resolve_building_conflicts___n100_building.value,
         expression="symbol_val = -99",
-        output_name=Building_N100.table_management__selection_bygningspunkt_with_undefined_nbr_values__n100.value,
+        output_name=Building_N100.calculating_field_values___selection_building_points_with_undefined_nbr_values___n100_building.value,
     )
 
     # Counter to store the count of each unique BYGGTYP_NBR
@@ -178,7 +178,7 @@ def table_management():
 
     # Iterate over the rows in the feature class
     with arcpy.da.SearchCursor(
-        Building_N100.table_management__selection_bygningspunkt_with_undefined_nbr_values__n100.value,
+        Building_N100.calculating_field_values___selection_building_points_with_undefined_nbr_values___n100_building.value,
         ["BYGGTYP_NBR", "symbol_val"],
     ) as cursor:
         for nbr, symbol_val in cursor:
@@ -190,7 +190,7 @@ def table_management():
 
     # Writing the counts to a log file
     with open(
-        Building_N100.table_management__building_points_with_undefined_nbr_values__n100.value,
+        Building_N100.calculating_field_values___building_points_with_undefined_nbr_values___n100_building.value,
         "w",
     ) as log_file:
         for nbr, count in nbr_counter.items():
@@ -199,7 +199,7 @@ def table_management():
         log_file.write(f"Total Rows without defined symbology: {total_count}\n")
 
     print(
-        f"Log file created at: {Building_N100.table_management__building_points_with_undefined_nbr_values__n100.value}"
+        f"Log file created at: {Building_N100.calculating_field_values___building_points_with_undefined_nbr_values___n100_building.value}"
     )
 
     # Code block to transform BYGGTYP_NBR values without symbology to other buildings (729)
@@ -220,7 +220,7 @@ def table_management():
 
     # Applying the symbol_val_to_nbr logic
     arcpy.CalculateField_management(
-        in_table=Building_N100.table_management__bygningspunkt_pre_resolve_building_conflicts__n100.value,
+        in_table=Building_N100.calculate_field_values___points_pre_resolve_building_conflicts___n100_building.value,
         field="BYGGTYP_NBR",
         expression="symbol_val_to_nbr(!symbol_val!, !BYGGTYP_NBR!)",
         expression_type="PYTHON3",
@@ -229,7 +229,7 @@ def table_management():
 
     # Applying the update_symbol_val logic
     arcpy.CalculateField_management(
-        in_table=Building_N100.table_management__bygningspunkt_pre_resolve_building_conflicts__n100.value,
+        in_table=Building_N100.calculate_field_values___points_pre_resolve_building_conflicts___n100_building.value,
         field="symbol_val",
         expression="update_symbol_val(!symbol_val!)",
         expression_type="PYTHON3",
@@ -243,7 +243,7 @@ def table_management():
 
     # Feature class to check fields existence
     point_feature_class = (
-        Building_N100.table_management__bygningspunkt_pre_resolve_building_conflicts__n100.value
+        Building_N100.calculate_field_values___points_pre_resolve_building_conflicts___n100_building.value
     )
 
     # Check if fields already exist
@@ -279,7 +279,7 @@ def table_management():
 
     # Then run CalculateField with the new code block
     arcpy.management.CalculateField(
-        in_table=Building_N100.table_management__bygningspunkt_pre_resolve_building_conflicts__n100.value,
+        in_table=Building_N100.calculate_field_values___points_pre_resolve_building_conflicts___n100_building.value,
         field="hierarchy",
         expression="determineHierarchy(!symbol_val!)",
         expression_type="PYTHON3",
