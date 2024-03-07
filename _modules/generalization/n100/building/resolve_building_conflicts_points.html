@@ -103,28 +103,9 @@
 <span class="sd">    This script resolves building conflicts, both building polygons and points</span>
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="n">environment_setup</span><span class="o">.</span><span class="n">main</span><span class="p">()</span>
-    <span class="c1"># Start timing</span>
-    <span class="n">start_time</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span>
     <span class="n">rbc_selection</span><span class="p">()</span>
     <span class="n">apply_symbology</span><span class="p">()</span>
-    <span class="n">resolve_building_conflicts</span><span class="p">()</span>
-
-    <span class="c1"># End timing</span>
-    <span class="n">end_time</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span>
-
-    <span class="c1"># Calculate elapsed time</span>
-    <span class="n">elapsed_time</span> <span class="o">=</span> <span class="n">end_time</span> <span class="o">-</span> <span class="n">start_time</span>
-
-    <span class="c1"># Convert to hours, minutes, and seconds</span>
-    <span class="n">hours</span><span class="p">,</span> <span class="n">remainder</span> <span class="o">=</span> <span class="nb">divmod</span><span class="p">(</span><span class="n">elapsed_time</span><span class="p">,</span> <span class="mi">3600</span><span class="p">)</span>
-    <span class="n">minutes</span><span class="p">,</span> <span class="n">seconds</span> <span class="o">=</span> <span class="nb">divmod</span><span class="p">(</span><span class="n">remainder</span><span class="p">,</span> <span class="mi">60</span><span class="p">)</span>
-
-    <span class="c1"># Format as string</span>
-    <span class="n">time_str</span> <span class="o">=</span> <span class="s2">&quot;</span><span class="si">{:02}</span><span class="s2"> hours, </span><span class="si">{:02}</span><span class="s2"> minutes, </span><span class="si">{:.2f}</span><span class="s2"> seconds&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span>
-        <span class="nb">int</span><span class="p">(</span><span class="n">hours</span><span class="p">),</span> <span class="nb">int</span><span class="p">(</span><span class="n">minutes</span><span class="p">),</span> <span class="n">seconds</span>
-    <span class="p">)</span>
-
-    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;resolve_building_conflicts took </span><span class="si">{</span><span class="n">time_str</span><span class="si">}</span><span class="s2"> to complete.&quot;</span><span class="p">)</span></div>
+    <span class="n">resolve_building_conflicts</span><span class="p">()</span></div>
 
 
 
@@ -284,17 +265,6 @@
         <span class="n">hierarchy_field</span><span class="o">=</span><span class="s2">&quot;hierarchy&quot;</span><span class="p">,</span>
     <span class="p">)</span>
 
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">    arcpy.cartography.ResolveBuildingConflicts(</span>
-<span class="sd">        in_buildings=Building_N100.resolve_building_conflicts__building_points_RBC_result_1__n100_lyrx.value,</span>
-<span class="sd">        invisibility_field=&quot;invisibility&quot;,</span>
-<span class="sd">        in_barriers=input_barriers_1,</span>
-<span class="sd">        building_gap=&quot;15 meters&quot;,</span>
-<span class="sd">        minimum_size=&quot;1 meters&quot;,</span>
-<span class="sd">        hierarchy_field=&quot;hierarchy&quot;,</span>
-<span class="sd">    )</span>
-<span class="sd">    &quot;&quot;&quot;</span>
-
     <span class="n">custom_arcpy</span><span class="o">.</span><span class="n">select_attribute_and_make_permanent_feature</span><span class="p">(</span>
         <span class="n">input_layer</span><span class="o">=</span><span class="n">Building_N100</span><span class="o">.</span><span class="n">resolve_building_conflicts__building_points_RBC_result_1__n100</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
         <span class="n">expression</span><span class="o">=</span><span class="n">sql_expression_resolve_building_conflicts</span><span class="p">,</span>
@@ -307,47 +277,6 @@
         <span class="n">output_name</span><span class="o">=</span><span class="n">Building_N100</span><span class="o">.</span><span class="n">resolve_building_conflicts__building_points_RBC_result_2__n100_lyrx</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
     <span class="p">)</span></div>
 
-
-    <span class="c1"># print(&quot;Starting Resolve Building Conflicts 2 for drawn polygons&quot;)</span>
-    <span class="c1"># # Define input barriers</span>
-    <span class="c1">#</span>
-    <span class="c1"># input_barriers_2 = [</span>
-    <span class="c1">#     [</span>
-    <span class="c1">#         Building_N100.apply_symbology__veg_sti_selection__n100_lyrx.value,</span>
-    <span class="c1">#         &quot;false&quot;,</span>
-    <span class="c1">#         &quot;45 Meters&quot;,</span>
-    <span class="c1">#     ],</span>
-    <span class="c1">#     [</span>
-    <span class="c1">#         Building_N100.apply_symbology__begrensningskurve_selection__n100_lyrx.value,</span>
-    <span class="c1">#         &quot;false&quot;,</span>
-    <span class="c1">#         &quot;25 Meters&quot;,</span>
-    <span class="c1">#     ],</span>
-    <span class="c1"># ]</span>
-    <span class="c1">#</span>
-    <span class="c1"># arcpy.cartography.ResolveBuildingConflicts(</span>
-    <span class="c1">#     in_buildings=Building_N100.apply_symbology__drawn_polygon_selection__n100_lyrx.value,</span>
-    <span class="c1">#     invisibility_field=&quot;invisibility&quot;,</span>
-    <span class="c1">#     in_barriers=input_barriers_2,</span>
-    <span class="c1">#     building_gap=&quot;45 meters&quot;,</span>
-    <span class="c1">#     minimum_size=&quot;1 meters&quot;,</span>
-    <span class="c1">#     hierarchy_field=&quot;hierarchy&quot;,</span>
-    <span class="c1"># )</span>
-    <span class="c1">#</span>
-    <span class="c1"># sql_expression_resolve_building_conflicts = (</span>
-    <span class="c1">#     &quot;(invisibility = 0) OR (symbol_val IN (1, 2, 3))&quot;</span>
-    <span class="c1"># )</span>
-    <span class="c1">#</span>
-    <span class="c1"># custom_arcpy.select_attribute_and_make_permanent_feature(</span>
-    <span class="c1">#     input_layer=Building_N100.resolve_building_conflicts__drawn_polygons_result_1__n100.value,</span>
-    <span class="c1">#     expression=sql_expression_resolve_building_conflicts,</span>
-    <span class="c1">#     output_name=Building_N100.resolve_building_conflicts__drawn_polygons_result_2__n100.value,</span>
-    <span class="c1"># )</span>
-    <span class="c1">#</span>
-    <span class="c1"># custom_arcpy.apply_symbology(</span>
-    <span class="c1">#     input_layer=Building_N100.resolve_building_conflicts__drawn_polygons_result_2__n100.value,</span>
-    <span class="c1">#     in_symbology_layer=Building_N100.apply_symbology__drawn_polygon_selection__n100_lyrx.value,</span>
-    <span class="c1">#     output_name=Building_N100.resolve_building_conflicts__drawn_polygon_RBC_result_2__n100_lyrx.value,</span>
-    <span class="c1"># )</span>
 
 
 <span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s2">&quot;__main__&quot;</span><span class="p">:</span>

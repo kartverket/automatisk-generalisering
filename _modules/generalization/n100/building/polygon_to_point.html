@@ -101,32 +101,8 @@
 <span class="sd">    This function creates points from small grunnriss lost during aggregation, and merges</span>
 <span class="sd">    them together with collapsed points from the tools simplify building and simplify polygon.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
-    <span class="c1"># Start timing</span>
-    <span class="n">environment_setup</span><span class="o">.</span><span class="n">main</span><span class="p">()</span>
-    <span class="n">start_time</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span>
+    <span class="n">grunnriss_to_point</span><span class="p">()</span></div>
 
-    <span class="n">grunnriss_to_point</span><span class="p">()</span>
-
-    <span class="c1"># End timing</span>
-    <span class="n">end_time</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span>
-
-    <span class="c1"># Calculate elapsed time</span>
-    <span class="n">elapsed_time</span> <span class="o">=</span> <span class="n">end_time</span> <span class="o">-</span> <span class="n">start_time</span>
-
-    <span class="c1"># Convert to hours, minutes, and seconds</span>
-    <span class="n">hours</span><span class="p">,</span> <span class="n">remainder</span> <span class="o">=</span> <span class="nb">divmod</span><span class="p">(</span><span class="n">elapsed_time</span><span class="p">,</span> <span class="mi">3600</span><span class="p">)</span>
-    <span class="n">minutes</span><span class="p">,</span> <span class="n">seconds</span> <span class="o">=</span> <span class="nb">divmod</span><span class="p">(</span><span class="n">remainder</span><span class="p">,</span> <span class="mi">60</span><span class="p">)</span>
-
-    <span class="c1"># Format as string</span>
-    <span class="n">time_str</span> <span class="o">=</span> <span class="s2">&quot;</span><span class="si">{:02}</span><span class="s2"> hours, </span><span class="si">{:02}</span><span class="s2"> minutes, </span><span class="si">{:.2f}</span><span class="s2"> seconds&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span>
-        <span class="nb">int</span><span class="p">(</span><span class="n">hours</span><span class="p">),</span> <span class="nb">int</span><span class="p">(</span><span class="n">minutes</span><span class="p">),</span> <span class="n">seconds</span>
-    <span class="p">)</span>
-
-    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;create_points_from_polygon took </span><span class="si">{</span><span class="n">time_str</span><span class="si">}</span><span class="s2"> to complete.&quot;</span><span class="p">)</span></div>
-
-
-
-<span class="c1">#######################################################################################################################################################</span>
 
 
 <div class="viewcode-block" id="grunnriss_to_point">
@@ -188,12 +164,13 @@
     <span class="c1"># Generate list of output paths for merge</span>
     <span class="n">output_paths</span> <span class="o">=</span> <span class="p">[</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">base_output_path</span><span class="si">}</span><span class="s2">_</span><span class="si">{</span><span class="n">i</span><span class="o">+</span><span class="mi">1</span><span class="si">}</span><span class="s2">&quot;</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">num_outputs</span><span class="p">)]</span>
 
-    <span class="c1"># Additional inputs for the merge (if any)</span>
+    <span class="c1"># Additional inputs for the merge</span>
     <span class="n">additional_inputs</span> <span class="o">=</span> <span class="p">[</span>
         <span class="n">Building_N100</span><span class="o">.</span><span class="n">data_preparation___points_created_from_small_polygon___n100_building</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
         <span class="n">Building_N100</span><span class="o">.</span><span class="n">data_preparation___church_points_from_polygon___n100_building</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
         <span class="n">Building_N100</span><span class="o">.</span><span class="n">polygon_to_point___polygons_to_point___n100_building</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
         <span class="n">Building_N100</span><span class="o">.</span><span class="n">polygon_propogate_displacement___final_merged_points___n100_building</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
+        <span class="n">Building_N100</span><span class="o">.</span><span class="n">polygon_propogate_displacement___small_building_polygons_to_point___n100_building</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
     <span class="p">]</span>
     <span class="c1"># Complete list of inputs for the merge</span>
     <span class="n">merge_inputs</span> <span class="o">=</span> <span class="n">additional_inputs</span> <span class="o">+</span> <span class="n">output_paths</span>
@@ -201,7 +178,7 @@
     <span class="c1"># Perform the Merge operation</span>
     <span class="n">arcpy</span><span class="o">.</span><span class="n">management</span><span class="o">.</span><span class="n">Merge</span><span class="p">(</span>
         <span class="n">inputs</span><span class="o">=</span><span class="n">merge_inputs</span><span class="p">,</span>
-        <span class="n">output</span><span class="o">=</span><span class="n">Building_N100</span><span class="o">.</span><span class="n">polygon_to_point___merged_points_created_from_polygon___n100_building</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
+        <span class="n">output</span><span class="o">=</span><span class="n">Building_N100</span><span class="o">.</span><span class="n">polygon_to_point___merged_points_final___n100_building</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
     <span class="p">)</span>
     <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Merge completed&quot;</span><span class="p">)</span></div>
 

@@ -352,10 +352,10 @@
         <span class="p">)</span>
     <span class="p">)</span>
 
-    <span class="n">polygon_to_point___merged_points_created_from_polygon___n100_building</span> <span class="o">=</span> <span class="p">(</span>
+    <span class="n">polygon_to_point___merged_points_final___n100_building</span> <span class="o">=</span> <span class="p">(</span>
         <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_gdb</span><span class="p">(</span>
             <span class="n">script_source_name</span><span class="o">=</span><span class="n">polygon_to_point</span><span class="p">,</span>
-            <span class="n">description</span><span class="o">=</span><span class="s2">&quot;merged_points_created_from_polygon&quot;</span><span class="p">,</span>
+            <span class="n">description</span><span class="o">=</span><span class="s2">&quot;merged_points_final&quot;</span><span class="p">,</span>
         <span class="p">)</span>
     <span class="p">)</span>
 
@@ -541,11 +541,16 @@
         <span class="p">)</span>
     <span class="p">)</span>
 
-    <span class="n">polygon_propogate_displacement___final_building_polygons___n100_building</span> <span class="o">=</span> <span class="p">(</span>
+    <span class="n">polygon_propogate_displacement___building_polygons_final___n100_building</span> <span class="o">=</span> <span class="p">(</span>
         <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_gdb</span><span class="p">(</span>
             <span class="n">script_source_name</span><span class="o">=</span><span class="n">polygon_propogate_displacement</span><span class="p">,</span>
-            <span class="n">description</span><span class="o">=</span><span class="s2">&quot;final_building_polgyons&quot;</span><span class="p">,</span>
+            <span class="n">description</span><span class="o">=</span><span class="s2">&quot;building_polygons_final&quot;</span><span class="p">,</span>
         <span class="p">)</span>
+    <span class="p">)</span>
+
+    <span class="n">polygon_propogate_displacement___building_polygons_not_invisible_not_intersecting___n100_building</span> <span class="o">=</span> <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_gdb</span><span class="p">(</span>
+        <span class="n">script_source_name</span><span class="o">=</span><span class="n">polygon_propogate_displacement</span><span class="p">,</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">&quot;building_polygons_not_invisible_not_intersecting&quot;</span><span class="p">,</span>
     <span class="p">)</span>
 
     <span class="n">polygon_propogate_displacement___building_polygons_intersecting_road___n100_building</span> <span class="o">=</span> <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_gdb</span><span class="p">(</span>
@@ -565,6 +570,18 @@
             <span class="n">script_source_name</span><span class="o">=</span><span class="n">polygon_propogate_displacement</span><span class="p">,</span>
             <span class="n">description</span><span class="o">=</span><span class="s2">&quot;final_merged_points&quot;</span><span class="p">,</span>
         <span class="p">)</span>
+    <span class="p">)</span>
+
+    <span class="n">polygon_propogate_displacement___small_building_polygons___n100_building</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_gdb</span><span class="p">(</span>
+            <span class="n">script_source_name</span><span class="o">=</span><span class="n">polygon_propogate_displacement</span><span class="p">,</span>
+            <span class="n">description</span><span class="o">=</span><span class="s2">&quot;small_building_polygons&quot;</span><span class="p">,</span>
+        <span class="p">)</span>
+    <span class="p">)</span>
+
+    <span class="n">polygon_propogate_displacement___small_building_polygons_to_point___n100_building</span> <span class="o">=</span> <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_gdb</span><span class="p">(</span>
+        <span class="n">script_source_name</span><span class="o">=</span><span class="n">polygon_propogate_displacement</span><span class="p">,</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">&quot;small_building_polygons_to_point&quot;</span><span class="p">,</span>
     <span class="p">)</span>
 
     <span class="c1">###################################################</span>
@@ -681,6 +698,17 @@
         <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_gdb</span><span class="p">(</span>
             <span class="n">script_source_name</span><span class="o">=</span><span class="n">point_propogate_displacement</span><span class="p">,</span>
             <span class="n">description</span><span class="o">=</span><span class="s2">&quot;points_pre_propogate_displacement&quot;</span><span class="p">,</span>
+        <span class="p">)</span>
+    <span class="p">)</span>
+
+    <span class="c1"># ========================================</span>
+    <span class="c1">#                              LAST POINT REMOVAL</span>
+    <span class="c1"># ========================================</span>
+
+    <span class="n">last_point_removal___water_features___n100_building</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_gdb</span><span class="p">(</span>
+            <span class="n">script_source_name</span><span class="o">=</span><span class="n">point_propogate_displacement</span><span class="p">,</span>
+            <span class="n">description</span><span class="o">=</span><span class="s2">&quot;water_features&quot;</span><span class="p">,</span>
         <span class="p">)</span>
     <span class="p">)</span>
 

@@ -44,6 +44,14 @@ generalization.n100.building.hospital\_church\_clusters module
    :undoc-members:
    :show-inheritance:
 
+generalization.n100.building.last\_point\_removal module
+--------------------------------------------------------
+
+.. automodule:: generalization.n100.building.last_point_removal
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
 generalization.n100.building.point\_displacement\_with\_buffer module
 ---------------------------------------------------------------------
 

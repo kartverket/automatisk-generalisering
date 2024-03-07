@@ -176,19 +176,19 @@
 
     <span class="c1"># Adding a field to indicate that points resulting from grunnriss is tracked</span>
     <span class="n">arcpy</span><span class="o">.</span><span class="n">AddField_management</span><span class="p">(</span>
-        <span class="n">in_table</span><span class="o">=</span><span class="n">Building_N100</span><span class="o">.</span><span class="n">polygon_to_point___merged_points_created_from_polygon___n100_building</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
+        <span class="n">in_table</span><span class="o">=</span><span class="n">Building_N100</span><span class="o">.</span><span class="n">polygon_to_point___merged_points_final___n100_building</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
         <span class="n">field_name</span><span class="o">=</span><span class="s2">&quot;grunnriss&quot;</span><span class="p">,</span>
         <span class="n">field_type</span><span class="o">=</span><span class="s2">&quot;LONG&quot;</span><span class="p">,</span>
     <span class="p">)</span>
     <span class="n">arcpy</span><span class="o">.</span><span class="n">CalculateField_management</span><span class="p">(</span>
-        <span class="n">in_table</span><span class="o">=</span><span class="n">Building_N100</span><span class="o">.</span><span class="n">polygon_to_point___merged_points_created_from_polygon___n100_building</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
+        <span class="n">in_table</span><span class="o">=</span><span class="n">Building_N100</span><span class="o">.</span><span class="n">polygon_to_point___merged_points_final___n100_building</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
         <span class="n">field</span><span class="o">=</span><span class="s2">&quot;grunnriss&quot;</span><span class="p">,</span>
         <span class="n">expression</span><span class="o">=</span><span class="s2">&quot;1&quot;</span><span class="p">,</span>
     <span class="p">)</span>
 
     <span class="c1"># Reclassify the sykehus from grunnriss to another NBR value</span>
     <span class="n">arcpy</span><span class="o">.</span><span class="n">CalculateField_management</span><span class="p">(</span>
-        <span class="n">in_table</span><span class="o">=</span><span class="n">Building_N100</span><span class="o">.</span><span class="n">polygon_to_point___merged_points_created_from_polygon___n100_building</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
+        <span class="n">in_table</span><span class="o">=</span><span class="n">Building_N100</span><span class="o">.</span><span class="n">polygon_to_point___merged_points_final___n100_building</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
         <span class="n">field</span><span class="o">=</span><span class="s2">&quot;BYGGTYP_NBR&quot;</span><span class="p">,</span>
         <span class="n">expression</span><span class="o">=</span><span class="s2">&quot;hospital_nbr(!BYGGTYP_NBR!)&quot;</span><span class="p">,</span>
         <span class="n">expression_type</span><span class="o">=</span><span class="s2">&quot;PYTHON3&quot;</span><span class="p">,</span>
@@ -199,7 +199,7 @@
     <span class="n">arcpy</span><span class="o">.</span><span class="n">management</span><span class="o">.</span><span class="n">Merge</span><span class="p">(</span>
         <span class="n">inputs</span><span class="o">=</span><span class="p">[</span>
             <span class="n">Building_N100</span><span class="o">.</span><span class="n">calculating_field_values___merged_points_n50_matrikkel___n100_building</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
-            <span class="n">Building_N100</span><span class="o">.</span><span class="n">polygon_to_point___merged_points_created_from_polygon___n100_building</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
+            <span class="n">Building_N100</span><span class="o">.</span><span class="n">polygon_to_point___merged_points_final___n100_building</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
         <span class="p">],</span>
         <span class="n">output</span><span class="o">=</span><span class="n">Building_N100</span><span class="o">.</span><span class="n">calculate_field_values___points_pre_resolve_building_conflicts___n100_building</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
     <span class="p">)</span>
