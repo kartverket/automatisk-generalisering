@@ -22,28 +22,9 @@ def main():
     This script resolves building conflicts, both building polygons and points
     """
     environment_setup.main()
-    # Start timing
-    start_time = time.time()
     rbc_selection()
     apply_symbology()
     resolve_building_conflicts()
-
-    # End timing
-    end_time = time.time()
-
-    # Calculate elapsed time
-    elapsed_time = end_time - start_time
-
-    # Convert to hours, minutes, and seconds
-    hours, remainder = divmod(elapsed_time, 3600)
-    minutes, seconds = divmod(remainder, 60)
-
-    # Format as string
-    time_str = "{:02} hours, {:02} minutes, {:.2f} seconds".format(
-        int(hours), int(minutes), seconds
-    )
-
-    print(f"resolve_building_conflicts took {time_str} to complete.")
 
 
 def rbc_selection():
@@ -194,17 +175,6 @@ def resolve_building_conflicts():
         hierarchy_field="hierarchy",
     )
 
-    """
-    arcpy.cartography.ResolveBuildingConflicts(
-        in_buildings=Building_N100.resolve_building_conflicts__building_points_RBC_result_1__n100_lyrx.value,
-        invisibility_field="invisibility",
-        in_barriers=input_barriers_1,
-        building_gap="15 meters",
-        minimum_size="1 meters",
-        hierarchy_field="hierarchy",
-    )
-    """
-
     custom_arcpy.select_attribute_and_make_permanent_feature(
         input_layer=Building_N100.resolve_building_conflicts__building_points_RBC_result_1__n100.value,
         expression=sql_expression_resolve_building_conflicts,
@@ -216,47 +186,6 @@ def resolve_building_conflicts():
         in_symbology_layer=SymbologyN100.bygningspunkt.value,
         output_name=Building_N100.resolve_building_conflicts__building_points_RBC_result_2__n100_lyrx.value,
     )
-
-    # print("Starting Resolve Building Conflicts 2 for drawn polygons")
-    # # Define input barriers
-    #
-    # input_barriers_2 = [
-    #     [
-    #         Building_N100.apply_symbology__veg_sti_selection__n100_lyrx.value,
-    #         "false",
-    #         "45 Meters",
-    #     ],
-    #     [
-    #         Building_N100.apply_symbology__begrensningskurve_selection__n100_lyrx.value,
-    #         "false",
-    #         "25 Meters",
-    #     ],
-    # ]
-    #
-    # arcpy.cartography.ResolveBuildingConflicts(
-    #     in_buildings=Building_N100.apply_symbology__drawn_polygon_selection__n100_lyrx.value,
-    #     invisibility_field="invisibility",
-    #     in_barriers=input_barriers_2,
-    #     building_gap="45 meters",
-    #     minimum_size="1 meters",
-    #     hierarchy_field="hierarchy",
-    # )
-    #
-    # sql_expression_resolve_building_conflicts = (
-    #     "(invisibility = 0) OR (symbol_val IN (1, 2, 3))"
-    # )
-    #
-    # custom_arcpy.select_attribute_and_make_permanent_feature(
-    #     input_layer=Building_N100.resolve_building_conflicts__drawn_polygons_result_1__n100.value,
-    #     expression=sql_expression_resolve_building_conflicts,
-    #     output_name=Building_N100.resolve_building_conflicts__drawn_polygons_result_2__n100.value,
-    # )
-    #
-    # custom_arcpy.apply_symbology(
-    #     input_layer=Building_N100.resolve_building_conflicts__drawn_polygons_result_2__n100.value,
-    #     in_symbology_layer=Building_N100.apply_symbology__drawn_polygon_selection__n100_lyrx.value,
-    #     output_name=Building_N100.resolve_building_conflicts__drawn_polygon_RBC_result_2__n100_lyrx.value,
-    # )
 
 
 if __name__ == "__main__":

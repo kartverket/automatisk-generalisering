@@ -70,6 +70,8 @@ def main():
     invisible_building_polygons_to_point()
     intersecting_building_polygons_to_point()
     merging_invisible_intersecting_points()
+    removing_small_building_polygons()
+    small_building_polygons_to_points()
 
 
 @timing_decorator
@@ -276,17 +278,17 @@ def resolve_building_conflict_building_polygon():
         [
             Building_N100.polygon_propogate_displacement___roads___n100_building_lyrx.value,
             "false",
-            "15 Meters",
+            "45 Meters",
         ],
         [
             Building_N100.polygon_propogate_displacement___begrensningskurve___n100_building_lyrx.value,
             "false",
-            "15 Meters",
+            "45 Meters",
         ],
         [
             Building_N100.polygon_propogate_displacement___polygonprocessor_symbology___n100_building_lyrx.value,
             "false",
-            "15 Meters",
+            "45 Meters",
         ],
     ]
 
@@ -295,7 +297,7 @@ def resolve_building_conflict_building_polygon():
         in_buildings=Building_N100.polygon_propogate_displacement___building_polygon___n100_building_lyrx.value,
         invisibility_field="invisibility",
         in_barriers=input_barriers,
-        building_gap="30 meters",
+        building_gap="45 meters",
         minimum_size="1 meters",
     )
 
@@ -450,8 +452,8 @@ def intersecting_building_polygons_to_point():
         input_layer=Building_N100.polygon_propogate_displacement___not_invisible_polygons_after_rbc___n100_building.value,
         overlap_type=custom_arcpy.OverlapType.INTERSECT,
         select_features=Building_N100.polygon_propogate_displacement___merged_road_buffers___n100_building.value,
-        inverted=True,
-        output_name=Building_N100.polygon_propogate_displacement___final_building_polygons___n100_building.value,
+        inverted=True,  # Inverted
+        output_name=Building_N100.polygon_propogate_displacement___building_polygons_not_invisible_not_intersecting___n100_building.value,
     )
 
     # Selecting buildings that overlap with road buffer layer and will be transformed to points
@@ -488,6 +490,37 @@ def merging_invisible_intersecting_points():
             Building_N100.polygon_propogate_displacement___invisible_polygons_to_points___n100_building.value,
         ],
         output=Building_N100.polygon_propogate_displacement___final_merged_points___n100_building.value,
+    )
+
+
+@timing_decorator
+def removing_small_building_polygons():
+    """
+    Summary:
+        Removes small building polygons from the input layer based on a specified area threshold.
+
+    Details:
+        This function removes building polygons from the input layer that have a shape area smaller than
+        a specified threshold (3200 square meters).
+    """
+    custom_arcpy.select_attribute_and_make_permanent_feature(
+        input_layer=Building_N100.polygon_propogate_displacement___building_polygons_not_invisible_not_intersecting___n100_building.value,
+        expression="Shape_Area > 3200",
+        output_name=Building_N100.polygon_propogate_displacement___building_polygons_final___n100_building.value,
+    )
+
+
+def small_building_polygons_to_points():
+    custom_arcpy.select_attribute_and_make_permanent_feature(
+        input_layer=Building_N100.polygon_propogate_displacement___building_polygons_not_invisible_not_intersecting___n100_building.value,
+        expression="Shape_Area < 3200",
+        output_name=Building_N100.polygon_propogate_displacement___small_building_polygons___n100_building.value,
+    )
+
+    # Transforming small polygons to points
+    arcpy.management.FeatureToPoint(
+        in_features=Building_N100.polygon_propogate_displacement___small_building_polygons___n100_building.value,
+        out_feature_class=Building_N100.polygon_propogate_displacement___small_building_polygons_to_point___n100_building.value,
     )
 
 
