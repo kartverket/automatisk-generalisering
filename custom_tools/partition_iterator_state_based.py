@@ -262,7 +262,13 @@ class PartitionIterator:
         )
         print(f"Created partition selection for OBJECTID {object_id}")
 
-    def process_input_features(self, alias, iteration_partition):
+    def process_input_features(
+        self,
+        alias,
+        iteration_partition,
+        object_id,
+        partition_field,
+    ):
         """
         Process input features for a given partition.
         """
@@ -294,8 +300,66 @@ class PartitionIterator:
                 print(f"{alias} has {count_points} features in {iteration_partition}")
                 aliases_with_features += 1
 
+                arcpy.CalculateField_management(
+                    in_table=input_features_partition_selection,
+                    field=partition_field,
+                    expression="1",
+                )
+
                 iteration_append_feature = f"{self.root_file_partition_iterator}_{alias}_iteration_append_feature_{self.scale}"
                 self.iteration_file_paths.append(iteration_append_feature)
+
+                PartitionIterator.create_feature_class(
+                    full_feature_path=iteration_append_feature,
+                    template_feature=input_features_partition_selection,
+                )
+
+                arcpy.management.Append(
+                    inputs=input_features_partition_selection,
+                    target=iteration_append_feature,
+                    schema_type="NO_TEST",
+                )
+
+                input_features_partition_context_selection = f"in_memory/{alias}_input_features_partition_context_selection_{self.scale}"
+                self.iteration_file_paths.append(
+                    input_features_partition_context_selection
+                )
+
+                custom_arcpy.select_location_and_make_feature_layer(
+                    input_layer=input_path,
+                    overlap_type=custom_arcpy.OverlapType.WITHIN_A_DISTANCE,
+                    select_features=iteration_partition,
+                    output_name=input_features_partition_context_selection,
+                    selection_type=custom_arcpy.SelectionType.NEW_SELECTION.value,
+                    search_distance=self.search_distance,
+                )
+
+                arcpy.management.SelectLayerByLocation(
+                    in_layer=input_features_partition_context_selection,
+                    overlap_type="HAVE_THEIR_CENTER_IN",
+                    select_features=iteration_partition,
+                    selection_type="REMOVE_FROM_SELECTION",
+                )
+
+                arcpy.CalculateField_management(
+                    in_table=input_features_partition_context_selection,
+                    field=partition_field,
+                    expression="0",
+                )
+
+                arcpy.management.Append(
+                    inputs=input_features_partition_context_selection,
+                    target=iteration_append_feature,
+                    schema_type="NO_TEST",
+                )
+
+                print(
+                    f"iteration partition {input_features_partition_context_selection} appended to {iteration_append_feature}"
+                )
+            else:
+                print(
+                    f"iteration partition {object_id} has no features for {alias} in the partition feature"
+                )
             return input_feature_count > 0
 
     def process_context_features(self, alias, iteration_partition):
@@ -329,6 +393,11 @@ class PartitionIterator:
     ):
         self.delete_existing_outputs()
         self.create_dummy_features(types_to_include=["input", "context"])
+        for alias in self.alias:
+            self.delete_iteration_files(*self.iteration_file_paths)
+        self.iteration_file_paths.clear()
+
+        max_object_id = self.pre_iteration()
 
         for object_id in range(1, max_object_id + 1):
             self.iteration_file_paths.clear()
@@ -338,178 +407,19 @@ class PartitionIterator:
 
             inputs_present_in_partition = False
 
-            # Processing 'input' type features.
-            for alias, details in self.data.items():
-                if details["type"] == "input":
-                    inputs_present = self.process_input_features(
-                        alias, details, iteration_partition
+            # Process input features for each alias
+            for alias in self.data.keys():
+                if "input" in self.data[alias]:
+                    input_processed = self.process_input_features(
+                        alias, iteration_partition
                     )
-                    inputs_present_in_partition |= inputs_present
+                    inputs_present_in_partition |= input_processed
 
-            # Processing 'context' type features only if 'input' features are present.
+            # Process context features only if input features are present
             if inputs_present_in_partition:
-                for alias, details in self.data.items():
-                    if details["type"] == "context":
-                        self.process_context_features(
-                            alias, details, iteration_partition
-                        )
-
-        # Creating dummy features and selecting partition features for all types.
-        for alias, details in self.data.items():
-            dummy_feature_path = (
-                f"{self.root_file_partition_iterator}_{alias}_dummy_{self.scale}"
-            )
-            self.create_feature_class(
-                out_path=os.path.dirname(dummy_feature_path),
-                out_name=os.path.basename(dummy_feature_path),
-                template_feature=details["path"],
-            )
-
-        for object_id in range(1, max_object_id + 1):
-            self.iteration_file_paths.clear()
-            iteration_partition = f"{self.partition_feature}_{object_id}"
-            # Flag to check if any input features exist in this partition.
-            inputs_present_in_partition = False
-
-            # Processing 'input' type features
-            for alias, details in self.data.items():
-                if details["type"] == "input":
-                    input_features_partition_selection = (
-                        f"in_memory/{alias}_partition_base_select_{scale}"
-                    )
-                    self.iteration_file_paths.append(input_features_partition_selection)
-                    input_feature_count = custom_arcpy.select_location_and_make_feature_layer(
-                        input_layer=details["path"],
-                        overlap_type=custom_arcpy.OverlapType.HAVE_THEIR_CENTER_IN.value,
-                        select_features=iteration_partition,
-                        output_name=input_features_partition_selection,
-                    )
-
-                    if input_feature_count > 0:
-                        inputs_present_in_partition = True
-                    # Processing 'context' type features only if 'input' features are present in this partition.
-                    if inputs_present_in_partition:
-                        for alias, details in self.data.items():
-                            if details["type"] == "context":
-                                context_selection_path = f"{self.root_file_partition_iterator}_{alias}_context_iteration_selection_{object_id}"
-                                self.iteration_file_paths.append(context_selection_path)
-
-                                custom_arcpy.select_location_and_make_permanent_feature(
-                                    input_layer=details["path"],
-                                    overlap_type=custom_arcpy.OverlapType.WITHIN_A_DISTANCE,
-                                    select_features=iteration_partition,
-                                    output_name=context_selection_path,
-                                    selection_type=custom_arcpy.SelectionType.NEW_SELECTION.value,
-                                    search_distance=self.search_distance,
-                                )
-
-        aliases_feature_counts = {alias: 0 for alias in self.alias}
-
-        for object_id in range(1, max_object_id + 1):
-            self.iteration_file_paths.clear()
-            for alias in self.alias:
-                # Retrieve the output path for the current alias
-                output_path = self.outputs.get(alias)
-
-                if object_id == 1:
-                    self.delete_feature_class(output_path)
-
-            print(f"\nProcessing {self.object_id_field} {object_id}")
-            iteration_partition = f"{partition_feature}_{object_id}"
-            self.iteration_file_paths.append(iteration_partition)
-
-            custom_arcpy.select_attribute_and_make_permanent_feature(
-                input_layer=partition_feature,
-                expression=f"{self.object_id_field} = {object_id}",
-                output_name=iteration_partition,
-            )
-
-            # Check for features for each alias and set features_present accordingly
-            for alias in self.alias:
-                input_data_copy = self.file_mapping[alias]["current_output"]
-                base_partition_selection = (
-                    f"in_memory/{alias}_partition_base_select_{scale}"
-                )
-                self.iteration_file_paths.append(base_partition_selection)
-
-                custom_arcpy.select_location_and_make_feature_layer(
-                    input_layer=input_data_copy,
-                    overlap_type=custom_arcpy.OverlapType.HAVE_THEIR_CENTER_IN.value,
-                    select_features=iteration_partition,
-                    output_name=base_partition_selection,
-                )
-
-                aliases_with_features = 0
-
-                count_points = int(
-                    arcpy.management.GetCount(base_partition_selection).getOutput(0)
-                )
-                aliases_feature_counts[alias] = count_points
-
-                # Check if there are features for this alias
-                if count_points > 0:
-                    print(
-                        f"{alias} has {count_points} features in {iteration_partition}"
-                    )
-                    aliases_with_features += 1
-
-                    iteration_append_feature = f"{root_file_partition_iterator}_{alias}_iteration_append_feature_{scale}"
-                    self.iteration_file_paths.append(iteration_append_feature)
-
-                    self.create_feature_class(
-                        out_path=os.path.dirname(iteration_append_feature),
-                        out_name=os.path.basename(iteration_append_feature),
-                        template_feature=input_data_copy,
-                    )
-
-                    arcpy.CalculateField_management(
-                        in_table=base_partition_selection,
-                        field=partition_field,
-                        expression="1",
-                    )
-
-                    arcpy.management.Append(
-                        inputs=base_partition_selection,
-                        target=iteration_append_feature,
-                        schema_type="NO_TEST",
-                    )
-
-                    base_partition_selection_2 = (
-                        f"in_memory/{alias}_partition_base_select_2_{scale}"
-                    )
-                    self.iteration_file_paths.append(base_partition_selection_2)
-
-                    custom_arcpy.select_location_and_make_feature_layer(
-                        input_layer=input_data_copy,
-                        overlap_type=custom_arcpy.OverlapType.WITHIN_A_DISTANCE,
-                        select_features=iteration_partition,
-                        output_name=base_partition_selection_2,
-                        selection_type=custom_arcpy.SelectionType.NEW_SELECTION.value,
-                        search_distance=self.search_distance,
-                    )
-
-                    arcpy.management.SelectLayerByLocation(
-                        in_layer=base_partition_selection_2,
-                        overlap_type="HAVE_THEIR_CENTER_IN",
-                        select_features=iteration_partition,
-                        selection_type="REMOVE_FROM_SELECTION",
-                    )
-
-                    arcpy.CalculateField_management(
-                        in_table=base_partition_selection_2,
-                        field=partition_field,
-                        expression="0",
-                    )
-
-                    arcpy.management.Append(
-                        inputs=base_partition_selection_2,
-                        target=iteration_append_feature,
-                        schema_type="NO_TEST",
-                    )
-
-                    print(
-                        f"iteration partition {base_partition_selection_2} appended to {iteration_append_feature}"
-                    )
+                for alias in self.data.keys():
+                    if "context" in self.data[alias]:
+                        self.process_context_features(alias, iteration_partition)
                 else:
                     print(
                         f"iteration partition {object_id} has no features for {alias} in the partition feature"
@@ -583,23 +493,9 @@ class PartitionIterator:
             print(f"Finished iteration {object_id}")
 
     def run(self):
-        environment_setup.main()
-        self.create_cartographic_partitions()
-
-        max_object_id = self.pre_iteration()
-
         self.prepare_input_data()
-
-        # self.partition_iteration(
-        #     [self.file_mapping[alias]["current_output"] for alias in self.alias],
-        #     self.partition_feature,
-        #     max_object_id,
-        #     self.root_file_partition_iterator,
-        #     self.scale,
-        #     "partition_select",
-        #     "id_field",
-        #     [self.final_append_features.get(alias) for alias in self.alias],
-        # )
+        self.create_cartographic_partitions()
+        self.partition_iteration()
 
 
 if __name__ == "__main__":
