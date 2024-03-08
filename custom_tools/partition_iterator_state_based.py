@@ -19,7 +19,7 @@ class PartitionIterator:
         alias_path_data,
         root_file_partition_iterator,
         scale,
-        output_feature_class,
+        alias_path_outputs,
         custom_functions=None,
         feature_count="15000",
         partition_method="FEATURES",
@@ -29,10 +29,10 @@ class PartitionIterator:
         """
         Initialize the PartitionIterator with input datasets for partitioning and processing.
 
-        :param alias_path_inputs: A dictionary of input feature class paths with their aliases.
+        :param alias_path_data: A dictionary of input feature class paths with their aliases.
         :param root_file_partition_iterator: Base path for in progress outputs.
         :param scale: Scale for the partitions.
-        :param output_feature_class: The output feature class for final results.
+        :param alias_path_outputs: The output feature class for final results.
         :param feature_count: Feature count for cartographic partitioning.
         :param partition_method: Method used for creating cartographic partitions.
         """
@@ -45,7 +45,7 @@ class PartitionIterator:
 
         self.root_file_partition_iterator = root_file_partition_iterator
         self.scale = scale
-        self.output_feature_class = output_feature_class
+        self.output_feature_class = alias_path_outputs
         self.feature_count = feature_count
         self.partition_method = partition_method
         self.partition_feature = (
@@ -60,12 +60,20 @@ class PartitionIterator:
     def integrate_initial_data(self, alias_path_data, custom_function_specs):
         # Process initial alias_path_data for inputs and outputs
         for alias, (type_info, path_info) in alias_path_data.items():
-            self.update_alias_state(alias, type_info, path_info)
+            self.update_alias_state(
+                alias=alias,
+                type_info=type_info,
+                path=path_info,
+            )
 
             for func_name, specs in custom_function_specs.items():
                 for alias, types in specs.items():
                     for type_info in types:
-                        self.update_alias_state(alias, type_info, None)
+                        self.update_alias_state(
+                            alias=alias,
+                            type_info=type_info,
+                            path=None,
+                        )
 
     def update_alias_state(self, alias, type_info, path=None):
         if alias not in self.data:
@@ -101,62 +109,75 @@ class PartitionIterator:
         else:
             print("No input or context features available for creating partitions.")
 
-    def delete_feature_class(
-        self,
-        feature_class_path,
-    ):
-        """Deletes a feature class if it exists.
-
-        Args:
-            feature_class_path (str): The path to the feature class to be deleted.
-        """
+    def delete_feature_class(self, feature_class_path, alias=None, output_type=None):
+        """Deletes a feature class if it exists, with an optional detailed print statement for output feature classes."""
         if arcpy.Exists(feature_class_path):
             arcpy.management.Delete(feature_class_path)
-            print(f"Deleted feature class: {feature_class_path}")
+            if alias and output_type:
+                print(
+                    f"Deleted existing output feature class for '{alias}' of type '{output_type}': {feature_class_path}"
+                )
+            else:
+                print(f"Deleted feature class: {feature_class_path}")
 
-    def create_feature_class(
-        self,
-        out_path,
-        out_name,
-        template_feature,
-    ):
-        """Creates a new feature class from a template feature class.
-
-        Args:
-            out_path (str): The output path where the feature class will be created.
-            out_name (str): The name of the new feature class.
-            template_feature (str): The path to the template feature class.
-        """
-        full_out_path = os.path.join(
-            out_path,
-            out_name,
-        )
-        if arcpy.Exists(full_out_path):
-            arcpy.management.Delete(full_out_path)
-            print(f"Deleted existing feature class: {full_out_path}")
-
-        arcpy.management.CreateFeatureclass(
-            out_path=out_path,
-            out_name=out_name,
-            template=template_feature,
-        )
-        print(f"Created feature class: {full_out_path}")
+    def delete_existing_outputs(self):
+        for alias, output_info in self.output_feature_class.items():
+            output_type, output_path = output_info
+            current_path = self.data.get(alias, {}).get(output_type)
+            if current_path == output_path and arcpy.Exists(current_path):
+                PartitionIterator.delete_feature_class(
+                    current_path,
+                    alias=alias,
+                    output_type=output_type,
+                )
+            else:
+                print(
+                    f"Output feature class for '{alias}' of type '{output_type}' does not exist or path does not match: {current_path}"
+                )
 
     def delete_iteration_files(self, *file_paths):
-        """Deletes multiple feature classes or files.
+        """Deletes multiple feature classes or files. Detailed alias and output_type logging is not available here."""
+        for file_path in file_paths:
+            self.delete_feature_class(file_path)
+
+    @staticmethod
+    def create_feature_class(full_feature_path, template_feature):
+        """Creates a new feature class from a template feature class, given a full path."""
+        out_path, out_name = os.path.split(full_feature_path)
+        if arcpy.Exists(full_feature_path):
+            arcpy.management.Delete(full_feature_path)
+            print(f"Deleted existing feature class: {full_feature_path}")
+
+        arcpy.management.CreateFeatureclass(
+            out_path=out_path, out_name=out_name, template=template_feature
+        )
+        print(f"Created feature class: {full_feature_path}")
+
+    def create_dummy_features(self, types_to_include=["input", "context"]):
+        """
+        Creates dummy features for aliases with specified types.
 
         Args:
-            *file_paths: A variable number of file paths to delete.
+            types_to_include (list): Types for which dummy features should be created.
         """
-        for file_path in file_paths:
-            try:
-                if arcpy.Exists(file_path):
-                    arcpy.Delete_management(file_path)
-                    print(f"Deleted iteration file: {file_path}")
-                if not arcpy.Exists(file_path):
-                    print(f"The file {file_path} does not exist.")
-            except Exception as e:
-                print(f"Error deleting {file_path}: {e}")
+        for alias, types in self.data.items():
+            # Check if alias has any of the specified types with valid paths
+            for type_info, path in types.items():
+                if type_info in types_to_include and path:
+                    dummy_feature_path = f"{self.root_file_partition_iterator}_{alias}_dummy_{self.scale}"
+                    PartitionIterator.create_feature_class(
+                        full_feature_path=dummy_feature_path,
+                        template_feature=path,
+                    )
+                    print(
+                        f"Created dummy feature class for {alias} of type {type_info}: {dummy_feature_path}"
+                    )
+                    # Update alias state to include this new dummy type and its path
+                    self.update_alias_state(
+                        alias=alias,
+                        type_info="dummy",
+                        path=dummy_feature_path,
+                    )
 
     def pre_iteration(self):
         """
@@ -191,7 +212,11 @@ class PartitionIterator:
                 print(f"Copied input data for: {alias}")
 
                 # Update the path for 'input' type to the new copied path
-                self.update_alias_state(alias, "input", input_data_copy)
+                self.update_alias_state(
+                    alias=alias,
+                    type_info="input",
+                    path=input_data_copy,
+                )
 
                 partition_field = "partition_select"
                 arcpy.AddField_management(
@@ -225,38 +250,6 @@ class PartitionIterator:
         outputs = []
         return outputs
 
-    def delete_existing_outputs(self):
-        for alias, types in self.data.items():
-            if "output" in types:
-                output_path = types["output"]
-                if output_path:  # Ensure there is a path to delete
-                    self.delete_feature_class(output_path)
-                    print(f"Deleted existing feature class: {output_path}")
-
-    def create_dummy_features(self, types_to_include=["input", "context"]):
-        """
-        Creates dummy features for aliases with specified types.
-
-        Args:
-            types_to_include (list): Types for which dummy features should be created.
-        """
-        for alias, types in self.data.items():
-            # Check if alias has any of the specified types with valid paths
-            for type_info, path in types.items():
-                if type_info in types_to_include and path:
-                    # Construct the dummy feature path
-                    dummy_feature_path = f"{self.root_file_partition_iterator}_{alias}_dummy_{self.scale}"
-                    self.create_feature_class(
-                        out_path=os.path.dirname(dummy_feature_path),
-                        out_name=os.path.basename(dummy_feature_path),
-                        template_feature=path,
-                    )
-                    print(
-                        f"Created dummy feature class for {alias} of type {type_info}: {dummy_feature_path}"
-                    )
-                    # Update alias state to include this new dummy type and its path
-                    self.update_alias_state(alias, "dummy", dummy_feature_path)
-
     def select_partition_feature(self, iteration_partition, object_id):
         """
         Selects partition feature based on OBJECTID.
@@ -286,6 +279,23 @@ class PartitionIterator:
                 select_features=iteration_partition,
                 output_name=input_features_partition_selection,
             )
+
+            aliases_with_features = 0
+
+            count_points = int(
+                arcpy.management.GetCount(input_features_partition_selection).getOutput(
+                    0
+                )
+            )
+            input_features_partition_selection[alias] = count_points
+
+            # Check if there are features for this alias
+            if count_points > 0:
+                print(f"{alias} has {count_points} features in {iteration_partition}")
+                aliases_with_features += 1
+
+                iteration_append_feature = f"{self.root_file_partition_iterator}_{alias}_iteration_append_feature_{self.scale}"
+                self.iteration_file_paths.append(iteration_append_feature)
             return input_feature_count > 0
 
     def process_context_features(self, alias, iteration_partition):
@@ -318,6 +328,7 @@ class PartitionIterator:
         final_append_feature,
     ):
         self.delete_existing_outputs()
+        self.create_dummy_features(types_to_include=["input", "context"])
 
         for object_id in range(1, max_object_id + 1):
             self.iteration_file_paths.clear()
@@ -599,7 +610,7 @@ if __name__ == "__main__":
     inputs = {
         building_points: [
             "input",
-            Building_N100.adding_matrikkel_as_points__matrikkel_bygningspunkt__n100.value,
+            Building_N100.data_preparation___matrikkel_bygningspunkt___n100_building.value,
         ],
         building_polygons: [
             "context",
@@ -621,10 +632,9 @@ if __name__ == "__main__":
     # Instantiate PartitionIterator with necessary parameters
     partition_iterator = PartitionIterator(
         alias_path_data=inputs,
-        # alias_path_outputs=outputs,
+        alias_path_outputs=outputs,
         root_file_partition_iterator=Building_N100.iteration__partition_iterator__n100.value,
         scale=env_setup.global_config.scale_n100,
-        output_feature_class=Building_N100.iteration__partition_iterator_final_output__n100.value,
     )
 
     # Run the partition iterator
@@ -639,35 +649,68 @@ Can I use pattern matching (match) to find the alias for each param?
 self.data = {
     'alias_1': {
         'input': 'file_path_1',
-        'function_1': 'file_path_2',
-        'function_2': 'file_path_3',
+        'function_1': 'file_path_3',
+        'function_2': 'file_path_4',
     },
     
     'alias_2': {
-        'context': 'file_path_4',
+        'context': 'file_path_2',
         'function_1': 'file_path_5',
         'function_2': 'file_path_6',
     },
 
 
+inputs = {
+    alias_1: [
+        "input",
+        file_path_1,
+    ],
+    alias_2: [
+        "context",
+        file_path_2,
+    ],
+}
+
+outputs = {
+    alias_1: [
+        "function_1",
+        file_path_3,
+    ],
+    alias_2: [
+        "function_2",
+        file_path_6,
+    ],
+}
+
 custom_functions = {
-    "polygon_processor": {
-        "function": PolygonProcessor,
+    "function_1": {
+        "function": function_1,
         "inputs": ["alias_1":input, "alias_2":context],
-        "outputs": ["alias_1":polygon_processor],
+        "outputs": ["alias_1":function_1],
         "additional_params": {
             "building_symbol_dimensions": building_symbol_dimensions,
             "symbol_field_name": "symbol_val",
             "index_field_name": "OBJECTID",
         },
         
-    "polygon_processor": {
-        "function": PolygonProcessor,
-        "inputs": ["alias_1":polygon_processor, "alias_2":context],
-        "outputs": ["alias_1":polygon_processor_2],
+    "function_2": {
+        "function": function_2,
+        "inputs": ["alias_1":function_1, "alias_2":context],
+        "outputs": ["alias_2":function_2],
         "additional_params": {
             "building_symbol_dimensions": building_symbol_dimensions,
             "symbol_field_name": "symbol_val",
             "index_field_name": "OBJECTID",
         },
+        
+
+partition_iterator = PartitionIterator(
+    alias_path_data=inputs,
+    alias_path_outputs=outputs,
+    root_file_partition_iterator=Building_N100.iteration__partition_iterator__n100.value,
+    scale=env_setup.global_config.scale_n100,
+)
+
+partition_iterator.run()
+        
 """

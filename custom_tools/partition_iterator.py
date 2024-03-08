@@ -550,7 +550,7 @@ if __name__ == "__main__":
     inputs = {
         building_points: [
             "input",
-            Building_N100.adding_matrikkel_as_points__matrikkel_bygningspunkt__n100.value,
+            Building_N100.data_preparation___matrikkel_bygningspunkt___n100_building.value,
         ],
         building_polygons: [
             "context",
