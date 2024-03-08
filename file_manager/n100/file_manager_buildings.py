@@ -271,10 +271,10 @@ class Building_N100(Enum):
         )
     )
 
-    polygon_to_point___merged_points_created_from_polygon___n100_building = (
+    polygon_to_point___merged_points_final___n100_building = (
         file_manager.generate_file_name_gdb(
             script_source_name=polygon_to_point,
-            description="merged_points_created_from_polygon",
+            description="merged_points_final",
         )
     )
 
@@ -460,11 +460,16 @@ class Building_N100(Enum):
         )
     )
 
-    polygon_propogate_displacement___final_building_polygons___n100_building = (
+    polygon_propogate_displacement___building_polygons_final___n100_building = (
         file_manager.generate_file_name_gdb(
             script_source_name=polygon_propogate_displacement,
-            description="final_building_polgyons",
+            description="building_polygons_final",
         )
+    )
+
+    polygon_propogate_displacement___building_polygons_not_invisible_not_intersecting___n100_building = file_manager.generate_file_name_gdb(
+        script_source_name=polygon_propogate_displacement,
+        description="building_polygons_not_invisible_not_intersecting",
     )
 
     polygon_propogate_displacement___building_polygons_intersecting_road___n100_building = file_manager.generate_file_name_gdb(
@@ -484,6 +489,18 @@ class Building_N100(Enum):
             script_source_name=polygon_propogate_displacement,
             description="final_merged_points",
         )
+    )
+
+    polygon_propogate_displacement___small_building_polygons___n100_building = (
+        file_manager.generate_file_name_gdb(
+            script_source_name=polygon_propogate_displacement,
+            description="small_building_polygons",
+        )
+    )
+
+    polygon_propogate_displacement___small_building_polygons_to_point___n100_building = file_manager.generate_file_name_gdb(
+        script_source_name=polygon_propogate_displacement,
+        description="small_building_polygons_to_point",
     )
 
     ###################################################
@@ -600,6 +617,17 @@ class Building_N100(Enum):
         file_manager.generate_file_name_gdb(
             script_source_name=point_propogate_displacement,
             description="points_pre_propogate_displacement",
+        )
+    )
+
+    # ========================================
+    #                              LAST POINT REMOVAL
+    # ========================================
+
+    last_point_removal___water_features___n100_building = (
+        file_manager.generate_file_name_gdb(
+            script_source_name=point_propogate_displacement,
+            description="water_features",
         )
     )
 

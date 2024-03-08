@@ -92,19 +92,19 @@ def table_management():
 
     # Adding a field to indicate that points resulting from grunnriss is tracked
     arcpy.AddField_management(
-        in_table=Building_N100.polygon_to_point___merged_points_created_from_polygon___n100_building.value,
+        in_table=Building_N100.polygon_to_point___merged_points_final___n100_building.value,
         field_name="grunnriss",
         field_type="LONG",
     )
     arcpy.CalculateField_management(
-        in_table=Building_N100.polygon_to_point___merged_points_created_from_polygon___n100_building.value,
+        in_table=Building_N100.polygon_to_point___merged_points_final___n100_building.value,
         field="grunnriss",
         expression="1",
     )
 
     # Reclassify the sykehus from grunnriss to another NBR value
     arcpy.CalculateField_management(
-        in_table=Building_N100.polygon_to_point___merged_points_created_from_polygon___n100_building.value,
+        in_table=Building_N100.polygon_to_point___merged_points_final___n100_building.value,
         field="BYGGTYP_NBR",
         expression="hospital_nbr(!BYGGTYP_NBR!)",
         expression_type="PYTHON3",
@@ -115,7 +115,7 @@ def table_management():
     arcpy.management.Merge(
         inputs=[
             Building_N100.calculating_field_values___merged_points_n50_matrikkel___n100_building.value,
-            Building_N100.polygon_to_point___merged_points_created_from_polygon___n100_building.value,
+            Building_N100.polygon_to_point___merged_points_final___n100_building.value,
         ],
         output=Building_N100.calculate_field_values___points_pre_resolve_building_conflicts___n100_building.value,
     )

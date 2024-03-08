@@ -20,31 +20,7 @@ def main():
     This function creates points from small grunnriss lost during aggregation, and merges
     them together with collapsed points from the tools simplify building and simplify polygon.
     """
-    # Start timing
-    environment_setup.main()
-    start_time = time.time()
-
     grunnriss_to_point()
-
-    # End timing
-    end_time = time.time()
-
-    # Calculate elapsed time
-    elapsed_time = end_time - start_time
-
-    # Convert to hours, minutes, and seconds
-    hours, remainder = divmod(elapsed_time, 3600)
-    minutes, seconds = divmod(remainder, 60)
-
-    # Format as string
-    time_str = "{:02} hours, {:02} minutes, {:.2f} seconds".format(
-        int(hours), int(minutes), seconds
-    )
-
-    print(f"create_points_from_polygon took {time_str} to complete.")
-
-
-#######################################################################################################################################################
 
 
 @timing_decorator
@@ -104,12 +80,13 @@ def grunnriss_to_point():
     # Generate list of output paths for merge
     output_paths = [f"{base_output_path}_{i+1}" for i in range(num_outputs)]
 
-    # Additional inputs for the merge (if any)
+    # Additional inputs for the merge
     additional_inputs = [
         Building_N100.data_preparation___points_created_from_small_polygon___n100_building.value,
         Building_N100.data_preparation___church_points_from_polygon___n100_building.value,
         Building_N100.polygon_to_point___polygons_to_point___n100_building.value,
         Building_N100.polygon_propogate_displacement___final_merged_points___n100_building.value,
+        Building_N100.polygon_propogate_displacement___small_building_polygons_to_point___n100_building.value,
     ]
     # Complete list of inputs for the merge
     merge_inputs = additional_inputs + output_paths
@@ -117,7 +94,7 @@ def grunnriss_to_point():
     # Perform the Merge operation
     arcpy.management.Merge(
         inputs=merge_inputs,
-        output=Building_N100.polygon_to_point___merged_points_created_from_polygon___n100_building.value,
+        output=Building_N100.polygon_to_point___merged_points_final___n100_building.value,
     )
     print("Merge completed")
 
