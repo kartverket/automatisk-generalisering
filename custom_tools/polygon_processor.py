@@ -8,6 +8,7 @@ from multiprocessing import Pool, cpu_count
 import config
 from env_setup import environment_setup
 from file_manager.n100.file_manager_buildings import Building_N100
+from constants.n100_constants import N100Symbology
 
 
 class PolygonProcessor:
@@ -292,31 +293,12 @@ class PolygonProcessor:
 
 if __name__ == "__main__":
     # Example parameters - replace these with actual values suitable for your test
-    input_building_points = (
-        Building_N100.calculate_field_values___points_pre_resolve_building_conflicts___n100_building.value
-    )
-    output_polygon_feature_class = (
-        Building_N100.building_point_buffer_displacement__iteration_points_to_square_polygons__n100.value
-    )
-    building_symbol_dimensions = {
-        1: (145, 145),
-        2: (145, 145),
-        3: (195, 145),
-        4: (40, 40),
-        5: (80, 80),
-        6: (30, 30),
-        7: (45, 45),
-        8: (45, 45),
-        9: (53, 45),
-    }
-    symbol_field_name = "symbol_val"
-    index_field_name = "OBJECTID"
 
     polygon_processor = PolygonProcessor(
-        input_building_points,
-        output_polygon_feature_class,
-        building_symbol_dimensions,
-        symbol_field_name,
-        index_field_name,
+        input_building_points=Building_N100.calculate_field_values___points_pre_resolve_building_conflicts___n100_building.value,
+        output_polygon_feature_class=Building_N100.building_point_buffer_displacement__iteration_points_to_square_polygons__n100.value,
+        building_symbol_dimensions=N100Symbology.building_symbol_dimensions.value,
+        symbol_field_name="symbol_val",
+        index_field_name="OBJECTID",
     )
     polygon_processor.run()

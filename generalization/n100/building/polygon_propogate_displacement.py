@@ -7,6 +7,7 @@ import input_data.input_n50
 from custom_tools import custom_arcpy
 from custom_tools.polygon_processor import PolygonProcessor
 from input_data import input_symbology
+from constants.n100_constants import N100Symbology
 
 # Importing environment settings
 from env_setup import environment_setup
@@ -236,18 +237,6 @@ def resolve_building_conflict_building_polygon():
         code_block=code_block,
     )
     # Polygon prosessor
-
-    building_symbol_dimensions = {
-        1: (145, 145),
-        2: (145, 145),
-        3: (195, 145),
-        4: (40, 40),
-        5: (80, 80),
-        6: (30, 30),
-        7: (45, 45),
-        8: (45, 45),
-        9: (53, 45),
-    }
     symbol_field_name = "symbol_val"
     index_field_name = "OBJECTID"
 
@@ -255,7 +244,7 @@ def resolve_building_conflict_building_polygon():
     polygon_process = PolygonProcessor(
         Building_N100.polygon_propogate_displacement___hospital_church_points___n100_building.value,  # input
         Building_N100.polygon_propogate_displacement___hospital_church_squares___n100_building.value,  # output
-        building_symbol_dimensions,
+        N100Symbology.building_symbol_dimensions.value,
         symbol_field_name,
         index_field_name,
     )
