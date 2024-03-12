@@ -285,6 +285,9 @@ class PartitionIterator:
         """
         Process input features for a given partition.
         """
+        if "input" not in self.data[alias]:
+            return None, False
+
         if "input" in self.data[alias]:
             input_path = self.data[alias]["input"]
             input_features_partition_selection = (
@@ -367,11 +370,24 @@ class PartitionIterator:
                 print(
                     f"iteration partition {input_features_partition_context_selection} appended to {iteration_append_feature}"
                 )
+                return aliases_with_features, True
             else:
                 print(
                     f"iteration partition {object_id} has no features for {alias} in the partition feature"
                 )
-            return aliases_with_features
+            return None, False
+
+    def _process_inputs_in_partition(self, aliases, iteration_partition, object_id):
+        inputs_present_in_partition = False
+        for alias in aliases:
+            if "input" in self.data[alias]:
+                _, input_present = self.process_input_features(
+                    alias, iteration_partition, object_id
+                )
+                inputs_present_in_partition = (
+                    inputs_present_in_partition or input_present
+                )
+        return inputs_present_in_partition
 
     def process_context_features(self, alias, iteration_partition):
         """
@@ -391,84 +407,54 @@ class PartitionIterator:
                 search_distance=self.search_distance,
             )
 
-    def partition_iteration(
-        self,
-        # input_data_copy,
-        # partition_feature,
-        # max_object_id,
-        # root_file_partition_iterator,
-        # scale,
-        # orig_id_field,
-        # final_append_feature,
+    def _process_context_features_and_others(
+        self, aliases, iteration_partition, object_id
     ):
+        for alias in aliases:
+            if "context" not in self.data[alias]:
+                print(
+                    f"iteration partition {object_id} has no features for {alias} in the partition feature"
+                )
+            else:
+                self.process_context_features(alias, iteration_partition)
+
+    def partition_iteration(self):
+        aliases = self.data.keys()
+        max_object_id = self.pre_iteration()
+
         self.delete_existing_outputs()
-        self.create_dummy_features(types_to_include=["input", "context"])
-        for alias in self.data:
+        self.create_dummy_features(
+            types_to_include=[
+                "input",
+                "context",
+            ]
+        )
+        for alias in aliases:
             self.delete_iteration_files(*self.iteration_file_paths)
         self.iteration_file_paths.clear()
 
-        max_object_id = self.pre_iteration()
-
         for object_id in range(1, max_object_id + 1):
             self.iteration_file_paths.clear()
-
             iteration_partition = f"{self.partition_feature}_{object_id}"
             self.select_partition_feature(iteration_partition, object_id)
 
-            inputs_present_in_partition = False
-
-            # Process input features for each alias
-            for alias in self.data.keys():
-                if "input" in self.data[alias]:
-                    input_processed = self.process_input_features(
-                        alias,
-                        iteration_partition,
-                        object_id,
-                    )
-                    inputs_present_in_partition |= any(
-                        value > 0 for value in input_processed.values()
-                    )
-
-            # Process context features only if input features are present
+            inputs_present_in_partition = self._process_inputs_in_partition(
+                aliases, iteration_partition, object_id
+            )
             if inputs_present_in_partition:
-                for alias in self.data.keys():
-                    if "context" in self.data[alias]:
-                        self.process_context_features(alias, iteration_partition)
-                else:
-                    print(
-                        f"iteration partition {object_id} has no features for {alias} in the partition feature"
-                    )
+                self._process_context_features_and_others(
+                    aliases, iteration_partition, object_id
+                )
+            else:
+                for alias in aliases:
+                    self.delete_iteration_files(*self.iteration_file_paths)
 
-                # If no aliases had features, skip the rest of the processing for this object_id
-            # if aliases_with_features == 0:
-            #     for alias in self.alias:
-            #         self.delete_iteration_files(*self.iteration_file_paths)
-            #     continue
-            #
-            # for func in self.custom_functions:
-            #     try:
-            #         pass
-            #         # Determine inputs for the current function
-            #         # inputs = [
-            #         #     self.file_mapping[fc]["func_output"] or fc
-            #         #     for fc in self.input_feature_classes
-            #         # ]
-            #
-            #         # Call the function and get outputs
-            #         outputs = func(inputs)
-            #
-            #         # Update file mapping with the outputs
-            #         for fc, output in zip(self.input_feature_classes, outputs):
-            #             self.file_mapping[fc]["current_output"] = output
-            #     except:
-            #         print(f"Error in custom function: {func}")
-            #
             #     # Process each alias after custom functions
-            # for alias in self.alias:
-            #     if aliases_feature_counts[alias] > 0:
+            # for alias in self.data.keys():
+            #     if inputs_present_in_partition:
             #         # Retrieve the output path for the current alias
             #         output_path = self.outputs.get(alias)
-            #         iteration_append_feature = f"{root_file_partition_iterator}_{alias}_iteration_append_feature_{scale}"
+            #         iteration_append_feature = f"{self.root_file_partition_iterator}_{alias}_iteration_append_feature_{scale}"
             #
             #         if not arcpy.Exists(output_path):
             #             self.create_feature_class(
@@ -478,13 +464,13 @@ class PartitionIterator:
             #             )
             #
             #         partition_target_selection = (
-            #             f"in_memory/{alias}_partition_target_selection_{scale}"
+            #             f"in_memory/{alias}_partition_target_selection_{self.scale}"
             #         )
             #         self.iteration_file_paths.append(partition_target_selection)
             #
             #         custom_arcpy.select_attribute_and_make_permanent_feature(
             #             input_layer=iteration_append_feature,
-            #             expression=f"{partition_field} = 1",
+            #             expression=f"{self.PARTITION_FIELD} = 1",
             #             output_name=partition_target_selection,
             #         )
             #
@@ -501,7 +487,7 @@ class PartitionIterator:
             #         print(
             #             f"No features found in {alias} for {self.object_id_field} {object_id} to append to {output_path}"
             #         )
-            #
+
             # for alias in self.alias:
             #     self.delete_iteration_files(*self.iteration_file_paths)
             # print(f"Finished iteration {object_id}")
@@ -510,14 +496,7 @@ class PartitionIterator:
         self.prepare_input_data()
         self.create_cartographic_partitions()
 
-        self.partition_iteration(
-            # self.input_data_copy,
-            # self.partition_feature,
-            # self.max_object_id,
-            # self.root_file_partition_iterator,
-            # self.scale,
-            # self.final_append_feature,
-        )
+        self.partition_iteration()
 
 
 if __name__ == "__main__":
