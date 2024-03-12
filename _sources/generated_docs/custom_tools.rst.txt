@@ -20,6 +20,14 @@ custom\_tools.file\_utilities module
    :undoc-members:
    :show-inheritance:
 
+custom\_tools.geometry\_tools module
+------------------------------------
+
+.. automodule:: custom_tools.geometry_tools
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
 custom\_tools.partition\_iterator module
 ----------------------------------------
 
@@ -48,6 +56,14 @@ custom\_tools.print\_logger module
 ----------------------------------
 
 .. automodule:: custom_tools.print_logger
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+custom\_tools.table\_mangement module
+-------------------------------------
+
+.. automodule:: custom_tools.table_mangement
    :members:
    :undoc-members:
    :show-inheritance:

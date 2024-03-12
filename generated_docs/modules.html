@@ -141,6 +141,14 @@
 </li>
 </ul>
 </li>
+<li class="toctree-l2"><a class="reference internal" href="custom_tools.html#module-custom_tools.geometry_tools">custom_tools.geometry_tools module</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="custom_tools.html#custom_tools.geometry_tools.RemovePolygonIslands"><code class="docutils literal notranslate"><span class="pre">RemovePolygonIslands</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="custom_tools.html#custom_tools.geometry_tools.RemovePolygonIslands.remove_islands"><code class="docutils literal notranslate"><span class="pre">RemovePolygonIslands.remove_islands()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="custom_tools.html#custom_tools.geometry_tools.remove_polygon_islands"><code class="docutils literal notranslate"><span class="pre">remove_polygon_islands()</span></code></a></li>
+</ul>
+</li>
 <li class="toctree-l2"><a class="reference internal" href="custom_tools.html#module-custom_tools.partition_iterator">custom_tools.partition_iterator module</a><ul>
 <li class="toctree-l3"><a class="reference internal" href="custom_tools.html#custom_tools.partition_iterator.PartitionIterator"><code class="docutils literal notranslate"><span class="pre">PartitionIterator</span></code></a><ul>
 <li class="toctree-l4"><a class="reference internal" href="custom_tools.html#custom_tools.partition_iterator.PartitionIterator.create_cartographic_partitions"><code class="docutils literal notranslate"><span class="pre">PartitionIterator.create_cartographic_partitions()</span></code></a></li>
@@ -150,6 +158,11 @@
 <li class="toctree-l4"><a class="reference internal" href="custom_tools.html#custom_tools.partition_iterator.PartitionIterator.pre_iteration"><code class="docutils literal notranslate"><span class="pre">PartitionIterator.pre_iteration()</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="custom_tools.html#custom_tools.partition_iterator.PartitionIterator.prepare_input_data"><code class="docutils literal notranslate"><span class="pre">PartitionIterator.prepare_input_data()</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="custom_tools.html#custom_tools.partition_iterator.PartitionIterator.custom_function"><code class="docutils literal notranslate"><span class="pre">PartitionIterator.custom_function()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="custom_tools.html#custom_tools.partition_iterator.PartitionIterator.delete_existing_outputs"><code class="docutils literal notranslate"><span class="pre">PartitionIterator.delete_existing_outputs()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="custom_tools.html#custom_tools.partition_iterator.PartitionIterator.create_dummy_features"><code class="docutils literal notranslate"><span class="pre">PartitionIterator.create_dummy_features()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="custom_tools.html#custom_tools.partition_iterator.PartitionIterator.select_partition_feature"><code class="docutils literal notranslate"><span class="pre">PartitionIterator.select_partition_feature()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="custom_tools.html#custom_tools.partition_iterator.PartitionIterator.process_input_features"><code class="docutils literal notranslate"><span class="pre">PartitionIterator.process_input_features()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="custom_tools.html#custom_tools.partition_iterator.PartitionIterator.process_context_features"><code class="docutils literal notranslate"><span class="pre">PartitionIterator.process_context_features()</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="custom_tools.html#custom_tools.partition_iterator.PartitionIterator.partition_iteration"><code class="docutils literal notranslate"><span class="pre">PartitionIterator.partition_iteration()</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="custom_tools.html#custom_tools.partition_iterator.PartitionIterator.run"><code class="docutils literal notranslate"><span class="pre">PartitionIterator.run()</span></code></a></li>
 </ul>
@@ -158,19 +171,21 @@
 </li>
 <li class="toctree-l2"><a class="reference internal" href="custom_tools.html#module-custom_tools.partition_iterator_state_based">custom_tools.partition_iterator_state_based module</a><ul>
 <li class="toctree-l3"><a class="reference internal" href="custom_tools.html#custom_tools.partition_iterator_state_based.PartitionIterator"><code class="docutils literal notranslate"><span class="pre">PartitionIterator</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="custom_tools.html#custom_tools.partition_iterator_state_based.PartitionIterator.PARTITION_FIELD"><code class="docutils literal notranslate"><span class="pre">PartitionIterator.PARTITION_FIELD</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="custom_tools.html#custom_tools.partition_iterator_state_based.PartitionIterator.ORIGINAL_ID_FIELD"><code class="docutils literal notranslate"><span class="pre">PartitionIterator.ORIGINAL_ID_FIELD</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="custom_tools.html#custom_tools.partition_iterator_state_based.PartitionIterator.integrate_initial_data"><code class="docutils literal notranslate"><span class="pre">PartitionIterator.integrate_initial_data()</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="custom_tools.html#custom_tools.partition_iterator_state_based.PartitionIterator.update_alias_state"><code class="docutils literal notranslate"><span class="pre">PartitionIterator.update_alias_state()</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="custom_tools.html#custom_tools.partition_iterator_state_based.PartitionIterator.create_new_alias"><code class="docutils literal notranslate"><span class="pre">PartitionIterator.create_new_alias()</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="custom_tools.html#custom_tools.partition_iterator_state_based.PartitionIterator.get_path_for_alias_and_type"><code class="docutils literal notranslate"><span class="pre">PartitionIterator.get_path_for_alias_and_type()</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="custom_tools.html#custom_tools.partition_iterator_state_based.PartitionIterator.create_cartographic_partitions"><code class="docutils literal notranslate"><span class="pre">PartitionIterator.create_cartographic_partitions()</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="custom_tools.html#custom_tools.partition_iterator_state_based.PartitionIterator.delete_feature_class"><code class="docutils literal notranslate"><span class="pre">PartitionIterator.delete_feature_class()</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="custom_tools.html#custom_tools.partition_iterator_state_based.PartitionIterator.create_feature_class"><code class="docutils literal notranslate"><span class="pre">PartitionIterator.create_feature_class()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="custom_tools.html#custom_tools.partition_iterator_state_based.PartitionIterator.delete_existing_outputs"><code class="docutils literal notranslate"><span class="pre">PartitionIterator.delete_existing_outputs()</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="custom_tools.html#custom_tools.partition_iterator_state_based.PartitionIterator.delete_iteration_files"><code class="docutils literal notranslate"><span class="pre">PartitionIterator.delete_iteration_files()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="custom_tools.html#custom_tools.partition_iterator_state_based.PartitionIterator.create_feature_class"><code class="docutils literal notranslate"><span class="pre">PartitionIterator.create_feature_class()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="custom_tools.html#custom_tools.partition_iterator_state_based.PartitionIterator.create_dummy_features"><code class="docutils literal notranslate"><span class="pre">PartitionIterator.create_dummy_features()</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="custom_tools.html#custom_tools.partition_iterator_state_based.PartitionIterator.pre_iteration"><code class="docutils literal notranslate"><span class="pre">PartitionIterator.pre_iteration()</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="custom_tools.html#custom_tools.partition_iterator_state_based.PartitionIterator.prepare_input_data"><code class="docutils literal notranslate"><span class="pre">PartitionIterator.prepare_input_data()</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="custom_tools.html#custom_tools.partition_iterator_state_based.PartitionIterator.custom_function"><code class="docutils literal notranslate"><span class="pre">PartitionIterator.custom_function()</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="custom_tools.html#custom_tools.partition_iterator_state_based.PartitionIterator.delete_existing_outputs"><code class="docutils literal notranslate"><span class="pre">PartitionIterator.delete_existing_outputs()</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="custom_tools.html#custom_tools.partition_iterator_state_based.PartitionIterator.create_dummy_features"><code class="docutils literal notranslate"><span class="pre">PartitionIterator.create_dummy_features()</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="custom_tools.html#custom_tools.partition_iterator_state_based.PartitionIterator.select_partition_feature"><code class="docutils literal notranslate"><span class="pre">PartitionIterator.select_partition_feature()</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="custom_tools.html#custom_tools.partition_iterator_state_based.PartitionIterator.process_input_features"><code class="docutils literal notranslate"><span class="pre">PartitionIterator.process_input_features()</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="custom_tools.html#custom_tools.partition_iterator_state_based.PartitionIterator.process_context_features"><code class="docutils literal notranslate"><span class="pre">PartitionIterator.process_context_features()</span></code></a></li>
@@ -190,6 +205,7 @@
 <li class="toctree-l3"><a class="reference internal" href="custom_tools.html#custom_tools.print_logger.setup_logger"><code class="docutils literal notranslate"><span class="pre">setup_logger()</span></code></a></li>
 </ul>
 </li>
+<li class="toctree-l2"><a class="reference internal" href="custom_tools.html#module-custom_tools.table_mangement">custom_tools.table_mangement module</a></li>
 <li class="toctree-l2"><a class="reference internal" href="custom_tools.html#module-custom_tools.timing_decorator">custom_tools.timing_decorator module</a><ul>
 <li class="toctree-l3"><a class="reference internal" href="custom_tools.html#custom_tools.timing_decorator.timing_decorator"><code class="docutils literal notranslate"><span class="pre">timing_decorator()</span></code></a></li>
 </ul>
