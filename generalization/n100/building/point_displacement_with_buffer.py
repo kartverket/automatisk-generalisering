@@ -4,6 +4,7 @@ import os
 
 from input_data import input_n100
 from file_manager.n100.file_manager_buildings import Building_N100
+from constants.n100_constants import N100Symbology
 
 from custom_tools.polygon_processor import PolygonProcessor
 from env_setup import environment_setup
@@ -300,23 +301,11 @@ def creating_road_buffer():
         )
         print(f"Merged buffers into {output_fc}.")
 
-        building_symbol_dimensions = {
-            1: (145, 145),
-            2: (145, 145),
-            3: (195, 145),
-            4: (40, 40),
-            5: (80, 80),
-            6: (30, 30),
-            7: (45, 45),
-            8: (45, 45),
-            9: (53, 45),
-        }
-
         print("Polygon Processor started...")
         polygon_processor = PolygonProcessor(
             input_building_points=current_building_points,
             output_polygon_feature_class=f"{Building_N100.building_point_buffer_displacement__iteration_points_to_square_polygons__n100.value}_{counter}",
-            building_symbol_dimensions=building_symbol_dimensions,
+            building_symbol_dimensions=N100Symbology.building_symbol_dimensions.value,
             symbol_field_name="symbol_val",
             index_field_name="OBJECTID",
         )
