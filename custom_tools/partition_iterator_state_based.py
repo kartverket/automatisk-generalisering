@@ -34,10 +34,10 @@ class PartitionIterator:
         """
         Initialize the PartitionIterator with input datasets for partitioning and processing.
 
-        :param alias_path_data: A dictionary of input feature class paths with their aliases.
+        :param alias_path_data: A nested dictionary of input feature class paths with their aliases.
         :param root_file_partition_iterator: Base path for in progress outputs.
         :param scale: Scale for the partitions.
-        :param alias_path_outputs: The output feature class for final results.
+        :param alias_path_outputs: A nested dictionary of output feature class for final results.
         :param feature_count: Feature count for cartographic partitioning.
         :param partition_method: Method used for creating cartographic partitions.
         """
@@ -107,7 +107,6 @@ class PartitionIterator:
 
         print(f"all_features: {all_features}")
         if all_features:
-            # self.delete_feature_class(self.partition_feature)
             arcpy.cartography.CreateCartographicPartitions(
                 in_features=all_features,
                 out_features=self.partition_feature,
@@ -518,13 +517,13 @@ if __name__ == "__main__":
 
     outputs = {
         building_points: [
-            "output",
+            "input",
             Building_N100.iteration__partition_iterator_final_output_points__n100.value,
         ],
-        building_polygons: [
-            "output",
-            Building_N100.iteration__partition_iterator_final_output_polygons__n100.value,
-        ],
+        # building_polygons: [
+        #     "output",
+        #     Building_N100.iteration__partition_iterator_final_output_polygons__n100.value,
+        # ],
     }
 
     # Instantiate PartitionIterator with necessary parameters
