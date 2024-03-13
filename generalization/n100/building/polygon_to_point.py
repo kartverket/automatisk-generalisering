@@ -20,6 +20,7 @@ def main():
     This function creates points from small grunnriss lost during aggregation, and merges
     them together with collapsed points from the tools simplify building and simplify polygon.
     """
+    environment_setup.main()
     grunnriss_to_point()
 
 
