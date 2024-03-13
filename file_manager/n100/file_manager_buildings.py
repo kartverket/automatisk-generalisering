@@ -20,6 +20,7 @@ polygon_propogate_displacement = "polygon_propogate_displacement"
 polygon_to_point = "polygon_to_point"
 calculating_field_values = "calculating_field_values"
 point_propogate_displacement = "point_propogate_displacement"
+point_cleanup = "point_cleanup"
 hospital_church_clusters = "hospital_church_clusters"
 point_displacement_with_buffer = "point_displacement_with_buffer"
 points_to_squares = "points_to_squares"
@@ -503,18 +504,18 @@ class Building_N100(Enum):
         description="small_building_polygons_to_point",
     )
 
-    ###################################################
-    ########### HOSPITAL AND CHURCH CLUSTERS ###########
-    ###################################################
+    # ========================================
+    #                        HOSPITAL CHURCH CLUSTERS
+    # ========================================
 
-    hospital_church_clusters___hospital_points___n100_hospital = (
+    hospital_church_clusters___hospital_points___n100_building = (
         file_manager.generate_file_name_gdb(
             script_source_name=hospital_church_clusters,
             description="hospital_points",
         )
     )
 
-    hospital_church_clusters___church_points___n100_hospital = (
+    hospital_church_clusters___church_points___n100_building = (
         file_manager.generate_file_name_gdb(
             script_source_name=hospital_church_clusters,
             description="church_points",
@@ -620,14 +621,75 @@ class Building_N100(Enum):
         )
     )
 
+    point_propogate_displacement___points_after_propogate_displacement___n100_building = file_manager.generate_file_name_gdb(
+        script_source_name=point_propogate_displacement,
+        description="points_after_propogate_displacement",
+    )
+
     # ========================================
-    #                              LAST POINT REMOVAL
+    #                              POINT CLEANUP
     # ========================================
 
-    last_point_removal___water_features___n100_building = (
+    point_cleanup___water_features___n100_building = (
         file_manager.generate_file_name_gdb(
-            script_source_name=point_propogate_displacement,
+            script_source_name=point_cleanup,
             description="water_features",
+        )
+    )
+
+    point_cleanup___points_that_intersect_water_features___n100_building = (
+        file_manager.generate_file_name_gdb(
+            script_source_name=point_cleanup,
+            description="points_that_intersect_water_features",
+        )
+    )
+
+    point_cleanup___points_not_intersecting_buffer___n100_building = (
+        file_manager.generate_file_name_gdb(
+            script_source_name=point_cleanup,
+            description="points_not_intersecting_buffer",
+        )
+    )
+
+    point_cleanup___building_points_to_squares___n100_building = (
+        file_manager.generate_file_name_gdb(
+            script_source_name=point_cleanup,
+            description="building_points_to_squares",
+        )
+    )
+
+    point_cleanup___points_50m_from_building_polygons___n100_building = (
+        file_manager.generate_file_name_gdb(
+            script_source_name=point_cleanup,
+            description="points_50m_from_building_polygons",
+        )
+    )
+
+    point_cleanup___polygons_not_too_close_to_squares___n100_building = (
+        file_manager.generate_file_name_gdb(
+            script_source_name=point_cleanup,
+            description="polygons_not_too_close_to_squares",
+        )
+    )
+
+    point_cleanup___polygons_too_close_to_squares___n100_building = (
+        file_manager.generate_file_name_gdb(
+            script_source_name=point_cleanup,
+            description="polygons_too_close_to_squares",
+        )
+    )
+
+    point_cleanup___building_points_final___n100_building = (
+        file_manager.generate_file_name_gdb(
+            script_source_name=point_cleanup,
+            description="building_points_final",
+        )
+    )
+
+    point_cleanup___building_points_merged_final__n100_building = (
+        file_manager.generate_file_name_gdb(
+            script_source_name=point_cleanup,
+            description="building_points_merged_final",
         )
     )
 
@@ -952,7 +1014,7 @@ class Building_N100(Enum):
         )
     )
 
-    resolve_building_conflicts__building_points_RBC_result_2__n100 = (
+    resolve_building_conflicts__building_points_RBC_final__n100 = (
         file_manager.generate_file_name_gdb(
             script_source_name=resolve_building_conflicts_points,
             description="building_points_RBC_result_2",
@@ -966,7 +1028,7 @@ class Building_N100(Enum):
         )
     )
 
-    resolve_building_conflicts__building_points_RBC_result_2__n100_lyrx = (
+    resolve_building_conflicts__building_points_RBC_final__n100_lyrx = (
         file_manager.generate_file_name_lyrx(
             script_source_name=resolve_building_conflicts_points,
             description="building_points_RBC_result_2",
