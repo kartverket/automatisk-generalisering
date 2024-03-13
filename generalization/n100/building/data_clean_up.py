@@ -11,11 +11,11 @@ from file_manager.n100.file_manager_buildings import Building_N100
 # Main function
 def main():
     environment_setup.main()
-    clean_up_fields_delete()
+    delete_uneccessary_fields()
 
 
 @timing_decorator
-def clean_up_fields_delete():
+def delete_uneccessary_fields():
     # Provide the path to your feature class
     feature_class_to_clean_up = (
         Building_N100.polygon_to_point___polygons_to_point___n100_building.value
