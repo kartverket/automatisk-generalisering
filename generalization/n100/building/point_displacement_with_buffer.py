@@ -309,7 +309,7 @@ def creating_road_buffer():
             6: (30, 30),
             7: (45, 45),
             8: (45, 45),
-            9: (53, 45),
+            9: (55, 65),
         }
 
         print("Polygon Processor started...")
