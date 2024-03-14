@@ -33,7 +33,6 @@ def main():
 
 @timing_decorator
 def propagate_displacement_building_points():
-    print("Point propogate displacement ...")
     """
     Summary:
         Makes sure that the building points are moved correspondingly to the displacement the road features have been moved during its generalization.
@@ -42,6 +41,8 @@ def propagate_displacement_building_points():
         - It copies the original dataset to prevent overwriting the data since PropagateDisplacement modifiy the input data.
         - When using Propagate Displacement, the adjustment style chosen for this process is "SOLID" to prevent the change of shape of input polygons (though not relevant for building points).
     """
+
+    print("Point propogate displacement ...")
 
     arcpy.management.Copy(
         in_data=Building_N100.calculate_field_values___points_pre_resolve_building_conflicts___n100_building.value,

@@ -93,8 +93,8 @@ class PolygonProcessor:
         # Constants and configurations
         self.IN_MEMORY_WORKSPACE = config.default_project_workspace
         self.TEMPORARY_FEATURE_CLASS_NAME = "temporary_polygon_feature_class"
-        self.BATCH_PERCENTAGE = 0.5
-        self.NUMBER_OF_SUBSETS = 1
+        self.BATCH_PERCENTAGE = 0.02
+        self.NUMBER_OF_SUBSETS = 5
         self.PERCENTAGE_OF_CPU_CORES = 1.0
 
     # Utility Functions
