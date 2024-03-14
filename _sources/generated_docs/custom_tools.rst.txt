@@ -28,6 +28,14 @@ custom\_tools.geometry\_tools module
    :undoc-members:
    :show-inheritance:
 
+custom\_tools.gpt\_file\_path\_masker module
+--------------------------------------------
+
+.. automodule:: custom_tools.gpt_file_path_masker
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
 custom\_tools.partition\_iterator module
 ----------------------------------------
 
