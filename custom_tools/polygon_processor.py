@@ -90,14 +90,30 @@ class PolygonProcessor:
         # Delay initialization of attributes that depend on external resources
         self.spatial_reference_system = None
         self.origin_id_field = None
+
         # Constants and configurations
         self.IN_MEMORY_WORKSPACE = config.default_project_workspace
         self.TEMPORARY_FEATURE_CLASS_NAME = "temporary_polygon_feature_class"
-        self.BATCH_PERCENTAGE = 0.02
-        self.NUMBER_OF_SUBSETS = 5
-        self.PERCENTAGE_OF_CPU_CORES = 1.0
+        self.BATCH_PERCENTAGE = None
+        self.NUMBER_OF_SUBSETS = None
+        self.PERCENTAGE_OF_CPU_CORES = 1
+        self.calculate_batch_params(input_building_points)
 
     # Utility Functions
+    def calculate_batch_params(self, input_building_points):
+        total_data_points = int(
+            arcpy.GetCount_management(input_building_points).getOutput(0)
+        )
+        if total_data_points < 1000:
+            self.BATCH_PERCENTAGE = 1
+            self.NUMBER_OF_SUBSETS = 1
+        elif 1000 <= total_data_points <= 10000:
+            self.BATCH_PERCENTAGE = 0.1
+            self.NUMBER_OF_SUBSETS = 3
+        else:
+            self.BATCH_PERCENTAGE = 0.02
+            self.NUMBER_OF_SUBSETS = 5
+
     def generate_unique_field_name(self, dataset, base_name):
         existing_field_names = [field.name for field in arcpy.ListFields(dataset)]
         unique_name = base_name
@@ -292,8 +308,9 @@ class PolygonProcessor:
 
 
 if __name__ == "__main__":
-    # Example parameters - replace these with actual values suitable for your test
+    environment_setup.main()
 
+    # Example parameters - replace these with actual values suitable for your test
     polygon_processor = PolygonProcessor(
         input_building_points=Building_N100.calculate_field_values___points_pre_resolve_building_conflicts___n100_building.value,
         output_polygon_feature_class=Building_N100.building_point_buffer_displacement__iteration_points_to_square_polygons__n100.value,
