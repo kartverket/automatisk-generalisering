@@ -4,7 +4,7 @@ import os
 
 from input_data import input_n100
 from file_manager.n100.file_manager_buildings import Building_N100
-from constants.n100_constants import N100Symbology
+from constants.n100_constants import N100_Symbology, N100_SQLResources
 
 from custom_tools.polygon_processor import PolygonProcessor
 from env_setup import environment_setup
@@ -215,29 +215,6 @@ def creating_road_buffer():
         - The final output contains the buffered features with gradually displaced building points to prevent overlap with road features.
 
     """
-    # Define the SQL queries and their corresponding buffer widths
-    sql_queries = {
-        "MOTORVEGTYPE = 'Motorveg'": 42.5,
-        """ 
-        SUBTYPEKODE = 3 
-        Or MOTORVEGTYPE = 'Motortrafikkveg' 
-        Or (SUBTYPEKODE = 2 And MOTORVEGTYPE = 'Motortrafikkveg') 
-        Or (SUBTYPEKODE = 2 And MOTORVEGTYPE = 'Ikke motorveg') 
-        Or (SUBTYPEKODE = 4 And MOTORVEGTYPE = 'Ikke motorveg') 
-        """: 22.5,
-        """
-        SUBTYPEKODE = 1
-        Or SUBTYPEKODE = 5
-        Or SUBTYPEKODE = 6
-        Or SUBTYPEKODE = 9
-        """: 20,
-        """
-        SUBTYPEKODE = 7
-        Or SUBTYPEKODE = 8
-        Or SUBTYPEKODE = 10
-        Or SUBTYPEKODE =11
-        """: 7.5,
-    }
 
     feature_selection = (
         Building_N100.building_point_buffer_displacement__selection_roads__n100.value
@@ -272,7 +249,10 @@ def creating_road_buffer():
 
         # Create buffers for each road selection at the current factor
         counter = 1
-        for sql_query, original_width in sql_queries.items():
+        for (
+            sql_query,
+            original_width,
+        ) in N100_SQLResources.road_symbology_size_sql_selection.value.items():
             selection_output_name = f"{feature_selection}_selection_{counter}"
             custom_arcpy.select_attribute_and_make_feature_layer(
                 input_layer=Building_N100.building_point_buffer_displacement__roads_study_area__n100.value,
@@ -305,7 +285,7 @@ def creating_road_buffer():
         polygon_processor = PolygonProcessor(
             input_building_points=current_building_points,
             output_polygon_feature_class=f"{Building_N100.building_point_buffer_displacement__iteration_points_to_square_polygons__n100.value}_{counter}",
-            building_symbol_dimensions=N100Symbology.building_symbol_dimensions.value,
+            building_symbol_dimensions=N100_Symbology.building_symbol_dimensions.value,
             symbol_field_name="symbol_val",
             index_field_name="OBJECTID",
         )

@@ -7,7 +7,7 @@ import input_data.input_n50
 from custom_tools import custom_arcpy
 from custom_tools.polygon_processor import PolygonProcessor
 from input_data import input_symbology
-from constants.n100_constants import N100Symbology
+from constants.n100_constants import N100_Symbology, N100_SQLResources
 
 # Importing environment settings
 from env_setup import environment_setup
@@ -205,36 +205,12 @@ def resolve_building_conflict_building_polygon():
         field_type="LONG",
     )
 
-    # Calculating symbol val
-    code_block = (
-        "def determineVal(nbr):\n"
-        "    if nbr == 970:\n"
-        "        return 1\n"
-        "    elif nbr == 719:\n"
-        "        return 2\n"
-        "    elif nbr == 671:\n"
-        "        return 3\n"
-        "    elif nbr in [111,112,121,122,131,133,135,136,141,142,143,144,145,146,159,161,162,171,199,524]:\n"
-        "        return 4\n"
-        "    elif nbr in [113,123,124,163]:\n"
-        "        return 5\n"
-        "    elif nbr in [151,152,211,212,214,221,231,232,233,243,244,311,312,313,321,322,323,330,411,412,415,416,4131,441,521,522,523,529,532,621,641,642,643,651,652,653,661,662,672,673,674,675,731,821,822,319,329,449,219,659,239,439,223,611,649,229,419,429,623,655,664,679,824]:\n"
-        "        return 6\n"
-        "    elif nbr in [531,612,613,614,615,616,619,629,819,829,669,533,539]:\n"
-        "        return 7\n"
-        "    elif nbr in [721,722,723,732,739,729]:\n"
-        "        return 8\n"
-        "    elif nbr in [172,181,182,183,193,216,241,245,248,654,999,249,840]:\n"
-        "        return 9\n"
-        "    else:\n"
-        "        return -99\n"
-    )
     arcpy.CalculateField_management(
         in_table=Building_N100.polygon_propogate_displacement___hospital_church_points___n100_building.value,
         field="symbol_val",
         expression="determineVal(!BYGGTYP_NBR!)",
         expression_type="PYTHON3",
-        code_block=code_block,
+        code_block=N100_SQLResources.nbr_symbol_val_code_block.value,
     )
     # Polygon prosessor
     symbol_field_name = "symbol_val"
@@ -244,7 +220,7 @@ def resolve_building_conflict_building_polygon():
     polygon_process = PolygonProcessor(
         Building_N100.polygon_propogate_displacement___hospital_church_points___n100_building.value,  # input
         Building_N100.polygon_propogate_displacement___hospital_church_squares___n100_building.value,  # output
-        N100Symbology.building_symbol_dimensions.value,
+        N100_Symbology.building_symbol_dimensions.value,
         symbol_field_name,
         index_field_name,
     )
@@ -311,29 +287,6 @@ def creating_road_buffer():
     """
 
     print("Creating road buffer ...")
-    # Dictionary with SQL queries and their corresponding buffer widths
-    sql_queries = {
-        "MOTORVEGTYPE = 'Motorveg'": 43,
-        """ 
-        SUBTYPEKODE = 3 
-        Or MOTORVEGTYPE = 'Motortrafikkveg' 
-        Or (SUBTYPEKODE = 2 And MOTORVEGTYPE = 'Motortrafikkveg') 
-        Or (SUBTYPEKODE = 2 And MOTORVEGTYPE = 'Ikke motorveg') 
-        Or (SUBTYPEKODE = 4 And MOTORVEGTYPE = 'Ikke motorveg') 
-        """: 23,
-        """
-        SUBTYPEKODE = 1
-        Or SUBTYPEKODE = 5
-        Or SUBTYPEKODE = 6
-        Or SUBTYPEKODE = 9
-        """: 20,
-        """
-        SUBTYPEKODE = 7
-        Or SUBTYPEKODE = 8
-        Or SUBTYPEKODE = 10
-        Or SUBTYPEKODE =11
-        """: 8,
-    }
 
     selection_name_base = (
         Building_N100.polygon_propogate_displacement___road_buffer_selection___n100_building.value
@@ -349,7 +302,10 @@ def creating_road_buffer():
     counter = 1
 
     # Loop through the dictionary (Key: SQL query and Value: width) to create buffers around the different roads
-    for sql_query, original_width in sql_queries.items():
+    for (
+        sql_query,
+        original_width,
+    ) in N100_SQLResources.road_symbology_size_sql_selection.value.items():
         selection_output_name = f"{selection_name_base}_{counter}"
         buffer_width = original_width + 15
         buffer_output_name = f"{buffer_name_base}_{buffer_width}m_{counter}"
