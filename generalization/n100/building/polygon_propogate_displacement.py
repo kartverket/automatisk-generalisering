@@ -60,6 +60,9 @@ def main():
 
         8. `merging_invisible_intersecting_points`:
             Combines points derived from invisible and intersecting building polygons.
+
+        9. `small_building_polygons_to_points`:
+            Find
     """
 
     environment_setup.main()

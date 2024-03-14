@@ -204,8 +204,6 @@ def adding_matrikkel_as_points():
         in_features=Building_N100.data_preparation___urban_area_selection_n100___n100_building.value,
         out_feature_class=Building_N100.data_preparation___urban_area_selection_n100_buffer___n100_building.value,
         buffer_distance_or_field="50 Meters",
-        dissolve_option="NONE",
-        dissolve_field=None,
         method="PLANAR",
     )
 

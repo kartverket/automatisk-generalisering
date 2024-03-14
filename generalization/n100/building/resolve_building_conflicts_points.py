@@ -130,7 +130,7 @@ def resolve_building_conflicts():
         in_buildings=Building_N100.apply_symbology__drawn_polygon_selection__n100_lyrx.value,
         invisibility_field="invisibility",
         in_barriers=input_barriers_1,
-        building_gap="15 meters",
+        building_gap="45 meters",
         minimum_size="1 meters",
         hierarchy_field="hierarchy",
     )
@@ -170,7 +170,7 @@ def resolve_building_conflicts():
         in_buildings=Building_N100.resolve_building_conflicts__building_points_RBC_result_1__n100_lyrx.value,
         invisibility_field="invisibility",
         in_barriers=input_barriers_1,
-        building_gap="15 meters",
+        building_gap="45 meters",
         minimum_size="1 meters",
         hierarchy_field="hierarchy",
     )
@@ -178,13 +178,13 @@ def resolve_building_conflicts():
     custom_arcpy.select_attribute_and_make_permanent_feature(
         input_layer=Building_N100.resolve_building_conflicts__building_points_RBC_result_1__n100.value,
         expression=sql_expression_resolve_building_conflicts,
-        output_name=Building_N100.resolve_building_conflicts__building_points_RBC_result_2__n100.value,
+        output_name=Building_N100.resolve_building_conflicts__building_points_RBC_final__n100.value,
     )
 
     custom_arcpy.apply_symbology(
-        input_layer=Building_N100.resolve_building_conflicts__building_points_RBC_result_2__n100.value,
+        input_layer=Building_N100.resolve_building_conflicts__building_points_RBC_final__n100.value,
         in_symbology_layer=SymbologyN100.bygningspunkt.value,
-        output_name=Building_N100.resolve_building_conflicts__building_points_RBC_result_2__n100_lyrx.value,
+        output_name=Building_N100.resolve_building_conflicts__building_points_RBC_final__n100_lyrx.value,
     )
 
 
