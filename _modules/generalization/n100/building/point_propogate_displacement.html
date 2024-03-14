@@ -117,7 +117,6 @@
 <a class="viewcode-back" href="../../../../generated_docs/generalization.n100.building.html#generalization.n100.building.point_propogate_displacement.propagate_displacement_building_points">[docs]</a>
 <span class="nd">@timing_decorator</span>
 <span class="k">def</span> <span class="nf">propagate_displacement_building_points</span><span class="p">():</span>
-    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Point propogate displacement ...&quot;</span><span class="p">)</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Summary:</span>
 <span class="sd">        Makes sure that the building points are moved correspondingly to the displacement the road features have been moved during its generalization.</span>
@@ -126,6 +125,8 @@
 <span class="sd">        - It copies the original dataset to prevent overwriting the data since PropagateDisplacement modifiy the input data.</span>
 <span class="sd">        - When using Propagate Displacement, the adjustment style chosen for this process is &quot;SOLID&quot; to prevent the change of shape of input polygons (though not relevant for building points).</span>
 <span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Point propogate displacement ...&quot;</span><span class="p">)</span>
 
     <span class="n">arcpy</span><span class="o">.</span><span class="n">management</span><span class="o">.</span><span class="n">Copy</span><span class="p">(</span>
         <span class="n">in_data</span><span class="o">=</span><span class="n">Building_N100</span><span class="o">.</span><span class="n">calculate_field_values___points_pre_resolve_building_conflicts___n100_building</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
