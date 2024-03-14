@@ -117,6 +117,7 @@
 <a class="viewcode-back" href="../../../../generated_docs/generalization.n100.building.html#generalization.n100.building.point_propogate_displacement.propagate_displacement_building_points">[docs]</a>
 <span class="nd">@timing_decorator</span>
 <span class="k">def</span> <span class="nf">propagate_displacement_building_points</span><span class="p">():</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Point propogate displacement ...&quot;</span><span class="p">)</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Summary:</span>
 <span class="sd">        Makes sure that the building points are moved correspondingly to the displacement the road features have been moved during its generalization.</span>
@@ -135,6 +136,11 @@
         <span class="n">in_features</span><span class="o">=</span><span class="n">Building_N100</span><span class="o">.</span><span class="n">calculate_field_values___points_pre_resolve_building_conflicts___n100_building</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
         <span class="n">displacement_features</span><span class="o">=</span><span class="n">config</span><span class="o">.</span><span class="n">displacement_feature</span><span class="p">,</span>
         <span class="n">adjustment_style</span><span class="o">=</span><span class="s2">&quot;SOLID&quot;</span><span class="p">,</span>
+    <span class="p">)</span>
+
+    <span class="n">arcpy</span><span class="o">.</span><span class="n">management</span><span class="o">.</span><span class="n">Copy</span><span class="p">(</span>
+        <span class="n">in_data</span><span class="o">=</span><span class="n">Building_N100</span><span class="o">.</span><span class="n">calculate_field_values___points_pre_resolve_building_conflicts___n100_building</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
+        <span class="n">out_data</span><span class="o">=</span><span class="n">Building_N100</span><span class="o">.</span><span class="n">point_propogate_displacement___points_after_propogate_displacement___n100_building</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
     <span class="p">)</span></div>
 
 

@@ -60,7 +60,7 @@
 </li>
 <li class="toctree-l2"><a class="reference internal" href="#module-generalization.n100.building.data_clean_up">generalization.n100.building.data_clean_up module</a><ul>
 <li class="toctree-l3"><a class="reference internal" href="#generalization.n100.building.data_clean_up.main"><code class="docutils literal notranslate"><span class="pre">main()</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="#generalization.n100.building.data_clean_up.clean_up_fields_delete"><code class="docutils literal notranslate"><span class="pre">clean_up_fields_delete()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#generalization.n100.building.data_clean_up.delete_uneccessary_fields"><code class="docutils literal notranslate"><span class="pre">delete_uneccessary_fields()</span></code></a></li>
 </ul>
 </li>
 <li class="toctree-l2"><a class="reference internal" href="#module-generalization.n100.building.data_preparation">generalization.n100.building.data_preparation module</a><ul>
@@ -79,10 +79,7 @@
 <li class="toctree-l3"><a class="reference internal" href="#generalization.n100.building.hospital_church_clusters.reducing_clusters"><code class="docutils literal notranslate"><span class="pre">reducing_clusters()</span></code></a></li>
 </ul>
 </li>
-<li class="toctree-l2"><a class="reference internal" href="#module-generalization.n100.building.last_point_removal">generalization.n100.building.last_point_removal module</a><ul>
-<li class="toctree-l3"><a class="reference internal" href="#generalization.n100.building.last_point_removal.removing_building_points_in_water_features"><code class="docutils literal notranslate"><span class="pre">removing_building_points_in_water_features()</span></code></a></li>
-</ul>
-</li>
+<li class="toctree-l2"><a class="reference internal" href="#generalization-n100-building-point-cleanup-module">generalization.n100.building.point_cleanup module</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#generalization-n100-building-point-displacement-with-buffer-module">generalization.n100.building.point_displacement_with_buffer module</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#module-generalization.n100.building.point_propogate_displacement">generalization.n100.building.point_propogate_displacement module</a><ul>
 <li class="toctree-l3"><a class="reference internal" href="#generalization.n100.building.point_propogate_displacement.main"><code class="docutils literal notranslate"><span class="pre">main()</span></code></a></li>
@@ -206,8 +203,8 @@ Ensures that building types which should not be delivered are correctly reclassi
 <dd></dd></dl>
 
 <dl class="py function">
-<dt class="sig sig-object py" id="generalization.n100.building.data_clean_up.clean_up_fields_delete">
-<span class="sig-prename descclassname"><span class="pre">generalization.n100.building.data_clean_up.</span></span><span class="sig-name descname"><span class="pre">clean_up_fields_delete</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/generalization/n100/building/data_clean_up.html#clean_up_fields_delete"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#generalization.n100.building.data_clean_up.clean_up_fields_delete" title="Link to this definition"></a></dt>
+<dt class="sig sig-object py" id="generalization.n100.building.data_clean_up.delete_uneccessary_fields">
+<span class="sig-prename descclassname"><span class="pre">generalization.n100.building.data_clean_up.</span></span><span class="sig-name descname"><span class="pre">delete_uneccessary_fields</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/generalization/n100/building/data_clean_up.html#delete_uneccessary_fields"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#generalization.n100.building.data_clean_up.delete_uneccessary_fields" title="Link to this definition"></a></dt>
 <dd></dd></dl>
 
 </section>
@@ -431,13 +428,8 @@ A cluster is defined as two or more points that are closer together than 200 met
 </dd></dl>
 
 </section>
-<section id="module-generalization.n100.building.last_point_removal">
-<span id="generalization-n100-building-last-point-removal-module"></span><h2>generalization.n100.building.last_point_removal module<a class="headerlink" href="#module-generalization.n100.building.last_point_removal" title="Link to this heading"></a></h2>
-<dl class="py function">
-<dt class="sig sig-object py" id="generalization.n100.building.last_point_removal.removing_building_points_in_water_features">
-<span class="sig-prename descclassname"><span class="pre">generalization.n100.building.last_point_removal.</span></span><span class="sig-name descname"><span class="pre">removing_building_points_in_water_features</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/generalization/n100/building/last_point_removal.html#removing_building_points_in_water_features"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#generalization.n100.building.last_point_removal.removing_building_points_in_water_features" title="Link to this definition"></a></dt>
-<dd></dd></dl>
-
+<section id="generalization-n100-building-point-cleanup-module">
+<h2>generalization.n100.building.point_cleanup module<a class="headerlink" href="#generalization-n100-building-point-cleanup-module" title="Link to this heading"></a></h2>
 </section>
 <section id="generalization-n100-building-point-displacement-with-buffer-module">
 <h2>generalization.n100.building.point_displacement_with_buffer module<a class="headerlink" href="#generalization-n100-building-point-displacement-with-buffer-module" title="Link to this heading"></a></h2>
@@ -469,16 +461,7 @@ A cluster is defined as two or more points that are closer together than 200 met
 <dl class="py function">
 <dt class="sig sig-object py" id="generalization.n100.building.point_propogate_displacement.propagate_displacement_building_points">
 <span class="sig-prename descclassname"><span class="pre">generalization.n100.building.point_propogate_displacement.</span></span><span class="sig-name descname"><span class="pre">propagate_displacement_building_points</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/generalization/n100/building/point_propogate_displacement.html#propagate_displacement_building_points"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#generalization.n100.building.point_propogate_displacement.propagate_displacement_building_points" title="Link to this definition"></a></dt>
-<dd><dl class="simple">
-<dt>Summary:</dt><dd><p>Makes sure that the building points are moved correspondingly to the displacement the road features have been moved during its generalization.</p>
-</dd>
-<dt>Details:</dt><dd><ul class="simple">
-<li><p>It copies the original dataset to prevent overwriting the data since PropagateDisplacement modifiy the input data.</p></li>
-<li><p>When using Propagate Displacement, the adjustment style chosen for this process is “SOLID” to prevent the change of shape of input polygons (though not relevant for building points).</p></li>
-</ul>
-</dd>
-</dl>
-</dd></dl>
+<dd></dd></dl>
 
 </section>
 <section id="generalization-n100-building-points-to-squares-module">

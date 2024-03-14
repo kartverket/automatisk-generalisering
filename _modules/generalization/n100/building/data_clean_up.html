@@ -92,14 +92,14 @@
 <a class="viewcode-back" href="../../../../generated_docs/generalization.n100.building.html#generalization.n100.building.data_clean_up.main">[docs]</a>
 <span class="k">def</span> <span class="nf">main</span><span class="p">():</span>
     <span class="n">environment_setup</span><span class="o">.</span><span class="n">main</span><span class="p">()</span>
-    <span class="n">clean_up_fields_delete</span><span class="p">()</span></div>
+    <span class="n">delete_uneccessary_fields</span><span class="p">()</span></div>
 
 
 
-<div class="viewcode-block" id="clean_up_fields_delete">
-<a class="viewcode-back" href="../../../../generated_docs/generalization.n100.building.html#generalization.n100.building.data_clean_up.clean_up_fields_delete">[docs]</a>
+<div class="viewcode-block" id="delete_uneccessary_fields">
+<a class="viewcode-back" href="../../../../generated_docs/generalization.n100.building.html#generalization.n100.building.data_clean_up.delete_uneccessary_fields">[docs]</a>
 <span class="nd">@timing_decorator</span>
-<span class="k">def</span> <span class="nf">clean_up_fields_delete</span><span class="p">():</span>
+<span class="k">def</span> <span class="nf">delete_uneccessary_fields</span><span class="p">():</span>
     <span class="c1"># Provide the path to your feature class</span>
     <span class="n">feature_class_to_clean_up</span> <span class="o">=</span> <span class="p">(</span>
         <span class="n">Building_N100</span><span class="o">.</span><span class="n">polygon_to_point___polygons_to_point___n100_building</span><span class="o">.</span><span class="n">value</span>
