@@ -10,6 +10,7 @@ from file_manager.n100.file_manager_buildings import Building_N100
 from custom_tools import custom_arcpy
 from env_setup import environment_setup
 from custom_tools.polygon_processor import PolygonProcessor
+from constants.n100_constants import N100Symbology
 
 
 def main():
@@ -58,27 +59,14 @@ def polygons_too_close_to_building_points():
     )
 
     # Polygon prosessor to transform building points to squares, representing the points symbology.
-    building_symbol_dimensions = {
-        1: (145, 145),
-        2: (145, 145),
-        3: (195, 145),
-        4: (40, 40),
-        5: (80, 80),
-        6: (30, 30),
-        7: (45, 45),
-        8: (45, 45),
-        9: (53, 45),
-    }
-    symbol_field_name = "symbol_val"
-    index_field_name = "OBJECTID"
 
     print("Polygon prosessor...")
     polygon_process = PolygonProcessor(
-        Building_N100.point_cleanup___points_50m_from_building_polygons___n100_building.value,  # input
-        Building_N100.point_cleanup___building_points_to_squares___n100_building.value,  # output
-        building_symbol_dimensions,
-        symbol_field_name,
-        index_field_name,
+        input_building_points=Building_N100.point_cleanup___points_50m_from_building_polygons___n100_building.value,  # input
+        output_polygon_feature_class=Building_N100.point_cleanup___building_points_to_squares___n100_building.value,  # output
+        building_symbol_dimensions=N100Symbology.building_symbol_dimensions.value,
+        symbol_field_name="symbol_val",
+        index_field_name="OBJECTID",
     )
     polygon_process.run()
 
