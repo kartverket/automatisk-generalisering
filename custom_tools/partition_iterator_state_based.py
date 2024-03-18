@@ -1,11 +1,13 @@
 import arcpy
 import os
 import random
-from enum import Enum
+import json
 
 import env_setup.global_config
 from env_setup import environment_setup
 from custom_tools import custom_arcpy
+from custom_tools.timing_decorator import timing_decorator
+
 from input_data import input_n50
 from file_manager.n100.file_manager_buildings import Building_N100
 
@@ -185,6 +187,10 @@ class PartitionIterator:
                         type_info="dummy",
                         path=dummy_feature_path,
                     )
+
+    def write_data_to_json(self, file_name):
+        with open(file_name, "w") as file:
+            json.dump(self.data, file, indent=4)
 
     def pre_iteration(self):
         """
@@ -422,12 +428,7 @@ class PartitionIterator:
         max_object_id = self.pre_iteration()
 
         self.delete_existing_outputs()
-        self.create_dummy_features(
-            types_to_include=[
-                "input",
-                "context",
-            ]
-        )
+        self.create_dummy_features(types_to_include=["input", "context"])
         for alias in aliases:
             self.delete_iteration_files(*self.iteration_file_paths)
         self.iteration_file_paths.clear()
@@ -491,11 +492,20 @@ class PartitionIterator:
             #     self.delete_iteration_files(*self.iteration_file_paths)
             # print(f"Finished iteration {object_id}")
 
+    @timing_decorator
     def run(self):
         self.prepare_input_data()
         self.create_cartographic_partitions()
 
+        self.write_data_to_json(
+            Building_N100.iteration___json_documentation_before___building_n100.value
+        )
+
         self.partition_iteration()
+
+        self.write_data_to_json(
+            Building_N100.iteration___json_documentation_after___building_n100.value
+        )
 
 
 if __name__ == "__main__":
@@ -510,7 +520,7 @@ if __name__ == "__main__":
             Building_N100.data_preparation___matrikkel_bygningspunkt___n100_building.value,
         ],
         building_polygons: [
-            "context",
+            "input",
             input_n50.Grunnriss,
         ],
     }
@@ -520,10 +530,10 @@ if __name__ == "__main__":
             "input",
             Building_N100.iteration__partition_iterator_final_output_points__n100.value,
         ],
-        # building_polygons: [
-        #     "output",
-        #     Building_N100.iteration__partition_iterator_final_output_polygons__n100.value,
-        # ],
+        building_polygons: [
+            "input",
+            Building_N100.iteration__partition_iterator_final_output_polygons__n100.value,
+        ],
     }
 
     # Instantiate PartitionIterator with necessary parameters
