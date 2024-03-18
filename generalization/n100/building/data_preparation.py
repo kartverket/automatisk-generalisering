@@ -245,21 +245,26 @@ def selecting_grunnriss_for_generalization():
         This function selects building polygons (grunnriss) to be generalized. Smaller polygons and churches or hospitals are excluded, transformed into points, and sent to building point generalization.
 
     Details:
-        - Reclassify hospitals and churches from polygons to 'NBR 729' (other buildings).
-        - Select grunnriss that are not churches or hospitals using inverted selection.
-        - Select grunnriss that are large enough based on a minimum polygon size of 1500 square meters.
+        - Reclassify hospitals and churches polygons to 'NBR 729' (other buildings).
+        - Select grunnriss that are large enough based on a minimum polygon size of 2500 square meters.
         - Transform small grunnriss features into points by calculating centroids.
-        - Select grunnriss features that represent churches and hospitals.
-        - Transform selected church and hospital grunnriss features into points by calculating centroids.
+
+
 
     Parameters:
-        - Minimum Polygon Size: The minimum size of polygons, in square meters. It currently at **'1500 Meters'**.
+        - Minimum Polygon Size: The minimum size of polygons, in square meters. It currently at **'2500 Meters'**.
     """
 
-    # Reclassify the sykehus from grunnriss to another NBR value
-    code_block_hospital = (
+    # Copy the input data to not modify the original fields.
+    arcpy.management.Copy(
+        in_data=input_n50.Grunnriss,
+        out_data=Building_N100.data_preparation___grunnriss_copy___n100_building.value,
+    )
+
+    # Reclassify the church and hospitals from grunnriss to another NBR value
+    code_block_church_hospital = (
         "def hospital_nbr(nbr):\n"
-        "    mapping = {970: 729, 719: 729}\n"
+        "    mapping = {970: 729, 719: 729, 671: 729}\n"
         "    return mapping.get(nbr, nbr)"
     )
 
@@ -269,35 +274,22 @@ def selecting_grunnriss_for_generalization():
         field="BYGGTYP_NBR",
         expression="hospital_nbr(!BYGGTYP_NBR!)",
         expression_type="PYTHON3",
-        code_block=code_block_hospital,
-    )
-
-    # Expression to be able to select churchs and hospitals
-    sql_nrb_code_sykehus = "BYGGTYP_NBR IN (970, 719)"
-    sql_nbr_code_kirke = "BYGGTYP_NBR IN (671)"
-
-    # Selecting grunnriss which are not churches or hospitals using inverted selection
-    custom_arcpy.select_attribute_and_make_permanent_feature(
-        input_layer=input_n50.Grunnriss,
-        expression=sql_nbr_code_kirke,
-        output_name=Building_N100.data_preparation___selected_polygon_not_church___n100_building.value,
-        selection_type=custom_arcpy.SelectionType.NEW_SELECTION,
-        inverted=True,
+        code_block=code_block_church_hospital,
     )
 
     # Selecting grunnriss which are large enough
-    grunnriss_minimum_size = 1500
+    grunnriss_minimum_size = 2500
     sql_expression_too_small_grunnriss = f"Shape_Area < {grunnriss_minimum_size}"
     sql_expression_correct_size_grunnriss = f"Shape_Area >= {grunnriss_minimum_size}"
 
     custom_arcpy.select_attribute_and_make_permanent_feature(
-        input_layer=Building_N100.data_preparation___selected_polygon_not_church___n100_building.value,
+        input_layer=Building_N100.data_preparation___grunnriss_copy___n100_building.value,
         expression=sql_expression_correct_size_grunnriss,
         output_name=Building_N100.data_preparation___large_enough_polygon___n100_building.value,
     )
 
     custom_arcpy.select_attribute_and_make_feature_layer(
-        input_layer=Building_N100.data_preparation___selected_polygon_not_church___n100_building.value,
+        input_layer=Building_N100.data_preparation___grunnriss_copy___n100_building.value,
         expression=sql_expression_too_small_grunnriss,
         output_name=Building_N100.data_preparation___too_small_polygon___n100_building.value,
         selection_type=custom_arcpy.SelectionType.NEW_SELECTION,
@@ -308,42 +300,6 @@ def selecting_grunnriss_for_generalization():
         in_features=Building_N100.data_preparation___too_small_polygon___n100_building.value,
         out_feature_class=Building_N100.data_preparation___points_created_from_small_polygon___n100_building.value,
         point_location="CENTROID",
-    )
-
-    # Selecting grunnriss features not inverted based on sql expression above to select churches and hospitals
-    custom_arcpy.select_attribute_and_make_feature_layer(
-        input_layer=input_n50.Grunnriss,
-        expression=sql_nbr_code_kirke,
-        output_name=Building_N100.data_preparation___church_polygon___n100_building.value,
-    )
-
-    # Transforming selected churches and hospitals into points
-    arcpy.FeatureToPoint_management(
-        in_features=Building_N100.data_preparation___church_polygon___n100_building.value,
-        out_feature_class=Building_N100.data_preparation___church_points_from_polygon___n100_building.value,
-        point_location="CENTROID",
-    )
-
-
-###################################### FILL ################################################
-
-
-@timing_decorator
-def removing_overlapping_byggningspunkt_and_grunnriss_matrikkel():
-    custom_arcpy.select_location_and_make_permanent_feature(
-        input_layer=input_n50.BygningsPunkt,
-        overlap_type=custom_arcpy.OverlapType.WITHIN,
-        select_features=input_n50.Grunnriss,
-        output_name="NEEDS UPDATE",
-        inverted=True,
-    )
-
-    custom_arcpy.select_location_and_make_permanent_feature(
-        input_layer=Building_N100.data_preparation___matrikkel_bygningspunkt___n100_building.value,
-        overlap_type=custom_arcpy.OverlapType.WITHIN,
-        select_features=input_n50.Grunnriss,
-        output_name="NEEDS UPDATE",
-        inverted=True,
     )
 
 

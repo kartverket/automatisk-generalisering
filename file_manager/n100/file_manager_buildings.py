@@ -176,10 +176,10 @@ class Building_N100(Enum):
         )
     )
 
-    data_preparation___selected_polygon_not_church___n100_building = (
+    data_preparation___grunnriss_copy___n100_building = (
         file_manager.generate_file_name_gdb(
             script_source_name=data_preparation,
-            description="selected_polygon_not_church",
+            description="grunnriss_copy",
         )
     )
 
@@ -201,20 +201,6 @@ class Building_N100(Enum):
         file_manager.generate_file_name_gdb(
             script_source_name=data_preparation,
             description="points_created_from_small_polygon",
-        )
-    )
-
-    data_preparation___church_polygon___n100_building = (
-        file_manager.generate_file_name_gdb(
-            script_source_name=data_preparation,
-            description="church_polygon",
-        )
-    )
-
-    data_preparation___church_points_from_polygon___n100_building = (
-        file_manager.generate_file_name_gdb(
-            script_source_name=data_preparation,
-            description="church_points_from_polygon",
         )
     )
 
@@ -905,6 +891,20 @@ class Building_N100(Enum):
         file_manager.generate_file_name_gdb(
             script_source_name=iteration,
             description="building_polygon_base_partition_selection",
+        )
+    )
+    iteration___json_documentation_before___building_n100 = (
+        file_manager.generate_file_name_general_files(
+            script_source_name=iteration,
+            description="json_documentation_before",
+            file_type="json",
+        )
+    )
+    iteration___json_documentation_after___building_n100 = (
+        file_manager.generate_file_name_general_files(
+            script_source_name=iteration,
+            description="json_documentation_after",
+            file_type="json",
         )
     )
 
