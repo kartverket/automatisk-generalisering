@@ -41,9 +41,6 @@ def main():
     selecting_grunnriss_for_generalization()
 
 
-###################################### Preparing begrensningskurve (limitation curve) ################################################
-
-
 @timing_decorator
 def preparation_begrensningskurve():
     """
@@ -117,29 +114,10 @@ def preparation_begrensningskurve():
     print(
         f"Erased 2 completed {Building_N100.data_preparation___begrensningskurve_buffer_erase_2___n100_building.value} created"
     )
-    print("Need to apply better logic for rivers separatly at a later point")
+    print(
+        "######################### Need to apply better logic for rivers separatly at a later point #########################"
+    )
     # Needs to use a different logic for narrow rivers, and instead use the centerline and a small buffer around it which is added to the feature class
-
-    # Adding hierarchy and invisibility fields to the preparation_begrensningskurve__begrensningskurve_buffer_waterfeatures__n100 and setting them to 0
-    # Define field information
-    fields_to_add = [["hierarchy", "LONG"], ["invisibility", "LONG"]]
-    fields_to_calculate = [["hierarchy", "0"], ["invisibility", "0"]]
-
-    # Add fields
-    arcpy.management.AddFields(
-        in_table=Building_N100.data_preparation___begrensningskurve_buffer_erase_2___n100_building.value,
-        field_description=fields_to_add,
-    )
-
-    # Calculate fields
-    arcpy.management.CalculateFields(
-        in_table=Building_N100.data_preparation___begrensningskurve_buffer_erase_2___n100_building.value,
-        expression_type="PYTHON3",
-        fields=fields_to_calculate,
-    )
-
-
-###################################### Preparing roads ################################################
 
 
 @timing_decorator
@@ -160,9 +138,6 @@ def preperation_veg_sti():
         out_feature_class=Building_N100.data_preparation___unsplit_veg_sti___n100_building.value,
         dissolve_field=["subtypekode", "motorvegtype", "UTTEGNING"],
     )
-
-
-###################################### Adding matrikkel-points (cadastre) for areas which are no longer urban ################################################
 
 
 @timing_decorator
@@ -235,9 +210,6 @@ def adding_matrikkel_as_points():
     )
 
 
-###################################### Transforms hospitals and churches polygons to points ################################################
-
-
 @timing_decorator
 def selecting_grunnriss_for_generalization():
     """
@@ -286,7 +258,7 @@ def selecting_grunnriss_for_generalization():
     )
 
     # Selecting grunnriss which are large enough
-    grunnriss_minimum_size = 1500
+    grunnriss_minimum_size = 2500
     sql_expression_too_small_grunnriss = f"Shape_Area < {grunnriss_minimum_size}"
     sql_expression_correct_size_grunnriss = f"Shape_Area >= {grunnriss_minimum_size}"
 
@@ -322,28 +294,6 @@ def selecting_grunnriss_for_generalization():
         in_features=Building_N100.data_preparation___church_polygon___n100_building.value,
         out_feature_class=Building_N100.data_preparation___church_points_from_polygon___n100_building.value,
         point_location="CENTROID",
-    )
-
-
-###################################### FILL ################################################
-
-
-@timing_decorator
-def removing_overlapping_byggningspunkt_and_grunnriss_matrikkel():
-    custom_arcpy.select_location_and_make_permanent_feature(
-        input_layer=input_n50.BygningsPunkt,
-        overlap_type=custom_arcpy.OverlapType.WITHIN,
-        select_features=input_n50.Grunnriss,
-        output_name="NEEDS UPDATE",
-        inverted=True,
-    )
-
-    custom_arcpy.select_location_and_make_permanent_feature(
-        input_layer=Building_N100.data_preparation___matrikkel_bygningspunkt___n100_building.value,
-        overlap_type=custom_arcpy.OverlapType.WITHIN,
-        select_features=input_n50.Grunnriss,
-        output_name="NEEDS UPDATE",
-        inverted=True,
     )
 
 
