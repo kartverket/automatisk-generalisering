@@ -66,11 +66,9 @@ def aggregate_polygons():
             Building_N100.data_preparation___unsplit_veg_sti___n100_building.value
         ],
         out_table=f"{Building_N100.simplify_polygons___small_gaps___n100_building.value}_table",
-        aggregate_field="BYGGTYP_NBR",
     )
 
 
-# Simplifying building polygons
 @timing_decorator
 def simplify_buildings_1():
     """
