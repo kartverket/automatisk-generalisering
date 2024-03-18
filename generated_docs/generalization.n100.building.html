@@ -69,7 +69,6 @@
 <li class="toctree-l3"><a class="reference internal" href="#generalization.n100.building.data_preparation.preperation_veg_sti"><code class="docutils literal notranslate"><span class="pre">preperation_veg_sti()</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="#generalization.n100.building.data_preparation.adding_matrikkel_as_points"><code class="docutils literal notranslate"><span class="pre">adding_matrikkel_as_points()</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="#generalization.n100.building.data_preparation.selecting_grunnriss_for_generalization"><code class="docutils literal notranslate"><span class="pre">selecting_grunnriss_for_generalization()</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="#generalization.n100.building.data_preparation.removing_overlapping_byggningspunkt_and_grunnriss_matrikkel"><code class="docutils literal notranslate"><span class="pre">removing_overlapping_byggningspunkt_and_grunnriss_matrikkel()</span></code></a></li>
 </ul>
 </li>
 <li class="toctree-l2"><a class="reference internal" href="#module-generalization.n100.building.hospital_church_clusters">generalization.n100.building.hospital_church_clusters module</a><ul>
@@ -319,26 +318,18 @@ It also adds the required fields and values for future analysis.</p>
 <dt>Summary:</dt><dd><p>This function selects building polygons (grunnriss) to be generalized. Smaller polygons and churches or hospitals are excluded, transformed into points, and sent to building point generalization.</p>
 </dd>
 <dt>Details:</dt><dd><ul class="simple">
-<li><p>Reclassify hospitals and churches from polygons to ‘NBR 729’ (other buildings).</p></li>
-<li><p>Select grunnriss that are not churches or hospitals using inverted selection.</p></li>
-<li><p>Select grunnriss that are large enough based on a minimum polygon size of 1500 square meters.</p></li>
+<li><p>Reclassify hospitals and churches polygons to ‘NBR 729’ (other buildings).</p></li>
+<li><p>Select grunnriss that are large enough based on a minimum polygon size of 2500 square meters.</p></li>
 <li><p>Transform small grunnriss features into points by calculating centroids.</p></li>
-<li><p>Select grunnriss features that represent churches and hospitals.</p></li>
-<li><p>Transform selected church and hospital grunnriss features into points by calculating centroids.</p></li>
 </ul>
 </dd>
 </dl>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>Size</strong> (<em>- Minimum Polygon</em>) – The minimum size of polygons, in square meters. It currently at <strong>‘1500 Meters’</strong>.</p>
+<dd class="field-odd"><p><strong>Size</strong> (<em>- Minimum Polygon</em>) – The minimum size of polygons, in square meters. It currently at <strong>‘2500 Meters’</strong>.</p>
 </dd>
 </dl>
 </dd></dl>
-
-<dl class="py function">
-<dt class="sig sig-object py" id="generalization.n100.building.data_preparation.removing_overlapping_byggningspunkt_and_grunnriss_matrikkel">
-<span class="sig-prename descclassname"><span class="pre">generalization.n100.building.data_preparation.</span></span><span class="sig-name descname"><span class="pre">removing_overlapping_byggningspunkt_and_grunnriss_matrikkel</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/generalization/n100/building/data_preparation.html#removing_overlapping_byggningspunkt_and_grunnriss_matrikkel"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#generalization.n100.building.data_preparation.removing_overlapping_byggningspunkt_and_grunnriss_matrikkel" title="Link to this definition"></a></dt>
-<dd></dd></dl>
 
 </section>
 <section id="module-generalization.n100.building.hospital_church_clusters">

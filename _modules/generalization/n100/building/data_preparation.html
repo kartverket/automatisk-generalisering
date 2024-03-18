@@ -338,21 +338,26 @@
 <span class="sd">        This function selects building polygons (grunnriss) to be generalized. Smaller polygons and churches or hospitals are excluded, transformed into points, and sent to building point generalization.</span>
 
 <span class="sd">    Details:</span>
-<span class="sd">        - Reclassify hospitals and churches from polygons to &#39;NBR 729&#39; (other buildings).</span>
-<span class="sd">        - Select grunnriss that are not churches or hospitals using inverted selection.</span>
-<span class="sd">        - Select grunnriss that are large enough based on a minimum polygon size of 1500 square meters.</span>
+<span class="sd">        - Reclassify hospitals and churches polygons to &#39;NBR 729&#39; (other buildings).</span>
+<span class="sd">        - Select grunnriss that are large enough based on a minimum polygon size of 2500 square meters.</span>
 <span class="sd">        - Transform small grunnriss features into points by calculating centroids.</span>
-<span class="sd">        - Select grunnriss features that represent churches and hospitals.</span>
-<span class="sd">        - Transform selected church and hospital grunnriss features into points by calculating centroids.</span>
+
+
 
 <span class="sd">    Parameters:</span>
-<span class="sd">        - Minimum Polygon Size: The minimum size of polygons, in square meters. It currently at **&#39;1500 Meters&#39;**.</span>
+<span class="sd">        - Minimum Polygon Size: The minimum size of polygons, in square meters. It currently at **&#39;2500 Meters&#39;**.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
-    <span class="c1"># Reclassify the sykehus from grunnriss to another NBR value</span>
-    <span class="n">code_block_hospital</span> <span class="o">=</span> <span class="p">(</span>
+    <span class="c1"># Copy the input data to not modify the original fields.</span>
+    <span class="n">arcpy</span><span class="o">.</span><span class="n">management</span><span class="o">.</span><span class="n">Copy</span><span class="p">(</span>
+        <span class="n">in_data</span><span class="o">=</span><span class="n">input_n50</span><span class="o">.</span><span class="n">Grunnriss</span><span class="p">,</span>
+        <span class="n">out_data</span><span class="o">=</span><span class="n">Building_N100</span><span class="o">.</span><span class="n">data_preparation___grunnriss_copy___n100_building</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
+    <span class="p">)</span>
+
+    <span class="c1"># Reclassify the church and hospitals from grunnriss to another NBR value</span>
+    <span class="n">code_block_church_hospital</span> <span class="o">=</span> <span class="p">(</span>
         <span class="s2">&quot;def hospital_nbr(nbr):</span><span class="se">\n</span><span class="s2">&quot;</span>
-        <span class="s2">&quot;    mapping = {970: 729, 719: 729}</span><span class="se">\n</span><span class="s2">&quot;</span>
+        <span class="s2">&quot;    mapping = {970: 729, 719: 729, 671: 729}</span><span class="se">\n</span><span class="s2">&quot;</span>
         <span class="s2">&quot;    return mapping.get(nbr, nbr)&quot;</span>
     <span class="p">)</span>
 
@@ -362,35 +367,22 @@
         <span class="n">field</span><span class="o">=</span><span class="s2">&quot;BYGGTYP_NBR&quot;</span><span class="p">,</span>
         <span class="n">expression</span><span class="o">=</span><span class="s2">&quot;hospital_nbr(!BYGGTYP_NBR!)&quot;</span><span class="p">,</span>
         <span class="n">expression_type</span><span class="o">=</span><span class="s2">&quot;PYTHON3&quot;</span><span class="p">,</span>
-        <span class="n">code_block</span><span class="o">=</span><span class="n">code_block_hospital</span><span class="p">,</span>
-    <span class="p">)</span>
-
-    <span class="c1"># Expression to be able to select churchs and hospitals</span>
-    <span class="n">sql_nrb_code_sykehus</span> <span class="o">=</span> <span class="s2">&quot;BYGGTYP_NBR IN (970, 719)&quot;</span>
-    <span class="n">sql_nbr_code_kirke</span> <span class="o">=</span> <span class="s2">&quot;BYGGTYP_NBR IN (671)&quot;</span>
-
-    <span class="c1"># Selecting grunnriss which are not churches or hospitals using inverted selection</span>
-    <span class="n">custom_arcpy</span><span class="o">.</span><span class="n">select_attribute_and_make_permanent_feature</span><span class="p">(</span>
-        <span class="n">input_layer</span><span class="o">=</span><span class="n">input_n50</span><span class="o">.</span><span class="n">Grunnriss</span><span class="p">,</span>
-        <span class="n">expression</span><span class="o">=</span><span class="n">sql_nbr_code_kirke</span><span class="p">,</span>
-        <span class="n">output_name</span><span class="o">=</span><span class="n">Building_N100</span><span class="o">.</span><span class="n">data_preparation___selected_polygon_not_church___n100_building</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
-        <span class="n">selection_type</span><span class="o">=</span><span class="n">custom_arcpy</span><span class="o">.</span><span class="n">SelectionType</span><span class="o">.</span><span class="n">NEW_SELECTION</span><span class="p">,</span>
-        <span class="n">inverted</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+        <span class="n">code_block</span><span class="o">=</span><span class="n">code_block_church_hospital</span><span class="p">,</span>
     <span class="p">)</span>
 
     <span class="c1"># Selecting grunnriss which are large enough</span>
-    <span class="n">grunnriss_minimum_size</span> <span class="o">=</span> <span class="mi">1500</span>
+    <span class="n">grunnriss_minimum_size</span> <span class="o">=</span> <span class="mi">2500</span>
     <span class="n">sql_expression_too_small_grunnriss</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;Shape_Area &lt; </span><span class="si">{</span><span class="n">grunnriss_minimum_size</span><span class="si">}</span><span class="s2">&quot;</span>
     <span class="n">sql_expression_correct_size_grunnriss</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;Shape_Area &gt;= </span><span class="si">{</span><span class="n">grunnriss_minimum_size</span><span class="si">}</span><span class="s2">&quot;</span>
 
     <span class="n">custom_arcpy</span><span class="o">.</span><span class="n">select_attribute_and_make_permanent_feature</span><span class="p">(</span>
-        <span class="n">input_layer</span><span class="o">=</span><span class="n">Building_N100</span><span class="o">.</span><span class="n">data_preparation___selected_polygon_not_church___n100_building</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
+        <span class="n">input_layer</span><span class="o">=</span><span class="n">Building_N100</span><span class="o">.</span><span class="n">data_preparation___grunnriss_copy___n100_building</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
         <span class="n">expression</span><span class="o">=</span><span class="n">sql_expression_correct_size_grunnriss</span><span class="p">,</span>
         <span class="n">output_name</span><span class="o">=</span><span class="n">Building_N100</span><span class="o">.</span><span class="n">data_preparation___large_enough_polygon___n100_building</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
     <span class="p">)</span>
 
     <span class="n">custom_arcpy</span><span class="o">.</span><span class="n">select_attribute_and_make_feature_layer</span><span class="p">(</span>
-        <span class="n">input_layer</span><span class="o">=</span><span class="n">Building_N100</span><span class="o">.</span><span class="n">data_preparation___selected_polygon_not_church___n100_building</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
+        <span class="n">input_layer</span><span class="o">=</span><span class="n">Building_N100</span><span class="o">.</span><span class="n">data_preparation___grunnriss_copy___n100_building</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
         <span class="n">expression</span><span class="o">=</span><span class="n">sql_expression_too_small_grunnriss</span><span class="p">,</span>
         <span class="n">output_name</span><span class="o">=</span><span class="n">Building_N100</span><span class="o">.</span><span class="n">data_preparation___too_small_polygon___n100_building</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
         <span class="n">selection_type</span><span class="o">=</span><span class="n">custom_arcpy</span><span class="o">.</span><span class="n">SelectionType</span><span class="o">.</span><span class="n">NEW_SELECTION</span><span class="p">,</span>
@@ -401,45 +393,6 @@
         <span class="n">in_features</span><span class="o">=</span><span class="n">Building_N100</span><span class="o">.</span><span class="n">data_preparation___too_small_polygon___n100_building</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
         <span class="n">out_feature_class</span><span class="o">=</span><span class="n">Building_N100</span><span class="o">.</span><span class="n">data_preparation___points_created_from_small_polygon___n100_building</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
         <span class="n">point_location</span><span class="o">=</span><span class="s2">&quot;CENTROID&quot;</span><span class="p">,</span>
-    <span class="p">)</span>
-
-    <span class="c1"># Selecting grunnriss features not inverted based on sql expression above to select churches and hospitals</span>
-    <span class="n">custom_arcpy</span><span class="o">.</span><span class="n">select_attribute_and_make_feature_layer</span><span class="p">(</span>
-        <span class="n">input_layer</span><span class="o">=</span><span class="n">input_n50</span><span class="o">.</span><span class="n">Grunnriss</span><span class="p">,</span>
-        <span class="n">expression</span><span class="o">=</span><span class="n">sql_nbr_code_kirke</span><span class="p">,</span>
-        <span class="n">output_name</span><span class="o">=</span><span class="n">Building_N100</span><span class="o">.</span><span class="n">data_preparation___church_polygon___n100_building</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
-    <span class="p">)</span>
-
-    <span class="c1"># Transforming selected churches and hospitals into points</span>
-    <span class="n">arcpy</span><span class="o">.</span><span class="n">FeatureToPoint_management</span><span class="p">(</span>
-        <span class="n">in_features</span><span class="o">=</span><span class="n">Building_N100</span><span class="o">.</span><span class="n">data_preparation___church_polygon___n100_building</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
-        <span class="n">out_feature_class</span><span class="o">=</span><span class="n">Building_N100</span><span class="o">.</span><span class="n">data_preparation___church_points_from_polygon___n100_building</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
-        <span class="n">point_location</span><span class="o">=</span><span class="s2">&quot;CENTROID&quot;</span><span class="p">,</span>
-    <span class="p">)</span></div>
-
-
-
-<span class="c1">###################################### FILL ################################################</span>
-
-
-<div class="viewcode-block" id="removing_overlapping_byggningspunkt_and_grunnriss_matrikkel">
-<a class="viewcode-back" href="../../../../generated_docs/generalization.n100.building.html#generalization.n100.building.data_preparation.removing_overlapping_byggningspunkt_and_grunnriss_matrikkel">[docs]</a>
-<span class="nd">@timing_decorator</span>
-<span class="k">def</span> <span class="nf">removing_overlapping_byggningspunkt_and_grunnriss_matrikkel</span><span class="p">():</span>
-    <span class="n">custom_arcpy</span><span class="o">.</span><span class="n">select_location_and_make_permanent_feature</span><span class="p">(</span>
-        <span class="n">input_layer</span><span class="o">=</span><span class="n">input_n50</span><span class="o">.</span><span class="n">BygningsPunkt</span><span class="p">,</span>
-        <span class="n">overlap_type</span><span class="o">=</span><span class="n">custom_arcpy</span><span class="o">.</span><span class="n">OverlapType</span><span class="o">.</span><span class="n">WITHIN</span><span class="p">,</span>
-        <span class="n">select_features</span><span class="o">=</span><span class="n">input_n50</span><span class="o">.</span><span class="n">Grunnriss</span><span class="p">,</span>
-        <span class="n">output_name</span><span class="o">=</span><span class="s2">&quot;NEEDS UPDATE&quot;</span><span class="p">,</span>
-        <span class="n">inverted</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
-    <span class="p">)</span>
-
-    <span class="n">custom_arcpy</span><span class="o">.</span><span class="n">select_location_and_make_permanent_feature</span><span class="p">(</span>
-        <span class="n">input_layer</span><span class="o">=</span><span class="n">Building_N100</span><span class="o">.</span><span class="n">data_preparation___matrikkel_bygningspunkt___n100_building</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
-        <span class="n">overlap_type</span><span class="o">=</span><span class="n">custom_arcpy</span><span class="o">.</span><span class="n">OverlapType</span><span class="o">.</span><span class="n">WITHIN</span><span class="p">,</span>
-        <span class="n">select_features</span><span class="o">=</span><span class="n">input_n50</span><span class="o">.</span><span class="n">Grunnriss</span><span class="p">,</span>
-        <span class="n">output_name</span><span class="o">=</span><span class="s2">&quot;NEEDS UPDATE&quot;</span><span class="p">,</span>
-        <span class="n">inverted</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
     <span class="p">)</span></div>
 
 
