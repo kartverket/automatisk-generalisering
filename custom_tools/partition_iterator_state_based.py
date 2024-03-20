@@ -44,12 +44,7 @@ class PartitionIterator:
         :param partition_method: Method used for creating cartographic partitions.
         """
         self.data = {}
-        for alias, info in alias_path_data.items():
-            type_info, path_info = info
-            if alias not in self.data:
-                self.data[alias] = {}
-            self.data[alias][type_info] = path_info
-
+        self.alias_path_data = alias_path_data
         self.root_file_partition_iterator = root_file_partition_iterator
         self.scale = scale
         self.output_feature_class = alias_path_outputs
@@ -67,23 +62,22 @@ class PartitionIterator:
         self.max_object_id = None
         self.final_append_feature = None
 
-    def integrate_initial_data(self, alias_path_data, custom_function_specs):
+    def integrate_initial_data(self, alias_path_data):
         # Process initial alias_path_data for inputs and outputs
-        for alias, (type_info, path_info) in alias_path_data.items():
-            self.update_alias_state(
-                alias=alias,
-                type_info=type_info,
-                path=path_info,
-            )
+        for alias, info in alias_path_data.items():
+            type_info, path_info = info
+            if alias not in self.data:
+                self.data[alias] = {}
+            self.data[alias][type_info] = path_info
 
-            for func_name, specs in custom_function_specs.items():
-                for alias, types in specs.items():
-                    for type_info in types:
-                        self.update_alias_state(
-                            alias=alias,
-                            type_info=type_info,
-                            path=None,
-                        )
+            # for func_name, specs in custom_function_specs.items():
+            #     for alias, types in specs.items():
+            #         for type_info in types:
+            #             self.update_alias_state(
+            #                 alias=alias,
+            #                 type_info=type_info,
+            #                 path=None,
+            #             )
 
     def update_alias_state(self, alias, type_info, path=None):
         if alias not in self.data:
@@ -494,6 +488,7 @@ class PartitionIterator:
 
     @timing_decorator
     def run(self):
+        self.integrate_initial_data(self.alias_path_data)
         self.prepare_input_data()
         self.create_cartographic_partitions()
 
