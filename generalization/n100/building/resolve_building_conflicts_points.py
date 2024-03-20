@@ -41,7 +41,7 @@ def rbc_selection():
             "output_name": Building_N100.rbc_selection__grunnriss_selection_rbc__n100.value,
         },
         {
-            "input_layer": Building_N100.data_preparation___unsplit_veg_sti___n100_building.value,
+            "input_layer": Building_N100.data_preparation___unsplit_roads___n100_building.value,
             "output_name": Building_N100.rbc_selection__veg_sti_selection_rbc_rbc__n100.value,
         },
         {

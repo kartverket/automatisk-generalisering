@@ -18,7 +18,7 @@ def main():
 def delete_uneccessary_fields():
     # Provide the path to your feature class
     feature_class_to_clean_up = (
-        Building_N100.polygon_to_point___polygons_to_point___n100_building.value
+        Building_N100.simplify_polygons___aggregated_polygons_to_points___n100_building.value
     )  # Switch out to correct feature class
 
     # List of field names to delete

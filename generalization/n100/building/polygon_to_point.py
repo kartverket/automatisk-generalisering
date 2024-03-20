@@ -17,79 +17,49 @@ from custom_tools.timing_decorator import timing_decorator
 @timing_decorator("creating_points_from_polygon.py")
 def main():
     """
-    This function creates points from small grunnriss lost during aggregation, and merges
+    This function creates points from small polygons lost during aggregation, and merges
     them together with collapsed points from the tools simplify building and simplify polygon.
     """
     environment_setup.main()
-    grunnriss_to_point()
+    building_polygons_to_points()
 
 
 @timing_decorator
-def grunnriss_to_point():
-    """
-    Summary:
-        Transforms building polygons that are too small to points
+def building_polygons_to_points():
 
-    """
-
-    custom_arcpy.select_location_and_make_feature_layer(
-        input_layer=Building_N100.data_preparation___large_enough_polygon___n100_building.value,
-        overlap_type=custom_arcpy.OverlapType.INTERSECT,
-        select_features=Building_N100.simplify_polygons___small_gaps___n100_building.value,
-        output_name=Building_N100.polygon_to_point___intersect_aggregated_and_original___n100_building.value,
-        inverted=True,
-    )
-
-    arcpy.management.FeatureToPoint(
-        in_features=Building_N100.polygon_to_point___intersect_aggregated_and_original___n100_building.value,
-        out_feature_class=Building_N100.polygon_to_point___polygons_to_point___n100_building.value,
-    )
-
-    # Base output which the for loop through for output creation
-    base_output_path = (
-        Building_N100.polygon_to_point___spatial_join_points___n100_building.value
-    )
-
-    # List of input features which will be spatially joined
-    input_features = [
-        Building_N100.simplify_polygons___points___n100_building.value,
-        Building_N100.simplify_polygons___simplify_building_1_points___n100_building.value,
-        Building_N100.simplify_polygons___simplify_building_2_points___n100_building.value,
+    # List of building points which will be spatially joined with building polygons
+    input_points = [
+        f"{Building_N100.simplify_polygons___simplify_polygon___n100_building.value}_Pnt",
+        f"{Building_N100.simplify_polygons___simplify_building_1___n100_building.value}_Pnt",
+        f"{Building_N100.simplify_polygons___simplify_building_2___n100_building.value}_Pnt",
     ]
 
-    #  Feature with the field information which will be used for spatial join
-    join_features = (
-        Building_N100.data_preparation___large_enough_polygon___n100_building.value
-    )
+    # List of spatially joined points
+    spatially_joined_points = []
 
-    # Looping through each Spatial Join operation
-    for i, input_feature in enumerate(input_features):
-        # Generate dynamic output path by appending iteration index
-        output_feature = f"{base_output_path}_{i+1}"
+    # Looping through each point layer in the list
+    for point_layer in input_points:
+        output_feature = f"{point_layer}_spatially_joined"
 
         arcpy.analysis.SpatialJoin(
-            target_features=input_feature,
-            join_features=join_features,
+            target_features=point_layer,
+            join_features=Building_N100.data_preparation___polygons_that_are_large_enough___n100_building.value,
             out_feature_class=output_feature,
             join_operation="JOIN_ONE_TO_ONE",
             match_option="INTERSECT",
         )
-        print(f"Spatial join {i+1} completed with output: {output_feature}")
 
-    # Finding the number of outputs from the Spatial Join step to be used in the Merge
-    num_outputs = len(input_features)
-    # Generate list of output paths for merge
-    output_paths = [f"{base_output_path}_{i+1}" for i in range(num_outputs)]
+        spatially_joined_points.append(output_feature)
 
     # Additional inputs for the merge
     additional_inputs = [
-        Building_N100.data_preparation___points_created_from_small_polygon___n100_building.value,
-        Building_N100.polygon_to_point___polygons_to_point___n100_building.value,
+        Building_N100.data_preparation___points_created_from_small_polygons___n100_building.value,
+        Building_N100.simplify_polygons___aggregated_polygons_to_points___n100_building.value,
         Building_N100.polygon_propogate_displacement___final_merged_points___n100_building.value,
         Building_N100.polygon_propogate_displacement___small_building_polygons_to_point___n100_building.value,
     ]
     # Complete list of inputs for the merge
-    merge_inputs = additional_inputs + output_paths
+    merge_inputs = spatially_joined_points + additional_inputs
 
     # Perform the Merge operation
     arcpy.management.Merge(

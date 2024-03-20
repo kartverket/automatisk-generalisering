@@ -197,10 +197,10 @@ def select_location_and_make_feature_layer(
 
     Example:
         >>> custom_arcpy.select_location_and_make_feature_layer(
-        ...     input_layer=Building_N100.data_preparation___large_enough_polygon___n100_building.value,
+        ...     input_layer=Building_N100.data_preparation___polygons_that_are_large_enough___n100_building.value,
         ...     overlap_type=custom_arcpy.OverlapType.INTERSECT.value,
         ...     select_features=Building_N100.grunnriss_to_point__aggregated_polygon__n100.value,
-        ...      output_name=Building_N100.polygon_to_point___intersect_aggregated_and_original___n100_building.value,
+        ...      output_name=Building_N100.simplify_polygons___not_intersect_aggregated_and_original_polygon___n100_building.value,
         ...     inverted=True,
         ... )
         'grunnriss_to_point__intersect_aggregated_and_original__n100' created temporarily.
@@ -271,7 +271,7 @@ def select_location_and_make_permanent_feature(
 
     Example:
         >>> custom_arcpy.select_location_and_make_permanent_feature(
-        ...     input_layer=Building_N100.data_preperation___selected_waterfeatures_from_begrensningskurve___n100_building.value,
+        ...     input_layer=Building_N100.data_preperation___waterfeatures_from_begrensningskurve_not_rivers___n100_building.value,
         ...     overlap_type=OverlapType.WITHIN_A_DISTANCE.value,
         ...     select_features=Building_N100.polygon_propogate_displacement___after_displacement___n100_building.value,
         ...     output_name=Building_N100.polygon_propogate_displacement___begrensningskurve_500m_from_displaced_polygon___n100_building.value,

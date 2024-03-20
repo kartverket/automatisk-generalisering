@@ -59,7 +59,7 @@ def selection():
     )
 
     custom_arcpy.select_location_and_make_permanent_feature(
-        input_layer=Building_N100.data_preparation___unsplit_veg_sti___n100_building.value,
+        input_layer=Building_N100.data_preparation___unsplit_roads___n100_building.value,
         overlap_type=custom_arcpy.OverlapType.INTERSECT.value,
         select_features=Building_N100.rbc_selection__selection_area_resolve_building_conflicts__n100.value,
         output_name=Building_N100.building_point_buffer_displacement__roads_study_area__n100.value,
@@ -100,7 +100,7 @@ def pre_create_template_feature_class():
     buffer_output_name = f"{Building_N100.building_point_buffer_displacement__roads_buffer__n100.value}_template"
 
     custom_arcpy.select_attribute_and_make_feature_layer(
-        input_layer=Building_N100.data_preparation___unsplit_veg_sti___n100_building.value,
+        input_layer=Building_N100.data_preparation___unsplit_roads___n100_building.value,
         expression=template_query,
         output_name=selection_output_name,
     )
