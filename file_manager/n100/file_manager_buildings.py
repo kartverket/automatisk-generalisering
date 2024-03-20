@@ -85,10 +85,27 @@ class Building_N100(Enum):
     #                                DATA PREPARATION
     # ========================================
 
-    data_preperation___selected_waterfeatures_from_begrensningskurve___n100_building = (
+    data_preperation___waterfeatures_from_begrensningskurve_not_rivers___n100_building = file_manager.generate_file_name_gdb(
+        script_source_name=data_preparation,
+        description="waterfeatures_from_begrensningskurve_not_rivers",
+    )
+
+    data_preperation___waterfeatures_from_begrensningskurve_rivers___n100_building = (
         file_manager.generate_file_name_gdb(
             script_source_name=data_preparation,
-            description="selected_waterfeatures_from_begrensningskurve",
+            description="waterfeatures_from_begrensningskurve_rivers",
+        )
+    )
+
+    data_preperation___waterfeatures_from_begrensningskurve_rivers_buffer___n100_building = file_manager.generate_file_name_gdb(
+        script_source_name=data_preparation,
+        description="waterfeatures_from_begrensningskurve_rivers_buffer",
+    )
+
+    data_preparation___merged_begrensningskurve_all_waterbodies___n100_building = (
+        file_manager.generate_file_name_gdb(
+            script_source_name=data_preparation,
+            description="merged_begrensningskurve_all_waterbodies",
         )
     )
 
@@ -134,10 +151,10 @@ class Building_N100(Enum):
         )
     )
 
-    data_preparation___unsplit_veg_sti___n100_building = (
+    data_preparation___unsplit_roads___n100_building = (
         file_manager.generate_file_name_gdb(
             script_source_name=data_preparation,
-            description="unsplit_veg_sti",
+            description="unsplit_roads",
         )
     )
 
@@ -169,11 +186,16 @@ class Building_N100(Enum):
         )
     )
 
-    data_preparation___matrikkel_bygningspunkt___n100_building = (
+    data_preparation___matrikkel_points___n100_building = (
         file_manager.generate_file_name_gdb(
             script_source_name=data_preparation,
-            description="matrikkel_bygningspunkt",
+            description="matrikkel_points",
         )
+    )
+
+    data_preparation___n50_points___n100_building = file_manager.generate_file_name_gdb(
+        script_source_name=data_preparation,
+        description="n50_points",
     )
 
     data_preparation___grunnriss_copy___n100_building = (
@@ -183,37 +205,44 @@ class Building_N100(Enum):
         )
     )
 
-    data_preparation___large_enough_polygon___n100_building = (
+    data_preparation___polygons_that_are_large_enough___n100_building = (
         file_manager.generate_file_name_gdb(
             script_source_name=data_preparation,
-            description="large_enough_polygon",
+            description="polygons_that_are_large_enough",
         )
     )
 
-    data_preparation___too_small_polygon___n100_building = (
+    data_preparation___polygons_that_are_too_small___n100_building = (
         file_manager.generate_file_name_gdb(
             script_source_name=data_preparation,
-            description="too_small_polygon",
+            description="polygons_that_are_too_small",
         )
     )
 
-    data_preparation___points_created_from_small_polygon___n100_building = (
+    data_preparation___points_created_from_small_polygons___n100_building = (
         file_manager.generate_file_name_gdb(
             script_source_name=data_preparation,
-            description="points_created_from_small_polygon",
+            description="points_created_from_small_polygons",
+        )
+    )
+
+    data_preperation___matrikkel_n50_points_merged___n100_building = (
+        file_manager.generate_file_name_gdb(
+            script_source_name=data_preparation,
+            description="matrikkel_n50_points_merged",
+        )
+    )
+
+    data_preparation___n50_polygons___n100_building = (
+        file_manager.generate_file_name_gdb(
+            script_source_name=data_preparation,
+            description="n50_polygons",
         )
     )
 
     # ========================================
     #                      CALCULATING FIELD VALUES
     # ========================================
-
-    calculating_field_values___merged_points_n50_matrikkel___n100_building = (
-        file_manager.generate_file_name_gdb(
-            script_source_name=calculating_field_values,
-            description="merged_points_n50_matrikkel",
-        )
-    )
 
     calculate_field_values___points_pre_resolve_building_conflicts___n100_building = (
         file_manager.generate_file_name_gdb(
@@ -237,20 +266,6 @@ class Building_N100(Enum):
     #                              POLYGON TO POINT
     # ========================================
 
-    polygon_to_point___intersect_aggregated_and_original___n100_building = (
-        file_manager.generate_file_name_gdb(
-            script_source_name=polygon_to_point,
-            description="intersect_aggregated_and_original",
-        )
-    )
-
-    polygon_to_point___polygons_to_point___n100_building = (
-        file_manager.generate_file_name_gdb(
-            script_source_name=polygon_to_point,
-            description="polygons_to_point",
-        )
-    )
-
     polygon_to_point___spatial_join_points___n100_building = (
         file_manager.generate_file_name_gdb(
             script_source_name=polygon_to_point,
@@ -268,6 +283,18 @@ class Building_N100(Enum):
     # ========================================
     #                              SIMPLIFY POLYGONS
     # ========================================
+
+    simplify_polygons___aggregated_polygons_to_points___n100_building = (
+        file_manager.generate_file_name_gdb(
+            script_source_name=simplify_polygons,
+            description="aggregated_polygons_to_points",
+        )
+    )
+
+    simplify_polygons___not_intersect_aggregated_and_original_polygon___n100_building = file_manager.generate_file_name_gdb(
+        script_source_name=polygon_to_point,
+        description="not_intersect_aggregated_and_original_polygon",
+    )
 
     simplify_polygons___small_gaps___n100_building = (
         file_manager.generate_file_name_gdb(
@@ -304,9 +331,11 @@ class Building_N100(Enum):
         )
     )
 
-    simplify_polygons___polygons___n100_building = file_manager.generate_file_name_gdb(
-        script_source_name=simplify_polygons,
-        description="polygons",
+    simplify_polygons___simplify_polygon___n100_building = (
+        file_manager.generate_file_name_gdb(
+            script_source_name=simplify_polygons,
+            description="simplify_polygon",
+        )
     )
 
     simplify_polygons___points___n100_building = file_manager.generate_file_name_gdb(
@@ -344,9 +373,9 @@ class Building_N100(Enum):
         )
     )
 
-    polygon_propogate_displacement___displacement_feature_1000m_from_polygon___n100_building = file_manager.generate_file_name_gdb(
+    polygon_propogate_displacement___displacement_feature_500m_from_polygon___n100_building = file_manager.generate_file_name_gdb(
         script_source_name=polygon_propogate_displacement,
-        description="displacement_feature_1000m_from_polygon",
+        description="displacement_feature_500m_from_polygon",
     )
 
     polygon_propogate_displacement___begrensningskurve_500m_from_displaced_polygon___n100_building = file_manager.generate_file_name_gdb(

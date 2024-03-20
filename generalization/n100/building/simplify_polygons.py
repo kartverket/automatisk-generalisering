@@ -5,6 +5,7 @@ import arcpy
 from env_setup import environment_setup
 from input_data import input_n50
 from file_manager.n100.file_manager_buildings import Building_N100
+from custom_tools import custom_arcpy
 
 # Importing timing decorator
 from custom_tools.timing_decorator import timing_decorator
@@ -56,19 +57,33 @@ def aggregate_polygons():
 
     print("Aggregating building polygons...")
     arcpy.cartography.AggregatePolygons(
-        in_features=Building_N100.data_preparation___large_enough_polygon___n100_building.value,
+        in_features=Building_N100.data_preparation___polygons_that_are_large_enough___n100_building.value,
         out_feature_class=Building_N100.simplify_polygons___small_gaps___n100_building.value,
         aggregation_distance="4",
         minimum_area="3200 SquareMeters",
         minimum_hole_size="10000 SquareMeters",
         orthogonality_option="ORTHOGONAL",
         barrier_features=[
-            Building_N100.data_preparation___unsplit_veg_sti___n100_building.value
+            Building_N100.data_preparation___unsplit_roads___n100_building.value
         ],
         out_table=f"{Building_N100.simplify_polygons___small_gaps___n100_building.value}_table",
     )
 
+    custom_arcpy.select_location_and_make_permanent_feature(
+        input_layer=Building_N100.data_preparation___polygons_that_are_large_enough___n100_building.value,
+        overlap_type=custom_arcpy.OverlapType.INTERSECT,
+        select_features=Building_N100.simplify_polygons___small_gaps___n100_building.value,
+        output_name=Building_N100.simplify_polygons___not_intersect_aggregated_and_original_polygon___n100_building.value,
+        inverted=True,
+    )
 
+    arcpy.management.FeatureToPoint(
+        in_features=Building_N100.simplify_polygons___not_intersect_aggregated_and_original_polygon___n100_building.value,
+        out_feature_class=Building_N100.simplify_polygons___aggregated_polygons_to_points___n100_building.value,
+    )
+
+
+# First round of simplify buildings
 @timing_decorator
 def simplify_buildings_1():
     """
@@ -86,7 +101,7 @@ def simplify_buildings_1():
         - Minimum Hole Size is **`10,000 Square Meters`**: Sets the minimum size for holes within the building polygons to be retained.
     """
 
-    print("Simplifying building polygons...")
+    print("Simplifying building polygons round 1...")
 
     arcpy.cartography.SimplifyBuilding(
         in_features=Building_N100.simplify_polygons___small_gaps___n100_building.value,
@@ -96,17 +111,8 @@ def simplify_buildings_1():
         collapsed_point_option="KEEP_COLLAPSED_POINTS",
     )
 
-    # Creating points to permanently store auto generated points from simplified building polygons to a specified path
-    auto_generated_points_1 = f"{Building_N100.simplify_polygons___simplify_building_1___n100_building.value}_Pnt"
 
-    arcpy.management.CopyFeatures(
-        auto_generated_points_1,
-        Building_N100.simplify_polygons___simplify_building_1_points___n100_building.value,
-    )
-    arcpy.management.Delete(auto_generated_points_1)
-
-
-# Simplifying polygons
+# Simplifying polygons (runs once)
 @timing_decorator
 def simplify_polygons():
     """
@@ -127,25 +133,12 @@ def simplify_polygons():
 
     arcpy.cartography.SimplifyPolygon(
         in_features=Building_N100.simplify_polygons___simplify_building_1___n100_building.value,
-        out_feature_class=Building_N100.simplify_polygons___polygons___n100_building.value,
+        out_feature_class=Building_N100.simplify_polygons___simplify_polygon___n100_building.value,
         algorithm="WEIGHTED_AREA",
         tolerance="15",
         minimum_area="3200 SquareMeters",
-        collapsed_point_option="KEEP_COLLAPSED_POINTS",
+        collapsed_point_option="KEEP_COLLAPSED_POINTS",  # Name of points will be the same with `Pnt` at the end
     )
-
-    # Creating points to permanently store auto generated points from simplified polygon to a specified path
-    auto_generated_points_2 = (
-        f"{Building_N100.simplify_polygons___polygons___n100_building.value}_Pnt"
-    )
-
-    arcpy.management.CopyFeatures(
-        auto_generated_points_2,
-        Building_N100.simplify_polygons___points___n100_building.value,
-    )
-    arcpy.management.Delete(auto_generated_points_2)
-
-    # Simplifying building polygons
 
 
 # Second round of simplify buildings
@@ -165,6 +158,7 @@ def simplify_buildings_2():
         - Minimum Area is **`3200 Square Meters`**: Specifies the minimum area a simplified building polygon should have.
         - Minimum Hole Size is **`10,000 Square Meters`**: Sets the minimum size for holes within the building polygons to be retained.
     """
+    print("Simplifying building polygons round 2...")
 
     arcpy.cartography.SimplifyBuilding(
         in_features=Building_N100.simplify_polygons___simplify_building_1___n100_building.value,
@@ -173,15 +167,6 @@ def simplify_buildings_2():
         minimum_area="3200 SquareMeters",
         collapsed_point_option="KEEP_COLLAPSED_POINTS",
     )
-
-    # Creating points to permanently store auto generated points from simplified polygon to a specified path
-    auto_generated_points_3 = f"{Building_N100.simplify_polygons___simplify_building_2___n100_building.value}_Pnt"
-
-    arcpy.management.CopyFeatures(
-        auto_generated_points_3,
-        Building_N100.simplify_polygons___simplify_building_2_points___n100_building.value,
-    )
-    arcpy.management.Delete(auto_generated_points_3)
 
 
 # Spatial join and adding fields to polygons
@@ -229,10 +214,14 @@ def join_and_add_fields():
     arcpy.management.CalculateFields(
         in_table=Building_N100.simplify_polygons___spatial_join_polygons___n100_building.value,
         expression_type="PYTHON3",
-        fields=[["angle", "0"], ["hierarchy", "0"], ["invisibility", "0"]],
+        fields=[
+            ["angle", "0"],
+            ["hierarchy", "1"],  # Hierachy 1 so buildings can be moved around
+            ["invisibility", "0"],
+        ],
     )
 
-    # Making a copy of the feature class
+    # Assigning new name to the final building polygons
     print("Making a copy of the feature class...")
     arcpy.management.CopyFeatures(
         Building_N100.simplify_polygons___spatial_join_polygons___n100_building.value,

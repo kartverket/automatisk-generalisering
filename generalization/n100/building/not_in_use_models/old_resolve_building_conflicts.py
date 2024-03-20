@@ -106,7 +106,7 @@ def iterate_through_selections():
                 "output_name": selection_grunnriss,
             },
             {
-                "input_layer": Building_N100.data_preparation___unsplit_veg_sti___n100_building.value,
+                "input_layer": Building_N100.data_preparation___unsplit_roads___n100_building.value,
                 "output_name": selection_veg_sti,
             },
             {
@@ -615,7 +615,7 @@ def rbc_iteration():
 #         "output_name": selection_grunnriss,
 #     },
 #     {
-#         "input_layer": Building_N100.data_preparation___unsplit_veg_sti___n100_building.value,
+#         "input_layer": Building_N100.data_preparation___unsplit_roads___n100_building.value,
 #         "output_name": selection_veg_sti,
 #     },
 #     {
@@ -623,7 +623,7 @@ def rbc_iteration():
 #         "output_name": selection_bygningspunkt,
 #     },
 #     {
-#         "input_layer": Building_N100.data_preperation___selected_waterfeatures_from_begrensningskurve___n100_building.value,
+#         "input_layer": Building_N100.data_preperation___waterfeatures_from_begrensningskurve_not_rivers___n100_building.value,
 #         "output_name": selection_begrensningskurve,
 #     },
 # ]

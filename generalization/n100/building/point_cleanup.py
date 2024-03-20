@@ -10,7 +10,7 @@ from file_manager.n100.file_manager_buildings import Building_N100
 from custom_tools import custom_arcpy
 from env_setup import environment_setup
 from custom_tools.polygon_processor import PolygonProcessor
-from constants.n100_constants import N100Symbology
+from constants.n100_constants import N100_Symbology
 
 
 def main():
@@ -64,7 +64,7 @@ def polygons_too_close_to_building_points():
     polygon_process = PolygonProcessor(
         input_building_points=Building_N100.point_cleanup___points_50m_from_building_polygons___n100_building.value,  # input
         output_polygon_feature_class=Building_N100.point_cleanup___building_points_to_squares___n100_building.value,  # output
-        building_symbol_dimensions=N100Symbology.building_symbol_dimensions.value,
+        building_symbol_dimensions=N100_Symbology.building_symbol_dimensions.value,
         symbol_field_name="symbol_val",
         index_field_name="OBJECTID",
     )
