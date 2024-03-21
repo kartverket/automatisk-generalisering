@@ -22,10 +22,10 @@ def main():
     """
 
     environment_setup.main()
-    begrensningskurve_land_and_water_bodies()
-    begrensningskurve_river()
-    merge_begrensningskurve_all_water_features()
-    unsplit_roads()
+    # begrensningskurve_land_and_water_bodies()
+    # begrensningskurve_river()
+    # merge_begrensningskurve_all_water_features()
+    # unsplit_roads()
     matrikkel_and_n50_not_in_urban_areas()
     adding_field_values_to_matrikkel()
     merge_matrikkel_and_n50_points()
@@ -212,12 +212,13 @@ def matrikkel_and_n50_not_in_urban_areas():
         output_name=Building_N100.data_preparation___matrikkel_points___n100_building.value,
     )
 
-    # Selecting n50 building points based on this new urban selection layer
+    # Selecting n50 so they are not in urban areas
     custom_arcpy.select_location_and_make_permanent_feature(
         input_layer=input_n50.BygningsPunkt,
         overlap_type=custom_arcpy.OverlapType.INTERSECT,
-        select_features=Building_N100.data_preparation___no_longer_urban_areas___n100_building.value,
+        select_features=Building_N100.data_preparation___urban_area_selection_n100_buffer___n100_building.value,
         output_name=Building_N100.data_preparation___n50_points___n100_building.value,
+        inverted=True,
     )
 
 

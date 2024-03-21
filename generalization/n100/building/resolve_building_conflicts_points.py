@@ -113,7 +113,7 @@ def resolve_building_conflicts():
     print("Starting Resolve Building Conflicts 1 for drawn polygons")
     # Define input barriers
 
-    input_barriers_1 = [  # NB: confusing name?? input_barriers_1
+    input_barriers_for_rbc = [
         [
             Building_N100.apply_symbology__veg_sti_selection__n100_lyrx.value,
             "false",
@@ -126,10 +126,15 @@ def resolve_building_conflicts():
         ],
     ]
 
+    input_buildings_rbc_1 = [
+        Building_N100.apply_symbology__grunnriss_selection__n100_lyrx.value,
+        Building_N100.apply_symbology__drawn_polygon_selection__n100_lyrx.value,
+    ]
+
     arcpy.cartography.ResolveBuildingConflicts(
-        in_buildings=Building_N100.apply_symbology__drawn_polygon_selection__n100_lyrx.value,
+        in_buildings=input_buildings_rbc_1,
         invisibility_field="invisibility",
-        in_barriers=input_barriers_1,
+        in_barriers=input_barriers_for_rbc,
         building_gap="45 meters",
         minimum_size="1 meters",
         hierarchy_field="hierarchy",
@@ -140,9 +145,17 @@ def resolve_building_conflicts():
         "(invisibility = 0) OR (symbol_val IN (1, 2, 3))"
     )
 
+    sql_expression_resolve_building_conflicts_polygon = "(invisibility = 0)"
+
     custom_arcpy.select_attribute_and_make_permanent_feature(
         input_layer=Building_N100.rbc_selection__drawn_polygon_selection_rbc__n100.value,
         expression=sql_expression_resolve_building_conflicts,
+        output_name=Building_N100.resolve_building_conflicts__drawn_polygons_result_1__n100.value,
+    )
+
+    custom_arcpy.select_attribute_and_make_permanent_feature(
+        input_layer=Building_N100.rbc_selection__grunnriss_selection_rbc__n100.value,
+        expression=sql_expression_resolve_building_conflicts_polygon,
         output_name=Building_N100.resolve_building_conflicts__drawn_polygons_result_1__n100.value,
     )
 
@@ -166,10 +179,15 @@ def resolve_building_conflicts():
 
     print("Starting resolve building conflicts 2")
 
+    input_buildings_rbc_2 = [
+        Building_N100.resolve_building_conflicts__drawn_polygon_RBC_result_1__n100_lyrx.value,
+        Building_N100.apply_symbology__drawn_polygon_selection__n100_lyrx.value,
+    ]
+
     arcpy.cartography.ResolveBuildingConflicts(
-        in_buildings=Building_N100.resolve_building_conflicts__building_points_RBC_result_1__n100_lyrx.value,
+        in_buildings=input_buildings_rbc_2,
         invisibility_field="invisibility",
-        in_barriers=input_barriers_1,
+        in_barriers=input_barriers_for_rbc,
         building_gap="45 meters",
         minimum_size="1 meters",
         hierarchy_field="hierarchy",

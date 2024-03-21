@@ -63,7 +63,7 @@ def main():
     points_to_squares.main()
     resolve_building_conflicts_points.main()
     # point_cleanup.main()
-    data_clean_up.main()
+    # data_clean_up.main()
 
 
 if __name__ == "__main__":
