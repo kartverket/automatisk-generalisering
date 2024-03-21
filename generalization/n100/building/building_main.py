@@ -62,7 +62,7 @@ def main():
     point_displacement_with_buffer.main()
     points_to_squares.main()
     resolve_building_conflicts_points.main()
-    point_cleanup.main()
+    # point_cleanup.main()
     data_clean_up.main()
 
 

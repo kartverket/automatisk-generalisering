@@ -3,6 +3,7 @@ import arcpy
 
 # Importing custom modules
 import config
+from custom_tools import custom_arcpy
 
 # Importing environment settings
 from env_setup import environment_setup
@@ -49,9 +50,18 @@ def propagate_displacement_building_points():
         out_data=Building_N100.point_propogate_displacement___points_pre_propogate_displacement___n100_building.value,
     )
 
+    # Selecting propogate displacement features 500 meters from building polgyons
+    custom_arcpy.select_location_and_make_permanent_feature(
+        input_layer=config.displacement_feature,
+        overlap_type=custom_arcpy.OverlapType.WITHIN_A_DISTANCE,
+        select_features=Building_N100.point_propogate_displacement___points_pre_propogate_displacement___n100_building.value,
+        output_name=Building_N100.point_propogate_displacement___displacement_feature_500m_from_point___n100_building.value,
+        search_distance="500 Meters",
+    )
+
     arcpy.cartography.PropagateDisplacement(
         in_features=Building_N100.calculate_field_values___points_pre_resolve_building_conflicts___n100_building.value,
-        displacement_features=config.displacement_feature,
+        displacement_features=Building_N100.point_propogate_displacement___displacement_feature_500m_from_point___n100_building.value,
         adjustment_style="SOLID",
     )
 

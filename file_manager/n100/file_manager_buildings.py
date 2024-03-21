@@ -636,6 +636,11 @@ class Building_N100(Enum):
         )
     )
 
+    point_propogate_displacement___displacement_feature_500m_from_point___n100_building = file_manager.generate_file_name_gdb(
+        script_source_name=point_propogate_displacement,
+        description="displacement_feature_500m_from_point",
+    )
+
     point_propogate_displacement___points_after_propogate_displacement___n100_building = file_manager.generate_file_name_gdb(
         script_source_name=point_propogate_displacement,
         description="points_after_propogate_displacement",
@@ -659,10 +664,10 @@ class Building_N100(Enum):
         )
     )
 
-    point_cleanup___points_not_intersecting_buffer___n100_building = (
+    point_cleanup___points_intersecting_buffer___n100_building = (
         file_manager.generate_file_name_gdb(
             script_source_name=point_cleanup,
-            description="points_not_intersecting_buffer",
+            description="points_intersecting_buffer",
         )
     )
 
@@ -705,6 +710,13 @@ class Building_N100(Enum):
         file_manager.generate_file_name_gdb(
             script_source_name=point_cleanup,
             description="building_points_merged_final",
+        )
+    )
+
+    point_cleanup___points_that_do_not_intersect_water_features___n100_building = (
+        file_manager.generate_file_name_gdb(
+            script_source_name=point_cleanup,
+            description="points_that_do_not_intersect_water_features",
         )
     )
 

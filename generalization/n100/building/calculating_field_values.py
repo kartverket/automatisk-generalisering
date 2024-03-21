@@ -26,9 +26,11 @@ def main():
     environment_setup.main()
     reclassifying_hospital_and_church_points_from_matrikkel()
     adding_original_source_to_points()
-    merge_matrikkel_and_n50_points_from_grunnriss()
+    merge_matrikkel_and_n50_with_points_from_grunnriss()
     find_undefined_nbr_values()
     find_each_unique_nbr_value()
+    calculate_angle_and_visibility_for_points()
+    calculate_hierarchy_for_points()
 
 
 @timing_decorator
@@ -78,7 +80,7 @@ def adding_original_source_to_points():
 
 
 @timing_decorator
-def merge_matrikkel_and_n50_points_from_grunnriss():
+def merge_matrikkel_and_n50_with_points_from_grunnriss():
 
     # Merge the merged building point from n50 and matrikkel with points created from grunnriss
     arcpy.management.Merge(
@@ -89,6 +91,13 @@ def merge_matrikkel_and_n50_points_from_grunnriss():
         output=Building_N100.calculate_field_values___points_pre_resolve_building_conflicts___n100_building.value,
     )
 
+    arcpy.AddField_management(
+        in_table=Building_N100.calculate_field_values___points_pre_resolve_building_conflicts___n100_building.value,
+        field_name="symbol_val",
+        field_type="SHORT",
+    )
+
+    # Determining and assigning symbol val
     arcpy.CalculateField_management(
         in_table=Building_N100.calculate_field_values___points_pre_resolve_building_conflicts___n100_building.value,
         field="symbol_val",

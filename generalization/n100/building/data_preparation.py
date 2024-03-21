@@ -24,14 +24,13 @@ def main():
     environment_setup.main()
     begrensningskurve_land_and_water_bodies()
     begrensningskurve_river()
-    merge_begrensningskurve_water_features()
+    merge_begrensningskurve_all_water_features()
     unsplit_roads()
     matrikkel_and_n50_not_in_urban_areas()
     adding_field_values_to_matrikkel()
+    merge_matrikkel_and_n50_points()
     selecting_polygons_not_in_urban_areas()
     reclassifying_polygon_values()
-    assign_symbol_value_to_polygons()
-    merge_matrikkel_n50_points()
     polygon_selections_based_on_size()
 
 
@@ -124,7 +123,7 @@ def begrensningskurve_river():
 
 
 @timing_decorator
-def merge_begrensningskurve_water_features():
+def merge_begrensningskurve_all_water_features():
 
     # Merge begrensningskurve buffers (water bodies and rivers)
     arcpy.management.Merge(
@@ -239,7 +238,7 @@ def adding_field_values_to_matrikkel():
 
 
 @timing_decorator
-def merge_matrikkel_n50_points():
+def merge_matrikkel_and_n50_points():
 
     # Merge the n50 building point and matrikkel
     arcpy.management.Merge(
@@ -289,25 +288,6 @@ def reclassifying_polygon_values():
     )
 
 
-@timing_decorator
-def assign_symbol_value_to_polygons():
-
-    # Adding a symbology value field based on NBR values
-    arcpy.AddField_management(
-        in_table=Building_N100.data_preparation___n50_polygons___n100_building.value,
-        field_name="symbol_val",
-        field_type="LONG",
-    )
-
-    arcpy.CalculateField_management(
-        in_table=Building_N100.data_preparation___n50_polygons___n100_building.value,
-        field="symbol_val",
-        expression="determineVal(!BYGGTYP_NBR!)",
-        expression_type="PYTHON3",
-        code_block=N100_SQLResources.nbr_symbol_val_code_block.value,
-    )
-
-
 def polygon_selections_based_on_size():
 
     # Selecting only building polygons over 2500 (the rest will be transformed to points due to size)
@@ -333,7 +313,7 @@ def polygon_selections_based_on_size():
     # Transforming small building polygons into points
     arcpy.management.FeatureToPoint(
         in_features=Building_N100.data_preparation___polygons_that_are_too_small___n100_building.value,
-        out_feature_class=Building_N100.data_preparation___points_created_from_small_polygons___n100_building.value,
+        out_feature_class=Building_N100.data_preparation___points_created_from_small_polygons___n100_building.value,  # Sent to polygon to point - to get merged as an additional input
     )
 
 

@@ -75,7 +75,7 @@ def main():
     invisible_building_polygons_to_point()
     intersecting_building_polygons_to_point()
     merging_invisible_intersecting_points()
-    removing_small_building_polygons()
+    check_if_building_polygons_are_big_enough()
     small_building_polygons_to_points()
 
 
@@ -442,7 +442,7 @@ def merging_invisible_intersecting_points():
 
 
 @timing_decorator
-def removing_small_building_polygons():
+def check_if_building_polygons_are_big_enough():
     """
     Summary:
         Removes small building polygons from the input layer based on a specified area threshold.

@@ -53,8 +53,7 @@ def aggregate_polygons():
     - Minimum Area is **`3200 Square Meters`**
     - Minimum Hole Size is **`10 000 Square Meters`**
     """
-    # Aggregating building polygons
-
+    # Aggregating building polygons (very minimal aggregation)
     print("Aggregating building polygons...")
     arcpy.cartography.AggregatePolygons(
         in_features=Building_N100.data_preparation___polygons_that_are_large_enough___n100_building.value,
@@ -69,6 +68,7 @@ def aggregate_polygons():
         out_table=f"{Building_N100.simplify_polygons___small_gaps___n100_building.value}_table",
     )
 
+    # Find aggregated polygons that do not intersect with "original polygons" (from data preperation)
     custom_arcpy.select_location_and_make_permanent_feature(
         input_layer=Building_N100.data_preparation___polygons_that_are_large_enough___n100_building.value,
         overlap_type=custom_arcpy.OverlapType.INTERSECT,
@@ -77,6 +77,7 @@ def aggregate_polygons():
         inverted=True,
     )
 
+    # These are transformed to points because they are too small and have been removed by the aggregate polygons minimum area treshold
     arcpy.management.FeatureToPoint(
         in_features=Building_N100.simplify_polygons___not_intersect_aggregated_and_original_polygon___n100_building.value,
         out_feature_class=Building_N100.simplify_polygons___aggregated_polygons_to_points___n100_building.value,
@@ -108,7 +109,7 @@ def simplify_buildings_1():
         out_feature_class=Building_N100.simplify_polygons___simplify_building_1___n100_building.value,
         simplification_tolerance="75",
         minimum_area="3200 SquareMeters",
-        collapsed_point_option="KEEP_COLLAPSED_POINTS",
+        collapsed_point_option="KEEP_COLLAPSED_POINTS",  # Name of points will be the same as output, but with `Pnt` at the end
     )
 
 
@@ -137,7 +138,7 @@ def simplify_polygons():
         algorithm="WEIGHTED_AREA",
         tolerance="15",
         minimum_area="3200 SquareMeters",
-        collapsed_point_option="KEEP_COLLAPSED_POINTS",  # Name of points will be the same with `Pnt` at the end
+        collapsed_point_option="KEEP_COLLAPSED_POINTS",  # Name of points will be the same as output, but with `Pnt` at the end
     )
 
 
@@ -165,7 +166,7 @@ def simplify_buildings_2():
         out_feature_class=Building_N100.simplify_polygons___simplify_building_2___n100_building.value,
         simplification_tolerance="75",
         minimum_area="3200 SquareMeters",
-        collapsed_point_option="KEEP_COLLAPSED_POINTS",
+        collapsed_point_option="KEEP_COLLAPSED_POINTS",  # Name of points will be the same as output, but with `Pnt` at the end
     )
 
 

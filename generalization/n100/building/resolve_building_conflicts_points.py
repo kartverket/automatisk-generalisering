@@ -37,7 +37,7 @@ def rbc_selection():
     # List of dictionaries containing parameters for each selection
     selections = [
         {
-            "input_layer": Building_N100.simplify_polygons___final___n100_building.value,
+            "input_layer": Building_N100.polygon_propogate_displacement___building_polygons_final___n100_building.value,
             "output_name": Building_N100.rbc_selection__grunnriss_selection_rbc__n100.value,
         },
         {
