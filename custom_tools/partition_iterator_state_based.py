@@ -243,6 +243,13 @@ class PartitionIterator:
         with open(file_name, "w") as file:
             json.dump(self.data, file, indent=4)
 
+    def generate_unique_field_name(self, input_feature, field_name):
+        existing_field_names = [field.name for field in arcpy.ListFields(input_feature)]
+        unique_field_name = field_name
+        while unique_field_name in existing_field_names:
+            unique_field_name = f"{unique_field_name}_{random.randint(0, 9)}"
+        return unique_field_name
+
     def pre_iteration(self):
         """
         Determine the maximum OBJECTID for partitioning.
@@ -283,6 +290,17 @@ class PartitionIterator:
                     new_type_path=input_data_copy,
                 )
 
+                # Making sure the field is unique if it exists a field with the same name
+                self.PARTITION_FIELD = self.generate_unique_field_name(
+                    input_feature=input_data_copy,
+                    field_name=self.PARTITION_FIELD,
+                )
+
+                self.ORIGINAL_ID_FIELD = self.generate_unique_field_name(
+                    input_feature=input_data_copy,
+                    field_name=self.ORIGINAL_ID_FIELD,
+                )
+
                 arcpy.AddField_management(
                     in_table=input_data_copy,
                     field_name=self.PARTITION_FIELD,
@@ -290,31 +308,19 @@ class PartitionIterator:
                 )
                 print(f"Added field {self.PARTITION_FIELD}")
 
-                # Making sure the field is unique if it exists a field with the same name
-                existing_field_names = [
-                    field.name for field in arcpy.ListFields(input_data_copy)
-                ]
-                unique_orig_id_field = self.ORIGINAL_ID_FIELD
-                while unique_orig_id_field in existing_field_names:
-                    unique_orig_id_field = (
-                        f"{self.ORIGINAL_ID_FIELD}_{random.randint(0, 9)}"
-                    )
                 arcpy.AddField_management(
                     in_table=input_data_copy,
-                    field_name=unique_orig_id_field,
+                    field_name=self.ORIGINAL_ID_FIELD,
                     field_type="LONG",
                 )
-                print(f"Added field {unique_orig_id_field}")
+                print(f"Added field {self.ORIGINAL_ID_FIELD}")
 
                 arcpy.CalculateField_management(
                     in_table=input_data_copy,
-                    field=unique_orig_id_field,
+                    field=self.ORIGINAL_ID_FIELD,
                     expression=f"!{self.object_id_field}!",
                 )
-                print(f"Calculated field {unique_orig_id_field}")
-
-                # Update the instance variable if a new unique field name was created
-                self.ORIGINAL_ID_FIELD = unique_orig_id_field
+                print(f"Calculated field {self.ORIGINAL_ID_FIELD}")
 
             if "context" in types:
                 context_data_path = types["context"]
