@@ -167,21 +167,6 @@ class PartitionIterator:
                     arcpy.management.Delete(output_file_path)
                     print(f"Deleted file: {output_file_path}")
 
-    def delete_existing_outputs(self):
-        for alias, output_info in self.output_feature_class.items():
-            output_type, output_path = output_info
-            current_path = self.data.get(alias, {}).get(output_type)
-            if current_path == output_path and arcpy.Exists(current_path):
-                PartitionIterator.delete_feature_class(
-                    current_path,
-                    alias=alias,
-                    output_type=output_type,
-                )
-            else:
-                print(
-                    f"Output feature class for '{alias}' of type '{output_type}' does not exist or path does not match: {current_path}"
-                )
-
     def delete_iteration_files(self, *file_paths):
         """Deletes multiple feature classes or files. Detailed alias and output_type logging is not available here."""
         for file_path in file_paths:
@@ -225,6 +210,37 @@ class PartitionIterator:
                         type_info="dummy",
                         path=dummy_feature_path,
                     )
+
+    def initialize_dummy_used(self):
+        # Assuming `aliases` is a list of all your aliases
+        for alias in self.data:
+            self.data[alias]["dummy_used"] = False
+
+    def reset_dummy_used(self):
+        # Assuming `aliases` is a list of all your aliases
+        for alias in self.data:
+            self.data[alias]["dummy_used"] = False
+
+    def update_alias_with_dummy_if_needed(self, alias, type_info):
+        # Check if the dummy type exists in the alias data
+        if "dummy" in self.data[alias]:
+            # Check if the input type exists in the alias data
+            if (
+                type_info in self.data[alias]
+                and self.data[alias][type_info] is not None
+            ):
+                # Get the dummy path from the alias data
+                dummy_path = self.data[alias]["dummy"]
+                # Set the value of the existing type_info to the dummy path
+                self.data[alias][type_info] = dummy_path
+                self.data[alias]["dummy_used"] = True
+                print(
+                    f"The '{type_info}' for alias '{alias}' was updated with dummy path: {dummy_path}"
+                )
+            else:
+                print(f"'{type_info}' does not exist for alias '{alias}' in data.")
+        else:
+            print(f"'dummy' type does not exist for alias '{alias}' in data.")
 
     def write_data_to_json(self, file_name):
         with open(file_name, "w") as file:
@@ -439,6 +455,11 @@ class PartitionIterator:
                 )
                 return aliases_with_features, True
             else:
+                # Loads in dummy feature for this alias for this iteration and sets dummy_used = True
+                self.update_alias_with_dummy_if_needed(
+                    alias,
+                    type_info="input",
+                )
                 print(
                     f"iteration partition {object_id} has no features for {alias} in the partition feature"
                 )
@@ -485,6 +506,11 @@ class PartitionIterator:
     ):
         for alias in aliases:
             if "context_copy" not in self.data[alias]:
+                # Loads in dummy feature for this alias for this iteration and sets dummy_used = True
+                self.update_alias_with_dummy_if_needed(
+                    alias,
+                    type_info="context",
+                )
                 print(
                     f"iteration partition {object_id} has no context features for {alias} in the partition feature"
                 )
@@ -498,7 +524,19 @@ class PartitionIterator:
 
         # For each type under current alias, append the result of the current iteration
         for type_info, final_output_path in self.final_outputs[alias].items():
+            if self.data[alias]["dummy_used"]:
+                continue
+
             input_feature_class = self.data[alias][type_info]
+
+            if (
+                not arcpy.Exists(input_feature_class)
+                or int(arcpy.GetCount_management(input_feature_class).getOutput(0)) <= 0
+            ):
+                print(
+                    f"No features found in partition target selection: {input_feature_class}"
+                )
+                continue
 
             partition_target_selection = (
                 f"in_memory/{alias}_{type_info}_partition_target_selection_{self.scale}"
@@ -549,11 +587,13 @@ class PartitionIterator:
 
         # self.delete_existing_outputs()
         self.create_dummy_features(types_to_include=["input_copy", "context_copy"])
+        self.initialize_dummy_used()
 
         self.delete_iteration_files(*self.iteration_file_paths)
         self.iteration_file_paths.clear()
 
         for object_id in range(1, max_object_id + 1):
+            self.reset_dummy_used()
             self.iteration_file_paths.clear()
             iteration_partition = f"{self.partition_feature}_{object_id}"
             self.select_partition_feature(iteration_partition, object_id)
