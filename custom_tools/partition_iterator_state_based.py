@@ -102,6 +102,23 @@ class PartitionIterator:
             self.data[alias] = {}
         self.data[alias][type_info] = path
 
+    def add_type_to_alias(self, alias, new_type, new_type_path=None):
+        """Adds a new type with optional file path to an existing alias."""
+        if alias not in self.data:
+            print(f"Alias '{alias}' not found in data.")
+            return
+
+        if new_type in self.data[alias]:
+            print(
+                f"Type '{new_type}' already exists for alias '{alias}'. Current path: {self.data[alias][new_type]}"
+            )
+            return
+
+        self.data[alias][new_type] = new_type_path
+        print(
+            f"Added type '{new_type}' to alias '{alias}' in data with path: {new_type_path}"
+        )
+
     def create_new_alias(self, alias, initial_states):
         if alias in self.data:
             raise ValueError(f"Alias {alias} already exists.")
@@ -116,7 +133,7 @@ class PartitionIterator:
             path
             for alias, types in self.data.items()
             for type_key, path in types.items()
-            if type_key in ["input", "context"] and path is not None
+            if type_key in ["input_copy", "context_copy"] and path is not None
         ]
 
         print(f"all_features: {all_features}")
@@ -184,7 +201,7 @@ class PartitionIterator:
         )
         print(f"Created feature class: {full_feature_path}")
 
-    def create_dummy_features(self, types_to_include=["input", "context"]):
+    def create_dummy_features(self, types_to_include=["input_copy", "context_copy"]):
         """
         Creates dummy features for aliases with specified types.
 
@@ -246,11 +263,11 @@ class PartitionIterator:
                 )
                 print(f"Copied input data for: {alias}")
 
-                # Update the path for 'input' type to the new copied path
-                self.update_alias_state(
+                # Add a new type for the alias the copied input data
+                self.add_type_to_alias(
                     alias=alias,
-                    type_info="input",
-                    path=input_data_copy,
+                    new_type="input_copy",
+                    new_type_path=input_data_copy,
                 )
 
                 arcpy.AddField_management(
@@ -286,6 +303,24 @@ class PartitionIterator:
                 # Update the instance variable if a new unique field name was created
                 self.ORIGINAL_ID_FIELD = unique_orig_id_field
 
+            if "context" in types:
+                context_data_path = types["context"]
+                context_data_copy = (
+                    f"{self.root_file_partition_iterator}_{alias}_context_copy"
+                )
+                # self.delete_feature_class(input_data_copy)
+                arcpy.management.Copy(
+                    in_data=context_data_path,
+                    out_data=context_data_copy,
+                )
+                print(f"Copied context data for: {alias}")
+
+                self.add_type_to_alias(
+                    alias=alias,
+                    new_type="context_copy",
+                    new_type_path=context_data_copy,
+                )
+
     def custom_function(inputs):
         outputs = []
         return outputs
@@ -311,18 +346,11 @@ class PartitionIterator:
         """
         Process input features for a given partition.
         """
-        if "input" not in self.data[alias]:
+        if "input_copy" not in self.data[alias]:
             return None, False
 
-        if "input" in self.data[alias]:
-            input_data_copy = f"{self.root_file_partition_iterator}_{alias}_input_copy"
-            self.update_alias_state(
-                alias=alias,
-                type_info="input",
-                path=input_data_copy,
-            )
-
-            input_path = self.data[alias]["input"]
+        if "input_copy" in self.data[alias]:
+            input_path = self.data[alias]["input_copy"]
             input_features_partition_selection = (
                 f"in_memory/{alias}_partition_base_select_{self.scale}"
             )
@@ -419,7 +447,7 @@ class PartitionIterator:
     def _process_inputs_in_partition(self, aliases, iteration_partition, object_id):
         inputs_present_in_partition = False
         for alias in aliases:
-            if "input" in self.data[alias]:
+            if "input_copy" in self.data[alias]:
                 _, input_present = self.process_input_features(
                     alias, iteration_partition, object_id
                 )
@@ -432,8 +460,8 @@ class PartitionIterator:
         """
         Process context features for a given partition if input features are present.
         """
-        if "context" in self.data[alias]:
-            context_path = self.data[alias]["context"]
+        if "context_copy" in self.data[alias]:
+            context_path = self.data[alias]["context_copy"]
             context_selection_path = f"{self.root_file_partition_iterator}_{alias}_context_iteration_selection"
             self.iteration_file_paths.append(context_selection_path)
 
@@ -446,13 +474,19 @@ class PartitionIterator:
                 search_distance=self.search_distance,
             )
 
+            self.update_alias_state(
+                alias=alias,
+                type_info="context",
+                path=context_selection_path,
+            )
+
     def _process_context_features_and_others(
         self, aliases, iteration_partition, object_id
     ):
         for alias in aliases:
-            if "context" not in self.data[alias]:
+            if "context_copy" not in self.data[alias]:
                 print(
-                    f"iteration partition {object_id} has no features for {alias} in the partition feature"
+                    f"iteration partition {object_id} has no context features for {alias} in the partition feature"
                 )
             else:
                 self.process_context_features(alias, iteration_partition)
@@ -514,7 +548,7 @@ class PartitionIterator:
         max_object_id = self.pre_iteration()
 
         # self.delete_existing_outputs()
-        self.create_dummy_features(types_to_include=["input", "context"])
+        self.create_dummy_features(types_to_include=["input_copy", "context_copy"])
 
         self.delete_iteration_files(*self.iteration_file_paths)
         self.iteration_file_paths.clear()
