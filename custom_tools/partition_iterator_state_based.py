@@ -47,7 +47,6 @@ class PartitionIterator:
         self.data = {}
         self.alias_path_data = alias_path_data
         self.alias_path_outputs = alias_path_outputs or {}
-        print("\nInitializing with alias_path_outputs = ", alias_path_outputs)
         self.root_file_partition_iterator = root_file_partition_iterator
         self.scale = scale
         self.output_feature_class = alias_path_outputs
@@ -90,7 +89,6 @@ class PartitionIterator:
             if alias not in self.final_outputs:
                 self.final_outputs[alias] = {}
             self.final_outputs[alias][type_info] = path_info
-            print("\nUnpacking alias_path_outputs = ", alias_path_outputs)
 
     def integrate_results(self):
         for alias, types in self.final_outputs.items():
@@ -128,7 +126,6 @@ class PartitionIterator:
         return self.data.get(alias, {}).get(type_info)
 
     def create_cartographic_partitions(self):
-        print("Debugging self.data before partition creation:", self.data)
         all_features = [
             path
             for alias, types in self.data.items()
@@ -324,7 +321,7 @@ class PartitionIterator:
                 context_data_copy = (
                     f"{self.root_file_partition_iterator}_{alias}_context_copy"
                 )
-                # self.delete_feature_class(input_data_copy)
+
                 arcpy.management.Copy(
                     in_data=context_data_path,
                     out_data=context_data_copy,
@@ -351,7 +348,7 @@ class PartitionIterator:
             expression=f"{self.object_id_field} = {object_id}",
             output_name=iteration_partition,
         )
-        print(f"Created partition selection for OBJECTID {object_id}")
+        print(f"\nCreated partition selection for OBJECTID {object_id}")
 
     def process_input_features(
         self,
@@ -389,7 +386,6 @@ class PartitionIterator:
 
             if aliases_with_features[alias] > 0:
                 print(f"{alias} has {count_points} features in {iteration_partition}")
-                # aliases_with_features += 1
 
                 arcpy.CalculateField_management(
                     in_table=input_features_partition_selection,
@@ -524,6 +520,7 @@ class PartitionIterator:
 
         # For each type under current alias, append the result of the current iteration
         for type_info, final_output_path in self.final_outputs[alias].items():
+            # Skipping append if the alias is a dummy feature
             if self.data[alias]["dummy_used"]:
                 continue
 
@@ -551,14 +548,6 @@ class PartitionIterator:
                 output_name=partition_target_selection,
             )
 
-            # Number of features before append/copy
-            orig_num_features = (
-                int(arcpy.GetCount_management(final_output_path).getOutput(0))
-                if arcpy.Exists(final_output_path)
-                else 0
-            )
-            print(f"\nNumber of features originally in the file: {orig_num_features}")
-
             if not arcpy.Exists(final_output_path):
                 arcpy.management.CopyFeatures(
                     in_features=partition_target_selection,
@@ -572,20 +561,10 @@ class PartitionIterator:
                     schema_type="NO_TEST",
                 )
 
-            # Number of features after append/copy
-            new_num_features = int(
-                arcpy.GetCount_management(final_output_path).getOutput(0)
-            )
-            print(f"\nNumber of features after append/copy: {new_num_features}")
-
-    def _append_iteration_to_final_and_others(self, alias):
-        self.append_iteration_to_final(alias)
-
     def partition_iteration(self):
         aliases = self.data.keys()
         max_object_id = self.pre_iteration()
 
-        # self.delete_existing_outputs()
         self.create_dummy_features(types_to_include=["input_copy", "context_copy"])
         self.initialize_dummy_used()
 
@@ -617,7 +596,7 @@ class PartitionIterator:
         self.integrate_initial_data(self.alias_path_data)
         if self.alias_path_outputs is not None:
             self.unpack_alias_path_outputs(self.alias_path_outputs)
-        print("\nAfter unpacking, final_outputs = ", self.final_outputs)
+
         self.delete_final_outputs()
         self.prepare_input_data()
         self.create_cartographic_partitions()
