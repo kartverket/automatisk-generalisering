@@ -19,7 +19,7 @@ class PartitionIterator:
 
     # Class-level constants
     PARTITION_FIELD = "partition_select"
-    ORIGINAL_ID_FIELD = "orig_id_field"
+    ORIGINAL_ID_FIELD = "original_id_field"
 
     def __init__(
         self,
@@ -95,35 +95,42 @@ class PartitionIterator:
             for type_info, final_output_path in types.items():
                 iteration_output_path = self.data[alias][type_info]
 
-    def update_alias_state(self, alias, type_info, path=None):
-        if alias not in self.data:
-            self.data[alias] = {}
-        self.data[alias][type_info] = path
-
-    def add_type_to_alias(self, alias, new_type, new_type_path=None):
-        """Adds a new type with optional file path to an existing alias."""
+    def configure_alias_and_type(
+        self,
+        alias,
+        type_name,
+        type_path,
+    ):
+        # Check if alias exists
         if alias not in self.data:
             print(f"Alias '{alias}' not found in data.")
             return
 
-        if new_type in self.data[alias]:
-            print(
-                f"Type '{new_type}' already exists for alias '{alias}'. Current path: {self.data[alias][new_type]}"
-            )
-            return
+        # Update path of an existing type or add a new type with the provided path
+        self.data[alias][type_name] = type_path
+        print(f"Set path for type '{type_name}' in alias '{alias}' to: {type_path}")
 
-        self.data[alias][new_type] = new_type_path
-        print(
-            f"Added type '{new_type}' to alias '{alias}' in data with path: {new_type_path}"
-        )
-
-    def create_new_alias(self, alias, initial_states):
+    def create_new_alias(
+        self,
+        alias,
+        initial_type_name=None,
+        initial_type_path=None,
+    ):
+        # Check if alias already exists
         if alias in self.data:
             raise ValueError(f"Alias {alias} already exists.")
-        self.data[alias] = initial_states
 
-    def get_path_for_alias_and_type(self, alias, type_info):
-        return self.data.get(alias, {}).get(type_info)
+        # Initialize data for alias
+        if initial_type_name:
+            # Create alias with initial type and path
+            self.data[alias] = {initial_type_name: initial_type_path}
+        else:
+            # Initialize alias as an empty dictionary
+            self.data[alias] = {}
+
+        print(
+            f"Created new alias '{alias}' in data with type '{initial_type_name}' and path: {initial_type_path}"
+        )
 
     def create_cartographic_partitions(self):
         all_features = [
@@ -202,10 +209,10 @@ class PartitionIterator:
                         f"Created dummy feature class for {alias} of type {type_info}: {dummy_feature_path}"
                     )
                     # Update alias state to include this new dummy type and its path
-                    self.update_alias_state(
+                    self.configure_alias_and_type(
                         alias=alias,
-                        type_info="dummy",
-                        path=dummy_feature_path,
+                        type_name="dummy",
+                        type_path=dummy_feature_path,
                     )
 
     def initialize_dummy_used(self):
@@ -284,10 +291,10 @@ class PartitionIterator:
                 print(f"Copied input data for: {alias}")
 
                 # Add a new type for the alias the copied input data
-                self.add_type_to_alias(
+                self.configure_alias_and_type(
                     alias=alias,
-                    new_type="input_copy",
-                    new_type_path=input_data_copy,
+                    type_name="input_copy",
+                    type_path=input_data_copy,
                 )
 
                 # Making sure the field is unique if it exists a field with the same name
@@ -334,10 +341,10 @@ class PartitionIterator:
                 )
                 print(f"Copied context data for: {alias}")
 
-                self.add_type_to_alias(
+                self.configure_alias_and_type(
                     alias=alias,
-                    new_type="context_copy",
-                    new_type_path=context_data_copy,
+                    type_name="context_copy",
+                    type_path=context_data_copy,
                 )
 
     def custom_function(inputs):
@@ -446,10 +453,10 @@ class PartitionIterator:
                     schema_type="NO_TEST",
                 )
 
-                self.update_alias_state(
+                self.configure_alias_and_type(
                     alias=alias,
-                    type_info="input",
-                    path=iteration_append_feature,
+                    type_name="input",
+                    type_path=iteration_append_feature,
                 )
 
                 print(
@@ -497,10 +504,10 @@ class PartitionIterator:
                 search_distance=self.search_distance,
             )
 
-            self.update_alias_state(
+            self.configure_alias_and_type(
                 alias=alias,
-                type_info="context",
-                path=context_selection_path,
+                type_name="context",
+                type_path=context_selection_path,
             )
 
     def _process_context_features_and_others(
