@@ -44,7 +44,7 @@ class PartitionIterator:
         :param partition_method: Method used for creating cartographic partitions.
         """
 
-        self.data = {}
+        self.nested_alias_type_data = {}
         self.alias_path_data = alias_path_data
         self.alias_path_outputs = alias_path_outputs or {}
         self.root_file_partition_iterator = root_file_partition_iterator
@@ -57,7 +57,7 @@ class PartitionIterator:
         )
         self.custom_functions = custom_functions or []
         self.iteration_file_paths = []
-        self.final_outputs = {}
+        self.nested_final_outputs = {}
         self.search_distance = search_distance
         self.object_id_field = object_id_field
 
@@ -69,17 +69,17 @@ class PartitionIterator:
         # Process initial alias_path_data for inputs and outputs
         for alias, info in alias_path_data.items():
             type_info, path_info = info
-            if alias not in self.data:
-                self.data[alias] = {}
-            self.data[alias][type_info] = path_info
+            if alias not in self.nested_alias_type_data:
+                self.nested_alias_type_data[alias] = {}
+            self.nested_alias_type_data[alias][type_info] = path_info
 
     def unpack_alias_path_outputs(self, alias_path_outputs):
-        self.final_outputs = {}
+        self.nested_final_outputs = {}
         for alias, info in alias_path_outputs.items():
             type_info, path_info = info
-            if alias not in self.final_outputs:
-                self.final_outputs[alias] = {}
-            self.final_outputs[alias][type_info] = path_info
+            if alias not in self.nested_final_outputs:
+                self.nested_final_outputs[alias] = {}
+            self.nested_final_outputs[alias][type_info] = path_info
 
     def configure_alias_and_type(
         self,
@@ -88,12 +88,12 @@ class PartitionIterator:
         type_path,
     ):
         # Check if alias exists
-        if alias not in self.data:
-            print(f"Alias '{alias}' not found in data.")
+        if alias not in self.nested_alias_type_data:
+            print(f"Alias '{alias}' not found in nested_alias_type_data.")
             return
 
         # Update path of an existing type or add a new type with the provided path
-        self.data[alias][type_name] = type_path
+        self.nested_alias_type_data[alias][type_name] = type_path
         print(f"Set path for type '{type_name}' in alias '{alias}' to: {type_path}")
 
     def create_new_alias(
@@ -103,25 +103,25 @@ class PartitionIterator:
         initial_type_path=None,
     ):
         # Check if alias already exists
-        if alias in self.data:
+        if alias in self.nested_alias_type_data:
             raise ValueError(f"Alias {alias} already exists.")
 
-        # Initialize data for alias
+        # Initialize nested_alias_type_data for alias
         if initial_type_name:
             # Create alias with initial type and path
-            self.data[alias] = {initial_type_name: initial_type_path}
+            self.nested_alias_type_data[alias] = {initial_type_name: initial_type_path}
         else:
             # Initialize alias as an empty dictionary
-            self.data[alias] = {}
+            self.nested_alias_type_data[alias] = {}
 
         print(
-            f"Created new alias '{alias}' in data with type '{initial_type_name}' and path: {initial_type_path}"
+            f"Created new alias '{alias}' in nested_alias_type_data with type '{initial_type_name}' and path: {initial_type_path}"
         )
 
     def create_cartographic_partitions(self):
         all_features = [
             path
-            for alias, types in self.data.items()
+            for alias, types in self.nested_alias_type_data.items()
             for type_key, path in types.items()
             if type_key in ["input_copy", "context_copy"] and path is not None
         ]
@@ -151,8 +151,8 @@ class PartitionIterator:
 
     def delete_final_outputs(self):
         """Deletes all final output files if they exist."""
-        for alias in self.final_outputs:
-            for _, output_file_path in self.final_outputs[alias].items():
+        for alias in self.nested_final_outputs:
+            for _, output_file_path in self.nested_final_outputs[alias].items():
                 if arcpy.Exists(output_file_path):
                     arcpy.management.Delete(output_file_path)
                     print(f"Deleted file: {output_file_path}")
@@ -183,7 +183,7 @@ class PartitionIterator:
         Args:
             types_to_include (list): Types for which dummy features should be created.
         """
-        for alias, alias_data in self.data.items():
+        for alias, alias_data in self.nested_alias_type_data.items():
             for type_info, path in list(alias_data.items()):
                 if type_info in types_to_include and path:
                     dummy_feature_path = f"{self.root_file_partition_iterator}_{alias}_dummy_{self.scale}"
@@ -203,38 +203,42 @@ class PartitionIterator:
 
     def initialize_dummy_used(self):
         # Assuming `aliases` is a list of all your aliases
-        for alias in self.data:
-            self.data[alias]["dummy_used"] = False
+        for alias in self.nested_alias_type_data:
+            self.nested_alias_type_data[alias]["dummy_used"] = False
 
     def reset_dummy_used(self):
         # Assuming `aliases` is a list of all your aliases
-        for alias in self.data:
-            self.data[alias]["dummy_used"] = False
+        for alias in self.nested_alias_type_data:
+            self.nested_alias_type_data[alias]["dummy_used"] = False
 
     def update_empty_alias_type_with_dummy_file(self, alias, type_info):
-        # Check if the dummy type exists in the alias data
-        if "dummy" in self.data[alias]:
-            # Check if the input type exists in the alias data
+        # Check if the dummy type exists in the alias nested_alias_type_data
+        if "dummy" in self.nested_alias_type_data[alias]:
+            # Check if the input type exists in the alias nested_alias_type_data
             if (
-                type_info in self.data[alias]
-                and self.data[alias][type_info] is not None
+                type_info in self.nested_alias_type_data[alias]
+                and self.nested_alias_type_data[alias][type_info] is not None
             ):
-                # Get the dummy path from the alias data
-                dummy_path = self.data[alias]["dummy"]
+                # Get the dummy path from the alias nested_alias_type_data
+                dummy_path = self.nested_alias_type_data[alias]["dummy"]
                 # Set the value of the existing type_info to the dummy path
-                self.data[alias][type_info] = dummy_path
-                self.data[alias]["dummy_used"] = True
+                self.nested_alias_type_data[alias][type_info] = dummy_path
+                self.nested_alias_type_data[alias]["dummy_used"] = True
                 print(
                     f"The '{type_info}' for alias '{alias}' was updated with dummy path: {dummy_path}"
                 )
             else:
-                print(f"'{type_info}' does not exist for alias '{alias}' in data.")
+                print(
+                    f"'{type_info}' does not exist for alias '{alias}' in nested_alias_type_data."
+                )
         else:
-            print(f"'dummy' type does not exist for alias '{alias}' in data.")
+            print(
+                f"'dummy' type does not exist for alias '{alias}' in nested_alias_type_data."
+            )
 
     def write_data_to_json(self, file_name):
         with open(file_name, "w") as file:
-            json.dump(self.data, file, indent=4)
+            json.dump(self.nested_alias_type_data, file, indent=4)
 
     def generate_unique_field_name(self, input_feature, field_name):
         existing_field_names = [field.name for field in arcpy.ListFields(input_feature)]
@@ -263,7 +267,7 @@ class PartitionIterator:
             print(f"Error in finding max {self.object_id_field}: {e}")
 
     def prepare_input_data(self):
-        for alias, types in self.data.items():
+        for alias, types in self.nested_alias_type_data.items():
             if "input" in types:
                 input_data_path = types["input"]
                 input_data_copy = (
@@ -274,9 +278,9 @@ class PartitionIterator:
                     in_data=input_data_path,
                     out_data=input_data_copy,
                 )
-                print(f"Copied input data for: {alias}")
+                print(f"Copied input nested_alias_type_data for: {alias}")
 
-                # Add a new type for the alias the copied input data
+                # Add a new type for the alias the copied input nested_alias_type_data
                 self.configure_alias_and_type(
                     alias=alias,
                     type_name="input_copy",
@@ -325,7 +329,7 @@ class PartitionIterator:
                     in_data=context_data_path,
                     out_data=context_data_copy,
                 )
-                print(f"Copied context data for: {alias}")
+                print(f"Copied context nested_alias_type_data for: {alias}")
 
                 self.configure_alias_and_type(
                     alias=alias,
@@ -358,11 +362,11 @@ class PartitionIterator:
         """
         Process input features for a given partition.
         """
-        if "input_copy" not in self.data[alias]:
+        if "input_copy" not in self.nested_alias_type_data[alias]:
             return None, False
 
-        if "input_copy" in self.data[alias]:
-            input_path = self.data[alias]["input_copy"]
+        if "input_copy" in self.nested_alias_type_data[alias]:
+            input_path = self.nested_alias_type_data[alias]["input_copy"]
             input_features_partition_selection = (
                 f"in_memory/{alias}_partition_base_select_{self.scale}"
             )
@@ -463,7 +467,7 @@ class PartitionIterator:
     def _process_inputs_in_partition(self, aliases, iteration_partition, object_id):
         inputs_present_in_partition = False
         for alias in aliases:
-            if "input_copy" in self.data[alias]:
+            if "input_copy" in self.nested_alias_type_data[alias]:
                 _, input_present = self.process_input_features(
                     alias, iteration_partition, object_id
                 )
@@ -476,8 +480,8 @@ class PartitionIterator:
         """
         Process context features for a given partition if input features are present.
         """
-        if "context_copy" in self.data[alias]:
-            context_path = self.data[alias]["context_copy"]
+        if "context_copy" in self.nested_alias_type_data[alias]:
+            context_path = self.nested_alias_type_data[alias]["context_copy"]
             context_selection_path = f"{self.root_file_partition_iterator}_{alias}_context_iteration_selection"
             self.iteration_file_paths.append(context_selection_path)
 
@@ -500,7 +504,7 @@ class PartitionIterator:
         self, aliases, iteration_partition, object_id
     ):
         for alias in aliases:
-            if "context_copy" not in self.data[alias]:
+            if "context_copy" not in self.nested_alias_type_data[alias]:
                 # Loads in dummy feature for this alias for this iteration and sets dummy_used = True
                 self.update_empty_alias_type_with_dummy_file(
                     alias,
@@ -513,17 +517,17 @@ class PartitionIterator:
                 self.process_context_features(alias, iteration_partition)
 
     def append_iteration_to_final(self, alias):
-        # Guard clause if alias doesn't exist in final_outputs
-        if alias not in self.final_outputs:
+        # Guard clause if alias doesn't exist in nested_final_outputs
+        if alias not in self.nested_final_outputs:
             return
 
         # For each type under current alias, append the result of the current iteration
-        for type_info, final_output_path in self.final_outputs[alias].items():
+        for type_info, final_output_path in self.nested_final_outputs[alias].items():
             # Skipping append if the alias is a dummy feature
-            if self.data[alias]["dummy_used"]:
+            if self.nested_alias_type_data[alias]["dummy_used"]:
                 continue
 
-            input_feature_class = self.data[alias][type_info]
+            input_feature_class = self.nested_alias_type_data[alias][type_info]
 
             if (
                 not arcpy.Exists(input_feature_class)
@@ -561,7 +565,7 @@ class PartitionIterator:
                 )
 
     def partition_iteration(self):
-        aliases = self.data.keys()
+        aliases = self.nested_alias_type_data.keys()
         max_object_id = self.find_maximum_object_id()
 
         self.create_dummy_features(types_to_include=["input_copy", "context_copy"])
@@ -656,7 +660,7 @@ Can I use pattern matching (match) to find the alias for each param?
 
 
 
-self.data = {
+self.nested_alias_type_data = {
     'alias_1': {
         'input': 'file_path_1',
         'function_1': 'file_path_3',
