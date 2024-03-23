@@ -2,6 +2,7 @@ import arcpy
 import os
 import random
 import json
+from typing import Dict, Tuple, Literal
 
 import env_setup.global_config
 from env_setup import environment_setup
@@ -23,15 +24,15 @@ class PartitionIterator:
 
     def __init__(
         self,
-        alias_path_data,
-        root_file_partition_iterator,
-        scale,
-        alias_path_outputs,
+        alias_path_data: Dict[str, Tuple[Literal["input", "context"], str]],
+        alias_path_outputs: Dict[str, Tuple[str, str]],
+        root_file_partition_iterator: str,
+        scale: str,
         custom_functions=None,
-        feature_count="15000",
-        partition_method="FEATURES",
-        search_distance="500 Meters",
-        object_id_field="OBJECTID",
+        feature_count: str = "15000",
+        partition_method: Literal["FEATURES", "VERTICES"] = "FEATURES",
+        search_distance: str = "500 Meters",
+        object_id_field: str = "OBJECTID",
     ):
         """
         Initialize the PartitionIterator with input datasets for partitioning and processing.
