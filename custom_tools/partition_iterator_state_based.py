@@ -73,15 +73,6 @@ class PartitionIterator:
                 self.data[alias] = {}
             self.data[alias][type_info] = path_info
 
-            # for func_name, specs in custom_function_specs.items():
-            #     for alias, types in specs.items():
-            #         for type_info in types:
-            #             self.update_alias_state(
-            #                 alias=alias,
-            #                 type_info=type_info,
-            #                 path=None,
-            #             )
-
     def unpack_alias_path_outputs(self, alias_path_outputs):
         self.final_outputs = {}
         for alias, info in alias_path_outputs.items():
@@ -89,11 +80,6 @@ class PartitionIterator:
             if alias not in self.final_outputs:
                 self.final_outputs[alias] = {}
             self.final_outputs[alias][type_info] = path_info
-
-    def integrate_results(self):
-        for alias, types in self.final_outputs.items():
-            for type_info, final_output_path in types.items():
-                iteration_output_path = self.data[alias][type_info]
 
     def configure_alias_and_type(
         self,
@@ -225,7 +211,7 @@ class PartitionIterator:
         for alias in self.data:
             self.data[alias]["dummy_used"] = False
 
-    def update_alias_with_dummy_if_needed(self, alias, type_info):
+    def update_empty_alias_type_with_dummy_file(self, alias, type_info):
         # Check if the dummy type exists in the alias data
         if "dummy" in self.data[alias]:
             # Check if the input type exists in the alias data
@@ -257,7 +243,7 @@ class PartitionIterator:
             unique_field_name = f"{unique_field_name}_{random.randint(0, 9)}"
         return unique_field_name
 
-    def pre_iteration(self):
+    def find_maximum_object_id(self):
         """
         Determine the maximum OBJECTID for partitioning.
         """
@@ -465,7 +451,7 @@ class PartitionIterator:
                 return aliases_with_features, True
             else:
                 # Loads in dummy feature for this alias for this iteration and sets dummy_used = True
-                self.update_alias_with_dummy_if_needed(
+                self.update_empty_alias_type_with_dummy_file(
                     alias,
                     type_info="input",
                 )
@@ -516,7 +502,7 @@ class PartitionIterator:
         for alias in aliases:
             if "context_copy" not in self.data[alias]:
                 # Loads in dummy feature for this alias for this iteration and sets dummy_used = True
-                self.update_alias_with_dummy_if_needed(
+                self.update_empty_alias_type_with_dummy_file(
                     alias,
                     type_info="context",
                 )
@@ -576,7 +562,7 @@ class PartitionIterator:
 
     def partition_iteration(self):
         aliases = self.data.keys()
-        max_object_id = self.pre_iteration()
+        max_object_id = self.find_maximum_object_id()
 
         self.create_dummy_features(types_to_include=["input_copy", "context_copy"])
         self.initialize_dummy_used()
