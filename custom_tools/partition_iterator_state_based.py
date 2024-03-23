@@ -366,6 +366,7 @@ class PartitionIterator:
         Process input features for a given partition.
         """
         if "input_copy" not in self.nested_alias_type_data[alias]:
+            # If there are no inputs to process, return None for the aliases and a flag indicating no input was present.
             return None, False
 
         if "input_copy" in self.nested_alias_type_data[alias]:
@@ -375,7 +376,7 @@ class PartitionIterator:
             )
             self.iteration_file_paths_list.append(input_features_partition_selection)
 
-            input_feature_count = custom_arcpy.select_location_and_make_feature_layer(
+            custom_arcpy.select_location_and_make_feature_layer(
                 input_layer=input_path,
                 overlap_type=custom_arcpy.OverlapType.HAVE_THEIR_CENTER_IN.value,
                 select_features=iteration_partition,
@@ -455,6 +456,7 @@ class PartitionIterator:
                 print(
                     f"iteration partition {input_features_partition_context_selection} appended to {iteration_append_feature}"
                 )
+                # Return the processed input features and a flag indicating successful operation
                 return aliases_with_features, True
             else:
                 # Loads in dummy feature for this alias for this iteration and sets dummy_used = True
@@ -465,15 +467,18 @@ class PartitionIterator:
                 print(
                     f"iteration partition {object_id} has no features for {alias} in the partition feature"
                 )
+            # If there are no inputs to process, return None for the aliases and a flag indicating no input was present.
             return None, False
 
     def _process_inputs_in_partition(self, aliases, iteration_partition, object_id):
         inputs_present_in_partition = False
         for alias in aliases:
             if "input_copy" in self.nested_alias_type_data[alias]:
+                # Using process_input_features to check whether inputs are present
                 _, input_present = self.process_input_features(
                     alias, iteration_partition, object_id
                 )
+                # Sets inputs_present_in_partition as True if any alias in partition has input present. Otherwise it remains False.
                 inputs_present_in_partition = (
                     inputs_present_in_partition or input_present
                 )
