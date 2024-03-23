@@ -44,26 +44,31 @@ class PartitionIterator:
         :param partition_method: Method used for creating cartographic partitions.
         """
 
-        self.nested_alias_type_data = {}
-        self.nested_final_outputs = {}
-        self.alias_path_data = alias_path_data
-        self.alias_path_outputs = alias_path_outputs or {}
+        # Raw inputs and initial setup
+        self.raw_input_data = alias_path_data
+        self.raw_output_data = alias_path_outputs or {}
         self.root_file_partition_iterator = root_file_partition_iterator
         self.scale = scale
-
+        self.search_distance = search_distance
         self.feature_count = feature_count
         self.partition_method = partition_method
+        self.object_id_field = object_id_field
+
+        # Initial processing results
+        self.nested_alias_type_data = {}
+        self.nested_final_outputs = {}
+
+        # Variables related to features and iterations
         self.partition_feature = (
             f"{root_file_partition_iterator}_partition_feature_{scale}"
         )
-        self.custom_functions = custom_functions or []
-        self.iteration_file_paths = []
-
-        self.search_distance = search_distance
-        self.object_id_field = object_id_field
         self.max_object_id = None
+        self.iteration_file_paths_list = []
 
-    def integrate_initial_data(self, alias_path_data):
+        # Variables related to custom operations
+        self.custom_functions = custom_functions or []
+
+    def unpack_alias_path_data(self, alias_path_data):
         # Process initial alias_path_data for inputs and outputs
         for alias, info in alias_path_data.items():
             type_info, path_info = info
@@ -342,7 +347,7 @@ class PartitionIterator:
         """
         Selects partition feature based on OBJECTID.
         """
-        self.iteration_file_paths.append(iteration_partition)
+        self.iteration_file_paths_list.append(iteration_partition)
         custom_arcpy.select_attribute_and_make_permanent_feature(
             input_layer=self.partition_feature,
             expression=f"{self.object_id_field} = {object_id}",
@@ -367,7 +372,7 @@ class PartitionIterator:
             input_features_partition_selection = (
                 f"in_memory/{alias}_partition_base_select_{self.scale}"
             )
-            self.iteration_file_paths.append(input_features_partition_selection)
+            self.iteration_file_paths_list.append(input_features_partition_selection)
 
             input_feature_count = custom_arcpy.select_location_and_make_feature_layer(
                 input_layer=input_path,
@@ -394,7 +399,7 @@ class PartitionIterator:
                 )
 
                 iteration_append_feature = f"{self.root_file_partition_iterator}_{alias}_iteration_append_feature_{self.scale}"
-                self.iteration_file_paths.append(iteration_append_feature)
+                self.iteration_file_paths_list.append(iteration_append_feature)
 
                 PartitionIterator.create_feature_class(
                     full_feature_path=iteration_append_feature,
@@ -408,7 +413,7 @@ class PartitionIterator:
                 )
 
                 input_features_partition_context_selection = f"in_memory/{alias}_input_features_partition_context_selection_{self.scale}"
-                self.iteration_file_paths.append(
+                self.iteration_file_paths_list.append(
                     input_features_partition_context_selection
                 )
 
@@ -480,7 +485,7 @@ class PartitionIterator:
         if "context_copy" in self.nested_alias_type_data[alias]:
             context_path = self.nested_alias_type_data[alias]["context_copy"]
             context_selection_path = f"{self.root_file_partition_iterator}_{alias}_context_iteration_selection"
-            self.iteration_file_paths.append(context_selection_path)
+            self.iteration_file_paths_list.append(context_selection_path)
 
             custom_arcpy.select_location_and_make_permanent_feature(
                 input_layer=context_path,
@@ -538,8 +543,8 @@ class PartitionIterator:
             partition_target_selection = (
                 f"in_memory/{alias}_{type_info}_partition_target_selection_{self.scale}"
             )
-            self.iteration_file_paths.append(partition_target_selection)
-            self.iteration_file_paths.append(input_feature_class)
+            self.iteration_file_paths_list.append(partition_target_selection)
+            self.iteration_file_paths_list.append(input_feature_class)
 
             # Apply feature selection
             custom_arcpy.select_attribute_and_make_permanent_feature(
@@ -568,12 +573,12 @@ class PartitionIterator:
         self.create_dummy_features(types_to_include=["input_copy", "context_copy"])
         self.initialize_dummy_used()
 
-        self.delete_iteration_files(*self.iteration_file_paths)
-        self.iteration_file_paths.clear()
+        self.delete_iteration_files(*self.iteration_file_paths_list)
+        self.iteration_file_paths_list.clear()
 
         for object_id in range(1, self.max_object_id + 1):
             self.reset_dummy_used()
-            self.iteration_file_paths.clear()
+            self.iteration_file_paths_list.clear()
             iteration_partition = f"{self.partition_feature}_{object_id}"
             self.select_partition_feature(iteration_partition, object_id)
 
@@ -587,15 +592,15 @@ class PartitionIterator:
             if inputs_present_in_partition:
                 for alias in aliases:
                     self.append_iteration_to_final(alias)
-                self.delete_iteration_files(*self.iteration_file_paths)
+                self.delete_iteration_files(*self.iteration_file_paths_list)
             else:
-                self.delete_iteration_files(*self.iteration_file_paths)
+                self.delete_iteration_files(*self.iteration_file_paths_list)
 
     @timing_decorator
     def run(self):
-        self.integrate_initial_data(self.alias_path_data)
-        if self.alias_path_outputs is not None:
-            self.unpack_alias_path_outputs(self.alias_path_outputs)
+        self.unpack_alias_path_data(self.raw_input_data)
+        if self.raw_output_data is not None:
+            self.unpack_alias_path_outputs(self.raw_output_data)
 
         self.delete_final_outputs()
         self.prepare_input_data()
