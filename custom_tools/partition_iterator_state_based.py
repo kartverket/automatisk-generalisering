@@ -45,11 +45,12 @@ class PartitionIterator:
         """
 
         self.nested_alias_type_data = {}
+        self.nested_final_outputs = {}
         self.alias_path_data = alias_path_data
         self.alias_path_outputs = alias_path_outputs or {}
         self.root_file_partition_iterator = root_file_partition_iterator
         self.scale = scale
-        self.output_feature_class = alias_path_outputs
+
         self.feature_count = feature_count
         self.partition_method = partition_method
         self.partition_feature = (
@@ -57,13 +58,10 @@ class PartitionIterator:
         )
         self.custom_functions = custom_functions or []
         self.iteration_file_paths = []
-        self.nested_final_outputs = {}
+
         self.search_distance = search_distance
         self.object_id_field = object_id_field
-
-        self.input_data_copy = None
         self.max_object_id = None
-        self.final_append_feature = None
 
     def integrate_initial_data(self, alias_path_data):
         # Process initial alias_path_data for inputs and outputs
@@ -258,11 +256,10 @@ class PartitionIterator:
                 self.object_id_field,
                 sql_clause=(None, f"ORDER BY {self.object_id_field} DESC"),
             ) as cursor:
-                max_object_id = next(cursor)[0]
+                self.max_object_id = next(cursor)[0]
 
-            print(f"Maximum {self.object_id_field} found: {max_object_id}")
+            print(f"Maximum {self.object_id_field} found: {self.max_object_id}")
 
-            return max_object_id
         except Exception as e:
             print(f"Error in finding max {self.object_id_field}: {e}")
 
@@ -566,7 +563,7 @@ class PartitionIterator:
 
     def partition_iteration(self):
         aliases = self.nested_alias_type_data.keys()
-        max_object_id = self.find_maximum_object_id()
+        self.find_maximum_object_id()
 
         self.create_dummy_features(types_to_include=["input_copy", "context_copy"])
         self.initialize_dummy_used()
@@ -574,7 +571,7 @@ class PartitionIterator:
         self.delete_iteration_files(*self.iteration_file_paths)
         self.iteration_file_paths.clear()
 
-        for object_id in range(1, max_object_id + 1):
+        for object_id in range(1, self.max_object_id + 1):
             self.reset_dummy_used()
             self.iteration_file_paths.clear()
             iteration_partition = f"{self.partition_feature}_{object_id}"
@@ -620,6 +617,8 @@ if __name__ == "__main__":
     # Define your input feature classes and their aliases
     building_points = "building_points"
     building_polygons = "building_polygons"
+    church_hospital = "church_hospital"
+    restriction_lines = "restriction_lines"
 
     inputs = {
         building_points: [
@@ -653,6 +652,38 @@ if __name__ == "__main__":
 
     # Run the partition iterator
     partition_iterator.run()
+
+    # inputs_2 = {
+    #     church_hospital: [
+    #         "input",
+    #         Building_N100.polygon_propogate_displacement___hospital_church_points___n100_building.value,
+    #     ],
+    #     restriction_lines: [
+    #         "input",
+    #         Building_N100.polygon_propogate_displacement___begrensningskurve_500m_from_displaced_polygon___n100_building.value,
+    #     ],
+    # }
+    #
+    # outputs_2 = {
+    #     church_hospital: [
+    #         "input",
+    #         f"{Building_N100.iteration__partition_iterator_final_output_points__n100.value}_church_hospital",
+    #     ],
+    #     restriction_lines: [
+    #         "input",
+    #         f"{Building_N100.iteration__partition_iterator_final_output_polygons__n100.value}_restriction_lines",
+    #     ],
+    # }
+    #
+    # partition_iterator_2 = PartitionIterator(
+    #     alias_path_data=inputs_2,
+    #     alias_path_outputs=outputs_2,
+    #     root_file_partition_iterator=f"{Building_N100.iteration__partition_iterator__n100.value}_2",
+    #     scale=env_setup.global_config.scale_n100,
+    # )
+    #
+    # # Run the partition iterator
+    # partition_iterator_2.run()
 
 
 """"
