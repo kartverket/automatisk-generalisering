@@ -1,5 +1,7 @@
 import arcpy
 import os
+import re
+import shutil
 import random
 import json
 from typing import Dict, Tuple, Literal
@@ -29,6 +31,7 @@ class PartitionIterator:
         root_file_partition_iterator: str,
         scale: str,
         custom_functions=None,
+        dictionary_documentation_path: str = None,
         feature_count: str = "15000",
         partition_method: Literal["FEATURES", "VERTICES"] = "FEATURES",
         search_distance: str = "500 Meters",
@@ -49,6 +52,13 @@ class PartitionIterator:
         self.raw_input_data = alias_path_data
         self.raw_output_data = alias_path_outputs or {}
         self.root_file_partition_iterator = root_file_partition_iterator
+        if "." in dictionary_documentation_path:
+            self.dictionary_documentation_path = re.sub(
+                r"\.[^.]*$", "", dictionary_documentation_path
+            )
+        else:
+            self.dictionary_documentation_path = dictionary_documentation_path
+
         self.scale = scale
         self.search_distance = search_distance
         self.feature_count = feature_count
@@ -65,9 +75,19 @@ class PartitionIterator:
         )
         self.max_object_id = None
         self.iteration_file_paths_list = []
+        self.first_call_directory_documentation = True
 
         # Variables related to custom operations
         self.custom_functions = custom_functions or []
+
+        # self.handle_data_export(
+        #     file_path=self.dictionary_documentation_path,
+        #     alias_type_data=self.nested_alias_type_data,
+        #     final_outputs=self.nested_final_outputs,
+        #     file_name="initialization",
+        #     iteration=False,
+        #     object_id=None,
+        # )
 
     def unpack_alias_path_data(self, alias_path_data):
         # Process initial alias_path_data for inputs and outputs
@@ -240,9 +260,110 @@ class PartitionIterator:
                 f"'dummy' type does not exist for alias '{alias}' in nested_alias_type_data."
             )
 
-    def write_data_to_json(self, file_name):
-        with open(file_name, "w") as file:
-            json.dump(self.nested_alias_type_data, file, indent=4)
+    def create_directory(
+        self,
+        root_path: str,
+        target_dir: str,
+        iteration: bool,
+    ) -> str:
+        """
+        Creates a directory at the given root_path for the target_dir.
+        Args:
+            root_path: The root directory where initial structure is created
+            target_dir: The target where the created directory should be placed
+            iteration: Boolean flag indicating if the iteration_documentation should be added
+        Returns:
+            A string containing the absolute path of the created directory.
+        """
+
+        # Determine base directory
+        directory_path = os.path.join(root_path, f"{target_dir}")
+
+        # Ensure that the directory exists
+        os.makedirs(directory_path, exist_ok=True)
+
+        if iteration:
+            iteration_documentation_dir = os.path.join(
+                directory_path, "iteration_documentation"
+            )
+            os.makedirs(iteration_documentation_dir, exist_ok=True)
+
+            return iteration_documentation_dir
+
+        return directory_path
+
+    def write_data_to_json(
+        self,
+        data: dict,
+        file_path: str,
+        file_name: str,
+        object_id=None,
+    ) -> None:
+        """
+        Writes dictionary into a json file.
+
+           Args:
+               data: The data to write.
+               file_path: The complete path (directory+file_name) where the file should be created
+               file_name: The name of the file to create
+               object_id: If provided, object_id will also be part of the file name.
+        """
+
+        if object_id:
+            complete_file_path = os.path.join(
+                file_path, f"{file_name}_{object_id}.json"
+            )
+        else:
+            complete_file_path = os.path.join(file_path, f"{file_name}.json")
+
+        with open(complete_file_path, "w") as f:
+            json.dump(data, f, indent=4)
+
+    def handle_data_export(
+        self,
+        file_path: str = None,
+        alias_type_data: dict = None,
+        final_outputs: dict = None,
+        file_name: str = None,
+        iteration: bool = False,
+        object_id=None,
+    ) -> None:
+        """
+        Handles the export of alias type data and final outputs into separate json files.
+
+        Args:
+            file_path: The complete file path where to create the output directories.
+            alias_type_data: The alias type data to export.
+            final_outputs: The final outputs data to export.
+            file_name: The name of the file to create
+            iteration: Boolean flag indicating if the iteration_documentation should be added
+            object_id: Object ID to be included in the file name if it's an iteration (`iteration==True`). If `None`, will not be used.
+        """
+
+        if file_path is None:
+            file_path = self.dictionary_documentation_path
+        if alias_type_data is None:
+            alias_type_data = self.nested_alias_type_data
+        if final_outputs is None:
+            final_outputs = self.nested_final_outputs
+
+        if self.first_call_directory_documentation and os.path.exists(file_path):
+            shutil.rmtree(file_path)
+            self.first_call_directory_documentation = False
+
+        alias_type_data_directory = self.create_directory(
+            file_path, "nested_alias_type_data", iteration
+        )
+        final_outputs_directory = self.create_directory(
+            file_path, "nested_final_outputs", iteration
+        )
+
+        self.write_data_to_json(
+            alias_type_data, alias_type_data_directory, file_name, object_id
+        )
+        self.write_data_to_json(
+            final_outputs, final_outputs_directory, file_name, object_id
+        )
 
     def generate_unique_field_name(self, input_feature, field_name):
         existing_field_names = [field.name for field in arcpy.ListFields(input_feature)]
@@ -584,6 +705,11 @@ class PartitionIterator:
 
         for object_id in range(1, self.max_object_id + 1):
             self.reset_dummy_used()
+            self.handle_data_export(
+                file_name="iteration_start",
+                iteration=True,
+                object_id=object_id,
+            )
             self.iteration_file_paths_list.clear()
             iteration_partition = f"{self.partition_feature}_{object_id}"
             self.select_partition_feature(iteration_partition, object_id)
@@ -602,25 +728,27 @@ class PartitionIterator:
             else:
                 self.delete_iteration_files(*self.iteration_file_paths_list)
 
+            self.handle_data_export(
+                file_name="iteration_end",
+                iteration=True,
+                object_id=object_id,
+            )
+
     @timing_decorator
     def run(self):
         self.unpack_alias_path_data(self.raw_input_data)
         if self.raw_output_data is not None:
             self.unpack_alias_path_outputs(self.raw_output_data)
 
+        self.handle_data_export(file_name="post_alias_unpack")
+
         self.delete_final_outputs()
         self.prepare_input_data()
+
         self.create_cartographic_partitions()
 
-        self.write_data_to_json(
-            Building_N100.iteration___json_documentation_before___building_n100.value
-        )
-
         self.partition_iteration()
-
-        self.write_data_to_json(
-            Building_N100.iteration___json_documentation_after___building_n100.value
-        )
+        self.handle_data_export(file_name="post_everything")
 
 
 if __name__ == "__main__":
@@ -659,6 +787,7 @@ if __name__ == "__main__":
         alias_path_outputs=outputs,
         root_file_partition_iterator=Building_N100.iteration__partition_iterator__n100.value,
         scale=env_setup.global_config.scale_n100,
+        dictionary_documentation_path=Building_N100.iteration___partition_iterator_json_documentation___building_n100.value,
     )
 
     # Run the partition iterator
@@ -774,6 +903,6 @@ partition_iterator.run()
 # Thoughts on PartitionIterator:
 
 """
-Working on append_iteration_to_final need it to select the correct file from nested dictionary based on type for alias
+Building_N100.iteration___json_documentation_after___building_n100.value
 
 """
