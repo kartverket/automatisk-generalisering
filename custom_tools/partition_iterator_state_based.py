@@ -260,7 +260,7 @@ class PartitionIterator:
                 f"'dummy' type does not exist for alias '{alias}' in nested_alias_type_data."
             )
 
-    def create_directory(
+    def create_directory_json_documentation(
         self,
         root_path: str,
         target_dir: str,
@@ -319,7 +319,7 @@ class PartitionIterator:
         with open(complete_file_path, "w") as f:
             json.dump(data, f, indent=4)
 
-    def handle_data_export(
+    def export_dictionaries_to_json(
         self,
         file_path: str = None,
         alias_type_data: dict = None,
@@ -351,10 +351,10 @@ class PartitionIterator:
             shutil.rmtree(file_path)
             self.first_call_directory_documentation = False
 
-        alias_type_data_directory = self.create_directory(
+        alias_type_data_directory = self.create_directory_json_documentation(
             file_path, "nested_alias_type_data", iteration
         )
-        final_outputs_directory = self.create_directory(
+        final_outputs_directory = self.create_directory_json_documentation(
             file_path, "nested_final_outputs", iteration
         )
 
@@ -705,7 +705,7 @@ class PartitionIterator:
 
         for object_id in range(1, self.max_object_id + 1):
             self.reset_dummy_used()
-            self.handle_data_export(
+            self.export_dictionaries_to_json(
                 file_name="iteration_start",
                 iteration=True,
                 object_id=object_id,
@@ -728,7 +728,7 @@ class PartitionIterator:
             else:
                 self.delete_iteration_files(*self.iteration_file_paths_list)
 
-            self.handle_data_export(
+            self.export_dictionaries_to_json(
                 file_name="iteration_end",
                 iteration=True,
                 object_id=object_id,
@@ -740,7 +740,7 @@ class PartitionIterator:
         if self.raw_output_data is not None:
             self.unpack_alias_path_outputs(self.raw_output_data)
 
-        self.handle_data_export(file_name="post_alias_unpack")
+        self.export_dictionaries_to_json(file_name="post_alias_unpack")
 
         self.delete_final_outputs()
         self.prepare_input_data()
@@ -748,7 +748,7 @@ class PartitionIterator:
         self.create_cartographic_partitions()
 
         self.partition_iteration()
-        self.handle_data_export(file_name="post_everything")
+        self.export_dictionaries_to_json(file_name="post_everything")
 
 
 if __name__ == "__main__":
