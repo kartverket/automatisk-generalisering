@@ -1,75 +1,53 @@
 import time
+import os
 from functools import wraps
 
-# Importing temporary files
 from file_manager.n100.file_manager_buildings import Building_N100
 
-import time
-from functools import wraps
 
-# Importing temporary files
-from file_manager.n100.file_manager_buildings import Building_N100
+def timing_decorator(func):
+    """Logs the execution time of a function to both the console and a log file"""
 
-# List to store print statements
-print_output = []
+    @wraps(func)
+    def wrapper(*args, **kwargs):
+        start_time = time.time()
 
-# Decorator to measure execution time of functions
-def timing_decorator(arg=None):
-    if isinstance(arg, str):  # If arg is a string, use it as a custom name
-        custom_name = arg
+        result = func(*args, **kwargs)
 
-        def decorator(func):
-            @wraps(func)
-            def wrapper(*args, **kwargs):
-                start_time = time.time()
-                result = func(*args, **kwargs)
-                end_time = time.time()
-                elapsed_time = end_time - start_time
-                minutes = int(elapsed_time // 60)
-                seconds = elapsed_time % 60
-                output = f"{custom_name} execution time: {minutes} minutes {seconds:.2f} seconds"
-                print_output.append(output)  # Append to the list
-                return result
+        elapsed_time = compute_elapsed_time(start_time)
 
-            return wrapper
+        log_to_console_and_file(func.__name__, elapsed_time)
 
-        return decorator
-    else:  # If arg is not a string (or None), use the function name as the default name
-        func = arg
+        return result
 
-        @wraps(func)
-        def wrapper(*args, **kwargs):
-            start_time = time.time()
-            result = func(*args, **kwargs)
-            end_time = time.time()
-            elapsed_time = end_time - start_time
-            minutes = int(elapsed_time // 60)
-            seconds = elapsed_time % 60
-            output = f"{func.__name__} execution time: {minutes} minutes {seconds:.2f} seconds"
-            print_output.append(output)  # Append to the list
-            return result
-
-        return wrapper
+    return wrapper
 
 
-# Total elapsed time accumulator
-total_elapsed_time = 0
+def compute_elapsed_time(start_time):
+    """Computes the elapsed time given a starting time"""
+    elapsed_time_seconds = time.time() - start_time
 
-# Calculate total elapsed time
-for line in print_output:
-    minutes = int(line.split(":")[1].split()[0])
-    seconds = float(line.split(":")[1].split()[2])
-    total_elapsed_time += minutes * 60 + seconds
+    elapsed_minutes, elapsed_seconds = divmod(elapsed_time_seconds, 60)
 
-# Write all print statements to a file
-output_file = Building_N100.overview__runtime_all_building_functions__n100.value
+    return elapsed_minutes, elapsed_seconds
 
-# Write total elapsed time to the file
-with open(output_file, "w") as f:
-    f.write(
-        f"Total run time: {int(total_elapsed_time // 3600)} hours {int((total_elapsed_time % 3600) // 60)} minutes {total_elapsed_time % 60:.2f} seconds\n\n"
-    )
 
-    # Write all print statements to the file with additional newline characters
-    for line in print_output:
-        f.write(line + "\n")
+def log_to_console_and_file(function_name, elapsed_time):
+    """Logs a messages to both the console and a file"""
+    elapsed_minutes, elapsed_seconds = elapsed_time
+    output = f"{function_name} execution time: {int(elapsed_minutes)} minutes {elapsed_seconds:.0f} seconds"
+
+    log_to_console(output)
+    log_to_file(output)
+
+
+def log_to_console(message):
+    """Prints a given message to the console"""
+    print(message)
+
+
+def log_to_file(message):
+    """Writes a given message to a log file"""
+    log_file_path = Building_N100.overview__runtime_all_building_functions__n100.value
+    with open(log_file_path, "a") as f:
+        f.write(message + "\n")
