@@ -893,17 +893,11 @@ class Building_N100(Enum):
             description="building_polygon_base_partition_selection",
         )
     )
-    iteration___json_documentation_before___building_n100 = (
+
+    iteration___partition_iterator_json_documentation___building_n100 = (
         file_manager.generate_file_name_general_files(
             script_source_name=iteration,
-            description="json_documentation_before",
-            file_type="json",
-        )
-    )
-    iteration___json_documentation_after___building_n100 = (
-        file_manager.generate_file_name_general_files(
-            script_source_name=iteration,
-            description="json_documentation_after",
+            description="partition_iterator_json_documentation",
             file_type="json",
         )
     )
