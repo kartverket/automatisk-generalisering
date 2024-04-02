@@ -78,83 +78,73 @@
              
   <h1>Source code for custom_tools.timing_decorator</h1><div class="highlight"><pre>
 <span></span><span class="kn">import</span> <span class="nn">time</span>
+<span class="kn">import</span> <span class="nn">os</span>
 <span class="kn">from</span> <span class="nn">functools</span> <span class="kn">import</span> <span class="n">wraps</span>
 
-<span class="c1"># Importing temporary files</span>
 <span class="kn">from</span> <span class="nn">file_manager.n100.file_manager_buildings</span> <span class="kn">import</span> <span class="n">Building_N100</span>
 
-<span class="kn">import</span> <span class="nn">time</span>
-<span class="kn">from</span> <span class="nn">functools</span> <span class="kn">import</span> <span class="n">wraps</span>
 
-<span class="c1"># Importing temporary files</span>
-<span class="kn">from</span> <span class="nn">file_manager.n100.file_manager_buildings</span> <span class="kn">import</span> <span class="n">Building_N100</span>
-
-<span class="c1"># List to store print statements</span>
-<span class="n">print_output</span> <span class="o">=</span> <span class="p">[]</span>
-
-<span class="c1"># Decorator to measure execution time of functions</span>
 <div class="viewcode-block" id="timing_decorator">
 <a class="viewcode-back" href="../../generated_docs/custom_tools.html#custom_tools.timing_decorator.timing_decorator">[docs]</a>
-<span class="k">def</span> <span class="nf">timing_decorator</span><span class="p">(</span><span class="n">arg</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
-    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">arg</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>  <span class="c1"># If arg is a string, use it as a custom name</span>
-        <span class="n">custom_name</span> <span class="o">=</span> <span class="n">arg</span>
+<span class="k">def</span> <span class="nf">timing_decorator</span><span class="p">(</span><span class="n">func</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Logs the execution time of a function to both the console and a log file&quot;&quot;&quot;</span>
 
-        <span class="k">def</span> <span class="nf">decorator</span><span class="p">(</span><span class="n">func</span><span class="p">):</span>
-            <span class="nd">@wraps</span><span class="p">(</span><span class="n">func</span><span class="p">)</span>
-            <span class="k">def</span> <span class="nf">wrapper</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
-                <span class="n">start_time</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span>
-                <span class="n">result</span> <span class="o">=</span> <span class="n">func</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
-                <span class="n">end_time</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span>
-                <span class="n">elapsed_time</span> <span class="o">=</span> <span class="n">end_time</span> <span class="o">-</span> <span class="n">start_time</span>
-                <span class="n">minutes</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">elapsed_time</span> <span class="o">//</span> <span class="mi">60</span><span class="p">)</span>
-                <span class="n">seconds</span> <span class="o">=</span> <span class="n">elapsed_time</span> <span class="o">%</span> <span class="mi">60</span>
-                <span class="n">output</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">custom_name</span><span class="si">}</span><span class="s2"> execution time: </span><span class="si">{</span><span class="n">minutes</span><span class="si">}</span><span class="s2"> minutes </span><span class="si">{</span><span class="n">seconds</span><span class="si">:</span><span class="s2">.2f</span><span class="si">}</span><span class="s2"> seconds&quot;</span>
-                <span class="n">print_output</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">output</span><span class="p">)</span>  <span class="c1"># Append to the list</span>
-                <span class="k">return</span> <span class="n">result</span>
+    <span class="nd">@wraps</span><span class="p">(</span><span class="n">func</span><span class="p">)</span>
+    <span class="k">def</span> <span class="nf">wrapper</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="n">start_time</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span>
 
-            <span class="k">return</span> <span class="n">wrapper</span>
+        <span class="n">result</span> <span class="o">=</span> <span class="n">func</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
 
-        <span class="k">return</span> <span class="n">decorator</span>
-    <span class="k">else</span><span class="p">:</span>  <span class="c1"># If arg is not a string (or None), use the function name as the default name</span>
-        <span class="n">func</span> <span class="o">=</span> <span class="n">arg</span>
+        <span class="n">elapsed_time</span> <span class="o">=</span> <span class="n">compute_elapsed_time</span><span class="p">(</span><span class="n">start_time</span><span class="p">)</span>
 
-        <span class="nd">@wraps</span><span class="p">(</span><span class="n">func</span><span class="p">)</span>
-        <span class="k">def</span> <span class="nf">wrapper</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
-            <span class="n">start_time</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span>
-            <span class="n">result</span> <span class="o">=</span> <span class="n">func</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
-            <span class="n">end_time</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span>
-            <span class="n">elapsed_time</span> <span class="o">=</span> <span class="n">end_time</span> <span class="o">-</span> <span class="n">start_time</span>
-            <span class="n">minutes</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">elapsed_time</span> <span class="o">//</span> <span class="mi">60</span><span class="p">)</span>
-            <span class="n">seconds</span> <span class="o">=</span> <span class="n">elapsed_time</span> <span class="o">%</span> <span class="mi">60</span>
-            <span class="n">output</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">func</span><span class="o">.</span><span class="vm">__name__</span><span class="si">}</span><span class="s2"> execution time: </span><span class="si">{</span><span class="n">minutes</span><span class="si">}</span><span class="s2"> minutes </span><span class="si">{</span><span class="n">seconds</span><span class="si">:</span><span class="s2">.2f</span><span class="si">}</span><span class="s2"> seconds&quot;</span>
-            <span class="n">print_output</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">output</span><span class="p">)</span>  <span class="c1"># Append to the list</span>
-            <span class="k">return</span> <span class="n">result</span>
+        <span class="n">log_to_console_and_file</span><span class="p">(</span><span class="n">func</span><span class="o">.</span><span class="vm">__name__</span><span class="p">,</span> <span class="n">elapsed_time</span><span class="p">)</span>
 
-        <span class="k">return</span> <span class="n">wrapper</span></div>
+        <span class="k">return</span> <span class="n">result</span>
+
+    <span class="k">return</span> <span class="n">wrapper</span></div>
 
 
 
-<span class="c1"># Total elapsed time accumulator</span>
-<span class="n">total_elapsed_time</span> <span class="o">=</span> <span class="mi">0</span>
+<div class="viewcode-block" id="compute_elapsed_time">
+<a class="viewcode-back" href="../../generated_docs/custom_tools.html#custom_tools.timing_decorator.compute_elapsed_time">[docs]</a>
+<span class="k">def</span> <span class="nf">compute_elapsed_time</span><span class="p">(</span><span class="n">start_time</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Computes the elapsed time given a starting time&quot;&quot;&quot;</span>
+    <span class="n">elapsed_time_seconds</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span> <span class="o">-</span> <span class="n">start_time</span>
 
-<span class="c1"># Calculate total elapsed time</span>
-<span class="k">for</span> <span class="n">line</span> <span class="ow">in</span> <span class="n">print_output</span><span class="p">:</span>
-    <span class="n">minutes</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">line</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">&quot;:&quot;</span><span class="p">)[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">split</span><span class="p">()[</span><span class="mi">0</span><span class="p">])</span>
-    <span class="n">seconds</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">line</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">&quot;:&quot;</span><span class="p">)[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">split</span><span class="p">()[</span><span class="mi">2</span><span class="p">])</span>
-    <span class="n">total_elapsed_time</span> <span class="o">+=</span> <span class="n">minutes</span> <span class="o">*</span> <span class="mi">60</span> <span class="o">+</span> <span class="n">seconds</span>
+    <span class="n">elapsed_minutes</span><span class="p">,</span> <span class="n">elapsed_seconds</span> <span class="o">=</span> <span class="nb">divmod</span><span class="p">(</span><span class="n">elapsed_time_seconds</span><span class="p">,</span> <span class="mi">60</span><span class="p">)</span>
 
-<span class="c1"># Write all print statements to a file</span>
-<span class="n">output_file</span> <span class="o">=</span> <span class="n">Building_N100</span><span class="o">.</span><span class="n">overview__runtime_all_building_functions__n100</span><span class="o">.</span><span class="n">value</span>
+    <span class="k">return</span> <span class="n">elapsed_minutes</span><span class="p">,</span> <span class="n">elapsed_seconds</span></div>
 
-<span class="c1"># Write total elapsed time to the file</span>
-<span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">output_file</span><span class="p">,</span> <span class="s2">&quot;w&quot;</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
-    <span class="n">f</span><span class="o">.</span><span class="n">write</span><span class="p">(</span>
-        <span class="sa">f</span><span class="s2">&quot;Total run time: </span><span class="si">{</span><span class="nb">int</span><span class="p">(</span><span class="n">total_elapsed_time</span><span class="w"> </span><span class="o">//</span><span class="w"> </span><span class="mi">3600</span><span class="p">)</span><span class="si">}</span><span class="s2"> hours </span><span class="si">{</span><span class="nb">int</span><span class="p">((</span><span class="n">total_elapsed_time</span><span class="w"> </span><span class="o">%</span><span class="w"> </span><span class="mi">3600</span><span class="p">)</span><span class="w"> </span><span class="o">//</span><span class="w"> </span><span class="mi">60</span><span class="p">)</span><span class="si">}</span><span class="s2"> minutes </span><span class="si">{</span><span class="n">total_elapsed_time</span><span class="w"> </span><span class="o">%</span><span class="w"> </span><span class="mi">60</span><span class="si">:</span><span class="s2">.2f</span><span class="si">}</span><span class="s2"> seconds</span><span class="se">\n\n</span><span class="s2">&quot;</span>
-    <span class="p">)</span>
 
-    <span class="c1"># Write all print statements to the file with additional newline characters</span>
-    <span class="k">for</span> <span class="n">line</span> <span class="ow">in</span> <span class="n">print_output</span><span class="p">:</span>
-        <span class="n">f</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">line</span> <span class="o">+</span> <span class="s2">&quot;</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">)</span>
+
+<div class="viewcode-block" id="log_to_console_and_file">
+<a class="viewcode-back" href="../../generated_docs/custom_tools.html#custom_tools.timing_decorator.log_to_console_and_file">[docs]</a>
+<span class="k">def</span> <span class="nf">log_to_console_and_file</span><span class="p">(</span><span class="n">function_name</span><span class="p">,</span> <span class="n">elapsed_time</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Logs a messages to both the console and a file&quot;&quot;&quot;</span>
+    <span class="n">elapsed_minutes</span><span class="p">,</span> <span class="n">elapsed_seconds</span> <span class="o">=</span> <span class="n">elapsed_time</span>
+    <span class="n">output</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">function_name</span><span class="si">}</span><span class="s2"> execution time: </span><span class="si">{</span><span class="nb">int</span><span class="p">(</span><span class="n">elapsed_minutes</span><span class="p">)</span><span class="si">}</span><span class="s2"> minutes </span><span class="si">{</span><span class="n">elapsed_seconds</span><span class="si">:</span><span class="s2">.0f</span><span class="si">}</span><span class="s2"> seconds&quot;</span>
+
+    <span class="n">log_to_console</span><span class="p">(</span><span class="n">output</span><span class="p">)</span>
+    <span class="n">log_to_file</span><span class="p">(</span><span class="n">output</span><span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="log_to_console">
+<a class="viewcode-back" href="../../generated_docs/custom_tools.html#custom_tools.timing_decorator.log_to_console">[docs]</a>
+<span class="k">def</span> <span class="nf">log_to_console</span><span class="p">(</span><span class="n">message</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Prints a given message to the console&quot;&quot;&quot;</span>
+    <span class="nb">print</span><span class="p">(</span><span class="n">message</span><span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="log_to_file">
+<a class="viewcode-back" href="../../generated_docs/custom_tools.html#custom_tools.timing_decorator.log_to_file">[docs]</a>
+<span class="k">def</span> <span class="nf">log_to_file</span><span class="p">(</span><span class="n">message</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Writes a given message to a log file&quot;&quot;&quot;</span>
+    <span class="n">log_file_path</span> <span class="o">=</span> <span class="n">Building_N100</span><span class="o">.</span><span class="n">overview__runtime_all_building_functions__n100</span><span class="o">.</span><span class="n">value</span>
+    <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">log_file_path</span><span class="p">,</span> <span class="s2">&quot;a&quot;</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
+        <span class="n">f</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">message</span> <span class="o">+</span> <span class="s2">&quot;</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">)</span></div>
+
 </pre></div>
 
            </div>
