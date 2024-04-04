@@ -44,14 +44,6 @@ generalization.n100.building.hospital\_church\_clusters module
    :undoc-members:
    :show-inheritance:
 
-generalization.n100.building.point\_cleanup module
---------------------------------------------------
-
-.. automodule:: generalization.n100.building.point_cleanup
-   :members:
-   :undoc-members:
-   :show-inheritance:
-
 generalization.n100.building.point\_displacement\_with\_buffer module
 ---------------------------------------------------------------------
 
@@ -88,6 +80,14 @@ generalization.n100.building.polygon\_to\_point module
 ------------------------------------------------------
 
 .. automodule:: generalization.n100.building.polygon_to_point
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+generalization.n100.building.removing\_points\_in\_water\_features module
+-------------------------------------------------------------------------
+
+.. automodule:: generalization.n100.building.removing_points_in_water_features
    :members:
    :undoc-members:
    :show-inheritance:
