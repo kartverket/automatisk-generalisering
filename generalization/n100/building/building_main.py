@@ -1,6 +1,7 @@
 # Importing modules
 from env_setup import environment_setup
 from custom_tools.timing_decorator import timing_decorator
+from custom_tools.timing_decorator import clear_print_output
 
 # Importing building scripts
 from generalization.n100.building import data_preparation
@@ -13,7 +14,7 @@ from generalization.n100.building import point_propogate_displacement
 from generalization.n100.building import point_displacement_with_buffer
 from generalization.n100.building import points_to_squares
 from generalization.n100.building import resolve_building_conflicts_points
-from generalization.n100.building import point_cleanup
+from generalization.n100.building import removing_points_in_water_features
 from generalization.n100.building import data_clean_up
 
 
@@ -50,7 +51,7 @@ def main():
     11. clean_up_building
 
     """
-
+    clear_print_output()
     environment_setup.main()
     data_preparation.main()
     simplify_polygons.main()
@@ -62,8 +63,8 @@ def main():
     point_displacement_with_buffer.main()
     points_to_squares.main()
     resolve_building_conflicts_points.main()
-    # point_cleanup.main()
-    # data_clean_up.main()
+    point_cleanup.main()
+    data_clean_up.main()
 
 
 if __name__ == "__main__":
