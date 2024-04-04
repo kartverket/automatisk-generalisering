@@ -20,7 +20,7 @@ polygon_propogate_displacement = "polygon_propogate_displacement"
 polygon_to_point = "polygon_to_point"
 calculating_field_values = "calculating_field_values"
 point_propogate_displacement = "point_propogate_displacement"
-point_cleanup = "point_cleanup"
+removing_points_in_water_features = "removing_points_in_water_features"
 hospital_church_clusters = "hospital_church_clusters"
 point_displacement_with_buffer = "point_displacement_with_buffer"
 points_to_squares = "points_to_squares"
@@ -237,6 +237,20 @@ class Building_N100(Enum):
         file_manager.generate_file_name_gdb(
             script_source_name=data_preparation,
             description="n50_polygons",
+        )
+    )
+
+    data_preparation___n50_points_in_urban_areas___n100_building = (
+        file_manager.generate_file_name_gdb(
+            script_source_name=data_preparation,
+            description="n50_points_in_urban_areas",
+        )
+    )
+
+    data_preparation___churches_and_hospitals_in_urban_areas___n100_building = (
+        file_manager.generate_file_name_gdb(
+            script_source_name=data_preparation,
+            description="churches_and_hospitals_in_urban_areas",
         )
     )
 
@@ -579,7 +593,6 @@ class Building_N100(Enum):
         )
     )
 
-    # Function: reducing_clusters
     hospital_church_clusters___minimum_bounding_geometry_hospital___n100_hospital = (
         file_manager.generate_file_name_gdb(
             script_source_name=hospital_church_clusters,
@@ -647,77 +660,19 @@ class Building_N100(Enum):
     )
 
     # ========================================
-    #                              POINT CLEANUP
+    #                REMOVING POINTS IN WATER FEATURES
     # ========================================
 
-    point_cleanup___water_features___n100_building = (
+    removing_points_in_water_features___water_features___n100_building = (
         file_manager.generate_file_name_gdb(
-            script_source_name=point_cleanup,
+            script_source_name=removing_points_in_water_features,
             description="water_features",
         )
     )
 
-    point_cleanup___points_that_intersect_water_features___n100_building = (
-        file_manager.generate_file_name_gdb(
-            script_source_name=point_cleanup,
-            description="points_that_intersect_water_features",
-        )
-    )
-
-    point_cleanup___points_intersecting_buffer___n100_building = (
-        file_manager.generate_file_name_gdb(
-            script_source_name=point_cleanup,
-            description="points_intersecting_buffer",
-        )
-    )
-
-    point_cleanup___building_points_to_squares___n100_building = (
-        file_manager.generate_file_name_gdb(
-            script_source_name=point_cleanup,
-            description="building_points_to_squares",
-        )
-    )
-
-    point_cleanup___points_50m_from_building_polygons___n100_building = (
-        file_manager.generate_file_name_gdb(
-            script_source_name=point_cleanup,
-            description="points_50m_from_building_polygons",
-        )
-    )
-
-    point_cleanup___polygons_not_too_close_to_squares___n100_building = (
-        file_manager.generate_file_name_gdb(
-            script_source_name=point_cleanup,
-            description="polygons_not_too_close_to_squares",
-        )
-    )
-
-    point_cleanup___polygons_too_close_to_squares___n100_building = (
-        file_manager.generate_file_name_gdb(
-            script_source_name=point_cleanup,
-            description="polygons_too_close_to_squares",
-        )
-    )
-
-    point_cleanup___building_points_final___n100_building = (
-        file_manager.generate_file_name_gdb(
-            script_source_name=point_cleanup,
-            description="building_points_final",
-        )
-    )
-
-    point_cleanup___building_points_merged_final__n100_building = (
-        file_manager.generate_file_name_gdb(
-            script_source_name=point_cleanup,
-            description="building_points_merged_final",
-        )
-    )
-
-    point_cleanup___points_that_do_not_intersect_water_features___n100_building = (
-        file_manager.generate_file_name_gdb(
-            script_source_name=point_cleanup,
-            description="points_that_do_not_intersect_water_features",
-        )
+    removing_points_in_water_features___points_that_do_not_intersect_water_features___n100_building = file_manager.generate_file_name_gdb(
+        script_source_name=removing_points_in_water_features,
+        description="points_that_do_not_intersect_water_features",
     )
 
     ############################################## NEEDS TO BE UPDATED ###########################################################
