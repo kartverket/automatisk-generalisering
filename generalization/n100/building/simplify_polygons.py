@@ -12,7 +12,7 @@ from custom_tools.timing_decorator import timing_decorator
 
 
 # Main function
-@timing_decorator("create_simplified_building_polgyons.py")
+@timing_decorator("simplify_polygons.py")
 def main():
     """
     Summary:

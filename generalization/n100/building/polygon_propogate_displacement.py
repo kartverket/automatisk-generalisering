@@ -154,6 +154,7 @@ def roads_and_water_barriers_500_m_from_building_polygons():
     )
 
 
+@timing_decorator
 def polygon_processor():
 
     # Selecting hospital and churches from n50
@@ -458,7 +459,18 @@ def check_if_building_polygons_are_big_enough():
     )
 
 
+@timing_decorator
 def small_building_polygons_to_points():
+    """
+    Summary:
+        Converts small building polygons to points.
+
+    Details:
+        This function selects small building polygons based on a specified area threshold and transforms them into points.
+        It first selects building polygons with an area less than 3200 square units using the select_attribute_and_make_permanent_feature function.
+        Then, it uses arcpy's FeatureToPoint tool to convert these selected polygons into point features.
+    """
+
     custom_arcpy.select_attribute_and_make_permanent_feature(
         input_layer=Building_N100.polygon_propogate_displacement___building_polygons_not_invisible_not_intersecting___n100_building.value,
         expression="Shape_Area < 3200",

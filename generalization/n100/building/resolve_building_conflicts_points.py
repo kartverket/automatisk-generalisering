@@ -17,6 +17,7 @@ from custom_tools.timing_decorator import timing_decorator
 iteration_fc = config.resolve_building_conflicts_iteration_feature
 
 
+@timing_decorator("resolve_building_conflicts_points.py")
 def main():
     """
     This script resolves building conflicts, both building polygons and points
@@ -27,6 +28,7 @@ def main():
     resolve_building_conflicts()
 
 
+@timing_decorator
 def rbc_selection():
     custom_arcpy.select_attribute_and_make_permanent_feature(
         input_layer=input_n100.AdminFlate,
@@ -68,6 +70,7 @@ def rbc_selection():
         )
 
 
+@timing_decorator
 def apply_symbology():
     # List of dictionaries containing parameters for each symbology application
     symbology_configs = [
@@ -107,6 +110,7 @@ def apply_symbology():
         )
 
 
+@timing_decorator
 def resolve_building_conflicts():
     arcpy.env.referenceScale = "100000"
 

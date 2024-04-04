@@ -184,6 +184,7 @@ def find_each_unique_nbr_value():
     )
 
 
+@timing_decorator
 def calculate_angle_and_visibility_for_points():
 
     # Feature class to check fields existence
@@ -213,6 +214,7 @@ def calculate_angle_and_visibility_for_points():
         )
 
 
+@timing_decorator
 def calculate_hierarchy_for_points():
 
     code_block_hierarchy = """def determineHierarchy(symbol_val):\n
