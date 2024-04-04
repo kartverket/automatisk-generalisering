@@ -22,10 +22,10 @@ def main():
     """
 
     environment_setup.main()
-    # begrensningskurve_land_and_water_bodies()
-    # begrensningskurve_river()
-    # merge_begrensningskurve_all_water_features()
-    # unsplit_roads()
+    begrensningskurve_land_and_water_bodies()
+    begrensningskurve_river()
+    merge_begrensningskurve_all_water_features()
+    unsplit_roads()
     matrikkel_and_n50_not_in_urban_areas()
     adding_field_values_to_matrikkel()
     merge_matrikkel_and_n50_points()
@@ -38,19 +38,13 @@ def main():
 def begrensningskurve_land_and_water_bodies():
     """
     Summary:
-        This function creates a buffer for water features using the "begrensningskurve" feature. It prepares the data for future building placement on the water's edge.
+        Processes land and water body features from the begrensningskurve dataset.
 
     Details:
-        - Using the object types ('ElvBekk', 'Havflate', 'Innsjø', 'InnsjøRegulert') in the "begrensningskurve" feature in SQL expressions to select water features and in inverse to select land features.
-        - Create a temporary feature of water features from the "begrensningskurve" using the defined SQL expression.
-        - Select land features using an inverted selection using the defined SQL expression.
-        - Identify land features near water features by selecting those that boundary-touch with water features to reduce the amount of processing.
-        - Apply a 15-meter buffer to the identified land features to create buffered land features, this is the distance objects is allowed to be overlapping water features in the final output.
-        - Apply a 45-meter buffer to the selected water features to create buffered water features, this is to make sure features are not going past the water barrier and is instead pushed towrds land instead of further inside waterfeatures.
-        - Erase buffered water features from the buffered land features to create a final set of waterfeature buffer which is used throughout this generalization of buildings.
-
-    Note:
-        - Additional logic may be required for rivers separately in future development as narrow polygons gets completly removed due to the land buffer being to large for the rivers. In processes actually needing barriers this will allow objects to cross narrow rivers.
+        This function extracts non-river water features (e.g., lake edges, coastal contours) from the begrensningskurve dataset and nearby land features.
+        It selects these water features based on predefined object types and creates buffers around them.
+        Additionally, it selects land features adjacent to the water bodies and creates buffers around them as well.
+        Finally, it erases overlapping areas between land and water body buffers to delineate distinct land and water body regions.
     """
 
     # Defining the SQL selection expression for water features for begrensningskurve (not river)
@@ -103,6 +97,15 @@ def begrensningskurve_land_and_water_bodies():
 
 @timing_decorator
 def begrensningskurve_river():
+    """
+    Summary:
+        Extracts river features from the begrensningskurve dataset and creates buffers around them.
+
+    Details:
+        This function selects river outlines from the begrensningskurve dataset based on a predefined object type ('ElvBekkKant').
+        It then creates a small buffer around the selected river features.
+        The resulting river outlines and their corresponding buffers are stored as separate feature classes.
+    """
 
     sql_expr_begrensningskurve_river_outline = "OBJTYPE = 'ElvBekkKant'"
 
@@ -124,6 +127,13 @@ def begrensningskurve_river():
 
 @timing_decorator
 def merge_begrensningskurve_all_water_features():
+    """
+    Summary:
+        Merges water feature buffers from begrensningskurve dataset.
+
+    Details:
+        This function merges buffers representing water bodies and rivers from the begrensningskurve dataset into a single feature class.
+    """
 
     # Merge begrensningskurve buffers (water bodies and rivers)
     arcpy.management.Merge(
@@ -139,13 +149,10 @@ def merge_begrensningskurve_all_water_features():
 def unsplit_roads():
     """
     Summary:
-        This function unsplit a line feature of roads to reduce the number of objects in future processing.
+        Unsplits road features.
 
     Details:
-        - It takes the input line feature `input_n100.VegSti` and removes any geometric splits.
-        - The feature is dissolved based on the fields "subtypekode," "motorvegtype," and "UTTEGNING" to merge segments with the same values in these fields.
-    Note:
-        - In the future when the inputs make spatial selections of the features used for context for processing like roads this step is redundant and will instead increase processing time.
+        This function unsplit road features in a specified feature class based on certain attributes.
     """
 
     arcpy.UnsplitLine_management(
@@ -159,17 +166,15 @@ def unsplit_roads():
 def matrikkel_and_n50_not_in_urban_areas():
     """
     Summary:
-        This function adds building points from the matrikkel dataset for areas that are no longer considered urban after the generalization of 'ArealdekkeFlate'. It also adds the required fields and values for future analysis.
+        Selects matrikkel and n50 building points not within urban areas.
 
     Details:
-        - Define an SQL expression to select urban areas ('Tettbebyggelse', 'Industriområde', 'BymessigBebyggelse') in the 'ArealdekkeFlate' dataset.
-        - Select urban areas from 'ArealdekkeFlate' in both n100 and n50 datasets using the defined SQL expression.
-        - Create a buffer of the selected urban areas from n100 to take into consideration that points should not be too close to urban areas.
-        - Remove areas from n50 urban areas that intersect with the buffer of n100 urban areas, resulting in areas in n100 that are no longer considered urban.
-        - Select matrikkel bygningspunkter based on the new urban selection layer.
-        - Transfer the NBR (building type) value to the matrikkel_bygningspunkt dataset by adding a new field "BYGGTYP_NBR" of type LONG and calculating its values from the "bygningstype" field.
-    Note:
-        - Should consider removing the logic of adding a buffer to the urban areas to prevent points to close to urban areas and instead using urban areas as a barrier feature in future processing.
+        This function performs a series of spatial and attribute selections to identify building points from the matrikkel and n50 datasets that are not within urban areas.
+        It first selects urban areas from the n100 and n50 datasets using a predefined SQL expression based on their object types.
+        Then, it creates a buffer around the urban areas from the n100 dataset and removes overlapping areas with the urban areas from the n50 dataset.
+        Building points from the matrikkel dataset that do not intersect with the resulting areas are selected.
+        Additionally, building points from the n50 dataset that are not within urban areas are selected, ensuring the retention of churches and hospitals within urban areas.
+        The selected churches and hospitals within urban areas are also retained.
     """
 
     # Defining sql expression to select urban areas
@@ -221,9 +226,32 @@ def matrikkel_and_n50_not_in_urban_areas():
         inverted=True,
     )
 
+    # Making sure we are not loosing churches or hospitals
+    custom_arcpy.select_location_and_make_permanent_feature(
+        input_layer=input_n50.BygningsPunkt,
+        overlap_type=custom_arcpy.OverlapType.INTERSECT,
+        select_features=Building_N100.data_preparation___urban_area_selection_n100_buffer___n100_building.value,
+        output_name=Building_N100.data_preparation___n50_points_in_urban_areas___n100_building.value,
+    )
+
+    sql_church_hospitals = "BYGGTYP_NBR IN (970, 719, 671)"
+    custom_arcpy.select_attribute_and_make_permanent_feature(
+        input_layer=Building_N100.data_preparation___n50_points_in_urban_areas___n100_building.value,
+        expression=sql_church_hospitals,
+        output_name=Building_N100.data_preparation___churches_and_hospitals_in_urban_areas___n100_building.value,
+    )
+
 
 @timing_decorator
 def adding_field_values_to_matrikkel():
+    """
+    Summary:
+        Adds field values to matrikkel building points.
+
+    Details:
+        This function adds a new field called 'BYGGTYP_NBR' of type 'LONG' to the matrikkel building points dataset.
+        Then, it copies values from an existing field ('bygningstype') into the newly added 'BYGGTYP_NBR' field for each record.
+    """
 
     # Adding transferring the NBR value to the matrikkel building points
     arcpy.AddField_management(
@@ -240,6 +268,59 @@ def adding_field_values_to_matrikkel():
 
 @timing_decorator
 def merge_matrikkel_and_n50_points():
+    """
+    Summary:
+        Merges points from different datasets into a single feature class.
+
+    Details:
+        This function merges points from the n50 building dataset, churches and hospitals in urban areas dataset, and the matrikkel dataset into a single feature class.
+        The resulting feature class contains the combined points from these datasets.
+    """
+
+    # Merge the n50 building point and matrikkel
+    arcpy.management.Merge(
+        inputs=[
+            Building_N100.data_preparation___n50_points___n100_building.value,
+            Building_N100.data_preparation___churches_and_hospitals_in_urban_areas___n100_building.value,
+            Building_N100.data_preparation___matrikkel_points___n100_building.value,
+        ],
+        output=Building_N100.data_preperation___matrikkel_n50_points_merged___n100_building.value,
+    )
+
+
+@timing_decorator
+def adding_field_values_to_matrikkel():
+    """
+    Summary:
+        Adds and transfers field values to matrikkel building points.
+
+    Details:
+        This function adds a new field called 'BYGGTYP_NBR' of type 'LONG' to the matrikkel building points dataset.
+        Subsequently, it copies values from an existing field ('bygningstype') into the newly added 'BYGGTYP_NBR' field for each record.
+    """
+
+    # Adding transferring the NBR value to the matrikkel building points
+    arcpy.AddField_management(
+        in_table=Building_N100.data_preparation___matrikkel_points___n100_building.value,
+        field_name="BYGGTYP_NBR",
+        field_type="LONG",
+    )
+    arcpy.CalculateField_management(
+        in_table=Building_N100.data_preparation___matrikkel_points___n100_building.value,
+        field="BYGGTYP_NBR",
+        expression="!bygningstype!",
+    )
+
+
+@timing_decorator
+def merge_matrikkel_and_n50_points():
+    """
+    Summary:
+        Merges points from the n50 building dataset and matrikkel dataset.
+
+    Details:
+        This function combines points from the n50 building dataset and the matrikkel dataset into a single feature class.
+    """
 
     # Merge the n50 building point and matrikkel
     arcpy.management.Merge(
@@ -253,6 +334,16 @@ def merge_matrikkel_and_n50_points():
 
 @timing_decorator
 def selecting_polygons_not_in_urban_areas():
+    """
+    Summary:
+        Selects polygons not within urban areas.
+
+    Details:
+        This function copies the input data to preserve the original fields, ensuring no modifications are made to the original dataset.
+        Then, it selects building polygons from the copied data based on their spatial relationship with a layer representing areas no longer classified as urban.
+        Polygons that do not intersect with the specified urban area layer are retained and stored as a new feature layer.
+    """
+
     print(
         "might want to remove this copyl ater when we have another script for just copying the database"
     )
@@ -273,6 +364,16 @@ def selecting_polygons_not_in_urban_areas():
 
 @timing_decorator
 def reclassifying_polygon_values():
+    """
+    Summary:
+        Reclassifies the values of hospitals and churches in the specified polygon layer to a new value (729), corresponding to "other buildings".
+
+    Details:
+        This function defines a reclassification scheme for hospitals and churches within a polygon layer. Hospitals and churches are identified by their respective values in the 'BYGGTYP_NBR' field.
+        These values (970, 719, and 671) are mapped to a new value (729) representing "other buildings" using a Python dictionary.
+        The reclassification is applied to the 'BYGGTYP_NBR' field.
+    """
+
     # Reclassify the hospitals and churches to NBR value 729 ("other buildings" / "andre bygg")
     reclassify_hospital_church_polygons = (
         "def reclassify(nbr):\n"
@@ -289,7 +390,17 @@ def reclassifying_polygon_values():
     )
 
 
+@timing_decorator
 def polygon_selections_based_on_size():
+    """
+    Summary:
+        Selects building polygons based on their size and converts small polygons to points.
+
+    Details:
+        This function performs a selection on building polygons based on their size. It first defines a minimum size threshold of 2500 square units.
+        Then, it selects polygons that meet this threshold (polygons over or equal to 2500 square meters) and those that do not (polygons under 2500 square meters).
+        The selected polygons over the minimum size are retained for further processing, while the smaller polygons are transformed into points.
+    """
 
     # Selecting only building polygons over 2500 (the rest will be transformed to points due to size)
     grunnriss_minimum_size = 2500
