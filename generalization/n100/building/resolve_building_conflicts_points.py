@@ -17,6 +17,7 @@ from custom_tools.timing_decorator import timing_decorator
 iteration_fc = config.resolve_building_conflicts_iteration_feature
 
 
+@timing_decorator("resolve_building_conflicts_points.py")
 def main():
     """
     This script resolves building conflicts, both building polygons and points
@@ -27,6 +28,7 @@ def main():
     resolve_building_conflicts()
 
 
+@timing_decorator
 def rbc_selection():
     custom_arcpy.select_attribute_and_make_permanent_feature(
         input_layer=input_n100.AdminFlate,
@@ -37,11 +39,11 @@ def rbc_selection():
     # List of dictionaries containing parameters for each selection
     selections = [
         {
-            "input_layer": Building_N100.simplify_polygons___final___n100_building.value,
+            "input_layer": Building_N100.polygon_propogate_displacement___building_polygons_final___n100_building.value,
             "output_name": Building_N100.rbc_selection__grunnriss_selection_rbc__n100.value,
         },
         {
-            "input_layer": Building_N100.data_preparation___unsplit_veg_sti___n100_building.value,
+            "input_layer": Building_N100.data_preparation___unsplit_roads___n100_building.value,
             "output_name": Building_N100.rbc_selection__veg_sti_selection_rbc_rbc__n100.value,
         },
         {
@@ -68,6 +70,7 @@ def rbc_selection():
         )
 
 
+@timing_decorator
 def apply_symbology():
     # List of dictionaries containing parameters for each symbology application
     symbology_configs = [
@@ -107,13 +110,14 @@ def apply_symbology():
         )
 
 
+@timing_decorator
 def resolve_building_conflicts():
     arcpy.env.referenceScale = "100000"
 
     print("Starting Resolve Building Conflicts 1 for drawn polygons")
     # Define input barriers
 
-    input_barriers_1 = [  # NB: confusing name?? input_barriers_1
+    input_barriers_for_rbc = [
         [
             Building_N100.apply_symbology__veg_sti_selection__n100_lyrx.value,
             "false",
@@ -126,10 +130,15 @@ def resolve_building_conflicts():
         ],
     ]
 
+    input_buildings_rbc_1 = [
+        Building_N100.apply_symbology__grunnriss_selection__n100_lyrx.value,
+        Building_N100.apply_symbology__drawn_polygon_selection__n100_lyrx.value,
+    ]
+
     arcpy.cartography.ResolveBuildingConflicts(
-        in_buildings=Building_N100.apply_symbology__drawn_polygon_selection__n100_lyrx.value,
+        in_buildings=input_buildings_rbc_1,
         invisibility_field="invisibility",
-        in_barriers=input_barriers_1,
+        in_barriers=input_barriers_for_rbc,
         building_gap="45 meters",
         minimum_size="1 meters",
         hierarchy_field="hierarchy",
@@ -140,9 +149,17 @@ def resolve_building_conflicts():
         "(invisibility = 0) OR (symbol_val IN (1, 2, 3))"
     )
 
+    sql_expression_resolve_building_conflicts_polygon = "(invisibility = 0)"
+
     custom_arcpy.select_attribute_and_make_permanent_feature(
         input_layer=Building_N100.rbc_selection__drawn_polygon_selection_rbc__n100.value,
         expression=sql_expression_resolve_building_conflicts,
+        output_name=Building_N100.resolve_building_conflicts__drawn_polygons_result_1__n100.value,
+    )
+
+    custom_arcpy.select_attribute_and_make_permanent_feature(
+        input_layer=Building_N100.rbc_selection__grunnriss_selection_rbc__n100.value,
+        expression=sql_expression_resolve_building_conflicts_polygon,
         output_name=Building_N100.resolve_building_conflicts__drawn_polygons_result_1__n100.value,
     )
 
@@ -166,10 +183,15 @@ def resolve_building_conflicts():
 
     print("Starting resolve building conflicts 2")
 
+    input_buildings_rbc_2 = [
+        Building_N100.resolve_building_conflicts__drawn_polygon_RBC_result_1__n100_lyrx.value,
+        Building_N100.apply_symbology__drawn_polygon_selection__n100_lyrx.value,
+    ]
+
     arcpy.cartography.ResolveBuildingConflicts(
-        in_buildings=Building_N100.resolve_building_conflicts__building_points_RBC_result_1__n100_lyrx.value,
+        in_buildings=input_buildings_rbc_2,
         invisibility_field="invisibility",
-        in_barriers=input_barriers_1,
+        in_barriers=input_barriers_for_rbc,
         building_gap="45 meters",
         minimum_size="1 meters",
         hierarchy_field="hierarchy",

@@ -67,14 +67,15 @@ def main():
 
     environment_setup.main()
     propagate_displacement_building_polygons()
-    features_500_m_from_building_polygons()
+    roads_and_water_barriers_500_m_from_building_polygons()
+    polygon_processor()
     apply_symbology_to_layers()
     resolve_building_conflict_building_polygon()
     creating_road_buffer()
     invisible_building_polygons_to_point()
     intersecting_building_polygons_to_point()
     merging_invisible_intersecting_points()
-    removing_small_building_polygons()
+    check_if_building_polygons_are_big_enough()
     small_building_polygons_to_points()
 
 
@@ -105,14 +106,14 @@ def propagate_displacement_building_polygons():
         input_layer=config.displacement_feature,
         overlap_type=custom_arcpy.OverlapType.WITHIN_A_DISTANCE,
         select_features=Building_N100.polygon_propogate_displacement___pre_displacement___n100_building.value,
-        output_name=Building_N100.polygon_propogate_displacement___displacement_feature_1000m_from_polygon___n100_building.value,
+        output_name=Building_N100.polygon_propogate_displacement___displacement_feature_500m_from_polygon___n100_building.value,
         search_distance="500 Meters",
     )
 
     # Running propogate displacement for building polygons
     arcpy.cartography.PropagateDisplacement(
         in_features=Building_N100.polygon_propogate_displacement___pre_displacement___n100_building.value,
-        displacement_features=Building_N100.polygon_propogate_displacement___displacement_feature_1000m_from_polygon___n100_building.value,
+        displacement_features=Building_N100.polygon_propogate_displacement___displacement_feature_500m_from_polygon___n100_building.value,
         adjustment_style="SOLID",
     )
 
@@ -124,7 +125,7 @@ def propagate_displacement_building_polygons():
 
 
 @timing_decorator
-def features_500_m_from_building_polygons():
+def roads_and_water_barriers_500_m_from_building_polygons():
     """
     Summary:
         Selects waterfeatures and roads located 500 meters from building polygons.
@@ -136,7 +137,7 @@ def features_500_m_from_building_polygons():
     print("Selecting features 500 meter from building polygon ...")
     # Selecting begrensningskurve 500 meters from building polygons
     custom_arcpy.select_location_and_make_permanent_feature(
-        input_layer=Building_N100.data_preperation___selected_waterfeatures_from_begrensningskurve___n100_building.value,
+        input_layer=Building_N100.data_preperation___waterfeatures_from_begrensningskurve_not_rivers___n100_building.value,
         overlap_type=custom_arcpy.OverlapType.WITHIN_A_DISTANCE,
         select_features=Building_N100.polygon_propogate_displacement___after_displacement___n100_building.value,
         output_name=Building_N100.polygon_propogate_displacement___begrensningskurve_500m_from_displaced_polygon___n100_building.value,
@@ -145,11 +146,58 @@ def features_500_m_from_building_polygons():
 
     # Selecting roads 500 meters from building polygons
     custom_arcpy.select_location_and_make_permanent_feature(
-        input_layer=Building_N100.data_preparation___unsplit_veg_sti___n100_building.value,
+        input_layer=Building_N100.data_preparation___unsplit_roads___n100_building.value,
         overlap_type=custom_arcpy.OverlapType.WITHIN_A_DISTANCE,
         select_features=Building_N100.polygon_propogate_displacement___after_displacement___n100_building.value,
         output_name=Building_N100.polygon_propogate_displacement___roads_500m_from_displaced_polygon___n100_building.value,
         search_distance="500 Meters",
+    )
+
+
+@timing_decorator
+def polygon_processor():
+
+    # Selecting hospital and churches from n50
+    custom_arcpy.select_attribute_and_make_permanent_feature(
+        input_layer=input_data.input_n50.BygningsPunkt,
+        expression="BYGGTYP_NBR IN (970, 719, 671)",
+        output_name=Building_N100.polygon_propogate_displacement___hospital_church_points___n100_building.value,
+    )
+
+    # Adding a symbology value field based on NBR values
+    arcpy.AddField_management(
+        in_table=Building_N100.polygon_propogate_displacement___hospital_church_points___n100_building.value,
+        field_name="symbol_val",
+        field_type="LONG",
+    )
+
+    arcpy.CalculateField_management(
+        in_table=Building_N100.polygon_propogate_displacement___hospital_church_points___n100_building.value,
+        field="symbol_val",
+        expression="determineVal(!BYGGTYP_NBR!)",
+        expression_type="PYTHON3",
+        code_block=N100_SQLResources.nbr_symbol_val_code_block.value,
+    )
+
+    # Polygon prosessor
+    symbol_field_name = "symbol_val"
+    index_field_name = "OBJECTID"
+
+    print("Polygon prosessor...")
+    polygon_process = PolygonProcessor(
+        Building_N100.polygon_propogate_displacement___hospital_church_points___n100_building.value,  # input
+        Building_N100.polygon_propogate_displacement___hospital_church_squares___n100_building.value,  # output
+        N100_Symbology.building_symbol_dimensions.value,
+        symbol_field_name,
+        index_field_name,
+    )
+    polygon_process.run()
+
+    # Applying symbology to polygonprocessed hospital and churches
+    custom_arcpy.apply_symbology(
+        input_layer=Building_N100.polygon_propogate_displacement___hospital_church_squares___n100_building.value,
+        in_symbology_layer=input_symbology.SymbologyN100.grunnriss.value,
+        output_name=Building_N100.polygon_propogate_displacement___polygonprocessor_symbology___n100_building_lyrx.value,
     )
 
 
@@ -193,48 +241,6 @@ def resolve_building_conflict_building_polygon():
         water features, hospitals, and churches. To incorporate hospital and church points as barriers, these points are first
         transformed into polygons using the dimensions of their symbology.
     """
-
-    # Selecting hospital and churches from n50
-    custom_arcpy.select_attribute_and_make_permanent_feature(
-        input_layer=input_data.input_n50.BygningsPunkt,
-        expression="BYGGTYP_NBR IN (970, 719, 671)",
-        output_name=Building_N100.polygon_propogate_displacement___hospital_church_points___n100_building.value,
-    )
-
-    # Adding a symbology value field based on NBR values
-    arcpy.AddField_management(
-        in_table=Building_N100.polygon_propogate_displacement___hospital_church_points___n100_building.value,
-        field_name="symbol_val",
-        field_type="LONG",
-    )
-
-    arcpy.CalculateField_management(
-        in_table=Building_N100.polygon_propogate_displacement___hospital_church_points___n100_building.value,
-        field="symbol_val",
-        expression="determineVal(!BYGGTYP_NBR!)",
-        expression_type="PYTHON3",
-        code_block=N100_SQLResources.nbr_symbol_val_code_block.value,
-    )
-    # Polygon prosessor
-    symbol_field_name = "symbol_val"
-    index_field_name = "OBJECTID"
-
-    print("Polygon prosessor...")
-    polygon_process = PolygonProcessor(
-        Building_N100.polygon_propogate_displacement___hospital_church_points___n100_building.value,  # input
-        Building_N100.polygon_propogate_displacement___hospital_church_squares___n100_building.value,  # output
-        N100_Symbology.building_symbol_dimensions.value,
-        symbol_field_name,
-        index_field_name,
-    )
-    polygon_process.run()
-
-    # Applying symbology to polygonprocessed hospital and churches
-    custom_arcpy.apply_symbology(
-        input_layer=Building_N100.polygon_propogate_displacement___hospital_church_squares___n100_building.value,
-        in_symbology_layer=input_symbology.SymbologyN100.grunnriss.value,
-        output_name=Building_N100.polygon_propogate_displacement___polygonprocessor_symbology___n100_building_lyrx.value,
-    )
 
     # Resolving Building Conflicts for building polygons
     print("Resolving building conflicts ...")
@@ -318,7 +324,7 @@ def creating_road_buffer():
 
         # Selecting road types and making new feature layer based on SQL query
         custom_arcpy.select_attribute_and_make_feature_layer(
-            input_layer=Building_N100.data_preparation___unsplit_veg_sti___n100_building.value,
+            input_layer=Building_N100.data_preparation___unsplit_roads___n100_building.value,
             expression=sql_query,
             output_name=selection_output_name,
         )
@@ -425,11 +431,6 @@ def merging_invisible_intersecting_points():
     """
     Summary:
         Merges points representing intersecting building polygons and invisible polygons.
-
-    Details:
-        This function merges two sets of points: one set representing building polygons that intersect with roads,
-        and another set representing invisible building polygons transformed into points. It combines these points
-        into a single feature class.
     """
     print("Merging points...")
     arcpy.management.Merge(
@@ -442,7 +443,7 @@ def merging_invisible_intersecting_points():
 
 
 @timing_decorator
-def removing_small_building_polygons():
+def check_if_building_polygons_are_big_enough():
     """
     Summary:
         Removes small building polygons from the input layer based on a specified area threshold.
@@ -453,12 +454,23 @@ def removing_small_building_polygons():
     """
     custom_arcpy.select_attribute_and_make_permanent_feature(
         input_layer=Building_N100.polygon_propogate_displacement___building_polygons_not_invisible_not_intersecting___n100_building.value,
-        expression="Shape_Area > 3200",
+        expression="Shape_Area >= 3200",
         output_name=Building_N100.polygon_propogate_displacement___building_polygons_final___n100_building.value,
     )
 
 
+@timing_decorator
 def small_building_polygons_to_points():
+    """
+    Summary:
+        Converts small building polygons to points.
+
+    Details:
+        This function selects small building polygons based on a specified area threshold and transforms them into points.
+        It first selects building polygons with an area less than 3200 square units using the select_attribute_and_make_permanent_feature function.
+        Then, it uses arcpy's FeatureToPoint tool to convert these selected polygons into point features.
+    """
+
     custom_arcpy.select_attribute_and_make_permanent_feature(
         input_layer=Building_N100.polygon_propogate_displacement___building_polygons_not_invisible_not_intersecting___n100_building.value,
         expression="Shape_Area < 3200",

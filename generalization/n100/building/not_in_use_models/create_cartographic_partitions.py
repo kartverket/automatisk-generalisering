@@ -24,7 +24,7 @@ def create_cartographic_partitions():
         in_features=[
             Building_N100.calculate_field_values___points_pre_resolve_building_conflicts___n100_building.value,
             Building_N100.simplify_building_polygons__simplified_grunnriss__n100.value,
-            Building_N100.data_preparation___unsplit_veg_sti___n100_building.value,
+            Building_N100.data_preparation___unsplit_roads___n100_building.value,
             Building_N100.data_preparation___begrensningskurve_buffer_erase_2___n100_building.value,
         ],
         out_features=Building_N100.create_cartographic_partitions__cartographic_partitions__n100.value,
