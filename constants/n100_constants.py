@@ -41,6 +41,14 @@ class N100_SQLResources(Enum):
         "        return -99\n"
     )
 
+    symbol_val_to_hierarchy = """def determineHierarchy(symbol_val):\n
+        if symbol_val in [1, 2, 3]:\n
+            return 1\n
+        elif symbol_val == 6:\n
+            return 2\n
+        else:\n
+            return 3\n"""
+
     road_symbology_size_sql_selection = {
         "MOTORVEGTYPE = 'Motorveg'": 43,
         """ 
