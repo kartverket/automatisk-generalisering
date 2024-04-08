@@ -53,7 +53,6 @@ def reclassifying_hospital_and_church_points_from_matrikkel():
 
 @timing_decorator
 def adding_original_source_to_points():
-
     # Adding a field to indicate that the merged building point and matrikkel does not come from grunnriss
     arcpy.AddField_management(
         in_table=Building_N100.data_preperation___matrikkel_n50_points_merged___n100_building.value,
@@ -81,7 +80,6 @@ def adding_original_source_to_points():
 
 @timing_decorator
 def merge_matrikkel_and_n50_with_points_from_grunnriss():
-
     # Merge the merged building point from n50 and matrikkel with points created from grunnriss
     arcpy.management.Merge(
         inputs=[
@@ -109,7 +107,6 @@ def merge_matrikkel_and_n50_with_points_from_grunnriss():
 
 @timing_decorator
 def find_undefined_nbr_values():
-
     custom_arcpy.select_attribute_and_make_feature_layer(
         input_layer=Building_N100.calculate_field_values___points_pre_resolve_building_conflicts___n100_building.value,
         expression="symbol_val = -99",
@@ -119,7 +116,6 @@ def find_undefined_nbr_values():
 
 @timing_decorator
 def find_each_unique_nbr_value():
-
     # Counter to store the count of each unique BYGGTYP_NBR
     nbr_counter = Counter()
 
@@ -186,7 +182,6 @@ def find_each_unique_nbr_value():
 
 @timing_decorator
 def calculate_angle_and_visibility_for_points():
-
     # Feature class to check fields existence
     point_feature_class = (
         Building_N100.calculate_field_values___points_pre_resolve_building_conflicts___n100_building.value
@@ -216,22 +211,13 @@ def calculate_angle_and_visibility_for_points():
 
 @timing_decorator
 def calculate_hierarchy_for_points():
-
-    code_block_hierarchy = """def determineHierarchy(symbol_val):\n
-        if symbol_val in [1, 2, 3]:\n
-            return 1\n
-        elif symbol_val == 6:\n
-            return 2\n
-        else:\n
-            return 3\n"""
-
     # Then run CalculateField with the new code block
     arcpy.management.CalculateField(
         in_table=Building_N100.calculate_field_values___points_pre_resolve_building_conflicts___n100_building.value,
         field="hierarchy",
         expression="determineHierarchy(!symbol_val!)",
         expression_type="PYTHON3",
-        code_block=code_block_hierarchy,
+        code_block=N100_SQLResources.symbol_val_to_hierarchy.value,
     )
 
 
