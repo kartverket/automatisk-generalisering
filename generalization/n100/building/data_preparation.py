@@ -12,6 +12,9 @@ from env_setup import environment_setup
 from custom_tools.timing_decorator import timing_decorator
 from custom_tools import custom_arcpy
 from constants.n100_constants import N100_SQLResources
+from custom_tools.polygon_processor import PolygonProcessor
+from input_data import input_symbology
+from constants.n100_constants import N100_Symbology, N100_SQLResources
 
 
 @timing_decorator("data_preparation.py")
@@ -27,6 +30,7 @@ def main():
     merge_begrensningskurve_all_water_features()
     unsplit_roads()
     matrikkel_and_n50_not_in_urban_areas()
+    railway_station_points_to_polygons()
     adding_field_values_to_matrikkel()
     merge_matrikkel_and_n50_points()
     selecting_polygons_not_in_urban_areas()
@@ -239,6 +243,48 @@ def matrikkel_and_n50_not_in_urban_areas():
         input_layer=Building_N100.data_preparation___n50_points_in_urban_areas___n100_building.value,
         expression=sql_church_hospitals,
         output_name=Building_N100.data_preparation___churches_and_hospitals_in_urban_areas___n100_building.value,
+    )
+
+
+@timing_decorator
+def railway_station_points_to_polygons():
+
+    # Railway stations from input data
+    railway_stations = input_n100.JernbaneStasjon
+
+    # Adding symbol_val field
+    arcpy.AddField_management(
+        in_table=railway_stations,
+        field_name="symbol_val",
+        field_type="SHORT",
+    )
+
+    # Assigning symbol_val
+    arcpy.CalculateField_management(
+        in_table=railway_stations,
+        field="symbol_val",
+        expression="symbol_val = 10",
+    )
+
+    # Polygon prosessor
+    symbol_field_name = "symbol_val"
+    index_field_name = "OBJECTID"
+
+    print("Polygon prosessor...")
+    polygon_process = PolygonProcessor(
+        railway_stations,  # input
+        Building_N100.data_preparation___railway_stations_to_polygons___n100_building.value,  # output
+        N100_Symbology.building_symbol_dimensions.value,
+        symbol_field_name,
+        index_field_name,
+    )
+    polygon_process.run()
+
+    # Applying symbology to polygonprocessed railwaystations
+    custom_arcpy.apply_symbology(
+        input_layer=Building_N100.data_preparation___railway_stations_to_polygons___n100_building.value,
+        in_symbology_layer=input_symbology.SymbologyN100.railway_stations.value,
+        output_name=Building_N100.data_preparation___railway_stations_to_polygons_symbology___n100_building_lyrx.value,
     )
 
 
