@@ -17,7 +17,7 @@ from custom_tools.timing_decorator import timing_decorator
 iteration_fc = config.resolve_building_conflicts_iteration_feature
 
 
-@timing_decorator("resolve_building_conflicts_points.py")
+@timing_decorator("point_resolve_building_conflicts.py")
 def main():
     """
     This script resolves building conflicts, both building polygons and points
@@ -25,30 +25,31 @@ def main():
     environment_setup.main()
     rbc_selection()
     apply_symbology()
-    resolve_building_conflicts()
+    resolve_building_conflicts_1()
+    building_points_to_keep_after_rbc()
 
 
 @timing_decorator
 def rbc_selection():
     custom_arcpy.select_attribute_and_make_permanent_feature(
         input_layer=input_n100.AdminFlate,
-        expression="NAVN = 'Asker'",
+        expression="NAVN IN ('Asker', 'Oslo')",
         output_name=Building_N100.rbc_selection__selection_area_resolve_building_conflicts__n100.value,
     )
 
     # List of dictionaries containing parameters for each selection
     selections = [
         {
-            "input_layer": Building_N100.polygon_propogate_displacement___building_polygons_final___n100_building.value,
-            "output_name": Building_N100.rbc_selection__grunnriss_selection_rbc__n100.value,
+            "input_layer": Building_N100.polygon_resolve_building_conflicts___building_polygons_final___n100_building.value,
+            "output_name": Building_N100.rbc_selection__building_polygon_selection_rbc__n100.value,
         },
         {
             "input_layer": Building_N100.data_preparation___unsplit_roads___n100_building.value,
-            "output_name": Building_N100.rbc_selection__veg_sti_selection_rbc_rbc__n100.value,
+            "output_name": Building_N100.rbc_selection__road_selection_rbc__n100.value,
         },
         {
-            "input_layer": Building_N100.calculate_field_values___points_pre_resolve_building_conflicts___n100_building.value,
-            "output_name": Building_N100.rbc_selection__bygningspunkt_selection_rbc__n100.value,
+            "input_layer": Building_N100.calculate_point_values___points_pre_resolve_building_conflicts___n100_building.value,
+            "output_name": Building_N100.rbc_selection__building_point_selection_rbc__n100.value,
         },
         {
             "input_layer": Building_N100.data_preparation___begrensningskurve_buffer_erase_2___n100_building.value,
@@ -75,17 +76,17 @@ def apply_symbology():
     # List of dictionaries containing parameters for each symbology application
     symbology_configs = [
         {
-            "input_layer": Building_N100.rbc_selection__bygningspunkt_selection_rbc__n100.value,
+            "input_layer": Building_N100.rbc_selection__building_point_selection_rbc__n100.value,
             "in_symbology_layer": SymbologyN100.bygningspunkt.value,
             "output_name": Building_N100.apply_symbology__bygningspunkt_selection__n100_lyrx.value,
         },
         {
-            "input_layer": Building_N100.rbc_selection__grunnriss_selection_rbc__n100.value,
+            "input_layer": Building_N100.rbc_selection__building_polygon_selection_rbc__n100.value,
             "in_symbology_layer": SymbologyN100.grunnriss.value,
             "output_name": Building_N100.apply_symbology__grunnriss_selection__n100_lyrx.value,
         },
         {
-            "input_layer": Building_N100.rbc_selection__veg_sti_selection_rbc_rbc__n100.value,
+            "input_layer": Building_N100.rbc_selection__road_selection_rbc__n100.value,
             "in_symbology_layer": SymbologyN100.veg_sti.value,
             "output_name": Building_N100.apply_symbology__veg_sti_selection__n100_lyrx.value,
         },
@@ -111,7 +112,7 @@ def apply_symbology():
 
 
 @timing_decorator
-def resolve_building_conflicts():
+def resolve_building_conflicts_1():
     arcpy.env.referenceScale = "100000"
 
     print("Starting Resolve Building Conflicts 1 for drawn polygons")
@@ -127,6 +128,16 @@ def resolve_building_conflicts():
             Building_N100.apply_symbology__begrensningskurve_selection__n100_lyrx.value,
             "false",
             "1 Meters",
+        ],
+        [
+            Building_N100.data_preparation___railway_stations_to_polygons_symbology___n100_building_lyrx.value,
+            "false",
+            "1 Meters",
+        ],
+        [
+            Building_N100.polygon_resolve_building_conflicts___railway_buffer___n100_building_lyrx.value,
+            "false",
+            "45 Meters",
         ],
     ]
 
@@ -144,29 +155,18 @@ def resolve_building_conflicts():
         hierarchy_field="hierarchy",
     )
 
-    # Sql expression to bring along bygningspunkt which are kept + church and hospital
+
+def building_points_to_keep_after_rbc():
+
+    # Sql expression to select buildingspoints that are visible + church and hospital points
     sql_expression_resolve_building_conflicts = (
         "(invisibility = 0) OR (symbol_val IN (1, 2, 3))"
     )
-
-    sql_expression_resolve_building_conflicts_polygon = "(invisibility = 0)"
 
     custom_arcpy.select_attribute_and_make_permanent_feature(
         input_layer=Building_N100.rbc_selection__drawn_polygon_selection_rbc__n100.value,
         expression=sql_expression_resolve_building_conflicts,
         output_name=Building_N100.resolve_building_conflicts__drawn_polygons_result_1__n100.value,
-    )
-
-    custom_arcpy.select_attribute_and_make_permanent_feature(
-        input_layer=Building_N100.rbc_selection__grunnriss_selection_rbc__n100.value,
-        expression=sql_expression_resolve_building_conflicts_polygon,
-        output_name=Building_N100.resolve_building_conflicts__drawn_polygons_result_1__n100.value,
-    )
-
-    custom_arcpy.apply_symbology(
-        input_layer=Building_N100.resolve_building_conflicts__drawn_polygons_result_1__n100.value,
-        in_symbology_layer=Building_N100.apply_symbology__drawn_polygon_selection__n100_lyrx.value,
-        output_name=Building_N100.resolve_building_conflicts__drawn_polygon_RBC_result_1__n100_lyrx.value,
     )
 
     arcpy.management.FeatureToPoint(
@@ -175,13 +175,88 @@ def resolve_building_conflicts():
         point_location="INSIDE",
     )
 
+
+def building_polygons_to_keep_after_first_rbc():
+
+    # Sql expression to keep only building polygons that are visible (0) after the tool has run
+    sql_expression_resolve_building_conflicts_polygon = "invisibility = 0"
+
+    # Selecting building polygons that are visible
+    custom_arcpy.select_attribute_and_make_permanent_feature(
+        input_layer=Building_N100.rbc_selection__building_polygon_selection_rbc__n100.value,
+        expression=sql_expression_resolve_building_conflicts_polygon,
+        output_name=Building_N100.resolve_building_conflicts__building_polygons_visible_result_1__n100.value,
+    )
+
+    custom_arcpy.apply_symbology(
+        input_layer=Building_N100.resolve_building_conflicts__building_polygons_visible_result_1__n100.value,
+        in_symbology_layer=SymbologyN100.grunnriss.value,
+        output_name=Building_N100.resolve_building_conflicts__building_polygon_symbology_2__n100_lyrx.value,
+    )
+
+
+def transforming_invisible_polygons_to_points_and_adding_symbology():
+
+    # Sql expression to keep only building polygons that have invisbility value 1 after the tool has run
+    sql_expression_resolve_building_conflicts_polygon = "invisibility = 1"
+
+    # Selecting building polygons that are invisible
+    custom_arcpy.select_attribute_and_make_permanent_feature(
+        input_layer=Building_N100.rbc_selection__building_polygon_selection_rbc__n100.value,
+        expression=sql_expression_resolve_building_conflicts_polygon,
+        output_name=Building_N100.resolve_building_conflicts__building_polygons_invisible_result_1__n100.value,
+    )
+
+    # Building polygons that are made invisible are transformed to points
+    arcpy.management.FeatureToPoint(
+        in_features=Building_N100.resolve_building_conflicts__building_polygons_visible_result_1__n100.value,
+        out_feature_class=Building_N100.resolve_building_conflicts__building_polygons_to_points_result_1__n100.value,
+        point_location="INSIDE",
+    )
+
+    custom_arcpy.apply_symbology(
+        input_layer=Building_N100.resolve_building_conflicts__drawn_polygons_result_1__n100.value,
+        in_symbology_layer=Building_N100.apply_symbology__drawn_polygon_selection__n100_lyrx.value,
+        output_name=Building_N100.resolve_building_conflicts__drawn_polygon_RBC_result_1__n100_lyrx.value,
+    )
+
+
+def adding_symbology_to_layers_being_used_for_rbc_2():
+
+    # Adding symbology to
     custom_arcpy.apply_symbology(
         input_layer=Building_N100.resolve_building_conflicts__building_points_RBC_result_1__n100.value,
         in_symbology_layer=SymbologyN100.bygningspunkt.value,
         output_name=Building_N100.resolve_building_conflicts__building_points_RBC_result_1__n100_lyrx.value,
     )
 
+
+def resolve_building_conflicts_2():
+
     print("Starting resolve building conflicts 2")
+
+    input_barriers_for_rbc = [
+        [
+            Building_N100.apply_symbology__veg_sti_selection__n100_lyrx.value,
+            "false",
+            "30 Meters",
+        ],
+        [
+            Building_N100.apply_symbology__begrensningskurve_selection__n100_lyrx.value,
+            "false",
+            "1 Meters",
+        ],
+        [
+            Building_N100.data_preparation___railway_stations_to_polygons_symbology___n100_building_lyrx.value,
+            "false",
+            "1 Meters",
+        ],
+        [
+            Building_N100.polygon_resolve_building_conflicts___railway_buffer___n100_building_lyrx.value,
+            "false",
+            "45 Meters",
+        ],
+    ]
 
     input_buildings_rbc_2 = [
         Building_N100.resolve_building_conflicts__drawn_polygon_RBC_result_1__n100_lyrx.value,
