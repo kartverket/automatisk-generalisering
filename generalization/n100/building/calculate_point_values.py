@@ -13,15 +13,11 @@ from collections import Counter
 from custom_tools.timing_decorator import timing_decorator
 
 
-@timing_decorator("calculating_field_values.py")
+@timing_decorator("calculate_point_values.py")
 def main():
     """
     Summary:
         Adds required fields for building point for symbology and resolves building conflicts: angle, hierarchy, and invisibility.
-
-    Details:
-        1. `table_management`:
-            Adds required fields for building point for symbology and resolves building conflicts: angle, hierarchy, and invisibility. Creates a symbology value field based on NBR values and logs undefined NBR values, reclassifying them to 729. Ensures that building types which should not be delivered are correctly reclassified.
     """
     environment_setup.main()
     reclassifying_hospital_and_church_points_from_matrikkel()
@@ -29,8 +25,8 @@ def main():
     merge_matrikkel_and_n50_with_points_from_grunnriss()
     find_undefined_nbr_values()
     find_each_unique_nbr_value()
-    calculate_angle_and_visibility_for_points()
-    calculate_hierarchy_for_points()
+    calculate_angle_and_visibility()
+    calculate_hierarchy()
 
 
 @timing_decorator
@@ -86,18 +82,18 @@ def merge_matrikkel_and_n50_with_points_from_grunnriss():
             Building_N100.data_preperation___matrikkel_n50_points_merged___n100_building.value,
             Building_N100.polygon_to_point___merged_points_final___n100_building.value,
         ],
-        output=Building_N100.calculate_field_values___points_pre_resolve_building_conflicts___n100_building.value,
+        output=Building_N100.calculate_point_values___points_pre_resolve_building_conflicts___n100_building.value,
     )
 
     arcpy.AddField_management(
-        in_table=Building_N100.calculate_field_values___points_pre_resolve_building_conflicts___n100_building.value,
+        in_table=Building_N100.calculate_point_values___points_pre_resolve_building_conflicts___n100_building.value,
         field_name="symbol_val",
         field_type="SHORT",
     )
 
     # Determining and assigning symbol val
     arcpy.CalculateField_management(
-        in_table=Building_N100.calculate_field_values___points_pre_resolve_building_conflicts___n100_building.value,
+        in_table=Building_N100.calculate_point_values___points_pre_resolve_building_conflicts___n100_building.value,
         field="symbol_val",
         expression="determineVal(!BYGGTYP_NBR!)",
         expression_type="PYTHON3",
@@ -108,9 +104,9 @@ def merge_matrikkel_and_n50_with_points_from_grunnriss():
 @timing_decorator
 def find_undefined_nbr_values():
     custom_arcpy.select_attribute_and_make_feature_layer(
-        input_layer=Building_N100.calculate_field_values___points_pre_resolve_building_conflicts___n100_building.value,
+        input_layer=Building_N100.calculate_point_values___points_pre_resolve_building_conflicts___n100_building.value,
         expression="symbol_val = -99",
-        output_name=Building_N100.calculating_field_values___selection_building_points_with_undefined_nbr_values___n100_building.value,
+        output_name=Building_N100.calculate_point_values___selection_building_points_with_undefined_nbr_values___n100_building.value,
     )
 
 
@@ -121,7 +117,7 @@ def find_each_unique_nbr_value():
 
     # Iterate over the rows in the feature class
     with arcpy.da.SearchCursor(
-        Building_N100.calculating_field_values___selection_building_points_with_undefined_nbr_values___n100_building.value,
+        Building_N100.calculate_point_values___selection_building_points_with_undefined_nbr_values___n100_building.value,
         ["BYGGTYP_NBR", "symbol_val"],
     ) as cursor:
         for nbr, symbol_val in cursor:
@@ -133,7 +129,7 @@ def find_each_unique_nbr_value():
 
     # Writing the counts to a log file
     with open(
-        Building_N100.calculating_field_values___building_points_with_undefined_nbr_values___n100_building.value,
+        Building_N100.calculate_point_values___building_points_with_undefined_nbr_values___n100_building.value,
         "w",
     ) as log_file:
         for nbr, count in nbr_counter.items():
@@ -142,7 +138,7 @@ def find_each_unique_nbr_value():
         log_file.write(f"Total Rows without defined symbology: {total_count}\n")
 
     print(
-        f"Log file created at: {Building_N100.calculating_field_values___building_points_with_undefined_nbr_values___n100_building.value}"
+        f"Log file created at: {Building_N100.calculate_point_values___building_points_with_undefined_nbr_values___n100_building.value}"
     )
 
     # Code block to transform BYGGTYP_NBR values without symbology to other buildings (729)
@@ -163,7 +159,7 @@ def find_each_unique_nbr_value():
 
     # Applying the symbol_val_to_nbr logic
     arcpy.CalculateField_management(
-        in_table=Building_N100.calculate_field_values___points_pre_resolve_building_conflicts___n100_building.value,
+        in_table=Building_N100.calculate_point_values___points_pre_resolve_building_conflicts___n100_building.value,
         field="BYGGTYP_NBR",
         expression="symbol_val_to_nbr(!symbol_val!, !BYGGTYP_NBR!)",
         expression_type="PYTHON3",
@@ -172,7 +168,7 @@ def find_each_unique_nbr_value():
 
     # Applying the update_symbol_val logic
     arcpy.CalculateField_management(
-        in_table=Building_N100.calculate_field_values___points_pre_resolve_building_conflicts___n100_building.value,
+        in_table=Building_N100.calculate_point_values___points_pre_resolve_building_conflicts___n100_building.value,
         field="symbol_val",
         expression="update_symbol_val(!symbol_val!)",
         expression_type="PYTHON3",
@@ -181,10 +177,10 @@ def find_each_unique_nbr_value():
 
 
 @timing_decorator
-def calculate_angle_and_visibility_for_points():
+def calculate_angle_and_visibility():
     # Feature class to check fields existence
     point_feature_class = (
-        Building_N100.calculate_field_values___points_pre_resolve_building_conflicts___n100_building.value
+        Building_N100.calculate_point_values___points_pre_resolve_building_conflicts___n100_building.value
     )
 
     # List of fields to add and calculate
@@ -210,10 +206,10 @@ def calculate_angle_and_visibility_for_points():
 
 
 @timing_decorator
-def calculate_hierarchy_for_points():
+def calculate_hierarchy():
     # Then run CalculateField with the new code block
     arcpy.management.CalculateField(
-        in_table=Building_N100.calculate_field_values___points_pre_resolve_building_conflicts___n100_building.value,
+        in_table=Building_N100.calculate_point_values___points_pre_resolve_building_conflicts___n100_building.value,
         field="hierarchy",
         expression="determineHierarchy(!symbol_val!)",
         expression_type="PYTHON3",
