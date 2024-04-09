@@ -39,7 +39,7 @@ def creating_append_layers():
     arcpy.CreateFeatureclass_management(
         out_path=config.default_project_workspace,
         out_name=byggningspunkt_append,
-        template=Building_N100.calculate_field_values___points_pre_resolve_building_conflicts___n100_building.value,
+        template=Building_N100.calculate_point_values___points_pre_resolve_building_conflicts___n100_building.value,
     )
 
     arcpy.CreateFeatureclass_management(
@@ -66,7 +66,7 @@ def pre_calculation():
 
     # Then run CalculateField with the new code block
     arcpy.management.CalculateField(
-        in_table=Building_N100.calculate_field_values___points_pre_resolve_building_conflicts___n100_building.value,
+        in_table=Building_N100.calculate_point_values___points_pre_resolve_building_conflicts___n100_building.value,
         field="hierarchy",
         expression="determineHierarchy(!symbol_val!)",
         expression_type="PYTHON3",
@@ -110,7 +110,7 @@ def iterate_through_selections():
                 "output_name": selection_veg_sti,
             },
             {
-                "input_layer": Building_N100.calculate_field_values___points_pre_resolve_building_conflicts___n100_building.value,
+                "input_layer": Building_N100.calculate_point_values___points_pre_resolve_building_conflicts___n100_building.value,
                 "output_name": selection_bygningspunkt,
             },
             {
@@ -619,7 +619,7 @@ def rbc_iteration():
 #         "output_name": selection_veg_sti,
 #     },
 #     {
-#         "input_layer": Building_N100.calculate_field_values___points_pre_resolve_building_conflicts___n100_building.value,
+#         "input_layer": Building_N100.calculate_point_values___points_pre_resolve_building_conflicts___n100_building.value,
 #         "output_name": selection_bygningspunkt,
 #     },
 #     {

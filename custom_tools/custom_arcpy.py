@@ -274,7 +274,7 @@ def select_location_and_make_permanent_feature(
         ...     input_layer=Building_N100.data_preperation___waterfeatures_from_begrensningskurve_not_rivers___n100_building.value,
         ...     overlap_type=OverlapType.WITHIN_A_DISTANCE.value,
         ...     select_features=Building_N100.polygon_propogate_displacement___after_displacement___n100_building.value,
-        ...     output_name=Building_N100.polygon_propogate_displacement___begrensningskurve_500m_from_displaced_polygon___n100_building.value,
+        ...     output_name=Building_N100.polygon_resolve_building_conflicts___begrensningskurve_500m_from_displaced_polygon___n100_building.value,
         ...     search_distance="500 Meters",
         ... )
         'polygon_propogate_displacement___begrensningskurve_500_m_from_displaced_polygon___n100_building' created permanently.
@@ -342,9 +342,9 @@ def apply_symbology(
 
     Example:
         >>> custom_arcpy.apply_symbology(
-        ...     input_layer=Building_N100.rbc_selection__grunnriss_selection_rbc__n100.value,
+        ...     input_layer=Building_N100.rbc_selection__building_polygon_selection_rbc__n100.value,
         ...     in_symbology_layer=config.symbology_n100_grunnriss,
-        ...     output_name=Building_N100.polygon_propogate_displacement___building_polygon___n100_building_lyrx.value,
+        ...     output_name=Building_N100.polygon_resolve_building_conflicts___building_polygon___n100_building_lyrx.value,
         ... )
         'apply_symbology_to_layers__building_polygon__n100__lyrx.lyrx file created.'
     """

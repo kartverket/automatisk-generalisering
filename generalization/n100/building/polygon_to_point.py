@@ -55,8 +55,8 @@ def building_polygons_to_points():
     additional_inputs = [
         Building_N100.data_preparation___points_created_from_small_polygons___n100_building.value,
         Building_N100.simplify_polygons___aggregated_polygons_to_points___n100_building.value,
-        Building_N100.polygon_propogate_displacement___final_merged_points___n100_building.value,
-        Building_N100.polygon_propogate_displacement___small_building_polygons_to_point___n100_building.value,
+        Building_N100.polygon_resolve_building_conflicts___final_merged_points___n100_building.value,
+        Building_N100.polygon_resolve_building_conflicts___small_building_polygons_to_point___n100_building.value,
     ]
     # Complete list of inputs for the merge
     merge_inputs = spatially_joined_points + additional_inputs
