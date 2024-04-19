@@ -7,19 +7,17 @@ from custom_tools.timing_decorator import timing_decorator
 from generalization.n100.building import data_preparation
 from generalization.n100.building import calculate_polygon_values
 from generalization.n100.building import calculate_point_values
-
 from generalization.n100.building import simplify_polygons
 from generalization.n100.building import polygon_propogate_displacement
 from generalization.n100.building import polygon_to_point
 from generalization.n100.building import hospital_church_clusters
 from generalization.n100.building import point_propogate_displacement
 from generalization.n100.building import point_displacement_with_buffer
-from generalization.n100.building import points_to_squares
 from generalization.n100.building import point_resolve_building_conflicts
 from generalization.n100.building import removing_points_in_water_features
 from generalization.n100.building import data_clean_up
 from generalization.n100.building import polygon_resolve_building_conflicts
-
+from generalization.n100.building import removing_overlapping_points
 
 # Main function that runs all the building scripts
 @timing_decorator("building_main.py")
@@ -57,17 +55,17 @@ def main():
     environment_setup.main()
     data_preparation.main()
     simplify_polygons.main()
+    calculate_polygon_values.main()
     polygon_propogate_displacement.main()
     polygon_resolve_building_conflicts.main()
     polygon_to_point.main()
-    calculate_polygon_values.main()
     calculate_point_values.main()
     point_propogate_displacement.main()
     hospital_church_clusters.main()
     point_displacement_with_buffer.main()
-    points_to_squares.main()
     point_resolve_building_conflicts.main()
     removing_points_in_water_features.main()
+    removing_overlapping_points.main()
     data_clean_up.main()
 
 
