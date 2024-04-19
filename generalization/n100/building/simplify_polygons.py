@@ -36,7 +36,7 @@ def main():
     simplify_buildings_1()
     simplify_polygons()
     simplify_buildings_2()
-    join_and_add_fields()
+    spatial_join_polygons()
 
 
 @timing_decorator
@@ -172,7 +172,7 @@ def simplify_buildings_2():
 
 # Spatial join and adding fields to polygons
 @timing_decorator
-def join_and_add_fields():
+def spatial_join_polygons():
     """
     Summary:
         Performs spatial join between simplified building polygons and original building polygons.
