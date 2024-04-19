@@ -29,7 +29,6 @@ def main():
         considering various barriers such as roads, waterfeatures, hospital and churches, ensuring proper placement and scaling.
 
     """
-
     environment_setup.main()
     propagate_displacement_building_polygons()
 
@@ -52,7 +51,7 @@ def propagate_displacement_building_polygons():
     print("Propogate displacement ...")
     # Copying layer so no changes are made to the original
     arcpy.management.Copy(
-        in_data=Building_N100.simplify_polygons___final___n100_building.value,
+        in_data=Building_N100.simplify_polygons___spatial_join_polygons___n100_building.value,
         out_data=Building_N100.polygon_propogate_displacement___pre_displacement___n100_building.value,
     )
 
