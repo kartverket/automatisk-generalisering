@@ -70,8 +70,9 @@ def main():
 
     environment_setup.main()
     roads_and_water_barriers_500_m_from_building_polygons()
-    railways_500_m_from_building_polygons_to_railway_buffer()
-    polygon_processor()
+    railway_500_m_from_building_polygons()
+    create_railway_buffer()
+    hospital_church_points_to_squares()
     apply_symbology_to_layers()
     resolve_building_conflict_building_polygon()
     creating_road_buffer()
@@ -122,7 +123,7 @@ def roads_and_water_barriers_500_m_from_building_polygons():
 
 
 @timing_decorator
-def railways_500_m_from_building_polygons_to_railway_buffer():
+def railway_500_m_from_building_polygons():
 
     # Selecting railway 500 meters from railways (togbane)
     custom_arcpy.select_location_and_make_permanent_feature(
@@ -133,6 +134,10 @@ def railways_500_m_from_building_polygons_to_railway_buffer():
         search_distance="500 Meters",
     )
 
+
+@timing_decorator
+def create_railway_buffer():
+
     # Buffering the railways
     arcpy.analysis.PairwiseBuffer(
         in_features=Building_N100.polygon_resolve_building_conflicts___railway_500m_from_displaced_polygon___n100_building.value,
@@ -142,7 +147,7 @@ def railways_500_m_from_building_polygons_to_railway_buffer():
 
 
 @timing_decorator
-def polygon_processor():
+def hospital_church_points_to_squares():
 
     # Selecting hospital and churches from n50
     custom_arcpy.select_attribute_and_make_permanent_feature(
@@ -219,7 +224,7 @@ def apply_symbology_to_layers():
     # Applying symbology to railway buffer
     custom_arcpy.apply_symbology(
         input_layer=Building_N100.polygon_resolve_building_conflicts___railway_buffer___n100_building.value,
-        in_symbology_layer=input_symbology.SymbologyN100.begrensnings_kurve_line.value,
+        in_symbology_layer=input_symbology.SymbologyN100.railways.value,
         output_name=Building_N100.polygon_resolve_building_conflicts___railway_buffer___n100_building_lyrx.value,
     )
 
