@@ -341,8 +341,8 @@ def apply_symbology(
         output_name (str): The name (including path) for the output layer file (.lyrx) with the applied symbology.
 
     Example:
-        >>> custom_arcpy.apply_symbology(
-        ...     input_layer=Building_N100.rbc_selection__building_polygon_selection_rbc__n100.value,
+        >>> custom_arcpy.apply_symbology_to_the_layers(
+        ...     input_layer=Building_N100.point_resolve_building_conflicts___building_polygon_selection_rbc___n100_building.value,
         ...     in_symbology_layer=config.symbology_n100_grunnriss,
         ...     output_name=Building_N100.polygon_resolve_building_conflicts___building_polygon___n100_building_lyrx.value,
         ... )
