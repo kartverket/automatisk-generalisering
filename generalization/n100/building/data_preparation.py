@@ -261,9 +261,7 @@ def railway_station_points_to_polygons():
 
     # Assigning symbol_val
     arcpy.CalculateField_management(
-        in_table=railway_stations,
-        field="symbol_val",
-        expression="symbol_val = 10",
+        in_table=railway_stations, field="symbol_val", expression="10"
     )
 
     # Polygon prosessor
