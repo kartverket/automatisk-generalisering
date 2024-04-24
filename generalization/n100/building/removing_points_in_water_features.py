@@ -38,7 +38,7 @@ def removing_points_in_water_features():
 
     # Select points that DO NOT intersect any waterfeatures
     custom_arcpy.select_location_and_make_permanent_feature(
-        input_layer=Building_N100.point_resolve_building_conflicts___building_points_RBC_final___n100_building.value,
+        input_layer=Building_N100.point_resolve_building_conflicts___building_points_final___n100_building.value,
         overlap_type=custom_arcpy.OverlapType.INTERSECT,
         select_features=Building_N100.removing_points_in_water_features___water_features___n100_building.value,
         output_name=Building_N100.removing_points_in_water_features___final_points___n100_building.value,
