@@ -142,17 +142,17 @@ def barriers_for_rbc():
         [
             Building_N100.point_resolve_building_conflicts___veg_sti_selection___n100_building_lyrx.value,
             "false",
-            "30 Meters",
+            "45 Meters",
         ],
         [
             Building_N100.point_resolve_building_conflicts___begrensningskurve_selection___n100_building_lyrx.value,
             "false",
-            "1 Meters",
+            "45 Meters",
         ],
         [
             Building_N100.data_preparation___railway_stations_to_polygons_symbology___n100_building_lyrx.value,
             "false",
-            "1 Meters",
+            "45 Meters",
         ],
         [
             Building_N100.polygon_resolve_building_conflicts___railway_buffer___n100_building_lyrx.value,
