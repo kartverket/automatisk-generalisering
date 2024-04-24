@@ -763,10 +763,10 @@ class Building_N100(Enum):
     #                REMOVING OVERLAPPING POINTS
     # ========================================
 
-    removing_overlapping_points___after_detecting_graphic_conflicts___n100_building = (
+    removing_overlapping_points___graphic_conflicts_polygon___n100_building = (
         file_manager.generate_file_name_gdb(
             script_source_name=removing_overlapping_points,
-            description="after_detecting_graphic_conflicts",
+            description="graphic_conflicts_polygon",
         )
     )
 
@@ -808,6 +808,25 @@ class Building_N100(Enum):
             script_source_name=removing_overlapping_points,
             description="points_not_in_a_cluster",
         )
+    )
+
+    removing_overlapping_points___final___n100_building = (
+        file_manager.generate_file_name_gdb(
+            script_source_name=removing_overlapping_points,
+            description="final",
+        )
+    )
+
+    removing_overlapping_points___points_in_a_cluster_original___n100_building = (
+        file_manager.generate_file_name_gdb(
+            script_source_name=removing_overlapping_points,
+            description="points_in_a_cluster_original",
+        )
+    )
+
+    removing_overlapping_points___points_NOT_close_to_graphic_conflict_polygons___n100_building = file_manager.generate_file_name_gdb(
+        script_source_name=removing_overlapping_points,
+        description="points_NOT_close_to_graphic_conflict_polygons",
     )
 
     ############################################## NEEDS TO BE UPDATED ###########################################################
