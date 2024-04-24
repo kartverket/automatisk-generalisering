@@ -8,6 +8,7 @@ from file_manager.n100.file_manager_buildings import Building_N100
 from custom_tools import custom_arcpy
 from env_setup import environment_setup
 from custom_tools.timing_decorator import timing_decorator
+from custom_tools.compare_feature_classes import compare_feature_classes
 
 
 def main():
@@ -15,7 +16,6 @@ def main():
     copying_previous_file()
     detecting_graphic_conflicts()
     selecting_points_close_to_graphic_conflict_polygons()
-    selecting_points_in_a_cluster_and_not_in_a_cluster()
     finding_clusters_amongst_the_points()
     selecting_points_in_a_cluster_and_not_in_a_cluster()
     keep_point_with_highest_hierarchy_for_each_cluster()
@@ -35,11 +35,13 @@ def copying_previous_file():
 @timing_decorator
 def detecting_graphic_conflicts():
 
+    arcpy.env.referenceScale = "100000"
+
     # Detecting Graphic Conflicts
     arcpy.cartography.DetectGraphicConflict(
         in_features=Building_N100.removing_points_in_water_features___final_points___n100_lyrx.value,
         conflict_features=Building_N100.removing_points_in_water_features___final_points___n100_lyrx.value,
-        out_feature_class=Building_N100.removing_overlapping_points___after_detecting_graphic_conflicts___n100_building.value,
+        out_feature_class=Building_N100.removing_overlapping_points___graphic_conflicts_polygon___n100_building.value,
         conflict_distance="20 Meters",
     )
 
@@ -51,9 +53,18 @@ def selecting_points_close_to_graphic_conflict_polygons():
     custom_arcpy.select_location_and_make_permanent_feature(
         input_layer=Building_N100.removing_overlapping_points___all_building_points___n100_building.value,
         overlap_type=custom_arcpy.OverlapType.WITHIN_A_DISTANCE,
-        select_features=Building_N100.removing_overlapping_points___after_detecting_graphic_conflicts___n100_building.value,
+        select_features=Building_N100.removing_overlapping_points___graphic_conflicts_polygon___n100_building.value,
         output_name=Building_N100.removing_overlapping_points___points_close_to_graphic_conflict_polygons___n100_building.value,
-        search_distance="25 Meters",
+        search_distance="40 Meters",
+    )
+
+    # Find points that are close to the graphic conflict polygons
+    custom_arcpy.select_location_and_make_permanent_feature(
+        input_layer=Building_N100.removing_overlapping_points___all_building_points___n100_building.value,
+        overlap_type=custom_arcpy.OverlapType.WITHIN_A_DISTANCE,
+        select_features=Building_N100.removing_overlapping_points___graphic_conflicts_polygon___n100_building.value,
+        output_name=Building_N100.removing_overlapping_points___points_NOT_close_to_graphic_conflict_polygons___n100_building.value,
+        search_distance="40 Meters",
         inverted=True,
     )
 
@@ -67,15 +78,7 @@ def finding_clusters_amongst_the_points():
         out_feature_class=Building_N100.removing_overlapping_points___point_clusters___n100_building.value,
         clustering_method="DBSCAN",
         minimum_points="2",
-        search_distance="40 Meters",
-    )
-    # Join CLUSTER_ID to points OBJECTID
-    arcpy.management.JoinField(
-        in_data=Building_N100.removing_overlapping_points___point_clusters___n100_building.value,
-        in_field="OBJECTID",
-        join_table=Building_N100.removing_overlapping_points___all_building_points___n100_building.value,
-        join_field="OBJECTID",
-        fields="CLUSTER_ID",
+        search_distance="50 Meters",
     )
 
 
@@ -87,17 +90,24 @@ def selecting_points_in_a_cluster_and_not_in_a_cluster():
 
     # Making feature class of points that are in a cluster and will be used for further proscessing
     custom_arcpy.select_attribute_and_make_permanent_feature(
-        input_layer=Building_N100.removing_overlapping_points___all_building_points___n100_building.value,
+        input_layer=Building_N100.removing_overlapping_points___point_clusters___n100_building.value,
         expression=expression_cluster,
         output_name=Building_N100.removing_overlapping_points___points_in_a_cluster___n100_building.value,
         selection_type=custom_arcpy.SelectionType.NEW_SELECTION,
     )
+
     # Making feature class of points that are NOT in a cluster and will be merged at the end
     custom_arcpy.select_attribute_and_make_permanent_feature(
-        input_layer=Building_N100.removing_overlapping_points___all_building_points___n100_building.value,
+        input_layer=Building_N100.removing_overlapping_points___point_clusters___n100_building.value,
         expression=expression_not_cluster,
         output_name=Building_N100.removing_overlapping_points___points_not_in_a_cluster___n100_building.value,
         selection_type=custom_arcpy.SelectionType.NEW_SELECTION,
+    )
+
+    # Copying the layer because the other one will be modified
+    arcpy.management.Copy(
+        in_data=Building_N100.removing_overlapping_points___points_in_a_cluster___n100_building.value,
+        out_data=Building_N100.removing_overlapping_points___points_in_a_cluster_original___n100_building.value,
     )
 
 
@@ -151,10 +161,16 @@ def merging_final_points_together():
     # Merge the final hospital and church layers
     arcpy.management.Merge(
         inputs=[
-            Building_N100.removing_overlapping_points___points_not_in_a_cluster___n100_building.value,
+            Building_N100.removing_overlapping_points___points_NOT_close_to_graphic_conflict_polygons___n100_building.value,
             Building_N100.removing_overlapping_points___points_in_a_cluster___n100_building.value,
+            Building_N100.removing_overlapping_points___points_not_in_a_cluster___n100_building.value,
         ],
-        output=Building_N100.removing_overlapping_points___points_not_in_a_cluster___n100_building.value,
+        output=Building_N100.removing_overlapping_points___final___n100_building.value,
+    )
+
+    compare_feature_classes(
+        Building_N100.removing_overlapping_points___all_building_points___n100_building.value,
+        Building_N100.removing_overlapping_points___final___n100_building.value,
     )
 
 
