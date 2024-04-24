@@ -11,3 +11,5 @@ class SymbologyN100(Enum):
     bygningspunkt = config.symbology_n100_bygningspunkt
     grunnriss = config.symbology_n100_grunnriss
     drawn_polygon = config.symbology_n100_drawn_polygon
+    railway_stations = config.symbology_railway_station
+    railways = config.symbology_railway_buffer

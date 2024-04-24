@@ -312,7 +312,7 @@ if __name__ == "__main__":
 
     # Example parameters - replace these with actual values suitable for your test
     polygon_processor = PolygonProcessor(
-        input_building_points=Building_N100.calculate_field_values___points_pre_resolve_building_conflicts___n100_building.value,
+        input_building_points=Building_N100.calculate_point_values___points_pre_resolve_building_conflicts___n100_building.value,
         output_polygon_feature_class=Building_N100.building_point_buffer_displacement__iteration_points_to_square_polygons__n100.value,
         building_symbol_dimensions=N100_Symbology.building_symbol_dimensions.value,
         symbol_field_name="symbol_val",

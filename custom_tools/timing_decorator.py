@@ -1,26 +1,30 @@
 import time
-import os
 from functools import wraps
-
 from file_manager.n100.file_manager_buildings import Building_N100
 
 
-def timing_decorator(func):
+def timing_decorator(func=None, name=None):
     """Logs the execution time of a function to both the console and a log file"""
 
-    @wraps(func)
-    def wrapper(*args, **kwargs):
-        start_time = time.time()
+    def decorator(func):
+        @wraps(func)
+        def wrapper(*args, **kwargs):
+            start_time = time.time()
 
-        result = func(*args, **kwargs)
+            result = func(*args, **kwargs)
 
-        elapsed_time = compute_elapsed_time(start_time)
+            elapsed_time = compute_elapsed_time(start_time)
 
-        log_to_console_and_file(func.__name__, elapsed_time)
+            log_to_console_and_file(name or func.__name__, elapsed_time)
 
-        return result
+            return result
 
-    return wrapper
+        return wrapper
+
+    if func is None:
+        return decorator
+    else:
+        return decorator(func)
 
 
 def compute_elapsed_time(start_time):
