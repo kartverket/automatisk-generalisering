@@ -66,7 +66,7 @@ def main():
     point_resolve_building_conflicts.main()
     removing_points_in_water_features.main()
     removing_overlapping_points.main()
-    data_clean_up.main()
+    # data_clean_up.main()
 
 
 if __name__ == "__main__":
