@@ -17,7 +17,7 @@
         <script src="_static/jquery.js?v=5d32c60e"></script>
         <script src="_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
         <script src="_static/documentation_options.js?v=d45e8c67"></script>
-        <script src="_static/doctools.js?v=888ff710"></script>
+        <script src="_static/doctools.js?v=9a2dae69"></script>
         <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="_static/js/theme.js"></script>
     <link rel="index" title="Index" href="genindex.html" />
@@ -85,6 +85,7 @@
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="generated_docs/custom_tools.html">custom_tools package</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="generated_docs/custom_tools.html#submodules">Submodules</a></li>
+<li class="toctree-l2"><a class="reference internal" href="generated_docs/custom_tools.html#module-custom_tools.compare_feature_classes">custom_tools.compare_feature_classes module</a></li>
 <li class="toctree-l2"><a class="reference internal" href="generated_docs/custom_tools.html#module-custom_tools.custom_arcpy">custom_tools.custom_arcpy module</a></li>
 <li class="toctree-l2"><a class="reference internal" href="generated_docs/custom_tools.html#module-custom_tools.file_utilities">custom_tools.file_utilities module</a></li>
 <li class="toctree-l2"><a class="reference internal" href="generated_docs/custom_tools.html#module-custom_tools.geometry_tools">custom_tools.geometry_tools module</a></li>
@@ -115,17 +116,19 @@
 <li class="toctree-l1"><a class="reference internal" href="generated_docs/generalization.n100.building.html">generalization.n100.building package</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="generated_docs/generalization.n100.building.html#submodules">Submodules</a></li>
 <li class="toctree-l2"><a class="reference internal" href="generated_docs/generalization.n100.building.html#generalization-n100-building-building-main-module">generalization.n100.building.building_main module</a></li>
-<li class="toctree-l2"><a class="reference internal" href="generated_docs/generalization.n100.building.html#generalization-n100-building-calculating-field-values-module">generalization.n100.building.calculating_field_values module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="generated_docs/generalization.n100.building.html#generalization-n100-building-calculate-point-values-module">generalization.n100.building.calculate_point_values module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="generated_docs/generalization.n100.building.html#generalization-n100-building-calculate-polygon-values-module">generalization.n100.building.calculate_polygon_values module</a></li>
 <li class="toctree-l2"><a class="reference internal" href="generated_docs/generalization.n100.building.html#generalization-n100-building-data-clean-up-module">generalization.n100.building.data_clean_up module</a></li>
 <li class="toctree-l2"><a class="reference internal" href="generated_docs/generalization.n100.building.html#generalization-n100-building-data-preparation-module">generalization.n100.building.data_preparation module</a></li>
 <li class="toctree-l2"><a class="reference internal" href="generated_docs/generalization.n100.building.html#generalization-n100-building-hospital-church-clusters-module">generalization.n100.building.hospital_church_clusters module</a></li>
 <li class="toctree-l2"><a class="reference internal" href="generated_docs/generalization.n100.building.html#generalization-n100-building-point-displacement-with-buffer-module">generalization.n100.building.point_displacement_with_buffer module</a></li>
 <li class="toctree-l2"><a class="reference internal" href="generated_docs/generalization.n100.building.html#generalization-n100-building-point-propogate-displacement-module">generalization.n100.building.point_propogate_displacement module</a></li>
-<li class="toctree-l2"><a class="reference internal" href="generated_docs/generalization.n100.building.html#generalization-n100-building-points-to-squares-module">generalization.n100.building.points_to_squares module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="generated_docs/generalization.n100.building.html#generalization-n100-building-point-resolve-building-conflicts-module">generalization.n100.building.point_resolve_building_conflicts module</a></li>
 <li class="toctree-l2"><a class="reference internal" href="generated_docs/generalization.n100.building.html#generalization-n100-building-polygon-propogate-displacement-module">generalization.n100.building.polygon_propogate_displacement module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="generated_docs/generalization.n100.building.html#generalization-n100-building-polygon-resolve-building-conflicts-module">generalization.n100.building.polygon_resolve_building_conflicts module</a></li>
 <li class="toctree-l2"><a class="reference internal" href="generated_docs/generalization.n100.building.html#generalization-n100-building-polygon-to-point-module">generalization.n100.building.polygon_to_point module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="generated_docs/generalization.n100.building.html#module-generalization.n100.building.removing_overlapping_points">generalization.n100.building.removing_overlapping_points module</a></li>
 <li class="toctree-l2"><a class="reference internal" href="generated_docs/generalization.n100.building.html#generalization-n100-building-removing-points-in-water-features-module">generalization.n100.building.removing_points_in_water_features module</a></li>
-<li class="toctree-l2"><a class="reference internal" href="generated_docs/generalization.n100.building.html#generalization-n100-building-resolve-building-conflicts-points-module">generalization.n100.building.resolve_building_conflicts_points module</a></li>
 <li class="toctree-l2"><a class="reference internal" href="generated_docs/generalization.n100.building.html#generalization-n100-building-simplify-polygons-module">generalization.n100.building.simplify_polygons module</a></li>
 <li class="toctree-l2"><a class="reference internal" href="generated_docs/generalization.n100.building.html#module-generalization.n100.building">Module contents</a></li>
 </ul>
@@ -136,7 +139,7 @@
 <li class="toctree-l2"><a class="reference internal" href="generated_docs/input_data.html#module-input_data.input_n100">input_data.input_n100 module</a></li>
 <li class="toctree-l2"><a class="reference internal" href="generated_docs/input_data.html#module-input_data.input_n50">input_data.input_n50 module</a></li>
 <li class="toctree-l2"><a class="reference internal" href="generated_docs/input_data.html#module-input_data.input_other">input_data.input_other module</a></li>
-<li class="toctree-l2"><a class="reference internal" href="generated_docs/input_data.html#module-input_data.input_symbology">input_data.input_symbology module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="generated_docs/input_data.html#input-data-input-symbology-module">input_data.input_symbology module</a></li>
 <li class="toctree-l2"><a class="reference internal" href="generated_docs/input_data.html#module-input_data">Module contents</a></li>
 </ul>
 </li>

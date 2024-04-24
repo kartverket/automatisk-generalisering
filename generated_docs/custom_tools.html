@@ -17,7 +17,7 @@
         <script src="../_static/jquery.js?v=5d32c60e"></script>
         <script src="../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
         <script src="../_static/documentation_options.js?v=d45e8c67"></script>
-        <script src="../_static/doctools.js?v=888ff710"></script>
+        <script src="../_static/doctools.js?v=9a2dae69"></script>
         <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="../_static/js/theme.js"></script>
     <link rel="index" title="Index" href="../genindex.html" />
@@ -49,6 +49,10 @@
 <ul class="current">
 <li class="toctree-l1 current"><a class="current reference internal" href="#">custom_tools package</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="#submodules">Submodules</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#module-custom_tools.compare_feature_classes">custom_tools.compare_feature_classes module</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#custom_tools.compare_feature_classes.compare_feature_classes"><code class="docutils literal notranslate"><span class="pre">compare_feature_classes()</span></code></a></li>
+</ul>
+</li>
 <li class="toctree-l2"><a class="reference internal" href="#module-custom_tools.custom_arcpy">custom_tools.custom_arcpy module</a><ul>
 <li class="toctree-l3"><a class="reference internal" href="#custom_tools.custom_arcpy.SelectionType"><code class="docutils literal notranslate"><span class="pre">SelectionType</span></code></a><ul>
 <li class="toctree-l4"><a class="reference internal" href="#custom_tools.custom_arcpy.SelectionType.NEW_SELECTION"><code class="docutils literal notranslate"><span class="pre">SelectionType.NEW_SELECTION</span></code></a></li>
@@ -229,11 +233,19 @@
 <section id="submodules">
 <h2>Submodules<a class="headerlink" href="#submodules" title="Link to this heading"></a></h2>
 </section>
+<section id="module-custom_tools.compare_feature_classes">
+<span id="custom-tools-compare-feature-classes-module"></span><h2>custom_tools.compare_feature_classes module<a class="headerlink" href="#module-custom_tools.compare_feature_classes" title="Link to this heading"></a></h2>
+<dl class="py function">
+<dt class="sig sig-object py" id="custom_tools.compare_feature_classes.compare_feature_classes">
+<span class="sig-prename descclassname"><span class="pre">custom_tools.compare_feature_classes.</span></span><span class="sig-name descname"><span class="pre">compare_feature_classes</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">feature_class_1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">feature_class_2</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/custom_tools/compare_feature_classes.html#compare_feature_classes"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#custom_tools.compare_feature_classes.compare_feature_classes" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+</section>
 <section id="module-custom_tools.custom_arcpy">
 <span id="custom-tools-custom-arcpy-module"></span><h2>custom_tools.custom_arcpy module<a class="headerlink" href="#module-custom_tools.custom_arcpy" title="Link to this heading"></a></h2>
 <dl class="py class">
 <dt class="sig sig-object py" id="custom_tools.custom_arcpy.SelectionType">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">custom_tools.custom_arcpy.</span></span><span class="sig-name descname"><span class="pre">SelectionType</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">value</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">names</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">values</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">module</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">qualname</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">type</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">start</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">boundary</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/custom_tools/custom_arcpy.html#SelectionType"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#custom_tools.custom_arcpy.SelectionType" title="Link to this definition"></a></dt>
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">custom_tools.custom_arcpy.</span></span><span class="sig-name descname"><span class="pre">SelectionType</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">value</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">names=&lt;not</span> <span class="pre">given&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">*values</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">module=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">qualname=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">type=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">start=1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">boundary=None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/custom_tools/custom_arcpy.html#SelectionType"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#custom_tools.custom_arcpy.SelectionType" title="Link to this definition"></a></dt>
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">Enum</span></code></p>
 <dl class="simple">
 <dt>Summary:</dt><dd><p>Enum class that holds the strings for the selection types.</p>
@@ -273,7 +285,7 @@
 
 <dl class="py class">
 <dt class="sig sig-object py" id="custom_tools.custom_arcpy.OverlapType">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">custom_tools.custom_arcpy.</span></span><span class="sig-name descname"><span class="pre">OverlapType</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">value</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">names</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">values</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">module</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">qualname</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">type</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">start</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">boundary</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/custom_tools/custom_arcpy.html#OverlapType"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#custom_tools.custom_arcpy.OverlapType" title="Link to this definition"></a></dt>
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">custom_tools.custom_arcpy.</span></span><span class="sig-name descname"><span class="pre">OverlapType</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">value</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">names=&lt;not</span> <span class="pre">given&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">*values</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">module=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">qualname=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">type=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">start=1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">boundary=None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/custom_tools/custom_arcpy.html#OverlapType"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#custom_tools.custom_arcpy.OverlapType" title="Link to this definition"></a></dt>
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">Enum</span></code></p>
 <dl class="simple">
 <dt>Summary:</dt><dd><p>Enum class that holds the strings for overlap types for select by location.</p>
@@ -378,7 +390,7 @@ ensuring compatibility and ease of use.</p>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>enum_class</strong> (<em>Enum</em>) – The enumeration class to which the value is supposed to belong.</p></li>
 <li><p><strong>value</strong> (<em>str</em><em>, </em><em>Enum</em><em>, or </em><em>any</em>) – The input value to resolve. This can be the enum member itself, its string name,</p></li>
-<li><p><strong>gracefully.</strong> (<em>or its associated value. The function is designed to handle these various formats</em>) – </p></li>
+<li><p><strong>gracefully.</strong> (<em>or its associated value. The function is designed to handle these various formats</em>)</p></li>
 </ul>
 </dd>
 </dl>
@@ -533,7 +545,7 @@ and creates a new, permanent feature class as an output.</p>
 <span class="gp">... </span>    <span class="n">input_layer</span><span class="o">=</span><span class="n">Building_N100</span><span class="o">.</span><span class="n">data_preperation___waterfeatures_from_begrensningskurve_not_rivers___n100_building</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
 <span class="gp">... </span>    <span class="n">overlap_type</span><span class="o">=</span><span class="n">OverlapType</span><span class="o">.</span><span class="n">WITHIN_A_DISTANCE</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
 <span class="gp">... </span>    <span class="n">select_features</span><span class="o">=</span><span class="n">Building_N100</span><span class="o">.</span><span class="n">polygon_propogate_displacement___after_displacement___n100_building</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
-<span class="gp">... </span>    <span class="n">output_name</span><span class="o">=</span><span class="n">Building_N100</span><span class="o">.</span><span class="n">polygon_propogate_displacement___begrensningskurve_500m_from_displaced_polygon___n100_building</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
+<span class="gp">... </span>    <span class="n">output_name</span><span class="o">=</span><span class="n">Building_N100</span><span class="o">.</span><span class="n">polygon_resolve_building_conflicts___begrensningskurve_500m_from_displaced_polygon___n100_building</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
 <span class="gp">... </span>    <span class="n">search_distance</span><span class="o">=</span><span class="s2">&quot;500 Meters&quot;</span><span class="p">,</span>
 <span class="gp">... </span><span class="p">)</span>
 <span class="go">&#39;polygon_propogate_displacement___begrensningskurve_500_m_from_displaced_polygon___n100_building&#39; created permanently.</span>
@@ -567,10 +579,10 @@ and creates a new, permanent feature class as an output.</p>
 </dd>
 </dl>
 <p class="rubric">Example</p>
-<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">custom_arcpy</span><span class="o">.</span><span class="n">apply_symbology</span><span class="p">(</span>
-<span class="gp">... </span>    <span class="n">input_layer</span><span class="o">=</span><span class="n">Building_N100</span><span class="o">.</span><span class="n">rbc_selection__grunnriss_selection_rbc__n100</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">custom_arcpy</span><span class="o">.</span><span class="n">apply_symbology_to_the_layers</span><span class="p">(</span>
+<span class="gp">... </span>    <span class="n">input_layer</span><span class="o">=</span><span class="n">Building_N100</span><span class="o">.</span><span class="n">point_resolve_building_conflicts___building_polygon_selection_rbc___n100_building</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
 <span class="gp">... </span>    <span class="n">in_symbology_layer</span><span class="o">=</span><span class="n">config</span><span class="o">.</span><span class="n">symbology_n100_grunnriss</span><span class="p">,</span>
-<span class="gp">... </span>    <span class="n">output_name</span><span class="o">=</span><span class="n">Building_N100</span><span class="o">.</span><span class="n">polygon_propogate_displacement___building_polygon___n100_building_lyrx</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
+<span class="gp">... </span>    <span class="n">output_name</span><span class="o">=</span><span class="n">Building_N100</span><span class="o">.</span><span class="n">polygon_resolve_building_conflicts___building_polygon___n100_building_lyrx</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
 <span class="gp">... </span><span class="p">)</span>
 <span class="go">&#39;apply_symbology_to_layers__building_polygon__n100__lyrx.lyrx file created.&#39;</span>
 </pre></div>
@@ -1057,7 +1069,7 @@ Log files will be stored in a directory structure matching the scale and object 
 <span id="custom-tools-timing-decorator-module"></span><h2>custom_tools.timing_decorator module<a class="headerlink" href="#module-custom_tools.timing_decorator" title="Link to this heading"></a></h2>
 <dl class="py function">
 <dt class="sig sig-object py" id="custom_tools.timing_decorator.timing_decorator">
-<span class="sig-prename descclassname"><span class="pre">custom_tools.timing_decorator.</span></span><span class="sig-name descname"><span class="pre">timing_decorator</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">func</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/custom_tools/timing_decorator.html#timing_decorator"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#custom_tools.timing_decorator.timing_decorator" title="Link to this definition"></a></dt>
+<span class="sig-prename descclassname"><span class="pre">custom_tools.timing_decorator.</span></span><span class="sig-name descname"><span class="pre">timing_decorator</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">func</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">name</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/custom_tools/timing_decorator.html#timing_decorator"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#custom_tools.timing_decorator.timing_decorator" title="Link to this definition"></a></dt>
 <dd><p>Logs the execution time of a function to both the console and a log file</p>
 </dd></dl>
 

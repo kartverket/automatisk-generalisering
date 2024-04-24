@@ -16,7 +16,7 @@
         <script src="../../../_static/jquery.js?v=5d32c60e"></script>
         <script src="../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
         <script src="../../../_static/documentation_options.js?v=d45e8c67"></script>
-        <script src="../../../_static/doctools.js?v=888ff710"></script>
+        <script src="../../../_static/doctools.js?v=9a2dae69"></script>
         <script src="../../../_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="../../../_static/js/theme.js"></script>
     <link rel="index" title="Index" href="../../../genindex.html" />
@@ -96,14 +96,18 @@
 <span class="n">data_preparation</span> <span class="o">=</span> <span class="s2">&quot;data_preparation&quot;</span>
 <span class="n">simplify_polygons</span> <span class="o">=</span> <span class="s2">&quot;simplify_polygons&quot;</span>
 <span class="n">polygon_propogate_displacement</span> <span class="o">=</span> <span class="s2">&quot;polygon_propogate_displacement&quot;</span>
+<span class="n">polygon_resolve_building_conflicts</span> <span class="o">=</span> <span class="s2">&quot;polygon_resolve_building_conflicts&quot;</span>
 <span class="n">polygon_to_point</span> <span class="o">=</span> <span class="s2">&quot;polygon_to_point&quot;</span>
-<span class="n">calculating_field_values</span> <span class="o">=</span> <span class="s2">&quot;calculating_field_values&quot;</span>
+<span class="n">calculating_polygon_values</span> <span class="o">=</span> <span class="s2">&quot;calculating_polygon_values&quot;</span>
+<span class="n">calculating_point_values</span> <span class="o">=</span> <span class="s2">&quot;calculating_point_values&quot;</span>
 <span class="n">point_propogate_displacement</span> <span class="o">=</span> <span class="s2">&quot;point_propogate_displacement&quot;</span>
 <span class="n">removing_points_in_water_features</span> <span class="o">=</span> <span class="s2">&quot;removing_points_in_water_features&quot;</span>
+<span class="n">removing_overlapping_points</span> <span class="o">=</span> <span class="s2">&quot;removing_overlapping_points&quot;</span>
 <span class="n">hospital_church_clusters</span> <span class="o">=</span> <span class="s2">&quot;hospital_church_clusters&quot;</span>
 <span class="n">point_displacement_with_buffer</span> <span class="o">=</span> <span class="s2">&quot;point_displacement_with_buffer&quot;</span>
 <span class="n">points_to_squares</span> <span class="o">=</span> <span class="s2">&quot;points_to_squares&quot;</span>
-<span class="n">resolve_building_conflicts_points</span> <span class="o">=</span> <span class="s2">&quot;resolve_building_conflicts_points&quot;</span>
+<span class="n">point_resolve_building_conflicts</span> <span class="o">=</span> <span class="s2">&quot;point_resolve_building_conflicts&quot;</span>
+<span class="n">resolve_building_conflicts_points</span> <span class="o">=</span> <span class="s2">&quot;resolve_building_conflicts_points&quot;</span>  <span class="c1"># Change to point_resolve_building_conflicts when OOP is implemented</span>
 <span class="n">data_clean_up</span> <span class="o">=</span> <span class="s2">&quot;data_clean_up&quot;</span>
 
 <span class="c1"># Additional names</span>
@@ -335,26 +339,51 @@
         <span class="p">)</span>
     <span class="p">)</span>
 
+    <span class="n">data_preparation___railway_stations_to_polygons___n100_building</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_gdb</span><span class="p">(</span>
+            <span class="n">script_source_name</span><span class="o">=</span><span class="n">data_preparation</span><span class="p">,</span>
+            <span class="n">description</span><span class="o">=</span><span class="s2">&quot;railway_stations_to_polygons&quot;</span><span class="p">,</span>
+        <span class="p">)</span>
+    <span class="p">)</span>
+
+    <span class="n">data_preparation___railway_stations_to_polygons_symbology___n100_building_lyrx</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_lyrx</span><span class="p">(</span>
+            <span class="n">script_source_name</span><span class="o">=</span><span class="n">data_preparation</span><span class="p">,</span>
+            <span class="n">description</span><span class="o">=</span><span class="s2">&quot;railway_stations_to_polygons_symbology&quot;</span><span class="p">,</span>
+        <span class="p">)</span>
+    <span class="p">)</span>
+
     <span class="c1"># ========================================</span>
-    <span class="c1">#                      CALCULATING FIELD VALUES</span>
+    <span class="c1">#                      CALCULATE POINT VALUES</span>
     <span class="c1"># ========================================</span>
 
-    <span class="n">calculate_field_values___points_pre_resolve_building_conflicts___n100_building</span> <span class="o">=</span> <span class="p">(</span>
+    <span class="n">calculate_point_values___points_pre_resolve_building_conflicts___n100_building</span> <span class="o">=</span> <span class="p">(</span>
         <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_gdb</span><span class="p">(</span>
-            <span class="n">script_source_name</span><span class="o">=</span><span class="n">calculating_field_values</span><span class="p">,</span>
+            <span class="n">script_source_name</span><span class="o">=</span><span class="n">calculating_point_values</span><span class="p">,</span>
             <span class="n">description</span><span class="o">=</span><span class="s2">&quot;points_pre_resolve_building_conflicts&quot;</span><span class="p">,</span>
         <span class="p">)</span>
     <span class="p">)</span>
 
-    <span class="n">calculating_field_values___selection_building_points_with_undefined_nbr_values___n100_building</span> <span class="o">=</span> <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_gdb</span><span class="p">(</span>
-        <span class="n">script_source_name</span><span class="o">=</span><span class="n">calculating_field_values</span><span class="p">,</span>
+    <span class="n">calculate_point_values___selection_building_points_with_undefined_nbr_values___n100_building</span> <span class="o">=</span> <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_gdb</span><span class="p">(</span>
+        <span class="n">script_source_name</span><span class="o">=</span><span class="n">calculating_point_values</span><span class="p">,</span>
         <span class="n">description</span><span class="o">=</span><span class="s2">&quot;selection_building_points_with_undefined_nbr_values&quot;</span><span class="p">,</span>
     <span class="p">)</span>
 
-    <span class="n">calculating_field_values___building_points_with_undefined_nbr_values___n100_building</span> <span class="o">=</span> <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_general_files</span><span class="p">(</span>
-        <span class="n">script_source_name</span><span class="o">=</span><span class="n">calculating_field_values</span><span class="p">,</span>
+    <span class="n">calculate_point_values___building_points_with_undefined_nbr_values___n100_building</span> <span class="o">=</span> <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_general_files</span><span class="p">(</span>
+        <span class="n">script_source_name</span><span class="o">=</span><span class="n">calculating_point_values</span><span class="p">,</span>
         <span class="n">description</span><span class="o">=</span><span class="s2">&quot;building_points_with_undefined_nbr_values&quot;</span><span class="p">,</span>
         <span class="n">file_type</span><span class="o">=</span><span class="s2">&quot;txt&quot;</span><span class="p">,</span>
+    <span class="p">)</span>
+
+    <span class="c1"># ========================================</span>
+    <span class="c1">#                      CALCULATE POLYGON VALUES</span>
+    <span class="c1"># ========================================</span>
+
+    <span class="n">calculate_polygon_values___final___n100_building</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_gdb</span><span class="p">(</span>
+            <span class="n">script_source_name</span><span class="o">=</span><span class="n">calculating_polygon_values</span><span class="p">,</span>
+            <span class="n">description</span><span class="o">=</span><span class="s2">&quot;final&quot;</span><span class="p">,</span>
+        <span class="p">)</span>
     <span class="p">)</span>
 
     <span class="c1"># ========================================</span>
@@ -445,11 +474,6 @@
         <span class="p">)</span>
     <span class="p">)</span>
 
-    <span class="n">simplify_polygons___final___n100_building</span> <span class="o">=</span> <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_gdb</span><span class="p">(</span>
-        <span class="n">script_source_name</span><span class="o">=</span><span class="n">simplify_polygons</span><span class="p">,</span>
-        <span class="n">description</span><span class="o">=</span><span class="s2">&quot;final&quot;</span><span class="p">,</span>
-    <span class="p">)</span>
-
     <span class="c1"># ========================================</span>
     <span class="c1">#                  POLYGON PROPOATE DISPLACEMENT</span>
     <span class="c1"># ========================================</span>
@@ -473,145 +497,160 @@
         <span class="n">description</span><span class="o">=</span><span class="s2">&quot;displacement_feature_500m_from_polygon&quot;</span><span class="p">,</span>
     <span class="p">)</span>
 
-    <span class="n">polygon_propogate_displacement___begrensningskurve_500m_from_displaced_polygon___n100_building</span> <span class="o">=</span> <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_gdb</span><span class="p">(</span>
-        <span class="n">script_source_name</span><span class="o">=</span><span class="n">polygon_propogate_displacement</span><span class="p">,</span>
+    <span class="c1"># ========================================</span>
+    <span class="c1">#                  POLYGON RESOLVE BUILDING CONFLICT</span>
+    <span class="c1"># ========================================</span>
+
+    <span class="n">polygon_resolve_building_conflicts___begrensningskurve_500m_from_displaced_polygon___n100_building</span> <span class="o">=</span> <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_gdb</span><span class="p">(</span>
+        <span class="n">script_source_name</span><span class="o">=</span><span class="n">polygon_resolve_building_conflicts</span><span class="p">,</span>
         <span class="n">description</span><span class="o">=</span><span class="s2">&quot;begrensningskurve_500m_from_displaced_polygon&quot;</span><span class="p">,</span>
     <span class="p">)</span>
-    <span class="n">polygon_propogate_displacement___roads_500m_from_displaced_polygon___n100_building</span> <span class="o">=</span> <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_gdb</span><span class="p">(</span>
-        <span class="n">script_source_name</span><span class="o">=</span><span class="n">polygon_propogate_displacement</span><span class="p">,</span>
+    <span class="n">polygon_resolve_building_conflicts___roads_500m_from_displaced_polygon___n100_building</span> <span class="o">=</span> <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_gdb</span><span class="p">(</span>
+        <span class="n">script_source_name</span><span class="o">=</span><span class="n">polygon_resolve_building_conflicts</span><span class="p">,</span>
         <span class="n">description</span><span class="o">=</span><span class="s2">&quot;roads_500m_from_displaced_polygon&quot;</span><span class="p">,</span>
     <span class="p">)</span>
 
-    <span class="n">polygon_propogate_displacement___building_polygon___n100_building_lyrx</span> <span class="o">=</span> <span class="p">(</span>
+    <span class="n">polygon_resolve_building_conflicts___building_polygon___n100_building_lyrx</span> <span class="o">=</span> <span class="p">(</span>
         <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_lyrx</span><span class="p">(</span>
-            <span class="n">script_source_name</span><span class="o">=</span><span class="n">polygon_propogate_displacement</span><span class="p">,</span>
+            <span class="n">script_source_name</span><span class="o">=</span><span class="n">polygon_resolve_building_conflicts</span><span class="p">,</span>
             <span class="n">description</span><span class="o">=</span><span class="s2">&quot;building_polygon&quot;</span><span class="p">,</span>
         <span class="p">)</span>
     <span class="p">)</span>
 
-    <span class="n">polygon_propogate_displacement___roads___n100_building_lyrx</span> <span class="o">=</span> <span class="p">(</span>
+    <span class="n">polygon_resolve_building_conflicts___roads___n100_building_lyrx</span> <span class="o">=</span> <span class="p">(</span>
         <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_lyrx</span><span class="p">(</span>
-            <span class="n">script_source_name</span><span class="o">=</span><span class="n">polygon_propogate_displacement</span><span class="p">,</span>
+            <span class="n">script_source_name</span><span class="o">=</span><span class="n">polygon_resolve_building_conflicts</span><span class="p">,</span>
             <span class="n">description</span><span class="o">=</span><span class="s2">&quot;roads&quot;</span><span class="p">,</span>
         <span class="p">)</span>
     <span class="p">)</span>
 
-    <span class="n">polygon_propogate_displacement___begrensningskurve___n100_building_lyrx</span> <span class="o">=</span> <span class="p">(</span>
+    <span class="n">polygon_resolve_building_conflicts___begrensningskurve___n100_building_lyrx</span> <span class="o">=</span> <span class="p">(</span>
         <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_lyrx</span><span class="p">(</span>
-            <span class="n">script_source_name</span><span class="o">=</span><span class="n">polygon_propogate_displacement</span><span class="p">,</span>
+            <span class="n">script_source_name</span><span class="o">=</span><span class="n">polygon_resolve_building_conflicts</span><span class="p">,</span>
             <span class="n">description</span><span class="o">=</span><span class="s2">&quot;begrensningskurve&quot;</span><span class="p">,</span>
         <span class="p">)</span>
     <span class="p">)</span>
 
-    <span class="n">polygon_propogate_displacement___after_rbc___n100_building</span> <span class="o">=</span> <span class="p">(</span>
+    <span class="n">polygon_resolve_building_conflicts___after_rbc___n100_building</span> <span class="o">=</span> <span class="p">(</span>
         <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_gdb</span><span class="p">(</span>
-            <span class="n">script_source_name</span><span class="o">=</span><span class="n">polygon_propogate_displacement</span><span class="p">,</span>
+            <span class="n">script_source_name</span><span class="o">=</span><span class="n">polygon_resolve_building_conflicts</span><span class="p">,</span>
             <span class="n">description</span><span class="o">=</span><span class="s2">&quot;after_rbc&quot;</span><span class="p">,</span>
         <span class="p">)</span>
     <span class="p">)</span>
 
-    <span class="n">polygon_propogate_displacement___hospital_church_points___n100_building</span> <span class="o">=</span> <span class="p">(</span>
+    <span class="n">polygon_resolve_building_conflicts___hospital_church_points___n100_building</span> <span class="o">=</span> <span class="p">(</span>
         <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_gdb</span><span class="p">(</span>
-            <span class="n">script_source_name</span><span class="o">=</span><span class="n">polygon_propogate_displacement</span><span class="p">,</span>
+            <span class="n">script_source_name</span><span class="o">=</span><span class="n">polygon_resolve_building_conflicts</span><span class="p">,</span>
             <span class="n">description</span><span class="o">=</span><span class="s2">&quot;hospital_church_points&quot;</span><span class="p">,</span>
         <span class="p">)</span>
     <span class="p">)</span>
 
-    <span class="n">polygon_propogate_displacement___hospital_church_squares___n100_building</span> <span class="o">=</span> <span class="p">(</span>
+    <span class="n">polygon_resolve_building_conflicts___hospital_church_squares___n100_building</span> <span class="o">=</span> <span class="p">(</span>
         <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_gdb</span><span class="p">(</span>
-            <span class="n">script_source_name</span><span class="o">=</span><span class="n">polygon_propogate_displacement</span><span class="p">,</span>
+            <span class="n">script_source_name</span><span class="o">=</span><span class="n">polygon_resolve_building_conflicts</span><span class="p">,</span>
             <span class="n">description</span><span class="o">=</span><span class="s2">&quot;hospital_church_squares&quot;</span><span class="p">,</span>
         <span class="p">)</span>
     <span class="p">)</span>
 
-    <span class="n">polygon_propogate_displacement___polygonprocessor_symbology___n100_building_lyrx</span> <span class="o">=</span> <span class="p">(</span>
-        <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_lyrx</span><span class="p">(</span>
-            <span class="n">script_source_name</span><span class="o">=</span><span class="n">polygon_propogate_displacement</span><span class="p">,</span>
-            <span class="n">description</span><span class="o">=</span><span class="s2">&quot;polygonprocessor_symbology&quot;</span><span class="p">,</span>
-        <span class="p">)</span>
+    <span class="n">polygon_resolve_building_conflicts___polygonprocessor_symbology___n100_building_lyrx</span> <span class="o">=</span> <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_lyrx</span><span class="p">(</span>
+        <span class="n">script_source_name</span><span class="o">=</span><span class="n">polygon_resolve_building_conflicts</span><span class="p">,</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">&quot;polygonprocessor_symbology&quot;</span><span class="p">,</span>
     <span class="p">)</span>
 
-    <span class="n">polygon_propogate_displacement___invisible_polygons_after_rbc___n100_building</span> <span class="o">=</span> <span class="p">(</span>
-        <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_gdb</span><span class="p">(</span>
-            <span class="n">script_source_name</span><span class="o">=</span><span class="n">polygon_propogate_displacement</span><span class="p">,</span>
-            <span class="n">description</span><span class="o">=</span><span class="s2">&quot;invisible_polygons_after_rbc&quot;</span><span class="p">,</span>
-        <span class="p">)</span>
+    <span class="n">polygon_resolve_building_conflicts___invisible_polygons_after_rbc___n100_building</span> <span class="o">=</span> <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_gdb</span><span class="p">(</span>
+        <span class="n">script_source_name</span><span class="o">=</span><span class="n">polygon_resolve_building_conflicts</span><span class="p">,</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">&quot;invisible_polygons_after_rbc&quot;</span><span class="p">,</span>
     <span class="p">)</span>
 
-    <span class="n">polygon_propogate_displacement___not_invisible_polygons_after_rbc___n100_building</span> <span class="o">=</span> <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_gdb</span><span class="p">(</span>
-        <span class="n">script_source_name</span><span class="o">=</span><span class="n">polygon_propogate_displacement</span><span class="p">,</span>
+    <span class="n">polygon_resolve_building_conflicts___not_invisible_polygons_after_rbc___n100_building</span> <span class="o">=</span> <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_gdb</span><span class="p">(</span>
+        <span class="n">script_source_name</span><span class="o">=</span><span class="n">polygon_resolve_building_conflicts</span><span class="p">,</span>
         <span class="n">description</span><span class="o">=</span><span class="s2">&quot;not_invisible_polygons_after_rbc&quot;</span><span class="p">,</span>
     <span class="p">)</span>
 
-    <span class="n">polygon_propogate_displacement___invisible_polygons_to_points___n100_building</span> <span class="o">=</span> <span class="p">(</span>
-        <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_gdb</span><span class="p">(</span>
-            <span class="n">script_source_name</span><span class="o">=</span><span class="n">polygon_propogate_displacement</span><span class="p">,</span>
-            <span class="n">description</span><span class="o">=</span><span class="s2">&quot;invisible_polygons_to_points&quot;</span><span class="p">,</span>
-        <span class="p">)</span>
+    <span class="n">polygon_resolve_building_conflicts___invisible_polygons_to_points___n100_building</span> <span class="o">=</span> <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_gdb</span><span class="p">(</span>
+        <span class="n">script_source_name</span><span class="o">=</span><span class="n">polygon_resolve_building_conflicts</span><span class="p">,</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">&quot;invisible_polygons_to_points&quot;</span><span class="p">,</span>
     <span class="p">)</span>
 
-    <span class="n">polygon_propogate_displacement___road_buffer_selection___n100_building</span> <span class="o">=</span> <span class="p">(</span>
+    <span class="n">polygon_resolve_building_conflicts___road_buffer_selection___n100_building</span> <span class="o">=</span> <span class="p">(</span>
         <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_gdb</span><span class="p">(</span>
-            <span class="n">script_source_name</span><span class="o">=</span><span class="n">polygon_propogate_displacement</span><span class="p">,</span>
+            <span class="n">script_source_name</span><span class="o">=</span><span class="n">polygon_resolve_building_conflicts</span><span class="p">,</span>
             <span class="n">description</span><span class="o">=</span><span class="s2">&quot;road_buffer_selection&quot;</span><span class="p">,</span>
         <span class="p">)</span>
     <span class="p">)</span>
 
-    <span class="n">polygon_propogate_displacement___road_buffers___n100_building</span> <span class="o">=</span> <span class="p">(</span>
+    <span class="n">polygon_resolve_building_conflicts___road_buffers___n100_building</span> <span class="o">=</span> <span class="p">(</span>
         <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_gdb</span><span class="p">(</span>
-            <span class="n">script_source_name</span><span class="o">=</span><span class="n">polygon_propogate_displacement</span><span class="p">,</span>
+            <span class="n">script_source_name</span><span class="o">=</span><span class="n">polygon_resolve_building_conflicts</span><span class="p">,</span>
             <span class="n">description</span><span class="o">=</span><span class="s2">&quot;road_buffers&quot;</span><span class="p">,</span>
         <span class="p">)</span>
     <span class="p">)</span>
 
-    <span class="n">polygon_propogate_displacement___merged_road_buffers___n100_building</span> <span class="o">=</span> <span class="p">(</span>
+    <span class="n">polygon_resolve_building_conflicts___merged_road_buffers___n100_building</span> <span class="o">=</span> <span class="p">(</span>
         <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_gdb</span><span class="p">(</span>
-            <span class="n">script_source_name</span><span class="o">=</span><span class="n">polygon_propogate_displacement</span><span class="p">,</span>
+            <span class="n">script_source_name</span><span class="o">=</span><span class="n">polygon_resolve_building_conflicts</span><span class="p">,</span>
             <span class="n">description</span><span class="o">=</span><span class="s2">&quot;merged_road_buffers&quot;</span><span class="p">,</span>
         <span class="p">)</span>
     <span class="p">)</span>
 
-    <span class="n">polygon_propogate_displacement___building_polygons_final___n100_building</span> <span class="o">=</span> <span class="p">(</span>
+    <span class="n">polygon_resolve_building_conflicts___building_polygons_final___n100_building</span> <span class="o">=</span> <span class="p">(</span>
         <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_gdb</span><span class="p">(</span>
-            <span class="n">script_source_name</span><span class="o">=</span><span class="n">polygon_propogate_displacement</span><span class="p">,</span>
+            <span class="n">script_source_name</span><span class="o">=</span><span class="n">polygon_resolve_building_conflicts</span><span class="p">,</span>
             <span class="n">description</span><span class="o">=</span><span class="s2">&quot;building_polygons_final&quot;</span><span class="p">,</span>
         <span class="p">)</span>
     <span class="p">)</span>
 
-    <span class="n">polygon_propogate_displacement___building_polygons_not_invisible_not_intersecting___n100_building</span> <span class="o">=</span> <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_gdb</span><span class="p">(</span>
-        <span class="n">script_source_name</span><span class="o">=</span><span class="n">polygon_propogate_displacement</span><span class="p">,</span>
+    <span class="n">polygon_resolve_building_conflicts___building_polygons_not_invisible_not_intersecting___n100_building</span> <span class="o">=</span> <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_gdb</span><span class="p">(</span>
+        <span class="n">script_source_name</span><span class="o">=</span><span class="n">polygon_resolve_building_conflicts</span><span class="p">,</span>
         <span class="n">description</span><span class="o">=</span><span class="s2">&quot;building_polygons_not_invisible_not_intersecting&quot;</span><span class="p">,</span>
     <span class="p">)</span>
 
-    <span class="n">polygon_propogate_displacement___building_polygons_intersecting_road___n100_building</span> <span class="o">=</span> <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_gdb</span><span class="p">(</span>
-        <span class="n">script_source_name</span><span class="o">=</span><span class="n">polygon_propogate_displacement</span><span class="p">,</span>
+    <span class="n">polygon_resolve_building_conflicts___building_polygons_intersecting_road___n100_building</span> <span class="o">=</span> <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_gdb</span><span class="p">(</span>
+        <span class="n">script_source_name</span><span class="o">=</span><span class="n">polygon_resolve_building_conflicts</span><span class="p">,</span>
         <span class="n">description</span><span class="o">=</span><span class="s2">&quot;building_polygons_intersecting_road&quot;</span><span class="p">,</span>
     <span class="p">)</span>
 
-    <span class="n">polygon_propogate_displacement___intersecting_polygons_to_points___n100_building</span> <span class="o">=</span> <span class="p">(</span>
-        <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_gdb</span><span class="p">(</span>
-            <span class="n">script_source_name</span><span class="o">=</span><span class="n">polygon_propogate_displacement</span><span class="p">,</span>
-            <span class="n">description</span><span class="o">=</span><span class="s2">&quot;intersecting_polygons_to_points&quot;</span><span class="p">,</span>
-        <span class="p">)</span>
+    <span class="n">polygon_resolve_building_conflicts___intersecting_polygons_to_points___n100_building</span> <span class="o">=</span> <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_gdb</span><span class="p">(</span>
+        <span class="n">script_source_name</span><span class="o">=</span><span class="n">polygon_resolve_building_conflicts</span><span class="p">,</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">&quot;intersecting_polygons_to_points&quot;</span><span class="p">,</span>
     <span class="p">)</span>
 
-    <span class="n">polygon_propogate_displacement___final_merged_points___n100_building</span> <span class="o">=</span> <span class="p">(</span>
+    <span class="n">polygon_resolve_building_conflicts___final_merged_points___n100_building</span> <span class="o">=</span> <span class="p">(</span>
         <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_gdb</span><span class="p">(</span>
-            <span class="n">script_source_name</span><span class="o">=</span><span class="n">polygon_propogate_displacement</span><span class="p">,</span>
+            <span class="n">script_source_name</span><span class="o">=</span><span class="n">polygon_resolve_building_conflicts</span><span class="p">,</span>
             <span class="n">description</span><span class="o">=</span><span class="s2">&quot;final_merged_points&quot;</span><span class="p">,</span>
         <span class="p">)</span>
     <span class="p">)</span>
 
-    <span class="n">polygon_propogate_displacement___small_building_polygons___n100_building</span> <span class="o">=</span> <span class="p">(</span>
+    <span class="n">polygon_resolve_building_conflicts___small_building_polygons___n100_building</span> <span class="o">=</span> <span class="p">(</span>
         <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_gdb</span><span class="p">(</span>
-            <span class="n">script_source_name</span><span class="o">=</span><span class="n">polygon_propogate_displacement</span><span class="p">,</span>
+            <span class="n">script_source_name</span><span class="o">=</span><span class="n">polygon_resolve_building_conflicts</span><span class="p">,</span>
             <span class="n">description</span><span class="o">=</span><span class="s2">&quot;small_building_polygons&quot;</span><span class="p">,</span>
         <span class="p">)</span>
     <span class="p">)</span>
 
-    <span class="n">polygon_propogate_displacement___small_building_polygons_to_point___n100_building</span> <span class="o">=</span> <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_gdb</span><span class="p">(</span>
-        <span class="n">script_source_name</span><span class="o">=</span><span class="n">polygon_propogate_displacement</span><span class="p">,</span>
+    <span class="n">polygon_resolve_building_conflicts___small_building_polygons_to_point___n100_building</span> <span class="o">=</span> <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_gdb</span><span class="p">(</span>
+        <span class="n">script_source_name</span><span class="o">=</span><span class="n">polygon_resolve_building_conflicts</span><span class="p">,</span>
         <span class="n">description</span><span class="o">=</span><span class="s2">&quot;small_building_polygons_to_point&quot;</span><span class="p">,</span>
+    <span class="p">)</span>
+
+    <span class="n">polygon_resolve_building_conflicts___railway_500m_from_displaced_polygon___n100_building</span> <span class="o">=</span> <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_gdb</span><span class="p">(</span>
+        <span class="n">script_source_name</span><span class="o">=</span><span class="n">polygon_resolve_building_conflicts</span><span class="p">,</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">&quot;railway_500m_from_displaced_polygon&quot;</span><span class="p">,</span>
+    <span class="p">)</span>
+
+    <span class="n">polygon_resolve_building_conflicts___railway_buffer___n100_building</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_gdb</span><span class="p">(</span>
+            <span class="n">script_source_name</span><span class="o">=</span><span class="n">polygon_resolve_building_conflicts</span><span class="p">,</span>
+            <span class="n">description</span><span class="o">=</span><span class="s2">&quot;railway_buffer&quot;</span><span class="p">,</span>
+        <span class="p">)</span>
+    <span class="p">)</span>
+
+    <span class="n">polygon_resolve_building_conflicts___railway_buffer___n100_building_lyrx</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_lyrx</span><span class="p">(</span>
+            <span class="n">script_source_name</span><span class="o">=</span><span class="n">polygon_resolve_building_conflicts</span><span class="p">,</span>
+            <span class="n">description</span><span class="o">=</span><span class="s2">&quot;railway_buffer&quot;</span><span class="p">,</span>
+        <span class="p">)</span>
     <span class="p">)</span>
 
     <span class="c1"># ========================================</span>
@@ -714,6 +753,42 @@
         <span class="p">)</span>
     <span class="p">)</span>
 
+    <span class="n">hospital_church_clusters___reduced_hospital_and_church_points_merged___n100_building</span> <span class="o">=</span> <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_gdb</span><span class="p">(</span>
+        <span class="n">script_source_name</span><span class="o">=</span><span class="n">hospital_church_clusters</span><span class="p">,</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">&quot;reduced_hospital_and_church_points_final&quot;</span><span class="p">,</span>
+    <span class="p">)</span>
+
+    <span class="n">hospital_church_clusters___selecting_hospital_points_after_cluster_reduction___n100_building</span> <span class="o">=</span> <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_gdb</span><span class="p">(</span>
+        <span class="n">script_source_name</span><span class="o">=</span><span class="n">hospital_church_clusters</span><span class="p">,</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">&quot;selecting_hospital_points_after_cluster_reduction&quot;</span><span class="p">,</span>
+    <span class="p">)</span>
+
+    <span class="n">hospital_church_clusters___selecting_church_points_after_cluster_reduction___n100_building</span> <span class="o">=</span> <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_gdb</span><span class="p">(</span>
+        <span class="n">script_source_name</span><span class="o">=</span><span class="n">hospital_church_clusters</span><span class="p">,</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">&quot;selecting_church_points_after_cluster_reduction&quot;</span><span class="p">,</span>
+    <span class="p">)</span>
+
+    <span class="n">hospital_church_clusters___church_points_too_close_to_hospitals___n100_building</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_gdb</span><span class="p">(</span>
+            <span class="n">script_source_name</span><span class="o">=</span><span class="n">hospital_church_clusters</span><span class="p">,</span>
+            <span class="n">description</span><span class="o">=</span><span class="s2">&quot;church_points_too_close_to_hospitals&quot;</span><span class="p">,</span>
+        <span class="p">)</span>
+    <span class="p">)</span>
+
+    <span class="n">hospital_church_clusters___hospital_church_points_final___n100_building</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_gdb</span><span class="p">(</span>
+            <span class="n">script_source_name</span><span class="o">=</span><span class="n">hospital_church_clusters</span><span class="p">,</span>
+            <span class="n">description</span><span class="o">=</span><span class="s2">&quot;hospital_church_points_final&quot;</span><span class="p">,</span>
+        <span class="p">)</span>
+    <span class="p">)</span>
+
+    <span class="n">hospital_church_clusters___deleted_churches___n100_building</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_gdb</span><span class="p">(</span>
+            <span class="n">script_source_name</span><span class="o">=</span><span class="n">hospital_church_clusters</span><span class="p">,</span>
+            <span class="n">description</span><span class="o">=</span><span class="s2">&quot;deleted_churches&quot;</span><span class="p">,</span>
+        <span class="p">)</span>
+    <span class="p">)</span>
+
     <span class="n">hospital_church_clusters___reduced_hospital_and_church_points_final___n100_building</span> <span class="o">=</span> <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_gdb</span><span class="p">(</span>
         <span class="n">script_source_name</span><span class="o">=</span><span class="n">hospital_church_clusters</span><span class="p">,</span>
         <span class="n">description</span><span class="o">=</span><span class="s2">&quot;reduced_hospital_and_church_points_final&quot;</span><span class="p">,</span>
@@ -751,9 +826,88 @@
         <span class="p">)</span>
     <span class="p">)</span>
 
-    <span class="n">removing_points_in_water_features___points_that_do_not_intersect_water_features___n100_building</span> <span class="o">=</span> <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_gdb</span><span class="p">(</span>
-        <span class="n">script_source_name</span><span class="o">=</span><span class="n">removing_points_in_water_features</span><span class="p">,</span>
-        <span class="n">description</span><span class="o">=</span><span class="s2">&quot;points_that_do_not_intersect_water_features&quot;</span><span class="p">,</span>
+    <span class="n">removing_points_in_water_features___final_points___n100_building</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_gdb</span><span class="p">(</span>
+            <span class="n">script_source_name</span><span class="o">=</span><span class="n">removing_points_in_water_features</span><span class="p">,</span>
+            <span class="n">description</span><span class="o">=</span><span class="s2">&quot;points_that_do_not_intersect_water_features&quot;</span><span class="p">,</span>
+        <span class="p">)</span>
+    <span class="p">)</span>
+
+    <span class="n">removing_points_in_water_features___final_points___n100_lyrx</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_lyrx</span><span class="p">(</span>
+            <span class="n">script_source_name</span><span class="o">=</span><span class="n">removing_points_in_water_features</span><span class="p">,</span>
+            <span class="n">description</span><span class="o">=</span><span class="s2">&quot;final_points&quot;</span><span class="p">,</span>
+        <span class="p">)</span>
+    <span class="p">)</span>
+
+    <span class="c1"># ========================================</span>
+    <span class="c1">#                REMOVING OVERLAPPING POINTS</span>
+    <span class="c1"># ========================================</span>
+
+    <span class="n">removing_overlapping_points___graphic_conflicts_polygon___n100_building</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_gdb</span><span class="p">(</span>
+            <span class="n">script_source_name</span><span class="o">=</span><span class="n">removing_overlapping_points</span><span class="p">,</span>
+            <span class="n">description</span><span class="o">=</span><span class="s2">&quot;graphic_conflicts_polygon&quot;</span><span class="p">,</span>
+        <span class="p">)</span>
+    <span class="p">)</span>
+
+    <span class="n">removing_overlapping_points___points_close_to_graphic_conflict_polygons___n100_building</span> <span class="o">=</span> <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_gdb</span><span class="p">(</span>
+        <span class="n">script_source_name</span><span class="o">=</span><span class="n">removing_overlapping_points</span><span class="p">,</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">&quot;points_close_to_graphic_conflict_polygons&quot;</span><span class="p">,</span>
+    <span class="p">)</span>
+
+    <span class="n">removing_overlapping_points___point_clusters___n100_building</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_gdb</span><span class="p">(</span>
+            <span class="n">script_source_name</span><span class="o">=</span><span class="n">removing_overlapping_points</span><span class="p">,</span>
+            <span class="n">description</span><span class="o">=</span><span class="s2">&quot;point_clusters&quot;</span><span class="p">,</span>
+        <span class="p">)</span>
+    <span class="p">)</span>
+
+    <span class="n">removing_overlapping_points___all_building_points___n100_building</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_gdb</span><span class="p">(</span>
+            <span class="n">script_source_name</span><span class="o">=</span><span class="n">removing_overlapping_points</span><span class="p">,</span>
+            <span class="n">description</span><span class="o">=</span><span class="s2">&quot;all_building_points&quot;</span><span class="p">,</span>
+        <span class="p">)</span>
+    <span class="p">)</span>
+
+    <span class="n">removing_overlapping_points___building_points_overlaps_removed___n100_building</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_gdb</span><span class="p">(</span>
+            <span class="n">script_source_name</span><span class="o">=</span><span class="n">removing_overlapping_points</span><span class="p">,</span>
+            <span class="n">description</span><span class="o">=</span><span class="s2">&quot;building_points_overlaps_removed&quot;</span><span class="p">,</span>
+        <span class="p">)</span>
+    <span class="p">)</span>
+
+    <span class="n">removing_overlapping_points___points_in_a_cluster___n100_building</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_gdb</span><span class="p">(</span>
+            <span class="n">script_source_name</span><span class="o">=</span><span class="n">removing_overlapping_points</span><span class="p">,</span>
+            <span class="n">description</span><span class="o">=</span><span class="s2">&quot;points_in_a_cluster&quot;</span><span class="p">,</span>
+        <span class="p">)</span>
+    <span class="p">)</span>
+
+    <span class="n">removing_overlapping_points___points_not_in_a_cluster___n100_building</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_gdb</span><span class="p">(</span>
+            <span class="n">script_source_name</span><span class="o">=</span><span class="n">removing_overlapping_points</span><span class="p">,</span>
+            <span class="n">description</span><span class="o">=</span><span class="s2">&quot;points_not_in_a_cluster&quot;</span><span class="p">,</span>
+        <span class="p">)</span>
+    <span class="p">)</span>
+
+    <span class="n">removing_overlapping_points___final___n100_building</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_gdb</span><span class="p">(</span>
+            <span class="n">script_source_name</span><span class="o">=</span><span class="n">removing_overlapping_points</span><span class="p">,</span>
+            <span class="n">description</span><span class="o">=</span><span class="s2">&quot;final&quot;</span><span class="p">,</span>
+        <span class="p">)</span>
+    <span class="p">)</span>
+
+    <span class="n">removing_overlapping_points___points_in_a_cluster_original___n100_building</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_gdb</span><span class="p">(</span>
+            <span class="n">script_source_name</span><span class="o">=</span><span class="n">removing_overlapping_points</span><span class="p">,</span>
+            <span class="n">description</span><span class="o">=</span><span class="s2">&quot;points_in_a_cluster_original&quot;</span><span class="p">,</span>
+        <span class="p">)</span>
+    <span class="p">)</span>
+
+    <span class="n">removing_overlapping_points___points_NOT_close_to_graphic_conflict_polygons___n100_building</span> <span class="o">=</span> <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_gdb</span><span class="p">(</span>
+        <span class="n">script_source_name</span><span class="o">=</span><span class="n">removing_overlapping_points</span><span class="p">,</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">&quot;points_NOT_close_to_graphic_conflict_polygons&quot;</span><span class="p">,</span>
     <span class="p">)</span>
 
     <span class="c1">############################################## NEEDS TO BE UPDATED ###########################################################</span>
@@ -829,17 +983,6 @@
         <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_gdb</span><span class="p">(</span>
             <span class="n">script_source_name</span><span class="o">=</span><span class="n">point_displacement_with_buffer</span><span class="p">,</span>
             <span class="n">description</span><span class="o">=</span><span class="s2">&quot;displaced_building_points&quot;</span><span class="p">,</span>
-        <span class="p">)</span>
-    <span class="p">)</span>
-
-    <span class="c1">#########################################</span>
-    <span class="c1">########### POINTS TO POLYGON ###########</span>
-    <span class="c1">#########################################</span>
-
-    <span class="n">points_to_squares___transform_points_to_square_polygons___n100_building</span> <span class="o">=</span> <span class="p">(</span>
-        <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_gdb</span><span class="p">(</span>
-            <span class="n">script_source_name</span><span class="o">=</span><span class="n">points_to_squares</span><span class="p">,</span>
-            <span class="n">description</span><span class="o">=</span><span class="s2">&quot;transform_points_to_square_polygons&quot;</span><span class="p">,</span>
         <span class="p">)</span>
     <span class="p">)</span>
 
@@ -979,144 +1122,218 @@
         <span class="p">)</span>
     <span class="p">)</span>
 
-    <span class="c1">###################################################</span>
-    <span class="c1">########### RESOLVE BUILDING CONFLICTS  ###########</span>
-    <span class="c1">###################################################</span>
+    <span class="c1"># ========================================</span>
+    <span class="c1">#                  POINT RESOLVE BUILDING CONFLICTS</span>
+    <span class="c1"># ========================================</span>
 
-    <span class="c1"># Function: rbc_selection</span>
+    <span class="n">point_resolve_building_conflicts___transform_points_to_square_polygons___n100_building</span> <span class="o">=</span> <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_gdb</span><span class="p">(</span>
+        <span class="n">script_source_name</span><span class="o">=</span><span class="n">point_resolve_building_conflicts</span><span class="p">,</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">&quot;transform_points_to_square_polygons&quot;</span><span class="p">,</span>
+    <span class="p">)</span>
 
-    <span class="n">rbc_selection__selection_area_resolve_building_conflicts__n100</span> <span class="o">=</span> <span class="p">(</span>
+    <span class="n">point_resolve_building_conflicts___selection_area_resolve_building_conflicts___n100_building</span> <span class="o">=</span> <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_gdb</span><span class="p">(</span>
+        <span class="n">script_source_name</span><span class="o">=</span><span class="n">point_resolve_building_conflicts</span><span class="p">,</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">&quot;selection_area_resolve_building_conflicts&quot;</span><span class="p">,</span>
+    <span class="p">)</span>
+
+    <span class="n">point_resolve_building_conflicts___building_polygon_selection_rbc___n100_building</span> <span class="o">=</span> <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_gdb</span><span class="p">(</span>
+        <span class="n">script_source_name</span><span class="o">=</span><span class="n">point_resolve_building_conflicts</span><span class="p">,</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">&quot;building_polygon_selection_rbc&quot;</span><span class="p">,</span>
+    <span class="p">)</span>
+
+    <span class="n">point_resolve_building_conflicts___building_polygons_to_points_and_then_squares___n100_building</span> <span class="o">=</span> <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_gdb</span><span class="p">(</span>
+        <span class="n">script_source_name</span><span class="o">=</span><span class="n">point_resolve_building_conflicts</span><span class="p">,</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">&quot;building_polygons_to_points_and_then_squares&quot;</span><span class="p">,</span>
+    <span class="p">)</span>
+
+    <span class="n">point_resolve_building_conflicts___road_selection_rbc___n100_building</span> <span class="o">=</span> <span class="p">(</span>
         <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_gdb</span><span class="p">(</span>
-            <span class="n">script_source_name</span><span class="o">=</span><span class="n">resolve_building_conflicts_points</span><span class="p">,</span>
-            <span class="n">description</span><span class="o">=</span><span class="s2">&quot;selection_area_resolve_building_conflicts&quot;</span><span class="p">,</span>
+            <span class="n">script_source_name</span><span class="o">=</span><span class="n">point_resolve_building_conflicts</span><span class="p">,</span>
+            <span class="n">description</span><span class="o">=</span><span class="s2">&quot;road_selection_rbc&quot;</span><span class="p">,</span>
         <span class="p">)</span>
     <span class="p">)</span>
 
-    <span class="n">rbc_selection__grunnriss_selection_rbc__n100</span> <span class="o">=</span> <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_gdb</span><span class="p">(</span>
-        <span class="n">script_source_name</span><span class="o">=</span><span class="n">resolve_building_conflicts_points</span><span class="p">,</span>
-        <span class="n">description</span><span class="o">=</span><span class="s2">&quot;grunnriss_selection_rbc&quot;</span><span class="p">,</span>
-    <span class="p">)</span>
-
-    <span class="n">rbc_selection__veg_sti_selection_rbc_rbc__n100</span> <span class="o">=</span> <span class="p">(</span>
+    <span class="n">point_resolve_building_conflicts___building_point_selection_rbc___n100_building</span> <span class="o">=</span> <span class="p">(</span>
         <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_gdb</span><span class="p">(</span>
-            <span class="n">script_source_name</span><span class="o">=</span><span class="n">resolve_building_conflicts_points</span><span class="p">,</span>
-            <span class="n">description</span><span class="o">=</span><span class="s2">&quot;veg_sti_selection_rbc&quot;</span><span class="p">,</span>
+            <span class="n">script_source_name</span><span class="o">=</span><span class="n">point_resolve_building_conflicts</span><span class="p">,</span>
+            <span class="n">description</span><span class="o">=</span><span class="s2">&quot;building_point_selection_rbc&quot;</span><span class="p">,</span>
         <span class="p">)</span>
     <span class="p">)</span>
 
-    <span class="n">rbc_selection__bygningspunkt_selection_rbc__n100</span> <span class="o">=</span> <span class="p">(</span>
-        <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_gdb</span><span class="p">(</span>
-            <span class="n">script_source_name</span><span class="o">=</span><span class="n">resolve_building_conflicts_points</span><span class="p">,</span>
-            <span class="n">description</span><span class="o">=</span><span class="s2">&quot;bygningspunkt_selection_rbc&quot;</span><span class="p">,</span>
-        <span class="p">)</span>
+    <span class="n">point_resolve_building_conflicts___begrensningskurve_selection_rbc___n100_building</span> <span class="o">=</span> <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_gdb</span><span class="p">(</span>
+        <span class="n">script_source_name</span><span class="o">=</span><span class="n">point_resolve_building_conflicts</span><span class="p">,</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">&quot;begrensningskurve_selection_rbc&quot;</span><span class="p">,</span>
     <span class="p">)</span>
 
-    <span class="n">rbc_selection__begrensningskurve_selection_rbc__n100</span> <span class="o">=</span> <span class="p">(</span>
+    <span class="n">point_resolve_building_conflicts___squares_selection_rbc___n100_building</span> <span class="o">=</span> <span class="p">(</span>
         <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_gdb</span><span class="p">(</span>
-            <span class="n">script_source_name</span><span class="o">=</span><span class="n">resolve_building_conflicts_points</span><span class="p">,</span>
-            <span class="n">description</span><span class="o">=</span><span class="s2">&quot;begrensningskurve_selection_rbc&quot;</span><span class="p">,</span>
-        <span class="p">)</span>
-    <span class="p">)</span>
-
-    <span class="n">rbc_selection__drawn_polygon_selection_rbc__n100</span> <span class="o">=</span> <span class="p">(</span>
-        <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_gdb</span><span class="p">(</span>
-            <span class="n">script_source_name</span><span class="o">=</span><span class="n">resolve_building_conflicts_points</span><span class="p">,</span>
+            <span class="n">script_source_name</span><span class="o">=</span><span class="n">point_resolve_building_conflicts</span><span class="p">,</span>
             <span class="n">description</span><span class="o">=</span><span class="s2">&quot;drawn_polygon_selection_rbc&quot;</span><span class="p">,</span>
         <span class="p">)</span>
     <span class="p">)</span>
 
-    <span class="c1"># Function: apply_symbology</span>
-
-    <span class="n">apply_symbology__bygningspunkt_selection__n100_lyrx</span> <span class="o">=</span> <span class="p">(</span>
+    <span class="n">point_resolve_building_conflicts___bygningspunkt_selection___n100_building_lyrx</span> <span class="o">=</span> <span class="p">(</span>
         <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_lyrx</span><span class="p">(</span>
-            <span class="n">script_source_name</span><span class="o">=</span><span class="n">resolve_building_conflicts_points</span><span class="p">,</span>
+            <span class="n">script_source_name</span><span class="o">=</span><span class="n">point_resolve_building_conflicts</span><span class="p">,</span>
             <span class="n">description</span><span class="o">=</span><span class="s2">&quot;bygningspunkt_selection&quot;</span><span class="p">,</span>
         <span class="p">)</span>
     <span class="p">)</span>
 
-    <span class="n">apply_symbology__grunnriss_selection__n100_lyrx</span> <span class="o">=</span> <span class="p">(</span>
+    <span class="n">point_resolve_building_conflicts___grunnriss_selection___n100_building_lyrx</span> <span class="o">=</span> <span class="p">(</span>
         <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_lyrx</span><span class="p">(</span>
-            <span class="n">script_source_name</span><span class="o">=</span><span class="n">resolve_building_conflicts_points</span><span class="p">,</span>
+            <span class="n">script_source_name</span><span class="o">=</span><span class="n">point_resolve_building_conflicts</span><span class="p">,</span>
             <span class="n">description</span><span class="o">=</span><span class="s2">&quot;grunnriss_selection&quot;</span><span class="p">,</span>
         <span class="p">)</span>
     <span class="p">)</span>
 
-    <span class="n">apply_symbology__veg_sti_selection__n100_lyrx</span> <span class="o">=</span> <span class="p">(</span>
+    <span class="n">point_resolve_building_conflicts___building_polygons_to_points_and_then_squares___n100_building_lyrx</span> <span class="o">=</span> <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_lyrx</span><span class="p">(</span>
+        <span class="n">script_source_name</span><span class="o">=</span><span class="n">point_resolve_building_conflicts</span><span class="p">,</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">&quot;building_polygons_to_points_and_then_squares&quot;</span><span class="p">,</span>
+    <span class="p">)</span>
+
+    <span class="n">point_resolve_building_conflicts___veg_sti_selection___n100_building_lyrx</span> <span class="o">=</span> <span class="p">(</span>
         <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_lyrx</span><span class="p">(</span>
-            <span class="n">script_source_name</span><span class="o">=</span><span class="n">resolve_building_conflicts_points</span><span class="p">,</span>
+            <span class="n">script_source_name</span><span class="o">=</span><span class="n">point_resolve_building_conflicts</span><span class="p">,</span>
             <span class="n">description</span><span class="o">=</span><span class="s2">&quot;veg_sti_selection&quot;</span><span class="p">,</span>
         <span class="p">)</span>
     <span class="p">)</span>
 
-    <span class="n">apply_symbology__begrensningskurve_selection__n100_lyrx</span> <span class="o">=</span> <span class="p">(</span>
-        <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_lyrx</span><span class="p">(</span>
-            <span class="n">script_source_name</span><span class="o">=</span><span class="n">resolve_building_conflicts_points</span><span class="p">,</span>
-            <span class="n">description</span><span class="o">=</span><span class="s2">&quot;begrensningskurve_selection&quot;</span><span class="p">,</span>
-        <span class="p">)</span>
+    <span class="n">point_resolve_building_conflicts___begrensningskurve_selection___n100_building_lyrx</span> <span class="o">=</span> <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_lyrx</span><span class="p">(</span>
+        <span class="n">script_source_name</span><span class="o">=</span><span class="n">point_resolve_building_conflicts</span><span class="p">,</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">&quot;begrensningskurve_selection&quot;</span><span class="p">,</span>
     <span class="p">)</span>
 
-    <span class="n">apply_symbology__drawn_polygon_selection__n100_lyrx</span> <span class="o">=</span> <span class="p">(</span>
+    <span class="n">point_resolve_building_conflicts___squares_selection___n100_building_lyrx</span> <span class="o">=</span> <span class="p">(</span>
         <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_lyrx</span><span class="p">(</span>
-            <span class="n">script_source_name</span><span class="o">=</span><span class="n">resolve_building_conflicts_points</span><span class="p">,</span>
+            <span class="n">script_source_name</span><span class="o">=</span><span class="n">point_resolve_building_conflicts</span><span class="p">,</span>
             <span class="n">description</span><span class="o">=</span><span class="s2">&quot;drawn_polygon_selection&quot;</span><span class="p">,</span>
         <span class="p">)</span>
     <span class="p">)</span>
 
-    <span class="c1"># Function: resolve_building_conflicts</span>
-
-    <span class="n">resolve_building_conflicts__drawn_polygons_result_1__n100</span> <span class="o">=</span> <span class="p">(</span>
+    <span class="n">point_resolve_building_conflicts___squares_to_keep_after_rbc1___n100_building</span> <span class="o">=</span> <span class="p">(</span>
         <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_gdb</span><span class="p">(</span>
-            <span class="n">script_source_name</span><span class="o">=</span><span class="n">resolve_building_conflicts_points</span><span class="p">,</span>
+            <span class="n">script_source_name</span><span class="o">=</span><span class="n">point_resolve_building_conflicts</span><span class="p">,</span>
             <span class="n">description</span><span class="o">=</span><span class="s2">&quot;drawn_polygons_result_1&quot;</span><span class="p">,</span>
         <span class="p">)</span>
     <span class="p">)</span>
 
-    <span class="n">resolve_building_conflicts__drawn_polygon_RBC_result_1__n100_lyrx</span> <span class="o">=</span> <span class="p">(</span>
-        <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_lyrx</span><span class="p">(</span>
-            <span class="n">script_source_name</span><span class="o">=</span><span class="n">resolve_building_conflicts_points</span><span class="p">,</span>
-            <span class="n">description</span><span class="o">=</span><span class="s2">&quot;drawn_polygon_RBC_result_1&quot;</span><span class="p">,</span>
-        <span class="p">)</span>
+    <span class="n">point_resolve_building_conflicts___drawn_polygon_RBC_result_1___n100_building_lyrx</span> <span class="o">=</span> <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_lyrx</span><span class="p">(</span>
+        <span class="n">script_source_name</span><span class="o">=</span><span class="n">point_resolve_building_conflicts</span><span class="p">,</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">&quot;drawn_polygon_RBC_result_1&quot;</span><span class="p">,</span>
     <span class="p">)</span>
 
-    <span class="n">resolve_building_conflicts__building_points_RBC_result_1__n100</span> <span class="o">=</span> <span class="p">(</span>
+    <span class="n">point_resolve_building_conflicts___rbc_1_squares_to_points___n100_building</span> <span class="o">=</span> <span class="p">(</span>
         <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_gdb</span><span class="p">(</span>
-            <span class="n">script_source_name</span><span class="o">=</span><span class="n">resolve_building_conflicts_points</span><span class="p">,</span>
+            <span class="n">script_source_name</span><span class="o">=</span><span class="n">point_resolve_building_conflicts</span><span class="p">,</span>
             <span class="n">description</span><span class="o">=</span><span class="s2">&quot;building_points_RBC_result_1&quot;</span><span class="p">,</span>
         <span class="p">)</span>
     <span class="p">)</span>
 
-    <span class="n">resolve_building_conflicts__building_points_RBC_final__n100</span> <span class="o">=</span> <span class="p">(</span>
+    <span class="n">point_resolve_building_conflicts___building_points_RBC_result_1___n100_building_lyrx</span> <span class="o">=</span> <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_lyrx</span><span class="p">(</span>
+        <span class="n">script_source_name</span><span class="o">=</span><span class="n">point_resolve_building_conflicts</span><span class="p">,</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">&quot;building_points_RBC_result_1&quot;</span><span class="p">,</span>
+    <span class="p">)</span>
+
+    <span class="n">point_resolve_building_conflicts___building_points_RBC_final___n100_building</span> <span class="o">=</span> <span class="p">(</span>
         <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_gdb</span><span class="p">(</span>
-            <span class="n">script_source_name</span><span class="o">=</span><span class="n">resolve_building_conflicts_points</span><span class="p">,</span>
-            <span class="n">description</span><span class="o">=</span><span class="s2">&quot;building_points_RBC_result_2&quot;</span><span class="p">,</span>
+            <span class="n">script_source_name</span><span class="o">=</span><span class="n">point_resolve_building_conflicts</span><span class="p">,</span>
+            <span class="n">description</span><span class="o">=</span><span class="s2">&quot;building_points_RBC_final&quot;</span><span class="p">,</span>
         <span class="p">)</span>
     <span class="p">)</span>
 
-    <span class="n">resolve_building_conflicts__building_points_RBC_result_1__n100_lyrx</span> <span class="o">=</span> <span class="p">(</span>
-        <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_lyrx</span><span class="p">(</span>
-            <span class="n">script_source_name</span><span class="o">=</span><span class="n">resolve_building_conflicts_points</span><span class="p">,</span>
-            <span class="n">description</span><span class="o">=</span><span class="s2">&quot;building_points_RBC_result_1&quot;</span><span class="p">,</span>
-        <span class="p">)</span>
+    <span class="n">point_resolve_building_conflicts___building_points_RBC_final___n100_building_lyrx</span> <span class="o">=</span> <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_lyrx</span><span class="p">(</span>
+        <span class="n">script_source_name</span><span class="o">=</span><span class="n">point_resolve_building_conflicts</span><span class="p">,</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">&quot;building_points_RBC_final&quot;</span><span class="p">,</span>
     <span class="p">)</span>
 
-    <span class="n">resolve_building_conflicts__building_points_RBC_final__n100_lyrx</span> <span class="o">=</span> <span class="p">(</span>
-        <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_lyrx</span><span class="p">(</span>
-            <span class="n">script_source_name</span><span class="o">=</span><span class="n">resolve_building_conflicts_points</span><span class="p">,</span>
-            <span class="n">description</span><span class="o">=</span><span class="s2">&quot;building_points_RBC_result_2&quot;</span><span class="p">,</span>
-        <span class="p">)</span>
-    <span class="p">)</span>
-
-    <span class="n">resolve_building_conflicts__drawn_polygons_result_2__n100</span> <span class="o">=</span> <span class="p">(</span>
+    <span class="n">point_resolve_building_conflicts___drawn_polygons_result_2___n100_building</span> <span class="o">=</span> <span class="p">(</span>
         <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_gdb</span><span class="p">(</span>
-            <span class="n">script_source_name</span><span class="o">=</span><span class="n">resolve_building_conflicts_points</span><span class="p">,</span>
+            <span class="n">script_source_name</span><span class="o">=</span><span class="n">point_resolve_building_conflicts</span><span class="p">,</span>
             <span class="n">description</span><span class="o">=</span><span class="s2">&quot;drawn_polygons_result_2&quot;</span><span class="p">,</span>
         <span class="p">)</span>
     <span class="p">)</span>
 
-    <span class="n">resolve_building_conflicts__drawn_polygon_RBC_result_2__n100_lyrx</span> <span class="o">=</span> <span class="p">(</span>
+    <span class="n">point_resolve_building_conflicts___drawn_polygon_result_2___n100_building_lyrx</span> <span class="o">=</span> <span class="p">(</span>
         <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_lyrx</span><span class="p">(</span>
-            <span class="n">script_source_name</span><span class="o">=</span><span class="n">resolve_building_conflicts_points</span><span class="p">,</span>
-            <span class="n">description</span><span class="o">=</span><span class="s2">&quot;drawn_polygon_RBC_result_2&quot;</span><span class="p">,</span>
+            <span class="n">script_source_name</span><span class="o">=</span><span class="n">point_resolve_building_conflicts</span><span class="p">,</span>
+            <span class="n">description</span><span class="o">=</span><span class="s2">&quot;drawn_polygon_result_2&quot;</span><span class="p">,</span>
+        <span class="p">)</span>
+    <span class="p">)</span>
+
+    <span class="n">point_resolve_building_conflicts___building_polygons_to_keep_after_rbc1___n100_building</span> <span class="o">=</span> <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_gdb</span><span class="p">(</span>
+        <span class="n">script_source_name</span><span class="o">=</span><span class="n">point_resolve_building_conflicts</span><span class="p">,</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">&quot;building_polygons_visible_result_1&quot;</span><span class="p">,</span>
+    <span class="p">)</span>
+
+    <span class="n">point_resolve_building_conflicts___building_polygons_invisible_result_1___n100_building</span> <span class="o">=</span> <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_gdb</span><span class="p">(</span>
+        <span class="n">script_source_name</span><span class="o">=</span><span class="n">point_resolve_building_conflicts</span><span class="p">,</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">&quot;building_polygons_invisible_result_1&quot;</span><span class="p">,</span>
+    <span class="p">)</span>
+
+    <span class="n">point_resolve_building_conflicts___building_polygons_to_points_result_1___n100_building</span> <span class="o">=</span> <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_gdb</span><span class="p">(</span>
+        <span class="n">script_source_name</span><span class="o">=</span><span class="n">point_resolve_building_conflicts</span><span class="p">,</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">&quot;building_polygons_to_points_result_1&quot;</span><span class="p">,</span>
+    <span class="p">)</span>
+
+    <span class="n">point_resolve_building_conflicts___squares_to_keep_after_rbc1___n100_building_lyrx</span> <span class="o">=</span> <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_lyrx</span><span class="p">(</span>
+        <span class="n">script_source_name</span><span class="o">=</span><span class="n">point_resolve_building_conflicts</span><span class="p">,</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">&quot;squares_to_keep_after_rbc1&quot;</span><span class="p">,</span>
+    <span class="p">)</span>
+
+    <span class="n">point_resolve_building_conflicts___building_polygons_to_keep_after_rbc1___n100_building_lyrx</span> <span class="o">=</span> <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_lyrx</span><span class="p">(</span>
+        <span class="n">script_source_name</span><span class="o">=</span><span class="n">point_resolve_building_conflicts</span><span class="p">,</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">&quot;squares_to_keep_after_rbc1&quot;</span><span class="p">,</span>
+    <span class="p">)</span>
+
+    <span class="n">point_resolve_building_conflicts___building_polygons_rbc2___n100_building</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_gdb</span><span class="p">(</span>
+            <span class="n">script_source_name</span><span class="o">=</span><span class="n">point_resolve_building_conflicts</span><span class="p">,</span>
+            <span class="n">description</span><span class="o">=</span><span class="s2">&quot;building_polygons_rbc2&quot;</span><span class="p">,</span>
+        <span class="p">)</span>
+    <span class="p">)</span>
+
+    <span class="n">point_resolve_building_conflicts___squares_from_points_rbc2___n100_building</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_gdb</span><span class="p">(</span>
+            <span class="n">script_source_name</span><span class="o">=</span><span class="n">point_resolve_building_conflicts</span><span class="p">,</span>
+            <span class="n">description</span><span class="o">=</span><span class="s2">&quot;squares_from_points_rbc2&quot;</span><span class="p">,</span>
+        <span class="p">)</span>
+    <span class="p">)</span>
+
+    <span class="n">point_resolve_building_conflicts___squares_from_polygons_rbc2___n100_building</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_gdb</span><span class="p">(</span>
+            <span class="n">script_source_name</span><span class="o">=</span><span class="n">point_resolve_building_conflicts</span><span class="p">,</span>
+            <span class="n">description</span><span class="o">=</span><span class="s2">&quot;squares_from_polygons_rbc2&quot;</span><span class="p">,</span>
+        <span class="p">)</span>
+    <span class="p">)</span>
+
+    <span class="n">point_resolve_building_conflicts___squares_from_points_transformed_back_to_points___n100_building</span> <span class="o">=</span> <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_gdb</span><span class="p">(</span>
+        <span class="n">script_source_name</span><span class="o">=</span><span class="n">point_resolve_building_conflicts</span><span class="p">,</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">&quot;squares_from_points_transformed_back_to_points&quot;</span><span class="p">,</span>
+    <span class="p">)</span>
+
+    <span class="n">point_resolve_building_conflicts___squares_from_polygons_transformed_to_points___n100_building</span> <span class="o">=</span> <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_gdb</span><span class="p">(</span>
+        <span class="n">script_source_name</span><span class="o">=</span><span class="n">point_resolve_building_conflicts</span><span class="p">,</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">&quot;squares_from_polygons_transformed_to_points&quot;</span><span class="p">,</span>
+    <span class="p">)</span>
+
+    <span class="n">point_resolve_building_conflicts___building_polygons_final___n100_building</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_gdb</span><span class="p">(</span>
+            <span class="n">script_source_name</span><span class="o">=</span><span class="n">point_resolve_building_conflicts</span><span class="p">,</span>
+            <span class="n">description</span><span class="o">=</span><span class="s2">&quot;building_polygons_final&quot;</span><span class="p">,</span>
+        <span class="p">)</span>
+    <span class="p">)</span>
+
+    <span class="n">point_resolve_building_conflicts___final_points_merged___n100_building</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_gdb</span><span class="p">(</span>
+            <span class="n">script_source_name</span><span class="o">=</span><span class="n">point_resolve_building_conflicts</span><span class="p">,</span>
+            <span class="n">description</span><span class="o">=</span><span class="s2">&quot;final_points_merged&quot;</span><span class="p">,</span>
+        <span class="p">)</span>
+    <span class="p">)</span>
+
+    <span class="n">point_resolve_building_conflicts___building_points_final___n100_building</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_gdb</span><span class="p">(</span>
+            <span class="n">script_source_name</span><span class="o">=</span><span class="n">point_resolve_building_conflicts</span><span class="p">,</span>
+            <span class="n">description</span><span class="o">=</span><span class="s2">&quot;building_points_final&quot;</span><span class="p">,</span>
         <span class="p">)</span>
     <span class="p">)</span></div>
 

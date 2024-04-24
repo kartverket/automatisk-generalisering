@@ -16,7 +16,7 @@
         <script src="../../_static/jquery.js?v=5d32c60e"></script>
         <script src="../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
         <script src="../../_static/documentation_options.js?v=d45e8c67"></script>
-        <script src="../../_static/doctools.js?v=888ff710"></script>
+        <script src="../../_static/doctools.js?v=9a2dae69"></script>
         <script src="../../_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="../../_static/js/theme.js"></script>
     <link rel="index" title="Index" href="../../genindex.html" />
@@ -373,7 +373,7 @@
 <span class="sd">        ...     input_layer=Building_N100.data_preperation___waterfeatures_from_begrensningskurve_not_rivers___n100_building.value,</span>
 <span class="sd">        ...     overlap_type=OverlapType.WITHIN_A_DISTANCE.value,</span>
 <span class="sd">        ...     select_features=Building_N100.polygon_propogate_displacement___after_displacement___n100_building.value,</span>
-<span class="sd">        ...     output_name=Building_N100.polygon_propogate_displacement___begrensningskurve_500m_from_displaced_polygon___n100_building.value,</span>
+<span class="sd">        ...     output_name=Building_N100.polygon_resolve_building_conflicts___begrensningskurve_500m_from_displaced_polygon___n100_building.value,</span>
 <span class="sd">        ...     search_distance=&quot;500 Meters&quot;,</span>
 <span class="sd">        ... )</span>
 <span class="sd">        &#39;polygon_propogate_displacement___begrensningskurve_500_m_from_displaced_polygon___n100_building&#39; created permanently.</span>
@@ -443,10 +443,10 @@
 <span class="sd">        output_name (str): The name (including path) for the output layer file (.lyrx) with the applied symbology.</span>
 
 <span class="sd">    Example:</span>
-<span class="sd">        &gt;&gt;&gt; custom_arcpy.apply_symbology(</span>
-<span class="sd">        ...     input_layer=Building_N100.rbc_selection__grunnriss_selection_rbc__n100.value,</span>
+<span class="sd">        &gt;&gt;&gt; custom_arcpy.apply_symbology_to_the_layers(</span>
+<span class="sd">        ...     input_layer=Building_N100.point_resolve_building_conflicts___building_polygon_selection_rbc___n100_building.value,</span>
 <span class="sd">        ...     in_symbology_layer=config.symbology_n100_grunnriss,</span>
-<span class="sd">        ...     output_name=Building_N100.polygon_propogate_displacement___building_polygon___n100_building_lyrx.value,</span>
+<span class="sd">        ...     output_name=Building_N100.polygon_resolve_building_conflicts___building_polygon___n100_building_lyrx.value,</span>
 <span class="sd">        ... )</span>
 <span class="sd">        &#39;apply_symbology_to_layers__building_polygon__n100__lyrx.lyrx file created.&#39;</span>
 <span class="sd">    &quot;&quot;&quot;</span>

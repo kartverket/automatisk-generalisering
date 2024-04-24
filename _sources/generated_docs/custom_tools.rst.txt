@@ -4,6 +4,14 @@ custom\_tools package
 Submodules
 ----------
 
+custom\_tools.compare\_feature\_classes module
+----------------------------------------------
+
+.. automodule:: custom_tools.compare_feature_classes
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
 custom\_tools.custom\_arcpy module
 ----------------------------------
 
