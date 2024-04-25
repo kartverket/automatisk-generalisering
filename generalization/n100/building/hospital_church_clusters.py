@@ -1,9 +1,11 @@
 # Importing modules
 import arcpy
 import os
+import random
 
 # Importing custom modules
 from custom_tools import custom_arcpy
+from custom_tools.compare_feature_classes import compare_feature_classes
 
 # Importing file manager
 from file_manager.n100.file_manager_buildings import Building_N100
@@ -37,6 +39,8 @@ def main():
     environment_setup.main()
     hospital_church_selections()
     find_clusters()
+    reducing_clusters()
+    hospitals_and_churches_too_close()
 
 
 @timing_decorator
@@ -50,29 +54,24 @@ def hospital_church_selections():
         - Churches are selected based on 'BYGGTYP_NBR' value 671.
     """
 
-    # Input feature class
-    input_for_selections = "tester_cluster_2"
-
-    # SQL-expressions
+    # SQL-expressions to select hospitals and churches
     sql_select_all_hospital = "BYGGTYP_NBR IN (970, 719)"
     sql_select_all_church = "BYGGTYP_NBR = 671"
 
     # Selecting all hospitals and making feature layer
     custom_arcpy.select_attribute_and_make_permanent_feature(
-        input_layer=input_for_selections,
+        input_layer=Building_N100.point_propogate_displacement___points_after_propogate_displacement___n100_building.value,
         expression=sql_select_all_hospital,
         output_name=Building_N100.hospital_church_clusters___hospital_points___n100_building.value,
         selection_type=custom_arcpy.SelectionType.NEW_SELECTION,
-        inverted=False,
     )
 
     # Selecting all churches and making feature layer
     custom_arcpy.select_attribute_and_make_permanent_feature(
-        input_layer=input_for_selections,
+        input_layer=Building_N100.point_propogate_displacement___points_after_propogate_displacement___n100_building.value,
         expression=sql_select_all_church,
         output_name=Building_N100.hospital_church_clusters___church_points___n100_building.value,
         selection_type=custom_arcpy.SelectionType.NEW_SELECTION,
-        inverted=False,
     )
 
 
@@ -137,6 +136,13 @@ def find_clusters():
     expression_cluster = "CLUSTER_ID > 0"
     expression_not_cluster = "CLUSTER_ID < 0"
 
+    # Making feature class of hospital points in a cluster
+    custom_arcpy.select_attribute_and_make_permanent_feature(
+        input_layer=Building_N100.hospital_church_clusters___hospital_points___n100_building.value,
+        expression=expression_cluster,
+        output_name=Building_N100.hospital_church_clusters___hospital_points_in_cluster___n100_building.value,
+        selection_type=custom_arcpy.SelectionType.NEW_SELECTION,
+    )
     # Making feature class of hospital points NOT in a cluster
     custom_arcpy.select_attribute_and_make_permanent_feature(
         input_layer=Building_N100.hospital_church_clusters___hospital_points___n100_building.value,
@@ -145,27 +151,18 @@ def find_clusters():
         selection_type=custom_arcpy.SelectionType.NEW_SELECTION,
     )
 
-    # Making feature class of hospital points in a cluster
-    custom_arcpy.select_attribute_and_make_permanent_feature(
-        input_layer=Building_N100.hospital_church_clusters___hospital_points___n100_building.value,
-        expression=expression_cluster,
-        output_name=Building_N100.hospital_church_clusters___hospital_points_in_cluster___n100_building.value,
-        selection_type=custom_arcpy.SelectionType.NEW_SELECTION,
-    )
-
-    # Making feature class of church points NOT in a cluster
-    custom_arcpy.select_attribute_and_make_permanent_feature(
-        input_layer=Building_N100.hospital_church_clusters___church_points___n100_building.value,
-        expression=expression_not_cluster,
-        output_name=Building_N100.hospital_church_clusters___church_points_not_in_cluster___n100_building.value,
-        selection_type=custom_arcpy.SelectionType.NEW_SELECTION,
-    )
-
     # Making feature class of church points in a cluster
     custom_arcpy.select_attribute_and_make_permanent_feature(
         input_layer=Building_N100.hospital_church_clusters___church_points___n100_building.value,
         expression=expression_cluster,
         output_name=Building_N100.hospital_church_clusters___church_points_in_cluster___n100_building.value,
+        selection_type=custom_arcpy.SelectionType.NEW_SELECTION,
+    )
+    # Making feature class of church points NOT in a cluster
+    custom_arcpy.select_attribute_and_make_permanent_feature(
+        input_layer=Building_N100.hospital_church_clusters___church_points___n100_building.value,
+        expression=expression_not_cluster,
+        output_name=Building_N100.hospital_church_clusters___church_points_not_in_cluster___n100_building.value,
         selection_type=custom_arcpy.SelectionType.NEW_SELECTION,
     )
 
@@ -187,16 +184,18 @@ def reducing_clusters():
     """
 
     # List of hospital and church layers to merge at the end
+    # Hospital and church points that are NOT in a cluster are already put in the list
     merge_hospitals_and_churches_list = [
         Building_N100.hospital_church_clusters___hospital_points_not_in_cluster___n100_building.value,
         Building_N100.hospital_church_clusters___church_points_not_in_cluster___n100_building.value,
     ]
 
-    # Check if there are any features in the feature class
-    get_count_hospital = arcpy.management.GetCount(
-        Building_N100.hospital_church_clusters___hospital_points_in_cluster___n100_building.value
+    # Check if there are any hospital clusters, getting the number
+    count_hospital = int(
+        arcpy.management.GetCount(
+            Building_N100.hospital_church_clusters___hospital_points_in_cluster___n100_building.value
+        ).getOutput(0)
     )
-    count_hospital = int(get_count_hospital.getOutput(0))
 
     if count_hospital > 0:
         print("Hospital clusters found.")
@@ -238,23 +237,29 @@ def reducing_clusters():
             Building_N100.hospital_church_clusters___hospital_points_in_cluster___n100_building.value,
             ["CLUSTER_ID", "NEAR_DIST", "OBJECTID"],
         ) as cursor:
-            for row in cursor:
-                cluster_id, near_dist, object_id = row
-
-                # If the CLUSTER_ID is not in the dictionary or the current NEAR_DIST is smaller than the stored one
+            for cluster_id, near_dist, object_id in cursor:
+                # Check if the CLUSTER_ID is not in the dictionary, or if the current NEAR_DIST is smaller than the stored one,
+                # or if the NEAR_DIST is equal but the OBJECTID is smaller
                 if (
                     cluster_id not in min_near_dist_dict_hospital
                     or near_dist < min_near_dist_dict_hospital[cluster_id][0]
                 ):
                     # Update the dictionary with the current NEAR_DIST and OBJECTID
                     min_near_dist_dict_hospital[cluster_id] = (near_dist, object_id)
+                # If NEAR_DIST is equal and OBJECTID is larger, randomly replace the existing OBJECTID
+                elif (
+                    near_dist == min_near_dist_dict_hospital[cluster_id][0]
+                    and object_id > min_near_dist_dict_hospital[cluster_id][1]
+                ):
+                    if random.random() < 0.5:  # Randomly choose which OBJECTID to keep
+                        min_near_dist_dict_hospital[cluster_id] = (near_dist, object_id)
 
         # Create a list of OBJECTIDs with the minimum NEAR_DIST for each CLUSTER_ID
         min_near_dist_object_ids_hospital = [
             object_id for _, object_id in min_near_dist_dict_hospital.values()
         ]
 
-        # Making new layer of hospital cluster points that we want to keep
+        # Make a new layer of hospital cluster points that we want to keep
         custom_arcpy.select_attribute_and_make_permanent_feature(
             input_layer=Building_N100.hospital_church_clusters___hospital_points_in_cluster___n100_building.value,
             expression=f"OBJECTID IN ({','.join(map(str, min_near_dist_object_ids_hospital))})",
@@ -263,23 +268,24 @@ def reducing_clusters():
             inverted=False,
         )
 
-        # Adding selected hospitals to the merge list
+        # Add selected hospitals to the merge list
         merge_hospitals_and_churches_list.append(
             Building_N100.hospital_church_clusters___chosen_hospitals_from_cluster___n100_building.value
         )
 
-    # Check if there are any church clusters
-    get_count_church = arcpy.management.GetCount(
-        Building_N100.hospital_church_clusters___hospital_points_in_cluster___n100_building.value
+    # Check if there are any hospital clusters, getting the number
+    count_church = int(
+        arcpy.management.GetCount(
+            Building_N100.hospital_church_clusters___church_points_in_cluster___n100_building.value
+        ).getOutput(0)
     )
-    count_church = int(get_count_church.getOutput(0))
 
     if count_church > 0:
         print("Church clusters found.")
-        print("Minimum Bounding Geometry ...")
+        print("Minimum Bounding Geometry running...")
         # Finding minimum bounding geometry for church clusters
         arcpy.management.MinimumBoundingGeometry(
-            in_features=Building_N100.hospital_church_clusters___hospital_points_in_cluster___n100_building.value,
+            in_features=Building_N100.hospital_church_clusters___church_points_in_cluster___n100_building.value,
             out_feature_class=Building_N100.hospital_church_clusters___minimum_bounding_geometry_church___n100_building.value,
             geometry_type="RECTANGLE_BY_AREA",
             group_option="LIST",
@@ -294,7 +300,9 @@ def reducing_clusters():
             out_feature_class=Building_N100.hospital_church_clusters___feature_to_point_church___n100_building.value,
         )
 
-        # Find church point closest to the center point, Near fid is automatically added to church points attribute table
+        print("Near...")
+
+        # Find church point closest to the center point. Near fid is automatically added to church points attribute table
         arcpy.analysis.Near(
             in_features=Building_N100.hospital_church_clusters___church_points_in_cluster___n100_building.value,
             near_features=Building_N100.hospital_church_clusters___feature_to_point_church___n100_building.value,
@@ -306,35 +314,44 @@ def reducing_clusters():
 
         # Iterate through the feature class to find the minimum NEAR_DIST for each CLUSTER_ID
         with arcpy.da.SearchCursor(
-            Building_N100.hospital_church_clusters___hospital_points_not_in_cluster___n100_building,
+            Building_N100.hospital_church_clusters___church_points_in_cluster___n100_building.value,
             ["CLUSTER_ID", "NEAR_DIST", "OBJECTID"],
         ) as cursor:
-            for row in cursor:
-                cluster_id, near_dist, object_id = row
-
-                # If the CLUSTER_ID is not in the dictionary or the current NEAR_DIST is smaller than the stored one
+            for cluster_id, near_dist, object_id in cursor:
+                # Check if the CLUSTER_ID is not in the dictionary, or if the current NEAR_DIST is smaller than the stored one,
+                # or if the NEAR_DIST is equal but the OBJECTID is smaller
                 if (
                     cluster_id not in min_near_dist_dict_church
                     or near_dist < min_near_dist_dict_church[cluster_id][0]
+                    or (
+                        near_dist == min_near_dist_dict_church[cluster_id][0]
+                        and object_id < min_near_dist_dict_church[cluster_id][1]
+                    )
                 ):
                     # Update the dictionary with the current NEAR_DIST and OBJECTID
                     min_near_dist_dict_church[cluster_id] = (near_dist, object_id)
+                # If NEAR_DIST is equal and OBJECTID is larger, randomly replace the existing OBJECTID
+                elif (
+                    near_dist == min_near_dist_dict_church[cluster_id][0]
+                    and object_id > min_near_dist_dict_church[cluster_id][1]
+                ):
+                    if random.random() < 0.5:  # Randomly choose which OBJECTID to keep
+                        min_near_dist_dict_church[cluster_id] = (near_dist, object_id)
 
         # Create a list of OBJECTIDs with the minimum NEAR_DIST for each CLUSTER_ID
         min_near_dist_object_ids_church = [
             object_id for _, object_id in min_near_dist_dict_church.values()
         ]
 
-        # Making layer of church points in a cluster
+        # Make a layer of church points in a cluster
         custom_arcpy.select_attribute_and_make_permanent_feature(
-            input_layer=Building_N100.hospital_church_clusters___hospital_points_in_cluster___n100_building.value,
+            input_layer=Building_N100.hospital_church_clusters___church_points_in_cluster___n100_building.value,
             expression=f"OBJECTID IN ({','.join(map(str, min_near_dist_object_ids_church))})",
             output_name=Building_N100.hospital_church_clusters___chosen_churches_from_cluster___n100_building.value,
             selection_type=custom_arcpy.SelectionType.NEW_SELECTION,
-            inverted=False,
         )
 
-        # Adding selected churches to the merge list
+        # Add selected churches to the merge list
         merge_hospitals_and_churches_list.append(
             Building_N100.hospital_church_clusters___chosen_churches_from_cluster___n100_building.value
         )
@@ -342,8 +359,52 @@ def reducing_clusters():
     # Merge the final hospital and church layers
     arcpy.management.Merge(
         inputs=merge_hospitals_and_churches_list,
+        output=Building_N100.hospital_church_clusters___reduced_hospital_and_church_points_merged___n100_building.value,
+    )
+
+
+@timing_decorator
+def hospitals_and_churches_too_close():
+
+    # SQL-expressions to select hospitals and churches
+    sql_select_all_hospital = "BYGGTYP_NBR IN (970, 719)"
+    sql_select_all_church = "BYGGTYP_NBR = 671"
+
+    # Selecting all hospitals and making feature layer
+    custom_arcpy.select_attribute_and_make_permanent_feature(
+        input_layer=Building_N100.hospital_church_clusters___reduced_hospital_and_church_points_merged___n100_building.value,
+        expression=sql_select_all_hospital,
+        output_name=Building_N100.hospital_church_clusters___selecting_hospital_points_after_cluster_reduction___n100_building.value,
+    )
+
+    # Selecting all churches and making feature layer
+    custom_arcpy.select_attribute_and_make_permanent_feature(
+        input_layer=Building_N100.hospital_church_clusters___reduced_hospital_and_church_points_merged___n100_building.value,
+        expression=sql_select_all_church,
+        output_name=Building_N100.hospital_church_clusters___selecting_church_points_after_cluster_reduction___n100_building.value,
+        selection_type=custom_arcpy.SelectionType.NEW_SELECTION,
+    )
+
+    # Selecting churches that are 215 Meters away from hospitals
+    custom_arcpy.select_location_and_make_permanent_feature(
+        input_layer=Building_N100.hospital_church_clusters___selecting_church_points_after_cluster_reduction___n100_building.value,
+        overlap_type=custom_arcpy.OverlapType.WITHIN_A_DISTANCE,
+        select_features=Building_N100.hospital_church_clusters___selecting_hospital_points_after_cluster_reduction___n100_building.value,
+        output_name=Building_N100.hospital_church_clusters___church_points_too_close_to_hospitals___n100_building.value,
+        search_distance="215 Meters",
+        inverted=True,
+    )
+
+    # Merge the final hospital and church layers after potentially deleting churches
+    arcpy.management.Merge(
+        inputs=[
+            Building_N100.hospital_church_clusters___selecting_hospital_points_after_cluster_reduction___n100_building.value,
+            Building_N100.hospital_church_clusters___deleted_churches___n100_building.value,
+        ],
         output=Building_N100.hospital_church_clusters___reduced_hospital_and_church_points_final___n100_building.value,
     )
+
+    print("Hospital and church clusters finished.")
 
 
 if __name__ == "__main__":

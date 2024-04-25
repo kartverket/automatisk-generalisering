@@ -796,11 +796,11 @@ if __name__ == "__main__":
     # inputs_2 = {
     #     church_hospital: [
     #         "input",
-    #         Building_N100.polygon_propogate_displacement___hospital_church_points___n100_building.value,
+    #         Building_N100.polygon_resolve_building_conflicts___hospital_church_points___n100_building.value,
     #     ],
     #     restriction_lines: [
     #         "input",
-    #         Building_N100.polygon_propogate_displacement___begrensningskurve_500m_from_displaced_polygon___n100_building.value,
+    #         Building_N100.polygon_resolve_building_conflicts___begrensningskurve_500m_from_displaced_polygon___n100_building.value,
     #     ],
     # }
     #

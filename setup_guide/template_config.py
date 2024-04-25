@@ -45,6 +45,8 @@ symbology_n100_bygningspunkt = r"C:\path\to\symbology\layer.lyrx"
 symbology_n100_grunnriss = r"C:\path\to\symbology\layer.lyrx"
 symbology_n100_drawn_polygon = r"C:\path\to\symbology\layer.lyrx"
 simple_road_symbology = r"C:\path\to\symbology\layer.lyrx"
+symbology_n100_railway_station = r"C:\path\to\symbology\layer.lyrx"
+symbology_railway_buffer = r"C:\path\to\symbology\layer.lyrx"
 
 # This is no longer used by main script
 symbology_output_folder = r"C:\path\to\output\folder"

@@ -3,15 +3,16 @@ from enum import Enum
 
 class N100_Symbology(Enum):
     building_symbol_dimensions = {
-        1: (175, 175),
-        2: (175, 175),
-        3: (160, 120),
+        1: (175, 175),  # Hospital
+        2: (175, 175),  # Hospital
+        3: (160, 120),  # Church
         4: (45, 45),
         5: (100, 100),
         6: (45, 45),
         7: (45, 45),
         8: (45, 45),
         9: (65, 55),
+        10: (130, 130),  # Railway station
     }
 
 

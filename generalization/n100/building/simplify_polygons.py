@@ -36,7 +36,7 @@ def main():
     simplify_buildings_1()
     simplify_polygons()
     simplify_buildings_2()
-    join_and_add_fields()
+    spatial_join_polygons()
 
 
 @timing_decorator
@@ -172,24 +172,12 @@ def simplify_buildings_2():
 
 # Spatial join and adding fields to polygons
 @timing_decorator
-def join_and_add_fields():
+def spatial_join_polygons():
     """
     Summary:
         Performs spatial join between simplified building polygons and original building polygons.
         Adds specific fields and assigns values to the building polygons, which will be useful for later in Resolve Building Conflict
-
-    Details:
-        - This function executes a spatial join between the simplified building polygons and the original building polygons.
-        - The resulting feature class includes both the geometries and attributes of the input polygons, providing a unified dataset.
-        - Multiple fields, including 'angle', 'hierarchy', and 'invisibility', are added to the feature class.
-        - Default values of '0' are assigned to these fields
-        - A copy of the feature class is then created for subsequent processing.
-
-    Parameters:
-        - No specific parameters
-
     """
-
     # Spatial join between simplified building polygons and original building polygons
     print("Performing spatial join...")
 
@@ -197,36 +185,6 @@ def join_and_add_fields():
         target_features=Building_N100.simplify_polygons___simplify_building_2___n100_building.value,
         join_features=input_n50.Grunnriss,
         out_feature_class=Building_N100.simplify_polygons___spatial_join_polygons___n100_building.value,
-    )
-
-    # Adding multiple fields
-    print("Adding fields...")
-    arcpy.management.AddFields(
-        in_table=Building_N100.simplify_polygons___spatial_join_polygons___n100_building.value,
-        field_description=[
-            ["angle", "SHORT"],
-            ["hierarchy", "SHORT"],
-            ["invisibility", "SHORT"],
-        ],
-    )
-
-    # Assigning values to the fields
-    print("Assigning values to fields...")
-    arcpy.management.CalculateFields(
-        in_table=Building_N100.simplify_polygons___spatial_join_polygons___n100_building.value,
-        expression_type="PYTHON3",
-        fields=[
-            ["angle", "0"],
-            ["hierarchy", "1"],  # Hierachy 1 so buildings can be moved around
-            ["invisibility", "0"],
-        ],
-    )
-
-    # Assigning new name to the final building polygons
-    print("Making a copy of the feature class...")
-    arcpy.management.CopyFeatures(
-        Building_N100.simplify_polygons___spatial_join_polygons___n100_building.value,
-        Building_N100.simplify_polygons___final___n100_building.value,
     )
 
 

@@ -164,7 +164,7 @@ PERCENTAGE_OF_CPU_CORES = 1.0
 
 # Input and output paths
 input_building_points = (
-    Building_N100.calculate_field_values___points_pre_resolve_building_conflicts___n100_building.value
+    Building_N100.calculate_point_values___points_pre_resolve_building_conflicts___n100_building.value
 )
 output_polygon_feature_class = (
     Building_N100.building_point_buffer_displacement__iteration_points_to_square_polygons__n100.value
