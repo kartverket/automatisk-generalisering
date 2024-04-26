@@ -13,7 +13,7 @@ from collections import Counter
 from custom_tools.timing_decorator import timing_decorator
 
 
-@timing_decorator("calculate_point_values.py")
+@timing_decorator
 def main():
     """
     Summary:

@@ -22,7 +22,7 @@ from custom_tools.timing_decorator import timing_decorator
 from custom_tools.timing_decorator import timing_decorator
 
 
-@timing_decorator("polygon_propogate_displacement.py")
+@timing_decorator
 def main():
     """
     Summary:
@@ -124,7 +124,6 @@ def roads_and_water_barriers_500_m_from_building_polygons():
 
 @timing_decorator
 def railway_500_m_from_building_polygons():
-
     # Selecting railway 500 meters from railways (togbane)
     custom_arcpy.select_location_and_make_permanent_feature(
         input_layer=input_data.input_n100.Bane,
@@ -137,7 +136,6 @@ def railway_500_m_from_building_polygons():
 
 @timing_decorator
 def create_railway_buffer():
-
     # Buffering the railways
     arcpy.analysis.PairwiseBuffer(
         in_features=Building_N100.polygon_resolve_building_conflicts___railway_500m_from_displaced_polygon___n100_building.value,
@@ -148,7 +146,6 @@ def create_railway_buffer():
 
 @timing_decorator
 def hospital_church_points_to_squares():
-
     # Selecting hospital and churches from n50
     custom_arcpy.select_attribute_and_make_permanent_feature(
         input_layer=input_data.input_n50.BygningsPunkt,
