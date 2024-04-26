@@ -1,2 +1,5 @@
-version: 1.0
-organisasjon: Land
+version: 2.0
+organization: Land
+product : automatisk-generalisering
+repo_types: [Tool]
+platforms: [LOKALT]
