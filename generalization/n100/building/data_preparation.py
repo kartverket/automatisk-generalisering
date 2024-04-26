@@ -17,7 +17,7 @@ from input_data import input_symbology
 from constants.n100_constants import N100_Symbology, N100_SQLResources
 
 
-@timing_decorator("data_preparation.py")
+@timing_decorator
 def main():
     """
     Summary:
@@ -248,7 +248,6 @@ def matrikkel_and_n50_not_in_urban_areas():
 
 @timing_decorator
 def railway_station_points_to_polygons():
-
     # Railway stations from input data
     railway_stations = input_n100.JernbaneStasjon
 

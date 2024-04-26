@@ -9,7 +9,7 @@ from file_manager.n100.file_manager_buildings import Building_N100
 
 
 # Main function
-@timing_decorator("data_clean_up.py")
+@timing_decorator
 def main():
     environment_setup.main()
     delete_uneccessary_fields()

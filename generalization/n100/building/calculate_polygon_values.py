@@ -10,7 +10,7 @@ from collections import Counter
 from custom_tools.timing_decorator import timing_decorator
 
 
-@timing_decorator("calculate_polygon_values.py")
+@timing_decorator
 def main():
     """
     Summary:
@@ -22,7 +22,6 @@ def main():
 
 
 def adding_angle_hierarchy_invisibility_fields():
-
     # Adding multiple fields
     print("Adding fields...")
     arcpy.management.AddFields(
@@ -48,7 +47,6 @@ def adding_angle_hierarchy_invisibility_fields():
 
 
 def adding_symbol_val():
-
     arcpy.AddField_management(
         in_table=Building_N100.simplify_polygons___spatial_join_polygons___n100_building.value,
         field_name="symbol_val",

@@ -15,7 +15,7 @@ from file_manager.n100.file_manager_buildings import Building_N100
 from custom_tools.timing_decorator import timing_decorator
 
 
-@timing_decorator("points_propogate_displacement.py")
+@timing_decorator
 def main():
     """
     Summary:

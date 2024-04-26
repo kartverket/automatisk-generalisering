@@ -12,7 +12,7 @@ from env_setup import environment_setup
 from custom_tools.timing_decorator import timing_decorator
 
 
-@timing_decorator("removing_points_in_water_features.py")
+@timing_decorator
 def main():
     environment_setup.main()
     removing_points_in_water_features()

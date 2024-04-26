@@ -14,7 +14,7 @@ from file_manager.n100.file_manager_buildings import Building_N100
 from custom_tools.timing_decorator import timing_decorator
 
 
-@timing_decorator("creating_points_from_polygon.py")
+@timing_decorator
 def main():
     """
     This function creates points from small polygons lost during aggregation, and merges
@@ -26,7 +26,6 @@ def main():
 
 @timing_decorator
 def building_polygons_to_points():
-
     # List of building points which will be spatially joined with building polygons
     input_points = [
         f"{Building_N100.simplify_polygons___simplify_polygon___n100_building.value}_Pnt",
