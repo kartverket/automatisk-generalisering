@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../../../">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>generalization.n100.building.polygon_to_point &mdash; Automatisk Generalisering 0.0.1 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../../../_static/pygments.css?v=80d5e7a1" />
+      <link rel="stylesheet" type="text/css" href="../../../../_static/css/theme.css?v=19f00094" />
+      <link rel="stylesheet" type="text/css" href="../../../../_static/custom.css" />
+
+  
+  <!--[if lt IE 9]>
+    <script src="../../../../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script src="../../../../_static/jquery.js?v=5d32c60e"></script>
+        <script src="../../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+        <script src="../../../../_static/documentation_options.js?v=d45e8c67"></script>
+        <script src="../../../../_static/doctools.js?v=9a2dae69"></script>
+        <script src="../../../../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="../../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../../index.html" class="icon icon-home">
+            Automatisk Generalisering
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../../generated_docs/custom_tools.html">custom_tools package</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../generated_docs/env_setup.html">env_setup package</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../generated_docs/file_manager.html">file_manager package</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../generated_docs/generalization.n100.building.html">generalization.n100.building package</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../generated_docs/input_data.html">input_data package</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../generated_docs/modules.html">automatisk-generalisering</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../../index.html">Automatisk Generalisering</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../../../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">generalization.n100.building.polygon_to_point</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for generalization.n100.building.polygon_to_point</h1><div class="highlight"><pre>
+<span></span><span class="c1"># Importing modules</span>
+<span class="kn">import</span> <span class="nn">arcpy</span>
+<span class="kn">import</span> <span class="nn">time</span>
+
+<span class="c1"># Importing custom files</span>
+<span class="kn">from</span> <span class="nn">custom_tools</span> <span class="kn">import</span> <span class="n">custom_arcpy</span>
+<span class="kn">from</span> <span class="nn">env_setup</span> <span class="kn">import</span> <span class="n">environment_setup</span>
+
+<span class="c1"># Importing temporary files</span>
+<span class="kn">from</span> <span class="nn">file_manager.n100.file_manager_buildings</span> <span class="kn">import</span> <span class="n">Building_N100</span>
+
+
+<span class="c1"># Importing timing decorator</span>
+<span class="kn">from</span> <span class="nn">custom_tools.timing_decorator</span> <span class="kn">import</span> <span class="n">timing_decorator</span>
+
+
+<div class="viewcode-block" id="main">
+<a class="viewcode-back" href="../../../../generated_docs/generalization.n100.building.html#generalization.n100.building.polygon_to_point.main">[docs]</a>
+<span class="nd">@timing_decorator</span>
+<span class="k">def</span> <span class="nf">main</span><span class="p">():</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    This function creates points from small polygons lost during aggregation, and merges</span>
+<span class="sd">    them together with collapsed points from the tools simplify building and simplify polygon.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">environment_setup</span><span class="o">.</span><span class="n">main</span><span class="p">()</span>
+    <span class="n">building_polygons_to_points</span><span class="p">()</span></div>
+
+
+
+<div class="viewcode-block" id="building_polygons_to_points">
+<a class="viewcode-back" href="../../../../generated_docs/generalization.n100.building.html#generalization.n100.building.polygon_to_point.building_polygons_to_points">[docs]</a>
+<span class="nd">@timing_decorator</span>
+<span class="k">def</span> <span class="nf">building_polygons_to_points</span><span class="p">():</span>
+    <span class="c1"># List of building points which will be spatially joined with building polygons</span>
+    <span class="n">input_points</span> <span class="o">=</span> <span class="p">[</span>
+        <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">Building_N100</span><span class="o">.</span><span class="n">simplify_polygons___simplify_polygon___n100_building</span><span class="o">.</span><span class="n">value</span><span class="si">}</span><span class="s2">_Pnt&quot;</span><span class="p">,</span>
+        <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">Building_N100</span><span class="o">.</span><span class="n">simplify_polygons___simplify_building_1___n100_building</span><span class="o">.</span><span class="n">value</span><span class="si">}</span><span class="s2">_Pnt&quot;</span><span class="p">,</span>
+        <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">Building_N100</span><span class="o">.</span><span class="n">simplify_polygons___simplify_building_2___n100_building</span><span class="o">.</span><span class="n">value</span><span class="si">}</span><span class="s2">_Pnt&quot;</span><span class="p">,</span>
+    <span class="p">]</span>
+
+    <span class="c1"># List of spatially joined points</span>
+    <span class="n">spatially_joined_points</span> <span class="o">=</span> <span class="p">[]</span>
+
+    <span class="c1"># Looping through each point layer in the list</span>
+    <span class="k">for</span> <span class="n">point_layer</span> <span class="ow">in</span> <span class="n">input_points</span><span class="p">:</span>
+        <span class="n">output_feature</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">point_layer</span><span class="si">}</span><span class="s2">_spatially_joined&quot;</span>
+
+        <span class="n">arcpy</span><span class="o">.</span><span class="n">analysis</span><span class="o">.</span><span class="n">SpatialJoin</span><span class="p">(</span>
+            <span class="n">target_features</span><span class="o">=</span><span class="n">point_layer</span><span class="p">,</span>
+            <span class="n">join_features</span><span class="o">=</span><span class="n">Building_N100</span><span class="o">.</span><span class="n">data_preparation___polygons_that_are_large_enough___n100_building</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
+            <span class="n">out_feature_class</span><span class="o">=</span><span class="n">output_feature</span><span class="p">,</span>
+            <span class="n">join_operation</span><span class="o">=</span><span class="s2">&quot;JOIN_ONE_TO_ONE&quot;</span><span class="p">,</span>
+            <span class="n">match_option</span><span class="o">=</span><span class="s2">&quot;INTERSECT&quot;</span><span class="p">,</span>
+        <span class="p">)</span>
+
+        <span class="n">spatially_joined_points</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">output_feature</span><span class="p">)</span>
+
+    <span class="c1"># Additional inputs for the merge</span>
+    <span class="n">additional_inputs</span> <span class="o">=</span> <span class="p">[</span>
+        <span class="n">Building_N100</span><span class="o">.</span><span class="n">data_preparation___points_created_from_small_polygons___n100_building</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
+        <span class="n">Building_N100</span><span class="o">.</span><span class="n">simplify_polygons___aggregated_polygons_to_points___n100_building</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
+        <span class="n">Building_N100</span><span class="o">.</span><span class="n">polygon_resolve_building_conflicts___final_merged_points___n100_building</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
+        <span class="n">Building_N100</span><span class="o">.</span><span class="n">polygon_resolve_building_conflicts___small_building_polygons_to_point___n100_building</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
+    <span class="p">]</span>
+    <span class="c1"># Complete list of inputs for the merge</span>
+    <span class="n">merge_inputs</span> <span class="o">=</span> <span class="n">spatially_joined_points</span> <span class="o">+</span> <span class="n">additional_inputs</span>
+
+    <span class="c1"># Perform the Merge operation</span>
+    <span class="n">arcpy</span><span class="o">.</span><span class="n">management</span><span class="o">.</span><span class="n">Merge</span><span class="p">(</span>
+        <span class="n">inputs</span><span class="o">=</span><span class="n">merge_inputs</span><span class="p">,</span>
+        <span class="n">output</span><span class="o">=</span><span class="n">Building_N100</span><span class="o">.</span><span class="n">polygon_to_point___merged_points_final___n100_building</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Merge completed&quot;</span><span class="p">)</span></div>
+
+
+
+<span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s2">&quot;__main__&quot;</span><span class="p">:</span>
+    <span class="n">main</span><span class="p">()</span>
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2024, Kartverket.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>
