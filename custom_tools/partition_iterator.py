@@ -13,6 +13,8 @@ from custom_tools.timing_decorator import timing_decorator
 
 from input_data import input_n50
 from file_manager.n100.file_manager_buildings import Building_N100
+from custom_tools.polygon_processor import PolygonProcessor
+from constants.n100_constants import N100_Symbology
 
 # THIS IS WORK IN PROGRESS NOT READY FOR USE YET
 
@@ -79,6 +81,7 @@ class PartitionIterator:
 
         # Variables related to custom operations
         self.custom_functions = custom_functions or []
+        self.custom_func_io_params = {}
 
         # self.handle_data_export(
         #     file_path=self.dictionary_documentation_path,
@@ -645,6 +648,40 @@ class PartitionIterator:
             else:
                 self.process_context_features(alias, iteration_partition)
 
+    def define_io_params(self):
+        for func in self.custom_functions:
+            metadata = getattr(func, "_partition_io_metadata", None)
+            if metadata:
+                # Save the input and output parameters of the function for later use
+                self.custom_func_io_params[func] = {
+                    "inputs": metadata["inputs"],
+                    "outputs": metadata["outputs"],
+                }
+                print(f"Function {func.__name__} has input and output parameters.")
+            else:
+                raise ValueError(
+                    f"The function {func.__name__} doesn't have the _partition_io_metadata attribute. Please ensure the function is decorated properly."
+                )
+
+    def determine_aliases_types(self):
+        pass
+        # Find unique aliases and types in inputs and outputs
+
+    def process_user_defined_output_paths(self):
+        pass
+        # Process user defined output paths
+
+    def construct_output_filepaths(self):
+        pass
+        # Construct file paths for output parameters
+
+    def map_filepaths_to_io_params(self):
+        pass
+        # Map file paths to correct parameters for custom functions
+
+    def execute_custom_functions(self):
+        pass
+
     def append_iteration_to_final(self, alias):
         # Guard clause if alias doesn't exist in nested_final_outputs
         if alias not in self.nested_final_outputs:
@@ -737,6 +774,7 @@ class PartitionIterator:
     @timing_decorator
     def run(self):
         self.unpack_alias_path_data(self.raw_input_data)
+
         if self.raw_output_data is not None:
             self.unpack_alias_path_outputs(self.raw_output_data)
 
@@ -779,6 +817,18 @@ if __name__ == "__main__":
             "input",
             Building_N100.iteration__partition_iterator_final_output_polygons__n100.value,
         ],
+    }
+
+    polygon_processor_config = {
+        "class": PolygonProcessor,
+        "method": "run",
+        "params": {
+            "input_building_points": ("building_points", "input"),
+            "output_polygon_feature_class": ("building_points", "output"),
+            "building_symbol_dimensions": N100_Symbology.building_symbol_dimensions.value,
+            "symbol_field_name": "symbol_val",
+            "index_field_name": "OBJECTID",
+        },
     }
 
     # Instantiate PartitionIterator with necessary parameters
