@@ -118,10 +118,25 @@
 <span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="n">environment_setup</span><span class="o">.</span><span class="n">main</span><span class="p">()</span>
+    <span class="n">selecting_all_other_points_that_are_not_hospital_and_church</span><span class="p">()</span>
     <span class="n">hospital_church_selections</span><span class="p">()</span>
     <span class="n">find_clusters</span><span class="p">()</span>
     <span class="n">reducing_clusters</span><span class="p">()</span>
     <span class="n">hospitals_and_churches_too_close</span><span class="p">()</span></div>
+
+
+
+<div class="viewcode-block" id="selecting_all_other_points_that_are_not_hospital_and_church">
+<a class="viewcode-back" href="../../../../generated_docs/generalization.n100.building.html#generalization.n100.building.hospital_church_clusters.selecting_all_other_points_that_are_not_hospital_and_church">[docs]</a>
+<span class="k">def</span> <span class="nf">selecting_all_other_points_that_are_not_hospital_and_church</span><span class="p">():</span>
+    <span class="c1"># Selecting all hospitals and making feature layer</span>
+    <span class="n">custom_arcpy</span><span class="o">.</span><span class="n">select_attribute_and_make_permanent_feature</span><span class="p">(</span>
+        <span class="n">input_layer</span><span class="o">=</span><span class="n">Building_N100</span><span class="o">.</span><span class="n">point_propogate_displacement___points_after_propogate_displacement___n100_building</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
+        <span class="n">expression</span><span class="o">=</span><span class="s2">&quot;BYGGTYP_NBR IN (970, 719, 671)&quot;</span><span class="p">,</span>
+        <span class="n">output_name</span><span class="o">=</span><span class="n">Building_N100</span><span class="o">.</span><span class="n">hospital_church_clusters___all_other_points_that_are_not_hospital_church___n100_building</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
+        <span class="n">selection_type</span><span class="o">=</span><span class="n">custom_arcpy</span><span class="o">.</span><span class="n">SelectionType</span><span class="o">.</span><span class="n">NEW_SELECTION</span><span class="p">,</span>
+        <span class="n">inverted</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+    <span class="p">)</span></div>
 
 
 
@@ -446,6 +461,8 @@
             <span class="n">Building_N100</span><span class="o">.</span><span class="n">hospital_church_clusters___chosen_churches_from_cluster___n100_building</span><span class="o">.</span><span class="n">value</span>
         <span class="p">)</span>
 
+        <span class="n">merge_hospitals_and_churches_list</span><span class="o">.</span><span class="n">append</span><span class="p">()</span>
+
     <span class="c1"># Merge the final hospital and church layers</span>
     <span class="n">arcpy</span><span class="o">.</span><span class="n">management</span><span class="o">.</span><span class="n">Merge</span><span class="p">(</span>
         <span class="n">inputs</span><span class="o">=</span><span class="n">merge_hospitals_and_churches_list</span><span class="p">,</span>
@@ -477,12 +494,12 @@
         <span class="n">selection_type</span><span class="o">=</span><span class="n">custom_arcpy</span><span class="o">.</span><span class="n">SelectionType</span><span class="o">.</span><span class="n">NEW_SELECTION</span><span class="p">,</span>
     <span class="p">)</span>
 
-    <span class="c1"># Selecting churches that are 215 Meters away from hospitals</span>
+    <span class="c1"># Selecting ONLY churches that are MORE THAN 215 Meters away from hospitals</span>
     <span class="n">custom_arcpy</span><span class="o">.</span><span class="n">select_location_and_make_permanent_feature</span><span class="p">(</span>
         <span class="n">input_layer</span><span class="o">=</span><span class="n">Building_N100</span><span class="o">.</span><span class="n">hospital_church_clusters___selecting_church_points_after_cluster_reduction___n100_building</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
         <span class="n">overlap_type</span><span class="o">=</span><span class="n">custom_arcpy</span><span class="o">.</span><span class="n">OverlapType</span><span class="o">.</span><span class="n">WITHIN_A_DISTANCE</span><span class="p">,</span>
         <span class="n">select_features</span><span class="o">=</span><span class="n">Building_N100</span><span class="o">.</span><span class="n">hospital_church_clusters___selecting_hospital_points_after_cluster_reduction___n100_building</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
-        <span class="n">output_name</span><span class="o">=</span><span class="n">Building_N100</span><span class="o">.</span><span class="n">hospital_church_clusters___church_points_too_close_to_hospitals___n100_building</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
+        <span class="n">output_name</span><span class="o">=</span><span class="n">Building_N100</span><span class="o">.</span><span class="n">hospital_church_clusters___church_points_NOT_too_close_to_hospitals___n100_building</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
         <span class="n">search_distance</span><span class="o">=</span><span class="s2">&quot;215 Meters&quot;</span><span class="p">,</span>
         <span class="n">inverted</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
     <span class="p">)</span>
@@ -491,9 +508,10 @@
     <span class="n">arcpy</span><span class="o">.</span><span class="n">management</span><span class="o">.</span><span class="n">Merge</span><span class="p">(</span>
         <span class="n">inputs</span><span class="o">=</span><span class="p">[</span>
             <span class="n">Building_N100</span><span class="o">.</span><span class="n">hospital_church_clusters___selecting_hospital_points_after_cluster_reduction___n100_building</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
-            <span class="n">Building_N100</span><span class="o">.</span><span class="n">hospital_church_clusters___deleted_churches___n100_building</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
+            <span class="n">Building_N100</span><span class="o">.</span><span class="n">hospital_church_clusters___church_points_NOT_too_close_to_hospitals___n100_building</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
+            <span class="n">Building_N100</span><span class="o">.</span><span class="n">hospital_church_clusters___all_other_points_that_are_not_hospital_church___n100_building</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
         <span class="p">],</span>
-        <span class="n">output</span><span class="o">=</span><span class="n">Building_N100</span><span class="o">.</span><span class="n">hospital_church_clusters___reduced_hospital_and_church_points_final___n100_building</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
+        <span class="n">output</span><span class="o">=</span><span class="n">Building_N100</span><span class="o">.</span><span class="n">hospital_church_clusters___final___n100_building</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
     <span class="p">)</span>
 
     <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Hospital and church clusters finished.&quot;</span><span class="p">)</span></div>

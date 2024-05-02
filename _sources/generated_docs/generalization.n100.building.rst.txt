@@ -44,6 +44,14 @@ generalization.n100.building.data\_preparation module
    :undoc-members:
    :show-inheritance:
 
+generalization.n100.building.finalizing\_buildings module
+---------------------------------------------------------
+
+.. automodule:: generalization.n100.building.finalizing_buildings
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
 generalization.n100.building.hospital\_church\_clusters module
 --------------------------------------------------------------
 

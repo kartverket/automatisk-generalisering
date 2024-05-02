@@ -72,12 +72,21 @@
 </li>
 <li class="toctree-l2"><a class="reference internal" href="#module-generalization.n100.building.data_clean_up">generalization.n100.building.data_clean_up module</a><ul>
 <li class="toctree-l3"><a class="reference internal" href="#generalization.n100.building.data_clean_up.main"><code class="docutils literal notranslate"><span class="pre">main()</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="#generalization.n100.building.data_clean_up.delete_uneccessary_fields"><code class="docutils literal notranslate"><span class="pre">delete_uneccessary_fields()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#generalization.n100.building.data_clean_up.keep_necessary_fields"><code class="docutils literal notranslate"><span class="pre">keep_necessary_fields()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#generalization.n100.building.data_clean_up.add_last_edited_date"><code class="docutils literal notranslate"><span class="pre">add_last_edited_date()</span></code></a></li>
 </ul>
 </li>
 <li class="toctree-l2"><a class="reference internal" href="#generalization-n100-building-data-preparation-module">generalization.n100.building.data_preparation module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#module-generalization.n100.building.finalizing_buildings">generalization.n100.building.finalizing_buildings module</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#generalization.n100.building.finalizing_buildings.main"><code class="docutils literal notranslate"><span class="pre">main()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#generalization.n100.building.finalizing_buildings.removing_points_in_urban_areas"><code class="docutils literal notranslate"><span class="pre">removing_points_in_urban_areas()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#generalization.n100.building.finalizing_buildings.selecting_all_tourist_cabins"><code class="docutils literal notranslate"><span class="pre">selecting_all_tourist_cabins()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#generalization.n100.building.finalizing_buildings.assigning_final_names"><code class="docutils literal notranslate"><span class="pre">assigning_final_names()</span></code></a></li>
+</ul>
+</li>
 <li class="toctree-l2"><a class="reference internal" href="#module-generalization.n100.building.hospital_church_clusters">generalization.n100.building.hospital_church_clusters module</a><ul>
 <li class="toctree-l3"><a class="reference internal" href="#generalization.n100.building.hospital_church_clusters.main"><code class="docutils literal notranslate"><span class="pre">main()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#generalization.n100.building.hospital_church_clusters.selecting_all_other_points_that_are_not_hospital_and_church"><code class="docutils literal notranslate"><span class="pre">selecting_all_other_points_that_are_not_hospital_and_church()</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="#generalization.n100.building.hospital_church_clusters.hospital_church_selections"><code class="docutils literal notranslate"><span class="pre">hospital_church_selections()</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="#generalization.n100.building.hospital_church_clusters.find_clusters"><code class="docutils literal notranslate"><span class="pre">find_clusters()</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="#generalization.n100.building.hospital_church_clusters.reducing_clusters"><code class="docutils literal notranslate"><span class="pre">reducing_clusters()</span></code></a></li>
@@ -101,6 +110,7 @@
 <li class="toctree-l2"><a class="reference internal" href="#module-generalization.n100.building.removing_overlapping_points">generalization.n100.building.removing_overlapping_points module</a><ul>
 <li class="toctree-l3"><a class="reference internal" href="#generalization.n100.building.removing_overlapping_points.main"><code class="docutils literal notranslate"><span class="pre">main()</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="#generalization.n100.building.removing_overlapping_points.copying_previous_file"><code class="docutils literal notranslate"><span class="pre">copying_previous_file()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#generalization.n100.building.removing_overlapping_points.adding_new_hierarchy_value_to_points"><code class="docutils literal notranslate"><span class="pre">adding_new_hierarchy_value_to_points()</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="#generalization.n100.building.removing_overlapping_points.detecting_graphic_conflicts"><code class="docutils literal notranslate"><span class="pre">detecting_graphic_conflicts()</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="#generalization.n100.building.removing_overlapping_points.selecting_points_close_to_graphic_conflict_polygons"><code class="docutils literal notranslate"><span class="pre">selecting_points_close_to_graphic_conflict_polygons()</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="#generalization.n100.building.removing_overlapping_points.finding_clusters_amongst_the_points"><code class="docutils literal notranslate"><span class="pre">finding_clusters_amongst_the_points()</span></code></a></li>
@@ -235,13 +245,41 @@
 <dd></dd></dl>
 
 <dl class="py function">
-<dt class="sig sig-object py" id="generalization.n100.building.data_clean_up.delete_uneccessary_fields">
-<span class="sig-prename descclassname"><span class="pre">generalization.n100.building.data_clean_up.</span></span><span class="sig-name descname"><span class="pre">delete_uneccessary_fields</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/generalization/n100/building/data_clean_up.html#delete_uneccessary_fields"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#generalization.n100.building.data_clean_up.delete_uneccessary_fields" title="Link to this definition"></a></dt>
+<dt class="sig sig-object py" id="generalization.n100.building.data_clean_up.keep_necessary_fields">
+<span class="sig-prename descclassname"><span class="pre">generalization.n100.building.data_clean_up.</span></span><span class="sig-name descname"><span class="pre">keep_necessary_fields</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/generalization/n100/building/data_clean_up.html#keep_necessary_fields"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#generalization.n100.building.data_clean_up.keep_necessary_fields" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="generalization.n100.building.data_clean_up.add_last_edited_date">
+<span class="sig-prename descclassname"><span class="pre">generalization.n100.building.data_clean_up.</span></span><span class="sig-name descname"><span class="pre">add_last_edited_date</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/generalization/n100/building/data_clean_up.html#add_last_edited_date"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#generalization.n100.building.data_clean_up.add_last_edited_date" title="Link to this definition"></a></dt>
 <dd></dd></dl>
 
 </section>
 <section id="generalization-n100-building-data-preparation-module">
 <h2>generalization.n100.building.data_preparation module<a class="headerlink" href="#generalization-n100-building-data-preparation-module" title="Link to this heading"></a></h2>
+</section>
+<section id="module-generalization.n100.building.finalizing_buildings">
+<span id="generalization-n100-building-finalizing-buildings-module"></span><h2>generalization.n100.building.finalizing_buildings module<a class="headerlink" href="#module-generalization.n100.building.finalizing_buildings" title="Link to this heading"></a></h2>
+<dl class="py function">
+<dt class="sig sig-object py" id="generalization.n100.building.finalizing_buildings.main">
+<span class="sig-prename descclassname"><span class="pre">generalization.n100.building.finalizing_buildings.</span></span><span class="sig-name descname"><span class="pre">main</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/generalization/n100/building/finalizing_buildings.html#main"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#generalization.n100.building.finalizing_buildings.main" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="generalization.n100.building.finalizing_buildings.removing_points_in_urban_areas">
+<span class="sig-prename descclassname"><span class="pre">generalization.n100.building.finalizing_buildings.</span></span><span class="sig-name descname"><span class="pre">removing_points_in_urban_areas</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/generalization/n100/building/finalizing_buildings.html#removing_points_in_urban_areas"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#generalization.n100.building.finalizing_buildings.removing_points_in_urban_areas" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="generalization.n100.building.finalizing_buildings.selecting_all_tourist_cabins">
+<span class="sig-prename descclassname"><span class="pre">generalization.n100.building.finalizing_buildings.</span></span><span class="sig-name descname"><span class="pre">selecting_all_tourist_cabins</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/generalization/n100/building/finalizing_buildings.html#selecting_all_tourist_cabins"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#generalization.n100.building.finalizing_buildings.selecting_all_tourist_cabins" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="generalization.n100.building.finalizing_buildings.assigning_final_names">
+<span class="sig-prename descclassname"><span class="pre">generalization.n100.building.finalizing_buildings.</span></span><span class="sig-name descname"><span class="pre">assigning_final_names</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/generalization/n100/building/finalizing_buildings.html#assigning_final_names"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#generalization.n100.building.finalizing_buildings.assigning_final_names" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
 </section>
 <section id="module-generalization.n100.building.hospital_church_clusters">
 <span id="generalization-n100-building-hospital-church-clusters-module"></span><h2>generalization.n100.building.hospital_church_clusters module<a class="headerlink" href="#module-generalization.n100.building.hospital_church_clusters" title="Link to this heading"></a></h2>
@@ -271,6 +309,11 @@
 </dd>
 </dl>
 </dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="generalization.n100.building.hospital_church_clusters.selecting_all_other_points_that_are_not_hospital_and_church">
+<span class="sig-prename descclassname"><span class="pre">generalization.n100.building.hospital_church_clusters.</span></span><span class="sig-name descname"><span class="pre">selecting_all_other_points_that_are_not_hospital_and_church</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/generalization/n100/building/hospital_church_clusters.html#selecting_all_other_points_that_are_not_hospital_and_church"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#generalization.n100.building.hospital_church_clusters.selecting_all_other_points_that_are_not_hospital_and_church" title="Link to this definition"></a></dt>
+<dd></dd></dl>
 
 <dl class="py function">
 <dt class="sig sig-object py" id="generalization.n100.building.hospital_church_clusters.hospital_church_selections">
@@ -411,6 +454,11 @@ them together with collapsed points from the tools simplify building and simplif
 <dl class="py function">
 <dt class="sig sig-object py" id="generalization.n100.building.removing_overlapping_points.copying_previous_file">
 <span class="sig-prename descclassname"><span class="pre">generalization.n100.building.removing_overlapping_points.</span></span><span class="sig-name descname"><span class="pre">copying_previous_file</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/generalization/n100/building/removing_overlapping_points.html#copying_previous_file"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#generalization.n100.building.removing_overlapping_points.copying_previous_file" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="generalization.n100.building.removing_overlapping_points.adding_new_hierarchy_value_to_points">
+<span class="sig-prename descclassname"><span class="pre">generalization.n100.building.removing_overlapping_points.</span></span><span class="sig-name descname"><span class="pre">adding_new_hierarchy_value_to_points</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/generalization/n100/building/removing_overlapping_points.html#adding_new_hierarchy_value_to_points"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#generalization.n100.building.removing_overlapping_points.adding_new_hierarchy_value_to_points" title="Link to this definition"></a></dt>
 <dd></dd></dl>
 
 <dl class="py function">
