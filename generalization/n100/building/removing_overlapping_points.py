@@ -10,10 +10,21 @@ from env_setup import environment_setup
 from custom_tools.timing_decorator import timing_decorator
 from custom_tools.compare_feature_classes import compare_feature_classes
 
+# Importing custom files
+from file_manager.n100.file_manager_buildings import Building_N100
+from constants.n100_constants import N100_SQLResources
+
+# Importing general packages
+import arcpy
+
+# Importing timing decorator
+from custom_tools.timing_decorator import timing_decorator
+
 
 def main():
     environment_setup.main()
     copying_previous_file()
+    adding_new_hierarchy_value_to_points()
     detecting_graphic_conflicts()
     selecting_points_close_to_graphic_conflict_polygons()
     finding_clusters_amongst_the_points()
@@ -29,6 +40,18 @@ def copying_previous_file():
     arcpy.management.Copy(
         in_data=Building_N100.removing_points_in_water_features___final_points___n100_building.value,
         out_data=Building_N100.removing_overlapping_points___all_building_points___n100_building.value,
+    )
+
+
+@timing_decorator
+def adding_new_hierarchy_value_to_points():
+    # Determining and assigning symbol val
+    arcpy.management.CalculateField(
+        in_table=Building_N100.removing_overlapping_points___all_building_points___n100_building.value,
+        field="hierarchy",
+        expression="determineHierarchy(!BYGGTYP_NBR!)",
+        expression_type="PYTHON3",
+        code_block=N100_SQLResources.nbr_to_hierarchy_overlapping_points.value,
     )
 
 
@@ -78,7 +101,7 @@ def finding_clusters_amongst_the_points():
         out_feature_class=Building_N100.removing_overlapping_points___point_clusters___n100_building.value,
         clustering_method="DBSCAN",
         minimum_points="2",
-        search_distance="50 Meters",
+        search_distance="80 Meters",
     )
 
 
