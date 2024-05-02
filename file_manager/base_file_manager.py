@@ -180,5 +180,5 @@ class BaseFileManager:
         Returns:
             str: The absolute path for the .gdb file.
         """
-        self.validate_name_and_description(file_name)
+        # self.validate_name_and_description(file_name)
         return rf"{self.relative_path_final_outputs}\{file_name}"
