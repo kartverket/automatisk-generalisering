@@ -59,6 +59,7 @@ class BaseFileManager:
         self.relative_path_gdb = rf"{self.local_root_directory}\{self.project_root_directory}\{self.scale}\{self.object}.gdb"
         self.relative_path_general_files = rf"{self.local_root_directory}\{self.project_root_directory}\{self.scale}\{self.general_files_directory_name}"
         self.relative_path_lyrx = rf"{self.local_root_directory}\{self.project_root_directory}\{self.scale}\{self.lyrx_directory_name}"
+        self.relative_path_final_outputs = rf"{self.local_root_directory}\{self.project_root_directory}\{self.scale}\{env_setup.global_config.final_outputs}"
 
     @property
     def script_source_name(self):
@@ -165,3 +166,19 @@ class BaseFileManager:
         """
         self.validate_name_and_description(script_source_name, description)
         return rf"{self.relative_path_lyrx}\{script_source_name}___{description}___{self.scale}_{self.object}.lyrx"
+
+    def generate_final_outputs(
+        self,
+        file_name: str,
+    ):
+        """
+        Generates a file path for geodatabase (.gdb) files for the final output files. After validating the input.
+
+        Args:
+            file_name (str): The name of the file name for the final output file.
+
+        Returns:
+            str: The absolute path for the .gdb file.
+        """
+        self.validate_name_and_description(file_name)
+        return rf"{self.relative_path_final_outputs}\{file_name}"
