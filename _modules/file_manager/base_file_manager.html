@@ -140,6 +140,7 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">relative_path_gdb</span> <span class="o">=</span> <span class="sa">rf</span><span class="s2">&quot;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">local_root_directory</span><span class="si">}</span><span class="s2">\</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">project_root_directory</span><span class="si">}</span><span class="s2">\</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">scale</span><span class="si">}</span><span class="s2">\</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">object</span><span class="si">}</span><span class="s2">.gdb&quot;</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">relative_path_general_files</span> <span class="o">=</span> <span class="sa">rf</span><span class="s2">&quot;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">local_root_directory</span><span class="si">}</span><span class="s2">\</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">project_root_directory</span><span class="si">}</span><span class="s2">\</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">scale</span><span class="si">}</span><span class="s2">\</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">general_files_directory_name</span><span class="si">}</span><span class="s2">&quot;</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">relative_path_lyrx</span> <span class="o">=</span> <span class="sa">rf</span><span class="s2">&quot;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">local_root_directory</span><span class="si">}</span><span class="s2">\</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">project_root_directory</span><span class="si">}</span><span class="s2">\</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">scale</span><span class="si">}</span><span class="s2">\</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">lyrx_directory_name</span><span class="si">}</span><span class="s2">&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">relative_path_final_outputs</span> <span class="o">=</span> <span class="sa">rf</span><span class="s2">&quot;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">local_root_directory</span><span class="si">}</span><span class="s2">\</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">project_root_directory</span><span class="si">}</span><span class="s2">\</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">scale</span><span class="si">}</span><span class="s2">\</span><span class="si">{</span><span class="n">env_setup</span><span class="o">.</span><span class="n">global_config</span><span class="o">.</span><span class="n">final_outputs</span><span class="si">}</span><span class="s2">&quot;</span>
 
     <span class="nd">@property</span>
     <span class="k">def</span> <span class="nf">script_source_name</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
@@ -257,6 +258,25 @@
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">validate_name_and_description</span><span class="p">(</span><span class="n">script_source_name</span><span class="p">,</span> <span class="n">description</span><span class="p">)</span>
         <span class="k">return</span> <span class="sa">rf</span><span class="s2">&quot;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">relative_path_lyrx</span><span class="si">}</span><span class="s2">\</span><span class="si">{</span><span class="n">script_source_name</span><span class="si">}</span><span class="s2">___</span><span class="si">{</span><span class="n">description</span><span class="si">}</span><span class="s2">___</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">scale</span><span class="si">}</span><span class="s2">_</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">object</span><span class="si">}</span><span class="s2">.lyrx&quot;</span></div>
+
+
+<div class="viewcode-block" id="BaseFileManager.generate_final_outputs">
+<a class="viewcode-back" href="../../generated_docs/file_manager.html#file_manager.base_file_manager.BaseFileManager.generate_final_outputs">[docs]</a>
+    <span class="k">def</span> <span class="nf">generate_final_outputs</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">file_name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+    <span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Generates a file path for geodatabase (.gdb) files for the final output files. After validating the input.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            file_name (str): The name of the file name for the final output file.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            str: The absolute path for the .gdb file.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">validate_name_and_description</span><span class="p">(</span><span class="n">file_name</span><span class="p">)</span>
+        <span class="k">return</span> <span class="sa">rf</span><span class="s2">&quot;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">relative_path_final_outputs</span><span class="si">}</span><span class="s2">\</span><span class="si">{</span><span class="n">file_name</span><span class="si">}</span><span class="s2">&quot;</span></div>
 </div>
 
 </pre></div>
