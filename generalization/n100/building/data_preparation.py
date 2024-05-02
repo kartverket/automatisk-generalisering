@@ -280,7 +280,7 @@ def railway_station_points_to_polygons():
     # Applying symbology to polygonprocessed railwaystations
     custom_arcpy.apply_symbology(
         input_layer=Building_N100.data_preparation___railway_stations_to_polygons___n100_building.value,
-        in_symbology_layer=input_symbology.SymbologyN100.railway_stations.value,
+        in_symbology_layer=input_symbology.SymbologyN100.railway_station_squares.value,
         output_name=Building_N100.data_preparation___railway_stations_to_polygons_symbology___n100_building_lyrx.value,
     )
 
