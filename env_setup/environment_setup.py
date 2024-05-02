@@ -3,6 +3,7 @@ import os
 
 import config
 from env_setup.global_config import (
+    final_outputs,
     scale_n50,
     scale_n100,
     scale_n250,
@@ -129,6 +130,7 @@ class ProjectDirectorySetup:
             scale_n500,
         ]
         self.gdb_names = [
+            final_outputs,
             object_admin,
             object_arealdekke_flate,
             object_bygning,
