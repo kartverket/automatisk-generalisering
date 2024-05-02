@@ -10,9 +10,6 @@ object_name = global_config.object_bygning
 file_manager = BaseFileManager(scale=scale, object_name=object_name)
 
 
-##############################################################################################################################################
-
-
 # All scripts
 data_preparation = "data_preparation"
 simplify_polygons = "simplify_polygons"
@@ -28,7 +25,6 @@ hospital_church_clusters = "hospital_church_clusters"
 point_displacement_with_buffer = "point_displacement_with_buffer"
 points_to_squares = "points_to_squares"
 point_resolve_building_conflicts = "point_resolve_building_conflicts"
-resolve_building_conflicts_points = "resolve_building_conflicts_points"  # Change to point_resolve_building_conflicts when OOP is implemented
 data_clean_up = "data_clean_up"
 
 # Additional names
@@ -687,11 +683,9 @@ class Building_N100(Enum):
         description="selecting_church_points_after_cluster_reduction",
     )
 
-    hospital_church_clusters___church_points_too_close_to_hospitals___n100_building = (
-        file_manager.generate_file_name_gdb(
-            script_source_name=hospital_church_clusters,
-            description="church_points_too_close_to_hospitals",
-        )
+    hospital_church_clusters___church_points_NOT_too_close_to_hospitals___n100_building = file_manager.generate_file_name_gdb(
+        script_source_name=hospital_church_clusters,
+        description="church_points_NOT_too_close_to_hospitals",
     )
 
     hospital_church_clusters___hospital_church_points_final___n100_building = (
@@ -701,16 +695,16 @@ class Building_N100(Enum):
         )
     )
 
-    hospital_church_clusters___deleted_churches___n100_building = (
+    hospital_church_clusters___final___n100_building = (
         file_manager.generate_file_name_gdb(
             script_source_name=hospital_church_clusters,
-            description="deleted_churches",
+            description="final",
         )
     )
 
-    hospital_church_clusters___reduced_hospital_and_church_points_final___n100_building = file_manager.generate_file_name_gdb(
+    hospital_church_clusters___all_other_points_that_are_not_hospital_church___n100_building = file_manager.generate_file_name_gdb(
         script_source_name=hospital_church_clusters,
-        description="reduced_hospital_and_church_points_final",
+        description="all_other_points_that_are_not_hospital_church",
     )
 
     # ========================================
@@ -732,6 +726,20 @@ class Building_N100(Enum):
     point_propogate_displacement___points_after_propogate_displacement___n100_building = file_manager.generate_file_name_gdb(
         script_source_name=point_propogate_displacement,
         description="points_after_propogate_displacement",
+    )
+
+    point_propogate_displacement___area_oslo_asker___n100_building = (
+        file_manager.generate_file_name_gdb(
+            script_source_name=point_propogate_displacement,
+            description="area_oslo_asker",
+        )
+    )
+
+    point_propogate_displacement___points_in_area_oslo_asker___n100_building = (
+        file_manager.generate_file_name_gdb(
+            script_source_name=point_propogate_displacement,
+            description="points_in_area_oslo_asker",
+        )
     )
 
     # ========================================
@@ -1065,10 +1073,10 @@ class Building_N100(Enum):
         description="building_polygons_to_points_and_then_squares",
     )
 
-    point_resolve_building_conflicts___road_selection_rbc___n100_building = (
+    point_resolve_building_conflicts___road_buffers_selection_rbc___n100_building = (
         file_manager.generate_file_name_gdb(
             script_source_name=point_resolve_building_conflicts,
-            description="road_selection_rbc",
+            description="road_buffers_selection_rbc",
         )
     )
 
@@ -1253,5 +1261,37 @@ class Building_N100(Enum):
         file_manager.generate_file_name_gdb(
             script_source_name=point_resolve_building_conflicts,
             description="building_points_final",
+        )
+    )
+
+    point_resolve_building_conflicts___road_selection_rbc___n100_building = (
+        file_manager.generate_file_name_gdb(
+            script_source_name=point_resolve_building_conflicts,
+            description="road_selection_rbc",
+        )
+    )
+
+    # ========================================
+    #                              FINALIZING BUILDINGS
+    # ========================================
+
+    finalizing_buildings___tourist_cabins___n100_building = (
+        file_manager.generate_file_name_gdb(
+            script_source_name=point_resolve_building_conflicts,
+            description="building_points_final",
+        )
+    )
+
+    finalizing_buildings___points_not_in_urban_areas___n100_building = (
+        file_manager.generate_file_name_gdb(
+            script_source_name=point_resolve_building_conflicts,
+            description="building_points_final",
+        )
+    )
+
+    finalizing_buildings___all_point_except_tourist_cabins___n100_building = (
+        file_manager.generate_file_name_gdb(
+            script_source_name=point_resolve_building_conflicts,
+            description="all_point_except_tourist_cabins",
         )
     )
