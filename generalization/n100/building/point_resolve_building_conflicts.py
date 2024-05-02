@@ -69,8 +69,8 @@ def selecting_data_with_area():
             "output_name": Building_N100.point_resolve_building_conflicts___building_polygon_selection_rbc___n100_building.value,
         },
         {
-            "input_layer": Building_N100.data_preparation___unsplit_roads___n100_building.value,
-            "output_name": Building_N100.point_resolve_building_conflicts___road_selection_rbc___n100_building.value,
+            "input_layer": Building_N100.polygon_resolve_building_conflicts___merged_road_buffers___n100_building.value,
+            "output_name": Building_N100.point_resolve_building_conflicts___road_buffers_selection_rbc___n100_building.value,
         },
         {
             "input_layer": Building_N100.calculate_point_values___points_pre_resolve_building_conflicts___n100_building.value,
@@ -101,18 +101,13 @@ def apply_symbology_to_the_layers():
     # List of dictionaries containing parameters for each symbology application
     symbology_configs = [
         {
-            "input_layer": Building_N100.point_resolve_building_conflicts___building_point_selection_rbc___n100_building.value,
-            "in_symbology_layer": SymbologyN100.bygningspunkt.value,
-            "output_name": Building_N100.point_resolve_building_conflicts___bygningspunkt_selection___n100_building_lyrx.value,
-        },
-        {
             "input_layer": Building_N100.point_resolve_building_conflicts___building_polygon_selection_rbc___n100_building.value,
             "in_symbology_layer": SymbologyN100.grunnriss.value,
             "output_name": Building_N100.point_resolve_building_conflicts___grunnriss_selection___n100_building_lyrx.value,
         },
         {
-            "input_layer": Building_N100.point_resolve_building_conflicts___road_selection_rbc___n100_building.value,
-            "in_symbology_layer": SymbologyN100.veg_sti.value,
+            "input_layer": Building_N100.point_resolve_building_conflicts___road_buffers_selection_rbc___n100_building.value,
+            "in_symbology_layer": SymbologyN100.road_buffers.value,
             "output_name": Building_N100.point_resolve_building_conflicts___veg_sti_selection___n100_building_lyrx.value,
         },
         {
