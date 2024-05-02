@@ -1,0 +1,37 @@
+# nonk8s
+apiVersion: "backstage.io/v1alpha1"
+kind: "Component"
+metadata:
+  name: "automatisk-generalisering"
+  tags:
+  - "private"
+spec:
+  type: "service"
+  lifecycle: "production"
+  owner: "n50"
+---
+apiVersion: "backstage.io/v1alpha1"
+kind: "Group"
+metadata:
+  name: "security_champion_automatisk-generalisering"
+  title: "Security Champion automatisk-generalisering"
+spec:
+  type: "security_champion"
+  parent: "land_security_champions"
+  members:
+  - "EllingOftedalKV"
+  children:
+  - "resource:automatisk-generalisering"
+---
+apiVersion: "backstage.io/v1alpha1"
+kind: "Resource"
+metadata:
+  name: "automatisk-generalisering"
+  links:
+  - url: "https://github.com/kartverket/automatisk-generalisering"
+    title: "automatisk-generalisering på GitHub"
+spec:
+  type: "repo"
+  owner: "security_champion_automatisk-generalisering"
+  dependencyOf:
+  - "component:automatisk-generalisering"

@@ -19,7 +19,7 @@ from custom_tools.timing_decorator import timing_decorator
 
 
 # Main function
-@timing_decorator("hospital_church_clusters.py")
+@timing_decorator
 def main():
     """
     Summary:
@@ -379,7 +379,6 @@ def reducing_clusters():
 
 @timing_decorator
 def hospitals_and_churches_too_close():
-
     # SQL-expressions to select hospitals and churches
     sql_select_all_hospital = "BYGGTYP_NBR IN (970, 719)"
     sql_select_all_church = "BYGGTYP_NBR = 671"

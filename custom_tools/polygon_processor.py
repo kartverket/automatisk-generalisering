@@ -7,10 +7,15 @@ from multiprocessing import Pool, cpu_count
 
 import config
 from env_setup import environment_setup
+from custom_tools.decorators.partition_io_decorator import partition_io_decorator
 from file_manager.n100.file_manager_buildings import Building_N100
 from constants.n100_constants import N100_Symbology
 
 
+@partition_io_decorator(
+    input_param_names=["input_building_points"],
+    output_param_names=["output_polygon_feature_class"],
+)
 class PolygonProcessor:
     """
     Example

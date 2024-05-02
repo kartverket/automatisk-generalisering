@@ -1,3 +1,4 @@
+final_outputs = "final_outputs"
 scale_n50 = "n50"
 scale_n100 = "n100"
 scale_n250 = "n250"

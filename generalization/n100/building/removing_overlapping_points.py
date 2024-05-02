@@ -21,6 +21,7 @@ import arcpy
 from custom_tools.timing_decorator import timing_decorator
 
 
+@timing_decorator
 def main():
     environment_setup.main()
     copying_previous_file()
@@ -35,7 +36,6 @@ def main():
 
 @timing_decorator
 def copying_previous_file():
-
     # Copying and assigning new name to layer
     arcpy.management.Copy(
         in_data=Building_N100.removing_points_in_water_features___final_points___n100_building.value,
@@ -57,7 +57,6 @@ def adding_new_hierarchy_value_to_points():
 
 @timing_decorator
 def detecting_graphic_conflicts():
-
     arcpy.env.referenceScale = "100000"
 
     # Detecting Graphic Conflicts
@@ -71,7 +70,6 @@ def detecting_graphic_conflicts():
 
 @timing_decorator
 def selecting_points_close_to_graphic_conflict_polygons():
-
     # Find points that are close to the graphic conflict polygons
     custom_arcpy.select_location_and_make_permanent_feature(
         input_layer=Building_N100.removing_overlapping_points___all_building_points___n100_building.value,
@@ -94,7 +92,6 @@ def selecting_points_close_to_graphic_conflict_polygons():
 
 @timing_decorator
 def finding_clusters_amongst_the_points():
-
     # Finding church clusters
     arcpy.gapro.FindPointClusters(
         input_points=Building_N100.removing_overlapping_points___points_close_to_graphic_conflict_polygons___n100_building.value,
@@ -107,7 +104,6 @@ def finding_clusters_amongst_the_points():
 
 @timing_decorator
 def selecting_points_in_a_cluster_and_not_in_a_cluster():
-
     expression_cluster = "CLUSTER_ID > 0"
     expression_not_cluster = "CLUSTER_ID < 0"
 
@@ -180,7 +176,6 @@ def keep_point_with_highest_hierarchy_for_each_cluster():
 
 @timing_decorator
 def merging_final_points_together():
-
     # Merge the final hospital and church layers
     arcpy.management.Merge(
         inputs=[

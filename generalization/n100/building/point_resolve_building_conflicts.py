@@ -19,7 +19,7 @@ from custom_tools.timing_decorator import timing_decorator
 iteration_fc = config.resolve_building_conflicts_iteration_feature
 
 
-@timing_decorator("point_resolve_building_conflicts.py")
+@timing_decorator
 def main():
     """
     This script resolves building conflicts, both building polygons and points
@@ -41,7 +41,6 @@ def main():
 
 @timing_decorator
 def building_points_to_squares():
-
     # Transforms all the building points to squares
     polygon_processor = PolygonProcessor(
         input_building_points=Building_N100.building_point_buffer_displacement__displaced_building_points__n100.value,
@@ -137,7 +136,6 @@ def apply_symbology_to_the_layers():
 
 
 def barriers_for_rbc():
-
     input_barriers_for_rbc = [
         [
             Building_N100.point_resolve_building_conflicts___veg_sti_selection___n100_building_lyrx.value,
@@ -198,7 +196,6 @@ def resolve_building_conflicts_1():
 
 
 def building_polygons_to_keep_after_rbc_1():
-
     # Sql expression to keep only building polygons that are visible (0) after the tool has run
     sql_expression_resolve_building_conflicts_polygon = "invisibility = 0"
 
@@ -211,7 +208,6 @@ def building_polygons_to_keep_after_rbc_1():
 
 
 def transforming_invisible_polygons_to_points_and_then_to_squares():
-
     # Sql expression to keep only building polygons that have invisbility value 1 after the tool has run
     sql_expression_resolve_building_conflicts_polygon = "invisibility = 1"
 
@@ -241,7 +237,6 @@ def transforming_invisible_polygons_to_points_and_then_to_squares():
 
 
 def adding_symbology_to_layers_being_used_for_rbc_2():
-
     # Building squares (from points, transformed to squares in the first function) that are kept after rbc 1
     custom_arcpy.apply_symbology(
         input_layer=Building_N100.point_resolve_building_conflicts___squares_to_keep_after_rbc1___n100_building.value,
@@ -263,7 +258,6 @@ def adding_symbology_to_layers_being_used_for_rbc_2():
 
 
 def resolve_building_conflicts_2():
-
     print("Starting resolve building conflicts 2")
 
     input_buildings_rbc_2 = [
@@ -283,7 +277,6 @@ def resolve_building_conflicts_2():
 
 
 def selecting_features_to_be_kept_after_rbc_2():
-
     sql_expression_resolve_building_conflicts = (
         "(invisibility = 0) OR (symbol_val IN (1, 2, 3))"
     )
@@ -310,7 +303,6 @@ def selecting_features_to_be_kept_after_rbc_2():
 
 
 def transforming_squares_back_to_points():
-
     # Squares from points are transformed back to points
     arcpy.management.FeatureToPoint(
         in_features=Building_N100.point_resolve_building_conflicts___squares_from_points_rbc2___n100_building.value,
@@ -327,7 +319,6 @@ def transforming_squares_back_to_points():
 
 
 def merging_building_points():
-
     arcpy.management.Merge(
         inputs=[
             Building_N100.point_resolve_building_conflicts___squares_from_points_transformed_back_to_points___n100_building.value,
@@ -338,7 +329,6 @@ def merging_building_points():
 
 
 def assigning_final_names():
-
     arcpy.management.CopyFeatures(
         Building_N100.point_resolve_building_conflicts___building_polygons_rbc2___n100_building.value,
         Building_N100.point_resolve_building_conflicts___building_polygons_final___n100_building.value,

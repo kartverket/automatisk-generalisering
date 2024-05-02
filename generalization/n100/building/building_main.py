@@ -19,8 +19,9 @@ from generalization.n100.building import data_clean_up
 from generalization.n100.building import polygon_resolve_building_conflicts
 from generalization.n100.building import removing_overlapping_points
 
+
 # Main function that runs all the building scripts
-@timing_decorator("building_main.py")
+@timing_decorator
 def main():
     """
     This is the main function that runs all the building scripts.
