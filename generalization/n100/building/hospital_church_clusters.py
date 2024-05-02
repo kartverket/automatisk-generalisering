@@ -37,10 +37,22 @@ def main():
     """
 
     environment_setup.main()
+    selecting_all_other_points_that_are_not_hospital_and_church()
     hospital_church_selections()
     find_clusters()
     reducing_clusters()
     hospitals_and_churches_too_close()
+
+
+def selecting_all_other_points_that_are_not_hospital_and_church():
+    # Selecting all hospitals and making feature layer
+    custom_arcpy.select_attribute_and_make_permanent_feature(
+        input_layer=Building_N100.point_propogate_displacement___points_after_propogate_displacement___n100_building.value,
+        expression="BYGGTYP_NBR IN (970, 719, 671)",
+        output_name=Building_N100.hospital_church_clusters___all_other_points_that_are_not_hospital_church___n100_building.value,
+        selection_type=custom_arcpy.SelectionType.NEW_SELECTION,
+        inverted=True,
+    )
 
 
 @timing_decorator
@@ -356,6 +368,8 @@ def reducing_clusters():
             Building_N100.hospital_church_clusters___chosen_churches_from_cluster___n100_building.value
         )
 
+        merge_hospitals_and_churches_list.append()
+
     # Merge the final hospital and church layers
     arcpy.management.Merge(
         inputs=merge_hospitals_and_churches_list,
@@ -385,12 +399,12 @@ def hospitals_and_churches_too_close():
         selection_type=custom_arcpy.SelectionType.NEW_SELECTION,
     )
 
-    # Selecting churches that are 215 Meters away from hospitals
+    # Selecting ONLY churches that are MORE THAN 215 Meters away from hospitals
     custom_arcpy.select_location_and_make_permanent_feature(
         input_layer=Building_N100.hospital_church_clusters___selecting_church_points_after_cluster_reduction___n100_building.value,
         overlap_type=custom_arcpy.OverlapType.WITHIN_A_DISTANCE,
         select_features=Building_N100.hospital_church_clusters___selecting_hospital_points_after_cluster_reduction___n100_building.value,
-        output_name=Building_N100.hospital_church_clusters___church_points_too_close_to_hospitals___n100_building.value,
+        output_name=Building_N100.hospital_church_clusters___church_points_NOT_too_close_to_hospitals___n100_building.value,
         search_distance="215 Meters",
         inverted=True,
     )
@@ -399,9 +413,10 @@ def hospitals_and_churches_too_close():
     arcpy.management.Merge(
         inputs=[
             Building_N100.hospital_church_clusters___selecting_hospital_points_after_cluster_reduction___n100_building.value,
-            Building_N100.hospital_church_clusters___deleted_churches___n100_building.value,
+            Building_N100.hospital_church_clusters___church_points_NOT_too_close_to_hospitals___n100_building.value,
+            Building_N100.hospital_church_clusters___all_other_points_that_are_not_hospital_church___n100_building.value,
         ],
-        output=Building_N100.hospital_church_clusters___reduced_hospital_and_church_points_final___n100_building.value,
+        output=Building_N100.hospital_church_clusters___final___n100_building.value,
     )
 
     print("Hospital and church clusters finished.")
