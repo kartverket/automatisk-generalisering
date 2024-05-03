@@ -83,33 +83,17 @@ class BaseFileManager:
 
     @staticmethod
     def _validate_input(value):
-        """Validate the input to ensure it does not contain spaces or dots."""
-        return not bool(re.search(r"[ .]", value))
+        """Validate the input to ensure it does not contain illegal characters for filenames or whitespace."""
+        illegal_characters = r'[<>:"/\|?*\s]'
+        if re.search(illegal_characters, value):
+            return False
+        return True
 
-    def validate_name_and_description(
-        self,
-        script_source_name,
-        description,
-        file_type=None,
-    ):
-        """
-        Validate the script source name and description.
-
-        Args:
-            script_source_name (str): The name of the script or source generating the file.
-            description (str): A brief description of the file's purpose or contents.
-            file_type (str): file type extension.
-
-        Returns:
-            Raises a ValueError if string contains spaces or dots.
-        """
-
-        if not self._validate_input(script_source_name):
-            raise ValueError("script_source_name must not contain spaces or dots.")
-        if not self._validate_input(description):
-            raise ValueError("description must not contain spaces or dots.")
-        if file_type is not None and not self._validate_input(file_type):
-            raise ValueError("file_type must not contain spaces or dots.")
+    def validate_inputs(self, *args):
+        """Uses the validate_input method to validate the input."""
+        for arg in args:
+            if arg is not None and not self._validate_input(arg):
+                raise ValueError(f"{arg} must not contain spaces or dots.")
 
     def generate_file_name_gdb(
         self,
@@ -126,7 +110,7 @@ class BaseFileManager:
         Returns:
             str: The absolute path for the .gdb file.
         """
-        self.validate_name_and_description(script_source_name, description)
+        self.validate_inputs(script_source_name, description)
         return rf"{self.relative_path_gdb}\{script_source_name}___{description}___{self.scale}_{self.object}"
 
     def generate_file_name_general_files(
@@ -146,7 +130,7 @@ class BaseFileManager:
         Returns:
             str: The absolute path for the general file, including the file extension.
         """
-        self.validate_name_and_description(script_source_name, description, file_type)
+        self.validate_inputs(script_source_name, description, file_type)
         return rf"{self.relative_path_general_files}\{script_source_name}___{description}___{self.scale}_{self.object}.{file_type}"
 
     def generate_file_name_lyrx(
@@ -164,7 +148,7 @@ class BaseFileManager:
         Returns:
             str: The absolute path for the .lyrx file.
         """
-        self.validate_name_and_description(script_source_name, description)
+        self.validate_inputs(script_source_name, description)
         return rf"{self.relative_path_lyrx}\{script_source_name}___{description}___{self.scale}_{self.object}.lyrx"
 
     def generate_final_outputs(
@@ -180,5 +164,5 @@ class BaseFileManager:
         Returns:
             str: The absolute path for the .gdb file.
         """
-        # self.validate_name_and_description(file_name)
+        self.validate_inputs(file_name)
         return rf"{self.relative_path_final_outputs}\{file_name}"
