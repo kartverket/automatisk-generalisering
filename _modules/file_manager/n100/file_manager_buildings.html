@@ -104,6 +104,7 @@
 <span class="n">point_displacement_with_buffer</span> <span class="o">=</span> <span class="s2">&quot;point_displacement_with_buffer&quot;</span>
 <span class="n">points_to_squares</span> <span class="o">=</span> <span class="s2">&quot;points_to_squares&quot;</span>
 <span class="n">point_resolve_building_conflicts</span> <span class="o">=</span> <span class="s2">&quot;point_resolve_building_conflicts&quot;</span>
+<span class="n">finalizing_buildings</span> <span class="o">=</span> <span class="s2">&quot;finalizing_buildings&quot;</span>
 <span class="n">data_clean_up</span> <span class="o">=</span> <span class="s2">&quot;data_clean_up&quot;</span>
 
 <span class="c1"># Additional names</span>
@@ -481,11 +482,9 @@
         <span class="p">)</span>
     <span class="p">)</span>
 
-    <span class="n">polygon_propogate_displacement___after_displacement___n100_building</span> <span class="o">=</span> <span class="p">(</span>
-        <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_gdb</span><span class="p">(</span>
-            <span class="n">script_source_name</span><span class="o">=</span><span class="n">polygon_propogate_displacement</span><span class="p">,</span>
-            <span class="n">description</span><span class="o">=</span><span class="s2">&quot;after_displacement&quot;</span><span class="p">,</span>
-        <span class="p">)</span>
+    <span class="n">polygon_propogate_displacement___building_polygons_after_displacement___n100_building</span> <span class="o">=</span> <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_gdb</span><span class="p">(</span>
+        <span class="n">script_source_name</span><span class="o">=</span><span class="n">polygon_propogate_displacement</span><span class="p">,</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">&quot;building_polygons_after_displacement&quot;</span><span class="p">,</span>
     <span class="p">)</span>
 
     <span class="n">polygon_propogate_displacement___displacement_feature_500m_from_polygon___n100_building</span> <span class="o">=</span> <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_gdb</span><span class="p">(</span>
@@ -1358,22 +1357,27 @@
 
     <span class="n">finalizing_buildings___tourist_cabins___n100_building</span> <span class="o">=</span> <span class="p">(</span>
         <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_gdb</span><span class="p">(</span>
-            <span class="n">script_source_name</span><span class="o">=</span><span class="n">point_resolve_building_conflicts</span><span class="p">,</span>
+            <span class="n">script_source_name</span><span class="o">=</span><span class="n">finalizing_buildings</span><span class="p">,</span>
             <span class="n">description</span><span class="o">=</span><span class="s2">&quot;building_points_final&quot;</span><span class="p">,</span>
         <span class="p">)</span>
     <span class="p">)</span>
 
-    <span class="n">finalizing_buildings___points_not_in_urban_areas___n100_building</span> <span class="o">=</span> <span class="p">(</span>
-        <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_gdb</span><span class="p">(</span>
-            <span class="n">script_source_name</span><span class="o">=</span><span class="n">point_resolve_building_conflicts</span><span class="p">,</span>
-            <span class="n">description</span><span class="o">=</span><span class="s2">&quot;building_points_final&quot;</span><span class="p">,</span>
-        <span class="p">)</span>
+    <span class="n">finalizing_buildings___points_not_intersecting_or_bordering_urban_areas___n100_building</span> <span class="o">=</span> <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_gdb</span><span class="p">(</span>
+        <span class="n">script_source_name</span><span class="o">=</span><span class="n">finalizing_buildings</span><span class="p">,</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">&quot;points_not_intersecting_or_bordering_urban_areas&quot;</span><span class="p">,</span>
     <span class="p">)</span>
 
     <span class="n">finalizing_buildings___all_point_except_tourist_cabins___n100_building</span> <span class="o">=</span> <span class="p">(</span>
         <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_gdb</span><span class="p">(</span>
-            <span class="n">script_source_name</span><span class="o">=</span><span class="n">point_resolve_building_conflicts</span><span class="p">,</span>
+            <span class="n">script_source_name</span><span class="o">=</span><span class="n">finalizing_buildings</span><span class="p">,</span>
             <span class="n">description</span><span class="o">=</span><span class="s2">&quot;all_point_except_tourist_cabins&quot;</span><span class="p">,</span>
+        <span class="p">)</span>
+    <span class="p">)</span>
+
+    <span class="n">finalizing_buildings___urban_areas___n100_building</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_gdb</span><span class="p">(</span>
+            <span class="n">script_source_name</span><span class="o">=</span><span class="n">finalizing_buildings</span><span class="p">,</span>
+            <span class="n">description</span><span class="o">=</span><span class="s2">&quot;urban_areas&quot;</span><span class="p">,</span>
         <span class="p">)</span>
     <span class="p">)</span></div>
 
