@@ -38,7 +38,7 @@ def removing_points_in_urban_areas():
     custom_arcpy.select_location_and_make_permanent_feature(
         input_layer=Building_N100.removing_overlapping_points___final___n100_building.value,
         overlap_type=custom_arcpy.OverlapType.WITHIN_A_DISTANCE,
-        select_features=Building_N100.data_preparation___urban_area_selection_n100___n100_building.value,
+        select_features=Building_N100.finalizing_buildings___urban_areas___n100_building.value,
         search_distance="0.5 Meters",
         inverted=True,
         output_name=Building_N100.finalizing_buildings___points_not_intersecting_or_bordering_urban_areas___n100_building.value,
