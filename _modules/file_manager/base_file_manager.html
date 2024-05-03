@@ -164,35 +164,19 @@
 
     <span class="nd">@staticmethod</span>
     <span class="k">def</span> <span class="nf">_validate_input</span><span class="p">(</span><span class="n">value</span><span class="p">):</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Validate the input to ensure it does not contain spaces or dots.&quot;&quot;&quot;</span>
-        <span class="k">return</span> <span class="ow">not</span> <span class="nb">bool</span><span class="p">(</span><span class="n">re</span><span class="o">.</span><span class="n">search</span><span class="p">(</span><span class="sa">r</span><span class="s2">&quot;[ .]&quot;</span><span class="p">,</span> <span class="n">value</span><span class="p">))</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Validate the input to ensure it does not contain illegal characters for filenames or whitespace.&quot;&quot;&quot;</span>
+        <span class="n">illegal_characters</span> <span class="o">=</span> <span class="sa">r</span><span class="s1">&#39;[&lt;&gt;:&quot;/\|?*\s]&#39;</span>
+        <span class="k">if</span> <span class="n">re</span><span class="o">.</span><span class="n">search</span><span class="p">(</span><span class="n">illegal_characters</span><span class="p">,</span> <span class="n">value</span><span class="p">):</span>
+            <span class="k">return</span> <span class="kc">False</span>
+        <span class="k">return</span> <span class="kc">True</span>
 
-<div class="viewcode-block" id="BaseFileManager.validate_name_and_description">
-<a class="viewcode-back" href="../../generated_docs/file_manager.html#file_manager.base_file_manager.BaseFileManager.validate_name_and_description">[docs]</a>
-    <span class="k">def</span> <span class="nf">validate_name_and_description</span><span class="p">(</span>
-        <span class="bp">self</span><span class="p">,</span>
-        <span class="n">script_source_name</span><span class="p">,</span>
-        <span class="n">description</span><span class="p">,</span>
-        <span class="n">file_type</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
-    <span class="p">):</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">        Validate the script source name and description.</span>
-
-<span class="sd">        Args:</span>
-<span class="sd">            script_source_name (str): The name of the script or source generating the file.</span>
-<span class="sd">            description (str): A brief description of the file&#39;s purpose or contents.</span>
-<span class="sd">            file_type (str): file type extension.</span>
-
-<span class="sd">        Returns:</span>
-<span class="sd">            Raises a ValueError if string contains spaces or dots.</span>
-<span class="sd">        &quot;&quot;&quot;</span>
-
-        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">_validate_input</span><span class="p">(</span><span class="n">script_source_name</span><span class="p">):</span>
-            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;script_source_name must not contain spaces or dots.&quot;</span><span class="p">)</span>
-        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">_validate_input</span><span class="p">(</span><span class="n">description</span><span class="p">):</span>
-            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;description must not contain spaces or dots.&quot;</span><span class="p">)</span>
-        <span class="k">if</span> <span class="n">file_type</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">_validate_input</span><span class="p">(</span><span class="n">file_type</span><span class="p">):</span>
-            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;file_type must not contain spaces or dots.&quot;</span><span class="p">)</span></div>
+<div class="viewcode-block" id="BaseFileManager.validate_inputs">
+<a class="viewcode-back" href="../../generated_docs/file_manager.html#file_manager.base_file_manager.BaseFileManager.validate_inputs">[docs]</a>
+    <span class="k">def</span> <span class="nf">validate_inputs</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Uses the validate_input method to validate the input.&quot;&quot;&quot;</span>
+        <span class="k">for</span> <span class="n">arg</span> <span class="ow">in</span> <span class="n">args</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">arg</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">_validate_input</span><span class="p">(</span><span class="n">arg</span><span class="p">):</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">arg</span><span class="si">}</span><span class="s2"> must not contain spaces or dots.&quot;</span><span class="p">)</span></div>
 
 
 <div class="viewcode-block" id="BaseFileManager.generate_file_name_gdb">
@@ -212,7 +196,7 @@
 <span class="sd">        Returns:</span>
 <span class="sd">            str: The absolute path for the .gdb file.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">validate_name_and_description</span><span class="p">(</span><span class="n">script_source_name</span><span class="p">,</span> <span class="n">description</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">validate_inputs</span><span class="p">(</span><span class="n">script_source_name</span><span class="p">,</span> <span class="n">description</span><span class="p">)</span>
         <span class="k">return</span> <span class="sa">rf</span><span class="s2">&quot;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">relative_path_gdb</span><span class="si">}</span><span class="s2">\</span><span class="si">{</span><span class="n">script_source_name</span><span class="si">}</span><span class="s2">___</span><span class="si">{</span><span class="n">description</span><span class="si">}</span><span class="s2">___</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">scale</span><span class="si">}</span><span class="s2">_</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">object</span><span class="si">}</span><span class="s2">&quot;</span></div>
 
 
@@ -235,7 +219,7 @@
 <span class="sd">        Returns:</span>
 <span class="sd">            str: The absolute path for the general file, including the file extension.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">validate_name_and_description</span><span class="p">(</span><span class="n">script_source_name</span><span class="p">,</span> <span class="n">description</span><span class="p">,</span> <span class="n">file_type</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">validate_inputs</span><span class="p">(</span><span class="n">script_source_name</span><span class="p">,</span> <span class="n">description</span><span class="p">,</span> <span class="n">file_type</span><span class="p">)</span>
         <span class="k">return</span> <span class="sa">rf</span><span class="s2">&quot;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">relative_path_general_files</span><span class="si">}</span><span class="s2">\</span><span class="si">{</span><span class="n">script_source_name</span><span class="si">}</span><span class="s2">___</span><span class="si">{</span><span class="n">description</span><span class="si">}</span><span class="s2">___</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">scale</span><span class="si">}</span><span class="s2">_</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">object</span><span class="si">}</span><span class="s2">.</span><span class="si">{</span><span class="n">file_type</span><span class="si">}</span><span class="s2">&quot;</span></div>
 
 
@@ -256,7 +240,7 @@
 <span class="sd">        Returns:</span>
 <span class="sd">            str: The absolute path for the .lyrx file.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">validate_name_and_description</span><span class="p">(</span><span class="n">script_source_name</span><span class="p">,</span> <span class="n">description</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">validate_inputs</span><span class="p">(</span><span class="n">script_source_name</span><span class="p">,</span> <span class="n">description</span><span class="p">)</span>
         <span class="k">return</span> <span class="sa">rf</span><span class="s2">&quot;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">relative_path_lyrx</span><span class="si">}</span><span class="s2">\</span><span class="si">{</span><span class="n">script_source_name</span><span class="si">}</span><span class="s2">___</span><span class="si">{</span><span class="n">description</span><span class="si">}</span><span class="s2">___</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">scale</span><span class="si">}</span><span class="s2">_</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">object</span><span class="si">}</span><span class="s2">.lyrx&quot;</span></div>
 
 
@@ -275,7 +259,7 @@
 <span class="sd">        Returns:</span>
 <span class="sd">            str: The absolute path for the .gdb file.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="c1"># self.validate_name_and_description(file_name)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">validate_inputs</span><span class="p">(</span><span class="n">file_name</span><span class="p">)</span>
         <span class="k">return</span> <span class="sa">rf</span><span class="s2">&quot;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">relative_path_final_outputs</span><span class="si">}</span><span class="s2">\</span><span class="si">{</span><span class="n">file_name</span><span class="si">}</span><span class="s2">&quot;</span></div>
 </div>
 

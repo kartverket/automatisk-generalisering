@@ -67,7 +67,7 @@
 <li class="toctree-l4"><a class="reference internal" href="#id3"><code class="docutils literal notranslate"><span class="pre">BaseFileManager.lyrx_directory_name</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="#file_manager.base_file_manager.BaseFileManager.script_source_name"><code class="docutils literal notranslate"><span class="pre">BaseFileManager.script_source_name</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="#file_manager.base_file_manager.BaseFileManager.description"><code class="docutils literal notranslate"><span class="pre">BaseFileManager.description</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="#file_manager.base_file_manager.BaseFileManager.validate_name_and_description"><code class="docutils literal notranslate"><span class="pre">BaseFileManager.validate_name_and_description()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#file_manager.base_file_manager.BaseFileManager.validate_inputs"><code class="docutils literal notranslate"><span class="pre">BaseFileManager.validate_inputs()</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="#file_manager.base_file_manager.BaseFileManager.generate_file_name_gdb"><code class="docutils literal notranslate"><span class="pre">BaseFileManager.generate_file_name_gdb()</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="#file_manager.base_file_manager.BaseFileManager.generate_file_name_general_files"><code class="docutils literal notranslate"><span class="pre">BaseFileManager.generate_file_name_general_files()</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="#file_manager.base_file_manager.BaseFileManager.generate_file_name_lyrx"><code class="docutils literal notranslate"><span class="pre">BaseFileManager.generate_file_name_lyrx()</span></code></a></li>
@@ -487,21 +487,9 @@ general files, and layer files, using the project’s naming conventions and dir
 <dd></dd></dl>
 
 <dl class="py method">
-<dt class="sig sig-object py" id="file_manager.base_file_manager.BaseFileManager.validate_name_and_description">
-<span class="sig-name descname"><span class="pre">validate_name_and_description</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">script_source_name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">description</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">file_type</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/file_manager/base_file_manager.html#BaseFileManager.validate_name_and_description"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#file_manager.base_file_manager.BaseFileManager.validate_name_and_description" title="Link to this definition"></a></dt>
-<dd><p>Validate the script source name and description.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>script_source_name</strong> (<em>str</em>) – The name of the script or source generating the file.</p></li>
-<li><p><strong>description</strong> (<em>str</em>) – A brief description of the file’s purpose or contents.</p></li>
-<li><p><strong>file_type</strong> (<em>str</em>) – file type extension.</p></li>
-</ul>
-</dd>
-<dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><p>Raises a ValueError if string contains spaces or dots.</p>
-</dd>
-</dl>
+<dt class="sig sig-object py" id="file_manager.base_file_manager.BaseFileManager.validate_inputs">
+<span class="sig-name descname"><span class="pre">validate_inputs</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/file_manager/base_file_manager.html#BaseFileManager.validate_inputs"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#file_manager.base_file_manager.BaseFileManager.validate_inputs" title="Link to this definition"></a></dt>
+<dd><p>Uses the validate_input method to validate the input.</p>
 </dd></dl>
 
 <dl class="py method">
