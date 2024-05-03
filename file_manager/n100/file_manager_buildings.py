@@ -25,6 +25,7 @@ hospital_church_clusters = "hospital_church_clusters"
 point_displacement_with_buffer = "point_displacement_with_buffer"
 points_to_squares = "points_to_squares"
 point_resolve_building_conflicts = "point_resolve_building_conflicts"
+finalizing_buildings = "finalizing_buildings"
 data_clean_up = "data_clean_up"
 
 # Additional names
@@ -400,11 +401,9 @@ class Building_N100(Enum):
         )
     )
 
-    polygon_propogate_displacement___after_displacement___n100_building = (
-        file_manager.generate_file_name_gdb(
-            script_source_name=polygon_propogate_displacement,
-            description="after_displacement",
-        )
+    polygon_propogate_displacement___building_polygons_after_displacement___n100_building = file_manager.generate_file_name_gdb(
+        script_source_name=polygon_propogate_displacement,
+        description="building_polygons_after_displacement",
     )
 
     polygon_propogate_displacement___displacement_feature_500m_from_polygon___n100_building = file_manager.generate_file_name_gdb(
@@ -1277,21 +1276,26 @@ class Building_N100(Enum):
 
     finalizing_buildings___tourist_cabins___n100_building = (
         file_manager.generate_file_name_gdb(
-            script_source_name=point_resolve_building_conflicts,
+            script_source_name=finalizing_buildings,
             description="building_points_final",
         )
     )
 
-    finalizing_buildings___points_not_in_urban_areas___n100_building = (
-        file_manager.generate_file_name_gdb(
-            script_source_name=point_resolve_building_conflicts,
-            description="building_points_final",
-        )
+    finalizing_buildings___points_not_intersecting_or_bordering_urban_areas___n100_building = file_manager.generate_file_name_gdb(
+        script_source_name=finalizing_buildings,
+        description="points_not_intersecting_or_bordering_urban_areas",
     )
 
     finalizing_buildings___all_point_except_tourist_cabins___n100_building = (
         file_manager.generate_file_name_gdb(
-            script_source_name=point_resolve_building_conflicts,
+            script_source_name=finalizing_buildings,
             description="all_point_except_tourist_cabins",
+        )
+    )
+
+    finalizing_buildings___urban_areas___n100_building = (
+        file_manager.generate_file_name_gdb(
+            script_source_name=finalizing_buildings,
+            description="urban_areas",
         )
     )
