@@ -649,19 +649,22 @@ class PartitionIterator:
                 self.process_context_features(alias, iteration_partition)
 
     def define_io_params(self):
-        for func in self.custom_functions:
+        for func_config in self.custom_functions:
+            if type(func_config) is dict:
+                method = func_config.get("method")
+                func = getattr(func_config.get("class"), method)
+                func_name = f"{func_config.get('class').__name__}.{method}"
+            else:
+                func = func_config
+                func_name = func.__name__
+
             metadata = getattr(func, "_partition_io_metadata", None)
             if metadata:
-                # Save the input and output parameters of the function for later use
-                self.custom_func_io_params[func] = {
-                    "inputs": metadata["inputs"],
-                    "outputs": metadata["outputs"],
-                }
-                print(f"Function {func.__name__} has input and output parameters.")
+                print(f"IO parameters for {func_name}:")
+                print(f"  - Input parameters: {metadata['inputs']}")
+                print(f"  - Output parameters: {metadata['outputs']}")
             else:
-                raise ValueError(
-                    f"The function {func.__name__} doesn't have the _partition_io_metadata attribute. Please ensure the function is decorated properly."
-                )
+                print(f"No IO metadata found for {func_name}.")
 
     def determine_aliases_types(self):
         pass
@@ -835,6 +838,7 @@ if __name__ == "__main__":
     partition_iterator = PartitionIterator(
         alias_path_data=inputs,
         alias_path_outputs=outputs,
+        custom_functions=[polygon_processor_config],
         root_file_partition_iterator=Building_N100.iteration__partition_iterator__n100.value,
         scale=env_setup.global_config.scale_n100,
         dictionary_documentation_path=Building_N100.iteration___partition_iterator_json_documentation___building_n100.value,
