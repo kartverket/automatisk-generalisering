@@ -5,7 +5,7 @@ import time
 # Importing custom files
 import config
 from custom_tools import custom_arcpy
-
+from env_setup import environment_setup
 from file_manager.n100.file_manager_buildings import Building_N100
 
 
@@ -16,13 +16,14 @@ from input_data import input_n100
 
 
 def main():
-    removing_points_in_urban_areas()
-    # selecting_all_tourist_cabins()
-    # assigning_final_names()
+    environment_setup.main()
+    removing_points_in_and_close_to_urban_areas()
+    selecting_all_tourist_cabins()
+    assigning_final_file_names()
 
 
 @timing_decorator
-def removing_points_in_urban_areas():
+def removing_points_in_and_close_to_urban_areas():
 
     # Defining sql expression to select urban areas
     urban_areas_sql_expr = "OBJTYPE = 'Tettbebyggelse' Or OBJTYPE = 'Industriområde' Or OBJTYPE = 'BymessigBebyggelse'"
@@ -34,14 +35,40 @@ def removing_points_in_urban_areas():
         output_name=Building_N100.finalizing_buildings___urban_areas___n100_building.value,
     )
 
-    # Selecting building points that are further away than 0,5 Meters from urban areas
+    # Selecting building points that are NOT further away than 50 Meters from urban areas
     custom_arcpy.select_location_and_make_permanent_feature(
         input_layer=Building_N100.removing_overlapping_points___final___n100_building.value,
         overlap_type=custom_arcpy.OverlapType.WITHIN_A_DISTANCE,
         select_features=Building_N100.finalizing_buildings___urban_areas___n100_building.value,
-        search_distance="0.5 Meters",
+        search_distance="50 Meters",
         inverted=True,
-        output_name=Building_N100.finalizing_buildings___points_not_intersecting_or_bordering_urban_areas___n100_building.value,
+        output_name=Building_N100.finalizing_buildings___points_not_close_to_urban_areas___n100_building.value,
+    )
+
+    # Selecting hospital and churches - to merge back in with the points further than 50 Merers away from urban areas
+    custom_arcpy.select_attribute_and_make_permanent_feature(
+        input_layer=Building_N100.finalizing_buildings___points_not_close_to_urban_areas___n100_building.value,
+        expression="BYGGTYP_NBR IN (970, 719, 671)",
+        output_name=Building_N100.finalizing_buildings___selecting_hospital_and_churches_in_urban_areas___n100_building.value,
+    )
+
+    # Selecting building points that are further away than 50 Meters from urban areas
+    custom_arcpy.select_location_and_make_permanent_feature(
+        input_layer=Building_N100.removing_overlapping_points___final___n100_building.value,
+        overlap_type=custom_arcpy.OverlapType.WITHIN_A_DISTANCE,
+        select_features=Building_N100.finalizing_buildings___urban_areas___n100_building.value,
+        search_distance="50 Meters",
+        inverted=True,
+        output_name=Building_N100.finalizing_buildings___points_not_close_to_urban_areas___n100_building.value,
+    )
+
+    # Merging hospital and churches in urban areas with points that are further away from urban areas than 50 Meters
+    arcpy.management.Merge(
+        inputs=[
+            Building_N100.finalizing_buildings___selecting_hospital_and_churches_in_urban_areas___n100_building.value,
+            Building_N100.finalizing_buildings___points_not_close_to_urban_areas___n100_building.value,
+        ],
+        output=Building_N100.finalizing_buildings___all_points_not_in_urban_areas___n100_building.value,
     )
 
 
@@ -52,30 +79,35 @@ def selecting_all_tourist_cabins():
 
     # Selecting all building points categorized as tourist cabins
     custom_arcpy.select_attribute_and_make_permanent_feature(
-        input_layer=Building_N100.finalizing_buildings___points_not_intersecting_or_bordering_urban_areas___n100_building.value,
+        input_layer=Building_N100.finalizing_buildings___all_points_not_in_urban_areas___n100_building.value,
         expression=selecting_tourist_cabins,
         output_name=Building_N100.finalizing_buildings___tourist_cabins___n100_building.value,
     )
     # Selecting all other building points (not tourist cabins)
     custom_arcpy.select_attribute_and_make_permanent_feature(
-        input_layer=Building_N100.finalizing_buildings___points_not_intersecting_or_bordering_urban_areas___n100_building.value,
+        input_layer=Building_N100.finalizing_buildings___all_points_not_in_urban_areas___n100_building.value,
         expression=selecting_tourist_cabins,
-        output_name=Building_N100.finalizing_buildings___all_point_except_tourist_cabins___n100_building.value,
+        output_name=Building_N100.finalizing_buildings___all_points_except_tourist_cabins___n100_building.value,
         inverted=True,
     )
 
 
 @timing_decorator
-def assigning_final_names():
+def assigning_final_file_names():
 
     arcpy.management.CopyFeatures(
-        Building_N100.Building_N100.finalizing_buildings___tourist_cabins___n100_building.value,
-        Building_N100.finalizing_buildings___TuristHytte___n100_building.value,
+        Building_N100.finalizing_buildings___tourist_cabins___n100_building.value,
+        Building_N100.TuristHytte.value,
     )
 
     arcpy.management.CopyFeatures(
-        Building_N100.point_resolve_building_conflicts___final_points_merged___n100_building.value,
-        Building_N100.point_resolve_building_conflicts___building_points_final___n100_building.value,
+        Building_N100.finalizing_buildings___all_points_except_tourist_cabins___n100_building.value,
+        Building_N100.BygningsPunkt.value,
+    )
+
+    arcpy.management.CopyFeatures(
+        Building_N100.point_resolve_building_conflicts___building_polygons_final___n100_building.value,
+        Building_N100.Grunnriss.value,
     )
 
 

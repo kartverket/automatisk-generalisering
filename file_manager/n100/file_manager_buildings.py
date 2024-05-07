@@ -560,10 +560,10 @@ class Building_N100(Enum):
         )
     )
 
-    polygon_resolve_building_conflicts___railway_buffer___n100_building_lyrx = (
+    polygon_resolve_building_conflicts___railway___n100_building_lyrx = (
         file_manager.generate_file_name_lyrx(
             script_source_name=polygon_resolve_building_conflicts,
-            description="railway_buffer",
+            description="railway",
         )
     )
 
@@ -1281,15 +1281,17 @@ class Building_N100(Enum):
         )
     )
 
-    finalizing_buildings___points_not_intersecting_or_bordering_urban_areas___n100_building = file_manager.generate_file_name_gdb(
-        script_source_name=finalizing_buildings,
-        description="points_not_intersecting_or_bordering_urban_areas",
-    )
-
-    finalizing_buildings___all_point_except_tourist_cabins___n100_building = (
+    finalizing_buildings___points_not_close_to_urban_areas___n100_building = (
         file_manager.generate_file_name_gdb(
             script_source_name=finalizing_buildings,
-            description="all_point_except_tourist_cabins",
+            description="points_not_close_to_urban_areas",
+        )
+    )
+
+    finalizing_buildings___all_points_except_tourist_cabins___n100_building = (
+        file_manager.generate_file_name_gdb(
+            script_source_name=finalizing_buildings,
+            description="all_points_except_tourist_cabins",
         )
     )
 
@@ -1298,4 +1300,28 @@ class Building_N100(Enum):
             script_source_name=finalizing_buildings,
             description="urban_areas",
         )
+    )
+
+    finalizing_buildings___selecting_hospital_and_churches_in_urban_areas___n100_building = file_manager.generate_file_name_gdb(
+        script_source_name=finalizing_buildings,
+        description="selecting_hospital_and_churches_in_urban_areas",
+    )
+
+    finalizing_buildings___all_points_not_in_urban_areas___n100_building = (
+        file_manager.generate_file_name_gdb(
+            script_source_name=finalizing_buildings,
+            description="all_points_not_in_urban_areas",
+        )
+    )
+
+    TuristHytte = file_manager.generate_final_outputs(
+        file_name="TuristHytte",
+    )
+
+    BygningsPunkt = file_manager.generate_final_outputs(
+        file_name="BygningsPunkt",
+    )
+
+    Grunnriss = file_manager.generate_final_outputs(
+        file_name="Grunnriss",
     )

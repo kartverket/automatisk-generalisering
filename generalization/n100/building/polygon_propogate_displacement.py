@@ -74,7 +74,7 @@ def propagate_displacement_building_polygons():
     # Copying and assigning new name to layer
     arcpy.management.Copy(
         in_data=Building_N100.polygon_propogate_displacement___pre_displacement___n100_building.value,
-        out_data=Building_N100.polygon_propogate_displacement___after_displacement___n100_building.value,
+        out_data=Building_N100.polygon_propogate_displacement___building_polygons_after_displacement___n100_building.value,
     )
 
 
