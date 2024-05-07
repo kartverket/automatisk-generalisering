@@ -70,8 +70,6 @@ def main():
 
     environment_setup.main()
     roads_and_water_barriers_500_m_from_building_polygons()
-    railway_500_m_from_building_polygons()
-    create_railway_buffer()
     hospital_church_points_to_squares()
     apply_symbology_to_layers()
     resolve_building_conflict_building_polygon()
@@ -98,7 +96,7 @@ def roads_and_water_barriers_500_m_from_building_polygons():
     custom_arcpy.select_location_and_make_permanent_feature(
         input_layer=Building_N100.data_preperation___waterfeatures_from_begrensningskurve_not_rivers___n100_building.value,
         overlap_type=custom_arcpy.OverlapType.WITHIN_A_DISTANCE,
-        select_features=Building_N100.polygon_propogate_displacement___after_displacement___n100_building.value,
+        select_features=Building_N100.polygon_propogate_displacement___building_polygons_after_displacement___n100_building.value,
         output_name=Building_N100.polygon_resolve_building_conflicts___begrensningskurve_500m_from_displaced_polygon___n100_building.value,
         search_distance="500 Meters",
     )
@@ -107,7 +105,7 @@ def roads_and_water_barriers_500_m_from_building_polygons():
     custom_arcpy.select_location_and_make_permanent_feature(
         input_layer=Building_N100.data_preparation___unsplit_roads___n100_building.value,
         overlap_type=custom_arcpy.OverlapType.WITHIN_A_DISTANCE,
-        select_features=Building_N100.polygon_propogate_displacement___after_displacement___n100_building.value,
+        select_features=Building_N100.polygon_propogate_displacement___building_polygons_after_displacement___n100_building.value,
         output_name=Building_N100.polygon_resolve_building_conflicts___roads_500m_from_displaced_polygon___n100_building.value,
         search_distance="500 Meters",
     )
@@ -116,31 +114,9 @@ def roads_and_water_barriers_500_m_from_building_polygons():
     custom_arcpy.select_location_and_make_permanent_feature(
         input_layer=Building_N100.data_preparation___unsplit_roads___n100_building.value,
         overlap_type=custom_arcpy.OverlapType.WITHIN_A_DISTANCE,
-        select_features=Building_N100.polygon_propogate_displacement___after_displacement___n100_building.value,
+        select_features=Building_N100.polygon_propogate_displacement___building_polygons_after_displacement___n100_building.value,
         output_name=Building_N100.polygon_resolve_building_conflicts___roads_500m_from_displaced_polygon___n100_building.value,
         search_distance="500 Meters",
-    )
-
-
-@timing_decorator
-def railway_500_m_from_building_polygons():
-    # Selecting railway 500 meters from railways (togbane)
-    custom_arcpy.select_location_and_make_permanent_feature(
-        input_layer=input_data.input_n100.Bane,
-        overlap_type=custom_arcpy.OverlapType.WITHIN_A_DISTANCE,
-        select_features=Building_N100.polygon_propogate_displacement___after_displacement___n100_building.value,
-        output_name=Building_N100.polygon_resolve_building_conflicts___railway_500m_from_displaced_polygon___n100_building.value,
-        search_distance="500 Meters",
-    )
-
-
-@timing_decorator
-def create_railway_buffer():
-    # Buffering the railways
-    arcpy.analysis.PairwiseBuffer(
-        in_features=Building_N100.polygon_resolve_building_conflicts___railway_500m_from_displaced_polygon___n100_building.value,
-        out_feature_class=Building_N100.polygon_resolve_building_conflicts___railway_buffer___n100_building.value,
-        buffer_distance_or_field="0.1 Meters",
     )
 
 
@@ -200,7 +176,7 @@ def apply_symbology_to_layers():
     print("Applying symbology ...")
     # Applying symbology to building polygons
     custom_arcpy.apply_symbology(
-        input_layer=Building_N100.polygon_propogate_displacement___after_displacement___n100_building.value,
+        input_layer=Building_N100.polygon_propogate_displacement___building_polygons_after_displacement___n100_building.value,
         in_symbology_layer=input_symbology.SymbologyN100.grunnriss.value,
         output_name=Building_N100.polygon_resolve_building_conflicts___building_polygon___n100_building_lyrx.value,
     )
@@ -218,11 +194,11 @@ def apply_symbology_to_layers():
         output_name=Building_N100.polygon_resolve_building_conflicts___begrensningskurve___n100_building_lyrx.value,
     )
 
-    # Applying symbology to railway buffer
+    # Applying symbology to railway
     custom_arcpy.apply_symbology(
-        input_layer=Building_N100.polygon_resolve_building_conflicts___railway_buffer___n100_building.value,
+        input_layer=input_data.input_n100.Bane,
         in_symbology_layer=input_symbology.SymbologyN100.railways.value,
-        output_name=Building_N100.polygon_resolve_building_conflicts___railway_buffer___n100_building_lyrx.value,
+        output_name=Building_N100.polygon_resolve_building_conflicts___railway___n100_building_lyrx.value,
     )
 
 
@@ -266,7 +242,7 @@ def resolve_building_conflict_building_polygon():
             "45 Meters",
         ],
         [
-            Building_N100.polygon_resolve_building_conflicts___railway_buffer___n100_building_lyrx.value,
+            Building_N100.polygon_resolve_building_conflicts___railway___n100_building_lyrx.value,
             "false",
             "45 Meters",
         ],
@@ -283,7 +259,7 @@ def resolve_building_conflict_building_polygon():
 
     # Copying and assigning new name to layer
     arcpy.management.Copy(
-        in_data=Building_N100.polygon_propogate_displacement___after_displacement___n100_building.value,
+        in_data=Building_N100.polygon_propogate_displacement___building_polygons_after_displacement___n100_building.value,
         out_data=Building_N100.polygon_resolve_building_conflicts___after_rbc___n100_building.value,
     )
     print("Finished")
