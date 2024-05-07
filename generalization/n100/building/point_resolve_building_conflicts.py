@@ -57,7 +57,7 @@ def selecting_data_with_area():
     # Selects data in Asker and Oslo only
     custom_arcpy.select_attribute_and_make_permanent_feature(
         input_layer=input_n100.AdminFlate,
-        expression="NAVN IN ('Asker', 'Oslo')",
+        expression="NAVN IN ('Asker', 'Oslo', 'Trondheim', 'Ringerike')",
         output_name=Building_N100.point_resolve_building_conflicts___selection_area_resolve_building_conflicts___n100_building.value,
     )
 
@@ -82,6 +82,10 @@ def selecting_data_with_area():
         {
             "input_layer": Building_N100.point_resolve_building_conflicts___transform_points_to_square_polygons___n100_building.value,
             "output_name": Building_N100.point_resolve_building_conflicts___squares_selection_rbc___n100_building.value,
+        },
+        {
+            "input_layer": input_n100.Bane,
+            "output_name": Building_N100.polygon_resolve_building_conflicts___railway___n100_building_lyrx,
         },
     ]
 
@@ -153,7 +157,7 @@ def barriers_for_rbc():
             "45 Meters",
         ],
         [
-            Building_N100.polygon_resolve_building_conflicts___railway_buffer___n100_building_lyrx.value,
+            Building_N100.polygon_resolve_building_conflicts___railway___n100_building_lyrx.value,
             "false",
             "45 Meters",
         ],
