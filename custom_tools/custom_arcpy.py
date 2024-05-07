@@ -273,7 +273,7 @@ def select_location_and_make_permanent_feature(
         >>> custom_arcpy.select_location_and_make_permanent_feature(
         ...     input_layer=Building_N100.data_preperation___waterfeatures_from_begrensningskurve_not_rivers___n100_building.value,
         ...     overlap_type=OverlapType.WITHIN_A_DISTANCE.value,
-        ...     select_features=Building_N100.polygon_propogate_displacement___after_displacement___n100_building.value,
+        ...     select_features=Building_N100.polygon_propogate_displacement___building_polygons_after_displacement___n100_building.value,
         ...     output_name=Building_N100.polygon_resolve_building_conflicts___begrensningskurve_500m_from_displaced_polygon___n100_building.value,
         ...     search_distance="500 Meters",
         ... )
