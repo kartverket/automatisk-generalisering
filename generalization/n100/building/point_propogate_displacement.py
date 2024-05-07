@@ -55,7 +55,7 @@ def propagate_displacement_building_points():
 
     custom_arcpy.select_attribute_and_make_permanent_feature(
         input_layer=input_n100.AdminFlate,
-        expression="NAVN IN ('Asker', 'Oslo')",
+        expression="NAVN IN ('Asker', 'Oslo', 'Trondheim', 'Ringerike')",
         output_name=Building_N100.point_propogate_displacement___area_oslo_asker___n100_building.value,
     )
 
