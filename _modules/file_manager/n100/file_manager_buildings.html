@@ -641,10 +641,10 @@
         <span class="p">)</span>
     <span class="p">)</span>
 
-    <span class="n">polygon_resolve_building_conflicts___railway_buffer___n100_building_lyrx</span> <span class="o">=</span> <span class="p">(</span>
+    <span class="n">polygon_resolve_building_conflicts___railway___n100_building_lyrx</span> <span class="o">=</span> <span class="p">(</span>
         <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_lyrx</span><span class="p">(</span>
             <span class="n">script_source_name</span><span class="o">=</span><span class="n">polygon_resolve_building_conflicts</span><span class="p">,</span>
-            <span class="n">description</span><span class="o">=</span><span class="s2">&quot;railway_buffer&quot;</span><span class="p">,</span>
+            <span class="n">description</span><span class="o">=</span><span class="s2">&quot;railway&quot;</span><span class="p">,</span>
         <span class="p">)</span>
     <span class="p">)</span>
 
@@ -1362,15 +1362,17 @@
         <span class="p">)</span>
     <span class="p">)</span>
 
-    <span class="n">finalizing_buildings___points_not_intersecting_or_bordering_urban_areas___n100_building</span> <span class="o">=</span> <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_gdb</span><span class="p">(</span>
-        <span class="n">script_source_name</span><span class="o">=</span><span class="n">finalizing_buildings</span><span class="p">,</span>
-        <span class="n">description</span><span class="o">=</span><span class="s2">&quot;points_not_intersecting_or_bordering_urban_areas&quot;</span><span class="p">,</span>
-    <span class="p">)</span>
-
-    <span class="n">finalizing_buildings___all_point_except_tourist_cabins___n100_building</span> <span class="o">=</span> <span class="p">(</span>
+    <span class="n">finalizing_buildings___points_not_close_to_urban_areas___n100_building</span> <span class="o">=</span> <span class="p">(</span>
         <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_gdb</span><span class="p">(</span>
             <span class="n">script_source_name</span><span class="o">=</span><span class="n">finalizing_buildings</span><span class="p">,</span>
-            <span class="n">description</span><span class="o">=</span><span class="s2">&quot;all_point_except_tourist_cabins&quot;</span><span class="p">,</span>
+            <span class="n">description</span><span class="o">=</span><span class="s2">&quot;points_not_close_to_urban_areas&quot;</span><span class="p">,</span>
+        <span class="p">)</span>
+    <span class="p">)</span>
+
+    <span class="n">finalizing_buildings___all_points_except_tourist_cabins___n100_building</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_gdb</span><span class="p">(</span>
+            <span class="n">script_source_name</span><span class="o">=</span><span class="n">finalizing_buildings</span><span class="p">,</span>
+            <span class="n">description</span><span class="o">=</span><span class="s2">&quot;all_points_except_tourist_cabins&quot;</span><span class="p">,</span>
         <span class="p">)</span>
     <span class="p">)</span>
 
@@ -1379,6 +1381,30 @@
             <span class="n">script_source_name</span><span class="o">=</span><span class="n">finalizing_buildings</span><span class="p">,</span>
             <span class="n">description</span><span class="o">=</span><span class="s2">&quot;urban_areas&quot;</span><span class="p">,</span>
         <span class="p">)</span>
+    <span class="p">)</span>
+
+    <span class="n">finalizing_buildings___selecting_hospital_and_churches_in_urban_areas___n100_building</span> <span class="o">=</span> <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_gdb</span><span class="p">(</span>
+        <span class="n">script_source_name</span><span class="o">=</span><span class="n">finalizing_buildings</span><span class="p">,</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">&quot;selecting_hospital_and_churches_in_urban_areas&quot;</span><span class="p">,</span>
+    <span class="p">)</span>
+
+    <span class="n">finalizing_buildings___all_points_not_in_urban_areas___n100_building</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_gdb</span><span class="p">(</span>
+            <span class="n">script_source_name</span><span class="o">=</span><span class="n">finalizing_buildings</span><span class="p">,</span>
+            <span class="n">description</span><span class="o">=</span><span class="s2">&quot;all_points_not_in_urban_areas&quot;</span><span class="p">,</span>
+        <span class="p">)</span>
+    <span class="p">)</span>
+
+    <span class="n">TuristHytte</span> <span class="o">=</span> <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_final_outputs</span><span class="p">(</span>
+        <span class="n">file_name</span><span class="o">=</span><span class="s2">&quot;TuristHytte&quot;</span><span class="p">,</span>
+    <span class="p">)</span>
+
+    <span class="n">BygningsPunkt</span> <span class="o">=</span> <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_final_outputs</span><span class="p">(</span>
+        <span class="n">file_name</span><span class="o">=</span><span class="s2">&quot;BygningsPunkt&quot;</span><span class="p">,</span>
+    <span class="p">)</span>
+
+    <span class="n">Grunnriss</span> <span class="o">=</span> <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_final_outputs</span><span class="p">(</span>
+        <span class="n">file_name</span><span class="o">=</span><span class="s2">&quot;Grunnriss&quot;</span><span class="p">,</span>
     <span class="p">)</span></div>
 
 </pre></div>
