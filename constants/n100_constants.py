@@ -13,6 +13,7 @@ class N100_Symbology(Enum):
         8: (45, 45),
         9: (65, 55),
         10: (130, 130),  # Railway station
+        11: (130, 130),  # Tourist Cabin
     }
 
 
@@ -37,6 +38,8 @@ class N100_SQLResources(Enum):
         "        return 8\n"
         "    elif nbr in [172,181,182,183,193,216,241,245,248,654,999,249,840]:\n"
         "        return 9\n"
+        "    elif nbr in [956]:\n"
+        "        return 11\n"  # Tourist Cabin
         "    else:\n"
         "        return -99\n"
     )
