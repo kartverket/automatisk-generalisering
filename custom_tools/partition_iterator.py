@@ -777,6 +777,8 @@ class PartitionIterator:
     @timing_decorator
     def run(self):
         self.unpack_alias_path_data(self.raw_input_data)
+        self.define_io_params()
+        print("\nDone!\n")
 
         if self.raw_output_data is not None:
             self.unpack_alias_path_outputs(self.raw_output_data)

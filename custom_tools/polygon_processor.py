@@ -12,10 +12,6 @@ from file_manager.n100.file_manager_buildings import Building_N100
 from constants.n100_constants import N100_Symbology
 
 
-@partition_io_decorator(
-    input_param_names=["input_building_points"],
-    output_param_names=["output_polygon_feature_class"],
-)
 class PolygonProcessor:
     """
     Example
@@ -259,6 +255,10 @@ class PolygonProcessor:
             print(f"Error deleting field {self.origin_id_field}: {e}")
 
     # Main Execution
+    @partition_io_decorator(
+        input_param_names=["input_building_points"],
+        output_param_names=["output_polygon_feature_class"],
+    )
     def run(self):
         """
         Orchestrates the process of converting building points to polygons.
