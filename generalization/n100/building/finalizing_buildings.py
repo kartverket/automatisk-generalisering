@@ -19,6 +19,8 @@ def main():
     environment_setup.main()
     removing_points_in_and_close_to_urban_areas()
     selecting_all_tourist_cabins()
+    building_polygons_to_line()
+    selecting_hospital_and_churches_for_pictogram_featureclass()
     assigning_final_file_names()
 
 
@@ -75,7 +77,7 @@ def removing_points_in_and_close_to_urban_areas():
 @timing_decorator
 def selecting_all_tourist_cabins():
 
-    selecting_tourist_cabins = "byggtyp_nbr = 956"
+    selecting_tourist_cabins = "BYGGTYP_NBR = 956"
 
     # Selecting all building points categorized as tourist cabins
     custom_arcpy.select_attribute_and_make_permanent_feature(
@@ -89,6 +91,23 @@ def selecting_all_tourist_cabins():
         expression=selecting_tourist_cabins,
         output_name=Building_N100.finalizing_buildings___all_points_except_tourist_cabins___n100_building.value,
         inverted=True,
+    )
+
+
+def building_polygons_to_line():
+    arcpy.management.PolygonToLine(
+        in_features=Building_N100.point_resolve_building_conflicts___building_polygons_final___n100_building.value,
+        out_feature_class=Building_N100.finalizing_buildings___polygon_to_line___n100_building.value,
+        neighbor_option="IDENTIFY_NEIGHBORS",
+    ),
+
+
+def selecting_hospital_and_churches_for_pictogram_featureclass():
+
+    custom_arcpy.select_attribute_and_make_permanent_feature(
+        input_layer=Building_N100.finalizing_buildings___all_points_except_tourist_cabins___n100_building.value,
+        expression="BYGGTYP_NBR IN (970, 719, 671)",
+        output_name=Building_N100.finalizing_buildings___hospitals_and_churches_pictogram___n100_building.value,
     )
 
 
@@ -108,6 +127,16 @@ def assigning_final_file_names():
     arcpy.management.CopyFeatures(
         Building_N100.point_resolve_building_conflicts___building_polygons_final___n100_building.value,
         Building_N100.Grunnriss.value,
+    )
+
+    arcpy.management.CopyFeatures(
+        Building_N100.finalizing_buildings___polygon_to_line___n100_building.value,
+        Building_N100.OmrissLinje.value,
+    )
+
+    arcpy.management.CopyFeatures(
+        Building_N100.finalizing_buildings___hospitals_and_churches_pictogram___n100_building.value,
+        Building_N100.Piktogram.value,
     )
 
 
