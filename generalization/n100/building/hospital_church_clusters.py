@@ -368,8 +368,6 @@ def reducing_clusters():
             Building_N100.hospital_church_clusters___chosen_churches_from_cluster___n100_building.value
         )
 
-        merge_hospitals_and_churches_list.append()
-
     # Merge the final hospital and church layers
     arcpy.management.Merge(
         inputs=merge_hospitals_and_churches_list,

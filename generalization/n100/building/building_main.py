@@ -18,6 +18,7 @@ from generalization.n100.building import removing_points_in_water_features
 from generalization.n100.building import data_clean_up
 from generalization.n100.building import polygon_resolve_building_conflicts
 from generalization.n100.building import removing_overlapping_points
+from generalization.n100.building import finalizing_buildings
 
 
 # Main function that runs all the building scripts
@@ -67,7 +68,8 @@ def main():
     point_resolve_building_conflicts.main()
     removing_points_in_water_features.main()
     removing_overlapping_points.main()
-    # data_clean_up.main()
+    finalizing_buildings.main()
+    data_clean_up.main()
 
 
 if __name__ == "__main__":

@@ -29,10 +29,12 @@ def main():
     begrensningskurve_river()
     merge_begrensningskurve_all_water_features()
     unsplit_roads()
-    matrikkel_and_n50_not_in_urban_areas()
     railway_station_points_to_polygons()
+    selecting_urban_areas_by_sql()
+    adding_matrikkel_points_to_areas_that_are_no_longer_urban_in_n100()
+    selecting_n50_points_not_in_urban_areas()
     adding_field_values_to_matrikkel()
-    merge_matrikkel_and_n50_points()
+    merge_matrikkel_n50_and_touristcabins_points()
     selecting_polygons_not_in_urban_areas()
     reclassifying_polygon_values()
     polygon_selections_based_on_size()
@@ -52,7 +54,7 @@ def begrensningskurve_land_and_water_bodies():
     """
 
     # Defining the SQL selection expression for water features for begrensningskurve (not river)
-    sql_expr_begrensningskurve_waterfeatures_not_river = "OBJTYPE = 'Innsjøkant' Or OBJTYPE = 'InnsjøkantRegulert' Or OBJTYPE = 'Kystkontur'"
+    sql_expr_begrensningskurve_waterfeatures_not_river = "objtype = 'Innsjøkant' Or objtype = 'InnsjøkantRegulert' Or objtype = 'Kystkontur'"
 
     # Creating a temporary feature of water features from begrensningskurve
     custom_arcpy.select_attribute_and_make_permanent_feature(
@@ -63,7 +65,7 @@ def begrensningskurve_land_and_water_bodies():
 
     custom_arcpy.select_attribute_and_make_permanent_feature(
         input_layer=input_n100.ArealdekkeFlate,
-        expression="""OBJTYPE NOT IN ('ElvBekk', 'Havflate', 'Innsjø', 'InnsjøRegulert')""",
+        expression="""objtype NOT IN ('ElvBekk', 'Havflate', 'Innsjø', 'InnsjøRegulert')""",
         output_name=Building_N100.data_preparation___selected_land_features_area___n100_building.value,
     )
 
@@ -111,7 +113,7 @@ def begrensningskurve_river():
         The resulting river outlines and their corresponding buffers are stored as separate feature classes.
     """
 
-    sql_expr_begrensningskurve_river_outline = "OBJTYPE = 'ElvBekkKant'"
+    sql_expr_begrensningskurve_river_outline = "objtype = 'ElvBekkKant'"
 
     # Creating a temporary feature of rivers from begrensningskurve
     custom_arcpy.select_attribute_and_make_permanent_feature(
@@ -162,92 +164,17 @@ def unsplit_roads():
     arcpy.UnsplitLine_management(
         in_features=input_n100.VegSti,
         out_feature_class=Building_N100.data_preparation___unsplit_roads___n100_building.value,
-        dissolve_field=["subtypekode", "motorvegtype", "UTTEGNING"],
-    )
-
-
-@timing_decorator
-def matrikkel_and_n50_not_in_urban_areas():
-    """
-    Summary:
-        Selects matrikkel and n50 building points not within urban areas.
-
-    Details:
-        This function performs a series of spatial and attribute selections to identify building points from the matrikkel and n50 datasets that are not within urban areas.
-        It first selects urban areas from the n100 and n50 datasets using a predefined SQL expression based on their object types.
-        Then, it creates a buffer around the urban areas from the n100 dataset and removes overlapping areas with the urban areas from the n50 dataset.
-        Building points from the matrikkel dataset that do not intersect with the resulting areas are selected.
-        Additionally, building points from the n50 dataset that are not within urban areas are selected, ensuring the retention of churches and hospitals within urban areas.
-        The selected churches and hospitals within urban areas are also retained.
-    """
-
-    # Defining sql expression to select urban areas
-    urban_areas_sql_expr = "OBJTYPE = 'Tettbebyggelse' Or OBJTYPE = 'Industriområde' Or OBJTYPE = 'BymessigBebyggelse'"
-
-    # Selecting urban areas from n100 using sql expression
-    custom_arcpy.select_attribute_and_make_feature_layer(
-        input_layer=input_n100.ArealdekkeFlate,
-        expression=urban_areas_sql_expr,
-        output_name=Building_N100.data_preparation___urban_area_selection_n100___n100_building.value,
-    )
-
-    # Selecting urban areas from n50 using sql expression
-    custom_arcpy.select_attribute_and_make_feature_layer(
-        input_layer=input_n50.ArealdekkeFlate,
-        expression=urban_areas_sql_expr,
-        output_name=Building_N100.data_preparation___urban_area_selection_n50___n100_building.value,
-    )
-
-    # Creating a buffer of the urban selection of n100 to take into account symbology
-    arcpy.PairwiseBuffer_analysis(
-        in_features=Building_N100.data_preparation___urban_area_selection_n100___n100_building.value,
-        out_feature_class=Building_N100.data_preparation___urban_area_selection_n100_buffer___n100_building.value,
-        buffer_distance_or_field="50 Meters",
-        method="PLANAR",
-    )
-
-    # Removing areas from n50 urban areas from the buffer of n100 urban areas resulting in areas in n100 which no longer are urban
-    arcpy.PairwiseErase_analysis(
-        in_features=Building_N100.data_preparation___urban_area_selection_n50___n100_building.value,
-        erase_features=Building_N100.data_preparation___urban_area_selection_n100_buffer___n100_building.value,
-        out_feature_class=Building_N100.data_preparation___no_longer_urban_areas___n100_building.value,
-    )
-
-    # Selecting matrikkel building points based on this new urban selection layer
-    custom_arcpy.select_location_and_make_permanent_feature(
-        input_layer=input_other.matrikkel_bygningspunkt,
-        overlap_type=custom_arcpy.OverlapType.INTERSECT,
-        select_features=Building_N100.data_preparation___no_longer_urban_areas___n100_building.value,
-        output_name=Building_N100.data_preparation___matrikkel_points___n100_building.value,
-    )
-
-    # Selecting n50 so they are not in urban areas
-    custom_arcpy.select_location_and_make_permanent_feature(
-        input_layer=input_n50.BygningsPunkt,
-        overlap_type=custom_arcpy.OverlapType.INTERSECT,
-        select_features=Building_N100.data_preparation___urban_area_selection_n100_buffer___n100_building.value,
-        output_name=Building_N100.data_preparation___n50_points___n100_building.value,
-        inverted=True,
-    )
-
-    # Making sure we are not loosing churches or hospitals
-    custom_arcpy.select_location_and_make_permanent_feature(
-        input_layer=input_n50.BygningsPunkt,
-        overlap_type=custom_arcpy.OverlapType.INTERSECT,
-        select_features=Building_N100.data_preparation___urban_area_selection_n100_buffer___n100_building.value,
-        output_name=Building_N100.data_preparation___n50_points_in_urban_areas___n100_building.value,
-    )
-
-    sql_church_hospitals = "BYGGTYP_NBR IN (970, 719, 671)"
-    custom_arcpy.select_attribute_and_make_permanent_feature(
-        input_layer=Building_N100.data_preparation___n50_points_in_urban_areas___n100_building.value,
-        expression=sql_church_hospitals,
-        output_name=Building_N100.data_preparation___churches_and_hospitals_in_urban_areas___n100_building.value,
+        dissolve_field=["subtypekode", "motorvegtype", "uttegning"],
     )
 
 
 @timing_decorator
 def railway_station_points_to_polygons():
+
+    arcpy.management.Copy(
+        in_data=input_n100.JernbaneStasjon,
+        out_data=Building_N100.data_preparation___railway_station_points_from_n100___n100_building.value,
+    )
     # Railway stations from input data
     railway_stations = input_n100.JernbaneStasjon
 
@@ -286,92 +213,124 @@ def railway_station_points_to_polygons():
 
 
 @timing_decorator
+def selecting_urban_areas_by_sql():
+
+    # Defining sql expression to select urban areas
+    urban_areas_sql_expr = "objtype = 'Tettbebyggelse' Or objtype = 'Industriområde' Or objtype = 'BymessigBebyggelse'"
+
+    # Selecting urban areas from n100 using sql expression
+    custom_arcpy.select_attribute_and_make_feature_layer(
+        input_layer=input_n100.ArealdekkeFlate,
+        expression=urban_areas_sql_expr,
+        output_name=Building_N100.data_preparation___urban_area_selection_n100___n100_building.value,
+    )
+
+    # Selecting urban areas from n50 using sql expression
+    custom_arcpy.select_attribute_and_make_feature_layer(
+        input_layer=input_n50.ArealdekkeFlate,
+        expression=urban_areas_sql_expr,
+        output_name=Building_N100.data_preparation___urban_area_selection_n50___n100_building.value,
+    )
+
+    # Creating a buffer of the urban selection of n100 to take into account symbology
+    arcpy.PairwiseBuffer_analysis(
+        in_features=Building_N100.data_preparation___urban_area_selection_n100___n100_building.value,
+        out_feature_class=Building_N100.data_preparation___urban_area_selection_n100_buffer___n100_building.value,
+        buffer_distance_or_field="50 Meters",
+        method="PLANAR",
+    )
+
+    # Removing areas from n50 urban areas from the buffer of n100 urban areas resulting in areas in n100 which no longer are urban
+    arcpy.PairwiseErase_analysis(
+        in_features=Building_N100.data_preparation___urban_area_selection_n50___n100_building.value,
+        erase_features=Building_N100.data_preparation___urban_area_selection_n100_buffer___n100_building.value,
+        out_feature_class=Building_N100.data_preparation___no_longer_urban_areas___n100_building.value,
+    )
+
+
+@timing_decorator
+def adding_matrikkel_points_to_areas_that_are_no_longer_urban_in_n100():
+
+    # Selecting matrikkel building points in areas that were urban in n50, but are NOT longer urban in n100
+    custom_arcpy.select_location_and_make_permanent_feature(
+        input_layer=input_other.matrikkel_bygningspunkt,
+        overlap_type=custom_arcpy.OverlapType.INTERSECT,
+        select_features=Building_N100.data_preparation___no_longer_urban_areas___n100_building.value,
+        output_name=Building_N100.data_preparation___matrikkel_points___n100_building.value,
+    )
+
+
+@timing_decorator
+def selecting_n50_points_not_in_urban_areas():
+
+    # Selecting n50 so they are not in urban areas
+    custom_arcpy.select_location_and_make_permanent_feature(
+        input_layer=input_n50.BygningsPunkt,
+        overlap_type=custom_arcpy.OverlapType.INTERSECT,
+        select_features=Building_N100.data_preparation___urban_area_selection_n100_buffer___n100_building.value,
+        output_name=Building_N100.data_preparation___n50_points___n100_building.value,
+        inverted=True,
+    )
+
+    # Making sure we are not loosing churches or hospitals
+    custom_arcpy.select_location_and_make_permanent_feature(
+        input_layer=input_n50.BygningsPunkt,
+        overlap_type=custom_arcpy.OverlapType.INTERSECT,
+        select_features=Building_N100.data_preparation___urban_area_selection_n100_buffer___n100_building.value,
+        output_name=Building_N100.data_preparation___n50_points_in_urban_areas___n100_building.value,
+    )
+
+    sql_church_hospitals = "byggtyp_nbr IN (970, 719, 671)"
+    custom_arcpy.select_attribute_and_make_permanent_feature(
+        input_layer=Building_N100.data_preparation___n50_points_in_urban_areas___n100_building.value,
+        expression=sql_church_hospitals,
+        output_name=Building_N100.data_preparation___churches_and_hospitals_in_urban_areas___n100_building.value,
+    )
+
+
+@timing_decorator
 def adding_field_values_to_matrikkel():
     """
     Summary:
         Adds field values to matrikkel building points.
 
     Details:
-        This function adds a new field called 'BYGGTYP_NBR' of type 'LONG' to the matrikkel building points dataset.
-        Then, it copies values from an existing field ('bygningstype') into the newly added 'BYGGTYP_NBR' field for each record.
+        This function adds a new field called 'byggtyp_nbr' of type 'LONG' to the matrikkel building points dataset.
+        Then, it copies values from an existing field ('bygningstype') into the newly added 'byggtyp_nbr' field for each record.
     """
 
     # Adding transferring the NBR value to the matrikkel building points
     arcpy.AddField_management(
         in_table=Building_N100.data_preparation___matrikkel_points___n100_building.value,
-        field_name="BYGGTYP_NBR",
+        field_name="byggtyp_nbr",
         field_type="LONG",
     )
     arcpy.CalculateField_management(
         in_table=Building_N100.data_preparation___matrikkel_points___n100_building.value,
-        field="BYGGTYP_NBR",
+        field="byggtyp_nbr",
         expression="!bygningstype!",
     )
 
 
 @timing_decorator
-def merge_matrikkel_and_n50_points():
+def merge_matrikkel_n50_and_touristcabins_points():
     """
     Summary:
-        Merges points from different datasets into a single feature class.
+        Merges points from the n50 building dataset, the matrikkel dataset and tourist cabins.
 
     Details:
-        This function merges points from the n50 building dataset, churches and hospitals in urban areas dataset, and the matrikkel dataset into a single feature class.
-        The resulting feature class contains the combined points from these datasets.
+        This function combines points from the n50 building dataset, the matrikkel dataset and the tourist cabins into a single feature class.
     """
 
-    # Merge the n50 building point and matrikkel
+    # Merge the n50 building point, matrikkel and tourist cabins
     arcpy.management.Merge(
         inputs=[
             Building_N100.data_preparation___n50_points___n100_building.value,
+            Building_N100.data_preparation___matrikkel_points___n100_building.value,
             Building_N100.data_preparation___churches_and_hospitals_in_urban_areas___n100_building.value,
-            Building_N100.data_preparation___matrikkel_points___n100_building.value,
+            input_n50.TuristHytte,
         ],
-        output=Building_N100.data_preperation___matrikkel_n50_points_merged___n100_building.value,
-    )
-
-
-@timing_decorator
-def adding_field_values_to_matrikkel():
-    """
-    Summary:
-        Adds and transfers field values to matrikkel building points.
-
-    Details:
-        This function adds a new field called 'BYGGTYP_NBR' of type 'LONG' to the matrikkel building points dataset.
-        Subsequently, it copies values from an existing field ('bygningstype') into the newly added 'BYGGTYP_NBR' field for each record.
-    """
-
-    # Adding transferring the NBR value to the matrikkel building points
-    arcpy.AddField_management(
-        in_table=Building_N100.data_preparation___matrikkel_points___n100_building.value,
-        field_name="BYGGTYP_NBR",
-        field_type="LONG",
-    )
-    arcpy.CalculateField_management(
-        in_table=Building_N100.data_preparation___matrikkel_points___n100_building.value,
-        field="BYGGTYP_NBR",
-        expression="!bygningstype!",
-    )
-
-
-@timing_decorator
-def merge_matrikkel_and_n50_points():
-    """
-    Summary:
-        Merges points from the n50 building dataset and matrikkel dataset.
-
-    Details:
-        This function combines points from the n50 building dataset and the matrikkel dataset into a single feature class.
-    """
-
-    # Merge the n50 building point and matrikkel
-    arcpy.management.Merge(
-        inputs=[
-            Building_N100.data_preparation___n50_points___n100_building.value,
-            Building_N100.data_preparation___matrikkel_points___n100_building.value,
-        ],
-        output=Building_N100.data_preperation___matrikkel_n50_points_merged___n100_building.value,
+        output=Building_N100.data_preperation___matrikkel_n50_touristcabins_points_merged___n100_building.value,
     )
 
 
@@ -387,9 +346,6 @@ def selecting_polygons_not_in_urban_areas():
         Polygons that do not intersect with the specified urban area layer are retained and stored as a new feature layer.
     """
 
-    print(
-        "might want to remove this copyl ater when we have another script for just copying the database"
-    )
     # Copy the input data to not modify the original fields.
     arcpy.management.Copy(
         in_data=input_n50.Grunnriss,
@@ -412,9 +368,9 @@ def reclassifying_polygon_values():
         Reclassifies the values of hospitals and churches in the specified polygon layer to a new value (729), corresponding to "other buildings".
 
     Details:
-        This function defines a reclassification scheme for hospitals and churches within a polygon layer. Hospitals and churches are identified by their respective values in the 'BYGGTYP_NBR' field.
+        This function defines a reclassification scheme for hospitals and churches within a polygon layer. Hospitals and churches are identified by their respective values in the 'byggtyp_nbr' field.
         These values (970, 719, and 671) are mapped to a new value (729) representing "other buildings" using a Python dictionary.
-        The reclassification is applied to the 'BYGGTYP_NBR' field.
+        The reclassification is applied to the 'byggtyp_nbr' field.
     """
 
     # Reclassify the hospitals and churches to NBR value 729 ("other buildings" / "andre bygg")
@@ -426,8 +382,8 @@ def reclassifying_polygon_values():
 
     arcpy.CalculateField_management(
         in_table=Building_N100.data_preparation___n50_polygons___n100_building.value,
-        field="BYGGTYP_NBR",
-        expression="reclassify(!BYGGTYP_NBR!)",
+        field="byggtyp_nbr",
+        expression="reclassify(!byggtyp_nbr!)",
         expression_type="PYTHON3",
         code_block=reclassify_hospital_church_polygons,
     )

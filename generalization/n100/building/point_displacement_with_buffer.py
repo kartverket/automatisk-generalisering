@@ -292,7 +292,7 @@ def creating_road_buffer():
         polygon_processor.run()
 
         # Perform Erase and FeatureToPoint operations
-        output_feature_to_point = f"{Building_N100.calculate_point_values___points_pre_resolve_building_conflicts___n100_building.value}_{counter}"
+        output_feature_to_point = f"{Building_N100.calculate_point_values___points_going_into_rbc___n100_building.value}_{counter}"
         arcpy.analysis.PairwiseErase(
             in_features=f"{Building_N100.building_point_buffer_displacement__iteration_points_to_square_polygons__n100.value}_{counter}",
             erase_features=output_fc,
