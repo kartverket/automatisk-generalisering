@@ -7,28 +7,52 @@ from custom_tools.timing_decorator import timing_decorator
 # Importing temporary files
 from file_manager.n100.file_manager_buildings import Building_N100
 
+# Import modules
+from datetime import datetime
+
 
 # Main function
 @timing_decorator
 def main():
     environment_setup.main()
-    keep_necessary_fields()
+    keep_necessary_fields(
+        Building_N100.BygningsPunkt.value,
+        ["objtype", "byggtyp_nbr", "målemetode", "nøyaktighet", "last_edited_date"],
+    )
+    keep_necessary_fields(
+        Building_N100.Grunnriss.value, "objtype", "byggtyp_nbr", "last_edited_date"
+    )
+    keep_necessary_fields(
+        Building_N100.TuristHytte.value,
+        [
+            "objtype",
+            "byggtyp_nbr",
+            "betjeningsgrad",
+            "hytteeier",
+            "hyttetilgjengelighet",
+            "navn",
+            "målemetode",
+            "nøyaktighet",
+            "last_edited_date",
+        ],
+    )
+    keep_necessary_fields(
+        Building_N100.OmrissLinje.value,
+        ["objtype", "målemetode", "nøyaktighet", "last_edited_date"],
+    )
+    keep_necessary_fields(
+        Building_N100.Piktogram.value, ["byggtyp_nbr", "last_edited_date"]
+    )
+    add_last_edited_date_to_all_feature_classes()
 
 
 @timing_decorator
-def keep_necessary_fields():
+def keep_necessary_fields(input_layer, list_of_fields):
     # Provide the path to your feature class
-    feature_class_to_clean_up = (
-        Building_N100.simplify_polygons___aggregated_polygons_to_points___n100_building.value
-    )  # Switch out to correct feature class
+    feature_class_to_clean_up = input_layer
 
     # List of field names to keep
-    fields_to_keep = [
-        "FIELD1",
-        "FIELD2",
-        "FIELD3",
-        # Add more field names as needed
-    ]
+    fields_to_keep = list_of_fields
 
     # Get a list of all fields in the feature class
     all_fields = [field.name for field in arcpy.ListFields(feature_class_to_clean_up)]
@@ -50,22 +74,39 @@ def keep_necessary_fields():
         print("No fields to delete.")
 
 
-def add_last_edited_date():
+def add_last_edited_date_to_all_feature_classes():
+    all_final_layers = [
+        Building_N100.BygningsPunkt.value,
+        Building_N100.Grunnriss.value,
+        Building_N100.TuristHytte.value,
+        Building_N100.OmrissLinje.value,
+        Building_N100.Piktogram.value,
+    ]
 
-    arcpy.AddField_management(
-        in_table=Building_N100.calculate_point_values___points_pre_resolve_building_conflicts___n100_building.value,
-        field_name="symbol_val",
-        field_type="SHORT",
-    )
+    for layer in all_final_layers:
+        feature_class = layer
+        field_name = "LAST_EDITED_DATE"
 
-    # Determining and assigning symbol val
-    arcpy.CalculateField_management(
-        in_table=Building_N100.calculate_point_values___points_pre_resolve_building_conflicts___n100_building.value,
-        field="symbol_val",
-        expression="determineVal(!BYGGTYP_NBR!)",
-        expression_type="PYTHON3",
-        code_block=N100_SQLResources.nbr_symbol_val_code_block.value,
-    )
+        # Check if the field already exists
+        existing_fields = [field.name for field in arcpy.ListFields(feature_class)]
+        if field_name in existing_fields:
+            print(f"The field '{field_name}' already exists in '{feature_class}'.")
+        else:
+            # Add the field if it doesn't exist
+            arcpy.AddField_management(
+                in_table=feature_class,
+                field_name=field_name,
+                field_type="DATE",
+            )
+
+        # Calculate LAST_EDITED_DATE
+        current_date = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        arcpy.CalculateField_management(
+            in_table=feature_class,
+            field=field_name,
+            expression=f"datetime.datetime.strptime('{current_date}', '%Y-%m-%d %H:%M:%S')",
+            expression_type="PYTHON3",
+        )
 
 
 if __name__ == "__main__":
