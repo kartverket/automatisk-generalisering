@@ -77,24 +77,24 @@ class N100_SQLResources(Enum):
     )
 
     road_symbology_size_sql_selection = {
-        "MOTORVEGTYPE = 'Motorveg'": 43,
+        "motorvegtype = 'Motorveg'": 43,
         """ 
-        SUBTYPEKODE = 3 
-        Or MOTORVEGTYPE = 'Motortrafikkveg' 
-        Or (SUBTYPEKODE = 2 And MOTORVEGTYPE = 'Motortrafikkveg') 
-        Or (SUBTYPEKODE = 2 And MOTORVEGTYPE = 'Ikke motorveg') 
-        Or (SUBTYPEKODE = 4 And MOTORVEGTYPE = 'Ikke motorveg') 
+        subtypekode = 3 
+        Or motorvegtype = 'Motortrafikkveg' 
+        Or (subtypekode = 2 And motorvegtype = 'Motortrafikkveg') 
+        Or (subtypekode = 2 And motorvegtype = 'Ikke motorveg') 
+        Or (subtypekode = 4 And motorvegtype = 'Ikke motorveg') 
         """: 23,
         """
-        SUBTYPEKODE = 1
-        Or SUBTYPEKODE = 5
-        Or SUBTYPEKODE = 6
-        Or SUBTYPEKODE = 9
+        subtypekode = 1
+        Or subtypekode = 5
+        Or subtypekode = 6
+        Or subtypekode = 9
         """: 20,
         """
-        SUBTYPEKODE = 7
-        Or SUBTYPEKODE = 8
-        Or SUBTYPEKODE = 10
-        Or SUBTYPEKODE =11
+        subtypekode = 7
+        Or subtypekode = 8
+        Or subtypekode = 10
+        Or subtypekode =11
         """: 8,
     }

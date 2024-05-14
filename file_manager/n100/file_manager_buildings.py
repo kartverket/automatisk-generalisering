@@ -17,7 +17,7 @@ polygon_propogate_displacement = "polygon_propogate_displacement"
 polygon_resolve_building_conflicts = "polygon_resolve_building_conflicts"
 polygon_to_point = "polygon_to_point"
 calculating_polygon_values = "calculating_polygon_values"
-calculating_point_values = "calculating_point_values"
+calculate_point_values = "calculate_point_values"
 point_propogate_displacement = "point_propogate_displacement"
 removing_points_in_water_features = "removing_points_in_water_features"
 removing_overlapping_points = "removing_overlapping_points"
@@ -227,10 +227,10 @@ class Building_N100(Enum):
         )
     )
 
-    data_preperation___matrikkel_n50_points_merged___n100_building = (
+    data_preperation___matrikkel_n50_touristcabins_points_merged___n100_building = (
         file_manager.generate_file_name_gdb(
             script_source_name=data_preparation,
-            description="matrikkel_n50_points_merged",
+            description="matrikkel_n50_points_touristcabins_merged",
         )
     )
 
@@ -269,24 +269,31 @@ class Building_N100(Enum):
         )
     )
 
+    data_preparation___railway_station_points_from_n100___n100_building = (
+        file_manager.generate_file_name_gdb(
+            script_source_name=data_preparation,
+            description="railway_station_points_from_n100",
+        )
+    )
+
     # ========================================
     #                      CALCULATE POINT VALUES
     # ========================================
 
-    calculate_point_values___points_pre_resolve_building_conflicts___n100_building = (
+    calculate_point_values___points_going_into_rbc___n100_building = (
         file_manager.generate_file_name_gdb(
-            script_source_name=calculating_point_values,
-            description="points_pre_resolve_building_conflicts",
+            script_source_name=calculate_point_values,
+            description="points_going_into_rbc",
         )
     )
 
     calculate_point_values___selection_building_points_with_undefined_nbr_values___n100_building = file_manager.generate_file_name_gdb(
-        script_source_name=calculating_point_values,
+        script_source_name=calculate_point_values,
         description="selection_building_points_with_undefined_nbr_values",
     )
 
     calculate_point_values___building_points_with_undefined_nbr_values___n100_building = file_manager.generate_file_name_general_files(
-        script_source_name=calculating_point_values,
+        script_source_name=calculate_point_values,
         description="building_points_with_undefined_nbr_values",
         file_type="txt",
     )
@@ -1314,6 +1321,20 @@ class Building_N100(Enum):
         )
     )
 
+    finalizing_buildings___polygon_to_line___n100_building = (
+        file_manager.generate_file_name_gdb(
+            script_source_name=finalizing_buildings,
+            description="polygon_to_line",
+        )
+    )
+
+    finalizing_buildings___hospitals_and_churches_pictogram___n100_building = (
+        file_manager.generate_file_name_gdb(
+            script_source_name=finalizing_buildings,
+            description="hospitals_and_churches_pictogram",
+        )
+    )
+
     TuristHytte = file_manager.generate_final_outputs(
         file_name="TuristHytte",
     )
@@ -1324,4 +1345,12 @@ class Building_N100(Enum):
 
     Grunnriss = file_manager.generate_final_outputs(
         file_name="Grunnriss",
+    )
+
+    OmrissLinje = file_manager.generate_final_outputs(
+        file_name="OmrissLinje",
+    )
+
+    Piktogram = file_manager.generate_final_outputs(
+        file_name="Piktogram",
     )

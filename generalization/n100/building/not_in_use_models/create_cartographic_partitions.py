@@ -22,7 +22,7 @@ def setup_arcpy_environment():
 def create_cartographic_partitions():
     arcpy.cartography.CreateCartographicPartitions(
         in_features=[
-            Building_N100.calculate_point_values___points_pre_resolve_building_conflicts___n100_building.value,
+            Building_N100.calculate_point_values___points_going_into_rbc___n100_building.value,
             Building_N100.simplify_building_polygons__simplified_grunnriss__n100.value,
             Building_N100.data_preparation___unsplit_roads___n100_building.value,
             Building_N100.data_preparation___begrensningskurve_buffer_erase_2___n100_building.value,

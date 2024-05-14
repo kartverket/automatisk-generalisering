@@ -49,7 +49,7 @@ def propagate_displacement_building_points():
     print("Point propogate displacement ...")
 
     arcpy.management.Copy(
-        in_data=Building_N100.calculate_point_values___points_pre_resolve_building_conflicts___n100_building.value,
+        in_data=Building_N100.calculate_point_values___points_going_into_rbc___n100_building.value,
         out_data=Building_N100.point_propogate_displacement___points_pre_propogate_displacement___n100_building.value,
     )
 
@@ -60,7 +60,7 @@ def propagate_displacement_building_points():
     )
 
     custom_arcpy.select_location_and_make_permanent_feature(
-        input_layer=Building_N100.calculate_point_values___points_pre_resolve_building_conflicts___n100_building.value,
+        input_layer=Building_N100.calculate_point_values___points_going_into_rbc___n100_building.value,
         overlap_type=custom_arcpy.OverlapType.INTERSECT.value,
         select_features=Building_N100.point_propogate_displacement___area_oslo_asker___n100_building.value,
         output_name=Building_N100.point_propogate_displacement___points_in_area_oslo_asker___n100_building.value,
