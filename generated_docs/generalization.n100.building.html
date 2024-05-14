@@ -57,7 +57,7 @@
 <li class="toctree-l3"><a class="reference internal" href="#generalization.n100.building.calculate_point_values.main"><code class="docutils literal notranslate"><span class="pre">main()</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="#generalization.n100.building.calculate_point_values.reclassifying_hospital_and_church_points_from_matrikkel"><code class="docutils literal notranslate"><span class="pre">reclassifying_hospital_and_church_points_from_matrikkel()</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="#generalization.n100.building.calculate_point_values.adding_original_source_to_points"><code class="docutils literal notranslate"><span class="pre">adding_original_source_to_points()</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="#generalization.n100.building.calculate_point_values.merge_matrikkel_and_n50_with_points_from_grunnriss"><code class="docutils literal notranslate"><span class="pre">merge_matrikkel_and_n50_with_points_from_grunnriss()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#generalization.n100.building.calculate_point_values.merge_matrikkel_n50_touristcabins_with_points_from_grunnriss"><code class="docutils literal notranslate"><span class="pre">merge_matrikkel_n50_touristcabins_with_points_from_grunnriss()</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="#generalization.n100.building.calculate_point_values.find_undefined_nbr_values"><code class="docutils literal notranslate"><span class="pre">find_undefined_nbr_values()</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="#generalization.n100.building.calculate_point_values.find_each_unique_nbr_value"><code class="docutils literal notranslate"><span class="pre">find_each_unique_nbr_value()</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="#generalization.n100.building.calculate_point_values.calculate_angle_and_visibility"><code class="docutils literal notranslate"><span class="pre">calculate_angle_and_visibility()</span></code></a></li>
@@ -73,7 +73,7 @@
 <li class="toctree-l2"><a class="reference internal" href="#module-generalization.n100.building.data_clean_up">generalization.n100.building.data_clean_up module</a><ul>
 <li class="toctree-l3"><a class="reference internal" href="#generalization.n100.building.data_clean_up.main"><code class="docutils literal notranslate"><span class="pre">main()</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="#generalization.n100.building.data_clean_up.keep_necessary_fields"><code class="docutils literal notranslate"><span class="pre">keep_necessary_fields()</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="#generalization.n100.building.data_clean_up.add_last_edited_date"><code class="docutils literal notranslate"><span class="pre">add_last_edited_date()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#generalization.n100.building.data_clean_up.add_last_edited_date_to_all_feature_classes"><code class="docutils literal notranslate"><span class="pre">add_last_edited_date_to_all_feature_classes()</span></code></a></li>
 </ul>
 </li>
 <li class="toctree-l2"><a class="reference internal" href="#generalization-n100-building-data-preparation-module">generalization.n100.building.data_preparation module</a></li>
@@ -81,6 +81,8 @@
 <li class="toctree-l3"><a class="reference internal" href="#generalization.n100.building.finalizing_buildings.main"><code class="docutils literal notranslate"><span class="pre">main()</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="#generalization.n100.building.finalizing_buildings.removing_points_in_and_close_to_urban_areas"><code class="docutils literal notranslate"><span class="pre">removing_points_in_and_close_to_urban_areas()</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="#generalization.n100.building.finalizing_buildings.selecting_all_tourist_cabins"><code class="docutils literal notranslate"><span class="pre">selecting_all_tourist_cabins()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#generalization.n100.building.finalizing_buildings.building_polygons_to_line"><code class="docutils literal notranslate"><span class="pre">building_polygons_to_line()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#generalization.n100.building.finalizing_buildings.selecting_hospital_and_churches_for_pictogram_featureclass"><code class="docutils literal notranslate"><span class="pre">selecting_hospital_and_churches_for_pictogram_featureclass()</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="#generalization.n100.building.finalizing_buildings.assigning_final_file_names"><code class="docutils literal notranslate"><span class="pre">assigning_final_file_names()</span></code></a></li>
 </ul>
 </li>
@@ -190,8 +192,8 @@
 <dd></dd></dl>
 
 <dl class="py function">
-<dt class="sig sig-object py" id="generalization.n100.building.calculate_point_values.merge_matrikkel_and_n50_with_points_from_grunnriss">
-<span class="sig-prename descclassname"><span class="pre">generalization.n100.building.calculate_point_values.</span></span><span class="sig-name descname"><span class="pre">merge_matrikkel_and_n50_with_points_from_grunnriss</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/generalization/n100/building/calculate_point_values.html#merge_matrikkel_and_n50_with_points_from_grunnriss"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#generalization.n100.building.calculate_point_values.merge_matrikkel_and_n50_with_points_from_grunnriss" title="Link to this definition"></a></dt>
+<dt class="sig sig-object py" id="generalization.n100.building.calculate_point_values.merge_matrikkel_n50_touristcabins_with_points_from_grunnriss">
+<span class="sig-prename descclassname"><span class="pre">generalization.n100.building.calculate_point_values.</span></span><span class="sig-name descname"><span class="pre">merge_matrikkel_n50_touristcabins_with_points_from_grunnriss</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/generalization/n100/building/calculate_point_values.html#merge_matrikkel_n50_touristcabins_with_points_from_grunnriss"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#generalization.n100.building.calculate_point_values.merge_matrikkel_n50_touristcabins_with_points_from_grunnriss" title="Link to this definition"></a></dt>
 <dd></dd></dl>
 
 <dl class="py function">
@@ -246,12 +248,12 @@
 
 <dl class="py function">
 <dt class="sig sig-object py" id="generalization.n100.building.data_clean_up.keep_necessary_fields">
-<span class="sig-prename descclassname"><span class="pre">generalization.n100.building.data_clean_up.</span></span><span class="sig-name descname"><span class="pre">keep_necessary_fields</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/generalization/n100/building/data_clean_up.html#keep_necessary_fields"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#generalization.n100.building.data_clean_up.keep_necessary_fields" title="Link to this definition"></a></dt>
+<span class="sig-prename descclassname"><span class="pre">generalization.n100.building.data_clean_up.</span></span><span class="sig-name descname"><span class="pre">keep_necessary_fields</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">input_layer</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">list_of_fields</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/generalization/n100/building/data_clean_up.html#keep_necessary_fields"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#generalization.n100.building.data_clean_up.keep_necessary_fields" title="Link to this definition"></a></dt>
 <dd></dd></dl>
 
 <dl class="py function">
-<dt class="sig sig-object py" id="generalization.n100.building.data_clean_up.add_last_edited_date">
-<span class="sig-prename descclassname"><span class="pre">generalization.n100.building.data_clean_up.</span></span><span class="sig-name descname"><span class="pre">add_last_edited_date</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/generalization/n100/building/data_clean_up.html#add_last_edited_date"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#generalization.n100.building.data_clean_up.add_last_edited_date" title="Link to this definition"></a></dt>
+<dt class="sig sig-object py" id="generalization.n100.building.data_clean_up.add_last_edited_date_to_all_feature_classes">
+<span class="sig-prename descclassname"><span class="pre">generalization.n100.building.data_clean_up.</span></span><span class="sig-name descname"><span class="pre">add_last_edited_date_to_all_feature_classes</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/generalization/n100/building/data_clean_up.html#add_last_edited_date_to_all_feature_classes"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#generalization.n100.building.data_clean_up.add_last_edited_date_to_all_feature_classes" title="Link to this definition"></a></dt>
 <dd></dd></dl>
 
 </section>
@@ -273,6 +275,16 @@
 <dl class="py function">
 <dt class="sig sig-object py" id="generalization.n100.building.finalizing_buildings.selecting_all_tourist_cabins">
 <span class="sig-prename descclassname"><span class="pre">generalization.n100.building.finalizing_buildings.</span></span><span class="sig-name descname"><span class="pre">selecting_all_tourist_cabins</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/generalization/n100/building/finalizing_buildings.html#selecting_all_tourist_cabins"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#generalization.n100.building.finalizing_buildings.selecting_all_tourist_cabins" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="generalization.n100.building.finalizing_buildings.building_polygons_to_line">
+<span class="sig-prename descclassname"><span class="pre">generalization.n100.building.finalizing_buildings.</span></span><span class="sig-name descname"><span class="pre">building_polygons_to_line</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/generalization/n100/building/finalizing_buildings.html#building_polygons_to_line"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#generalization.n100.building.finalizing_buildings.building_polygons_to_line" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="generalization.n100.building.finalizing_buildings.selecting_hospital_and_churches_for_pictogram_featureclass">
+<span class="sig-prename descclassname"><span class="pre">generalization.n100.building.finalizing_buildings.</span></span><span class="sig-name descname"><span class="pre">selecting_hospital_and_churches_for_pictogram_featureclass</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/generalization/n100/building/finalizing_buildings.html#selecting_hospital_and_churches_for_pictogram_featureclass"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#generalization.n100.building.finalizing_buildings.selecting_hospital_and_churches_for_pictogram_featureclass" title="Link to this definition"></a></dt>
 <dd></dd></dl>
 
 <dl class="py function">

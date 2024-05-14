@@ -86,6 +86,9 @@
 <span class="c1"># Importing temporary files</span>
 <span class="kn">from</span> <span class="nn">file_manager.n100.file_manager_buildings</span> <span class="kn">import</span> <span class="n">Building_N100</span>
 
+<span class="c1"># Import modules</span>
+<span class="kn">from</span> <span class="nn">datetime</span> <span class="kn">import</span> <span class="n">datetime</span>
+
 
 <span class="c1"># Main function</span>
 <div class="viewcode-block" id="main">
@@ -93,26 +96,47 @@
 <span class="nd">@timing_decorator</span>
 <span class="k">def</span> <span class="nf">main</span><span class="p">():</span>
     <span class="n">environment_setup</span><span class="o">.</span><span class="n">main</span><span class="p">()</span>
-    <span class="n">keep_necessary_fields</span><span class="p">()</span></div>
+    <span class="n">keep_necessary_fields</span><span class="p">(</span>
+        <span class="n">Building_N100</span><span class="o">.</span><span class="n">BygningsPunkt</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
+        <span class="p">[</span><span class="s2">&quot;objtype&quot;</span><span class="p">,</span> <span class="s2">&quot;byggtyp_nbr&quot;</span><span class="p">,</span> <span class="s2">&quot;målemetode&quot;</span><span class="p">,</span> <span class="s2">&quot;nøyaktighet&quot;</span><span class="p">,</span> <span class="s2">&quot;last_edited_date&quot;</span><span class="p">],</span>
+    <span class="p">)</span>
+    <span class="n">keep_necessary_fields</span><span class="p">(</span>
+        <span class="n">Building_N100</span><span class="o">.</span><span class="n">Grunnriss</span><span class="o">.</span><span class="n">value</span><span class="p">,</span> <span class="s2">&quot;objtype&quot;</span><span class="p">,</span> <span class="s2">&quot;byggtyp_nbr&quot;</span><span class="p">,</span> <span class="s2">&quot;last_edited_date&quot;</span>
+    <span class="p">)</span>
+    <span class="n">keep_necessary_fields</span><span class="p">(</span>
+        <span class="n">Building_N100</span><span class="o">.</span><span class="n">TuristHytte</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
+        <span class="p">[</span>
+            <span class="s2">&quot;objtype&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;byggtyp_nbr&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;betjeningsgrad&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;hytteeier&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;hyttetilgjengelighet&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;navn&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;målemetode&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;nøyaktighet&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;last_edited_date&quot;</span><span class="p">,</span>
+        <span class="p">],</span>
+    <span class="p">)</span>
+    <span class="n">keep_necessary_fields</span><span class="p">(</span>
+        <span class="n">Building_N100</span><span class="o">.</span><span class="n">OmrissLinje</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
+        <span class="p">[</span><span class="s2">&quot;objtype&quot;</span><span class="p">,</span> <span class="s2">&quot;målemetode&quot;</span><span class="p">,</span> <span class="s2">&quot;nøyaktighet&quot;</span><span class="p">,</span> <span class="s2">&quot;last_edited_date&quot;</span><span class="p">],</span>
+    <span class="p">)</span>
+    <span class="n">keep_necessary_fields</span><span class="p">(</span>
+        <span class="n">Building_N100</span><span class="o">.</span><span class="n">Piktogram</span><span class="o">.</span><span class="n">value</span><span class="p">,</span> <span class="p">[</span><span class="s2">&quot;byggtyp_nbr&quot;</span><span class="p">,</span> <span class="s2">&quot;last_edited_date&quot;</span><span class="p">]</span>
+    <span class="p">)</span>
+    <span class="n">add_last_edited_date_to_all_feature_classes</span><span class="p">()</span></div>
 
 
 
 <div class="viewcode-block" id="keep_necessary_fields">
 <a class="viewcode-back" href="../../../../generated_docs/generalization.n100.building.html#generalization.n100.building.data_clean_up.keep_necessary_fields">[docs]</a>
 <span class="nd">@timing_decorator</span>
-<span class="k">def</span> <span class="nf">keep_necessary_fields</span><span class="p">():</span>
+<span class="k">def</span> <span class="nf">keep_necessary_fields</span><span class="p">(</span><span class="n">input_layer</span><span class="p">,</span> <span class="n">list_of_fields</span><span class="p">):</span>
     <span class="c1"># Provide the path to your feature class</span>
-    <span class="n">feature_class_to_clean_up</span> <span class="o">=</span> <span class="p">(</span>
-        <span class="n">Building_N100</span><span class="o">.</span><span class="n">simplify_polygons___aggregated_polygons_to_points___n100_building</span><span class="o">.</span><span class="n">value</span>
-    <span class="p">)</span>  <span class="c1"># Switch out to correct feature class</span>
+    <span class="n">feature_class_to_clean_up</span> <span class="o">=</span> <span class="n">input_layer</span>
 
     <span class="c1"># List of field names to keep</span>
-    <span class="n">fields_to_keep</span> <span class="o">=</span> <span class="p">[</span>
-        <span class="s2">&quot;FIELD1&quot;</span><span class="p">,</span>
-        <span class="s2">&quot;FIELD2&quot;</span><span class="p">,</span>
-        <span class="s2">&quot;FIELD3&quot;</span><span class="p">,</span>
-        <span class="c1"># Add more field names as needed</span>
-    <span class="p">]</span>
+    <span class="n">fields_to_keep</span> <span class="o">=</span> <span class="n">list_of_fields</span>
 
     <span class="c1"># Get a list of all fields in the feature class</span>
     <span class="n">all_fields</span> <span class="o">=</span> <span class="p">[</span><span class="n">field</span><span class="o">.</span><span class="n">name</span> <span class="k">for</span> <span class="n">field</span> <span class="ow">in</span> <span class="n">arcpy</span><span class="o">.</span><span class="n">ListFields</span><span class="p">(</span><span class="n">feature_class_to_clean_up</span><span class="p">)]</span>
@@ -135,24 +159,41 @@
 
 
 
-<div class="viewcode-block" id="add_last_edited_date">
-<a class="viewcode-back" href="../../../../generated_docs/generalization.n100.building.html#generalization.n100.building.data_clean_up.add_last_edited_date">[docs]</a>
-<span class="k">def</span> <span class="nf">add_last_edited_date</span><span class="p">():</span>
+<div class="viewcode-block" id="add_last_edited_date_to_all_feature_classes">
+<a class="viewcode-back" href="../../../../generated_docs/generalization.n100.building.html#generalization.n100.building.data_clean_up.add_last_edited_date_to_all_feature_classes">[docs]</a>
+<span class="k">def</span> <span class="nf">add_last_edited_date_to_all_feature_classes</span><span class="p">():</span>
+    <span class="n">all_final_layers</span> <span class="o">=</span> <span class="p">[</span>
+        <span class="n">Building_N100</span><span class="o">.</span><span class="n">BygningsPunkt</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
+        <span class="n">Building_N100</span><span class="o">.</span><span class="n">Grunnriss</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
+        <span class="n">Building_N100</span><span class="o">.</span><span class="n">TuristHytte</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
+        <span class="n">Building_N100</span><span class="o">.</span><span class="n">OmrissLinje</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
+        <span class="n">Building_N100</span><span class="o">.</span><span class="n">Piktogram</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
+    <span class="p">]</span>
 
-    <span class="n">arcpy</span><span class="o">.</span><span class="n">AddField_management</span><span class="p">(</span>
-        <span class="n">in_table</span><span class="o">=</span><span class="n">Building_N100</span><span class="o">.</span><span class="n">calculate_point_values___points_pre_resolve_building_conflicts___n100_building</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
-        <span class="n">field_name</span><span class="o">=</span><span class="s2">&quot;symbol_val&quot;</span><span class="p">,</span>
-        <span class="n">field_type</span><span class="o">=</span><span class="s2">&quot;SHORT&quot;</span><span class="p">,</span>
-    <span class="p">)</span>
+    <span class="k">for</span> <span class="n">layer</span> <span class="ow">in</span> <span class="n">all_final_layers</span><span class="p">:</span>
+        <span class="n">feature_class</span> <span class="o">=</span> <span class="n">layer</span>
+        <span class="n">field_name</span> <span class="o">=</span> <span class="s2">&quot;LAST_EDITED_DATE&quot;</span>
 
-    <span class="c1"># Determining and assigning symbol val</span>
-    <span class="n">arcpy</span><span class="o">.</span><span class="n">CalculateField_management</span><span class="p">(</span>
-        <span class="n">in_table</span><span class="o">=</span><span class="n">Building_N100</span><span class="o">.</span><span class="n">calculate_point_values___points_pre_resolve_building_conflicts___n100_building</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
-        <span class="n">field</span><span class="o">=</span><span class="s2">&quot;symbol_val&quot;</span><span class="p">,</span>
-        <span class="n">expression</span><span class="o">=</span><span class="s2">&quot;determineVal(!BYGGTYP_NBR!)&quot;</span><span class="p">,</span>
-        <span class="n">expression_type</span><span class="o">=</span><span class="s2">&quot;PYTHON3&quot;</span><span class="p">,</span>
-        <span class="n">code_block</span><span class="o">=</span><span class="n">N100_SQLResources</span><span class="o">.</span><span class="n">nbr_symbol_val_code_block</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
-    <span class="p">)</span></div>
+        <span class="c1"># Check if the field already exists</span>
+        <span class="n">existing_fields</span> <span class="o">=</span> <span class="p">[</span><span class="n">field</span><span class="o">.</span><span class="n">name</span> <span class="k">for</span> <span class="n">field</span> <span class="ow">in</span> <span class="n">arcpy</span><span class="o">.</span><span class="n">ListFields</span><span class="p">(</span><span class="n">feature_class</span><span class="p">)]</span>
+        <span class="k">if</span> <span class="n">field_name</span> <span class="ow">in</span> <span class="n">existing_fields</span><span class="p">:</span>
+            <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;The field &#39;</span><span class="si">{</span><span class="n">field_name</span><span class="si">}</span><span class="s2">&#39; already exists in &#39;</span><span class="si">{</span><span class="n">feature_class</span><span class="si">}</span><span class="s2">&#39;.&quot;</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="c1"># Add the field if it doesn&#39;t exist</span>
+            <span class="n">arcpy</span><span class="o">.</span><span class="n">AddField_management</span><span class="p">(</span>
+                <span class="n">in_table</span><span class="o">=</span><span class="n">feature_class</span><span class="p">,</span>
+                <span class="n">field_name</span><span class="o">=</span><span class="n">field_name</span><span class="p">,</span>
+                <span class="n">field_type</span><span class="o">=</span><span class="s2">&quot;DATE&quot;</span><span class="p">,</span>
+            <span class="p">)</span>
+
+        <span class="c1"># Calculate LAST_EDITED_DATE</span>
+        <span class="n">current_date</span> <span class="o">=</span> <span class="n">datetime</span><span class="o">.</span><span class="n">now</span><span class="p">()</span><span class="o">.</span><span class="n">strftime</span><span class="p">(</span><span class="s2">&quot;%Y-%m-</span><span class="si">%d</span><span class="s2"> %H:%M:%S&quot;</span><span class="p">)</span>
+        <span class="n">arcpy</span><span class="o">.</span><span class="n">CalculateField_management</span><span class="p">(</span>
+            <span class="n">in_table</span><span class="o">=</span><span class="n">feature_class</span><span class="p">,</span>
+            <span class="n">field</span><span class="o">=</span><span class="n">field_name</span><span class="p">,</span>
+            <span class="n">expression</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;datetime.datetime.strptime(&#39;</span><span class="si">{</span><span class="n">current_date</span><span class="si">}</span><span class="s2">&#39;, &#39;%Y-%m-%d %H:%M:%S&#39;)&quot;</span><span class="p">,</span>
+            <span class="n">expression_type</span><span class="o">=</span><span class="s2">&quot;PYTHON3&quot;</span><span class="p">,</span>
+        <span class="p">)</span></div>
 
 
 

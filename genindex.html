@@ -105,7 +105,7 @@
 <h2 id="A">A</h2>
 <table style="width: 100%" class="indextable genindextable"><tr>
   <td style="width: 33%; vertical-align: top;"><ul>
-      <li><a href="generated_docs/generalization.n100.building.html#generalization.n100.building.data_clean_up.add_last_edited_date">add_last_edited_date() (in module generalization.n100.building.data_clean_up)</a>
+      <li><a href="generated_docs/generalization.n100.building.html#generalization.n100.building.data_clean_up.add_last_edited_date_to_all_feature_classes">add_last_edited_date_to_all_feature_classes() (in module generalization.n100.building.data_clean_up)</a>
 </li>
       <li><a href="generated_docs/custom_tools.html#custom_tools.custom_arcpy.SelectionType.ADD_TO_SELECTION">ADD_TO_SELECTION (custom_tools.custom_arcpy.SelectionType attribute)</a>
 </li>
@@ -167,6 +167,8 @@
 </li>
       <li><a href="generated_docs/file_manager.n100.html#file_manager.n100.file_manager_buildings.Building_N100.building_point_buffer_displacement__selection_roads__n100">building_point_buffer_displacement__selection_roads__n100 (file_manager.n100.file_manager_buildings.Building_N100 attribute)</a>
 </li>
+      <li><a href="generated_docs/generalization.n100.building.html#generalization.n100.building.finalizing_buildings.building_polygons_to_line">building_polygons_to_line() (in module generalization.n100.building.finalizing_buildings)</a>
+</li>
       <li><a href="generated_docs/generalization.n100.building.html#generalization.n100.building.polygon_to_point.building_polygons_to_points">building_polygons_to_points() (in module generalization.n100.building.polygon_to_point)</a>
 </li>
       <li><a href="generated_docs/file_manager.n100.html#file_manager.n100.file_manager_buildings.Building_N100.BygningsPunkt">BygningsPunkt (file_manager.n100.file_manager_buildings.Building_N100 attribute)</a>
@@ -183,7 +185,7 @@
 </li>
       <li><a href="generated_docs/file_manager.n100.html#file_manager.n100.file_manager_buildings.Building_N100.calculate_point_values___building_points_with_undefined_nbr_values___n100_building">calculate_point_values___building_points_with_undefined_nbr_values___n100_building (file_manager.n100.file_manager_buildings.Building_N100 attribute)</a>
 </li>
-      <li><a href="generated_docs/file_manager.n100.html#file_manager.n100.file_manager_buildings.Building_N100.calculate_point_values___points_pre_resolve_building_conflicts___n100_building">calculate_point_values___points_pre_resolve_building_conflicts___n100_building (file_manager.n100.file_manager_buildings.Building_N100 attribute)</a>
+      <li><a href="generated_docs/file_manager.n100.html#file_manager.n100.file_manager_buildings.Building_N100.calculate_point_values___points_going_into_rbc___n100_building">calculate_point_values___points_going_into_rbc___n100_building (file_manager.n100.file_manager_buildings.Building_N100 attribute)</a>
 </li>
       <li><a href="generated_docs/file_manager.n100.html#file_manager.n100.file_manager_buildings.Building_N100.calculate_point_values___selection_building_points_with_undefined_nbr_values___n100_building">calculate_point_values___selection_building_points_with_undefined_nbr_values___n100_building (file_manager.n100.file_manager_buildings.Building_N100 attribute)</a>
 </li>
@@ -418,6 +420,8 @@
 </li>
   </ul></td>
   <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="generated_docs/file_manager.n100.html#file_manager.n100.file_manager_buildings.Building_N100.data_preparation___railway_station_points_from_n100___n100_building">data_preparation___railway_station_points_from_n100___n100_building (file_manager.n100.file_manager_buildings.Building_N100 attribute)</a>
+</li>
       <li><a href="generated_docs/file_manager.n100.html#file_manager.n100.file_manager_buildings.Building_N100.data_preparation___railway_stations_to_polygons___n100_building">data_preparation___railway_stations_to_polygons___n100_building (file_manager.n100.file_manager_buildings.Building_N100 attribute)</a>
 </li>
       <li><a href="generated_docs/file_manager.n100.html#file_manager.n100.file_manager_buildings.Building_N100.data_preparation___railway_stations_to_polygons_symbology___n100_building_lyrx">data_preparation___railway_stations_to_polygons_symbology___n100_building_lyrx (file_manager.n100.file_manager_buildings.Building_N100 attribute)</a>
@@ -432,7 +436,7 @@
 </li>
       <li><a href="generated_docs/file_manager.n100.html#file_manager.n100.file_manager_buildings.Building_N100.data_preparation___urban_area_selection_n50___n100_building">data_preparation___urban_area_selection_n50___n100_building (file_manager.n100.file_manager_buildings.Building_N100 attribute)</a>
 </li>
-      <li><a href="generated_docs/file_manager.n100.html#file_manager.n100.file_manager_buildings.Building_N100.data_preperation___matrikkel_n50_points_merged___n100_building">data_preperation___matrikkel_n50_points_merged___n100_building (file_manager.n100.file_manager_buildings.Building_N100 attribute)</a>
+      <li><a href="generated_docs/file_manager.n100.html#file_manager.n100.file_manager_buildings.Building_N100.data_preperation___matrikkel_n50_touristcabins_points_merged___n100_building">data_preperation___matrikkel_n50_touristcabins_points_merged___n100_building (file_manager.n100.file_manager_buildings.Building_N100 attribute)</a>
 </li>
       <li><a href="generated_docs/file_manager.n100.html#file_manager.n100.file_manager_buildings.Building_N100.data_preperation___waterfeatures_from_begrensningskurve_not_rivers___n100_building">data_preperation___waterfeatures_from_begrensningskurve_not_rivers___n100_building (file_manager.n100.file_manager_buildings.Building_N100 attribute)</a>
 </li>
@@ -538,13 +542,17 @@
         <li><a href="generated_docs/file_manager.n100.html#module-file_manager.n100.file_manager_rivers">module</a>
 </li>
       </ul></li>
-  </ul></td>
-  <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="generated_docs/file_manager.n100.html#file_manager.n100.file_manager_buildings.Building_N100.finalizing_buildings___all_points_except_tourist_cabins___n100_building">finalizing_buildings___all_points_except_tourist_cabins___n100_building (file_manager.n100.file_manager_buildings.Building_N100 attribute)</a>
 </li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="generated_docs/file_manager.n100.html#file_manager.n100.file_manager_buildings.Building_N100.finalizing_buildings___all_points_not_in_urban_areas___n100_building">finalizing_buildings___all_points_not_in_urban_areas___n100_building (file_manager.n100.file_manager_buildings.Building_N100 attribute)</a>
 </li>
+      <li><a href="generated_docs/file_manager.n100.html#file_manager.n100.file_manager_buildings.Building_N100.finalizing_buildings___hospitals_and_churches_pictogram___n100_building">finalizing_buildings___hospitals_and_churches_pictogram___n100_building (file_manager.n100.file_manager_buildings.Building_N100 attribute)</a>
+</li>
       <li><a href="generated_docs/file_manager.n100.html#file_manager.n100.file_manager_buildings.Building_N100.finalizing_buildings___points_not_close_to_urban_areas___n100_building">finalizing_buildings___points_not_close_to_urban_areas___n100_building (file_manager.n100.file_manager_buildings.Building_N100 attribute)</a>
+</li>
+      <li><a href="generated_docs/file_manager.n100.html#file_manager.n100.file_manager_buildings.Building_N100.finalizing_buildings___polygon_to_line___n100_building">finalizing_buildings___polygon_to_line___n100_building (file_manager.n100.file_manager_buildings.Building_N100 attribute)</a>
 </li>
       <li><a href="generated_docs/file_manager.n100.html#file_manager.n100.file_manager_buildings.Building_N100.finalizing_buildings___selecting_hospital_and_churches_in_urban_areas___n100_building">finalizing_buildings___selecting_hospital_and_churches_in_urban_areas___n100_building (file_manager.n100.file_manager_buildings.Building_N100 attribute)</a>
 </li>
@@ -885,7 +893,7 @@
         <li><a href="generated_docs/generalization.n100.river.html#generalization.n100.river.preparing_river_network.main">(in module generalization.n100.river.preparing_river_network)</a>
 </li>
       </ul></li>
-      <li><a href="generated_docs/generalization.n100.building.html#generalization.n100.building.calculate_point_values.merge_matrikkel_and_n50_with_points_from_grunnriss">merge_matrikkel_and_n50_with_points_from_grunnriss() (in module generalization.n100.building.calculate_point_values)</a>
+      <li><a href="generated_docs/generalization.n100.building.html#generalization.n100.building.calculate_point_values.merge_matrikkel_n50_touristcabins_with_points_from_grunnriss">merge_matrikkel_n50_touristcabins_with_points_from_grunnriss() (in module generalization.n100.building.calculate_point_values)</a>
 </li>
       <li><a href="generated_docs/generalization.n100.building.html#generalization.n100.building.removing_overlapping_points.merging_final_points_together">merging_final_points_together() (in module generalization.n100.building.removing_overlapping_points)</a>
 </li>
@@ -990,6 +998,8 @@
 <h2 id="O">O</h2>
 <table style="width: 100%" class="indextable genindextable"><tr>
   <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="generated_docs/file_manager.n100.html#file_manager.n100.file_manager_buildings.Building_N100.OmrissLinje">OmrissLinje (file_manager.n100.file_manager_buildings.Building_N100 attribute)</a>
+</li>
       <li><a href="generated_docs/custom_tools.html#custom_tools.partition_iterator_state_based.PartitionIterator.ORIGINAL_ID_FIELD">ORIGINAL_ID_FIELD (custom_tools.partition_iterator_state_based.PartitionIterator attribute)</a>
 </li>
   </ul></td>
@@ -1009,6 +1019,8 @@
       <li><a href="generated_docs/custom_tools.html#custom_tools.partition_iterator_state_based.PartitionIterator.partition_iteration">partition_iteration() (custom_tools.partition_iterator_state_based.PartitionIterator method)</a>
 </li>
       <li><a href="generated_docs/custom_tools.html#custom_tools.partition_iterator_state_based.PartitionIterator">PartitionIterator (class in custom_tools.partition_iterator_state_based)</a>
+</li>
+      <li><a href="generated_docs/file_manager.n100.html#file_manager.n100.file_manager_buildings.Building_N100.Piktogram">Piktogram (file_manager.n100.file_manager_buildings.Building_N100 attribute)</a>
 </li>
       <li><a href="generated_docs/file_manager.n100.html#file_manager.n100.file_manager_buildings.Building_N100.point_propogate_displacement___area_oslo_asker___n100_building">point_propogate_displacement___area_oslo_asker___n100_building (file_manager.n100.file_manager_buildings.Building_N100 attribute)</a>
 </li>
@@ -1082,10 +1094,10 @@
 </li>
       <li><a href="generated_docs/file_manager.n100.html#file_manager.n100.file_manager_buildings.Building_N100.point_resolve_building_conflicts___squares_selection___n100_building_lyrx">point_resolve_building_conflicts___squares_selection___n100_building_lyrx (file_manager.n100.file_manager_buildings.Building_N100 attribute)</a>
 </li>
-      <li><a href="generated_docs/file_manager.n100.html#file_manager.n100.file_manager_buildings.Building_N100.point_resolve_building_conflicts___squares_selection_rbc___n100_building">point_resolve_building_conflicts___squares_selection_rbc___n100_building (file_manager.n100.file_manager_buildings.Building_N100 attribute)</a>
-</li>
   </ul></td>
   <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="generated_docs/file_manager.n100.html#file_manager.n100.file_manager_buildings.Building_N100.point_resolve_building_conflicts___squares_selection_rbc___n100_building">point_resolve_building_conflicts___squares_selection_rbc___n100_building (file_manager.n100.file_manager_buildings.Building_N100 attribute)</a>
+</li>
       <li><a href="generated_docs/file_manager.n100.html#file_manager.n100.file_manager_buildings.Building_N100.point_resolve_building_conflicts___squares_to_keep_after_rbc1___n100_building">point_resolve_building_conflicts___squares_to_keep_after_rbc1___n100_building (file_manager.n100.file_manager_buildings.Building_N100 attribute)</a>
 </li>
       <li><a href="generated_docs/file_manager.n100.html#file_manager.n100.file_manager_buildings.Building_N100.point_resolve_building_conflicts___squares_to_keep_after_rbc1___n100_building_lyrx">point_resolve_building_conflicts___squares_to_keep_after_rbc1___n100_building_lyrx (file_manager.n100.file_manager_buildings.Building_N100 attribute)</a>
@@ -1265,6 +1277,8 @@
       <li><a href="generated_docs/generalization.n100.building.html#generalization.n100.building.hospital_church_clusters.selecting_all_other_points_that_are_not_hospital_and_church">selecting_all_other_points_that_are_not_hospital_and_church() (in module generalization.n100.building.hospital_church_clusters)</a>
 </li>
       <li><a href="generated_docs/generalization.n100.building.html#generalization.n100.building.finalizing_buildings.selecting_all_tourist_cabins">selecting_all_tourist_cabins() (in module generalization.n100.building.finalizing_buildings)</a>
+</li>
+      <li><a href="generated_docs/generalization.n100.building.html#generalization.n100.building.finalizing_buildings.selecting_hospital_and_churches_for_pictogram_featureclass">selecting_hospital_and_churches_for_pictogram_featureclass() (in module generalization.n100.building.finalizing_buildings)</a>
 </li>
       <li><a href="generated_docs/generalization.n100.building.html#generalization.n100.building.removing_overlapping_points.selecting_points_close_to_graphic_conflict_polygons">selecting_points_close_to_graphic_conflict_polygons() (in module generalization.n100.building.removing_overlapping_points)</a>
 </li>

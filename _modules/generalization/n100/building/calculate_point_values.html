@@ -103,7 +103,7 @@
     <span class="n">environment_setup</span><span class="o">.</span><span class="n">main</span><span class="p">()</span>
     <span class="n">reclassifying_hospital_and_church_points_from_matrikkel</span><span class="p">()</span>
     <span class="n">adding_original_source_to_points</span><span class="p">()</span>
-    <span class="n">merge_matrikkel_and_n50_with_points_from_grunnriss</span><span class="p">()</span>
+    <span class="n">merge_matrikkel_n50_touristcabins_with_points_from_grunnriss</span><span class="p">()</span>
     <span class="n">find_undefined_nbr_values</span><span class="p">()</span>
     <span class="n">find_each_unique_nbr_value</span><span class="p">()</span>
     <span class="n">calculate_angle_and_visibility</span><span class="p">()</span>
@@ -138,12 +138,12 @@
 <span class="k">def</span> <span class="nf">adding_original_source_to_points</span><span class="p">():</span>
     <span class="c1"># Adding a field to indicate that the merged building point and matrikkel does not come from grunnriss</span>
     <span class="n">arcpy</span><span class="o">.</span><span class="n">AddField_management</span><span class="p">(</span>
-        <span class="n">in_table</span><span class="o">=</span><span class="n">Building_N100</span><span class="o">.</span><span class="n">data_preperation___matrikkel_n50_points_merged___n100_building</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
+        <span class="n">in_table</span><span class="o">=</span><span class="n">Building_N100</span><span class="o">.</span><span class="n">data_preperation___matrikkel_n50_touristcabins_points_merged___n100_building</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
         <span class="n">field_name</span><span class="o">=</span><span class="s2">&quot;grunnriss&quot;</span><span class="p">,</span>
         <span class="n">field_type</span><span class="o">=</span><span class="s2">&quot;LONG&quot;</span><span class="p">,</span>
     <span class="p">)</span>
     <span class="n">arcpy</span><span class="o">.</span><span class="n">CalculateField_management</span><span class="p">(</span>
-        <span class="n">in_table</span><span class="o">=</span><span class="n">Building_N100</span><span class="o">.</span><span class="n">data_preperation___matrikkel_n50_points_merged___n100_building</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
+        <span class="n">in_table</span><span class="o">=</span><span class="n">Building_N100</span><span class="o">.</span><span class="n">data_preperation___matrikkel_n50_touristcabins_points_merged___n100_building</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
         <span class="n">field</span><span class="o">=</span><span class="s2">&quot;grunnriss&quot;</span><span class="p">,</span>
         <span class="n">expression</span><span class="o">=</span><span class="s2">&quot;0&quot;</span><span class="p">,</span>
     <span class="p">)</span>
@@ -162,28 +162,28 @@
 
 
 
-<div class="viewcode-block" id="merge_matrikkel_and_n50_with_points_from_grunnriss">
-<a class="viewcode-back" href="../../../../generated_docs/generalization.n100.building.html#generalization.n100.building.calculate_point_values.merge_matrikkel_and_n50_with_points_from_grunnriss">[docs]</a>
+<div class="viewcode-block" id="merge_matrikkel_n50_touristcabins_with_points_from_grunnriss">
+<a class="viewcode-back" href="../../../../generated_docs/generalization.n100.building.html#generalization.n100.building.calculate_point_values.merge_matrikkel_n50_touristcabins_with_points_from_grunnriss">[docs]</a>
 <span class="nd">@timing_decorator</span>
-<span class="k">def</span> <span class="nf">merge_matrikkel_and_n50_with_points_from_grunnriss</span><span class="p">():</span>
+<span class="k">def</span> <span class="nf">merge_matrikkel_n50_touristcabins_with_points_from_grunnriss</span><span class="p">():</span>
     <span class="c1"># Merge the merged building point from n50 and matrikkel with points created from grunnriss</span>
     <span class="n">arcpy</span><span class="o">.</span><span class="n">management</span><span class="o">.</span><span class="n">Merge</span><span class="p">(</span>
         <span class="n">inputs</span><span class="o">=</span><span class="p">[</span>
-            <span class="n">Building_N100</span><span class="o">.</span><span class="n">data_preperation___matrikkel_n50_points_merged___n100_building</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
+            <span class="n">Building_N100</span><span class="o">.</span><span class="n">data_preperation___matrikkel_n50_touristcabins_points_merged___n100_building</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
             <span class="n">Building_N100</span><span class="o">.</span><span class="n">polygon_to_point___merged_points_final___n100_building</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
         <span class="p">],</span>
-        <span class="n">output</span><span class="o">=</span><span class="n">Building_N100</span><span class="o">.</span><span class="n">calculate_point_values___points_pre_resolve_building_conflicts___n100_building</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
+        <span class="n">output</span><span class="o">=</span><span class="n">Building_N100</span><span class="o">.</span><span class="n">calculate_point_values___points_going_into_rbc___n100_building</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
     <span class="p">)</span>
 
     <span class="n">arcpy</span><span class="o">.</span><span class="n">AddField_management</span><span class="p">(</span>
-        <span class="n">in_table</span><span class="o">=</span><span class="n">Building_N100</span><span class="o">.</span><span class="n">calculate_point_values___points_pre_resolve_building_conflicts___n100_building</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
+        <span class="n">in_table</span><span class="o">=</span><span class="n">Building_N100</span><span class="o">.</span><span class="n">calculate_point_values___points_going_into_rbc___n100_building</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
         <span class="n">field_name</span><span class="o">=</span><span class="s2">&quot;symbol_val&quot;</span><span class="p">,</span>
         <span class="n">field_type</span><span class="o">=</span><span class="s2">&quot;SHORT&quot;</span><span class="p">,</span>
     <span class="p">)</span>
 
     <span class="c1"># Determining and assigning symbol val</span>
     <span class="n">arcpy</span><span class="o">.</span><span class="n">CalculateField_management</span><span class="p">(</span>
-        <span class="n">in_table</span><span class="o">=</span><span class="n">Building_N100</span><span class="o">.</span><span class="n">calculate_point_values___points_pre_resolve_building_conflicts___n100_building</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
+        <span class="n">in_table</span><span class="o">=</span><span class="n">Building_N100</span><span class="o">.</span><span class="n">calculate_point_values___points_going_into_rbc___n100_building</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
         <span class="n">field</span><span class="o">=</span><span class="s2">&quot;symbol_val&quot;</span><span class="p">,</span>
         <span class="n">expression</span><span class="o">=</span><span class="s2">&quot;determineVal(!BYGGTYP_NBR!)&quot;</span><span class="p">,</span>
         <span class="n">expression_type</span><span class="o">=</span><span class="s2">&quot;PYTHON3&quot;</span><span class="p">,</span>
@@ -197,7 +197,7 @@
 <span class="nd">@timing_decorator</span>
 <span class="k">def</span> <span class="nf">find_undefined_nbr_values</span><span class="p">():</span>
     <span class="n">custom_arcpy</span><span class="o">.</span><span class="n">select_attribute_and_make_feature_layer</span><span class="p">(</span>
-        <span class="n">input_layer</span><span class="o">=</span><span class="n">Building_N100</span><span class="o">.</span><span class="n">calculate_point_values___points_pre_resolve_building_conflicts___n100_building</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
+        <span class="n">input_layer</span><span class="o">=</span><span class="n">Building_N100</span><span class="o">.</span><span class="n">calculate_point_values___points_going_into_rbc___n100_building</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
         <span class="n">expression</span><span class="o">=</span><span class="s2">&quot;symbol_val = -99&quot;</span><span class="p">,</span>
         <span class="n">output_name</span><span class="o">=</span><span class="n">Building_N100</span><span class="o">.</span><span class="n">calculate_point_values___selection_building_points_with_undefined_nbr_values___n100_building</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
     <span class="p">)</span></div>
@@ -255,7 +255,7 @@
 
     <span class="c1"># Applying the symbol_val_to_nbr logic</span>
     <span class="n">arcpy</span><span class="o">.</span><span class="n">CalculateField_management</span><span class="p">(</span>
-        <span class="n">in_table</span><span class="o">=</span><span class="n">Building_N100</span><span class="o">.</span><span class="n">calculate_point_values___points_pre_resolve_building_conflicts___n100_building</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
+        <span class="n">in_table</span><span class="o">=</span><span class="n">Building_N100</span><span class="o">.</span><span class="n">calculate_point_values___points_going_into_rbc___n100_building</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
         <span class="n">field</span><span class="o">=</span><span class="s2">&quot;BYGGTYP_NBR&quot;</span><span class="p">,</span>
         <span class="n">expression</span><span class="o">=</span><span class="s2">&quot;symbol_val_to_nbr(!symbol_val!, !BYGGTYP_NBR!)&quot;</span><span class="p">,</span>
         <span class="n">expression_type</span><span class="o">=</span><span class="s2">&quot;PYTHON3&quot;</span><span class="p">,</span>
@@ -264,7 +264,7 @@
 
     <span class="c1"># Applying the update_symbol_val logic</span>
     <span class="n">arcpy</span><span class="o">.</span><span class="n">CalculateField_management</span><span class="p">(</span>
-        <span class="n">in_table</span><span class="o">=</span><span class="n">Building_N100</span><span class="o">.</span><span class="n">calculate_point_values___points_pre_resolve_building_conflicts___n100_building</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
+        <span class="n">in_table</span><span class="o">=</span><span class="n">Building_N100</span><span class="o">.</span><span class="n">calculate_point_values___points_going_into_rbc___n100_building</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
         <span class="n">field</span><span class="o">=</span><span class="s2">&quot;symbol_val&quot;</span><span class="p">,</span>
         <span class="n">expression</span><span class="o">=</span><span class="s2">&quot;update_symbol_val(!symbol_val!)&quot;</span><span class="p">,</span>
         <span class="n">expression_type</span><span class="o">=</span><span class="s2">&quot;PYTHON3&quot;</span><span class="p">,</span>
@@ -279,7 +279,7 @@
 <span class="k">def</span> <span class="nf">calculate_angle_and_visibility</span><span class="p">():</span>
     <span class="c1"># Feature class to check fields existence</span>
     <span class="n">point_feature_class</span> <span class="o">=</span> <span class="p">(</span>
-        <span class="n">Building_N100</span><span class="o">.</span><span class="n">calculate_point_values___points_pre_resolve_building_conflicts___n100_building</span><span class="o">.</span><span class="n">value</span>
+        <span class="n">Building_N100</span><span class="o">.</span><span class="n">calculate_point_values___points_going_into_rbc___n100_building</span><span class="o">.</span><span class="n">value</span>
     <span class="p">)</span>
 
     <span class="c1"># List of fields to add and calculate</span>
@@ -311,7 +311,7 @@
 <span class="k">def</span> <span class="nf">calculate_hierarchy</span><span class="p">():</span>
     <span class="c1"># Then run CalculateField with the new code block</span>
     <span class="n">arcpy</span><span class="o">.</span><span class="n">management</span><span class="o">.</span><span class="n">CalculateField</span><span class="p">(</span>
-        <span class="n">in_table</span><span class="o">=</span><span class="n">Building_N100</span><span class="o">.</span><span class="n">calculate_point_values___points_pre_resolve_building_conflicts___n100_building</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
+        <span class="n">in_table</span><span class="o">=</span><span class="n">Building_N100</span><span class="o">.</span><span class="n">calculate_point_values___points_going_into_rbc___n100_building</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
         <span class="n">field</span><span class="o">=</span><span class="s2">&quot;hierarchy&quot;</span><span class="p">,</span>
         <span class="n">expression</span><span class="o">=</span><span class="s2">&quot;determineHierarchy(!symbol_val!)&quot;</span><span class="p">,</span>
         <span class="n">expression_type</span><span class="o">=</span><span class="s2">&quot;PYTHON3&quot;</span><span class="p">,</span>

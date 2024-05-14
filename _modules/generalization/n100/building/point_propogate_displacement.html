@@ -133,7 +133,7 @@
     <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Point propogate displacement ...&quot;</span><span class="p">)</span>
 
     <span class="n">arcpy</span><span class="o">.</span><span class="n">management</span><span class="o">.</span><span class="n">Copy</span><span class="p">(</span>
-        <span class="n">in_data</span><span class="o">=</span><span class="n">Building_N100</span><span class="o">.</span><span class="n">calculate_point_values___points_pre_resolve_building_conflicts___n100_building</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
+        <span class="n">in_data</span><span class="o">=</span><span class="n">Building_N100</span><span class="o">.</span><span class="n">calculate_point_values___points_going_into_rbc___n100_building</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
         <span class="n">out_data</span><span class="o">=</span><span class="n">Building_N100</span><span class="o">.</span><span class="n">point_propogate_displacement___points_pre_propogate_displacement___n100_building</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
     <span class="p">)</span>
 
@@ -144,7 +144,7 @@
     <span class="p">)</span>
 
     <span class="n">custom_arcpy</span><span class="o">.</span><span class="n">select_location_and_make_permanent_feature</span><span class="p">(</span>
-        <span class="n">input_layer</span><span class="o">=</span><span class="n">Building_N100</span><span class="o">.</span><span class="n">calculate_point_values___points_pre_resolve_building_conflicts___n100_building</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
+        <span class="n">input_layer</span><span class="o">=</span><span class="n">Building_N100</span><span class="o">.</span><span class="n">calculate_point_values___points_going_into_rbc___n100_building</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
         <span class="n">overlap_type</span><span class="o">=</span><span class="n">custom_arcpy</span><span class="o">.</span><span class="n">OverlapType</span><span class="o">.</span><span class="n">INTERSECT</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
         <span class="n">select_features</span><span class="o">=</span><span class="n">Building_N100</span><span class="o">.</span><span class="n">point_propogate_displacement___area_oslo_asker___n100_building</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
         <span class="n">output_name</span><span class="o">=</span><span class="n">Building_N100</span><span class="o">.</span><span class="n">point_propogate_displacement___points_in_area_oslo_asker___n100_building</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>

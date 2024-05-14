@@ -96,7 +96,7 @@
 <span class="n">polygon_resolve_building_conflicts</span> <span class="o">=</span> <span class="s2">&quot;polygon_resolve_building_conflicts&quot;</span>
 <span class="n">polygon_to_point</span> <span class="o">=</span> <span class="s2">&quot;polygon_to_point&quot;</span>
 <span class="n">calculating_polygon_values</span> <span class="o">=</span> <span class="s2">&quot;calculating_polygon_values&quot;</span>
-<span class="n">calculating_point_values</span> <span class="o">=</span> <span class="s2">&quot;calculating_point_values&quot;</span>
+<span class="n">calculate_point_values</span> <span class="o">=</span> <span class="s2">&quot;calculate_point_values&quot;</span>
 <span class="n">point_propogate_displacement</span> <span class="o">=</span> <span class="s2">&quot;point_propogate_displacement&quot;</span>
 <span class="n">removing_points_in_water_features</span> <span class="o">=</span> <span class="s2">&quot;removing_points_in_water_features&quot;</span>
 <span class="n">removing_overlapping_points</span> <span class="o">=</span> <span class="s2">&quot;removing_overlapping_points&quot;</span>
@@ -308,10 +308,10 @@
         <span class="p">)</span>
     <span class="p">)</span>
 
-    <span class="n">data_preperation___matrikkel_n50_points_merged___n100_building</span> <span class="o">=</span> <span class="p">(</span>
+    <span class="n">data_preperation___matrikkel_n50_touristcabins_points_merged___n100_building</span> <span class="o">=</span> <span class="p">(</span>
         <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_gdb</span><span class="p">(</span>
             <span class="n">script_source_name</span><span class="o">=</span><span class="n">data_preparation</span><span class="p">,</span>
-            <span class="n">description</span><span class="o">=</span><span class="s2">&quot;matrikkel_n50_points_merged&quot;</span><span class="p">,</span>
+            <span class="n">description</span><span class="o">=</span><span class="s2">&quot;matrikkel_n50_points_touristcabins_merged&quot;</span><span class="p">,</span>
         <span class="p">)</span>
     <span class="p">)</span>
 
@@ -350,24 +350,31 @@
         <span class="p">)</span>
     <span class="p">)</span>
 
+    <span class="n">data_preparation___railway_station_points_from_n100___n100_building</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_gdb</span><span class="p">(</span>
+            <span class="n">script_source_name</span><span class="o">=</span><span class="n">data_preparation</span><span class="p">,</span>
+            <span class="n">description</span><span class="o">=</span><span class="s2">&quot;railway_station_points_from_n100&quot;</span><span class="p">,</span>
+        <span class="p">)</span>
+    <span class="p">)</span>
+
     <span class="c1"># ========================================</span>
     <span class="c1">#                      CALCULATE POINT VALUES</span>
     <span class="c1"># ========================================</span>
 
-    <span class="n">calculate_point_values___points_pre_resolve_building_conflicts___n100_building</span> <span class="o">=</span> <span class="p">(</span>
+    <span class="n">calculate_point_values___points_going_into_rbc___n100_building</span> <span class="o">=</span> <span class="p">(</span>
         <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_gdb</span><span class="p">(</span>
-            <span class="n">script_source_name</span><span class="o">=</span><span class="n">calculating_point_values</span><span class="p">,</span>
-            <span class="n">description</span><span class="o">=</span><span class="s2">&quot;points_pre_resolve_building_conflicts&quot;</span><span class="p">,</span>
+            <span class="n">script_source_name</span><span class="o">=</span><span class="n">calculate_point_values</span><span class="p">,</span>
+            <span class="n">description</span><span class="o">=</span><span class="s2">&quot;points_going_into_rbc&quot;</span><span class="p">,</span>
         <span class="p">)</span>
     <span class="p">)</span>
 
     <span class="n">calculate_point_values___selection_building_points_with_undefined_nbr_values___n100_building</span> <span class="o">=</span> <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_gdb</span><span class="p">(</span>
-        <span class="n">script_source_name</span><span class="o">=</span><span class="n">calculating_point_values</span><span class="p">,</span>
+        <span class="n">script_source_name</span><span class="o">=</span><span class="n">calculate_point_values</span><span class="p">,</span>
         <span class="n">description</span><span class="o">=</span><span class="s2">&quot;selection_building_points_with_undefined_nbr_values&quot;</span><span class="p">,</span>
     <span class="p">)</span>
 
     <span class="n">calculate_point_values___building_points_with_undefined_nbr_values___n100_building</span> <span class="o">=</span> <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_general_files</span><span class="p">(</span>
-        <span class="n">script_source_name</span><span class="o">=</span><span class="n">calculating_point_values</span><span class="p">,</span>
+        <span class="n">script_source_name</span><span class="o">=</span><span class="n">calculate_point_values</span><span class="p">,</span>
         <span class="n">description</span><span class="o">=</span><span class="s2">&quot;building_points_with_undefined_nbr_values&quot;</span><span class="p">,</span>
         <span class="n">file_type</span><span class="o">=</span><span class="s2">&quot;txt&quot;</span><span class="p">,</span>
     <span class="p">)</span>
@@ -1395,6 +1402,20 @@
         <span class="p">)</span>
     <span class="p">)</span>
 
+    <span class="n">finalizing_buildings___polygon_to_line___n100_building</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_gdb</span><span class="p">(</span>
+            <span class="n">script_source_name</span><span class="o">=</span><span class="n">finalizing_buildings</span><span class="p">,</span>
+            <span class="n">description</span><span class="o">=</span><span class="s2">&quot;polygon_to_line&quot;</span><span class="p">,</span>
+        <span class="p">)</span>
+    <span class="p">)</span>
+
+    <span class="n">finalizing_buildings___hospitals_and_churches_pictogram___n100_building</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_gdb</span><span class="p">(</span>
+            <span class="n">script_source_name</span><span class="o">=</span><span class="n">finalizing_buildings</span><span class="p">,</span>
+            <span class="n">description</span><span class="o">=</span><span class="s2">&quot;hospitals_and_churches_pictogram&quot;</span><span class="p">,</span>
+        <span class="p">)</span>
+    <span class="p">)</span>
+
     <span class="n">TuristHytte</span> <span class="o">=</span> <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_final_outputs</span><span class="p">(</span>
         <span class="n">file_name</span><span class="o">=</span><span class="s2">&quot;TuristHytte&quot;</span><span class="p">,</span>
     <span class="p">)</span>
@@ -1405,6 +1426,14 @@
 
     <span class="n">Grunnriss</span> <span class="o">=</span> <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_final_outputs</span><span class="p">(</span>
         <span class="n">file_name</span><span class="o">=</span><span class="s2">&quot;Grunnriss&quot;</span><span class="p">,</span>
+    <span class="p">)</span>
+
+    <span class="n">OmrissLinje</span> <span class="o">=</span> <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_final_outputs</span><span class="p">(</span>
+        <span class="n">file_name</span><span class="o">=</span><span class="s2">&quot;OmrissLinje&quot;</span><span class="p">,</span>
+    <span class="p">)</span>
+
+    <span class="n">Piktogram</span> <span class="o">=</span> <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_final_outputs</span><span class="p">(</span>
+        <span class="n">file_name</span><span class="o">=</span><span class="s2">&quot;Piktogram&quot;</span><span class="p">,</span>
     <span class="p">)</span></div>
 
 </pre></div>
