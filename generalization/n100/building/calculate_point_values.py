@@ -22,7 +22,7 @@ def main():
     environment_setup.main()
     reclassifying_hospital_and_church_points_from_matrikkel()
     adding_original_source_to_points()
-    merge_matrikkel_and_n50_with_points_from_grunnriss()
+    merge_matrikkel_n50_touristcabins_with_points_from_grunnriss()
     find_undefined_nbr_values()
     find_each_unique_nbr_value()
     calculate_angle_and_visibility()
@@ -51,12 +51,12 @@ def reclassifying_hospital_and_church_points_from_matrikkel():
 def adding_original_source_to_points():
     # Adding a field to indicate that the merged building point and matrikkel does not come from grunnriss
     arcpy.AddField_management(
-        in_table=Building_N100.data_preperation___matrikkel_n50_points_merged___n100_building.value,
+        in_table=Building_N100.data_preperation___matrikkel_n50_touristcabins_points_merged___n100_building.value,
         field_name="grunnriss",
         field_type="LONG",
     )
     arcpy.CalculateField_management(
-        in_table=Building_N100.data_preperation___matrikkel_n50_points_merged___n100_building.value,
+        in_table=Building_N100.data_preperation___matrikkel_n50_touristcabins_points_merged___n100_building.value,
         field="grunnriss",
         expression="0",
     )
@@ -75,25 +75,25 @@ def adding_original_source_to_points():
 
 
 @timing_decorator
-def merge_matrikkel_and_n50_with_points_from_grunnriss():
+def merge_matrikkel_n50_touristcabins_with_points_from_grunnriss():
     # Merge the merged building point from n50 and matrikkel with points created from grunnriss
     arcpy.management.Merge(
         inputs=[
-            Building_N100.data_preperation___matrikkel_n50_points_merged___n100_building.value,
+            Building_N100.data_preperation___matrikkel_n50_touristcabins_points_merged___n100_building.value,
             Building_N100.polygon_to_point___merged_points_final___n100_building.value,
         ],
-        output=Building_N100.calculate_point_values___points_pre_resolve_building_conflicts___n100_building.value,
+        output=Building_N100.calculate_point_values___points_going_into_rbc___n100_building.value,
     )
 
     arcpy.AddField_management(
-        in_table=Building_N100.calculate_point_values___points_pre_resolve_building_conflicts___n100_building.value,
+        in_table=Building_N100.calculate_point_values___points_going_into_rbc___n100_building.value,
         field_name="symbol_val",
         field_type="SHORT",
     )
 
     # Determining and assigning symbol val
     arcpy.CalculateField_management(
-        in_table=Building_N100.calculate_point_values___points_pre_resolve_building_conflicts___n100_building.value,
+        in_table=Building_N100.calculate_point_values___points_going_into_rbc___n100_building.value,
         field="symbol_val",
         expression="determineVal(!BYGGTYP_NBR!)",
         expression_type="PYTHON3",
@@ -104,7 +104,7 @@ def merge_matrikkel_and_n50_with_points_from_grunnriss():
 @timing_decorator
 def find_undefined_nbr_values():
     custom_arcpy.select_attribute_and_make_feature_layer(
-        input_layer=Building_N100.calculate_point_values___points_pre_resolve_building_conflicts___n100_building.value,
+        input_layer=Building_N100.calculate_point_values___points_going_into_rbc___n100_building.value,
         expression="symbol_val = -99",
         output_name=Building_N100.calculate_point_values___selection_building_points_with_undefined_nbr_values___n100_building.value,
     )
@@ -159,7 +159,7 @@ def find_each_unique_nbr_value():
 
     # Applying the symbol_val_to_nbr logic
     arcpy.CalculateField_management(
-        in_table=Building_N100.calculate_point_values___points_pre_resolve_building_conflicts___n100_building.value,
+        in_table=Building_N100.calculate_point_values___points_going_into_rbc___n100_building.value,
         field="BYGGTYP_NBR",
         expression="symbol_val_to_nbr(!symbol_val!, !BYGGTYP_NBR!)",
         expression_type="PYTHON3",
@@ -168,7 +168,7 @@ def find_each_unique_nbr_value():
 
     # Applying the update_symbol_val logic
     arcpy.CalculateField_management(
-        in_table=Building_N100.calculate_point_values___points_pre_resolve_building_conflicts___n100_building.value,
+        in_table=Building_N100.calculate_point_values___points_going_into_rbc___n100_building.value,
         field="symbol_val",
         expression="update_symbol_val(!symbol_val!)",
         expression_type="PYTHON3",
@@ -180,7 +180,7 @@ def find_each_unique_nbr_value():
 def calculate_angle_and_visibility():
     # Feature class to check fields existence
     point_feature_class = (
-        Building_N100.calculate_point_values___points_pre_resolve_building_conflicts___n100_building.value
+        Building_N100.calculate_point_values___points_going_into_rbc___n100_building.value
     )
 
     # List of fields to add and calculate
@@ -209,7 +209,7 @@ def calculate_angle_and_visibility():
 def calculate_hierarchy():
     # Then run CalculateField with the new code block
     arcpy.management.CalculateField(
-        in_table=Building_N100.calculate_point_values___points_pre_resolve_building_conflicts___n100_building.value,
+        in_table=Building_N100.calculate_point_values___points_going_into_rbc___n100_building.value,
         field="hierarchy",
         expression="determineHierarchy(!symbol_val!)",
         expression_type="PYTHON3",
