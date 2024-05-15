@@ -172,7 +172,7 @@
 
     <span class="k">for</span> <span class="n">layer</span> <span class="ow">in</span> <span class="n">all_final_layers</span><span class="p">:</span>
         <span class="n">feature_class</span> <span class="o">=</span> <span class="n">layer</span>
-        <span class="n">field_name</span> <span class="o">=</span> <span class="s2">&quot;LAST_EDITED_DATE&quot;</span>
+        <span class="n">field_name</span> <span class="o">=</span> <span class="s2">&quot;last_edited_date&quot;</span>
 
         <span class="c1"># Check if the field already exists</span>
         <span class="n">existing_fields</span> <span class="o">=</span> <span class="p">[</span><span class="n">field</span><span class="o">.</span><span class="n">name</span> <span class="k">for</span> <span class="n">field</span> <span class="ow">in</span> <span class="n">arcpy</span><span class="o">.</span><span class="n">ListFields</span><span class="p">(</span><span class="n">feature_class</span><span class="p">)]</span>
@@ -186,7 +186,7 @@
                 <span class="n">field_type</span><span class="o">=</span><span class="s2">&quot;DATE&quot;</span><span class="p">,</span>
             <span class="p">)</span>
 
-        <span class="c1"># Calculate LAST_EDITED_DATE</span>
+        <span class="c1"># Calculate last_edited_date</span>
         <span class="n">current_date</span> <span class="o">=</span> <span class="n">datetime</span><span class="o">.</span><span class="n">now</span><span class="p">()</span><span class="o">.</span><span class="n">strftime</span><span class="p">(</span><span class="s2">&quot;%Y-%m-</span><span class="si">%d</span><span class="s2"> %H:%M:%S&quot;</span><span class="p">)</span>
         <span class="n">arcpy</span><span class="o">.</span><span class="n">CalculateField_management</span><span class="p">(</span>
             <span class="n">in_table</span><span class="o">=</span><span class="n">feature_class</span><span class="p">,</span>

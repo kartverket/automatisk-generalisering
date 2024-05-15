@@ -142,7 +142,7 @@
     <span class="n">arcpy</span><span class="o">.</span><span class="n">cartography</span><span class="o">.</span><span class="n">AggregatePolygons</span><span class="p">(</span>
         <span class="n">in_features</span><span class="o">=</span><span class="n">Building_N100</span><span class="o">.</span><span class="n">data_preparation___polygons_that_are_large_enough___n100_building</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
         <span class="n">out_feature_class</span><span class="o">=</span><span class="n">Building_N100</span><span class="o">.</span><span class="n">simplify_polygons___small_gaps___n100_building</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
-        <span class="n">aggregation_distance</span><span class="o">=</span><span class="s2">&quot;4&quot;</span><span class="p">,</span>
+        <span class="n">aggregation_distance</span><span class="o">=</span><span class="s2">&quot;4 Meters&quot;</span><span class="p">,</span>
         <span class="n">minimum_area</span><span class="o">=</span><span class="s2">&quot;3200 SquareMeters&quot;</span><span class="p">,</span>
         <span class="n">minimum_hole_size</span><span class="o">=</span><span class="s2">&quot;10000 SquareMeters&quot;</span><span class="p">,</span>
         <span class="n">orthogonality_option</span><span class="o">=</span><span class="s2">&quot;ORTHOGONAL&quot;</span><span class="p">,</span>
@@ -194,7 +194,7 @@
     <span class="n">arcpy</span><span class="o">.</span><span class="n">cartography</span><span class="o">.</span><span class="n">SimplifyBuilding</span><span class="p">(</span>
         <span class="n">in_features</span><span class="o">=</span><span class="n">Building_N100</span><span class="o">.</span><span class="n">simplify_polygons___small_gaps___n100_building</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
         <span class="n">out_feature_class</span><span class="o">=</span><span class="n">Building_N100</span><span class="o">.</span><span class="n">simplify_polygons___simplify_building_1___n100_building</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
-        <span class="n">simplification_tolerance</span><span class="o">=</span><span class="s2">&quot;75&quot;</span><span class="p">,</span>
+        <span class="n">simplification_tolerance</span><span class="o">=</span><span class="s2">&quot;75 Meters&quot;</span><span class="p">,</span>
         <span class="n">minimum_area</span><span class="o">=</span><span class="s2">&quot;3200 SquareMeters&quot;</span><span class="p">,</span>
         <span class="n">collapsed_point_option</span><span class="o">=</span><span class="s2">&quot;KEEP_COLLAPSED_POINTS&quot;</span><span class="p">,</span>  <span class="c1"># Name of points will be the same as output, but with `Pnt` at the end</span>
     <span class="p">)</span></div>
@@ -226,7 +226,7 @@
         <span class="n">in_features</span><span class="o">=</span><span class="n">Building_N100</span><span class="o">.</span><span class="n">simplify_polygons___simplify_building_1___n100_building</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
         <span class="n">out_feature_class</span><span class="o">=</span><span class="n">Building_N100</span><span class="o">.</span><span class="n">simplify_polygons___simplify_polygon___n100_building</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
         <span class="n">algorithm</span><span class="o">=</span><span class="s2">&quot;WEIGHTED_AREA&quot;</span><span class="p">,</span>
-        <span class="n">tolerance</span><span class="o">=</span><span class="s2">&quot;15&quot;</span><span class="p">,</span>
+        <span class="n">tolerance</span><span class="o">=</span><span class="s2">&quot;15 Meters&quot;</span><span class="p">,</span>
         <span class="n">minimum_area</span><span class="o">=</span><span class="s2">&quot;3200 SquareMeters&quot;</span><span class="p">,</span>
         <span class="n">collapsed_point_option</span><span class="o">=</span><span class="s2">&quot;KEEP_COLLAPSED_POINTS&quot;</span><span class="p">,</span>  <span class="c1"># Name of points will be the same as output, but with `Pnt` at the end</span>
     <span class="p">)</span></div>
@@ -257,7 +257,7 @@
     <span class="n">arcpy</span><span class="o">.</span><span class="n">cartography</span><span class="o">.</span><span class="n">SimplifyBuilding</span><span class="p">(</span>
         <span class="n">in_features</span><span class="o">=</span><span class="n">Building_N100</span><span class="o">.</span><span class="n">simplify_polygons___simplify_building_1___n100_building</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
         <span class="n">out_feature_class</span><span class="o">=</span><span class="n">Building_N100</span><span class="o">.</span><span class="n">simplify_polygons___simplify_building_2___n100_building</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
-        <span class="n">simplification_tolerance</span><span class="o">=</span><span class="s2">&quot;75&quot;</span><span class="p">,</span>
+        <span class="n">simplification_tolerance</span><span class="o">=</span><span class="s2">&quot;75 Meters&quot;</span><span class="p">,</span>
         <span class="n">minimum_area</span><span class="o">=</span><span class="s2">&quot;3200 SquareMeters&quot;</span><span class="p">,</span>
         <span class="n">collapsed_point_option</span><span class="o">=</span><span class="s2">&quot;KEEP_COLLAPSED_POINTS&quot;</span><span class="p">,</span>  <span class="c1"># Name of points will be the same as output, but with `Pnt` at the end</span>
     <span class="p">)</span></div>

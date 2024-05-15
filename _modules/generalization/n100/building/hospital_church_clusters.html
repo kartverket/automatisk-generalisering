@@ -132,7 +132,7 @@
     <span class="c1"># Selecting all hospitals and making feature layer</span>
     <span class="n">custom_arcpy</span><span class="o">.</span><span class="n">select_attribute_and_make_permanent_feature</span><span class="p">(</span>
         <span class="n">input_layer</span><span class="o">=</span><span class="n">Building_N100</span><span class="o">.</span><span class="n">point_propogate_displacement___points_after_propogate_displacement___n100_building</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
-        <span class="n">expression</span><span class="o">=</span><span class="s2">&quot;BYGGTYP_NBR IN (970, 719, 671)&quot;</span><span class="p">,</span>
+        <span class="n">expression</span><span class="o">=</span><span class="s2">&quot;byggtyp_nbr IN (970, 719, 671)&quot;</span><span class="p">,</span>
         <span class="n">output_name</span><span class="o">=</span><span class="n">Building_N100</span><span class="o">.</span><span class="n">hospital_church_clusters___all_other_points_that_are_not_hospital_church___n100_building</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
         <span class="n">selection_type</span><span class="o">=</span><span class="n">custom_arcpy</span><span class="o">.</span><span class="n">SelectionType</span><span class="o">.</span><span class="n">NEW_SELECTION</span><span class="p">,</span>
         <span class="n">inverted</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
@@ -149,13 +149,13 @@
 <span class="sd">        Selects hospitals and churches from the input point feature class, creating separate feature layers for each category.</span>
 
 <span class="sd">    Details:</span>
-<span class="sd">        - Hospitals are selected based on &#39;BYGGTYP_NBR&#39; values 970 and 719.</span>
-<span class="sd">        - Churches are selected based on &#39;BYGGTYP_NBR&#39; value 671.</span>
+<span class="sd">        - Hospitals are selected based on &#39;byggtyp_nbr&#39; values 970 and 719.</span>
+<span class="sd">        - Churches are selected based on &#39;byggtyp_nbr&#39; value 671.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="c1"># SQL-expressions to select hospitals and churches</span>
-    <span class="n">sql_select_all_hospital</span> <span class="o">=</span> <span class="s2">&quot;BYGGTYP_NBR IN (970, 719)&quot;</span>
-    <span class="n">sql_select_all_church</span> <span class="o">=</span> <span class="s2">&quot;BYGGTYP_NBR = 671&quot;</span>
+    <span class="n">sql_select_all_hospital</span> <span class="o">=</span> <span class="s2">&quot;byggtyp_nbr IN (970, 719)&quot;</span>
+    <span class="n">sql_select_all_church</span> <span class="o">=</span> <span class="s2">&quot;byggtyp_nbr = 671&quot;</span>
 
     <span class="c1"># Selecting all hospitals and making feature layer</span>
     <span class="n">custom_arcpy</span><span class="o">.</span><span class="n">select_attribute_and_make_permanent_feature</span><span class="p">(</span>
@@ -474,8 +474,8 @@
 <span class="nd">@timing_decorator</span>
 <span class="k">def</span> <span class="nf">hospitals_and_churches_too_close</span><span class="p">():</span>
     <span class="c1"># SQL-expressions to select hospitals and churches</span>
-    <span class="n">sql_select_all_hospital</span> <span class="o">=</span> <span class="s2">&quot;BYGGTYP_NBR IN (970, 719)&quot;</span>
-    <span class="n">sql_select_all_church</span> <span class="o">=</span> <span class="s2">&quot;BYGGTYP_NBR = 671&quot;</span>
+    <span class="n">sql_select_all_hospital</span> <span class="o">=</span> <span class="s2">&quot;byggtyp_nbr IN (970, 719)&quot;</span>
+    <span class="n">sql_select_all_church</span> <span class="o">=</span> <span class="s2">&quot;byggtyp_nbr = 671&quot;</span>
 
     <span class="c1"># Selecting all hospitals and making feature layer</span>
     <span class="n">custom_arcpy</span><span class="o">.</span><span class="n">select_attribute_and_make_permanent_feature</span><span class="p">(</span>

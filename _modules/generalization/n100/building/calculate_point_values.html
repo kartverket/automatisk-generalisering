@@ -124,8 +124,8 @@
 
     <span class="n">arcpy</span><span class="o">.</span><span class="n">CalculateField_management</span><span class="p">(</span>
         <span class="n">in_table</span><span class="o">=</span><span class="n">Building_N100</span><span class="o">.</span><span class="n">data_preparation___matrikkel_points___n100_building</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
-        <span class="n">field</span><span class="o">=</span><span class="s2">&quot;BYGGTYP_NBR&quot;</span><span class="p">,</span>
-        <span class="n">expression</span><span class="o">=</span><span class="s2">&quot;reclassify(!BYGGTYP_NBR!)&quot;</span><span class="p">,</span>
+        <span class="n">field</span><span class="o">=</span><span class="s2">&quot;byggtyp_nbr&quot;</span><span class="p">,</span>
+        <span class="n">expression</span><span class="o">=</span><span class="s2">&quot;reclassify(!byggtyp_nbr!)&quot;</span><span class="p">,</span>
         <span class="n">expression_type</span><span class="o">=</span><span class="s2">&quot;PYTHON3&quot;</span><span class="p">,</span>
         <span class="n">code_block</span><span class="o">=</span><span class="n">code_block_hospital_church</span><span class="p">,</span>
     <span class="p">)</span></div>
@@ -185,7 +185,7 @@
     <span class="n">arcpy</span><span class="o">.</span><span class="n">CalculateField_management</span><span class="p">(</span>
         <span class="n">in_table</span><span class="o">=</span><span class="n">Building_N100</span><span class="o">.</span><span class="n">calculate_point_values___points_going_into_rbc___n100_building</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
         <span class="n">field</span><span class="o">=</span><span class="s2">&quot;symbol_val&quot;</span><span class="p">,</span>
-        <span class="n">expression</span><span class="o">=</span><span class="s2">&quot;determineVal(!BYGGTYP_NBR!)&quot;</span><span class="p">,</span>
+        <span class="n">expression</span><span class="o">=</span><span class="s2">&quot;determineVal(!byggtyp_nbr!)&quot;</span><span class="p">,</span>
         <span class="n">expression_type</span><span class="o">=</span><span class="s2">&quot;PYTHON3&quot;</span><span class="p">,</span>
         <span class="n">code_block</span><span class="o">=</span><span class="n">N100_SQLResources</span><span class="o">.</span><span class="n">nbr_symbol_val_code_block</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
     <span class="p">)</span></div>
@@ -208,13 +208,13 @@
 <a class="viewcode-back" href="../../../../generated_docs/generalization.n100.building.html#generalization.n100.building.calculate_point_values.find_each_unique_nbr_value">[docs]</a>
 <span class="nd">@timing_decorator</span>
 <span class="k">def</span> <span class="nf">find_each_unique_nbr_value</span><span class="p">():</span>
-    <span class="c1"># Counter to store the count of each unique BYGGTYP_NBR</span>
+    <span class="c1"># Counter to store the count of each unique byggtyp_nbr</span>
     <span class="n">nbr_counter</span> <span class="o">=</span> <span class="n">Counter</span><span class="p">()</span>
 
     <span class="c1"># Iterate over the rows in the feature class</span>
     <span class="k">with</span> <span class="n">arcpy</span><span class="o">.</span><span class="n">da</span><span class="o">.</span><span class="n">SearchCursor</span><span class="p">(</span>
         <span class="n">Building_N100</span><span class="o">.</span><span class="n">calculate_point_values___selection_building_points_with_undefined_nbr_values___n100_building</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
-        <span class="p">[</span><span class="s2">&quot;BYGGTYP_NBR&quot;</span><span class="p">,</span> <span class="s2">&quot;symbol_val&quot;</span><span class="p">],</span>
+        <span class="p">[</span><span class="s2">&quot;byggtyp_nbr&quot;</span><span class="p">,</span> <span class="s2">&quot;symbol_val&quot;</span><span class="p">],</span>
     <span class="p">)</span> <span class="k">as</span> <span class="n">cursor</span><span class="p">:</span>
         <span class="k">for</span> <span class="n">nbr</span><span class="p">,</span> <span class="n">symbol_val</span> <span class="ow">in</span> <span class="n">cursor</span><span class="p">:</span>
             <span class="k">if</span> <span class="n">symbol_val</span> <span class="o">==</span> <span class="o">-</span><span class="mi">99</span><span class="p">:</span>
@@ -229,7 +229,7 @@
         <span class="s2">&quot;w&quot;</span><span class="p">,</span>
     <span class="p">)</span> <span class="k">as</span> <span class="n">log_file</span><span class="p">:</span>
         <span class="k">for</span> <span class="n">nbr</span><span class="p">,</span> <span class="n">count</span> <span class="ow">in</span> <span class="n">nbr_counter</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
-            <span class="n">log_file</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;BYGGTYP_NBR: </span><span class="si">{</span><span class="n">nbr</span><span class="si">}</span><span class="s2">, Count: </span><span class="si">{</span><span class="n">count</span><span class="si">}</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">)</span>
+            <span class="n">log_file</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;byggtyp_nbr: </span><span class="si">{</span><span class="n">nbr</span><span class="si">}</span><span class="s2">, Count: </span><span class="si">{</span><span class="n">count</span><span class="si">}</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">)</span>
         <span class="c1"># Write the total count at the end</span>
         <span class="n">log_file</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Total Rows without defined symbology: </span><span class="si">{</span><span class="n">total_count</span><span class="si">}</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">)</span>
 
@@ -237,7 +237,7 @@
         <span class="sa">f</span><span class="s2">&quot;Log file created at: </span><span class="si">{</span><span class="n">Building_N100</span><span class="o">.</span><span class="n">calculate_point_values___building_points_with_undefined_nbr_values___n100_building</span><span class="o">.</span><span class="n">value</span><span class="si">}</span><span class="s2">&quot;</span>
     <span class="p">)</span>
 
-    <span class="c1"># Code block to transform BYGGTYP_NBR values without symbology to other buildings (729)</span>
+    <span class="c1"># Code block to transform byggtyp_nbr values without symbology to other buildings (729)</span>
     <span class="n">code_block_symbol_val_to_nbr</span> <span class="o">=</span> <span class="p">(</span>
         <span class="s2">&quot;def symbol_val_to_nbr(symbol_val, byggtyp_nbr):</span><span class="se">\n</span><span class="s2">&quot;</span>
         <span class="s2">&quot;    if symbol_val == -99:</span><span class="se">\n</span><span class="s2">&quot;</span>
@@ -245,7 +245,7 @@
         <span class="s2">&quot;    return byggtyp_nbr&quot;</span>
     <span class="p">)</span>
 
-    <span class="c1"># Code block to update the symbol_val to reflect the new BYGGTYP_NBR</span>
+    <span class="c1"># Code block to update the symbol_val to reflect the new byggtyp_nbr</span>
     <span class="n">code_block_update_symbol_val</span> <span class="o">=</span> <span class="p">(</span>
         <span class="s2">&quot;def update_symbol_val(symbol_val):</span><span class="se">\n</span><span class="s2">&quot;</span>
         <span class="s2">&quot;    if symbol_val == -99:</span><span class="se">\n</span><span class="s2">&quot;</span>
@@ -256,8 +256,8 @@
     <span class="c1"># Applying the symbol_val_to_nbr logic</span>
     <span class="n">arcpy</span><span class="o">.</span><span class="n">CalculateField_management</span><span class="p">(</span>
         <span class="n">in_table</span><span class="o">=</span><span class="n">Building_N100</span><span class="o">.</span><span class="n">calculate_point_values___points_going_into_rbc___n100_building</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
-        <span class="n">field</span><span class="o">=</span><span class="s2">&quot;BYGGTYP_NBR&quot;</span><span class="p">,</span>
-        <span class="n">expression</span><span class="o">=</span><span class="s2">&quot;symbol_val_to_nbr(!symbol_val!, !BYGGTYP_NBR!)&quot;</span><span class="p">,</span>
+        <span class="n">field</span><span class="o">=</span><span class="s2">&quot;byggtyp_nbr&quot;</span><span class="p">,</span>
+        <span class="n">expression</span><span class="o">=</span><span class="s2">&quot;symbol_val_to_nbr(!symbol_val!, !byggtyp_nbr!)&quot;</span><span class="p">,</span>
         <span class="n">expression_type</span><span class="o">=</span><span class="s2">&quot;PYTHON3&quot;</span><span class="p">,</span>
         <span class="n">code_block</span><span class="o">=</span><span class="n">code_block_symbol_val_to_nbr</span><span class="p">,</span>
     <span class="p">)</span>
