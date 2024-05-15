@@ -54,7 +54,7 @@ def selection():
     """
     custom_arcpy.select_attribute_and_make_permanent_feature(
         input_layer=input_n100.AdminFlate,
-        expression="NAVN IN ('Asker', 'Oslo', 'Trondheim', 'Ringerike')",
+        expression="navn IN ('Asker', 'Oslo', 'Trondheim', 'Ringerike')",
         output_name=Building_N100.point_resolve_building_conflicts___selection_area_resolve_building_conflicts___n100_building.value,
     )
 
@@ -87,13 +87,13 @@ def pre_create_template_feature_class():
         Creates a small selection of road features to be used as a template feature class.
 
     Details:
-        - Defines a template query "MOTORVEGTYPE = 'Motorveg'" and buffer width of 42.5 meters to create a template feature class.
+        - Defines a template query "motorvegtype = 'Motorveg'" and buffer width of 42.5 meters to create a template feature class.
         - Selects road features based on the template query and creates a selection output layer.
         - Applies pairwise buffering to the selected road features, creating a buffer output feature class with the specified buffer width.
     """
 
     # Select a query and buffer width to create a template feature class
-    template_query = "MOTORVEGTYPE = 'Motorveg'"
+    template_query = "motorvegtype = 'Motorveg'"
     template_buffer_width = 42.5
 
     selection_output_name = f"{Building_N100.building_point_buffer_displacement__selection_roads__n100.value}_template"

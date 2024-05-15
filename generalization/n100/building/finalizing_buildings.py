@@ -28,7 +28,7 @@ def main():
 def removing_points_in_and_close_to_urban_areas():
 
     # Defining sql expression to select urban areas
-    urban_areas_sql_expr = "OBJTYPE = 'Tettbebyggelse' Or OBJTYPE = 'Industriområde' Or OBJTYPE = 'BymessigBebyggelse'"
+    urban_areas_sql_expr = "objtype = 'Tettbebyggelse' Or objtype = 'Industriområde' Or objtype = 'BymessigBebyggelse'"
 
     # Selecting urban areas from n100 using sql expression
     custom_arcpy.select_attribute_and_make_feature_layer(
@@ -50,7 +50,7 @@ def removing_points_in_and_close_to_urban_areas():
     # Selecting hospital and churches - to merge back in with the points further than 50 Merers away from urban areas
     custom_arcpy.select_attribute_and_make_permanent_feature(
         input_layer=Building_N100.finalizing_buildings___points_not_close_to_urban_areas___n100_building.value,
-        expression="BYGGTYP_NBR IN (970, 719, 671)",
+        expression="byggtyp_nbr IN (970, 719, 671)",
         output_name=Building_N100.finalizing_buildings___selecting_hospital_and_churches_in_urban_areas___n100_building.value,
     )
 
@@ -77,7 +77,7 @@ def removing_points_in_and_close_to_urban_areas():
 @timing_decorator
 def selecting_all_tourist_cabins():
 
-    selecting_tourist_cabins = "BYGGTYP_NBR = 956"
+    selecting_tourist_cabins = "byggtyp_nbr = 956"
 
     # Selecting all building points categorized as tourist cabins
     custom_arcpy.select_attribute_and_make_permanent_feature(
@@ -106,7 +106,7 @@ def selecting_hospital_and_churches_for_pictogram_featureclass():
 
     custom_arcpy.select_attribute_and_make_permanent_feature(
         input_layer=Building_N100.finalizing_buildings___all_points_except_tourist_cabins___n100_building.value,
-        expression="BYGGTYP_NBR IN (970, 719, 671)",
+        expression="byggtyp_nbr IN (970, 719, 671)",
         output_name=Building_N100.finalizing_buildings___hospitals_and_churches_pictogram___n100_building.value,
     )
 

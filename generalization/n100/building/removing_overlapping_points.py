@@ -49,7 +49,7 @@ def adding_new_hierarchy_value_to_points():
     arcpy.management.CalculateField(
         in_table=Building_N100.removing_overlapping_points___all_building_points___n100_building.value,
         field="hierarchy",
-        expression="determineHierarchy(!BYGGTYP_NBR!)",
+        expression="determineHierarchy(!byggtyp_nbr!)",
         expression_type="PYTHON3",
         code_block=N100_SQLResources.nbr_to_hierarchy_overlapping_points.value,
     )

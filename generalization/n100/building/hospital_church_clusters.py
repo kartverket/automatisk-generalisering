@@ -48,7 +48,7 @@ def selecting_all_other_points_that_are_not_hospital_and_church():
     # Selecting all hospitals and making feature layer
     custom_arcpy.select_attribute_and_make_permanent_feature(
         input_layer=Building_N100.point_propogate_displacement___points_after_propogate_displacement___n100_building.value,
-        expression="BYGGTYP_NBR IN (970, 719, 671)",
+        expression="byggtyp_nbr IN (970, 719, 671)",
         output_name=Building_N100.hospital_church_clusters___all_other_points_that_are_not_hospital_church___n100_building.value,
         selection_type=custom_arcpy.SelectionType.NEW_SELECTION,
         inverted=True,
@@ -62,13 +62,13 @@ def hospital_church_selections():
         Selects hospitals and churches from the input point feature class, creating separate feature layers for each category.
 
     Details:
-        - Hospitals are selected based on 'BYGGTYP_NBR' values 970 and 719.
-        - Churches are selected based on 'BYGGTYP_NBR' value 671.
+        - Hospitals are selected based on 'byggtyp_nbr' values 970 and 719.
+        - Churches are selected based on 'byggtyp_nbr' value 671.
     """
 
     # SQL-expressions to select hospitals and churches
-    sql_select_all_hospital = "BYGGTYP_NBR IN (970, 719)"
-    sql_select_all_church = "BYGGTYP_NBR = 671"
+    sql_select_all_hospital = "byggtyp_nbr IN (970, 719)"
+    sql_select_all_church = "byggtyp_nbr = 671"
 
     # Selecting all hospitals and making feature layer
     custom_arcpy.select_attribute_and_make_permanent_feature(
@@ -378,8 +378,8 @@ def reducing_clusters():
 @timing_decorator
 def hospitals_and_churches_too_close():
     # SQL-expressions to select hospitals and churches
-    sql_select_all_hospital = "BYGGTYP_NBR IN (970, 719)"
-    sql_select_all_church = "BYGGTYP_NBR = 671"
+    sql_select_all_hospital = "byggtyp_nbr IN (970, 719)"
+    sql_select_all_church = "byggtyp_nbr = 671"
 
     # Selecting all hospitals and making feature layer
     custom_arcpy.select_attribute_and_make_permanent_feature(
