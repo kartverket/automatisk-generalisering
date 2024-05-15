@@ -57,7 +57,7 @@ def adding_symbol_val():
     arcpy.CalculateField_management(
         in_table=Building_N100.simplify_polygons___spatial_join_polygons___n100_building.value,
         field="symbol_val",
-        expression="determineVal(!BYGGTYP_NBR!)",
+        expression="determineVal(!byggtyp_nbr!)",
         expression_type="PYTHON3",
         code_block=N100_SQLResources.nbr_symbol_val_code_block.value,
     )

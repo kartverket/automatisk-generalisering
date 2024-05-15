@@ -125,7 +125,7 @@ def hospital_church_points_to_squares():
     # Selecting hospital and churches from n50
     custom_arcpy.select_attribute_and_make_permanent_feature(
         input_layer=input_data.input_n50.BygningsPunkt,
-        expression="BYGGTYP_NBR IN (970, 719, 671)",
+        expression="byggtyp_nbr IN (970, 719, 671)",
         output_name=Building_N100.polygon_resolve_building_conflicts___hospital_church_points___n100_building.value,
     )
 
@@ -139,7 +139,7 @@ def hospital_church_points_to_squares():
     arcpy.CalculateField_management(
         in_table=Building_N100.polygon_resolve_building_conflicts___hospital_church_points___n100_building.value,
         field="symbol_val",
-        expression="determineVal(!BYGGTYP_NBR!)",
+        expression="determineVal(!byggtyp_nbr!)",
         expression_type="PYTHON3",
         code_block=N100_SQLResources.nbr_symbol_val_code_block.value,
     )
