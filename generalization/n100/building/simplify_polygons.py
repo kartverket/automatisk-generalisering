@@ -6,6 +6,7 @@ from env_setup import environment_setup
 from input_data import input_n50
 from file_manager.n100.file_manager_buildings import Building_N100
 from custom_tools import custom_arcpy
+from constants.n100_constants import N100_Values
 
 # Importing timing decorator
 from custom_tools.timing_decorator import timing_decorator
@@ -59,7 +60,7 @@ def aggregate_polygons():
         in_features=Building_N100.data_preparation___polygons_that_are_large_enough___n100_building.value,
         out_feature_class=Building_N100.simplify_polygons___small_gaps___n100_building.value,
         aggregation_distance="4",
-        minimum_area="3200 SquareMeters",
+        minimum_area=f"{N100_Values.minimum_simplified_building_polygon_size_m2.value} SquareMeters",
         minimum_hole_size="10000 SquareMeters",
         orthogonality_option="ORTHOGONAL",
         barrier_features=[

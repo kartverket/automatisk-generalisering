@@ -1,6 +1,15 @@
 from enum import Enum
 
 
+class N100_Values(Enum):
+    buffer_clearance_distance_m = 45
+    rbc_barrier_clearance_distance_m = 45
+    rbc_building_clearance_distance_m = 45
+    minimum_selection_building_polygon_size_m2 = 2500
+    minimum_simplified_building_polygon_size_m2 = 3200
+    building_water_intrusion_distance_m = 15
+
+
 class N100_Symbology(Enum):
     building_symbol_dimensions = {
         1: (175, 175),  # Hospital
@@ -98,3 +107,5 @@ class N100_SQLResources(Enum):
         Or subtypekode =11
         """: 8,
     }
+
+    urban_areas = "objtype = 'Tettbebyggelse' Or objtype = 'Industriområde' Or objtype = 'BymessigBebyggelse'"

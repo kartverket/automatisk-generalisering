@@ -8,7 +8,7 @@ from custom_tools import custom_arcpy
 from input_data import input_n100
 from input_data.input_symbology import SymbologyN100
 from file_manager.n100.file_manager_buildings import Building_N100
-from constants.n100_constants import N100_Symbology
+from constants.n100_constants import N100_Symbology, N100_Values
 from custom_tools.polygon_processor import PolygonProcessor
 from env_setup import environment_setup
 
@@ -144,22 +144,22 @@ def barriers_for_rbc():
         [
             Building_N100.point_resolve_building_conflicts___veg_sti_selection___n100_building_lyrx.value,
             "false",
-            "45 Meters",
+            f"{N100_Values.rbc_barrier_clearance_distance_m.value} Meters",
         ],
         [
             Building_N100.point_resolve_building_conflicts___begrensningskurve_selection___n100_building_lyrx.value,
             "false",
-            "45 Meters",
+            f"{N100_Values.rbc_barrier_clearance_distance_m.value} Meters",
         ],
         [
             Building_N100.data_preparation___railway_stations_to_polygons_symbology___n100_building_lyrx.value,
             "false",
-            "45 Meters",
+            f"{N100_Values.rbc_barrier_clearance_distance_m.value} Meters",
         ],
         [
             Building_N100.polygon_resolve_building_conflicts___railway___n100_building_lyrx.value,
             "false",
-            "45 Meters",
+            f"{N100_Values.rbc_barrier_clearance_distance_m.value} Meters",
         ],
     ]
 
@@ -182,7 +182,7 @@ def resolve_building_conflicts_1():
         in_buildings=input_buildings_rbc_1,
         invisibility_field="invisibility",
         in_barriers=barriers_for_rbc(),
-        building_gap="45 meters",
+        building_gap=f"{N100_Values.rbc_building_clearance_distance_m.value} Meters",
         minimum_size="1 meters",
         hierarchy_field="hierarchy",
     )
@@ -274,7 +274,7 @@ def resolve_building_conflicts_2():
         in_buildings=input_buildings_rbc_2,
         invisibility_field="invisibility",
         in_barriers=barriers_for_rbc(),
-        building_gap="45 meters",
+        building_gap=f"{N100_Values.rbc_building_clearance_distance_m.value} Meters",
         minimum_size="1 meters",
         hierarchy_field="hierarchy",
     )

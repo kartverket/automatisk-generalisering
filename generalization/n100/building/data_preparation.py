@@ -218,7 +218,7 @@ def selecting_urban_areas_by_sql():
     # Defining sql expression to select urban areas
 
     # Selecting urban areas from n100 using sql expression
-    custom_arcpy.select_attribute_and_make_feature_layer(
+    custom_arcpy.select_attribute_and_make_permanent_feature(
         input_layer=input_n100.ArealdekkeFlate,
         expression=N100_SQLResources.urban_areas.value,
         output_name=Building_N100.data_preparation___urban_area_selection_n100___n100_building.value,
@@ -235,7 +235,7 @@ def selecting_urban_areas_by_sql():
     arcpy.PairwiseBuffer_analysis(
         in_features=Building_N100.data_preparation___urban_area_selection_n100___n100_building.value,
         out_feature_class=Building_N100.data_preparation___urban_area_selection_n100_buffer___n100_building.value,
-        buffer_distance_or_field=N100_Values.buffer_clearance_distance.value,
+        buffer_distance_or_field=f"{N100_Values.buffer_clearance_distance_m.value} Meters",
         method="PLANAR",
     )
 
@@ -400,10 +400,10 @@ def polygon_selections_based_on_size():
 
     # Selecting only building polygons over 2500 (the rest will be transformed to points due to size)
     sql_expression_too_small_polygons = (
-        f"Shape_Area < {N100_Values.minimum_building_polygon_size_m2.value}"
+        f"Shape_Area < {N100_Values.minimum_selection_building_polygon_size_m2.value}"
     )
     sql_expression_correct_size_polygons = (
-        f"Shape_Area >= {N100_Values.minimum_building_polygon_size_m2.value}"
+        f"Shape_Area >= {N100_Values.minimum_selection_building_polygon_size_m2.value}"
     )
 
     # Polygons over or equal to 2500 Square Meters are selected
