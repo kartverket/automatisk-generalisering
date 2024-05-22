@@ -29,7 +29,7 @@ def removing_points_in_water_features():
         Then, it selects points that do not intersect with any water features and retains them.
     """
 
-    sql_expression_water_features = f"OBJTYPE = 'FerskvannTørrfall' Or OBJTYPE = 'Innsjø' Or OBJTYPE = 'InnsjøRegulert' Or OBJTYPE = 'Havflate' Or OBJTYPE = 'ElvBekk'"
+    sql_expression_water_features = f"objtype = 'FerskvannTørrfall' Or objtype = 'Innsjø' Or objtype = 'InnsjøRegulert' Or objtype = 'Havflate' Or objtype = 'ElvBekk'"
     custom_arcpy.select_attribute_and_make_permanent_feature(
         input_layer=input_n100.ArealdekkeFlate,
         expression=sql_expression_water_features,

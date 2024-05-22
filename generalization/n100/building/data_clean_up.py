@@ -85,7 +85,7 @@ def add_last_edited_date_to_all_feature_classes():
 
     for layer in all_final_layers:
         feature_class = layer
-        field_name = "LAST_EDITED_DATE"
+        field_name = "last_edited_date"
 
         # Check if the field already exists
         existing_fields = [field.name for field in arcpy.ListFields(feature_class)]
@@ -99,7 +99,7 @@ def add_last_edited_date_to_all_feature_classes():
                 field_type="DATE",
             )
 
-        # Calculate LAST_EDITED_DATE
+        # Calculate last_edited_date
         current_date = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
         arcpy.CalculateField_management(
             in_table=feature_class,

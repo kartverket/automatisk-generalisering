@@ -125,7 +125,6 @@ def begrensningskurve_river():
     )
 
     # Creating small buffer around begrensningskurve rivers
-
     arcpy.analysis.PairwiseBuffer(
         in_features=Building_N100.data_preperation___waterfeatures_from_begrensningskurve_rivers___n100_building.value,
         out_feature_class=Building_N100.data_preperation___waterfeatures_from_begrensningskurve_rivers_buffer___n100_building.value,

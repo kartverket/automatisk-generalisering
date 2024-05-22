@@ -40,8 +40,8 @@ def reclassifying_hospital_and_church_points_from_matrikkel():
 
     arcpy.CalculateField_management(
         in_table=Building_N100.data_preparation___matrikkel_points___n100_building.value,
-        field="BYGGTYP_NBR",
-        expression="reclassify(!BYGGTYP_NBR!)",
+        field="byggtyp_nbr",
+        expression="reclassify(!byggtyp_nbr!)",
         expression_type="PYTHON3",
         code_block=code_block_hospital_church,
     )
@@ -95,7 +95,7 @@ def merge_matrikkel_n50_touristcabins_with_points_from_grunnriss():
     arcpy.CalculateField_management(
         in_table=Building_N100.calculate_point_values___points_going_into_rbc___n100_building.value,
         field="symbol_val",
-        expression="determineVal(!BYGGTYP_NBR!)",
+        expression="determineVal(!byggtyp_nbr!)",
         expression_type="PYTHON3",
         code_block=N100_SQLResources.nbr_symbol_val_code_block.value,
     )
@@ -112,13 +112,13 @@ def find_undefined_nbr_values():
 
 @timing_decorator
 def find_each_unique_nbr_value():
-    # Counter to store the count of each unique BYGGTYP_NBR
+    # Counter to store the count of each unique byggtyp_nbr
     nbr_counter = Counter()
 
     # Iterate over the rows in the feature class
     with arcpy.da.SearchCursor(
         Building_N100.calculate_point_values___selection_building_points_with_undefined_nbr_values___n100_building.value,
-        ["BYGGTYP_NBR", "symbol_val"],
+        ["byggtyp_nbr", "symbol_val"],
     ) as cursor:
         for nbr, symbol_val in cursor:
             if symbol_val == -99:
@@ -133,7 +133,7 @@ def find_each_unique_nbr_value():
         "w",
     ) as log_file:
         for nbr, count in nbr_counter.items():
-            log_file.write(f"BYGGTYP_NBR: {nbr}, Count: {count}\n")
+            log_file.write(f"byggtyp_nbr: {nbr}, Count: {count}\n")
         # Write the total count at the end
         log_file.write(f"Total Rows without defined symbology: {total_count}\n")
 
@@ -141,7 +141,7 @@ def find_each_unique_nbr_value():
         f"Log file created at: {Building_N100.calculate_point_values___building_points_with_undefined_nbr_values___n100_building.value}"
     )
 
-    # Code block to transform BYGGTYP_NBR values without symbology to other buildings (729)
+    # Code block to transform byggtyp_nbr values without symbology to other buildings (729)
     code_block_symbol_val_to_nbr = (
         "def symbol_val_to_nbr(symbol_val, byggtyp_nbr):\n"
         "    if symbol_val == -99:\n"
@@ -149,7 +149,7 @@ def find_each_unique_nbr_value():
         "    return byggtyp_nbr"
     )
 
-    # Code block to update the symbol_val to reflect the new BYGGTYP_NBR
+    # Code block to update the symbol_val to reflect the new byggtyp_nbr
     code_block_update_symbol_val = (
         "def update_symbol_val(symbol_val):\n"
         "    if symbol_val == -99:\n"
@@ -160,8 +160,8 @@ def find_each_unique_nbr_value():
     # Applying the symbol_val_to_nbr logic
     arcpy.CalculateField_management(
         in_table=Building_N100.calculate_point_values___points_going_into_rbc___n100_building.value,
-        field="BYGGTYP_NBR",
-        expression="symbol_val_to_nbr(!symbol_val!, !BYGGTYP_NBR!)",
+        field="byggtyp_nbr",
+        expression="symbol_val_to_nbr(!symbol_val!, !byggtyp_nbr!)",
         expression_type="PYTHON3",
         code_block=code_block_symbol_val_to_nbr,
     )

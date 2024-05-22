@@ -59,7 +59,7 @@ def aggregate_polygons():
     arcpy.cartography.AggregatePolygons(
         in_features=Building_N100.data_preparation___polygons_that_are_large_enough___n100_building.value,
         out_feature_class=Building_N100.simplify_polygons___small_gaps___n100_building.value,
-        aggregation_distance="4",
+        aggregation_distance="4 Meters",
         minimum_area=f"{N100_Values.minimum_simplified_building_polygon_size_m2.value} SquareMeters",
         minimum_hole_size="10000 SquareMeters",
         orthogonality_option="ORTHOGONAL",
@@ -108,7 +108,7 @@ def simplify_buildings_1():
     arcpy.cartography.SimplifyBuilding(
         in_features=Building_N100.simplify_polygons___small_gaps___n100_building.value,
         out_feature_class=Building_N100.simplify_polygons___simplify_building_1___n100_building.value,
-        simplification_tolerance="75",
+        simplification_tolerance="75 Meters",
         minimum_area="3200 SquareMeters",
         collapsed_point_option="KEEP_COLLAPSED_POINTS",  # Name of points will be the same as output, but with `Pnt` at the end
     )
@@ -137,7 +137,7 @@ def simplify_polygons():
         in_features=Building_N100.simplify_polygons___simplify_building_1___n100_building.value,
         out_feature_class=Building_N100.simplify_polygons___simplify_polygon___n100_building.value,
         algorithm="WEIGHTED_AREA",
-        tolerance="15",
+        tolerance="15 Meters",
         minimum_area="3200 SquareMeters",
         collapsed_point_option="KEEP_COLLAPSED_POINTS",  # Name of points will be the same as output, but with `Pnt` at the end
     )
@@ -165,7 +165,7 @@ def simplify_buildings_2():
     arcpy.cartography.SimplifyBuilding(
         in_features=Building_N100.simplify_polygons___simplify_building_1___n100_building.value,
         out_feature_class=Building_N100.simplify_polygons___simplify_building_2___n100_building.value,
-        simplification_tolerance="75",
+        simplification_tolerance="75 Meters",
         minimum_area="3200 SquareMeters",
         collapsed_point_option="KEEP_COLLAPSED_POINTS",  # Name of points will be the same as output, but with `Pnt` at the end
     )

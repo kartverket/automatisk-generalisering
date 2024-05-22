@@ -57,7 +57,7 @@ def selecting_data_with_area():
     # Selects data in Asker and Oslo only
     custom_arcpy.select_attribute_and_make_permanent_feature(
         input_layer=input_n100.AdminFlate,
-        expression="NAVN IN ('Asker', 'Oslo', 'Trondheim', 'Ringerike')",
+        expression="navn IN ('Asker', 'Oslo', 'Trondheim', 'Ringerike')",
         output_name=Building_N100.point_resolve_building_conflicts___selection_area_resolve_building_conflicts___n100_building.value,
     )
 
