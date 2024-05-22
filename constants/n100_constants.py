@@ -1,19 +1,20 @@
 from enum import Enum
+from typing import Union
 
 
 class N100_Values(Enum):
     # Building constants
-    buffer_clearance_distance_m = 45
-    rbc_barrier_clearance_distance_m = 45
-    rbc_building_clearance_distance_m = 45
+    buffer_clearance_distance_m: int = 45
+    rbc_barrier_clearance_distance_m: int = 45
+    rbc_building_clearance_distance_m: int = 45
     # Simplify building polygon constants
-    minimum_selection_building_polygon_size_m2 = 2500
-    minimum_simplified_building_polygon_size_m2 = 3200
-    simplify_building_tolerance_m = 75
-    simplify_polygon_tolerance_m = 15
-    building_polygon_aggregation_distance_m = 4
+    minimum_selection_building_polygon_size_m2: int = 2500
+    minimum_simplified_building_polygon_size_m2: int = 3200
+    simplify_building_tolerance_m: int = 75
+    simplify_polygon_tolerance_m: int = 15
+    building_polygon_aggregation_distance_m: int = 4
 
-    building_water_intrusion_distance_m = 15
+    building_water_intrusion_distance_m: int = 15
 
 
 class N100_Symbology(Enum):
