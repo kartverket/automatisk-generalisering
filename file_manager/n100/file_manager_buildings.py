@@ -877,6 +877,13 @@ class Building_N100(Enum):
         )
     )
 
+    building_point_buffer_displacement__selection_urban_areas__n100 = (
+        file_manager.generate_file_name_gdb(
+            script_source_name=point_displacement_with_buffer,
+            description="selection_urban_areas",
+        )
+    )
+
     building_point_buffer_displacement__align_buffer_schema_to_template__n100 = (
         file_manager.generate_file_name_gdb(
             script_source_name=point_displacement_with_buffer,

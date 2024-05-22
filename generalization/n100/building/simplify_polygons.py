@@ -6,6 +6,7 @@ from env_setup import environment_setup
 from input_data import input_n50
 from file_manager.n100.file_manager_buildings import Building_N100
 from custom_tools import custom_arcpy
+from constants.n100_constants import N100_Values
 
 # Importing timing decorator
 from custom_tools.timing_decorator import timing_decorator
@@ -58,8 +59,8 @@ def aggregate_polygons():
     arcpy.cartography.AggregatePolygons(
         in_features=Building_N100.data_preparation___polygons_that_are_large_enough___n100_building.value,
         out_feature_class=Building_N100.simplify_polygons___small_gaps___n100_building.value,
-        aggregation_distance="4 Meters",
-        minimum_area="3200 SquareMeters",
+        aggregation_distance=f"{N100_Values.building_polygon_aggregation_distance_m.value} Meters",
+        minimum_area=f"{N100_Values.minimum_simplified_building_polygon_size_m2.value} SquareMeters",
         minimum_hole_size="10000 SquareMeters",
         orthogonality_option="ORTHOGONAL",
         barrier_features=[
@@ -107,8 +108,8 @@ def simplify_buildings_1():
     arcpy.cartography.SimplifyBuilding(
         in_features=Building_N100.simplify_polygons___small_gaps___n100_building.value,
         out_feature_class=Building_N100.simplify_polygons___simplify_building_1___n100_building.value,
-        simplification_tolerance="75 Meters",
-        minimum_area="3200 SquareMeters",
+        simplification_tolerance=f"{N100_Values.simplify_building_tolerance_m.value} Meters",
+        minimum_area=f"{N100_Values.minimum_simplified_building_polygon_size_m2.value} SquareMeters",
         collapsed_point_option="KEEP_COLLAPSED_POINTS",  # Name of points will be the same as output, but with `Pnt` at the end
     )
 
@@ -136,8 +137,8 @@ def simplify_polygons():
         in_features=Building_N100.simplify_polygons___simplify_building_1___n100_building.value,
         out_feature_class=Building_N100.simplify_polygons___simplify_polygon___n100_building.value,
         algorithm="WEIGHTED_AREA",
-        tolerance="15 Meters",
-        minimum_area="3200 SquareMeters",
+        tolerance=f"{N100_Values.simplify_polygon_tolerance_m.value} Meters",
+        minimum_area=f"{N100_Values.minimum_simplified_building_polygon_size_m2.value} SquareMeters",
         collapsed_point_option="KEEP_COLLAPSED_POINTS",  # Name of points will be the same as output, but with `Pnt` at the end
     )
 
@@ -164,8 +165,8 @@ def simplify_buildings_2():
     arcpy.cartography.SimplifyBuilding(
         in_features=Building_N100.simplify_polygons___simplify_building_1___n100_building.value,
         out_feature_class=Building_N100.simplify_polygons___simplify_building_2___n100_building.value,
-        simplification_tolerance="75 Meters",
-        minimum_area="3200 SquareMeters",
+        simplification_tolerance=f"{N100_Values.simplify_building_tolerance_m.value} Meters",
+        minimum_area=f"{N100_Values.minimum_simplified_building_polygon_size_m2.value} SquareMeters",
         collapsed_point_option="KEEP_COLLAPSED_POINTS",  # Name of points will be the same as output, but with `Pnt` at the end
     )
 

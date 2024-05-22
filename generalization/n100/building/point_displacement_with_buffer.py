@@ -4,7 +4,7 @@ import os
 
 from input_data import input_n100
 from file_manager.n100.file_manager_buildings import Building_N100
-from constants.n100_constants import N100_Symbology, N100_SQLResources
+from constants.n100_constants import N100_Symbology, N100_SQLResources, N100_Values
 
 from custom_tools.polygon_processor import PolygonProcessor
 from env_setup import environment_setup
@@ -77,6 +77,13 @@ def selection():
         overlap_type=custom_arcpy.OverlapType.INTERSECT.value,
         select_features=Building_N100.point_resolve_building_conflicts___selection_area_resolve_building_conflicts___n100_building.value,
         output_name=Building_N100.building_point_buffer_displacement__buildings_study_area__n100.value,
+    )
+
+    custom_arcpy.select_location_and_make_permanent_feature(
+        input_layer=Building_N100.data_preparation___urban_area_selection_n100___n100_building.value,
+        overlap_type=custom_arcpy.OverlapType.INTERSECT.value,
+        select_features=Building_N100.point_resolve_building_conflicts___selection_area_resolve_building_conflicts___n100_building.value,
+        output_name=Building_N100.building_point_buffer_displacement__selection_urban_areas__n100.value,
     )
 
 
@@ -273,10 +280,24 @@ def creating_road_buffer():
             print(f"Buffered {buffer_output_name} created.")
             counter += 1
 
+        urban_buffer_distance = round(
+            N100_Values.buffer_clearance_distance_m.value * factor
+        )
+
+        iteration_urban_buffer_output = f"{Building_N100.data_preparation___urban_area_selection_n100_buffer___n100_building.value}_{counter}"
+        arcpy.PairwiseBuffer_analysis(
+            in_features=Building_N100.building_point_buffer_displacement__selection_urban_areas__n100.value,
+            out_feature_class=iteration_urban_buffer_output,
+            buffer_distance_or_field=f"{urban_buffer_distance} Meters",
+            method="PLANAR",
+        )
+
         # Merge all buffers for the current factor into a single feature class
         output_fc = output_feature_classes[factor]
         arcpy.management.Merge(
-            inputs=buffer_output_names + [preparation_fc_modified],
+            inputs=buffer_output_names
+            + [preparation_fc_modified]
+            + [iteration_urban_buffer_output],
             output=output_fc,
         )
         print(f"Merged buffers into {output_fc}.")

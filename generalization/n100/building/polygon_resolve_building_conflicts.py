@@ -8,7 +8,7 @@ import input_data.input_n100
 from custom_tools import custom_arcpy
 from custom_tools.polygon_processor import PolygonProcessor
 from input_data import input_symbology
-from constants.n100_constants import N100_Symbology, N100_SQLResources
+from constants.n100_constants import N100_Symbology, N100_SQLResources, N100_Values
 
 # Importing environment settings
 from env_setup import environment_setup
@@ -224,27 +224,27 @@ def resolve_building_conflict_building_polygon():
         [
             Building_N100.polygon_resolve_building_conflicts___roads___n100_building_lyrx.value,
             "false",
-            "45 Meters",
+            f"{N100_Values.rbc_barrier_clearance_distance_m.value} Meters",
         ],
         [
             Building_N100.polygon_resolve_building_conflicts___begrensningskurve___n100_building_lyrx.value,
             "false",
-            "45 Meters",
+            f"{N100_Values.rbc_barrier_clearance_distance_m.value} Meters",
         ],
         [
             Building_N100.polygon_resolve_building_conflicts___polygonprocessor_symbology___n100_building_lyrx.value,
             "false",
-            "45 Meters",
+            f"{N100_Values.rbc_barrier_clearance_distance_m.value} Meters",
         ],
         [
             Building_N100.data_preparation___railway_stations_to_polygons_symbology___n100_building_lyrx.value,
             "false",
-            "45 Meters",
+            f"{N100_Values.rbc_barrier_clearance_distance_m.value} Meters",
         ],
         [
             Building_N100.polygon_resolve_building_conflicts___railway___n100_building_lyrx.value,
             "false",
-            "45 Meters",
+            f"{N100_Values.rbc_barrier_clearance_distance_m.value} Meters",
         ],
     ]
 
@@ -253,7 +253,7 @@ def resolve_building_conflict_building_polygon():
         in_buildings=Building_N100.polygon_resolve_building_conflicts___building_polygon___n100_building_lyrx.value,
         invisibility_field="invisibility",
         in_barriers=input_barriers,
-        building_gap="45 meters",
+        building_gap=f"{N100_Values.rbc_building_clearance_distance_m.value} Meters",
         minimum_size="1 meters",
     )
 

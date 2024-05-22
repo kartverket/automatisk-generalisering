@@ -11,10 +11,9 @@ from file_manager.n100.file_manager_buildings import Building_N100
 from env_setup import environment_setup
 from custom_tools.timing_decorator import timing_decorator
 from custom_tools import custom_arcpy
-from constants.n100_constants import N100_SQLResources
 from custom_tools.polygon_processor import PolygonProcessor
 from input_data import input_symbology
-from constants.n100_constants import N100_Symbology, N100_SQLResources
+from constants.n100_constants import N100_Symbology, N100_SQLResources, N100_Values
 
 
 @timing_decorator
@@ -79,13 +78,16 @@ def begrensningskurve_land_and_water_bodies():
     arcpy.analysis.PairwiseBuffer(
         in_features=Building_N100.data_preparation___land_features_near_water___n100_building.value,
         out_feature_class=Building_N100.data_preparation___land_features_buffer___n100_building.value,
-        buffer_distance_or_field="15 Meters",
+        buffer_distance_or_field=f"{N100_Values.building_water_intrusion_distance_m.value} Meters",
     )
 
+    water_feature_buffer_width = (
+        N100_Values.building_water_intrusion_distance_m.value + 30
+    )
     arcpy.analysis.PairwiseBuffer(
         in_features=Building_N100.data_preperation___waterfeatures_from_begrensningskurve_not_rivers___n100_building.value,
         out_feature_class=Building_N100.data_preparation___begrensningskurve_waterfeatures_buffer___n100_building.value,
-        buffer_distance_or_field="45 Meters",
+        buffer_distance_or_field=f"{water_feature_buffer_width} Meters",
     )
 
     arcpy.analysis.PairwiseErase(
@@ -169,7 +171,6 @@ def unsplit_roads():
 
 @timing_decorator
 def railway_station_points_to_polygons():
-
     arcpy.management.Copy(
         in_data=input_n100.JernbaneStasjon,
         out_data=Building_N100.data_preparation___railway_station_points_from_n100___n100_building.value,
@@ -213,21 +214,19 @@ def railway_station_points_to_polygons():
 
 @timing_decorator
 def selecting_urban_areas_by_sql():
-
     # Defining sql expression to select urban areas
-    urban_areas_sql_expr = "objtype = 'Tettbebyggelse' Or objtype = 'Industriområde' Or objtype = 'BymessigBebyggelse'"
 
     # Selecting urban areas from n100 using sql expression
-    custom_arcpy.select_attribute_and_make_feature_layer(
+    custom_arcpy.select_attribute_and_make_permanent_feature(
         input_layer=input_n100.ArealdekkeFlate,
-        expression=urban_areas_sql_expr,
+        expression=N100_SQLResources.urban_areas.value,
         output_name=Building_N100.data_preparation___urban_area_selection_n100___n100_building.value,
     )
 
     # Selecting urban areas from n50 using sql expression
     custom_arcpy.select_attribute_and_make_feature_layer(
         input_layer=input_n50.ArealdekkeFlate,
-        expression=urban_areas_sql_expr,
+        expression=N100_SQLResources.urban_areas.value,
         output_name=Building_N100.data_preparation___urban_area_selection_n50___n100_building.value,
     )
 
@@ -235,7 +234,7 @@ def selecting_urban_areas_by_sql():
     arcpy.PairwiseBuffer_analysis(
         in_features=Building_N100.data_preparation___urban_area_selection_n100___n100_building.value,
         out_feature_class=Building_N100.data_preparation___urban_area_selection_n100_buffer___n100_building.value,
-        buffer_distance_or_field="50 Meters",
+        buffer_distance_or_field=f"{N100_Values.buffer_clearance_distance_m.value} Meters",
         method="PLANAR",
     )
 
@@ -249,7 +248,6 @@ def selecting_urban_areas_by_sql():
 
 @timing_decorator
 def adding_matrikkel_points_to_areas_that_are_no_longer_urban_in_n100():
-
     # Selecting matrikkel building points in areas that were urban in n50, but are NOT longer urban in n100
     custom_arcpy.select_location_and_make_permanent_feature(
         input_layer=input_other.matrikkel_bygningspunkt,
@@ -261,7 +259,6 @@ def adding_matrikkel_points_to_areas_that_are_no_longer_urban_in_n100():
 
 @timing_decorator
 def selecting_n50_points_not_in_urban_areas():
-
     # Selecting n50 so they are not in urban areas
     custom_arcpy.select_location_and_make_permanent_feature(
         input_layer=input_n50.BygningsPunkt,
@@ -401,9 +398,12 @@ def polygon_selections_based_on_size():
     """
 
     # Selecting only building polygons over 2500 (the rest will be transformed to points due to size)
-    grunnriss_minimum_size = 2500
-    sql_expression_too_small_polygons = f"Shape_Area < {grunnriss_minimum_size}"
-    sql_expression_correct_size_polygons = f"Shape_Area >= {grunnriss_minimum_size}"
+    sql_expression_too_small_polygons = (
+        f"Shape_Area < {N100_Values.minimum_selection_building_polygon_size_m2.value}"
+    )
+    sql_expression_correct_size_polygons = (
+        f"Shape_Area >= {N100_Values.minimum_selection_building_polygon_size_m2.value}"
+    )
 
     # Polygons over or equal to 2500 Square Meters are selected
     custom_arcpy.select_attribute_and_make_permanent_feature(
