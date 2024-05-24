@@ -114,12 +114,13 @@ class PartitionIterator:
         type_name,
         type_path,
     ):
-        # Check if alias exists
+        # Check if alias exists, if not, create it
         if alias not in self.nested_alias_type_data:
-            print(f"Alias '{alias}' not found in nested_alias_type_data.")
-            return
+            print(
+                f"Alias '{alias}' not found in nested_alias_type_data. Creating new alias."
+            )
+            self.nested_alias_type_data[alias] = {}
 
-        # Update path of an existing type or add a new type with the provided path
         self.nested_alias_type_data[alias][type_name] = type_path
         print(f"Set path for type '{type_name}' in alias '{alias}' to: {type_path}")
 
@@ -649,9 +650,15 @@ class PartitionIterator:
                 self.process_context_features(alias, iteration_partition)
 
     def prepare_io_custom_logic(self):
+        """
+        Prepare the input/output parameters for custom logic functions by resolving their paths.
+        """
         self.find_io_params_custom_logic()
 
     def find_io_params_custom_logic(self):
+        """
+        Find and resolve the IO parameters for custom logic functions.
+        """
         for custom_func in self.custom_functions:
             if "class" in custom_func:  # Class method
                 func = custom_func["class"]
@@ -663,56 +670,101 @@ class PartitionIterator:
                 metadata = method._partition_io_metadata
                 input_params = metadata.get("inputs", [])
                 output_params = metadata.get("outputs", [])
-                print(f"IO parameters for {func.__name__}.{method.__name__}:")
-                print(f"  - Input parameters: {input_params}")
-                print(f"  - Output parameters: {output_params}")
 
-                self.find_alias_type_custom_logic_params(
+                self.resolve_io_params(
                     param_type="input",
                     params=input_params,
                     custom_func=custom_func,
                 )
-                self.find_alias_type_custom_logic_params(
+                self.resolve_io_params(
                     param_type="output",
-                    params=input_params,
+                    params=output_params,
                     custom_func=custom_func,
                 )
 
-    def find_alias_type_custom_logic_params(self, param_type, params, custom_func):
+    def resolve_io_params(self, param_type, params, custom_func):
+        """
+        Resolve paths for input/output parameters of custom functions.
+        """
         for param in params:
-            params_infos = custom_func["params"].get(param, [])
-            if isinstance(params_infos, tuple):
-                params_infos = [params_infos]
-            for params_info in params_infos:
-                if len(params_info) == 2:
-                    alias, alias_type = params_info
-                    print(
-                        f"Alias and type for {param_type} param {param}: {alias, alias_type}"
-                    )
-                elif len(params_info) == 3:
-                    alias, alias_type, file_path = params_info
-                    print(
-                        f"Alias and type for {param_type} param {param}: {alias, alias_type}, with file path: {file_path}"
-                    )
+            param_info_list = custom_func["params"].get(param, [])
+            if isinstance(param_info_list, tuple):
+                param_info_list = [param_info_list]
 
-    def determine_aliases_types(self):
-        pass
-        # Find unique aliases and types in inputs and outputs
+            for param_info in param_info_list:
+                if len(param_info) == 2:
+                    alias, alias_type = param_info
+                    # Check if alias and type exist in nested_alias_type_data
+                    if (
+                        alias in self.nested_alias_type_data
+                        and alias_type in self.nested_alias_type_data[alias]
+                    ):
+                        resolved_path = self.nested_alias_type_data[alias][alias_type]
+                    else:
+                        # Construct a new path for the alias type
+                        resolved_path = self.construct_path_for_alias_type(
+                            alias, alias_type
+                        )
+                        self.configure_alias_and_type(alias, alias_type, resolved_path)
+                    # Replace the alias and type with the resolved path
+                    custom_func["params"][param] = resolved_path
+                elif len(param_info) == 3:
+                    alias, alias_type, file_path = param_info
+                    resolved_path = file_path
+                    # Ensure the alias and type are updated with the provided path
+                    self.configure_alias_and_type(alias, alias_type, resolved_path)
+                    # Replace the alias and type with the resolved path
+                    custom_func["params"][param] = resolved_path
 
-    def process_user_defined_output_paths(self):
-        pass
-        # Process user defined output paths
-
-    def construct_output_filepaths(self):
-        pass
-        # Construct file paths for output parameters
-
-    def map_filepaths_to_io_params(self):
-        pass
-        # Map file paths to correct parameters for custom functions
+    def construct_path_for_alias_type(self, alias, alias_type):
+        """
+        Construct a new path for a given alias and type.
+        """
+        base_path = self.root_file_partition_iterator
+        scale = self.scale
+        constructed_path = f"{base_path}_{alias}_{alias_type}_{scale}"
+        return constructed_path
 
     def execute_custom_functions(self):
-        pass
+        """
+        Execute custom functions with the resolved input and output paths.
+        """
+        for custom_func in self.custom_functions:
+            if "class" in custom_func:
+                # Handle class methods
+                func_class = custom_func["class"]
+                method = getattr(func_class, custom_func["method"])
+
+                # Prepare parameters for the class instantiation and method call
+                class_params = {}
+                method_params = {}
+
+                for param, path in custom_func["params"].items():
+                    # Determine if the parameter is for the constructor or method
+                    if hasattr(func_class.__init__, "func_code"):
+                        if param in func_class.__init__.func_code.co_varnames:
+                            class_params[param] = path
+                        else:
+                            method_params[param] = path
+                    else:
+                        class_params[param] = path
+
+                # Instantiate the class with the required parameters
+                instance = func_class(**class_params)
+                # Call the method with the required parameters
+                method(instance, **method_params)
+            else:
+                # Handle standalone functions
+                method = custom_func["func"]
+
+                # Prepare parameters for the function call
+                func_params = custom_func["params"]
+                resolved_params = {param: path for param, path in func_params.items()}
+
+                # Execute the function with resolved parameters
+                method(**resolved_params)
+
+            print(f"Executed {method.__name__} with parameters: {resolved_params}")
 
     def append_iteration_to_final(self, alias):
         # Guard clause if alias doesn't exist in nested_final_outputs
@@ -790,6 +842,7 @@ class PartitionIterator:
                 self._process_context_features_and_others(
                     aliases, iteration_partition, object_id
                 )
+                self.execute_custom_functions()
             if inputs_present_in_partition:
                 for alias in aliases:
                     self.append_iteration_to_final(alias)
@@ -836,7 +889,7 @@ if __name__ == "__main__":
     inputs = {
         building_points: [
             "input",
-            Building_N100.data_preparation___matrikkel_points___n100_building.value,
+            Building_N100.calculate_point_values___points_going_into_rbc___n100_building.value,
         ],
         building_polygons: [
             "input",
@@ -846,12 +899,8 @@ if __name__ == "__main__":
 
     outputs = {
         building_points: [
-            "input",
+            "output",
             Building_N100.iteration__partition_iterator_final_output_points__n100.value,
-        ],
-        building_polygons: [
-            "input",
-            Building_N100.iteration__partition_iterator_final_output_polygons__n100.value,
         ],
     }
 
@@ -879,3 +928,14 @@ if __name__ == "__main__":
 
     # Run the partition iterator
     partition_iterator.run()
+
+    # outputs = {
+    #     building_points: [
+    #         "input",
+    #         Building_N100.iteration__partition_iterator_final_output_points__n100.value,
+    #     ],
+    #     building_polygons: [
+    #         "input",
+    #         Building_N100.iteration__partition_iterator_final_output_polygons__n100.value,
+    #     ],
+    # }
