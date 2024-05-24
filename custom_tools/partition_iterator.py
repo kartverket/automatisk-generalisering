@@ -899,7 +899,7 @@ if __name__ == "__main__":
 
     outputs = {
         building_points: [
-            "output",
+            "input",
             Building_N100.iteration__partition_iterator_final_output_points__n100.value,
         ],
     }
