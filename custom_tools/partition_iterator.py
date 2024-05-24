@@ -648,23 +648,54 @@ class PartitionIterator:
             else:
                 self.process_context_features(alias, iteration_partition)
 
-    def define_io_params(self):
-        for func_config in self.custom_functions:
-            if type(func_config) is dict:
-                method = func_config.get("method")
-                func = getattr(func_config.get("class"), method)
-                func_name = f"{func_config.get('class').__name__}.{method}"
-            else:
-                func = func_config
-                func_name = func.__name__
+    def prepare_io_custom_functions(self):
+        self.define_io_params()
 
-            metadata = getattr(func, "_partition_io_metadata", None)
-            if metadata:
-                print(f"IO parameters for {func_name}:")
-                print(f"  - Input parameters: {metadata['inputs']}")
-                print(f"  - Output parameters: {metadata['outputs']}")
-            else:
-                print(f"No IO metadata found for {func_name}.")
+    def define_io_params(self):
+        for custom_func in self.custom_functions:
+            if "class" in custom_func:  # Class method
+                func = custom_func["class"]
+                method = getattr(func, custom_func["method"])
+            else:  # Standalone function
+                method = custom_func["func"]
+
+            if hasattr(method, "_partition_io_metadata"):
+                metadata = method._partition_io_metadata
+                input_params = metadata.get("inputs", [])
+                output_params = metadata.get("outputs", [])
+                print(f"IO parameters for {func.__name__}.{method.__name__}:")
+                print(f"  - Input parameters: {input_params}")
+                print(f"  - Output parameters: {output_params}")
+                for param in input_params:
+                    params_infos = custom_func["params"].get(param, [])
+                    if isinstance(params_infos, tuple):
+                        params_infos = [params_infos]
+                    for params_info in params_infos:
+                        if len(params_info) == 2:
+                            alias, alias_type = params_info
+                            print(
+                                f"Alias and type for input param {param}: {alias, alias_type}"
+                            )
+                        elif len(params_info) == 3:
+                            alias, alias_type, file_path = params_info
+                            print(
+                                f"Alias and type for input param {param}: {alias, alias_type}, with file path: {file_path}"
+                            )
+                for param in output_params:
+                    params_infos = custom_func["params"].get(param, [])
+                    if isinstance(params_infos, tuple):
+                        params_infos = [params_infos]
+                    for params_info in params_infos:
+                        if len(params_info) == 2:
+                            alias, alias_type = params_info
+                            print(
+                                f"Alias and type for input param {param}: {alias, alias_type}"
+                            )
+                        elif len(params_info) == 3:
+                            alias, alias_type, file_path = params_info
+                            print(
+                                f"Alias and type for input param {param}: {alias, alias_type}, with file path: {file_path}"
+                            )
 
     def determine_aliases_types(self):
         pass
@@ -777,7 +808,7 @@ class PartitionIterator:
     @timing_decorator
     def run(self):
         self.unpack_alias_path_data(self.raw_input_data)
-        self.define_io_params()
+        self.prepare_io_custom_functions()
         print("\nDone!\n")
 
         if self.raw_output_data is not None:
