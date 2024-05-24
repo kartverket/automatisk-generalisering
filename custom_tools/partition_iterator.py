@@ -648,10 +648,10 @@ class PartitionIterator:
             else:
                 self.process_context_features(alias, iteration_partition)
 
-    def prepare_io_custom_functions(self):
-        self.define_io_params()
+    def prepare_io_custom_logic(self):
+        self.find_io_params_custom_logic()
 
-    def define_io_params(self):
+    def find_io_params_custom_logic(self):
         for custom_func in self.custom_functions:
             if "class" in custom_func:  # Class method
                 func = custom_func["class"]
@@ -666,36 +666,34 @@ class PartitionIterator:
                 print(f"IO parameters for {func.__name__}.{method.__name__}:")
                 print(f"  - Input parameters: {input_params}")
                 print(f"  - Output parameters: {output_params}")
-                for param in input_params:
-                    params_infos = custom_func["params"].get(param, [])
-                    if isinstance(params_infos, tuple):
-                        params_infos = [params_infos]
-                    for params_info in params_infos:
-                        if len(params_info) == 2:
-                            alias, alias_type = params_info
-                            print(
-                                f"Alias and type for input param {param}: {alias, alias_type}"
-                            )
-                        elif len(params_info) == 3:
-                            alias, alias_type, file_path = params_info
-                            print(
-                                f"Alias and type for input param {param}: {alias, alias_type}, with file path: {file_path}"
-                            )
-                for param in output_params:
-                    params_infos = custom_func["params"].get(param, [])
-                    if isinstance(params_infos, tuple):
-                        params_infos = [params_infos]
-                    for params_info in params_infos:
-                        if len(params_info) == 2:
-                            alias, alias_type = params_info
-                            print(
-                                f"Alias and type for input param {param}: {alias, alias_type}"
-                            )
-                        elif len(params_info) == 3:
-                            alias, alias_type, file_path = params_info
-                            print(
-                                f"Alias and type for input param {param}: {alias, alias_type}, with file path: {file_path}"
-                            )
+
+                self.find_alias_type_custom_logic_params(
+                    param_type="input",
+                    params=input_params,
+                    custom_func=custom_func,
+                )
+                self.find_alias_type_custom_logic_params(
+                    param_type="output",
+                    params=input_params,
+                    custom_func=custom_func,
+                )
+
+    def find_alias_type_custom_logic_params(self, param_type, params, custom_func):
+        for param in params:
+            params_infos = custom_func["params"].get(param, [])
+            if isinstance(params_infos, tuple):
+                params_infos = [params_infos]
+            for params_info in params_infos:
+                if len(params_info) == 2:
+                    alias, alias_type = params_info
+                    print(
+                        f"Alias and type for {param_type} param {param}: {alias, alias_type}"
+                    )
+                elif len(params_info) == 3:
+                    alias, alias_type, file_path = params_info
+                    print(
+                        f"Alias and type for {param_type} param {param}: {alias, alias_type}, with file path: {file_path}"
+                    )
 
     def determine_aliases_types(self):
         pass
@@ -808,13 +806,15 @@ class PartitionIterator:
     @timing_decorator
     def run(self):
         self.unpack_alias_path_data(self.raw_input_data)
-        self.prepare_io_custom_functions()
-        print("\nDone!\n")
+        self.prepare_io_custom_logic()
+        print("\n logic io unpacking Done!\n")
 
         if self.raw_output_data is not None:
             self.unpack_alias_path_outputs(self.raw_output_data)
 
         self.export_dictionaries_to_json(file_name="post_alias_unpack")
+
+        print("\nJson export Done!\n")
 
         self.delete_final_outputs()
         self.prepare_input_data()
