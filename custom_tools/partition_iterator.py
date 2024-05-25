@@ -753,6 +753,7 @@ class PartitionIterator:
                 instance = func_class(**class_params)
                 # Call the method with the required parameters
                 method(instance, **method_params)
+                resolved_params = {**class_params, **method_params}
             else:
                 # Handle standalone functions
                 method = custom_func["func"]
@@ -827,7 +828,7 @@ class PartitionIterator:
         for object_id in range(1, self.max_object_id + 1):
             self.reset_dummy_used()
             self.export_dictionaries_to_json(
-                file_name="iteration_start",
+                file_name="start",
                 iteration=True,
                 object_id=object_id,
             )
@@ -838,9 +839,15 @@ class PartitionIterator:
             inputs_present_in_partition = self._process_inputs_in_partition(
                 aliases, iteration_partition, object_id
             )
+
             if inputs_present_in_partition:
                 self._process_context_features_and_others(
                     aliases, iteration_partition, object_id
+                )
+                self.export_dictionaries_to_json(
+                    file_name="input",
+                    iteration=True,
+                    object_id=object_id,
                 )
                 self.execute_custom_functions()
             if inputs_present_in_partition:
@@ -851,7 +858,7 @@ class PartitionIterator:
                 self.delete_iteration_files(*self.iteration_file_paths_list)
 
             self.export_dictionaries_to_json(
-                file_name="iteration_end",
+                file_name="end",
                 iteration=True,
                 object_id=object_id,
             )
@@ -860,22 +867,23 @@ class PartitionIterator:
     def run(self):
         self.unpack_alias_path_data(self.raw_input_data)
         self.prepare_io_custom_logic()
-        print("\n logic io unpacking Done!\n")
+        print("\n Logic I/O unpacking Done!\n")
 
         if self.raw_output_data is not None:
             self.unpack_alias_path_outputs(self.raw_output_data)
 
-        self.export_dictionaries_to_json(file_name="post_alias_unpack")
+        self.export_dictionaries_to_json(file_name="post_initialization")
 
         print("\nJson export Done!\n")
 
         self.delete_final_outputs()
         self.prepare_input_data()
+        self.export_dictionaries_to_json(file_name="post_data_preparation")
 
         self.create_cartographic_partitions()
 
         self.partition_iteration()
-        self.export_dictionaries_to_json(file_name="post_everything")
+        self.export_dictionaries_to_json(file_name="post_runtime")
 
 
 if __name__ == "__main__":
@@ -899,7 +907,7 @@ if __name__ == "__main__":
 
     outputs = {
         building_points: [
-            "input",
+            "output",
             Building_N100.iteration__partition_iterator_final_output_points__n100.value,
         ],
     }
