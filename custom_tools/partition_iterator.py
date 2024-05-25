@@ -708,6 +708,7 @@ class PartitionIterator:
                         self.configure_alias_and_type(alias, alias_type, resolved_path)
                     # Replace the alias and type with the resolved path
                     custom_func["params"][param] = resolved_path
+                    print(f"Resolved {param_type} path for {param}: {resolved_path}")
                 elif len(param_info) == 3:
                     alias, alias_type, file_path = param_info
                     resolved_path = file_path
@@ -715,6 +716,7 @@ class PartitionIterator:
                     self.configure_alias_and_type(alias, alias_type, resolved_path)
                     # Replace the alias and type with the resolved path
                     custom_func["params"][param] = resolved_path
+                    print(f"Resolved {param_type} path for {param}: {resolved_path}")
 
     def construct_path_for_alias_type(self, alias, alias_type):
         """
@@ -730,6 +732,8 @@ class PartitionIterator:
         Execute custom functions with the resolved input and output paths.
         """
         for custom_func in self.custom_functions:
+            resolved_params = {}  # Initialize resolved_params
+
             if "class" in custom_func:
                 # Handle class methods
                 func_class = custom_func["class"]
@@ -741,13 +745,15 @@ class PartitionIterator:
 
                 for param, path in custom_func["params"].items():
                     # Determine if the parameter is for the constructor or method
-                    if hasattr(func_class.__init__, "func_code"):
-                        if param in func_class.__init__.func_code.co_varnames:
-                            class_params[param] = path
-                        else:
-                            method_params[param] = path
-                    else:
+                    if param in func_class.__init__.__code__.co_varnames:
                         class_params[param] = path
+                    else:
+                        method_params[param] = path
+
+                # Log the class parameters
+                print(f"Class parameters for {func_class.__name__}: {class_params}")
+                # Log the method parameters
+                print(f"Method parameters for {method.__name__}: {method_params}")
 
                 # Instantiate the class with the required parameters
                 instance = func_class(**class_params)
@@ -761,6 +767,9 @@ class PartitionIterator:
                 # Prepare parameters for the function call
                 func_params = custom_func["params"]
                 resolved_params = {param: path for param, path in func_params.items()}
+
+                # Log the function parameters
+                print(f"Function parameters for {method.__name__}: {resolved_params}")
 
                 # Execute the function with resolved parameters
                 method(**resolved_params)
@@ -844,6 +853,7 @@ class PartitionIterator:
                 self._process_context_features_and_others(
                     aliases, iteration_partition, object_id
                 )
+                self.prepare_io_custom_logic()
                 self.export_dictionaries_to_json(
                     file_name="input",
                     iteration=True,
@@ -866,7 +876,7 @@ class PartitionIterator:
     @timing_decorator
     def run(self):
         self.unpack_alias_path_data(self.raw_input_data)
-        self.prepare_io_custom_logic()
+        # self.prepare_io_custom_logic()
         print("\n Logic I/O unpacking Done!\n")
 
         if self.raw_output_data is not None:
