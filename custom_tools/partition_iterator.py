@@ -287,9 +287,7 @@ class PartitionIterator:
         os.makedirs(directory_path, exist_ok=True)
 
         if iteration:
-            iteration_documentation_dir = os.path.join(
-                directory_path, "iteration_documentation"
-            )
+            iteration_documentation_dir = os.path.join(directory_path, "iteration")
             os.makedirs(iteration_documentation_dir, exist_ok=True)
 
             return iteration_documentation_dir
@@ -356,10 +354,10 @@ class PartitionIterator:
             self.first_call_directory_documentation = False
 
         alias_type_data_directory = self.create_directory_json_documentation(
-            file_path, "nested_alias_type_data", iteration
+            file_path, "alias_type", iteration
         )
         final_outputs_directory = self.create_directory_json_documentation(
-            file_path, "nested_final_outputs", iteration
+            file_path, "outputs", iteration
         )
 
         self.write_data_to_json(
@@ -479,7 +477,6 @@ class PartitionIterator:
             expression=f"{self.object_id_field} = {object_id}",
             output_name=iteration_partition,
         )
-        print(f"\nCreated partition selection for OBJECTID {object_id}")
 
     def process_input_features(
         self,
@@ -835,12 +832,9 @@ class PartitionIterator:
         self.iteration_file_paths_list.clear()
 
         for object_id in range(1, self.max_object_id + 1):
+            print(f"\nProcessing Partition: {object_id} out of {self.max_object_id}")
             self.reset_dummy_used()
-            self.export_dictionaries_to_json(
-                file_name="start",
-                iteration=True,
-                object_id=object_id,
-            )
+
             self.iteration_file_paths_list.clear()
             iteration_partition = f"{self.partition_feature}_{object_id}"
             self.select_partition_feature(iteration_partition, object_id)
@@ -855,7 +849,7 @@ class PartitionIterator:
                 )
                 self.prepare_io_custom_logic()
                 self.export_dictionaries_to_json(
-                    file_name="input",
+                    file_name="iteration",
                     iteration=True,
                     object_id=object_id,
                 )
@@ -867,31 +861,25 @@ class PartitionIterator:
             else:
                 self.delete_iteration_files(*self.iteration_file_paths_list)
 
-            self.export_dictionaries_to_json(
-                file_name="end",
-                iteration=True,
-                object_id=object_id,
-            )
-
     @timing_decorator
     def run(self):
         self.unpack_alias_path_data(self.raw_input_data)
-        # self.prepare_io_custom_logic()
-        print("\n Logic I/O unpacking Done!\n")
 
         if self.raw_output_data is not None:
             self.unpack_alias_path_outputs(self.raw_output_data)
 
         self.export_dictionaries_to_json(file_name="post_initialization")
+        print("Initialization done\n")
 
-        print("\nJson export Done!\n")
-
+        print("\nStarting Data Preparation...")
         self.delete_final_outputs()
         self.prepare_input_data()
         self.export_dictionaries_to_json(file_name="post_data_preparation")
 
+        print("\nCreating Cartographic Partitions...")
         self.create_cartographic_partitions()
 
+        print("\nStarting on Partition Iteration...")
         self.partition_iteration()
         self.export_dictionaries_to_json(file_name="post_runtime")
 
