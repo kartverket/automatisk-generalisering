@@ -7,6 +7,7 @@ import json
 from typing import Dict, Tuple, Literal
 
 import env_setup.global_config
+import config
 from env_setup import environment_setup
 from custom_tools import custom_arcpy
 from custom_tools.timing_decorator import timing_decorator
@@ -38,6 +39,7 @@ class PartitionIterator:
         partition_method: Literal["FEATURES", "VERTICES"] = "FEATURES",
         search_distance: str = "500 Meters",
         context_selection: bool = True,
+        safe_output_final_cleanup: bool = True,
         object_id_field: str = "OBJECTID",
     ):
         """
@@ -68,6 +70,7 @@ class PartitionIterator:
         self.partition_method = partition_method
         self.object_id_field = object_id_field
         self.selection_of_context_features = context_selection
+        self.safe_final_output_cleanup = safe_output_final_cleanup
 
         # Initial processing results
         self.nested_alias_type_data = {}
@@ -84,15 +87,6 @@ class PartitionIterator:
         # Variables related to custom operations
         self.custom_functions = custom_functions or []
         self.custom_func_io_params = {}
-
-        # self.handle_data_export(
-        #     file_path=self.dictionary_documentation_path,
-        #     alias_type_data=self.nested_alias_type_data,
-        #     final_outputs=self.nested_final_outputs,
-        #     file_name="initialization",
-        #     iteration=False,
-        #     object_id=None,
-        # )
 
     def unpack_alias_path_data(self, alias_path_data):
         # Process initial alias_path_data for inputs and outputs
@@ -179,13 +173,39 @@ class PartitionIterator:
             else:
                 print(f"Deleted feature class: {feature_class_path}")
 
+    def is_safe_to_delete(self, file_path: str, safe_directory: str) -> bool:
+        """
+        Check if the file path is within the specified safe directory.
+
+        Args:
+            file_path (str): The path of the file to check.
+            safe_directory (str): The directory considered safe for deletion.
+
+        Returns:
+            bool: True if the file is within the safe directory, False otherwise.
+        """
+        # Ensure safe directory ends with a backslash for correct comparison
+        if not safe_directory.endswith(os.path.sep):
+            safe_directory += os.path.sep
+        return file_path.startswith(safe_directory)
+
     def delete_final_outputs(self):
-        """Deletes all final output files if they exist."""
+        """Deletes all existing final output files if they exist and are in the safe directory."""
+        # Construct the safe directory path
+        local_root_directory = config.output_folder
+        project_root_directory = env_setup.global_config.main_directory_name
+        safe_directory = rf"{local_root_directory}\{project_root_directory}"
+
         for alias in self.nested_final_outputs:
             for _, output_file_path in self.nested_final_outputs[alias].items():
-                if arcpy.Exists(output_file_path):
-                    arcpy.management.Delete(output_file_path)
-                    print(f"Deleted file: {output_file_path}")
+                if self.is_safe_to_delete(output_file_path, safe_directory):
+                    if arcpy.Exists(output_file_path):
+                        arcpy.management.Delete(output_file_path)
+                        print(f"Deleted file: {output_file_path}")
+                else:
+                    print(
+                        f"Skipped deletion for {output_file_path}, not in safe directory."
+                    )
 
     def delete_iteration_files(self, *file_paths):
         """Deletes multiple feature classes or files. Detailed alias and output_type logging is not available here."""
