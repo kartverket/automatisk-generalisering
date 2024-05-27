@@ -922,11 +922,23 @@ if __name__ == "__main__":
         ],
     }
 
+    select_hospitals_config = {
+        "func": custom_arcpy.select_attribute_and_make_permanent_feature,
+        "params": {
+            "input_layer": (
+                "building_points",
+                "input",
+            ),
+            "output_name": ("building_points", "hospitals"),
+            "expression": "symbol_val IN (1, 2, 3)",
+        },
+    }
+
     polygon_processor_config = {
         "class": PolygonProcessor,
         "method": "run",
         "params": {
-            "input_building_points": ("building_points", "input"),
+            "input_building_points": ("building_points", "hospitals"),
             "output_polygon_feature_class": ("building_points", "polygon_processor"),
             "building_symbol_dimensions": N100_Symbology.building_symbol_dimensions.value,
             "symbol_field_name": "symbol_val",
@@ -938,11 +950,11 @@ if __name__ == "__main__":
     partition_iterator = PartitionIterator(
         alias_path_data=inputs,
         alias_path_outputs=outputs,
-        custom_functions=[polygon_processor_config],
+        custom_functions=[select_hospitals_config, polygon_processor_config],
         root_file_partition_iterator=Building_N100.iteration__partition_iterator__n100.value,
         scale=env_setup.global_config.scale_n100,
         dictionary_documentation_path=Building_N100.iteration___partition_iterator_json_documentation___building_n100.value,
-        feature_count="100000",
+        feature_count="400000",
     )
 
     # Run the partition iterator
