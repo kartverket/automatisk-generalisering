@@ -37,6 +37,7 @@ class PartitionIterator:
         feature_count: str = "15000",
         partition_method: Literal["FEATURES", "VERTICES"] = "FEATURES",
         search_distance: str = "500 Meters",
+        context_selection: bool = True,
         object_id_field: str = "OBJECTID",
     ):
         """
@@ -66,6 +67,7 @@ class PartitionIterator:
         self.feature_count = feature_count
         self.partition_method = partition_method
         self.object_id_field = object_id_field
+        self.selection_of_context_features = context_selection
 
         # Initial processing results
         self.nested_alias_type_data = {}
@@ -445,27 +447,53 @@ class PartitionIterator:
                 )
                 print(f"Calculated field {self.ORIGINAL_ID_FIELD}")
 
+        for alias, types in self.nested_alias_type_data.items():
             if "context" in types:
                 context_data_path = types["context"]
                 context_data_copy = (
                     f"{self.root_file_partition_iterator}_{alias}_context_copy"
                 )
+                if self.selection_of_context_features:
+                    PartitionIterator.create_feature_class(
+                        full_feature_path=context_data_copy,
+                        template_feature=context_data_path,
+                    )
 
-                arcpy.management.Copy(
-                    in_data=context_data_path,
-                    out_data=context_data_copy,
-                )
-                print(f"Copied context nested_alias_type_data for: {alias}")
+                    for input_alias, input_types in self.nested_alias_type_data.items():
+                        if "input_copy" in input_types:
+                            input_data_copy = input_types["input_copy"]
+
+                            context_features_input_selection = f"in_memory/{alias}_context_input_select_{input_alias}_{self.scale}"
+                            print(
+                                f"\nselecting: {context_data_copy} \nusing:  {input_data_copy}\n"
+                            )
+                            custom_arcpy.select_location_and_make_feature_layer(
+                                input_layer=context_data_path,
+                                overlap_type=custom_arcpy.OverlapType.WITHIN_A_DISTANCE,
+                                select_features=input_data_copy,
+                                output_name=context_features_input_selection,
+                                search_distance=self.search_distance,
+                            )
+                            arcpy.management.Append(
+                                inputs=context_features_input_selection,
+                                target=context_data_copy,
+                                schema_type="NO_TEST",
+                            )
+                            arcpy.management.Delete(context_features_input_selection)
+                    print(f"Processed context feature for: {alias}")
+
+                else:
+                    arcpy.management.Copy(
+                        in_data=context_data_path,
+                        out_data=context_data_copy,
+                    )
+                    print(f"Copied context data for: {alias}")
 
                 self.configure_alias_and_type(
                     alias=alias,
                     type_name="context_copy",
                     type_path=context_data_copy,
                 )
-
-    def custom_function(inputs):
-        outputs = []
-        return outputs
 
     def select_partition_feature(self, iteration_partition, object_id):
         """
@@ -891,6 +919,8 @@ if __name__ == "__main__":
     building_polygons = "building_polygons"
     church_hospital = "church_hospital"
     restriction_lines = "restriction_lines"
+    bane = "bane"
+    river = "river"
 
     inputs = {
         building_points: [
@@ -898,8 +928,16 @@ if __name__ == "__main__":
             Building_N100.calculate_point_values___points_going_into_rbc___n100_building.value,
         ],
         building_polygons: [
-            "context",
+            "input",
             input_n50.Grunnriss,
+        ],
+        bane: [
+            "input",
+            input_n50.Bane,
+        ],
+        river: [
+            "context",
+            input_n50.ElvBekk,
         ],
     }
 
@@ -926,7 +964,7 @@ if __name__ == "__main__":
         "class": PolygonProcessor,
         "method": "run",
         "params": {
-            "input_building_points": ("building_points", "hospitals"),
+            "input_building_points": ("building_points", "input"),
             "output_polygon_feature_class": ("building_points", "polygon_processor"),
             "building_symbol_dimensions": N100_Symbology.building_symbol_dimensions.value,
             "symbol_field_name": "symbol_val",
@@ -938,7 +976,7 @@ if __name__ == "__main__":
     partition_iterator = PartitionIterator(
         alias_path_data=inputs,
         alias_path_outputs=outputs,
-        custom_functions=[select_hospitals_config, polygon_processor_config],
+        custom_functions=[polygon_processor_config],
         root_file_partition_iterator=Building_N100.iteration__partition_iterator__n100.value,
         scale=env_setup.global_config.scale_n100,
         dictionary_documentation_path=Building_N100.iteration___partition_iterator_json_documentation___building_n100.value,
