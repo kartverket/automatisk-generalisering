@@ -910,14 +910,14 @@ if __name__ == "__main__":
             Building_N100.calculate_point_values___points_going_into_rbc___n100_building.value,
         ],
         building_polygons: [
-            "input",
+            "context",
             input_n50.Grunnriss,
         ],
     }
 
     outputs = {
         building_points: [
-            "output",
+            "polygon_processor",
             Building_N100.iteration__partition_iterator_final_output_points__n100.value,
         ],
     }
@@ -927,7 +927,7 @@ if __name__ == "__main__":
         "method": "run",
         "params": {
             "input_building_points": ("building_points", "input"),
-            "output_polygon_feature_class": ("building_points", "output"),
+            "output_polygon_feature_class": ("building_points", "polygon_processor"),
             "building_symbol_dimensions": N100_Symbology.building_symbol_dimensions.value,
             "symbol_field_name": "symbol_val",
             "index_field_name": "OBJECTID",
@@ -942,18 +942,8 @@ if __name__ == "__main__":
         root_file_partition_iterator=Building_N100.iteration__partition_iterator__n100.value,
         scale=env_setup.global_config.scale_n100,
         dictionary_documentation_path=Building_N100.iteration___partition_iterator_json_documentation___building_n100.value,
+        feature_count="100000",
     )
 
     # Run the partition iterator
     partition_iterator.run()
-
-    # outputs = {
-    #     building_points: [
-    #         "input",
-    #         Building_N100.iteration__partition_iterator_final_output_points__n100.value,
-    #     ],
-    #     building_polygons: [
-    #         "input",
-    #         Building_N100.iteration__partition_iterator_final_output_polygons__n100.value,
-    #     ],
-    # }
