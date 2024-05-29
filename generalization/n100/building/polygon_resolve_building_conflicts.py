@@ -224,7 +224,7 @@ def resolve_building_conflict_building_polygon():
         [
             Building_N100.polygon_resolve_building_conflicts___roads___n100_building_lyrx.value,
             "false",
-            f"{N100_Values.rbc_barrier_clearance_distance_m.value} Meters",
+            f"{N100_Values.rbc_barrier_clearance_distance_m.value} Meters",  # 30 Meters for all barriers
         ],
         [
             Building_N100.polygon_resolve_building_conflicts___begrensningskurve___n100_building_lyrx.value,
@@ -298,7 +298,7 @@ def creating_road_buffer():
         original_width,
     ) in N100_SQLResources.road_symbology_size_sql_selection.value.items():
         selection_output_name = f"{selection_name_base}_{counter}"
-        buffer_width = original_width + 15
+        buffer_width = original_width
         buffer_output_name = f"{buffer_name_base}_{buffer_width}m_{counter}"
 
         print(selection_output_name)
