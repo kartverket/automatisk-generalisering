@@ -19,7 +19,9 @@ polygon_to_point = "polygon_to_point"
 calculating_polygon_values = "calculating_polygon_values"
 calculate_point_values = "calculate_point_values"
 point_propogate_displacement = "point_propogate_displacement"
-removing_points_in_water_features = "removing_points_in_water_features"
+removing_points_and_erasing_polygons_in_water_features = (
+    "removing_points_and_erasing_polygons_in_water_features"
+)
 removing_overlapping_points = "removing_overlapping_points"
 hospital_church_clusters = "hospital_church_clusters"
 point_displacement_with_buffer = "point_displacement_with_buffer"
@@ -752,25 +754,58 @@ class Building_N100(Enum):
     #                REMOVING POINTS IN WATER FEATURES
     # ========================================
 
-    removing_points_in_water_features___water_features___n100_building = (
-        file_manager.generate_file_name_gdb(
-            script_source_name=removing_points_in_water_features,
-            description="water_features",
-        )
+    removing_points_and_erasing_polygons_in_water_features___water_features___n100_building = file_manager.generate_file_name_gdb(
+        script_source_name=removing_points_and_erasing_polygons_in_water_features,
+        description="water_features",
     )
 
-    removing_points_in_water_features___final_points___n100_building = (
-        file_manager.generate_file_name_gdb(
-            script_source_name=removing_points_in_water_features,
-            description="points_that_do_not_intersect_water_features",
-        )
+    removing_points_and_erasing_polygons_in_water_features___final_points___n100_building = file_manager.generate_file_name_gdb(
+        script_source_name=removing_points_and_erasing_polygons_in_water_features,
+        description="points_that_do_not_intersect_water_features",
     )
 
-    removing_points_in_water_features___final_points___n100_lyrx = (
-        file_manager.generate_file_name_lyrx(
-            script_source_name=removing_points_in_water_features,
-            description="final_points",
-        )
+    removing_points_and_erasing_polygons_in_water_features___final_points___n100_lyrx = file_manager.generate_file_name_lyrx(
+        script_source_name=removing_points_and_erasing_polygons_in_water_features,
+        description="final_points",
+    )
+
+    removing_points_and_erasing_polygons_in_water_features___building_polygons_too_close_to_water_features___n100_building = file_manager.generate_file_name_gdb(
+        script_source_name=removing_points_and_erasing_polygons_in_water_features,
+        description="building_polygons_too_close_to_water_features",
+    )
+
+    removing_points_and_erasing_polygons_in_water_features___building_polygons_NOT_too_close_to_water_features___n100_building = file_manager.generate_file_name_gdb(
+        script_source_name=removing_points_and_erasing_polygons_in_water_features,
+        description="building_polygons_NOT_too_close_to_water_features",
+    )
+
+    removing_points_and_erasing_polygons_in_water_features___erased_polygons___n100_building = file_manager.generate_file_name_gdb(
+        script_source_name=removing_points_and_erasing_polygons_in_water_features,
+        description="erased_polygons",
+    )
+
+    removing_points_and_erasing_polygons_in_water_features___simplified_polygons___n100_building = file_manager.generate_file_name_gdb(
+        script_source_name=removing_points_and_erasing_polygons_in_water_features,
+        description="simplified_polygons",
+    )
+
+    removing_points_and_erasing_polygons_in_water_features___water_features_buffered___n100_building = file_manager.generate_file_name_gdb(
+        script_source_name=removing_points_and_erasing_polygons_in_water_features,
+        description="water_features_buffered",
+    )
+
+    removing_points_and_erasing_polygons_in_water_features___water_features_close_to_building_polygons___n100_building = file_manager.generate_file_name_gdb(
+        script_source_name=removing_points_and_erasing_polygons_in_water_features,
+        description="water_feature_buffer_close_to_building_polygons",
+    )
+    removing_points_and_erasing_polygons_in_water_features___final_points_merged___n100_building = file_manager.generate_file_name_gdb(
+        script_source_name=removing_points_and_erasing_polygons_in_water_features,
+        description="final_points_merged",
+    )
+
+    removing_points_and_erasing_polygons_in_water_features___final_building_polygons_merged___n100_building = file_manager.generate_file_name_gdb(
+        script_source_name=removing_points_and_erasing_polygons_in_water_features,
+        description="final_building_polygons_merged",
     )
 
     # ========================================
@@ -824,10 +859,10 @@ class Building_N100(Enum):
         )
     )
 
-    removing_overlapping_points___final___n100_building = (
+    removing_overlapping_points___merging_final_points___n100_building = (
         file_manager.generate_file_name_gdb(
             script_source_name=removing_overlapping_points,
-            description="final",
+            description="merging_final_points",
         )
     )
 
@@ -841,6 +876,41 @@ class Building_N100(Enum):
     removing_overlapping_points___points_NOT_close_to_graphic_conflict_polygons___n100_building = file_manager.generate_file_name_gdb(
         script_source_name=removing_overlapping_points,
         description="points_NOT_close_to_graphic_conflict_polygons",
+    )
+
+    removing_overlapping_points___points_to_squares___n100_building = (
+        file_manager.generate_file_name_gdb(
+            script_source_name=removing_overlapping_points,
+            description="points_to_squares",
+        )
+    )
+
+    removing_overlapping_points___final___n100_building = (
+        file_manager.generate_file_name_gdb(
+            script_source_name=removing_overlapping_points,
+            description="final",
+        )
+    )
+
+    removing_overlapping_points___all_points_not_hospital_and_church__n100_building = (
+        file_manager.generate_file_name_gdb(
+            script_source_name=removing_overlapping_points,
+            description="all_points_not_hospital_and_church",
+        )
+    )
+
+    removing_overlapping_points___squares_back_to_points___n100_building = (
+        file_manager.generate_file_name_gdb(
+            script_source_name=removing_overlapping_points,
+            description="squares_back_to_points",
+        )
+    )
+
+    removing_overlapping_points___hospital_and_church_points__n100_building = (
+        file_manager.generate_file_name_gdb(
+            script_source_name=removing_overlapping_points,
+            description="hospital_and_church_points",
+        )
     )
 
     ############################################## NEEDS TO BE UPDATED ###########################################################
@@ -923,6 +993,13 @@ class Building_N100(Enum):
         file_manager.generate_file_name_gdb(
             script_source_name=point_displacement_with_buffer,
             description="displaced_building_points",
+        )
+    )
+
+    removing_overlapping_points___squares_not_overlapping_roads___n100_building = (
+        file_manager.generate_file_name_gdb(
+            script_source_name=point_displacement_with_buffer,
+            description="squares_not_overlapping_roads",
         )
     )
 
@@ -1339,6 +1416,13 @@ class Building_N100(Enum):
         file_manager.generate_file_name_gdb(
             script_source_name=finalizing_buildings,
             description="hospitals_and_churches_pictogram",
+        )
+    )
+
+    finalizing_buildings___points_too_close_to_urban_areas___n100_building = (
+        file_manager.generate_file_name_gdb(
+            script_source_name=finalizing_buildings,
+            description="points_too_close_to_urban_areas",
         )
     )
 
