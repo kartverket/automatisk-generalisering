@@ -5,8 +5,8 @@ from typing import Union
 class N100_Values(Enum):
     # Building constants
     buffer_clearance_distance_m: int = 45
-    rbc_barrier_clearance_distance_m: int = 45
-    rbc_building_clearance_distance_m: int = 45
+    rbc_barrier_clearance_distance_m: int = 30
+    rbc_building_clearance_distance_m: int = 30
     # Simplify building polygon constants
     minimum_selection_building_polygon_size_m2: int = 2500
     minimum_simplified_building_polygon_size_m2: int = 3200

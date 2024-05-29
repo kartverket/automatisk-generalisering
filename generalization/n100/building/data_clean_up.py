@@ -8,7 +8,7 @@ from custom_tools.timing_decorator import timing_decorator
 from file_manager.n100.file_manager_buildings import Building_N100
 
 # Import modules
-from datetime import datetime
+import datetime as dt
 
 
 # Main function
@@ -20,7 +20,7 @@ def main():
         ["objtype", "byggtyp_nbr", "målemetode", "nøyaktighet", "last_edited_date"],
     )
     keep_necessary_fields(
-        Building_N100.Grunnriss.value, "objtype", "byggtyp_nbr", "last_edited_date"
+        Building_N100.Grunnriss.value, ["objtype", "byggtyp_nbr", "last_edited_date"]
     )
     keep_necessary_fields(
         Building_N100.TuristHytte.value,
@@ -52,7 +52,12 @@ def keep_necessary_fields(input_layer, list_of_fields):
     feature_class_to_clean_up = input_layer
 
     # List of field names to keep
-    fields_to_keep = list_of_fields
+    fields_to_keep = [
+        "OBJECTID",
+        "Shape_Area",
+        "Shape",
+        "Shape_Length",
+    ] + list_of_fields
 
     # Get a list of all fields in the feature class
     all_fields = [field.name for field in arcpy.ListFields(feature_class_to_clean_up)]
@@ -100,11 +105,11 @@ def add_last_edited_date_to_all_feature_classes():
             )
 
         # Calculate last_edited_date
-        current_date = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        current_date = dt.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
         arcpy.CalculateField_management(
             in_table=feature_class,
             field=field_name,
-            expression=f"datetime.datetime.strptime('{current_date}', '%Y-%m-%d %H:%M:%S')",
+            expression=f"'{current_date}'",
             expression_type="PYTHON3",
         )
 

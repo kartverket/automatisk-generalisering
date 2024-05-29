@@ -26,7 +26,6 @@ def main():
 
 @timing_decorator
 def removing_points_in_and_close_to_urban_areas():
-
     # Defining sql expression to select urban areas
     urban_areas_sql_expr = "objtype = 'Tettbebyggelse' Or objtype = 'Industriområde' Or objtype = 'BymessigBebyggelse'"
 
@@ -37,23 +36,6 @@ def removing_points_in_and_close_to_urban_areas():
         output_name=Building_N100.finalizing_buildings___urban_areas___n100_building.value,
     )
 
-    # Selecting building points that are NOT further away than 50 Meters from urban areas
-    custom_arcpy.select_location_and_make_permanent_feature(
-        input_layer=Building_N100.removing_overlapping_points___final___n100_building.value,
-        overlap_type=custom_arcpy.OverlapType.WITHIN_A_DISTANCE,
-        select_features=Building_N100.finalizing_buildings___urban_areas___n100_building.value,
-        search_distance="50 Meters",
-        inverted=True,
-        output_name=Building_N100.finalizing_buildings___points_not_close_to_urban_areas___n100_building.value,
-    )
-
-    # Selecting hospital and churches - to merge back in with the points further than 50 Merers away from urban areas
-    custom_arcpy.select_attribute_and_make_permanent_feature(
-        input_layer=Building_N100.finalizing_buildings___points_not_close_to_urban_areas___n100_building.value,
-        expression="byggtyp_nbr IN (970, 719, 671)",
-        output_name=Building_N100.finalizing_buildings___selecting_hospital_and_churches_in_urban_areas___n100_building.value,
-    )
-
     # Selecting building points that are further away than 50 Meters from urban areas
     custom_arcpy.select_location_and_make_permanent_feature(
         input_layer=Building_N100.removing_overlapping_points___final___n100_building.value,
@@ -62,6 +44,22 @@ def removing_points_in_and_close_to_urban_areas():
         search_distance="50 Meters",
         inverted=True,
         output_name=Building_N100.finalizing_buildings___points_not_close_to_urban_areas___n100_building.value,
+    )
+
+    # Selecting building points that are CLOSE to urban areas
+    custom_arcpy.select_location_and_make_permanent_feature(
+        input_layer=Building_N100.removing_overlapping_points___merging_final_points___n100_building.value,
+        overlap_type=custom_arcpy.OverlapType.WITHIN_A_DISTANCE,
+        select_features=Building_N100.finalizing_buildings___urban_areas___n100_building.value,
+        search_distance="50 Meters",
+        output_name=Building_N100.finalizing_buildings___points_too_close_to_urban_areas___n100_building.value,
+    )
+
+    # Selecting hospital and churches - to merge back in with the points further than 50 Merers away from urban areas
+    custom_arcpy.select_attribute_and_make_permanent_feature(
+        input_layer=Building_N100.finalizing_buildings___points_too_close_to_urban_areas___n100_building.value,
+        expression="byggtyp_nbr IN (970, 719, 671)",
+        output_name=Building_N100.finalizing_buildings___selecting_hospital_and_churches_in_urban_areas___n100_building.value,
     )
 
     # Merging hospital and churches in urban areas with points that are further away from urban areas than 50 Meters
@@ -76,7 +74,6 @@ def removing_points_in_and_close_to_urban_areas():
 
 @timing_decorator
 def selecting_all_tourist_cabins():
-
     selecting_tourist_cabins = "byggtyp_nbr = 956"
 
     # Selecting all building points categorized as tourist cabins
@@ -103,7 +100,6 @@ def building_polygons_to_line():
 
 
 def selecting_hospital_and_churches_for_pictogram_featureclass():
-
     custom_arcpy.select_attribute_and_make_permanent_feature(
         input_layer=Building_N100.finalizing_buildings___all_points_except_tourist_cabins___n100_building.value,
         expression="byggtyp_nbr IN (970, 719, 671)",
@@ -113,7 +109,6 @@ def selecting_hospital_and_churches_for_pictogram_featureclass():
 
 @timing_decorator
 def assigning_final_file_names():
-
     arcpy.management.CopyFeatures(
         Building_N100.finalizing_buildings___tourist_cabins___n100_building.value,
         Building_N100.TuristHytte.value,
@@ -125,7 +120,7 @@ def assigning_final_file_names():
     )
 
     arcpy.management.CopyFeatures(
-        Building_N100.point_resolve_building_conflicts___building_polygons_final___n100_building.value,
+        Building_N100.removing_points_and_erasing_polygons_in_water_features___final_building_polygons_merged___n100_building.value,
         Building_N100.Grunnriss.value,
     )
 

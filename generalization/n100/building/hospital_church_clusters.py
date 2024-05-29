@@ -113,7 +113,7 @@ def find_clusters():
         out_feature_class=Building_N100.hospital_church_clusters___all_hospital_clusters___n100_building.value,
         clustering_method="DBSCAN",
         minimum_points="2",
-        search_distance="200 Meters",
+        search_distance="250 Meters",
     )
 
     # Finding church clusters
@@ -122,7 +122,7 @@ def find_clusters():
         out_feature_class=Building_N100.hospital_church_clusters___all_church_clusters___n100_building.value,
         clustering_method="DBSCAN",
         minimum_points="2",
-        search_distance="200 Meters",
+        search_distance="250 Meters",
     )
 
     print("Joining fields...")
