@@ -787,7 +787,7 @@ if __name__ == "__main__":
         alias_path_outputs=outputs,
         root_file_partition_iterator=Building_N100.iteration__partition_iterator__n100.value,
         scale=env_setup.global_config.scale_n100,
-        dictionary_documentation_path=Building_N100.iteration___partition_iterator_json_documentation___building_n100.value,
+        dictionary_documentation_path=Building_N100.iteration___json_documentation___building_n100.value,
     )
 
     # Run the partition iterator

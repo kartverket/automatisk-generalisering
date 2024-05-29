@@ -5,6 +5,8 @@ import shutil
 import random
 import json
 from typing import Dict, Tuple, Literal
+import time
+from datetime import timedelta
 
 import env_setup.global_config
 import config
@@ -29,7 +31,9 @@ class PartitionIterator:
 
     def __init__(
         self,
-        alias_path_data: Dict[str, Tuple[Literal["input", "context"], str]],
+        alias_path_data: Dict[
+            str, Tuple[Literal["input", "context", "reference"], str]
+        ],
         alias_path_outputs: Dict[str, Tuple[str, str]],
         root_file_partition_iterator: str,
         scale: str,
@@ -87,6 +91,10 @@ class PartitionIterator:
         # Variables related to custom operations
         self.custom_functions = custom_functions or []
         self.custom_func_io_params = {}
+
+        self.total_start_time = None
+        self.iteration_times_with_input = []
+        self.iteration_start_time = None
 
     def unpack_alias_path_data(self, alias_path_data):
         # Process initial alias_path_data for inputs and outputs
@@ -204,7 +212,10 @@ class PartitionIterator:
                         print(f"Deleted file: {output_file_path}")
                 else:
                     print(
-                        f"Skipped deletion for {output_file_path}, not in safe directory."
+                        f"""Skipped deletion for {output_file_path}, the provided path is not in safe directory.
+                        If you intend to delete this file outside of the project directory change the 
+                        'safe_output_final_cleanup' param to 'false'
+                        """
                     )
 
     def delete_iteration_files(self, *file_paths):
@@ -484,9 +495,7 @@ class PartitionIterator:
                             input_data_copy = input_types["input_copy"]
 
                             context_features_input_selection = f"in_memory/{alias}_context_input_select_{input_alias}_{self.scale}"
-                            print(
-                                f"\nselecting: {context_data_copy} \nusing:  {input_data_copy}\n"
-                            )
+
                             custom_arcpy.select_location_and_make_feature_layer(
                                 input_layer=context_data_path,
                                 overlap_type=custom_arcpy.OverlapType.WITHIN_A_DISTANCE,
@@ -694,6 +703,53 @@ class PartitionIterator:
             else:
                 self.process_context_features(alias, iteration_partition)
 
+    def format_time(self, seconds):
+        """
+        Convert seconds to a formatted string: HH:MM:SS.
+
+        Args:
+            seconds (float): Time in seconds.
+
+        Returns:
+            str: Formatted time string.
+        """
+        seconds = int(seconds)  # Convert to integer for rounding
+        hours, remainder = divmod(seconds, 3600)
+        minutes, seconds = divmod(remainder, 60)
+        return f"{hours} hours, {minutes} minutes, {seconds} seconds"
+
+    def track_iteration_time(self, object_id, inputs_present_in_partition):
+        """
+        Track the iteration time and estimate the remaining time.
+
+        Args:
+            object_id (int): The ID of the current partition iteration.
+            inputs_present_in_partition (bool): Flag indicating if there were input features in the iteration.
+        """
+        iteration_time = time.time() - self.iteration_start_time
+        if inputs_present_in_partition:
+            self.iteration_times_with_input.append(iteration_time)
+            average_runtime_per_iteration = sum(self.iteration_times_with_input) / len(
+                self.iteration_times_with_input
+            )
+        else:
+            average_runtime_per_iteration = (
+                sum(self.iteration_times_with_input)
+                / len(self.iteration_times_with_input)
+                if self.iteration_times_with_input
+                else 0
+            )
+
+        total_runtime = time.time() - self.total_start_time
+        remaining_iterations = self.max_object_id - object_id
+        estimated_remaining_time = remaining_iterations * average_runtime_per_iteration
+
+        formatted_total_runtime = self.format_time(total_runtime)
+        formatted_estimated_remaining_time = self.format_time(estimated_remaining_time)
+
+        print(f"\nCurrent runtime: {formatted_total_runtime}")
+        print(f"Estimated remaining time: {formatted_estimated_remaining_time}")
+
     def prepare_io_custom_logic(self):
         """
         Prepare the input/output parameters for custom logic functions by resolving their paths.
@@ -880,6 +936,7 @@ class PartitionIterator:
         self.iteration_file_paths_list.clear()
 
         for object_id in range(1, self.max_object_id + 1):
+            self.iteration_start_time = time.time()
             print(f"\nProcessing Partition: {object_id} out of {self.max_object_id}")
             self.reset_dummy_used()
 
@@ -908,9 +965,11 @@ class PartitionIterator:
                 self.delete_iteration_files(*self.iteration_file_paths_list)
             else:
                 self.delete_iteration_files(*self.iteration_file_paths_list)
+            self.track_iteration_time(object_id, inputs_present_in_partition)
 
     @timing_decorator
     def run(self):
+        self.total_start_time = time.time()
         self.unpack_alias_path_data(self.raw_input_data)
 
         if self.raw_output_data is not None:
@@ -948,15 +1007,15 @@ if __name__ == "__main__":
             Building_N100.calculate_point_values___points_going_into_rbc___n100_building.value,
         ],
         building_polygons: [
-            "input",
+            "context",
             input_n50.Grunnriss,
         ],
         bane: [
-            "input",
+            "context",
             input_n50.Bane,
         ],
         river: [
-            "context",
+            "reference",
             input_n50.ElvBekk,
         ],
     }
@@ -971,11 +1030,8 @@ if __name__ == "__main__":
     select_hospitals_config = {
         "func": custom_arcpy.select_attribute_and_make_permanent_feature,
         "params": {
-            "input_layer": (
-                "building_points",
-                "input",
-            ),
-            "output_name": ("building_points", "hospitals"),
+            "input_layer": ("building_points", "input"),
+            "output_name": ("building_points", "hospitals_selection"),
             "expression": "symbol_val IN (1, 2, 3)",
         },
     }
@@ -984,7 +1040,7 @@ if __name__ == "__main__":
         "class": PolygonProcessor,
         "method": "run",
         "params": {
-            "input_building_points": ("building_points", "input"),
+            "input_building_points": ("building_points", "hospitals_selection"),
             "output_polygon_feature_class": ("building_points", "polygon_processor"),
             "building_symbol_dimensions": N100_Symbology.building_symbol_dimensions.value,
             "symbol_field_name": "symbol_val",
@@ -996,10 +1052,10 @@ if __name__ == "__main__":
     partition_iterator = PartitionIterator(
         alias_path_data=inputs,
         alias_path_outputs=outputs,
-        custom_functions=[polygon_processor_config],
+        custom_functions=[select_hospitals_config, polygon_processor_config],
         root_file_partition_iterator=Building_N100.iteration__partition_iterator__n100.value,
         scale=env_setup.global_config.scale_n100,
-        dictionary_documentation_path=Building_N100.iteration___partition_iterator_json_documentation___building_n100.value,
+        dictionary_documentation_path=Building_N100.iteration___json_documentation___building_n100.value,
         feature_count="400000",
     )
 
