@@ -99,7 +99,7 @@
 
         <span class="n">result</span> <span class="o">=</span> <span class="n">func</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
 
-        <span class="n">elapsed_time</span> <span class="o">=</span> <span class="n">compute_elapsed_time</span><span class="p">(</span><span class="n">start_time</span><span class="p">)</span>
+        <span class="n">elapsed_time</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span> <span class="o">-</span> <span class="n">start_time</span>
 
         <span class="n">function_name</span> <span class="o">=</span> <span class="n">func</span><span class="o">.</span><span class="vm">__name__</span>
         <span class="n">file_path</span> <span class="o">=</span> <span class="n">inspect</span><span class="o">.</span><span class="n">getfile</span><span class="p">(</span><span class="n">func</span><span class="p">)</span>
@@ -108,9 +108,11 @@
         <span class="n">formatted_file_name</span> <span class="o">=</span> <span class="n">file_name</span><span class="o">.</span><span class="n">ljust</span><span class="p">(</span><span class="mi">40</span><span class="p">)</span>
         <span class="n">formatted_function_name</span> <span class="o">=</span> <span class="n">function_name</span><span class="o">.</span><span class="n">ljust</span><span class="p">(</span><span class="mi">55</span><span class="p">)</span>
 
+        <span class="n">formatted_elapsed_time</span> <span class="o">=</span> <span class="n">format_time</span><span class="p">(</span><span class="n">elapsed_time</span><span class="p">)</span>
+
         <span class="n">log_to_console_and_file</span><span class="p">(</span>
             <span class="sa">f</span><span class="s2">&quot;File name: </span><span class="si">{</span><span class="n">formatted_file_name</span><span class="si">}</span><span class="s2"> Function name: </span><span class="si">{</span><span class="n">formatted_function_name</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span>
-            <span class="n">elapsed_time</span><span class="p">,</span>
+            <span class="n">formatted_elapsed_time</span><span class="p">,</span>
         <span class="p">)</span>
 
         <span class="k">return</span> <span class="n">result</span>
@@ -119,26 +121,30 @@
 
 
 
-<div class="viewcode-block" id="compute_elapsed_time">
-<a class="viewcode-back" href="../../generated_docs/custom_tools.html#custom_tools.timing_decorator.compute_elapsed_time">[docs]</a>
-<span class="k">def</span> <span class="nf">compute_elapsed_time</span><span class="p">(</span><span class="n">start_time</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Computes the elapsed time given a starting time&quot;&quot;&quot;</span>
-    <span class="n">elapsed_time_seconds</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span> <span class="o">-</span> <span class="n">start_time</span>
+<div class="viewcode-block" id="format_time">
+<a class="viewcode-back" href="../../generated_docs/custom_tools.html#custom_tools.timing_decorator.format_time">[docs]</a>
+<span class="k">def</span> <span class="nf">format_time</span><span class="p">(</span><span class="n">seconds</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Convert seconds to a formatted string: HH:MM:SS.</span>
 
-    <span class="n">elapsed_minutes</span><span class="p">,</span> <span class="n">elapsed_seconds</span> <span class="o">=</span> <span class="nb">divmod</span><span class="p">(</span><span class="n">elapsed_time_seconds</span><span class="p">,</span> <span class="mi">30</span><span class="p">)</span>
+<span class="sd">    Args:</span>
+<span class="sd">        seconds (float): Time in seconds.</span>
 
-    <span class="k">return</span> <span class="n">elapsed_minutes</span><span class="p">,</span> <span class="n">elapsed_seconds</span></div>
+<span class="sd">    Returns:</span>
+<span class="sd">        str: Formatted time string.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">seconds</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">seconds</span><span class="p">)</span>  <span class="c1"># Convert to integer for rounding</span>
+    <span class="n">hours</span><span class="p">,</span> <span class="n">remainder</span> <span class="o">=</span> <span class="nb">divmod</span><span class="p">(</span><span class="n">seconds</span><span class="p">,</span> <span class="mi">3600</span><span class="p">)</span>
+    <span class="n">minutes</span><span class="p">,</span> <span class="n">seconds</span> <span class="o">=</span> <span class="nb">divmod</span><span class="p">(</span><span class="n">remainder</span><span class="p">,</span> <span class="mi">60</span><span class="p">)</span>
+    <span class="k">return</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">hours</span><span class="si">}</span><span class="s2"> hours, </span><span class="si">{</span><span class="n">minutes</span><span class="si">}</span><span class="s2"> minutes, </span><span class="si">{</span><span class="n">seconds</span><span class="si">}</span><span class="s2"> seconds&quot;</span></div>
 
 
 
 <div class="viewcode-block" id="log_to_console_and_file">
 <a class="viewcode-back" href="../../generated_docs/custom_tools.html#custom_tools.timing_decorator.log_to_console_and_file">[docs]</a>
 <span class="k">def</span> <span class="nf">log_to_console_and_file</span><span class="p">(</span><span class="n">function_name</span><span class="p">,</span> <span class="n">elapsed_time</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Logs a messages to both the console and a file&quot;&quot;&quot;</span>
-    <span class="n">elapsed_minutes</span><span class="p">,</span> <span class="n">elapsed_seconds</span> <span class="o">=</span> <span class="n">elapsed_time</span>
-    <span class="n">output</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">function_name</span><span class="si">}</span><span class="s2"> Execution time: </span><span class="si">{</span><span class="nb">int</span><span class="p">(</span><span class="n">elapsed_minutes</span><span class="p">)</span><span class="si">}</span><span class="s2"> minutes </span><span class="si">{</span><span class="n">elapsed_seconds</span><span class="si">:</span><span class="s2">.0f</span><span class="si">}</span><span class="s2"> seconds&quot;</span><span class="o">.</span><span class="n">ljust</span><span class="p">(</span>
-        <span class="mi">60</span>
-    <span class="p">)</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Logs a message to both the console and a file&quot;&quot;&quot;</span>
+    <span class="n">output</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">function_name</span><span class="si">}</span><span class="s2"> Execution time: </span><span class="si">{</span><span class="n">elapsed_time</span><span class="si">}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">ljust</span><span class="p">(</span><span class="mi">60</span><span class="p">)</span>
 
     <span class="n">log_to_console</span><span class="p">(</span><span class="n">output</span><span class="p">)</span>
     <span class="n">log_to_file</span><span class="p">(</span><span class="n">output</span><span class="p">)</span></div>

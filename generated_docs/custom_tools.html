@@ -155,7 +155,7 @@
 <li class="toctree-l2"><a class="reference internal" href="#module-custom_tools.table_mangement">custom_tools.table_mangement module</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#module-custom_tools.timing_decorator">custom_tools.timing_decorator module</a><ul>
 <li class="toctree-l3"><a class="reference internal" href="#custom_tools.timing_decorator.timing_decorator"><code class="docutils literal notranslate"><span class="pre">timing_decorator()</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="#custom_tools.timing_decorator.compute_elapsed_time"><code class="docutils literal notranslate"><span class="pre">compute_elapsed_time()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#custom_tools.timing_decorator.format_time"><code class="docutils literal notranslate"><span class="pre">format_time()</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="#custom_tools.timing_decorator.log_to_console_and_file"><code class="docutils literal notranslate"><span class="pre">log_to_console_and_file()</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="#custom_tools.timing_decorator.log_to_console"><code class="docutils literal notranslate"><span class="pre">log_to_console()</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="#custom_tools.timing_decorator.log_to_file"><code class="docutils literal notranslate"><span class="pre">log_to_file()</span></code></a></li>
@@ -848,15 +848,26 @@ Log files will be stored in a directory structure matching the scale and object 
 </dd></dl>
 
 <dl class="py function">
-<dt class="sig sig-object py" id="custom_tools.timing_decorator.compute_elapsed_time">
-<span class="sig-prename descclassname"><span class="pre">custom_tools.timing_decorator.</span></span><span class="sig-name descname"><span class="pre">compute_elapsed_time</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">start_time</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/custom_tools/timing_decorator.html#compute_elapsed_time"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#custom_tools.timing_decorator.compute_elapsed_time" title="Link to this definition"></a></dt>
-<dd><p>Computes the elapsed time given a starting time</p>
+<dt class="sig sig-object py" id="custom_tools.timing_decorator.format_time">
+<span class="sig-prename descclassname"><span class="pre">custom_tools.timing_decorator.</span></span><span class="sig-name descname"><span class="pre">format_time</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">seconds</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/custom_tools/timing_decorator.html#format_time"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#custom_tools.timing_decorator.format_time" title="Link to this definition"></a></dt>
+<dd><p>Convert seconds to a formatted string: HH:MM:SS.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>seconds</strong> (<em>float</em>) – Time in seconds.</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Formatted time string.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>str</p>
+</dd>
+</dl>
 </dd></dl>
 
 <dl class="py function">
 <dt class="sig sig-object py" id="custom_tools.timing_decorator.log_to_console_and_file">
 <span class="sig-prename descclassname"><span class="pre">custom_tools.timing_decorator.</span></span><span class="sig-name descname"><span class="pre">log_to_console_and_file</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">function_name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">elapsed_time</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/custom_tools/timing_decorator.html#log_to_console_and_file"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#custom_tools.timing_decorator.log_to_console_and_file" title="Link to this definition"></a></dt>
-<dd><p>Logs a messages to both the console and a file</p>
+<dd><p>Logs a message to both the console and a file</p>
 </dd></dl>
 
 <dl class="py function">
