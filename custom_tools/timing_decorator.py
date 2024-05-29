@@ -18,7 +18,7 @@ def timing_decorator(func):
 
         result = func(*args, **kwargs)
 
-        elapsed_time = compute_elapsed_time(start_time)
+        elapsed_time = time.time() - start_time
 
         function_name = func.__name__
         file_path = inspect.getfile(func)
@@ -27,9 +27,11 @@ def timing_decorator(func):
         formatted_file_name = file_name.ljust(40)
         formatted_function_name = function_name.ljust(55)
 
+        formatted_elapsed_time = format_time(elapsed_time)
+
         log_to_console_and_file(
             f"File name: {formatted_file_name} Function name: {formatted_function_name}",
-            elapsed_time,
+            formatted_elapsed_time,
         )
 
         return result
@@ -37,21 +39,25 @@ def timing_decorator(func):
     return wrapper
 
 
-def compute_elapsed_time(start_time):
-    """Computes the elapsed time given a starting time"""
-    elapsed_time_seconds = time.time() - start_time
+def format_time(seconds):
+    """
+    Convert seconds to a formatted string: HH:MM:SS.
 
-    elapsed_minutes, elapsed_seconds = divmod(elapsed_time_seconds, 30)
+    Args:
+        seconds (float): Time in seconds.
 
-    return elapsed_minutes, elapsed_seconds
+    Returns:
+        str: Formatted time string.
+    """
+    seconds = int(seconds)  # Convert to integer for rounding
+    hours, remainder = divmod(seconds, 3600)
+    minutes, seconds = divmod(remainder, 60)
+    return f"{hours} hours, {minutes} minutes, {seconds} seconds"
 
 
 def log_to_console_and_file(function_name, elapsed_time):
-    """Logs a messages to both the console and a file"""
-    elapsed_minutes, elapsed_seconds = elapsed_time
-    output = f"{function_name} Execution time: {int(elapsed_minutes)} minutes {elapsed_seconds:.0f} seconds".ljust(
-        60
-    )
+    """Logs a message to both the console and a file"""
+    output = f"{function_name} Execution time: {elapsed_time}".ljust(60)
 
     log_to_console(output)
     log_to_file(output)
