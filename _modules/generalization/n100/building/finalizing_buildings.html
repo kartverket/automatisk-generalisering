@@ -110,7 +110,6 @@
 <a class="viewcode-back" href="../../../../generated_docs/generalization.n100.building.html#generalization.n100.building.finalizing_buildings.removing_points_in_and_close_to_urban_areas">[docs]</a>
 <span class="nd">@timing_decorator</span>
 <span class="k">def</span> <span class="nf">removing_points_in_and_close_to_urban_areas</span><span class="p">():</span>
-
     <span class="c1"># Defining sql expression to select urban areas</span>
     <span class="n">urban_areas_sql_expr</span> <span class="o">=</span> <span class="s2">&quot;objtype = &#39;Tettbebyggelse&#39; Or objtype = &#39;Industriområde&#39; Or objtype = &#39;BymessigBebyggelse&#39;&quot;</span>
 
@@ -121,23 +120,6 @@
         <span class="n">output_name</span><span class="o">=</span><span class="n">Building_N100</span><span class="o">.</span><span class="n">finalizing_buildings___urban_areas___n100_building</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
     <span class="p">)</span>
 
-    <span class="c1"># Selecting building points that are NOT further away than 50 Meters from urban areas</span>
-    <span class="n">custom_arcpy</span><span class="o">.</span><span class="n">select_location_and_make_permanent_feature</span><span class="p">(</span>
-        <span class="n">input_layer</span><span class="o">=</span><span class="n">Building_N100</span><span class="o">.</span><span class="n">removing_overlapping_points___final___n100_building</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
-        <span class="n">overlap_type</span><span class="o">=</span><span class="n">custom_arcpy</span><span class="o">.</span><span class="n">OverlapType</span><span class="o">.</span><span class="n">WITHIN_A_DISTANCE</span><span class="p">,</span>
-        <span class="n">select_features</span><span class="o">=</span><span class="n">Building_N100</span><span class="o">.</span><span class="n">finalizing_buildings___urban_areas___n100_building</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
-        <span class="n">search_distance</span><span class="o">=</span><span class="s2">&quot;50 Meters&quot;</span><span class="p">,</span>
-        <span class="n">inverted</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
-        <span class="n">output_name</span><span class="o">=</span><span class="n">Building_N100</span><span class="o">.</span><span class="n">finalizing_buildings___points_not_close_to_urban_areas___n100_building</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
-    <span class="p">)</span>
-
-    <span class="c1"># Selecting hospital and churches - to merge back in with the points further than 50 Merers away from urban areas</span>
-    <span class="n">custom_arcpy</span><span class="o">.</span><span class="n">select_attribute_and_make_permanent_feature</span><span class="p">(</span>
-        <span class="n">input_layer</span><span class="o">=</span><span class="n">Building_N100</span><span class="o">.</span><span class="n">finalizing_buildings___points_not_close_to_urban_areas___n100_building</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
-        <span class="n">expression</span><span class="o">=</span><span class="s2">&quot;byggtyp_nbr IN (970, 719, 671)&quot;</span><span class="p">,</span>
-        <span class="n">output_name</span><span class="o">=</span><span class="n">Building_N100</span><span class="o">.</span><span class="n">finalizing_buildings___selecting_hospital_and_churches_in_urban_areas___n100_building</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
-    <span class="p">)</span>
-
     <span class="c1"># Selecting building points that are further away than 50 Meters from urban areas</span>
     <span class="n">custom_arcpy</span><span class="o">.</span><span class="n">select_location_and_make_permanent_feature</span><span class="p">(</span>
         <span class="n">input_layer</span><span class="o">=</span><span class="n">Building_N100</span><span class="o">.</span><span class="n">removing_overlapping_points___final___n100_building</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
@@ -146,6 +128,22 @@
         <span class="n">search_distance</span><span class="o">=</span><span class="s2">&quot;50 Meters&quot;</span><span class="p">,</span>
         <span class="n">inverted</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
         <span class="n">output_name</span><span class="o">=</span><span class="n">Building_N100</span><span class="o">.</span><span class="n">finalizing_buildings___points_not_close_to_urban_areas___n100_building</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
+    <span class="p">)</span>
+
+    <span class="c1"># Selecting building points that are CLOSE to urban areas</span>
+    <span class="n">custom_arcpy</span><span class="o">.</span><span class="n">select_location_and_make_permanent_feature</span><span class="p">(</span>
+        <span class="n">input_layer</span><span class="o">=</span><span class="n">Building_N100</span><span class="o">.</span><span class="n">removing_overlapping_points___merging_final_points___n100_building</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
+        <span class="n">overlap_type</span><span class="o">=</span><span class="n">custom_arcpy</span><span class="o">.</span><span class="n">OverlapType</span><span class="o">.</span><span class="n">WITHIN_A_DISTANCE</span><span class="p">,</span>
+        <span class="n">select_features</span><span class="o">=</span><span class="n">Building_N100</span><span class="o">.</span><span class="n">finalizing_buildings___urban_areas___n100_building</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
+        <span class="n">search_distance</span><span class="o">=</span><span class="s2">&quot;50 Meters&quot;</span><span class="p">,</span>
+        <span class="n">output_name</span><span class="o">=</span><span class="n">Building_N100</span><span class="o">.</span><span class="n">finalizing_buildings___points_too_close_to_urban_areas___n100_building</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
+    <span class="p">)</span>
+
+    <span class="c1"># Selecting hospital and churches - to merge back in with the points further than 50 Merers away from urban areas</span>
+    <span class="n">custom_arcpy</span><span class="o">.</span><span class="n">select_attribute_and_make_permanent_feature</span><span class="p">(</span>
+        <span class="n">input_layer</span><span class="o">=</span><span class="n">Building_N100</span><span class="o">.</span><span class="n">finalizing_buildings___points_too_close_to_urban_areas___n100_building</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
+        <span class="n">expression</span><span class="o">=</span><span class="s2">&quot;byggtyp_nbr IN (970, 719, 671)&quot;</span><span class="p">,</span>
+        <span class="n">output_name</span><span class="o">=</span><span class="n">Building_N100</span><span class="o">.</span><span class="n">finalizing_buildings___selecting_hospital_and_churches_in_urban_areas___n100_building</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
     <span class="p">)</span>
 
     <span class="c1"># Merging hospital and churches in urban areas with points that are further away from urban areas than 50 Meters</span>
@@ -163,7 +161,6 @@
 <a class="viewcode-back" href="../../../../generated_docs/generalization.n100.building.html#generalization.n100.building.finalizing_buildings.selecting_all_tourist_cabins">[docs]</a>
 <span class="nd">@timing_decorator</span>
 <span class="k">def</span> <span class="nf">selecting_all_tourist_cabins</span><span class="p">():</span>
-
     <span class="n">selecting_tourist_cabins</span> <span class="o">=</span> <span class="s2">&quot;byggtyp_nbr = 956&quot;</span>
 
     <span class="c1"># Selecting all building points categorized as tourist cabins</span>
@@ -196,7 +193,6 @@
 <div class="viewcode-block" id="selecting_hospital_and_churches_for_pictogram_featureclass">
 <a class="viewcode-back" href="../../../../generated_docs/generalization.n100.building.html#generalization.n100.building.finalizing_buildings.selecting_hospital_and_churches_for_pictogram_featureclass">[docs]</a>
 <span class="k">def</span> <span class="nf">selecting_hospital_and_churches_for_pictogram_featureclass</span><span class="p">():</span>
-
     <span class="n">custom_arcpy</span><span class="o">.</span><span class="n">select_attribute_and_make_permanent_feature</span><span class="p">(</span>
         <span class="n">input_layer</span><span class="o">=</span><span class="n">Building_N100</span><span class="o">.</span><span class="n">finalizing_buildings___all_points_except_tourist_cabins___n100_building</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
         <span class="n">expression</span><span class="o">=</span><span class="s2">&quot;byggtyp_nbr IN (970, 719, 671)&quot;</span><span class="p">,</span>
@@ -209,7 +205,6 @@
 <a class="viewcode-back" href="../../../../generated_docs/generalization.n100.building.html#generalization.n100.building.finalizing_buildings.assigning_final_file_names">[docs]</a>
 <span class="nd">@timing_decorator</span>
 <span class="k">def</span> <span class="nf">assigning_final_file_names</span><span class="p">():</span>
-
     <span class="n">arcpy</span><span class="o">.</span><span class="n">management</span><span class="o">.</span><span class="n">CopyFeatures</span><span class="p">(</span>
         <span class="n">Building_N100</span><span class="o">.</span><span class="n">finalizing_buildings___tourist_cabins___n100_building</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
         <span class="n">Building_N100</span><span class="o">.</span><span class="n">TuristHytte</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
@@ -221,7 +216,7 @@
     <span class="p">)</span>
 
     <span class="n">arcpy</span><span class="o">.</span><span class="n">management</span><span class="o">.</span><span class="n">CopyFeatures</span><span class="p">(</span>
-        <span class="n">Building_N100</span><span class="o">.</span><span class="n">point_resolve_building_conflicts___building_polygons_final___n100_building</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
+        <span class="n">Building_N100</span><span class="o">.</span><span class="n">removing_points_and_erasing_polygons_in_water_features___final_building_polygons_merged___n100_building</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
         <span class="n">Building_N100</span><span class="o">.</span><span class="n">Grunnriss</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
     <span class="p">)</span>
 
