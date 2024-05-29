@@ -144,7 +144,7 @@ def barriers_for_rbc():
         [
             Building_N100.point_resolve_building_conflicts___veg_sti_selection___n100_building_lyrx.value,
             "false",
-            f"{N100_Values.rbc_barrier_clearance_distance_m.value} Meters",
+            f"{N100_Values.rbc_barrier_clearance_distance_m.value} Meters",  # 30 Meters for all barriers
         ],
         [
             Building_N100.point_resolve_building_conflicts___begrensningskurve_selection___n100_building_lyrx.value,
@@ -229,6 +229,39 @@ def transforming_invisible_polygons_to_points_and_then_to_squares():
         point_location="INSIDE",
     )
 
+    code_block_symbol_val_to_nbr = (
+        "def symbol_val_to_nbr(symbol_val, byggtyp_nbr):\n"
+        "    if symbol_val == -99:\n"
+        "        return 729\n"
+        "    return byggtyp_nbr"
+    )
+
+    # Code block to update the symbol_val to reflect the new byggtyp_nbr
+    code_block_update_symbol_val = (
+        "def update_symbol_val(symbol_val):\n"
+        "    if symbol_val == -99:\n"
+        "        return 8\n"
+        "    return symbol_val"
+    )
+
+    # Applying the symbol_val_to_nbr logic
+    arcpy.CalculateField_management(
+        in_table=Building_N100.point_resolve_building_conflicts___building_polygons_to_points_result_1___n100_building.value,
+        field="byggtyp_nbr",
+        expression="symbol_val_to_nbr(!symbol_val!, !byggtyp_nbr!)",
+        expression_type="PYTHON3",
+        code_block=code_block_symbol_val_to_nbr,
+    )
+
+    # Applying the update_symbol_val logic
+    arcpy.CalculateField_management(
+        in_table=Building_N100.point_resolve_building_conflicts___building_polygons_to_points_result_1___n100_building.value,
+        field="symbol_val",
+        expression="update_symbol_val(!symbol_val!)",
+        expression_type="PYTHON3",
+        code_block=code_block_update_symbol_val,
+    )
+
     # Transforms all the building points to squares
     polygon_processor = PolygonProcessor(
         input_building_points=Building_N100.point_resolve_building_conflicts___building_polygons_to_points_result_1___n100_building.value,
@@ -263,6 +296,7 @@ def adding_symbology_to_layers_being_used_for_rbc_2():
 
 def resolve_building_conflicts_2():
     print("Starting resolve building conflicts 2")
+    arcpy.env.referenceScale = "100000"
 
     input_buildings_rbc_2 = [
         Building_N100.point_resolve_building_conflicts___squares_to_keep_after_rbc1___n100_building_lyrx.value,
