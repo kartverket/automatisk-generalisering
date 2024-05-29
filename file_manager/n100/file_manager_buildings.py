@@ -1054,10 +1054,10 @@ class Building_N100(Enum):
         )
     )
 
-    iteration___partition_iterator_json_documentation___building_n100 = (
+    iteration___json_documentation___building_n100 = (
         file_manager.generate_file_name_general_files(
             script_source_name=iteration,
-            description="partition_iterator_json_documentation",
+            description="json_documentation",
             file_type="json",
         )
     )

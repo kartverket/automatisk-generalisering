@@ -5,8 +5,11 @@ import shutil
 import random
 import json
 from typing import Dict, Tuple, Literal
+import time
+from datetime import timedelta
 
 import env_setup.global_config
+import config
 from env_setup import environment_setup
 from custom_tools import custom_arcpy
 from custom_tools.timing_decorator import timing_decorator
@@ -28,7 +31,9 @@ class PartitionIterator:
 
     def __init__(
         self,
-        alias_path_data: Dict[str, Tuple[Literal["input", "context"], str]],
+        alias_path_data: Dict[
+            str, Tuple[Literal["input", "context", "reference"], str]
+        ],
         alias_path_outputs: Dict[str, Tuple[str, str]],
         root_file_partition_iterator: str,
         scale: str,
@@ -37,6 +42,8 @@ class PartitionIterator:
         feature_count: str = "15000",
         partition_method: Literal["FEATURES", "VERTICES"] = "FEATURES",
         search_distance: str = "500 Meters",
+        context_selection: bool = True,
+        safe_output_final_cleanup: bool = True,
         object_id_field: str = "OBJECTID",
     ):
         """
@@ -66,6 +73,8 @@ class PartitionIterator:
         self.feature_count = feature_count
         self.partition_method = partition_method
         self.object_id_field = object_id_field
+        self.selection_of_context_features = context_selection
+        self.safe_final_output_cleanup = safe_output_final_cleanup
 
         # Initial processing results
         self.nested_alias_type_data = {}
@@ -83,14 +92,9 @@ class PartitionIterator:
         self.custom_functions = custom_functions or []
         self.custom_func_io_params = {}
 
-        # self.handle_data_export(
-        #     file_path=self.dictionary_documentation_path,
-        #     alias_type_data=self.nested_alias_type_data,
-        #     final_outputs=self.nested_final_outputs,
-        #     file_name="initialization",
-        #     iteration=False,
-        #     object_id=None,
-        # )
+        self.total_start_time = None
+        self.iteration_times_with_input = []
+        self.iteration_start_time = None
 
     def unpack_alias_path_data(self, alias_path_data):
         # Process initial alias_path_data for inputs and outputs
@@ -177,13 +181,42 @@ class PartitionIterator:
             else:
                 print(f"Deleted feature class: {feature_class_path}")
 
+    def is_safe_to_delete(self, file_path: str, safe_directory: str) -> bool:
+        """
+        Check if the file path is within the specified safe directory.
+
+        Args:
+            file_path (str): The path of the file to check.
+            safe_directory (str): The directory considered safe for deletion.
+
+        Returns:
+            bool: True if the file is within the safe directory, False otherwise.
+        """
+        # Ensure safe directory ends with a backslash for correct comparison
+        if not safe_directory.endswith(os.path.sep):
+            safe_directory += os.path.sep
+        return file_path.startswith(safe_directory)
+
     def delete_final_outputs(self):
-        """Deletes all final output files if they exist."""
+        """Deletes all existing final output files if they exist and are in the safe directory."""
+        # Construct the safe directory path
+        local_root_directory = config.output_folder
+        project_root_directory = env_setup.global_config.main_directory_name
+        safe_directory = rf"{local_root_directory}\{project_root_directory}"
+
         for alias in self.nested_final_outputs:
             for _, output_file_path in self.nested_final_outputs[alias].items():
-                if arcpy.Exists(output_file_path):
-                    arcpy.management.Delete(output_file_path)
-                    print(f"Deleted file: {output_file_path}")
+                if self.is_safe_to_delete(output_file_path, safe_directory):
+                    if arcpy.Exists(output_file_path):
+                        arcpy.management.Delete(output_file_path)
+                        print(f"Deleted file: {output_file_path}")
+                else:
+                    print(
+                        f"""Skipped deletion for {output_file_path}, the provided path is not in safe directory.
+                        If you intend to delete this file outside of the project directory change the 
+                        'safe_output_final_cleanup' param to 'false'
+                        """
+                    )
 
     def delete_iteration_files(self, *file_paths):
         """Deletes multiple feature classes or files. Detailed alias and output_type logging is not available here."""
@@ -287,9 +320,7 @@ class PartitionIterator:
         os.makedirs(directory_path, exist_ok=True)
 
         if iteration:
-            iteration_documentation_dir = os.path.join(
-                directory_path, "iteration_documentation"
-            )
+            iteration_documentation_dir = os.path.join(directory_path, "iteration")
             os.makedirs(iteration_documentation_dir, exist_ok=True)
 
             return iteration_documentation_dir
@@ -356,10 +387,10 @@ class PartitionIterator:
             self.first_call_directory_documentation = False
 
         alias_type_data_directory = self.create_directory_json_documentation(
-            file_path, "nested_alias_type_data", iteration
+            file_path, "alias_type", iteration
         )
         final_outputs_directory = self.create_directory_json_documentation(
-            file_path, "nested_final_outputs", iteration
+            file_path, "outputs", iteration
         )
 
         self.write_data_to_json(
@@ -447,27 +478,51 @@ class PartitionIterator:
                 )
                 print(f"Calculated field {self.ORIGINAL_ID_FIELD}")
 
+        for alias, types in self.nested_alias_type_data.items():
             if "context" in types:
                 context_data_path = types["context"]
                 context_data_copy = (
                     f"{self.root_file_partition_iterator}_{alias}_context_copy"
                 )
+                if self.selection_of_context_features:
+                    PartitionIterator.create_feature_class(
+                        full_feature_path=context_data_copy,
+                        template_feature=context_data_path,
+                    )
 
-                arcpy.management.Copy(
-                    in_data=context_data_path,
-                    out_data=context_data_copy,
-                )
-                print(f"Copied context nested_alias_type_data for: {alias}")
+                    for input_alias, input_types in self.nested_alias_type_data.items():
+                        if "input_copy" in input_types:
+                            input_data_copy = input_types["input_copy"]
+
+                            context_features_input_selection = f"in_memory/{alias}_context_input_select_{input_alias}_{self.scale}"
+
+                            custom_arcpy.select_location_and_make_feature_layer(
+                                input_layer=context_data_path,
+                                overlap_type=custom_arcpy.OverlapType.WITHIN_A_DISTANCE,
+                                select_features=input_data_copy,
+                                output_name=context_features_input_selection,
+                                search_distance=self.search_distance,
+                            )
+                            arcpy.management.Append(
+                                inputs=context_features_input_selection,
+                                target=context_data_copy,
+                                schema_type="NO_TEST",
+                            )
+                            arcpy.management.Delete(context_features_input_selection)
+                    print(f"Processed context feature for: {alias}")
+
+                else:
+                    arcpy.management.Copy(
+                        in_data=context_data_path,
+                        out_data=context_data_copy,
+                    )
+                    print(f"Copied context data for: {alias}")
 
                 self.configure_alias_and_type(
                     alias=alias,
                     type_name="context_copy",
                     type_path=context_data_copy,
                 )
-
-    def custom_function(inputs):
-        outputs = []
-        return outputs
 
     def select_partition_feature(self, iteration_partition, object_id):
         """
@@ -479,7 +534,6 @@ class PartitionIterator:
             expression=f"{self.object_id_field} = {object_id}",
             output_name=iteration_partition,
         )
-        print(f"\nCreated partition selection for OBJECTID {object_id}")
 
     def process_input_features(
         self,
@@ -648,6 +702,53 @@ class PartitionIterator:
                 )
             else:
                 self.process_context_features(alias, iteration_partition)
+
+    def format_time(self, seconds):
+        """
+        Convert seconds to a formatted string: HH:MM:SS.
+
+        Args:
+            seconds (float): Time in seconds.
+
+        Returns:
+            str: Formatted time string.
+        """
+        seconds = int(seconds)  # Convert to integer for rounding
+        hours, remainder = divmod(seconds, 3600)
+        minutes, seconds = divmod(remainder, 60)
+        return f"{hours} hours, {minutes} minutes, {seconds} seconds"
+
+    def track_iteration_time(self, object_id, inputs_present_in_partition):
+        """
+        Track the iteration time and estimate the remaining time.
+
+        Args:
+            object_id (int): The ID of the current partition iteration.
+            inputs_present_in_partition (bool): Flag indicating if there were input features in the iteration.
+        """
+        iteration_time = time.time() - self.iteration_start_time
+        if inputs_present_in_partition:
+            self.iteration_times_with_input.append(iteration_time)
+            average_runtime_per_iteration = sum(self.iteration_times_with_input) / len(
+                self.iteration_times_with_input
+            )
+        else:
+            average_runtime_per_iteration = (
+                sum(self.iteration_times_with_input)
+                / len(self.iteration_times_with_input)
+                if self.iteration_times_with_input
+                else 0
+            )
+
+        total_runtime = time.time() - self.total_start_time
+        remaining_iterations = self.max_object_id - object_id
+        estimated_remaining_time = remaining_iterations * average_runtime_per_iteration
+
+        formatted_total_runtime = self.format_time(total_runtime)
+        formatted_estimated_remaining_time = self.format_time(estimated_remaining_time)
+
+        print(f"\nCurrent runtime: {formatted_total_runtime}")
+        print(f"Estimated remaining time: {formatted_estimated_remaining_time}")
 
     def prepare_io_custom_logic(self):
         """
@@ -835,12 +936,10 @@ class PartitionIterator:
         self.iteration_file_paths_list.clear()
 
         for object_id in range(1, self.max_object_id + 1):
+            self.iteration_start_time = time.time()
+            print(f"\nProcessing Partition: {object_id} out of {self.max_object_id}")
             self.reset_dummy_used()
-            self.export_dictionaries_to_json(
-                file_name="start",
-                iteration=True,
-                object_id=object_id,
-            )
+
             self.iteration_file_paths_list.clear()
             iteration_partition = f"{self.partition_feature}_{object_id}"
             self.select_partition_feature(iteration_partition, object_id)
@@ -855,7 +954,7 @@ class PartitionIterator:
                 )
                 self.prepare_io_custom_logic()
                 self.export_dictionaries_to_json(
-                    file_name="input",
+                    file_name="iteration",
                     iteration=True,
                     object_id=object_id,
                 )
@@ -866,32 +965,28 @@ class PartitionIterator:
                 self.delete_iteration_files(*self.iteration_file_paths_list)
             else:
                 self.delete_iteration_files(*self.iteration_file_paths_list)
-
-            self.export_dictionaries_to_json(
-                file_name="end",
-                iteration=True,
-                object_id=object_id,
-            )
+            self.track_iteration_time(object_id, inputs_present_in_partition)
 
     @timing_decorator
     def run(self):
+        self.total_start_time = time.time()
         self.unpack_alias_path_data(self.raw_input_data)
-        # self.prepare_io_custom_logic()
-        print("\n Logic I/O unpacking Done!\n")
 
         if self.raw_output_data is not None:
             self.unpack_alias_path_outputs(self.raw_output_data)
 
         self.export_dictionaries_to_json(file_name="post_initialization")
+        print("Initialization done\n")
 
-        print("\nJson export Done!\n")
-
+        print("\nStarting Data Preparation...")
         self.delete_final_outputs()
         self.prepare_input_data()
         self.export_dictionaries_to_json(file_name="post_data_preparation")
 
+        print("\nCreating Cartographic Partitions...")
         self.create_cartographic_partitions()
 
+        print("\nStarting on Partition Iteration...")
         self.partition_iteration()
         self.export_dictionaries_to_json(file_name="post_runtime")
 
@@ -903,6 +998,8 @@ if __name__ == "__main__":
     building_polygons = "building_polygons"
     church_hospital = "church_hospital"
     restriction_lines = "restriction_lines"
+    bane = "bane"
+    river = "river"
 
     inputs = {
         building_points: [
@@ -912,6 +1009,14 @@ if __name__ == "__main__":
         building_polygons: [
             "context",
             input_n50.Grunnriss,
+        ],
+        bane: [
+            "context",
+            input_n50.Bane,
+        ],
+        river: [
+            "reference",
+            input_n50.ElvBekk,
         ],
     }
 
@@ -925,11 +1030,8 @@ if __name__ == "__main__":
     select_hospitals_config = {
         "func": custom_arcpy.select_attribute_and_make_permanent_feature,
         "params": {
-            "input_layer": (
-                "building_points",
-                "input",
-            ),
-            "output_name": ("building_points", "hospitals"),
+            "input_layer": ("building_points", "input"),
+            "output_name": ("building_points", "hospitals_selection"),
             "expression": "symbol_val IN (1, 2, 3)",
         },
     }
@@ -938,7 +1040,7 @@ if __name__ == "__main__":
         "class": PolygonProcessor,
         "method": "run",
         "params": {
-            "input_building_points": ("building_points", "hospitals"),
+            "input_building_points": ("building_points", "hospitals_selection"),
             "output_polygon_feature_class": ("building_points", "polygon_processor"),
             "building_symbol_dimensions": N100_Symbology.building_symbol_dimensions.value,
             "symbol_field_name": "symbol_val",
@@ -953,7 +1055,7 @@ if __name__ == "__main__":
         custom_functions=[select_hospitals_config, polygon_processor_config],
         root_file_partition_iterator=Building_N100.iteration__partition_iterator__n100.value,
         scale=env_setup.global_config.scale_n100,
-        dictionary_documentation_path=Building_N100.iteration___partition_iterator_json_documentation___building_n100.value,
+        dictionary_documentation_path=Building_N100.iteration___json_documentation___building_n100.value,
         feature_count="400000",
     )
 
