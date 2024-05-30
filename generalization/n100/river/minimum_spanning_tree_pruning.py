@@ -5,7 +5,6 @@ from itertools import combinations
 import math
 
 from env_setup import environment_setup
-from custom_tools import custom_arcpy
 from file_manager.n100.file_manager_rivers import River_N100
 
 

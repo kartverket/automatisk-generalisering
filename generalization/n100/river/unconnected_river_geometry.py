@@ -1,14 +1,11 @@
 import arcpy
 import multiprocessing
 from multiprocessing import Pool, Manager
-from math import radians, cos, sin, sqrt, atan2
-from tqdm import tqdm
 
 import config
 from env_setup import environment_setup
 from input_data import input_n50
-from input_data import input_n100
-from custom_tools import custom_arcpy
+from custom_tools.general_tools import custom_arcpy
 from file_manager.n100.file_manager_rivers import River_N100
 
 

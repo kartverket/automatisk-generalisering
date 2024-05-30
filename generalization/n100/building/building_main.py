@@ -1,6 +1,6 @@
 # Importing modules
 from env_setup import environment_setup
-from custom_tools.timing_decorator import timing_decorator
+from custom_tools.decorators.timing_decorator import timing_decorator
 
 
 # Importing building scripts

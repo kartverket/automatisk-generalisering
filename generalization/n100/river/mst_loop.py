@@ -1,14 +1,11 @@
 import arcpy
-import networkx as nx
 import os
-from itertools import combinations
-import math
 
 from env_setup import environment_setup
-from custom_tools import custom_arcpy
+from custom_tools.general_tools import custom_arcpy
 from file_manager.n100.file_manager_rivers import River_N100
 from input_data import input_n50
-from custom_tools.file_utilities import FeatureClassCreator
+from custom_tools.general_tools.file_utilities import FeatureClassCreator
 
 
 def main():

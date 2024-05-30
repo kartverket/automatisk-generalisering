@@ -6,10 +6,10 @@ from input_data import input_n100
 from file_manager.n100.file_manager_buildings import Building_N100
 from constants.n100_constants import N100_Symbology, N100_SQLResources, N100_Values
 
-from custom_tools.polygon_processor import PolygonProcessor
+from custom_tools.general_tools.polygon_processor import PolygonProcessor
 from env_setup import environment_setup
-from custom_tools.timing_decorator import timing_decorator
-from custom_tools import custom_arcpy
+from custom_tools.decorators.timing_decorator import timing_decorator
+from custom_tools.general_tools import custom_arcpy
 
 
 @timing_decorator
