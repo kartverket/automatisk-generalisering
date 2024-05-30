@@ -1,11 +1,9 @@
 # Importing modules
 import arcpy
-import os
 import random
 
 # Importing custom modules
 from custom_tools import custom_arcpy
-from custom_tools.compare_feature_classes import compare_feature_classes
 
 # Importing file manager
 from file_manager.n100.file_manager_buildings import Building_N100
@@ -15,7 +13,7 @@ from env_setup import environment_setup
 
 
 # Importing timing decorator
-from custom_tools.timing_decorator import timing_decorator
+from custom_tools.decorators.timing_decorator import timing_decorator
 
 
 # Main function

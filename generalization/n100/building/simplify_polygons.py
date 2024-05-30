@@ -9,7 +9,7 @@ from custom_tools import custom_arcpy
 from constants.n100_constants import N100_Values
 
 # Importing timing decorator
-from custom_tools.timing_decorator import timing_decorator
+from custom_tools.decorators.timing_decorator import timing_decorator
 
 
 # Main function

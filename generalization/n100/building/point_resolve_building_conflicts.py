@@ -1,6 +1,5 @@
 # Importing modules
 import arcpy
-import time
 
 # Importing custom files
 import config
@@ -13,7 +12,7 @@ from custom_tools.polygon_processor import PolygonProcessor
 from env_setup import environment_setup
 
 # Importing timing decorator
-from custom_tools.timing_decorator import timing_decorator
+from custom_tools.decorators.timing_decorator import timing_decorator
 
 
 iteration_fc = config.resolve_building_conflicts_iteration_feature

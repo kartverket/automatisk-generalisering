@@ -2,7 +2,7 @@ import arcpy
 
 # Importing custom files relative to the root path
 from env_setup import environment_setup
-from custom_tools.timing_decorator import timing_decorator
+from custom_tools.decorators.timing_decorator import timing_decorator
 
 # Importing temporary files
 from file_manager.n100.file_manager_buildings import Building_N100

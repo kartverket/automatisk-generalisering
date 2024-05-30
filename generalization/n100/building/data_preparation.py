@@ -9,7 +9,7 @@ from input_data import input_other
 # Importing custom modules
 from file_manager.n100.file_manager_buildings import Building_N100
 from env_setup import environment_setup
-from custom_tools.timing_decorator import timing_decorator
+from custom_tools.decorators.timing_decorator import timing_decorator
 from custom_tools import custom_arcpy
 from custom_tools.polygon_processor import PolygonProcessor
 from input_data import input_symbology

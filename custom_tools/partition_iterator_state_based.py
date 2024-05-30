@@ -9,7 +9,7 @@ from typing import Dict, Tuple, Literal
 import env_setup.global_config
 from env_setup import environment_setup
 from custom_tools import custom_arcpy
-from custom_tools.timing_decorator import timing_decorator
+from custom_tools.decorators.timing_decorator import timing_decorator
 
 from input_data import input_n50
 from file_manager.n100.file_manager_buildings import Building_N100

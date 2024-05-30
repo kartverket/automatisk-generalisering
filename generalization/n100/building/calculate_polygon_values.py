@@ -4,10 +4,9 @@ from constants.n100_constants import N100_SQLResources
 
 # Importing general packages
 import arcpy
-from collections import Counter
 
 # Importing timing decorator
-from custom_tools.timing_decorator import timing_decorator
+from custom_tools.decorators.timing_decorator import timing_decorator
 
 
 @timing_decorator
