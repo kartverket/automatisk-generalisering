@@ -3,7 +3,7 @@ import arcpy
 
 # Importing custom files
 import config
-from custom_tools import custom_arcpy
+from custom_tools.general_tools import custom_arcpy
 from input_data import input_n100
 from input_data.input_symbology import SymbologyN100
 from file_manager.n100.file_manager_buildings import Building_N100

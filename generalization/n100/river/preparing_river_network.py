@@ -1,10 +1,8 @@
 # Importing modules
 import arcpy
 
-import config
-
 # Importing custom tools
-from custom_tools import custom_arcpy
+from custom_tools.general_tools import custom_arcpy
 from env_setup import environment_setup
 
 # Importing file manager

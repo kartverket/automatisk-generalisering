@@ -10,7 +10,7 @@ import time
 import env_setup.global_config
 import config
 from env_setup import environment_setup
-from custom_tools import custom_arcpy
+from custom_tools.general_tools import custom_arcpy
 from custom_tools.decorators.timing_decorator import timing_decorator
 
 from input_data import input_n50

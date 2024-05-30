@@ -3,7 +3,7 @@ import arcpy
 
 # Importing custom modules
 import config
-from custom_tools import custom_arcpy
+from custom_tools.general_tools import custom_arcpy
 from input_data import input_n100
 
 # Importing environment settings

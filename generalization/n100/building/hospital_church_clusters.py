@@ -3,7 +3,7 @@ import arcpy
 import random
 
 # Importing custom modules
-from custom_tools import custom_arcpy
+from custom_tools.general_tools import custom_arcpy
 
 # Importing file manager
 from file_manager.n100.file_manager_buildings import Building_N100

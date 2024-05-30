@@ -4,7 +4,7 @@ import arcpy
 # Importing custom modules
 import input_data.input_n50
 import input_data.input_n100
-from custom_tools import custom_arcpy
+from custom_tools.general_tools import custom_arcpy
 from custom_tools.polygon_processor import PolygonProcessor
 from input_data import input_symbology
 from constants.n100_constants import N100_Symbology, N100_SQLResources, N100_Values
