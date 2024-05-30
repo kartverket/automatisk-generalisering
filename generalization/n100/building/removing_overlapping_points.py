@@ -5,7 +5,7 @@
 # Import custom modules
 from custom_tools.general_tools import custom_arcpy
 from env_setup import environment_setup
-from custom_tools.general_tools.compare_feature_classes import compare_feature_classes
+from custom_tools.general_tools.file_utilities import compare_feature_classes
 from custom_tools.general_tools.polygon_processor import PolygonProcessor
 from constants.n100_constants import N100_Symbology
 
