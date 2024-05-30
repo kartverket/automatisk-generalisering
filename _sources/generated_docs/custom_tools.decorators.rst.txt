@@ -1,0 +1,29 @@
+custom\_tools.decorators package
+================================
+
+Submodules
+----------
+
+custom\_tools.decorators.partition\_io\_decorator module
+--------------------------------------------------------
+
+.. automodule:: custom_tools.decorators.partition_io_decorator
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+custom\_tools.decorators.timing\_decorator module
+-------------------------------------------------
+
+.. automodule:: custom_tools.decorators.timing_decorator
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+Module contents
+---------------
+
+.. automodule:: custom_tools.decorators
+   :members:
+   :undoc-members:
+   :show-inheritance:

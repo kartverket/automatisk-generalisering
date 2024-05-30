@@ -1,0 +1,655 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../../../">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>generalization.n100.river.mst_loop &mdash; Automatisk Generalisering 0.0.1 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../../../_static/pygments.css?v=80d5e7a1" />
+      <link rel="stylesheet" type="text/css" href="../../../../_static/css/theme.css?v=19f00094" />
+      <link rel="stylesheet" type="text/css" href="../../../../_static/custom.css" />
+
+  
+  <!--[if lt IE 9]>
+    <script src="../../../../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script src="../../../../_static/jquery.js?v=5d32c60e"></script>
+        <script src="../../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+        <script src="../../../../_static/documentation_options.js?v=d45e8c67"></script>
+        <script src="../../../../_static/doctools.js?v=9a2dae69"></script>
+        <script src="../../../../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="../../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../../index.html" class="icon icon-home">
+            Automatisk Generalisering
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../../generated_docs/custom_tools.html">custom_tools package</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../generated_docs/env_setup.html">env_setup package</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../generated_docs/file_manager.html">file_manager package</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../generated_docs/generalization.n100.building.html">generalization.n100.building package</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../generated_docs/input_data.html">input_data package</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../generated_docs/modules.html">automatisk-generalisering</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../../index.html">Automatisk Generalisering</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../../../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">generalization.n100.river.mst_loop</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for generalization.n100.river.mst_loop</h1><div class="highlight"><pre>
+<span></span><span class="kn">import</span> <span class="nn">arcpy</span>
+<span class="kn">import</span> <span class="nn">os</span>
+
+<span class="kn">from</span> <span class="nn">env_setup</span> <span class="kn">import</span> <span class="n">environment_setup</span>
+<span class="kn">from</span> <span class="nn">custom_tools.general_tools</span> <span class="kn">import</span> <span class="n">custom_arcpy</span>
+<span class="kn">from</span> <span class="nn">file_manager.n100.file_manager_rivers</span> <span class="kn">import</span> <span class="n">River_N100</span>
+<span class="kn">from</span> <span class="nn">input_data</span> <span class="kn">import</span> <span class="n">input_n50</span>
+<span class="kn">from</span> <span class="nn">custom_tools.general_tools.file_utilities</span> <span class="kn">import</span> <span class="n">FeatureClassCreator</span>
+
+
+<div class="viewcode-block" id="main">
+<a class="viewcode-back" href="../../../../generated_docs/generalization.n100.river.html#generalization.n100.river.mst_loop.main">[docs]</a>
+<span class="k">def</span> <span class="nf">main</span><span class="p">():</span>
+    <span class="n">environment_setup</span><span class="o">.</span><span class="n">main</span><span class="p">()</span>
+    <span class="n">prepare_data</span><span class="p">()</span>
+    <span class="n">create_collapsed_centerline</span><span class="p">()</span>
+
+    <span class="n">filter_complicated_lakes</span><span class="p">()</span></div>
+
+
+    <span class="c1"># create_feature_class()</span>
+
+
+<span class="n">input_water_polygon</span> <span class="o">=</span> <span class="n">River_N100</span><span class="o">.</span><span class="n">centerline_pruning_loop__lake_features__n100</span><span class="o">.</span><span class="n">value</span>
+<span class="n">input_centerline</span> <span class="o">=</span> <span class="n">River_N100</span><span class="o">.</span><span class="n">river_centerline__water_feature_collapsed__n100</span><span class="o">.</span><span class="n">value</span>
+<span class="n">input_rivers</span> <span class="o">=</span> <span class="p">(</span>
+    <span class="n">River_N100</span><span class="o">.</span><span class="n">centerline_pruning_loop__rivers_erased_with_lake_features__n100</span><span class="o">.</span><span class="n">value</span>
+<span class="p">)</span>
+
+<span class="n">water_polygon</span> <span class="o">=</span> <span class="n">River_N100</span><span class="o">.</span><span class="n">centerline_pruning_loop__water_features_processed__n100</span><span class="o">.</span><span class="n">value</span>
+<span class="n">centerline</span> <span class="o">=</span> <span class="n">River_N100</span><span class="o">.</span><span class="n">centerline_pruning_loop__collapsed_hydropolygon__n100</span><span class="o">.</span><span class="n">value</span>
+<span class="n">rivers</span> <span class="o">=</span> <span class="n">River_N100</span><span class="o">.</span><span class="n">centerline_pruning_loop__river_inlets_erased__n100</span><span class="o">.</span><span class="n">value</span>
+
+<span class="n">complex_lakes</span> <span class="o">=</span> <span class="n">River_N100</span><span class="o">.</span><span class="n">centerline_pruning_loop__complex_water_features__n100</span><span class="o">.</span><span class="n">value</span>
+<span class="n">simple_lakes</span> <span class="o">=</span> <span class="n">River_N100</span><span class="o">.</span><span class="n">centerline_pruning_loop__simple_water_features__n100</span><span class="o">.</span><span class="n">value</span>
+<span class="n">river_inlet_nodes</span> <span class="o">=</span> <span class="p">(</span>
+    <span class="n">River_N100</span><span class="o">.</span><span class="n">centerline_pruning_loop__river_inlets_points_merged__n100</span><span class="o">.</span><span class="n">value</span>
+<span class="p">)</span>
+<span class="n">complex_centerlines</span> <span class="o">=</span> <span class="p">(</span>
+    <span class="n">River_N100</span><span class="o">.</span><span class="n">centerline_pruning_loop__complex_centerlines__n100</span><span class="o">.</span><span class="n">value</span>
+<span class="p">)</span>
+<span class="n">simple_centerlines</span> <span class="o">=</span> <span class="n">River_N100</span><span class="o">.</span><span class="n">centerline_pruning_loop__simple_centerlines__n100</span><span class="o">.</span><span class="n">value</span>
+
+
+<div class="viewcode-block" id="prepare_data">
+<a class="viewcode-back" href="../../../../generated_docs/generalization.n100.river.html#generalization.n100.river.mst_loop.prepare_data">[docs]</a>
+<span class="k">def</span> <span class="nf">prepare_data</span><span class="p">():</span>
+    <span class="n">sql_expression_water_features</span> <span class="o">=</span> <span class="s2">&quot;OBJTYPE = &#39;FerskvannTørrfall&#39; Or OBJTYPE = &#39;Innsjø&#39; Or OBJTYPE = &#39;InnsjøRegulert&#39; Or OBJTYPE = &#39;ElvBekk&#39;&quot;</span>
+    <span class="n">custom_arcpy</span><span class="o">.</span><span class="n">select_attribute_and_make_permanent_feature</span><span class="p">(</span>
+        <span class="n">input_layer</span><span class="o">=</span><span class="n">input_n50</span><span class="o">.</span><span class="n">ArealdekkeFlate</span><span class="p">,</span>
+        <span class="n">expression</span><span class="o">=</span><span class="n">sql_expression_water_features</span><span class="p">,</span>
+        <span class="n">output_name</span><span class="o">=</span><span class="n">River_N100</span><span class="o">.</span><span class="n">centerline_pruning_loop__lake_features__n100</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
+    <span class="p">)</span>
+
+    <span class="n">arcpy</span><span class="o">.</span><span class="n">analysis</span><span class="o">.</span><span class="n">PairwiseErase</span><span class="p">(</span>
+        <span class="n">in_features</span><span class="o">=</span><span class="n">River_N100</span><span class="o">.</span><span class="n">unconnected_river_geometry__river_area_selection__n100</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
+        <span class="n">erase_features</span><span class="o">=</span><span class="n">River_N100</span><span class="o">.</span><span class="n">centerline_pruning_loop__lake_features__n100</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
+        <span class="n">out_feature_class</span><span class="o">=</span><span class="n">River_N100</span><span class="o">.</span><span class="n">centerline_pruning_loop__rivers_erased_with_lake_features__n100</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span>
+        <span class="sa">f</span><span class="s2">&quot;Created </span><span class="si">{</span><span class="n">River_N100</span><span class="o">.</span><span class="n">river_centerline__rivers_near_waterfeatures_erased__n100</span><span class="o">.</span><span class="n">value</span><span class="si">}</span><span class="s2">&quot;</span>
+    <span class="p">)</span>
+
+    <span class="n">arcpy</span><span class="o">.</span><span class="n">analysis</span><span class="o">.</span><span class="n">PairwiseBuffer</span><span class="p">(</span>
+        <span class="n">in_features</span><span class="o">=</span><span class="n">input_rivers</span><span class="p">,</span>
+        <span class="n">out_feature_class</span><span class="o">=</span><span class="n">River_N100</span><span class="o">.</span><span class="n">centerline_pruning_loop__study_area__n100</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
+        <span class="n">buffer_distance_or_field</span><span class="o">=</span><span class="s2">&quot;5 Kilometers&quot;</span><span class="p">,</span>
+        <span class="n">dissolve_option</span><span class="o">=</span><span class="s2">&quot;ALL&quot;</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Created study area buffer&quot;</span><span class="p">)</span>
+
+    <span class="n">custom_arcpy</span><span class="o">.</span><span class="n">select_location_and_make_permanent_feature</span><span class="p">(</span>
+        <span class="n">input_layer</span><span class="o">=</span><span class="n">input_water_polygon</span><span class="p">,</span>
+        <span class="n">overlap_type</span><span class="o">=</span><span class="n">custom_arcpy</span><span class="o">.</span><span class="n">OverlapType</span><span class="o">.</span><span class="n">INTERSECT</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
+        <span class="n">select_features</span><span class="o">=</span><span class="n">River_N100</span><span class="o">.</span><span class="n">centerline_pruning_loop__study_area__n100</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
+        <span class="n">output_name</span><span class="o">=</span><span class="n">River_N100</span><span class="o">.</span><span class="n">centerline_pruning_loop__water_features_study_area__n100</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
+    <span class="p">)</span>
+
+    <span class="n">arcpy</span><span class="o">.</span><span class="n">gapro</span><span class="o">.</span><span class="n">DissolveBoundaries</span><span class="p">(</span>
+        <span class="n">input_layer</span><span class="o">=</span><span class="n">River_N100</span><span class="o">.</span><span class="n">centerline_pruning_loop__water_features_study_area__n100</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
+        <span class="n">out_feature_class</span><span class="o">=</span><span class="n">River_N100</span><span class="o">.</span><span class="n">centerline_pruning_loop__water_features_dissolved__n100</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
+    <span class="p">)</span>
+
+    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Dissolved water features boundaries&quot;</span><span class="p">)</span>
+
+    <span class="n">custom_arcpy</span><span class="o">.</span><span class="n">select_location_and_make_permanent_feature</span><span class="p">(</span>
+        <span class="n">input_layer</span><span class="o">=</span><span class="n">River_N100</span><span class="o">.</span><span class="n">centerline_pruning_loop__water_features_dissolved__n100</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
+        <span class="n">overlap_type</span><span class="o">=</span><span class="n">custom_arcpy</span><span class="o">.</span><span class="n">OverlapType</span><span class="o">.</span><span class="n">INTERSECT</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
+        <span class="n">select_features</span><span class="o">=</span><span class="n">input_rivers</span><span class="p">,</span>
+        <span class="n">output_name</span><span class="o">=</span><span class="n">River_N100</span><span class="o">.</span><span class="n">centerline_pruning_loop__water_features_dissolved_river_intersect__n100</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
+    <span class="p">)</span>
+
+    <span class="n">custom_arcpy</span><span class="o">.</span><span class="n">select_location_and_make_permanent_feature</span><span class="p">(</span>
+        <span class="n">input_layer</span><span class="o">=</span><span class="n">input_water_polygon</span><span class="p">,</span>
+        <span class="n">overlap_type</span><span class="o">=</span><span class="n">custom_arcpy</span><span class="o">.</span><span class="n">OverlapType</span><span class="o">.</span><span class="n">INTERSECT</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
+        <span class="n">select_features</span><span class="o">=</span><span class="n">River_N100</span><span class="o">.</span><span class="n">centerline_pruning_loop__water_features_dissolved_river_intersect__n100</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
+        <span class="n">output_name</span><span class="o">=</span><span class="n">River_N100</span><span class="o">.</span><span class="n">centerline_pruning_loop__water_features_river_final_selection__n100</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
+    <span class="p">)</span>
+
+    <span class="n">sql_expression_torrfall</span> <span class="o">=</span> <span class="s2">&quot;OBJTYPE = &#39;FerskvannTørrfall&#39;&quot;</span>
+
+    <span class="n">custom_arcpy</span><span class="o">.</span><span class="n">select_attribute_and_make_feature_layer</span><span class="p">(</span>
+        <span class="n">input_layer</span><span class="o">=</span><span class="n">River_N100</span><span class="o">.</span><span class="n">centerline_pruning_loop__water_features_river_final_selection__n100</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
+        <span class="n">expression</span><span class="o">=</span><span class="n">sql_expression_torrfall</span><span class="p">,</span>
+        <span class="n">output_name</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">River_N100</span><span class="o">.</span><span class="n">centerline_pruning_loop__water_features_river_final_selection__n100</span><span class="o">.</span><span class="n">value</span><span class="si">}</span><span class="s2">_torrfall&quot;</span><span class="p">,</span>
+    <span class="p">)</span>
+
+    <span class="n">sql_expression_elvbekk</span> <span class="o">=</span> <span class="s2">&quot;OBJTYPE = &#39;ElvBekk&#39;&quot;</span>
+
+    <span class="n">custom_arcpy</span><span class="o">.</span><span class="n">select_attribute_and_make_feature_layer</span><span class="p">(</span>
+        <span class="n">input_layer</span><span class="o">=</span><span class="n">River_N100</span><span class="o">.</span><span class="n">centerline_pruning_loop__water_features_river_final_selection__n100</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
+        <span class="n">expression</span><span class="o">=</span><span class="n">sql_expression_elvbekk</span><span class="p">,</span>
+        <span class="n">output_name</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">River_N100</span><span class="o">.</span><span class="n">centerline_pruning_loop__water_features_river_final_selection__n100</span><span class="o">.</span><span class="n">value</span><span class="si">}</span><span class="s2">_elvbekk&quot;</span><span class="p">,</span>
+    <span class="p">)</span>
+
+    <span class="n">arcpy</span><span class="o">.</span><span class="n">topographic</span><span class="o">.</span><span class="n">EliminatePolygon</span><span class="p">(</span>
+        <span class="n">in_features</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">River_N100</span><span class="o">.</span><span class="n">centerline_pruning_loop__water_features_river_final_selection__n100</span><span class="o">.</span><span class="n">value</span><span class="si">}</span><span class="s2">_torrfall&quot;</span><span class="p">,</span>
+        <span class="n">surrounding_features</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">River_N100</span><span class="o">.</span><span class="n">centerline_pruning_loop__water_features_river_final_selection__n100</span><span class="o">.</span><span class="n">value</span><span class="si">}</span><span class="s2">_elvbekk&quot;</span><span class="p">,</span>
+    <span class="p">)</span>
+
+    <span class="n">sql_expression_small_features</span> <span class="o">=</span> <span class="s2">&quot;shape_Area &lt;= 100000&quot;</span>
+
+    <span class="n">custom_arcpy</span><span class="o">.</span><span class="n">select_attribute_and_make_feature_layer</span><span class="p">(</span>
+        <span class="n">input_layer</span><span class="o">=</span><span class="n">River_N100</span><span class="o">.</span><span class="n">centerline_pruning_loop__water_features_river_final_selection__n100</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
+        <span class="n">expression</span><span class="o">=</span><span class="n">sql_expression_small_features</span><span class="p">,</span>
+        <span class="n">output_name</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">River_N100</span><span class="o">.</span><span class="n">centerline_pruning_loop__water_features_river_final_selection__n100</span><span class="o">.</span><span class="n">value</span><span class="si">}</span><span class="s2">_small_features&quot;</span><span class="p">,</span>
+    <span class="p">)</span>
+
+    <span class="n">arcpy</span><span class="o">.</span><span class="n">Eliminate_management</span><span class="p">(</span>
+        <span class="n">in_features</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">River_N100</span><span class="o">.</span><span class="n">centerline_pruning_loop__water_features_river_final_selection__n100</span><span class="o">.</span><span class="n">value</span><span class="si">}</span><span class="s2">_small_features&quot;</span><span class="p">,</span>
+        <span class="n">out_feature_class</span><span class="o">=</span><span class="n">River_N100</span><span class="o">.</span><span class="n">centerline_pruning_loop__water_features_processed__n100</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
+        <span class="n">selection</span><span class="o">=</span><span class="s2">&quot;LENGTH&quot;</span><span class="p">,</span>
+    <span class="p">)</span>
+
+    <span class="n">arcpy</span><span class="o">.</span><span class="n">PolygonToLine_management</span><span class="p">(</span>
+        <span class="n">in_features</span><span class="o">=</span><span class="n">River_N100</span><span class="o">.</span><span class="n">centerline_pruning_loop__water_features_processed__n100</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
+        <span class="n">out_feature_class</span><span class="o">=</span><span class="n">River_N100</span><span class="o">.</span><span class="n">centerline_pruning_loop__polygon_to_line__n100</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
+        <span class="n">neighbor_option</span><span class="o">=</span><span class="s2">&quot;IDENTIFY_NEIGHBORS&quot;</span><span class="p">,</span>
+    <span class="p">)</span>
+
+    <span class="n">arcpy</span><span class="o">.</span><span class="n">management</span><span class="o">.</span><span class="n">AddSpatialJoin</span><span class="p">(</span>
+        <span class="n">target_features</span><span class="o">=</span><span class="n">River_N100</span><span class="o">.</span><span class="n">centerline_pruning_loop__polygon_to_line__n100</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
+        <span class="n">join_features</span><span class="o">=</span><span class="n">River_N100</span><span class="o">.</span><span class="n">centerline_pruning_loop__water_features_processed__n100</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
+        <span class="n">join_operation</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+        <span class="n">join_type</span><span class="o">=</span><span class="s2">&quot;KEEP_ALL&quot;</span><span class="p">,</span>
+        <span class="n">match_option</span><span class="o">=</span><span class="s2">&quot;LARGEST_OVERLAP&quot;</span><span class="p">,</span>
+        <span class="n">permanent_join</span><span class="o">=</span><span class="s2">&quot;PERMANENT_FIELDS&quot;</span><span class="p">,</span>
+    <span class="p">)</span>
+
+    <span class="n">sql_expression_boundaries</span> <span class="o">=</span> <span class="s2">&quot;LEFT_FID &lt;&gt; -1 AND RIGHT_FID &lt;&gt; -1&quot;</span>
+    <span class="n">custom_arcpy</span><span class="o">.</span><span class="n">select_attribute_and_make_permanent_feature</span><span class="p">(</span>
+        <span class="n">input_layer</span><span class="o">=</span><span class="n">River_N100</span><span class="o">.</span><span class="n">centerline_pruning_loop__polygon_to_line__n100</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
+        <span class="n">expression</span><span class="o">=</span><span class="n">sql_expression_boundaries</span><span class="p">,</span>
+        <span class="n">output_name</span><span class="o">=</span><span class="n">River_N100</span><span class="o">.</span><span class="n">centerline_pruning_loop__water_features_shared_boundaries__n100</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
+    <span class="p">)</span>
+
+    <span class="n">arcpy</span><span class="o">.</span><span class="n">management</span><span class="o">.</span><span class="n">FeatureVerticesToPoints</span><span class="p">(</span>
+        <span class="n">in_features</span><span class="o">=</span><span class="n">River_N100</span><span class="o">.</span><span class="n">centerline_pruning_loop__water_features_shared_boundaries__n100</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
+        <span class="n">out_feature_class</span><span class="o">=</span><span class="n">River_N100</span><span class="o">.</span><span class="n">centerline_pruning_loop__shared_boundaries_midpoint__n100</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
+        <span class="n">point_location</span><span class="o">=</span><span class="s2">&quot;MID&quot;</span><span class="p">,</span>
+    <span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="extract_closed_lines">
+<a class="viewcode-back" href="../../../../generated_docs/generalization.n100.river.html#generalization.n100.river.mst_loop.extract_closed_lines">[docs]</a>
+<span class="k">def</span> <span class="nf">extract_closed_lines</span><span class="p">(</span><span class="n">input_feature_class</span><span class="p">,</span> <span class="n">output_feature_class</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Extracts lines that start and end at the same point from the input feature class and</span>
+<span class="sd">    creates a new feature class containing only these closed lines.</span>
+
+<span class="sd">    Parameters:</span>
+<span class="sd">    input_feature_class (str): The path to the input feature class to check.</span>
+<span class="sd">    output_feature_class (str): The path to the output feature class for storing closed lines.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="c1"># Create the output feature class with the same spatial reference and fields as the input</span>
+    <span class="n">spatial_reference</span> <span class="o">=</span> <span class="n">arcpy</span><span class="o">.</span><span class="n">Describe</span><span class="p">(</span><span class="n">input_feature_class</span><span class="p">)</span><span class="o">.</span><span class="n">spatialReference</span>
+    <span class="c1"># Check if the output feature class already exists; if so, delete it</span>
+    <span class="k">if</span> <span class="n">arcpy</span><span class="o">.</span><span class="n">Exists</span><span class="p">(</span><span class="n">output_feature_class</span><span class="p">):</span>
+        <span class="n">arcpy</span><span class="o">.</span><span class="n">Delete_management</span><span class="p">(</span><span class="n">output_feature_class</span><span class="p">)</span>
+    <span class="n">arcpy</span><span class="o">.</span><span class="n">CreateFeatureclass_management</span><span class="p">(</span>
+        <span class="n">out_path</span><span class="o">=</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">dirname</span><span class="p">(</span><span class="n">output_feature_class</span><span class="p">),</span>
+        <span class="n">out_name</span><span class="o">=</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">basename</span><span class="p">(</span><span class="n">output_feature_class</span><span class="p">),</span>
+        <span class="n">geometry_type</span><span class="o">=</span><span class="s2">&quot;POLYLINE&quot;</span><span class="p">,</span>
+        <span class="n">spatial_reference</span><span class="o">=</span><span class="n">spatial_reference</span><span class="p">,</span>
+    <span class="p">)</span>
+
+    <span class="c1"># Define fields to include (excluding OID and Shape) and add them to the output feature class</span>
+    <span class="n">fields_to_copy</span> <span class="o">=</span> <span class="p">[</span>
+        <span class="n">field</span><span class="o">.</span><span class="n">name</span>
+        <span class="k">for</span> <span class="n">field</span> <span class="ow">in</span> <span class="n">arcpy</span><span class="o">.</span><span class="n">ListFields</span><span class="p">(</span><span class="n">input_feature_class</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">field</span><span class="o">.</span><span class="n">type</span> <span class="ow">not</span> <span class="ow">in</span> <span class="p">(</span><span class="s2">&quot;OID&quot;</span><span class="p">,</span> <span class="s2">&quot;Geometry&quot;</span><span class="p">)</span>
+    <span class="p">]</span>
+    <span class="n">fields</span> <span class="o">=</span> <span class="p">[</span>
+        <span class="s2">&quot;SHAPE@XY&quot;</span>
+    <span class="p">]</span> <span class="o">+</span> <span class="n">fields_to_copy</span>  <span class="c1"># &#39;SHAPE@XY&#39; used for simplicity, consider &#39;SHAPE@&#39; for exact geometry copy</span>
+    <span class="k">for</span> <span class="n">field</span> <span class="ow">in</span> <span class="n">fields_to_copy</span><span class="p">:</span>
+        <span class="n">arcpy</span><span class="o">.</span><span class="n">AddField_management</span><span class="p">(</span>
+            <span class="n">output_feature_class</span><span class="p">,</span>
+            <span class="n">field</span><span class="p">,</span>
+            <span class="n">arcpy</span><span class="o">.</span><span class="n">ListFields</span><span class="p">(</span><span class="n">input_feature_class</span><span class="p">,</span> <span class="n">field</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">type</span><span class="p">,</span>
+        <span class="p">)</span>
+
+    <span class="c1"># Process each line in the input feature class</span>
+    <span class="k">with</span> <span class="n">arcpy</span><span class="o">.</span><span class="n">da</span><span class="o">.</span><span class="n">SearchCursor</span><span class="p">(</span>
+        <span class="n">input_feature_class</span><span class="p">,</span> <span class="p">[</span><span class="s2">&quot;OID@&quot;</span><span class="p">,</span> <span class="s2">&quot;SHAPE@&quot;</span><span class="p">]</span> <span class="o">+</span> <span class="n">fields_to_copy</span>
+    <span class="p">)</span> <span class="k">as</span> <span class="n">search_cursor</span><span class="p">,</span> <span class="n">arcpy</span><span class="o">.</span><span class="n">da</span><span class="o">.</span><span class="n">InsertCursor</span><span class="p">(</span>
+        <span class="n">output_feature_class</span><span class="p">,</span> <span class="p">[</span><span class="s2">&quot;SHAPE@&quot;</span><span class="p">]</span> <span class="o">+</span> <span class="n">fields_to_copy</span>
+    <span class="p">)</span> <span class="k">as</span> <span class="n">insert_cursor</span><span class="p">:</span>
+        <span class="k">for</span> <span class="n">row</span> <span class="ow">in</span> <span class="n">search_cursor</span><span class="p">:</span>
+            <span class="n">polyline</span> <span class="o">=</span> <span class="n">row</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>  <span class="c1"># Geometry of the feature</span>
+            <span class="k">if</span> <span class="n">polyline</span><span class="o">.</span><span class="n">firstPoint</span><span class="o">.</span><span class="n">equals</span><span class="p">(</span>
+                <span class="n">polyline</span><span class="o">.</span><span class="n">lastPoint</span>
+            <span class="p">):</span>  <span class="c1"># Check if the line is closed</span>
+                <span class="c1"># Prepare the row for insertion</span>
+                <span class="n">insert_row</span> <span class="o">=</span> <span class="p">[</span><span class="n">polyline</span><span class="p">]</span> <span class="o">+</span> <span class="nb">list</span><span class="p">(</span><span class="n">row</span><span class="p">[</span><span class="mi">2</span><span class="p">:])</span>  <span class="c1"># Exclude OID@</span>
+                <span class="n">insert_cursor</span><span class="o">.</span><span class="n">insertRow</span><span class="p">(</span><span class="n">insert_row</span><span class="p">)</span>
+                <span class="nb">print</span><span class="p">(</span>
+                    <span class="sa">f</span><span class="s2">&quot;Feature ID </span><span class="si">{</span><span class="n">row</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="si">}</span><span class="s2"> is closed and has been added to the output feature class.&quot;</span>
+                <span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="create_collapsed_centerline">
+<a class="viewcode-back" href="../../../../generated_docs/generalization.n100.river.html#generalization.n100.river.mst_loop.create_collapsed_centerline">[docs]</a>
+<span class="k">def</span> <span class="nf">create_collapsed_centerline</span><span class="p">():</span>
+    <span class="n">custom_arcpy</span><span class="o">.</span><span class="n">select_location_and_make_permanent_feature</span><span class="p">(</span>
+        <span class="n">input_layer</span><span class="o">=</span><span class="n">input_rivers</span><span class="p">,</span>
+        <span class="n">overlap_type</span><span class="o">=</span><span class="n">custom_arcpy</span><span class="o">.</span><span class="n">OverlapType</span><span class="o">.</span><span class="n">BOUNDARY_TOUCHES</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
+        <span class="n">select_features</span><span class="o">=</span><span class="n">River_N100</span><span class="o">.</span><span class="n">centerline_pruning_loop__water_features_processed__n100</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
+        <span class="n">output_name</span><span class="o">=</span><span class="n">River_N100</span><span class="o">.</span><span class="n">centerline_pruning_loop__river_inlets__n100</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
+    <span class="p">)</span>
+
+    <span class="n">arcpy</span><span class="o">.</span><span class="n">analysis</span><span class="o">.</span><span class="n">PairwiseErase</span><span class="p">(</span>
+        <span class="n">in_features</span><span class="o">=</span><span class="n">River_N100</span><span class="o">.</span><span class="n">centerline_pruning_loop__river_inlets__n100</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
+        <span class="n">erase_features</span><span class="o">=</span><span class="n">River_N100</span><span class="o">.</span><span class="n">centerline_pruning_loop__water_features_processed__n100</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
+        <span class="n">out_feature_class</span><span class="o">=</span><span class="n">River_N100</span><span class="o">.</span><span class="n">centerline_pruning_loop__river_inlets_erased__n100</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span>
+        <span class="sa">f</span><span class="s2">&quot;Created </span><span class="si">{</span><span class="n">River_N100</span><span class="o">.</span><span class="n">river_centerline__rivers_near_waterfeatures_erased__n100</span><span class="o">.</span><span class="n">value</span><span class="si">}</span><span class="s2">&quot;</span>
+    <span class="p">)</span>
+
+    <span class="c1"># Copy to rename the file to have less characters in the name since the name needs to fit inside a field in CollapseHydroPolygon</span>
+    <span class="n">arcpy</span><span class="o">.</span><span class="n">management</span><span class="o">.</span><span class="n">CopyFeatures</span><span class="p">(</span>
+        <span class="n">in_features</span><span class="o">=</span><span class="n">River_N100</span><span class="o">.</span><span class="n">centerline_pruning_loop__water_features_processed__n100</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
+        <span class="n">out_feature_class</span><span class="o">=</span><span class="n">River_N100</span><span class="o">.</span><span class="n">short_name__water__n100</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Created </span><span class="si">{</span><span class="n">River_N100</span><span class="o">.</span><span class="n">short_name__water__n100</span><span class="o">.</span><span class="n">value</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+
+    <span class="n">arcpy</span><span class="o">.</span><span class="n">cartography</span><span class="o">.</span><span class="n">CollapseHydroPolygon</span><span class="p">(</span>
+        <span class="n">in_features</span><span class="o">=</span><span class="n">River_N100</span><span class="o">.</span><span class="n">short_name__water__n100</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
+        <span class="n">out_line_feature_class</span><span class="o">=</span><span class="n">River_N100</span><span class="o">.</span><span class="n">centerline_pruning_loop__collapsed_hydropolygon__n100</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
+        <span class="n">connecting_features</span><span class="o">=</span><span class="n">River_N100</span><span class="o">.</span><span class="n">centerline_pruning_loop__river_inlets_erased__n100</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
+        <span class="n">merge_adjacent_input_polygons</span><span class="o">=</span><span class="s2">&quot;MERGE_ADJACENT&quot;</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span>
+        <span class="sa">f</span><span class="s2">&quot;Created </span><span class="si">{</span><span class="n">River_N100</span><span class="o">.</span><span class="n">centerline_pruning_loop__collapsed_hydropolygon__n100</span><span class="o">.</span><span class="n">value</span><span class="si">}</span><span class="s2">&quot;</span>
+    <span class="p">)</span>
+
+    <span class="n">arcpy</span><span class="o">.</span><span class="n">management</span><span class="o">.</span><span class="n">FeatureVerticesToPoints</span><span class="p">(</span>
+        <span class="n">in_features</span><span class="o">=</span><span class="n">River_N100</span><span class="o">.</span><span class="n">centerline_pruning_loop__collapsed_hydropolygon__n100</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
+        <span class="n">out_feature_class</span><span class="o">=</span><span class="n">River_N100</span><span class="o">.</span><span class="n">centerline_pruning_loop__collapsed_hydropolygon_points__n100</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
+        <span class="n">point_location</span><span class="o">=</span><span class="s2">&quot;BOTH_ENDS&quot;</span><span class="p">,</span>
+    <span class="p">)</span>
+
+    <span class="n">custom_arcpy</span><span class="o">.</span><span class="n">select_location_and_make_permanent_feature</span><span class="p">(</span>
+        <span class="n">input_layer</span><span class="o">=</span><span class="n">River_N100</span><span class="o">.</span><span class="n">centerline_pruning_loop__collapsed_hydropolygon_points__n100</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
+        <span class="n">overlap_type</span><span class="o">=</span><span class="n">custom_arcpy</span><span class="o">.</span><span class="n">OverlapType</span><span class="o">.</span><span class="n">INTERSECT</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
+        <span class="n">select_features</span><span class="o">=</span><span class="n">River_N100</span><span class="o">.</span><span class="n">centerline_pruning_loop__water_features_shared_boundaries__n100</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
+        <span class="n">output_name</span><span class="o">=</span><span class="n">River_N100</span><span class="o">.</span><span class="n">centerline_pruning_loop__collapsed_hydropolygon_points_selected__n100</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
+    <span class="p">)</span>
+
+    <span class="n">arcpy</span><span class="o">.</span><span class="n">edit</span><span class="o">.</span><span class="n">Snap</span><span class="p">(</span>
+        <span class="n">in_features</span><span class="o">=</span><span class="n">River_N100</span><span class="o">.</span><span class="n">centerline_pruning_loop__shared_boundaries_midpoint__n100</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
+        <span class="n">snap_environment</span><span class="o">=</span><span class="p">[</span>
+            <span class="p">[</span>
+                <span class="n">River_N100</span><span class="o">.</span><span class="n">centerline_pruning_loop__collapsed_hydropolygon_points_selected__n100</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
+                <span class="s2">&quot;END&quot;</span><span class="p">,</span>
+                <span class="s2">&quot;3000 Meters&quot;</span><span class="p">,</span>
+            <span class="p">]</span>
+        <span class="p">],</span>
+    <span class="p">)</span>
+
+    <span class="n">extract_closed_lines</span><span class="p">(</span>
+        <span class="n">River_N100</span><span class="o">.</span><span class="n">centerline_pruning_loop__collapsed_hydropolygon__n100</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
+        <span class="n">River_N100</span><span class="o">.</span><span class="n">centerline_pruning_loop__closed_centerline_lines__n100</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
+    <span class="p">)</span>
+
+    <span class="n">arcpy</span><span class="o">.</span><span class="n">management</span><span class="o">.</span><span class="n">FeatureVerticesToPoints</span><span class="p">(</span>
+        <span class="n">in_features</span><span class="o">=</span><span class="n">River_N100</span><span class="o">.</span><span class="n">centerline_pruning_loop__closed_centerline_lines__n100</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
+        <span class="n">out_feature_class</span><span class="o">=</span><span class="n">River_N100</span><span class="o">.</span><span class="n">centerline_pruning_loop__closed_centerline_point__n100</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
+        <span class="n">point_location</span><span class="o">=</span><span class="s2">&quot;END&quot;</span><span class="p">,</span>
+    <span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="filter_complicated_lakes">
+<a class="viewcode-back" href="../../../../generated_docs/generalization.n100.river.html#generalization.n100.river.mst_loop.filter_complicated_lakes">[docs]</a>
+<span class="k">def</span> <span class="nf">filter_complicated_lakes</span><span class="p">():</span>
+    <span class="n">arcpy</span><span class="o">.</span><span class="n">management</span><span class="o">.</span><span class="n">FeatureVerticesToPoints</span><span class="p">(</span>
+        <span class="n">in_features</span><span class="o">=</span><span class="n">River_N100</span><span class="o">.</span><span class="n">centerline_pruning_loop__collapsed_hydropolygon__n100</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
+        <span class="n">out_feature_class</span><span class="o">=</span><span class="n">River_N100</span><span class="o">.</span><span class="n">centerline_pruning_loop__centerline_start_end_vertex__n100</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
+        <span class="n">point_location</span><span class="o">=</span><span class="s2">&quot;BOTH_ENDS&quot;</span><span class="p">,</span>
+    <span class="p">)</span>
+
+    <span class="n">arcpy</span><span class="o">.</span><span class="n">management</span><span class="o">.</span><span class="n">DeleteIdentical</span><span class="p">(</span>
+        <span class="n">in_dataset</span><span class="o">=</span><span class="n">River_N100</span><span class="o">.</span><span class="n">centerline_pruning_loop__centerline_start_end_vertex__n100</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
+        <span class="n">fields</span><span class="o">=</span><span class="s2">&quot;Shape&quot;</span><span class="p">,</span>
+    <span class="p">)</span>
+
+    <span class="n">arcpy</span><span class="o">.</span><span class="n">management</span><span class="o">.</span><span class="n">FeatureVerticesToPoints</span><span class="p">(</span>
+        <span class="n">in_features</span><span class="o">=</span><span class="n">River_N100</span><span class="o">.</span><span class="n">centerline_pruning_loop__collapsed_hydropolygon__n100</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
+        <span class="n">out_feature_class</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">River_N100</span><span class="o">.</span><span class="n">centerline_pruning_loop__river_inlet_dangles__n100</span><span class="o">.</span><span class="n">value</span><span class="si">}</span><span class="s2">_not_selected&quot;</span><span class="p">,</span>
+        <span class="n">point_location</span><span class="o">=</span><span class="s2">&quot;DANGLE&quot;</span><span class="p">,</span>
+    <span class="p">)</span>
+
+    <span class="n">custom_arcpy</span><span class="o">.</span><span class="n">select_location_and_make_permanent_feature</span><span class="p">(</span>
+        <span class="n">input_layer</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">River_N100</span><span class="o">.</span><span class="n">centerline_pruning_loop__river_inlet_dangles__n100</span><span class="o">.</span><span class="n">value</span><span class="si">}</span><span class="s2">_not_selected&quot;</span><span class="p">,</span>
+        <span class="n">overlap_type</span><span class="o">=</span><span class="n">custom_arcpy</span><span class="o">.</span><span class="n">OverlapType</span><span class="o">.</span><span class="n">INTERSECT</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
+        <span class="n">select_features</span><span class="o">=</span><span class="n">River_N100</span><span class="o">.</span><span class="n">centerline_pruning_loop__river_inlets_erased__n100</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
+        <span class="n">output_name</span><span class="o">=</span><span class="n">River_N100</span><span class="o">.</span><span class="n">centerline_pruning_loop__river_inlet_dangles__n100</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
+    <span class="p">)</span>
+
+    <span class="n">arcpy</span><span class="o">.</span><span class="n">management</span><span class="o">.</span><span class="n">Merge</span><span class="p">(</span>
+        <span class="n">inputs</span><span class="o">=</span><span class="p">[</span>
+            <span class="n">River_N100</span><span class="o">.</span><span class="n">centerline_pruning_loop__shared_boundaries_midpoint__n100</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
+            <span class="n">River_N100</span><span class="o">.</span><span class="n">centerline_pruning_loop__river_inlet_dangles__n100</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
+        <span class="p">],</span>
+        <span class="n">output</span><span class="o">=</span><span class="n">River_N100</span><span class="o">.</span><span class="n">centerline_pruning_loop__river_inlets_points_merged__n100</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span>
+        <span class="s2">&quot;NB! Need to create a logic to fix missing inlet nodes between interconnected waterfeature polygons&quot;</span>
+    <span class="p">)</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Currently it only makes one node between two water features but some places this would lead to missing node connections</span>
+<span class="sd">    as more nodes are needed.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">custom_arcpy</span><span class="o">.</span><span class="n">select_location_and_make_permanent_feature</span><span class="p">(</span>
+        <span class="n">input_layer</span><span class="o">=</span><span class="n">River_N100</span><span class="o">.</span><span class="n">centerline_pruning_loop__centerline_start_end_vertex__n100</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
+        <span class="n">overlap_type</span><span class="o">=</span><span class="n">custom_arcpy</span><span class="o">.</span><span class="n">OverlapType</span><span class="o">.</span><span class="n">INTERSECT</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
+        <span class="n">select_features</span><span class="o">=</span><span class="n">River_N100</span><span class="o">.</span><span class="n">centerline_pruning_loop__river_inlets_points_merged__n100</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
+        <span class="n">output_name</span><span class="o">=</span><span class="n">River_N100</span><span class="o">.</span><span class="n">centerline_pruning_loop__centerline_intersection_vertex__n100</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
+        <span class="n">inverted</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+    <span class="p">)</span>
+
+    <span class="n">arcpy</span><span class="o">.</span><span class="n">management</span><span class="o">.</span><span class="n">Merge</span><span class="p">(</span>
+        <span class="n">inputs</span><span class="o">=</span><span class="p">[</span>
+            <span class="n">River_N100</span><span class="o">.</span><span class="n">centerline_pruning_loop__centerline_intersection_vertex__n100</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
+            <span class="n">River_N100</span><span class="o">.</span><span class="n">centerline_pruning_loop__closed_centerline_point__n100</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
+        <span class="p">],</span>
+        <span class="n">output</span><span class="o">=</span><span class="n">River_N100</span><span class="o">.</span><span class="n">centerline_pruning_loop__intersection_points_merged__n100</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
+    <span class="p">)</span>
+
+    <span class="n">intersection_field</span> <span class="o">=</span> <span class="s2">&quot;intersection&quot;</span>
+    <span class="n">river_inlet_field</span> <span class="o">=</span> <span class="s2">&quot;inlets&quot;</span>
+
+    <span class="n">arcpy</span><span class="o">.</span><span class="n">AddField_management</span><span class="p">(</span>
+        <span class="n">in_table</span><span class="o">=</span><span class="n">River_N100</span><span class="o">.</span><span class="n">centerline_pruning_loop__intersection_points_merged__n100</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
+        <span class="n">field_name</span><span class="o">=</span><span class="n">intersection_field</span><span class="p">,</span>
+        <span class="n">field_type</span><span class="o">=</span><span class="s2">&quot;LONG&quot;</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="n">arcpy</span><span class="o">.</span><span class="n">CalculateField_management</span><span class="p">(</span>
+        <span class="n">in_table</span><span class="o">=</span><span class="n">River_N100</span><span class="o">.</span><span class="n">centerline_pruning_loop__intersection_points_merged__n100</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
+        <span class="n">field</span><span class="o">=</span><span class="n">intersection_field</span><span class="p">,</span>
+        <span class="n">expression</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span>
+    <span class="p">)</span>
+
+    <span class="n">arcpy</span><span class="o">.</span><span class="n">AddField_management</span><span class="p">(</span>
+        <span class="n">in_table</span><span class="o">=</span><span class="n">River_N100</span><span class="o">.</span><span class="n">centerline_pruning_loop__river_inlets_points_merged__n100</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
+        <span class="n">field_name</span><span class="o">=</span><span class="n">river_inlet_field</span><span class="p">,</span>
+        <span class="n">field_type</span><span class="o">=</span><span class="s2">&quot;LONG&quot;</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="n">arcpy</span><span class="o">.</span><span class="n">CalculateField_management</span><span class="p">(</span>
+        <span class="n">in_table</span><span class="o">=</span><span class="n">River_N100</span><span class="o">.</span><span class="n">centerline_pruning_loop__river_inlets_points_merged__n100</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
+        <span class="n">field</span><span class="o">=</span><span class="n">river_inlet_field</span><span class="p">,</span>
+        <span class="n">expression</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span>
+    <span class="p">)</span>
+
+    <span class="n">target_features</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="n">River_N100</span><span class="o">.</span><span class="n">centerline_pruning_loop__water_features_processed__n100</span><span class="o">.</span><span class="n">value</span>
+    <span class="p">)</span>
+    <span class="n">join_features_1</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="n">River_N100</span><span class="o">.</span><span class="n">centerline_pruning_loop__river_inlets_points_merged__n100</span><span class="o">.</span><span class="n">value</span>
+    <span class="p">)</span>
+    <span class="n">join_features_2</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="n">River_N100</span><span class="o">.</span><span class="n">centerline_pruning_loop__intersection_points_merged__n100</span><span class="o">.</span><span class="n">value</span>
+    <span class="p">)</span>
+
+    <span class="c1"># First Spatial Join - Adding river inlet data</span>
+    <span class="n">field_mappings</span> <span class="o">=</span> <span class="n">arcpy</span><span class="o">.</span><span class="n">FieldMappings</span><span class="p">()</span>
+    <span class="n">field_mappings</span><span class="o">.</span><span class="n">addTable</span><span class="p">(</span><span class="n">target_features</span><span class="p">)</span>
+    <span class="n">field_mappings</span><span class="o">.</span><span class="n">addTable</span><span class="p">(</span><span class="n">join_features_1</span><span class="p">)</span>
+
+    <span class="c1"># Setup field mapping for river_inlet_field (assuming sum_inlets is the intended outcome)</span>
+    <span class="c1"># Note: Corrected to ensure we&#39;re modifying the correct field mapping</span>
+    <span class="n">inlet_field_index</span> <span class="o">=</span> <span class="n">field_mappings</span><span class="o">.</span><span class="n">findFieldMapIndex</span><span class="p">(</span><span class="n">river_inlet_field</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">inlet_field_index</span> <span class="o">!=</span> <span class="o">-</span><span class="mi">1</span><span class="p">:</span>
+        <span class="n">field_map</span> <span class="o">=</span> <span class="n">field_mappings</span><span class="o">.</span><span class="n">getFieldMap</span><span class="p">(</span><span class="n">inlet_field_index</span><span class="p">)</span>
+        <span class="n">field</span> <span class="o">=</span> <span class="n">field_map</span><span class="o">.</span><span class="n">outputField</span>
+        <span class="n">field</span><span class="o">.</span><span class="n">name</span> <span class="o">=</span> <span class="s2">&quot;sum_inlets&quot;</span>
+        <span class="n">field</span><span class="o">.</span><span class="n">aliasName</span> <span class="o">=</span> <span class="s2">&quot;Sum of Inlets&quot;</span>
+        <span class="n">field_map</span><span class="o">.</span><span class="n">outputField</span> <span class="o">=</span> <span class="n">field</span>
+        <span class="n">field_map</span><span class="o">.</span><span class="n">mergeRule</span> <span class="o">=</span> <span class="s2">&quot;Sum&quot;</span>
+        <span class="n">field_mappings</span><span class="o">.</span><span class="n">replaceFieldMap</span><span class="p">(</span><span class="n">inlet_field_index</span><span class="p">,</span> <span class="n">field_map</span><span class="p">)</span>
+
+    <span class="c1"># Execute the first spatial join</span>
+    <span class="n">arcpy</span><span class="o">.</span><span class="n">analysis</span><span class="o">.</span><span class="n">SpatialJoin</span><span class="p">(</span>
+        <span class="n">target_features</span><span class="o">=</span><span class="n">target_features</span><span class="p">,</span>
+        <span class="n">join_features</span><span class="o">=</span><span class="n">join_features_1</span><span class="p">,</span>
+        <span class="n">out_feature_class</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">target_features</span><span class="si">}</span><span class="s2">_add_join_1&quot;</span><span class="p">,</span>
+        <span class="n">join_operation</span><span class="o">=</span><span class="s2">&quot;JOIN_ONE_TO_ONE&quot;</span><span class="p">,</span>
+        <span class="n">join_type</span><span class="o">=</span><span class="s2">&quot;KEEP_ALL&quot;</span><span class="p">,</span>
+        <span class="n">field_mapping</span><span class="o">=</span><span class="n">field_mappings</span><span class="p">,</span>
+        <span class="n">match_option</span><span class="o">=</span><span class="s2">&quot;INTERSECT&quot;</span><span class="p">,</span>
+    <span class="p">)</span>
+
+    <span class="c1"># Second Spatial Join - Adding intersection data</span>
+    <span class="n">field_mappings_2</span> <span class="o">=</span> <span class="n">arcpy</span><span class="o">.</span><span class="n">FieldMappings</span><span class="p">()</span>
+    <span class="n">field_mappings_2</span><span class="o">.</span><span class="n">addTable</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">target_features</span><span class="si">}</span><span class="s2">_add_join_1&quot;</span><span class="p">)</span>
+    <span class="n">field_mappings_2</span><span class="o">.</span><span class="n">addTable</span><span class="p">(</span><span class="n">join_features_2</span><span class="p">)</span>
+
+    <span class="c1"># Setup field mapping for intersection_field (assuming sum_intersection is the intended outcome)</span>
+    <span class="c1"># Corrected to focus on intersection_field</span>
+    <span class="n">intersection_field_index</span> <span class="o">=</span> <span class="n">field_mappings_2</span><span class="o">.</span><span class="n">findFieldMapIndex</span><span class="p">(</span><span class="n">intersection_field</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">intersection_field_index</span> <span class="o">!=</span> <span class="o">-</span><span class="mi">1</span><span class="p">:</span>
+        <span class="n">field_map</span> <span class="o">=</span> <span class="n">field_mappings_2</span><span class="o">.</span><span class="n">getFieldMap</span><span class="p">(</span><span class="n">intersection_field_index</span><span class="p">)</span>
+        <span class="n">field</span> <span class="o">=</span> <span class="n">field_map</span><span class="o">.</span><span class="n">outputField</span>
+        <span class="n">field</span><span class="o">.</span><span class="n">name</span> <span class="o">=</span> <span class="s2">&quot;sum_intersection&quot;</span>
+        <span class="n">field</span><span class="o">.</span><span class="n">aliasName</span> <span class="o">=</span> <span class="s2">&quot;Sum of Intersection&quot;</span>
+        <span class="n">field_map</span><span class="o">.</span><span class="n">outputField</span> <span class="o">=</span> <span class="n">field</span>
+        <span class="n">field_map</span><span class="o">.</span><span class="n">mergeRule</span> <span class="o">=</span> <span class="s2">&quot;Sum&quot;</span>
+        <span class="n">field_mappings_2</span><span class="o">.</span><span class="n">replaceFieldMap</span><span class="p">(</span><span class="n">intersection_field_index</span><span class="p">,</span> <span class="n">field_map</span><span class="p">)</span>
+
+    <span class="c1"># Execute the second spatial join</span>
+    <span class="n">arcpy</span><span class="o">.</span><span class="n">analysis</span><span class="o">.</span><span class="n">SpatialJoin</span><span class="p">(</span>
+        <span class="n">target_features</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">target_features</span><span class="si">}</span><span class="s2">_add_join_1&quot;</span><span class="p">,</span>
+        <span class="n">join_features</span><span class="o">=</span><span class="n">join_features_2</span><span class="p">,</span>
+        <span class="n">out_feature_class</span><span class="o">=</span><span class="n">River_N100</span><span class="o">.</span><span class="n">centerline_pruning_loop__water_feature_summarized__n100</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
+        <span class="n">join_operation</span><span class="o">=</span><span class="s2">&quot;JOIN_ONE_TO_ONE&quot;</span><span class="p">,</span>
+        <span class="n">join_type</span><span class="o">=</span><span class="s2">&quot;KEEP_ALL&quot;</span><span class="p">,</span>
+        <span class="n">field_mapping</span><span class="o">=</span><span class="n">field_mappings_2</span><span class="p">,</span>
+        <span class="n">match_option</span><span class="o">=</span><span class="s2">&quot;INTERSECT&quot;</span><span class="p">,</span>
+    <span class="p">)</span>
+
+    <span class="c1"># Use CalculateField to set null (&quot;sum_intersection&quot; = &lt;NULL&gt;) values to 0</span>
+    <span class="n">arcpy</span><span class="o">.</span><span class="n">CalculateField_management</span><span class="p">(</span>
+        <span class="n">in_table</span><span class="o">=</span><span class="n">River_N100</span><span class="o">.</span><span class="n">centerline_pruning_loop__water_feature_summarized__n100</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
+        <span class="n">field</span><span class="o">=</span><span class="s2">&quot;sum_intersection&quot;</span><span class="p">,</span>
+        <span class="n">expression</span><span class="o">=</span><span class="s2">&quot;0 if !sum_intersection! is None else !sum_intersection!&quot;</span><span class="p">,</span>
+        <span class="n">expression_type</span><span class="o">=</span><span class="s2">&quot;PYTHON3&quot;</span><span class="p">,</span>
+    <span class="p">)</span>
+
+    <span class="n">sql_simple_water_features</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="s2">&quot;(sum_intersection &lt; sum_inlets) OR (sum_intersection = 1 AND sum_inlets = 1)&quot;</span>
+    <span class="p">)</span>
+    <span class="n">custom_arcpy</span><span class="o">.</span><span class="n">select_attribute_and_make_permanent_feature</span><span class="p">(</span>
+        <span class="n">input_layer</span><span class="o">=</span><span class="n">River_N100</span><span class="o">.</span><span class="n">centerline_pruning_loop__water_feature_summarized__n100</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
+        <span class="n">expression</span><span class="o">=</span><span class="n">sql_simple_water_features</span><span class="p">,</span>
+        <span class="n">output_name</span><span class="o">=</span><span class="n">River_N100</span><span class="o">.</span><span class="n">centerline_pruning_loop__simple_water_features__n100</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
+    <span class="p">)</span>
+
+    <span class="n">sql_complex_water_features</span> <span class="o">=</span> <span class="s2">&quot;(sum_intersection &gt;= sum_inlets) AND (sum_intersection &lt;&gt; 1 OR sum_inlets &lt;&gt; 1)&quot;</span>
+    <span class="n">custom_arcpy</span><span class="o">.</span><span class="n">select_attribute_and_make_permanent_feature</span><span class="p">(</span>
+        <span class="n">input_layer</span><span class="o">=</span><span class="n">River_N100</span><span class="o">.</span><span class="n">centerline_pruning_loop__water_feature_summarized__n100</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
+        <span class="n">expression</span><span class="o">=</span><span class="n">sql_complex_water_features</span><span class="p">,</span>
+        <span class="n">output_name</span><span class="o">=</span><span class="n">River_N100</span><span class="o">.</span><span class="n">centerline_pruning_loop__complex_water_features__n100</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
+    <span class="p">)</span>
+
+    <span class="n">custom_arcpy</span><span class="o">.</span><span class="n">select_location_and_make_permanent_feature</span><span class="p">(</span>
+        <span class="n">input_layer</span><span class="o">=</span><span class="n">centerline</span><span class="p">,</span>
+        <span class="n">overlap_type</span><span class="o">=</span><span class="n">custom_arcpy</span><span class="o">.</span><span class="n">OverlapType</span><span class="o">.</span><span class="n">HAVE_THEIR_CENTER_IN</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
+        <span class="n">select_features</span><span class="o">=</span><span class="n">River_N100</span><span class="o">.</span><span class="n">centerline_pruning_loop__simple_water_features__n100</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
+        <span class="n">output_name</span><span class="o">=</span><span class="n">River_N100</span><span class="o">.</span><span class="n">centerline_pruning_loop__simple_centerlines__n100</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
+    <span class="p">)</span>
+
+    <span class="n">custom_arcpy</span><span class="o">.</span><span class="n">select_location_and_make_permanent_feature</span><span class="p">(</span>
+        <span class="n">input_layer</span><span class="o">=</span><span class="n">centerline</span><span class="p">,</span>
+        <span class="n">overlap_type</span><span class="o">=</span><span class="n">custom_arcpy</span><span class="o">.</span><span class="n">OverlapType</span><span class="o">.</span><span class="n">HAVE_THEIR_CENTER_IN</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
+        <span class="n">select_features</span><span class="o">=</span><span class="n">River_N100</span><span class="o">.</span><span class="n">centerline_pruning_loop__complex_water_features__n100</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
+        <span class="n">output_name</span><span class="o">=</span><span class="n">River_N100</span><span class="o">.</span><span class="n">centerline_pruning_loop__complex_centerlines__n100</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
+    <span class="p">)</span>
+
+    <span class="n">create_lake_centerline_feature</span> <span class="o">=</span> <span class="n">FeatureClassCreator</span><span class="p">(</span>
+        <span class="n">template_fc</span><span class="o">=</span><span class="n">input_rivers</span><span class="p">,</span>
+        <span class="n">input_fc</span><span class="o">=</span><span class="n">River_N100</span><span class="o">.</span><span class="n">centerline_pruning_loop__simple_centerlines__n100</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
+        <span class="n">output_fc</span><span class="o">=</span><span class="n">River_N100</span><span class="o">.</span><span class="n">centerline_pruning_loop__finnished_centerlines__n100</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
+        <span class="n">object_type</span><span class="o">=</span><span class="s2">&quot;POLYLINE&quot;</span><span class="p">,</span>
+        <span class="n">delete_existing</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="n">create_lake_centerline_feature</span><span class="o">.</span><span class="n">run</span><span class="p">()</span></div>
+
+
+
+<div class="viewcode-block" id="create_feature_class">
+<a class="viewcode-back" href="../../../../generated_docs/generalization.n100.river.html#generalization.n100.river.mst_loop.create_feature_class">[docs]</a>
+<span class="k">def</span> <span class="nf">create_feature_class</span><span class="p">():</span>
+    <span class="c1"># create_lake_centerline_feature = FeatureClassCreator(</span>
+    <span class="c1">#     template_fc=input_rivers,</span>
+    <span class="c1">#     input_fc=River_N100.centerline_pruning_loop__simple_centerlines__n100.value,</span>
+    <span class="c1">#     output_fc=River_N100.centerline_pruning_loop__finnished_centerlines__n100.value,</span>
+    <span class="c1">#     object_type=&quot;POLYLINE&quot;,</span>
+    <span class="c1">#     delete_existing=True,</span>
+    <span class="c1"># )</span>
+    <span class="c1"># create_lake_centerline_feature.run()</span>
+
+    <span class="n">input_feature_class</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="n">River_N100</span><span class="o">.</span><span class="n">centerline_pruning_loop__water_features_processed__n100</span><span class="o">.</span><span class="n">value</span>
+    <span class="p">)</span>
+
+    <span class="n">dissolve_output</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">input_feature_class</span><span class="si">}</span><span class="s2">_dissolved&quot;</span>
+    <span class="n">arcpy</span><span class="o">.</span><span class="n">analysis</span><span class="o">.</span><span class="n">PairwiseDissolve</span><span class="p">(</span>
+        <span class="n">in_features</span><span class="o">=</span><span class="n">input_feature_class</span><span class="p">,</span>
+        <span class="n">out_feature_class</span><span class="o">=</span><span class="n">dissolve_output</span><span class="p">,</span>
+        <span class="n">dissolve_field</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;shape_Length&quot;</span><span class="p">,</span> <span class="s2">&quot;shape_Area&quot;</span><span class="p">],</span>
+        <span class="n">multi_part</span><span class="o">=</span><span class="s2">&quot;MULTI_PART&quot;</span><span class="p">,</span>
+    <span class="p">)</span>
+
+    <span class="n">eliminate_polygon_part_output</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">input_feature_class</span><span class="si">}</span><span class="s2">_eliminate_polygon_part&quot;</span>
+
+    <span class="n">arcpy</span><span class="o">.</span><span class="n">management</span><span class="o">.</span><span class="n">EliminatePolygonPart</span><span class="p">(</span>
+        <span class="n">in_features</span><span class="o">=</span><span class="n">dissolve_output</span><span class="p">,</span>
+        <span class="n">out_feature_class</span><span class="o">=</span><span class="n">eliminate_polygon_part_output</span><span class="p">,</span>
+        <span class="n">condition</span><span class="o">=</span><span class="s2">&quot;AREA_OR_PERCENT&quot;</span><span class="p">,</span>
+        <span class="n">part_area</span><span class="o">=</span><span class="s2">&quot;1000000&quot;</span><span class="p">,</span>
+        <span class="n">part_area_percent</span><span class="o">=</span><span class="s2">&quot;99&quot;</span><span class="p">,</span>
+        <span class="n">part_option</span><span class="o">=</span><span class="s2">&quot;CONTAINED_ONLY&quot;</span><span class="p">,</span>
+    <span class="p">)</span>
+
+    <span class="n">polygon_islands</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">input_feature_class</span><span class="si">}</span><span class="s2">_polygon_islands&quot;</span>
+    <span class="n">custom_arcpy</span><span class="o">.</span><span class="n">select_location_and_make_permanent_feature</span><span class="p">(</span>
+        <span class="n">input_layer</span><span class="o">=</span><span class="n">input_feature_class</span><span class="p">,</span>
+        <span class="n">overlap_type</span><span class="o">=</span><span class="n">custom_arcpy</span><span class="o">.</span><span class="n">OverlapType</span><span class="o">.</span><span class="n">COMPLETELY_WITHIN</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
+        <span class="n">select_features</span><span class="o">=</span><span class="n">eliminate_polygon_part_output</span><span class="p">,</span>
+        <span class="n">output_name</span><span class="o">=</span><span class="n">polygon_islands</span><span class="p">,</span>
+    <span class="p">)</span>
+
+    <span class="n">arcpy</span><span class="o">.</span><span class="n">topographic</span><span class="o">.</span><span class="n">EliminatePolygon</span><span class="p">(</span>
+        <span class="n">in_features</span><span class="o">=</span><span class="n">polygon_islands</span><span class="p">,</span>
+        <span class="n">surrounding_features</span><span class="o">=</span><span class="n">input_feature_class</span><span class="p">,</span>
+    <span class="p">)</span></div>
+
+
+
+<span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s2">&quot;__main__&quot;</span><span class="p">:</span>
+    <span class="n">main</span><span class="p">()</span>
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2024, Kartverket.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

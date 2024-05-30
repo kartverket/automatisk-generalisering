@@ -22,7 +22,7 @@
     <script src="../_static/js/theme.js"></script>
     <link rel="index" title="Index" href="../genindex.html" />
     <link rel="search" title="Search" href="../search.html" />
-    <link rel="next" title="env_setup package" href="env_setup.html" />
+    <link rel="next" title="custom_tools.decorators package" href="custom_tools.decorators.html" />
     <link rel="prev" title="Welcome to Automatisk Generalisering’s documentation!" href="../index.html" /> 
 </head>
 
@@ -48,117 +48,11 @@
               <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
 <ul class="current">
 <li class="toctree-l1 current"><a class="current reference internal" href="#">custom_tools package</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="#submodules">Submodules</a></li>
-<li class="toctree-l2"><a class="reference internal" href="#module-custom_tools.compare_feature_classes">custom_tools.compare_feature_classes module</a><ul>
-<li class="toctree-l3"><a class="reference internal" href="#custom_tools.compare_feature_classes.compare_feature_classes"><code class="docutils literal notranslate"><span class="pre">compare_feature_classes()</span></code></a></li>
-</ul>
-</li>
-<li class="toctree-l2"><a class="reference internal" href="#module-custom_tools.custom_arcpy">custom_tools.custom_arcpy module</a><ul>
-<li class="toctree-l3"><a class="reference internal" href="#custom_tools.custom_arcpy.SelectionType"><code class="docutils literal notranslate"><span class="pre">SelectionType</span></code></a><ul>
-<li class="toctree-l4"><a class="reference internal" href="#custom_tools.custom_arcpy.SelectionType.NEW_SELECTION"><code class="docutils literal notranslate"><span class="pre">SelectionType.NEW_SELECTION</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="#custom_tools.custom_arcpy.SelectionType.ADD_TO_SELECTION"><code class="docutils literal notranslate"><span class="pre">SelectionType.ADD_TO_SELECTION</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="#custom_tools.custom_arcpy.SelectionType.REMOVE_FROM_SELECTION"><code class="docutils literal notranslate"><span class="pre">SelectionType.REMOVE_FROM_SELECTION</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="#custom_tools.custom_arcpy.SelectionType.SUBSET_SELECTION"><code class="docutils literal notranslate"><span class="pre">SelectionType.SUBSET_SELECTION</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="#custom_tools.custom_arcpy.SelectionType.SWITCH_SELECTION"><code class="docutils literal notranslate"><span class="pre">SelectionType.SWITCH_SELECTION</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="#custom_tools.custom_arcpy.SelectionType.CLEAR_SELECTION"><code class="docutils literal notranslate"><span class="pre">SelectionType.CLEAR_SELECTION</span></code></a></li>
-</ul>
-</li>
-<li class="toctree-l3"><a class="reference internal" href="#custom_tools.custom_arcpy.OverlapType"><code class="docutils literal notranslate"><span class="pre">OverlapType</span></code></a><ul>
-<li class="toctree-l4"><a class="reference internal" href="#custom_tools.custom_arcpy.OverlapType.INTERSECT"><code class="docutils literal notranslate"><span class="pre">OverlapType.INTERSECT</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="#custom_tools.custom_arcpy.OverlapType.INTERSECT_3D"><code class="docutils literal notranslate"><span class="pre">OverlapType.INTERSECT_3D</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="#custom_tools.custom_arcpy.OverlapType.INTERSECT_DBMS"><code class="docutils literal notranslate"><span class="pre">OverlapType.INTERSECT_DBMS</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="#custom_tools.custom_arcpy.OverlapType.WITHIN_A_DISTANCE"><code class="docutils literal notranslate"><span class="pre">OverlapType.WITHIN_A_DISTANCE</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="#custom_tools.custom_arcpy.OverlapType.WITHIN_A_DISTANCE_3D"><code class="docutils literal notranslate"><span class="pre">OverlapType.WITHIN_A_DISTANCE_3D</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="#custom_tools.custom_arcpy.OverlapType.WITHIN_A_DISTANCE_GEODESIC"><code class="docutils literal notranslate"><span class="pre">OverlapType.WITHIN_A_DISTANCE_GEODESIC</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="#custom_tools.custom_arcpy.OverlapType.CONTAINS"><code class="docutils literal notranslate"><span class="pre">OverlapType.CONTAINS</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="#custom_tools.custom_arcpy.OverlapType.COMPLETELY_CONTAINS"><code class="docutils literal notranslate"><span class="pre">OverlapType.COMPLETELY_CONTAINS</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="#custom_tools.custom_arcpy.OverlapType.CONTAINS_CLEMENTINI"><code class="docutils literal notranslate"><span class="pre">OverlapType.CONTAINS_CLEMENTINI</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="#custom_tools.custom_arcpy.OverlapType.WITHIN"><code class="docutils literal notranslate"><span class="pre">OverlapType.WITHIN</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="#custom_tools.custom_arcpy.OverlapType.COMPLETELY_WITHIN"><code class="docutils literal notranslate"><span class="pre">OverlapType.COMPLETELY_WITHIN</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="#custom_tools.custom_arcpy.OverlapType.WITHIN_CLEMENTINI"><code class="docutils literal notranslate"><span class="pre">OverlapType.WITHIN_CLEMENTINI</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="#custom_tools.custom_arcpy.OverlapType.ARE_IDENTICAL_TO"><code class="docutils literal notranslate"><span class="pre">OverlapType.ARE_IDENTICAL_TO</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="#custom_tools.custom_arcpy.OverlapType.BOUNDARY_TOUCHES"><code class="docutils literal notranslate"><span class="pre">OverlapType.BOUNDARY_TOUCHES</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="#custom_tools.custom_arcpy.OverlapType.SHARE_A_LINE_SEGMENT_WITH"><code class="docutils literal notranslate"><span class="pre">OverlapType.SHARE_A_LINE_SEGMENT_WITH</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="#custom_tools.custom_arcpy.OverlapType.CROSSED_BY_THE_OUTLINE_OF"><code class="docutils literal notranslate"><span class="pre">OverlapType.CROSSED_BY_THE_OUTLINE_OF</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="#custom_tools.custom_arcpy.OverlapType.HAVE_THEIR_CENTER_IN"><code class="docutils literal notranslate"><span class="pre">OverlapType.HAVE_THEIR_CENTER_IN</span></code></a></li>
-</ul>
-</li>
-<li class="toctree-l3"><a class="reference internal" href="#custom_tools.custom_arcpy.resolve_enum"><code class="docutils literal notranslate"><span class="pre">resolve_enum()</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="#custom_tools.custom_arcpy.select_attribute_and_make_feature_layer"><code class="docutils literal notranslate"><span class="pre">select_attribute_and_make_feature_layer()</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="#custom_tools.custom_arcpy.select_attribute_and_make_permanent_feature"><code class="docutils literal notranslate"><span class="pre">select_attribute_and_make_permanent_feature()</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="#custom_tools.custom_arcpy.select_location_and_make_feature_layer"><code class="docutils literal notranslate"><span class="pre">select_location_and_make_feature_layer()</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="#custom_tools.custom_arcpy.select_location_and_make_permanent_feature"><code class="docutils literal notranslate"><span class="pre">select_location_and_make_permanent_feature()</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="#custom_tools.custom_arcpy.apply_symbology"><code class="docutils literal notranslate"><span class="pre">apply_symbology()</span></code></a></li>
-</ul>
-</li>
-<li class="toctree-l2"><a class="reference internal" href="#module-custom_tools.file_utilities">custom_tools.file_utilities module</a><ul>
-<li class="toctree-l3"><a class="reference internal" href="#custom_tools.file_utilities.FeatureClassCreator"><code class="docutils literal notranslate"><span class="pre">FeatureClassCreator</span></code></a><ul>
-<li class="toctree-l4"><a class="reference internal" href="#custom_tools.file_utilities.FeatureClassCreator.run"><code class="docutils literal notranslate"><span class="pre">FeatureClassCreator.run()</span></code></a></li>
-</ul>
-</li>
-</ul>
-</li>
-<li class="toctree-l2"><a class="reference internal" href="#module-custom_tools.geometry_tools">custom_tools.geometry_tools module</a><ul>
-<li class="toctree-l3"><a class="reference internal" href="#custom_tools.geometry_tools.RemovePolygonIslands"><code class="docutils literal notranslate"><span class="pre">RemovePolygonIslands</span></code></a><ul>
-<li class="toctree-l4"><a class="reference internal" href="#custom_tools.geometry_tools.RemovePolygonIslands.remove_islands"><code class="docutils literal notranslate"><span class="pre">RemovePolygonIslands.remove_islands()</span></code></a></li>
-</ul>
-</li>
-<li class="toctree-l3"><a class="reference internal" href="#custom_tools.geometry_tools.remove_polygon_islands"><code class="docutils literal notranslate"><span class="pre">remove_polygon_islands()</span></code></a></li>
-</ul>
-</li>
-<li class="toctree-l2"><a class="reference internal" href="#custom-tools-gpt-file-path-masker-module">custom_tools.gpt_file_path_masker module</a></li>
-<li class="toctree-l2"><a class="reference internal" href="#custom-tools-partition-iterator-module">custom_tools.partition_iterator module</a></li>
-<li class="toctree-l2"><a class="reference internal" href="#module-custom_tools.partition_iterator_state_based">custom_tools.partition_iterator_state_based module</a><ul>
-<li class="toctree-l3"><a class="reference internal" href="#custom_tools.partition_iterator_state_based.PartitionIterator"><code class="docutils literal notranslate"><span class="pre">PartitionIterator</span></code></a><ul>
-<li class="toctree-l4"><a class="reference internal" href="#custom_tools.partition_iterator_state_based.PartitionIterator.PARTITION_FIELD"><code class="docutils literal notranslate"><span class="pre">PartitionIterator.PARTITION_FIELD</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="#custom_tools.partition_iterator_state_based.PartitionIterator.ORIGINAL_ID_FIELD"><code class="docutils literal notranslate"><span class="pre">PartitionIterator.ORIGINAL_ID_FIELD</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="#custom_tools.partition_iterator_state_based.PartitionIterator.unpack_alias_path_data"><code class="docutils literal notranslate"><span class="pre">PartitionIterator.unpack_alias_path_data()</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="#custom_tools.partition_iterator_state_based.PartitionIterator.unpack_alias_path_outputs"><code class="docutils literal notranslate"><span class="pre">PartitionIterator.unpack_alias_path_outputs()</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="#custom_tools.partition_iterator_state_based.PartitionIterator.configure_alias_and_type"><code class="docutils literal notranslate"><span class="pre">PartitionIterator.configure_alias_and_type()</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="#custom_tools.partition_iterator_state_based.PartitionIterator.create_new_alias"><code class="docutils literal notranslate"><span class="pre">PartitionIterator.create_new_alias()</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="#custom_tools.partition_iterator_state_based.PartitionIterator.create_cartographic_partitions"><code class="docutils literal notranslate"><span class="pre">PartitionIterator.create_cartographic_partitions()</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="#custom_tools.partition_iterator_state_based.PartitionIterator.delete_feature_class"><code class="docutils literal notranslate"><span class="pre">PartitionIterator.delete_feature_class()</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="#custom_tools.partition_iterator_state_based.PartitionIterator.delete_final_outputs"><code class="docutils literal notranslate"><span class="pre">PartitionIterator.delete_final_outputs()</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="#custom_tools.partition_iterator_state_based.PartitionIterator.delete_iteration_files"><code class="docutils literal notranslate"><span class="pre">PartitionIterator.delete_iteration_files()</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="#custom_tools.partition_iterator_state_based.PartitionIterator.create_feature_class"><code class="docutils literal notranslate"><span class="pre">PartitionIterator.create_feature_class()</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="#custom_tools.partition_iterator_state_based.PartitionIterator.create_dummy_features"><code class="docutils literal notranslate"><span class="pre">PartitionIterator.create_dummy_features()</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="#custom_tools.partition_iterator_state_based.PartitionIterator.initialize_dummy_used"><code class="docutils literal notranslate"><span class="pre">PartitionIterator.initialize_dummy_used()</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="#custom_tools.partition_iterator_state_based.PartitionIterator.reset_dummy_used"><code class="docutils literal notranslate"><span class="pre">PartitionIterator.reset_dummy_used()</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="#custom_tools.partition_iterator_state_based.PartitionIterator.update_empty_alias_type_with_dummy_file"><code class="docutils literal notranslate"><span class="pre">PartitionIterator.update_empty_alias_type_with_dummy_file()</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="#custom_tools.partition_iterator_state_based.PartitionIterator.create_directory_json_documentation"><code class="docutils literal notranslate"><span class="pre">PartitionIterator.create_directory_json_documentation()</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="#custom_tools.partition_iterator_state_based.PartitionIterator.write_data_to_json"><code class="docutils literal notranslate"><span class="pre">PartitionIterator.write_data_to_json()</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="#custom_tools.partition_iterator_state_based.PartitionIterator.export_dictionaries_to_json"><code class="docutils literal notranslate"><span class="pre">PartitionIterator.export_dictionaries_to_json()</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="#custom_tools.partition_iterator_state_based.PartitionIterator.generate_unique_field_name"><code class="docutils literal notranslate"><span class="pre">PartitionIterator.generate_unique_field_name()</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="#custom_tools.partition_iterator_state_based.PartitionIterator.find_maximum_object_id"><code class="docutils literal notranslate"><span class="pre">PartitionIterator.find_maximum_object_id()</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="#custom_tools.partition_iterator_state_based.PartitionIterator.prepare_input_data"><code class="docutils literal notranslate"><span class="pre">PartitionIterator.prepare_input_data()</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="#custom_tools.partition_iterator_state_based.PartitionIterator.custom_function"><code class="docutils literal notranslate"><span class="pre">PartitionIterator.custom_function()</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="#custom_tools.partition_iterator_state_based.PartitionIterator.select_partition_feature"><code class="docutils literal notranslate"><span class="pre">PartitionIterator.select_partition_feature()</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="#custom_tools.partition_iterator_state_based.PartitionIterator.process_input_features"><code class="docutils literal notranslate"><span class="pre">PartitionIterator.process_input_features()</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="#custom_tools.partition_iterator_state_based.PartitionIterator.process_context_features"><code class="docutils literal notranslate"><span class="pre">PartitionIterator.process_context_features()</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="#custom_tools.partition_iterator_state_based.PartitionIterator.append_iteration_to_final"><code class="docutils literal notranslate"><span class="pre">PartitionIterator.append_iteration_to_final()</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="#custom_tools.partition_iterator_state_based.PartitionIterator.partition_iteration"><code class="docutils literal notranslate"><span class="pre">PartitionIterator.partition_iteration()</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="#custom_tools.partition_iterator_state_based.PartitionIterator.run"><code class="docutils literal notranslate"><span class="pre">PartitionIterator.run()</span></code></a></li>
-</ul>
-</li>
-</ul>
-</li>
-<li class="toctree-l2"><a class="reference internal" href="#custom-tools-polygon-processor-module">custom_tools.polygon_processor module</a></li>
-<li class="toctree-l2"><a class="reference internal" href="#module-custom_tools.print_logger">custom_tools.print_logger module</a><ul>
-<li class="toctree-l3"><a class="reference internal" href="#custom_tools.print_logger.LogPath"><code class="docutils literal notranslate"><span class="pre">LogPath</span></code></a><ul>
-<li class="toctree-l4"><a class="reference internal" href="#custom_tools.print_logger.LogPath.N100Building"><code class="docutils literal notranslate"><span class="pre">LogPath.N100Building</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="#custom_tools.print_logger.LogPath.N100River"><code class="docutils literal notranslate"><span class="pre">LogPath.N100River</span></code></a></li>
-</ul>
-</li>
-<li class="toctree-l3"><a class="reference internal" href="#custom_tools.print_logger.setup_logger"><code class="docutils literal notranslate"><span class="pre">setup_logger()</span></code></a></li>
-</ul>
-</li>
-<li class="toctree-l2"><a class="reference internal" href="#module-custom_tools.table_mangement">custom_tools.table_mangement module</a></li>
-<li class="toctree-l2"><a class="reference internal" href="#module-custom_tools.timing_decorator">custom_tools.timing_decorator module</a><ul>
-<li class="toctree-l3"><a class="reference internal" href="#custom_tools.timing_decorator.timing_decorator"><code class="docutils literal notranslate"><span class="pre">timing_decorator()</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="#custom_tools.timing_decorator.format_time"><code class="docutils literal notranslate"><span class="pre">format_time()</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="#custom_tools.timing_decorator.log_to_console_and_file"><code class="docutils literal notranslate"><span class="pre">log_to_console_and_file()</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="#custom_tools.timing_decorator.log_to_console"><code class="docutils literal notranslate"><span class="pre">log_to_console()</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="#custom_tools.timing_decorator.log_to_file"><code class="docutils literal notranslate"><span class="pre">log_to_file()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#subpackages">Subpackages</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="custom_tools.decorators.html">custom_tools.decorators package</a></li>
+<li class="toctree-l3"><a class="reference internal" href="custom_tools.development_tools.html">custom_tools.development_tools package</a></li>
+<li class="toctree-l3"><a class="reference internal" href="custom_tools.general_tools.html">custom_tools.general_tools package</a></li>
+<li class="toctree-l3"><a class="reference internal" href="custom_tools.generalization_tools.html">custom_tools.generalization_tools package</a></li>
 </ul>
 </li>
 <li class="toctree-l2"><a class="reference internal" href="#module-custom_tools">Module contents</a></li>
@@ -197,691 +91,110 @@
              
   <section id="custom-tools-package">
 <h1>custom_tools package<a class="headerlink" href="#custom-tools-package" title="Link to this heading"></a></h1>
-<section id="submodules">
-<h2>Submodules<a class="headerlink" href="#submodules" title="Link to this heading"></a></h2>
-</section>
-<section id="module-custom_tools.compare_feature_classes">
-<span id="custom-tools-compare-feature-classes-module"></span><h2>custom_tools.compare_feature_classes module<a class="headerlink" href="#module-custom_tools.compare_feature_classes" title="Link to this heading"></a></h2>
-<dl class="py function">
-<dt class="sig sig-object py" id="custom_tools.compare_feature_classes.compare_feature_classes">
-<span class="sig-prename descclassname"><span class="pre">custom_tools.compare_feature_classes.</span></span><span class="sig-name descname"><span class="pre">compare_feature_classes</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">feature_class_1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">feature_class_2</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/custom_tools/compare_feature_classes.html#compare_feature_classes"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#custom_tools.compare_feature_classes.compare_feature_classes" title="Link to this definition"></a></dt>
-<dd></dd></dl>
-
-</section>
-<section id="module-custom_tools.custom_arcpy">
-<span id="custom-tools-custom-arcpy-module"></span><h2>custom_tools.custom_arcpy module<a class="headerlink" href="#module-custom_tools.custom_arcpy" title="Link to this heading"></a></h2>
-<dl class="py class">
-<dt class="sig sig-object py" id="custom_tools.custom_arcpy.SelectionType">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">custom_tools.custom_arcpy.</span></span><span class="sig-name descname"><span class="pre">SelectionType</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">value</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">names=&lt;not</span> <span class="pre">given&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">*values</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">module=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">qualname=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">type=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">start=1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">boundary=None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/custom_tools/custom_arcpy.html#SelectionType"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#custom_tools.custom_arcpy.SelectionType" title="Link to this definition"></a></dt>
-<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">Enum</span></code></p>
-<dl class="simple">
-<dt>Summary:</dt><dd><p>Enum class that holds the strings for the selection types.</p>
-</dd>
-</dl>
-<dl class="py attribute">
-<dt class="sig sig-object py" id="custom_tools.custom_arcpy.SelectionType.NEW_SELECTION">
-<span class="sig-name descname"><span class="pre">NEW_SELECTION</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'NEW_SELECTION'</span></em><a class="headerlink" href="#custom_tools.custom_arcpy.SelectionType.NEW_SELECTION" title="Link to this definition"></a></dt>
-<dd></dd></dl>
-
-<dl class="py attribute">
-<dt class="sig sig-object py" id="custom_tools.custom_arcpy.SelectionType.ADD_TO_SELECTION">
-<span class="sig-name descname"><span class="pre">ADD_TO_SELECTION</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'ADD_TO_SELECTION'</span></em><a class="headerlink" href="#custom_tools.custom_arcpy.SelectionType.ADD_TO_SELECTION" title="Link to this definition"></a></dt>
-<dd></dd></dl>
-
-<dl class="py attribute">
-<dt class="sig sig-object py" id="custom_tools.custom_arcpy.SelectionType.REMOVE_FROM_SELECTION">
-<span class="sig-name descname"><span class="pre">REMOVE_FROM_SELECTION</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'REMOVE_FROM_SELECTION'</span></em><a class="headerlink" href="#custom_tools.custom_arcpy.SelectionType.REMOVE_FROM_SELECTION" title="Link to this definition"></a></dt>
-<dd></dd></dl>
-
-<dl class="py attribute">
-<dt class="sig sig-object py" id="custom_tools.custom_arcpy.SelectionType.SUBSET_SELECTION">
-<span class="sig-name descname"><span class="pre">SUBSET_SELECTION</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'SUBSET_SELECTION'</span></em><a class="headerlink" href="#custom_tools.custom_arcpy.SelectionType.SUBSET_SELECTION" title="Link to this definition"></a></dt>
-<dd></dd></dl>
-
-<dl class="py attribute">
-<dt class="sig sig-object py" id="custom_tools.custom_arcpy.SelectionType.SWITCH_SELECTION">
-<span class="sig-name descname"><span class="pre">SWITCH_SELECTION</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'SWITCH_SELECTION'</span></em><a class="headerlink" href="#custom_tools.custom_arcpy.SelectionType.SWITCH_SELECTION" title="Link to this definition"></a></dt>
-<dd></dd></dl>
-
-<dl class="py attribute">
-<dt class="sig sig-object py" id="custom_tools.custom_arcpy.SelectionType.CLEAR_SELECTION">
-<span class="sig-name descname"><span class="pre">CLEAR_SELECTION</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'CLEAR_SELECTION'</span></em><a class="headerlink" href="#custom_tools.custom_arcpy.SelectionType.CLEAR_SELECTION" title="Link to this definition"></a></dt>
-<dd></dd></dl>
-
-</dd></dl>
-
-<dl class="py class">
-<dt class="sig sig-object py" id="custom_tools.custom_arcpy.OverlapType">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">custom_tools.custom_arcpy.</span></span><span class="sig-name descname"><span class="pre">OverlapType</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">value</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">names=&lt;not</span> <span class="pre">given&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">*values</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">module=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">qualname=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">type=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">start=1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">boundary=None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/custom_tools/custom_arcpy.html#OverlapType"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#custom_tools.custom_arcpy.OverlapType" title="Link to this definition"></a></dt>
-<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">Enum</span></code></p>
-<dl class="simple">
-<dt>Summary:</dt><dd><p>Enum class that holds the strings for overlap types for select by location.</p>
-</dd>
-</dl>
-<dl class="py attribute">
-<dt class="sig sig-object py" id="custom_tools.custom_arcpy.OverlapType.INTERSECT">
-<span class="sig-name descname"><span class="pre">INTERSECT</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'INTERSECT'</span></em><a class="headerlink" href="#custom_tools.custom_arcpy.OverlapType.INTERSECT" title="Link to this definition"></a></dt>
-<dd></dd></dl>
-
-<dl class="py attribute">
-<dt class="sig sig-object py" id="custom_tools.custom_arcpy.OverlapType.INTERSECT_3D">
-<span class="sig-name descname"><span class="pre">INTERSECT_3D</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'INTERSECT_3D'</span></em><a class="headerlink" href="#custom_tools.custom_arcpy.OverlapType.INTERSECT_3D" title="Link to this definition"></a></dt>
-<dd></dd></dl>
-
-<dl class="py attribute">
-<dt class="sig sig-object py" id="custom_tools.custom_arcpy.OverlapType.INTERSECT_DBMS">
-<span class="sig-name descname"><span class="pre">INTERSECT_DBMS</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'INTERSECT_DBMS'</span></em><a class="headerlink" href="#custom_tools.custom_arcpy.OverlapType.INTERSECT_DBMS" title="Link to this definition"></a></dt>
-<dd></dd></dl>
-
-<dl class="py attribute">
-<dt class="sig sig-object py" id="custom_tools.custom_arcpy.OverlapType.WITHIN_A_DISTANCE">
-<span class="sig-name descname"><span class="pre">WITHIN_A_DISTANCE</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'WITHIN_A_DISTANCE'</span></em><a class="headerlink" href="#custom_tools.custom_arcpy.OverlapType.WITHIN_A_DISTANCE" title="Link to this definition"></a></dt>
-<dd></dd></dl>
-
-<dl class="py attribute">
-<dt class="sig sig-object py" id="custom_tools.custom_arcpy.OverlapType.WITHIN_A_DISTANCE_3D">
-<span class="sig-name descname"><span class="pre">WITHIN_A_DISTANCE_3D</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'WITHIN_A_DISTANCE_3D'</span></em><a class="headerlink" href="#custom_tools.custom_arcpy.OverlapType.WITHIN_A_DISTANCE_3D" title="Link to this definition"></a></dt>
-<dd></dd></dl>
-
-<dl class="py attribute">
-<dt class="sig sig-object py" id="custom_tools.custom_arcpy.OverlapType.WITHIN_A_DISTANCE_GEODESIC">
-<span class="sig-name descname"><span class="pre">WITHIN_A_DISTANCE_GEODESIC</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'WITHIN_A_DISTANCE_GEODESIC'</span></em><a class="headerlink" href="#custom_tools.custom_arcpy.OverlapType.WITHIN_A_DISTANCE_GEODESIC" title="Link to this definition"></a></dt>
-<dd></dd></dl>
-
-<dl class="py attribute">
-<dt class="sig sig-object py" id="custom_tools.custom_arcpy.OverlapType.CONTAINS">
-<span class="sig-name descname"><span class="pre">CONTAINS</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'CONTAINS'</span></em><a class="headerlink" href="#custom_tools.custom_arcpy.OverlapType.CONTAINS" title="Link to this definition"></a></dt>
-<dd></dd></dl>
-
-<dl class="py attribute">
-<dt class="sig sig-object py" id="custom_tools.custom_arcpy.OverlapType.COMPLETELY_CONTAINS">
-<span class="sig-name descname"><span class="pre">COMPLETELY_CONTAINS</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'COMPLETELY_CONTAINS'</span></em><a class="headerlink" href="#custom_tools.custom_arcpy.OverlapType.COMPLETELY_CONTAINS" title="Link to this definition"></a></dt>
-<dd></dd></dl>
-
-<dl class="py attribute">
-<dt class="sig sig-object py" id="custom_tools.custom_arcpy.OverlapType.CONTAINS_CLEMENTINI">
-<span class="sig-name descname"><span class="pre">CONTAINS_CLEMENTINI</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'CONTAINS_CLEMENTINI'</span></em><a class="headerlink" href="#custom_tools.custom_arcpy.OverlapType.CONTAINS_CLEMENTINI" title="Link to this definition"></a></dt>
-<dd></dd></dl>
-
-<dl class="py attribute">
-<dt class="sig sig-object py" id="custom_tools.custom_arcpy.OverlapType.WITHIN">
-<span class="sig-name descname"><span class="pre">WITHIN</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'WITHIN'</span></em><a class="headerlink" href="#custom_tools.custom_arcpy.OverlapType.WITHIN" title="Link to this definition"></a></dt>
-<dd></dd></dl>
-
-<dl class="py attribute">
-<dt class="sig sig-object py" id="custom_tools.custom_arcpy.OverlapType.COMPLETELY_WITHIN">
-<span class="sig-name descname"><span class="pre">COMPLETELY_WITHIN</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'COMPLETELY_WITHIN'</span></em><a class="headerlink" href="#custom_tools.custom_arcpy.OverlapType.COMPLETELY_WITHIN" title="Link to this definition"></a></dt>
-<dd></dd></dl>
-
-<dl class="py attribute">
-<dt class="sig sig-object py" id="custom_tools.custom_arcpy.OverlapType.WITHIN_CLEMENTINI">
-<span class="sig-name descname"><span class="pre">WITHIN_CLEMENTINI</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'WITHIN_CLEMENTINI'</span></em><a class="headerlink" href="#custom_tools.custom_arcpy.OverlapType.WITHIN_CLEMENTINI" title="Link to this definition"></a></dt>
-<dd></dd></dl>
-
-<dl class="py attribute">
-<dt class="sig sig-object py" id="custom_tools.custom_arcpy.OverlapType.ARE_IDENTICAL_TO">
-<span class="sig-name descname"><span class="pre">ARE_IDENTICAL_TO</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'ARE_IDENTICAL_TO'</span></em><a class="headerlink" href="#custom_tools.custom_arcpy.OverlapType.ARE_IDENTICAL_TO" title="Link to this definition"></a></dt>
-<dd></dd></dl>
-
-<dl class="py attribute">
-<dt class="sig sig-object py" id="custom_tools.custom_arcpy.OverlapType.BOUNDARY_TOUCHES">
-<span class="sig-name descname"><span class="pre">BOUNDARY_TOUCHES</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'BOUNDARY_TOUCHES'</span></em><a class="headerlink" href="#custom_tools.custom_arcpy.OverlapType.BOUNDARY_TOUCHES" title="Link to this definition"></a></dt>
-<dd></dd></dl>
-
-<dl class="py attribute">
-<dt class="sig sig-object py" id="custom_tools.custom_arcpy.OverlapType.SHARE_A_LINE_SEGMENT_WITH">
-<span class="sig-name descname"><span class="pre">SHARE_A_LINE_SEGMENT_WITH</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'SHARE_A_LINE_SEGMENT_WITH'</span></em><a class="headerlink" href="#custom_tools.custom_arcpy.OverlapType.SHARE_A_LINE_SEGMENT_WITH" title="Link to this definition"></a></dt>
-<dd></dd></dl>
-
-<dl class="py attribute">
-<dt class="sig sig-object py" id="custom_tools.custom_arcpy.OverlapType.CROSSED_BY_THE_OUTLINE_OF">
-<span class="sig-name descname"><span class="pre">CROSSED_BY_THE_OUTLINE_OF</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'CROSSED_BY_THE_OUTLINE_OF'</span></em><a class="headerlink" href="#custom_tools.custom_arcpy.OverlapType.CROSSED_BY_THE_OUTLINE_OF" title="Link to this definition"></a></dt>
-<dd></dd></dl>
-
-<dl class="py attribute">
-<dt class="sig sig-object py" id="custom_tools.custom_arcpy.OverlapType.HAVE_THEIR_CENTER_IN">
-<span class="sig-name descname"><span class="pre">HAVE_THEIR_CENTER_IN</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'HAVE_THEIR_CENTER_IN'</span></em><a class="headerlink" href="#custom_tools.custom_arcpy.OverlapType.HAVE_THEIR_CENTER_IN" title="Link to this definition"></a></dt>
-<dd></dd></dl>
-
-</dd></dl>
-
-<dl class="py function">
-<dt class="sig sig-object py" id="custom_tools.custom_arcpy.resolve_enum">
-<span class="sig-prename descclassname"><span class="pre">custom_tools.custom_arcpy.</span></span><span class="sig-name descname"><span class="pre">resolve_enum</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">enum_class</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">value</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/custom_tools/custom_arcpy.html#resolve_enum"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#custom_tools.custom_arcpy.resolve_enum" title="Link to this definition"></a></dt>
-<dd><p>Resolves various types of inputs to their corresponding enum member within a specified enumeration class.</p>
-<p>This function is designed to enhance flexibility in function arguments, allowing the use of enum members,
-their string names, or their values interchangeably. This is particularly useful in scenarios where function parameters might be specified in different formats,
-ensuring compatibility and ease of use.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>enum_class</strong> (<em>Enum</em>) – The enumeration class to which the value is supposed to belong.</p></li>
-<li><p><strong>value</strong> (<em>str</em><em>, </em><em>Enum</em><em>, or </em><em>any</em>) – The input value to resolve. This can be the enum member itself, its string name,</p></li>
-<li><p><strong>gracefully.</strong> (<em>or its associated value. The function is designed to handle these various formats</em>)</p></li>
+<section id="subpackages">
+<h2>Subpackages<a class="headerlink" href="#subpackages" title="Link to this heading"></a></h2>
+<div class="toctree-wrapper compound">
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="custom_tools.decorators.html">custom_tools.decorators package</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="custom_tools.decorators.html#submodules">Submodules</a></li>
+<li class="toctree-l2"><a class="reference internal" href="custom_tools.decorators.html#module-custom_tools.decorators.partition_io_decorator">custom_tools.decorators.partition_io_decorator module</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="custom_tools.decorators.html#custom_tools.decorators.partition_io_decorator.partition_io_decorator"><code class="docutils literal notranslate"><span class="pre">partition_io_decorator()</span></code></a></li>
 </ul>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="py function">
-<dt class="sig sig-object py" id="custom_tools.custom_arcpy.select_attribute_and_make_feature_layer">
-<span class="sig-prename descclassname"><span class="pre">custom_tools.custom_arcpy.</span></span><span class="sig-name descname"><span class="pre">select_attribute_and_make_feature_layer</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">input_layer</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">expression</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">output_name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">selection_type</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'NEW_SELECTION'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">inverted</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/custom_tools/custom_arcpy.html#select_attribute_and_make_feature_layer"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#custom_tools.custom_arcpy.select_attribute_and_make_feature_layer" title="Link to this definition"></a></dt>
-<dd><dl class="simple">
-<dt>Summary:</dt><dd><p>Selects features based on an attribute query and creates a new feature layer with the selected features.</p>
-</dd>
-<dt>Details:</dt><dd><ul class="simple">
-<li><p>A temporary feature layer is created from the <cite>input_layer</cite>.</p></li>
-<li><p>The selection type, defined by <cite>selection_type</cite>, is applied to this layer.</p></li>
-<li><p>The selected features are stored in a new temporary feature layer</p></li>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="custom_tools.decorators.html#module-custom_tools.decorators.timing_decorator">custom_tools.decorators.timing_decorator module</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="custom_tools.decorators.html#custom_tools.decorators.timing_decorator.timing_decorator"><code class="docutils literal notranslate"><span class="pre">timing_decorator()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="custom_tools.decorators.html#custom_tools.decorators.timing_decorator.format_time"><code class="docutils literal notranslate"><span class="pre">format_time()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="custom_tools.decorators.html#custom_tools.decorators.timing_decorator.log_to_console_and_file"><code class="docutils literal notranslate"><span class="pre">log_to_console_and_file()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="custom_tools.decorators.html#custom_tools.decorators.timing_decorator.log_to_console"><code class="docutils literal notranslate"><span class="pre">log_to_console()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="custom_tools.decorators.html#custom_tools.decorators.timing_decorator.log_to_file"><code class="docutils literal notranslate"><span class="pre">log_to_file()</span></code></a></li>
 </ul>
-</dd>
-</dl>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>input_layer</strong> (<em>str</em>) – The path or name of the input feature layer.</p></li>
-<li><p><strong>expression</strong> (<em>str</em>) – The SQL expression for selecting features.</p></li>
-<li><p><strong>output_name</strong> (<em>str</em>) – The name of the output feature layer.</p></li>
-<li><p><strong>selection_type</strong> (<em>str</em><em>, </em><em>optional</em>) – Type of selection (e.g., “NEW_SELECTION”). Defaults to “NEW_SELECTION”.</p></li>
-<li><p><strong>inverted</strong> (<em>bool</em><em>, </em><em>optional</em>) – If True, inverts the selection. Defaults to False.</p></li>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="custom_tools.decorators.html#module-custom_tools.decorators">Module contents</a></li>
 </ul>
-</dd>
-</dl>
-<p class="rubric">Example</p>
-<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">custom_arcpy</span><span class="o">.</span><span class="n">select_attribute_and_make_feature_layer</span><span class="p">(</span>
-<span class="gp">... </span>    <span class="n">input_layer</span><span class="o">=</span><span class="n">input_n100</span><span class="o">.</span><span class="n">ArealdekkeFlate</span><span class="p">,</span>
-<span class="gp">... </span>    <span class="n">expression</span><span class="o">=</span><span class="n">urban_areas_sql_expr</span><span class="p">,</span>
-<span class="gp">... </span>    <span class="n">output_name</span><span class="o">=</span><span class="n">Building_N100</span><span class="o">.</span><span class="n">data_preparation___urban_area_selection_n100___n100_building</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
-<span class="gp">... </span><span class="p">)</span>
-<span class="go">&#39;Building_N100.adding_matrikkel_as_points__urban_area_selection_n100__n100&#39; created temporarily.</span>
-</pre></div>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="custom_tools.development_tools.html">custom_tools.development_tools package</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="custom_tools.development_tools.html#submodules">Submodules</a></li>
+<li class="toctree-l2"><a class="reference internal" href="custom_tools.development_tools.html#custom-tools-development-tools-gpt-file-path-masker-module">custom_tools.development_tools.gpt_file_path_masker module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="custom_tools.development_tools.html#module-custom_tools.development_tools">Module contents</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="custom_tools.general_tools.html">custom_tools.general_tools package</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="custom_tools.general_tools.html#submodules">Submodules</a></li>
+<li class="toctree-l2"><a class="reference internal" href="custom_tools.general_tools.html#module-custom_tools.general_tools.custom_arcpy">custom_tools.general_tools.custom_arcpy module</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="custom_tools.general_tools.html#custom_tools.general_tools.custom_arcpy.SelectionType"><code class="docutils literal notranslate"><span class="pre">SelectionType</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="custom_tools.general_tools.html#custom_tools.general_tools.custom_arcpy.SelectionType.NEW_SELECTION"><code class="docutils literal notranslate"><span class="pre">SelectionType.NEW_SELECTION</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="custom_tools.general_tools.html#custom_tools.general_tools.custom_arcpy.SelectionType.ADD_TO_SELECTION"><code class="docutils literal notranslate"><span class="pre">SelectionType.ADD_TO_SELECTION</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="custom_tools.general_tools.html#custom_tools.general_tools.custom_arcpy.SelectionType.REMOVE_FROM_SELECTION"><code class="docutils literal notranslate"><span class="pre">SelectionType.REMOVE_FROM_SELECTION</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="custom_tools.general_tools.html#custom_tools.general_tools.custom_arcpy.SelectionType.SUBSET_SELECTION"><code class="docutils literal notranslate"><span class="pre">SelectionType.SUBSET_SELECTION</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="custom_tools.general_tools.html#custom_tools.general_tools.custom_arcpy.SelectionType.SWITCH_SELECTION"><code class="docutils literal notranslate"><span class="pre">SelectionType.SWITCH_SELECTION</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="custom_tools.general_tools.html#custom_tools.general_tools.custom_arcpy.SelectionType.CLEAR_SELECTION"><code class="docutils literal notranslate"><span class="pre">SelectionType.CLEAR_SELECTION</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="custom_tools.general_tools.html#custom_tools.general_tools.custom_arcpy.OverlapType"><code class="docutils literal notranslate"><span class="pre">OverlapType</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="custom_tools.general_tools.html#custom_tools.general_tools.custom_arcpy.OverlapType.INTERSECT"><code class="docutils literal notranslate"><span class="pre">OverlapType.INTERSECT</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="custom_tools.general_tools.html#custom_tools.general_tools.custom_arcpy.OverlapType.INTERSECT_3D"><code class="docutils literal notranslate"><span class="pre">OverlapType.INTERSECT_3D</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="custom_tools.general_tools.html#custom_tools.general_tools.custom_arcpy.OverlapType.INTERSECT_DBMS"><code class="docutils literal notranslate"><span class="pre">OverlapType.INTERSECT_DBMS</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="custom_tools.general_tools.html#custom_tools.general_tools.custom_arcpy.OverlapType.WITHIN_A_DISTANCE"><code class="docutils literal notranslate"><span class="pre">OverlapType.WITHIN_A_DISTANCE</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="custom_tools.general_tools.html#custom_tools.general_tools.custom_arcpy.OverlapType.WITHIN_A_DISTANCE_3D"><code class="docutils literal notranslate"><span class="pre">OverlapType.WITHIN_A_DISTANCE_3D</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="custom_tools.general_tools.html#custom_tools.general_tools.custom_arcpy.OverlapType.WITHIN_A_DISTANCE_GEODESIC"><code class="docutils literal notranslate"><span class="pre">OverlapType.WITHIN_A_DISTANCE_GEODESIC</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="custom_tools.general_tools.html#custom_tools.general_tools.custom_arcpy.OverlapType.CONTAINS"><code class="docutils literal notranslate"><span class="pre">OverlapType.CONTAINS</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="custom_tools.general_tools.html#custom_tools.general_tools.custom_arcpy.OverlapType.COMPLETELY_CONTAINS"><code class="docutils literal notranslate"><span class="pre">OverlapType.COMPLETELY_CONTAINS</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="custom_tools.general_tools.html#custom_tools.general_tools.custom_arcpy.OverlapType.CONTAINS_CLEMENTINI"><code class="docutils literal notranslate"><span class="pre">OverlapType.CONTAINS_CLEMENTINI</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="custom_tools.general_tools.html#custom_tools.general_tools.custom_arcpy.OverlapType.WITHIN"><code class="docutils literal notranslate"><span class="pre">OverlapType.WITHIN</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="custom_tools.general_tools.html#custom_tools.general_tools.custom_arcpy.OverlapType.COMPLETELY_WITHIN"><code class="docutils literal notranslate"><span class="pre">OverlapType.COMPLETELY_WITHIN</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="custom_tools.general_tools.html#custom_tools.general_tools.custom_arcpy.OverlapType.WITHIN_CLEMENTINI"><code class="docutils literal notranslate"><span class="pre">OverlapType.WITHIN_CLEMENTINI</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="custom_tools.general_tools.html#custom_tools.general_tools.custom_arcpy.OverlapType.ARE_IDENTICAL_TO"><code class="docutils literal notranslate"><span class="pre">OverlapType.ARE_IDENTICAL_TO</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="custom_tools.general_tools.html#custom_tools.general_tools.custom_arcpy.OverlapType.BOUNDARY_TOUCHES"><code class="docutils literal notranslate"><span class="pre">OverlapType.BOUNDARY_TOUCHES</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="custom_tools.general_tools.html#custom_tools.general_tools.custom_arcpy.OverlapType.SHARE_A_LINE_SEGMENT_WITH"><code class="docutils literal notranslate"><span class="pre">OverlapType.SHARE_A_LINE_SEGMENT_WITH</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="custom_tools.general_tools.html#custom_tools.general_tools.custom_arcpy.OverlapType.CROSSED_BY_THE_OUTLINE_OF"><code class="docutils literal notranslate"><span class="pre">OverlapType.CROSSED_BY_THE_OUTLINE_OF</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="custom_tools.general_tools.html#custom_tools.general_tools.custom_arcpy.OverlapType.HAVE_THEIR_CENTER_IN"><code class="docutils literal notranslate"><span class="pre">OverlapType.HAVE_THEIR_CENTER_IN</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="custom_tools.general_tools.html#custom_tools.general_tools.custom_arcpy.resolve_enum"><code class="docutils literal notranslate"><span class="pre">resolve_enum()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="custom_tools.general_tools.html#custom_tools.general_tools.custom_arcpy.select_attribute_and_make_feature_layer"><code class="docutils literal notranslate"><span class="pre">select_attribute_and_make_feature_layer()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="custom_tools.general_tools.html#custom_tools.general_tools.custom_arcpy.select_attribute_and_make_permanent_feature"><code class="docutils literal notranslate"><span class="pre">select_attribute_and_make_permanent_feature()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="custom_tools.general_tools.html#custom_tools.general_tools.custom_arcpy.select_location_and_make_feature_layer"><code class="docutils literal notranslate"><span class="pre">select_location_and_make_feature_layer()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="custom_tools.general_tools.html#custom_tools.general_tools.custom_arcpy.select_location_and_make_permanent_feature"><code class="docutils literal notranslate"><span class="pre">select_location_and_make_permanent_feature()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="custom_tools.general_tools.html#custom_tools.general_tools.custom_arcpy.apply_symbology"><code class="docutils literal notranslate"><span class="pre">apply_symbology()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="custom_tools.general_tools.html#module-custom_tools.general_tools.file_utilities">custom_tools.general_tools.file_utilities module</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="custom_tools.general_tools.html#custom_tools.general_tools.file_utilities.FeatureClassCreator"><code class="docutils literal notranslate"><span class="pre">FeatureClassCreator</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="custom_tools.general_tools.html#custom_tools.general_tools.file_utilities.FeatureClassCreator.run"><code class="docutils literal notranslate"><span class="pre">FeatureClassCreator.run()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="custom_tools.general_tools.html#custom_tools.general_tools.file_utilities.compare_feature_classes"><code class="docutils literal notranslate"><span class="pre">compare_feature_classes()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="custom_tools.general_tools.html#module-custom_tools.general_tools.geometry_tools">custom_tools.general_tools.geometry_tools module</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="custom_tools.general_tools.html#custom_tools.general_tools.geometry_tools.RemovePolygonIslands"><code class="docutils literal notranslate"><span class="pre">RemovePolygonIslands</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="custom_tools.general_tools.html#custom_tools.general_tools.geometry_tools.RemovePolygonIslands.remove_islands"><code class="docutils literal notranslate"><span class="pre">RemovePolygonIslands.remove_islands()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="custom_tools.general_tools.html#custom_tools.general_tools.geometry_tools.remove_polygon_islands"><code class="docutils literal notranslate"><span class="pre">remove_polygon_islands()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="custom_tools.general_tools.html#module-custom_tools.general_tools.line_to_buffer_symbology">custom_tools.general_tools.line_to_buffer_symbology module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="custom_tools.general_tools.html#custom-tools-general-tools-partition-iterator-module">custom_tools.general_tools.partition_iterator module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="custom_tools.general_tools.html#custom-tools-general-tools-polygon-processor-module">custom_tools.general_tools.polygon_processor module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="custom_tools.general_tools.html#module-custom_tools.general_tools.print_logger">custom_tools.general_tools.print_logger module</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="custom_tools.general_tools.html#custom_tools.general_tools.print_logger.LogPath"><code class="docutils literal notranslate"><span class="pre">LogPath</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="custom_tools.general_tools.html#custom_tools.general_tools.print_logger.LogPath.N100Building"><code class="docutils literal notranslate"><span class="pre">LogPath.N100Building</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="custom_tools.general_tools.html#custom_tools.general_tools.print_logger.LogPath.N100River"><code class="docutils literal notranslate"><span class="pre">LogPath.N100River</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="custom_tools.general_tools.html#custom_tools.general_tools.print_logger.setup_logger"><code class="docutils literal notranslate"><span class="pre">setup_logger()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="custom_tools.general_tools.html#module-custom_tools.general_tools">Module contents</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="custom_tools.generalization_tools.html">custom_tools.generalization_tools package</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="custom_tools.generalization_tools.html#module-custom_tools.generalization_tools">Module contents</a></li>
+</ul>
+</li>
+</ul>
 </div>
-</dd></dl>
-
-<dl class="py function">
-<dt class="sig sig-object py" id="custom_tools.custom_arcpy.select_attribute_and_make_permanent_feature">
-<span class="sig-prename descclassname"><span class="pre">custom_tools.custom_arcpy.</span></span><span class="sig-name descname"><span class="pre">select_attribute_and_make_permanent_feature</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">input_layer</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">expression</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">output_name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">selection_type</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'NEW_SELECTION'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">inverted</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/custom_tools/custom_arcpy.html#select_attribute_and_make_permanent_feature"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#custom_tools.custom_arcpy.select_attribute_and_make_permanent_feature" title="Link to this definition"></a></dt>
-<dd><dl class="simple">
-<dt>Summary:</dt><dd><p>Selects features based on an attribute query and creates a new feature layer,
-then stores the selected features permanently in the specified output feature class.</p>
-</dd>
-<dt>Details:</dt><dd><ul class="simple">
-<li><p>A temporary feature layer is created from the <cite>input_layer</cite>.</p></li>
-<li><p>The <cite>selection_type</cite> determines how the selection is applied to this layer. If <cite>inverted</cite> is True, the selection is inverted.</p></li>
-<li><p>The selection is done on the feature layer using the <cite>expression</cite>.</p></li>
-<li><p>The selected features are stored permanently in a new feature class specified by <cite>output_name</cite> using copy features.</p></li>
-</ul>
-</dd>
-</dl>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>input_layer</strong> (<em>str</em>) – The path or name of the input feature layer for selection.</p></li>
-<li><p><strong>expression</strong> (<em>str</em>) – The SQL expression used for selecting features.</p></li>
-<li><p><strong>output_name</strong> (<em>str</em>) – The name for the new, permanent output feature class.</p></li>
-<li><p><strong>selection_type</strong> (<em>str</em><em>, </em><em>optional</em>) – Specifies the type of selection. Defaults to “NEW_SELECTION”.</p></li>
-<li><p><strong>inverted</strong> (<em>bool</em><em>, </em><em>optional</em>) – If set to True, inverts the selection. Defaults to False.</p></li>
-</ul>
-</dd>
-</dl>
-<p class="rubric">Example</p>
-<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">custom_arcpy</span><span class="o">.</span><span class="n">select_attribute_and_make_permanent_feature</span><span class="p">(</span>
-<span class="gp">... </span>    <span class="n">input_layer</span><span class="o">=</span><span class="n">input_n100</span><span class="o">.</span><span class="n">ArealdekkeFlate</span><span class="p">,</span>
-<span class="gp">... </span>    <span class="n">expression</span><span class="o">=</span><span class="n">urban_areas_sql_expr</span><span class="p">,</span>
-<span class="gp">... </span>    <span class="n">output_name</span><span class="o">=</span><span class="n">Building_N100</span><span class="o">.</span><span class="n">adding_matrikkel_as_points__urban_area_selection_n100__permanent</span><span class="p">,</span>
-<span class="gp">... </span><span class="p">)</span>
-<span class="go">&#39;Building_N100.adding_matrikkel_as_points__urban_area_selection_n100__permanent&#39; created permanently.</span>
-</pre></div>
-</div>
-</dd></dl>
-
-<dl class="py function">
-<dt class="sig sig-object py" id="custom_tools.custom_arcpy.select_location_and_make_feature_layer">
-<span class="sig-prename descclassname"><span class="pre">custom_tools.custom_arcpy.</span></span><span class="sig-name descname"><span class="pre">select_location_and_make_feature_layer</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">input_layer</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">overlap_type</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">select_features</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">output_name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">selection_type</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">SelectionType.NEW_SELECTION</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">inverted</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">search_distance</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/custom_tools/custom_arcpy.html#select_location_and_make_feature_layer"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#custom_tools.custom_arcpy.select_location_and_make_feature_layer" title="Link to this definition"></a></dt>
-<dd><dl class="simple">
-<dt>Summary:</dt><dd><p>Selects features based from the input layer based on their spatial relationship to the selection features
-and creates a new, temporary feature layer as an output.</p>
-</dd>
-<dt>Details:</dt><dd><ul class="simple">
-<li><p>Creates a feature layer from the <cite>input_layer</cite>.</p></li>
-<li><p>Depending on the <cite>overlap_type</cite>, features in <cite>input_layer</cite> that spatially relate to <cite>select_features</cite> are selected.</p></li>
-<li><p>If <cite>overlap_type</cite> requires a <cite>search_distance</cite> and it is provided, the distance is used in the selection.</p></li>
-<li><p>The selection can be inverted if <cite>inverted</cite> is set to True.</p></li>
-<li><p>The selected features are stored in a new temporary feature layer named <cite>output_name</cite>.</p></li>
-</ul>
-</dd>
-</dl>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>input_layer</strong> (<em>str</em>) – The path or name of the input feature layer.</p></li>
-<li><p><strong>overlap_type</strong> (<em>str</em><em> or </em><a class="reference internal" href="#custom_tools.custom_arcpy.OverlapType" title="custom_tools.custom_arcpy.OverlapType"><em>OverlapType</em></a>) – The spatial relationship type to use for selecting features.</p></li>
-<li><p><strong>select_features</strong> (<em>str</em>) – The path or name of the feature layer used to select features from the <cite>input_layer</cite>.</p></li>
-<li><p><strong>output_name</strong> (<em>str</em>) – The name of the output feature layer.</p></li>
-<li><p><strong>selection_type</strong> (<a class="reference internal" href="#custom_tools.custom_arcpy.SelectionType" title="custom_tools.custom_arcpy.SelectionType"><em>SelectionType</em></a><em>, </em><em>optional</em>) – Specifies the type of selection. Defaults to SelectionType.NEW_SELECTION.</p></li>
-<li><p><strong>inverted</strong> (<em>bool</em><em>, </em><em>optional</em>) – If True, inverts the selection. Defaults to False.</p></li>
-<li><p><strong>search_distance</strong> (<em>str</em><em>, </em><em>optional</em>) – A distance value that defines the proximity for selecting features. Required for certain <cite>overlap_type</cite> values.</p></li>
-</ul>
-</dd>
-</dl>
-<p class="rubric">Example</p>
-<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">custom_arcpy</span><span class="o">.</span><span class="n">select_location_and_make_feature_layer</span><span class="p">(</span>
-<span class="gp">... </span>    <span class="n">input_layer</span><span class="o">=</span><span class="n">Building_N100</span><span class="o">.</span><span class="n">data_preparation___polygons_that_are_large_enough___n100_building</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
-<span class="gp">... </span>    <span class="n">overlap_type</span><span class="o">=</span><span class="n">custom_arcpy</span><span class="o">.</span><span class="n">OverlapType</span><span class="o">.</span><span class="n">INTERSECT</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
-<span class="gp">... </span>    <span class="n">select_features</span><span class="o">=</span><span class="n">Building_N100</span><span class="o">.</span><span class="n">grunnriss_to_point__aggregated_polygon__n100</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
-<span class="gp">... </span>     <span class="n">output_name</span><span class="o">=</span><span class="n">Building_N100</span><span class="o">.</span><span class="n">simplify_polygons___not_intersect_aggregated_and_original_polygon___n100_building</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
-<span class="gp">... </span>    <span class="n">inverted</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
-<span class="gp">... </span><span class="p">)</span>
-<span class="go">&#39;grunnriss_to_point__intersect_aggregated_and_original__n100&#39; created temporarily.</span>
-</pre></div>
-</div>
-</dd></dl>
-
-<dl class="py function">
-<dt class="sig sig-object py" id="custom_tools.custom_arcpy.select_location_and_make_permanent_feature">
-<span class="sig-prename descclassname"><span class="pre">custom_tools.custom_arcpy.</span></span><span class="sig-name descname"><span class="pre">select_location_and_make_permanent_feature</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">input_layer</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">overlap_type</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">select_features</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">output_name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">selection_type</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">SelectionType.NEW_SELECTION</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">inverted</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">search_distance</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/custom_tools/custom_arcpy.html#select_location_and_make_permanent_feature"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#custom_tools.custom_arcpy.select_location_and_make_permanent_feature" title="Link to this definition"></a></dt>
-<dd><dl class="simple">
-<dt>Summary:</dt><dd><p>Selects features based from the input layer based on their spatial relationship to the selection features
-and creates a new, permanent feature class as an output.</p>
-</dd>
-<dt>Details:</dt><dd><ul class="simple">
-<li><p>Initiates by creating a temporary feature layer from <cite>input_layer</cite>.</p></li>
-<li><p>Applies a spatial selection based on <cite>overlap_type</cite> between the <cite>input_layer</cite> and <cite>select_features</cite>.</p></li>
-<li><p>Utilizes <cite>search_distance</cite> if required by the <cite>overlap_type</cite> and provided, to define the proximity for selection.</p></li>
-<li><p>The selection can be inverted if <cite>inverted</cite> is set to True, meaning it will select all features not meeting the spatial relationship criteria.</p></li>
-<li><p>The selected features are stored permanently in a new feature class specified by <cite>output_name</cite>.</p></li>
-<li><p>Cleans up by deleting the temporary feature layer to maintain a tidy workspace.</p></li>
-</ul>
-</dd>
-</dl>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>input_layer</strong> (<em>str</em>) – The path or name of the input feature layer.</p></li>
-<li><p><strong>overlap_type</strong> (<em>str</em><em> or </em><a class="reference internal" href="#custom_tools.custom_arcpy.OverlapType" title="custom_tools.custom_arcpy.OverlapType"><em>OverlapType</em></a>) – The type of spatial relationship to use for feature selection.</p></li>
-<li><p><strong>select_features</strong> (<em>str</em>) – The feature layer used as a reference for spatial selection.</p></li>
-<li><p><strong>output_name</strong> (<em>str</em>) – The name for the new, permanent feature class to store selected features.</p></li>
-<li><p><strong>selection_type</strong> (<a class="reference internal" href="#custom_tools.custom_arcpy.SelectionType" title="custom_tools.custom_arcpy.SelectionType"><em>SelectionType</em></a><em>, </em><em>optional</em>) – The method of selection to apply. Defaults to SelectionType.NEW_SELECTION.</p></li>
-<li><p><strong>inverted</strong> (<em>bool</em><em>, </em><em>optional</em>) – If set to True, the selection will be inverted. Defaults to False.</p></li>
-<li><p><strong>search_distance</strong> (<em>str</em><em>, </em><em>optional</em>) – The distance within which to select features, necessary for certain types of spatial selections like WITHIN_A_DISTANCE.</p></li>
-</ul>
-</dd>
-</dl>
-<p class="rubric">Example</p>
-<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">custom_arcpy</span><span class="o">.</span><span class="n">select_location_and_make_permanent_feature</span><span class="p">(</span>
-<span class="gp">... </span>    <span class="n">input_layer</span><span class="o">=</span><span class="n">Building_N100</span><span class="o">.</span><span class="n">data_preperation___waterfeatures_from_begrensningskurve_not_rivers___n100_building</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
-<span class="gp">... </span>    <span class="n">overlap_type</span><span class="o">=</span><span class="n">OverlapType</span><span class="o">.</span><span class="n">WITHIN_A_DISTANCE</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
-<span class="gp">... </span>    <span class="n">select_features</span><span class="o">=</span><span class="n">Building_N100</span><span class="o">.</span><span class="n">polygon_propogate_displacement___building_polygons_after_displacement___n100_building</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
-<span class="gp">... </span>    <span class="n">output_name</span><span class="o">=</span><span class="n">Building_N100</span><span class="o">.</span><span class="n">polygon_resolve_building_conflicts___begrensningskurve_500m_from_displaced_polygon___n100_building</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
-<span class="gp">... </span>    <span class="n">search_distance</span><span class="o">=</span><span class="s2">&quot;500 Meters&quot;</span><span class="p">,</span>
-<span class="gp">... </span><span class="p">)</span>
-<span class="go">&#39;polygon_propogate_displacement___begrensningskurve_500_m_from_displaced_polygon___n100_building&#39; created permanently.</span>
-</pre></div>
-</div>
-</dd></dl>
-
-<dl class="py function">
-<dt class="sig sig-object py" id="custom_tools.custom_arcpy.apply_symbology">
-<span class="sig-prename descclassname"><span class="pre">custom_tools.custom_arcpy.</span></span><span class="sig-name descname"><span class="pre">apply_symbology</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">input_layer</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">in_symbology_layer</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">output_name</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/custom_tools/custom_arcpy.html#apply_symbology"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#custom_tools.custom_arcpy.apply_symbology" title="Link to this definition"></a></dt>
-<dd><dl class="simple">
-<dt>Summary:</dt><dd><p>Applies symbology from a specified lyrx file to an input feature layer and saves the result as a new lyrx file.</p>
-</dd>
-<dt>Details:</dt><dd><ul class="simple">
-<li><p>Creates a temporary feature layer from the <cite>input_layer</cite>.</p></li>
-<li><p>Applies symbology to the temporary layer using the symbology defined in <cite>in_symbology_layer</cite>.</p></li>
-<li><p>The symbology settings are maintained as they are in the symbology layer file.</p></li>
-<li><p>Saves the temporary layer with the applied symbology to a new layer file specified by <cite>output_name</cite>.</p></li>
-<li><p>Deletes the temporary layer to clean up the workspace.</p></li>
-<li><p>A confirmation message is printed indicating the successful creation of the output layer file.</p></li>
-</ul>
-</dd>
-</dl>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>input_layer</strong> (<em>str</em>) – The path or name of the input feature layer to which symbology will be applied.</p></li>
-<li><p><strong>in_symbology_layer</strong> (<em>str</em>) – The path to the layer file (.lyrx) containing the desired symbology settings.</p></li>
-<li><p><strong>output_name</strong> (<em>str</em>) – The name (including path) for the output layer file (.lyrx) with the applied symbology.</p></li>
-</ul>
-</dd>
-</dl>
-<p class="rubric">Example</p>
-<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">custom_arcpy</span><span class="o">.</span><span class="n">apply_symbology_to_the_layers</span><span class="p">(</span>
-<span class="gp">... </span>    <span class="n">input_layer</span><span class="o">=</span><span class="n">Building_N100</span><span class="o">.</span><span class="n">point_resolve_building_conflicts___building_polygon_selection_rbc___n100_building</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
-<span class="gp">... </span>    <span class="n">in_symbology_layer</span><span class="o">=</span><span class="n">config</span><span class="o">.</span><span class="n">symbology_n100_grunnriss</span><span class="p">,</span>
-<span class="gp">... </span>    <span class="n">output_name</span><span class="o">=</span><span class="n">Building_N100</span><span class="o">.</span><span class="n">polygon_resolve_building_conflicts___building_polygon___n100_building_lyrx</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
-<span class="gp">... </span><span class="p">)</span>
-<span class="go">&#39;apply_symbology_to_layers__building_polygon__n100__lyrx.lyrx file created.&#39;</span>
-</pre></div>
-</div>
-</dd></dl>
-
-</section>
-<section id="module-custom_tools.file_utilities">
-<span id="custom-tools-file-utilities-module"></span><h2>custom_tools.file_utilities module<a class="headerlink" href="#module-custom_tools.file_utilities" title="Link to this heading"></a></h2>
-<dl class="py class">
-<dt class="sig sig-object py" id="custom_tools.file_utilities.FeatureClassCreator">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">custom_tools.file_utilities.</span></span><span class="sig-name descname"><span class="pre">FeatureClassCreator</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">template_fc</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">input_fc</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">output_fc</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">object_type</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'POLYGON'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">delete_existing</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/custom_tools/file_utilities.html#FeatureClassCreator"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#custom_tools.file_utilities.FeatureClassCreator" title="Link to this definition"></a></dt>
-<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
-<dl class="py method">
-<dt class="sig sig-object py" id="custom_tools.file_utilities.FeatureClassCreator.run">
-<span class="sig-name descname"><span class="pre">run</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/custom_tools/file_utilities.html#FeatureClassCreator.run"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#custom_tools.file_utilities.FeatureClassCreator.run" title="Link to this definition"></a></dt>
-<dd><p>Executes the process of creating a new feature class and appending geometry from the input feature class.</p>
-</dd></dl>
-
-</dd></dl>
-
-</section>
-<section id="module-custom_tools.geometry_tools">
-<span id="custom-tools-geometry-tools-module"></span><h2>custom_tools.geometry_tools module<a class="headerlink" href="#module-custom_tools.geometry_tools" title="Link to this heading"></a></h2>
-<dl class="py class">
-<dt class="sig sig-object py" id="custom_tools.geometry_tools.RemovePolygonIslands">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">custom_tools.geometry_tools.</span></span><span class="sig-name descname"><span class="pre">RemovePolygonIslands</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">input_feature_class</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/custom_tools/geometry_tools.html#RemovePolygonIslands"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#custom_tools.geometry_tools.RemovePolygonIslands" title="Link to this definition"></a></dt>
-<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
-<dl class="py method">
-<dt class="sig sig-object py" id="custom_tools.geometry_tools.RemovePolygonIslands.remove_islands">
-<span class="sig-name descname"><span class="pre">remove_islands</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/custom_tools/geometry_tools.html#RemovePolygonIslands.remove_islands"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#custom_tools.geometry_tools.RemovePolygonIslands.remove_islands" title="Link to this definition"></a></dt>
-<dd></dd></dl>
-
-</dd></dl>
-
-<dl class="py function">
-<dt class="sig sig-object py" id="custom_tools.geometry_tools.remove_polygon_islands">
-<span class="sig-prename descclassname"><span class="pre">custom_tools.geometry_tools.</span></span><span class="sig-name descname"><span class="pre">remove_polygon_islands</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">output_feature_class</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/custom_tools/geometry_tools.html#remove_polygon_islands"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#custom_tools.geometry_tools.remove_polygon_islands" title="Link to this definition"></a></dt>
-<dd></dd></dl>
-
-</section>
-<section id="custom-tools-gpt-file-path-masker-module">
-<h2>custom_tools.gpt_file_path_masker module<a class="headerlink" href="#custom-tools-gpt-file-path-masker-module" title="Link to this heading"></a></h2>
-</section>
-<section id="custom-tools-partition-iterator-module">
-<h2>custom_tools.partition_iterator module<a class="headerlink" href="#custom-tools-partition-iterator-module" title="Link to this heading"></a></h2>
-</section>
-<section id="module-custom_tools.partition_iterator_state_based">
-<span id="custom-tools-partition-iterator-state-based-module"></span><h2>custom_tools.partition_iterator_state_based module<a class="headerlink" href="#module-custom_tools.partition_iterator_state_based" title="Link to this heading"></a></h2>
-<dl class="py class">
-<dt class="sig sig-object py" id="custom_tools.partition_iterator_state_based.PartitionIterator">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">custom_tools.partition_iterator_state_based.</span></span><span class="sig-name descname"><span class="pre">PartitionIterator</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">alias_path_data</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Dict</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">Tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">Literal</span><span class="p"><span class="pre">[</span></span><span class="s"><span class="pre">'input'</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="s"><span class="pre">'context'</span></span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">str</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">alias_path_outputs</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Dict</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">Tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">str</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">root_file_partition_iterator</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">scale</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">custom_functions</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dictionary_documentation_path</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">feature_count</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'15000'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">partition_method</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Literal</span><span class="p"><span class="pre">[</span></span><span class="s"><span class="pre">'FEATURES'</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="s"><span class="pre">'VERTICES'</span></span><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'FEATURES'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">search_distance</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'500</span> <span class="pre">Meters'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">object_id_field</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'OBJECTID'</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/custom_tools/partition_iterator_state_based.html#PartitionIterator"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#custom_tools.partition_iterator_state_based.PartitionIterator" title="Link to this definition"></a></dt>
-<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
-<p>THIS IS WORK IN PROGRESS NOT READY FOR USE YET</p>
-<dl class="py attribute">
-<dt class="sig sig-object py" id="custom_tools.partition_iterator_state_based.PartitionIterator.PARTITION_FIELD">
-<span class="sig-name descname"><span class="pre">PARTITION_FIELD</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'partition_select'</span></em><a class="headerlink" href="#custom_tools.partition_iterator_state_based.PartitionIterator.PARTITION_FIELD" title="Link to this definition"></a></dt>
-<dd></dd></dl>
-
-<dl class="py attribute">
-<dt class="sig sig-object py" id="custom_tools.partition_iterator_state_based.PartitionIterator.ORIGINAL_ID_FIELD">
-<span class="sig-name descname"><span class="pre">ORIGINAL_ID_FIELD</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'original_id_field'</span></em><a class="headerlink" href="#custom_tools.partition_iterator_state_based.PartitionIterator.ORIGINAL_ID_FIELD" title="Link to this definition"></a></dt>
-<dd></dd></dl>
-
-<dl class="py method">
-<dt class="sig sig-object py" id="custom_tools.partition_iterator_state_based.PartitionIterator.unpack_alias_path_data">
-<span class="sig-name descname"><span class="pre">unpack_alias_path_data</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">alias_path_data</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/custom_tools/partition_iterator_state_based.html#PartitionIterator.unpack_alias_path_data"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#custom_tools.partition_iterator_state_based.PartitionIterator.unpack_alias_path_data" title="Link to this definition"></a></dt>
-<dd></dd></dl>
-
-<dl class="py method">
-<dt class="sig sig-object py" id="custom_tools.partition_iterator_state_based.PartitionIterator.unpack_alias_path_outputs">
-<span class="sig-name descname"><span class="pre">unpack_alias_path_outputs</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">alias_path_outputs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/custom_tools/partition_iterator_state_based.html#PartitionIterator.unpack_alias_path_outputs"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#custom_tools.partition_iterator_state_based.PartitionIterator.unpack_alias_path_outputs" title="Link to this definition"></a></dt>
-<dd></dd></dl>
-
-<dl class="py method">
-<dt class="sig sig-object py" id="custom_tools.partition_iterator_state_based.PartitionIterator.configure_alias_and_type">
-<span class="sig-name descname"><span class="pre">configure_alias_and_type</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">alias</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">type_name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">type_path</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/custom_tools/partition_iterator_state_based.html#PartitionIterator.configure_alias_and_type"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#custom_tools.partition_iterator_state_based.PartitionIterator.configure_alias_and_type" title="Link to this definition"></a></dt>
-<dd></dd></dl>
-
-<dl class="py method">
-<dt class="sig sig-object py" id="custom_tools.partition_iterator_state_based.PartitionIterator.create_new_alias">
-<span class="sig-name descname"><span class="pre">create_new_alias</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">alias</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">initial_type_name</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">initial_type_path</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/custom_tools/partition_iterator_state_based.html#PartitionIterator.create_new_alias"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#custom_tools.partition_iterator_state_based.PartitionIterator.create_new_alias" title="Link to this definition"></a></dt>
-<dd></dd></dl>
-
-<dl class="py method">
-<dt class="sig sig-object py" id="custom_tools.partition_iterator_state_based.PartitionIterator.create_cartographic_partitions">
-<span class="sig-name descname"><span class="pre">create_cartographic_partitions</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/custom_tools/partition_iterator_state_based.html#PartitionIterator.create_cartographic_partitions"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#custom_tools.partition_iterator_state_based.PartitionIterator.create_cartographic_partitions" title="Link to this definition"></a></dt>
-<dd></dd></dl>
-
-<dl class="py method">
-<dt class="sig sig-object py" id="custom_tools.partition_iterator_state_based.PartitionIterator.delete_feature_class">
-<span class="sig-name descname"><span class="pre">delete_feature_class</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">feature_class_path</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">alias</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">output_type</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/custom_tools/partition_iterator_state_based.html#PartitionIterator.delete_feature_class"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#custom_tools.partition_iterator_state_based.PartitionIterator.delete_feature_class" title="Link to this definition"></a></dt>
-<dd><p>Deletes a feature class if it exists.</p>
-</dd></dl>
-
-<dl class="py method">
-<dt class="sig sig-object py" id="custom_tools.partition_iterator_state_based.PartitionIterator.delete_final_outputs">
-<span class="sig-name descname"><span class="pre">delete_final_outputs</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/custom_tools/partition_iterator_state_based.html#PartitionIterator.delete_final_outputs"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#custom_tools.partition_iterator_state_based.PartitionIterator.delete_final_outputs" title="Link to this definition"></a></dt>
-<dd><p>Deletes all final output files if they exist.</p>
-</dd></dl>
-
-<dl class="py method">
-<dt class="sig sig-object py" id="custom_tools.partition_iterator_state_based.PartitionIterator.delete_iteration_files">
-<span class="sig-name descname"><span class="pre">delete_iteration_files</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">file_paths</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/custom_tools/partition_iterator_state_based.html#PartitionIterator.delete_iteration_files"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#custom_tools.partition_iterator_state_based.PartitionIterator.delete_iteration_files" title="Link to this definition"></a></dt>
-<dd><p>Deletes multiple feature classes or files. Detailed alias and output_type logging is not available here.</p>
-</dd></dl>
-
-<dl class="py method">
-<dt class="sig sig-object py" id="custom_tools.partition_iterator_state_based.PartitionIterator.create_feature_class">
-<em class="property"><span class="pre">static</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">create_feature_class</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">full_feature_path</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">template_feature</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/custom_tools/partition_iterator_state_based.html#PartitionIterator.create_feature_class"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#custom_tools.partition_iterator_state_based.PartitionIterator.create_feature_class" title="Link to this definition"></a></dt>
-<dd><p>Creates a new feature class from a template feature class, given a full path.</p>
-</dd></dl>
-
-<dl class="py method">
-<dt class="sig sig-object py" id="custom_tools.partition_iterator_state_based.PartitionIterator.create_dummy_features">
-<span class="sig-name descname"><span class="pre">create_dummy_features</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">types_to_include</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">['input_copy',</span> <span class="pre">'context_copy']</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/custom_tools/partition_iterator_state_based.html#PartitionIterator.create_dummy_features"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#custom_tools.partition_iterator_state_based.PartitionIterator.create_dummy_features" title="Link to this definition"></a></dt>
-<dd><p>Creates dummy features for aliases with specified types.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>types_to_include</strong> (<em>list</em>) – Types for which dummy features should be created.</p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="py method">
-<dt class="sig sig-object py" id="custom_tools.partition_iterator_state_based.PartitionIterator.initialize_dummy_used">
-<span class="sig-name descname"><span class="pre">initialize_dummy_used</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/custom_tools/partition_iterator_state_based.html#PartitionIterator.initialize_dummy_used"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#custom_tools.partition_iterator_state_based.PartitionIterator.initialize_dummy_used" title="Link to this definition"></a></dt>
-<dd></dd></dl>
-
-<dl class="py method">
-<dt class="sig sig-object py" id="custom_tools.partition_iterator_state_based.PartitionIterator.reset_dummy_used">
-<span class="sig-name descname"><span class="pre">reset_dummy_used</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/custom_tools/partition_iterator_state_based.html#PartitionIterator.reset_dummy_used"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#custom_tools.partition_iterator_state_based.PartitionIterator.reset_dummy_used" title="Link to this definition"></a></dt>
-<dd></dd></dl>
-
-<dl class="py method">
-<dt class="sig sig-object py" id="custom_tools.partition_iterator_state_based.PartitionIterator.update_empty_alias_type_with_dummy_file">
-<span class="sig-name descname"><span class="pre">update_empty_alias_type_with_dummy_file</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">alias</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">type_info</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/custom_tools/partition_iterator_state_based.html#PartitionIterator.update_empty_alias_type_with_dummy_file"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#custom_tools.partition_iterator_state_based.PartitionIterator.update_empty_alias_type_with_dummy_file" title="Link to this definition"></a></dt>
-<dd></dd></dl>
-
-<dl class="py method">
-<dt class="sig sig-object py" id="custom_tools.partition_iterator_state_based.PartitionIterator.create_directory_json_documentation">
-<span class="sig-name descname"><span class="pre">create_directory_json_documentation</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">root_path</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">target_dir</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">iteration</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">str</span></span></span><a class="reference internal" href="../_modules/custom_tools/partition_iterator_state_based.html#PartitionIterator.create_directory_json_documentation"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#custom_tools.partition_iterator_state_based.PartitionIterator.create_directory_json_documentation" title="Link to this definition"></a></dt>
-<dd><p>Creates a directory at the given root_path for the target_dir.
-:param root_path: The root directory where initial structure is created
-:param target_dir: The target where the created directory should be placed
-:param iteration: Boolean flag indicating if the iteration_documentation should be added</p>
-<dl class="field-list simple">
-<dt class="field-odd">Returns<span class="colon">:</span></dt>
-<dd class="field-odd"><p>A string containing the absolute path of the created directory.</p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="py method">
-<dt class="sig sig-object py" id="custom_tools.partition_iterator_state_based.PartitionIterator.write_data_to_json">
-<span class="sig-name descname"><span class="pre">write_data_to_json</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">data</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dict</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">file_path</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">file_name</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">object_id</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="reference internal" href="../_modules/custom_tools/partition_iterator_state_based.html#PartitionIterator.write_data_to_json"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#custom_tools.partition_iterator_state_based.PartitionIterator.write_data_to_json" title="Link to this definition"></a></dt>
-<dd><p>Writes dictionary into a json file.</p>
-<blockquote>
-<div><dl class="simple">
-<dt>Args:</dt><dd><p>data: The data to write.
-file_path: The complete path (directory+file_name) where the file should be created
-file_name: The name of the file to create
-object_id: If provided, object_id will also be part of the file name.</p>
-</dd>
-</dl>
-</div></blockquote>
-</dd></dl>
-
-<dl class="py method">
-<dt class="sig sig-object py" id="custom_tools.partition_iterator_state_based.PartitionIterator.export_dictionaries_to_json">
-<span class="sig-name descname"><span class="pre">export_dictionaries_to_json</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">file_path</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">alias_type_data</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dict</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">final_outputs</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dict</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">file_name</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">iteration</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">object_id</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="reference internal" href="../_modules/custom_tools/partition_iterator_state_based.html#PartitionIterator.export_dictionaries_to_json"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#custom_tools.partition_iterator_state_based.PartitionIterator.export_dictionaries_to_json" title="Link to this definition"></a></dt>
-<dd><p>Handles the export of alias type data and final outputs into separate json files.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>file_path</strong> – The complete file path where to create the output directories.</p></li>
-<li><p><strong>alias_type_data</strong> – The alias type data to export.</p></li>
-<li><p><strong>final_outputs</strong> – The final outputs data to export.</p></li>
-<li><p><strong>file_name</strong> – The name of the file to create</p></li>
-<li><p><strong>iteration</strong> – Boolean flag indicating if the iteration_documentation should be added</p></li>
-<li><p><strong>object_id</strong> – Object ID to be included in the file name if it’s an iteration (<cite>iteration==True</cite>). If <cite>None</cite>, will not be used.</p></li>
-</ul>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="py method">
-<dt class="sig sig-object py" id="custom_tools.partition_iterator_state_based.PartitionIterator.generate_unique_field_name">
-<span class="sig-name descname"><span class="pre">generate_unique_field_name</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">input_feature</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">field_name</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/custom_tools/partition_iterator_state_based.html#PartitionIterator.generate_unique_field_name"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#custom_tools.partition_iterator_state_based.PartitionIterator.generate_unique_field_name" title="Link to this definition"></a></dt>
-<dd></dd></dl>
-
-<dl class="py method">
-<dt class="sig sig-object py" id="custom_tools.partition_iterator_state_based.PartitionIterator.find_maximum_object_id">
-<span class="sig-name descname"><span class="pre">find_maximum_object_id</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/custom_tools/partition_iterator_state_based.html#PartitionIterator.find_maximum_object_id"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#custom_tools.partition_iterator_state_based.PartitionIterator.find_maximum_object_id" title="Link to this definition"></a></dt>
-<dd><p>Determine the maximum OBJECTID for partitioning.</p>
-</dd></dl>
-
-<dl class="py method">
-<dt class="sig sig-object py" id="custom_tools.partition_iterator_state_based.PartitionIterator.prepare_input_data">
-<span class="sig-name descname"><span class="pre">prepare_input_data</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/custom_tools/partition_iterator_state_based.html#PartitionIterator.prepare_input_data"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#custom_tools.partition_iterator_state_based.PartitionIterator.prepare_input_data" title="Link to this definition"></a></dt>
-<dd></dd></dl>
-
-<dl class="py method">
-<dt class="sig sig-object py" id="custom_tools.partition_iterator_state_based.PartitionIterator.custom_function">
-<span class="sig-name descname"><span class="pre">custom_function</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/custom_tools/partition_iterator_state_based.html#PartitionIterator.custom_function"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#custom_tools.partition_iterator_state_based.PartitionIterator.custom_function" title="Link to this definition"></a></dt>
-<dd></dd></dl>
-
-<dl class="py method">
-<dt class="sig sig-object py" id="custom_tools.partition_iterator_state_based.PartitionIterator.select_partition_feature">
-<span class="sig-name descname"><span class="pre">select_partition_feature</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">iteration_partition</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">object_id</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/custom_tools/partition_iterator_state_based.html#PartitionIterator.select_partition_feature"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#custom_tools.partition_iterator_state_based.PartitionIterator.select_partition_feature" title="Link to this definition"></a></dt>
-<dd><p>Selects partition feature based on OBJECTID.</p>
-</dd></dl>
-
-<dl class="py method">
-<dt class="sig sig-object py" id="custom_tools.partition_iterator_state_based.PartitionIterator.process_input_features">
-<span class="sig-name descname"><span class="pre">process_input_features</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">alias</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">iteration_partition</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">object_id</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/custom_tools/partition_iterator_state_based.html#PartitionIterator.process_input_features"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#custom_tools.partition_iterator_state_based.PartitionIterator.process_input_features" title="Link to this definition"></a></dt>
-<dd><p>Process input features for a given partition.</p>
-</dd></dl>
-
-<dl class="py method">
-<dt class="sig sig-object py" id="custom_tools.partition_iterator_state_based.PartitionIterator.process_context_features">
-<span class="sig-name descname"><span class="pre">process_context_features</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">alias</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">iteration_partition</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/custom_tools/partition_iterator_state_based.html#PartitionIterator.process_context_features"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#custom_tools.partition_iterator_state_based.PartitionIterator.process_context_features" title="Link to this definition"></a></dt>
-<dd><p>Process context features for a given partition if input features are present.</p>
-</dd></dl>
-
-<dl class="py method">
-<dt class="sig sig-object py" id="custom_tools.partition_iterator_state_based.PartitionIterator.append_iteration_to_final">
-<span class="sig-name descname"><span class="pre">append_iteration_to_final</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">alias</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/custom_tools/partition_iterator_state_based.html#PartitionIterator.append_iteration_to_final"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#custom_tools.partition_iterator_state_based.PartitionIterator.append_iteration_to_final" title="Link to this definition"></a></dt>
-<dd></dd></dl>
-
-<dl class="py method">
-<dt class="sig sig-object py" id="custom_tools.partition_iterator_state_based.PartitionIterator.partition_iteration">
-<span class="sig-name descname"><span class="pre">partition_iteration</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/custom_tools/partition_iterator_state_based.html#PartitionIterator.partition_iteration"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#custom_tools.partition_iterator_state_based.PartitionIterator.partition_iteration" title="Link to this definition"></a></dt>
-<dd></dd></dl>
-
-<dl class="py method">
-<dt class="sig sig-object py" id="custom_tools.partition_iterator_state_based.PartitionIterator.run">
-<span class="sig-name descname"><span class="pre">run</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/custom_tools/partition_iterator_state_based.html#PartitionIterator.run"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#custom_tools.partition_iterator_state_based.PartitionIterator.run" title="Link to this definition"></a></dt>
-<dd></dd></dl>
-
-</dd></dl>
-
-</section>
-<section id="custom-tools-polygon-processor-module">
-<h2>custom_tools.polygon_processor module<a class="headerlink" href="#custom-tools-polygon-processor-module" title="Link to this heading"></a></h2>
-</section>
-<section id="module-custom_tools.print_logger">
-<span id="custom-tools-print-logger-module"></span><h2>custom_tools.print_logger module<a class="headerlink" href="#module-custom_tools.print_logger" title="Link to this heading"></a></h2>
-<dl class="py class">
-<dt class="sig sig-object py" id="custom_tools.print_logger.LogPath">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">custom_tools.print_logger.</span></span><span class="sig-name descname"><span class="pre">LogPath</span></span><a class="reference internal" href="../_modules/custom_tools/print_logger.html#LogPath"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#custom_tools.print_logger.LogPath" title="Link to this definition"></a></dt>
-<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
-<dl class="py attribute">
-<dt class="sig sig-object py" id="custom_tools.print_logger.LogPath.N100Building">
-<span class="sig-name descname"><span class="pre">N100Building</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'C:\\path\\to\\folder\\you\\want\\your\\outputs\\in\\automatic_generalization_outputs\\n100\\building\\general_files\\app.log'</span></em><a class="headerlink" href="#custom_tools.print_logger.LogPath.N100Building" title="Link to this definition"></a></dt>
-<dd></dd></dl>
-
-<dl class="py attribute">
-<dt class="sig sig-object py" id="custom_tools.print_logger.LogPath.N100River">
-<span class="sig-name descname"><span class="pre">N100River</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'C:\\path\\to\\folder\\you\\want\\your\\outputs\\in\\automatic_generalization_outputs\\n100\\river\\general_files\\app.log'</span></em><a class="headerlink" href="#custom_tools.print_logger.LogPath.N100River" title="Link to this definition"></a></dt>
-<dd></dd></dl>
-
-</dd></dl>
-
-<dl class="py function">
-<dt class="sig sig-object py" id="custom_tools.print_logger.setup_logger">
-<span class="sig-prename descclassname"><span class="pre">custom_tools.print_logger.</span></span><span class="sig-name descname"><span class="pre">setup_logger</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">scale</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">object_type</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">log_directory</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'logs'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">filename</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'app.log'</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/custom_tools/print_logger.html#setup_logger"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#custom_tools.print_logger.setup_logger" title="Link to this definition"></a></dt>
-<dd><p>WORK IN PROGRESS NOT DONE
-Creates a logger for the specified scale and object type.
-Log files will be stored in a directory structure matching the scale and object type.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>scale</strong> – The scale for the log (e.g., ‘n100’).</p></li>
-<li><p><strong>object_type</strong> – The object type for the log (e.g., ‘bygning’).</p></li>
-<li><p><strong>log_directory</strong> – Base directory for logs. Defaults to ‘logs’.</p></li>
-<li><p><strong>filename</strong> – Default filename for the log. Defaults to ‘app.log’.</p></li>
-</ul>
-</dd>
-<dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><p>Logger instance for the specified scale and object type.</p>
-</dd>
-</dl>
-</dd></dl>
-
-</section>
-<section id="module-custom_tools.table_mangement">
-<span id="custom-tools-table-mangement-module"></span><h2>custom_tools.table_mangement module<a class="headerlink" href="#module-custom_tools.table_mangement" title="Link to this heading"></a></h2>
-</section>
-<section id="module-custom_tools.timing_decorator">
-<span id="custom-tools-timing-decorator-module"></span><h2>custom_tools.timing_decorator module<a class="headerlink" href="#module-custom_tools.timing_decorator" title="Link to this heading"></a></h2>
-<dl class="py function">
-<dt class="sig sig-object py" id="custom_tools.timing_decorator.timing_decorator">
-<span class="sig-prename descclassname"><span class="pre">custom_tools.timing_decorator.</span></span><span class="sig-name descname"><span class="pre">timing_decorator</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">func</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/custom_tools/timing_decorator.html#timing_decorator"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#custom_tools.timing_decorator.timing_decorator" title="Link to this definition"></a></dt>
-<dd><p>Logs the execution time of a function to both the console and a log file</p>
-</dd></dl>
-
-<dl class="py function">
-<dt class="sig sig-object py" id="custom_tools.timing_decorator.format_time">
-<span class="sig-prename descclassname"><span class="pre">custom_tools.timing_decorator.</span></span><span class="sig-name descname"><span class="pre">format_time</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">seconds</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/custom_tools/timing_decorator.html#format_time"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#custom_tools.timing_decorator.format_time" title="Link to this definition"></a></dt>
-<dd><p>Convert seconds to a formatted string: HH:MM:SS.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>seconds</strong> (<em>float</em>) – Time in seconds.</p>
-</dd>
-<dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><p>Formatted time string.</p>
-</dd>
-<dt class="field-odd">Return type<span class="colon">:</span></dt>
-<dd class="field-odd"><p>str</p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="py function">
-<dt class="sig sig-object py" id="custom_tools.timing_decorator.log_to_console_and_file">
-<span class="sig-prename descclassname"><span class="pre">custom_tools.timing_decorator.</span></span><span class="sig-name descname"><span class="pre">log_to_console_and_file</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">function_name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">elapsed_time</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/custom_tools/timing_decorator.html#log_to_console_and_file"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#custom_tools.timing_decorator.log_to_console_and_file" title="Link to this definition"></a></dt>
-<dd><p>Logs a message to both the console and a file</p>
-</dd></dl>
-
-<dl class="py function">
-<dt class="sig sig-object py" id="custom_tools.timing_decorator.log_to_console">
-<span class="sig-prename descclassname"><span class="pre">custom_tools.timing_decorator.</span></span><span class="sig-name descname"><span class="pre">log_to_console</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">message</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/custom_tools/timing_decorator.html#log_to_console"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#custom_tools.timing_decorator.log_to_console" title="Link to this definition"></a></dt>
-<dd><p>Prints a given message to the console</p>
-</dd></dl>
-
-<dl class="py function">
-<dt class="sig sig-object py" id="custom_tools.timing_decorator.log_to_file">
-<span class="sig-prename descclassname"><span class="pre">custom_tools.timing_decorator.</span></span><span class="sig-name descname"><span class="pre">log_to_file</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">message</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/custom_tools/timing_decorator.html#log_to_file"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#custom_tools.timing_decorator.log_to_file" title="Link to this definition"></a></dt>
-<dd><p>Writes a given message to a log file</p>
-</dd></dl>
-
 </section>
 <section id="module-custom_tools">
 <span id="module-contents"></span><h2>Module contents<a class="headerlink" href="#module-custom_tools" title="Link to this heading"></a></h2>
@@ -893,7 +206,7 @@ Log files will be stored in a directory structure matching the scale and object 
           </div>
           <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
         <a href="../index.html" class="btn btn-neutral float-left" title="Welcome to Automatisk Generalisering’s documentation!" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
-        <a href="env_setup.html" class="btn btn-neutral float-right" title="env_setup package" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+        <a href="custom_tools.decorators.html" class="btn btn-neutral float-right" title="custom_tools.decorators package" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
     </div>
 
   <hr/>

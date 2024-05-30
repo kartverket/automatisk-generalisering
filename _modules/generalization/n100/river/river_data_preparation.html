@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>generalization.n100.river.preparing_river_network &mdash; Automatisk Generalisering 0.0.1 documentation</title>
+  <title>generalization.n100.river.river_data_preparation &mdash; Automatisk Generalisering 0.0.1 documentation</title>
       <link rel="stylesheet" type="text/css" href="../../../../_static/pygments.css?v=80d5e7a1" />
       <link rel="stylesheet" type="text/css" href="../../../../_static/css/theme.css?v=19f00094" />
       <link rel="stylesheet" type="text/css" href="../../../../_static/custom.css" />
@@ -67,7 +67,7 @@
   <ul class="wy-breadcrumbs">
       <li><a href="../../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
           <li class="breadcrumb-item"><a href="../../../index.html">Module code</a></li>
-      <li class="breadcrumb-item active">generalization.n100.river.preparing_river_network</li>
+      <li class="breadcrumb-item active">generalization.n100.river.river_data_preparation</li>
       <li class="wy-breadcrumbs-aside">
       </li>
   </ul>
@@ -76,70 +76,44 @@
           <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
            <div itemprop="articleBody">
              
-  <h1>Source code for generalization.n100.river.preparing_river_network</h1><div class="highlight"><pre>
-<span></span><span class="c1"># Importing modules</span>
-<span class="kn">import</span> <span class="nn">arcpy</span>
-
-<span class="c1"># Importing custom tools</span>
+  <h1>Source code for generalization.n100.river.river_data_preparation</h1><div class="highlight"><pre>
+<span></span><span class="kn">from</span> <span class="nn">env_setup</span> <span class="kn">import</span> <span class="n">environment_setup</span>
+<span class="kn">from</span> <span class="nn">input_data</span> <span class="kn">import</span> <span class="n">input_n50</span>
 <span class="kn">from</span> <span class="nn">custom_tools.general_tools</span> <span class="kn">import</span> <span class="n">custom_arcpy</span>
-<span class="kn">from</span> <span class="nn">env_setup</span> <span class="kn">import</span> <span class="n">environment_setup</span>
-
-<span class="c1"># Importing file manager</span>
 <span class="kn">from</span> <span class="nn">file_manager.n100.file_manager_rivers</span> <span class="kn">import</span> <span class="n">River_N100</span>
 
 
 <div class="viewcode-block" id="main">
-<a class="viewcode-back" href="../../../../generated_docs/generalization.n100.river.html#generalization.n100.river.preparing_river_network.main">[docs]</a>
+<a class="viewcode-back" href="../../../../generated_docs/generalization.n100.river.html#generalization.n100.river.river_data_preparation.main">[docs]</a>
 <span class="k">def</span> <span class="nf">main</span><span class="p">():</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Summary:</span>
-<span class="sd">        This script prepares the river network for the 1:100,000 scale by setting line directions and thinning hydrology lines.</span>
+<span class="sd">        This is the main function of river data preparation, which aims to prepare the data for future river generalization processing.</span>
 
 <span class="sd">    Details:</span>
-<span class="sd">        1. `set_line_direction`:</span>
-<span class="sd">            Sets the direction of each stream segment in the river network based on downhill flow.</span>
-
-<span class="sd">        2. `thin_hydrology_lines`:</span>
-<span class="sd">            Thins the hydrology lines in the river network to optimize for the 1:100,000 scale.</span>
-<span class="sd">            The function thins the river network, removing line segments based on hierarchy, direction, length and spacing between features</span>
-
+<span class="sd">        1. `selecting_polygon_features`:</span>
+<span class="sd">            This function creates new feature classes based on SQL-expressions: the first one to be used to generate centerlines, while the second</span>
+<span class="sd">            is used to fill geometry gaps in the river network.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="n">environment_setup</span><span class="o">.</span><span class="n">main</span><span class="p">()</span>
-    <span class="n">set_line_direction</span><span class="p">()</span></div>
+    <span class="n">selecting_polygon_features</span><span class="p">()</span></div>
 
 
 
-<span class="c1"># This function sets the direction of each stream segment in the river network</span>
-<div class="viewcode-block" id="set_line_direction">
-<a class="viewcode-back" href="../../../../generated_docs/generalization.n100.river.html#generalization.n100.river.preparing_river_network.set_line_direction">[docs]</a>
-<span class="k">def</span> <span class="nf">set_line_direction</span><span class="p">():</span>
-    <span class="n">arcpy</span><span class="o">.</span><span class="n">topographic</span><span class="o">.</span><span class="n">SetLineDirection</span><span class="p">(</span>
-        <span class="n">in_line_features</span><span class="o">=</span><span class="s2">&quot;placeholder&quot;</span><span class="p">,</span>
-        <span class="n">digital_elevation_model</span><span class="o">=</span><span class="s2">&quot;placeholder_for_DTM&quot;</span><span class="p">,</span>
-        <span class="n">line_direction</span><span class="o">=</span><span class="s2">&quot;DOWNHILL_FLOW&quot;</span><span class="p">,</span>
-    <span class="p">)</span></div>
-
-
-
-<span class="c1"># This function thins the river network</span>
-<div class="viewcode-block" id="thin_hydrology_lines">
-<a class="viewcode-back" href="../../../../generated_docs/generalization.n100.river.html#generalization.n100.river.preparing_river_network.thin_hydrology_lines">[docs]</a>
-<span class="k">def</span> <span class="nf">thin_hydrology_lines</span><span class="p">():</span>
-    <span class="n">arcpy</span><span class="o">.</span><span class="n">topographic</span><span class="o">.</span><span class="n">ThinHydrologyLines</span><span class="p">(</span>
-        <span class="n">in_features</span><span class="o">=</span><span class="s2">&quot;placeholder_for_streamnetwork&quot;</span><span class="p">,</span>
-        <span class="n">invisibility_field</span><span class="o">=</span><span class="s2">&quot;invisibility&quot;</span><span class="p">,</span>
-        <span class="n">min_length</span><span class="o">=</span><span class="s2">&quot;500&quot;</span><span class="p">,</span>
-        <span class="n">min_spacing</span><span class="o">=</span><span class="s2">&quot;100&quot;</span><span class="p">,</span>
-        <span class="n">hierarchy_field</span><span class="o">=</span><span class="s2">&quot;Strahler_placeholder&quot;</span><span class="p">,</span>
-        <span class="n">intersecting_features</span><span class="o">=</span><span class="n">River_N100</span><span class="o">.</span><span class="n">selecting_water_polygons__centerline__n100</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
-        <span class="n">unsplit_lines</span><span class="o">=</span><span class="s2">&quot;UNSPLIT_LINES&quot;</span><span class="p">,</span>
-        <span class="n">use_angles</span><span class="o">=</span><span class="s2">&quot;NO_USE_ANGLES&quot;</span><span class="p">,</span>
-    <span class="p">)</span>
-    <span class="c1"># Selecting featueres that have visibility value 0 from Thin Hydrology Lines</span>
+<div class="viewcode-block" id="selecting_polygon_features">
+<a class="viewcode-back" href="../../../../generated_docs/generalization.n100.river.html#generalization.n100.river.river_data_preparation.selecting_polygon_features">[docs]</a>
+<span class="k">def</span> <span class="nf">selecting_polygon_features</span><span class="p">():</span>
     <span class="n">custom_arcpy</span><span class="o">.</span><span class="n">select_attribute_and_make_permanent_feature</span><span class="p">(</span>
-        <span class="n">input_layer</span><span class="o">=</span><span class="s2">&quot;placeholder_from_function_above&quot;</span><span class="p">,</span>
-        <span class="n">expression</span><span class="o">=</span><span class="s2">&quot;invisibility = 0&quot;</span><span class="p">,</span>
-        <span class="n">output_name</span><span class="o">=</span><span class="n">River_N100</span><span class="o">.</span><span class="n">thin_hydrology_lines__visible_streams__n100</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
+        <span class="n">input_layer</span><span class="o">=</span><span class="n">input_n50</span><span class="o">.</span><span class="n">ArealdekkeFlate</span><span class="p">,</span>
+        <span class="n">expression</span><span class="o">=</span><span class="s2">&quot;OBJTYPE IN (&#39;FerskvannTørrfall&#39;, &#39;Innsjø&#39;, &#39;InnsjøRegulert&#39;, &#39;ElvBekk&#39;)&quot;</span><span class="p">,</span>
+        <span class="n">output_name</span><span class="o">=</span><span class="n">River_N100</span><span class="o">.</span><span class="n">selecting_water_polygons__centerline__n100</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
+        <span class="n">selection_type</span><span class="o">=</span><span class="s2">&quot;NEW_SELECTION&quot;</span><span class="p">,</span>
+    <span class="p">)</span>
+
+    <span class="n">custom_arcpy</span><span class="o">.</span><span class="n">select_attribute_and_make_permanent_feature</span><span class="p">(</span>
+        <span class="n">input_layer</span><span class="o">=</span><span class="n">input_n50</span><span class="o">.</span><span class="n">ArealdekkeFlate</span><span class="p">,</span>
+        <span class="n">expression</span><span class="o">=</span><span class="s2">&quot;OBJTYPE IN (&#39;FerskvannTørrfall&#39;, &#39;Innsjø&#39;, &#39;InnsjøRegulert&#39;, &#39;Havflate&#39;, &#39;ElvBekk&#39;)&quot;</span><span class="p">,</span>
+        <span class="n">output_name</span><span class="o">=</span><span class="n">River_N100</span><span class="o">.</span><span class="n">selecting_water_polygons__geometry_gaps__n100</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
         <span class="n">selection_type</span><span class="o">=</span><span class="s2">&quot;NEW_SELECTION&quot;</span><span class="p">,</span>
     <span class="p">)</span></div>
 

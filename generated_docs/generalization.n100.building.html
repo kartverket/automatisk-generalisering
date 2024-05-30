@@ -102,7 +102,11 @@
 </ul>
 </li>
 <li class="toctree-l2"><a class="reference internal" href="#generalization-n100-building-point-resolve-building-conflicts-module">generalization.n100.building.point_resolve_building_conflicts module</a></li>
-<li class="toctree-l2"><a class="reference internal" href="#generalization-n100-building-polygon-propogate-displacement-module">generalization.n100.building.polygon_propogate_displacement module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#module-generalization.n100.building.polygon_propogate_displacement">generalization.n100.building.polygon_propogate_displacement module</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#generalization.n100.building.polygon_propogate_displacement.main"><code class="docutils literal notranslate"><span class="pre">main()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#generalization.n100.building.polygon_propogate_displacement.propagate_displacement_building_polygons"><code class="docutils literal notranslate"><span class="pre">propagate_displacement_building_polygons()</span></code></a></li>
+</ul>
+</li>
 <li class="toctree-l2"><a class="reference internal" href="#generalization-n100-building-polygon-resolve-building-conflicts-module">generalization.n100.building.polygon_resolve_building_conflicts module</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#module-generalization.n100.building.polygon_to_point">generalization.n100.building.polygon_to_point module</a><ul>
 <li class="toctree-l3"><a class="reference internal" href="#generalization.n100.building.polygon_to_point.main"><code class="docutils literal notranslate"><span class="pre">main()</span></code></a></li>
@@ -424,8 +428,33 @@ A cluster is defined as two or more points that are closer together than 200 met
 <section id="generalization-n100-building-point-resolve-building-conflicts-module">
 <h2>generalization.n100.building.point_resolve_building_conflicts module<a class="headerlink" href="#generalization-n100-building-point-resolve-building-conflicts-module" title="Link to this heading"></a></h2>
 </section>
-<section id="generalization-n100-building-polygon-propogate-displacement-module">
-<h2>generalization.n100.building.polygon_propogate_displacement module<a class="headerlink" href="#generalization-n100-building-polygon-propogate-displacement-module" title="Link to this heading"></a></h2>
+<section id="module-generalization.n100.building.polygon_propogate_displacement">
+<span id="generalization-n100-building-polygon-propogate-displacement-module"></span><h2>generalization.n100.building.polygon_propogate_displacement module<a class="headerlink" href="#module-generalization.n100.building.polygon_propogate_displacement" title="Link to this heading"></a></h2>
+<dl class="py function">
+<dt class="sig sig-object py" id="generalization.n100.building.polygon_propogate_displacement.main">
+<span class="sig-prename descclassname"><span class="pre">generalization.n100.building.polygon_propogate_displacement.</span></span><span class="sig-name descname"><span class="pre">main</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/generalization/n100/building/polygon_propogate_displacement.html#main"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#generalization.n100.building.polygon_propogate_displacement.main" title="Link to this definition"></a></dt>
+<dd><dl class="simple">
+<dt>Summary:</dt><dd><p>This script first propagates displacement for building polygons to ensure their alignment with roads
+at a scale of 1:100,000. Next, it resolves conflicts among all building polygons in Norway,
+considering various barriers such as roads, waterfeatures, hospital and churches, ensuring proper placement and scaling.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="generalization.n100.building.polygon_propogate_displacement.propagate_displacement_building_polygons">
+<span class="sig-prename descclassname"><span class="pre">generalization.n100.building.polygon_propogate_displacement.</span></span><span class="sig-name descname"><span class="pre">propagate_displacement_building_polygons</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/generalization/n100/building/polygon_propogate_displacement.html#propagate_displacement_building_polygons"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#generalization.n100.building.polygon_propogate_displacement.propagate_displacement_building_polygons" title="Link to this definition"></a></dt>
+<dd><dl class="simple">
+<dt>Summary:</dt><dd><p>Selects displacement features located within a 500-meter radius from building polygons
+and propagates displacement for the building polygons.</p>
+</dd>
+<dt>Details:</dt><dd><p>This function selects displacement features within a specified distance (500 meters) from the building polygons
+and applies a displacement operation to ensure the building polygons align appropriately with surrounding features,
+such as roads or other structures.</p>
+</dd>
+</dl>
+</dd></dl>
+
 </section>
 <section id="generalization-n100-building-polygon-resolve-building-conflicts-module">
 <h2>generalization.n100.building.polygon_resolve_building_conflicts module<a class="headerlink" href="#generalization-n100-building-polygon-resolve-building-conflicts-module" title="Link to this heading"></a></h2>

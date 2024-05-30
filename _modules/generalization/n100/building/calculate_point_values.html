@@ -78,9 +78,8 @@
              
   <h1>Source code for generalization.n100.building.calculate_point_values</h1><div class="highlight"><pre>
 <span></span><span class="c1"># Importing custom files relative to the root path</span>
-<span class="kn">from</span> <span class="nn">custom_tools</span> <span class="kn">import</span> <span class="n">custom_arcpy</span>
+<span class="kn">from</span> <span class="nn">custom_tools.general_tools</span> <span class="kn">import</span> <span class="n">custom_arcpy</span>
 <span class="kn">from</span> <span class="nn">env_setup</span> <span class="kn">import</span> <span class="n">environment_setup</span>
-<span class="kn">from</span> <span class="nn">input_data</span> <span class="kn">import</span> <span class="n">input_n50</span>
 <span class="kn">from</span> <span class="nn">file_manager.n100.file_manager_buildings</span> <span class="kn">import</span> <span class="n">Building_N100</span>
 <span class="kn">from</span> <span class="nn">constants.n100_constants</span> <span class="kn">import</span> <span class="n">N100_SQLResources</span>
 
@@ -89,7 +88,7 @@
 <span class="kn">from</span> <span class="nn">collections</span> <span class="kn">import</span> <span class="n">Counter</span>
 
 <span class="c1"># Importing timing decorator</span>
-<span class="kn">from</span> <span class="nn">custom_tools.timing_decorator</span> <span class="kn">import</span> <span class="n">timing_decorator</span>
+<span class="kn">from</span> <span class="nn">custom_tools.decorators.timing_decorator</span> <span class="kn">import</span> <span class="n">timing_decorator</span>
 
 
 <div class="viewcode-block" id="main">

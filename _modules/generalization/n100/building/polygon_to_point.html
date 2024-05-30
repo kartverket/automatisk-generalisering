@@ -79,10 +79,8 @@
   <h1>Source code for generalization.n100.building.polygon_to_point</h1><div class="highlight"><pre>
 <span></span><span class="c1"># Importing modules</span>
 <span class="kn">import</span> <span class="nn">arcpy</span>
-<span class="kn">import</span> <span class="nn">time</span>
 
 <span class="c1"># Importing custom files</span>
-<span class="kn">from</span> <span class="nn">custom_tools</span> <span class="kn">import</span> <span class="n">custom_arcpy</span>
 <span class="kn">from</span> <span class="nn">env_setup</span> <span class="kn">import</span> <span class="n">environment_setup</span>
 
 <span class="c1"># Importing temporary files</span>
@@ -90,7 +88,7 @@
 
 
 <span class="c1"># Importing timing decorator</span>
-<span class="kn">from</span> <span class="nn">custom_tools.timing_decorator</span> <span class="kn">import</span> <span class="n">timing_decorator</span>
+<span class="kn">from</span> <span class="nn">custom_tools.decorators.timing_decorator</span> <span class="kn">import</span> <span class="n">timing_decorator</span>
 
 
 <div class="viewcode-block" id="main">
