@@ -68,7 +68,7 @@ class LineToBufferSymbology:
         Processes each SQL query to select road lines and create buffers.
         """
         selection_output_name = f"in_memory/road_selection_{counter}"
-        buffer_output_name = f"in_memory/line_buffer_{original_width}m_{counter}"
+        buffer_output_name = f"in_memory/line_buffer_{counter}"
 
         self.selecting_different_road_lines(sql_query, selection_output_name)
         self.creating_buffer_from_selected_lines(
