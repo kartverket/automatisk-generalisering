@@ -1,13 +1,8 @@
 import arcpy
-import os
 
-from input_data import input_n100
-from file_manager.n100.file_manager_buildings import Building_N100
-from constants.n100_constants import N100_Symbology, N100_SQLResources, N100_Values
-
-from custom_tools.general_tools.polygon_processor import PolygonProcessor
 from env_setup import environment_setup
-from custom_tools.decorators.timing_decorator import timing_decorator
+from constants.n100_constants import N100_Symbology, N100_SQLResources, N100_Values
+from file_manager.n100.file_manager_buildings import Building_N100
 from custom_tools.general_tools import custom_arcpy
 
 
@@ -16,34 +11,99 @@ class LineToBufferSymbology:
         self,
         input_road_lines,
         sql_selection_query,
-        output_feature_class,
+        output_road_buffer,
     ):
         self.input_road_lines = input_road_lines
         self.sql_selection_query = sql_selection_query
-        self.output_feature_class = output_feature_class
+        self.output_road_buffer = output_road_buffer
+        self.working_files_list = []
 
-    def selecting_different_road_lines(self, selection_output_name):
+    def selecting_different_road_lines(self, sql_query, selection_output_name):
         """
         Selects road lines based on the provided SQL query and creates a feature layer.
         """
         custom_arcpy.select_attribute_and_make_feature_layer(
             input_layer=self.input_road_lines,
-            expression=self.sql_selection_query,
+            expression=sql_query,
             output_name=selection_output_name,
         )
+        self.working_files_list.append(selection_output_name)
 
-    def creating_buffer_from_selected_lines(self):
-        pass
+    def creating_buffer_from_selected_lines(
+        self, selection_output_name, buffer_width, buffer_output_name
+    ):
+        """
+        Creates a buffer around the selected road lines.
+        """
+        arcpy.analysis.PairwiseBuffer(
+            in_features=selection_output_name,
+            out_feature_class=buffer_output_name,
+            buffer_distance_or_field=f"{buffer_width} Meters",
+        )
+        self.working_files_list.append(buffer_output_name)
+
+    def merge_buffers(self, buffer_output_names, merged_output_name):
+        """
+        Merges multiple buffer outputs into a single feature class.
+        """
+        arcpy.management.Merge(inputs=buffer_output_names, output=merged_output_name)
+        print(f"Merged buffers into {merged_output_name}")
+
+    def process_each_query(self, sql_query, original_width, counter):
+        """
+        Processes each SQL query to select road lines and create buffers.
+        """
+        selection_output_name = f"in_memory/road_selection_{counter}"
+        buffer_output_name = f"in_memory/line_buffer_{original_width}m_{counter}"
+
+        self.selecting_different_road_lines(sql_query, selection_output_name)
+        self.creating_buffer_from_selected_lines(
+            selection_output_name, original_width, buffer_output_name
+        )
+
+        return buffer_output_name
+
+    def delete_working_files(self, *file_paths):
+        """
+        Deletes multiple feature classes or files.
+        """
+        for file_path in file_paths:
+            self.delete_feature_class(file_path)
+            print(f"Deleted file: {file_path}")
+
+    def delete_feature_class(self, feature_class_path):
+        """
+        Deletes a feature class if it exists.
+        """
+        if arcpy.Exists(feature_class_path):
+            arcpy.management.Delete(feature_class_path)
+
+    def process_queries(self):
+        """
+        Processes all SQL queries to create buffers and handle merging.
+        """
+        buffer_output_names = []
+        counter = 1
+
+        for sql_query, original_width in self.sql_selection_query.items():
+            buffer_output_name = self.process_each_query(
+                sql_query, original_width, counter
+            )
+            buffer_output_names.append(buffer_output_name)
+            counter += 1
+
+        self.merge_buffers(buffer_output_names, self.output_road_buffer)
+        self.delete_working_files(*self.working_files_list)
 
     def run(self):
-        self.selecting_different_road_lines()
-        self.creating_buffer_from_selected_lines()
+        self.process_queries()
 
 
 if __name__ == "__main__":
+    environment_setup.main()
     line_to_buffer_symbology = LineToBufferSymbology(
         input_road_lines=Building_N100.data_preparation___unsplit_roads___n100_building.value,
         sql_selection_query=N100_SQLResources.road_symbology_size_sql_selection.value,
-        output_feature_class=Building_N100.line_to_buffer_symbology___buffer_symbology___n100_building.value,
+        output_road_buffer=Building_N100.line_to_buffer_symbology___buffer_symbology___n100_building.value,
     )
     line_to_buffer_symbology.run()
