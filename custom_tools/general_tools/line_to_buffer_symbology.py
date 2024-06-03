@@ -16,6 +16,15 @@ class LineToBufferSymbology:
         buffer_factor: Union[int, float] = 1,
         fixed_buffer_addition: Union[int, float] = 0,
     ):
+        """
+        Initializes the LineToBufferSymbology class with the specified parameters.
+
+        :param input_road_lines: Path to the input road lines.
+        :param sql_selection_query: Dictionary containing SQL queries and associated buffer widths.
+        :param output_road_buffer: Path to save the output road buffer.
+        :param buffer_factor: Multiplicative factor to adjust buffer widths, avoid using 0.
+        :param fixed_buffer_addition: Additional fixed width to add to buffer widths.
+        """
         self.input_road_lines = input_road_lines
         self.sql_selection_query = sql_selection_query
         self.output_road_buffer = output_road_buffer
