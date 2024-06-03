@@ -496,6 +496,59 @@ and creates a new, permanent feature class as an output.</p>
 </section>
 <section id="module-custom_tools.general_tools.line_to_buffer_symbology">
 <span id="custom-tools-general-tools-line-to-buffer-symbology-module"></span><h2>custom_tools.general_tools.line_to_buffer_symbology module<a class="headerlink" href="#module-custom_tools.general_tools.line_to_buffer_symbology" title="Link to this heading"></a></h2>
+<dl class="py class">
+<dt class="sig sig-object py" id="custom_tools.general_tools.line_to_buffer_symbology.LineToBufferSymbology">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">custom_tools.general_tools.line_to_buffer_symbology.</span></span><span class="sig-name descname"><span class="pre">LineToBufferSymbology</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">input_road_lines</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sql_selection_query</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">output_road_buffer</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/custom_tools/general_tools/line_to_buffer_symbology.html#LineToBufferSymbology"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#custom_tools.general_tools.line_to_buffer_symbology.LineToBufferSymbology" title="Link to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<dl class="py method">
+<dt class="sig sig-object py" id="custom_tools.general_tools.line_to_buffer_symbology.LineToBufferSymbology.selecting_different_road_lines">
+<span class="sig-name descname"><span class="pre">selecting_different_road_lines</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">sql_query</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">selection_output_name</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/custom_tools/general_tools/line_to_buffer_symbology.html#LineToBufferSymbology.selecting_different_road_lines"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#custom_tools.general_tools.line_to_buffer_symbology.LineToBufferSymbology.selecting_different_road_lines" title="Link to this definition"></a></dt>
+<dd><p>Selects road lines based on the provided SQL query and creates a feature layer.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="custom_tools.general_tools.line_to_buffer_symbology.LineToBufferSymbology.creating_buffer_from_selected_lines">
+<span class="sig-name descname"><span class="pre">creating_buffer_from_selected_lines</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">selection_output_name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">buffer_width</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">buffer_output_name</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/custom_tools/general_tools/line_to_buffer_symbology.html#LineToBufferSymbology.creating_buffer_from_selected_lines"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#custom_tools.general_tools.line_to_buffer_symbology.LineToBufferSymbology.creating_buffer_from_selected_lines" title="Link to this definition"></a></dt>
+<dd><p>Creates a buffer around the selected road lines.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="custom_tools.general_tools.line_to_buffer_symbology.LineToBufferSymbology.merge_buffers">
+<span class="sig-name descname"><span class="pre">merge_buffers</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">buffer_output_names</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">merged_output_name</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/custom_tools/general_tools/line_to_buffer_symbology.html#LineToBufferSymbology.merge_buffers"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#custom_tools.general_tools.line_to_buffer_symbology.LineToBufferSymbology.merge_buffers" title="Link to this definition"></a></dt>
+<dd><p>Merges multiple buffer outputs into a single feature class.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="custom_tools.general_tools.line_to_buffer_symbology.LineToBufferSymbology.process_each_query">
+<span class="sig-name descname"><span class="pre">process_each_query</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">sql_query</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">original_width</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">counter</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/custom_tools/general_tools/line_to_buffer_symbology.html#LineToBufferSymbology.process_each_query"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#custom_tools.general_tools.line_to_buffer_symbology.LineToBufferSymbology.process_each_query" title="Link to this definition"></a></dt>
+<dd><p>Processes each SQL query to select road lines and create buffers.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="custom_tools.general_tools.line_to_buffer_symbology.LineToBufferSymbology.delete_working_files">
+<span class="sig-name descname"><span class="pre">delete_working_files</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">file_paths</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/custom_tools/general_tools/line_to_buffer_symbology.html#LineToBufferSymbology.delete_working_files"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#custom_tools.general_tools.line_to_buffer_symbology.LineToBufferSymbology.delete_working_files" title="Link to this definition"></a></dt>
+<dd><p>Deletes multiple feature classes or files.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="custom_tools.general_tools.line_to_buffer_symbology.LineToBufferSymbology.delete_feature_class">
+<span class="sig-name descname"><span class="pre">delete_feature_class</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">feature_class_path</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/custom_tools/general_tools/line_to_buffer_symbology.html#LineToBufferSymbology.delete_feature_class"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#custom_tools.general_tools.line_to_buffer_symbology.LineToBufferSymbology.delete_feature_class" title="Link to this definition"></a></dt>
+<dd><p>Deletes a feature class if it exists.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="custom_tools.general_tools.line_to_buffer_symbology.LineToBufferSymbology.process_queries">
+<span class="sig-name descname"><span class="pre">process_queries</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/custom_tools/general_tools/line_to_buffer_symbology.html#LineToBufferSymbology.process_queries"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#custom_tools.general_tools.line_to_buffer_symbology.LineToBufferSymbology.process_queries" title="Link to this definition"></a></dt>
+<dd><p>Processes all SQL queries to create buffers and handle merging.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="custom_tools.general_tools.line_to_buffer_symbology.LineToBufferSymbology.run">
+<span class="sig-name descname"><span class="pre">run</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/custom_tools/general_tools/line_to_buffer_symbology.html#LineToBufferSymbology.run"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#custom_tools.general_tools.line_to_buffer_symbology.LineToBufferSymbology.run" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
 </section>
 <section id="custom-tools-general-tools-partition-iterator-module">
 <h2>custom_tools.general_tools.partition_iterator module<a class="headerlink" href="#custom-tools-general-tools-partition-iterator-module" title="Link to this heading"></a></h2>

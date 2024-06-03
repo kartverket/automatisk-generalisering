@@ -95,6 +95,7 @@
 <span class="n">polygon_propogate_displacement</span> <span class="o">=</span> <span class="s2">&quot;polygon_propogate_displacement&quot;</span>
 <span class="n">polygon_resolve_building_conflicts</span> <span class="o">=</span> <span class="s2">&quot;polygon_resolve_building_conflicts&quot;</span>
 <span class="n">polygon_to_point</span> <span class="o">=</span> <span class="s2">&quot;polygon_to_point&quot;</span>
+<span class="n">line_to_buffer_symbology</span> <span class="o">=</span> <span class="s2">&quot;line_to_buffer_symbology&quot;</span>
 <span class="n">calculating_polygon_values</span> <span class="o">=</span> <span class="s2">&quot;calculating_polygon_values&quot;</span>
 <span class="n">calculate_point_values</span> <span class="o">=</span> <span class="s2">&quot;calculate_point_values&quot;</span>
 <span class="n">point_propogate_displacement</span> <span class="o">=</span> <span class="s2">&quot;point_propogate_displacement&quot;</span>
@@ -109,12 +110,14 @@
 <span class="n">finalizing_buildings</span> <span class="o">=</span> <span class="s2">&quot;finalizing_buildings&quot;</span>
 <span class="n">data_clean_up</span> <span class="o">=</span> <span class="s2">&quot;data_clean_up&quot;</span>
 
+
 <span class="c1"># Additional names</span>
 <span class="n">overview</span> <span class="o">=</span> <span class="s2">&quot;overview&quot;</span>
 
 <span class="c1"># TO BE DELETED</span>
 <span class="n">create_cartographic_partitions</span> <span class="o">=</span> <span class="s2">&quot;create_cartographic_partitions&quot;</span>
 <span class="n">iteration</span> <span class="o">=</span> <span class="s2">&quot;iteration&quot;</span>
+<span class="n">begrensingskurve_land_water</span> <span class="o">=</span> <span class="s2">&quot;begrensingskurve_land_water&quot;</span>
 
 
 <div class="viewcode-block" id="Building_N100">
@@ -360,6 +363,16 @@
     <span class="p">)</span>
 
     <span class="c1"># ========================================</span>
+    <span class="c1">#                              begrensingskurve_land_water</span>
+    <span class="c1"># ========================================</span>
+    <span class="n">begrensingskurve_land_water___begrensingskurve_buffer_in_water___n100_building</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_gdb</span><span class="p">(</span>
+            <span class="n">script_source_name</span><span class="o">=</span><span class="n">begrensingskurve_land_water</span><span class="p">,</span>
+            <span class="n">description</span><span class="o">=</span><span class="s2">&quot;begrensingskurve_buffer_in_water&quot;</span><span class="p">,</span>
+        <span class="p">)</span>
+    <span class="p">)</span>
+
+    <span class="c1"># ========================================</span>
     <span class="c1">#                      CALCULATE POINT VALUES</span>
     <span class="c1"># ========================================</span>
 
@@ -407,6 +420,16 @@
         <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_gdb</span><span class="p">(</span>
             <span class="n">script_source_name</span><span class="o">=</span><span class="n">polygon_to_point</span><span class="p">,</span>
             <span class="n">description</span><span class="o">=</span><span class="s2">&quot;merged_points_final&quot;</span><span class="p">,</span>
+        <span class="p">)</span>
+    <span class="p">)</span>
+
+    <span class="c1"># ========================================</span>
+    <span class="c1">#                              LINE TO BUFFER SYMBOLOGY</span>
+    <span class="c1"># ========================================</span>
+    <span class="n">line_to_buffer_symbology___buffer_symbology___n100_building</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_gdb</span><span class="p">(</span>
+            <span class="n">script_source_name</span><span class="o">=</span><span class="n">line_to_buffer_symbology</span><span class="p">,</span>
+            <span class="n">description</span><span class="o">=</span><span class="s2">&quot;buffer_symbology&quot;</span><span class="p">,</span>
         <span class="p">)</span>
     <span class="p">)</span>
 
