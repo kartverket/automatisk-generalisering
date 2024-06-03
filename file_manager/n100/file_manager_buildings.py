@@ -16,6 +16,7 @@ simplify_polygons = "simplify_polygons"
 polygon_propogate_displacement = "polygon_propogate_displacement"
 polygon_resolve_building_conflicts = "polygon_resolve_building_conflicts"
 polygon_to_point = "polygon_to_point"
+line_to_buffer_symbology = "line_to_buffer_symbology"
 calculating_polygon_values = "calculating_polygon_values"
 calculate_point_values = "calculate_point_values"
 point_propogate_displacement = "point_propogate_displacement"
@@ -30,12 +31,14 @@ point_resolve_building_conflicts = "point_resolve_building_conflicts"
 finalizing_buildings = "finalizing_buildings"
 data_clean_up = "data_clean_up"
 
+
 # Additional names
 overview = "overview"
 
 # TO BE DELETED
 create_cartographic_partitions = "create_cartographic_partitions"
 iteration = "iteration"
+begrensingskurve_land_water = "begrensingskurve_land_water"
 
 
 class Building_N100(Enum):
@@ -279,6 +282,16 @@ class Building_N100(Enum):
     )
 
     # ========================================
+    #                              begrensingskurve_land_water
+    # ========================================
+    begrensingskurve_land_water___begrensingskurve_buffer_in_water___n100_building = (
+        file_manager.generate_file_name_gdb(
+            script_source_name=begrensingskurve_land_water,
+            description="begrensingskurve_buffer_in_water",
+        )
+    )
+
+    # ========================================
     #                      CALCULATE POINT VALUES
     # ========================================
 
@@ -326,6 +339,16 @@ class Building_N100(Enum):
         file_manager.generate_file_name_gdb(
             script_source_name=polygon_to_point,
             description="merged_points_final",
+        )
+    )
+
+    # ========================================
+    #                              LINE TO BUFFER SYMBOLOGY
+    # ========================================
+    line_to_buffer_symbology___buffer_symbology___n100_building = (
+        file_manager.generate_file_name_gdb(
+            script_source_name=line_to_buffer_symbology,
+            description="buffer_symbology",
         )
     )
 
