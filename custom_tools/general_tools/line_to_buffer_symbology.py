@@ -1,4 +1,5 @@
 import arcpy
+from typing import Union
 
 from env_setup import environment_setup
 from constants.n100_constants import N100_Symbology, N100_SQLResources, N100_Values
@@ -9,14 +10,24 @@ from custom_tools.general_tools import custom_arcpy
 class LineToBufferSymbology:
     def __init__(
         self,
-        input_road_lines,
-        sql_selection_query,
-        output_road_buffer,
+        input_road_lines: str,
+        sql_selection_query: dict,
+        output_road_buffer: str,
+        buffer_factor: Union[int, float] = 1,
+        fixed_buffer_addition: Union[int, float] = 0,
     ):
         self.input_road_lines = input_road_lines
         self.sql_selection_query = sql_selection_query
         self.output_road_buffer = output_road_buffer
+        self.buffer_factor = buffer_factor
+        self.fixed_buffer_addition = fixed_buffer_addition
+
         self.working_files_list = []
+
+        if buffer_factor == 0:
+            raise ValueError(
+                "buffer_factor should not be 0 to avoid non-buffer creation."
+            )
 
     def selecting_different_road_lines(self, sql_query, selection_output_name):
         """
@@ -35,10 +46,13 @@ class LineToBufferSymbology:
         """
         Creates a buffer around the selected road lines.
         """
+        adjusted_buffer_width = (
+            buffer_width * self.buffer_factor
+        ) + self.fixed_buffer_addition
         arcpy.analysis.PairwiseBuffer(
             in_features=selection_output_name,
             out_feature_class=buffer_output_name,
-            buffer_distance_or_field=f"{buffer_width} Meters",
+            buffer_distance_or_field=f"{adjusted_buffer_width} Meters",
         )
         self.working_files_list.append(buffer_output_name)
 
@@ -105,5 +119,7 @@ if __name__ == "__main__":
         input_road_lines=Building_N100.data_preparation___unsplit_roads___n100_building.value,
         sql_selection_query=N100_SQLResources.road_symbology_size_sql_selection.value,
         output_road_buffer=Building_N100.line_to_buffer_symbology___buffer_symbology___n100_building.value,
+        buffer_factor=1,  # This is an optional parameter not needed unless you want another value than 1
+        fixed_buffer_addition=0,  # This is an optional parameter not needed unless you want another value than 0
     )
     line_to_buffer_symbology.run()
