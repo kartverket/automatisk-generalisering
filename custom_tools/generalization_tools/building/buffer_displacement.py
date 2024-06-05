@@ -1,4 +1,5 @@
 import arcpy
+import math
 from typing import Union, List, Dict, Tuple
 
 from env_setup import environment_setup
@@ -49,32 +50,36 @@ class PointDisplacementUsingBuffers:
         """
         maximum_buffer_increase_tolerance = smallest_building_dimension / 2
         total_buffer_needed = self.buffer_displacement_meter
-        iterations = []
+        largest_buffer = (largest_road_dimension * 1) + self.buffer_displacement_meter
 
-        while total_buffer_needed > 0:
-            best_factor = 0
-            best_addition = 0
-            best_increase = 0
+        # Determine the number of iterations needed
+        num_iterations = int(largest_buffer / maximum_buffer_increase_tolerance) + 1
+        increments = []
 
-            for factor in self.buffer_factors:
-                increase = (
-                    largest_road_dimension * factor
-                ) + self.fixed_buffer_addition
-                if maximum_buffer_increase_tolerance > increase > best_increase:
-                    best_increase = increase
-                    best_factor = factor
-                    best_addition = self.fixed_buffer_addition
-
-            if best_increase == 0 or total_buffer_needed - best_increase <= 0:
-                iterations.append((1, total_buffer_needed))
-                total_buffer_needed = 0
-            else:
-                iterations.append((best_factor, best_addition))
-                total_buffer_needed -= best_increase
-
-            self.fixed_buffer_addition = (
-                0  # Resetting fixed addition to 0 for next iterations
+        current_buffer = 0
+        for i in range(num_iterations - 1):
+            # Calculate the remaining buffer needed to avoid exceeding the total buffer
+            remaining_buffer_needed = largest_buffer - current_buffer
+            buffer_increase = min(
+                maximum_buffer_increase_tolerance - 1, remaining_buffer_needed
             )
+            increments.append(buffer_increase)
+            current_buffer += buffer_increase
+
+        # Ensure the final increment meets the exact buffer displacement needed
+        final_increment = total_buffer_needed - sum(increments)
+        increments.append(final_increment)
+
+        # Create iterations with buffer factors and fixed buffer additions
+        iterations = [
+            (increment / largest_road_dimension, 0) for increment in increments[:-1]
+        ]
+        iterations.append((1, increments[-1]))
+
+        # Print debug information
+        print(f"buffer displacement: {self.buffer_displacement_meter}")
+        print("Increments for each iteration:", increments)
+        print("Calculated iterations:", iterations)
 
         return iterations
 
