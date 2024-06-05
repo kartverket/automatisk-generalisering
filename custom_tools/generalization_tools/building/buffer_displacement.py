@@ -15,6 +15,7 @@ class PointDisplacementUsingBuffers:
         self,
         input_road_lines: str,
         input_building_points: str,
+        output_building_points: str,
         sql_selection_query: dict,
         output_road_buffer_base: str,
         buffer_displacement_meter: int = 30,
@@ -26,6 +27,7 @@ class PointDisplacementUsingBuffers:
         self.sql_selection_query = sql_selection_query
         self.output_road_buffer_base = output_road_buffer_base
         self.input_misc_objects = input_misc_objects
+        self.output_building_points = output_building_points
 
         self.buffer_displacement_meter = buffer_displacement_meter
         self.building_symbol_dimensions = building_symbol_dimensions
@@ -181,6 +183,11 @@ class PointDisplacementUsingBuffers:
         for factor, addition in self.increments:
             self.process_buffer_factor(factor, addition)
 
+        arcpy.management.Copy(
+            in_data=self.current_building_points,
+            out_data=self.output_building_points,
+        )
+
 
 if __name__ == "__main__":
     environment_setup.main()
@@ -188,6 +195,7 @@ if __name__ == "__main__":
     point_displacement = PointDisplacementUsingBuffers(
         input_road_lines=Building_N100.building_point_buffer_displacement__roads_study_area__n100.value,
         input_building_points=Building_N100.building_point_buffer_displacement__buildings_study_area__n100.value,
+        output_building_points=Building_N100.line_to_buffer_symbology___buffer_displaced_building_points___n100_building.value,
         sql_selection_query=N100_SQLResources.road_symbology_size_sql_selection.value,
         output_road_buffer_base=Building_N100.line_to_buffer_symbology___test___n100_building.value,
         building_symbol_dimensions=N100_Symbology.building_symbol_dimensions.value,
