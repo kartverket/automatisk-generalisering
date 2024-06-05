@@ -13,11 +13,12 @@ class BufferIncrementCalculator:
         self.previous_value = 0
         self.current_value = 0
         self.rest_value = 0
+        self.iteration_fixed_buffer_addition = 0
         self.increments = []
 
     def calculate_buffer_increments(self):
         iteration_buffer_factor = 0
-        iteration_fixed_buffer_addition = 0
+
         found_valid_increment = False
 
         while iteration_buffer_factor < 1:
@@ -45,9 +46,6 @@ class BufferIncrementCalculator:
 
             iteration_buffer_factor = next_buffer_factor
             self.current_value = iteration_buffer_factor * self.largest_road_dimension
-        print(f"Current value: {self.current_value}")
-        print(f"Previous value: {self.previous_value}")
-        print(f"iteration_buffer_factor: {iteration_buffer_factor}")
 
         if self.previous_value != self.current_value:
             self.current_value = self.largest_road_dimension
@@ -56,25 +54,25 @@ class BufferIncrementCalculator:
             self.rest_value = self.tolerance - increase_from_last_cleanup
 
             self.increments.append((1, self.rest_value))
-            self.current_value = self.current_value + self.rest_value
+            self.current_value = self.rest_value
+        else:
+            self.current_value = 0
 
-        while self.current_value < self.target_value:
+        self.target_value = self.buffer_displacement_meter
+
+        while self.current_value <= self.target_value:
             missing_value = self.target_value - self.current_value
 
-            if missing_value > self.tolerance:
-                overshoot_value = missing_value - self.tolerance
-            else:
+            if missing_value <= self.tolerance:
                 self.increments.append((1, self.buffer_displacement_meter))
+
                 break
 
-            increment_value = missing_value - overshoot_value
+            increment_value = min(self.tolerance, missing_value)
+            self.iteration_fixed_buffer_addition = increment_value + self.current_value
 
-            iteration_fixed_buffer_addition = (
-                iteration_fixed_buffer_addition + increment_value
-            )
-
-            self.increments.append((1, iteration_fixed_buffer_addition))
-            self.current_value = self.current_value + increment_value
+            self.increments.append((1, self.iteration_fixed_buffer_addition))
+            self.current_value = self.iteration_fixed_buffer_addition
 
         return self.increments
 
@@ -82,7 +80,7 @@ class BufferIncrementCalculator:
 # Example usage
 calculator = BufferIncrementCalculator(
     largest_road_dimension=133,
-    buffer_displacement_meter=101,
+    buffer_displacement_meter=201,
     maximum_buffer_increase_tolerance=22.5,
 )
 increments = calculator.calculate_buffer_increments()
