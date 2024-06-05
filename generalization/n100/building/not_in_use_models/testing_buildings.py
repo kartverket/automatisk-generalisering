@@ -79,8 +79,8 @@ class BufferIncrementCalculator:
 
 # Example usage
 calculator = BufferIncrementCalculator(
-    largest_road_dimension=133,
-    buffer_displacement_meter=201,
+    largest_road_dimension=43,
+    buffer_displacement_meter=30,
     maximum_buffer_increase_tolerance=22.5,
 )
 increments = calculator.calculate_buffer_increments()
