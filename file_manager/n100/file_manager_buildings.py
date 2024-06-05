@@ -345,10 +345,10 @@ class Building_N100(Enum):
     # ========================================
     #                              LINE TO BUFFER SYMBOLOGY
     # ========================================
-    line_to_buffer_symbology___buffer_symbology___n100_building = (
+    line_to_buffer_symbology___test___n100_building = (
         file_manager.generate_file_name_gdb(
             script_source_name=line_to_buffer_symbology,
-            description="buffer_symbology",
+            description="test",
         )
     )
 

@@ -127,7 +127,7 @@ if __name__ == "__main__":
     line_to_buffer_symbology = LineToBufferSymbology(
         input_road_lines=Building_N100.data_preparation___unsplit_roads___n100_building.value,
         sql_selection_query=N100_SQLResources.road_symbology_size_sql_selection.value,
-        output_road_buffer=Building_N100.line_to_buffer_symbology___buffer_symbology___n100_building.value,
+        output_road_buffer=Building_N100.line_to_buffer_symbology___test___n100_building.value,
         buffer_factor=1,  # This is an optional parameter not needed unless you want another value than 1
         fixed_buffer_addition=0,  # This is an optional parameter not needed unless you want another value than 0
     )
