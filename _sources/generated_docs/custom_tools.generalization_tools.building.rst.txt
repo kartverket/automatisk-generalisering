@@ -12,6 +12,14 @@ custom\_tools.generalization\_tools.building.begrensningskurve\_land\_waterbodie
    :undoc-members:
    :show-inheritance:
 
+custom\_tools.generalization\_tools.building.buffer\_displacement module
+------------------------------------------------------------------------
+
+.. automodule:: custom_tools.generalization_tools.building.buffer_displacement
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
 Module contents
 ---------------
 

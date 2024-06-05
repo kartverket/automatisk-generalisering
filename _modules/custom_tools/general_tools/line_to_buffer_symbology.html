@@ -78,6 +78,7 @@
              
   <h1>Source code for custom_tools.general_tools.line_to_buffer_symbology</h1><div class="highlight"><pre>
 <span></span><span class="kn">import</span> <span class="nn">arcpy</span>
+<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Union</span>
 
 <span class="kn">from</span> <span class="nn">env_setup</span> <span class="kn">import</span> <span class="n">environment_setup</span>
 <span class="kn">from</span> <span class="nn">constants.n100_constants</span> <span class="kn">import</span> <span class="n">N100_Symbology</span><span class="p">,</span> <span class="n">N100_SQLResources</span><span class="p">,</span> <span class="n">N100_Values</span>
@@ -90,14 +91,33 @@
 <span class="k">class</span> <span class="nc">LineToBufferSymbology</span><span class="p">:</span>
     <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
-        <span class="n">input_road_lines</span><span class="p">,</span>
-        <span class="n">sql_selection_query</span><span class="p">,</span>
-        <span class="n">output_road_buffer</span><span class="p">,</span>
+        <span class="n">input_road_lines</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+        <span class="n">sql_selection_query</span><span class="p">:</span> <span class="nb">dict</span><span class="p">,</span>
+        <span class="n">output_road_buffer</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+        <span class="n">buffer_factor</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="mi">1</span><span class="p">,</span>
+        <span class="n">fixed_buffer_addition</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="mi">0</span><span class="p">,</span>
     <span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Initializes the LineToBufferSymbology class with the specified parameters.</span>
+
+<span class="sd">        :param input_road_lines: Path to the input road lines.</span>
+<span class="sd">        :param sql_selection_query: Dictionary containing SQL queries and associated buffer widths.</span>
+<span class="sd">        :param output_road_buffer: Path to save the output road buffer.</span>
+<span class="sd">        :param buffer_factor: Multiplicative factor to adjust buffer widths, avoid using 0.</span>
+<span class="sd">        :param fixed_buffer_addition: Additional fixed width to add to buffer widths.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">input_road_lines</span> <span class="o">=</span> <span class="n">input_road_lines</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">sql_selection_query</span> <span class="o">=</span> <span class="n">sql_selection_query</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">output_road_buffer</span> <span class="o">=</span> <span class="n">output_road_buffer</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">buffer_factor</span> <span class="o">=</span> <span class="n">buffer_factor</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">fixed_buffer_addition</span> <span class="o">=</span> <span class="n">fixed_buffer_addition</span>
+
         <span class="bp">self</span><span class="o">.</span><span class="n">working_files_list</span> <span class="o">=</span> <span class="p">[]</span>
+
+        <span class="k">if</span> <span class="n">buffer_factor</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="s2">&quot;buffer_factor should not be 0 to avoid non-buffer creation.&quot;</span>
+            <span class="p">)</span>
 
 <div class="viewcode-block" id="LineToBufferSymbology.selecting_different_road_lines">
 <a class="viewcode-back" href="../../../generated_docs/custom_tools.general_tools.html#custom_tools.general_tools.line_to_buffer_symbology.LineToBufferSymbology.selecting_different_road_lines">[docs]</a>
@@ -121,10 +141,13 @@
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Creates a buffer around the selected road lines.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">adjusted_buffer_width</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="n">buffer_width</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">buffer_factor</span>
+        <span class="p">)</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">fixed_buffer_addition</span>
         <span class="n">arcpy</span><span class="o">.</span><span class="n">analysis</span><span class="o">.</span><span class="n">PairwiseBuffer</span><span class="p">(</span>
             <span class="n">in_features</span><span class="o">=</span><span class="n">selection_output_name</span><span class="p">,</span>
             <span class="n">out_feature_class</span><span class="o">=</span><span class="n">buffer_output_name</span><span class="p">,</span>
-            <span class="n">buffer_distance_or_field</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">buffer_width</span><span class="si">}</span><span class="s2"> Meters&quot;</span><span class="p">,</span>
+            <span class="n">buffer_distance_or_field</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">adjusted_buffer_width</span><span class="si">}</span><span class="s2"> Meters&quot;</span><span class="p">,</span>
         <span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">working_files_list</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">buffer_output_name</span><span class="p">)</span></div>
 
@@ -146,7 +169,7 @@
 <span class="sd">        Processes each SQL query to select road lines and create buffers.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="n">selection_output_name</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;in_memory/road_selection_</span><span class="si">{</span><span class="n">counter</span><span class="si">}</span><span class="s2">&quot;</span>
-        <span class="n">buffer_output_name</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;in_memory/line_buffer_</span><span class="si">{</span><span class="n">original_width</span><span class="si">}</span><span class="s2">m_</span><span class="si">{</span><span class="n">counter</span><span class="si">}</span><span class="s2">&quot;</span>
+        <span class="n">buffer_output_name</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;in_memory/line_buffer_</span><span class="si">{</span><span class="n">counter</span><span class="si">}</span><span class="s2">&quot;</span>
 
         <span class="bp">self</span><span class="o">.</span><span class="n">selecting_different_road_lines</span><span class="p">(</span><span class="n">sql_query</span><span class="p">,</span> <span class="n">selection_output_name</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">creating_buffer_from_selected_lines</span><span class="p">(</span>
@@ -210,7 +233,9 @@
     <span class="n">line_to_buffer_symbology</span> <span class="o">=</span> <span class="n">LineToBufferSymbology</span><span class="p">(</span>
         <span class="n">input_road_lines</span><span class="o">=</span><span class="n">Building_N100</span><span class="o">.</span><span class="n">data_preparation___unsplit_roads___n100_building</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
         <span class="n">sql_selection_query</span><span class="o">=</span><span class="n">N100_SQLResources</span><span class="o">.</span><span class="n">road_symbology_size_sql_selection</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
-        <span class="n">output_road_buffer</span><span class="o">=</span><span class="n">Building_N100</span><span class="o">.</span><span class="n">line_to_buffer_symbology___buffer_symbology___n100_building</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
+        <span class="n">output_road_buffer</span><span class="o">=</span><span class="n">Building_N100</span><span class="o">.</span><span class="n">line_to_buffer_symbology___test___n100_building</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
+        <span class="n">buffer_factor</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span>  <span class="c1"># This is an optional parameter not needed unless you want another value than 1</span>
+        <span class="n">fixed_buffer_addition</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span>  <span class="c1"># This is an optional parameter not needed unless you want another value than 0</span>
     <span class="p">)</span>
     <span class="n">line_to_buffer_symbology</span><span class="o">.</span><span class="n">run</span><span class="p">()</span>
 </pre></div>
