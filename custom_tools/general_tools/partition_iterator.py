@@ -13,10 +13,14 @@ from env_setup import environment_setup
 from custom_tools.general_tools import custom_arcpy
 from custom_tools.decorators.timing_decorator import timing_decorator
 
-from input_data import input_n50
+from input_data import input_n50, input_n100
 from file_manager.n100.file_manager_buildings import Building_N100
 from custom_tools.general_tools.polygon_processor import PolygonProcessor
 from constants.n100_constants import N100_Symbology
+
+from generalization.n100.building.not_in_use_models.testing_buildings import (
+    DictionaryBuffer2,
+)
 
 # THIS IS WORK IN PROGRESS NOT READY FOR USE YET
 
@@ -96,20 +100,30 @@ class PartitionIterator:
         self.iteration_start_time = None
 
     def unpack_alias_path_data(self, alias_path_data):
-        # Process initial alias_path_data for inputs and outputs
+        """
+        Process initial alias_path_data for inputs and outputs.
+        """
         for alias, info in alias_path_data.items():
-            type_info, path_info = info
             if alias not in self.nested_alias_type_data:
                 self.nested_alias_type_data[alias] = {}
-            self.nested_alias_type_data[alias][type_info] = path_info
+
+            for i in range(0, len(info), 2):
+                type_info = info[i]
+                path_info = info[i + 1]
+                self.nested_alias_type_data[alias][type_info] = path_info
 
     def unpack_alias_path_outputs(self, alias_path_outputs):
-        self.nested_final_outputs = {}
+        """
+        Process initial alias_path_outputs for outputs.
+        """
         for alias, info in alias_path_outputs.items():
-            type_info, path_info = info
             if alias not in self.nested_final_outputs:
                 self.nested_final_outputs[alias] = {}
-            self.nested_final_outputs[alias][type_info] = path_info
+
+            for i in range(0, len(info), 2):
+                type_info = info[i]
+                path_info = info[i + 1]
+                self.nested_final_outputs[alias][type_info] = path_info
 
     def configure_alias_and_type(
         self,
@@ -999,6 +1013,7 @@ if __name__ == "__main__":
     restriction_lines = "restriction_lines"
     bane = "bane"
     river = "river"
+    train_stations = "train_stations"
 
     inputs = {
         building_points: [
@@ -1024,6 +1039,74 @@ if __name__ == "__main__":
             "polygon_processor",
             Building_N100.iteration__partition_iterator_final_output_points__n100.value,
         ],
+    }
+
+    inputs_2 = {
+        building_points: [
+            "input",
+            Building_N100.building_point_buffer_displacement__buildings_study_area__n100.value,
+        ],
+        river: [
+            "input",
+            Building_N100.building_point_buffer_displacement__begrensningskurve_study_area__n100.value,
+        ],
+        train_stations: [
+            "input",
+            input_n100.JernbaneStasjon,
+        ],
+        bane: [
+            "input",
+            input_n100.Bane,
+        ],
+    }
+
+    outputs_2 = {
+        building_points: [
+            "buffer_1",
+            Building_N100.testing_building___partition_iterator_building_buffer_1___n100_building.value,
+        ],
+        river: [
+            "buffer_1",
+            Building_N100.testing_building___partition_iterator_river_buffer_1___n100_building.value,
+        ],
+        train_stations: [
+            "buffer_1",
+            Building_N100.testing_building___partition_iterator_train_buffer_1___n100_building.value,
+        ],
+        bane: [
+            "buffer_1",
+            Building_N100.testing_building___partition_iterator_bane_buffer_1___n100_building.value,
+        ],
+    }
+
+    input_dict = {
+        "building_points": [
+            ("building_points", "input"),
+            ("river", "input"),
+            "10",
+        ],
+        "train_stations": [
+            ("train_stations", "input"),
+            ("bane", "input"),
+            "10",
+        ],
+    }
+
+    output_dict = {
+        "building_points": [
+            ("building_points", "buffer_1"),
+            ("river", "buffer_1"),
+        ],
+        "train_stations": [
+            ("train_stations", "buffer_1"),
+            ("bane", "buffer_1"),
+        ],
+    }
+
+    buffer_operation_config = {
+        "class": DictionaryBuffer2,
+        "method": "run",
+        "params": {"input_dict": input_dict, "output_dict": output_dict},
     }
 
     select_hospitals_config = {
