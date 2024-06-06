@@ -30,6 +30,7 @@ points_to_squares = "points_to_squares"
 point_resolve_building_conflicts = "point_resolve_building_conflicts"
 finalizing_buildings = "finalizing_buildings"
 data_clean_up = "data_clean_up"
+testing_building = "testing_building"
 
 
 # Additional names
@@ -356,6 +357,66 @@ class Building_N100(Enum):
         file_manager.generate_file_name_gdb(
             script_source_name=line_to_buffer_symbology,
             description="buffer_displaced_building_points",
+        )
+    )
+
+    # ========================================
+    #                              TESTING BUILDINGS
+    # ========================================
+
+    testing_building___building_point_1___n100_building = (
+        file_manager.generate_file_name_gdb(
+            script_source_name=testing_building,
+            description="building_point_1",
+        )
+    )
+
+    testing_building___building_point_2___n100_building = (
+        file_manager.generate_file_name_gdb(
+            script_source_name=testing_building,
+            description="building_point_2",
+        )
+    )
+
+    testing_building___training_point_1___n100_building = (
+        file_manager.generate_file_name_gdb(
+            script_source_name=testing_building,
+            description="training_point_1",
+        )
+    )
+
+    testing_building___training_point_2___n100_building = (
+        file_manager.generate_file_name_gdb(
+            script_source_name=testing_building,
+            description="training_point_2",
+        )
+    )
+
+    testing_building___partition_iterator_building_buffer_1___n100_building = (
+        file_manager.generate_file_name_gdb(
+            script_source_name=testing_building,
+            description="partition_iterator_building_buffer_1",
+        )
+    )
+
+    testing_building___partition_iterator_river_buffer_1___n100_building = (
+        file_manager.generate_file_name_gdb(
+            script_source_name=testing_building,
+            description="partition_iterator_river_buffer_1",
+        )
+    )
+
+    testing_building___partition_iterator_train_buffer_1___n100_building = (
+        file_manager.generate_file_name_gdb(
+            script_source_name=testing_building,
+            description="partition_iterator_train_buffer_1",
+        )
+    )
+
+    testing_building___partition_iterator_bane_buffer_1___n100_building = (
+        file_manager.generate_file_name_gdb(
+            script_source_name=testing_building,
+            description="partition_iterator_bane_buffer_1",
         )
     )
 

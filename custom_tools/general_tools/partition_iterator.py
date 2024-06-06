@@ -1223,8 +1223,21 @@ if __name__ == "__main__":
         },
     }
 
-    # Instantiate PartitionIterator with necessary parameters
     partition_iterator = PartitionIterator(
+        alias_path_data=inputs,
+        alias_path_outputs=outputs,
+        custom_functions=[select_hospitals_config, polygon_processor_config],
+        root_file_partition_iterator=Building_N100.iteration__partition_iterator__n100.value,
+        scale=env_setup.global_config.scale_n100,
+        dictionary_documentation_path=Building_N100.iteration___json_documentation___building_n100.value,
+        feature_count="400000",
+    )
+
+    # Run the partition iterator
+    # partition_iterator.run()
+
+    # Instantiate PartitionIterator with necessary parameters
+    partition_iterator_2 = PartitionIterator(
         alias_path_data=inputs3,
         alias_path_outputs=outputs3,
         custom_functions=[buffer_displacement_config],
@@ -1235,4 +1248,4 @@ if __name__ == "__main__":
     )
 
     # Run the partition iterator
-    partition_iterator.run()
+    partition_iterator_2.run()

@@ -5,12 +5,14 @@ from typing import Union, List, Dict, Tuple
 from env_setup import environment_setup
 from constants.n100_constants import N100_Symbology, N100_SQLResources, N100_Values
 from file_manager.n100.file_manager_buildings import Building_N100
+from input_data import input_n100
 from custom_tools.general_tools import custom_arcpy
 from custom_tools.general_tools.line_to_buffer_symbology import LineToBufferSymbology
 from custom_tools.general_tools.polygon_processor import PolygonProcessor
+from custom_tools.decorators.partition_io_decorator import partition_io_decorator
 
 
-class PointDisplacementUsingBuffers:
+class BufferDisplacement:
     def __init__(
         self,
         input_road_lines: str,
@@ -157,11 +159,17 @@ class PointDisplacementUsingBuffers:
             calculated_buffer_width = (buffer_width * factor) + fixed_addition
             misc_buffer_output = f"{self.output_road_buffer_base}_{feature_name}_buffer_factor_{factor_name}_add_{fixed_addition_name}"
 
-            arcpy.analysis.PairwiseBuffer(
-                in_features=feature_path,
-                out_feature_class=misc_buffer_output,
-                buffer_distance_or_field=f"{calculated_buffer_width} Meters",
-            )
+            if buffer_width == 0:
+                arcpy.management.Copy(
+                    in_data=feature_path,
+                    out_data=misc_buffer_output,
+                )
+            else:
+                arcpy.analysis.PairwiseBuffer(
+                    in_features=feature_path,
+                    out_feature_class=misc_buffer_output,
+                    buffer_distance_or_field=f"{calculated_buffer_width} Meters",
+                )
             misc_buffer_outputs.append(misc_buffer_output)
 
         merged_barrier_output = f"{self.output_road_buffer_base}_merged_barriers_factor_{factor_name}_add_{fixed_addition_name}"
@@ -184,7 +192,7 @@ class PointDisplacementUsingBuffers:
         output_feature_to_point = f"{self.output_road_buffer_base}_erased_buildings_factor_{factor_name}_add_{fixed_addition_name}"
         arcpy.analysis.PairwiseErase(
             in_features=output_building_points,
-            erase_features=output_road_buffer,
+            erase_features=merged_barrier_output,
             out_feature_class=output_feature_to_point,
         )
 
@@ -198,6 +206,14 @@ class PointDisplacementUsingBuffers:
 
         self.current_building_points = output_feature_to_points
 
+    @partition_io_decorator(
+        input_param_names=[
+            "input_road_lines",
+            "input_building_points",
+            "input_misc_objects",
+        ],
+        output_param_names=["output_building_points"],
+    )
     def run(self):
         self.finding_dimensions(self.buffer_displacement_meter)
         self.calculate_buffer_increments()
@@ -217,15 +233,23 @@ if __name__ == "__main__":
     misc_objects = {
         "begrensningskurve": (
             Building_N100.building_point_buffer_displacement__begrensningskurve_study_area__n100.value,
-            1,
+            0,
         ),
         "urban_areas": (
             Building_N100.building_point_buffer_displacement__selection_urban_areas__n100.value,
             1,
         ),
+        "bane_station": (
+            input_n100.JernbaneStasjon,
+            1,
+        ),
+        "bane_lines": (
+            input_n100.Bane,
+            1,
+        ),
     }
 
-    point_displacement = PointDisplacementUsingBuffers(
+    point_displacement = BufferDisplacement(
         input_road_lines=Building_N100.building_point_buffer_displacement__roads_study_area__n100.value,
         input_building_points=Building_N100.building_point_buffer_displacement__buildings_study_area__n100.value,
         input_misc_objects=misc_objects,
@@ -236,3 +260,22 @@ if __name__ == "__main__":
         buffer_displacement_meter=N100_Values.buffer_clearance_distance_m.value,
     )
     point_displacement.run()
+
+    misc_objects = {
+        "begrensningskurve": (
+            ("begrensningskurve", "context"),
+            0,
+        ),
+        "urban_areas": (
+            ("urban_areas", "context"),
+            1,
+        ),
+        "bane_station": (
+            ("bane_station", "context"),
+            1,
+        ),
+        "bane_lines": (
+            ("bane_lines", "context"),
+            1,
+        ),
+    }
