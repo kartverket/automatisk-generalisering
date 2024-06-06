@@ -148,6 +148,28 @@ class PointDisplacementUsingBuffers:
         )
         line_to_buffer_symbology.run()
 
+        misc_buffer_outputs = []
+
+        for feature_name, (
+            feature_path,
+            buffer_width,
+        ) in self.input_misc_objects.items():
+            calculated_buffer_width = (buffer_width * factor) + fixed_addition
+            misc_buffer_output = f"{self.output_road_buffer_base}_{feature_name}_buffer_factor_{factor_name}_add_{fixed_addition_name}"
+
+            arcpy.analysis.PairwiseBuffer(
+                in_features=feature_path,
+                out_feature_class=misc_buffer_output,
+                buffer_distance_or_field=f"{calculated_buffer_width} Meters",
+            )
+            misc_buffer_outputs.append(misc_buffer_output)
+
+        merged_barrier_output = f"{self.output_road_buffer_base}_merged_barriers_factor_{factor_name}_add_{fixed_addition_name}"
+        arcpy.management.Merge(
+            inputs=[output_road_buffer] + misc_buffer_outputs,
+            output=merged_barrier_output,
+        )
+
         output_building_points = f"{self.output_road_buffer_base}_building_factor_{factor_name}_add_{fixed_addition_name}"
 
         building_polygons = PolygonProcessor(
@@ -192,9 +214,21 @@ class PointDisplacementUsingBuffers:
 if __name__ == "__main__":
     environment_setup.main()
 
+    misc_objects = {
+        "begrensningskurve": (
+            Building_N100.building_point_buffer_displacement__begrensningskurve_study_area__n100.value,
+            1,
+        ),
+        "urban_areas": (
+            Building_N100.building_point_buffer_displacement__selection_urban_areas__n100.value,
+            1,
+        ),
+    }
+
     point_displacement = PointDisplacementUsingBuffers(
         input_road_lines=Building_N100.building_point_buffer_displacement__roads_study_area__n100.value,
         input_building_points=Building_N100.building_point_buffer_displacement__buildings_study_area__n100.value,
+        input_misc_objects=misc_objects,
         output_building_points=Building_N100.line_to_buffer_symbology___buffer_displaced_building_points___n100_building.value,
         sql_selection_query=N100_SQLResources.road_symbology_size_sql_selection.value,
         output_road_buffer_base=Building_N100.line_to_buffer_symbology___test___n100_building.value,
