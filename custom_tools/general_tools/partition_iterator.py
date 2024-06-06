@@ -21,6 +21,10 @@ from constants.n100_constants import N100_Symbology
 from generalization.n100.building.not_in_use_models.testing_buildings import (
     DictionaryBuffer2,
 )
+from custom_tools.generalization_tools.building.buffer_displacement import (
+    BufferDisplacement,
+)
+from constants.n100_constants import N100_Symbology, N100_SQLResources, N100_Values
 
 # THIS IS WORK IN PROGRESS NOT READY FOR USE YET
 
@@ -800,15 +804,11 @@ class PartitionIterator:
         """
         Resolve paths for input/output parameters of custom functions.
         """
-        for param in params:
-            param_info_list = custom_func["params"].get(param, [])
-            if isinstance(param_info_list, tuple):
-                param_info_list = [param_info_list]
 
-            for param_info in param_info_list:
+        def resolve_param(param_info):
+            if isinstance(param_info, tuple):
                 if len(param_info) == 2:
                     alias, alias_type = param_info
-                    # Check if alias and type exist in nested_alias_type_data
                     if (
                         alias in self.nested_alias_type_data
                         and alias_type in self.nested_alias_type_data[alias]
@@ -820,17 +820,38 @@ class PartitionIterator:
                             alias, alias_type
                         )
                         self.configure_alias_and_type(alias, alias_type, resolved_path)
-                    # Replace the alias and type with the resolved path
-                    custom_func["params"][param] = resolved_path
-                    print(f"Resolved {param_type} path for {param}: {resolved_path}")
+                    return resolved_path
                 elif len(param_info) == 3:
                     alias, alias_type, file_path = param_info
                     resolved_path = file_path
                     # Ensure the alias and type are updated with the provided path
                     self.configure_alias_and_type(alias, alias_type, resolved_path)
-                    # Replace the alias and type with the resolved path
-                    custom_func["params"][param] = resolved_path
-                    print(f"Resolved {param_type} path for {param}: {resolved_path}")
+                    return resolved_path
+                else:
+                    return tuple(resolve_param(p) for p in param_info)
+            elif isinstance(param_info, dict):
+                return {k: resolve_param(v) for k, v in param_info.items()}
+            elif isinstance(param_info, list):
+                return [resolve_param(item) for item in param_info]
+            else:
+                return param_info
+
+        for param in params:
+            param_info_list = custom_func["params"].get(param, [])
+            if not isinstance(param_info_list, list):
+                param_info_list = [param_info_list]
+
+            resolved_paths = [
+                resolve_param(param_info) for param_info in param_info_list
+            ]
+            if len(resolved_paths) == 1:
+                custom_func["params"][param] = resolved_paths[0]
+            else:
+                custom_func["params"][param] = resolved_paths
+
+            print(
+                f"Resolved {param_type} path for {param}: {custom_func['params'][param]}"
+            )
 
     def construct_path_for_alias_type(self, alias, alias_type):
         """
@@ -1079,6 +1100,80 @@ if __name__ == "__main__":
         ],
     }
 
+    inputs3 = {
+        "input_road_lines": [
+            "input",
+            Building_N100.building_point_buffer_displacement__roads_study_area__n100.value,
+        ],
+        "input_building_points": [
+            "input",
+            Building_N100.building_point_buffer_displacement__buildings_study_area__n100.value,
+        ],
+        "begrensningskurve": [
+            "context",
+            Building_N100.building_point_buffer_displacement__begrensningskurve_study_area__n100.value,
+        ],
+        "urban_areas": [
+            "context",
+            Building_N100.building_point_buffer_displacement__selection_urban_areas__n100.value,
+        ],
+        "bane_station": [
+            "context",
+            input_n100.JernbaneStasjon,
+        ],
+        "bane_lines": [
+            "context",
+            input_n100.Bane,
+        ],
+    }
+
+    outputs3 = {
+        "output_building_points": [
+            "buffer_displacement",
+            Building_N100.line_to_buffer_symbology___buffer_displaced_building_points___n100_building.value,
+        ],
+        "output_road_buffer_base": [
+            "buffer_displacement",
+            Building_N100.line_to_buffer_symbology___test___n100_building.value,
+        ],
+    }
+    misc_objects = {
+        "begrensningskurve": (
+            ("begrensningskurve", "context"),
+            0,
+        ),
+        "urban_areas": (
+            ("urban_areas", "context"),
+            1,
+        ),
+        "bane_station": (
+            ("bane_station", "context"),
+            1,
+        ),
+        "bane_lines": (
+            ("bane_lines", "context"),
+            1,
+        ),
+    }
+
+    buffer_displacement_config = {
+        "class": BufferDisplacement,
+        "method": "run",
+        "params": {
+            "input_road_lines": ("input_road_lines", "input"),
+            "input_building_points": ("input_building_points", "input"),
+            "input_misc_objects": misc_objects,  # Already structured properly
+            "output_building_points": ("output_building_points", "buffer_displacement"),
+            "sql_selection_query": N100_SQLResources.road_symbology_size_sql_selection.value,
+            "output_road_buffer_base": (
+                "output_road_buffer_base",
+                "buffer_displacement",
+            ),
+            "building_symbol_dimensions": N100_Symbology.building_symbol_dimensions.value,
+            "buffer_displacement_meter": N100_Values.buffer_clearance_distance_m.value,
+        },
+    }
+
     input_dict = {
         "building_points": [
             ("building_points", "input"),
@@ -1132,9 +1227,9 @@ if __name__ == "__main__":
 
     # Instantiate PartitionIterator with necessary parameters
     partition_iterator = PartitionIterator(
-        alias_path_data=inputs,
-        alias_path_outputs=outputs,
-        custom_functions=[select_hospitals_config, polygon_processor_config],
+        alias_path_data=inputs3,
+        alias_path_outputs=outputs3,
+        custom_functions=[buffer_displacement_config],
         root_file_partition_iterator=Building_N100.iteration__partition_iterator__n100.value,
         scale=env_setup.global_config.scale_n100,
         dictionary_documentation_path=Building_N100.iteration___json_documentation___building_n100.value,
