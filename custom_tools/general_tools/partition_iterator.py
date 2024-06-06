@@ -1035,6 +1035,8 @@ if __name__ == "__main__":
     bane = "bane"
     river = "river"
     train_stations = "train_stations"
+    urban_area = "urban_area"
+    roads = "roads"
 
     inputs = {
         building_points: [
@@ -1101,40 +1103,36 @@ if __name__ == "__main__":
     }
 
     inputs3 = {
-        "input_road_lines": [
+        roads: [
             "input",
             Building_N100.building_point_buffer_displacement__roads_study_area__n100.value,
         ],
-        "input_building_points": [
+        building_points: [
             "input",
             Building_N100.building_point_buffer_displacement__buildings_study_area__n100.value,
         ],
-        "begrensningskurve": [
+        river: [
             "context",
             Building_N100.building_point_buffer_displacement__begrensningskurve_study_area__n100.value,
         ],
-        "urban_areas": [
+        urban_area: [
             "context",
             Building_N100.building_point_buffer_displacement__selection_urban_areas__n100.value,
         ],
-        "bane_station": [
+        train_stations: [
             "context",
             input_n100.JernbaneStasjon,
         ],
-        "bane_lines": [
+        bane: [
             "context",
             input_n100.Bane,
         ],
     }
 
     outputs3 = {
-        "output_building_points": [
+        building_points: [
             "buffer_displacement",
             Building_N100.line_to_buffer_symbology___buffer_displaced_building_points___n100_building.value,
-        ],
-        "output_road_buffer_base": [
-            "buffer_displacement",
-            Building_N100.line_to_buffer_symbology___test___n100_building.value,
         ],
     }
     misc_objects = {
