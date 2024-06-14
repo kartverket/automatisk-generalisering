@@ -22,7 +22,7 @@ class BufferDisplacement:
         output_road_buffer_base: str,
         buffer_displacement_meter: int = 30,
         building_symbol_dimensions: Dict[int, Tuple[int, int]] = None,
-        input_misc_objects: dict = None,
+        input_misc_objects: Dict[str, List[Union[str, int]]] = None,
     ):
         self.input_road_lines = input_road_lines
         self.input_building_points = input_building_points
@@ -152,10 +152,8 @@ class BufferDisplacement:
 
         misc_buffer_outputs = []
 
-        for feature_name, (
-            feature_path,
-            buffer_width,
-        ) in self.input_misc_objects.items():
+        for feature_name, feature_details in self.input_misc_objects.items():
+            feature_path, buffer_width = feature_details
             calculated_buffer_width = (buffer_width * factor) + fixed_addition
             misc_buffer_output = f"{self.output_road_buffer_base}_{feature_name}_buffer_factor_{factor_name}_add_{fixed_addition_name}"
 
@@ -231,22 +229,22 @@ if __name__ == "__main__":
     environment_setup.main()
 
     misc_objects = {
-        "begrensningskurve": (
+        "begrensningskurve": [
             Building_N100.building_point_buffer_displacement__begrensningskurve_study_area__n100.value,
             0,
-        ),
-        "urban_areas": (
+        ],
+        "urban_areas": [
             Building_N100.building_point_buffer_displacement__selection_urban_areas__n100.value,
             1,
-        ),
-        "bane_station": (
+        ],
+        "bane_station": [
             input_n100.JernbaneStasjon,
             1,
-        ),
-        "bane_lines": (
+        ],
+        "bane_lines": [
             input_n100.Bane,
             1,
-        ),
+        ],
     }
 
     point_displacement = BufferDisplacement(
