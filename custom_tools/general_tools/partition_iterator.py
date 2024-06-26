@@ -806,29 +806,25 @@ class PartitionIterator:
         """
 
         def resolve_param(param_info):
-            if isinstance(param_info, tuple):
-                if len(param_info) == 2:
-                    alias, alias_type = param_info
-                    if (
-                        alias in self.nested_alias_type_data
-                        and alias_type in self.nested_alias_type_data[alias]
-                    ):
-                        resolved_path = self.nested_alias_type_data[alias][alias_type]
-                    else:
-                        # Construct a new path for the alias type
-                        resolved_path = self.construct_path_for_alias_type(
-                            alias, alias_type
-                        )
-                        self.configure_alias_and_type(alias, alias_type, resolved_path)
-                    return resolved_path
-                elif len(param_info) == 3:
-                    alias, alias_type, file_path = param_info
-                    resolved_path = file_path
-                    # Ensure the alias and type are updated with the provided path
-                    self.configure_alias_and_type(alias, alias_type, resolved_path)
-                    return resolved_path
+            if isinstance(param_info, tuple) and len(param_info) == 2:
+                alias, alias_type = param_info
+                if (
+                    alias in self.nested_alias_type_data
+                    and alias_type in self.nested_alias_type_data[alias]
+                ):
+                    resolved_path = self.nested_alias_type_data[alias][alias_type]
                 else:
-                    return tuple(resolve_param(p) for p in param_info)
+                    # Construct a new path for the alias type
+                    resolved_path = self.construct_path_for_alias_type(
+                        alias, alias_type
+                    )
+                    self.configure_alias_and_type(alias, alias_type, resolved_path)
+
+                # Ensure all paths are added to nested_alias_type_data
+                self.configure_alias_and_type(alias, alias_type, resolved_path)
+
+                print(f"Resolved {param_info} to {resolved_path}")
+                return resolved_path
             elif isinstance(param_info, dict):
                 return {k: resolve_param(v) for k, v in param_info.items()}
             elif isinstance(param_info, list):
@@ -1136,37 +1132,34 @@ if __name__ == "__main__":
         ],
     }
     misc_objects = {
-        "begrensningskurve": (
-            ("begrensningskurve", "context"),
+        "begrensningskurve": [
+            ("river", "context"),
             0,
-        ),
-        "urban_areas": (
-            ("urban_areas", "context"),
+        ],
+        "urban_areas": [
+            ("urban_area", "context"),
             1,
-        ),
-        "bane_station": (
-            ("bane_station", "context"),
+        ],
+        "bane_station": [
+            ("train_stations", "context"),
             1,
-        ),
-        "bane_lines": (
-            ("bane_lines", "context"),
+        ],
+        "bane_lines": [
+            ("bane", "context"),
             1,
-        ),
+        ],
     }
 
     buffer_displacement_config = {
         "class": BufferDisplacement,
         "method": "run",
         "params": {
-            "input_road_lines": ("input_road_lines", "input"),
-            "input_building_points": ("input_building_points", "input"),
-            "input_misc_objects": misc_objects,  # Already structured properly
-            "output_building_points": ("output_building_points", "buffer_displacement"),
+            "input_road_lines": ("roads", "input"),
+            "input_building_points": ("building_points", "input"),
+            "input_misc_objects": misc_objects,
+            "output_building_points": ("building_points", "buffer_displacement"),
             "sql_selection_query": N100_SQLResources.road_symbology_size_sql_selection.value,
-            "output_road_buffer_base": (
-                "output_road_buffer_base",
-                "buffer_displacement",
-            ),
+            "output_road_buffer_base": Building_N100.line_to_buffer_symbology___test___n100_building.value,
             "building_symbol_dimensions": N100_Symbology.building_symbol_dimensions.value,
             "buffer_displacement_meter": N100_Values.buffer_clearance_distance_m.value,
         },
@@ -1247,5 +1240,16 @@ if __name__ == "__main__":
         feature_count="400000",
     )
 
+    partition_iterator_3 = PartitionIterator(
+        alias_path_data=inputs_2,
+        alias_path_outputs=outputs_2,
+        custom_functions=[buffer_operation_config],
+        root_file_partition_iterator=Building_N100.iteration__partition_iterator__n100.value,
+        scale=env_setup.global_config.scale_n100,
+        dictionary_documentation_path=Building_N100.iteration___json_documentation___building_n100.value,
+        feature_count="32000",
+    )
+
     # Run the partition iterator
     partition_iterator_2.run()
+    # partition_iterator_3.run()
