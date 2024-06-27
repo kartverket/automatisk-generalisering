@@ -806,15 +806,17 @@ class PartitionIterator:
         """
 
         def resolve_param(param_info):
+            # Checks for tuples which indicate places to insert file path
             if isinstance(param_info, tuple) and len(param_info) == 2:
                 alias, alias_type = param_info
+                # Checks if there is an existing alias_type with a file value
                 if (
                     alias in self.nested_alias_type_data
                     and alias_type in self.nested_alias_type_data[alias]
                 ):
                     resolved_path = self.nested_alias_type_data[alias][alias_type]
                 else:
-                    # Construct a new path for the alias type
+                    # Construct a new path for the alias type since it does not exist
                     resolved_path = self.construct_path_for_alias_type(
                         alias, alias_type
                     )
@@ -826,23 +828,30 @@ class PartitionIterator:
                 print(f"Resolved {param_info} to {resolved_path}")
                 return resolved_path
             elif isinstance(param_info, dict):
+                # Recursively calls func to resolve each value in dict returning a resolved values in a dict
                 return {k: resolve_param(v) for k, v in param_info.items()}
             elif isinstance(param_info, list):
+                # Recursively calls func to resolve each value in list returning a resolved values in a list
                 return [resolve_param(item) for item in param_info]
             else:
                 return param_info
 
         for param in params:
+            # Retrieves parameter info from custom_func (defaults to empty list)
             param_info_list = custom_func["params"].get(param, [])
             if not isinstance(param_info_list, list):
+                # Convert to a list if it was not a list already
                 param_info_list = [param_info_list]
 
+            # Resolves paths using resolve_param func
             resolved_paths = [
                 resolve_param(param_info) for param_info in param_info_list
             ]
             if len(resolved_paths) == 1:
+                # Resolved single path if it is only a single path
                 custom_func["params"][param] = resolved_paths[0]
             else:
+                # If there are multiple resolved paths assigns the list of resolved paths to custom_func params
                 custom_func["params"][param] = resolved_paths
 
             print(
