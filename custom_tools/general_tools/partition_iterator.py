@@ -13,10 +13,18 @@ from env_setup import environment_setup
 from custom_tools.general_tools import custom_arcpy
 from custom_tools.decorators.timing_decorator import timing_decorator
 
-from input_data import input_n50
+from input_data import input_n50, input_n100
 from file_manager.n100.file_manager_buildings import Building_N100
 from custom_tools.general_tools.polygon_processor import PolygonProcessor
 from constants.n100_constants import N100_Symbology
+
+from generalization.n100.building.not_in_use_models.testing_buildings import (
+    DictionaryBuffer2,
+)
+from custom_tools.generalization_tools.building.buffer_displacement import (
+    BufferDisplacement,
+)
+from constants.n100_constants import N100_Symbology, N100_SQLResources, N100_Values
 
 # THIS IS WORK IN PROGRESS NOT READY FOR USE YET
 
@@ -96,20 +104,30 @@ class PartitionIterator:
         self.iteration_start_time = None
 
     def unpack_alias_path_data(self, alias_path_data):
-        # Process initial alias_path_data for inputs and outputs
+        """
+        Process initial alias_path_data for inputs and outputs.
+        """
         for alias, info in alias_path_data.items():
-            type_info, path_info = info
             if alias not in self.nested_alias_type_data:
                 self.nested_alias_type_data[alias] = {}
-            self.nested_alias_type_data[alias][type_info] = path_info
+
+            for i in range(0, len(info), 2):
+                type_info = info[i]
+                path_info = info[i + 1]
+                self.nested_alias_type_data[alias][type_info] = path_info
 
     def unpack_alias_path_outputs(self, alias_path_outputs):
-        self.nested_final_outputs = {}
+        """
+        Process initial alias_path_outputs for outputs.
+        """
         for alias, info in alias_path_outputs.items():
-            type_info, path_info = info
             if alias not in self.nested_final_outputs:
                 self.nested_final_outputs[alias] = {}
-            self.nested_final_outputs[alias][type_info] = path_info
+
+            for i in range(0, len(info), 2):
+                type_info = info[i]
+                path_info = info[i + 1]
+                self.nested_final_outputs[alias][type_info] = path_info
 
     def configure_alias_and_type(
         self,
@@ -786,37 +804,59 @@ class PartitionIterator:
         """
         Resolve paths for input/output parameters of custom functions.
         """
+
+        def resolve_param(param_info):
+            # Checks for tuples which indicate places to insert file path
+            if isinstance(param_info, tuple) and len(param_info) == 2:
+                alias, alias_type = param_info
+                # Checks if there is an existing alias_type with a file value
+                if (
+                    alias in self.nested_alias_type_data
+                    and alias_type in self.nested_alias_type_data[alias]
+                ):
+                    resolved_path = self.nested_alias_type_data[alias][alias_type]
+                else:
+                    # Construct a new path for the alias type since it does not exist
+                    resolved_path = self.construct_path_for_alias_type(
+                        alias, alias_type
+                    )
+                    self.configure_alias_and_type(alias, alias_type, resolved_path)
+
+                # Ensure all paths are added to nested_alias_type_data
+                self.configure_alias_and_type(alias, alias_type, resolved_path)
+
+                print(f"Resolved {param_info} to {resolved_path}")
+                return resolved_path
+            elif isinstance(param_info, dict):
+                # Recursively calls func to resolve each value in dict returning a resolved values in a dict
+                return {k: resolve_param(v) for k, v in param_info.items()}
+            elif isinstance(param_info, list):
+                # Recursively calls func to resolve each value in list returning a resolved values in a list
+                return [resolve_param(item) for item in param_info]
+            else:
+                return param_info
+
         for param in params:
+            # Retrieves parameter info from custom_func (defaults to empty list)
             param_info_list = custom_func["params"].get(param, [])
-            if isinstance(param_info_list, tuple):
+            if not isinstance(param_info_list, list):
+                # Convert to a list if it was not a list already
                 param_info_list = [param_info_list]
 
-            for param_info in param_info_list:
-                if len(param_info) == 2:
-                    alias, alias_type = param_info
-                    # Check if alias and type exist in nested_alias_type_data
-                    if (
-                        alias in self.nested_alias_type_data
-                        and alias_type in self.nested_alias_type_data[alias]
-                    ):
-                        resolved_path = self.nested_alias_type_data[alias][alias_type]
-                    else:
-                        # Construct a new path for the alias type
-                        resolved_path = self.construct_path_for_alias_type(
-                            alias, alias_type
-                        )
-                        self.configure_alias_and_type(alias, alias_type, resolved_path)
-                    # Replace the alias and type with the resolved path
-                    custom_func["params"][param] = resolved_path
-                    print(f"Resolved {param_type} path for {param}: {resolved_path}")
-                elif len(param_info) == 3:
-                    alias, alias_type, file_path = param_info
-                    resolved_path = file_path
-                    # Ensure the alias and type are updated with the provided path
-                    self.configure_alias_and_type(alias, alias_type, resolved_path)
-                    # Replace the alias and type with the resolved path
-                    custom_func["params"][param] = resolved_path
-                    print(f"Resolved {param_type} path for {param}: {resolved_path}")
+            # Resolves paths using resolve_param func
+            resolved_paths = [
+                resolve_param(param_info) for param_info in param_info_list
+            ]
+            if len(resolved_paths) == 1:
+                # Resolved single path if it is only a single path
+                custom_func["params"][param] = resolved_paths[0]
+            else:
+                # If there are multiple resolved paths assigns the list of resolved paths to custom_func params
+                custom_func["params"][param] = resolved_paths
+
+            print(
+                f"Resolved {param_type} path for {param}: {custom_func['params'][param]}"
+            )
 
     def construct_path_for_alias_type(self, alias, alias_type):
         """
@@ -999,6 +1039,9 @@ if __name__ == "__main__":
     restriction_lines = "restriction_lines"
     bane = "bane"
     river = "river"
+    train_stations = "train_stations"
+    urban_area = "urban_area"
+    roads = "roads"
 
     inputs = {
         building_points: [
@@ -1026,6 +1069,141 @@ if __name__ == "__main__":
         ],
     }
 
+    inputs_2 = {
+        building_points: [
+            "input",
+            Building_N100.building_point_buffer_displacement__buildings_study_area__n100.value,
+        ],
+        river: [
+            "input",
+            Building_N100.building_point_buffer_displacement__begrensningskurve_study_area__n100.value,
+        ],
+        train_stations: [
+            "input",
+            input_n100.JernbaneStasjon,
+        ],
+        bane: [
+            "input",
+            input_n100.Bane,
+        ],
+    }
+
+    outputs_2 = {
+        building_points: [
+            "buffer_1",
+            Building_N100.testing_building___partition_iterator_building_buffer_1___n100_building.value,
+        ],
+        river: [
+            "buffer_1",
+            Building_N100.testing_building___partition_iterator_river_buffer_1___n100_building.value,
+        ],
+        train_stations: [
+            "buffer_1",
+            Building_N100.testing_building___partition_iterator_train_buffer_1___n100_building.value,
+        ],
+        bane: [
+            "buffer_1",
+            Building_N100.testing_building___partition_iterator_bane_buffer_1___n100_building.value,
+        ],
+    }
+
+    inputs3 = {
+        roads: [
+            "input",
+            Building_N100.building_point_buffer_displacement__roads_study_area__n100.value,
+        ],
+        building_points: [
+            "input",
+            Building_N100.building_point_buffer_displacement__buildings_study_area__n100.value,
+        ],
+        river: [
+            "context",
+            Building_N100.building_point_buffer_displacement__begrensningskurve_study_area__n100.value,
+        ],
+        urban_area: [
+            "context",
+            Building_N100.building_point_buffer_displacement__selection_urban_areas__n100.value,
+        ],
+        train_stations: [
+            "context",
+            input_n100.JernbaneStasjon,
+        ],
+        bane: [
+            "context",
+            input_n100.Bane,
+        ],
+    }
+
+    outputs3 = {
+        building_points: [
+            "buffer_displacement",
+            Building_N100.line_to_buffer_symbology___buffer_displaced_building_points___n100_building.value,
+        ],
+    }
+    misc_objects = {
+        "begrensningskurve": [
+            ("river", "context"),
+            0,
+        ],
+        "urban_areas": [
+            ("urban_area", "context"),
+            1,
+        ],
+        "bane_station": [
+            ("train_stations", "context"),
+            1,
+        ],
+        "bane_lines": [
+            ("bane", "context"),
+            1,
+        ],
+    }
+
+    buffer_displacement_config = {
+        "class": BufferDisplacement,
+        "method": "run",
+        "params": {
+            "input_road_lines": ("roads", "input"),
+            "input_building_points": ("building_points", "input"),
+            "input_misc_objects": misc_objects,
+            "output_building_points": ("building_points", "buffer_displacement"),
+            "sql_selection_query": N100_SQLResources.road_symbology_size_sql_selection.value,
+            "output_road_buffer_base": Building_N100.line_to_buffer_symbology___test___n100_building.value,
+            "building_symbol_dimensions": N100_Symbology.building_symbol_dimensions.value,
+            "buffer_displacement_meter": N100_Values.buffer_clearance_distance_m.value,
+        },
+    }
+
+    input_dict = {
+        "building_points": [
+            ("building_points", "input"),
+            ("river", "input"),
+            "10",
+        ],
+        "train_stations": [
+            ("train_stations", "input"),
+            ("bane", "input"),
+            "10",
+        ],
+    }
+
+    output_dict = {
+        "building_points": [
+            ("building_points", "buffer_1"),
+            ("river", "buffer_1"),
+        ],
+        "train_stations": [
+            ("train_stations", "buffer_1"),
+            ("bane", "buffer_1"),
+        ],
+    }
+
+    buffer_operation_config = {
+        "class": DictionaryBuffer2,
+        "method": "run",
+        "params": {"input_dict": input_dict, "output_dict": output_dict},
+    }
+
     select_hospitals_config = {
         "func": custom_arcpy.select_attribute_and_make_permanent_feature,
         "params": {
@@ -1047,7 +1225,6 @@ if __name__ == "__main__":
         },
     }
 
-    # Instantiate PartitionIterator with necessary parameters
     partition_iterator = PartitionIterator(
         alias_path_data=inputs,
         alias_path_outputs=outputs,
@@ -1059,4 +1236,29 @@ if __name__ == "__main__":
     )
 
     # Run the partition iterator
-    partition_iterator.run()
+    # partition_iterator.run()
+
+    # Instantiate PartitionIterator with necessary parameters
+    partition_iterator_2 = PartitionIterator(
+        alias_path_data=inputs3,
+        alias_path_outputs=outputs3,
+        custom_functions=[buffer_displacement_config],
+        root_file_partition_iterator=Building_N100.iteration__partition_iterator__n100.value,
+        scale=env_setup.global_config.scale_n100,
+        dictionary_documentation_path=Building_N100.iteration___json_documentation___building_n100.value,
+        feature_count="400000",
+    )
+
+    partition_iterator_3 = PartitionIterator(
+        alias_path_data=inputs_2,
+        alias_path_outputs=outputs_2,
+        custom_functions=[buffer_operation_config],
+        root_file_partition_iterator=Building_N100.iteration__partition_iterator__n100.value,
+        scale=env_setup.global_config.scale_n100,
+        dictionary_documentation_path=Building_N100.iteration___json_documentation___building_n100.value,
+        feature_count="32000",
+    )
+
+    # Run the partition iterator
+    partition_iterator_2.run()
+    # partition_iterator_3.run()
