@@ -258,22 +258,3 @@ if __name__ == "__main__":
         buffer_displacement_meter=N100_Values.buffer_clearance_distance_m.value,
     )
     point_displacement.run()
-
-    misc_objects = {
-        "begrensningskurve": (
-            ("begrensningskurve", "context"),
-            0,
-        ),
-        "urban_areas": (
-            ("urban_areas", "context"),
-            1,
-        ),
-        "bane_station": (
-            ("bane_station", "context"),
-            1,
-        ),
-        "bane_lines": (
-            ("bane_lines", "context"),
-            1,
-        ),
-    }
