@@ -122,6 +122,26 @@ class PolygonProcessor:
             unique_name = f"{base_name}_{random.randint(0, 9)}"
         return unique_name
 
+    def setup_spatial_reference_and_origin_id(self):
+        self.spatial_reference_system = arcpy.SpatialReference(
+            environment_setup.project_spatial_reference
+        )
+        self.origin_id_field = self.generate_unique_field_name(
+            self.input_building_points, "match_id"
+        )
+
+    @staticmethod
+    def convert_corners_to_wkt(polygon_corners):
+        """
+        Converts a list of polygon corner coordinates to a Well-Known Text (WKT) string.
+        Args:
+            polygon_corners (list): A list of tuples representing the coordinates of the polygon corners.
+        Returns:
+            str: The WKT representation of the polygon.
+        """
+        coordinate_strings = ", ".join(f"{x} {y}" for x, y in polygon_corners)
+        return f"POLYGON (({coordinate_strings}))"
+
     # Core Processing Functions
     def calculate_well_known_text_polygon(self, arguments):
         """
@@ -142,17 +162,6 @@ class PolygonProcessor:
         polygon_corners = list(zip(corner_x_values, corner_y_values))
         polygon_corners.append(polygon_corners[0])  # Close the polygon
         return object_id, self.convert_corners_to_wkt(polygon_corners)
-
-    def convert_corners_to_wkt(self, polygon_corners):
-        """
-        Converts a list of polygon corner coordinates to a Well-Known Text (WKT) string.
-        Args:
-            polygon_corners (list): A list of tuples representing the coordinates of the polygon corners.
-        Returns:
-            str: The WKT representation of the polygon.
-        """
-        coordinate_strings = ", ".join(f"{x} {y}" for x, y in polygon_corners)
-        return f"POLYGON (({coordinate_strings}))"
 
     # Data Handling and Batch Processing
     def create_output_feature_class_if_not_exists(self):
@@ -197,7 +206,7 @@ class PolygonProcessor:
         arcpy.AddField_management(temporary_feature_class, self.origin_id_field, "LONG")
 
         total_rows = len(well_known_text_data)
-        batch_size = int(total_rows * self.BATCH_PERCENTAGE)
+        batch_size = max(int(total_rows * self.BATCH_PERCENTAGE), 1)
         subset_size = len(well_known_text_data) // self.NUMBER_OF_SUBSETS
 
         for subset_index in range(self.NUMBER_OF_SUBSETS):
@@ -209,7 +218,7 @@ class PolygonProcessor:
             )
             subset_data = well_known_text_data[start_index:end_index]
 
-            for batch_start in tqdm(range(0, len(subset_data), batch_size)):
+            for batch_start in range(0, len(subset_data), batch_size):
                 batch_end = min(batch_start + batch_size, len(subset_data))
                 batch = subset_data[batch_start:batch_end]
                 with arcpy.da.InsertCursor(
@@ -223,6 +232,38 @@ class PolygonProcessor:
                 temporary_feature_class, self.output_polygon_feature_class, "NO_TEST"
             )
             arcpy.DeleteRows_management(temporary_feature_class)
+
+    def prepare_data_for_processing(self):
+        input_data_array = arcpy.da.FeatureClassToNumPyArray(
+            self.input_building_points,
+            ["SHAPE@X", "SHAPE@Y", self.index_field_name, self.symbol_field_name],
+        )
+        data_to_be_processed = [
+            (
+                index,
+                row["SHAPE@X"],
+                row["SHAPE@Y"],
+                row[self.index_field_name],
+                row[self.symbol_field_name],
+            )
+            for index, row in enumerate(input_data_array)
+        ]
+        return data_to_be_processed
+
+    def process_data(self, data_to_be_processed):
+        total_data_points = len(data_to_be_processed)
+        if total_data_points >= 10000:
+            number_of_cores = int(cpu_count() * self.PERCENTAGE_OF_CPU_CORES)
+            with Pool(processes=number_of_cores) as processing_pool:
+                well_known_text_data = processing_pool.map(
+                    self.calculate_well_known_text_polygon, data_to_be_processed
+                )
+        else:
+            well_known_text_data = [
+                self.calculate_well_known_text_polygon(args)
+                for args in data_to_be_processed
+            ]
+        return well_known_text_data
 
     # Field Management and Cleanup
     def add_fields_with_join(self):
@@ -263,39 +304,15 @@ class PolygonProcessor:
         """
         Orchestrates the process of converting building points to polygons.
         """
-        self.spatial_reference_system = arcpy.SpatialReference(
-            environment_setup.project_spatial_reference
-        )
-        self.origin_id_field = self.generate_unique_field_name(
-            self.input_building_points, "match_id"
-        )
+
+        self.setup_spatial_reference_and_origin_id()
 
         self.create_output_feature_class_if_not_exists()
 
-        # Preparing data for processing
-        input_data_array = arcpy.da.FeatureClassToNumPyArray(
-            self.input_building_points,
-            ["SHAPE@X", "SHAPE@Y", self.index_field_name, self.symbol_field_name],
-        )
-        data_to_be_processed = [
-            (
-                index,
-                row["SHAPE@X"],
-                row["SHAPE@Y"],
-                row[self.index_field_name],
-                row[self.symbol_field_name],
-            )
-            for index, row in enumerate(input_data_array)
-        ]
-
-        # Parallel processing setup
-        number_of_cores = int(cpu_count() * self.PERCENTAGE_OF_CPU_CORES)
-        with Pool(processes=number_of_cores) as processing_pool:
-            well_known_text_data = processing_pool.map(
-                self.calculate_well_known_text_polygon, data_to_be_processed
-            )
-
         # Processing data in batches
+        data_to_be_processed = self.prepare_data_for_processing()
+        well_known_text_data = self.process_data(data_to_be_processed)
+
         self.process_data_in_batches(well_known_text_data)
         arcpy.Delete_management(
             f"{self.IN_MEMORY_WORKSPACE}/{self.TEMPORARY_FEATURE_CLASS_NAME}"
@@ -317,7 +334,7 @@ if __name__ == "__main__":
 
     # Example parameters - replace these with actual values suitable for your test
     polygon_processor = PolygonProcessor(
-        input_building_points=Building_N100.calculate_point_values___points_going_into_rbc___n100_building.value,
+        input_building_points=Building_N100.building_point_buffer_displacement__buildings_study_area__n100.value,
         output_polygon_feature_class=Building_N100.building_point_buffer_displacement__iteration_points_to_square_polygons__n100.value,
         building_symbol_dimensions=N100_Symbology.building_symbol_dimensions.value,
         symbol_field_name="symbol_val",

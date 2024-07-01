@@ -42,6 +42,7 @@ class LineToBufferSymbology:
         """
         Selects road lines based on the provided SQL query and creates a feature layer.
         """
+
         custom_arcpy.select_attribute_and_make_feature_layer(
             input_layer=self.input_road_lines,
             expression=sql_query,
@@ -55,15 +56,20 @@ class LineToBufferSymbology:
         """
         Creates a buffer around the selected road lines.
         """
+        count_result = arcpy.GetCount_management(selection_output_name)
+        feature_count = int(count_result.getOutput(0))
+
         adjusted_buffer_width = (
             buffer_width * self.buffer_factor
         ) + self.fixed_buffer_addition
-        arcpy.analysis.PairwiseBuffer(
-            in_features=selection_output_name,
-            out_feature_class=buffer_output_name,
-            buffer_distance_or_field=f"{adjusted_buffer_width} Meters",
-        )
-        self.working_files_list.append(buffer_output_name)
+
+        if feature_count > 0:
+            arcpy.analysis.PairwiseBuffer(
+                in_features=selection_output_name,
+                out_feature_class=buffer_output_name,
+                buffer_distance_or_field=f"{adjusted_buffer_width} Meters",
+            )
+            self.working_files_list.append(buffer_output_name)
 
     def merge_buffers(self, buffer_output_names, merged_output_name):
         """
