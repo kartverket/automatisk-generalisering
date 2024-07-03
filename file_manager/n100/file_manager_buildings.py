@@ -92,6 +92,28 @@ class Building_N100(Enum):
     #                                DATA PREPARATION
     # ========================================
 
+    data_preparation___begrensingskurve_docu___building_n100 = (
+        file_manager.generate_file_name_general_files(
+            script_source_name=data_preparation,
+            description="begrensingskurve_docu",
+            file_type="json",
+        )
+    )
+
+    data_preperation___begrensningskurve_base___n100_building = (
+        file_manager.generate_file_name_gdb(
+            script_source_name=data_preparation,
+            description="begrensningskurve_base",
+        )
+    )
+
+    data_preperation___processed_begrensningskurve___n100_building = (
+        file_manager.generate_file_name_gdb(
+            script_source_name=data_preparation,
+            description="processed_begrensningskurve",
+        )
+    )
+
     data_preperation___waterfeatures_from_begrensningskurve_not_rivers___n100_building = file_manager.generate_file_name_gdb(
         script_source_name=data_preparation,
         description="waterfeatures_from_begrensningskurve_not_rivers",
@@ -285,6 +307,14 @@ class Building_N100(Enum):
     # ========================================
     #                              begrensingskurve_land_water
     # ========================================
+
+    begrensingskurve_land_water___root_file___n100_building = (
+        file_manager.generate_file_name_gdb(
+            script_source_name=begrensingskurve_land_water,
+            description="root_file",
+        )
+    )
+
     begrensingskurve_land_water___begrensingskurve_buffer_in_water___n100_building = (
         file_manager.generate_file_name_gdb(
             script_source_name=begrensingskurve_land_water,
