@@ -9,11 +9,16 @@ from input_data import input_other
 # Importing custom modules
 from file_manager.n100.file_manager_buildings import Building_N100
 from env_setup import environment_setup
+import env_setup.global_config
 from custom_tools.decorators.timing_decorator import timing_decorator
 from custom_tools.general_tools import custom_arcpy
 from custom_tools.general_tools.polygon_processor import PolygonProcessor
-from input_data import input_symbology
+from input_data.input_symbology import SymbologyN100
 from constants.n100_constants import N100_Symbology, N100_SQLResources, N100_Values
+from custom_tools.general_tools.partition_iterator import PartitionIterator
+from custom_tools.generalization_tools.building.begrensningskurve_land_waterbodies import (
+    BegrensningskurveLandWaterbodies,
+)
 
 
 @timing_decorator
@@ -52,55 +57,53 @@ def begrensningskurve_land_and_water_bodies():
         Finally, it erases overlapping areas between land and water body buffers to delineate distinct land and water body regions.
     """
 
-    # Defining the SQL selection expression for water features for begrensningskurve (not river)
-    sql_expr_begrensningskurve_waterfeatures_not_river = "objtype = 'Innsjøkant' Or objtype = 'InnsjøkantRegulert' Or objtype = 'Kystkontur'"
+    begrensningskurve = "begrensningskurve"
+    land_cover = "land_cover"
 
-    # Creating a temporary feature of water features from begrensningskurve
-    custom_arcpy.select_attribute_and_make_permanent_feature(
-        input_layer=input_n100.BegrensningsKurve,
-        expression=sql_expr_begrensningskurve_waterfeatures_not_river,
-        output_name=Building_N100.data_preperation___waterfeatures_from_begrensningskurve_not_rivers___n100_building.value,
-    )
+    inputs = {
+        begrensningskurve: [
+            "input",
+            input_n100.BegrensningsKurve,
+        ],
+        land_cover: [
+            "context",
+            input_n100.ArealdekkeFlate,
+        ],
+    }
 
-    custom_arcpy.select_attribute_and_make_permanent_feature(
-        input_layer=input_n100.ArealdekkeFlate,
-        expression="""objtype NOT IN ('ElvBekk', 'Havflate', 'Innsjø', 'InnsjøRegulert')""",
-        output_name=Building_N100.data_preparation___selected_land_features_area___n100_building.value,
-    )
+    outputs = {
+        begrensningskurve: [
+            "processed_begrensningskurve",
+            Building_N100.data_preperation___processed_begrensningskurve___n100_building.value,
+        ],
+    }
 
-    custom_arcpy.select_location_and_make_permanent_feature(
-        input_layer=Building_N100.data_preparation___selected_land_features_area___n100_building.value,
-        overlap_type=custom_arcpy.OverlapType.BOUNDARY_TOUCHES.value,
-        select_features=Building_N100.data_preperation___waterfeatures_from_begrensningskurve_not_rivers___n100_building.value,
-        output_name=Building_N100.data_preparation___land_features_near_water___n100_building.value,
-    )
+    process_begrensningskurve = {
+        "class": BegrensningskurveLandWaterbodies,
+        "method": "run",
+        "params": {
+            "input_begrensningskurve": (begrensningskurve, "input"),
+            "input_land_features": (land_cover, "context"),
+            "water_feature_buffer_width": N100_Values.building_water_intrusion_distance_m.value,
+            "output_begrensningskurve": (
+                f"{begrensningskurve}",
+                "processed_begrensningskurve",
+            ),
+            "write_work_files_to_memory": False,
+            "root_file": Building_N100.begrensingskurve_land_water___root_file___n100_building.value,
+        },
+    }
 
-    arcpy.analysis.PairwiseBuffer(
-        in_features=Building_N100.data_preparation___land_features_near_water___n100_building.value,
-        out_feature_class=Building_N100.data_preparation___land_features_buffer___n100_building.value,
-        buffer_distance_or_field=f"{N100_Values.building_water_intrusion_distance_m.value} Meters",
+    partition_begrensningskurve = PartitionIterator(
+        alias_path_data=inputs,
+        alias_path_outputs=outputs,
+        custom_functions=[process_begrensningskurve],
+        root_file_partition_iterator=Building_N100.data_preperation___begrensningskurve_base___n100_building.value,
+        scale=env_setup.global_config.scale_n100,
+        dictionary_documentation_path=Building_N100.data_preparation___begrensingskurve_docu___building_n100.value,
+        feature_count="500000",
     )
-
-    water_feature_buffer_width = (
-        N100_Values.building_water_intrusion_distance_m.value + 30
-    )
-    arcpy.analysis.PairwiseBuffer(
-        in_features=Building_N100.data_preperation___waterfeatures_from_begrensningskurve_not_rivers___n100_building.value,
-        out_feature_class=Building_N100.data_preparation___begrensningskurve_waterfeatures_buffer___n100_building.value,
-        buffer_distance_or_field=f"{water_feature_buffer_width} Meters",
-    )
-
-    arcpy.analysis.PairwiseErase(
-        in_features=Building_N100.data_preparation___begrensningskurve_waterfeatures_buffer___n100_building.value,
-        erase_features=Building_N100.data_preparation___selected_land_features_area___n100_building.value,
-        out_feature_class=Building_N100.data_preparation___begrensningskurve_buffer_erase_1___n100_building.value,
-    )
-
-    arcpy.analysis.PairwiseErase(
-        in_features=Building_N100.data_preparation___begrensningskurve_buffer_erase_1___n100_building.value,
-        erase_features=Building_N100.data_preparation___land_features_buffer___n100_building.value,
-        out_feature_class=Building_N100.data_preparation___begrensningskurve_buffer_erase_2___n100_building.value,
-    )
+    partition_begrensningskurve.run()
 
 
 @timing_decorator
@@ -207,7 +210,7 @@ def railway_station_points_to_polygons():
     # Applying symbology to polygonprocessed railwaystations
     custom_arcpy.apply_symbology(
         input_layer=Building_N100.data_preparation___railway_stations_to_polygons___n100_building.value,
-        in_symbology_layer=input_symbology.SymbologyN100.railway_station_squares.value,
+        in_symbology_layer=SymbologyN100.railway_station_squares.value,
         output_name=Building_N100.data_preparation___railway_stations_to_polygons_symbology___n100_building_lyrx.value,
     )
 
