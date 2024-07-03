@@ -383,6 +383,13 @@ class Building_N100(Enum):
         )
     )
 
+    line_to_buffer_symbology___root_file___n100_building = (
+        file_manager.generate_file_name_gdb(
+            script_source_name=line_to_buffer_symbology,
+            description="root_file",
+        )
+    )
+
     line_to_buffer_symbology___buffer_displaced_building_points___n100_building = (
         file_manager.generate_file_name_gdb(
             script_source_name=line_to_buffer_symbology,
