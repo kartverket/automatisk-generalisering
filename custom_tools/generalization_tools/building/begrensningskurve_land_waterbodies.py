@@ -31,8 +31,10 @@ class BegrensningskurveLandWaterbodies:
         self.keep_work_files = keep_work_files
         self.root_file = root_file
 
-        # The width of the actually created
+        # How far out from land water buffer is created
         self.water_feature_buffer_width = water_feature_buffer_width
+
+        # How wide the water feature buffer will be
         self.water_barrier_buffer_width = water_barrier_buffer_width
 
         self.waterfeatures_from_begrensningskurve_not_rivers = None
@@ -40,6 +42,7 @@ class BegrensningskurveLandWaterbodies:
         self.selected_land_features = None
         self.land_features_buffer = None
         self.begrensningskurve_waterfeatures_buffer = None
+        self.erase_feature_1 = None
 
         self.working_files_list = []
 
@@ -74,6 +77,7 @@ class BegrensningskurveLandWaterbodies:
         self.begrensningskurve_waterfeatures_buffer = (
             f"{file_location}begrensningskurve_waterfeatures_buffer_{unique_id}"
         )
+        self.erase_feature_1 = f"{file_location}erase_feature_1{unique_id}"
 
         self.working_files_list = [
             self.waterfeatures_from_begrensningskurve_not_rivers,
@@ -81,6 +85,7 @@ class BegrensningskurveLandWaterbodies:
             self.selected_land_features,
             self.land_features_buffer,
             self.begrensningskurve_waterfeatures_buffer,
+            self.erase_feature_1,
         ]
 
     def selections(self):
@@ -131,7 +136,7 @@ class BegrensningskurveLandWaterbodies:
             buffer_distance_or_field=f"{self.water_feature_buffer_width} Meters",
         )
 
-        self.water_feature_buffer_width += 30
+        self.water_feature_buffer_width += self.water_barrier_buffer_width
 
         arcpy.analysis.PairwiseBuffer(
             in_features=self.waterfeatures_from_begrensningskurve_not_rivers,
@@ -143,6 +148,12 @@ class BegrensningskurveLandWaterbodies:
         arcpy.analysis.PairwiseErase(
             in_features=self.begrensningskurve_waterfeatures_buffer,
             erase_features=self.land_features_buffer,
+            out_feature_class=self.erase_feature_1,
+        )
+
+        arcpy.analysis.PairwiseErase(
+            in_features=self.erase_feature_1,
+            erase_features=self.land_features_area,
             out_feature_class=self.output_begrensningskurve,
         )
 
@@ -152,7 +163,8 @@ class BegrensningskurveLandWaterbodies:
             self.delete_feature_class(file_path)
             print(f"Deleted file: {file_path}")
 
-    def delete_feature_class(self, feature_class_path):
+    @staticmethod
+    def delete_feature_class(feature_class_path):
         """Deletes a feature class if it exists."""
         if arcpy.Exists(feature_class_path):
             arcpy.management.Delete(feature_class_path)
