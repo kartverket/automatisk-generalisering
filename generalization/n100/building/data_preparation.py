@@ -101,7 +101,7 @@ def begrensningskurve_land_and_water_bodies():
         root_file_partition_iterator=Building_N100.data_preperation___begrensningskurve_base___n100_building.value,
         scale=env_setup.global_config.scale_n100,
         dictionary_documentation_path=Building_N100.data_preparation___begrensingskurve_docu___building_n100.value,
-        feature_count="500000",
+        feature_count="400000",
     )
     partition_begrensningskurve.run()
 
@@ -149,7 +149,7 @@ def merge_begrensningskurve_all_water_features():
     arcpy.management.Merge(
         inputs=[
             Building_N100.data_preperation___waterfeatures_from_begrensningskurve_rivers_buffer___n100_building.value,
-            Building_N100.data_preparation___begrensningskurve_buffer_erase_2___n100_building.value,
+            Building_N100.data_preperation___processed_begrensningskurve___n100_building.value,
         ],
         output=Building_N100.data_preparation___merged_begrensningskurve_all_waterbodies___n100_building.value,
     )
