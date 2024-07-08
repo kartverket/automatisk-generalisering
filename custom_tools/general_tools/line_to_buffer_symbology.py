@@ -55,12 +55,19 @@ class LineToBufferSymbology:
         Selects road lines based on the provided SQL query and creates a feature layer.
         """
 
-        custom_arcpy.select_attribute_and_make_feature_layer(
-            input_layer=self.input_road_lines,
-            expression=sql_query,
-            output_name=selection_output_name,
-        )
-        # self.working_files_list.append(selection_output_name)
+        if self.write_work_files_to_memory:
+            custom_arcpy.select_attribute_and_make_feature_layer(
+                input_layer=self.input_road_lines,
+                expression=sql_query,
+                output_name=selection_output_name,
+            )
+
+        if not self.write_work_files_to_memory:
+            custom_arcpy.select_attribute_and_make_permanent_feature(
+                input_layer=self.input_road_lines,
+                expression=sql_query,
+                output_name=selection_output_name,
+            )
 
     def creating_buffer_from_selected_lines(
         self, selection_output_name, buffer_width, buffer_output_name
@@ -81,7 +88,6 @@ class LineToBufferSymbology:
                 out_feature_class=buffer_output_name,
                 buffer_distance_or_field=f"{adjusted_buffer_width} Meters",
             )
-            # self.working_files_list.append(buffer_output_name)
 
     @staticmethod
     def merge_buffers(buffer_output_names, merged_output_name):
@@ -99,13 +105,23 @@ class LineToBufferSymbology:
         temporary_file = "in_memory\\"
         permanent_file = f"{self.root_file}_"
 
+        if self.root_file is None:
+            if not self.write_work_files_to_memory:
+                raise ValueError(
+                    "Need to specify root_file path to write to disk for work files."
+                )
+            if self.keep_work_files:
+                raise ValueError(
+                    "Need to specify root_file path and write to disk to keep_work_files."
+                )
+
         if self.write_work_files_to_memory:
             file_location = temporary_file
         else:
             file_location = permanent_file
 
-        selection_output_name = f"{file_location}road_selection_{counter}___{unique_id}"
-        buffer_output_name = f"{file_location}line_buffer_{counter}___{unique_id}"
+        selection_output_name = f"{file_location}road_selection_{counter}__{unique_id}"
+        buffer_output_name = f"{file_location}line_buffer_{counter}__{unique_id}"
 
         self.selecting_different_road_lines(sql_query, selection_output_name)
         self.creating_buffer_from_selected_lines(
@@ -143,7 +159,12 @@ class LineToBufferSymbology:
             buffer_output_name = self.process_each_query(
                 sql_query, original_width, counter
             )
-            buffer_output_names.append(buffer_output_name)
+            if arcpy.Exists(buffer_output_name):
+                count_result = arcpy.GetCount_management(buffer_output_name)
+                feature_count = int(count_result.getOutput(0))
+
+                if feature_count > 0:
+                    buffer_output_names.append(buffer_output_name)
             counter += 1
 
         self.merge_buffers(buffer_output_names, self.output_road_buffer)
