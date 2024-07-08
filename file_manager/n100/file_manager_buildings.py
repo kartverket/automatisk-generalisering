@@ -397,6 +397,13 @@ class Building_N100(Enum):
         )
     )
 
+    line_to_buffer_symbology___root_buffer_displaced___n100_building = (
+        file_manager.generate_file_name_gdb(
+            script_source_name=line_to_buffer_symbology,
+            description="root_buffer_displaced",
+        )
+    )
+
     # ========================================
     #                              TESTING BUILDINGS
     # ========================================
@@ -1046,6 +1053,47 @@ class Building_N100(Enum):
     # ========================================
     #                  POINT DISPLACEMENT WITH BUFFER
     # ========================================
+
+    building_point_buffer_displacement___church_hospital_selection___n100_building = (
+        file_manager.generate_file_name_gdb(
+            script_source_name=point_displacement_with_buffer,
+            description="church_hospital_selection",
+        )
+    )
+
+    building_point_buffer_displacement___building_points_selection___n100_building = (
+        file_manager.generate_file_name_gdb(
+            script_source_name=point_displacement_with_buffer,
+            description="building_points_selection",
+        )
+    )
+
+    building_point_buffer_displacement___root_file___n100_building = (
+        file_manager.generate_file_name_gdb(
+            script_source_name=point_displacement_with_buffer,
+            description="root_file",
+        )
+    )
+
+    building_point_buffer_displacement___displaced_building_points___n100_building = (
+        file_manager.generate_file_name_gdb(
+            script_source_name=point_displacement_with_buffer,
+            description="displaced_building_points",
+        )
+    )
+
+    point_displacement_with_buffer___documentation___building_n100 = (
+        file_manager.generate_file_name_general_files(
+            script_source_name=point_displacement_with_buffer,
+            description="documentation",
+            file_type="json",
+        )
+    )
+
+    building_point_buffer_displacement___merged_buffer_displaced_points___n100_building = file_manager.generate_file_name_gdb(
+        script_source_name=point_displacement_with_buffer,
+        description="merged_buffer_displaced_points",
+    )
 
     building_point_buffer_displacement__roads_study_area__n100 = (
         file_manager.generate_file_name_gdb(
