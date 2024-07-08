@@ -19,17 +19,24 @@ class BufferDisplacement:
         input_building_points: str,
         output_building_points: str,
         sql_selection_query: dict,
-        output_road_buffer_base: str,
+        root_file: str,
         buffer_displacement_meter: int = 30,
         building_symbol_dimensions: Dict[int, Tuple[int, int]] = None,
         input_misc_objects: Dict[str, List[Union[str, int]]] = None,
+        write_work_files_to_memory: bool = True,
+        keep_work_files: bool = False,
     ):
         self.input_road_lines = input_road_lines
         self.input_building_points = input_building_points
         self.sql_selection_query = sql_selection_query
-        self.output_road_buffer_base = output_road_buffer_base
+        self.root_file = root_file
         self.input_misc_objects = input_misc_objects
         self.output_building_points = output_building_points
+
+        self.current_building_points = self.input_building_points
+
+        self.write_work_files_to_memory = write_work_files_to_memory
+        self.keep_work_files = keep_work_files
 
         self.buffer_displacement_meter = buffer_displacement_meter
         self.building_symbol_dimensions = building_symbol_dimensions
@@ -45,7 +52,37 @@ class BufferDisplacement:
         self.iteration_fixed_buffer_addition = 0
         self.increments = []
 
-        self.current_building_points = self.input_building_points
+        self.file_location = None
+        self.unique_id = id(self)
+
+        self.output_road_buffer = None
+        self.misc_buffer_output = None
+        self.merged_barrier_output = None
+        self.output_building_points_to_polygon = None
+        self.erased_building_polygons = None
+        self.output_feature_to_points = None
+
+        self.working_files_list = []
+        self.working_files_list_2 = []
+
+    def initialize_work_file_location(self):
+        """Reset temporary file attributes."""
+        temporary_file = "in_memory\\"
+        permanent_file = f"{self.root_file}_"
+        if self.root_file is None:
+            if not self.write_work_files_to_memory:
+                raise ValueError(
+                    "Need to specify root_file path to write to disk for work files."
+                )
+            if self.keep_work_files:
+                raise ValueError(
+                    "Need to specify root_file path and write to disk to keep_work_files."
+                )
+
+        if self.write_work_files_to_memory:
+            self.file_location = temporary_file
+        else:
+            self.file_location = permanent_file
 
     def finding_dimensions(self, buffer_displacement_meter):
         """
@@ -140,13 +177,18 @@ class BufferDisplacement:
         factor_name = str(factor).replace(".", "_")
         fixed_addition_name = str(fixed_addition).replace(".", "_")
 
-        output_road_buffer = f"{self.output_road_buffer_base}_road_factor_{factor_name}_add_{fixed_addition_name}"
+        self.output_road_buffer = f"{self.file_location}_road_factor_{factor_name}_add_{fixed_addition_name}__{self.unique_id}"
+        self.working_files_list.append(self.output_road_buffer)
+
         line_to_buffer_symbology = LineToBufferSymbology(
             input_road_lines=self.input_road_lines,
             sql_selection_query=self.sql_selection_query,
-            output_road_buffer=output_road_buffer,
+            output_road_buffer=self.output_road_buffer,
+            root_file=self.root_file,
             buffer_factor=factor,
             fixed_buffer_addition=fixed_addition,
+            keep_work_files=self.keep_work_files,
+            write_work_files_to_memory=self.write_work_files_to_memory,
         )
         line_to_buffer_symbology.run()
 
@@ -155,54 +197,78 @@ class BufferDisplacement:
         for feature_name, feature_details in self.input_misc_objects.items():
             feature_path, buffer_width = feature_details
             calculated_buffer_width = (buffer_width * factor) + fixed_addition
-            misc_buffer_output = f"{self.output_road_buffer_base}_{feature_name}_buffer_factor_{factor_name}_add_{fixed_addition_name}"
+            self.misc_buffer_output = f"{self.file_location}_{feature_name}_buffer_factor_{factor_name}_add_{fixed_addition_name}__{self.unique_id}"
+            self.working_files_list.append(self.misc_buffer_output)
 
             if buffer_width == 0:
-                arcpy.management.Copy(
-                    in_data=feature_path,
-                    out_data=misc_buffer_output,
+                arcpy.analysis.PairwiseBuffer(
+                    in_features=feature_path,
+                    out_feature_class=self.misc_buffer_output,
+                    buffer_distance_or_field=f"0,1 Meters",
                 )
             else:
                 arcpy.analysis.PairwiseBuffer(
                     in_features=feature_path,
-                    out_feature_class=misc_buffer_output,
+                    out_feature_class=self.misc_buffer_output,
                     buffer_distance_or_field=f"{calculated_buffer_width} Meters",
                 )
-            misc_buffer_outputs.append(misc_buffer_output)
+            misc_buffer_outputs.append(self.misc_buffer_output)
 
-        merged_barrier_output = f"{self.output_road_buffer_base}_merged_barriers_factor_{factor_name}_add_{fixed_addition_name}"
+        self.merged_barrier_output = f"{self.file_location}_merged_barriers_factor_{factor_name}_add_{fixed_addition_name}__{self.unique_id}"
+        self.working_files_list.append(self.merged_barrier_output)
+
         arcpy.management.Merge(
-            inputs=[output_road_buffer] + misc_buffer_outputs,
-            output=merged_barrier_output,
+            inputs=[self.output_road_buffer] + misc_buffer_outputs,
+            output=self.merged_barrier_output,
         )
 
-        output_building_points = f"{self.output_road_buffer_base}_building_factor_{factor_name}_add_{fixed_addition_name}"
+        self.output_building_points_to_polygon = f"{self.root_file}_building_factor_{factor_name}_add_{fixed_addition_name}__{self.unique_id}"
+        self.working_files_list.append(self.output_building_points_to_polygon)
 
         building_polygons = PolygonProcessor(
             input_building_points=self.current_building_points,
-            output_polygon_feature_class=output_building_points,
+            output_polygon_feature_class=self.output_building_points_to_polygon,
             building_symbol_dimensions=self.building_symbol_dimensions,
             symbol_field_name="symbol_val",
             index_field_name="OBJECTID",
         )
         building_polygons.run()
 
-        output_feature_to_point = f"{self.output_road_buffer_base}_erased_buildings_factor_{factor_name}_add_{fixed_addition_name}"
+        self.erased_building_polygons = f"{self.file_location}_erased_buildings_factor_{factor_name}_add_{fixed_addition_name}__{self.unique_id}"
+        self.working_files_list.append(self.erased_building_polygons)
+
         arcpy.analysis.PairwiseErase(
-            in_features=output_building_points,
-            erase_features=merged_barrier_output,
-            out_feature_class=output_feature_to_point,
+            in_features=self.output_building_points_to_polygon,
+            erase_features=self.merged_barrier_output,
+            out_feature_class=self.erased_building_polygons,
         )
 
-        output_feature_to_points = f"{self.output_road_buffer_base}_output_feature_to_points_factor_{factor_name}_add_{fixed_addition_name}"
+        self.output_feature_to_points = f"{self.root_file}_output_feature_to_points_factor_{factor_name}_add_{fixed_addition_name}__{self.unique_id}"
+        self.working_files_list_2.append(self.output_feature_to_points)
 
         arcpy.management.FeatureToPoint(
-            in_features=output_feature_to_point,
-            out_feature_class=output_feature_to_points,
+            in_features=self.erased_building_polygons,
+            out_feature_class=self.output_feature_to_points,
             point_location="INSIDE",
         )
 
-        self.current_building_points = output_feature_to_points
+        self.current_building_points = self.output_feature_to_points
+
+    def delete_working_files(self, *file_paths):
+        """
+        Deletes multiple feature classes or files.
+        """
+        for file_path in file_paths:
+            self.delete_feature_class(file_path)
+            print(f"Deleted file: {file_path}")
+
+    @staticmethod
+    def delete_feature_class(feature_class_path):
+        """
+        Deletes a feature class if it exists.
+        """
+        if arcpy.Exists(feature_class_path):
+            arcpy.management.Delete(feature_class_path)
 
     @partition_io_decorator(
         input_param_names=[
@@ -213,16 +279,22 @@ class BufferDisplacement:
         output_param_names=["output_building_points"],
     )
     def run(self):
+        self.initialize_work_file_location()
         self.finding_dimensions(self.buffer_displacement_meter)
         self.calculate_buffer_increments()
 
         for factor, addition in self.increments:
             self.process_buffer_factor(factor, addition)
 
+            if not self.keep_work_files:
+                self.delete_working_files(*self.working_files_list)
+
         arcpy.management.Copy(
             in_data=self.current_building_points,
             out_data=self.output_building_points,
         )
+        if not self.keep_work_files:
+            self.delete_working_files(*self.working_files_list_2)
 
 
 if __name__ == "__main__":
@@ -253,8 +325,10 @@ if __name__ == "__main__":
         input_misc_objects=misc_objects,
         output_building_points=Building_N100.line_to_buffer_symbology___buffer_displaced_building_points___n100_building.value,
         sql_selection_query=N100_SQLResources.road_symbology_size_sql_selection.value,
-        output_road_buffer_base=Building_N100.line_to_buffer_symbology___test___n100_building.value,
+        root_file=Building_N100.line_to_buffer_symbology___root_buffer_displaced___n100_building.value,
         building_symbol_dimensions=N100_Symbology.building_symbol_dimensions.value,
         buffer_displacement_meter=N100_Values.buffer_clearance_distance_m.value,
+        write_work_files_to_memory=True,
+        keep_work_files=False,
     )
     point_displacement.run()
