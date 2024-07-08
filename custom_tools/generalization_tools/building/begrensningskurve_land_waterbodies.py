@@ -53,15 +53,13 @@ class BegrensningskurveLandWaterbodies:
         permanent_file = f"{self.root_file}_"
         if self.root_file is None:
             if not self.write_work_files_to_memory:
-                print(
-                    "Need to specify root_file path to write to disk for work files, set to write to memory instead"
+                raise ValueError(
+                    "Need to specify root_file path to write to disk for work files."
                 )
             if self.keep_work_files:
-                print(
-                    "Need to specify root_file path and write to disk to keep_work_files. Set to delete instead"
+                raise ValueError(
+                    "Need to specify root_file path and write to disk to keep_work_files."
                 )
-            self.write_work_files_to_memory = True
-            self.keep_work_files = False
 
         if self.write_work_files_to_memory:
             file_location = temporary_file
