@@ -104,17 +104,17 @@ def apply_symbology_to_the_layers():
     symbology_configs = [
         {
             "input_layer": Building_N100.point_resolve_building_conflicts___building_point_selection_rbc___n100_building.value,
-            "in_symbology_layer": SymbologyN100.bygningspunkt.value,
+            "in_symbology_layer": SymbologyN100.building_point.value,
             "output_name": Building_N100.point_resolve_building_conflicts___bygningspunkt_selection___n100_building_lyrx.value,
         },
         {
             "input_layer": Building_N100.point_resolve_building_conflicts___building_polygon_selection_rbc___n100_building.value,
-            "in_symbology_layer": SymbologyN100.grunnriss.value,
+            "in_symbology_layer": SymbologyN100.building_polygon.value,
             "output_name": Building_N100.point_resolve_building_conflicts___grunnriss_selection___n100_building_lyrx.value,
         },
         {
             "input_layer": Building_N100.point_resolve_building_conflicts___road_selection_rbc___n100_building.value,
-            "in_symbology_layer": SymbologyN100.veg_sti.value,
+            "in_symbology_layer": SymbologyN100.road.value,
             "output_name": Building_N100.point_resolve_building_conflicts___veg_sti_selection___n100_building_lyrx.value,
         },
         {
@@ -124,7 +124,7 @@ def apply_symbology_to_the_layers():
         },
         {
             "input_layer": Building_N100.point_resolve_building_conflicts___squares_selection_rbc___n100_building.value,
-            "in_symbology_layer": SymbologyN100.drawn_polygon.value,
+            "in_symbology_layer": SymbologyN100.squares.value,
             "output_name": Building_N100.point_resolve_building_conflicts___squares_selection___n100_building_lyrx.value,
         },
     ]
@@ -276,19 +276,19 @@ def adding_symbology_to_layers_being_used_for_rbc_2():
     # Building squares (from points, transformed to squares in the first function) that are kept after rbc 1
     custom_arcpy.apply_symbology(
         input_layer=Building_N100.point_resolve_building_conflicts___squares_to_keep_after_rbc1___n100_building.value,
-        in_symbology_layer=SymbologyN100.drawn_polygon.value,
+        in_symbology_layer=SymbologyN100.squares.value,
         output_name=Building_N100.point_resolve_building_conflicts___squares_to_keep_after_rbc1___n100_building_lyrx.value,
     )
     # Building polygons kept after rbc 1
     custom_arcpy.apply_symbology(
         input_layer=Building_N100.point_resolve_building_conflicts___building_polygons_to_keep_after_rbc1___n100_building.value,
-        in_symbology_layer=SymbologyN100.grunnriss.value,
+        in_symbology_layer=SymbologyN100.building_polygon.value,
         output_name=Building_N100.point_resolve_building_conflicts___building_polygons_to_keep_after_rbc1___n100_building_lyrx.value,
     )
     # Squares made from points, which again comes from invisible building polygons after rbc 1
     custom_arcpy.apply_symbology(
         input_layer=Building_N100.point_resolve_building_conflicts___building_polygons_to_points_and_then_squares___n100_building.value,
-        in_symbology_layer=SymbologyN100.drawn_polygon.value,
+        in_symbology_layer=SymbologyN100.squares.value,
         output_name=Building_N100.point_resolve_building_conflicts___building_polygons_to_points_and_then_squares___n100_building_lyrx.value,
     )
 
