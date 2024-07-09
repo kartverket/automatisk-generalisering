@@ -237,7 +237,7 @@ class BufferDisplacement:
         self.erased_building_polygons = f"{self.file_location}_erased_buildings_factor_{factor_name}_add_{fixed_addition_name}__{self.unique_id}"
         self.working_files_list.append(self.erased_building_polygons)
 
-        arcpy.analysis.PairwiseErase(
+        arcpy.analysis.Erase(
             in_features=self.output_building_points_to_polygon,
             erase_features=self.merged_barrier_output,
             out_feature_class=self.erased_building_polygons,
