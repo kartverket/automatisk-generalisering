@@ -48,34 +48,34 @@ def reclassifying_hospital_and_church_points_from_matrikkel():
 
 @timing_decorator
 def adding_original_source_to_points():
-    # Adding a field to indicate that the merged building point and matrikkel does not come from grunnriss
+    # Adding a field to indicate that the merged building point and matrikkel does not come from building_polygon
     arcpy.AddField_management(
         in_table=Building_N100.data_preperation___matrikkel_n50_touristcabins_points_merged___n100_building.value,
-        field_name="grunnriss",
+        field_name="building_polygon",
         field_type="LONG",
     )
     arcpy.CalculateField_management(
         in_table=Building_N100.data_preperation___matrikkel_n50_touristcabins_points_merged___n100_building.value,
-        field="grunnriss",
+        field="building_polygon",
         expression="0",
     )
 
-    # Adding a field to indicate that points resulting from grunnriss is tracked
+    # Adding a field to indicate that points resulting from building_polygon is tracked
     arcpy.AddField_management(
         in_table=Building_N100.polygon_to_point___merged_points_final___n100_building.value,
-        field_name="grunnriss",
+        field_name="building_polygon",
         field_type="LONG",
     )
     arcpy.CalculateField_management(
         in_table=Building_N100.polygon_to_point___merged_points_final___n100_building.value,
-        field="grunnriss",
+        field="building_polygon",
         expression="1",
     )
 
 
 @timing_decorator
 def merge_matrikkel_n50_touristcabins_with_points_from_grunnriss():
-    # Merge the merged building point from n50 and matrikkel with points created from grunnriss
+    # Merge the merged building point from n50 and matrikkel with points created from building_polygon
     arcpy.management.Merge(
         inputs=[
             Building_N100.data_preperation___matrikkel_n50_touristcabins_points_merged___n100_building.value,
