@@ -168,6 +168,8 @@ class PartitionIterator:
         )
 
     def create_cartographic_partitions(self):
+        self.delete_feature_class(self.partition_feature)
+
         all_features = [
             path
             for alias, types in self.nested_alias_type_data.items()
@@ -1168,9 +1170,11 @@ if __name__ == "__main__":
             "input_misc_objects": misc_objects,
             "output_building_points": ("building_points", "buffer_displacement"),
             "sql_selection_query": N100_SQLResources.road_symbology_size_sql_selection.value,
-            "output_road_buffer_base": Building_N100.line_to_buffer_symbology___test___n100_building.value,
+            "root_file": Building_N100.line_to_buffer_symbology___test___n100_building.value,
             "building_symbol_dimensions": N100_Symbology.building_symbol_dimensions.value,
             "buffer_displacement_meter": N100_Values.buffer_clearance_distance_m.value,
+            "write_work_files_to_memory": True,
+            "keep_work_files": False,
         },
     }
 
@@ -1246,7 +1250,7 @@ if __name__ == "__main__":
         root_file_partition_iterator=Building_N100.iteration__partition_iterator__n100.value,
         scale=env_setup.global_config.scale_n100,
         dictionary_documentation_path=Building_N100.iteration___json_documentation___building_n100.value,
-        feature_count="400000",
+        feature_count="33000",
     )
 
     partition_iterator_3 = PartitionIterator(

@@ -5,6 +5,7 @@ from env_setup import environment_setup
 from constants.n100_constants import N100_Symbology, N100_SQLResources, N100_Values
 from file_manager.n100.file_manager_buildings import Building_N100
 from custom_tools.general_tools import custom_arcpy
+from custom_tools.decorators.partition_io_decorator import partition_io_decorator
 
 
 class LineToBufferSymbology:
@@ -15,6 +16,9 @@ class LineToBufferSymbology:
         output_road_buffer: str,
         buffer_factor: Union[int, float] = 1,
         fixed_buffer_addition: Union[int, float] = 0,
+        write_work_files_to_memory: bool = True,
+        keep_work_files: bool = False,
+        root_file: str = None,
     ):
         """
         Initializes the LineToBufferSymbology class with the specified parameters.
@@ -28,8 +32,16 @@ class LineToBufferSymbology:
         self.input_road_lines = input_road_lines
         self.sql_selection_query = sql_selection_query
         self.output_road_buffer = output_road_buffer
+
         self.buffer_factor = buffer_factor
         self.fixed_buffer_addition = fixed_buffer_addition
+
+        self.write_work_files_to_memory = write_work_files_to_memory
+        self.keep_work_files = keep_work_files
+        self.root_file = root_file
+
+        self.selection_output_name = None
+        self.buffer_output_name = None
 
         self.working_files_list = []
 
@@ -43,12 +55,19 @@ class LineToBufferSymbology:
         Selects road lines based on the provided SQL query and creates a feature layer.
         """
 
-        custom_arcpy.select_attribute_and_make_feature_layer(
-            input_layer=self.input_road_lines,
-            expression=sql_query,
-            output_name=selection_output_name,
-        )
-        self.working_files_list.append(selection_output_name)
+        if self.write_work_files_to_memory:
+            custom_arcpy.select_attribute_and_make_feature_layer(
+                input_layer=self.input_road_lines,
+                expression=sql_query,
+                output_name=selection_output_name,
+            )
+
+        if not self.write_work_files_to_memory:
+            custom_arcpy.select_attribute_and_make_permanent_feature(
+                input_layer=self.input_road_lines,
+                expression=sql_query,
+                output_name=selection_output_name,
+            )
 
     def creating_buffer_from_selected_lines(
         self, selection_output_name, buffer_width, buffer_output_name
@@ -69,9 +88,9 @@ class LineToBufferSymbology:
                 out_feature_class=buffer_output_name,
                 buffer_distance_or_field=f"{adjusted_buffer_width} Meters",
             )
-            self.working_files_list.append(buffer_output_name)
 
-    def merge_buffers(self, buffer_output_names, merged_output_name):
+    @staticmethod
+    def merge_buffers(buffer_output_names, merged_output_name):
         """
         Merges multiple buffer outputs into a single feature class.
         """
@@ -82,13 +101,35 @@ class LineToBufferSymbology:
         """
         Processes each SQL query to select road lines and create buffers.
         """
-        selection_output_name = f"in_memory/road_selection_{counter}"
-        buffer_output_name = f"in_memory/line_buffer_{counter}"
+        unique_id = id(self)
+        temporary_file = "in_memory\\"
+        permanent_file = f"{self.root_file}_"
+
+        if self.root_file is None:
+            if not self.write_work_files_to_memory:
+                raise ValueError(
+                    "Need to specify root_file path to write to disk for work files."
+                )
+            if self.keep_work_files:
+                raise ValueError(
+                    "Need to specify root_file path and write to disk to keep_work_files."
+                )
+
+        if self.write_work_files_to_memory:
+            file_location = temporary_file
+        else:
+            file_location = permanent_file
+
+        selection_output_name = f"{file_location}road_selection_{counter}__{unique_id}"
+        buffer_output_name = f"{file_location}line_buffer_{counter}__{unique_id}"
 
         self.selecting_different_road_lines(sql_query, selection_output_name)
         self.creating_buffer_from_selected_lines(
             selection_output_name, original_width, buffer_output_name
         )
+
+        self.working_files_list.append(selection_output_name)
+        self.working_files_list.append(buffer_output_name)
 
         return buffer_output_name
 
@@ -118,12 +159,22 @@ class LineToBufferSymbology:
             buffer_output_name = self.process_each_query(
                 sql_query, original_width, counter
             )
-            buffer_output_names.append(buffer_output_name)
+            if arcpy.Exists(buffer_output_name):
+                count_result = arcpy.GetCount_management(buffer_output_name)
+                feature_count = int(count_result.getOutput(0))
+
+                if feature_count > 0:
+                    buffer_output_names.append(buffer_output_name)
             counter += 1
 
         self.merge_buffers(buffer_output_names, self.output_road_buffer)
-        self.delete_working_files(*self.working_files_list)
+        if not self.keep_work_files:
+            self.delete_working_files(*self.working_files_list)
 
+    @partition_io_decorator(
+        input_param_names=["input_road_lines"],
+        output_param_names=["output_road_buffer"],
+    )
     def run(self):
         self.process_queries()
 
@@ -134,6 +185,9 @@ if __name__ == "__main__":
         input_road_lines=Building_N100.data_preparation___unsplit_roads___n100_building.value,
         sql_selection_query=N100_SQLResources.road_symbology_size_sql_selection.value,
         output_road_buffer=Building_N100.line_to_buffer_symbology___test___n100_building.value,
+        write_work_files_to_memory=False,
+        keep_work_files=False,
+        root_file=Building_N100.line_to_buffer_symbology___root_file___n100_building.value,
         buffer_factor=1,  # This is an optional parameter not needed unless you want another value than 1
         fixed_buffer_addition=0,  # This is an optional parameter not needed unless you want another value than 0
     )

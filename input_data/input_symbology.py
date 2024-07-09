@@ -8,7 +8,7 @@ class SymbologyN100(Enum):
     veg_sti = config.symbology_n100_roads
     begrensnings_kurve_buffer = config.symbology_n100_begrensningskurve_buffer
     begrensnings_kurve_line = config.symbology_n100_begrensningskurve_line
-    begrensningskurve_polygon = config.symbology_n100_begrensningskurve_polygon
+    begrensningskurve_polygon = config.symbology_n100_begrensningskurve_buffer
     bygningspunkt = config.symbology_n100_bygningspunkt
     grunnriss = config.symbology_n100_grunnriss
     drawn_polygon = config.symbology_n100_drawn_polygon
