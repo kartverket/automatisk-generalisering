@@ -5,12 +5,12 @@ import config
 
 # Defining universal paths for other files regardless of local path env_setup
 class SymbologyN100(Enum):
-    veg_sti = config.symbology_n100_roads
+    road = config.symbology_n100_roads
     begrensnings_kurve_buffer = config.symbology_n100_begrensningskurve_buffer
     begrensnings_kurve_line = config.symbology_n100_begrensningskurve_line
     begrensningskurve_polygon = config.symbology_n100_begrensningskurve_buffer
-    bygningspunkt = config.symbology_n100_bygningspunkt
-    grunnriss = config.symbology_n100_grunnriss
-    drawn_polygon = config.symbology_n100_drawn_polygon
+    building_point = config.symbology_n100_bygningspunkt
+    building_polygon = config.symbology_n100_grunnriss
+    squares = config.symbology_n100_drawn_polygon
     railway_station_squares = config.symbology_n100_railway_station_squares
-    railways = config.symbology_n100_railway
+    railway = config.symbology_n100_railway
