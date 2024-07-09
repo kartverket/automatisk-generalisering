@@ -52,6 +52,7 @@ class StudyAreaSelector:
                 in_features=input_file,
                 out_feature_class=output_file,
             )
+            print(f"Copied {output_file}")
 
     def delete_working_files(self, *file_paths):
         """
