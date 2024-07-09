@@ -16,21 +16,7 @@ from custom_tools.decorators.timing_decorator import timing_decorator
 @timing_decorator
 def main():
     """
-    Summary:
-        This script aggregates and simplifies building polygons, minimizing detailed parts of the building.
 
-    Details:
-        1. `aggregate_building_polygons`:
-            Selects hospitals and churches from the input point feature class.
-
-        2. `simplify_buildings`:
-            Finds clusters in the hospital and church layers.
-
-        3. `simplify_polygons`:
-            Reduces clusters to one point for each cluster.
-
-        3. `joining_and_adding_fields`:
-            Reduces clusters to one point for each cluster.
     """
     environment_setup.main()
     aggregate_polygons()
