@@ -159,10 +159,10 @@ def rbc_iteration():
         lyrx_begrensnings_kurve = rf"{config.symbology_output_folder}\lyrx_begrensnings_kurve_{unique_id}.lyrx"
 
         # Defining symbology layers
-        symbology_veg_sti = SymbologyN100.veg_sti.value
+        symbology_veg_sti = SymbologyN100.road.value
         symbology_begrensnings_kurve = SymbologyN100.begrensnings_kurve_buffer.value
-        symbology_bygningspunkt = SymbologyN100.bygningspunkt.value
-        symbology_grunnriss = SymbologyN100.grunnriss.value
+        symbology_bygningspunkt = SymbologyN100.building_point.value
+        symbology_grunnriss = SymbologyN100.building_polygon.value
 
         symbology_configs = [
             {
@@ -257,7 +257,7 @@ def rbc_iteration():
             hierarchy_field="hierarchy",
         )
 
-        # Sql expression to bring along bygningspunkt which are kept + church and hospital
+        # Sql expression to bring along building_point which are kept + church and hospital
         sql_expression_resolve_building_conflicts = (
             "(invisibility = 0) OR (symbol_val IN (1, 2, 3))"
         )
@@ -390,10 +390,10 @@ def rbc_iteration():
 #         )
 #
 #         # Defining symbology layers
-#         symbology_veg_sti = SymbologyN100.veg_sti.value
+#         symbology_veg_sti = SymbologyN100.road.value
 #         symbology_begrensnings_kurve = SymbologyN100.begrensnings_kurve.value
-#         symbology_bygningspunkt = SymbologyN100.bygningspunkt.value
-#         symbology_grunnriss = SymbologyN100.grunnriss.value
+#         symbology_bygningspunkt = SymbologyN100.building_point.value
+#         symbology_grunnriss = SymbologyN100.building_polygon.value
 #
 #         # Apply symbology to selections
 #
@@ -503,7 +503,7 @@ def rbc_iteration():
 #             hierarchy_field="hierarchy",
 #         )
 #
-#         # Sql expression to bring along bygningspunkt which are kept + church and hospital
+#         # Sql expression to bring along building_point which are kept + church and hospital
 #         sql_expression_resolve_building_conflicts = (
 #             "(invisibility = 0) OR (symbol_val IN (1, 2, 3))"
 #         )
@@ -634,10 +634,10 @@ def rbc_iteration():
 #     )
 #
 # # Defining symbology layers
-# symbology_veg_sti = SymbologyN100.veg_sti.value
+# symbology_veg_sti = SymbologyN100.road.value
 # symbology_begrensnings_kurve = SymbologyN100.begrensnings_kurve.value
-# symbology_bygningspunkt = SymbologyN100.bygningspunkt.value
-# symbology_grunnriss = SymbologyN100.grunnriss.value
+# symbology_bygningspunkt = SymbologyN100.building_point.value
+# symbology_grunnriss = SymbologyN100.building_polygon.value
 #
 # # Apply symbology to selections
 #
@@ -757,7 +757,7 @@ def rbc_iteration():
 #     hierarchy_field="hierarchy",
 # )
 #
-# # Sql expression to bring along bygningspunkt which are kept + church and hospital
+# # Sql expression to bring along building_point which are kept + church and hospital
 # sql_expression_resolve_building_conflicts = (
 #     "(invisibility = 0) OR (symbol_val IN (1, 2, 3))"
 # )
