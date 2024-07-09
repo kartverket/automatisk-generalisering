@@ -11,6 +11,7 @@ file_manager = BaseFileManager(scale=scale, object_name=object_name)
 
 
 # All scripts
+data_selection = "data_selection"
 data_preparation = "data_preparation"
 simplify_polygons = "simplify_polygons"
 polygon_propogate_displacement = "polygon_propogate_displacement"
@@ -92,6 +93,76 @@ class Building_N100(Enum):
     #                                DATA PREPARATION
     # ========================================
 
+    data_selection___begrensningskurve_n100_input_data___n100_building = (
+        file_manager.generate_file_name_gdb(
+            script_source_name=data_selection,
+            description="begrensningskurve_n100_input_data",
+        )
+    )
+
+    data_selection___land_cover_n100_input_data___n100_building = (
+        file_manager.generate_file_name_gdb(
+            script_source_name=data_selection,
+            description="land_cover_n100_input_data",
+        )
+    )
+
+    data_selection___land_cover_n50_input_data___n100_building = (
+        file_manager.generate_file_name_gdb(
+            script_source_name=data_selection,
+            description="land_cover_n50_input_data",
+        )
+    )
+
+    data_selection___road_n100_input_data___n100_building = (
+        file_manager.generate_file_name_gdb(
+            script_source_name=data_selection,
+            description="road_n100_input_data",
+        )
+    )
+
+    data_selection___building_point_n50_input_data___n100_building = (
+        file_manager.generate_file_name_gdb(
+            script_source_name=data_selection,
+            description="building_point_n50_input_data",
+        )
+    )
+
+    data_selection___building_polygon_n50_input_data___n100_building = (
+        file_manager.generate_file_name_gdb(
+            script_source_name=data_selection,
+            description="building_polygon_n50_input_data",
+        )
+    )
+
+    data_selection___tourist_hut_n50_input_data___n100_building = (
+        file_manager.generate_file_name_gdb(
+            script_source_name=data_selection,
+            description="tourist_hut_n50_input_data",
+        )
+    )
+
+    data_selection___railroad_stations_n100_input_data___n100_building = (
+        file_manager.generate_file_name_gdb(
+            script_source_name=data_selection,
+            description="railroad_stations_n100_input_data",
+        )
+    )
+
+    data_selection___railroad_tracks_n100_input_data___n100_building = (
+        file_manager.generate_file_name_gdb(
+            script_source_name=data_selection,
+            description="railroad_tracks_n100_input_data",
+        )
+    )
+
+    data_selection___matrikkel_input_data___n100_building = (
+        file_manager.generate_file_name_gdb(
+            script_source_name=data_selection,
+            description="matrikkel_input_data",
+        )
+    )
+
     data_preparation___begrensingskurve_docu___building_n100 = (
         file_manager.generate_file_name_general_files(
             script_source_name=data_preparation,
@@ -100,33 +171,33 @@ class Building_N100(Enum):
         )
     )
 
-    data_preperation___begrensningskurve_base___n100_building = (
+    data_preparation___begrensningskurve_base___n100_building = (
         file_manager.generate_file_name_gdb(
             script_source_name=data_preparation,
             description="begrensningskurve_base",
         )
     )
 
-    data_preperation___processed_begrensningskurve___n100_building = (
+    data_preparation___processed_begrensningskurve___n100_building = (
         file_manager.generate_file_name_gdb(
             script_source_name=data_preparation,
             description="processed_begrensningskurve",
         )
     )
 
-    data_preperation___waterfeatures_from_begrensningskurve_not_rivers___n100_building = file_manager.generate_file_name_gdb(
+    data_preparation___waterfeatures_from_begrensningskurve_not_rivers___n100_building = file_manager.generate_file_name_gdb(
         script_source_name=data_preparation,
         description="waterfeatures_from_begrensningskurve_not_rivers",
     )
 
-    data_preperation___waterfeatures_from_begrensningskurve_rivers___n100_building = (
+    data_preparation___waterfeatures_from_begrensningskurve_rivers___n100_building = (
         file_manager.generate_file_name_gdb(
             script_source_name=data_preparation,
             description="waterfeatures_from_begrensningskurve_rivers",
         )
     )
 
-    data_preperation___waterfeatures_from_begrensningskurve_rivers_buffer___n100_building = file_manager.generate_file_name_gdb(
+    data_preparation___waterfeatures_from_begrensningskurve_rivers_buffer___n100_building = file_manager.generate_file_name_gdb(
         script_source_name=data_preparation,
         description="waterfeatures_from_begrensningskurve_rivers_buffer",
     )

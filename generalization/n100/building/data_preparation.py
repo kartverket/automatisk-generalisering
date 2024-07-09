@@ -10,6 +10,7 @@ from input_data import input_other
 from file_manager.n100.file_manager_buildings import Building_N100
 from env_setup import environment_setup
 import env_setup.global_config
+import config
 from custom_tools.decorators.timing_decorator import timing_decorator
 from custom_tools.general_tools import custom_arcpy
 from custom_tools.general_tools.polygon_processor import PolygonProcessor
@@ -19,6 +20,7 @@ from custom_tools.general_tools.partition_iterator import PartitionIterator
 from custom_tools.generalization_tools.building.begrensningskurve_land_waterbodies import (
     BegrensningskurveLandWaterbodies,
 )
+from custom_tools.general_tools.study_area_selector import StudyAreaSelector
 
 
 @timing_decorator
@@ -29,6 +31,7 @@ def main():
     """
 
     environment_setup.main()
+    data_selection()
     begrensningskurve_land_and_water_bodies()
     begrensningskurve_river()
     merge_begrensningskurve_all_water_features()
@@ -42,6 +45,31 @@ def main():
     selecting_polygons_not_in_urban_areas()
     reclassifying_polygon_values()
     polygon_selections_based_on_size()
+
+
+@timing_decorator
+def data_selection():
+    input_output_file_dict = {
+        input_n100.BegrensningsKurve: Building_N100.data_selection___begrensningskurve_n100_input_data___n100_building.value,
+        input_n100.ArealdekkeFlate: Building_N100.data_selection___land_cover_n100_input_data___n100_building.value,
+        input_n100.VegSti: Building_N100.data_selection___road_n100_input_data___n100_building.value,
+        input_n100.JernbaneStasjon: Building_N100.data_selection___railroad_stations_n100_input_data___n100_building.value,
+        input_n100.Bane: Building_N100.data_selection___railroad_tracks_n100_input_data___n100_building.value,
+        input_n50.ArealdekkeFlate: Building_N100.data_selection___land_cover_n50_input_data___n100_building.value,
+        input_n50.BygningsPunkt: Building_N100.data_selection___building_point_n50_input_data___n100_building.value,
+        input_n50.Grunnriss: Building_N100.data_selection___building_polygon_n50_input_data___n100_building.value,
+        input_n50.TuristHytte: Building_N100.data_selection___tourist_hut_n50_input_data___n100_building.value,
+        input_other.matrikkel_bygningspunkt: Building_N100.data_selection___matrikkel_input_data___n100_building.value,
+    }
+
+    selector = StudyAreaSelector(
+        input_output_file_dict=input_output_file_dict,
+        selecting_file=input_n100.AdminFlate,
+        selecting_sql_expression="navn IN ('Asker', 'Oslo', 'Trondheim', 'Ringerike')",
+        select_local=config.select_study_area,
+    )
+
+    selector.run()
 
 
 @timing_decorator
@@ -63,18 +91,18 @@ def begrensningskurve_land_and_water_bodies():
     inputs = {
         begrensningskurve: [
             "input",
-            input_n100.BegrensningsKurve,
+            Building_N100.data_selection___begrensningskurve_n100_input_data___n100_building.value,
         ],
         land_cover: [
             "context",
-            input_n100.ArealdekkeFlate,
+            Building_N100.data_selection___land_cover_n100_input_data___n100_building.value,
         ],
     }
 
     outputs = {
         begrensningskurve: [
             "processed_begrensningskurve",
-            Building_N100.data_preperation___processed_begrensningskurve___n100_building.value,
+            Building_N100.data_preparation___processed_begrensningskurve___n100_building.value,
         ],
     }
 
@@ -98,10 +126,10 @@ def begrensningskurve_land_and_water_bodies():
         alias_path_data=inputs,
         alias_path_outputs=outputs,
         custom_functions=[process_begrensningskurve],
-        root_file_partition_iterator=Building_N100.data_preperation___begrensningskurve_base___n100_building.value,
+        root_file_partition_iterator=Building_N100.data_preparation___begrensningskurve_base___n100_building.value,
         scale=env_setup.global_config.scale_n100,
         dictionary_documentation_path=Building_N100.data_preparation___begrensingskurve_docu___building_n100.value,
-        feature_count="400000",
+        feature_count="800000",
     )
     partition_begrensningskurve.run()
 
@@ -122,15 +150,15 @@ def begrensningskurve_river():
 
     # Creating a temporary feature of rivers from begrensningskurve
     custom_arcpy.select_attribute_and_make_permanent_feature(
-        input_layer=input_n100.BegrensningsKurve,
+        input_layer=Building_N100.data_selection___begrensningskurve_n100_input_data___n100_building.value,
         expression=sql_expr_begrensningskurve_river_outline,
-        output_name=Building_N100.data_preperation___waterfeatures_from_begrensningskurve_rivers___n100_building.value,
+        output_name=Building_N100.data_preparation___waterfeatures_from_begrensningskurve_rivers___n100_building.value,
     )
 
     # Creating small buffer around begrensningskurve rivers
     arcpy.analysis.PairwiseBuffer(
-        in_features=Building_N100.data_preperation___waterfeatures_from_begrensningskurve_rivers___n100_building.value,
-        out_feature_class=Building_N100.data_preperation___waterfeatures_from_begrensningskurve_rivers_buffer___n100_building.value,
+        in_features=Building_N100.data_preparation___waterfeatures_from_begrensningskurve_rivers___n100_building.value,
+        out_feature_class=Building_N100.data_preparation___waterfeatures_from_begrensningskurve_rivers_buffer___n100_building.value,
         buffer_distance_or_field="0.1 Meters",
     )
 
@@ -148,8 +176,8 @@ def merge_begrensningskurve_all_water_features():
     # Merge begrensningskurve buffers (water bodies and rivers)
     arcpy.management.Merge(
         inputs=[
-            Building_N100.data_preperation___waterfeatures_from_begrensningskurve_rivers_buffer___n100_building.value,
-            Building_N100.data_preperation___processed_begrensningskurve___n100_building.value,
+            Building_N100.data_preparation___waterfeatures_from_begrensningskurve_rivers_buffer___n100_building.value,
+            Building_N100.data_preparation___processed_begrensningskurve___n100_building.value,
         ],
         output=Building_N100.data_preparation___merged_begrensningskurve_all_waterbodies___n100_building.value,
     )
@@ -166,7 +194,7 @@ def unsplit_roads():
     """
 
     arcpy.UnsplitLine_management(
-        in_features=input_n100.VegSti,
+        in_features=Building_N100.data_selection___road_n100_input_data___n100_building.value,
         out_feature_class=Building_N100.data_preparation___unsplit_roads___n100_building.value,
         dissolve_field=["subtypekode", "motorvegtype", "uttegning"],
     )
@@ -175,11 +203,13 @@ def unsplit_roads():
 @timing_decorator
 def railway_station_points_to_polygons():
     arcpy.management.Copy(
-        in_data=input_n100.JernbaneStasjon,
+        in_data=Building_N100.data_selection___railroad_tracks_n100_input_data___n100_building.value,
         out_data=Building_N100.data_preparation___railway_station_points_from_n100___n100_building.value,
     )
     # Railway stations from input data
-    railway_stations = input_n100.JernbaneStasjon
+    railway_stations = (
+        Building_N100.data_selection___railroad_stations_n100_input_data___n100_building.value
+    )
 
     # Adding symbol_val field
     arcpy.AddField_management(
@@ -221,14 +251,14 @@ def selecting_urban_areas_by_sql():
 
     # Selecting urban areas from n100 using sql expression
     custom_arcpy.select_attribute_and_make_permanent_feature(
-        input_layer=input_n100.ArealdekkeFlate,
+        input_layer=Building_N100.data_selection___land_cover_n100_input_data___n100_building.value,
         expression=N100_SQLResources.urban_areas.value,
         output_name=Building_N100.data_preparation___urban_area_selection_n100___n100_building.value,
     )
 
     # Selecting urban areas from n50 using sql expression
     custom_arcpy.select_attribute_and_make_feature_layer(
-        input_layer=input_n50.ArealdekkeFlate,
+        input_layer=Building_N100.data_selection___land_cover_n50_input_data___n100_building.value,
         expression=N100_SQLResources.urban_areas.value,
         output_name=Building_N100.data_preparation___urban_area_selection_n50___n100_building.value,
     )
@@ -253,7 +283,7 @@ def selecting_urban_areas_by_sql():
 def adding_matrikkel_points_to_areas_that_are_no_longer_urban_in_n100():
     # Selecting matrikkel building points in areas that were urban in n50, but are NOT longer urban in n100
     custom_arcpy.select_location_and_make_permanent_feature(
-        input_layer=input_other.matrikkel_bygningspunkt,
+        input_layer=Building_N100.data_selection___matrikkel_input_data___n100_building.value,
         overlap_type=custom_arcpy.OverlapType.INTERSECT,
         select_features=Building_N100.data_preparation___no_longer_urban_areas___n100_building.value,
         output_name=Building_N100.data_preparation___matrikkel_points___n100_building.value,
@@ -264,7 +294,7 @@ def adding_matrikkel_points_to_areas_that_are_no_longer_urban_in_n100():
 def selecting_n50_points_not_in_urban_areas():
     # Selecting n50 so they are not in urban areas
     custom_arcpy.select_location_and_make_permanent_feature(
-        input_layer=input_n50.BygningsPunkt,
+        input_layer=Building_N100.data_selection___building_point_n50_input_data___n100_building.value,
         overlap_type=custom_arcpy.OverlapType.INTERSECT,
         select_features=Building_N100.data_preparation___urban_area_selection_n100_buffer___n100_building.value,
         output_name=Building_N100.data_preparation___n50_points___n100_building.value,
@@ -273,7 +303,7 @@ def selecting_n50_points_not_in_urban_areas():
 
     # Making sure we are not loosing churches or hospitals
     custom_arcpy.select_location_and_make_permanent_feature(
-        input_layer=input_n50.BygningsPunkt,
+        input_layer=Building_N100.data_selection___building_point_n50_input_data___n100_building.value,
         overlap_type=custom_arcpy.OverlapType.INTERSECT,
         select_features=Building_N100.data_preparation___urban_area_selection_n100_buffer___n100_building.value,
         output_name=Building_N100.data_preparation___n50_points_in_urban_areas___n100_building.value,
@@ -327,7 +357,7 @@ def merge_matrikkel_n50_and_touristcabins_points():
             Building_N100.data_preparation___n50_points___n100_building.value,
             Building_N100.data_preparation___matrikkel_points___n100_building.value,
             Building_N100.data_preparation___churches_and_hospitals_in_urban_areas___n100_building.value,
-            input_n50.TuristHytte,
+            Building_N100.data_selection___tourist_hut_n50_input_data___n100_building.value,
         ],
         output=Building_N100.data_preperation___matrikkel_n50_touristcabins_points_merged___n100_building.value,
     )
@@ -347,13 +377,13 @@ def selecting_polygons_not_in_urban_areas():
 
     # Copy the input data to not modify the original fields.
     arcpy.management.Copy(
-        in_data=input_n50.Grunnriss,
+        in_data=Building_N100.data_selection___building_polygon_n50_input_data___n100_building.value,
         out_data=Building_N100.data_preparation___grunnriss_copy___n100_building.value,
     )
 
     # Selecting n50 building points based on this new urban selection layer
     custom_arcpy.select_location_and_make_permanent_feature(
-        input_layer=input_n50.Grunnriss,
+        input_layer=Building_N100.data_selection___building_polygon_n50_input_data___n100_building.value,
         overlap_type=custom_arcpy.OverlapType.INTERSECT,
         select_features=Building_N100.data_preparation___no_longer_urban_areas___n100_building.value,
         output_name=Building_N100.data_preparation___n50_polygons___n100_building.value,
