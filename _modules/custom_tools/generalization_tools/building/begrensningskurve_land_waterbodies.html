@@ -79,6 +79,7 @@
   <h1>Source code for custom_tools.generalization_tools.building.begrensningskurve_land_waterbodies</h1><div class="highlight"><pre>
 <span></span><span class="kn">import</span> <span class="nn">arcpy</span>
 
+
 <span class="kn">from</span> <span class="nn">input_data</span> <span class="kn">import</span> <span class="n">input_n100</span>
 
 <span class="c1"># Importing custom modules</span>
@@ -94,70 +95,136 @@
 <span class="k">class</span> <span class="nc">BegrensningskurveLandWaterbodies</span><span class="p">:</span>
     <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
-        <span class="n">input_begrensningskurve</span><span class="p">,</span>
-        <span class="n">input_land_features</span><span class="p">,</span>
-        <span class="n">water_feature_buffer_width</span><span class="p">,</span>
-        <span class="n">output_begrensningskurve</span><span class="p">,</span>
+        <span class="n">input_begrensningskurve</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+        <span class="n">input_land_features</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+        <span class="n">water_feature_buffer_width</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+        <span class="n">output_begrensningskurve</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+        <span class="n">water_barrier_buffer_width</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">30</span><span class="p">,</span>
+        <span class="n">write_work_files_to_memory</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
+        <span class="n">keep_work_files</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+        <span class="n">root_file</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="p">):</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">input_begrensningskurve</span> <span class="o">=</span> <span class="n">input_begrensningskurve</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">input_land_features</span> <span class="o">=</span> <span class="n">input_land_features</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">water_feature_buffer_width</span> <span class="o">=</span> <span class="n">water_feature_buffer_width</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">output_begrensningskurve</span> <span class="o">=</span> <span class="n">output_begrensningskurve</span>
 
+        <span class="bp">self</span><span class="o">.</span><span class="n">write_work_files_to_memory</span> <span class="o">=</span> <span class="n">write_work_files_to_memory</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">keep_work_files</span> <span class="o">=</span> <span class="n">keep_work_files</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">root_file</span> <span class="o">=</span> <span class="n">root_file</span>
+
+        <span class="c1"># How far out from land water buffer is created</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">water_feature_buffer_width</span> <span class="o">=</span> <span class="n">water_feature_buffer_width</span>
+
+        <span class="c1"># How wide the water feature buffer will be</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">water_barrier_buffer_width</span> <span class="o">=</span> <span class="n">water_barrier_buffer_width</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">waterfeatures_from_begrensningskurve_not_rivers</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">land_features_area</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">selected_land_features</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">land_features_buffer</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">begrensningskurve_waterfeatures_buffer</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">erase_feature_1</span> <span class="o">=</span> <span class="kc">None</span>
+
         <span class="bp">self</span><span class="o">.</span><span class="n">working_files_list</span> <span class="o">=</span> <span class="p">[]</span>
+
+<div class="viewcode-block" id="BegrensningskurveLandWaterbodies.reset_temp_files">
+<a class="viewcode-back" href="../../../../generated_docs/custom_tools.generalization_tools.building.html#custom_tools.generalization_tools.building.begrensningskurve_land_waterbodies.BegrensningskurveLandWaterbodies.reset_temp_files">[docs]</a>
+    <span class="k">def</span> <span class="nf">reset_temp_files</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Reset temporary file attributes.&quot;&quot;&quot;</span>
+        <span class="n">unique_id</span> <span class="o">=</span> <span class="nb">id</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
+        <span class="n">temporary_file</span> <span class="o">=</span> <span class="s2">&quot;in_memory</span><span class="se">\\</span><span class="s2">&quot;</span>
+        <span class="n">permanent_file</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">root_file</span><span class="si">}</span><span class="s2">_&quot;</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">root_file</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">write_work_files_to_memory</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                    <span class="s2">&quot;Need to specify root_file path to write to disk for work files.&quot;</span>
+                <span class="p">)</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">keep_work_files</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                    <span class="s2">&quot;Need to specify root_file path and write to disk to keep_work_files.&quot;</span>
+                <span class="p">)</span>
+
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">write_work_files_to_memory</span><span class="p">:</span>
+            <span class="n">file_location</span> <span class="o">=</span> <span class="n">temporary_file</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">file_location</span> <span class="o">=</span> <span class="n">permanent_file</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">waterfeatures_from_begrensningskurve_not_rivers</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">file_location</span><span class="si">}</span><span class="s2">waterfeatures_from_begrensningskurve_not_rivers_</span><span class="si">{</span><span class="n">unique_id</span><span class="si">}</span><span class="s2">&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">land_features_area</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">file_location</span><span class="si">}</span><span class="s2">land_features_area_</span><span class="si">{</span><span class="n">unique_id</span><span class="si">}</span><span class="s2">&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">selected_land_features</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">file_location</span><span class="si">}</span><span class="s2">selected_land_features_</span><span class="si">{</span><span class="n">unique_id</span><span class="si">}</span><span class="s2">&quot;</span>
+        <span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">land_features_buffer</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">file_location</span><span class="si">}</span><span class="s2">land_features_buffer_</span><span class="si">{</span><span class="n">unique_id</span><span class="si">}</span><span class="s2">&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">begrensningskurve_waterfeatures_buffer</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">file_location</span><span class="si">}</span><span class="s2">begrensningskurve_waterfeatures_buffer_</span><span class="si">{</span><span class="n">unique_id</span><span class="si">}</span><span class="s2">&quot;</span>
+        <span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">erase_feature_1</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">file_location</span><span class="si">}</span><span class="s2">erase_feature_1</span><span class="si">{</span><span class="n">unique_id</span><span class="si">}</span><span class="s2">&quot;</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">working_files_list</span> <span class="o">=</span> <span class="p">[</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">waterfeatures_from_begrensningskurve_not_rivers</span><span class="p">,</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">land_features_area</span><span class="p">,</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">selected_land_features</span><span class="p">,</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">land_features_buffer</span><span class="p">,</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">begrensningskurve_waterfeatures_buffer</span><span class="p">,</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">erase_feature_1</span><span class="p">,</span>
+        <span class="p">]</span></div>
+
 
 <div class="viewcode-block" id="BegrensningskurveLandWaterbodies.selections">
 <a class="viewcode-back" href="../../../../generated_docs/custom_tools.generalization_tools.building.html#custom_tools.generalization_tools.building.begrensningskurve_land_waterbodies.BegrensningskurveLandWaterbodies.selections">[docs]</a>
     <span class="k">def</span> <span class="nf">selections</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">waterfeatures_from_begrensningskurve_not_rivers</span> <span class="o">=</span> <span class="p">(</span>
-            <span class="s2">&quot;in_memory/waterfeatures_from_begrensningskurve_not_rivers&quot;</span>
-        <span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">working_files_list</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">waterfeatures_from_begrensningskurve_not_rivers</span>
-        <span class="p">)</span>
-        <span class="n">custom_arcpy</span><span class="o">.</span><span class="n">select_attribute_and_make_feature_layer</span><span class="p">(</span>
-            <span class="n">input_layer</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">input_begrensningskurve</span><span class="p">,</span>
-            <span class="n">expression</span><span class="o">=</span><span class="s2">&quot;objtype = &#39;Innsjøkant&#39; Or objtype = &#39;InnsjøkantRegulert&#39; Or objtype = &#39;Kystkontur&#39;&quot;</span><span class="p">,</span>
-            <span class="n">output_name</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">waterfeatures_from_begrensningskurve_not_rivers</span><span class="p">,</span>
-        <span class="p">)</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">write_work_files_to_memory</span><span class="p">:</span>
+            <span class="n">custom_arcpy</span><span class="o">.</span><span class="n">select_attribute_and_make_feature_layer</span><span class="p">(</span>
+                <span class="n">input_layer</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">input_begrensningskurve</span><span class="p">,</span>
+                <span class="n">expression</span><span class="o">=</span><span class="s2">&quot;objtype = &#39;Innsjøkant&#39; Or objtype = &#39;InnsjøkantRegulert&#39; Or objtype = &#39;Kystkontur&#39;&quot;</span><span class="p">,</span>
+                <span class="n">output_name</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">waterfeatures_from_begrensningskurve_not_rivers</span><span class="p">,</span>
+            <span class="p">)</span>
 
-        <span class="bp">self</span><span class="o">.</span><span class="n">land_features_area</span> <span class="o">=</span> <span class="s2">&quot;in_memory/land_features_area&quot;</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">working_files_list</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">land_features_area</span><span class="p">)</span>
-        <span class="n">custom_arcpy</span><span class="o">.</span><span class="n">select_attribute_and_make_feature_layer</span><span class="p">(</span>
-            <span class="n">input_layer</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">input_land_features</span><span class="p">,</span>
-            <span class="n">expression</span><span class="o">=</span><span class="s2">&quot;&quot;&quot;objtype NOT IN (&#39;ElvBekk&#39;, &#39;Havflate&#39;, &#39;Innsjø&#39;, &#39;InnsjøRegulert&#39;)&quot;&quot;&quot;</span><span class="p">,</span>
-            <span class="n">output_name</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">land_features_area</span><span class="p">,</span>
-        <span class="p">)</span>
+            <span class="n">custom_arcpy</span><span class="o">.</span><span class="n">select_attribute_and_make_feature_layer</span><span class="p">(</span>
+                <span class="n">input_layer</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">input_land_features</span><span class="p">,</span>
+                <span class="n">expression</span><span class="o">=</span><span class="s2">&quot;&quot;&quot;objtype NOT IN (&#39;ElvBekk&#39;, &#39;Havflate&#39;, &#39;Innsjø&#39;, &#39;InnsjøRegulert&#39;)&quot;&quot;&quot;</span><span class="p">,</span>
+                <span class="n">output_name</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">land_features_area</span><span class="p">,</span>
+            <span class="p">)</span>
 
-        <span class="bp">self</span><span class="o">.</span><span class="n">selected_land_features</span> <span class="o">=</span> <span class="s2">&quot;in_memory/selected_land_features_area&quot;</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">working_files_list</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">selected_land_features</span><span class="p">)</span>
+            <span class="n">custom_arcpy</span><span class="o">.</span><span class="n">select_location_and_make_feature_layer</span><span class="p">(</span>
+                <span class="n">input_layer</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">land_features_area</span><span class="p">,</span>
+                <span class="n">overlap_type</span><span class="o">=</span><span class="n">custom_arcpy</span><span class="o">.</span><span class="n">OverlapType</span><span class="o">.</span><span class="n">BOUNDARY_TOUCHES</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
+                <span class="n">select_features</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">waterfeatures_from_begrensningskurve_not_rivers</span><span class="p">,</span>
+                <span class="n">output_name</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">selected_land_features</span><span class="p">,</span>
+            <span class="p">)</span>
 
-        <span class="n">custom_arcpy</span><span class="o">.</span><span class="n">select_location_and_make_feature_layer</span><span class="p">(</span>
-            <span class="n">input_layer</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">land_features_area</span><span class="p">,</span>
-            <span class="n">overlap_type</span><span class="o">=</span><span class="n">custom_arcpy</span><span class="o">.</span><span class="n">OverlapType</span><span class="o">.</span><span class="n">BOUNDARY_TOUCHES</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
-            <span class="n">select_features</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">waterfeatures_from_begrensningskurve_not_rivers</span><span class="p">,</span>
-            <span class="n">output_name</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">selected_land_features</span><span class="p">,</span>
-        <span class="p">)</span></div>
+        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">write_work_files_to_memory</span><span class="p">:</span>
+            <span class="n">custom_arcpy</span><span class="o">.</span><span class="n">select_attribute_and_make_permanent_feature</span><span class="p">(</span>
+                <span class="n">input_layer</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">input_begrensningskurve</span><span class="p">,</span>
+                <span class="n">expression</span><span class="o">=</span><span class="s2">&quot;objtype = &#39;Innsjøkant&#39; Or objtype = &#39;InnsjøkantRegulert&#39; Or objtype = &#39;Kystkontur&#39;&quot;</span><span class="p">,</span>
+                <span class="n">output_name</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">waterfeatures_from_begrensningskurve_not_rivers</span><span class="p">,</span>
+            <span class="p">)</span>
+
+            <span class="n">custom_arcpy</span><span class="o">.</span><span class="n">select_attribute_and_make_permanent_feature</span><span class="p">(</span>
+                <span class="n">input_layer</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">input_land_features</span><span class="p">,</span>
+                <span class="n">expression</span><span class="o">=</span><span class="s2">&quot;&quot;&quot;objtype NOT IN (&#39;ElvBekk&#39;, &#39;Havflate&#39;, &#39;Innsjø&#39;, &#39;InnsjøRegulert&#39;)&quot;&quot;&quot;</span><span class="p">,</span>
+                <span class="n">output_name</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">land_features_area</span><span class="p">,</span>
+            <span class="p">)</span>
+
+            <span class="n">custom_arcpy</span><span class="o">.</span><span class="n">select_location_and_make_permanent_feature</span><span class="p">(</span>
+                <span class="n">input_layer</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">land_features_area</span><span class="p">,</span>
+                <span class="n">overlap_type</span><span class="o">=</span><span class="n">custom_arcpy</span><span class="o">.</span><span class="n">OverlapType</span><span class="o">.</span><span class="n">BOUNDARY_TOUCHES</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
+                <span class="n">select_features</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">waterfeatures_from_begrensningskurve_not_rivers</span><span class="p">,</span>
+                <span class="n">output_name</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">selected_land_features</span><span class="p">,</span>
+            <span class="p">)</span></div>
 
 
 <div class="viewcode-block" id="BegrensningskurveLandWaterbodies.creating_buffers">
 <a class="viewcode-back" href="../../../../generated_docs/custom_tools.generalization_tools.building.html#custom_tools.generalization_tools.building.begrensningskurve_land_waterbodies.BegrensningskurveLandWaterbodies.creating_buffers">[docs]</a>
     <span class="k">def</span> <span class="nf">creating_buffers</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">land_features_buffer</span> <span class="o">=</span> <span class="s2">&quot;in_memory/land_features_buffer&quot;</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">working_files_list</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">land_features_buffer</span><span class="p">)</span>
-
         <span class="n">arcpy</span><span class="o">.</span><span class="n">analysis</span><span class="o">.</span><span class="n">PairwiseBuffer</span><span class="p">(</span>
             <span class="n">in_features</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">selected_land_features</span><span class="p">,</span>
             <span class="n">out_feature_class</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">land_features_buffer</span><span class="p">,</span>
             <span class="n">buffer_distance_or_field</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">water_feature_buffer_width</span><span class="si">}</span><span class="s2"> Meters&quot;</span><span class="p">,</span>
         <span class="p">)</span>
 
-        <span class="bp">self</span><span class="o">.</span><span class="n">water_feature_buffer_width</span> <span class="o">+=</span> <span class="mi">30</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">water_feature_buffer_width</span> <span class="o">+=</span> <span class="bp">self</span><span class="o">.</span><span class="n">water_barrier_buffer_width</span>
 
-        <span class="bp">self</span><span class="o">.</span><span class="n">begrensningskurve_waterfeatures_buffer</span> <span class="o">=</span> <span class="p">(</span>
-            <span class="s2">&quot;in_memory/begrensningskurve_waterfeatures_buffer&quot;</span>
-        <span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">working_files_list</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">begrensningskurve_waterfeatures_buffer</span><span class="p">)</span>
         <span class="n">arcpy</span><span class="o">.</span><span class="n">analysis</span><span class="o">.</span><span class="n">PairwiseBuffer</span><span class="p">(</span>
             <span class="n">in_features</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">waterfeatures_from_begrensningskurve_not_rivers</span><span class="p">,</span>
             <span class="n">out_feature_class</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">begrensningskurve_waterfeatures_buffer</span><span class="p">,</span>
@@ -168,17 +235,15 @@
 <div class="viewcode-block" id="BegrensningskurveLandWaterbodies.erase_buffers">
 <a class="viewcode-back" href="../../../../generated_docs/custom_tools.generalization_tools.building.html#custom_tools.generalization_tools.building.begrensningskurve_land_waterbodies.BegrensningskurveLandWaterbodies.erase_buffers">[docs]</a>
     <span class="k">def</span> <span class="nf">erase_buffers</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">erase_feature_1</span> <span class="o">=</span> <span class="s2">&quot;in_memory/erase_feature_1&quot;</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">working_files_list</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">erase_feature_1</span><span class="p">)</span>
         <span class="n">arcpy</span><span class="o">.</span><span class="n">analysis</span><span class="o">.</span><span class="n">PairwiseErase</span><span class="p">(</span>
             <span class="n">in_features</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">begrensningskurve_waterfeatures_buffer</span><span class="p">,</span>
-            <span class="n">erase_features</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">selected_land_features</span><span class="p">,</span>
+            <span class="n">erase_features</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">land_features_buffer</span><span class="p">,</span>
             <span class="n">out_feature_class</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">erase_feature_1</span><span class="p">,</span>
         <span class="p">)</span>
 
         <span class="n">arcpy</span><span class="o">.</span><span class="n">analysis</span><span class="o">.</span><span class="n">PairwiseErase</span><span class="p">(</span>
             <span class="n">in_features</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">erase_feature_1</span><span class="p">,</span>
-            <span class="n">erase_features</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">land_features_buffer</span><span class="p">,</span>
+            <span class="n">erase_features</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">land_features_area</span><span class="p">,</span>
             <span class="n">out_feature_class</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">output_begrensningskurve</span><span class="p">,</span>
         <span class="p">)</span></div>
 
@@ -194,7 +259,8 @@
 
 <div class="viewcode-block" id="BegrensningskurveLandWaterbodies.delete_feature_class">
 <a class="viewcode-back" href="../../../../generated_docs/custom_tools.generalization_tools.building.html#custom_tools.generalization_tools.building.begrensningskurve_land_waterbodies.BegrensningskurveLandWaterbodies.delete_feature_class">[docs]</a>
-    <span class="k">def</span> <span class="nf">delete_feature_class</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">feature_class_path</span><span class="p">):</span>
+    <span class="nd">@staticmethod</span>
+    <span class="k">def</span> <span class="nf">delete_feature_class</span><span class="p">(</span><span class="n">feature_class_path</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Deletes a feature class if it exists.&quot;&quot;&quot;</span>
         <span class="k">if</span> <span class="n">arcpy</span><span class="o">.</span><span class="n">Exists</span><span class="p">(</span><span class="n">feature_class_path</span><span class="p">):</span>
             <span class="n">arcpy</span><span class="o">.</span><span class="n">management</span><span class="o">.</span><span class="n">Delete</span><span class="p">(</span><span class="n">feature_class_path</span><span class="p">)</span></div>
@@ -207,10 +273,12 @@
         <span class="n">output_param_names</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;output_begrensningskurve&quot;</span><span class="p">],</span>
     <span class="p">)</span>
     <span class="k">def</span> <span class="nf">run</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">reset_temp_files</span><span class="p">()</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">selections</span><span class="p">()</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">creating_buffers</span><span class="p">()</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">erase_buffers</span><span class="p">()</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">delete_working_files</span><span class="p">(</span><span class="o">*</span><span class="bp">self</span><span class="o">.</span><span class="n">working_files_list</span><span class="p">)</span></div>
+        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">keep_work_files</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">delete_working_files</span><span class="p">(</span><span class="o">*</span><span class="bp">self</span><span class="o">.</span><span class="n">working_files_list</span><span class="p">)</span></div>
 </div>
 
 
@@ -222,6 +290,9 @@
         <span class="n">input_land_features</span><span class="o">=</span><span class="n">input_n100</span><span class="o">.</span><span class="n">ArealdekkeFlate</span><span class="p">,</span>
         <span class="n">water_feature_buffer_width</span><span class="o">=</span><span class="n">N100_Values</span><span class="o">.</span><span class="n">building_water_intrusion_distance_m</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
         <span class="n">output_begrensningskurve</span><span class="o">=</span><span class="n">Building_N100</span><span class="o">.</span><span class="n">begrensingskurve_land_water___begrensingskurve_buffer_in_water___n100_building</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
+        <span class="n">write_work_files_to_memory</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+        <span class="n">keep_work_files</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+        <span class="n">root_file</span><span class="o">=</span><span class="n">Building_N100</span><span class="o">.</span><span class="n">begrensingskurve_land_water___root_file___n100_building</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
     <span class="p">)</span>
     <span class="n">begrensningskurve_land_waterbodies</span><span class="o">.</span><span class="n">run</span><span class="p">()</span>
 </pre></div>
