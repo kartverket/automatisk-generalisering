@@ -52,13 +52,13 @@ def extracting_churches_hospitals():
     church_hospital_sql_expression = "symbol_val IN (1, 2, 3)"
 
     custom_arcpy.select_attribute_and_make_permanent_feature(
-        input_layer=Building_N100.point_propagate_displacement___points_after_propagate_displacement___n100_building.value,
+        input_layer=Building_N100.hospital_church_clusters___final___n100_building.value,
         expression=church_hospital_sql_expression,
         output_name=Building_N100.building_point_buffer_displacement___church_hospital_selection___n100_building.value,
     )
 
     custom_arcpy.select_attribute_and_make_permanent_feature(
-        input_layer=Building_N100.point_propagate_displacement___points_after_propagate_displacement___n100_building.value,
+        input_layer=Building_N100.hospital_church_clusters___final___n100_building.value,
         expression=church_hospital_sql_expression,
         output_name=Building_N100.building_point_buffer_displacement___building_points_selection___n100_building.value,
         inverted=True,
