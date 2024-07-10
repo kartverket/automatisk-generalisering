@@ -38,7 +38,7 @@ def selecting_water_polygon_features():
 def removing_points_in_water_features():
     # Select points that DO NOT intersect any waterfeatures
     custom_arcpy.select_location_and_make_permanent_feature(
-        input_layer=Building_N100.point_resolve_building_conflicts___building_points_final___n100_building.value,
+        input_layer=Building_N100.point_resolve_building_conflicts___POINT_OUTPUT__n100_building.value,
         overlap_type=custom_arcpy.OverlapType.INTERSECT,
         select_features=Building_N100.removing_points_and_erasing_polygons_in_water_features___water_features___n100_building.value,
         output_name=Building_N100.removing_points_and_erasing_polygons_in_water_features___final_points___n100_building.value,
@@ -78,7 +78,7 @@ def buffering_water_polygon_features():
 def selecting_building_polygons():
     # Selecting polygons intersecting water features
     custom_arcpy.select_location_and_make_permanent_feature(
-        input_layer=Building_N100.point_resolve_building_conflicts___building_polygons_final___n100_building.value,
+        input_layer=Building_N100.point_resolve_building_conflicts___POLYGON_OUTPUT__n100_building.value,
         overlap_type=custom_arcpy.OverlapType.INTERSECT,
         select_features=Building_N100.removing_points_and_erasing_polygons_in_water_features___water_features_buffered___n100_building.value,
         output_name=Building_N100.removing_points_and_erasing_polygons_in_water_features___building_polygons_too_close_to_water_features___n100_building.value,
@@ -86,7 +86,7 @@ def selecting_building_polygons():
 
     # Selecting polygons NOT intersecting from water features (these will not be further processed, but merged at the end of the script)
     custom_arcpy.select_location_and_make_permanent_feature(
-        input_layer=Building_N100.point_resolve_building_conflicts___building_polygons_final___n100_building.value,
+        input_layer=Building_N100.point_resolve_building_conflicts___POLYGON_OUTPUT__n100_building.value,
         overlap_type=custom_arcpy.OverlapType.INTERSECT,
         select_features=Building_N100.removing_points_and_erasing_polygons_in_water_features___water_features_buffered___n100_building.value,
         output_name=Building_N100.removing_points_and_erasing_polygons_in_water_features___building_polygons_NOT_too_close_to_water_features___n100_building.value,
