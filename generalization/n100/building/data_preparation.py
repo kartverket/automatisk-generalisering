@@ -60,6 +60,7 @@ def data_selection():
         input_n50.Grunnriss: Building_N100.data_selection___building_polygon_n50_input_data___n100_building.value,
         input_n50.TuristHytte: Building_N100.data_selection___tourist_hut_n50_input_data___n100_building.value,
         input_other.matrikkel_bygningspunkt: Building_N100.data_selection___matrikkel_input_data___n100_building.value,
+        config.displacement_feature: Building_N100.data_selection___displacement_feature___n100_building.value,
     }
 
     selector = StudyAreaSelector(
