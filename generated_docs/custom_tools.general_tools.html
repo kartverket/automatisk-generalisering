@@ -60,6 +60,7 @@
 <li class="toctree-l4"><a class="reference internal" href="#custom-tools-general-tools-partition-iterator-module">custom_tools.general_tools.partition_iterator module</a></li>
 <li class="toctree-l4"><a class="reference internal" href="#custom-tools-general-tools-polygon-processor-module">custom_tools.general_tools.polygon_processor module</a></li>
 <li class="toctree-l4"><a class="reference internal" href="#module-custom_tools.general_tools.print_logger">custom_tools.general_tools.print_logger module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#module-custom_tools.general_tools.study_area_selector">custom_tools.general_tools.study_area_selector module</a></li>
 <li class="toctree-l4"><a class="reference internal" href="#module-custom_tools.general_tools">Module contents</a></li>
 </ul>
 </li>
@@ -407,7 +408,7 @@ and creates a new, permanent feature class as an output.</p>
 </dl>
 <p class="rubric">Example</p>
 <div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">custom_arcpy</span><span class="o">.</span><span class="n">select_location_and_make_permanent_feature</span><span class="p">(</span>
-<span class="gp">... </span>    <span class="n">input_layer</span><span class="o">=</span><span class="n">Building_N100</span><span class="o">.</span><span class="n">data_preperation___waterfeatures_from_begrensningskurve_not_rivers___n100_building</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
+<span class="gp">... </span>    <span class="n">input_layer</span><span class="o">=</span><span class="n">Building_N100</span><span class="o">.</span><span class="n">data_preparation___waterfeatures_from_begrensningskurve_not_rivers___n100_building</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
 <span class="gp">... </span>    <span class="n">overlap_type</span><span class="o">=</span><span class="n">OverlapType</span><span class="o">.</span><span class="n">WITHIN_A_DISTANCE</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
 <span class="gp">... </span>    <span class="n">select_features</span><span class="o">=</span><span class="n">Building_N100</span><span class="o">.</span><span class="n">polygon_propogate_displacement___building_polygons_after_displacement___n100_building</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
 <span class="gp">... </span>    <span class="n">output_name</span><span class="o">=</span><span class="n">Building_N100</span><span class="o">.</span><span class="n">polygon_resolve_building_conflicts___begrensningskurve_500m_from_displaced_polygon___n100_building</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
@@ -593,6 +594,42 @@ Log files will be stored in a directory structure matching the scale and object 
 <dd class="field-even"><p>Logger instance for the specified scale and object type.</p>
 </dd>
 </dl>
+</dd></dl>
+
+</section>
+<section id="module-custom_tools.general_tools.study_area_selector">
+<span id="custom-tools-general-tools-study-area-selector-module"></span><h2>custom_tools.general_tools.study_area_selector module<a class="headerlink" href="#module-custom_tools.general_tools.study_area_selector" title="Link to this heading"></a></h2>
+<dl class="py class">
+<dt class="sig sig-object py" id="custom_tools.general_tools.study_area_selector.StudyAreaSelector">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">custom_tools.general_tools.study_area_selector.</span></span><span class="sig-name descname"><span class="pre">StudyAreaSelector</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">input_output_file_dict</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dict</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">selecting_file</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">select_local</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">selecting_sql_expression</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/custom_tools/general_tools/study_area_selector.html#StudyAreaSelector"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#custom_tools.general_tools.study_area_selector.StudyAreaSelector" title="Link to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<dl class="py method">
+<dt class="sig sig-object py" id="custom_tools.general_tools.study_area_selector.StudyAreaSelector.select_study_area">
+<span class="sig-name descname"><span class="pre">select_study_area</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/custom_tools/general_tools/study_area_selector.html#StudyAreaSelector.select_study_area"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#custom_tools.general_tools.study_area_selector.StudyAreaSelector.select_study_area" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="custom_tools.general_tools.study_area_selector.StudyAreaSelector.use_global_files">
+<span class="sig-name descname"><span class="pre">use_global_files</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/custom_tools/general_tools/study_area_selector.html#StudyAreaSelector.use_global_files"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#custom_tools.general_tools.study_area_selector.StudyAreaSelector.use_global_files" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="custom_tools.general_tools.study_area_selector.StudyAreaSelector.delete_working_files">
+<span class="sig-name descname"><span class="pre">delete_working_files</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">file_paths</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/custom_tools/general_tools/study_area_selector.html#StudyAreaSelector.delete_working_files"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#custom_tools.general_tools.study_area_selector.StudyAreaSelector.delete_working_files" title="Link to this definition"></a></dt>
+<dd><p>Deletes multiple feature classes or files.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="custom_tools.general_tools.study_area_selector.StudyAreaSelector.delete_feature_class">
+<span class="sig-name descname"><span class="pre">delete_feature_class</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">feature_class_path</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/custom_tools/general_tools/study_area_selector.html#StudyAreaSelector.delete_feature_class"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#custom_tools.general_tools.study_area_selector.StudyAreaSelector.delete_feature_class" title="Link to this definition"></a></dt>
+<dd><p>Deletes a feature class if it exists.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="custom_tools.general_tools.study_area_selector.StudyAreaSelector.run">
+<span class="sig-name descname"><span class="pre">run</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/custom_tools/general_tools/study_area_selector.html#StudyAreaSelector.run"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#custom_tools.general_tools.study_area_selector.StudyAreaSelector.run" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
 </dd></dl>
 
 </section>

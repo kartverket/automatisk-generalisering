@@ -89,8 +89,6 @@
 <span class="c1"># Importing timing decorator</span>
 <span class="kn">from</span> <span class="nn">custom_tools.decorators.timing_decorator</span> <span class="kn">import</span> <span class="n">timing_decorator</span>
 
-<span class="kn">from</span> <span class="nn">input_data</span> <span class="kn">import</span> <span class="n">input_n100</span>
-
 
 <div class="viewcode-block" id="main">
 <a class="viewcode-back" href="../../../../generated_docs/generalization.n100.building.html#generalization.n100.building.finalizing_buildings.main">[docs]</a>
@@ -113,7 +111,7 @@
 
     <span class="c1"># Selecting urban areas from n100 using sql expression</span>
     <span class="n">custom_arcpy</span><span class="o">.</span><span class="n">select_attribute_and_make_feature_layer</span><span class="p">(</span>
-        <span class="n">input_layer</span><span class="o">=</span><span class="n">input_n100</span><span class="o">.</span><span class="n">ArealdekkeFlate</span><span class="p">,</span>
+        <span class="n">input_layer</span><span class="o">=</span><span class="n">Building_N100</span><span class="o">.</span><span class="n">data_selection___land_cover_n100_input_data___n100_building</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
         <span class="n">expression</span><span class="o">=</span><span class="n">urban_areas_sql_expr</span><span class="p">,</span>
         <span class="n">output_name</span><span class="o">=</span><span class="n">Building_N100</span><span class="o">.</span><span class="n">finalizing_buildings___urban_areas___n100_building</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
     <span class="p">)</span>

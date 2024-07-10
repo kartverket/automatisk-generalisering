@@ -60,6 +60,14 @@ custom\_tools.general\_tools.print\_logger module
    :undoc-members:
    :show-inheritance:
 
+custom\_tools.general\_tools.study\_area\_selector module
+---------------------------------------------------------
+
+.. automodule:: custom_tools.general_tools.study_area_selector
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
 Module contents
 ---------------
 

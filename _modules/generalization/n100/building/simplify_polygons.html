@@ -82,7 +82,7 @@
 
 <span class="c1"># Importing custom modules</span>
 <span class="kn">from</span> <span class="nn">env_setup</span> <span class="kn">import</span> <span class="n">environment_setup</span>
-<span class="kn">from</span> <span class="nn">input_data</span> <span class="kn">import</span> <span class="n">input_n50</span>
+
 <span class="kn">from</span> <span class="nn">file_manager.n100.file_manager_buildings</span> <span class="kn">import</span> <span class="n">Building_N100</span>
 <span class="kn">from</span> <span class="nn">custom_tools.general_tools</span> <span class="kn">import</span> <span class="n">custom_arcpy</span>
 <span class="kn">from</span> <span class="nn">constants.n100_constants</span> <span class="kn">import</span> <span class="n">N100_Values</span>
@@ -280,7 +280,7 @@
 
     <span class="n">arcpy</span><span class="o">.</span><span class="n">analysis</span><span class="o">.</span><span class="n">SpatialJoin</span><span class="p">(</span>
         <span class="n">target_features</span><span class="o">=</span><span class="n">Building_N100</span><span class="o">.</span><span class="n">simplify_polygons___simplify_building_2___n100_building</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
-        <span class="n">join_features</span><span class="o">=</span><span class="n">input_n50</span><span class="o">.</span><span class="n">Grunnriss</span><span class="p">,</span>
+        <span class="n">join_features</span><span class="o">=</span><span class="n">Building_N100</span><span class="o">.</span><span class="n">data_selection___building_polygon_n50_input_data___n100_building</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
         <span class="n">out_feature_class</span><span class="o">=</span><span class="n">Building_N100</span><span class="o">.</span><span class="n">simplify_polygons___spatial_join_polygons___n100_building</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
     <span class="p">)</span></div>
 

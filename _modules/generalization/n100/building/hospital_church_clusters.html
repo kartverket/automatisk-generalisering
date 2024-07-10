@@ -129,7 +129,7 @@
 <span class="k">def</span> <span class="nf">selecting_all_other_points_that_are_not_hospital_and_church</span><span class="p">():</span>
     <span class="c1"># Selecting all hospitals and making feature layer</span>
     <span class="n">custom_arcpy</span><span class="o">.</span><span class="n">select_attribute_and_make_permanent_feature</span><span class="p">(</span>
-        <span class="n">input_layer</span><span class="o">=</span><span class="n">Building_N100</span><span class="o">.</span><span class="n">point_propogate_displacement___points_after_propogate_displacement___n100_building</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
+        <span class="n">input_layer</span><span class="o">=</span><span class="n">Building_N100</span><span class="o">.</span><span class="n">point_propagate_displacement___points_after_propagate_displacement___n100_building</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
         <span class="n">expression</span><span class="o">=</span><span class="s2">&quot;byggtyp_nbr IN (970, 719, 671)&quot;</span><span class="p">,</span>
         <span class="n">output_name</span><span class="o">=</span><span class="n">Building_N100</span><span class="o">.</span><span class="n">hospital_church_clusters___all_other_points_that_are_not_hospital_church___n100_building</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
         <span class="n">selection_type</span><span class="o">=</span><span class="n">custom_arcpy</span><span class="o">.</span><span class="n">SelectionType</span><span class="o">.</span><span class="n">NEW_SELECTION</span><span class="p">,</span>
@@ -157,7 +157,7 @@
 
     <span class="c1"># Selecting all hospitals and making feature layer</span>
     <span class="n">custom_arcpy</span><span class="o">.</span><span class="n">select_attribute_and_make_permanent_feature</span><span class="p">(</span>
-        <span class="n">input_layer</span><span class="o">=</span><span class="n">Building_N100</span><span class="o">.</span><span class="n">point_propogate_displacement___points_after_propogate_displacement___n100_building</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
+        <span class="n">input_layer</span><span class="o">=</span><span class="n">Building_N100</span><span class="o">.</span><span class="n">point_propagate_displacement___points_after_propagate_displacement___n100_building</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
         <span class="n">expression</span><span class="o">=</span><span class="n">sql_select_all_hospital</span><span class="p">,</span>
         <span class="n">output_name</span><span class="o">=</span><span class="n">Building_N100</span><span class="o">.</span><span class="n">hospital_church_clusters___hospital_points___n100_building</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
         <span class="n">selection_type</span><span class="o">=</span><span class="n">custom_arcpy</span><span class="o">.</span><span class="n">SelectionType</span><span class="o">.</span><span class="n">NEW_SELECTION</span><span class="p">,</span>
@@ -165,7 +165,7 @@
 
     <span class="c1"># Selecting all churches and making feature layer</span>
     <span class="n">custom_arcpy</span><span class="o">.</span><span class="n">select_attribute_and_make_permanent_feature</span><span class="p">(</span>
-        <span class="n">input_layer</span><span class="o">=</span><span class="n">Building_N100</span><span class="o">.</span><span class="n">point_propogate_displacement___points_after_propogate_displacement___n100_building</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
+        <span class="n">input_layer</span><span class="o">=</span><span class="n">Building_N100</span><span class="o">.</span><span class="n">point_propagate_displacement___points_after_propagate_displacement___n100_building</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
         <span class="n">expression</span><span class="o">=</span><span class="n">sql_select_all_church</span><span class="p">,</span>
         <span class="n">output_name</span><span class="o">=</span><span class="n">Building_N100</span><span class="o">.</span><span class="n">hospital_church_clusters___church_points___n100_building</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
         <span class="n">selection_type</span><span class="o">=</span><span class="n">custom_arcpy</span><span class="o">.</span><span class="n">SelectionType</span><span class="o">.</span><span class="n">NEW_SELECTION</span><span class="p">,</span>

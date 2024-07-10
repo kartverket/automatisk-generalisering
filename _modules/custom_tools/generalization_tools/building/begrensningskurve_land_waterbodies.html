@@ -235,13 +235,13 @@
 <div class="viewcode-block" id="BegrensningskurveLandWaterbodies.erase_buffers">
 <a class="viewcode-back" href="../../../../generated_docs/custom_tools.generalization_tools.building.html#custom_tools.generalization_tools.building.begrensningskurve_land_waterbodies.BegrensningskurveLandWaterbodies.erase_buffers">[docs]</a>
     <span class="k">def</span> <span class="nf">erase_buffers</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="n">arcpy</span><span class="o">.</span><span class="n">analysis</span><span class="o">.</span><span class="n">PairwiseErase</span><span class="p">(</span>
+        <span class="n">arcpy</span><span class="o">.</span><span class="n">analysis</span><span class="o">.</span><span class="n">Erase</span><span class="p">(</span>
             <span class="n">in_features</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">begrensningskurve_waterfeatures_buffer</span><span class="p">,</span>
             <span class="n">erase_features</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">land_features_buffer</span><span class="p">,</span>
             <span class="n">out_feature_class</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">erase_feature_1</span><span class="p">,</span>
         <span class="p">)</span>
 
-        <span class="n">arcpy</span><span class="o">.</span><span class="n">analysis</span><span class="o">.</span><span class="n">PairwiseErase</span><span class="p">(</span>
+        <span class="n">arcpy</span><span class="o">.</span><span class="n">analysis</span><span class="o">.</span><span class="n">Erase</span><span class="p">(</span>
             <span class="n">in_features</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">erase_feature_1</span><span class="p">,</span>
             <span class="n">erase_features</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">land_features_area</span><span class="p">,</span>
             <span class="n">out_feature_class</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">output_begrensningskurve</span><span class="p">,</span>

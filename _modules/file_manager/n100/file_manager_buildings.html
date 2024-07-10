@@ -90,6 +90,7 @@
 
 
 <span class="c1"># All scripts</span>
+<span class="n">data_selection</span> <span class="o">=</span> <span class="s2">&quot;data_selection&quot;</span>
 <span class="n">data_preparation</span> <span class="o">=</span> <span class="s2">&quot;data_preparation&quot;</span>
 <span class="n">simplify_polygons</span> <span class="o">=</span> <span class="s2">&quot;simplify_polygons&quot;</span>
 <span class="n">polygon_propogate_displacement</span> <span class="o">=</span> <span class="s2">&quot;polygon_propogate_displacement&quot;</span>
@@ -98,7 +99,7 @@
 <span class="n">line_to_buffer_symbology</span> <span class="o">=</span> <span class="s2">&quot;line_to_buffer_symbology&quot;</span>
 <span class="n">calculating_polygon_values</span> <span class="o">=</span> <span class="s2">&quot;calculating_polygon_values&quot;</span>
 <span class="n">calculate_point_values</span> <span class="o">=</span> <span class="s2">&quot;calculate_point_values&quot;</span>
-<span class="n">point_propogate_displacement</span> <span class="o">=</span> <span class="s2">&quot;point_propogate_displacement&quot;</span>
+<span class="n">point_propagate_displacement</span> <span class="o">=</span> <span class="s2">&quot;point_propagate_displacement&quot;</span>
 <span class="n">removing_points_and_erasing_polygons_in_water_features</span> <span class="o">=</span> <span class="p">(</span>
     <span class="s2">&quot;removing_points_and_erasing_polygons_in_water_features&quot;</span>
 <span class="p">)</span>
@@ -173,6 +174,83 @@
     <span class="c1">#                                DATA PREPARATION</span>
     <span class="c1"># ========================================</span>
 
+    <span class="n">data_selection___begrensningskurve_n100_input_data___n100_building</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_gdb</span><span class="p">(</span>
+            <span class="n">script_source_name</span><span class="o">=</span><span class="n">data_selection</span><span class="p">,</span>
+            <span class="n">description</span><span class="o">=</span><span class="s2">&quot;begrensningskurve_n100_input_data&quot;</span><span class="p">,</span>
+        <span class="p">)</span>
+    <span class="p">)</span>
+
+    <span class="n">data_selection___land_cover_n100_input_data___n100_building</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_gdb</span><span class="p">(</span>
+            <span class="n">script_source_name</span><span class="o">=</span><span class="n">data_selection</span><span class="p">,</span>
+            <span class="n">description</span><span class="o">=</span><span class="s2">&quot;land_cover_n100_input_data&quot;</span><span class="p">,</span>
+        <span class="p">)</span>
+    <span class="p">)</span>
+
+    <span class="n">data_selection___land_cover_n50_input_data___n100_building</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_gdb</span><span class="p">(</span>
+            <span class="n">script_source_name</span><span class="o">=</span><span class="n">data_selection</span><span class="p">,</span>
+            <span class="n">description</span><span class="o">=</span><span class="s2">&quot;land_cover_n50_input_data&quot;</span><span class="p">,</span>
+        <span class="p">)</span>
+    <span class="p">)</span>
+
+    <span class="n">data_selection___road_n100_input_data___n100_building</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_gdb</span><span class="p">(</span>
+            <span class="n">script_source_name</span><span class="o">=</span><span class="n">data_selection</span><span class="p">,</span>
+            <span class="n">description</span><span class="o">=</span><span class="s2">&quot;road_n100_input_data&quot;</span><span class="p">,</span>
+        <span class="p">)</span>
+    <span class="p">)</span>
+
+    <span class="n">data_selection___building_point_n50_input_data___n100_building</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_gdb</span><span class="p">(</span>
+            <span class="n">script_source_name</span><span class="o">=</span><span class="n">data_selection</span><span class="p">,</span>
+            <span class="n">description</span><span class="o">=</span><span class="s2">&quot;building_point_n50_input_data&quot;</span><span class="p">,</span>
+        <span class="p">)</span>
+    <span class="p">)</span>
+
+    <span class="n">data_selection___building_polygon_n50_input_data___n100_building</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_gdb</span><span class="p">(</span>
+            <span class="n">script_source_name</span><span class="o">=</span><span class="n">data_selection</span><span class="p">,</span>
+            <span class="n">description</span><span class="o">=</span><span class="s2">&quot;building_polygon_n50_input_data&quot;</span><span class="p">,</span>
+        <span class="p">)</span>
+    <span class="p">)</span>
+
+    <span class="n">data_selection___tourist_hut_n50_input_data___n100_building</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_gdb</span><span class="p">(</span>
+            <span class="n">script_source_name</span><span class="o">=</span><span class="n">data_selection</span><span class="p">,</span>
+            <span class="n">description</span><span class="o">=</span><span class="s2">&quot;tourist_hut_n50_input_data&quot;</span><span class="p">,</span>
+        <span class="p">)</span>
+    <span class="p">)</span>
+
+    <span class="n">data_selection___railroad_stations_n100_input_data___n100_building</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_gdb</span><span class="p">(</span>
+            <span class="n">script_source_name</span><span class="o">=</span><span class="n">data_selection</span><span class="p">,</span>
+            <span class="n">description</span><span class="o">=</span><span class="s2">&quot;railroad_stations_n100_input_data&quot;</span><span class="p">,</span>
+        <span class="p">)</span>
+    <span class="p">)</span>
+
+    <span class="n">data_selection___railroad_tracks_n100_input_data___n100_building</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_gdb</span><span class="p">(</span>
+            <span class="n">script_source_name</span><span class="o">=</span><span class="n">data_selection</span><span class="p">,</span>
+            <span class="n">description</span><span class="o">=</span><span class="s2">&quot;railroad_tracks_n100_input_data&quot;</span><span class="p">,</span>
+        <span class="p">)</span>
+    <span class="p">)</span>
+
+    <span class="n">data_selection___matrikkel_input_data___n100_building</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_gdb</span><span class="p">(</span>
+            <span class="n">script_source_name</span><span class="o">=</span><span class="n">data_selection</span><span class="p">,</span>
+            <span class="n">description</span><span class="o">=</span><span class="s2">&quot;matrikkel_input_data&quot;</span><span class="p">,</span>
+        <span class="p">)</span>
+    <span class="p">)</span>
+
+    <span class="n">data_selection___displacement_feature___n100_building</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_gdb</span><span class="p">(</span>
+            <span class="n">script_source_name</span><span class="o">=</span><span class="n">data_selection</span><span class="p">,</span>
+            <span class="n">description</span><span class="o">=</span><span class="s2">&quot;displacement_feature&quot;</span><span class="p">,</span>
+        <span class="p">)</span>
+    <span class="p">)</span>
+
     <span class="n">data_preparation___begrensingskurve_docu___building_n100</span> <span class="o">=</span> <span class="p">(</span>
         <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_general_files</span><span class="p">(</span>
             <span class="n">script_source_name</span><span class="o">=</span><span class="n">data_preparation</span><span class="p">,</span>
@@ -181,33 +259,33 @@
         <span class="p">)</span>
     <span class="p">)</span>
 
-    <span class="n">data_preperation___begrensningskurve_base___n100_building</span> <span class="o">=</span> <span class="p">(</span>
+    <span class="n">data_preparation___begrensningskurve_base___n100_building</span> <span class="o">=</span> <span class="p">(</span>
         <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_gdb</span><span class="p">(</span>
             <span class="n">script_source_name</span><span class="o">=</span><span class="n">data_preparation</span><span class="p">,</span>
             <span class="n">description</span><span class="o">=</span><span class="s2">&quot;begrensningskurve_base&quot;</span><span class="p">,</span>
         <span class="p">)</span>
     <span class="p">)</span>
 
-    <span class="n">data_preperation___processed_begrensningskurve___n100_building</span> <span class="o">=</span> <span class="p">(</span>
+    <span class="n">data_preparation___processed_begrensningskurve___n100_building</span> <span class="o">=</span> <span class="p">(</span>
         <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_gdb</span><span class="p">(</span>
             <span class="n">script_source_name</span><span class="o">=</span><span class="n">data_preparation</span><span class="p">,</span>
             <span class="n">description</span><span class="o">=</span><span class="s2">&quot;processed_begrensningskurve&quot;</span><span class="p">,</span>
         <span class="p">)</span>
     <span class="p">)</span>
 
-    <span class="n">data_preperation___waterfeatures_from_begrensningskurve_not_rivers___n100_building</span> <span class="o">=</span> <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_gdb</span><span class="p">(</span>
+    <span class="n">data_preparation___waterfeatures_from_begrensningskurve_not_rivers___n100_building</span> <span class="o">=</span> <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_gdb</span><span class="p">(</span>
         <span class="n">script_source_name</span><span class="o">=</span><span class="n">data_preparation</span><span class="p">,</span>
         <span class="n">description</span><span class="o">=</span><span class="s2">&quot;waterfeatures_from_begrensningskurve_not_rivers&quot;</span><span class="p">,</span>
     <span class="p">)</span>
 
-    <span class="n">data_preperation___waterfeatures_from_begrensningskurve_rivers___n100_building</span> <span class="o">=</span> <span class="p">(</span>
+    <span class="n">data_preparation___waterfeatures_from_begrensningskurve_rivers___n100_building</span> <span class="o">=</span> <span class="p">(</span>
         <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_gdb</span><span class="p">(</span>
             <span class="n">script_source_name</span><span class="o">=</span><span class="n">data_preparation</span><span class="p">,</span>
             <span class="n">description</span><span class="o">=</span><span class="s2">&quot;waterfeatures_from_begrensningskurve_rivers&quot;</span><span class="p">,</span>
         <span class="p">)</span>
     <span class="p">)</span>
 
-    <span class="n">data_preperation___waterfeatures_from_begrensningskurve_rivers_buffer___n100_building</span> <span class="o">=</span> <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_gdb</span><span class="p">(</span>
+    <span class="n">data_preparation___waterfeatures_from_begrensningskurve_rivers_buffer___n100_building</span> <span class="o">=</span> <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_gdb</span><span class="p">(</span>
         <span class="n">script_source_name</span><span class="o">=</span><span class="n">data_preparation</span><span class="p">,</span>
         <span class="n">description</span><span class="o">=</span><span class="s2">&quot;waterfeatures_from_begrensningskurve_rivers_buffer&quot;</span><span class="p">,</span>
     <span class="p">)</span>
@@ -407,11 +485,9 @@
     <span class="c1">#                      CALCULATE POINT VALUES</span>
     <span class="c1"># ========================================</span>
 
-    <span class="n">calculate_point_values___points_going_into_rbc___n100_building</span> <span class="o">=</span> <span class="p">(</span>
-        <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_gdb</span><span class="p">(</span>
-            <span class="n">script_source_name</span><span class="o">=</span><span class="n">calculate_point_values</span><span class="p">,</span>
-            <span class="n">description</span><span class="o">=</span><span class="s2">&quot;points_going_into_rbc&quot;</span><span class="p">,</span>
-        <span class="p">)</span>
+    <span class="n">calculate_point_values___points_going_into_propagate_displacement___n100_building</span> <span class="o">=</span> <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_gdb</span><span class="p">(</span>
+        <span class="n">script_source_name</span><span class="o">=</span><span class="n">calculate_point_values</span><span class="p">,</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">&quot;points_going_into_propagate_displacement&quot;</span><span class="p">,</span>
     <span class="p">)</span>
 
     <span class="n">calculate_point_values___selection_building_points_with_undefined_nbr_values___n100_building</span> <span class="o">=</span> <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_gdb</span><span class="p">(</span>
@@ -629,11 +705,6 @@
     <span class="n">polygon_propogate_displacement___building_polygons_after_displacement___n100_building</span> <span class="o">=</span> <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_gdb</span><span class="p">(</span>
         <span class="n">script_source_name</span><span class="o">=</span><span class="n">polygon_propogate_displacement</span><span class="p">,</span>
         <span class="n">description</span><span class="o">=</span><span class="s2">&quot;building_polygons_after_displacement&quot;</span><span class="p">,</span>
-    <span class="p">)</span>
-
-    <span class="n">polygon_propogate_displacement___displacement_feature_500m_from_polygon___n100_building</span> <span class="o">=</span> <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_gdb</span><span class="p">(</span>
-        <span class="n">script_source_name</span><span class="o">=</span><span class="n">polygon_propogate_displacement</span><span class="p">,</span>
-        <span class="n">description</span><span class="o">=</span><span class="s2">&quot;displacement_feature_500m_from_polygon&quot;</span><span class="p">,</span>
     <span class="p">)</span>
 
     <span class="c1"># ========================================</span>
@@ -935,33 +1006,26 @@
     <span class="c1">#                  POINT PROPOATE DISPLACEMENT</span>
     <span class="c1"># ========================================</span>
 
-    <span class="n">point_propogate_displacement___points_pre_propogate_displacement___n100_building</span> <span class="o">=</span> <span class="p">(</span>
-        <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_gdb</span><span class="p">(</span>
-            <span class="n">script_source_name</span><span class="o">=</span><span class="n">point_propogate_displacement</span><span class="p">,</span>
-            <span class="n">description</span><span class="o">=</span><span class="s2">&quot;points_pre_propogate_displacement&quot;</span><span class="p">,</span>
-        <span class="p">)</span>
+    <span class="n">point_propagate_displacement___points_after_propagate_displacement___n100_building</span> <span class="o">=</span> <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_gdb</span><span class="p">(</span>
+        <span class="n">script_source_name</span><span class="o">=</span><span class="n">point_propagate_displacement</span><span class="p">,</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">&quot;points_after_propagate_displacement&quot;</span><span class="p">,</span>
     <span class="p">)</span>
 
     <span class="n">point_propogate_displacement___displacement_feature_500m_from_point___n100_building</span> <span class="o">=</span> <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_gdb</span><span class="p">(</span>
-        <span class="n">script_source_name</span><span class="o">=</span><span class="n">point_propogate_displacement</span><span class="p">,</span>
+        <span class="n">script_source_name</span><span class="o">=</span><span class="n">point_propagate_displacement</span><span class="p">,</span>
         <span class="n">description</span><span class="o">=</span><span class="s2">&quot;displacement_feature_500m_from_point&quot;</span><span class="p">,</span>
-    <span class="p">)</span>
-
-    <span class="n">point_propogate_displacement___points_after_propogate_displacement___n100_building</span> <span class="o">=</span> <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_gdb</span><span class="p">(</span>
-        <span class="n">script_source_name</span><span class="o">=</span><span class="n">point_propogate_displacement</span><span class="p">,</span>
-        <span class="n">description</span><span class="o">=</span><span class="s2">&quot;points_after_propogate_displacement&quot;</span><span class="p">,</span>
     <span class="p">)</span>
 
     <span class="n">point_propogate_displacement___area_oslo_asker___n100_building</span> <span class="o">=</span> <span class="p">(</span>
         <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_gdb</span><span class="p">(</span>
-            <span class="n">script_source_name</span><span class="o">=</span><span class="n">point_propogate_displacement</span><span class="p">,</span>
+            <span class="n">script_source_name</span><span class="o">=</span><span class="n">point_propagate_displacement</span><span class="p">,</span>
             <span class="n">description</span><span class="o">=</span><span class="s2">&quot;area_oslo_asker&quot;</span><span class="p">,</span>
         <span class="p">)</span>
     <span class="p">)</span>
 
     <span class="n">point_propogate_displacement___points_in_area_oslo_asker___n100_building</span> <span class="o">=</span> <span class="p">(</span>
         <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_gdb</span><span class="p">(</span>
-            <span class="n">script_source_name</span><span class="o">=</span><span class="n">point_propogate_displacement</span><span class="p">,</span>
+            <span class="n">script_source_name</span><span class="o">=</span><span class="n">point_propagate_displacement</span><span class="p">,</span>
             <span class="n">description</span><span class="o">=</span><span class="s2">&quot;points_in_area_oslo_asker&quot;</span><span class="p">,</span>
         <span class="p">)</span>
     <span class="p">)</span>
