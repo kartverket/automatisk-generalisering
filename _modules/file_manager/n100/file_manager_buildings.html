@@ -106,20 +106,15 @@
 <span class="n">removing_overlapping_points</span> <span class="o">=</span> <span class="s2">&quot;removing_overlapping_points&quot;</span>
 <span class="n">hospital_church_clusters</span> <span class="o">=</span> <span class="s2">&quot;hospital_church_clusters&quot;</span>
 <span class="n">point_displacement_with_buffer</span> <span class="o">=</span> <span class="s2">&quot;point_displacement_with_buffer&quot;</span>
-<span class="n">points_to_squares</span> <span class="o">=</span> <span class="s2">&quot;points_to_squares&quot;</span>
 <span class="n">point_resolve_building_conflicts</span> <span class="o">=</span> <span class="s2">&quot;point_resolve_building_conflicts&quot;</span>
 <span class="n">finalizing_buildings</span> <span class="o">=</span> <span class="s2">&quot;finalizing_buildings&quot;</span>
-<span class="n">data_clean_up</span> <span class="o">=</span> <span class="s2">&quot;data_clean_up&quot;</span>
-<span class="n">testing_building</span> <span class="o">=</span> <span class="s2">&quot;testing_building&quot;</span>
-
-<span class="n">rbc_tool</span> <span class="o">=</span> <span class="s2">&quot;rbc_tool&quot;</span>
 
 
 <span class="c1"># Additional names</span>
 <span class="n">overview</span> <span class="o">=</span> <span class="s2">&quot;overview&quot;</span>
 
 <span class="c1"># TO BE DELETED</span>
-<span class="n">create_cartographic_partitions</span> <span class="o">=</span> <span class="s2">&quot;create_cartographic_partitions&quot;</span>
+
 <span class="n">iteration</span> <span class="o">=</span> <span class="s2">&quot;iteration&quot;</span>
 <span class="n">begrensingskurve_land_water</span> <span class="o">=</span> <span class="s2">&quot;begrensingskurve_land_water&quot;</span>
 
@@ -275,11 +270,6 @@
         <span class="p">)</span>
     <span class="p">)</span>
 
-    <span class="n">data_preparation___waterfeatures_from_begrensningskurve_not_rivers___n100_building</span> <span class="o">=</span> <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_gdb</span><span class="p">(</span>
-        <span class="n">script_source_name</span><span class="o">=</span><span class="n">data_preparation</span><span class="p">,</span>
-        <span class="n">description</span><span class="o">=</span><span class="s2">&quot;waterfeatures_from_begrensningskurve_not_rivers&quot;</span><span class="p">,</span>
-    <span class="p">)</span>
-
     <span class="n">data_preparation___waterfeatures_from_begrensningskurve_rivers___n100_building</span> <span class="o">=</span> <span class="p">(</span>
         <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_gdb</span><span class="p">(</span>
             <span class="n">script_source_name</span><span class="o">=</span><span class="n">data_preparation</span><span class="p">,</span>
@@ -296,41 +286,6 @@
         <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_gdb</span><span class="p">(</span>
             <span class="n">script_source_name</span><span class="o">=</span><span class="n">data_preparation</span><span class="p">,</span>
             <span class="n">description</span><span class="o">=</span><span class="s2">&quot;merged_begrensningskurve_all_waterbodies&quot;</span><span class="p">,</span>
-        <span class="p">)</span>
-    <span class="p">)</span>
-
-    <span class="n">data_preparation___selected_land_features_area___n100_building</span> <span class="o">=</span> <span class="p">(</span>
-        <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_gdb</span><span class="p">(</span>
-            <span class="n">script_source_name</span><span class="o">=</span><span class="n">data_preparation</span><span class="p">,</span>
-            <span class="n">description</span><span class="o">=</span><span class="s2">&quot;selected_land_features_area&quot;</span><span class="p">,</span>
-        <span class="p">)</span>
-    <span class="p">)</span>
-
-    <span class="n">data_preparation___land_features_near_water___n100_building</span> <span class="o">=</span> <span class="p">(</span>
-        <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_gdb</span><span class="p">(</span>
-            <span class="n">script_source_name</span><span class="o">=</span><span class="n">data_preparation</span><span class="p">,</span>
-            <span class="n">description</span><span class="o">=</span><span class="s2">&quot;land_features_near_water&quot;</span><span class="p">,</span>
-        <span class="p">)</span>
-    <span class="p">)</span>
-
-    <span class="n">data_preparation___begrensningskurve_waterfeatures_buffer___n100_building</span> <span class="o">=</span> <span class="p">(</span>
-        <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_gdb</span><span class="p">(</span>
-            <span class="n">script_source_name</span><span class="o">=</span><span class="n">data_preparation</span><span class="p">,</span>
-            <span class="n">description</span><span class="o">=</span><span class="s2">&quot;begrensningskurve_waterfeatures_buffer&quot;</span><span class="p">,</span>
-        <span class="p">)</span>
-    <span class="p">)</span>
-
-    <span class="n">data_preparation___land_features_buffer___n100_building</span> <span class="o">=</span> <span class="p">(</span>
-        <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_gdb</span><span class="p">(</span>
-            <span class="n">script_source_name</span><span class="o">=</span><span class="n">data_preparation</span><span class="p">,</span>
-            <span class="n">description</span><span class="o">=</span><span class="s2">&quot;land_features_buffer&quot;</span><span class="p">,</span>
-        <span class="p">)</span>
-    <span class="p">)</span>
-
-    <span class="n">data_preparation___begrensningskurve_buffer_erase_1___n100_building</span> <span class="o">=</span> <span class="p">(</span>
-        <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_gdb</span><span class="p">(</span>
-            <span class="n">script_source_name</span><span class="o">=</span><span class="n">data_preparation</span><span class="p">,</span>
-            <span class="n">description</span><span class="o">=</span><span class="s2">&quot;begrensningskurve_buffer_erase_1&quot;</span><span class="p">,</span>
         <span class="p">)</span>
     <span class="p">)</span>
 
@@ -518,13 +473,6 @@
     <span class="c1">#                              POLYGON TO POINT</span>
     <span class="c1"># ========================================</span>
 
-    <span class="n">polygon_to_point___spatial_join_points___n100_building</span> <span class="o">=</span> <span class="p">(</span>
-        <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_gdb</span><span class="p">(</span>
-            <span class="n">script_source_name</span><span class="o">=</span><span class="n">polygon_to_point</span><span class="p">,</span>
-            <span class="n">description</span><span class="o">=</span><span class="s2">&quot;spatial_join_points&quot;</span><span class="p">,</span>
-        <span class="p">)</span>
-    <span class="p">)</span>
-
     <span class="n">polygon_to_point___merged_points_final___n100_building</span> <span class="o">=</span> <span class="p">(</span>
         <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_gdb</span><span class="p">(</span>
             <span class="n">script_source_name</span><span class="o">=</span><span class="n">polygon_to_point</span><span class="p">,</span>
@@ -564,66 +512,6 @@
     <span class="p">)</span>
 
     <span class="c1"># ========================================</span>
-    <span class="c1">#                              TESTING BUILDINGS</span>
-    <span class="c1"># ========================================</span>
-
-    <span class="n">testing_building___building_point_1___n100_building</span> <span class="o">=</span> <span class="p">(</span>
-        <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_gdb</span><span class="p">(</span>
-            <span class="n">script_source_name</span><span class="o">=</span><span class="n">testing_building</span><span class="p">,</span>
-            <span class="n">description</span><span class="o">=</span><span class="s2">&quot;building_point_1&quot;</span><span class="p">,</span>
-        <span class="p">)</span>
-    <span class="p">)</span>
-
-    <span class="n">testing_building___building_point_2___n100_building</span> <span class="o">=</span> <span class="p">(</span>
-        <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_gdb</span><span class="p">(</span>
-            <span class="n">script_source_name</span><span class="o">=</span><span class="n">testing_building</span><span class="p">,</span>
-            <span class="n">description</span><span class="o">=</span><span class="s2">&quot;building_point_2&quot;</span><span class="p">,</span>
-        <span class="p">)</span>
-    <span class="p">)</span>
-
-    <span class="n">testing_building___training_point_1___n100_building</span> <span class="o">=</span> <span class="p">(</span>
-        <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_gdb</span><span class="p">(</span>
-            <span class="n">script_source_name</span><span class="o">=</span><span class="n">testing_building</span><span class="p">,</span>
-            <span class="n">description</span><span class="o">=</span><span class="s2">&quot;training_point_1&quot;</span><span class="p">,</span>
-        <span class="p">)</span>
-    <span class="p">)</span>
-
-    <span class="n">testing_building___training_point_2___n100_building</span> <span class="o">=</span> <span class="p">(</span>
-        <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_gdb</span><span class="p">(</span>
-            <span class="n">script_source_name</span><span class="o">=</span><span class="n">testing_building</span><span class="p">,</span>
-            <span class="n">description</span><span class="o">=</span><span class="s2">&quot;training_point_2&quot;</span><span class="p">,</span>
-        <span class="p">)</span>
-    <span class="p">)</span>
-
-    <span class="n">testing_building___partition_iterator_building_buffer_1___n100_building</span> <span class="o">=</span> <span class="p">(</span>
-        <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_gdb</span><span class="p">(</span>
-            <span class="n">script_source_name</span><span class="o">=</span><span class="n">testing_building</span><span class="p">,</span>
-            <span class="n">description</span><span class="o">=</span><span class="s2">&quot;partition_iterator_building_buffer_1&quot;</span><span class="p">,</span>
-        <span class="p">)</span>
-    <span class="p">)</span>
-
-    <span class="n">testing_building___partition_iterator_river_buffer_1___n100_building</span> <span class="o">=</span> <span class="p">(</span>
-        <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_gdb</span><span class="p">(</span>
-            <span class="n">script_source_name</span><span class="o">=</span><span class="n">testing_building</span><span class="p">,</span>
-            <span class="n">description</span><span class="o">=</span><span class="s2">&quot;partition_iterator_river_buffer_1&quot;</span><span class="p">,</span>
-        <span class="p">)</span>
-    <span class="p">)</span>
-
-    <span class="n">testing_building___partition_iterator_train_buffer_1___n100_building</span> <span class="o">=</span> <span class="p">(</span>
-        <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_gdb</span><span class="p">(</span>
-            <span class="n">script_source_name</span><span class="o">=</span><span class="n">testing_building</span><span class="p">,</span>
-            <span class="n">description</span><span class="o">=</span><span class="s2">&quot;partition_iterator_train_buffer_1&quot;</span><span class="p">,</span>
-        <span class="p">)</span>
-    <span class="p">)</span>
-
-    <span class="n">testing_building___partition_iterator_bane_buffer_1___n100_building</span> <span class="o">=</span> <span class="p">(</span>
-        <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_gdb</span><span class="p">(</span>
-            <span class="n">script_source_name</span><span class="o">=</span><span class="n">testing_building</span><span class="p">,</span>
-            <span class="n">description</span><span class="o">=</span><span class="s2">&quot;partition_iterator_bane_buffer_1&quot;</span><span class="p">,</span>
-        <span class="p">)</span>
-    <span class="p">)</span>
-
-    <span class="c1"># ========================================</span>
     <span class="c1">#                              SIMPLIFY POLYGONS</span>
     <span class="c1"># ========================================</span>
 
@@ -653,24 +541,10 @@
         <span class="p">)</span>
     <span class="p">)</span>
 
-    <span class="n">simplify_polygons___simplify_building_1_points___n100_building</span> <span class="o">=</span> <span class="p">(</span>
-        <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_gdb</span><span class="p">(</span>
-            <span class="n">script_source_name</span><span class="o">=</span><span class="n">simplify_polygons</span><span class="p">,</span>
-            <span class="n">description</span><span class="o">=</span><span class="s2">&quot;simplify_building_1_points&quot;</span><span class="p">,</span>
-        <span class="p">)</span>
-    <span class="p">)</span>
-
     <span class="n">simplify_polygons___simplify_building_2___n100_building</span> <span class="o">=</span> <span class="p">(</span>
         <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_gdb</span><span class="p">(</span>
             <span class="n">script_source_name</span><span class="o">=</span><span class="n">simplify_polygons</span><span class="p">,</span>
             <span class="n">description</span><span class="o">=</span><span class="s2">&quot;simplify_building_2&quot;</span><span class="p">,</span>
-        <span class="p">)</span>
-    <span class="p">)</span>
-
-    <span class="n">simplify_polygons___simplify_building_2_points___n100_building</span> <span class="o">=</span> <span class="p">(</span>
-        <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_gdb</span><span class="p">(</span>
-            <span class="n">script_source_name</span><span class="o">=</span><span class="n">simplify_polygons</span><span class="p">,</span>
-            <span class="n">description</span><span class="o">=</span><span class="s2">&quot;_simplify_building_2_points&quot;</span><span class="p">,</span>
         <span class="p">)</span>
     <span class="p">)</span>
 
@@ -679,11 +553,6 @@
             <span class="n">script_source_name</span><span class="o">=</span><span class="n">simplify_polygons</span><span class="p">,</span>
             <span class="n">description</span><span class="o">=</span><span class="s2">&quot;simplify_polygon&quot;</span><span class="p">,</span>
         <span class="p">)</span>
-    <span class="p">)</span>
-
-    <span class="n">simplify_polygons___points___n100_building</span> <span class="o">=</span> <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_gdb</span><span class="p">(</span>
-        <span class="n">script_source_name</span><span class="o">=</span><span class="n">simplify_polygons</span><span class="p">,</span>
-        <span class="n">description</span><span class="o">=</span><span class="s2">&quot;points&quot;</span><span class="p">,</span>
     <span class="p">)</span>
 
     <span class="n">simplify_polygons___spatial_join_polygons___n100_building</span> <span class="o">=</span> <span class="p">(</span>
@@ -846,18 +715,6 @@
         <span class="n">description</span><span class="o">=</span><span class="s2">&quot;small_building_polygons_to_point&quot;</span><span class="p">,</span>
     <span class="p">)</span>
 
-    <span class="n">polygon_resolve_building_conflicts___railway_500m_from_displaced_polygon___n100_building</span> <span class="o">=</span> <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_gdb</span><span class="p">(</span>
-        <span class="n">script_source_name</span><span class="o">=</span><span class="n">polygon_resolve_building_conflicts</span><span class="p">,</span>
-        <span class="n">description</span><span class="o">=</span><span class="s2">&quot;railway_500m_from_displaced_polygon&quot;</span><span class="p">,</span>
-    <span class="p">)</span>
-
-    <span class="n">polygon_resolve_building_conflicts___railway_buffer___n100_building</span> <span class="o">=</span> <span class="p">(</span>
-        <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_gdb</span><span class="p">(</span>
-            <span class="n">script_source_name</span><span class="o">=</span><span class="n">polygon_resolve_building_conflicts</span><span class="p">,</span>
-            <span class="n">description</span><span class="o">=</span><span class="s2">&quot;railway_buffer&quot;</span><span class="p">,</span>
-        <span class="p">)</span>
-    <span class="p">)</span>
-
     <span class="n">polygon_resolve_building_conflicts___railway___n100_building_lyrx</span> <span class="o">=</span> <span class="p">(</span>
         <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_lyrx</span><span class="p">(</span>
             <span class="n">script_source_name</span><span class="o">=</span><span class="n">polygon_resolve_building_conflicts</span><span class="p">,</span>
@@ -985,13 +842,6 @@
         <span class="n">description</span><span class="o">=</span><span class="s2">&quot;church_points_NOT_too_close_to_hospitals&quot;</span><span class="p">,</span>
     <span class="p">)</span>
 
-    <span class="n">hospital_church_clusters___hospital_church_points_final___n100_building</span> <span class="o">=</span> <span class="p">(</span>
-        <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_gdb</span><span class="p">(</span>
-            <span class="n">script_source_name</span><span class="o">=</span><span class="n">hospital_church_clusters</span><span class="p">,</span>
-            <span class="n">description</span><span class="o">=</span><span class="s2">&quot;hospital_church_points_final&quot;</span><span class="p">,</span>
-        <span class="p">)</span>
-    <span class="p">)</span>
-
     <span class="n">hospital_church_clusters___final___n100_building</span> <span class="o">=</span> <span class="p">(</span>
         <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_gdb</span><span class="p">(</span>
             <span class="n">script_source_name</span><span class="o">=</span><span class="n">hospital_church_clusters</span><span class="p">,</span>
@@ -1005,31 +855,12 @@
     <span class="p">)</span>
 
     <span class="c1"># ========================================</span>
-    <span class="c1">#                  POINT PROPOATE DISPLACEMENT</span>
+    <span class="c1">#                  POINT PROPAGATE DISPLACEMENT</span>
     <span class="c1"># ========================================</span>
 
     <span class="n">point_propagate_displacement___points_after_propagate_displacement___n100_building</span> <span class="o">=</span> <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_gdb</span><span class="p">(</span>
         <span class="n">script_source_name</span><span class="o">=</span><span class="n">point_propagate_displacement</span><span class="p">,</span>
         <span class="n">description</span><span class="o">=</span><span class="s2">&quot;points_after_propagate_displacement&quot;</span><span class="p">,</span>
-    <span class="p">)</span>
-
-    <span class="n">point_propogate_displacement___displacement_feature_500m_from_point___n100_building</span> <span class="o">=</span> <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_gdb</span><span class="p">(</span>
-        <span class="n">script_source_name</span><span class="o">=</span><span class="n">point_propagate_displacement</span><span class="p">,</span>
-        <span class="n">description</span><span class="o">=</span><span class="s2">&quot;displacement_feature_500m_from_point&quot;</span><span class="p">,</span>
-    <span class="p">)</span>
-
-    <span class="n">point_propogate_displacement___area_oslo_asker___n100_building</span> <span class="o">=</span> <span class="p">(</span>
-        <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_gdb</span><span class="p">(</span>
-            <span class="n">script_source_name</span><span class="o">=</span><span class="n">point_propagate_displacement</span><span class="p">,</span>
-            <span class="n">description</span><span class="o">=</span><span class="s2">&quot;area_oslo_asker&quot;</span><span class="p">,</span>
-        <span class="p">)</span>
-    <span class="p">)</span>
-
-    <span class="n">point_propogate_displacement___points_in_area_oslo_asker___n100_building</span> <span class="o">=</span> <span class="p">(</span>
-        <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_gdb</span><span class="p">(</span>
-            <span class="n">script_source_name</span><span class="o">=</span><span class="n">point_propagate_displacement</span><span class="p">,</span>
-            <span class="n">description</span><span class="o">=</span><span class="s2">&quot;points_in_area_oslo_asker&quot;</span><span class="p">,</span>
-        <span class="p">)</span>
     <span class="p">)</span>
 
     <span class="c1"># ========================================</span>
@@ -1117,13 +948,6 @@
         <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_gdb</span><span class="p">(</span>
             <span class="n">script_source_name</span><span class="o">=</span><span class="n">removing_overlapping_points</span><span class="p">,</span>
             <span class="n">description</span><span class="o">=</span><span class="s2">&quot;all_building_points&quot;</span><span class="p">,</span>
-        <span class="p">)</span>
-    <span class="p">)</span>
-
-    <span class="n">removing_overlapping_points___building_points_overlaps_removed___n100_building</span> <span class="o">=</span> <span class="p">(</span>
-        <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_gdb</span><span class="p">(</span>
-            <span class="n">script_source_name</span><span class="o">=</span><span class="n">removing_overlapping_points</span><span class="p">,</span>
-            <span class="n">description</span><span class="o">=</span><span class="s2">&quot;building_points_overlaps_removed&quot;</span><span class="p">,</span>
         <span class="p">)</span>
     <span class="p">)</span>
 
@@ -1263,13 +1087,6 @@
         <span class="p">)</span>
     <span class="p">)</span>
 
-    <span class="n">building_point_buffer_displacement__selection_roads__n100</span> <span class="o">=</span> <span class="p">(</span>
-        <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_gdb</span><span class="p">(</span>
-            <span class="n">script_source_name</span><span class="o">=</span><span class="n">point_displacement_with_buffer</span><span class="p">,</span>
-            <span class="n">description</span><span class="o">=</span><span class="s2">&quot;selection_roads&quot;</span><span class="p">,</span>
-        <span class="p">)</span>
-    <span class="p">)</span>
-
     <span class="n">building_point_buffer_displacement__selection_urban_areas__n100</span> <span class="o">=</span> <span class="p">(</span>
         <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_gdb</span><span class="p">(</span>
             <span class="n">script_source_name</span><span class="o">=</span><span class="n">point_displacement_with_buffer</span><span class="p">,</span>
@@ -1277,38 +1094,10 @@
         <span class="p">)</span>
     <span class="p">)</span>
 
-    <span class="n">building_point_buffer_displacement__align_buffer_schema_to_template__n100</span> <span class="o">=</span> <span class="p">(</span>
-        <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_gdb</span><span class="p">(</span>
-            <span class="n">script_source_name</span><span class="o">=</span><span class="n">point_displacement_with_buffer</span><span class="p">,</span>
-            <span class="n">description</span><span class="o">=</span><span class="s2">&quot;align_buffer_schema_to_template&quot;</span><span class="p">,</span>
-        <span class="p">)</span>
-    <span class="p">)</span>
-
-    <span class="n">building_point_buffer_displacement__roads_buffer__n100</span> <span class="o">=</span> <span class="p">(</span>
-        <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_gdb</span><span class="p">(</span>
-            <span class="n">script_source_name</span><span class="o">=</span><span class="n">point_displacement_with_buffer</span><span class="p">,</span>
-            <span class="n">description</span><span class="o">=</span><span class="s2">&quot;roads_buffer&quot;</span><span class="p">,</span>
-        <span class="p">)</span>
-    <span class="p">)</span>
-
-    <span class="n">building_point_buffer_displacement__roads_buffer_appended__n100</span> <span class="o">=</span> <span class="p">(</span>
-        <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_gdb</span><span class="p">(</span>
-            <span class="n">script_source_name</span><span class="o">=</span><span class="n">point_displacement_with_buffer</span><span class="p">,</span>
-            <span class="n">description</span><span class="o">=</span><span class="s2">&quot;roads_buffer_appended&quot;</span><span class="p">,</span>
-        <span class="p">)</span>
-    <span class="p">)</span>
-
     <span class="n">building_point_buffer_displacement__iteration_points_to_square_polygons__n100</span> <span class="o">=</span> <span class="p">(</span>
         <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_gdb</span><span class="p">(</span>
             <span class="n">script_source_name</span><span class="o">=</span><span class="n">point_displacement_with_buffer</span><span class="p">,</span>
             <span class="n">description</span><span class="o">=</span><span class="s2">&quot;iteration_points_to_square_polygons&quot;</span><span class="p">,</span>
-        <span class="p">)</span>
-    <span class="p">)</span>
-
-    <span class="n">building_point_buffer_displacement__building_polygon_erased__n100</span> <span class="o">=</span> <span class="p">(</span>
-        <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_gdb</span><span class="p">(</span>
-            <span class="n">script_source_name</span><span class="o">=</span><span class="n">point_displacement_with_buffer</span><span class="p">,</span>
-            <span class="n">description</span><span class="o">=</span><span class="s2">&quot;building_polygon_erased&quot;</span><span class="p">,</span>
         <span class="p">)</span>
     <span class="p">)</span>
 
@@ -1328,31 +1117,6 @@
 
     <span class="c1">############################################## NOT USED RIGHT NOW ###########################################################</span>
 
-    <span class="c1">##############################################</span>
-    <span class="c1">######## CREATE CARTOGRAPHIC PARTITIONS ########</span>
-    <span class="c1">##############################################</span>
-
-    <span class="n">create_cartographic_partitions__cartographic_partitions__n100</span> <span class="o">=</span> <span class="p">(</span>
-        <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_gdb</span><span class="p">(</span>
-            <span class="n">script_source_name</span><span class="o">=</span><span class="n">create_cartographic_partitions</span><span class="p">,</span>
-            <span class="n">description</span><span class="o">=</span><span class="s2">&quot;cartographic_partitions&quot;</span><span class="p">,</span>
-        <span class="p">)</span>
-    <span class="p">)</span>
-
-    <span class="n">create_cartographic_partitions__cartographic_partitions_buffer__n100</span> <span class="o">=</span> <span class="p">(</span>
-        <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_gdb</span><span class="p">(</span>
-            <span class="n">script_source_name</span><span class="o">=</span><span class="n">create_cartographic_partitions</span><span class="p">,</span>
-            <span class="n">description</span><span class="o">=</span><span class="s2">&quot;cartographic_partitions_buffer&quot;</span><span class="p">,</span>
-        <span class="p">)</span>
-    <span class="p">)</span>
-
-    <span class="n">create_cartographic_partitions__buffer_erased__n100</span> <span class="o">=</span> <span class="p">(</span>
-        <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_gdb</span><span class="p">(</span>
-            <span class="n">script_source_name</span><span class="o">=</span><span class="n">create_cartographic_partitions</span><span class="p">,</span>
-            <span class="n">description</span><span class="o">=</span><span class="s2">&quot;buffer_erased&quot;</span><span class="p">,</span>
-        <span class="p">)</span>
-    <span class="p">)</span>
-
     <span class="c1">##################################</span>
     <span class="c1">############ ITERATION ############</span>
     <span class="c1">##################################</span>
@@ -1362,95 +1126,10 @@
         <span class="n">description</span><span class="o">=</span><span class="s2">&quot;partition_iterator&quot;</span><span class="p">,</span>
     <span class="p">)</span>
 
-    <span class="n">iteration__partition_iterator_final_output__n100</span> <span class="o">=</span> <span class="p">(</span>
-        <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_gdb</span><span class="p">(</span>
-            <span class="n">script_source_name</span><span class="o">=</span><span class="n">iteration</span><span class="p">,</span>
-            <span class="n">description</span><span class="o">=</span><span class="s2">&quot;partition_iterator_final_output&quot;</span><span class="p">,</span>
-        <span class="p">)</span>
-    <span class="p">)</span>
-
     <span class="n">iteration__partition_iterator_final_output_points__n100</span> <span class="o">=</span> <span class="p">(</span>
         <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_gdb</span><span class="p">(</span>
             <span class="n">script_source_name</span><span class="o">=</span><span class="n">iteration</span><span class="p">,</span>
             <span class="n">description</span><span class="o">=</span><span class="s2">&quot;partition_iterator_final_output_points&quot;</span><span class="p">,</span>
-        <span class="p">)</span>
-    <span class="p">)</span>
-
-    <span class="n">iteration__partition_iterator_final_output_polygons__n100</span> <span class="o">=</span> <span class="p">(</span>
-        <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_gdb</span><span class="p">(</span>
-            <span class="n">script_source_name</span><span class="o">=</span><span class="n">iteration</span><span class="p">,</span>
-            <span class="n">description</span><span class="o">=</span><span class="s2">&quot;partition_iterator_final_output_polygons&quot;</span><span class="p">,</span>
-        <span class="p">)</span>
-    <span class="p">)</span>
-
-    <span class="n">iteration__iteration_partition__n100</span> <span class="o">=</span> <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_gdb</span><span class="p">(</span>
-        <span class="n">script_source_name</span><span class="o">=</span><span class="n">iteration</span><span class="p">,</span>
-        <span class="n">description</span><span class="o">=</span><span class="s2">&quot;iteration_partition&quot;</span><span class="p">,</span>
-    <span class="p">)</span>
-
-    <span class="n">iteration__iteration_buffer__n100</span> <span class="o">=</span> <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_gdb</span><span class="p">(</span>
-        <span class="n">script_source_name</span><span class="o">=</span><span class="n">iteration</span><span class="p">,</span>
-        <span class="n">description</span><span class="o">=</span><span class="s2">&quot;iteration_buffer&quot;</span><span class="p">,</span>
-    <span class="p">)</span>
-
-    <span class="n">iteration__iteration_erased_buffer__n100</span> <span class="o">=</span> <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_gdb</span><span class="p">(</span>
-        <span class="n">script_source_name</span><span class="o">=</span><span class="n">iteration</span><span class="p">,</span>
-        <span class="n">description</span><span class="o">=</span><span class="s2">&quot;iteration_erased_buffer&quot;</span><span class="p">,</span>
-    <span class="p">)</span>
-
-    <span class="n">iteration__append_feature_building_point__n100</span> <span class="o">=</span> <span class="p">(</span>
-        <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_gdb</span><span class="p">(</span>
-            <span class="n">script_source_name</span><span class="o">=</span><span class="n">iteration</span><span class="p">,</span>
-            <span class="n">description</span><span class="o">=</span><span class="s2">&quot;append_feature_building_point&quot;</span><span class="p">,</span>
-        <span class="p">)</span>
-    <span class="p">)</span>
-
-    <span class="n">iteration__append_feature_building_polygon__n100</span> <span class="o">=</span> <span class="p">(</span>
-        <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_gdb</span><span class="p">(</span>
-            <span class="n">script_source_name</span><span class="o">=</span><span class="n">iteration</span><span class="p">,</span>
-            <span class="n">description</span><span class="o">=</span><span class="s2">&quot;append_feature_building_polygon&quot;</span><span class="p">,</span>
-        <span class="p">)</span>
-    <span class="p">)</span>
-
-    <span class="n">iteration__building_points_iteration_selection_append__n100</span> <span class="o">=</span> <span class="p">(</span>
-        <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_gdb</span><span class="p">(</span>
-            <span class="n">script_source_name</span><span class="o">=</span><span class="n">iteration</span><span class="p">,</span>
-            <span class="n">description</span><span class="o">=</span><span class="s2">&quot;building_points_iteration_selection_append&quot;</span><span class="p">,</span>
-        <span class="p">)</span>
-    <span class="p">)</span>
-
-    <span class="n">iteration__building_polygon_iteration_selection_append__n100</span> <span class="o">=</span> <span class="p">(</span>
-        <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_gdb</span><span class="p">(</span>
-            <span class="n">script_source_name</span><span class="o">=</span><span class="n">iteration</span><span class="p">,</span>
-            <span class="n">description</span><span class="o">=</span><span class="s2">&quot;building_polygon_iteration_selection_append&quot;</span><span class="p">,</span>
-        <span class="p">)</span>
-    <span class="p">)</span>
-
-    <span class="n">iteration__building_points_present_partition__n100</span> <span class="o">=</span> <span class="p">(</span>
-        <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_gdb</span><span class="p">(</span>
-            <span class="n">script_source_name</span><span class="o">=</span><span class="n">iteration</span><span class="p">,</span>
-            <span class="n">description</span><span class="o">=</span><span class="s2">&quot;building_points_present_partition&quot;</span><span class="p">,</span>
-        <span class="p">)</span>
-    <span class="p">)</span>
-
-    <span class="n">iteration__building_polygon_present_partition__n100</span> <span class="o">=</span> <span class="p">(</span>
-        <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_gdb</span><span class="p">(</span>
-            <span class="n">script_source_name</span><span class="o">=</span><span class="n">iteration</span><span class="p">,</span>
-            <span class="n">description</span><span class="o">=</span><span class="s2">&quot;building_polygon_present_partition&quot;</span><span class="p">,</span>
-        <span class="p">)</span>
-    <span class="p">)</span>
-
-    <span class="n">iteration__building_points_base_partition_selection__n100</span> <span class="o">=</span> <span class="p">(</span>
-        <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_gdb</span><span class="p">(</span>
-            <span class="n">script_source_name</span><span class="o">=</span><span class="n">iteration</span><span class="p">,</span>
-            <span class="n">description</span><span class="o">=</span><span class="s2">&quot;building_points_base_partition_selection&quot;</span><span class="p">,</span>
-        <span class="p">)</span>
-    <span class="p">)</span>
-
-    <span class="n">iteration__building_polygon_base_partition_selection__n100</span> <span class="o">=</span> <span class="p">(</span>
-        <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_gdb</span><span class="p">(</span>
-            <span class="n">script_source_name</span><span class="o">=</span><span class="n">iteration</span><span class="p">,</span>
-            <span class="n">description</span><span class="o">=</span><span class="s2">&quot;building_polygon_base_partition_selection&quot;</span><span class="p">,</span>
         <span class="p">)</span>
     <span class="p">)</span>
 
@@ -1484,13 +1163,6 @@
     <span class="n">point_resolve_building_conflicts___building_polygons_to_points_and_then_squares___n100_building</span> <span class="o">=</span> <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_gdb</span><span class="p">(</span>
         <span class="n">script_source_name</span><span class="o">=</span><span class="n">point_resolve_building_conflicts</span><span class="p">,</span>
         <span class="n">description</span><span class="o">=</span><span class="s2">&quot;building_polygons_to_points_and_then_squares&quot;</span><span class="p">,</span>
-    <span class="p">)</span>
-
-    <span class="n">point_resolve_building_conflicts___road_buffers_selection_rbc___n100_building</span> <span class="o">=</span> <span class="p">(</span>
-        <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_gdb</span><span class="p">(</span>
-            <span class="n">script_source_name</span><span class="o">=</span><span class="n">point_resolve_building_conflicts</span><span class="p">,</span>
-            <span class="n">description</span><span class="o">=</span><span class="s2">&quot;road_buffers_selection_rbc&quot;</span><span class="p">,</span>
-        <span class="p">)</span>
     <span class="p">)</span>
 
     <span class="n">point_resolve_building_conflicts___building_point_selection_rbc___n100_building</span> <span class="o">=</span> <span class="p">(</span>
@@ -1554,49 +1226,6 @@
         <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_gdb</span><span class="p">(</span>
             <span class="n">script_source_name</span><span class="o">=</span><span class="n">point_resolve_building_conflicts</span><span class="p">,</span>
             <span class="n">description</span><span class="o">=</span><span class="s2">&quot;drawn_polygons_result_1&quot;</span><span class="p">,</span>
-        <span class="p">)</span>
-    <span class="p">)</span>
-
-    <span class="n">point_resolve_building_conflicts___drawn_polygon_RBC_result_1___n100_building_lyrx</span> <span class="o">=</span> <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_lyrx</span><span class="p">(</span>
-        <span class="n">script_source_name</span><span class="o">=</span><span class="n">point_resolve_building_conflicts</span><span class="p">,</span>
-        <span class="n">description</span><span class="o">=</span><span class="s2">&quot;drawn_polygon_RBC_result_1&quot;</span><span class="p">,</span>
-    <span class="p">)</span>
-
-    <span class="n">point_resolve_building_conflicts___rbc_1_squares_to_points___n100_building</span> <span class="o">=</span> <span class="p">(</span>
-        <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_gdb</span><span class="p">(</span>
-            <span class="n">script_source_name</span><span class="o">=</span><span class="n">point_resolve_building_conflicts</span><span class="p">,</span>
-            <span class="n">description</span><span class="o">=</span><span class="s2">&quot;building_points_RBC_result_1&quot;</span><span class="p">,</span>
-        <span class="p">)</span>
-    <span class="p">)</span>
-
-    <span class="n">point_resolve_building_conflicts___building_points_RBC_result_1___n100_building_lyrx</span> <span class="o">=</span> <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_lyrx</span><span class="p">(</span>
-        <span class="n">script_source_name</span><span class="o">=</span><span class="n">point_resolve_building_conflicts</span><span class="p">,</span>
-        <span class="n">description</span><span class="o">=</span><span class="s2">&quot;building_points_RBC_result_1&quot;</span><span class="p">,</span>
-    <span class="p">)</span>
-
-    <span class="n">point_resolve_building_conflicts___building_points_RBC_final___n100_building</span> <span class="o">=</span> <span class="p">(</span>
-        <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_gdb</span><span class="p">(</span>
-            <span class="n">script_source_name</span><span class="o">=</span><span class="n">point_resolve_building_conflicts</span><span class="p">,</span>
-            <span class="n">description</span><span class="o">=</span><span class="s2">&quot;building_points_RBC_final&quot;</span><span class="p">,</span>
-        <span class="p">)</span>
-    <span class="p">)</span>
-
-    <span class="n">point_resolve_building_conflicts___building_points_RBC_final___n100_building_lyrx</span> <span class="o">=</span> <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_lyrx</span><span class="p">(</span>
-        <span class="n">script_source_name</span><span class="o">=</span><span class="n">point_resolve_building_conflicts</span><span class="p">,</span>
-        <span class="n">description</span><span class="o">=</span><span class="s2">&quot;building_points_RBC_final&quot;</span><span class="p">,</span>
-    <span class="p">)</span>
-
-    <span class="n">point_resolve_building_conflicts___drawn_polygons_result_2___n100_building</span> <span class="o">=</span> <span class="p">(</span>
-        <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_gdb</span><span class="p">(</span>
-            <span class="n">script_source_name</span><span class="o">=</span><span class="n">point_resolve_building_conflicts</span><span class="p">,</span>
-            <span class="n">description</span><span class="o">=</span><span class="s2">&quot;drawn_polygons_result_2&quot;</span><span class="p">,</span>
-        <span class="p">)</span>
-    <span class="p">)</span>
-
-    <span class="n">point_resolve_building_conflicts___drawn_polygon_result_2___n100_building_lyrx</span> <span class="o">=</span> <span class="p">(</span>
-        <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_lyrx</span><span class="p">(</span>
-            <span class="n">script_source_name</span><span class="o">=</span><span class="n">point_resolve_building_conflicts</span><span class="p">,</span>
-            <span class="n">description</span><span class="o">=</span><span class="s2">&quot;drawn_polygon_result_2&quot;</span><span class="p">,</span>
         <span class="p">)</span>
     <span class="p">)</span>
 
@@ -1697,13 +1326,6 @@
         <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_gdb</span><span class="p">(</span>
             <span class="n">script_source_name</span><span class="o">=</span><span class="n">point_resolve_building_conflicts</span><span class="p">,</span>
             <span class="n">description</span><span class="o">=</span><span class="s2">&quot;POLYGON_OUTPUT&quot;</span><span class="p">,</span>
-        <span class="p">)</span>
-    <span class="p">)</span>
-
-    <span class="n">point_resolve_building_conflicts___base_lyrx__n100_building</span> <span class="o">=</span> <span class="p">(</span>
-        <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_lyrx</span><span class="p">(</span>
-            <span class="n">script_source_name</span><span class="o">=</span><span class="n">point_resolve_building_conflicts</span><span class="p">,</span>
-            <span class="n">description</span><span class="o">=</span><span class="s2">&quot;base_lyrx&quot;</span><span class="p">,</span>
         <span class="p">)</span>
     <span class="p">)</span>
 

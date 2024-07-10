@@ -4,6 +4,14 @@ custom\_tools.development\_tools package
 Submodules
 ----------
 
+custom\_tools.development\_tools.find\_unused\_files module
+-----------------------------------------------------------
+
+.. automodule:: custom_tools.development_tools.find_unused_files
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
 custom\_tools.development\_tools.gpt\_file\_path\_masker module
 ---------------------------------------------------------------
 
