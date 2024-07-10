@@ -33,6 +33,8 @@ finalizing_buildings = "finalizing_buildings"
 data_clean_up = "data_clean_up"
 testing_building = "testing_building"
 
+rbc_tool = "rbc_tool"
+
 
 # Additional names
 overview = "overview"
@@ -1600,6 +1602,33 @@ class Building_N100(Enum):
             description="road_selection_rbc",
         )
     )
+
+    ########################### testing ########################
+
+    point_resolve_building_conflicts___POINT_OUTPUT__n100_building = (
+        file_manager.generate_file_name_gdb(
+            script_source_name=point_resolve_building_conflicts,
+            description="POINT_OUTPUT",
+        )
+    )
+
+    point_resolve_building_conflicts___POLYGON_OUTPUT__n100_building = (
+        file_manager.generate_file_name_gdb(
+            script_source_name=point_resolve_building_conflicts,
+            description="POLYGON_OUTPUT",
+        )
+    )
+
+    point_resolve_building_conflicts___base_lyrx__n100_building = (
+        file_manager.generate_file_name_lyrx(
+            script_source_name=point_resolve_building_conflicts,
+            description="base_lyrx",
+        )
+    )
+
+    # ========================================
+    #                              RBC TOOL
+    # ========================================
 
     # ========================================
     #                              FINALIZING BUILDINGS
