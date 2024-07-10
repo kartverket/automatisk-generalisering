@@ -112,6 +112,8 @@
 <span class="n">data_clean_up</span> <span class="o">=</span> <span class="s2">&quot;data_clean_up&quot;</span>
 <span class="n">testing_building</span> <span class="o">=</span> <span class="s2">&quot;testing_building&quot;</span>
 
+<span class="n">rbc_tool</span> <span class="o">=</span> <span class="s2">&quot;rbc_tool&quot;</span>
+
 
 <span class="c1"># Additional names</span>
 <span class="n">overview</span> <span class="o">=</span> <span class="s2">&quot;overview&quot;</span>
@@ -1681,6 +1683,33 @@
             <span class="n">description</span><span class="o">=</span><span class="s2">&quot;road_selection_rbc&quot;</span><span class="p">,</span>
         <span class="p">)</span>
     <span class="p">)</span>
+
+    <span class="c1">########################### testing ########################</span>
+
+    <span class="n">point_resolve_building_conflicts___POINT_OUTPUT__n100_building</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_gdb</span><span class="p">(</span>
+            <span class="n">script_source_name</span><span class="o">=</span><span class="n">point_resolve_building_conflicts</span><span class="p">,</span>
+            <span class="n">description</span><span class="o">=</span><span class="s2">&quot;POINT_OUTPUT&quot;</span><span class="p">,</span>
+        <span class="p">)</span>
+    <span class="p">)</span>
+
+    <span class="n">point_resolve_building_conflicts___POLYGON_OUTPUT__n100_building</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_gdb</span><span class="p">(</span>
+            <span class="n">script_source_name</span><span class="o">=</span><span class="n">point_resolve_building_conflicts</span><span class="p">,</span>
+            <span class="n">description</span><span class="o">=</span><span class="s2">&quot;POLYGON_OUTPUT&quot;</span><span class="p">,</span>
+        <span class="p">)</span>
+    <span class="p">)</span>
+
+    <span class="n">point_resolve_building_conflicts___base_lyrx__n100_building</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_lyrx</span><span class="p">(</span>
+            <span class="n">script_source_name</span><span class="o">=</span><span class="n">point_resolve_building_conflicts</span><span class="p">,</span>
+            <span class="n">description</span><span class="o">=</span><span class="s2">&quot;base_lyrx&quot;</span><span class="p">,</span>
+        <span class="p">)</span>
+    <span class="p">)</span>
+
+    <span class="c1"># ========================================</span>
+    <span class="c1">#                              RBC TOOL</span>
+    <span class="c1"># ========================================</span>
 
     <span class="c1"># ========================================</span>
     <span class="c1">#                              FINALIZING BUILDINGS</span>

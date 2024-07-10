@@ -135,27 +135,27 @@
 <a class="viewcode-back" href="../../../../generated_docs/generalization.n100.building.html#generalization.n100.building.calculate_point_values.adding_original_source_to_points">[docs]</a>
 <span class="nd">@timing_decorator</span>
 <span class="k">def</span> <span class="nf">adding_original_source_to_points</span><span class="p">():</span>
-    <span class="c1"># Adding a field to indicate that the merged building point and matrikkel does not come from grunnriss</span>
+    <span class="c1"># Adding a field to indicate that the merged building point and matrikkel does not come from building_polygon</span>
     <span class="n">arcpy</span><span class="o">.</span><span class="n">AddField_management</span><span class="p">(</span>
         <span class="n">in_table</span><span class="o">=</span><span class="n">Building_N100</span><span class="o">.</span><span class="n">data_preperation___matrikkel_n50_touristcabins_points_merged___n100_building</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
-        <span class="n">field_name</span><span class="o">=</span><span class="s2">&quot;grunnriss&quot;</span><span class="p">,</span>
+        <span class="n">field_name</span><span class="o">=</span><span class="s2">&quot;building_polygon&quot;</span><span class="p">,</span>
         <span class="n">field_type</span><span class="o">=</span><span class="s2">&quot;LONG&quot;</span><span class="p">,</span>
     <span class="p">)</span>
     <span class="n">arcpy</span><span class="o">.</span><span class="n">CalculateField_management</span><span class="p">(</span>
         <span class="n">in_table</span><span class="o">=</span><span class="n">Building_N100</span><span class="o">.</span><span class="n">data_preperation___matrikkel_n50_touristcabins_points_merged___n100_building</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
-        <span class="n">field</span><span class="o">=</span><span class="s2">&quot;grunnriss&quot;</span><span class="p">,</span>
+        <span class="n">field</span><span class="o">=</span><span class="s2">&quot;building_polygon&quot;</span><span class="p">,</span>
         <span class="n">expression</span><span class="o">=</span><span class="s2">&quot;0&quot;</span><span class="p">,</span>
     <span class="p">)</span>
 
-    <span class="c1"># Adding a field to indicate that points resulting from grunnriss is tracked</span>
+    <span class="c1"># Adding a field to indicate that points resulting from building_polygon is tracked</span>
     <span class="n">arcpy</span><span class="o">.</span><span class="n">AddField_management</span><span class="p">(</span>
         <span class="n">in_table</span><span class="o">=</span><span class="n">Building_N100</span><span class="o">.</span><span class="n">polygon_to_point___merged_points_final___n100_building</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
-        <span class="n">field_name</span><span class="o">=</span><span class="s2">&quot;grunnriss&quot;</span><span class="p">,</span>
+        <span class="n">field_name</span><span class="o">=</span><span class="s2">&quot;building_polygon&quot;</span><span class="p">,</span>
         <span class="n">field_type</span><span class="o">=</span><span class="s2">&quot;LONG&quot;</span><span class="p">,</span>
     <span class="p">)</span>
     <span class="n">arcpy</span><span class="o">.</span><span class="n">CalculateField_management</span><span class="p">(</span>
         <span class="n">in_table</span><span class="o">=</span><span class="n">Building_N100</span><span class="o">.</span><span class="n">polygon_to_point___merged_points_final___n100_building</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
-        <span class="n">field</span><span class="o">=</span><span class="s2">&quot;grunnriss&quot;</span><span class="p">,</span>
+        <span class="n">field</span><span class="o">=</span><span class="s2">&quot;building_polygon&quot;</span><span class="p">,</span>
         <span class="n">expression</span><span class="o">=</span><span class="s2">&quot;1&quot;</span><span class="p">,</span>
     <span class="p">)</span></div>
 
@@ -165,7 +165,7 @@
 <a class="viewcode-back" href="../../../../generated_docs/generalization.n100.building.html#generalization.n100.building.calculate_point_values.merge_matrikkel_n50_touristcabins_with_points_from_grunnriss">[docs]</a>
 <span class="nd">@timing_decorator</span>
 <span class="k">def</span> <span class="nf">merge_matrikkel_n50_touristcabins_with_points_from_grunnriss</span><span class="p">():</span>
-    <span class="c1"># Merge the merged building point from n50 and matrikkel with points created from grunnriss</span>
+    <span class="c1"># Merge the merged building point from n50 and matrikkel with points created from building_polygon</span>
     <span class="n">arcpy</span><span class="o">.</span><span class="n">management</span><span class="o">.</span><span class="n">Merge</span><span class="p">(</span>
         <span class="n">inputs</span><span class="o">=</span><span class="p">[</span>
             <span class="n">Building_N100</span><span class="o">.</span><span class="n">data_preperation___matrikkel_n50_touristcabins_points_merged___n100_building</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
