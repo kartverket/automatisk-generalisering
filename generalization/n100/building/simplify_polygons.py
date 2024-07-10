@@ -3,7 +3,7 @@ import arcpy
 
 # Importing custom modules
 from env_setup import environment_setup
-from input_data import input_n50
+
 from file_manager.n100.file_manager_buildings import Building_N100
 from custom_tools.general_tools import custom_arcpy
 from constants.n100_constants import N100_Values
@@ -184,7 +184,7 @@ def spatial_join_polygons():
 
     arcpy.analysis.SpatialJoin(
         target_features=Building_N100.simplify_polygons___simplify_building_2___n100_building.value,
-        join_features=input_n50.Grunnriss,
+        join_features=Building_N100.data_selection___building_polygon_n50_input_data___n100_building.value,
         out_feature_class=Building_N100.simplify_polygons___spatial_join_polygons___n100_building.value,
     )
 

@@ -18,9 +18,7 @@ from file_manager.n100.file_manager_buildings import Building_N100
 from custom_tools.general_tools.polygon_processor import PolygonProcessor
 from constants.n100_constants import N100_Symbology
 
-from generalization.n100.building.not_in_use_models.testing_buildings import (
-    DictionaryBuffer2,
-)
+
 from custom_tools.generalization_tools.building.buffer_displacement import (
     BufferDisplacement,
 )
@@ -1048,7 +1046,7 @@ if __name__ == "__main__":
     inputs = {
         building_points: [
             "input",
-            Building_N100.calculate_point_values___points_going_into_rbc___n100_building.value,
+            Building_N100.point_propagate_displacement___points_after_propagate_displacement___n100_building.value,
         ],
         building_polygons: [
             "context",
@@ -1068,44 +1066,6 @@ if __name__ == "__main__":
         building_points: [
             "polygon_processor",
             Building_N100.iteration__partition_iterator_final_output_points__n100.value,
-        ],
-    }
-
-    inputs_2 = {
-        building_points: [
-            "input",
-            Building_N100.building_point_buffer_displacement__buildings_study_area__n100.value,
-        ],
-        river: [
-            "input",
-            Building_N100.building_point_buffer_displacement__begrensningskurve_study_area__n100.value,
-        ],
-        train_stations: [
-            "input",
-            input_n100.JernbaneStasjon,
-        ],
-        bane: [
-            "input",
-            input_n100.Bane,
-        ],
-    }
-
-    outputs_2 = {
-        building_points: [
-            "buffer_1",
-            Building_N100.testing_building___partition_iterator_building_buffer_1___n100_building.value,
-        ],
-        river: [
-            "buffer_1",
-            Building_N100.testing_building___partition_iterator_river_buffer_1___n100_building.value,
-        ],
-        train_stations: [
-            "buffer_1",
-            Building_N100.testing_building___partition_iterator_train_buffer_1___n100_building.value,
-        ],
-        bane: [
-            "buffer_1",
-            Building_N100.testing_building___partition_iterator_bane_buffer_1___n100_building.value,
         ],
     }
 
@@ -1202,12 +1162,6 @@ if __name__ == "__main__":
         ],
     }
 
-    buffer_operation_config = {
-        "class": DictionaryBuffer2,
-        "method": "run",
-        "params": {"input_dict": input_dict, "output_dict": output_dict},
-    }
-
     select_hospitals_config = {
         "func": custom_arcpy.select_attribute_and_make_permanent_feature,
         "params": {
@@ -1253,16 +1207,5 @@ if __name__ == "__main__":
         feature_count="33000",
     )
 
-    partition_iterator_3 = PartitionIterator(
-        alias_path_data=inputs_2,
-        alias_path_outputs=outputs_2,
-        custom_functions=[buffer_operation_config],
-        root_file_partition_iterator=Building_N100.iteration__partition_iterator__n100.value,
-        scale=env_setup.global_config.scale_n100,
-        dictionary_documentation_path=Building_N100.iteration___json_documentation___building_n100.value,
-        feature_count="32000",
-    )
-
     # Run the partition iterator
     partition_iterator_2.run()
-    # partition_iterator_3.run()

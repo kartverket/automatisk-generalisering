@@ -143,13 +143,13 @@ class BegrensningskurveLandWaterbodies:
         )
 
     def erase_buffers(self):
-        arcpy.analysis.PairwiseErase(
+        arcpy.analysis.Erase(
             in_features=self.begrensningskurve_waterfeatures_buffer,
             erase_features=self.land_features_buffer,
             out_feature_class=self.erase_feature_1,
         )
 
-        arcpy.analysis.PairwiseErase(
+        arcpy.analysis.Erase(
             in_features=self.erase_feature_1,
             erase_features=self.land_features_area,
             out_feature_class=self.output_begrensningskurve,
