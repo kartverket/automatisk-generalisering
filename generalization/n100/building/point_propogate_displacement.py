@@ -1,11 +1,6 @@
 # Importing modules
 import arcpy
 
-# Importing custom modules
-import config
-from custom_tools.general_tools import custom_arcpy
-from input_data import input_n100
-
 # Importing environment settings
 from env_setup import environment_setup
 
@@ -47,41 +42,14 @@ def propagate_displacement_building_points():
     print("Point propogate displacement ...")
 
     arcpy.management.Copy(
-        in_data=Building_N100.calculate_point_values___points_going_into_rbc___n100_building.value,
-        out_data=Building_N100.point_propogate_displacement___points_pre_propogate_displacement___n100_building.value,
-    )
-
-    custom_arcpy.select_attribute_and_make_permanent_feature(
-        input_layer=input_n100.AdminFlate,
-        expression="navn IN ('Asker', 'Oslo', 'Trondheim', 'Ringerike')",
-        output_name=Building_N100.point_propogate_displacement___area_oslo_asker___n100_building.value,
-    )
-
-    custom_arcpy.select_location_and_make_permanent_feature(
-        input_layer=Building_N100.calculate_point_values___points_going_into_rbc___n100_building.value,
-        overlap_type=custom_arcpy.OverlapType.INTERSECT.value,
-        select_features=Building_N100.point_propogate_displacement___area_oslo_asker___n100_building.value,
-        output_name=Building_N100.point_propogate_displacement___points_in_area_oslo_asker___n100_building.value,
-    )
-
-    # Selecting propogate displacement features 500 meters from building polgyons
-    custom_arcpy.select_location_and_make_permanent_feature(
-        input_layer=config.displacement_feature,
-        overlap_type=custom_arcpy.OverlapType.WITHIN_A_DISTANCE,
-        select_features=Building_N100.point_propogate_displacement___points_in_area_oslo_asker___n100_building.value,
-        output_name=Building_N100.point_propogate_displacement___displacement_feature_500m_from_point___n100_building.value,
-        search_distance="500 Meters",
+        in_data=Building_N100.calculate_point_values___points_going_into_propagate_displacement___n100_building.value,
+        out_data=Building_N100.point_propagate_displacement___points_after_propagate_displacement___n100_building.value,
     )
 
     arcpy.cartography.PropagateDisplacement(
-        in_features=Building_N100.point_propogate_displacement___points_in_area_oslo_asker___n100_building.value,
-        displacement_features=Building_N100.point_propogate_displacement___displacement_feature_500m_from_point___n100_building.value,
+        in_features=Building_N100.calculate_point_values___points_going_into_propagate_displacement___n100_building.value,
+        displacement_features=Building_N100.data_selection___displacement_feature___n100_building.value,
         adjustment_style="SOLID",
-    )
-
-    arcpy.management.Copy(
-        in_data=Building_N100.point_propogate_displacement___points_in_area_oslo_asker___n100_building.value,
-        out_data=Building_N100.point_propogate_displacement___points_after_propogate_displacement___n100_building.value,
     )
 
 

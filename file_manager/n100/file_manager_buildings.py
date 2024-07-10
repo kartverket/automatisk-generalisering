@@ -20,7 +20,7 @@ polygon_to_point = "polygon_to_point"
 line_to_buffer_symbology = "line_to_buffer_symbology"
 calculating_polygon_values = "calculating_polygon_values"
 calculate_point_values = "calculate_point_values"
-point_propogate_displacement = "point_propogate_displacement"
+point_propagate_displacement = "point_propagate_displacement"
 removing_points_and_erasing_polygons_in_water_features = (
     "removing_points_and_erasing_polygons_in_water_features"
 )
@@ -160,6 +160,13 @@ class Building_N100(Enum):
         file_manager.generate_file_name_gdb(
             script_source_name=data_selection,
             description="matrikkel_input_data",
+        )
+    )
+
+    data_selection___displacement_feature___n100_building = (
+        file_manager.generate_file_name_gdb(
+            script_source_name=data_selection,
+            description="displacement_feature",
         )
     )
 
@@ -397,11 +404,9 @@ class Building_N100(Enum):
     #                      CALCULATE POINT VALUES
     # ========================================
 
-    calculate_point_values___points_going_into_rbc___n100_building = (
-        file_manager.generate_file_name_gdb(
-            script_source_name=calculate_point_values,
-            description="points_going_into_rbc",
-        )
+    calculate_point_values___points_going_into_propagate_displacement___n100_building = file_manager.generate_file_name_gdb(
+        script_source_name=calculate_point_values,
+        description="points_going_into_propagate_displacement",
     )
 
     calculate_point_values___selection_building_points_with_undefined_nbr_values___n100_building = file_manager.generate_file_name_gdb(
@@ -619,11 +624,6 @@ class Building_N100(Enum):
     polygon_propogate_displacement___building_polygons_after_displacement___n100_building = file_manager.generate_file_name_gdb(
         script_source_name=polygon_propogate_displacement,
         description="building_polygons_after_displacement",
-    )
-
-    polygon_propogate_displacement___displacement_feature_500m_from_polygon___n100_building = file_manager.generate_file_name_gdb(
-        script_source_name=polygon_propogate_displacement,
-        description="displacement_feature_500m_from_polygon",
     )
 
     # ========================================
@@ -925,33 +925,26 @@ class Building_N100(Enum):
     #                  POINT PROPOATE DISPLACEMENT
     # ========================================
 
-    point_propogate_displacement___points_pre_propogate_displacement___n100_building = (
-        file_manager.generate_file_name_gdb(
-            script_source_name=point_propogate_displacement,
-            description="points_pre_propogate_displacement",
-        )
+    point_propagate_displacement___points_after_propagate_displacement___n100_building = file_manager.generate_file_name_gdb(
+        script_source_name=point_propagate_displacement,
+        description="points_after_propagate_displacement",
     )
 
     point_propogate_displacement___displacement_feature_500m_from_point___n100_building = file_manager.generate_file_name_gdb(
-        script_source_name=point_propogate_displacement,
+        script_source_name=point_propagate_displacement,
         description="displacement_feature_500m_from_point",
-    )
-
-    point_propogate_displacement___points_after_propogate_displacement___n100_building = file_manager.generate_file_name_gdb(
-        script_source_name=point_propogate_displacement,
-        description="points_after_propogate_displacement",
     )
 
     point_propogate_displacement___area_oslo_asker___n100_building = (
         file_manager.generate_file_name_gdb(
-            script_source_name=point_propogate_displacement,
+            script_source_name=point_propagate_displacement,
             description="area_oslo_asker",
         )
     )
 
     point_propogate_displacement___points_in_area_oslo_asker___n100_building = (
         file_manager.generate_file_name_gdb(
-            script_source_name=point_propogate_displacement,
+            script_source_name=point_propagate_displacement,
             description="points_in_area_oslo_asker",
         )
     )

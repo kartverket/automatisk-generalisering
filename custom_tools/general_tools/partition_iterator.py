@@ -1046,7 +1046,7 @@ if __name__ == "__main__":
     inputs = {
         building_points: [
             "input",
-            Building_N100.calculate_point_values___points_going_into_rbc___n100_building.value,
+            Building_N100.point_propagate_displacement___points_after_propagate_displacement___n100_building.value,
         ],
         building_polygons: [
             "context",

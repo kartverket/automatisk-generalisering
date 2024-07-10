@@ -2,8 +2,7 @@
 import arcpy
 
 # Importing custom modules
-import input_data.input_n50
-import input_data.input_n100
+
 from custom_tools.general_tools import custom_arcpy
 from custom_tools.general_tools.polygon_processor import PolygonProcessor
 from input_data import input_symbology
@@ -92,7 +91,7 @@ def roads_and_water_barriers_500_m_from_building_polygons():
     print("Selecting features 500 meter from building polygon ...")
     # Selecting begrensningskurve 500 meters from building polygons
     custom_arcpy.select_location_and_make_permanent_feature(
-        input_layer=Building_N100.data_preparation___waterfeatures_from_begrensningskurve_not_rivers___n100_building.value,
+        input_layer=Building_N100.data_preparation___merged_begrensningskurve_all_waterbodies___n100_building.value,
         overlap_type=custom_arcpy.OverlapType.WITHIN_A_DISTANCE,
         select_features=Building_N100.polygon_propogate_displacement___building_polygons_after_displacement___n100_building.value,
         output_name=Building_N100.polygon_resolve_building_conflicts___begrensningskurve_500m_from_displaced_polygon___n100_building.value,
@@ -122,7 +121,7 @@ def roads_and_water_barriers_500_m_from_building_polygons():
 def hospital_church_points_to_squares():
     # Selecting hospital and churches from n50
     custom_arcpy.select_attribute_and_make_permanent_feature(
-        input_layer=input_data.input_n50.BygningsPunkt,
+        input_layer=Building_N100.data_selection___building_point_n50_input_data___n100_building.value,
         expression="byggtyp_nbr IN (970, 719, 671)",
         output_name=Building_N100.polygon_resolve_building_conflicts___hospital_church_points___n100_building.value,
     )
@@ -188,13 +187,13 @@ def apply_symbology_to_layers():
     # Applying symbology to begrensningskurve (limiting curve)
     custom_arcpy.apply_symbology(
         input_layer=Building_N100.polygon_resolve_building_conflicts___begrensningskurve_500m_from_displaced_polygon___n100_building.value,
-        in_symbology_layer=input_symbology.SymbologyN100.begrensnings_kurve_line.value,
+        in_symbology_layer=input_symbology.SymbologyN100.begrensningskurve_polygon.value,
         output_name=Building_N100.polygon_resolve_building_conflicts___begrensningskurve___n100_building_lyrx.value,
     )
 
     # Applying symbology to railway
     custom_arcpy.apply_symbology(
-        input_layer=input_data.input_n100.Bane,
+        input_layer=Building_N100.data_selection___railroad_tracks_n100_input_data___n100_building.value,
         in_symbology_layer=input_symbology.SymbologyN100.railways.value,
         output_name=Building_N100.polygon_resolve_building_conflicts___railway___n100_building_lyrx.value,
     )
