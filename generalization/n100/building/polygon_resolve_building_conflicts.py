@@ -174,13 +174,13 @@ def apply_symbology_to_layers():
     # Applying symbology to building polygons
     custom_arcpy.apply_symbology(
         input_layer=Building_N100.polygon_propogate_displacement___building_polygons_after_displacement___n100_building.value,
-        in_symbology_layer=input_symbology.SymbologyN100.grunnriss.value,
+        in_symbology_layer=input_symbology.SymbologyN100.building_polygon.value,
         output_name=Building_N100.polygon_resolve_building_conflicts___building_polygon___n100_building_lyrx.value,
     )
     # Applying symbology to roads
     custom_arcpy.apply_symbology(
         input_layer=Building_N100.polygon_resolve_building_conflicts___roads_500m_from_displaced_polygon___n100_building.value,
-        in_symbology_layer=input_symbology.SymbologyN100.veg_sti.value,
+        in_symbology_layer=input_symbology.SymbologyN100.road.value,
         output_name=Building_N100.polygon_resolve_building_conflicts___roads___n100_building_lyrx.value,
     )
 
@@ -194,7 +194,7 @@ def apply_symbology_to_layers():
     # Applying symbology to railway
     custom_arcpy.apply_symbology(
         input_layer=Building_N100.data_selection___railroad_tracks_n100_input_data___n100_building.value,
-        in_symbology_layer=input_symbology.SymbologyN100.railways.value,
+        in_symbology_layer=input_symbology.SymbologyN100.railway.value,
         output_name=Building_N100.polygon_resolve_building_conflicts___railway___n100_building_lyrx.value,
     )
 

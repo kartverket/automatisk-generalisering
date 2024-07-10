@@ -185,6 +185,7 @@ class ResolveBuildingConflicts:
             print(f"Error in resolve_building_conflicts_1: {e}")
             raise
 
+    @timing_decorator
     def building_squares_and_polygons_to_keep_after_rbc_1(self):
         # Sql expression to select building squares that are visible + church and hospital points
         sql_expression_resolve_building_conflicts_squares = (
@@ -207,6 +208,7 @@ class ResolveBuildingConflicts:
             output_name=f"{self.base_path_for_features}results_rbc_1_polygons",
         )
 
+    @timing_decorator
     def transforming_invisible_polygons_to_points_and_then_to_squares(self):
         # Sql expression to keep only building polygons that have invisbility value 1 after the tool has run
         sql_expression_find_invisible_polygons = "invisibility = 1"
@@ -244,6 +246,7 @@ class ResolveBuildingConflicts:
             output=f"{self.base_path_for_features}merged_squares_rbc1",
         )
 
+    @timing_decorator
     def calculating_symbol_val_and_nbr_for_squares(self):
         # Features with symbol_val -99 get byggtyp_nbr 729
         code_block_symbol_val_to_nbr = (
@@ -279,6 +282,7 @@ class ResolveBuildingConflicts:
             code_block=code_block_update_symbol_val,
         )
 
+    @timing_decorator
     def adding_symbology_to_layers_being_used_for_rbc_2(self):
         # Building squares (from points, transformed to squares in the first function) that are kept after rbc 1
         custom_arcpy.apply_symbology(
@@ -294,6 +298,7 @@ class ResolveBuildingConflicts:
             output_name=f"{self.lyrx_base_path}adding_symbology_to_polygons_going_into_rbc2.lyrx",
         )
 
+    @timing_decorator
     def resolve_building_conflicts_2(self):
         print("Starting resolve building conflicts 2")
         arcpy.env.referenceScale = "100000"
@@ -312,6 +317,7 @@ class ResolveBuildingConflicts:
             hierarchy_field="hierarchy",
         )
 
+    @timing_decorator
     def selecting_features_to_be_kept_after_rbc_2(self):
         sql_expression_squares = "(invisibility = 0) OR (symbol_val IN (1, 2, 3))"
 
@@ -331,6 +337,7 @@ class ResolveBuildingConflicts:
             output_name=f"{self.base_path_for_features}polygons_after_rbc2",
         )
 
+    @timing_decorator
     def transforming_squares_back_to_points(self):
         # Squares from points are transformed back to points
         arcpy.management.FeatureToPoint(
@@ -339,6 +346,7 @@ class ResolveBuildingConflicts:
             point_location="INSIDE",
         )
 
+    @timing_decorator
     def assigning_final_names(self):
         # Squares
         arcpy.management.CopyFeatures(
@@ -350,6 +358,7 @@ class ResolveBuildingConflicts:
             f"{self.base_path_for_features}polygons_after_rbc2", self.output_polygons
         )
 
+    @timing_decorator
     def adding_files_to_working_list(self):
         self.working_files_list.extend(
             [
@@ -374,6 +383,7 @@ class ResolveBuildingConflicts:
             ]
         )
 
+    @timing_decorator
     def delete_working_files(self, *file_paths):
         """
         Deletes multiple feature classes or files.
@@ -392,16 +402,16 @@ class ResolveBuildingConflicts:
 
     def run(self):
         environment_setup.main()
-        # self.building_points_to_squares()
-        # self.apply_symbology_to_the_layers()
-        # self.resolve_building_conflicts_1()
-        # self.building_squares_and_polygons_to_keep_after_rbc_1()
-        # self.transforming_invisible_polygons_to_points_and_then_to_squares()
-        # self.calculating_symbol_val_and_nbr_for_squares()
-        # self.adding_symbology_to_layers_being_used_for_rbc_2()
-        # self.resolve_building_conflicts_2()
-        # self.selecting_features_to_be_kept_after_rbc_2()
-        # self.transforming_squares_back_to_points()
+        self.building_points_to_squares()
+        self.apply_symbology_to_the_layers()
+        self.resolve_building_conflicts_1()
+        self.building_squares_and_polygons_to_keep_after_rbc_1()
+        self.transforming_invisible_polygons_to_points_and_then_to_squares()
+        self.calculating_symbol_val_and_nbr_for_squares()
+        self.adding_symbology_to_layers_being_used_for_rbc_2()
+        self.resolve_building_conflicts_2()
+        self.selecting_features_to_be_kept_after_rbc_2()
+        self.transforming_squares_back_to_points()
         self.assigning_final_names()
         self.adding_files_to_working_list()
         self.delete_working_files(self.working_files_list)
@@ -410,7 +420,7 @@ class ResolveBuildingConflicts:
 if __name__ == "__main__":
     resolve_building_conflicts = ResolveBuildingConflicts(
         building_inputs={
-            "building_points": Building_N100.building_point_buffer_displacement__displaced_building_points__n100.value,
+            "building_points": Building_N100.building_point_buffer_displacement___merged_buffer_displaced_points___n100_building.value,
             "building_polygons": Building_N100.polygon_resolve_building_conflicts___building_polygons_final___n100_building.value,
         },
         building_gap_distance=30,
