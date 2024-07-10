@@ -20,6 +20,14 @@ custom\_tools.generalization\_tools.building.buffer\_displacement module
    :undoc-members:
    :show-inheritance:
 
+custom\_tools.generalization\_tools.building.resolve\_building\_conflicts module
+--------------------------------------------------------------------------------
+
+.. automodule:: custom_tools.generalization_tools.building.resolve_building_conflicts
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
 Module contents
 ---------------
 
