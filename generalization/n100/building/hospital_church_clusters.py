@@ -45,7 +45,7 @@ def main():
 def selecting_all_other_points_that_are_not_hospital_and_church():
     # Selecting all hospitals and making feature layer
     custom_arcpy.select_attribute_and_make_permanent_feature(
-        input_layer=Building_N100.point_propogate_displacement___points_after_propogate_displacement___n100_building.value,
+        input_layer=Building_N100.point_propagate_displacement___points_after_propagate_displacement___n100_building.value,
         expression="byggtyp_nbr IN (970, 719, 671)",
         output_name=Building_N100.hospital_church_clusters___all_other_points_that_are_not_hospital_church___n100_building.value,
         selection_type=custom_arcpy.SelectionType.NEW_SELECTION,
@@ -70,7 +70,7 @@ def hospital_church_selections():
 
     # Selecting all hospitals and making feature layer
     custom_arcpy.select_attribute_and_make_permanent_feature(
-        input_layer=Building_N100.point_propogate_displacement___points_after_propogate_displacement___n100_building.value,
+        input_layer=Building_N100.point_propagate_displacement___points_after_propagate_displacement___n100_building.value,
         expression=sql_select_all_hospital,
         output_name=Building_N100.hospital_church_clusters___hospital_points___n100_building.value,
         selection_type=custom_arcpy.SelectionType.NEW_SELECTION,
@@ -78,7 +78,7 @@ def hospital_church_selections():
 
     # Selecting all churches and making feature layer
     custom_arcpy.select_attribute_and_make_permanent_feature(
-        input_layer=Building_N100.point_propogate_displacement___points_after_propogate_displacement___n100_building.value,
+        input_layer=Building_N100.point_propagate_displacement___points_after_propagate_displacement___n100_building.value,
         expression=sql_select_all_church,
         output_name=Building_N100.hospital_church_clusters___church_points___n100_building.value,
         selection_type=custom_arcpy.SelectionType.NEW_SELECTION,

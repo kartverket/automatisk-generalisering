@@ -71,7 +71,7 @@ def selecting_data_with_area():
             "output_name": Building_N100.point_resolve_building_conflicts___road_selection_rbc___n100_building.value,
         },
         {
-            "input_layer": Building_N100.calculate_point_values___points_going_into_rbc___n100_building.value,
+            "input_layer": Building_N100.point_propagate_displacement___points_after_propagate_displacement___n100_building.value,
             "output_name": Building_N100.point_resolve_building_conflicts___building_point_selection_rbc___n100_building.value,
         },
         {

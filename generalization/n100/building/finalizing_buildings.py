@@ -10,8 +10,6 @@ from file_manager.n100.file_manager_buildings import Building_N100
 # Importing timing decorator
 from custom_tools.decorators.timing_decorator import timing_decorator
 
-from input_data import input_n100
-
 
 def main():
     environment_setup.main()
@@ -29,7 +27,7 @@ def removing_points_in_and_close_to_urban_areas():
 
     # Selecting urban areas from n100 using sql expression
     custom_arcpy.select_attribute_and_make_feature_layer(
-        input_layer=input_n100.ArealdekkeFlate,
+        input_layer=Building_N100.data_selection___land_cover_n100_input_data___n100_building.value,
         expression=urban_areas_sql_expr,
         output_name=Building_N100.finalizing_buildings___urban_areas___n100_building.value,
     )

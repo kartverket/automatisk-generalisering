@@ -2,7 +2,6 @@
 import arcpy
 
 # Importing custom files
-from input_data import input_n100
 from file_manager.n100.file_manager_buildings import Building_N100
 from input_data.input_symbology import SymbologyN100
 
@@ -29,7 +28,7 @@ def main():
 def selecting_water_polygon_features():
     sql_expression_water_features = f"objtype = 'FerskvannTørrfall' Or objtype = 'Innsjø' Or objtype = 'InnsjøRegulert' Or objtype = 'Havflate' Or objtype = 'ElvBekk'"
     custom_arcpy.select_attribute_and_make_permanent_feature(
-        input_layer=input_n100.ArealdekkeFlate,
+        input_layer=Building_N100.data_selection___land_cover_n100_input_data___n100_building.value,
         expression=sql_expression_water_features,
         output_name=Building_N100.removing_points_and_erasing_polygons_in_water_features___water_features___n100_building.value,
     )

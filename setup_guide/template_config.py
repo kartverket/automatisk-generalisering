@@ -2,6 +2,7 @@
 #                 DEFINED CPU PERCENTAGE
 # ========================================
 cpu_percentage = "90%"
+select_study_area = True
 
 # ========================================
 #                 WORKSPACE ENVIRONMENT PATHS

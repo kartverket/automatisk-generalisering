@@ -81,18 +81,18 @@ def merge_matrikkel_n50_touristcabins_with_points_from_grunnriss():
             Building_N100.data_preperation___matrikkel_n50_touristcabins_points_merged___n100_building.value,
             Building_N100.polygon_to_point___merged_points_final___n100_building.value,
         ],
-        output=Building_N100.calculate_point_values___points_going_into_rbc___n100_building.value,
+        output=Building_N100.calculate_point_values___points_going_into_propagate_displacement___n100_building.value,
     )
 
     arcpy.AddField_management(
-        in_table=Building_N100.calculate_point_values___points_going_into_rbc___n100_building.value,
+        in_table=Building_N100.calculate_point_values___points_going_into_propagate_displacement___n100_building.value,
         field_name="symbol_val",
         field_type="SHORT",
     )
 
     # Determining and assigning symbol val
     arcpy.CalculateField_management(
-        in_table=Building_N100.calculate_point_values___points_going_into_rbc___n100_building.value,
+        in_table=Building_N100.calculate_point_values___points_going_into_propagate_displacement___n100_building.value,
         field="symbol_val",
         expression="determineVal(!byggtyp_nbr!)",
         expression_type="PYTHON3",
@@ -103,7 +103,7 @@ def merge_matrikkel_n50_touristcabins_with_points_from_grunnriss():
 @timing_decorator
 def find_undefined_nbr_values():
     custom_arcpy.select_attribute_and_make_feature_layer(
-        input_layer=Building_N100.calculate_point_values___points_going_into_rbc___n100_building.value,
+        input_layer=Building_N100.calculate_point_values___points_going_into_propagate_displacement___n100_building.value,
         expression="symbol_val = -99",
         output_name=Building_N100.calculate_point_values___selection_building_points_with_undefined_nbr_values___n100_building.value,
     )
@@ -158,7 +158,7 @@ def find_each_unique_nbr_value():
 
     # Applying the symbol_val_to_nbr logic
     arcpy.CalculateField_management(
-        in_table=Building_N100.calculate_point_values___points_going_into_rbc___n100_building.value,
+        in_table=Building_N100.calculate_point_values___points_going_into_propagate_displacement___n100_building.value,
         field="byggtyp_nbr",
         expression="symbol_val_to_nbr(!symbol_val!, !byggtyp_nbr!)",
         expression_type="PYTHON3",
@@ -167,7 +167,7 @@ def find_each_unique_nbr_value():
 
     # Applying the update_symbol_val logic
     arcpy.CalculateField_management(
-        in_table=Building_N100.calculate_point_values___points_going_into_rbc___n100_building.value,
+        in_table=Building_N100.calculate_point_values___points_going_into_propagate_displacement___n100_building.value,
         field="symbol_val",
         expression="update_symbol_val(!symbol_val!)",
         expression_type="PYTHON3",
@@ -179,7 +179,7 @@ def find_each_unique_nbr_value():
 def calculate_angle_and_visibility():
     # Feature class to check fields existence
     point_feature_class = (
-        Building_N100.calculate_point_values___points_going_into_rbc___n100_building.value
+        Building_N100.calculate_point_values___points_going_into_propagate_displacement___n100_building.value
     )
 
     # List of fields to add and calculate
@@ -208,7 +208,7 @@ def calculate_angle_and_visibility():
 def calculate_hierarchy():
     # Then run CalculateField with the new code block
     arcpy.management.CalculateField(
-        in_table=Building_N100.calculate_point_values___points_going_into_rbc___n100_building.value,
+        in_table=Building_N100.calculate_point_values___points_going_into_propagate_displacement___n100_building.value,
         field="hierarchy",
         expression="determineHierarchy(!symbol_val!)",
         expression_type="PYTHON3",
