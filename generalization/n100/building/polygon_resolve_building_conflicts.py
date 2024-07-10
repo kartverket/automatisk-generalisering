@@ -159,7 +159,7 @@ def hospital_church_points_to_squares():
     # Applying symbology to polygonprocessed hospital and churches
     custom_arcpy.apply_symbology(
         input_layer=Building_N100.polygon_resolve_building_conflicts___hospital_church_squares___n100_building.value,
-        in_symbology_layer=input_symbology.SymbologyN100.grunnriss.value,
+        in_symbology_layer=input_symbology.SymbologyN100.building_polygon.value,
         output_name=Building_N100.polygon_resolve_building_conflicts___polygonprocessor_symbology___n100_building_lyrx.value,
     )
 
