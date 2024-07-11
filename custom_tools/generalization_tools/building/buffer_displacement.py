@@ -302,11 +302,11 @@ if __name__ == "__main__":
 
     misc_objects = {
         "begrensningskurve": [
-            Building_N100.building_point_buffer_displacement__begrensningskurve_study_area__n100.value,
+            Building_N100.data_preparation___processed_begrensningskurve___n100_building.value,
             0,
         ],
         "urban_areas": [
-            Building_N100.building_point_buffer_displacement__selection_urban_areas__n100.value,
+            Building_N100.data_preparation___urban_area_selection_n100___n100_building.value,
             1,
         ],
         "bane_station": [
@@ -320,8 +320,8 @@ if __name__ == "__main__":
     }
 
     point_displacement = BufferDisplacement(
-        input_road_lines=Building_N100.building_point_buffer_displacement__roads_study_area__n100.value,
-        input_building_points=Building_N100.building_point_buffer_displacement__buildings_study_area__n100.value,
+        input_road_lines=Building_N100.data_preparation___unsplit_roads___n100_building.value,
+        input_building_points=Building_N100.point_displacement_with_buffer___building_points_selection___n100_building.value,
         input_misc_objects=misc_objects,
         output_building_points=Building_N100.line_to_buffer_symbology___buffer_displaced_building_points___n100_building.value,
         sql_selection_query=N100_SQLResources.road_symbology_size_sql_selection.value,

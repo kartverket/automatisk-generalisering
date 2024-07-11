@@ -1076,7 +1076,7 @@ if __name__ == "__main__":
     inputs3 = {
         building_points: [
             "input",
-            Building_N100.building_point_buffer_displacement___building_points_selection___n100_building.value,
+            Building_N100.point_displacement_with_buffer___building_points_selection___n100_building.value,
         ],
         roads: [
             "input",
