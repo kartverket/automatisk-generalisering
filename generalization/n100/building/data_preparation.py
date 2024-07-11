@@ -33,8 +33,6 @@ def main():
     environment_setup.main()
     data_selection()
     begrensningskurve_land_and_water_bodies()
-    begrensningskurve_river()
-    merge_begrensningskurve_all_water_features()
     unsplit_roads()
     railway_station_points_to_polygons()
     selecting_urban_areas_by_sql()
@@ -133,55 +131,6 @@ def begrensningskurve_land_and_water_bodies():
         feature_count="800000",
     )
     partition_begrensningskurve.run()
-
-
-@timing_decorator
-def begrensningskurve_river():
-    """
-    Summary:
-        Extracts river features from the begrensningskurve dataset and creates buffers around them.
-
-    Details:
-        This function selects river outlines from the begrensningskurve dataset based on a predefined object type ('ElvBekkKant').
-        It then creates a small buffer around the selected river features.
-        The resulting river outlines and their corresponding buffers are stored as separate feature classes.
-    """
-
-    sql_expr_begrensningskurve_river_outline = "objtype = 'ElvBekkKant'"
-
-    # Creating a temporary feature of rivers from begrensningskurve
-    custom_arcpy.select_attribute_and_make_permanent_feature(
-        input_layer=Building_N100.data_selection___begrensningskurve_n100_input_data___n100_building.value,
-        expression=sql_expr_begrensningskurve_river_outline,
-        output_name=Building_N100.data_preparation___waterfeatures_from_begrensningskurve_rivers___n100_building.value,
-    )
-
-    # Creating small buffer around begrensningskurve rivers
-    arcpy.analysis.PairwiseBuffer(
-        in_features=Building_N100.data_preparation___waterfeatures_from_begrensningskurve_rivers___n100_building.value,
-        out_feature_class=Building_N100.data_preparation___waterfeatures_from_begrensningskurve_rivers_buffer___n100_building.value,
-        buffer_distance_or_field="0.1 Meters",
-    )
-
-
-@timing_decorator
-def merge_begrensningskurve_all_water_features():
-    """
-    Summary:
-        Merges water feature buffers from begrensningskurve dataset.
-
-    Details:
-        This function merges buffers representing water bodies and rivers from the begrensningskurve dataset into a single feature class.
-    """
-
-    # Merge begrensningskurve buffers (water bodies and rivers)
-    arcpy.management.Merge(
-        inputs=[
-            Building_N100.data_preparation___waterfeatures_from_begrensningskurve_rivers_buffer___n100_building.value,
-            Building_N100.data_preparation___processed_begrensningskurve___n100_building.value,
-        ],
-        output=Building_N100.data_preparation___merged_begrensningskurve_all_waterbodies___n100_building.value,
-    )
 
 
 @timing_decorator

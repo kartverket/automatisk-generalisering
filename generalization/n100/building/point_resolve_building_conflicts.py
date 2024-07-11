@@ -86,7 +86,7 @@ def resolve_building_conflicts():
         ],
         begrensningskurve: [
             "context",
-            Building_N100.data_preparation___merged_begrensningskurve_all_waterbodies___n100_building.value,
+            Building_N100.data_preparation___processed_begrensningskurve___n100_building.value,
         ],
         building_squares_lyrx: [
             "reference",

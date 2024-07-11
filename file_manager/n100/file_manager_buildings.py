@@ -201,13 +201,6 @@ class Building_N100(Enum):
         description="waterfeatures_from_begrensningskurve_rivers_buffer",
     )
 
-    data_preparation___merged_begrensningskurve_all_waterbodies___n100_building = (
-        file_manager.generate_file_name_gdb(
-            script_source_name=data_preparation,
-            description="merged_begrensningskurve_all_waterbodies",
-        )
-    )
-
     data_preparation___begrensningskurve_buffer_erase_2___n100_building = (
         file_manager.generate_file_name_gdb(
             script_source_name=data_preparation,
