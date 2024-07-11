@@ -6,6 +6,7 @@ import random
 import json
 from typing import Dict, Tuple, Literal
 import time
+from datetime import datetime
 
 import env_setup.global_config
 import config
@@ -764,7 +765,10 @@ class PartitionIterator:
         formatted_total_runtime = self.format_time(total_runtime)
         formatted_estimated_remaining_time = self.format_time(estimated_remaining_time)
 
-        print(f"\nCurrent runtime: {formatted_total_runtime}")
+        current_time_date = datetime.now().strftime("%m-%d %H:%M:%S")
+
+        print(f"\nCurrent time: {current_time_date}")
+        print(f"Current runtime: {formatted_total_runtime}")
         print(f"Estimated remaining time: {formatted_estimated_remaining_time}")
 
     def prepare_io_custom_logic(self):
@@ -1070,25 +1074,25 @@ if __name__ == "__main__":
     }
 
     inputs3 = {
-        roads: [
-            "input",
-            Building_N100.building_point_buffer_displacement__roads_study_area__n100.value,
-        ],
         building_points: [
             "input",
-            Building_N100.building_point_buffer_displacement__buildings_study_area__n100.value,
+            Building_N100.building_point_buffer_displacement___building_points_selection___n100_building.value,
+        ],
+        roads: [
+            "input",
+            Building_N100.data_preparation___unsplit_roads___n100_building.value,
         ],
         river: [
             "context",
-            Building_N100.building_point_buffer_displacement__begrensningskurve_study_area__n100.value,
+            Building_N100.data_preparation___merged_begrensningskurve_all_waterbodies___n100_building.value,
         ],
         urban_area: [
             "context",
-            Building_N100.building_point_buffer_displacement__selection_urban_areas__n100.value,
+            Building_N100.data_preparation___urban_area_selection_n100___n100_building.value,
         ],
         train_stations: [
-            "context",
-            input_n100.JernbaneStasjon,
+            "reference",
+            Building_N100.data_selection___railroad_stations_n100_input_data___n100_building.value,
         ],
         bane: [
             "context",
@@ -1112,7 +1116,7 @@ if __name__ == "__main__":
             1,
         ],
         "bane_station": [
-            ("train_stations", "context"),
+            ("train_stations", "reference"),
             1,
         ],
         "bane_lines": [
