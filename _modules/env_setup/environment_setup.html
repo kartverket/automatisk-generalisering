@@ -79,6 +79,7 @@
   <h1>Source code for env_setup.environment_setup</h1><div class="highlight"><pre>
 <span></span><span class="kn">import</span> <span class="nn">arcpy</span>
 <span class="kn">import</span> <span class="nn">os</span>
+<span class="kn">from</span> <span class="nn">datetime</span> <span class="kn">import</span> <span class="n">datetime</span>
 
 <span class="kn">import</span> <span class="nn">config</span>
 <span class="kn">from</span> <span class="nn">env_setup.global_config</span> <span class="kn">import</span> <span class="p">(</span>
@@ -115,11 +116,40 @@
 <span class="sd">          xy tolerance (0.02 meters), and xy resolution (0.01 meters), parallel processing factor and set the overwrite output flag to True.</span>
 <span class="sd">        - Sets up the project directory structure, including creating geodatabases and layer files directories.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">StartTimePrinter</span><span class="o">.</span><span class="n">print_start_time</span><span class="p">()</span>
     <span class="n">arc_gis_environment_setup</span> <span class="o">=</span> <span class="n">ArcGisEnvironmentSetup</span><span class="p">()</span>
     <span class="n">arc_gis_environment_setup</span><span class="o">.</span><span class="n">setup</span><span class="p">()</span>
 
     <span class="n">directory_setup_instance</span> <span class="o">=</span> <span class="n">ProjectDirectorySetup</span><span class="p">()</span>
     <span class="n">directory_setup_instance</span><span class="o">.</span><span class="n">setup</span><span class="p">()</span></div>
+
+
+
+<div class="viewcode-block" id="StartTimePrinter">
+<a class="viewcode-back" href="../../generated_docs/env_setup.html#env_setup.environment_setup.StartTimePrinter">[docs]</a>
+<span class="k">class</span> <span class="nc">StartTimePrinter</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Prints the start time/date when it is called for the first time.</span>
+
+<span class="sd">    Summary:</span>
+<span class="sd">        This class is responsible for printing the current date and time the first time it is called.</span>
+
+<span class="sd">    Details:</span>
+<span class="sd">        - Uses a class variable to ensure the message is printed only once.</span>
+<span class="sd">        - Prints the current date and time in a readable format.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">_has_printed</span> <span class="o">=</span> <span class="kc">False</span>
+
+<div class="viewcode-block" id="StartTimePrinter.print_start_time">
+<a class="viewcode-back" href="../../generated_docs/env_setup.html#env_setup.environment_setup.StartTimePrinter.print_start_time">[docs]</a>
+    <span class="nd">@classmethod</span>
+    <span class="k">def</span> <span class="nf">print_start_time</span><span class="p">(</span><span class="bp">cls</span><span class="p">):</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="bp">cls</span><span class="o">.</span><span class="n">_has_printed</span><span class="p">:</span>
+            <span class="n">start_time</span> <span class="o">=</span> <span class="n">datetime</span><span class="o">.</span><span class="n">now</span><span class="p">()</span><span class="o">.</span><span class="n">strftime</span><span class="p">(</span><span class="s2">&quot;%Y-%m-</span><span class="si">%d</span><span class="s2"> %H:%M:%S&quot;</span><span class="p">)</span>
+            <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2">Script start time: </span><span class="si">{</span><span class="n">start_time</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+            <span class="bp">cls</span><span class="o">.</span><span class="n">_has_printed</span> <span class="o">=</span> <span class="kc">True</span></div>
+</div>
 
 
 
@@ -160,9 +190,6 @@
 <a class="viewcode-back" href="../../generated_docs/env_setup.html#env_setup.environment_setup.ArcGisEnvironmentSetup.setup">[docs]</a>
     <span class="k">def</span> <span class="nf">setup</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="k">if</span> <span class="n">ArcGisEnvironmentSetup</span><span class="o">.</span><span class="n">_setup_done_globally</span><span class="p">:</span>
-            <span class="nb">print</span><span class="p">(</span>
-                <span class="s2">&quot;</span><span class="se">\n</span><span class="s2">ArcGIS Pro environment setup has already been completed. Skipping.&quot;</span>
-            <span class="p">)</span>
             <span class="k">return</span>
 
         <span class="n">arcpy</span><span class="o">.</span><span class="n">env</span><span class="o">.</span><span class="n">overwriteOutput</span> <span class="o">=</span> <span class="kc">True</span>
@@ -232,7 +259,6 @@
 <a class="viewcode-back" href="../../generated_docs/env_setup.html#env_setup.environment_setup.ProjectDirectorySetup.setup">[docs]</a>
     <span class="k">def</span> <span class="nf">setup</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="k">if</span> <span class="n">ProjectDirectorySetup</span><span class="o">.</span><span class="n">_setup_done_globally</span><span class="p">:</span>
-            <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Global setup has already been completed. Skipping.</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">)</span>
             <span class="k">return</span>
 
         <span class="n">main_directory_path</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">base_directory</span><span class="p">,</span> <span class="n">main_directory_name</span><span class="p">)</span>

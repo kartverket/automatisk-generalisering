@@ -52,6 +52,10 @@
 <li class="toctree-l2"><a class="reference internal" href="#submodules">Submodules</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#module-env_setup.environment_setup">env_setup.environment_setup module</a><ul>
 <li class="toctree-l3"><a class="reference internal" href="#env_setup.environment_setup.main"><code class="docutils literal notranslate"><span class="pre">main()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#env_setup.environment_setup.StartTimePrinter"><code class="docutils literal notranslate"><span class="pre">StartTimePrinter</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#env_setup.environment_setup.StartTimePrinter.print_start_time"><code class="docutils literal notranslate"><span class="pre">StartTimePrinter.print_start_time()</span></code></a></li>
+</ul>
+</li>
 <li class="toctree-l3"><a class="reference internal" href="#env_setup.environment_setup.ArcGisEnvironmentSetup"><code class="docutils literal notranslate"><span class="pre">ArcGisEnvironmentSetup</span></code></a><ul>
 <li class="toctree-l4"><a class="reference internal" href="#env_setup.environment_setup.ArcGisEnvironmentSetup.workspace"><code class="docutils literal notranslate"><span class="pre">ArcGisEnvironmentSetup.workspace</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="#env_setup.environment_setup.ArcGisEnvironmentSetup.spatial_reference"><code class="docutils literal notranslate"><span class="pre">ArcGisEnvironmentSetup.spatial_reference</span></code></a></li>
@@ -126,6 +130,27 @@ xy tolerance (0.02 meters), and xy resolution (0.01 meters), parallel processing
 </ul>
 </dd>
 </dl>
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="env_setup.environment_setup.StartTimePrinter">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">env_setup.environment_setup.</span></span><span class="sig-name descname"><span class="pre">StartTimePrinter</span></span><a class="reference internal" href="../_modules/env_setup/environment_setup.html#StartTimePrinter"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#env_setup.environment_setup.StartTimePrinter" title="Link to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<p>Prints the start time/date when it is called for the first time.</p>
+<dl class="simple">
+<dt>Summary:</dt><dd><p>This class is responsible for printing the current date and time the first time it is called.</p>
+</dd>
+<dt>Details:</dt><dd><ul class="simple">
+<li><p>Uses a class variable to ensure the message is printed only once.</p></li>
+<li><p>Prints the current date and time in a readable format.</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="env_setup.environment_setup.StartTimePrinter.print_start_time">
+<em class="property"><span class="pre">classmethod</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">print_start_time</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/env_setup/environment_setup.html#StartTimePrinter.print_start_time"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#env_setup.environment_setup.StartTimePrinter.print_start_time" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
 </dd></dl>
 
 <dl class="py class">
