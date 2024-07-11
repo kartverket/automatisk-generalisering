@@ -133,6 +133,26 @@ class BaseFileManager:
         self.validate_inputs(script_source_name, description, file_type)
         return rf"{self.relative_path_general_files}\{script_source_name}___{description}___{self.scale}_{self.object}.{file_type}"
 
+    def generate_file_name_general_directory(
+        self,
+        script_source_name: str,
+        description: str,
+        file_type: str,
+    ):
+        """
+        Generates a file path for general files (e.g., CSV, TXT). After validating the input.
+
+        Args:
+            script_source_name (str): The name of the script or source generating the file.
+            description (str): A brief description of the file's purpose or contents.
+            file_type (str): The filetype extension (without dot).
+
+        Returns:
+            str: The absolute path for the general file, including the file extension.
+        """
+        self.validate_inputs(script_source_name, description, file_type)
+        return rf"{self.relative_path_general_files}\{script_source_name}___{description}___{self.scale}_{self.object}"
+
     def generate_file_name_lyrx(
         self,
         script_source_name: str,
