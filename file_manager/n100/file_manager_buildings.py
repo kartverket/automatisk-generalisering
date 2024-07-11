@@ -937,28 +937,28 @@ class Building_N100(Enum):
     #                  POINT DISPLACEMENT WITH BUFFER
     # ========================================
 
-    building_point_buffer_displacement___church_hospital_selection___n100_building = (
+    point_displacement_with_buffer___church_hospital_selection___n100_building = (
         file_manager.generate_file_name_gdb(
             script_source_name=point_displacement_with_buffer,
             description="church_hospital_selection",
         )
     )
 
-    building_point_buffer_displacement___building_points_selection___n100_building = (
+    point_displacement_with_buffer___building_points_selection___n100_building = (
         file_manager.generate_file_name_gdb(
             script_source_name=point_displacement_with_buffer,
             description="building_points_selection",
         )
     )
 
-    building_point_buffer_displacement___root_file___n100_building = (
+    point_displacement_with_buffer___root_file___n100_building = (
         file_manager.generate_file_name_gdb(
             script_source_name=point_displacement_with_buffer,
             description="root_file",
         )
     )
 
-    building_point_buffer_displacement___displaced_building_points___n100_building = (
+    point_displacement_with_buffer___displaced_building_points___n100_building = (
         file_manager.generate_file_name_gdb(
             script_source_name=point_displacement_with_buffer,
             description="displaced_building_points",
@@ -973,54 +973,28 @@ class Building_N100(Enum):
         )
     )
 
-    building_point_buffer_displacement___merged_buffer_displaced_points___n100_building = file_manager.generate_file_name_gdb(
-        script_source_name=point_displacement_with_buffer,
-        description="merged_buffer_displaced_points",
-    )
-
-    building_point_buffer_displacement__roads_study_area__n100 = (
+    point_displacement_with_buffer___merged_buffer_displaced_points___n100_building = (
         file_manager.generate_file_name_gdb(
             script_source_name=point_displacement_with_buffer,
-            description="roads_study_area",
+            description="merged_buffer_displaced_points",
         )
     )
 
-    building_point_buffer_displacement__begrensningskurve_study_area__n100 = (
-        file_manager.generate_file_name_gdb(
-            script_source_name=point_displacement_with_buffer,
-            description="begrensningskurve_study_area",
-        )
-    )
-
-    building_point_buffer_displacement__buildings_study_area__n100 = (
-        file_manager.generate_file_name_gdb(
-            script_source_name=point_displacement_with_buffer,
-            description="buildings_study_area",
-        )
-    )
-
-    building_point_buffer_displacement__selection_urban_areas__n100 = (
-        file_manager.generate_file_name_gdb(
-            script_source_name=point_displacement_with_buffer,
-            description="selection_urban_areas",
-        )
-    )
-
-    building_point_buffer_displacement__iteration_points_to_square_polygons__n100 = (
+    point_displacement_with_buffer__iteration_points_to_square_polygons__n100 = (
         file_manager.generate_file_name_gdb(
             script_source_name=point_displacement_with_buffer,
             description="iteration_points_to_square_polygons",
         )
     )
 
-    building_point_buffer_displacement__displaced_building_points__n100 = (
+    point_displacement_with_buffer__displaced_building_points__n100 = (
         file_manager.generate_file_name_gdb(
             script_source_name=point_displacement_with_buffer,
             description="displaced_building_points",
         )
     )
 
-    removing_overlapping_points___squares_not_overlapping_roads___n100_building = (
+    point_displacement_with_buffer___squares_not_overlapping_roads___n100_building = (
         file_manager.generate_file_name_gdb(
             script_source_name=point_displacement_with_buffer,
             description="squares_not_overlapping_roads",

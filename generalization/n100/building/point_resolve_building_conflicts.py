@@ -66,7 +66,7 @@ def resolve_building_conflicts():
     inputs = {
         building_points: [
             "input",
-            Building_N100.building_point_buffer_displacement___merged_buffer_displaced_points___n100_building.value,
+            Building_N100.point_displacement_with_buffer___merged_buffer_displaced_points___n100_building.value,
         ],
         building_polygons: [
             "input",
@@ -176,7 +176,7 @@ def resolve_building_conflicts():
         root_file_partition_iterator=Building_N100.point_resolve_building_conflicts___root_file___n100_building.value,
         scale=env_setup.global_config.scale_n100,
         dictionary_documentation_path=Building_N100.point_resolve_building_conflicts___documentation___building_n100.value,
-        feature_count="50000",
+        feature_count="150000",
     )
 
     resolve_building_conflicts_partition_iteration.run()
