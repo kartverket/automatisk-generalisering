@@ -282,13 +282,6 @@
         <span class="n">description</span><span class="o">=</span><span class="s2">&quot;waterfeatures_from_begrensningskurve_rivers_buffer&quot;</span><span class="p">,</span>
     <span class="p">)</span>
 
-    <span class="n">data_preparation___merged_begrensningskurve_all_waterbodies___n100_building</span> <span class="o">=</span> <span class="p">(</span>
-        <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_gdb</span><span class="p">(</span>
-            <span class="n">script_source_name</span><span class="o">=</span><span class="n">data_preparation</span><span class="p">,</span>
-            <span class="n">description</span><span class="o">=</span><span class="s2">&quot;merged_begrensningskurve_all_waterbodies&quot;</span><span class="p">,</span>
-        <span class="p">)</span>
-    <span class="p">)</span>
-
     <span class="n">data_preparation___begrensningskurve_buffer_erase_2___n100_building</span> <span class="o">=</span> <span class="p">(</span>
         <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_gdb</span><span class="p">(</span>
             <span class="n">script_source_name</span><span class="o">=</span><span class="n">data_preparation</span><span class="p">,</span>
@@ -1025,28 +1018,28 @@
     <span class="c1">#                  POINT DISPLACEMENT WITH BUFFER</span>
     <span class="c1"># ========================================</span>
 
-    <span class="n">building_point_buffer_displacement___church_hospital_selection___n100_building</span> <span class="o">=</span> <span class="p">(</span>
+    <span class="n">point_displacement_with_buffer___church_hospital_selection___n100_building</span> <span class="o">=</span> <span class="p">(</span>
         <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_gdb</span><span class="p">(</span>
             <span class="n">script_source_name</span><span class="o">=</span><span class="n">point_displacement_with_buffer</span><span class="p">,</span>
             <span class="n">description</span><span class="o">=</span><span class="s2">&quot;church_hospital_selection&quot;</span><span class="p">,</span>
         <span class="p">)</span>
     <span class="p">)</span>
 
-    <span class="n">building_point_buffer_displacement___building_points_selection___n100_building</span> <span class="o">=</span> <span class="p">(</span>
+    <span class="n">point_displacement_with_buffer___building_points_selection___n100_building</span> <span class="o">=</span> <span class="p">(</span>
         <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_gdb</span><span class="p">(</span>
             <span class="n">script_source_name</span><span class="o">=</span><span class="n">point_displacement_with_buffer</span><span class="p">,</span>
             <span class="n">description</span><span class="o">=</span><span class="s2">&quot;building_points_selection&quot;</span><span class="p">,</span>
         <span class="p">)</span>
     <span class="p">)</span>
 
-    <span class="n">building_point_buffer_displacement___root_file___n100_building</span> <span class="o">=</span> <span class="p">(</span>
+    <span class="n">point_displacement_with_buffer___root_file___n100_building</span> <span class="o">=</span> <span class="p">(</span>
         <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_gdb</span><span class="p">(</span>
             <span class="n">script_source_name</span><span class="o">=</span><span class="n">point_displacement_with_buffer</span><span class="p">,</span>
             <span class="n">description</span><span class="o">=</span><span class="s2">&quot;root_file&quot;</span><span class="p">,</span>
         <span class="p">)</span>
     <span class="p">)</span>
 
-    <span class="n">building_point_buffer_displacement___displaced_building_points___n100_building</span> <span class="o">=</span> <span class="p">(</span>
+    <span class="n">point_displacement_with_buffer___displaced_building_points___n100_building</span> <span class="o">=</span> <span class="p">(</span>
         <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_gdb</span><span class="p">(</span>
             <span class="n">script_source_name</span><span class="o">=</span><span class="n">point_displacement_with_buffer</span><span class="p">,</span>
             <span class="n">description</span><span class="o">=</span><span class="s2">&quot;displaced_building_points&quot;</span><span class="p">,</span>
@@ -1061,54 +1054,28 @@
         <span class="p">)</span>
     <span class="p">)</span>
 
-    <span class="n">building_point_buffer_displacement___merged_buffer_displaced_points___n100_building</span> <span class="o">=</span> <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_gdb</span><span class="p">(</span>
-        <span class="n">script_source_name</span><span class="o">=</span><span class="n">point_displacement_with_buffer</span><span class="p">,</span>
-        <span class="n">description</span><span class="o">=</span><span class="s2">&quot;merged_buffer_displaced_points&quot;</span><span class="p">,</span>
-    <span class="p">)</span>
-
-    <span class="n">building_point_buffer_displacement__roads_study_area__n100</span> <span class="o">=</span> <span class="p">(</span>
+    <span class="n">point_displacement_with_buffer___merged_buffer_displaced_points___n100_building</span> <span class="o">=</span> <span class="p">(</span>
         <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_gdb</span><span class="p">(</span>
             <span class="n">script_source_name</span><span class="o">=</span><span class="n">point_displacement_with_buffer</span><span class="p">,</span>
-            <span class="n">description</span><span class="o">=</span><span class="s2">&quot;roads_study_area&quot;</span><span class="p">,</span>
+            <span class="n">description</span><span class="o">=</span><span class="s2">&quot;merged_buffer_displaced_points&quot;</span><span class="p">,</span>
         <span class="p">)</span>
     <span class="p">)</span>
 
-    <span class="n">building_point_buffer_displacement__begrensningskurve_study_area__n100</span> <span class="o">=</span> <span class="p">(</span>
-        <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_gdb</span><span class="p">(</span>
-            <span class="n">script_source_name</span><span class="o">=</span><span class="n">point_displacement_with_buffer</span><span class="p">,</span>
-            <span class="n">description</span><span class="o">=</span><span class="s2">&quot;begrensningskurve_study_area&quot;</span><span class="p">,</span>
-        <span class="p">)</span>
-    <span class="p">)</span>
-
-    <span class="n">building_point_buffer_displacement__buildings_study_area__n100</span> <span class="o">=</span> <span class="p">(</span>
-        <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_gdb</span><span class="p">(</span>
-            <span class="n">script_source_name</span><span class="o">=</span><span class="n">point_displacement_with_buffer</span><span class="p">,</span>
-            <span class="n">description</span><span class="o">=</span><span class="s2">&quot;buildings_study_area&quot;</span><span class="p">,</span>
-        <span class="p">)</span>
-    <span class="p">)</span>
-
-    <span class="n">building_point_buffer_displacement__selection_urban_areas__n100</span> <span class="o">=</span> <span class="p">(</span>
-        <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_gdb</span><span class="p">(</span>
-            <span class="n">script_source_name</span><span class="o">=</span><span class="n">point_displacement_with_buffer</span><span class="p">,</span>
-            <span class="n">description</span><span class="o">=</span><span class="s2">&quot;selection_urban_areas&quot;</span><span class="p">,</span>
-        <span class="p">)</span>
-    <span class="p">)</span>
-
-    <span class="n">building_point_buffer_displacement__iteration_points_to_square_polygons__n100</span> <span class="o">=</span> <span class="p">(</span>
+    <span class="n">point_displacement_with_buffer__iteration_points_to_square_polygons__n100</span> <span class="o">=</span> <span class="p">(</span>
         <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_gdb</span><span class="p">(</span>
             <span class="n">script_source_name</span><span class="o">=</span><span class="n">point_displacement_with_buffer</span><span class="p">,</span>
             <span class="n">description</span><span class="o">=</span><span class="s2">&quot;iteration_points_to_square_polygons&quot;</span><span class="p">,</span>
         <span class="p">)</span>
     <span class="p">)</span>
 
-    <span class="n">building_point_buffer_displacement__displaced_building_points__n100</span> <span class="o">=</span> <span class="p">(</span>
+    <span class="n">point_displacement_with_buffer__displaced_building_points__n100</span> <span class="o">=</span> <span class="p">(</span>
         <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_gdb</span><span class="p">(</span>
             <span class="n">script_source_name</span><span class="o">=</span><span class="n">point_displacement_with_buffer</span><span class="p">,</span>
             <span class="n">description</span><span class="o">=</span><span class="s2">&quot;displaced_building_points&quot;</span><span class="p">,</span>
         <span class="p">)</span>
     <span class="p">)</span>
 
-    <span class="n">removing_overlapping_points___squares_not_overlapping_roads___n100_building</span> <span class="o">=</span> <span class="p">(</span>
+    <span class="n">point_displacement_with_buffer___squares_not_overlapping_roads___n100_building</span> <span class="o">=</span> <span class="p">(</span>
         <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_gdb</span><span class="p">(</span>
             <span class="n">script_source_name</span><span class="o">=</span><span class="n">point_displacement_with_buffer</span><span class="p">,</span>
             <span class="n">description</span><span class="o">=</span><span class="s2">&quot;squares_not_overlapping_roads&quot;</span><span class="p">,</span>
