@@ -1064,6 +1064,34 @@ class Building_N100(Enum):
     #                  POINT RESOLVE BUILDING CONFLICTS
     # ========================================
 
+    point_resolve_building_conflicts___lyrx_root___n100_building = (
+        file_manager.generate_file_lyrx_directory(
+            script_source_name=point_resolve_building_conflicts, description="lyrx_root"
+        )
+    )
+
+    point_resolve_building_conflicts___base_path_for_features___n100_building = (
+        file_manager.generate_file_name_gdb(
+            script_source_name=point_resolve_building_conflicts,
+            description="base_path_for_features",
+        )
+    )
+
+    point_resolve_building_conflicts___root_file___n100_building = (
+        file_manager.generate_file_name_gdb(
+            script_source_name=point_resolve_building_conflicts,
+            description="root_file",
+        )
+    )
+
+    point_resolve_building_conflicts___documentation___building_n100 = (
+        file_manager.generate_file_name_general_files(
+            script_source_name=point_resolve_building_conflicts,
+            description="documentation",
+            file_type="json",
+        )
+    )
+
     point_resolve_building_conflicts___transform_points_to_square_polygons___n100_building = file_manager.generate_file_name_gdb(
         script_source_name=point_resolve_building_conflicts,
         description="transform_points_to_square_polygons",
