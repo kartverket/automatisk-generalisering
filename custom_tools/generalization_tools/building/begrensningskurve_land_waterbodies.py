@@ -15,7 +15,7 @@ class BegrensningskurveLandWaterbodies:
     def __init__(
         self,
         input_begrensningskurve: str,
-        input_land_features: str,
+        input_land_cover_features: str,
         water_feature_buffer_width: int,
         output_begrensningskurve: str,
         water_barrier_buffer_width: int = 30,
@@ -24,7 +24,7 @@ class BegrensningskurveLandWaterbodies:
         root_file: str = None,
     ):
         self.input_begrensningskurve = input_begrensningskurve
-        self.input_land_features = input_land_features
+        self.input_land_cover_features = input_land_cover_features
         self.output_begrensningskurve = output_begrensningskurve
 
         self.write_work_files_to_memory = write_work_files_to_memory
@@ -37,12 +37,19 @@ class BegrensningskurveLandWaterbodies:
         # How wide the water feature buffer will be
         self.water_barrier_buffer_width = water_barrier_buffer_width
 
-        self.waterfeatures_from_begrensningskurve_not_rivers = None
+        self.area_length_ratio_field_name = "area_length_ratio"
+
+        self.waterfeatures_from_begrensningskurve = None
+        self.waterfeatures_from_begrensningskurve_selection = None
         self.land_features_area = None
+        self.water_features_area = None
+        self.water_features_area_narrow = None
+        self.water_features_area_wide = None
         self.selected_land_features = None
         self.land_features_buffer = None
         self.begrensningskurve_waterfeatures_buffer = None
         self.erase_feature_1 = None
+        self.erase_feature_2 = None
 
         self.working_files_list = []
 
@@ -66,36 +73,60 @@ class BegrensningskurveLandWaterbodies:
         else:
             file_location = permanent_file
 
-        self.waterfeatures_from_begrensningskurve_not_rivers = f"{file_location}waterfeatures_from_begrensningskurve_not_rivers_{unique_id}"
+        self.waterfeatures_from_begrensningskurve = (
+            f"{file_location}waterfeatures_from_begrensningskurve_{unique_id}"
+        )
+        self.waterfeatures_from_begrensningskurve_selection = (
+            f"{file_location}waterfeatures_from_begrensningskurve_selection_{unique_id}"
+        )
         self.land_features_area = f"{file_location}land_features_area_{unique_id}"
+        self.water_features_area = f"{file_location}water_features_area_{unique_id}"
         self.selected_land_features = (
             f"{file_location}selected_land_features_{unique_id}"
+        )
+        self.water_features_area_narrow = (
+            f"{file_location}water_features_area_narrow_{unique_id}"
+        )
+        self.water_features_area_wide = (
+            f"{file_location}water_features_area_wide_{unique_id}"
         )
         self.land_features_buffer = f"{file_location}land_features_buffer_{unique_id}"
         self.begrensningskurve_waterfeatures_buffer = (
             f"{file_location}begrensningskurve_waterfeatures_buffer_{unique_id}"
         )
         self.erase_feature_1 = f"{file_location}erase_feature_1{unique_id}"
+        self.erase_feature_2 = f"{file_location}erase_feature_2{unique_id}"
 
         self.working_files_list = [
-            self.waterfeatures_from_begrensningskurve_not_rivers,
+            self.waterfeatures_from_begrensningskurve,
+            self.waterfeatures_from_begrensningskurve_selection,
             self.land_features_area,
+            self.water_features_area,
+            self.water_features_area_narrow,
+            self.water_features_area_wide,
             self.selected_land_features,
             self.land_features_buffer,
             self.begrensningskurve_waterfeatures_buffer,
             self.erase_feature_1,
+            self.erase_feature_2,
         ]
 
     def selections(self):
         if self.write_work_files_to_memory:
             custom_arcpy.select_attribute_and_make_feature_layer(
                 input_layer=self.input_begrensningskurve,
-                expression="objtype = 'Innsjøkant' Or objtype = 'InnsjøkantRegulert' Or objtype = 'Kystkontur'",
-                output_name=self.waterfeatures_from_begrensningskurve_not_rivers,
+                expression="""objtype IN ('Innsjøkant', 'InnsjøkantRegulert', 'Kystkontur', 'ElvBekkKant')""",
+                output_name=self.waterfeatures_from_begrensningskurve,
             )
 
             custom_arcpy.select_attribute_and_make_feature_layer(
-                input_layer=self.input_land_features,
+                input_layer=self.input_land_cover_features,
+                expression="""objtype IN ('ElvBekk', 'Havflate', 'Innsjø', 'InnsjøRegulert')""",
+                output_name=self.water_features_area,
+            )
+
+            custom_arcpy.select_attribute_and_make_feature_layer(
+                input_layer=self.input_land_cover_features,
                 expression="""objtype NOT IN ('ElvBekk', 'Havflate', 'Innsjø', 'InnsjøRegulert')""",
                 output_name=self.land_features_area,
             )
@@ -103,19 +134,25 @@ class BegrensningskurveLandWaterbodies:
             custom_arcpy.select_location_and_make_feature_layer(
                 input_layer=self.land_features_area,
                 overlap_type=custom_arcpy.OverlapType.BOUNDARY_TOUCHES.value,
-                select_features=self.waterfeatures_from_begrensningskurve_not_rivers,
+                select_features=self.waterfeatures_from_begrensningskurve,
                 output_name=self.selected_land_features,
             )
 
         if not self.write_work_files_to_memory:
             custom_arcpy.select_attribute_and_make_permanent_feature(
                 input_layer=self.input_begrensningskurve,
-                expression="objtype = 'Innsjøkant' Or objtype = 'InnsjøkantRegulert' Or objtype = 'Kystkontur'",
-                output_name=self.waterfeatures_from_begrensningskurve_not_rivers,
+                expression="""objtype IN ('Innsjøkant', 'InnsjøkantRegulert', 'Kystkontur', 'ElvBekkKant')""",
+                output_name=self.waterfeatures_from_begrensningskurve,
             )
 
             custom_arcpy.select_attribute_and_make_permanent_feature(
-                input_layer=self.input_land_features,
+                input_layer=self.input_land_cover_features,
+                expression="""objtype IN ('ElvBekk', 'Havflate', 'Innsjø', 'InnsjøRegulert')""",
+                output_name=self.water_features_area,
+            )
+
+            custom_arcpy.select_attribute_and_make_permanent_feature(
+                input_layer=self.input_land_cover_features,
                 expression="""objtype NOT IN ('ElvBekk', 'Havflate', 'Innsjø', 'InnsjøRegulert')""",
                 output_name=self.land_features_area,
             )
@@ -123,8 +160,66 @@ class BegrensningskurveLandWaterbodies:
             custom_arcpy.select_location_and_make_permanent_feature(
                 input_layer=self.land_features_area,
                 overlap_type=custom_arcpy.OverlapType.BOUNDARY_TOUCHES.value,
-                select_features=self.waterfeatures_from_begrensningskurve_not_rivers,
+                select_features=self.waterfeatures_from_begrensningskurve,
                 output_name=self.selected_land_features,
+            )
+
+    def field_management(self):
+        arcpy.management.AddField(
+            in_table=self.water_features_area,
+            field_name=self.area_length_ratio_field_name,
+            field_type="FLOAT",
+        )
+
+        sql_expr = "!shape.area! / !shape.length!"
+        arcpy.management.CalculateField(
+            in_table=self.water_features_area,
+            field=self.area_length_ratio_field_name,
+            expression=sql_expr,
+        )
+
+    def finding_narrow_or_not(self):
+        sql_expression_narrow = f'"{self.area_length_ratio_field_name}" < 100'
+        sql_expression_wide = f'"{self.area_length_ratio_field_name}" >= 100'
+
+        if self.write_work_files_to_memory:
+            custom_arcpy.select_attribute_and_make_feature_layer(
+                input_layer=self.water_features_area,
+                expression=sql_expression_narrow,
+                output_name=self.water_features_area_narrow,
+            )
+
+            custom_arcpy.select_attribute_and_make_feature_layer(
+                input_layer=self.water_features_area,
+                expression=sql_expression_wide,
+                output_name=self.water_features_area_wide,
+            )
+
+            custom_arcpy.select_location_and_make_feature_layer(
+                input_layer=self.waterfeatures_from_begrensningskurve,
+                overlap_type=custom_arcpy.OverlapType.BOUNDARY_TOUCHES.value,
+                select_features=self.water_features_area_wide,
+                output_name=self.waterfeatures_from_begrensningskurve_selection,
+            )
+
+        if not self.write_work_files_to_memory:
+            custom_arcpy.select_attribute_and_make_permanent_feature(
+                input_layer=self.water_features_area,
+                expression=sql_expression_narrow,
+                output_name=self.water_features_area_narrow,
+            )
+
+            custom_arcpy.select_attribute_and_make_permanent_feature(
+                input_layer=self.water_features_area,
+                expression=sql_expression_wide,
+                output_name=self.water_features_area_wide,
+            )
+
+            custom_arcpy.select_location_and_make_permanent_feature(
+                input_layer=self.waterfeatures_from_begrensningskurve,
+                overlap_type=custom_arcpy.OverlapType.BOUNDARY_TOUCHES.value,
+                select_features=self.water_features_area_wide,
+                output_name=self.waterfeatures_from_begrensningskurve_selection,
             )
 
     def creating_buffers(self):
@@ -137,7 +232,7 @@ class BegrensningskurveLandWaterbodies:
         self.water_feature_buffer_width += self.water_barrier_buffer_width
 
         arcpy.analysis.PairwiseBuffer(
-            in_features=self.waterfeatures_from_begrensningskurve_not_rivers,
+            in_features=self.waterfeatures_from_begrensningskurve_selection,
             out_feature_class=self.begrensningskurve_waterfeatures_buffer,
             buffer_distance_or_field=f"{self.water_feature_buffer_width} Meters",
         )
@@ -152,7 +247,16 @@ class BegrensningskurveLandWaterbodies:
         arcpy.analysis.Erase(
             in_features=self.erase_feature_1,
             erase_features=self.land_features_area,
-            out_feature_class=self.output_begrensningskurve,
+            out_feature_class=self.erase_feature_2,
+        )
+
+    def merge_water_features(self):
+        arcpy.management.Merge(
+            inputs=[
+                self.water_features_area_narrow,
+                self.erase_feature_2,
+            ],
+            output=self.output_begrensningskurve,
         )
 
     def delete_working_files(self, *file_paths):
@@ -168,14 +272,17 @@ class BegrensningskurveLandWaterbodies:
             arcpy.management.Delete(feature_class_path)
 
     @partition_io_decorator(
-        input_param_names=["input_begrensningskurve", "input_land_features"],
+        input_param_names=["input_begrensningskurve", "input_land_cover_features"],
         output_param_names=["output_begrensningskurve"],
     )
     def run(self):
         self.reset_temp_files()
         self.selections()
+        self.field_management()
+        self.finding_narrow_or_not()
         self.creating_buffers()
         self.erase_buffers()
+        self.merge_water_features()
         if not self.keep_work_files:
             self.delete_working_files(*self.working_files_list)
 
@@ -183,12 +290,12 @@ class BegrensningskurveLandWaterbodies:
 if __name__ == "__main__":
     environment_setup.main()
     begrensningskurve_land_waterbodies = BegrensningskurveLandWaterbodies(
-        input_begrensningskurve=input_n100.BegrensningsKurve,
-        input_land_features=input_n100.ArealdekkeFlate,
+        input_begrensningskurve=Building_N100.data_selection___begrensningskurve_n100_input_data___n100_building.value,
+        input_land_cover_features=Building_N100.data_selection___land_cover_n100_input_data___n100_building.value,
         water_feature_buffer_width=N100_Values.building_water_intrusion_distance_m.value,
         output_begrensningskurve=Building_N100.begrensingskurve_land_water___begrensingskurve_buffer_in_water___n100_building.value,
         write_work_files_to_memory=False,
-        keep_work_files=False,
+        keep_work_files=True,
         root_file=Building_N100.begrensingskurve_land_water___root_file___n100_building.value,
     )
     begrensningskurve_land_waterbodies.run()

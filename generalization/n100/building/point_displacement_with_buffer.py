@@ -54,13 +54,13 @@ def extracting_churches_hospitals():
     custom_arcpy.select_attribute_and_make_permanent_feature(
         input_layer=Building_N100.hospital_church_clusters___final___n100_building.value,
         expression=church_hospital_sql_expression,
-        output_name=Building_N100.building_point_buffer_displacement___church_hospital_selection___n100_building.value,
+        output_name=Building_N100.point_displacement_with_buffer___church_hospital_selection___n100_building.value,
     )
 
     custom_arcpy.select_attribute_and_make_permanent_feature(
         input_layer=Building_N100.hospital_church_clusters___final___n100_building.value,
         expression=church_hospital_sql_expression,
-        output_name=Building_N100.building_point_buffer_displacement___building_points_selection___n100_building.value,
+        output_name=Building_N100.point_displacement_with_buffer___building_points_selection___n100_building.value,
         inverted=True,
     )
 
@@ -77,7 +77,7 @@ def buffer_displacement():
     inputs = {
         building_points: [
             "input",
-            Building_N100.building_point_buffer_displacement___building_points_selection___n100_building.value,
+            Building_N100.point_displacement_with_buffer___building_points_selection___n100_building.value,
         ],
         roads: [
             "input",
@@ -85,7 +85,7 @@ def buffer_displacement():
         ],
         river: [
             "context",
-            Building_N100.data_preparation___merged_begrensningskurve_all_waterbodies___n100_building.value,
+            Building_N100.data_preparation___processed_begrensningskurve___n100_building.value,
         ],
         urban_area: [
             "context",
@@ -93,18 +93,18 @@ def buffer_displacement():
         ],
         train_stations: [
             "context",
-            input_n100.JernbaneStasjon,
+            Building_N100.data_selection___railroad_stations_n100_input_data___n100_building.value,
         ],
         bane: [
             "context",
-            input_n100.Bane,
+            Building_N100.data_selection___railroad_tracks_n100_input_data___n100_building.value,
         ],
     }
 
     outputs = {
         building_points: [
             "buffer_displacement",
-            Building_N100.building_point_buffer_displacement___displaced_building_points___n100_building.value,
+            Building_N100.point_displacement_with_buffer___displaced_building_points___n100_building.value,
         ],
     }
     misc_objects = {
@@ -135,7 +135,7 @@ def buffer_displacement():
             "input_misc_objects": misc_objects,
             "output_building_points": ("building_points", "buffer_displacement"),
             "sql_selection_query": N100_SQLResources.road_symbology_size_sql_selection.value,
-            "root_file": Building_N100.building_point_buffer_displacement___root_file___n100_building.value,
+            "root_file": Building_N100.point_displacement_with_buffer___root_file___n100_building.value,
             "building_symbol_dimensions": N100_Symbology.building_symbol_dimensions.value,
             "buffer_displacement_meter": N100_Values.buffer_clearance_distance_m.value,
             "write_work_files_to_memory": False,
@@ -147,7 +147,7 @@ def buffer_displacement():
         alias_path_data=inputs,
         alias_path_outputs=outputs,
         custom_functions=[buffer_displacement_config],
-        root_file_partition_iterator=Building_N100.building_point_buffer_displacement___root_file___n100_building.value,
+        root_file_partition_iterator=Building_N100.point_displacement_with_buffer___root_file___n100_building.value,
         scale=env_setup.global_config.scale_n100,
         dictionary_documentation_path=Building_N100.point_displacement_with_buffer___documentation___building_n100.value,
         feature_count="1400000",
@@ -160,10 +160,10 @@ def buffer_displacement():
 def merge_church_hospitals_buffer_displaced_points():
     arcpy.management.Merge(
         inputs=[
-            Building_N100.building_point_buffer_displacement___church_hospital_selection___n100_building.value,
-            Building_N100.building_point_buffer_displacement___displaced_building_points___n100_building.value,
+            Building_N100.point_displacement_with_buffer___church_hospital_selection___n100_building.value,
+            Building_N100.point_displacement_with_buffer___displaced_building_points___n100_building.value,
         ],
-        output=Building_N100.building_point_buffer_displacement___merged_buffer_displaced_points___n100_building.value,
+        output=Building_N100.point_displacement_with_buffer___merged_buffer_displaced_points___n100_building.value,
     )
 
 

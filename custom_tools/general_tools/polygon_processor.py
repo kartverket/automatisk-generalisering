@@ -334,8 +334,8 @@ if __name__ == "__main__":
 
     # Example parameters - replace these with actual values suitable for your test
     polygon_processor = PolygonProcessor(
-        input_building_points=Building_N100.building_point_buffer_displacement__buildings_study_area__n100.value,
-        output_polygon_feature_class=Building_N100.building_point_buffer_displacement__iteration_points_to_square_polygons__n100.value,
+        input_building_points=Building_N100.calculate_point_values___points_going_into_propagate_displacement___n100_building.value,
+        output_polygon_feature_class=Building_N100.point_displacement_with_buffer__iteration_points_to_square_polygons__n100.value,
         building_symbol_dimensions=N100_Symbology.building_symbol_dimensions.value,
         symbol_field_name="symbol_val",
         index_field_name="OBJECTID",

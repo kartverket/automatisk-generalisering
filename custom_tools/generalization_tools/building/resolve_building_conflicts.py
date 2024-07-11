@@ -429,7 +429,7 @@ class ResolveBuildingConflicts:
 if __name__ == "__main__":
     resolve_building_conflicts = ResolveBuildingConflicts(
         building_inputs={
-            "building_points": Building_N100.building_point_buffer_displacement___merged_buffer_displaced_points___n100_building.value,
+            "building_points": Building_N100.point_displacement_with_buffer___merged_buffer_displaced_points___n100_building.value,
             "building_polygons": Building_N100.polygon_resolve_building_conflicts___building_polygons_final___n100_building.value,
         },
         building_gap_distance=30,

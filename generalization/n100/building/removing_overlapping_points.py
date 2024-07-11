@@ -228,13 +228,13 @@ def remove_points_that_are_overlapping_roads():
         input_layer=Building_N100.removing_overlapping_points___points_to_squares___n100_building.value,
         overlap_type=custom_arcpy.OverlapType.INTERSECT,
         select_features=Building_N100.polygon_resolve_building_conflicts___merged_road_buffers___n100_building.value,
-        output_name=Building_N100.removing_overlapping_points___squares_not_overlapping_roads___n100_building.value,
+        output_name=Building_N100.point_displacement_with_buffer___squares_not_overlapping_roads___n100_building.value,
         inverted=True,
     )
 
     # Polygon to point to transform squares back to points
     arcpy.management.FeatureToPoint(
-        in_features=Building_N100.removing_overlapping_points___squares_not_overlapping_roads___n100_building.value,
+        in_features=Building_N100.point_displacement_with_buffer___squares_not_overlapping_roads___n100_building.value,
         out_feature_class=Building_N100.removing_overlapping_points___squares_back_to_points___n100_building.value,
     )
 

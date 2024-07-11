@@ -66,7 +66,7 @@ def resolve_building_conflicts():
     inputs = {
         building_points: [
             "input",
-            Building_N100.building_point_buffer_displacement___merged_buffer_displaced_points___n100_building.value,
+            Building_N100.point_displacement_with_buffer___merged_buffer_displaced_points___n100_building.value,
         ],
         building_polygons: [
             "input",
@@ -86,7 +86,7 @@ def resolve_building_conflicts():
         ],
         begrensningskurve: [
             "context",
-            Building_N100.data_preparation___merged_begrensningskurve_all_waterbodies___n100_building.value,
+            Building_N100.data_preparation___processed_begrensningskurve___n100_building.value,
         ],
         building_squares_lyrx: [
             "reference",
@@ -159,11 +159,11 @@ def resolve_building_conflicts():
             "base_path_for_features": Building_N100.point_resolve_building_conflicts___base_path_for_features___n100_building.value,
             "output_files": {
                 "building_points": (
-                    Building_N100.point_resolve_building_conflicts___POINT_OUTPUT__n100_building.value,
+                    building_points,
                     "building_points_after_rbc",
                 ),
                 "building_polygons": (
-                    Building_N100.point_resolve_building_conflicts___POLYGON_OUTPUT__n100_building.value,
+                    building_polygons,
                     "building_polygons_after_rbc",
                 ),
             },
@@ -176,7 +176,7 @@ def resolve_building_conflicts():
         root_file_partition_iterator=Building_N100.point_resolve_building_conflicts___root_file___n100_building.value,
         scale=env_setup.global_config.scale_n100,
         dictionary_documentation_path=Building_N100.point_resolve_building_conflicts___documentation___building_n100.value,
-        feature_count="50000",
+        feature_count="150000",
     )
 
     resolve_building_conflicts_partition_iteration.run()
