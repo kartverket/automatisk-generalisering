@@ -405,6 +405,7 @@ class ResolveBuildingConflicts:
         input_param_names=[
             "building_inputs",
             "barrier_inputs",
+            "lyrx_files",
         ],
         output_param_names=["output_files"],
     )
