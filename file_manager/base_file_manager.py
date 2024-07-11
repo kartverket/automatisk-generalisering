@@ -171,6 +171,24 @@ class BaseFileManager:
         self.validate_inputs(script_source_name, description)
         return rf"{self.relative_path_lyrx}\{script_source_name}___{description}___{self.scale}_{self.object}.lyrx"
 
+    def generate_file_lyrx_directory(
+        self,
+        script_source_name: str,
+        description: str,
+    ):
+        """
+        Generates a file path for ArcGIS layer files (.lyrx). After validating the input.
+
+        Args:
+            script_source_name (str): The name of the script or source generating the file.
+            description (str): A brief description of the layer file's purpose or contents.
+
+        Returns:
+            str: The absolute path for the .lyrx file.
+        """
+        self.validate_inputs(script_source_name, description)
+        return rf"{self.relative_path_lyrx}\{script_source_name}___{description}___{self.scale}_{self.object}"
+
     def generate_final_outputs(
         self,
         file_name: str,
