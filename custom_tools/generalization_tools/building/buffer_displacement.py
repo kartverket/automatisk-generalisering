@@ -310,11 +310,11 @@ if __name__ == "__main__":
             1,
         ],
         "bane_station": [
-            input_n100.JernbaneStasjon,
+            Building_N100.data_selection___railroad_stations_n100_input_data___n100_building.value,
             1,
         ],
         "bane_lines": [
-            input_n100.Bane,
+            Building_N100.data_selection___railroad_tracks_n100_input_data___n100_building.value,
             1,
         ],
     }
