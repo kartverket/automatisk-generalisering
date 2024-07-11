@@ -1,5 +1,6 @@
 import arcpy
 import os
+from datetime import datetime
 
 import config
 from env_setup.global_config import (
@@ -34,11 +35,34 @@ def main():
           xy tolerance (0.02 meters), and xy resolution (0.01 meters), parallel processing factor and set the overwrite output flag to True.
         - Sets up the project directory structure, including creating geodatabases and layer files directories.
     """
+    StartTimePrinter.print_start_time()
     arc_gis_environment_setup = ArcGisEnvironmentSetup()
     arc_gis_environment_setup.setup()
 
     directory_setup_instance = ProjectDirectorySetup()
     directory_setup_instance.setup()
+
+
+class StartTimePrinter:
+    """
+    Prints the start time/date when it is called for the first time.
+
+    Summary:
+        This class is responsible for printing the current date and time the first time it is called.
+
+    Details:
+        - Uses a class variable to ensure the message is printed only once.
+        - Prints the current date and time in a readable format.
+    """
+
+    _has_printed = False
+
+    @classmethod
+    def print_start_time(cls):
+        if not cls._has_printed:
+            start_time = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+            print(f"\nScript start time: {start_time}")
+            cls._has_printed = True
 
 
 class ArcGisEnvironmentSetup:
@@ -74,9 +98,6 @@ class ArcGisEnvironmentSetup:
 
     def setup(self):
         if ArcGisEnvironmentSetup._setup_done_globally:
-            print(
-                "\nArcGIS Pro environment setup has already been completed. Skipping."
-            )
             return
 
         arcpy.env.overwriteOutput = True
@@ -140,7 +161,6 @@ class ProjectDirectorySetup:
 
     def setup(self):
         if ProjectDirectorySetup._setup_done_globally:
-            print("Global setup has already been completed. Skipping.\n")
             return
 
         main_directory_path = os.path.join(self.base_directory, main_directory_name)
