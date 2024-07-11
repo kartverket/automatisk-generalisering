@@ -445,8 +445,8 @@ if __name__ == "__main__":
             "railway_station": input_symbology.SymbologyN100.railway_station_squares.value,
             "railway": input_symbology.SymbologyN100.railway.value,
         },
-        base_path_for_lyrx=r"C:\\writing_lyrx_from_rbc_to_this_folder\\",
-        base_path_for_features=r"C:\\Users\helmar\Documents\\ArcGIS\\Projects\rbc_testing_outputs.gdb\\",
+        base_path_for_lyrx=Building_N100.point_resolve_building_conflicts___lyrx_root___n100_building.value,
+        base_path_for_features=Building_N100.point_resolve_building_conflicts___base_path_for_features___n100_building.value,
         output_files={
             "building_points": Building_N100.point_resolve_building_conflicts___POINT_OUTPUT__n100_building.value,
             "building_polygons": Building_N100.point_resolve_building_conflicts___POLYGON_OUTPUT__n100_building.value,

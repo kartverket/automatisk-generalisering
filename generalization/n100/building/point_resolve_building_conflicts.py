@@ -16,6 +16,7 @@ from custom_tools.generalization_tools.building.resolve_building_conflicts impor
     ResolveBuildingConflicts,
 )
 
+
 # Importing environment settings
 import env_setup.global_config
 
@@ -132,7 +133,7 @@ def resolve_building_conflicts():
                 "building_points": (building_points, "input"),
                 "building_polygons": (building_polygons, "input"),
             },
-            "building_gap_distance": 45,
+            "building_gap_distance": N100_Values.buffer_clearance_distance_m.value,
             "barrier_inputs": {
                 "begrensningskurve": (begrensningskurve, "context"),
                 "road": (road, "context"),
@@ -140,10 +141,10 @@ def resolve_building_conflicts():
                 "railway": (railway, "context"),
             },
             "barrier_gap_distances": {
-                "begrensningskurve": 45,
-                "road": 45,
-                "railway_station": 45,
-                "railway": 45,
+                "begrensningskurve": N100_Values.rbc_barrier_clearance_distance_m.value,
+                "road": N100_Values.rbc_barrier_clearance_distance_m.value,
+                "railway_station": N100_Values.rbc_barrier_clearance_distance_m.value,
+                "railway": N100_Values.rbc_barrier_clearance_distance_m.value,
             },
             "building_symbol_dimension": N100_Symbology.building_symbol_dimensions.value,
             "lyrx_files": {
@@ -156,19 +157,18 @@ def resolve_building_conflicts():
             },
             "base_path_for_lyrx": Building_N100.point_resolve_building_conflicts___lyrx_root___n100_building.value,
             "base_path_for_features": Building_N100.point_resolve_building_conflicts___base_path_for_features___n100_building.value,
-        },
-        "output_files": {
-            "building_points": (
-                Building_N100.point_resolve_building_conflicts___POINT_OUTPUT__n100_building.value,
-                "output",
-            ),
-            "building_polgyons": (
-                Building_N100.point_resolve_building_conflicts___POLYGON_OUTPUT__n100_building.value,
-                "output",
-            ),
+            "output_files": {
+                "building_points": (
+                    Building_N100.point_resolve_building_conflicts___POINT_OUTPUT__n100_building.value,
+                    "building_points_after_rbc",
+                ),
+                "building_polygons": (
+                    Building_N100.point_resolve_building_conflicts___POLYGON_OUTPUT__n100_building.value,
+                    "building_polygons_after_rbc",
+                ),
+            },
         },
     }
-
     resolve_building_conflicts_partition_iteration = PartitionIterator(
         alias_path_data=inputs,
         alias_path_outputs=outputs,
