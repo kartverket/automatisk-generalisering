@@ -20,6 +20,7 @@ from input_data import input_symbology
 
 # Importing timing decorator
 from custom_tools.decorators.timing_decorator import timing_decorator
+from custom_tools.decorators.partition_io_decorator import partition_io_decorator
 
 
 class ResolveBuildingConflicts:
@@ -400,6 +401,13 @@ class ResolveBuildingConflicts:
         if arcpy.Exists(feature_class_path):
             arcpy.management.Delete(feature_class_path)
 
+    @partition_io_decorator(
+        input_param_names=[
+            "building_inputs",
+            "barrier_inputs",
+        ],
+        output_param_names=["output_files"],
+    )
     def run(self):
         environment_setup.main()
         self.building_points_to_squares()
