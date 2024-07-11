@@ -159,11 +159,11 @@ def resolve_building_conflicts():
             "base_path_for_features": Building_N100.point_resolve_building_conflicts___base_path_for_features___n100_building.value,
             "output_files": {
                 "building_points": (
-                    Building_N100.point_resolve_building_conflicts___POINT_OUTPUT__n100_building.value,
+                    building_points,
                     "building_points_after_rbc",
                 ),
                 "building_polygons": (
-                    Building_N100.point_resolve_building_conflicts___POLYGON_OUTPUT__n100_building.value,
+                    building_polygons,
                     "building_polygons_after_rbc",
                 ),
             },
