@@ -93,7 +93,7 @@ def begrensningskurve_land_and_water_bodies():
             Building_N100.data_selection___begrensningskurve_n100_input_data___n100_building.value,
         ],
         land_cover: [
-            "context",
+            "input",
             Building_N100.data_selection___land_cover_n100_input_data___n100_building.value,
         ],
     }
@@ -110,7 +110,7 @@ def begrensningskurve_land_and_water_bodies():
         "method": "run",
         "params": {
             "input_begrensningskurve": (begrensningskurve, "input"),
-            "input_land_cover_features": (land_cover, "context"),
+            "input_land_cover_features": (land_cover, "input"),
             "water_feature_buffer_width": N100_Values.building_water_intrusion_distance_m.value,
             "output_begrensningskurve": (
                 f"{begrensningskurve}",
