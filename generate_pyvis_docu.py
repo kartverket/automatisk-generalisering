@@ -21,7 +21,7 @@ def analyze_project(root_dir):
     dependencies = {}
     for subdir, _, files in os.walk(root_dir):
         for file in files:
-            if file.endswith(".py"):
+            if file.endswith(".py") and file != "__init__.py":
                 full_path = os.path.relpath(os.path.join(subdir, file), root_dir)
                 dependencies[full_path] = find_imports(os.path.join(subdir, file))
     return dependencies
@@ -50,7 +50,9 @@ def identify_external_libraries(root_dir, imports):
 def create_dependency_graph(
     dependencies, external_libs, output_file="dependency_graph.html"
 ):
-    net = Network(height="750px", width="100%", bgcolor="#222222", font_color="white")
+    net = Network(height="1500px", width="100%", bgcolor="#222222", font_color="white")
+
+    net.barnes_hut()
 
     # Add all nodes first
     for file in dependencies.keys():
