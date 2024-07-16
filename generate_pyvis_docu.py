@@ -19,12 +19,16 @@ def find_imports(filepath):
 
 def analyze_project(root_dir):
     dependencies = {}
+    all_imports = set()
     for subdir, _, files in os.walk(root_dir):
         for file in files:
             if file.endswith(".py") and file != "__init__.py":
                 full_path = os.path.relpath(os.path.join(subdir, file), root_dir)
-                dependencies[full_path] = find_imports(os.path.join(subdir, file))
-    return dependencies
+                file_imports = find_imports(os.path.join(subdir, file))
+                dependencies[full_path] = file_imports
+                all_imports.update(file_imports)
+                print(f"{full_path}: {file_imports}")
+    return dependencies, all_imports
 
 
 def identify_external_libraries(root_dir, imports):
@@ -57,7 +61,7 @@ def create_dependency_graph(
     # Add all nodes first
     for file in dependencies.keys():
         net.add_node(file, label=file)
-        # print(f"Added node: {file}")
+        print(f"Added node: {file}")
 
     # Add edges for dependencies that exist as nodes and are not external libraries
     for file, deps in dependencies.items():
@@ -66,29 +70,33 @@ def create_dependency_graph(
                 dep_file = find_file_path(dep, dependencies.keys())
                 if dep_file:
                     net.add_edge(file, dep_file)
-                    # print(f"Added edge from {file} to {dep_file}")
-                # else:
-                # print(f"Dependency {dep} not found for {file}")
+                    print(f"Added edge from {file} to {dep_file}")
+                else:
+                    print(f"Dependency {dep} not found for {file}")
 
     # Use save_graph to generate the HTML file
     net.save_graph(output_file)
-    print(output_file)
+    print(f"Graph saved to {output_file}")
 
 
 def find_file_path(module_name, files):
-    module_name = module_name.replace(".", "/")
-    for file in files:
-        if file.endswith(f"{module_name}.py") or file.endswith(
-            f"{module_name}/__init__.py"
-        ):
-            return file
+    module_parts = module_name.split(".")
+    for i in range(len(module_parts), 0, -1):
+        module_path = "/".join(module_parts[:i])
+        possible_files = [
+            f
+            for f in files
+            if f.startswith(module_path)
+            and (f.endswith(".py") or f.endswith("/__init__.py"))
+        ]
+        if possible_files:
+            return possible_files[0]
     return None
 
 
 if __name__ == "__main__":
     root_dir = os.path.dirname(os.path.abspath(__file__))
-    all_imports = analyze_project(root_dir)
+    dependencies, all_imports = analyze_project(root_dir)
     external_libs = identify_external_libraries(root_dir, all_imports)
     print(f"External libraries: {external_libs}")
-    dependencies = analyze_project(root_dir)
     create_dependency_graph(dependencies, external_libs)
