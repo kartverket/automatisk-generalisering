@@ -1,0 +1,7 @@
+generate\_pyvis\_docu module
+============================
+
+.. automodule:: generate_pyvis_docu
+   :members:
+   :undoc-members:
+   :show-inheritance:

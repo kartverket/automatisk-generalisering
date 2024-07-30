@@ -10,4 +10,5 @@ automatisk-generalisering
    env_setup
    file_manager
    generalization
+   generate_pyvis_docu
    input_data
