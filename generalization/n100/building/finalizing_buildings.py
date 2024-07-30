@@ -34,7 +34,7 @@ def removing_points_in_and_close_to_urban_areas():
 
     # Selecting building points that are further away than 50 Meters from urban areas
     custom_arcpy.select_location_and_make_permanent_feature(
-        input_layer=Building_N100.removing_overlapping_points___final___n100_building.value,
+        input_layer=Building_N100.removing_overlapping_polygons_and_points___final___n100_building.value,
         overlap_type=custom_arcpy.OverlapType.WITHIN_A_DISTANCE,
         select_features=Building_N100.finalizing_buildings___urban_areas___n100_building.value,
         search_distance="50 Meters",
@@ -44,7 +44,7 @@ def removing_points_in_and_close_to_urban_areas():
 
     # Selecting building points that are CLOSE to urban areas
     custom_arcpy.select_location_and_make_permanent_feature(
-        input_layer=Building_N100.removing_overlapping_points___merging_final_points___n100_building.value,
+        input_layer=Building_N100.removing_overlapping_polygons_and_points___merging_final_points___n100_building.value,
         overlap_type=custom_arcpy.OverlapType.WITHIN_A_DISTANCE,
         select_features=Building_N100.finalizing_buildings___urban_areas___n100_building.value,
         search_distance="50 Meters",
@@ -89,7 +89,7 @@ def selecting_all_tourist_cabins():
 
 def building_polygons_to_line():
     arcpy.management.PolygonToLine(
-        in_features=Building_N100.point_resolve_building_conflicts___building_polygons_final___n100_building.value,
+        in_features=Building_N100.removing_overlapping_polygons_and_points___polygons_NOT_intersecting_road_buffers___n100_building.value,
         out_feature_class=Building_N100.finalizing_buildings___polygon_to_line___n100_building.value,
         neighbor_option="IDENTIFY_NEIGHBORS",
     ),
@@ -116,7 +116,7 @@ def assigning_final_file_names():
     )
 
     arcpy.management.CopyFeatures(
-        Building_N100.removing_points_and_erasing_polygons_in_water_features___final_building_polygons_merged___n100_building.value,
+        Building_N100.removing_overlapping_polygons_and_points___polygons_NOT_intersecting_road_buffers___n100_building.value,
         Building_N100.Grunnriss.value,
     )
 
