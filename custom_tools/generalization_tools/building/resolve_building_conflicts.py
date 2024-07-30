@@ -457,8 +457,8 @@ if __name__ == "__main__":
         base_path_for_lyrx=Building_N100.point_resolve_building_conflicts___lyrx_root___n100_building.value,
         base_path_for_features=Building_N100.point_resolve_building_conflicts___base_path_for_features___n100_building.value,
         output_files={
-            "building_points": Building_N100.point_resolve_building_conflicts___POINT_OUTPUT__n100_building.value,
-            "building_polygons": Building_N100.point_resolve_building_conflicts___POLYGON_OUTPUT__n100_building.value,
+            "building_points": Building_N100.point_resolve_building_conflicts___POINT_OUTPUT___n100_building.value,
+            "building_polygons": Building_N100.point_resolve_building_conflicts___POLYGON_OUTPUT___n100_building.value,
         },
     )
 
