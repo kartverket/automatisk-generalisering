@@ -34,7 +34,7 @@ def main():
     environment_setup.main()
     data_selection()
     begrensningskurve_land_and_water_bodies()
-    unsplit_roads()
+    unsplit_roads_and_make_buffer()
     railway_station_points_to_polygons()
     selecting_urban_areas_by_sql()
     adding_matrikkel_points_to_areas_that_are_no_longer_urban_in_n100()
@@ -65,7 +65,7 @@ def data_selection():
     selector = StudyAreaSelector(
         input_output_file_dict=input_output_file_dict,
         selecting_file=input_n100.AdminFlate,
-        selecting_sql_expression="navn IN ('Asker', 'Oslo', 'Trondheim', 'Ringerike')",
+        selecting_sql_expression="navn IN ('Trondheim')",
         select_local=config.select_study_area,
     )
 
@@ -135,7 +135,7 @@ def begrensningskurve_land_and_water_bodies():
 
 
 @timing_decorator
-def unsplit_roads():
+def unsplit_roads_and_make_buffer():
     """
     Summary:
         Unsplits road features.

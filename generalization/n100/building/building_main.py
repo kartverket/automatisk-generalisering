@@ -19,7 +19,7 @@ from generalization.n100.building import (
 )
 from generalization.n100.building import data_clean_up
 from generalization.n100.building import polygon_resolve_building_conflicts
-from generalization.n100.building import removing_overlapping_points
+from generalization.n100.building import removing_overlapping_polygons_and_points
 from generalization.n100.building import finalizing_buildings
 
 
@@ -40,7 +40,7 @@ def main():
     point_displacement_with_buffer.main()
     point_resolve_building_conflicts.main()
     removing_points_and_erasing_polygons_in_water_features.main()
-    removing_overlapping_points.main()
+    removing_overlapping_polygons_and_points.main()
     finalizing_buildings.main()
     data_clean_up.main()
 
