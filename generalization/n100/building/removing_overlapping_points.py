@@ -227,7 +227,7 @@ def remove_points_that_are_overlapping_roads():
     custom_arcpy.select_location_and_make_permanent_feature(
         input_layer=Building_N100.removing_overlapping_points___points_to_squares___n100_building.value,
         overlap_type=custom_arcpy.OverlapType.INTERSECT,
-        select_features=Building_N100.polygon_resolve_building_conflicts___merged_road_buffers___n100_building.value,
+        select_features=Building_N100.data_preparation___road_symbology_buffers___n100_building.value,
         output_name=Building_N100.point_displacement_with_buffer___squares_not_overlapping_roads___n100_building.value,
         inverted=True,
     )

@@ -215,6 +215,20 @@ class Building_N100(Enum):
         )
     )
 
+    data_preparation___road_symbology_buffers___n100_building = (
+        file_manager.generate_file_name_gdb(
+            script_source_name=data_preparation,
+            description="road_symbology_buffers",
+        )
+    )
+
+    data_preparation___root_file_line_symbology___n100_building = (
+        file_manager.generate_file_name_gdb(
+            script_source_name=data_preparation,
+            description="root_file_line_symbology",
+        )
+    )
+
     data_preparation___urban_area_selection_n100___n100_building = (
         file_manager.generate_file_name_gdb(
             script_source_name=data_preparation,
@@ -503,6 +517,11 @@ class Building_N100(Enum):
         description="roads_500m_from_displaced_polygon",
     )
 
+    polygon_resolve_building_conflicts___railroads_500m_from_displaced_polygon___n100_building = file_manager.generate_file_name_gdb(
+        script_source_name=polygon_resolve_building_conflicts,
+        description="railroads_500m_from_displaced_polygon",
+    )
+
     polygon_resolve_building_conflicts___building_polygon___n100_building_lyrx = (
         file_manager.generate_file_name_lyrx(
             script_source_name=polygon_resolve_building_conflicts,
@@ -576,13 +595,6 @@ class Building_N100(Enum):
         file_manager.generate_file_name_gdb(
             script_source_name=polygon_resolve_building_conflicts,
             description="road_buffers",
-        )
-    )
-
-    polygon_resolve_building_conflicts___merged_road_buffers___n100_building = (
-        file_manager.generate_file_name_gdb(
-            script_source_name=polygon_resolve_building_conflicts,
-            description="merged_road_buffers",
         )
     )
 
