@@ -103,7 +103,7 @@
 <span class="n">removing_points_and_erasing_polygons_in_water_features</span> <span class="o">=</span> <span class="p">(</span>
     <span class="s2">&quot;removing_points_and_erasing_polygons_in_water_features&quot;</span>
 <span class="p">)</span>
-<span class="n">removing_overlapping_points</span> <span class="o">=</span> <span class="s2">&quot;removing_overlapping_points&quot;</span>
+<span class="n">removing_overlapping_polygons_and_points</span> <span class="o">=</span> <span class="s2">&quot;removing_overlapping_polygons_and_points&quot;</span>
 <span class="n">hospital_church_clusters</span> <span class="o">=</span> <span class="s2">&quot;hospital_church_clusters&quot;</span>
 <span class="n">point_displacement_with_buffer</span> <span class="o">=</span> <span class="s2">&quot;point_displacement_with_buffer&quot;</span>
 <span class="n">point_resolve_building_conflicts</span> <span class="o">=</span> <span class="s2">&quot;point_resolve_building_conflicts&quot;</span>
@@ -930,97 +930,102 @@
     <span class="c1">#                REMOVING OVERLAPPING POINTS</span>
     <span class="c1"># ========================================</span>
 
-    <span class="n">removing_overlapping_points___graphic_conflicts_polygon___n100_building</span> <span class="o">=</span> <span class="p">(</span>
-        <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_gdb</span><span class="p">(</span>
-            <span class="n">script_source_name</span><span class="o">=</span><span class="n">removing_overlapping_points</span><span class="p">,</span>
-            <span class="n">description</span><span class="o">=</span><span class="s2">&quot;graphic_conflicts_polygon&quot;</span><span class="p">,</span>
-        <span class="p">)</span>
+    <span class="n">removing_overlapping_polygons_and_points___graphic_conflicts_polygon___n100_building</span> <span class="o">=</span> <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_gdb</span><span class="p">(</span>
+        <span class="n">script_source_name</span><span class="o">=</span><span class="n">removing_overlapping_polygons_and_points</span><span class="p">,</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">&quot;graphic_conflicts_polygon&quot;</span><span class="p">,</span>
     <span class="p">)</span>
 
-    <span class="n">removing_overlapping_points___points_close_to_graphic_conflict_polygons___n100_building</span> <span class="o">=</span> <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_gdb</span><span class="p">(</span>
-        <span class="n">script_source_name</span><span class="o">=</span><span class="n">removing_overlapping_points</span><span class="p">,</span>
+    <span class="n">removing_overlapping_polygons_and_points___points_close_to_graphic_conflict_polygons___n100_building</span> <span class="o">=</span> <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_gdb</span><span class="p">(</span>
+        <span class="n">script_source_name</span><span class="o">=</span><span class="n">removing_overlapping_polygons_and_points</span><span class="p">,</span>
         <span class="n">description</span><span class="o">=</span><span class="s2">&quot;points_close_to_graphic_conflict_polygons&quot;</span><span class="p">,</span>
     <span class="p">)</span>
 
-    <span class="n">removing_overlapping_points___point_clusters___n100_building</span> <span class="o">=</span> <span class="p">(</span>
+    <span class="n">removing_overlapping_polygons_and_points___point_clusters___n100_building</span> <span class="o">=</span> <span class="p">(</span>
         <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_gdb</span><span class="p">(</span>
-            <span class="n">script_source_name</span><span class="o">=</span><span class="n">removing_overlapping_points</span><span class="p">,</span>
+            <span class="n">script_source_name</span><span class="o">=</span><span class="n">removing_overlapping_polygons_and_points</span><span class="p">,</span>
             <span class="n">description</span><span class="o">=</span><span class="s2">&quot;point_clusters&quot;</span><span class="p">,</span>
         <span class="p">)</span>
     <span class="p">)</span>
 
-    <span class="n">removing_overlapping_points___all_building_points___n100_building</span> <span class="o">=</span> <span class="p">(</span>
+    <span class="n">removing_overlapping_polygons_and_points___all_building_points___n100_building</span> <span class="o">=</span> <span class="p">(</span>
         <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_gdb</span><span class="p">(</span>
-            <span class="n">script_source_name</span><span class="o">=</span><span class="n">removing_overlapping_points</span><span class="p">,</span>
+            <span class="n">script_source_name</span><span class="o">=</span><span class="n">removing_overlapping_polygons_and_points</span><span class="p">,</span>
             <span class="n">description</span><span class="o">=</span><span class="s2">&quot;all_building_points&quot;</span><span class="p">,</span>
         <span class="p">)</span>
     <span class="p">)</span>
 
-    <span class="n">removing_overlapping_points___points_in_a_cluster___n100_building</span> <span class="o">=</span> <span class="p">(</span>
+    <span class="n">removing_overlapping_polygons_and_points___points_in_a_cluster___n100_building</span> <span class="o">=</span> <span class="p">(</span>
         <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_gdb</span><span class="p">(</span>
-            <span class="n">script_source_name</span><span class="o">=</span><span class="n">removing_overlapping_points</span><span class="p">,</span>
+            <span class="n">script_source_name</span><span class="o">=</span><span class="n">removing_overlapping_polygons_and_points</span><span class="p">,</span>
             <span class="n">description</span><span class="o">=</span><span class="s2">&quot;points_in_a_cluster&quot;</span><span class="p">,</span>
         <span class="p">)</span>
     <span class="p">)</span>
 
-    <span class="n">removing_overlapping_points___points_not_in_a_cluster___n100_building</span> <span class="o">=</span> <span class="p">(</span>
-        <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_gdb</span><span class="p">(</span>
-            <span class="n">script_source_name</span><span class="o">=</span><span class="n">removing_overlapping_points</span><span class="p">,</span>
-            <span class="n">description</span><span class="o">=</span><span class="s2">&quot;points_not_in_a_cluster&quot;</span><span class="p">,</span>
-        <span class="p">)</span>
+    <span class="n">removing_overlapping_polygons_and_points___points_not_in_a_cluster___n100_building</span> <span class="o">=</span> <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_gdb</span><span class="p">(</span>
+        <span class="n">script_source_name</span><span class="o">=</span><span class="n">removing_overlapping_polygons_and_points</span><span class="p">,</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">&quot;points_not_in_a_cluster&quot;</span><span class="p">,</span>
     <span class="p">)</span>
 
-    <span class="n">removing_overlapping_points___merging_final_points___n100_building</span> <span class="o">=</span> <span class="p">(</span>
+    <span class="n">removing_overlapping_polygons_and_points___merging_final_points___n100_building</span> <span class="o">=</span> <span class="p">(</span>
         <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_gdb</span><span class="p">(</span>
-            <span class="n">script_source_name</span><span class="o">=</span><span class="n">removing_overlapping_points</span><span class="p">,</span>
+            <span class="n">script_source_name</span><span class="o">=</span><span class="n">removing_overlapping_polygons_and_points</span><span class="p">,</span>
             <span class="n">description</span><span class="o">=</span><span class="s2">&quot;merging_final_points&quot;</span><span class="p">,</span>
         <span class="p">)</span>
     <span class="p">)</span>
 
-    <span class="n">removing_overlapping_points___points_in_a_cluster_original___n100_building</span> <span class="o">=</span> <span class="p">(</span>
-        <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_gdb</span><span class="p">(</span>
-            <span class="n">script_source_name</span><span class="o">=</span><span class="n">removing_overlapping_points</span><span class="p">,</span>
-            <span class="n">description</span><span class="o">=</span><span class="s2">&quot;points_in_a_cluster_original&quot;</span><span class="p">,</span>
-        <span class="p">)</span>
+    <span class="n">removing_overlapping_polygons_and_points___points_in_a_cluster_original___n100_building</span> <span class="o">=</span> <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_gdb</span><span class="p">(</span>
+        <span class="n">script_source_name</span><span class="o">=</span><span class="n">removing_overlapping_polygons_and_points</span><span class="p">,</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">&quot;points_in_a_cluster_original&quot;</span><span class="p">,</span>
     <span class="p">)</span>
 
-    <span class="n">removing_overlapping_points___points_NOT_close_to_graphic_conflict_polygons___n100_building</span> <span class="o">=</span> <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_gdb</span><span class="p">(</span>
-        <span class="n">script_source_name</span><span class="o">=</span><span class="n">removing_overlapping_points</span><span class="p">,</span>
+    <span class="n">removing_overlapping_polygons_and_points___points_NOT_close_to_graphic_conflict_polygons___n100_building</span> <span class="o">=</span> <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_gdb</span><span class="p">(</span>
+        <span class="n">script_source_name</span><span class="o">=</span><span class="n">removing_overlapping_polygons_and_points</span><span class="p">,</span>
         <span class="n">description</span><span class="o">=</span><span class="s2">&quot;points_NOT_close_to_graphic_conflict_polygons&quot;</span><span class="p">,</span>
     <span class="p">)</span>
 
-    <span class="n">removing_overlapping_points___points_to_squares___n100_building</span> <span class="o">=</span> <span class="p">(</span>
+    <span class="n">removing_overlapping_polygons_and_points___points_to_squares___n100_building</span> <span class="o">=</span> <span class="p">(</span>
         <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_gdb</span><span class="p">(</span>
-            <span class="n">script_source_name</span><span class="o">=</span><span class="n">removing_overlapping_points</span><span class="p">,</span>
+            <span class="n">script_source_name</span><span class="o">=</span><span class="n">removing_overlapping_polygons_and_points</span><span class="p">,</span>
             <span class="n">description</span><span class="o">=</span><span class="s2">&quot;points_to_squares&quot;</span><span class="p">,</span>
         <span class="p">)</span>
     <span class="p">)</span>
 
-    <span class="n">removing_overlapping_points___final___n100_building</span> <span class="o">=</span> <span class="p">(</span>
+    <span class="n">removing_overlapping_polygons_and_points___final___n100_building</span> <span class="o">=</span> <span class="p">(</span>
         <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_gdb</span><span class="p">(</span>
-            <span class="n">script_source_name</span><span class="o">=</span><span class="n">removing_overlapping_points</span><span class="p">,</span>
+            <span class="n">script_source_name</span><span class="o">=</span><span class="n">removing_overlapping_polygons_and_points</span><span class="p">,</span>
             <span class="n">description</span><span class="o">=</span><span class="s2">&quot;final&quot;</span><span class="p">,</span>
         <span class="p">)</span>
     <span class="p">)</span>
 
-    <span class="n">removing_overlapping_points___all_points_not_hospital_and_church__n100_building</span> <span class="o">=</span> <span class="p">(</span>
-        <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_gdb</span><span class="p">(</span>
-            <span class="n">script_source_name</span><span class="o">=</span><span class="n">removing_overlapping_points</span><span class="p">,</span>
-            <span class="n">description</span><span class="o">=</span><span class="s2">&quot;all_points_not_hospital_and_church&quot;</span><span class="p">,</span>
-        <span class="p">)</span>
+    <span class="n">removing_overlapping_polygons_and_points___all_points_not_hospital_and_church__n100_building</span> <span class="o">=</span> <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_gdb</span><span class="p">(</span>
+        <span class="n">script_source_name</span><span class="o">=</span><span class="n">removing_overlapping_polygons_and_points</span><span class="p">,</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">&quot;all_points_not_hospital_and_church&quot;</span><span class="p">,</span>
     <span class="p">)</span>
 
-    <span class="n">removing_overlapping_points___squares_back_to_points___n100_building</span> <span class="o">=</span> <span class="p">(</span>
-        <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_gdb</span><span class="p">(</span>
-            <span class="n">script_source_name</span><span class="o">=</span><span class="n">removing_overlapping_points</span><span class="p">,</span>
-            <span class="n">description</span><span class="o">=</span><span class="s2">&quot;squares_back_to_points&quot;</span><span class="p">,</span>
-        <span class="p">)</span>
+    <span class="n">removing_overlapping_polygons_and_points___squares_back_to_points___n100_building</span> <span class="o">=</span> <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_gdb</span><span class="p">(</span>
+        <span class="n">script_source_name</span><span class="o">=</span><span class="n">removing_overlapping_polygons_and_points</span><span class="p">,</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">&quot;squares_back_to_points&quot;</span><span class="p">,</span>
     <span class="p">)</span>
 
-    <span class="n">removing_overlapping_points___hospital_and_church_points__n100_building</span> <span class="o">=</span> <span class="p">(</span>
+    <span class="n">removing_overlapping_polygons_and_points___hospital_and_church_points__n100_building</span> <span class="o">=</span> <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_gdb</span><span class="p">(</span>
+        <span class="n">script_source_name</span><span class="o">=</span><span class="n">removing_overlapping_polygons_and_points</span><span class="p">,</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">&quot;hospital_and_church_points&quot;</span><span class="p">,</span>
+    <span class="p">)</span>
+
+    <span class="n">removing_overlapping_polygons_and_points___polygons_intersecting_road_buffers___n100_building</span> <span class="o">=</span> <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_gdb</span><span class="p">(</span>
+        <span class="n">script_source_name</span><span class="o">=</span><span class="n">removing_overlapping_polygons_and_points</span><span class="p">,</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">&quot;polygons_intersecting_road_buffers&quot;</span><span class="p">,</span>
+    <span class="p">)</span>
+
+    <span class="n">removing_overlapping_polygons_and_points___polygons_NOT_intersecting_road_buffers___n100_building</span> <span class="o">=</span> <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_gdb</span><span class="p">(</span>
+        <span class="n">script_source_name</span><span class="o">=</span><span class="n">removing_overlapping_polygons_and_points</span><span class="p">,</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">&quot;polygons_NOT_intersecting_road_buffers&quot;</span><span class="p">,</span>
+    <span class="p">)</span>
+
+    <span class="n">removing_overlapping_polygons_and_points___polygons_to_points___n100_building</span> <span class="o">=</span> <span class="p">(</span>
         <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_gdb</span><span class="p">(</span>
-            <span class="n">script_source_name</span><span class="o">=</span><span class="n">removing_overlapping_points</span><span class="p">,</span>
-            <span class="n">description</span><span class="o">=</span><span class="s2">&quot;hospital_and_church_points&quot;</span><span class="p">,</span>
+            <span class="n">script_source_name</span><span class="o">=</span><span class="n">removing_overlapping_polygons_and_points</span><span class="p">,</span>
+            <span class="n">description</span><span class="o">=</span><span class="s2">&quot;polygons_to_points&quot;</span><span class="p">,</span>
         <span class="p">)</span>
     <span class="p">)</span>
 
@@ -1322,14 +1327,14 @@
 
     <span class="c1">########################### testing ########################</span>
 
-    <span class="n">point_resolve_building_conflicts___POINT_OUTPUT__n100_building</span> <span class="o">=</span> <span class="p">(</span>
+    <span class="n">point_resolve_building_conflicts___POINT_OUTPUT___n100_building</span> <span class="o">=</span> <span class="p">(</span>
         <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_gdb</span><span class="p">(</span>
             <span class="n">script_source_name</span><span class="o">=</span><span class="n">point_resolve_building_conflicts</span><span class="p">,</span>
             <span class="n">description</span><span class="o">=</span><span class="s2">&quot;POINT_OUTPUT&quot;</span><span class="p">,</span>
         <span class="p">)</span>
     <span class="p">)</span>
 
-    <span class="n">point_resolve_building_conflicts___POLYGON_OUTPUT__n100_building</span> <span class="o">=</span> <span class="p">(</span>
+    <span class="n">point_resolve_building_conflicts___POLYGON_OUTPUT___n100_building</span> <span class="o">=</span> <span class="p">(</span>
         <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_gdb</span><span class="p">(</span>
             <span class="n">script_source_name</span><span class="o">=</span><span class="n">point_resolve_building_conflicts</span><span class="p">,</span>
             <span class="n">description</span><span class="o">=</span><span class="s2">&quot;POLYGON_OUTPUT&quot;</span><span class="p">,</span>

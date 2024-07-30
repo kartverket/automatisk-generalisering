@@ -108,10 +108,10 @@ generalization.n100.building.polygon\_to\_point module
    :undoc-members:
    :show-inheritance:
 
-generalization.n100.building.removing\_overlapping\_points module
------------------------------------------------------------------
+generalization.n100.building.removing\_overlapping\_polygons\_and\_points module
+--------------------------------------------------------------------------------
 
-.. automodule:: generalization.n100.building.removing_overlapping_points
+.. automodule:: generalization.n100.building.removing_overlapping_polygons_and_points
    :members:
    :undoc-members:
    :show-inheritance:
