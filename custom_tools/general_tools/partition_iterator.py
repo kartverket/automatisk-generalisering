@@ -7,6 +7,7 @@ import json
 from typing import Dict, Tuple, Literal
 import time
 from datetime import datetime
+import pprint
 
 import env_setup.global_config
 import config
@@ -895,9 +896,12 @@ class PartitionIterator:
                         method_params[param] = path
 
                 # Log the class parameters
-                print(f"Class parameters for {func_class.__name__}: {class_params}")
+                print(f"Class parameters for {func_class.__name__}:")
+                pprint.pprint(class_params, indent=4)
+
                 # Log the method parameters
-                print(f"Method parameters for {method.__name__}: {method_params}")
+                print(f"Method parameters for {method.__name__}:")
+                pprint.pprint(method_params, indent=4)
 
                 # Instantiate the class with the required parameters
                 instance = func_class(**class_params)

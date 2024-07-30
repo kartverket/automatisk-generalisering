@@ -180,7 +180,7 @@ def apply_symbology_to_layers():
     # Applying symbology to roads
     custom_arcpy.apply_symbology(
         input_layer=Building_N100.polygon_resolve_building_conflicts___roads_500m_from_displaced_polygon___n100_building.value,
-        in_symbology_layer=input_symbology.SymbologyN100.road.value,
+        in_symbology_layer=input_symbology.SymbologyN100.railway.value,
         output_name=Building_N100.polygon_resolve_building_conflicts___roads___n100_building_lyrx.value,
     )
 
