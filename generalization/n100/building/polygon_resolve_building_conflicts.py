@@ -5,6 +5,7 @@ import arcpy
 
 from custom_tools.general_tools import custom_arcpy
 from custom_tools.general_tools.polygon_processor import PolygonProcessor
+from custom_tools.general_tools.line_to_buffer_symbology import LineToBufferSymbology
 from input_data import input_symbology
 from constants.n100_constants import N100_Symbology, N100_SQLResources, N100_Values
 
@@ -70,7 +71,6 @@ def main():
     hospital_church_points_to_squares()
     apply_symbology_to_layers()
     resolve_building_conflict_building_polygon()
-    creating_road_buffer()
     invisible_building_polygons_to_point()
     intersecting_building_polygons_to_point()
     merging_invisible_intersecting_points()
@@ -100,7 +100,7 @@ def roads_and_water_barriers_500_m_from_building_polygons():
 
     # Selecting roads 500 meters from building polygons
     custom_arcpy.select_location_and_make_permanent_feature(
-        input_layer=Building_N100.data_preparation___unsplit_roads___n100_building.value,
+        input_layer=Building_N100.data_preparation___road_symbology_buffers___n100_building.value,
         overlap_type=custom_arcpy.OverlapType.WITHIN_A_DISTANCE,
         select_features=Building_N100.polygon_propogate_displacement___building_polygons_after_displacement___n100_building.value,
         output_name=Building_N100.polygon_resolve_building_conflicts___roads_500m_from_displaced_polygon___n100_building.value,
@@ -109,10 +109,10 @@ def roads_and_water_barriers_500_m_from_building_polygons():
 
     # Selecting railway 500 meters from building polygons
     custom_arcpy.select_location_and_make_permanent_feature(
-        input_layer=Building_N100.data_preparation___unsplit_roads___n100_building.value,
+        input_layer=Building_N100.data_selection___railroad_tracks_n100_input_data___n100_building.value,
         overlap_type=custom_arcpy.OverlapType.WITHIN_A_DISTANCE,
         select_features=Building_N100.polygon_propogate_displacement___building_polygons_after_displacement___n100_building.value,
-        output_name=Building_N100.polygon_resolve_building_conflicts___roads_500m_from_displaced_polygon___n100_building.value,
+        output_name=Building_N100.polygon_resolve_building_conflicts___railroads_500m_from_displaced_polygon___n100_building.value,
         search_distance="500 Meters",
     )
 
@@ -193,7 +193,7 @@ def apply_symbology_to_layers():
 
     # Applying symbology to railway
     custom_arcpy.apply_symbology(
-        input_layer=Building_N100.data_selection___railroad_tracks_n100_input_data___n100_building.value,
+        input_layer=Building_N100.polygon_resolve_building_conflicts___railroads_500m_from_displaced_polygon___n100_building.value,
         in_symbology_layer=input_symbology.SymbologyN100.railway.value,
         output_name=Building_N100.polygon_resolve_building_conflicts___railway___n100_building_lyrx.value,
     )
@@ -263,71 +263,6 @@ def resolve_building_conflict_building_polygon():
 
 
 @timing_decorator
-def creating_road_buffer():
-    """
-    Summary:
-        Creates buffers around different types of roads based on specified criteria, and merges all the buffers into one single layer.
-
-    Details:
-        This function generates buffers around various types of roads by applying predefined SQL queries
-        to select specific road types and associated buffer widths. Each SQL query corresponds to a particular
-        road type, and the resulting buffers provide spatial context and aid in urban infrastructure analysis.
-    """
-
-    print("Creating road buffer ...")
-
-    selection_name_base = (
-        Building_N100.polygon_resolve_building_conflicts___road_buffer_selection___n100_building.value
-    )
-    buffer_name_base = (
-        Building_N100.polygon_resolve_building_conflicts___road_buffers___n100_building.value
-    )
-
-    # List to store the road buffer outputs
-    road_buffer_output_names = []
-
-    # Counter for naming the individual road type selections
-    counter = 1
-
-    # Loop through the dictionary (Key: SQL query and Value: width) to create buffers around the different roads
-    for (
-        sql_query,
-        original_width,
-    ) in N100_SQLResources.road_symbology_size_sql_selection.value.items():
-        selection_output_name = f"{selection_name_base}_{counter}"
-        buffer_width = original_width
-        buffer_output_name = f"{buffer_name_base}_{buffer_width}m_{counter}"
-
-        print(selection_output_name)
-        print(buffer_output_name)
-
-        # Selecting road types and making new feature layer based on SQL query
-        custom_arcpy.select_attribute_and_make_feature_layer(
-            input_layer=Building_N100.data_preparation___unsplit_roads___n100_building.value,
-            expression=sql_query,
-            output_name=selection_output_name,
-        )
-
-        # Making a buffer around each road type with specified width + 15 meters
-        arcpy.analysis.PairwiseBuffer(
-            in_features=selection_output_name,
-            out_feature_class=buffer_output_name,
-            buffer_distance_or_field=f"{buffer_width} Meters",
-        )
-
-        # Add buffer output names to list
-        road_buffer_output_names.append(buffer_output_name)
-        # Increase the counter by 1
-        counter += 1
-
-    # Merge all buffers into a single feature class
-    arcpy.management.Merge(
-        inputs=road_buffer_output_names,
-        output=Building_N100.polygon_resolve_building_conflicts___merged_road_buffers___n100_building.value,
-    )
-
-
-@timing_decorator
 def invisible_building_polygons_to_point():
     """
     Summary:
@@ -384,7 +319,7 @@ def intersecting_building_polygons_to_point():
     custom_arcpy.select_location_and_make_permanent_feature(
         input_layer=Building_N100.polygon_resolve_building_conflicts___not_invisible_polygons_after_rbc___n100_building.value,
         overlap_type=custom_arcpy.OverlapType.INTERSECT,
-        select_features=Building_N100.polygon_resolve_building_conflicts___merged_road_buffers___n100_building.value,
+        select_features=Building_N100.data_preparation___road_symbology_buffers___n100_building.value,
         inverted=True,  # Inverted
         output_name=Building_N100.polygon_resolve_building_conflicts___building_polygons_not_invisible_not_intersecting___n100_building.value,
     )
@@ -393,7 +328,7 @@ def intersecting_building_polygons_to_point():
     custom_arcpy.select_location_and_make_permanent_feature(
         input_layer=Building_N100.polygon_resolve_building_conflicts___not_invisible_polygons_after_rbc___n100_building.value,
         overlap_type=custom_arcpy.OverlapType.INTERSECT,
-        select_features=Building_N100.polygon_resolve_building_conflicts___merged_road_buffers___n100_building.value,
+        select_features=Building_N100.data_preparation___road_symbology_buffers___n100_building.value,
         inverted=False,
         output_name=Building_N100.polygon_resolve_building_conflicts___building_polygons_intersecting_road___n100_building.value,
     )

@@ -14,6 +14,7 @@ import config
 from custom_tools.decorators.timing_decorator import timing_decorator
 from custom_tools.general_tools import custom_arcpy
 from custom_tools.general_tools.polygon_processor import PolygonProcessor
+from custom_tools.general_tools.line_to_buffer_symbology import LineToBufferSymbology
 from input_data.input_symbology import SymbologyN100
 from constants.n100_constants import N100_Symbology, N100_SQLResources, N100_Values
 from custom_tools.general_tools.partition_iterator import PartitionIterator
@@ -148,6 +149,17 @@ def unsplit_roads():
         out_feature_class=Building_N100.data_preparation___unsplit_roads___n100_building.value,
         dissolve_field=["subtypekode", "motorvegtype", "uttegning"],
     )
+
+    road_lines_to_buffer_symbology = LineToBufferSymbology(
+        input_road_lines=Building_N100.data_preparation___unsplit_roads___n100_building.value,
+        sql_selection_query=N100_SQLResources.road_symbology_size_sql_selection.value,
+        output_road_buffer=Building_N100.data_preparation___road_symbology_buffers___n100_building.value,
+        write_work_files_to_memory=False,
+        keep_work_files=False,
+        root_file=Building_N100.data_preparation___root_file_line_symbology___n100_building.value,
+        fixed_buffer_addition=N100_Values.rbc_barrier_clearance_distance_m.value,
+    )
+    road_lines_to_buffer_symbology.run()
 
 
 @timing_decorator
