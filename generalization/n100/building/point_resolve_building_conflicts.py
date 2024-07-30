@@ -117,15 +117,15 @@ def resolve_building_conflicts():
     outputs = {
         building_points: [
             "building_points_after_rbc",
-            Building_N100.point_resolve_building_conflicts___POINT_OUTPUT__n100_building.value,
+            Building_N100.point_resolve_building_conflicts___POINT_OUTPUT___n100_building.value,
         ],
         building_polygons: [
             "building_polygons_after_rbc",
-            Building_N100.point_resolve_building_conflicts___POLYGON_OUTPUT__n100_building.value,
+            Building_N100.point_resolve_building_conflicts___POLYGON_OUTPUT___n100_building.value,
         ],
     }
 
-    resolve_building_conficts_config = {
+    resolve_building_conflicts_config = {
         "class": ResolveBuildingConflicts,
         "method": "run",
         "params": {
@@ -172,7 +172,7 @@ def resolve_building_conflicts():
     resolve_building_conflicts_partition_iteration = PartitionIterator(
         alias_path_data=inputs,
         alias_path_outputs=outputs,
-        custom_functions=[resolve_building_conficts_config],
+        custom_functions=[resolve_building_conflicts_config],
         root_file_partition_iterator=Building_N100.point_resolve_building_conflicts___root_file___n100_building.value,
         scale=env_setup.global_config.scale_n100,
         dictionary_documentation_path=Building_N100.point_resolve_building_conflicts___documentation___building_n100.value,
