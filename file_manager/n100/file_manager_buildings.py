@@ -24,7 +24,7 @@ point_propagate_displacement = "point_propagate_displacement"
 removing_points_and_erasing_polygons_in_water_features = (
     "removing_points_and_erasing_polygons_in_water_features"
 )
-removing_overlapping_points = "removing_overlapping_points"
+removing_overlapping_polygons_and_points = "removing_overlapping_polygons_and_points"
 hospital_church_clusters = "hospital_church_clusters"
 point_displacement_with_buffer = "point_displacement_with_buffer"
 point_resolve_building_conflicts = "point_resolve_building_conflicts"
@@ -849,97 +849,116 @@ class Building_N100(Enum):
     #                REMOVING OVERLAPPING POINTS
     # ========================================
 
-    removing_overlapping_points___graphic_conflicts_polygon___n100_building = (
+    removing_overlapping_polygons_and_points___graphic_conflicts_polygon___n100_building = (
         file_manager.generate_file_name_gdb(
-            script_source_name=removing_overlapping_points,
+            script_source_name=removing_overlapping_polygons_and_points,
             description="graphic_conflicts_polygon",
         )
     )
 
-    removing_overlapping_points___points_close_to_graphic_conflict_polygons___n100_building = file_manager.generate_file_name_gdb(
-        script_source_name=removing_overlapping_points,
+    removing_overlapping_polygons_and_points___points_close_to_graphic_conflict_polygons___n100_building = file_manager.generate_file_name_gdb(
+        script_source_name=removing_overlapping_polygons_and_points,
         description="points_close_to_graphic_conflict_polygons",
     )
 
-    removing_overlapping_points___point_clusters___n100_building = (
+    removing_overlapping_polygons_and_points___point_clusters___n100_building = (
         file_manager.generate_file_name_gdb(
-            script_source_name=removing_overlapping_points,
+            script_source_name=removing_overlapping_polygons_and_points,
             description="point_clusters",
         )
     )
 
-    removing_overlapping_points___all_building_points___n100_building = (
+    removing_overlapping_polygons_and_points___all_building_points___n100_building = (
         file_manager.generate_file_name_gdb(
-            script_source_name=removing_overlapping_points,
+            script_source_name=removing_overlapping_polygons_and_points,
             description="all_building_points",
         )
     )
 
-    removing_overlapping_points___points_in_a_cluster___n100_building = (
+    removing_overlapping_polygons_and_points___points_in_a_cluster___n100_building = (
         file_manager.generate_file_name_gdb(
-            script_source_name=removing_overlapping_points,
+            script_source_name=removing_overlapping_polygons_and_points,
             description="points_in_a_cluster",
         )
     )
 
-    removing_overlapping_points___points_not_in_a_cluster___n100_building = (
+    removing_overlapping_polygons_and_points___points_not_in_a_cluster___n100_building = (
         file_manager.generate_file_name_gdb(
-            script_source_name=removing_overlapping_points,
+            script_source_name=removing_overlapping_polygons_and_points,
             description="points_not_in_a_cluster",
         )
     )
 
-    removing_overlapping_points___merging_final_points___n100_building = (
+    removing_overlapping_polygons_and_points___merging_final_points___n100_building = (
         file_manager.generate_file_name_gdb(
-            script_source_name=removing_overlapping_points,
+            script_source_name=removing_overlapping_polygons_and_points,
             description="merging_final_points",
         )
     )
 
-    removing_overlapping_points___points_in_a_cluster_original___n100_building = (
+    removing_overlapping_polygons_and_points___points_in_a_cluster_original___n100_building = (
         file_manager.generate_file_name_gdb(
-            script_source_name=removing_overlapping_points,
+            script_source_name=removing_overlapping_polygons_and_points,
             description="points_in_a_cluster_original",
         )
     )
 
-    removing_overlapping_points___points_NOT_close_to_graphic_conflict_polygons___n100_building = file_manager.generate_file_name_gdb(
-        script_source_name=removing_overlapping_points,
+    removing_overlapping_polygons_and_points___points_NOT_close_to_graphic_conflict_polygons___n100_building = file_manager.generate_file_name_gdb(
+        script_source_name=removing_overlapping_polygons_and_points,
         description="points_NOT_close_to_graphic_conflict_polygons",
     )
 
-    removing_overlapping_points___points_to_squares___n100_building = (
+    removing_overlapping_polygons_and_points___points_to_squares___n100_building = (
         file_manager.generate_file_name_gdb(
-            script_source_name=removing_overlapping_points,
+            script_source_name=removing_overlapping_polygons_and_points,
             description="points_to_squares",
         )
     )
 
-    removing_overlapping_points___final___n100_building = (
+    removing_overlapping_polygons_and_points___final___n100_building = (
         file_manager.generate_file_name_gdb(
-            script_source_name=removing_overlapping_points,
+            script_source_name=removing_overlapping_polygons_and_points,
             description="final",
         )
     )
 
-    removing_overlapping_points___all_points_not_hospital_and_church__n100_building = (
+    removing_overlapping_polygons_and_points___all_points_not_hospital_and_church__n100_building = (
         file_manager.generate_file_name_gdb(
-            script_source_name=removing_overlapping_points,
+            script_source_name=removing_overlapping_polygons_and_points,
             description="all_points_not_hospital_and_church",
         )
     )
 
-    removing_overlapping_points___squares_back_to_points___n100_building = (
+    removing_overlapping_polygons_and_points___squares_back_to_points___n100_building = (
         file_manager.generate_file_name_gdb(
-            script_source_name=removing_overlapping_points,
+            script_source_name=removing_overlapping_polygons_and_points,
             description="squares_back_to_points",
         )
     )
 
-    removing_overlapping_points___hospital_and_church_points__n100_building = (
+    removing_overlapping_polygons_and_points___hospital_and_church_points__n100_building = (
         file_manager.generate_file_name_gdb(
-            script_source_name=removing_overlapping_points,
+            script_source_name=removing_overlapping_polygons_and_points,
             description="hospital_and_church_points",
+        )
+    )
+
+    removing_overlapping_polygons_and_points___polygons_intersecting_road_buffers___n100_building = (
+        file_manager.generate_file_name_gdb(
+            script_source_name=removing_overlapping_polygons_and_points,
+            description="polygons_intersecting_road_buffers",
+        )
+    )
+
+    removing_overlapping_polygons_and_points___polygons_NOT_intersecting_road_buffers___n100_building = file_manager.generate_file_name_gdb(
+        script_source_name=removing_overlapping_polygons_and_points,
+        description="polygons_NOT_intersecting_road_buffers",
+    )
+
+    removing_overlapping_polygons_and_points___polygons_to_points___n100_building = (
+        file_manager.generate_file_name_gdb(
+            script_source_name=removing_overlapping_polygons_and_points,
+            description="polygons_to_points",
         )
     )
 
@@ -1241,14 +1260,14 @@ class Building_N100(Enum):
 
     ########################### testing ########################
 
-    point_resolve_building_conflicts___POINT_OUTPUT__n100_building = (
+    point_resolve_building_conflicts___POINT_OUTPUT___n100_building = (
         file_manager.generate_file_name_gdb(
             script_source_name=point_resolve_building_conflicts,
             description="POINT_OUTPUT",
         )
     )
 
-    point_resolve_building_conflicts___POLYGON_OUTPUT__n100_building = (
+    point_resolve_building_conflicts___POLYGON_OUTPUT___n100_building = (
         file_manager.generate_file_name_gdb(
             script_source_name=point_resolve_building_conflicts,
             description="POLYGON_OUTPUT",
