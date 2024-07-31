@@ -65,7 +65,7 @@ def data_selection():
     selector = StudyAreaSelector(
         input_output_file_dict=input_output_file_dict,
         selecting_file=input_n100.AdminFlate,
-        selecting_sql_expression="navn IN ('Trondheim')",
+        selecting_sql_expression="navn IN ('Asker', 'Oslo', 'Trondheim', 'Ringerike')",
         select_local=config.select_study_area,
     )
 

@@ -87,12 +87,21 @@ class ResolveBuildingConflicts:
         #                                       LOGICS
         # ========================================
 
+        self.points_to_squares = None
+
+    def constructing_work_files(self):
+        unique_id = id(self)
+
+        self.points_to_squares = (
+            f"{self.base_path_for_features}_points_to_squares_{unique_id}"
+        )
+
     @timing_decorator
     def building_points_to_squares(self):
         # Transforms all the building points to squares
         polygon_processor = PolygonProcessor(
             input_building_points=self.input_building_points,
-            output_polygon_feature_class=f"{self.base_path_for_features}points_to_squares",
+            output_polygon_feature_class=self.points_to_squares,
             building_symbol_dimensions=self.building_symbol_dimension,
             symbol_field_name="symbol_val",
             index_field_name="OBJECTID",
@@ -106,7 +115,7 @@ class ResolveBuildingConflicts:
         print("Now starting to apply symbology to layers")
         features_for_apply_symbology = [
             {
-                "input_layer": f"{self.base_path_for_features}points_to_squares",
+                "input_layer": self.points_to_squares,
                 "in_symbology_layer": self.building_squares_lyrx,
                 "output_name": f"{self.lyrx_base_path}building_squares_with_lyrx.lyrx",
             },
@@ -139,6 +148,8 @@ class ResolveBuildingConflicts:
 
         # Loop over the symbology configurations and apply the function
         for symbology_config in features_for_apply_symbology:
+            print("Now starting to apply symbology to layer")
+            print(f"{symbology_config['input_layer']}\n")
             custom_arcpy.apply_symbology(
                 input_layer=symbology_config["input_layer"],
                 in_symbology_layer=symbology_config["in_symbology_layer"],
@@ -194,7 +205,7 @@ class ResolveBuildingConflicts:
         )
         # Selecting building squares that are visible OR are hospitals/churches
         custom_arcpy.select_attribute_and_make_permanent_feature(
-            input_layer=f"{self.base_path_for_features}points_to_squares",
+            input_layer=self.points_to_squares,
             expression=sql_expression_resolve_building_conflicts_squares,
             output_name=f"{self.base_path_for_features}results_rbc_1_squares",
         )
@@ -381,6 +392,7 @@ class ResolveBuildingConflicts:
                 f"{self.base_path_for_features}squares_back_to_points_after_rbc2"
                 f"{self.base_path_for_features}squares_after_rbc2",
                 f"{self.base_path_for_features}polygons_after_rbc2",
+                self.points_to_squares,
             ]
         )
 
@@ -411,6 +423,7 @@ class ResolveBuildingConflicts:
     )
     def run(self):
         environment_setup.main()
+        self.constructing_work_files()
         self.building_points_to_squares()
         self.apply_symbology_to_the_layers()
         self.resolve_building_conflicts_1()
