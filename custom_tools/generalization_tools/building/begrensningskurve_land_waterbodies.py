@@ -8,7 +8,8 @@ from file_manager.n100.file_manager_buildings import Building_N100
 from env_setup import environment_setup
 from custom_tools.decorators.partition_io_decorator import partition_io_decorator
 from custom_tools.general_tools import custom_arcpy
-from constants.n100_constants import N100_Symbology, N100_SQLResources, N100_Values
+from custom_tools.general_tools.file_utilities import WorkFileManager
+from constants.n100_constants import N100_Values
 
 
 class BegrensningskurveLandWaterbodies:
@@ -39,19 +40,57 @@ class BegrensningskurveLandWaterbodies:
 
         self.area_length_ratio_field_name = "area_length_ratio"
 
-        self.waterfeatures_from_begrensningskurve = None
-        self.waterfeatures_from_begrensningskurve_selection = None
-        self.land_features_area = None
-        self.water_features_area = None
-        self.water_features_area_narrow = None
-        self.water_features_area_wide = None
-        self.selected_land_features = None
-        self.land_features_buffer = None
-        self.begrensningskurve_waterfeatures_buffer = None
-        self.erase_feature_1 = None
-        self.erase_feature_2 = None
+        self.work_file_manager = WorkFileManager(
+            unique_id=id(self),
+            root_file=root_file,
+            write_to_memory=write_work_files_to_memory,
+            keep_files=keep_work_files,
+        )
+
+        self.waterfeatures_from_begrensningskurve = (
+            "waterfeatures_from_begrensningskurve"
+        )
+        self.waterfeatures_from_begrensningskurve_selection = (
+            "waterfeatures_from_begrensningskurve_selection"
+        )
+        self.land_features_area = "land_features_area"
+        self.water_features_area = "water_features_area"
+        self.water_features_area_narrow = "water_features_area_narrow"
+        self.water_features_area_wide = "water_features_area_wide"
+        self.selected_land_features = "selected_land_features"
+        self.land_features_buffer = "land_features_buffer"
+        self.begrensningskurve_waterfeatures_buffer = (
+            "begrensningskurve_waterfeatures_buffer"
+        )
+        self.erase_feature_1 = "erase_feature_1"
+        self.erase_feature_2 = "erase_feature_2"
+
+        self.work_file_list = [
+            self.waterfeatures_from_begrensningskurve,
+            self.waterfeatures_from_begrensningskurve_selection,
+            self.land_features_area,
+            self.water_features_area,
+            self.water_features_area_narrow,
+            self.water_features_area_wide,
+            self.selected_land_features,
+            self.land_features_buffer,
+            self.begrensningskurve_waterfeatures_buffer,
+            self.erase_feature_1,
+            self.erase_feature_2,
+        ]
 
         self.working_files_list = []
+
+    def setup_work_files(self):
+        # Generate full file paths and assign them to instance variables
+        self.working_files_list = self.work_file_manager.setup_work_file_paths(
+            instance=self,
+            file_names=self.work_file_list,
+        )
+
+    def cleanup_work_files(self):
+        # Clean up the work files when done
+        self.work_file_manager.cleanup_files(self.working_files_list)
 
     def reset_temp_files(self):
         """Reset temporary file attributes."""
@@ -276,15 +315,22 @@ class BegrensningskurveLandWaterbodies:
         output_param_names=["output_begrensningskurve"],
     )
     def run(self):
-        self.reset_temp_files()
+        self.working_files_list = self.work_file_manager.setup_work_file_paths(
+            instance=self,
+            file_names=self.work_file_list,
+        )
+
+        # self.reset_temp_files()
         self.selections()
         self.field_management()
         self.finding_narrow_or_not()
         self.creating_buffers()
         self.erase_buffers()
         self.merge_water_features()
-        if not self.keep_work_files:
-            self.delete_working_files(*self.working_files_list)
+        # if not self.keep_work_files:
+        #     self.delete_working_files(*self.working_files_list)
+
+        self.work_file_manager.cleanup_files(self.working_files_list)
 
 
 if __name__ == "__main__":
@@ -294,8 +340,8 @@ if __name__ == "__main__":
         input_land_cover_features=Building_N100.data_selection___land_cover_n100_input_data___n100_building.value,
         water_feature_buffer_width=N100_Values.building_water_intrusion_distance_m.value,
         output_begrensningskurve=Building_N100.begrensingskurve_land_water___begrensingskurve_buffer_in_water___n100_building.value,
-        write_work_files_to_memory=False,
-        keep_work_files=True,
+        write_work_files_to_memory=True,
+        keep_work_files=False,
         root_file=Building_N100.begrensingskurve_land_water___root_file___n100_building.value,
     )
     begrensningskurve_land_waterbodies.run()

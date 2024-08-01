@@ -93,6 +93,57 @@ class FeatureClassCreator:
         print("Appended geometry to the feature class.")
 
 
+class WorkFileManager:
+    def __init__(
+        self,
+        unique_id: str,
+        root_file: str = None,
+        write_to_memory: bool = True,
+        keep_files: bool = False,
+    ):
+        self.unique_id = unique_id
+        self.root_file = root_file
+        self.write_to_memory = write_to_memory
+        self.keep_files = keep_files
+
+        if not self.write_to_memory and not self.root_file:
+            raise ValueError(
+                "Need to specify root_file path to write to disk for work files."
+            )
+
+        if self.keep_files and not self.root_file:
+            raise ValueError(
+                "Need to specify root_file path and write to disk to keep work files."
+            )
+
+        self.file_location = "memory/" if self.write_to_memory else f"{self.root_file}_"
+
+    def _build_file_path(self, file_name: str) -> str:
+        return f"{self.file_location}{file_name}_{self.unique_id}"
+
+    def setup_work_file_paths(self, instance, file_names: list[str]):
+        """Generates file paths and sets them as attributes on the instance."""
+        generated_paths = [self._build_file_path(name) for name in file_names]
+        for name, path in zip(file_names, generated_paths):
+            setattr(instance, name, path)
+        return generated_paths
+
+    def cleanup_files(self, file_paths: list[str]):
+        for path in file_paths:
+            self._delete_file(path)
+
+    @staticmethod
+    def _delete_file(file_path: str):
+        try:
+            if arcpy.Exists(file_path):
+                arcpy.management.Delete(file_path)
+                print(f"Deleted: {file_path}")
+            else:
+                print(f"File did not exist: {file_path}")
+        except arcpy.ExecuteError as e:
+            print(f"Error deleting file {file_path}: {e}")
+
+
 def compare_feature_classes(feature_class_1, feature_class_2):
     # Get count of features in the first feature class
     count_fc1 = int(arcpy.GetCount_management(feature_class_1)[0])
