@@ -96,7 +96,7 @@ class FeatureClassCreator:
 class WorkFileManager:
     def __init__(
         self,
-        unique_id: str,
+        unique_id: int,
         root_file: str = None,
         write_to_memory: bool = True,
         keep_files: bool = False,
@@ -124,6 +124,16 @@ class WorkFileManager:
     def setup_work_file_paths(self, instance, file_names: list[str]):
         """Generates file paths and sets them as attributes on the instance."""
         generated_paths = [self._build_file_path(name) for name in file_names]
+        for name, path in zip(file_names, generated_paths):
+            setattr(instance, name, path)
+        return generated_paths
+
+    def _build_file_path_lyrx(self, file_name: str) -> str:
+        return f"{self.file_location}{file_name}_{self.unique_id}.lyrx"
+
+    def setup_work_file_paths_lyrx(self, instance, file_names: list[str]):
+        """Generates file paths and sets them as attributes on the instance."""
+        generated_paths = [self._build_file_path_lyrx(name) for name in file_names]
         for name, path in zip(file_names, generated_paths):
             setattr(instance, name, path)
         return generated_paths
