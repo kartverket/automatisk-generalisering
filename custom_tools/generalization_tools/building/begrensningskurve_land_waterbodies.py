@@ -234,7 +234,9 @@ class BegrensningskurveLandWaterbodies:
         output_param_names=["output_begrensningskurve"],
     )
     def run(self):
-        self.working_files_list = self.work_file_manager.setup_work_file_paths(
+        environment_setup.main()
+
+        self.work_file_manager.setup_work_file_paths(
             instance=self,
             file_names=self.work_file_list,
         )
@@ -246,7 +248,7 @@ class BegrensningskurveLandWaterbodies:
         self.erase_buffers()
         self.merge_water_features()
 
-        self.work_file_manager.cleanup_files(self.working_files_list)
+        self.work_file_manager.cleanup_files(self.work_file_list)
 
 
 if __name__ == "__main__":

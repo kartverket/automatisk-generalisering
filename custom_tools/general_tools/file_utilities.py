@@ -121,26 +121,56 @@ class WorkFileManager:
     def _build_file_path(self, file_name: str) -> str:
         return f"{self.file_location}{file_name}_{self.unique_id}"
 
-    def setup_work_file_paths(self, instance, file_names: list[str]):
-        """Generates file paths and sets them as attributes on the instance."""
-        generated_paths = [self._build_file_path(name) for name in file_names]
-        for name, path in zip(file_names, generated_paths):
-            setattr(instance, name, path)
-        return generated_paths
+    def setup_work_file_paths(self, instance, file_names):
+        """
+        Generates file paths and sets them as attributes on the instance.
+        Updates the file_names list with the new paths.
+        Can handle a list of file names or a list of lists of file names.
+        """
+        if isinstance(file_names[0], list):
+            for sublist in file_names:
+                for i, name in enumerate(sublist):
+                    path = self._build_file_path(name)
+                    setattr(instance, name, path)
+                    sublist[i] = path
+        else:
+            for i, name in enumerate(file_names):
+                path = self._build_file_path(name)
+                setattr(instance, name, path)
+                file_names[i] = path
 
     def _build_file_path_lyrx(self, file_name: str) -> str:
         return f"{self.file_location}{file_name}_{self.unique_id}.lyrx"
 
-    def setup_work_file_paths_lyrx(self, instance, file_names: list[str]):
-        """Generates file paths and sets them as attributes on the instance."""
-        generated_paths = [self._build_file_path_lyrx(name) for name in file_names]
-        for name, path in zip(file_names, generated_paths):
-            setattr(instance, name, path)
-        return generated_paths
+    def setup_work_file_paths_lyrx(self, instance, file_names):
+        """
+        Generates file paths and sets them as attributes on the instance.
+        Updates the file_names list with the new paths.
+        Can handle a list of file names or a list of lists of file names.
+        """
+        if isinstance(file_names[0], list):
+            for sublist in file_names:
+                for i, name in enumerate(sublist):
+                    path = self._build_file_path_lyrx(name)
+                    setattr(instance, name, path)
+                    sublist[i] = path
+        else:
+            for i, name in enumerate(file_names):
+                path = self._build_file_path_lyrx(name)
+                setattr(instance, name, path)
+                file_names[i] = path
 
-    def cleanup_files(self, file_paths: list[str]):
-        for path in file_paths:
-            self._delete_file(path)
+    def cleanup_files(self, file_paths):
+        """
+        Deletes files. Can handle a list of file paths or a list of lists of file paths.
+        """
+        if isinstance(file_paths[0], list):
+            for sublist in file_paths:
+                for path in sublist:
+                    self._delete_file(path)
+        else:
+            for path in file_paths:
+                self._delete_file(path)
 
     @staticmethod
     def _delete_file(file_path: str):
