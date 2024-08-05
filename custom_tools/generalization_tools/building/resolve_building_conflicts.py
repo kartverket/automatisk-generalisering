@@ -13,6 +13,7 @@ import input_data.input_n100
 from input_data.input_symbology import SymbologyN100
 from file_manager.n100.file_manager_buildings import Building_N100
 from file_manager.base_file_manager import BaseFileManager
+from custom_tools.general_tools.file_utilities import WorkFileManager
 from constants.n100_constants import N100_Symbology, N100_Values
 from custom_tools.general_tools.polygon_processor import PolygonProcessor
 from env_setup import environment_setup
@@ -35,6 +36,8 @@ class ResolveBuildingConflicts:
         base_path_for_lyrx: str,
         base_path_for_features: str,
         output_files: Dict[str, str],
+        write_work_files_to_memory: bool = False,
+        keep_work_files: bool = False,
     ):
         # ========================================
         #                              INITIALIZING VARIABLES
@@ -74,7 +77,74 @@ class ResolveBuildingConflicts:
         self.output_points = output_files["building_points"]
         self.output_polygons = output_files["building_polygons"]
 
-        # Working files (to be deleted after script has run)
+        self.work_file_manager_gdb = WorkFileManager(
+            unique_id=id(self),
+            root_file=base_path_for_features,
+            write_to_memory=write_work_files_to_memory,
+            keep_files=keep_work_files,
+        )
+
+        self.work_file_manager_lyrx = WorkFileManager(
+            unique_id=id(self),
+            root_file=base_path_for_lyrx,
+            write_to_memory=write_work_files_to_memory,
+            keep_files=keep_work_files,
+        )
+
+        # GDB Work Files
+        self.points_to_squares = "points_to_squares"
+        self.results_rbc_1_squares = "results_rbc_1_squares"
+        self.results_rbc_1_polygons = "results_rbc_1_polygons"
+        self.invisible_polygons_after_rbc_1 = "invisible_polygons_after_rbc_1"
+        self.invisible_polygons_to_points_after_rbc_1 = (
+            "invisible_polygons_to_points_after_rbc_1"
+        )
+        self.building_polygons_to_points_and_then_squares_rbc_1 = (
+            "building_polygons_to_points_and_then_squares_rbc_1"
+        )
+        self.merged_squares_rbc1 = "merged_squares_rbc1"
+        self.squares_after_rbc2 = "squares_after_rbc2"
+        self.polygons_after_rbc2 = "polygons_after_rbc2"
+        self.squares_back_to_points_after_rbc2 = "squares_back_to_points_after_rbc2"
+
+        self.working_files_list_gdb = [
+            self.points_to_squares,
+            self.results_rbc_1_squares,
+            self.results_rbc_1_polygons,
+            self.invisible_polygons_after_rbc_1,
+            self.invisible_polygons_to_points_after_rbc_1,
+            self.building_polygons_to_points_and_then_squares_rbc_1,
+            self.merged_squares_rbc1,
+            self.squares_after_rbc2,
+            self.polygons_after_rbc2,
+            self.squares_back_to_points_after_rbc2,
+        ]
+
+        # Lyrx Work FIles
+        self.building_squares_with_lyrx = "building_squares_with_lyrx"
+        self.polygons_with_lyrx = "polygons_with_lyrx"
+        self.roads_with_lyrx = "roads_with_lyrx"
+        self.begrensningskurve_with_lyrx = "begrensningskurve_with_lyrx"
+        self.railway_with_lyrx = "railway_with_lyrx"
+        self.railway_stations_with_lyrx = "railway_stations_with_lyrx"
+        self.adding_symbology_to_squares_going_into_rbc2 = (
+            "adding_symbology_to_squares_going_into_rbc2"
+        )
+        self.adding_symbology_to_polygons_going_into_rbc2 = (
+            "adding_symbology_to_polygons_going_into_rbc2"
+        )
+
+        self.working_files_list_lyrx = [
+            self.building_squares_with_lyrx,
+            self.polygons_with_lyrx,
+            self.roads_with_lyrx,
+            self.begrensningskurve_with_lyrx,
+            self.railway_with_lyrx,
+            self.railway_stations_with_lyrx,
+            self.adding_symbology_to_squares_going_into_rbc2,
+            self.adding_symbology_to_polygons_going_into_rbc2,
+        ]
+
         self.working_files_list = []
 
         # Feature base path
@@ -86,8 +156,6 @@ class ResolveBuildingConflicts:
         # ========================================
         #                                       LOGICS
         # ========================================
-
-        self.points_to_squares = None
 
     def constructing_work_files(self):
         unique_id = id(self)
@@ -423,6 +491,23 @@ class ResolveBuildingConflicts:
     )
     def run(self):
         environment_setup.main()
+
+        self.work_file_manager_gdb.setup_work_file_paths(
+            instance=self,
+            file_names=self.working_files_list_gdb,
+        )
+
+        self.work_file_manager_lyrx.setup_work_file_paths_lyrx(
+            instance=self,
+            file_names=self.working_files_list_lyrx,
+        )
+
+        for file in self.working_files_list_gdb:
+            print(f"Working file: {file}")
+
+        for file in self.working_files_list_lyrx:
+            print(f"Working file: {file}")
+
         self.constructing_work_files()
         self.building_points_to_squares()
         self.apply_symbology_to_the_layers()
@@ -437,6 +522,8 @@ class ResolveBuildingConflicts:
         self.assigning_final_names()
         self.adding_files_to_working_list()
         self.delete_working_files(self.working_files_list)
+
+        self.work_file_manager.cleanup_files(self.working_files_list)
 
 
 if __name__ == "__main__":

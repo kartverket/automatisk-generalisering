@@ -8,7 +8,7 @@ from input_data import input_n100
 from input_data.input_symbology import SymbologyN100
 from file_manager.n100.file_manager_buildings import Building_N100
 from constants.n100_constants import N100_Symbology, N100_Values
-from custom_tools.general_tools.polygon_processor import PolygonProcessor
+
 from env_setup import environment_setup
 from input_data import input_symbology
 from custom_tools.general_tools.partition_iterator import PartitionIterator
@@ -34,18 +34,6 @@ def main():
     """
     environment_setup.main()
     resolve_building_conflicts()
-    # building_points_to_squares()
-    # selecting_data_with_area()
-    # apply_symbology_to_the_layers()
-    # resolve_building_conflicts_1()
-    # building_polygons_to_keep_after_rbc_1()
-    # transforming_invisible_polygons_to_points_and_then_to_squares()
-    # adding_symbology_to_layers_being_used_for_rbc_2()
-    # resolve_building_conflicts_2()
-    # selecting_features_to_be_kept_after_rbc_2()
-    # transforming_squares_back_to_points()
-    # merging_building_points()
-    # assigning_final_names()
 
 
 def resolve_building_conflicts():
