@@ -79,8 +79,6 @@ class BegrensningskurveLandWaterbodies:
             self.erase_feature_2,
         ]
 
-        self.working_files_list = []
-
     def selections(self):
         if self.write_work_files_to_memory:
             custom_arcpy.select_attribute_and_make_feature_layer(
