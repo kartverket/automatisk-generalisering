@@ -470,6 +470,34 @@ and creates a new, permanent feature class as an output.</p>
 
 </dd></dl>
 
+<dl class="py class">
+<dt class="sig sig-object py" id="custom_tools.general_tools.file_utilities.WorkFileManager">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">custom_tools.general_tools.file_utilities.</span></span><span class="sig-name descname"><span class="pre">WorkFileManager</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">unique_id</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">root_file</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">write_to_memory</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">keep_files</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/custom_tools/general_tools/file_utilities.html#WorkFileManager"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#custom_tools.general_tools.file_utilities.WorkFileManager" title="Link to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<dl class="py method">
+<dt class="sig sig-object py" id="custom_tools.general_tools.file_utilities.WorkFileManager.setup_work_file_paths">
+<span class="sig-name descname"><span class="pre">setup_work_file_paths</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">instance</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">file_names</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/custom_tools/general_tools/file_utilities.html#WorkFileManager.setup_work_file_paths"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#custom_tools.general_tools.file_utilities.WorkFileManager.setup_work_file_paths" title="Link to this definition"></a></dt>
+<dd><p>Generates file paths and sets them as attributes on the instance.
+Updates the file_names list with the new paths.
+Can handle a list of file names or a list of lists of file names.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="custom_tools.general_tools.file_utilities.WorkFileManager.setup_work_file_paths_lyrx">
+<span class="sig-name descname"><span class="pre">setup_work_file_paths_lyrx</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">instance</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">file_names</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/custom_tools/general_tools/file_utilities.html#WorkFileManager.setup_work_file_paths_lyrx"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#custom_tools.general_tools.file_utilities.WorkFileManager.setup_work_file_paths_lyrx" title="Link to this definition"></a></dt>
+<dd><p>Generates file paths and sets them as attributes on the instance.
+Updates the file_names list with the new paths.
+Can handle a list of file names or a list of lists of file names.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="custom_tools.general_tools.file_utilities.WorkFileManager.cleanup_files">
+<span class="sig-name descname"><span class="pre">cleanup_files</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">file_paths</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/custom_tools/general_tools/file_utilities.html#WorkFileManager.cleanup_files"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#custom_tools.general_tools.file_utilities.WorkFileManager.cleanup_files" title="Link to this definition"></a></dt>
+<dd><p>Deletes files. Can handle a list of file paths or a list of lists of file paths.</p>
+</dd></dl>
+
+</dd></dl>
+
 <dl class="py function">
 <dt class="sig sig-object py" id="custom_tools.general_tools.file_utilities.compare_feature_classes">
 <span class="sig-prename descclassname"><span class="pre">custom_tools.general_tools.file_utilities.</span></span><span class="sig-name descname"><span class="pre">compare_feature_classes</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">feature_class_1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">feature_class_2</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/custom_tools/general_tools/file_utilities.html#compare_feature_classes"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#custom_tools.general_tools.file_utilities.compare_feature_classes" title="Link to this definition"></a></dt>

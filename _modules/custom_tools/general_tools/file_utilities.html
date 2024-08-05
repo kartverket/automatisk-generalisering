@@ -178,6 +178,109 @@
 
 
 
+<div class="viewcode-block" id="WorkFileManager">
+<a class="viewcode-back" href="../../../generated_docs/custom_tools.general_tools.html#custom_tools.general_tools.file_utilities.WorkFileManager">[docs]</a>
+<span class="k">class</span> <span class="nc">WorkFileManager</span><span class="p">:</span>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">unique_id</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+        <span class="n">root_file</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">write_to_memory</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
+        <span class="n">keep_files</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+    <span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">unique_id</span> <span class="o">=</span> <span class="n">unique_id</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">root_file</span> <span class="o">=</span> <span class="n">root_file</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">write_to_memory</span> <span class="o">=</span> <span class="n">write_to_memory</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">keep_files</span> <span class="o">=</span> <span class="n">keep_files</span>
+
+        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">write_to_memory</span> <span class="ow">and</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">root_file</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="s2">&quot;Need to specify root_file path to write to disk for work files.&quot;</span>
+            <span class="p">)</span>
+
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">keep_files</span> <span class="ow">and</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">root_file</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="s2">&quot;Need to specify root_file path and write to disk to keep work files.&quot;</span>
+            <span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">file_location</span> <span class="o">=</span> <span class="s2">&quot;memory/&quot;</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">write_to_memory</span> <span class="k">else</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">root_file</span><span class="si">}</span><span class="s2">_&quot;</span>
+
+    <span class="k">def</span> <span class="nf">_build_file_path</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">file_name</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+        <span class="k">return</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">file_location</span><span class="si">}{</span><span class="n">file_name</span><span class="si">}</span><span class="s2">_</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">unique_id</span><span class="si">}</span><span class="s2">&quot;</span>
+
+<div class="viewcode-block" id="WorkFileManager.setup_work_file_paths">
+<a class="viewcode-back" href="../../../generated_docs/custom_tools.general_tools.html#custom_tools.general_tools.file_utilities.WorkFileManager.setup_work_file_paths">[docs]</a>
+    <span class="k">def</span> <span class="nf">setup_work_file_paths</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">instance</span><span class="p">,</span> <span class="n">file_names</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Generates file paths and sets them as attributes on the instance.</span>
+<span class="sd">        Updates the file_names list with the new paths.</span>
+<span class="sd">        Can handle a list of file names or a list of lists of file names.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">file_names</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="nb">list</span><span class="p">):</span>
+            <span class="k">for</span> <span class="n">sublist</span> <span class="ow">in</span> <span class="n">file_names</span><span class="p">:</span>
+                <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">name</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">sublist</span><span class="p">):</span>
+                    <span class="n">path</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_build_file_path</span><span class="p">(</span><span class="n">name</span><span class="p">)</span>
+                    <span class="nb">setattr</span><span class="p">(</span><span class="n">instance</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="n">path</span><span class="p">)</span>
+                    <span class="n">sublist</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="n">path</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">name</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">file_names</span><span class="p">):</span>
+                <span class="n">path</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_build_file_path</span><span class="p">(</span><span class="n">name</span><span class="p">)</span>
+                <span class="nb">setattr</span><span class="p">(</span><span class="n">instance</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="n">path</span><span class="p">)</span>
+                <span class="n">file_names</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="n">path</span></div>
+
+
+    <span class="k">def</span> <span class="nf">_build_file_path_lyrx</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">file_name</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+        <span class="k">return</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">file_location</span><span class="si">}{</span><span class="n">file_name</span><span class="si">}</span><span class="s2">_</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">unique_id</span><span class="si">}</span><span class="s2">.lyrx&quot;</span>
+
+<div class="viewcode-block" id="WorkFileManager.setup_work_file_paths_lyrx">
+<a class="viewcode-back" href="../../../generated_docs/custom_tools.general_tools.html#custom_tools.general_tools.file_utilities.WorkFileManager.setup_work_file_paths_lyrx">[docs]</a>
+    <span class="k">def</span> <span class="nf">setup_work_file_paths_lyrx</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">instance</span><span class="p">,</span> <span class="n">file_names</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Generates file paths and sets them as attributes on the instance.</span>
+<span class="sd">        Updates the file_names list with the new paths.</span>
+<span class="sd">        Can handle a list of file names or a list of lists of file names.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">file_names</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="nb">list</span><span class="p">):</span>
+            <span class="k">for</span> <span class="n">sublist</span> <span class="ow">in</span> <span class="n">file_names</span><span class="p">:</span>
+                <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">name</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">sublist</span><span class="p">):</span>
+                    <span class="n">path</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_build_file_path_lyrx</span><span class="p">(</span><span class="n">name</span><span class="p">)</span>
+                    <span class="nb">setattr</span><span class="p">(</span><span class="n">instance</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="n">path</span><span class="p">)</span>
+                    <span class="n">sublist</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="n">path</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">name</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">file_names</span><span class="p">):</span>
+                <span class="n">path</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_build_file_path_lyrx</span><span class="p">(</span><span class="n">name</span><span class="p">)</span>
+                <span class="nb">setattr</span><span class="p">(</span><span class="n">instance</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="n">path</span><span class="p">)</span>
+                <span class="n">file_names</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="n">path</span></div>
+
+
+<div class="viewcode-block" id="WorkFileManager.cleanup_files">
+<a class="viewcode-back" href="../../../generated_docs/custom_tools.general_tools.html#custom_tools.general_tools.file_utilities.WorkFileManager.cleanup_files">[docs]</a>
+    <span class="k">def</span> <span class="nf">cleanup_files</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">file_paths</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Deletes files. Can handle a list of file paths or a list of lists of file paths.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">file_paths</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="nb">list</span><span class="p">):</span>
+            <span class="k">for</span> <span class="n">sublist</span> <span class="ow">in</span> <span class="n">file_paths</span><span class="p">:</span>
+                <span class="k">for</span> <span class="n">path</span> <span class="ow">in</span> <span class="n">sublist</span><span class="p">:</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">_delete_file</span><span class="p">(</span><span class="n">path</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">for</span> <span class="n">path</span> <span class="ow">in</span> <span class="n">file_paths</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_delete_file</span><span class="p">(</span><span class="n">path</span><span class="p">)</span></div>
+
+
+    <span class="nd">@staticmethod</span>
+    <span class="k">def</span> <span class="nf">_delete_file</span><span class="p">(</span><span class="n">file_path</span><span class="p">:</span> <span class="nb">str</span><span class="p">):</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">arcpy</span><span class="o">.</span><span class="n">Exists</span><span class="p">(</span><span class="n">file_path</span><span class="p">):</span>
+                <span class="n">arcpy</span><span class="o">.</span><span class="n">management</span><span class="o">.</span><span class="n">Delete</span><span class="p">(</span><span class="n">file_path</span><span class="p">)</span>
+                <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Deleted: </span><span class="si">{</span><span class="n">file_path</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;File did not exist: </span><span class="si">{</span><span class="n">file_path</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+        <span class="k">except</span> <span class="n">arcpy</span><span class="o">.</span><span class="n">ExecuteError</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+            <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Error deleting file </span><span class="si">{</span><span class="n">file_path</span><span class="si">}</span><span class="s2">: </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span></div>
+
+
+
 <div class="viewcode-block" id="compare_feature_classes">
 <a class="viewcode-back" href="../../../generated_docs/custom_tools.general_tools.html#custom_tools.general_tools.file_utilities.compare_feature_classes">[docs]</a>
 <span class="k">def</span> <span class="nf">compare_feature_classes</span><span class="p">(</span><span class="n">feature_class_1</span><span class="p">,</span> <span class="n">feature_class_2</span><span class="p">):</span>
