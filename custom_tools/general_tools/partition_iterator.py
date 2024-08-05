@@ -17,6 +17,7 @@ from custom_tools.decorators.timing_decorator import timing_decorator
 
 from input_data import input_n50, input_n100
 from file_manager.n100.file_manager_buildings import Building_N100
+from custom_tools.general_tools.file_utilities import WorkFileManager
 from custom_tools.general_tools.polygon_processor import PolygonProcessor
 from constants.n100_constants import N100_Symbology
 
@@ -51,6 +52,7 @@ class PartitionIterator:
         search_distance: str = "500 Meters",
         context_selection: bool = True,
         safe_output_final_cleanup: bool = True,
+        keep_work_files: bool = False,
         object_id_field: str = "OBJECTID",
     ):
         """
@@ -102,6 +104,52 @@ class PartitionIterator:
         self.total_start_time = None
         self.iteration_times_with_input = []
         self.iteration_start_time = None
+
+        # Setting up WorkFileManager
+        self.work_file_manager_disk = WorkFileManager(
+            unique_id=id(self),
+            root_file=root_file_partition_iterator,
+            write_to_memory=False,
+            keep_files=keep_work_files,
+        )
+
+        self.work_file_manager_memory = WorkFileManager(
+            unique_id=id(self),
+            root_file=root_file_partition_iterator,
+            write_to_memory=True,
+            keep_files=keep_work_files,
+        )
+
+        # Disk Work Files
+        self.dummy_feature_path = "dummy_feature_path"
+        self.partition_feature = "partition_feature"
+        self.input_data_copy = "input_data_copy"
+        self.context_data_copy = "context_data_copy"
+        self.input_iteration_selection = "input_iteration_selection"
+        self.context_iteration_selection = "context_iteration_selection"
+
+        self.disk_work_files_list = [
+            self.dummy_feature_path,
+            self.partition_feature,
+            self.input_data_copy,
+            self.context_data_copy,
+            self.input_iteration_selection,
+            self.context_iteration_selection,
+        ]
+
+        # Memory Work Files
+
+        self.context_features_input_selection = "context_features_input_selection"
+        self.input_features_partition_selection = "input_features_partition_selection"
+        self.input_features_partition_context_selection = (
+            "input_features_partition_context_selection"
+        )
+
+        self.memory_work_files_list = [
+            self.context_features_input_selection,
+            self.input_features_partition_selection,
+            self.input_features_partition_context_selection,
+        ]
 
     def unpack_alias_path_data(self, alias_path_data):
         """
@@ -316,8 +364,8 @@ class PartitionIterator:
                 f"'dummy' type does not exist for alias '{alias}' in nested_alias_type_data."
             )
 
+    @staticmethod
     def create_directory_json_documentation(
-        self,
         root_path: str,
         target_dir: str,
         iteration: bool,
@@ -346,8 +394,8 @@ class PartitionIterator:
 
         return directory_path
 
+    @staticmethod
     def write_data_to_json(
-        self,
         data: dict,
         file_path: str,
         file_name: str,
