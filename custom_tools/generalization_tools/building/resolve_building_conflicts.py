@@ -432,49 +432,6 @@ class ResolveBuildingConflicts:
             self.output_polygons,
         )
 
-    @timing_decorator
-    def adding_files_to_working_list(self):
-        self.working_files_list.extend(
-            [
-                f"{self.base_path_for_features}points_to_squares",
-                f"{self.lyrx_base_path}building_squares_with_lyrx.lyrx",
-                f"{self.lyrx_base_path}polygons_with_lyrx.lyrx",
-                f"{self.lyrx_base_path}roads_with_lyrx.lyrx",
-                f"{self.lyrx_base_path}begrensningskurve_with_lyrx.lyrx",
-                f"{self.lyrx_base_path}railway_with_lyrx.lyrx",
-                f"{self.lyrx_base_path}railway_stations_with_lyrx.lyrx",
-                f"{self.base_path_for_features}results_rbc_1_squares",
-                f"{self.base_path_for_features}results_rbc_1_polygons",
-                f"{self.base_path_for_features}invisible_polygons_after_rbc_1",
-                f"{self.base_path_for_features}invisible_polygons_to_points_after_rbc_1",
-                f"{self.base_path_for_features}building_polygons_to_points_and_then_squares_rbc_1",
-                f"{self.base_path_for_features}merged_squares_rbc1",
-                f"{self.lyrx_base_path}adding_symbology_to_squares_going_into_rbc2.lyrx",
-                f"{self.lyrx_base_path}adding_symbology_to_polygons_going_into_rbc2.lyrx",
-                f"{self.base_path_for_features}squares_back_to_points_after_rbc2"
-                f"{self.base_path_for_features}squares_after_rbc2",
-                f"{self.base_path_for_features}polygons_after_rbc2",
-                self.points_to_squares,
-            ]
-        )
-
-    @timing_decorator
-    def delete_working_files(self, *file_paths):
-        """
-        Deletes multiple feature classes or files.
-        """
-        for file_path in file_paths:
-            self.delete_feature_class(file_path)
-            print(f"Deleted file: {file_path}")
-
-    @staticmethod
-    def delete_feature_class(feature_class_path):
-        """
-        Deletes a feature class if it exists.
-        """
-        if arcpy.Exists(feature_class_path):
-            arcpy.management.Delete(feature_class_path)
-
     @partition_io_decorator(
         input_param_names=[
             "building_inputs",
@@ -496,12 +453,6 @@ class ResolveBuildingConflicts:
             file_names=self.working_files_list_lyrx,
         )
 
-        for file in self.working_files_list_gdb:
-            print(f"Working file: {file}")
-
-        for file in self.working_files_list_lyrx:
-            print(f"Working file: {file}")
-
         self.building_points_to_squares()
         self.apply_symbology_to_the_layers()
         self.resolve_building_conflicts_1()
@@ -513,8 +464,6 @@ class ResolveBuildingConflicts:
         self.selecting_features_to_be_kept_after_rbc_2()
         self.transforming_squares_back_to_points()
         self.assigning_final_names()
-        # self.adding_files_to_working_list()
-        # self.delete_working_files(self.working_files_list)
 
         self.work_file_manager_gdb.cleanup_files(
             [self.working_files_list_gdb, self.working_files_list_lyrx]
