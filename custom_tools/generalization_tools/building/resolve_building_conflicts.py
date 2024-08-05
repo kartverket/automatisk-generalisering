@@ -13,6 +13,7 @@ import input_data.input_n100
 from input_data.input_symbology import SymbologyN100
 from file_manager.n100.file_manager_buildings import Building_N100
 from file_manager.base_file_manager import BaseFileManager
+from custom_tools.general_tools.file_utilities import WorkFileManager
 from constants.n100_constants import N100_Symbology, N100_Values
 from custom_tools.general_tools.polygon_processor import PolygonProcessor
 from env_setup import environment_setup
@@ -35,6 +36,8 @@ class ResolveBuildingConflicts:
         base_path_for_lyrx: str,
         base_path_for_features: str,
         output_files: Dict[str, str],
+        write_work_files_to_memory: bool = False,
+        keep_work_files: bool = False,
     ):
         # ========================================
         #                              INITIALIZING VARIABLES
@@ -74,7 +77,74 @@ class ResolveBuildingConflicts:
         self.output_points = output_files["building_points"]
         self.output_polygons = output_files["building_polygons"]
 
-        # Working files (to be deleted after script has run)
+        self.work_file_manager_gdb = WorkFileManager(
+            unique_id=id(self),
+            root_file=base_path_for_features,
+            write_to_memory=write_work_files_to_memory,
+            keep_files=keep_work_files,
+        )
+
+        self.work_file_manager_lyrx = WorkFileManager(
+            unique_id=id(self),
+            root_file=base_path_for_lyrx,
+            write_to_memory=write_work_files_to_memory,
+            keep_files=keep_work_files,
+        )
+
+        # GDB Work Files
+        self.points_to_squares = "points_to_squares"
+        self.results_rbc_1_squares = "results_rbc_1_squares"
+        self.results_rbc_1_polygons = "results_rbc_1_polygons"
+        self.invisible_polygons_after_rbc_1 = "invisible_polygons_after_rbc_1"
+        self.invisible_polygons_to_points_after_rbc_1 = (
+            "invisible_polygons_to_points_after_rbc_1"
+        )
+        self.building_polygons_to_points_and_then_squares_rbc_1 = (
+            "building_polygons_to_points_and_then_squares_rbc_1"
+        )
+        self.merged_squares_rbc1 = "merged_squares_rbc1"
+        self.squares_after_rbc2 = "squares_after_rbc2"
+        self.polygons_after_rbc2 = "polygons_after_rbc2"
+        self.squares_back_to_points_after_rbc2 = "squares_back_to_points_after_rbc2"
+
+        self.working_files_list_gdb = [
+            self.points_to_squares,
+            self.results_rbc_1_squares,
+            self.results_rbc_1_polygons,
+            self.invisible_polygons_after_rbc_1,
+            self.invisible_polygons_to_points_after_rbc_1,
+            self.building_polygons_to_points_and_then_squares_rbc_1,
+            self.merged_squares_rbc1,
+            self.squares_after_rbc2,
+            self.polygons_after_rbc2,
+            self.squares_back_to_points_after_rbc2,
+        ]
+
+        # Lyrx Work FIles
+        self.building_squares_with_lyrx = "building_squares_with_lyrx"
+        self.polygons_with_lyrx = "polygons_with_lyrx"
+        self.roads_with_lyrx = "roads_with_lyrx"
+        self.begrensningskurve_with_lyrx = "begrensningskurve_with_lyrx"
+        self.railway_with_lyrx = "railway_with_lyrx"
+        self.railway_stations_with_lyrx = "railway_stations_with_lyrx"
+        self.adding_symbology_to_squares_going_into_rbc2 = (
+            "adding_symbology_to_squares_going_into_rbc2"
+        )
+        self.adding_symbology_to_polygons_going_into_rbc2 = (
+            "adding_symbology_to_polygons_going_into_rbc2"
+        )
+
+        self.working_files_list_lyrx = [
+            self.building_squares_with_lyrx,
+            self.polygons_with_lyrx,
+            self.roads_with_lyrx,
+            self.begrensningskurve_with_lyrx,
+            self.railway_with_lyrx,
+            self.railway_stations_with_lyrx,
+            self.adding_symbology_to_squares_going_into_rbc2,
+            self.adding_symbology_to_polygons_going_into_rbc2,
+        ]
+
         self.working_files_list = []
 
         # Feature base path
@@ -86,15 +156,6 @@ class ResolveBuildingConflicts:
         # ========================================
         #                                       LOGICS
         # ========================================
-
-        self.points_to_squares = None
-
-    def constructing_work_files(self):
-        unique_id = id(self)
-
-        self.points_to_squares = (
-            f"{self.base_path_for_features}_points_to_squares_{unique_id}"
-        )
 
     @timing_decorator
     def building_points_to_squares(self):
@@ -117,32 +178,32 @@ class ResolveBuildingConflicts:
             {
                 "input_layer": self.points_to_squares,
                 "in_symbology_layer": self.building_squares_lyrx,
-                "output_name": f"{self.lyrx_base_path}building_squares_with_lyrx.lyrx",
+                "output_name": self.building_squares_with_lyrx,
             },
             {
                 "input_layer": self.input_building_polygons,
                 "in_symbology_layer": self.building_polygons_lyrx,
-                "output_name": f"{self.lyrx_base_path}polygons_with_lyrx.lyrx",
+                "output_name": self.polygons_with_lyrx,
             },
             {
                 "input_layer": self.input_road_barrier,
                 "in_symbology_layer": self.road_barrier_lyrx,
-                "output_name": f"{self.lyrx_base_path}roads_with_lyrx.lyrx",
+                "output_name": self.roads_with_lyrx,
             },
             {
                 "input_layer": self.input_begrensningskurve_barrier,
                 "in_symbology_layer": self.begrensningskurve_barrier_lyrx,
-                "output_name": f"{self.lyrx_base_path}begrensningskurve_with_lyrx.lyrx",
+                "output_name": self.begrensningskurve_with_lyrx,
             },
             {
                 "input_layer": self.input_railway_barrier,
                 "in_symbology_layer": self.railway_barrier_lyrx,
-                "output_name": f"{self.lyrx_base_path}railway_with_lyrx.lyrx",
+                "output_name": self.railway_with_lyrx,
             },
             {
                 "input_layer": self.input_railway_station_barrier,
                 "in_symbology_layer": self.railway_station_barrier_lyrx,
-                "output_name": f"{self.lyrx_base_path}railway_stations_with_lyrx.lyrx",
+                "output_name": self.railway_stations_with_lyrx,
             },
         ]
 
@@ -159,17 +220,17 @@ class ResolveBuildingConflicts:
     def barriers_for_rbc(self):
         input_barriers_for_rbc = [
             [
-                f"{self.lyrx_base_path}begrensningskurve_with_lyrx.lyrx",
+                self.begrensningskurve_with_lyrx,
                 "false",
                 f"{self.begrensningskurve_barrier_gap} Meters",
             ],
             [
-                f"{self.lyrx_base_path}railway_stations_with_lyrx.lyrx",
+                self.railway_stations_with_lyrx,
                 "false",
                 f"{self.railway_station_barrier_gap} Meters",
             ],
             [
-                f"{self.lyrx_base_path}railway_with_lyrx.lyrx",
+                self.railway_with_lyrx,
                 "false",
                 f"{self.railway_barrier_gap} Meters",
             ],
@@ -182,8 +243,8 @@ class ResolveBuildingConflicts:
         try:
             arcpy.env.referenceScale = "100000"
             input_buildings_rbc_1 = [
-                f"{self.lyrx_base_path}polygons_with_lyrx.lyrx",
-                f"{self.lyrx_base_path}building_squares_with_lyrx.lyrx",
+                self.polygons_with_lyrx,
+                self.building_squares_with_lyrx,
             ]
             arcpy.cartography.ResolveBuildingConflicts(
                 in_buildings=input_buildings_rbc_1,
@@ -207,7 +268,7 @@ class ResolveBuildingConflicts:
         custom_arcpy.select_attribute_and_make_permanent_feature(
             input_layer=self.points_to_squares,
             expression=sql_expression_resolve_building_conflicts_squares,
-            output_name=f"{self.base_path_for_features}results_rbc_1_squares",
+            output_name=self.results_rbc_1_squares,
         )
 
         # Sql expression to keep only building polygons that are visible (0) after the tool has run
@@ -217,7 +278,7 @@ class ResolveBuildingConflicts:
         custom_arcpy.select_attribute_and_make_permanent_feature(
             input_layer=self.input_building_polygons,
             expression=sql_expression_resolve_building_conflicts_polygon,
-            output_name=f"{self.base_path_for_features}results_rbc_1_polygons",
+            output_name=self.results_rbc_1_polygons,
         )
 
     @timing_decorator
@@ -229,20 +290,20 @@ class ResolveBuildingConflicts:
         custom_arcpy.select_attribute_and_make_permanent_feature(
             input_layer=self.input_building_polygons,
             expression=sql_expression_find_invisible_polygons,
-            output_name=f"{self.base_path_for_features}invisible_polygons_after_rbc_1",
+            output_name=self.invisible_polygons_after_rbc_1,
         )
 
         # Invisible building polygons are then transformed to points
         arcpy.management.FeatureToPoint(
-            in_features=f"{self.base_path_for_features}invisible_polygons_after_rbc_1",
-            out_feature_class=f"{self.base_path_for_features}invisible_polygons_to_points_after_rbc_1",
+            in_features=self.invisible_polygons_after_rbc_1,
+            out_feature_class=self.invisible_polygons_to_points_after_rbc_1,
             point_location="INSIDE",
         )
 
         # Transforms all the building points to squares
         polygon_processor = PolygonProcessor(
-            input_building_points=f"{self.base_path_for_features}invisible_polygons_to_points_after_rbc_1",
-            output_polygon_feature_class=f"{self.base_path_for_features}building_polygons_to_points_and_then_squares_rbc_1",
+            input_building_points=self.invisible_polygons_to_points_after_rbc_1,
+            output_polygon_feature_class=self.building_polygons_to_points_and_then_squares_rbc_1,
             building_symbol_dimensions=self.building_symbol_dimension,
             symbol_field_name="symbol_val",
             index_field_name="OBJECTID",
@@ -252,10 +313,10 @@ class ResolveBuildingConflicts:
         # Merging squares and polygons made to points, and then squares
         arcpy.management.Merge(
             inputs=[
-                f"{self.base_path_for_features}results_rbc_1_squares",
-                f"{self.base_path_for_features}building_polygons_to_points_and_then_squares_rbc_1",
+                self.results_rbc_1_squares,
+                self.building_polygons_to_points_and_then_squares_rbc_1,
             ],
-            output=f"{self.base_path_for_features}merged_squares_rbc1",
+            output=self.merged_squares_rbc1,
         )
 
     @timing_decorator
@@ -278,7 +339,7 @@ class ResolveBuildingConflicts:
 
         # Applying the symbol_val_to_nbr logic
         arcpy.CalculateField_management(
-            in_table=f"{self.base_path_for_features}merged_squares_rbc1",
+            in_table=self.merged_squares_rbc1,
             field="byggtyp_nbr",
             expression="symbol_val_to_nbr(!symbol_val!, !byggtyp_nbr!)",
             expression_type="PYTHON3",
@@ -287,7 +348,7 @@ class ResolveBuildingConflicts:
 
         # Applying the update_symbol_val logic
         arcpy.CalculateField_management(
-            in_table=f"{self.base_path_for_features}merged_squares_rbc1",
+            in_table=self.merged_squares_rbc1,
             field="symbol_val",
             expression="update_symbol_val(!symbol_val!)",
             expression_type="PYTHON3",
@@ -298,16 +359,16 @@ class ResolveBuildingConflicts:
     def adding_symbology_to_layers_being_used_for_rbc_2(self):
         # Building squares (from points, transformed to squares in the first function) that are kept after rbc 1
         custom_arcpy.apply_symbology(
-            input_layer=f"{self.base_path_for_features}merged_squares_rbc1",
+            input_layer=self.merged_squares_rbc1,
             in_symbology_layer=self.building_squares_lyrx,
-            output_name=f"{self.lyrx_base_path}adding_symbology_to_squares_going_into_rbc2.lyrx",
+            output_name=self.adding_symbology_to_squares_going_into_rbc2,
         )
 
         # Building polygons kept after rbc 1
         custom_arcpy.apply_symbology(
-            input_layer=f"{self.base_path_for_features}results_rbc_1_polygons",
+            input_layer=self.results_rbc_1_polygons,
             in_symbology_layer=self.building_polygons_lyrx,
-            output_name=f"{self.lyrx_base_path}adding_symbology_to_polygons_going_into_rbc2.lyrx",
+            output_name=self.adding_symbology_to_polygons_going_into_rbc2,
         )
 
     @timing_decorator
@@ -316,8 +377,8 @@ class ResolveBuildingConflicts:
         arcpy.env.referenceScale = "100000"
 
         input_buildings_rbc_2 = [
-            f"{self.lyrx_base_path}adding_symbology_to_squares_going_into_rbc2.lyrx",
-            f"{self.lyrx_base_path}adding_symbology_to_polygons_going_into_rbc2.lyrx",
+            self.adding_symbology_to_squares_going_into_rbc2,
+            self.adding_symbology_to_polygons_going_into_rbc2,
         ]
 
         arcpy.cartography.ResolveBuildingConflicts(
@@ -337,24 +398,24 @@ class ResolveBuildingConflicts:
 
         # Selecting squares that should be kept after rbc 2
         custom_arcpy.select_attribute_and_make_permanent_feature(
-            input_layer=f"{self.base_path_for_features}merged_squares_rbc1",
+            input_layer=self.merged_squares_rbc1,
             expression=sql_expression_squares,
-            output_name=f"{self.base_path_for_features}squares_after_rbc2",
+            output_name=self.squares_after_rbc2,
         )
 
         # Selecting polygons that should be kept after rbc 2
         custom_arcpy.select_attribute_and_make_permanent_feature(
-            input_layer=f"{self.base_path_for_features}results_rbc_1_polygons",
+            input_layer=self.results_rbc_1_polygons,
             expression=sql_expression_polygons,
-            output_name=f"{self.base_path_for_features}polygons_after_rbc2",
+            output_name=self.polygons_after_rbc2,
         )
 
     @timing_decorator
     def transforming_squares_back_to_points(self):
         # Squares from points are transformed back to points
         arcpy.management.FeatureToPoint(
-            in_features=f"{self.base_path_for_features}squares_after_rbc2",
-            out_feature_class=f"{self.base_path_for_features}squares_back_to_points_after_rbc2",
+            in_features=self.squares_after_rbc2,
+            out_feature_class=self.squares_back_to_points_after_rbc2,
             point_location="INSIDE",
         )
 
@@ -362,56 +423,14 @@ class ResolveBuildingConflicts:
     def assigning_final_names(self):
         # Squares
         arcpy.management.CopyFeatures(
-            f"{self.base_path_for_features}squares_back_to_points_after_rbc2",
+            self.squares_back_to_points_after_rbc2,
             self.output_points,
         )
         # Polygons
         arcpy.management.CopyFeatures(
-            f"{self.base_path_for_features}polygons_after_rbc2", self.output_polygons
+            self.polygons_after_rbc2,
+            self.output_polygons,
         )
-
-    @timing_decorator
-    def adding_files_to_working_list(self):
-        self.working_files_list.extend(
-            [
-                f"{self.base_path_for_features}points_to_squares",
-                f"{self.lyrx_base_path}building_squares_with_lyrx.lyrx",
-                f"{self.lyrx_base_path}polygons_with_lyrx.lyrx",
-                f"{self.lyrx_base_path}roads_with_lyrx.lyrx",
-                f"{self.lyrx_base_path}begrensningskurve_with_lyrx.lyrx",
-                f"{self.lyrx_base_path}railway_with_lyrx.lyrx",
-                f"{self.lyrx_base_path}railway_stations_with_lyrx.lyrx",
-                f"{self.base_path_for_features}results_rbc_1_squares",
-                f"{self.base_path_for_features}results_rbc_1_polygons",
-                f"{self.base_path_for_features}invisible_polygons_after_rbc_1",
-                f"{self.base_path_for_features}invisible_polygons_to_points_after_rbc_1",
-                f"{self.base_path_for_features}building_polygons_to_points_and_then_squares_rbc_1",
-                f"{self.base_path_for_features}merged_squares_rbc1",
-                f"{self.lyrx_base_path}adding_symbology_to_squares_going_into_rbc2.lyrx",
-                f"{self.lyrx_base_path}adding_symbology_to_polygons_going_into_rbc2.lyrx",
-                f"{self.base_path_for_features}squares_back_to_points_after_rbc2"
-                f"{self.base_path_for_features}squares_after_rbc2",
-                f"{self.base_path_for_features}polygons_after_rbc2",
-                self.points_to_squares,
-            ]
-        )
-
-    @timing_decorator
-    def delete_working_files(self, *file_paths):
-        """
-        Deletes multiple feature classes or files.
-        """
-        for file_path in file_paths:
-            self.delete_feature_class(file_path)
-            print(f"Deleted file: {file_path}")
-
-    @staticmethod
-    def delete_feature_class(feature_class_path):
-        """
-        Deletes a feature class if it exists.
-        """
-        if arcpy.Exists(feature_class_path):
-            arcpy.management.Delete(feature_class_path)
 
     @partition_io_decorator(
         input_param_names=[
@@ -423,7 +442,17 @@ class ResolveBuildingConflicts:
     )
     def run(self):
         environment_setup.main()
-        self.constructing_work_files()
+
+        self.work_file_manager_gdb.setup_work_file_paths(
+            instance=self,
+            file_names=self.working_files_list_gdb,
+        )
+
+        self.work_file_manager_lyrx.setup_work_file_paths_lyrx(
+            instance=self,
+            file_names=self.working_files_list_lyrx,
+        )
+
         self.building_points_to_squares()
         self.apply_symbology_to_the_layers()
         self.resolve_building_conflicts_1()
@@ -435,8 +464,10 @@ class ResolveBuildingConflicts:
         self.selecting_features_to_be_kept_after_rbc_2()
         self.transforming_squares_back_to_points()
         self.assigning_final_names()
-        self.adding_files_to_working_list()
-        self.delete_working_files(self.working_files_list)
+
+        self.work_file_manager_gdb.cleanup_files(
+            [self.working_files_list_gdb, self.working_files_list_lyrx]
+        )
 
 
 if __name__ == "__main__":

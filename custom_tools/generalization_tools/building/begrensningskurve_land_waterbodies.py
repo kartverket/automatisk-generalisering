@@ -8,7 +8,8 @@ from file_manager.n100.file_manager_buildings import Building_N100
 from env_setup import environment_setup
 from custom_tools.decorators.partition_io_decorator import partition_io_decorator
 from custom_tools.general_tools import custom_arcpy
-from constants.n100_constants import N100_Symbology, N100_SQLResources, N100_Values
+from custom_tools.general_tools.file_utilities import WorkFileManager
+from constants.n100_constants import N100_Values
 
 
 class BegrensningskurveLandWaterbodies:
@@ -39,65 +40,32 @@ class BegrensningskurveLandWaterbodies:
 
         self.area_length_ratio_field_name = "area_length_ratio"
 
-        self.waterfeatures_from_begrensningskurve = None
-        self.waterfeatures_from_begrensningskurve_selection = None
-        self.land_features_area = None
-        self.water_features_area = None
-        self.water_features_area_narrow = None
-        self.water_features_area_wide = None
-        self.selected_land_features = None
-        self.land_features_buffer = None
-        self.begrensningskurve_waterfeatures_buffer = None
-        self.erase_feature_1 = None
-        self.erase_feature_2 = None
-
-        self.working_files_list = []
-
-    def reset_temp_files(self):
-        """Reset temporary file attributes."""
-        unique_id = id(self)
-        temporary_file = "in_memory\\"
-        permanent_file = f"{self.root_file}_"
-        if self.root_file is None:
-            if not self.write_work_files_to_memory:
-                raise ValueError(
-                    "Need to specify root_file path to write to disk for work files."
-                )
-            if self.keep_work_files:
-                raise ValueError(
-                    "Need to specify root_file path and write to disk to keep_work_files."
-                )
-
-        if self.write_work_files_to_memory:
-            file_location = temporary_file
-        else:
-            file_location = permanent_file
+        self.work_file_manager = WorkFileManager(
+            unique_id=id(self),
+            root_file=root_file,
+            write_to_memory=write_work_files_to_memory,
+            keep_files=keep_work_files,
+        )
 
         self.waterfeatures_from_begrensningskurve = (
-            f"{file_location}waterfeatures_from_begrensningskurve_{unique_id}"
+            "waterfeatures_from_begrensningskurve"
         )
         self.waterfeatures_from_begrensningskurve_selection = (
-            f"{file_location}waterfeatures_from_begrensningskurve_selection_{unique_id}"
+            "waterfeatures_from_begrensningskurve_selection"
         )
-        self.land_features_area = f"{file_location}land_features_area_{unique_id}"
-        self.water_features_area = f"{file_location}water_features_area_{unique_id}"
-        self.selected_land_features = (
-            f"{file_location}selected_land_features_{unique_id}"
-        )
-        self.water_features_area_narrow = (
-            f"{file_location}water_features_area_narrow_{unique_id}"
-        )
-        self.water_features_area_wide = (
-            f"{file_location}water_features_area_wide_{unique_id}"
-        )
-        self.land_features_buffer = f"{file_location}land_features_buffer_{unique_id}"
+        self.land_features_area = "land_features_area"
+        self.water_features_area = "water_features_area"
+        self.water_features_area_narrow = "water_features_area_narrow"
+        self.water_features_area_wide = "water_features_area_wide"
+        self.selected_land_features = "selected_land_features"
+        self.land_features_buffer = "land_features_buffer"
         self.begrensningskurve_waterfeatures_buffer = (
-            f"{file_location}begrensningskurve_waterfeatures_buffer_{unique_id}"
+            "begrensningskurve_waterfeatures_buffer"
         )
-        self.erase_feature_1 = f"{file_location}erase_feature_1{unique_id}"
-        self.erase_feature_2 = f"{file_location}erase_feature_2{unique_id}"
+        self.erase_feature_1 = "erase_feature_1"
+        self.erase_feature_2 = "erase_feature_2"
 
-        self.working_files_list = [
+        self.work_file_list = [
             self.waterfeatures_from_begrensningskurve,
             self.waterfeatures_from_begrensningskurve_selection,
             self.land_features_area,
@@ -259,32 +227,26 @@ class BegrensningskurveLandWaterbodies:
             output=self.output_begrensningskurve,
         )
 
-    def delete_working_files(self, *file_paths):
-        """Deletes multiple feature classes or files. Detailed alias and output_type logging is not available here."""
-        for file_path in file_paths:
-            self.delete_feature_class(file_path)
-            print(f"Deleted file: {file_path}")
-
-    @staticmethod
-    def delete_feature_class(feature_class_path):
-        """Deletes a feature class if it exists."""
-        if arcpy.Exists(feature_class_path):
-            arcpy.management.Delete(feature_class_path)
-
     @partition_io_decorator(
         input_param_names=["input_begrensningskurve", "input_land_cover_features"],
         output_param_names=["output_begrensningskurve"],
     )
     def run(self):
-        self.reset_temp_files()
+        environment_setup.main()
+
+        self.work_file_manager.setup_work_file_paths(
+            instance=self,
+            file_names=self.work_file_list,
+        )
+
         self.selections()
         self.field_management()
         self.finding_narrow_or_not()
         self.creating_buffers()
         self.erase_buffers()
         self.merge_water_features()
-        if not self.keep_work_files:
-            self.delete_working_files(*self.working_files_list)
+
+        self.work_file_manager.cleanup_files(self.work_file_list)
 
 
 if __name__ == "__main__":
@@ -295,7 +257,7 @@ if __name__ == "__main__":
         water_feature_buffer_width=N100_Values.building_water_intrusion_distance_m.value,
         output_begrensningskurve=Building_N100.begrensingskurve_land_water___begrensingskurve_buffer_in_water___n100_building.value,
         write_work_files_to_memory=False,
-        keep_work_files=True,
+        keep_work_files=False,
         root_file=Building_N100.begrensingskurve_land_water___root_file___n100_building.value,
     )
     begrensningskurve_land_waterbodies.run()
