@@ -20,6 +20,14 @@ file\_manager.n100.file\_manager\_rivers module
    :undoc-members:
    :show-inheritance:
 
+file\_manager.n100.file\_manager\_roads module
+----------------------------------------------
+
+.. automodule:: file_manager.n100.file_manager_roads
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
 Module contents
 ---------------
 

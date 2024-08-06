@@ -9,6 +9,7 @@ Subpackages
 
    generalization.n100.building
    generalization.n100.river
+   generalization.n100.road
 
 Module contents
 ---------------
