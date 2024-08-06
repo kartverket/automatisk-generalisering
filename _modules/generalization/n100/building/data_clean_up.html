@@ -132,6 +132,10 @@
 <a class="viewcode-back" href="../../../../generated_docs/generalization.n100.building.html#generalization.n100.building.data_clean_up.keep_necessary_fields">[docs]</a>
 <span class="nd">@timing_decorator</span>
 <span class="k">def</span> <span class="nf">keep_necessary_fields</span><span class="p">(</span><span class="n">input_layer</span><span class="p">,</span> <span class="n">list_of_fields</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Summary:</span>
+<span class="sd">        Deletes all fields from the input feature class except for a specified set of fields.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
     <span class="c1"># Provide the path to your feature class</span>
     <span class="n">feature_class_to_clean_up</span> <span class="o">=</span> <span class="n">input_layer</span>
 
@@ -167,6 +171,10 @@
 <div class="viewcode-block" id="add_last_edited_date_to_all_feature_classes">
 <a class="viewcode-back" href="../../../../generated_docs/generalization.n100.building.html#generalization.n100.building.data_clean_up.add_last_edited_date_to_all_feature_classes">[docs]</a>
 <span class="k">def</span> <span class="nf">add_last_edited_date_to_all_feature_classes</span><span class="p">():</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Summary:</span>
+<span class="sd">        Adds a &#39;last_edited_date&#39; field to specified feature classes and sets it to the current date and time.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
     <span class="n">all_final_layers</span> <span class="o">=</span> <span class="p">[</span>
         <span class="n">Building_N100</span><span class="o">.</span><span class="n">BygningsPunkt</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
         <span class="n">Building_N100</span><span class="o">.</span><span class="n">Grunnriss</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>

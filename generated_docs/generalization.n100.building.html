@@ -177,22 +177,40 @@
 <dl class="py function">
 <dt class="sig sig-object py" id="generalization.n100.building.calculate_point_values.reclassifying_hospital_and_church_points_from_matrikkel">
 <span class="sig-prename descclassname"><span class="pre">generalization.n100.building.calculate_point_values.</span></span><span class="sig-name descname"><span class="pre">reclassifying_hospital_and_church_points_from_matrikkel</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/generalization/n100/building/calculate_point_values.html#reclassifying_hospital_and_church_points_from_matrikkel"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#generalization.n100.building.calculate_point_values.reclassifying_hospital_and_church_points_from_matrikkel" title="Link to this definition"></a></dt>
-<dd></dd></dl>
+<dd><dl class="simple">
+<dt>Summary:</dt><dd><p>Reclassifies hospitals and churches in the matrikkel dataset to a new NBR value (“Other buildings” / “Andre bygg”).</p>
+</dd>
+</dl>
+</dd></dl>
 
 <dl class="py function">
 <dt class="sig sig-object py" id="generalization.n100.building.calculate_point_values.adding_original_source_to_points">
 <span class="sig-prename descclassname"><span class="pre">generalization.n100.building.calculate_point_values.</span></span><span class="sig-name descname"><span class="pre">adding_original_source_to_points</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/generalization/n100/building/calculate_point_values.html#adding_original_source_to_points"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#generalization.n100.building.calculate_point_values.adding_original_source_to_points" title="Link to this definition"></a></dt>
-<dd></dd></dl>
+<dd><dl class="simple">
+<dt>Summary:</dt><dd><p>Adds a field to point features to indicate their original source:
+<cite>0</cite> for points from merged sources and <cite>1</cite> for points resulting from building polygons.</p>
+</dd>
+</dl>
+</dd></dl>
 
 <dl class="py function">
 <dt class="sig sig-object py" id="generalization.n100.building.calculate_point_values.merge_matrikkel_n50_touristcabins_with_points_from_grunnriss">
 <span class="sig-prename descclassname"><span class="pre">generalization.n100.building.calculate_point_values.</span></span><span class="sig-name descname"><span class="pre">merge_matrikkel_n50_touristcabins_with_points_from_grunnriss</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/generalization/n100/building/calculate_point_values.html#merge_matrikkel_n50_touristcabins_with_points_from_grunnriss"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#generalization.n100.building.calculate_point_values.merge_matrikkel_n50_touristcabins_with_points_from_grunnriss" title="Link to this definition"></a></dt>
-<dd></dd></dl>
+<dd><dl class="simple">
+<dt>Summary:</dt><dd><p>Merges points from the <cite>matrikkel_n50_touristcabins</cite> dataset with points created from building polygons.
+Adds a field to the merged points to determine and assign a symbol value based on their NBR code.</p>
+</dd>
+</dl>
+</dd></dl>
 
 <dl class="py function">
 <dt class="sig sig-object py" id="generalization.n100.building.calculate_point_values.find_undefined_nbr_values">
 <span class="sig-prename descclassname"><span class="pre">generalization.n100.building.calculate_point_values.</span></span><span class="sig-name descname"><span class="pre">find_undefined_nbr_values</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/generalization/n100/building/calculate_point_values.html#find_undefined_nbr_values"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#generalization.n100.building.calculate_point_values.find_undefined_nbr_values" title="Link to this definition"></a></dt>
-<dd></dd></dl>
+<dd><dl class="simple">
+<dt>Summary:</dt><dd><p>Selects building points with an undefined NBR value (symbol value of -99) from the dataset.</p>
+</dd>
+</dl>
+</dd></dl>
 
 <dl class="py function">
 <dt class="sig sig-object py" id="generalization.n100.building.calculate_point_values.find_each_unique_nbr_value">
@@ -242,12 +260,20 @@
 <dl class="py function">
 <dt class="sig sig-object py" id="generalization.n100.building.data_clean_up.keep_necessary_fields">
 <span class="sig-prename descclassname"><span class="pre">generalization.n100.building.data_clean_up.</span></span><span class="sig-name descname"><span class="pre">keep_necessary_fields</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">input_layer</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">list_of_fields</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/generalization/n100/building/data_clean_up.html#keep_necessary_fields"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#generalization.n100.building.data_clean_up.keep_necessary_fields" title="Link to this definition"></a></dt>
-<dd></dd></dl>
+<dd><dl class="simple">
+<dt>Summary:</dt><dd><p>Deletes all fields from the input feature class except for a specified set of fields.</p>
+</dd>
+</dl>
+</dd></dl>
 
 <dl class="py function">
 <dt class="sig sig-object py" id="generalization.n100.building.data_clean_up.add_last_edited_date_to_all_feature_classes">
 <span class="sig-prename descclassname"><span class="pre">generalization.n100.building.data_clean_up.</span></span><span class="sig-name descname"><span class="pre">add_last_edited_date_to_all_feature_classes</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/generalization/n100/building/data_clean_up.html#add_last_edited_date_to_all_feature_classes"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#generalization.n100.building.data_clean_up.add_last_edited_date_to_all_feature_classes" title="Link to this definition"></a></dt>
-<dd></dd></dl>
+<dd><dl class="simple">
+<dt>Summary:</dt><dd><p>Adds a ‘last_edited_date’ field to specified feature classes and sets it to the current date and time.</p>
+</dd>
+</dl>
+</dd></dl>
 
 </section>
 <section id="generalization-n100-building-data-preparation-module">
@@ -263,27 +289,47 @@
 <dl class="py function">
 <dt class="sig sig-object py" id="generalization.n100.building.finalizing_buildings.removing_points_in_and_close_to_urban_areas">
 <span class="sig-prename descclassname"><span class="pre">generalization.n100.building.finalizing_buildings.</span></span><span class="sig-name descname"><span class="pre">removing_points_in_and_close_to_urban_areas</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/generalization/n100/building/finalizing_buildings.html#removing_points_in_and_close_to_urban_areas"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#generalization.n100.building.finalizing_buildings.removing_points_in_and_close_to_urban_areas" title="Link to this definition"></a></dt>
-<dd></dd></dl>
+<dd><dl class="simple">
+<dt>Summary:</dt><dd><p>Selects and processes building points based on their proximity to urban areas, keeping those further away and merging specific points.</p>
+</dd>
+</dl>
+</dd></dl>
 
 <dl class="py function">
 <dt class="sig sig-object py" id="generalization.n100.building.finalizing_buildings.selecting_all_tourist_cabins">
 <span class="sig-prename descclassname"><span class="pre">generalization.n100.building.finalizing_buildings.</span></span><span class="sig-name descname"><span class="pre">selecting_all_tourist_cabins</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/generalization/n100/building/finalizing_buildings.html#selecting_all_tourist_cabins"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#generalization.n100.building.finalizing_buildings.selecting_all_tourist_cabins" title="Link to this definition"></a></dt>
-<dd></dd></dl>
+<dd><dl class="simple">
+<dt>Summary:</dt><dd><p>Selects building points categorized as tourist cabins and distinguishes them from other building points.</p>
+</dd>
+</dl>
+</dd></dl>
 
 <dl class="py function">
 <dt class="sig sig-object py" id="generalization.n100.building.finalizing_buildings.building_polygons_to_line">
 <span class="sig-prename descclassname"><span class="pre">generalization.n100.building.finalizing_buildings.</span></span><span class="sig-name descname"><span class="pre">building_polygons_to_line</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/generalization/n100/building/finalizing_buildings.html#building_polygons_to_line"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#generalization.n100.building.finalizing_buildings.building_polygons_to_line" title="Link to this definition"></a></dt>
-<dd></dd></dl>
+<dd><dl class="simple">
+<dt>Summary:</dt><dd><p>Converts building polygons to lines</p>
+</dd>
+</dl>
+</dd></dl>
 
 <dl class="py function">
 <dt class="sig sig-object py" id="generalization.n100.building.finalizing_buildings.selecting_hospital_and_churches_for_pictogram_featureclass">
 <span class="sig-prename descclassname"><span class="pre">generalization.n100.building.finalizing_buildings.</span></span><span class="sig-name descname"><span class="pre">selecting_hospital_and_churches_for_pictogram_featureclass</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/generalization/n100/building/finalizing_buildings.html#selecting_hospital_and_churches_for_pictogram_featureclass"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#generalization.n100.building.finalizing_buildings.selecting_hospital_and_churches_for_pictogram_featureclass" title="Link to this definition"></a></dt>
-<dd></dd></dl>
+<dd><dl class="simple">
+<dt>Summary:</dt><dd><p>Selects building points categorized as hospitals or churches for inclusion in a pictogram feature class.</p>
+</dd>
+</dl>
+</dd></dl>
 
 <dl class="py function">
 <dt class="sig sig-object py" id="generalization.n100.building.finalizing_buildings.assigning_final_file_names">
 <span class="sig-prename descclassname"><span class="pre">generalization.n100.building.finalizing_buildings.</span></span><span class="sig-name descname"><span class="pre">assigning_final_file_names</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/generalization/n100/building/finalizing_buildings.html#assigning_final_file_names"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#generalization.n100.building.finalizing_buildings.assigning_final_file_names" title="Link to this definition"></a></dt>
-<dd></dd></dl>
+<dd><dl class="simple">
+<dt>Summary:</dt><dd><p>Copies final feature classes to their respective output file locations in the “final_outputs.gdb”</p>
+</dd>
+</dl>
+</dd></dl>
 
 </section>
 <section id="module-generalization.n100.building.hospital_church_clusters">
@@ -293,24 +339,6 @@
 <span class="sig-prename descclassname"><span class="pre">generalization.n100.building.hospital_church_clusters.</span></span><span class="sig-name descname"><span class="pre">main</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/generalization/n100/building/hospital_church_clusters.html#main"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#generalization.n100.building.hospital_church_clusters.main" title="Link to this definition"></a></dt>
 <dd><dl class="simple">
 <dt>Summary:</dt><dd><p>This script detects and reduces hospital and church clusters.</p>
-</dd>
-<dt>Details:</dt><dd><ol class="arabic simple">
-<li><dl class="simple">
-<dt><cite>hospital_church_selections</cite>:</dt><dd><p>Selects hospitals and churches from the input point feature class.</p>
-</dd>
-</dl>
-</li>
-<li><dl class="simple">
-<dt><cite>find_clusters</cite>:</dt><dd><p>Finds clusters in the hospital and church layers.</p>
-</dd>
-</dl>
-</li>
-<li><dl class="simple">
-<dt><cite>reducing_clusters</cite>:</dt><dd><p>Reduces clusters to one point for each cluster.</p>
-</dd>
-</dl>
-</li>
-</ol>
 </dd>
 </dl>
 </dd></dl>
@@ -380,7 +408,11 @@ A cluster is defined as two or more points that are closer together than 200 met
 <dl class="py function">
 <dt class="sig sig-object py" id="generalization.n100.building.hospital_church_clusters.hospitals_and_churches_too_close">
 <span class="sig-prename descclassname"><span class="pre">generalization.n100.building.hospital_church_clusters.</span></span><span class="sig-name descname"><span class="pre">hospitals_and_churches_too_close</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/generalization/n100/building/hospital_church_clusters.html#hospitals_and_churches_too_close"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#generalization.n100.building.hospital_church_clusters.hospitals_and_churches_too_close" title="Link to this definition"></a></dt>
-<dd></dd></dl>
+<dd><dl class="simple">
+<dt>Summary:</dt><dd><p>Selects hospitals and churches, then identifies churches that are more than 215 meters away from hospitals.</p>
+</dd>
+</dl>
+</dd></dl>
 
 </section>
 <section id="generalization-n100-building-point-displacement-with-buffer-module">
