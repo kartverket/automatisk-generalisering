@@ -22,16 +22,6 @@ def main():
     """
     Summary:
         This script detects and reduces hospital and church clusters.
-
-    Details:
-        1. `hospital_church_selections`:
-            Selects hospitals and churches from the input point feature class.
-
-        2. `find_clusters`:
-            Finds clusters in the hospital and church layers.
-
-        3. `reducing_clusters`:
-            Reduces clusters to one point for each cluster.
     """
 
     environment_setup.main()
@@ -375,6 +365,10 @@ def reducing_clusters():
 
 @timing_decorator
 def hospitals_and_churches_too_close():
+    """
+    Summary:
+        Selects hospitals and churches, then identifies churches that are more than 215 meters away from hospitals.
+    """
     # SQL-expressions to select hospitals and churches
     sql_select_all_hospital = "byggtyp_nbr IN (970, 719)"
     sql_select_all_church = "byggtyp_nbr = 671"

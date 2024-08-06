@@ -48,6 +48,10 @@ def main():
 
 @timing_decorator
 def keep_necessary_fields(input_layer, list_of_fields):
+    """
+    Summary:
+        Deletes all fields from the input feature class except for a specified set of fields.
+    """
     # Provide the path to your feature class
     feature_class_to_clean_up = input_layer
 
@@ -80,6 +84,10 @@ def keep_necessary_fields(input_layer, list_of_fields):
 
 
 def add_last_edited_date_to_all_feature_classes():
+    """
+    Summary:
+        Adds a 'last_edited_date' field to specified feature classes and sets it to the current date and time.
+    """
     all_final_layers = [
         Building_N100.BygningsPunkt.value,
         Building_N100.Grunnriss.value,

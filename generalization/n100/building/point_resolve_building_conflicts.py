@@ -37,6 +37,38 @@ def main():
 
 
 def resolve_building_conflicts():
+    """
+    Resolves conflicts between building features and other spatial elements such as roads, railways, and water features.
+
+    This function performs the following tasks:
+    1. Defines aliases for various input and reference layers, including building points and polygons, roads, railways, and symbology files.
+    2. Sets up input and output mappings for the building features and context layers.
+    3. Configures the `ResolveBuildingConflicts` class to process these layers, handling barriers and building gaps.
+    4. Uses `PartitionIterator` to manage large datasets efficiently by processing them in smaller chunks.
+    5. Executes the conflict resolution process and generates the final outputs.
+
+    The function utilizes the following components:
+    - `ResolveBuildingConflicts` class: A custom class for handling building conflicts with spatial barriers.
+    - `PartitionIterator`: A utility for processing large datasets by partitioning them into manageable chunks.
+    - `N100_Values` and `N100_Symbology`: Configuration objects that provide buffer clearance distances and symbology settings.
+
+    Inputs:
+        - Building points and polygons
+        - Contextual layers for roads, railways, railway stations, and boundary curves
+        - Symbology files for various spatial features
+
+    Outputs:
+        - Processed building points
+        - Processed building polygons
+
+    Configuration:
+        - `building_gap_distance`: Clearance distance between buildings and barriers.
+        - `barrier_gap_distances`: Clearance distances for specific barriers (roads, railways, etc.).
+        - `lyrx_files`: Symbology files used for visual representation of features.
+
+    Execution:
+        - `PartitionIterator` is used to iterate over partitions of data for processing.
+    """
     building_points = "building_points"
     building_polygons = "building_polygons"
 
