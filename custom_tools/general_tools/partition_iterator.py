@@ -17,7 +17,6 @@ from custom_tools.decorators.timing_decorator import timing_decorator
 
 from input_data import input_n50, input_n100
 from file_manager.n100.file_manager_buildings import Building_N100
-from custom_tools.general_tools.file_utilities import WorkFileManager
 from custom_tools.general_tools.polygon_processor import PolygonProcessor
 from constants.n100_constants import N100_Symbology
 
@@ -98,6 +97,7 @@ class PartitionIterator:
         # Variables related to custom operations
         self.custom_functions = custom_functions or []
         self.custom_func_io_params = {}
+        self.types_to_update = []
 
         self.total_start_time = None
         self.iteration_times_with_input = []
@@ -779,13 +779,7 @@ class PartitionIterator:
         print(f"Current runtime: {formatted_total_runtime}")
         print(f"Estimated remaining time: {formatted_estimated_remaining_time}")
 
-    def prepare_io_custom_logic(self):
-        """
-        Prepare the input/output parameters for custom logic functions by resolving their paths.
-        """
-        self.find_io_params_custom_logic()
-
-    def find_io_params_custom_logic(self):
+    def find_io_params_custom_logic(self, object_id):
         """
         Find and resolve the IO parameters for custom logic functions.
         """
@@ -805,14 +799,16 @@ class PartitionIterator:
                     param_type="input",
                     params=input_params,
                     custom_func=custom_func,
+                    object_id=object_id,
                 )
                 self.resolve_io_params(
                     param_type="output",
                     params=output_params,
                     custom_func=custom_func,
+                    object_id=object_id,
                 )
 
-    def resolve_io_params(self, param_type, params, custom_func):
+    def resolve_io_params(self, param_type, params, custom_func, object_id):
         """
         Resolve paths for input/output parameters of custom functions.
         """
@@ -830,7 +826,9 @@ class PartitionIterator:
                 else:
                     # Construct a new path for the alias type since it does not exist
                     resolved_path = self.construct_path_for_alias_type(
-                        alias, alias_type
+                        alias,
+                        alias_type,
+                        object_id,
                     )
                     self.configure_alias_and_type(alias, alias_type, resolved_path)
 
@@ -870,12 +868,12 @@ class PartitionIterator:
                 f"Resolved {param_type} path for {param}: {custom_func['params'][param]}"
             )
 
-    def construct_path_for_alias_type(self, alias, alias_type):
+    def construct_path_for_alias_type(self, alias, alias_type, object_id):
         """
         Construct a new path for a given alias and type.
         """
         base_path = self.root_file_partition_iterator
-        constructed_path = f"{base_path}_{alias}_{alias_type}"
+        constructed_path = f"{base_path}_{alias}_{alias_type}_{object_id}"
         return constructed_path
 
     def execute_custom_functions(self):
@@ -1003,7 +1001,7 @@ class PartitionIterator:
                 self._process_context_features_and_others(
                     aliases, iteration_partition, object_id
                 )
-                self.prepare_io_custom_logic()
+                self.find_io_params_custom_logic(object_id)
                 self.export_dictionaries_to_json(
                     file_name="iteration",
                     iteration=True,
