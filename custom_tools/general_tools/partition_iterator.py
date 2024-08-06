@@ -89,10 +89,9 @@ class PartitionIterator:
         self.nested_final_outputs = {}
 
         # Variables related to features and iterations
-        self.partition_feature = (
-            f"{root_file_partition_iterator}_partition_feature_{scale}"
-        )
+        self.partition_feature = f"{root_file_partition_iterator}_partition_feature"
         self.max_object_id = None
+        self.current_iteration_id = None
         self.iteration_file_paths_list = []
         self.first_call_directory_documentation = True
 
@@ -190,7 +189,8 @@ class PartitionIterator:
         else:
             print("No input or context features available for creating partitions.")
 
-    def delete_feature_class(self, feature_class_path, alias=None, output_type=None):
+    @staticmethod
+    def delete_feature_class(feature_class_path, alias=None, output_type=None):
         """Deletes a feature class if it exists."""
         if arcpy.Exists(feature_class_path):
             arcpy.management.Delete(feature_class_path)
@@ -201,7 +201,8 @@ class PartitionIterator:
             else:
                 print(f"Deleted feature class: {feature_class_path}")
 
-    def is_safe_to_delete(self, file_path: str, safe_directory: str) -> bool:
+    @staticmethod
+    def is_safe_to_delete(file_path: str, safe_directory: str) -> bool:
         """
         Check if the file path is within the specified safe directory.
 
@@ -267,7 +268,9 @@ class PartitionIterator:
         for alias, alias_data in self.nested_alias_type_data.items():
             for type_info, path in list(alias_data.items()):
                 if type_info in types_to_include and path:
-                    dummy_feature_path = f"{self.root_file_partition_iterator}_{alias}_dummy_{self.scale}"
+                    dummy_feature_path = (
+                        f"{self.root_file_partition_iterator}_{alias}_dummy_feature"
+                    )
                     PartitionIterator.create_feature_class(
                         full_feature_path=dummy_feature_path,
                         template_feature=path,
@@ -317,8 +320,8 @@ class PartitionIterator:
                 f"'dummy' type does not exist for alias '{alias}' in nested_alias_type_data."
             )
 
+    @staticmethod
     def create_directory_json_documentation(
-        self,
         root_path: str,
         target_dir: str,
         iteration: bool,
@@ -347,8 +350,8 @@ class PartitionIterator:
 
         return directory_path
 
+    @staticmethod
     def write_data_to_json(
-        self,
         data: dict,
         file_path: str,
         file_name: str,
@@ -420,7 +423,8 @@ class PartitionIterator:
             final_outputs, final_outputs_directory, file_name, object_id
         )
 
-    def generate_unique_field_name(self, input_feature, field_name):
+    @staticmethod
+    def generate_unique_field_name(input_feature, field_name):
         existing_field_names = [field.name for field in arcpy.ListFields(input_feature)]
         unique_field_name = field_name
         while unique_field_name in existing_field_names:
@@ -450,7 +454,7 @@ class PartitionIterator:
             if "input" in types:
                 input_data_path = types["input"]
                 input_data_copy = (
-                    f"{self.root_file_partition_iterator}_{alias}_input_copy"
+                    f"{self.root_file_partition_iterator}_{alias}_input_data_copy"
                 )
                 # self.delete_feature_class(input_data_copy)
                 arcpy.management.Copy(
@@ -502,7 +506,7 @@ class PartitionIterator:
             if "context" in types:
                 context_data_path = types["context"]
                 context_data_copy = (
-                    f"{self.root_file_partition_iterator}_{alias}_context_copy"
+                    f"{self.root_file_partition_iterator}_{alias}_context_data_copy"
                 )
                 if self.selection_of_context_features:
                     PartitionIterator.create_feature_class(
@@ -514,21 +518,23 @@ class PartitionIterator:
                         if "input_copy" in input_types:
                             input_data_copy = input_types["input_copy"]
 
-                            context_features_input_selection = f"in_memory/{alias}_context_input_select_{input_alias}_{self.scale}"
+                            context_features_near_input_selection = f"memory/{alias}_context_features_near_{input_alias}_selection"
 
                             custom_arcpy.select_location_and_make_feature_layer(
                                 input_layer=context_data_path,
                                 overlap_type=custom_arcpy.OverlapType.WITHIN_A_DISTANCE,
                                 select_features=input_data_copy,
-                                output_name=context_features_input_selection,
+                                output_name=context_features_near_input_selection,
                                 search_distance=self.search_distance,
                             )
                             arcpy.management.Append(
-                                inputs=context_features_input_selection,
+                                inputs=context_features_near_input_selection,
                                 target=context_data_copy,
                                 schema_type="NO_TEST",
                             )
-                            arcpy.management.Delete(context_features_input_selection)
+                            arcpy.management.Delete(
+                                context_features_near_input_selection
+                            )
                     print(f"Processed context feature for: {alias}")
 
                 else:
@@ -570,23 +576,23 @@ class PartitionIterator:
 
         if "input_copy" in self.nested_alias_type_data[alias]:
             input_path = self.nested_alias_type_data[alias]["input_copy"]
-            input_features_partition_selection = (
-                f"in_memory/{alias}_partition_base_select_{self.scale}"
+            input_features_center_in_partition_selection = f"memory/{alias}_input_features_center_in_partition_selection_{object_id}"
+            self.iteration_file_paths_list.append(
+                input_features_center_in_partition_selection
             )
-            self.iteration_file_paths_list.append(input_features_partition_selection)
 
             custom_arcpy.select_location_and_make_feature_layer(
                 input_layer=input_path,
                 overlap_type=custom_arcpy.OverlapType.HAVE_THEIR_CENTER_IN.value,
                 select_features=iteration_partition,
-                output_name=input_features_partition_selection,
+                output_name=input_features_center_in_partition_selection,
             )
 
             aliases_with_features = {}
             count_points = int(
-                arcpy.management.GetCount(input_features_partition_selection).getOutput(
-                    0
-                )
+                arcpy.management.GetCount(
+                    input_features_center_in_partition_selection
+                ).getOutput(0)
             )
             aliases_with_features[alias] = count_points
 
@@ -594,66 +600,66 @@ class PartitionIterator:
                 print(f"{alias} has {count_points} features in {iteration_partition}")
 
                 arcpy.CalculateField_management(
-                    in_table=input_features_partition_selection,
+                    in_table=input_features_center_in_partition_selection,
                     field=self.PARTITION_FIELD,
                     expression="1",
                 )
 
-                iteration_append_feature = f"{self.root_file_partition_iterator}_{alias}_iteration_append_feature_{self.scale}"
-                self.iteration_file_paths_list.append(iteration_append_feature)
+                input_data_iteration_selection = f"{self.root_file_partition_iterator}_{alias}_input_data_iteration_selection_{object_id}"
+                self.iteration_file_paths_list.append(input_data_iteration_selection)
 
                 PartitionIterator.create_feature_class(
-                    full_feature_path=iteration_append_feature,
-                    template_feature=input_features_partition_selection,
+                    full_feature_path=input_data_iteration_selection,
+                    template_feature=input_features_center_in_partition_selection,
                 )
 
                 arcpy.management.Append(
-                    inputs=input_features_partition_selection,
-                    target=iteration_append_feature,
+                    inputs=input_features_center_in_partition_selection,
+                    target=input_data_iteration_selection,
                     schema_type="NO_TEST",
                 )
 
-                input_features_partition_context_selection = f"in_memory/{alias}_input_features_partition_context_selection_{self.scale}"
+                input_features_within_distance_of_partition_selection = f"memory/{alias}_input_features_within_distance_of_partition_selection_{object_id}"
                 self.iteration_file_paths_list.append(
-                    input_features_partition_context_selection
+                    input_features_within_distance_of_partition_selection
                 )
 
                 custom_arcpy.select_location_and_make_feature_layer(
                     input_layer=input_path,
                     overlap_type=custom_arcpy.OverlapType.WITHIN_A_DISTANCE,
                     select_features=iteration_partition,
-                    output_name=input_features_partition_context_selection,
+                    output_name=input_features_within_distance_of_partition_selection,
                     selection_type=custom_arcpy.SelectionType.NEW_SELECTION.value,
                     search_distance=self.search_distance,
                 )
 
                 arcpy.management.SelectLayerByLocation(
-                    in_layer=input_features_partition_context_selection,
+                    in_layer=input_features_within_distance_of_partition_selection,
                     overlap_type="HAVE_THEIR_CENTER_IN",
                     select_features=iteration_partition,
                     selection_type="REMOVE_FROM_SELECTION",
                 )
 
                 arcpy.CalculateField_management(
-                    in_table=input_features_partition_context_selection,
+                    in_table=input_features_within_distance_of_partition_selection,
                     field=self.PARTITION_FIELD,
                     expression="0",
                 )
 
                 arcpy.management.Append(
-                    inputs=input_features_partition_context_selection,
-                    target=iteration_append_feature,
+                    inputs=input_features_within_distance_of_partition_selection,
+                    target=input_data_iteration_selection,
                     schema_type="NO_TEST",
                 )
 
                 self.configure_alias_and_type(
                     alias=alias,
                     type_name="input",
-                    type_path=iteration_append_feature,
+                    type_path=input_data_iteration_selection,
                 )
 
                 print(
-                    f"iteration partition {input_features_partition_context_selection} appended to {iteration_append_feature}"
+                    f"iteration partition {input_features_within_distance_of_partition_selection} appended to {input_data_iteration_selection}"
                 )
                 # Return the processed input features and a flag indicating successful operation
                 return aliases_with_features, True
@@ -683,20 +689,20 @@ class PartitionIterator:
                 )
         return inputs_present_in_partition
 
-    def process_context_features(self, alias, iteration_partition):
+    def process_context_features(self, alias, iteration_partition, object_id):
         """
         Process context features for a given partition if input features are present.
         """
         if "context_copy" in self.nested_alias_type_data[alias]:
             context_path = self.nested_alias_type_data[alias]["context_copy"]
-            context_selection_path = f"{self.root_file_partition_iterator}_{alias}_context_iteration_selection"
-            self.iteration_file_paths_list.append(context_selection_path)
+            context_data_iteration_selection = f"{self.root_file_partition_iterator}_{alias}_context_data_iteration_selection_{object_id}"
+            self.iteration_file_paths_list.append(context_data_iteration_selection)
 
             custom_arcpy.select_location_and_make_permanent_feature(
                 input_layer=context_path,
                 overlap_type=custom_arcpy.OverlapType.WITHIN_A_DISTANCE,
                 select_features=iteration_partition,
-                output_name=context_selection_path,
+                output_name=context_data_iteration_selection,
                 selection_type=custom_arcpy.SelectionType.NEW_SELECTION.value,
                 search_distance=self.search_distance,
             )
@@ -704,7 +710,7 @@ class PartitionIterator:
             self.configure_alias_and_type(
                 alias=alias,
                 type_name="context",
-                type_path=context_selection_path,
+                type_path=context_data_iteration_selection,
             )
 
     def _process_context_features_and_others(
@@ -721,7 +727,7 @@ class PartitionIterator:
                     f"iteration partition {object_id} has no context features for {alias} in the partition feature"
                 )
             else:
-                self.process_context_features(alias, iteration_partition)
+                self.process_context_features(alias, iteration_partition, object_id)
 
     def format_time(self, seconds):
         """
@@ -869,8 +875,7 @@ class PartitionIterator:
         Construct a new path for a given alias and type.
         """
         base_path = self.root_file_partition_iterator
-        scale = self.scale
-        constructed_path = f"{base_path}_{alias}_{alias_type}_{scale}"
+        constructed_path = f"{base_path}_{alias}_{alias_type}"
         return constructed_path
 
     def execute_custom_functions(self):
@@ -923,9 +928,7 @@ class PartitionIterator:
                 # Execute the function with resolved parameters
                 method(**resolved_params)
 
-            print(f"Executed {method.__name__} with parameters: {resolved_params}")
-
-    def append_iteration_to_final(self, alias):
+    def append_iteration_to_final(self, alias, object_id):
         # Guard clause if alias doesn't exist in nested_final_outputs
         if alias not in self.nested_final_outputs:
             return
@@ -948,7 +951,7 @@ class PartitionIterator:
                 continue
 
             partition_target_selection = (
-                f"in_memory/{alias}_{type_info}_partition_target_selection_{self.scale}"
+                f"memory/{alias}_{type_info}_partition_target_selection_{object_id}"
             )
             self.iteration_file_paths_list.append(partition_target_selection)
             self.iteration_file_paths_list.append(input_feature_class)
@@ -1009,7 +1012,7 @@ class PartitionIterator:
                 self.execute_custom_functions()
             if inputs_present_in_partition:
                 for alias in aliases:
-                    self.append_iteration_to_final(alias)
+                    self.append_iteration_to_final(alias, object_id)
                 self.delete_iteration_files(*self.iteration_file_paths_list)
             else:
                 self.delete_iteration_files(*self.iteration_file_paths_list)
