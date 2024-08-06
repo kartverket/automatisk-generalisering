@@ -30,6 +30,10 @@ def main():
 
 @timing_decorator
 def reclassifying_hospital_and_church_points_from_matrikkel():
+    """
+    Summary:
+        Reclassifies hospitals and churches in the matrikkel dataset to a new NBR value ("Other buildings" / "Andre bygg").
+    """
     # Reclassify hospitals and churches from matrikken to another NBR value ("Other buildings" / "Andre bygg")
     code_block_hospital_church = (
         "def reclassify(nbr):\n"
@@ -48,6 +52,11 @@ def reclassifying_hospital_and_church_points_from_matrikkel():
 
 @timing_decorator
 def adding_original_source_to_points():
+    """
+    Summary:
+        Adds a field to point features to indicate their original source:
+        `0` for points from merged sources and `1` for points resulting from building polygons.
+    """
     # Adding a field to indicate that the merged building point and matrikkel does not come from building_polygon
     arcpy.AddField_management(
         in_table=Building_N100.data_preperation___matrikkel_n50_touristcabins_points_merged___n100_building.value,
@@ -75,6 +84,12 @@ def adding_original_source_to_points():
 
 @timing_decorator
 def merge_matrikkel_n50_touristcabins_with_points_from_grunnriss():
+    """
+    Summary:
+        Merges points from the `matrikkel_n50_touristcabins` dataset with points created from building polygons.
+        Adds a field to the merged points to determine and assign a symbol value based on their NBR code.
+    """
+
     # Merge the merged building point from n50 and matrikkel with points created from building_polygon
     arcpy.management.Merge(
         inputs=[
@@ -102,6 +117,10 @@ def merge_matrikkel_n50_touristcabins_with_points_from_grunnriss():
 
 @timing_decorator
 def find_undefined_nbr_values():
+    """
+    Summary:
+        Selects building points with an undefined NBR value (symbol value of -99) from the dataset.
+    """
     custom_arcpy.select_attribute_and_make_feature_layer(
         input_layer=Building_N100.calculate_point_values___points_going_into_propagate_displacement___n100_building.value,
         expression="symbol_val = -99",

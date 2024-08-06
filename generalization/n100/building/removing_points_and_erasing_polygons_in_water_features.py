@@ -26,6 +26,11 @@ def main():
 
 @timing_decorator
 def selecting_water_polygon_features():
+    """
+    Summary:
+        Selects water-related polygon features from a land cover dataset based on specific types
+        and saves them to a new layer.
+    """
     sql_expression_water_features = f"objtype = 'FerskvannTørrfall' Or objtype = 'Innsjø' Or objtype = 'InnsjøRegulert' Or objtype = 'Havflate' Or objtype = 'ElvBekk'"
     custom_arcpy.select_attribute_and_make_permanent_feature(
         input_layer=Building_N100.data_selection___land_cover_n100_input_data___n100_building.value,
@@ -36,6 +41,10 @@ def selecting_water_polygon_features():
 
 @timing_decorator
 def removing_points_in_water_features():
+    """
+    Summary:
+        Selects points that do not intersect with any water features and applies symbology to the filtered points.
+    """
     # Select points that DO NOT intersect any waterfeatures
     custom_arcpy.select_location_and_make_permanent_feature(
         input_layer=Building_N100.point_resolve_building_conflicts___POINT_OUTPUT___n100_building.value,
@@ -54,6 +63,10 @@ def removing_points_in_water_features():
 
 @timing_decorator
 def selecting_water_features_close_to_building_polygons():
+    """
+    Summary:
+        Select water features that are within a specified distance from building polygons.
+    """
     custom_arcpy.select_location_and_make_permanent_feature(
         input_layer=Building_N100.removing_points_and_erasing_polygons_in_water_features___water_features___n100_building.value,
         overlap_type=custom_arcpy.OverlapType.WITHIN_A_DISTANCE,
@@ -65,6 +78,10 @@ def selecting_water_features_close_to_building_polygons():
 
 @timing_decorator
 def buffering_water_polygon_features():
+    """
+    Summary:
+        Buffer water features by 15 meters.
+    """
     # Buffering the water features with 15 Meters
     arcpy.PairwiseBuffer_analysis(
         in_features=Building_N100.removing_points_and_erasing_polygons_in_water_features___water_features_close_to_building_polygons___n100_building.value,
@@ -76,6 +93,10 @@ def buffering_water_polygon_features():
 
 @timing_decorator
 def selecting_building_polygons():
+    """
+    Summary:
+        Select building polygons based on their intersection with buffered water features.
+    """
     # Selecting polygons intersecting water features
     custom_arcpy.select_location_and_make_permanent_feature(
         input_layer=Building_N100.point_resolve_building_conflicts___POLYGON_OUTPUT___n100_building.value,
@@ -96,6 +117,10 @@ def selecting_building_polygons():
 
 @timing_decorator
 def erasing_parts_of_building_polygons_in_water_features():
+    """
+    Summary:
+        Erases parts of building polygons that intersect with buffered water features.
+    """
     # Erasing the parts of the building polygons that intersect the water feature buffer
     arcpy.PairwiseErase_analysis(
         in_features=Building_N100.removing_points_and_erasing_polygons_in_water_features___building_polygons_too_close_to_water_features___n100_building.value,
@@ -106,6 +131,10 @@ def erasing_parts_of_building_polygons_in_water_features():
 
 @timing_decorator
 def merge_polygons():
+    """
+    Summary:
+        Merges building polygons that are either too close to water features or have had parts erased due to intersection with water features.
+    """
     arcpy.management.Merge(
         inputs=[
             Building_N100.removing_points_and_erasing_polygons_in_water_features___building_polygons_NOT_too_close_to_water_features___n100_building.value,
@@ -117,6 +146,10 @@ def merge_polygons():
 
 @timing_decorator
 def merge_points():
+    """
+    Summary:
+        Merges multiple point feature layers into a single final output layer.
+    """
     arcpy.management.Merge(
         inputs=[
             Building_N100.removing_points_and_erasing_polygons_in_water_features___final_points___n100_building.value,

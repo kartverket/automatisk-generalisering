@@ -37,6 +37,11 @@ def main():
 
 @timing_decorator
 def copying_previous_file():
+    """
+    Summary:
+        Copies an existing feature class and assigns it a new name.
+    """
+
     # Copying and assigning new name to layer
     arcpy.management.Copy(
         in_data=Building_N100.removing_points_and_erasing_polygons_in_water_features___final_points_merged___n100_building.value,
@@ -46,6 +51,10 @@ def copying_previous_file():
 
 @timing_decorator
 def adding_new_hierarchy_value_to_points():
+    """
+    Summary:
+        Calculates and assigns a new hierarchy value to building points based on their nbr code
+    """
     # Determining and assigning symbol val
     arcpy.management.CalculateField(
         in_table=Building_N100.removing_overlapping_polygons_and_points___all_building_points___n100_building.value,
@@ -58,6 +67,10 @@ def adding_new_hierarchy_value_to_points():
 
 @timing_decorator
 def detecting_graphic_conflicts():
+    """
+    Summary:
+        Detects graphic conflicts within a given set of features based on a 20 meter conflict distance.
+    """
     arcpy.env.referenceScale = "100000"
 
     # Detecting Graphic Conflicts
@@ -71,6 +84,10 @@ def detecting_graphic_conflicts():
 
 @timing_decorator
 def selecting_points_close_to_graphic_conflict_polygons():
+    """
+    Summary:
+        Selects points based on their proximity to graphic conflict polygons.
+    """
     # Find points that are close to the graphic conflict polygons
     custom_arcpy.select_location_and_make_permanent_feature(
         input_layer=Building_N100.removing_overlapping_polygons_and_points___all_building_points___n100_building.value,
@@ -93,6 +110,11 @@ def selecting_points_close_to_graphic_conflict_polygons():
 
 @timing_decorator
 def finding_clusters_amongst_the_points():
+    """
+    Summary:
+        Identifies clusters among points based on proximity and density.
+        Specifically, finds clusters of points that are close to graphic conflict polygons.
+    """
     # Finding church clusters
     arcpy.gapro.FindPointClusters(
         input_points=Building_N100.removing_overlapping_polygons_and_points___points_close_to_graphic_conflict_polygons___n100_building.value,
@@ -105,6 +127,11 @@ def finding_clusters_amongst_the_points():
 
 @timing_decorator
 def selecting_points_in_a_cluster_and_not_in_a_cluster():
+    """
+    Summary:
+        Selects and categorizes points based on their cluster status.
+        Points are divided into those that are within a cluster and those that are not.
+    """
     expression_cluster = "CLUSTER_ID > 0"
     expression_not_cluster = "CLUSTER_ID < 0"
 
@@ -133,6 +160,11 @@ def selecting_points_in_a_cluster_and_not_in_a_cluster():
 
 @timing_decorator
 def keep_point_with_highest_hierarchy_for_each_cluster():
+    """
+    Summary:
+        Iterates through each cluster and retains the point with the highest hierarchy value within the cluster.
+        Deletes all other points in the cluster.
+    """
     # Iterate over each cluster
     with arcpy.da.SearchCursor(
         Building_N100.removing_overlapping_polygons_and_points___points_in_a_cluster___n100_building.value,
@@ -176,7 +208,12 @@ def keep_point_with_highest_hierarchy_for_each_cluster():
 
 
 def polygons_overlapping_roads_to_points():
-    # Polygons that are intersecting road buffer and will be transformed to points
+    """
+    Summary:
+        Processes polygons that overlap with road buffers and transforms them to points.
+        Also identifies and keeps polygons that do not intersect with road buffers.
+    """
+    # Select polygons that intersect with road buffers
     custom_arcpy.select_location_and_make_permanent_feature(
         input_layer=Building_N100.removing_points_and_erasing_polygons_in_water_features___final_building_polygons_merged___n100_building.value,
         overlap_type=custom_arcpy.OverlapType.INTERSECT,
@@ -184,24 +221,29 @@ def polygons_overlapping_roads_to_points():
         output_name=Building_N100.removing_overlapping_polygons_and_points___polygons_intersecting_road_buffers___n100_building.value,
     )
 
-    # Polygons to points
+    # Convert the selected polygons that intersect with road buffers to points
     arcpy.management.FeatureToPoint(
         in_features=Building_N100.removing_overlapping_polygons_and_points___polygons_intersecting_road_buffers___n100_building.value,
         out_feature_class=Building_N100.removing_overlapping_polygons_and_points___polygons_to_points___n100_building.value,
+        point_location="INSIDE",  # Points will be placed inside the polygons
     )
 
-    # Polygons that are NOT intersecting road buffer and will be kept as polygons
+    # Select polygons that do NOT intersect with road buffers
     custom_arcpy.select_location_and_make_permanent_feature(
         input_layer=Building_N100.removing_points_and_erasing_polygons_in_water_features___final_building_polygons_merged___n100_building.value,
         overlap_type=custom_arcpy.OverlapType.INTERSECT,
         select_features=Building_N100.data_preparation___road_symbology_buffers___n100_building.value,
         output_name=Building_N100.removing_overlapping_polygons_and_points___polygons_NOT_intersecting_road_buffers___n100_building.value,
-        inverted=True,
+        inverted=True,  # Select polygons not intersecting with road buffers
     )
 
 
 @timing_decorator
 def merging_final_points_together():
+    """
+    Summary:
+        Merges multiple point feature layers into a single final output layer.
+    """
     # Merge the final hospital and church layers
     arcpy.management.Merge(
         inputs=[
@@ -215,6 +257,11 @@ def merging_final_points_together():
 
 
 def remove_points_that_are_overlapping_roads():
+    """
+    Summary:
+        Processes and filters points to remove those overlapping with road buffers,
+        while preserving hospital and church points.
+    """
     # Selecting all points that are NOT hospital and churches
     custom_arcpy.select_attribute_and_make_permanent_feature(
         input_layer=Building_N100.removing_overlapping_polygons_and_points___merging_final_points___n100_building.value,
