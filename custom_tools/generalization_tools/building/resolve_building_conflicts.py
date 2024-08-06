@@ -159,6 +159,10 @@ class ResolveBuildingConflicts:
 
     @timing_decorator
     def building_points_to_squares(self):
+        """
+        Summary:
+            Transforms all the building points to squares.
+        """
         # Transforms all the building points to squares
         polygon_processor = PolygonProcessor(
             input_building_points=self.input_building_points,
@@ -173,6 +177,10 @@ class ResolveBuildingConflicts:
 
     @timing_decorator
     def apply_symbology_to_the_layers(self):
+        """
+        Summary:
+            Applies symbology to various input layers using lyrx_files
+        """
         print("Now starting to apply symbology to layers")
         features_for_apply_symbology = [
             {
@@ -218,6 +226,10 @@ class ResolveBuildingConflicts:
             )
 
     def barriers_for_rbc(self):
+        """
+        Summary:
+            Prepares a list of barrier features being used in RBC
+        """
         input_barriers_for_rbc = [
             [
                 self.begrensningskurve_with_lyrx,
@@ -240,6 +252,10 @@ class ResolveBuildingConflicts:
 
     @timing_decorator
     def resolve_building_conflicts_1(self):
+        """
+        Summary:
+            Resolves building conflicts using specified building and barrier features
+        """
         try:
             arcpy.env.referenceScale = "100000"
             input_buildings_rbc_1 = [
@@ -260,6 +276,10 @@ class ResolveBuildingConflicts:
 
     @timing_decorator
     def building_squares_and_polygons_to_keep_after_rbc_1(self):
+        """
+        Summary:
+            Selects and retains building squares and polygons that are visible or hospital / churches
+        """
         # Sql expression to select building squares that are visible + church and hospital points
         sql_expression_resolve_building_conflicts_squares = (
             "(invisibility = 0) OR (BYGGTYP_NBR IN (970, 719, 671))"
@@ -283,6 +303,10 @@ class ResolveBuildingConflicts:
 
     @timing_decorator
     def transforming_invisible_polygons_to_points_and_then_to_squares(self):
+        """
+        Summary:
+            Transforms invisible building polygons to points and then to squares.
+        """
         # Sql expression to keep only building polygons that have invisbility value 1 after the tool has run
         sql_expression_find_invisible_polygons = "invisibility = 1"
 
@@ -321,6 +345,10 @@ class ResolveBuildingConflicts:
 
     @timing_decorator
     def calculating_symbol_val_and_nbr_for_squares(self):
+        """
+        Summary:
+            Calculates and updates the `byggtyp_nbr` and `symbol_val` fields for squares
+        """
         # Features with symbol_val -99 get byggtyp_nbr 729
         code_block_symbol_val_to_nbr = (
             "def symbol_val_to_nbr(symbol_val, byggtyp_nbr):\n"
@@ -357,6 +385,10 @@ class ResolveBuildingConflicts:
 
     @timing_decorator
     def adding_symbology_to_layers_being_used_for_rbc_2(self):
+        """
+        Summary:
+            Applies symbology to building squares and polygons for use in RBC 2 processing.
+        """
         # Building squares (from points, transformed to squares in the first function) that are kept after rbc 1
         custom_arcpy.apply_symbology(
             input_layer=self.merged_squares_rbc1,
@@ -373,6 +405,10 @@ class ResolveBuildingConflicts:
 
     @timing_decorator
     def resolve_building_conflicts_2(self):
+        """
+        Summary:
+            Resolves building conflicts for the second RBC processing stage using specified building and barrier features
+        """
         print("Starting resolve building conflicts 2")
         arcpy.env.referenceScale = "100000"
 
@@ -392,6 +428,10 @@ class ResolveBuildingConflicts:
 
     @timing_decorator
     def selecting_features_to_be_kept_after_rbc_2(self):
+        """
+        Summary:
+            Selects and retains building squares and polygons based on visibility and symbol value criteria after the second RBC processing stage.
+        """
         sql_expression_squares = "(invisibility = 0) OR (symbol_val IN (1, 2, 3))"
 
         sql_expression_polygons = "invisibility = 0"
@@ -412,6 +452,10 @@ class ResolveBuildingConflicts:
 
     @timing_decorator
     def transforming_squares_back_to_points(self):
+        """
+        Summary:
+            Transforms squares back into points.
+        """
         # Squares from points are transformed back to points
         arcpy.management.FeatureToPoint(
             in_features=self.squares_after_rbc2,
@@ -421,6 +465,10 @@ class ResolveBuildingConflicts:
 
     @timing_decorator
     def assigning_final_names(self):
+        """
+        Summary:
+            Copies the final squares and polygons to their respective output feature classes.
+        """
         # Squares
         arcpy.management.CopyFeatures(
             self.squares_back_to_points_after_rbc2,

@@ -82,11 +82,7 @@ def main():
 def roads_and_water_barriers_500_m_from_building_polygons():
     """
     Summary:
-        Selects waterfeatures and roads located 500 meters from building polygons.
-
-    Details:
-        **`Search distance is 500 Meters`**
-
+        Selects roads, water barriers, and railways that are within 500 meters of building polygons.
     """
     print("Selecting features 500 meter from building polygon ...")
     # Selecting begrensningskurve 500 meters from building polygons
@@ -119,6 +115,10 @@ def roads_and_water_barriers_500_m_from_building_polygons():
 
 @timing_decorator
 def hospital_church_points_to_squares():
+    """
+    Summary:
+        Selects hospital and church points, processes them into squares, and applies the appropriate symbology.
+    """
     # Selecting hospital and churches from n50
     custom_arcpy.select_attribute_and_make_permanent_feature(
         input_layer=Building_N100.data_selection___building_point_n50_input_data___n100_building.value,

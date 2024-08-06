@@ -49,6 +49,10 @@ def main():
 
 @timing_decorator
 def extracting_churches_hospitals():
+    """
+    Selects and saves features identified as churches or hospitals based on `symbol_val`.
+    Separates out features that are not churches or hospitals.
+    """
     church_hospital_sql_expression = "symbol_val IN (1, 2, 3)"
 
     custom_arcpy.select_attribute_and_make_permanent_feature(
