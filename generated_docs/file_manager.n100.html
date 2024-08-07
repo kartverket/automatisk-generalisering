@@ -1463,15 +1463,66 @@ reflecting the specific needs and naming conventions of river data management wi
 </section>
 <section id="module-file_manager.n100.file_manager_roads">
 <span id="file-manager-n100-file-manager-roads-module"></span><h2>file_manager.n100.file_manager_roads module<a class="headerlink" href="#module-file_manager.n100.file_manager_roads" title="Link to this heading"></a></h2>
+<dl class="py data">
+<dt class="sig sig-object py" id="file_manager.n100.file_manager_roads.data_preparation">
+<span class="sig-prename descclassname"><span class="pre">file_manager.n100.file_manager_roads.</span></span><span class="sig-name descname"><span class="pre">data_preparation</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'data_preparation'</span></em><a class="headerlink" href="#file_manager.n100.file_manager_roads.data_preparation" title="Link to this definition"></a></dt>
+<dd><p>”
+# gdb</p>
+<blockquote>
+<div><dl class="simple">
+<dt>data_selection___example___n100_road = file_manager.generate_file_name_gdb(</dt><dd><p>script_source_name=data_selection,
+description=”example”,</p>
+</dd>
+</dl>
+<p>)</p>
+</div></blockquote>
+<dl>
+<dt># csv</dt><dd><dl>
+<dt>data_selection___example_csv___n100_road = (</dt><dd><dl class="simple">
+<dt>file_manager.generate_file_name_general_files(</dt><dd><p>script_source_name=”data_selection”,
+description=”example_csv”,
+file_type=”csv”,</p>
+</dd>
+</dl>
+<p>)</p>
+</dd>
+</dl>
+<p>)</p>
+</dd>
+<dt># lyrx</dt><dd><dl>
+<dt>data_selection___example_lyrx___n100_road_lyrx = (</dt><dd><dl class="simple">
+<dt>file_manager.generate_file_name_lyrx(</dt><dd><p>script_source_name=”data_selection”,
+description=”example_lyrx___n100_road”,</p>
+</dd>
+</dl>
+<p>)</p>
+</dd>
+</dl>
+<p>)</p>
+</dd>
+<dt># final output</dt><dd><dl class="simple">
+<dt>Road = file_manager.generate_final_outputs(</dt><dd><p>file_name=”Road”,</p>
+</dd>
+</dl>
+<p>)</p>
+</dd>
+<dt># lyrx directory</dt><dd><dl>
+<dt>data_selection___lyrx_root___n100_road= (</dt><dd><dl class="simple">
+<dt>file_manager.generate_file_lyrx_directory(</dt><dd><p>script_source_name=data_selection, description=”lyrx_root”</p>
+</dd>
+</dl>
+<p>)</p>
+</dd>
+</dl>
+<p>)</p>
+</dd>
+</dl>
+</dd></dl>
+
 <dl class="py class">
 <dt class="sig sig-object py" id="file_manager.n100.file_manager_roads.RoadN100">
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">file_manager.n100.file_manager_roads.</span></span><span class="sig-name descname"><span class="pre">RoadN100</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">value</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">names=&lt;not</span> <span class="pre">given&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">*values</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">module=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">qualname=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">type=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">start=1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">boundary=None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/file_manager/n100/file_manager_roads.html#RoadN100"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#file_manager.n100.file_manager_roads.RoadN100" title="Link to this definition"></a></dt>
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">Enum</span></code></p>
-<dl class="py attribute">
-<dt class="sig sig-object py" id="file_manager.n100.file_manager_roads.RoadN100.data_selection___example___n100_road">
-<span class="sig-name descname"><span class="pre">data_selection___example___n100_road</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'C:\\path\\to\\folder\\you\\want\\your\\outputs\\in\\automatic_generalization_outputs\\n100\\road.gdb\\data_selection___example___n100_road'</span></em><a class="headerlink" href="#file_manager.n100.file_manager_roads.RoadN100.data_selection___example___n100_road" title="Link to this definition"></a></dt>
-<dd></dd></dl>
-
 </dd></dl>
 
 </section>

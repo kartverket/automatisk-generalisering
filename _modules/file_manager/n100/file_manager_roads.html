@@ -94,13 +94,47 @@
 <span class="n">data_preparation</span> <span class="o">=</span> <span class="s2">&quot;data_preparation&quot;</span>
 
 
+<span class="sd">&quot;&quot;&quot;&quot;</span>
+<span class="sd"># gdb</span>
+<span class="sd">    data_selection___example___n100_road = file_manager.generate_file_name_gdb(</span>
+<span class="sd">        script_source_name=data_selection,</span>
+<span class="sd">        description=&quot;example&quot;,</span>
+<span class="sd">    )</span>
+<span class="sd">    </span>
+<span class="sd"># csv</span>
+<span class="sd">    data_selection___example_csv___n100_road = (</span>
+<span class="sd">        file_manager.generate_file_name_general_files(</span>
+<span class="sd">            script_source_name=&quot;data_selection&quot;,</span>
+<span class="sd">            description=&quot;example_csv&quot;,</span>
+<span class="sd">            file_type=&quot;csv&quot;,</span>
+<span class="sd">        )</span>
+<span class="sd">    )</span>
+<span class="sd"># lyrx</span>
+<span class="sd">    data_selection___example_lyrx___n100_road_lyrx = (</span>
+<span class="sd">        file_manager.generate_file_name_lyrx(</span>
+<span class="sd">            script_source_name=&quot;data_selection&quot;,</span>
+<span class="sd">            description=&quot;example_lyrx___n100_road&quot;,</span>
+<span class="sd">        )</span>
+<span class="sd">    )</span>
+<span class="sd"># final output</span>
+<span class="sd">    Road = file_manager.generate_final_outputs(</span>
+<span class="sd">        file_name=&quot;Road&quot;,</span>
+<span class="sd">    )</span>
+<span class="sd">    </span>
+<span class="sd"># lyrx directory</span>
+<span class="sd">    data_selection___lyrx_root___n100_road= (</span>
+<span class="sd">        file_manager.generate_file_lyrx_directory(</span>
+<span class="sd">            script_source_name=data_selection, description=&quot;lyrx_root&quot;</span>
+<span class="sd">        )</span>
+<span class="sd">    )</span>
+
+<span class="sd">&quot;&quot;&quot;</span>
+
+
 <div class="viewcode-block" id="RoadN100">
 <a class="viewcode-back" href="../../../generated_docs/file_manager.n100.html#file_manager.n100.file_manager_roads.RoadN100">[docs]</a>
 <span class="k">class</span> <span class="nc">RoadN100</span><span class="p">(</span><span class="n">Enum</span><span class="p">):</span>
-    <span class="n">data_selection___example___n100_road</span> <span class="o">=</span> <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_gdb</span><span class="p">(</span>
-        <span class="n">script_source_name</span><span class="o">=</span><span class="n">data_selection</span><span class="p">,</span>
-        <span class="n">description</span><span class="o">=</span><span class="s2">&quot;example&quot;</span><span class="p">,</span>
-    <span class="p">)</span></div>
+    <span class="k">pass</span></div>
 
 </pre></div>
 

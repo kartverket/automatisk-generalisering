@@ -1,6 +1,17 @@
 generalization.n100.road package
 ================================
 
+Submodules
+----------
+
+generalization.n100.road.road\_main module
+------------------------------------------
+
+.. automodule:: generalization.n100.road.road_main
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
 Module contents
 ---------------
 
