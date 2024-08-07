@@ -17,7 +17,6 @@ from custom_tools.decorators.timing_decorator import timing_decorator
 
 from input_data import input_n50, input_n100
 from file_manager.n100.file_manager_buildings import Building_N100
-from custom_tools.general_tools.file_utilities import WorkFileManager
 from custom_tools.general_tools.polygon_processor import PolygonProcessor
 from constants.n100_constants import N100_Symbology
 
@@ -98,6 +97,7 @@ class PartitionIterator:
         # Variables related to custom operations
         self.custom_functions = custom_functions or []
         self.custom_func_io_params = {}
+        self.types_to_update = []
 
         self.total_start_time = None
         self.iteration_times_with_input = []
@@ -779,13 +779,7 @@ class PartitionIterator:
         print(f"Current runtime: {formatted_total_runtime}")
         print(f"Estimated remaining time: {formatted_estimated_remaining_time}")
 
-    def prepare_io_custom_logic(self):
-        """
-        Prepare the input/output parameters for custom logic functions by resolving their paths.
-        """
-        self.find_io_params_custom_logic()
-
-    def find_io_params_custom_logic(self):
+    def find_io_params_custom_logic(self, object_id):
         """
         Find and resolve the IO parameters for custom logic functions.
         """
@@ -801,81 +795,99 @@ class PartitionIterator:
                 input_params = metadata.get("inputs", [])
                 output_params = metadata.get("outputs", [])
 
+                print(f"\nResolving IO Params for object_id {object_id}")
+                print(f"Before resolving: {custom_func['params']}")
+
                 self.resolve_io_params(
                     param_type="input",
                     params=input_params,
                     custom_func=custom_func,
+                    object_id=object_id,
                 )
                 self.resolve_io_params(
                     param_type="output",
                     params=output_params,
                     custom_func=custom_func,
+                    object_id=object_id,
                 )
 
-    def resolve_io_params(self, param_type, params, custom_func):
+                print(f"After resolving: {custom_func['params']}")
+
+    def resolve_io_params(self, param_type, params, custom_func, object_id):
         """
         Resolve paths for input/output parameters of custom functions.
         """
 
         def resolve_param(param_info):
-            # Checks for tuples which indicate places to insert file path
             if isinstance(param_info, tuple) and len(param_info) == 2:
-                alias, alias_type = param_info
-                # Checks if there is an existing alias_type with a file value
-                if (
-                    alias in self.nested_alias_type_data
-                    and alias_type in self.nested_alias_type_data[alias]
-                ):
-                    resolved_path = self.nested_alias_type_data[alias][alias_type]
-                else:
-                    # Construct a new path for the alias type since it does not exist
-                    resolved_path = self.construct_path_for_alias_type(
-                        alias, alias_type
-                    )
-                    self.configure_alias_and_type(alias, alias_type, resolved_path)
-
-                # Ensure all paths are added to nested_alias_type_data
-                self.configure_alias_and_type(alias, alias_type, resolved_path)
-
-                print(f"Resolved {param_info} to {resolved_path}")
-                return resolved_path
+                return self._handle_tuple_param(param_info, object_id)
             elif isinstance(param_info, dict):
-                # Recursively calls func to resolve each value in dict returning a resolved values in a dict
                 return {k: resolve_param(v) for k, v in param_info.items()}
             elif isinstance(param_info, list):
-                # Recursively calls func to resolve each value in list returning a resolved values in a list
                 return [resolve_param(item) for item in param_info]
             else:
                 return param_info
 
         for param in params:
-            # Retrieves parameter info from custom_func (defaults to empty list)
             param_info_list = custom_func["params"].get(param, [])
             if not isinstance(param_info_list, list):
-                # Convert to a list if it was not a list already
                 param_info_list = [param_info_list]
 
-            # Resolves paths using resolve_param func
             resolved_paths = [
                 resolve_param(param_info) for param_info in param_info_list
             ]
             if len(resolved_paths) == 1:
-                # Resolved single path if it is only a single path
                 custom_func["params"][param] = resolved_paths[0]
             else:
-                # If there are multiple resolved paths assigns the list of resolved paths to custom_func params
                 custom_func["params"][param] = resolved_paths
 
             print(
                 f"Resolved {param_type} path for {param}: {custom_func['params'][param]}"
             )
 
-    def construct_path_for_alias_type(self, alias, alias_type):
+    def _handle_tuple_param(self, param_info, object_id):
         """
-        Construct a new path for a given alias and type.
+        Handle the resolution of parameters that are tuples of (alias, alias_type).
+        """
+        alias, alias_type = param_info
+
+        if alias_type in self.types_to_update:
+            resolved_path = self.construct_path_for_alias_type(
+                alias,
+                alias_type,
+                object_id,
+            )
+            print(
+                f"Updated path for {param_info}: {resolved_path} (type is in types_to_update)"
+            )
+        elif (
+            alias in self.nested_alias_type_data
+            and alias_type in self.nested_alias_type_data[alias]
+        ):
+            resolved_path = self.nested_alias_type_data[alias][alias_type]
+            print(f"Using existing path for {param_info}: {resolved_path}")
+        else:
+            resolved_path = self.construct_path_for_alias_type(
+                alias,
+                alias_type,
+                object_id,
+            )
+            self.types_to_update.append(alias_type)
+            print(
+                f"Constructed new path for {param_info}: {resolved_path} and added {alias_type} to types_to_update"
+            )
+
+        self.configure_alias_and_type(alias, alias_type, resolved_path)
+        # print(f"This is object_id {object_id}")
+        # print(f"Added new path for {param_info}: {resolved_path}")
+        return resolved_path
+
+    def construct_path_for_alias_type(self, alias, alias_type, object_id):
+        """
+        Construct a new path for a given alias and type specific to the current iteration.
         """
         base_path = self.root_file_partition_iterator
-        constructed_path = f"{base_path}_{alias}_{alias_type}"
+        constructed_path = f"{base_path}_{alias}_{alias_type}_{object_id}"
         return constructed_path
 
     def execute_custom_functions(self):
@@ -986,10 +998,19 @@ class PartitionIterator:
         self.delete_iteration_files(*self.iteration_file_paths_list)
         self.iteration_file_paths_list.clear()
 
+        original_custom_func_params = {
+            id(custom_func): dict(custom_func["params"])
+            for custom_func in self.custom_functions
+        }
+
         for object_id in range(1, self.max_object_id + 1):
             self.iteration_start_time = time.time()
             print(f"\nProcessing Partition: {object_id} out of {self.max_object_id}")
             self.reset_dummy_used()
+            for custom_func in self.custom_functions:
+                custom_func["params"] = dict(
+                    original_custom_func_params[id(custom_func)]
+                )
 
             self.iteration_file_paths_list.clear()
             iteration_partition = f"{self.partition_feature}_{object_id}"
@@ -1003,7 +1024,7 @@ class PartitionIterator:
                 self._process_context_features_and_others(
                     aliases, iteration_partition, object_id
                 )
-                self.prepare_io_custom_logic()
+                self.find_io_params_custom_logic(object_id)
                 self.export_dictionaries_to_json(
                     file_name="iteration",
                     iteration=True,
