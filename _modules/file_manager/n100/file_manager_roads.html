@@ -92,6 +92,7 @@
 <span class="c1"># All scripts</span>
 <span class="n">data_selection</span> <span class="o">=</span> <span class="s2">&quot;data_selection&quot;</span>
 <span class="n">data_preparation</span> <span class="o">=</span> <span class="s2">&quot;data_preparation&quot;</span>
+<span class="n">first_generalization</span> <span class="o">=</span> <span class="s2">&quot;first_generalization&quot;</span>
 
 
 <span class="sd">&quot;&quot;&quot;&quot;</span>
@@ -131,10 +132,94 @@
 <span class="sd">&quot;&quot;&quot;</span>
 
 
-<div class="viewcode-block" id="RoadN100">
-<a class="viewcode-back" href="../../../generated_docs/file_manager.n100.html#file_manager.n100.file_manager_roads.RoadN100">[docs]</a>
-<span class="k">class</span> <span class="nc">RoadN100</span><span class="p">(</span><span class="n">Enum</span><span class="p">):</span>
-    <span class="k">pass</span></div>
+<div class="viewcode-block" id="Road_N100">
+<a class="viewcode-back" href="../../../generated_docs/file_manager.n100.html#file_manager.n100.file_manager_roads.Road_N100">[docs]</a>
+<span class="k">class</span> <span class="nc">Road_N100</span><span class="p">(</span><span class="n">Enum</span><span class="p">):</span>
+    <span class="c1"># ========================================</span>
+    <span class="c1">#                                DATA PREPARATION</span>
+    <span class="c1"># ========================================</span>
+
+    <span class="n">data_preperation___paths_n50___n100_road</span> <span class="o">=</span> <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_gdb</span><span class="p">(</span>
+        <span class="n">script_source_name</span><span class="o">=</span><span class="n">data_preparation</span><span class="p">,</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">&quot;paths_n50&quot;</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="n">data_preperation___selecting_vegtrase_and_kjorebane_nvdb___n100_road</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_gdb</span><span class="p">(</span>
+            <span class="n">script_source_name</span><span class="o">=</span><span class="n">data_preparation</span><span class="p">,</span>
+            <span class="n">description</span><span class="o">=</span><span class="s2">&quot;selecting_vegtrase_and_kjorebane_nvdb&quot;</span><span class="p">,</span>
+        <span class="p">)</span>
+    <span class="p">)</span>
+
+    <span class="n">data_preperation___selecting_everything_but_rampe_nvdb___n100_road</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_gdb</span><span class="p">(</span>
+            <span class="n">script_source_name</span><span class="o">=</span><span class="n">data_preparation</span><span class="p">,</span>
+            <span class="n">description</span><span class="o">=</span><span class="s2">&quot;selecting_everything_but_rampe_nvdb&quot;</span><span class="p">,</span>
+        <span class="p">)</span>
+    <span class="p">)</span>
+
+    <span class="n">data_preperation___selecting_everything_but_rampe_with_calculated_fields_nvdb___n100_road</span> <span class="o">=</span> <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_gdb</span><span class="p">(</span>
+        <span class="n">script_source_name</span><span class="o">=</span><span class="n">data_preparation</span><span class="p">,</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">&quot;selecting_everything_but_rampe_with_calculated_fields_nvdb&quot;</span><span class="p">,</span>
+    <span class="p">)</span>
+
+    <span class="c1"># ========================================</span>
+    <span class="c1">#                                FIRST GENERALIZATION</span>
+    <span class="c1"># ========================================</span>
+
+    <span class="n">first_generalization___paths_in_study_area___n100_road</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_gdb</span><span class="p">(</span>
+            <span class="n">script_source_name</span><span class="o">=</span><span class="n">first_generalization</span><span class="p">,</span>
+            <span class="n">description</span><span class="o">=</span><span class="s2">&quot;paths_in_study_area&quot;</span><span class="p">,</span>
+        <span class="p">)</span>
+    <span class="p">)</span>
+    <span class="n">first_generalization____nvdb_roads_in_study_area___n100_road</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_gdb</span><span class="p">(</span>
+            <span class="n">script_source_name</span><span class="o">=</span><span class="n">first_generalization</span><span class="p">,</span>
+            <span class="n">description</span><span class="o">=</span><span class="s2">&quot;nvdb_roads_in_study_area&quot;</span><span class="p">,</span>
+        <span class="p">)</span>
+    <span class="p">)</span>
+
+    <span class="n">first_generalization____merged_roads_and_paths___n100_road</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_gdb</span><span class="p">(</span>
+            <span class="n">script_source_name</span><span class="o">=</span><span class="n">first_generalization</span><span class="p">,</span>
+            <span class="n">description</span><span class="o">=</span><span class="s2">&quot;merged_roads_and_paths&quot;</span><span class="p">,</span>
+        <span class="p">)</span>
+    <span class="p">)</span>
+
+    <span class="n">first_generalization____multipart_to_singlepart___n100_road</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_gdb</span><span class="p">(</span>
+            <span class="n">script_source_name</span><span class="o">=</span><span class="n">first_generalization</span><span class="p">,</span>
+            <span class="n">description</span><span class="o">=</span><span class="s2">&quot;multipart_to_singlepart&quot;</span><span class="p">,</span>
+        <span class="p">)</span>
+    <span class="p">)</span>
+
+    <span class="n">first_generalization____merge_divided_roads_features___n100_road</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_gdb</span><span class="p">(</span>
+            <span class="n">script_source_name</span><span class="o">=</span><span class="n">first_generalization</span><span class="p">,</span>
+            <span class="n">description</span><span class="o">=</span><span class="s2">&quot;merge_divided_roads_features&quot;</span><span class="p">,</span>
+        <span class="p">)</span>
+    <span class="p">)</span>
+
+    <span class="n">first_generalization____merge_divided_roads_displacement_feature___n100_road</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_gdb</span><span class="p">(</span>
+            <span class="n">script_source_name</span><span class="o">=</span><span class="n">first_generalization</span><span class="p">,</span>
+            <span class="n">description</span><span class="o">=</span><span class="s2">&quot;merge_divided_roads_displacement_feature&quot;</span><span class="p">,</span>
+        <span class="p">)</span>
+    <span class="p">)</span>
+
+    <span class="n">first_generalization____visible_features_after_thin_road_network___n100_road</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_gdb</span><span class="p">(</span>
+            <span class="n">script_source_name</span><span class="o">=</span><span class="n">first_generalization</span><span class="p">,</span>
+            <span class="n">description</span><span class="o">=</span><span class="s2">&quot;visible_features_after_thin_road_network&quot;</span><span class="p">,</span>
+        <span class="p">)</span>
+    <span class="p">)</span>
+
+    <span class="n">first_generalization____collapse_road_detail___n100_road</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_gdb</span><span class="p">(</span>
+            <span class="n">script_source_name</span><span class="o">=</span><span class="n">first_generalization</span><span class="p">,</span>
+            <span class="n">description</span><span class="o">=</span><span class="s2">&quot;collapse_road_detail&quot;</span><span class="p">,</span>
+        <span class="p">)</span>
+    <span class="p">)</span></div>
 
 </pre></div>
 
