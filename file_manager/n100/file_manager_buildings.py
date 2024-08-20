@@ -167,6 +167,13 @@ class Building_N100(Enum):
         )
     )
 
+    data_preparation___geometry_validation___n100_building = (
+        file_manager.generate_file_name_gdb(
+            script_source_name=data_preparation,
+            description="geometry_validation",
+        )
+    )
+
     data_preparation___begrensingskurve_docu___building_n100 = (
         file_manager.generate_file_name_general_files(
             script_source_name=data_preparation,
@@ -1048,9 +1055,24 @@ class Building_N100(Enum):
     #                  POINT RESOLVE BUILDING CONFLICTS
     # ========================================
 
+    point_resolve_building_conflicts___building_points_squares___n100_building = (
+        file_manager.generate_file_name_gdb(
+            script_source_name=point_resolve_building_conflicts,
+            description="building_points_squares",
+        )
+    )
+
+    point_resolve_building_conflicts___geometry_validation___n100_building = (
+        file_manager.generate_file_name_gdb(
+            script_source_name=point_resolve_building_conflicts,
+            description="geometry_validation",
+        )
+    )
+
     point_resolve_building_conflicts___lyrx_root___n100_building = (
         file_manager.generate_file_lyrx_directory(
-            script_source_name=point_resolve_building_conflicts, description="lyrx_root"
+            script_source_name=point_resolve_building_conflicts,
+            description="lyrx_root",
         )
     )
 
