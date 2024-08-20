@@ -13,6 +13,7 @@ file_manager = BaseFileManager(scale=scale, object_name=object_name)
 # All scripts
 data_selection = "data_selection"
 data_preparation = "data_preparation"
+first_generalization = "first_generalization"
 
 
 """"
@@ -52,5 +53,89 @@ data_preparation = "data_preparation"
 """
 
 
-class RoadN100(Enum):
-    pass
+class Road_N100(Enum):
+    # ========================================
+    #                                DATA PREPARATION
+    # ========================================
+
+    data_preperation___paths_n50___n100_road = file_manager.generate_file_name_gdb(
+        script_source_name=data_preparation,
+        description="paths_n50",
+    )
+    data_preperation___selecting_vegtrase_and_kjorebane_nvdb___n100_road = (
+        file_manager.generate_file_name_gdb(
+            script_source_name=data_preparation,
+            description="selecting_vegtrase_and_kjorebane_nvdb",
+        )
+    )
+
+    data_preperation___selecting_everything_but_rampe_nvdb___n100_road = (
+        file_manager.generate_file_name_gdb(
+            script_source_name=data_preparation,
+            description="selecting_everything_but_rampe_nvdb",
+        )
+    )
+
+    data_preperation___selecting_everything_but_rampe_with_calculated_fields_nvdb___n100_road = file_manager.generate_file_name_gdb(
+        script_source_name=data_preparation,
+        description="selecting_everything_but_rampe_with_calculated_fields_nvdb",
+    )
+
+    # ========================================
+    #                                FIRST GENERALIZATION
+    # ========================================
+
+    first_generalization___paths_in_study_area___n100_road = (
+        file_manager.generate_file_name_gdb(
+            script_source_name=first_generalization,
+            description="paths_in_study_area",
+        )
+    )
+    first_generalization____nvdb_roads_in_study_area___n100_road = (
+        file_manager.generate_file_name_gdb(
+            script_source_name=first_generalization,
+            description="nvdb_roads_in_study_area",
+        )
+    )
+
+    first_generalization____merged_roads_and_paths___n100_road = (
+        file_manager.generate_file_name_gdb(
+            script_source_name=first_generalization,
+            description="merged_roads_and_paths",
+        )
+    )
+
+    first_generalization____multipart_to_singlepart___n100_road = (
+        file_manager.generate_file_name_gdb(
+            script_source_name=first_generalization,
+            description="multipart_to_singlepart",
+        )
+    )
+
+    first_generalization____merge_divided_roads_features___n100_road = (
+        file_manager.generate_file_name_gdb(
+            script_source_name=first_generalization,
+            description="merge_divided_roads_features",
+        )
+    )
+
+    first_generalization____merge_divided_roads_displacement_feature___n100_road = (
+        file_manager.generate_file_name_gdb(
+            script_source_name=first_generalization,
+            description="merge_divided_roads_displacement_feature",
+        )
+    )
+
+    first_generalization____visible_features_after_thin_road_network___n100_road = (
+        file_manager.generate_file_name_gdb(
+            script_source_name=first_generalization,
+            description="visible_features_after_thin_road_network",
+        )
+    )
+
+    first_generalization____collapse_road_detail___n100_road = (
+        file_manager.generate_file_name_gdb(
+            script_source_name=first_generalization,
+            description="collapse_road_detail",
+        )
+    )
