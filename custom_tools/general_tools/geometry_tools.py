@@ -1,4 +1,6 @@
 import arcpy
+from typing import Union, Dict
+
 from custom_tools.general_tools import custom_arcpy
 from file_manager.n100.file_manager_rivers import River_N100
 
@@ -41,3 +43,95 @@ def remove_polygon_islands(output_feature_class):
         select_features=River_N100.centerline_pruning_loop__complex_water_features__n100.value,
         output_name=River_N100.centerline_pruning_loop__complex_centerlines__n100.value,
     )
+
+
+class GeometryValidator:
+    def __init__(
+        self,
+        input_features: Union[Dict[str, str], str],
+        output_table_path: str,
+    ):
+        self.input_features = input_features
+        self.output_table_path = output_table_path
+        self.generated_out_table_path = None
+        self.problematic_features = {}
+        self.non_problematic_features = {}
+        self.iteration = 0
+
+    def check_geometry(self):
+        """Check the geometry of the input features."""
+        self.problematic_features.clear()
+
+        if isinstance(self.input_features, dict):
+            for alias, path in self.input_features.items():
+                # Skip if this feature was previously validated as non-problematic
+                if alias in self.non_problematic_features:
+                    continue
+
+                self.generated_out_table_path = (
+                    f"{self.output_table_path}_{alias}_iter{self.iteration}"
+                )
+                result = arcpy.management.CheckGeometry(
+                    in_features=path, out_table=self.generated_out_table_path
+                )
+                problems_found = result[1] == "true"
+                if problems_found:
+                    self.problematic_features[alias] = path
+                    print(f"Geometry issues found in feature: {alias}")
+                else:
+                    self.non_problematic_features[alias] = path
+                    print(f"No geometry issues found in feature: {alias}")
+        elif isinstance(self.input_features, str):
+            if self.input_features in self.non_problematic_features:
+                print(
+                    f"Feature {self.input_features} previously validated as non-problematic, skipping."
+                )
+                return
+
+            self.generated_out_table_path = (
+                f"{self.output_table_path}_iter{self.iteration}"
+            )
+            result = arcpy.management.CheckGeometry(
+                in_features=self.input_features, out_table=self.generated_out_table_path
+            )
+            problems_found = result[1] == "true"
+            if problems_found:
+                self.problematic_features[self.input_features] = self.input_features
+                print(f"Geometry issues found in feature: {self.input_features}")
+            else:
+                self.non_problematic_features[self.input_features] = self.input_features
+                print(f"No geometry issues found in feature: {self.input_features}")
+        else:
+            raise TypeError("input_features must be either a dictionary or a string.")
+
+    def repair_geometry(self, delete_null="DELETE_NULL", validation_method="ESRI"):
+        """Repair the geometry of the features identified with issues."""
+        if not self.problematic_features:
+            print("No problematic features to repair.")
+            return
+
+        for alias, path in self.problematic_features.items():
+            arcpy.management.RepairGeometry(
+                in_features=path,
+                delete_null=delete_null,
+                validation_method=validation_method,
+            )
+            print(f"Repaired geometry for feature: {alias}")
+
+    def check_repair_sequence(self, max_iterations=2):
+        """Run the check-repair-check sequence until no issues remain or max iterations reached."""
+        self.iteration = 0
+        while self.iteration < max_iterations:
+            print(f"--- Iteration {self.iteration + 1} ---")
+            self.check_geometry()
+            if not self.problematic_features:
+                print("No further geometry issues detected.")
+                break
+            self.repair_geometry()
+            self.iteration += 1
+
+        if self.iteration == max_iterations:
+            problematic_aliases = ", ".join(self.problematic_features.keys())
+            print(
+                f"Maximum iterations ({max_iterations}) reached. Manual inspection may be required for the following features: {problematic_aliases}"
+            )
