@@ -18,15 +18,12 @@ from custom_tools.decorators.timing_decorator import timing_decorator
 from input_data import input_n50, input_n100
 from file_manager.n100.file_manager_buildings import Building_N100
 from custom_tools.general_tools.polygon_processor import PolygonProcessor
-from constants.n100_constants import N100_Symbology
 
 
 from custom_tools.generalization_tools.building.buffer_displacement import (
     BufferDisplacement,
 )
 from constants.n100_constants import N100_Symbology, N100_SQLResources, N100_Values
-
-# THIS IS WORK IN PROGRESS NOT READY FOR USE YET
 
 
 class PartitionIterator:
@@ -285,13 +282,7 @@ class PartitionIterator:
                         type_path=dummy_feature_path,
                     )
 
-    def initialize_dummy_used(self):
-        # Assuming `aliases` is a list of all your aliases
-        for alias in self.nested_alias_type_data:
-            self.nested_alias_type_data[alias]["dummy_used"] = False
-
     def reset_dummy_used(self):
-        # Assuming `aliases` is a list of all your aliases
         for alias in self.nested_alias_type_data:
             self.nested_alias_type_data[alias]["dummy_used"] = False
 
@@ -456,7 +447,7 @@ class PartitionIterator:
                 input_data_copy = (
                     f"{self.root_file_partition_iterator}_{alias}_input_data_copy"
                 )
-                # self.delete_feature_class(input_data_copy)
+
                 arcpy.management.Copy(
                     in_data=input_data_path,
                     out_data=input_data_copy,
@@ -729,7 +720,8 @@ class PartitionIterator:
             else:
                 self.process_context_features(alias, iteration_partition, object_id)
 
-    def format_time(self, seconds):
+    @staticmethod
+    def format_time(seconds):
         """
         Convert seconds to a formatted string: HH:MM:SS.
 
@@ -878,8 +870,7 @@ class PartitionIterator:
             )
 
         self.configure_alias_and_type(alias, alias_type, resolved_path)
-        # print(f"This is object_id {object_id}")
-        # print(f"Added new path for {param_info}: {resolved_path}")
+
         return resolved_path
 
     def construct_path_for_alias_type(self, alias, alias_type, object_id):
@@ -993,7 +984,7 @@ class PartitionIterator:
         self.find_maximum_object_id()
 
         self.create_dummy_features(types_to_include=["input_copy", "context_copy"])
-        self.initialize_dummy_used()
+        self.reset_dummy_used()
 
         self.delete_iteration_files(*self.iteration_file_paths_list)
         self.iteration_file_paths_list.clear()
