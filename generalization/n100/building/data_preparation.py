@@ -22,6 +22,7 @@ from custom_tools.generalization_tools.building.begrensningskurve_land_waterbodi
     BegrensningskurveLandWaterbodies,
 )
 from custom_tools.general_tools.study_area_selector import StudyAreaSelector
+from custom_tools.general_tools.geometry_tools import GeometryValidator
 
 
 @timing_decorator
@@ -70,6 +71,25 @@ def data_selection():
     )
 
     selector.run()
+
+    input_features_validation = {
+        "begrensningskurve": Building_N100.data_selection___begrensningskurve_n100_input_data___n100_building.value,
+        "area": Building_N100.data_selection___land_cover_n100_input_data___n100_building.value,
+        "roads": Building_N100.data_selection___road_n100_input_data___n100_building.value,
+        "railroad_stations": Building_N100.data_selection___railroad_stations_n100_input_data___n100_building.value,
+        "railroad_tracks": Building_N100.data_selection___railroad_tracks_n100_input_data___n100_building.value,
+        "building_points": Building_N100.data_selection___building_point_n50_input_data___n100_building.value,
+        "building_polygons": Building_N100.data_selection___building_polygon_n50_input_data___n100_building.value,
+        "tourist_huts": Building_N100.data_selection___tourist_hut_n50_input_data___n100_building.value,
+        "building_point_matrikkel": Building_N100.data_selection___matrikkel_input_data___n100_building.value,
+        "road_displacement_feature": Building_N100.data_selection___displacement_feature___n100_building.value,
+    }
+
+    data_validation = GeometryValidator(
+        input_features=input_features_validation,
+        output_table_path=Building_N100.data_preparation___geometry_validation___n100_building.value,
+    )
+    data_validation.check_repair_sequence()
 
 
 @timing_decorator
