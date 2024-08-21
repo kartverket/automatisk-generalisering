@@ -722,21 +722,9 @@ class PartitionIterator:
                     f"iteration partition {object_id} has no features for {alias} in the partition feature"
                 )
 
-    def _process_context_features_and_others(
-        self, aliases, iteration_partition, object_id
-    ):
+    def _process_context_features(self, aliases, iteration_partition, object_id):
         for alias in aliases:
-            if "context_copy" not in self.nested_alias_type_data[alias]:
-                # Loads in dummy feature for this alias for this iteration and sets dummy_used = True
-                self.update_empty_alias_type_with_dummy_file(
-                    alias,
-                    type_info="context",
-                )
-                print(
-                    f"iteration partition {object_id} has no context features for {alias} in the partition feature"
-                )
-            else:
-                self.process_context_features(alias, iteration_partition, object_id)
+            self.process_context_features(alias, iteration_partition, object_id)
 
     @staticmethod
     def format_time(seconds):
@@ -1030,9 +1018,7 @@ class PartitionIterator:
             )
 
             if inputs_present_in_partition:
-                self._process_context_features_and_others(
-                    aliases, iteration_partition, object_id
-                )
+                self._process_context_features(aliases, iteration_partition, object_id)
                 self.find_io_params_custom_logic(object_id)
                 self.export_dictionaries_to_json(
                     file_name="iteration",
