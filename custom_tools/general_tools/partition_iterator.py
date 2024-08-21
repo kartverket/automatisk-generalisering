@@ -579,17 +579,15 @@ class PartitionIterator:
                 output_name=input_features_center_in_partition_selection,
             )
 
-            aliases_with_features = {}
             count_points = int(
                 arcpy.management.GetCount(
                     input_features_center_in_partition_selection
                 ).getOutput(0)
             )
-            aliases_with_features[alias] = count_points
 
             self.nested_alias_type_data[alias]["count"] = count_points
 
-            if aliases_with_features[alias] > 0:
+            if count_points > 0:
                 print(f"{alias} has {count_points} features in {iteration_partition}")
 
                 arcpy.CalculateField_management(
@@ -655,7 +653,7 @@ class PartitionIterator:
                     f"iteration partition {input_features_within_distance_of_partition_selection} appended to {input_data_iteration_selection}"
                 )
                 # Return the processed input features and a flag indicating successful operation
-                return aliases_with_features, True
+                return True
             else:
                 # Loads in dummy feature for this alias for this iteration and sets dummy_used = True
                 self.update_empty_alias_type_with_dummy_file(
@@ -666,14 +664,14 @@ class PartitionIterator:
                     f"iteration partition {object_id} has no features for {alias} in the partition feature"
                 )
             # If there are no inputs to process, return None for the aliases and a flag indicating no input was present.
-            return None, False
+            return False
 
     def _process_inputs_in_partition(self, aliases, iteration_partition, object_id):
         inputs_present_in_partition = False
         for alias in aliases:
             if "input_copy" in self.nested_alias_type_data[alias]:
                 # Using process_input_features to check whether inputs are present
-                _, input_present = self.process_input_features(
+                input_present = self.process_input_features(
                     alias, iteration_partition, object_id
                 )
                 # Sets inputs_present_in_partition as True if any alias in partition has input present. Otherwise it remains False.
@@ -700,15 +698,13 @@ class PartitionIterator:
                 search_distance=self.search_distance,
             )
 
-            aliases_with_features = {}
             count_points = int(
                 arcpy.management.GetCount(context_data_iteration_selection).getOutput(0)
             )
-            aliases_with_features[alias] = count_points
 
             self.nested_alias_type_data[alias]["count"] = count_points
 
-            if aliases_with_features[alias] > 0:
+            if count_points > 0:
                 print(f"{alias} has {count_points} features in {iteration_partition}")
 
                 self.configure_alias_and_type(
