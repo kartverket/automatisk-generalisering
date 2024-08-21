@@ -587,6 +587,8 @@ class PartitionIterator:
             )
             aliases_with_features[alias] = count_points
 
+            self.nested_alias_type_data[alias]["count"] = count_points
+
             if aliases_with_features[alias] > 0:
                 print(f"{alias} has {count_points} features in {iteration_partition}")
 
@@ -698,11 +700,31 @@ class PartitionIterator:
                 search_distance=self.search_distance,
             )
 
-            self.configure_alias_and_type(
-                alias=alias,
-                type_name="context",
-                type_path=context_data_iteration_selection,
+            aliases_with_features = {}
+            count_points = int(
+                arcpy.management.GetCount(context_data_iteration_selection).getOutput(0)
             )
+            aliases_with_features[alias] = count_points
+
+            self.nested_alias_type_data[alias]["count"] = count_points
+
+            if aliases_with_features[alias] > 0:
+                print(f"{alias} has {count_points} features in {iteration_partition}")
+
+                self.configure_alias_and_type(
+                    alias=alias,
+                    type_name="context",
+                    type_path=context_data_iteration_selection,
+                )
+            else:
+                # Loads in dummy feature for this alias for this iteration and sets dummy_used = True
+                self.update_empty_alias_type_with_dummy_file(
+                    alias,
+                    type_info="context",
+                )
+                print(
+                    f"iteration partition {object_id} has no features for {alias} in the partition feature"
+                )
 
     def _process_context_features_and_others(
         self, aliases, iteration_partition, object_id
