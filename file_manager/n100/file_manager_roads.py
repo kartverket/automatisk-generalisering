@@ -126,10 +126,10 @@ class Road_N100(Enum):
         )
     )
 
-    first_generalization____visible_features_after_thin_road_network___n100_road = (
+    first_generalization____visible_features_after_thin_road_network_1___n100_road = (
         file_manager.generate_file_name_gdb(
             script_source_name=first_generalization,
-            description="visible_features_after_thin_road_network",
+            description="visible_features_after_thin_road_network_1_test",
         )
     )
 
@@ -137,5 +137,26 @@ class Road_N100(Enum):
         file_manager.generate_file_name_gdb(
             script_source_name=first_generalization,
             description="collapse_road_detail",
+        )
+    )
+
+    first_generalization____visible_features_after_thin_road_network_2___n100_road = (
+        file_manager.generate_file_name_gdb(
+            script_source_name=first_generalization,
+            description="visible_features_after_thin_road_network_2_test",
+        )
+    )
+
+    data_preperation___paths_n50_with_calculated_fields___n100_road = (
+        file_manager.generate_file_name_gdb(
+            script_source_name=first_generalization,
+            description="paths_n50_with_calculated_fields",
+        )
+    )
+
+    first_generalization____visible_features_after_thin_road_network_3___n100_road = (
+        file_manager.generate_file_name_gdb(
+            script_source_name=first_generalization,
+            description="visible_features_after_thin_road_network_3_test",
         )
     )
