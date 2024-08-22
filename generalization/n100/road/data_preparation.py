@@ -24,12 +24,13 @@ def main():
     selecting_paths_from_n50()
     adding_fields_to_n50_paths_and_calculating_hierarchy()
     selecting_vegtrase_and_kjorebane_from_nvdb()
-    selecting_everything_but_rampe()
-    adding_fields_and_calculating_values()
+    selecting_everything_but_rampe_from_vegtrase_and_kjorebane()
+    adding_fields_to_nvdb_and_calculating_values()
 
 
+# Selecting paths (stier) from n50
+@timing_decorator
 def selecting_paths_from_n50():
-    # Selecting paths (stier) from n50
     custom_arcpy.select_attribute_and_make_permanent_feature(
         input_layer=input_n50.VegSti,
         expression="objtype = 'VegSenterlinje'",
@@ -39,26 +40,48 @@ def selecting_paths_from_n50():
     )
 
 
+# Selecting detaljnivå vegtrase, and vegtrase og kjørebane
+@timing_decorator
+def selecting_vegtrase_and_kjorebane_from_nvdb():
+    custom_arcpy.select_attribute_and_make_permanent_feature(
+        input_layer=config.path_to_roads_nvdb,  # NB:  Input nvdb vegnett Oslo
+        expression="DETALJNIVÅ = 'Vegtrase' Or DETALJNIVÅ = 'Vegtrase og kjørebane'",
+        output_name=Road_N100.data_preperation___selecting_vegtrase_and_kjorebane_nvdb___n100_road.value,
+        selection_type=custom_arcpy.SelectionType.NEW_SELECTION,
+    )
+
+
+# Selecting all typeveg other than rampe
+@timing_decorator
+def selecting_everything_but_rampe_from_vegtrase_and_kjorebane():
+    custom_arcpy.select_attribute_and_make_permanent_feature(
+        input_layer=Road_N100.data_preperation___selecting_vegtrase_and_kjorebane_nvdb___n100_road.value,
+        expression="TYPEVEG = 'rampe'",
+        output_name=Road_N100.data_preperation___selecting_everything_but_rampe_nvdb___n100_road.value,
+        selection_type=custom_arcpy.SelectionType.NEW_SELECTION,
+        inverted=True,
+    )
+
+
+@timing_decorator
 def adding_fields_to_n50_paths_and_calculating_hierarchy():
     # Adding fields to the table
     arcpy.management.AddFields(
         in_table=Road_N100.data_preperation___paths_n50___n100_road.value,
         field_description=[
-            ["invisibility", "SHORT"],
+            ["invisibility_1", "SHORT"],
             ["hierarchy", "SHORT"],
             ["characters", "SHORT"],
+            ["invisibility_2", "SHORT"],
+            ["invisibility_3", "SHORT"],
         ],
     )
 
     # Defining the Python code for field calculation
     assign_hierarchy_to_n50_paths = """
 def Reclass(subtypekode):
-    if subtypekode in [6, 8, 10, 7]:
-        return 1
-    elif subtypekode in [11, 9]:
-        return 2
-    else:
-        return 3
+    if subtypekode > 0:
+        return 5
 """
 
     # Applying the field calculation using the custom function
@@ -78,36 +101,23 @@ def Reclass(subtypekode):
         code_block=assign_hierarchy_to_n50_paths,
     )
 
-
-def selecting_vegtrase_and_kjorebane_from_nvdb():
-    # Selecting all hospitals and making feature layer
-    custom_arcpy.select_attribute_and_make_permanent_feature(
-        input_layer=config.path_to_roads_nvdb,  # Input nvdb
-        expression="DETALJNIVÅ = 'Vegtrase' Or DETALJNIVÅ = 'Vegtrase og kjørebane'",
-        output_name=Road_N100.data_preperation___selecting_vegtrase_and_kjorebane_nvdb___n100_road.value,
-        selection_type=custom_arcpy.SelectionType.NEW_SELECTION,
+    arcpy.management.CopyFeatures(
+        Road_N100.data_preperation___paths_n50___n100_road.value,
+        Road_N100.data_preperation___paths_n50_with_calculated_fields___n100_road.value,
     )
 
 
-def selecting_everything_but_rampe():
-    # Selecting all hospitals and making feature layer
-    custom_arcpy.select_attribute_and_make_permanent_feature(
-        input_layer=Road_N100.data_preperation___selecting_vegtrase_and_kjorebane_nvdb___n100_road.value,
-        expression="TYPEVEG = 'rampe'",
-        output_name=Road_N100.data_preperation___selecting_everything_but_rampe_nvdb___n100_road.value,
-        selection_type=custom_arcpy.SelectionType.NEW_SELECTION,
-        inverted=True,
-    )
-
-
-def adding_fields_and_calculating_values():
+@timing_decorator
+def adding_fields_to_nvdb_and_calculating_values():
     arcpy.management.AddFields(
         in_table=Road_N100.data_preperation___selecting_everything_but_rampe_nvdb___n100_road.value,
         field_description=[
-            ["invisibility", "SHORT"],
+            ["invisibility_1", "SHORT"],
             ["hierarchy", "SHORT"],
             ["merge", "LONG"],
             ["characters", "SHORT"],
+            ["invisibility_2", "SHORT"],
+            ["invisibility_3", "SHORT"],
         ],
     )
 
@@ -125,16 +135,16 @@ def adding_fields_and_calculating_values():
         expression_type="PYTHON3",
     )
 
-    assign_hierarchy_to_road_types = """def Reclass(road_category):
-        if road_category in ['Europaveg', 'Riksveg', 'Fylkesveg']:
+    assign_hierarchy_to_nvdb_roads = """def Reclass(road_category):
+        if road_category == 'Europaveg':
             return 1
-        elif road_category == 'Kommunal veg':
+        elif road_category in ['Riksveg', 'Fylkesveg']:
             return 2
-        elif road_category == 'Privat veg':
+        elif road_category == 'Kommunal veg':
             return 3
-        elif road_category == 'Skogsveg':
+        elif road_category == 'Privat veg':
             return 4
-        else:
+        elif road_category == 'Skogsveg':
             return 5
     """
 
@@ -143,7 +153,7 @@ def adding_fields_and_calculating_values():
         field="hierarchy",
         expression="Reclass(!VEGSYSTEM_VEGKATEGORI!)",
         expression_type="PYTHON3",
-        code_block=assign_hierarchy_to_road_types,
+        code_block=assign_hierarchy_to_nvdb_roads,
     )
 
     arcpy.management.CopyFeatures(
