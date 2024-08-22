@@ -922,7 +922,7 @@ class PartitionIterator:
                 instance = func_class(**class_params)
                 # Call the method with the required parameters
                 method(instance, **method_params)
-                resolved_params = {**class_params, **method_params}
+
             else:
                 # Handle standalone functions
                 method = custom_func["func"]
@@ -932,7 +932,8 @@ class PartitionIterator:
                 resolved_params = {param: path for param, path in func_params.items()}
 
                 # Log the function parameters
-                print(f"Function parameters for {method.__name__}: {resolved_params}")
+                print(f"Function parameters for {method.__name__}:")
+                pprint.pprint(resolved_params, indent=4)
 
                 # Execute the function with resolved parameters
                 method(**resolved_params)
@@ -1025,7 +1026,16 @@ class PartitionIterator:
                     iteration=True,
                     object_id=object_id,
                 )
-                self.execute_custom_functions()
+                # Implementing retry mechanism
+                max_retries = 3
+                for attempt in range(max_retries):
+                    try:
+                        self.execute_custom_functions()
+                        break  # If successful, exit the retry loop
+                    except Exception as e:
+                        print(f"Attempt {attempt + 1} failed with error: {e}")
+                        if attempt + 1 == max_retries:
+                            print("Max retries reached. Moving to next iteration.")
             if inputs_present_in_partition:
                 for alias in aliases:
                     self.append_iteration_to_final(alias, object_id)
