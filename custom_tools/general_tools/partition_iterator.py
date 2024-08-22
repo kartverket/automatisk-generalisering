@@ -90,6 +90,7 @@ class PartitionIterator:
         self.current_iteration_id = None
         self.iteration_file_paths_list = []
         self.first_call_directory_documentation = True
+        self.error_log = {}
 
         # Variables related to custom operations
         self.custom_functions = custom_functions or []
@@ -412,6 +413,26 @@ class PartitionIterator:
         )
         self.write_data_to_json(
             final_outputs, final_outputs_directory, file_name, object_id
+        )
+
+    def create_error_log_directory(self):
+        """
+        Creates an error_log directory inside self.dictionary_documentation_path.
+        Returns the path to the error_log directory.
+        """
+        return self.create_directory_json_documentation(
+            root_path=self.dictionary_documentation_path,
+            target_dir="error_log",
+            iteration=False,
+        )
+
+    def save_error_log(self, error_log):
+        """
+        Saves the error log to a JSON file in the error_log directory.
+        """
+        error_log_directory = self.create_error_log_directory()
+        self.write_data_to_json(
+            data=error_log, file_path=error_log_directory, file_name="error_log"
         )
 
     @staticmethod
@@ -793,8 +814,8 @@ class PartitionIterator:
                 input_params = metadata.get("inputs", [])
                 output_params = metadata.get("outputs", [])
 
-                print(f"\nResolving IO Params for object_id {object_id}")
-                print(f"Before resolving: {custom_func['params']}")
+                # print(f"\nResolving IO Params for object_id {object_id}")
+                # print(f"Before resolving: {custom_func['params']}")
 
                 self.resolve_io_params(
                     param_type="input",
@@ -809,7 +830,7 @@ class PartitionIterator:
                     object_id=object_id,
                 )
 
-                print(f"After resolving: {custom_func['params']}")
+                # print(f"After resolving: {custom_func['params']}")
 
     def resolve_io_params(self, param_type, params, custom_func, object_id):
         """
@@ -839,9 +860,9 @@ class PartitionIterator:
             else:
                 custom_func["params"][param] = resolved_paths
 
-            print(
-                f"Resolved {param_type} path for {param}: {custom_func['params'][param]}"
-            )
+            # print(
+            #     f"Resolved {param_type} path for {param}: {custom_func['params'][param]}"
+            # )
 
     def _handle_tuple_param(self, param_info, object_id):
         """
@@ -938,6 +959,38 @@ class PartitionIterator:
                 # Execute the function with resolved parameters
                 method(**resolved_params)
 
+    def resilient_execute_custom_functions(self, object_id):
+        """
+        Helper function to execute custom functions with retry logic to handle potential failures.
+
+        Args:
+            object_id (int): The current object_id being processed (for logging).
+            error_log (dict): A dictionary to store error information for each iteration.
+        """
+        max_retries = 10
+
+        for attempt in range(max_retries):
+            try:
+                self.execute_custom_functions()
+                break  # If successful, exit the retry loop
+            except Exception as e:
+                error_message = str(e)
+                print(f"Attempt {attempt + 1} failed with error: {error_message}")
+
+                # Initialize the log for this iteration if not already done
+                if object_id not in self.error_log:
+                    self.error_log[object_id] = {
+                        "Number of retries": 0,
+                        "Error Messages": {},
+                    }
+
+                # Update the log with the retry attempt and error message
+                self.error_log[object_id]["Number of retries"] += 1
+                self.error_log[object_id]["Error Messages"][attempt + 1] = error_message
+
+                if attempt + 1 == max_retries:
+                    print("Max retries reached. Moving to next iteration.")
+
     def append_iteration_to_final(self, alias, object_id):
         # Guard clause if alias doesn't exist in nested_final_outputs
         if alias not in self.nested_final_outputs:
@@ -1026,16 +1079,9 @@ class PartitionIterator:
                     iteration=True,
                     object_id=object_id,
                 )
-                # Implementing retry mechanism
-                max_retries = 3
-                for attempt in range(max_retries):
-                    try:
-                        self.execute_custom_functions()
-                        break  # If successful, exit the retry loop
-                    except Exception as e:
-                        print(f"Attempt {attempt + 1} failed with error: {e}")
-                        if attempt + 1 == max_retries:
-                            print("Max retries reached. Moving to next iteration.")
+
+                self.resilient_execute_custom_functions(object_id)
+
             if inputs_present_in_partition:
                 for alias in aliases:
                     self.append_iteration_to_final(alias, object_id)
@@ -1066,6 +1112,7 @@ class PartitionIterator:
         print("\nStarting on Partition Iteration...")
         self.partition_iteration()
         self.export_dictionaries_to_json(file_name="post_runtime")
+        self.save_error_log(self.error_log)
 
 
 if __name__ == "__main__":
