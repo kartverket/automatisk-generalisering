@@ -47,6 +47,7 @@ class PartitionIterator:
         partition_method: Literal["FEATURES", "VERTICES"] = "FEATURES",
         search_distance: str = "500 Meters",
         context_selection: bool = True,
+        delete_final_outputs: bool = True,
         safe_output_final_cleanup: bool = True,
         object_id_field: str = "OBJECTID",
     ):
@@ -78,6 +79,7 @@ class PartitionIterator:
         self.partition_method = partition_method
         self.object_id_field = object_id_field
         self.selection_of_context_features = context_selection
+        self.delete_final_outputs_bool = delete_final_outputs
         self.safe_final_output_cleanup = safe_output_final_cleanup
 
         # Initial processing results
@@ -218,6 +220,12 @@ class PartitionIterator:
 
     def delete_final_outputs(self):
         """Deletes all existing final output files if they exist and are in the safe directory."""
+
+        # Check if deletion is allowed
+        if not self.delete_final_outputs_bool:
+            print("Deletion of final outputs is disabled.")
+            return
+
         # Construct the safe directory path
         local_root_directory = config.output_folder
         project_root_directory = env_setup.global_config.main_directory_name
@@ -1055,6 +1063,7 @@ class PartitionIterator:
         }
 
         for object_id in range(1, self.max_object_id + 1):
+            self.current_iteration_id = object_id
             self.iteration_start_time = time.time()
             print(f"\nProcessing Partition: {object_id} out of {self.max_object_id}")
             self.reset_dummy_used()
