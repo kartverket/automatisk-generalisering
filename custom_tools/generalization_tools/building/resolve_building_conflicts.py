@@ -20,7 +20,7 @@ from env_setup import environment_setup
 from input_data import input_symbology
 
 # Importing timing decorator
-from custom_tools.decorators.timing_decorator import timing_decorator
+
 from custom_tools.decorators.partition_io_decorator import partition_io_decorator
 
 
@@ -155,7 +155,6 @@ class ResolveBuildingConflicts:
         #                                       LOGICS
         # ========================================
 
-    @timing_decorator
     def apply_symbology_to_the_layers(self):
         """
         Summary:
@@ -163,102 +162,46 @@ class ResolveBuildingConflicts:
         """
         print("Now starting to apply symbology to layers")
 
-        # Apply symbology to the third layer
-        print("Now starting to apply symbology to layer")
-        print(f"{self.input_road_barrier}\n")
-        custom_arcpy.apply_symbology(
-            input_layer=self.input_road_barrier,
-            in_symbology_layer=self.road_barrier_lyrx,
-            output_name=self.roads_with_lyrx,
-        )
+        features_for_apply_symbology = [
+            {
+                "input_layer": self.input_building_points,
+                "in_symbology_layer": self.building_squares_lyrx,
+                "output_name": self.building_squares_with_lyrx,
+            },
+            {
+                "input_layer": self.input_building_polygons,
+                "in_symbology_layer": self.building_polygons_lyrx,
+                "output_name": self.polygons_with_lyrx,
+            },
+            {
+                "input_layer": self.input_road_barrier,
+                "in_symbology_layer": self.road_barrier_lyrx,
+                "output_name": self.roads_with_lyrx,
+            },
+            {
+                "input_layer": self.input_begrensningskurve_barrier,
+                "in_symbology_layer": self.begrensningskurve_barrier_lyrx,
+                "output_name": self.begrensningskurve_with_lyrx,
+            },
+            {
+                "input_layer": self.input_railway_barrier,
+                "in_symbology_layer": self.railway_barrier_lyrx,
+                "output_name": self.railway_with_lyrx,
+            },
+            {
+                "input_layer": self.input_railway_station_barrier,
+                "in_symbology_layer": self.railway_station_barrier_lyrx,
+                "output_name": self.railway_stations_with_lyrx,
+            },
+        ]
 
-        # Apply symbology to the first layer
-        print("Now starting to apply symbology to layer")
-        print(f"{self.input_building_points}\n")
-        custom_arcpy.apply_symbology(
-            input_layer=self.input_building_points,
-            in_symbology_layer=self.building_squares_lyrx,
-            output_name=self.building_squares_with_lyrx,
-        )
-
-        # Apply symbology to the second layer
-        print("Now starting to apply symbology to layer")
-        print(f"{self.input_building_polygons}\n")
-        custom_arcpy.apply_symbology(
-            input_layer=self.input_building_polygons,
-            in_symbology_layer=self.building_polygons_lyrx,
-            output_name=self.polygons_with_lyrx,
-        )
-
-        # Apply symbology to the fourth layer
-        print("Now starting to apply symbology to layer")
-        print(f"{self.input_begrensningskurve_barrier}\n")
-        custom_arcpy.apply_symbology(
-            input_layer=self.input_begrensningskurve_barrier,
-            in_symbology_layer=self.begrensningskurve_barrier_lyrx,
-            output_name=self.begrensningskurve_with_lyrx,
-        )
-
-        # Apply symbology to the fifth layer
-        print("Now starting to apply symbology to layer")
-        print(f"{self.input_railway_barrier}\n")
-        custom_arcpy.apply_symbology(
-            input_layer=self.input_railway_barrier,
-            in_symbology_layer=self.railway_barrier_lyrx,
-            output_name=self.railway_with_lyrx,
-        )
-
-        # Apply symbology to the sixth layer
-        print("Now starting to apply symbology to layer")
-        print(f"{self.input_railway_station_barrier}\n")
-        custom_arcpy.apply_symbology(
-            input_layer=self.input_railway_station_barrier,
-            in_symbology_layer=self.railway_station_barrier_lyrx,
-            output_name=self.railway_stations_with_lyrx,
-        )
-        #
-        # features_for_apply_symbology = [
-        #     {
-        #         "input_layer": self.points_to_squares,
-        #         "in_symbology_layer": self.building_squares_lyrx,
-        #         "output_name": self.building_squares_with_lyrx,
-        #     },
-        #     {
-        #         "input_layer": self.input_building_polygons,
-        #         "in_symbology_layer": self.building_polygons_lyrx,
-        #         "output_name": self.polygons_with_lyrx,
-        #     },
-        #     {
-        #         "input_layer": self.input_road_barrier,
-        #         "in_symbology_layer": self.road_barrier_lyrx,
-        #         "output_name": self.roads_with_lyrx,
-        #     },
-        #     {
-        #         "input_layer": self.input_begrensningskurve_barrier,
-        #         "in_symbology_layer": self.begrensningskurve_barrier_lyrx,
-        #         "output_name": self.begrensningskurve_with_lyrx,
-        #     },
-        #     {
-        #         "input_layer": self.input_railway_barrier,
-        #         "in_symbology_layer": self.railway_barrier_lyrx,
-        #         "output_name": self.railway_with_lyrx,
-        #     },
-        #     {
-        #         "input_layer": self.input_railway_station_barrier,
-        #         "in_symbology_layer": self.railway_station_barrier_lyrx,
-        #         "output_name": self.railway_stations_with_lyrx,
-        #     },
-        # ]
-        #
-        # # Loop over the symbology configurations and apply the function
-        # for symbology_config in features_for_apply_symbology:
-        #     print("Now starting to apply symbology to layer")
-        #     print(f"{symbology_config['input_layer']}\n")
-        #     custom_arcpy.apply_symbology(
-        #         input_layer=symbology_config["input_layer"],
-        #         in_symbology_layer=symbology_config["in_symbology_layer"],
-        #         output_name=symbology_config["output_name"],
-        #     )
+        # Loop over the symbology configurations and apply the function
+        for symbology_config in features_for_apply_symbology:
+            custom_arcpy.apply_symbology(
+                input_layer=symbology_config["input_layer"],
+                in_symbology_layer=symbology_config["in_symbology_layer"],
+                output_name=symbology_config["output_name"],
+            )
 
     def barriers_for_rbc(self):
         """
@@ -285,7 +228,6 @@ class ResolveBuildingConflicts:
 
         return input_barriers_for_rbc
 
-    @timing_decorator
     def resolve_building_conflicts_1(self):
         """
         Summary:
@@ -309,7 +251,6 @@ class ResolveBuildingConflicts:
             print(f"Error in resolve_building_conflicts_1: {e}")
             raise
 
-    @timing_decorator
     def building_squares_and_polygons_to_keep_after_rbc_1(self):
         """
         Summary:
@@ -317,8 +258,9 @@ class ResolveBuildingConflicts:
         """
         # Sql expression to select building squares that are visible + church and hospital points
         sql_expression_resolve_building_conflicts_squares = (
-            "(invisibility = 0) OR (BYGGTYP_NBR IN (970, 719, 671))"
+            "(invisibility = 0) OR (symbol_val IN (1, 2, 3)) OR (byggtyp_nbr = 956)"
         )
+
         # Selecting building squares that are visible OR are hospitals/churches
         custom_arcpy.select_attribute_and_make_permanent_feature(
             input_layer=self.input_building_points,
@@ -336,7 +278,6 @@ class ResolveBuildingConflicts:
             output_name=self.results_rbc_1_polygons,
         )
 
-    @timing_decorator
     def transforming_invisible_polygons_to_points_and_then_to_squares(self):
         """
         Summary:
@@ -378,7 +319,6 @@ class ResolveBuildingConflicts:
             output=self.merged_squares_rbc1,
         )
 
-    @timing_decorator
     def calculating_symbol_val_and_nbr_for_squares(self):
         """
         Summary:
@@ -418,7 +358,6 @@ class ResolveBuildingConflicts:
             code_block=code_block_update_symbol_val,
         )
 
-    @timing_decorator
     def adding_symbology_to_layers_being_used_for_rbc_2(self):
         """
         Summary:
@@ -438,7 +377,6 @@ class ResolveBuildingConflicts:
             output_name=self.adding_symbology_to_polygons_going_into_rbc2,
         )
 
-    @timing_decorator
     def resolve_building_conflicts_2(self):
         """
         Summary:
@@ -461,13 +399,14 @@ class ResolveBuildingConflicts:
             hierarchy_field="hierarchy",
         )
 
-    @timing_decorator
     def selecting_features_to_be_kept_after_rbc_2(self):
         """
         Summary:
             Selects and retains building squares and polygons based on visibility and symbol value criteria after the second RBC processing stage.
         """
-        sql_expression_squares = "(invisibility = 0) OR (symbol_val IN (1, 2, 3))"
+        sql_expression_squares = (
+            "(invisibility = 0) OR (symbol_val IN (1, 2, 3)) OR (byggtyp_nbr = 956)"
+        )
 
         sql_expression_polygons = "invisibility = 0"
 
@@ -485,7 +424,6 @@ class ResolveBuildingConflicts:
             output_name=self.polygons_after_rbc2,
         )
 
-    @timing_decorator
     def transforming_squares_back_to_points(self):
         """
         Summary:
@@ -498,7 +436,6 @@ class ResolveBuildingConflicts:
             point_location="INSIDE",
         )
 
-    @timing_decorator
     def assigning_final_names(self):
         """
         Summary:
