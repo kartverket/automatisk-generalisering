@@ -1,7 +1,10 @@
 import arcpy
 from typing import Union, Dict
 
+from xarray.backends.common import NONE_VAR_NAME
+
 from custom_tools.general_tools import custom_arcpy
+from custom_tools.decorators.partition_io_decorator import partition_io_decorator
 from file_manager.n100.file_manager_rivers import River_N100
 
 
@@ -69,7 +72,7 @@ class GeometryValidator:
                     continue
 
                 self.generated_out_table_path = (
-                    f"{self.output_table_path}_{alias}_iter{self.iteration}"
+                    f"{self.output_table_path}_{alias}_validation_{self.iteration}"
                 )
                 result = arcpy.management.CheckGeometry(
                     in_features=path, out_table=self.generated_out_table_path
@@ -118,6 +121,10 @@ class GeometryValidator:
             )
             print(f"Repaired geometry for feature: {alias}")
 
+    @partition_io_decorator(
+        input_param_names=["input_features"],
+        output_param_names=None,
+    )
     def check_repair_sequence(self, max_iterations=2):
         """Run the check-repair-check sequence until no issues remain or max iterations reached."""
         self.iteration = 0
