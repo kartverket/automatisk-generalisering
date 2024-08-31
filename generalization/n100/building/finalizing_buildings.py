@@ -101,7 +101,7 @@ def building_polygons_to_line():
         Converts building polygons to lines
     """
     arcpy.management.PolygonToLine(
-        in_features=Building_N100.removing_overlapping_polygons_and_points___polygons_NOT_intersecting_road_buffers___n100_building.value,
+        in_features=Building_N100.removing_overlapping_polygons_and_points___building_polygons_not_intersecting_church_hospitals____n100_building.value,
         out_feature_class=Building_N100.finalizing_buildings___polygon_to_line___n100_building.value,
         neighbor_option="IDENTIFY_NEIGHBORS",
     )
@@ -136,7 +136,7 @@ def assigning_final_file_names():
     )
 
     arcpy.management.CopyFeatures(
-        Building_N100.removing_overlapping_polygons_and_points___polygons_NOT_intersecting_road_buffers___n100_building.value,
+        Building_N100.removing_overlapping_polygons_and_points___building_polygons_not_intersecting_church_hospitals____n100_building.value,
         Building_N100.Grunnriss.value,
     )
 

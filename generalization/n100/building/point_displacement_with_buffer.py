@@ -53,17 +53,19 @@ def extracting_churches_hospitals():
     Selects and saves features identified as churches or hospitals based on `symbol_val`.
     Separates out features that are not churches or hospitals.
     """
-    church_hospital_sql_expression = "symbol_val IN (1, 2, 3)"
+    church_hospital_tourist_hut_sql_expression = (
+        "symbol_val IN (1, 2, 3) Or byggtyp_nbr = 956"
+    )
 
     custom_arcpy.select_attribute_and_make_permanent_feature(
         input_layer=Building_N100.hospital_church_clusters___final___n100_building.value,
-        expression=church_hospital_sql_expression,
+        expression=church_hospital_tourist_hut_sql_expression,
         output_name=Building_N100.point_displacement_with_buffer___church_hospital_selection___n100_building.value,
     )
 
     custom_arcpy.select_attribute_and_make_permanent_feature(
         input_layer=Building_N100.hospital_church_clusters___final___n100_building.value,
-        expression=church_hospital_sql_expression,
+        expression=church_hospital_tourist_hut_sql_expression,
         output_name=Building_N100.point_displacement_with_buffer___building_points_selection___n100_building.value,
         inverted=True,
     )

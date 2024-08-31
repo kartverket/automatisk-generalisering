@@ -231,7 +231,7 @@ def resolve_building_conflicts():
         root_file_partition_iterator=Building_N100.point_resolve_building_conflicts___root_file___n100_building.value,
         scale=env_setup.global_config.scale_n100,
         dictionary_documentation_path=Building_N100.point_resolve_building_conflicts___documentation___building_n100.value,
-        feature_count="8000",
+        feature_count="100000",
     )
 
     resolve_building_conflicts_partition_iteration.run()

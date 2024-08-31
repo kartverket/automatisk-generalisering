@@ -3,6 +3,7 @@ import arcpy
 # Importing custom files relative to the root path
 from env_setup import environment_setup
 from custom_tools.decorators.timing_decorator import timing_decorator
+from custom_tools.general_tools.geometry_tools import GeometryValidator
 
 # Importing temporary files
 from file_manager.n100.file_manager_buildings import Building_N100
@@ -43,6 +44,9 @@ def main():
     keep_necessary_fields(
         Building_N100.Piktogram.value, ["byggtyp_nbr", "last_edited_date"]
     )
+
+    check_and_repair_geometry()
+
     add_last_edited_date_to_all_feature_classes()
 
 
@@ -120,6 +124,24 @@ def add_last_edited_date_to_all_feature_classes():
             expression=f"'{current_date}'",
             expression_type="PYTHON3",
         )
+
+        print(f"Added last edited date: '{current_date}' for '{feature_class}'.")
+
+
+def check_and_repair_geometry():
+    input_features_validation = {
+        "building_points": Building_N100.BygningsPunkt.value,
+        "building_polygons": Building_N100.Grunnriss.value,
+        "tourist_huts": Building_N100.TuristHytte.value,
+        "omriss_linje": Building_N100.OmrissLinje.value,
+        "piktogram": Building_N100.Piktogram.value,
+    }
+
+    data_validation = GeometryValidator(
+        input_features=input_features_validation,
+        output_table_path=Building_N100.data_cleanup___geometry_validation___n100_building.value,
+    )
+    data_validation.check_repair_sequence()
 
 
 if __name__ == "__main__":
