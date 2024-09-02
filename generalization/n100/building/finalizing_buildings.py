@@ -55,10 +55,10 @@ def removing_points_in_and_close_to_urban_areas():
         output_name=Building_N100.finalizing_buildings___points_too_close_to_urban_areas___n100_building.value,
     )
 
-    # Selecting hospital and churches - to merge back in with the points further than 50 Merers away from urban areas
+    # Selecting hospital and churches and tourist huts - to merge back in with the points further than 50 Merers away from urban areas
     custom_arcpy.select_attribute_and_make_permanent_feature(
         input_layer=Building_N100.finalizing_buildings___points_too_close_to_urban_areas___n100_building.value,
-        expression="byggtyp_nbr IN (970, 719, 671)",
+        expression="byggtyp_nbr IN (970, 719, 671, 956)",
         output_name=Building_N100.finalizing_buildings___selecting_hospital_and_churches_in_urban_areas___n100_building.value,
     )
 

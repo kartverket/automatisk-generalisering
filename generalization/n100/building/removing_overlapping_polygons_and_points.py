@@ -46,9 +46,27 @@ def copying_previous_file():
 
     # Copying and assigning new name to layer
     arcpy.management.Copy(
-        in_data=Building_N100.removing_points_and_erasing_polygons_in_water_features___points_that_do_not_intersect_water_features___n100_building.value,
+        in_data=Building_N100.removing_points_and_erasing_polygons_in_water_features___merged_points_and_tourist_cabins___n100_building.value,
         out_data=Building_N100.removing_overlapping_polygons_and_points___all_building_points___n100_building.value,
     )
+
+    try:
+        # Check if the "CLUSTER_ID" field exists
+        if arcpy.ListFields(
+            Building_N100.removing_overlapping_polygons_and_points___all_building_points___n100_building.value,
+            "CLUSTER_ID",
+        ):
+            # Delete the "CLUSTER_ID" field if it exists
+            arcpy.management.DeleteField(
+                Building_N100.removing_overlapping_polygons_and_points___all_building_points___n100_building.value,
+                "CLUSTER_ID",
+            )
+            print("Field 'CLUSTER_ID' deleted successfully.")
+        else:
+            print("Field 'CLUSTER_ID' does not exist.")
+    except arcpy.ExecuteError as e:
+        # Handle any other arcpy execution errors if needed
+        print(f"An error occurred: {e}")
 
 
 @timing_decorator
@@ -208,7 +226,7 @@ def keep_point_with_highest_hierarchy_for_each_cluster():
                     )  # Store the OBJECTID and hierarchy value
 
             # Sort the points based on hierarchy value
-            sorted_points = sorted(hierarchy_values, key=lambda x: x[1], reverse=True)
+            sorted_points = sorted(hierarchy_values, key=lambda x: x[1])
 
             # Keep the point with the highest hierarchy value
             if sorted_points:
@@ -294,7 +312,7 @@ def remove_points_that_are_overlapping_roads():
     # Selecting all points that are NOT hospital and churches or tourist huts
     custom_arcpy.select_attribute_and_make_permanent_feature(
         input_layer=Building_N100.removing_overlapping_polygons_and_points___merging_final_points___n100_building.value,
-        expression="byggtyp_nbr IN (970, 719, 671) OR byggtyp_nbr = 956",
+        expression="byggtyp_nbr IN (970, 719, 671, 956)",
         output_name=Building_N100.removing_overlapping_polygons_and_points___all_points_not_hospital_and_church__n100_building.value,
         selection_type=custom_arcpy.SelectionType.NEW_SELECTION,
         inverted=True,
@@ -302,24 +320,10 @@ def remove_points_that_are_overlapping_roads():
     # Selecting only hospital and churches or tourist huts, they are not going into polygon processor etc
     custom_arcpy.select_attribute_and_make_permanent_feature(
         input_layer=Building_N100.removing_overlapping_polygons_and_points___merging_final_points___n100_building.value,
-        expression="byggtyp_nbr IN (970, 719, 671) OR byggtyp_nbr = 956",
+        expression="byggtyp_nbr IN (970, 719, 671, 956)",
         output_name=Building_N100.removing_overlapping_polygons_and_points___hospital_and_church_points__n100_building.value,
         selection_type=custom_arcpy.SelectionType.NEW_SELECTION,
     )
-
-    # Polygon prosessor to turn points to squares so we can do an intersect with roads
-    # symbol_field_name = "symbol_val"
-    # index_field_name = "OBJECTID"
-    #
-    # print("Polygon prosessor...")
-    # polygon_process = PolygonProcessor(
-    #     Building_N100.removing_overlapping_polygons_and_points___all_points_not_hospital_and_church__n100_building.value,  # input
-    #     Building_N100.removing_overlapping_polygons_and_points___points_to_squares___n100_building.value,  # output
-    #     N100_Symbology.building_symbol_dimensions.value,
-    #     symbol_field_name,
-    #     index_field_name,
-    # )
-    # polygon_process.run()
 
     code_block_update_symbol_val = (
         "def update_symbol_val(symbol_val):\n"
