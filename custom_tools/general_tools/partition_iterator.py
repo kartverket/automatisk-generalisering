@@ -1047,6 +1047,37 @@ class PartitionIterator:
                     schema_type="NO_TEST",
                 )
 
+    @staticmethod
+    def delete_fields(feature_class_path, fields_to_delete):
+        """
+        Deletes specified fields from the given feature class if they exist.
+
+        :param feature_class_path: The path to the feature class.
+        :param fields_to_delete: A list of field names to delete.
+        """
+        for field_name in fields_to_delete:
+            try:
+                # Check if the field exists
+                if arcpy.ListFields(feature_class_path, field_name):
+                    # Delete the field if it exists
+                    arcpy.management.DeleteField(feature_class_path, field_name)
+                    print(f"Field '{field_name}' deleted successfully.")
+                else:
+                    print(f"Field '{field_name}' does not exist.")
+            except arcpy.ExecuteError as e:
+                print(f"An error occurred while deleting field '{field_name}': {e}")
+
+    def cleanup_final_outputs(self):
+        """
+        Cleanup function to delete unnecessary fields from final output feature classes.
+        """
+        fields_to_delete = [self.PARTITION_FIELD]
+
+        for alias, output_paths in self.nested_final_outputs.items():
+            for output_type, feature_class_path in output_paths.items():
+                print(f"Cleaning up fields in {feature_class_path}...")
+                self.delete_fields(feature_class_path, fields_to_delete)
+
     def partition_iteration(self):
         aliases = self.nested_alias_type_data.keys()
         self.find_maximum_object_id()
@@ -1121,6 +1152,7 @@ class PartitionIterator:
         print("\nStarting on Partition Iteration...")
         self.partition_iteration()
         self.export_dictionaries_to_json(file_name="post_runtime")
+        self.cleanup_final_outputs()
         self.save_error_log(self.error_log)
 
 
@@ -1288,7 +1320,7 @@ if __name__ == "__main__":
     )
 
     # Run the partition iterator
-    # partition_iterator.run()
+    partition_iterator.run()
 
     # Instantiate PartitionIterator with necessary parameters
     partition_iterator_2 = PartitionIterator(
@@ -1302,4 +1334,4 @@ if __name__ == "__main__":
     )
 
     # Run the partition iterator
-    partition_iterator_2.run()
+    # partition_iterator_2.run()
