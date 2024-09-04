@@ -896,6 +896,26 @@ class Building_N100(Enum):
         )
     )
 
+    removing_overlapping_polygons_and_points___all_building_points___n100_building_lyrx = file_manager.generate_file_name_lyrx(
+        script_source_name=removing_overlapping_polygons_and_points,
+        description="all_building_points",
+    )
+
+    removing_overlapping_polygons_and_points___all_building_points_to_squares___n100_building = file_manager.generate_file_name_gdb(
+        script_source_name=removing_overlapping_polygons_and_points,
+        description="all_building_points_to_squares",
+    )
+
+    removing_overlapping_polygons_and_points___squares_close_to_graphic_conflict_polygons___n100_building = file_manager.generate_file_name_gdb(
+        script_source_name=removing_overlapping_polygons_and_points,
+        description="squares_close_to_graphic_conflict_polygons",
+    )
+
+    removing_overlapping_polygons_and_points___squares_not_close_to_graphic_conflict_polygons___n100_building = file_manager.generate_file_name_gdb(
+        script_source_name=removing_overlapping_polygons_and_points,
+        description="squares_not_close_to_graphic_conflict_polygons",
+    )
+
     removing_overlapping_polygons_and_points___points_in_a_cluster___n100_building = (
         file_manager.generate_file_name_gdb(
             script_source_name=removing_overlapping_polygons_and_points,

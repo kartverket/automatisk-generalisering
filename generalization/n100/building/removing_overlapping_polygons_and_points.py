@@ -9,6 +9,8 @@ from custom_tools.general_tools.file_utilities import compare_feature_classes
 from custom_tools.general_tools.polygon_processor import PolygonProcessor
 from custom_tools.general_tools.line_to_buffer_symbology import LineToBufferSymbology
 from constants.n100_constants import N100_Symbology
+from input_data.input_symbology import SymbologyN100
+
 
 # Importing custom files
 from file_manager.n100.file_manager_buildings import Building_N100
@@ -66,7 +68,7 @@ def copying_previous_file():
             print("Field 'CLUSTER_ID' does not exist.")
     except arcpy.ExecuteError as e:
         # Handle any other arcpy execution errors if needed
-        print(f"An error occurred: {e}")
+        print(f"An error occurred deleting fields: {e}")
 
 
 @timing_decorator
@@ -106,12 +108,18 @@ def detecting_graphic_conflicts():
     Summary:
         Detects graphic conflicts within a given set of features based on a 20 meter conflict distance.
     """
+    custom_arcpy.apply_symbology(
+        input_layer=Building_N100.removing_overlapping_polygons_and_points___all_building_points___n100_building.value,
+        in_symbology_layer=SymbologyN100.building_point.value,
+        output_name=Building_N100.removing_overlapping_polygons_and_points___all_building_points___n100_building_lyrx.value,
+    )
+
     arcpy.env.referenceScale = "100000"
 
     # Detecting Graphic Conflicts
     arcpy.cartography.DetectGraphicConflict(
-        in_features=Building_N100.removing_points_and_erasing_polygons_in_water_features___final_points___n100_lyrx.value,
-        conflict_features=Building_N100.removing_points_and_erasing_polygons_in_water_features___final_points___n100_lyrx.value,
+        in_features=Building_N100.removing_overlapping_polygons_and_points___all_building_points___n100_building_lyrx.value,
+        conflict_features=Building_N100.removing_overlapping_polygons_and_points___all_building_points___n100_building_lyrx.value,
         out_feature_class=Building_N100.removing_overlapping_polygons_and_points___graphic_conflicts_polygon___n100_building.value,
         conflict_distance="20 Meters",
     )
@@ -123,23 +131,45 @@ def selecting_points_close_to_graphic_conflict_polygons():
     Summary:
         Selects points based on their proximity to graphic conflict polygons.
     """
+
+    polygon_processor = PolygonProcessor(
+        input_building_points=Building_N100.removing_overlapping_polygons_and_points___all_building_points___n100_building.value,
+        output_polygon_feature_class=Building_N100.removing_overlapping_polygons_and_points___all_building_points_to_squares___n100_building.value,
+        building_symbol_dimensions=N100_Symbology.building_symbol_dimensions.value,
+        symbol_field_name="symbol_val",
+        index_field_name="OBJECTID",
+    )
+    polygon_processor.run()
+
     # Find points that are close to the graphic conflict polygons
     custom_arcpy.select_location_and_make_permanent_feature(
-        input_layer=Building_N100.removing_overlapping_polygons_and_points___all_building_points___n100_building.value,
+        input_layer=Building_N100.removing_overlapping_polygons_and_points___all_building_points_to_squares___n100_building.value,
         overlap_type=custom_arcpy.OverlapType.WITHIN_A_DISTANCE,
         select_features=Building_N100.removing_overlapping_polygons_and_points___graphic_conflicts_polygon___n100_building.value,
-        output_name=Building_N100.removing_overlapping_polygons_and_points___points_close_to_graphic_conflict_polygons___n100_building.value,
-        search_distance="40 Meters",
+        output_name=Building_N100.removing_overlapping_polygons_and_points___squares_close_to_graphic_conflict_polygons___n100_building.value,
+        search_distance="20 Meters",
     )
 
     # Find points that are close to the graphic conflict polygons
     custom_arcpy.select_location_and_make_permanent_feature(
-        input_layer=Building_N100.removing_overlapping_polygons_and_points___all_building_points___n100_building.value,
+        input_layer=Building_N100.removing_overlapping_polygons_and_points___all_building_points_to_squares___n100_building.value,
         overlap_type=custom_arcpy.OverlapType.WITHIN_A_DISTANCE,
         select_features=Building_N100.removing_overlapping_polygons_and_points___graphic_conflicts_polygon___n100_building.value,
-        output_name=Building_N100.removing_overlapping_polygons_and_points___points_NOT_close_to_graphic_conflict_polygons___n100_building.value,
-        search_distance="40 Meters",
+        output_name=Building_N100.removing_overlapping_polygons_and_points___squares_not_close_to_graphic_conflict_polygons___n100_building.value,
+        search_distance="20 Meters",
         inverted=True,
+    )
+
+    arcpy.management.FeatureToPoint(
+        in_features=Building_N100.removing_overlapping_polygons_and_points___squares_close_to_graphic_conflict_polygons___n100_building.value,
+        out_feature_class=Building_N100.removing_overlapping_polygons_and_points___points_close_to_graphic_conflict_polygons___n100_building.value,
+        point_location="INSIDE",
+    )
+
+    arcpy.management.FeatureToPoint(
+        in_features=Building_N100.removing_overlapping_polygons_and_points___squares_not_close_to_graphic_conflict_polygons___n100_building.value,
+        out_feature_class=Building_N100.removing_overlapping_polygons_and_points___points_NOT_close_to_graphic_conflict_polygons___n100_building.value,
+        point_location="INSIDE",
     )
 
 
@@ -156,7 +186,7 @@ def finding_clusters_amongst_the_points():
         out_feature_class=Building_N100.removing_overlapping_polygons_and_points___point_clusters___n100_building.value,
         clustering_method="DBSCAN",
         minimum_points="2",
-        search_distance="80 Meters",
+        search_distance="140 Meters",
     )
 
 
@@ -389,7 +419,7 @@ def removing_building_polygons_overlapping_church_hospitals():
         overlap_type=custom_arcpy.OverlapType.WITHIN_A_DISTANCE,
         select_features=Building_N100.removing_overlapping_polygons_and_points___points_to_squares_church_hospitals___n100_building.value,
         output_name=Building_N100.removing_overlapping_polygons_and_points___building_polygons_not_intersecting_church_hospitals____n100_building.value,
-        inverted=True,  # Select polygons not intersecting with road buffers
+        inverted=True,
         search_distance="30 Meters",
     )
 
