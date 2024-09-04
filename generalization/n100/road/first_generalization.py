@@ -27,25 +27,28 @@ def main():
     merge_n50_and_nvdb()
     multipart_to_singlepart()
     merge_divided_roads()
-    thin_road_network()
+    thin_road_network_1()
     collapse_road_detail()
-    adding_second_invisibility_and_hierarchy_field()
+    thin_road_network_2()
+    thin_road_network_3()
 
 
+@timing_decorator
 def selecting_paths_and_nvdb_roads_in_studyarea():
     selector = StudyAreaSelector(
         input_output_file_dict={
-            Road_N100.data_preperation___paths_n50___n100_road.value: Road_N100.first_generalization___paths_in_study_area___n100_road.value,
+            Road_N100.data_preperation___paths_n50_with_calculated_fields___n100_road.value: Road_N100.first_generalization___paths_in_study_area___n100_road.value,
             Road_N100.data_preperation___selecting_everything_but_rampe_with_calculated_fields_nvdb___n100_road.value: Road_N100.first_generalization____nvdb_roads_in_study_area___n100_road.value,
         },
         selecting_file=input_n100.AdminFlate,
-        selecting_sql_expression="navn IN ('Asker')",
+        selecting_sql_expression="navn IN ('Oslo')",
         select_local=config.select_study_area,
     )
 
     selector.run()
 
 
+@timing_decorator
 def merge_n50_and_nvdb():
     # Merging paths and nvdb roads
     arcpy.management.Merge(
@@ -57,6 +60,7 @@ def merge_n50_and_nvdb():
     )
 
 
+@timing_decorator
 def multipart_to_singlepart():
     arcpy.management.MultipartToSinglepart(
         in_features=Road_N100.first_generalization____merged_roads_and_paths___n100_road.value,
@@ -64,6 +68,7 @@ def multipart_to_singlepart():
     )
 
 
+@timing_decorator
 def merge_divided_roads():
     # Execute Merge Divided Roads
     arcpy.cartography.MergeDividedRoads(
@@ -76,36 +81,60 @@ def merge_divided_roads():
     )
 
 
-def thin_road_network():
+@timing_decorator
+def thin_road_network_1():
     arcpy.cartography.ThinRoadNetwork(
         in_features=Road_N100.first_generalization____merge_divided_roads_features___n100_road.value,
-        minimum_length="750 Meters",
-        invisibility_field="invisibility",
+        minimum_length="500 Meters",
+        invisibility_field="invisibility_1",
         hierarchy_field="hierarchy",
     )
     custom_arcpy.select_attribute_and_make_permanent_feature(
         input_layer=Road_N100.first_generalization____merge_divided_roads_features___n100_road.value,
-        expression="invisibility = 0",
-        output_name=Road_N100.first_generalization____visible_features_after_thin_road_network___n100_road.value,
+        expression="invisibility_1 = 0",
+        output_name=Road_N100.first_generalization____visible_features_after_thin_road_network_1___n100_road.value,
         selection_type=custom_arcpy.SelectionType.NEW_SELECTION,
     )
 
 
+@timing_decorator
 def collapse_road_detail():
     arcpy.cartography.CollapseRoadDetail(
-        in_features=Road_N100.first_generalization____visible_features_after_thin_road_network___n100_road.value,
+        in_features=Road_N100.first_generalization____visible_features_after_thin_road_network_1___n100_road.value,
         collapse_distance="80 Meters",
         output_feature_class=Road_N100.first_generalization____collapse_road_detail___n100_road.value,
-    )  # Should we have "locking field" here?
+    )
 
 
-def adding_second_invisibility_and_hierarchy_field():
-    arcpy.management.AddFields(
-        in_table=Road_N100.first_generalization____collapse_road_detail___n100_road.value,
-        field_description=[
-            ["invisibility_2", "SHORT"],
-            ["hierarchy_2", "SHORT"],
-        ],
+@timing_decorator
+def thin_road_network_2():
+    arcpy.cartography.ThinRoadNetwork(
+        in_features=Road_N100.first_generalization____collapse_road_detail___n100_road.value,
+        minimum_length="1000 Meters",
+        invisibility_field="invisibility_2",
+        hierarchy_field="hierarchy",
+    )
+    custom_arcpy.select_attribute_and_make_permanent_feature(
+        input_layer=Road_N100.first_generalization____collapse_road_detail___n100_road.value,
+        expression="invisibility_2 = 0",
+        output_name=Road_N100.first_generalization____visible_features_after_thin_road_network_2___n100_road.value,
+        selection_type=custom_arcpy.SelectionType.NEW_SELECTION,
+    )
+
+
+@timing_decorator
+def thin_road_network_3():
+    arcpy.cartography.ThinRoadNetwork(
+        in_features=Road_N100.first_generalization____visible_features_after_thin_road_network_2___n100_road.value,
+        minimum_length="2000 Meters",
+        invisibility_field="invisibility_3",
+        hierarchy_field="hierarchy",
+    )
+    custom_arcpy.select_attribute_and_make_permanent_feature(
+        input_layer=Road_N100.first_generalization____visible_features_after_thin_road_network_2___n100_road.value,
+        expression="invisibility_3 = 0",
+        output_name=Road_N100.first_generalization____visible_features_after_thin_road_network_3___n100_road.value,
+        selection_type=custom_arcpy.SelectionType.NEW_SELECTION,
     )
 
 
