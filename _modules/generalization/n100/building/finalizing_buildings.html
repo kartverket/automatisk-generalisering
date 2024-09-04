@@ -139,10 +139,10 @@
         <span class="n">output_name</span><span class="o">=</span><span class="n">Building_N100</span><span class="o">.</span><span class="n">finalizing_buildings___points_too_close_to_urban_areas___n100_building</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
     <span class="p">)</span>
 
-    <span class="c1"># Selecting hospital and churches - to merge back in with the points further than 50 Merers away from urban areas</span>
+    <span class="c1"># Selecting hospital and churches and tourist huts - to merge back in with the points further than 50 Merers away from urban areas</span>
     <span class="n">custom_arcpy</span><span class="o">.</span><span class="n">select_attribute_and_make_permanent_feature</span><span class="p">(</span>
         <span class="n">input_layer</span><span class="o">=</span><span class="n">Building_N100</span><span class="o">.</span><span class="n">finalizing_buildings___points_too_close_to_urban_areas___n100_building</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
-        <span class="n">expression</span><span class="o">=</span><span class="s2">&quot;byggtyp_nbr IN (970, 719, 671)&quot;</span><span class="p">,</span>
+        <span class="n">expression</span><span class="o">=</span><span class="s2">&quot;byggtyp_nbr IN (970, 719, 671, 956)&quot;</span><span class="p">,</span>
         <span class="n">output_name</span><span class="o">=</span><span class="n">Building_N100</span><span class="o">.</span><span class="n">finalizing_buildings___selecting_hospital_and_churches_in_urban_areas___n100_building</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
     <span class="p">)</span>
 
@@ -191,7 +191,7 @@
 <span class="sd">        Converts building polygons to lines</span>
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="n">arcpy</span><span class="o">.</span><span class="n">management</span><span class="o">.</span><span class="n">PolygonToLine</span><span class="p">(</span>
-        <span class="n">in_features</span><span class="o">=</span><span class="n">Building_N100</span><span class="o">.</span><span class="n">removing_overlapping_polygons_and_points___polygons_NOT_intersecting_road_buffers___n100_building</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
+        <span class="n">in_features</span><span class="o">=</span><span class="n">Building_N100</span><span class="o">.</span><span class="n">removing_overlapping_polygons_and_points___building_polygons_not_intersecting_church_hospitals____n100_building</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
         <span class="n">out_feature_class</span><span class="o">=</span><span class="n">Building_N100</span><span class="o">.</span><span class="n">finalizing_buildings___polygon_to_line___n100_building</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
         <span class="n">neighbor_option</span><span class="o">=</span><span class="s2">&quot;IDENTIFY_NEIGHBORS&quot;</span><span class="p">,</span>
     <span class="p">)</span></div>
@@ -232,7 +232,7 @@
     <span class="p">)</span>
 
     <span class="n">arcpy</span><span class="o">.</span><span class="n">management</span><span class="o">.</span><span class="n">CopyFeatures</span><span class="p">(</span>
-        <span class="n">Building_N100</span><span class="o">.</span><span class="n">removing_overlapping_polygons_and_points___polygons_NOT_intersecting_road_buffers___n100_building</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
+        <span class="n">Building_N100</span><span class="o">.</span><span class="n">removing_overlapping_polygons_and_points___building_polygons_not_intersecting_church_hospitals____n100_building</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
         <span class="n">Building_N100</span><span class="o">.</span><span class="n">Grunnriss</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
     <span class="p">)</span>
 

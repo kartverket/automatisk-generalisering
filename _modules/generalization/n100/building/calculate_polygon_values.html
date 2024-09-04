@@ -148,6 +148,39 @@
         <span class="n">code_block</span><span class="o">=</span><span class="n">N100_SQLResources</span><span class="o">.</span><span class="n">nbr_symbol_val_code_block</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
     <span class="p">)</span>
 
+    <span class="n">code_block_symbol_val_to_nbr</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="s2">&quot;def symbol_val_to_nbr(symbol_val, byggtyp_nbr):</span><span class="se">\n</span><span class="s2">&quot;</span>
+        <span class="s2">&quot;    if symbol_val == -99:</span><span class="se">\n</span><span class="s2">&quot;</span>
+        <span class="s2">&quot;        return 729</span><span class="se">\n</span><span class="s2">&quot;</span>
+        <span class="s2">&quot;    return byggtyp_nbr&quot;</span>
+    <span class="p">)</span>
+
+    <span class="c1"># Code block to update the symbol_val to reflect the new byggtyp_nbr</span>
+    <span class="n">code_block_update_symbol_val</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="s2">&quot;def update_symbol_val(symbol_val):</span><span class="se">\n</span><span class="s2">&quot;</span>
+        <span class="s2">&quot;    if symbol_val == -99:</span><span class="se">\n</span><span class="s2">&quot;</span>
+        <span class="s2">&quot;        return 8</span><span class="se">\n</span><span class="s2">&quot;</span>
+        <span class="s2">&quot;    return symbol_val&quot;</span>
+    <span class="p">)</span>
+
+    <span class="c1"># Applying the symbol_val_to_nbr logic</span>
+    <span class="n">arcpy</span><span class="o">.</span><span class="n">CalculateField_management</span><span class="p">(</span>
+        <span class="n">in_table</span><span class="o">=</span><span class="n">Building_N100</span><span class="o">.</span><span class="n">simplify_polygons___spatial_join_polygons___n100_building</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
+        <span class="n">field</span><span class="o">=</span><span class="s2">&quot;byggtyp_nbr&quot;</span><span class="p">,</span>
+        <span class="n">expression</span><span class="o">=</span><span class="s2">&quot;symbol_val_to_nbr(!symbol_val!, !byggtyp_nbr!)&quot;</span><span class="p">,</span>
+        <span class="n">expression_type</span><span class="o">=</span><span class="s2">&quot;PYTHON3&quot;</span><span class="p">,</span>
+        <span class="n">code_block</span><span class="o">=</span><span class="n">code_block_symbol_val_to_nbr</span><span class="p">,</span>
+    <span class="p">)</span>
+
+    <span class="c1"># Applying the update_symbol_val logic</span>
+    <span class="n">arcpy</span><span class="o">.</span><span class="n">CalculateField_management</span><span class="p">(</span>
+        <span class="n">in_table</span><span class="o">=</span><span class="n">Building_N100</span><span class="o">.</span><span class="n">simplify_polygons___spatial_join_polygons___n100_building</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
+        <span class="n">field</span><span class="o">=</span><span class="s2">&quot;symbol_val&quot;</span><span class="p">,</span>
+        <span class="n">expression</span><span class="o">=</span><span class="s2">&quot;update_symbol_val(!symbol_val!)&quot;</span><span class="p">,</span>
+        <span class="n">expression_type</span><span class="o">=</span><span class="s2">&quot;PYTHON3&quot;</span><span class="p">,</span>
+        <span class="n">code_block</span><span class="o">=</span><span class="n">code_block_update_symbol_val</span><span class="p">,</span>
+    <span class="p">)</span>
+
     <span class="c1"># Assigning new name to the final building polygons</span>
     <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Making a copy of the feature class...&quot;</span><span class="p">)</span>
     <span class="n">arcpy</span><span class="o">.</span><span class="n">management</span><span class="o">.</span><span class="n">CopyFeatures</span><span class="p">(</span>
