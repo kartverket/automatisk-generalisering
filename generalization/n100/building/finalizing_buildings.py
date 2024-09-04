@@ -55,10 +55,10 @@ def removing_points_in_and_close_to_urban_areas():
         output_name=Building_N100.finalizing_buildings___points_too_close_to_urban_areas___n100_building.value,
     )
 
-    # Selecting hospital and churches - to merge back in with the points further than 50 Merers away from urban areas
+    # Selecting hospital and churches and tourist huts - to merge back in with the points further than 50 Merers away from urban areas
     custom_arcpy.select_attribute_and_make_permanent_feature(
         input_layer=Building_N100.finalizing_buildings___points_too_close_to_urban_areas___n100_building.value,
-        expression="byggtyp_nbr IN (970, 719, 671)",
+        expression="byggtyp_nbr IN (970, 719, 671, 956)",
         output_name=Building_N100.finalizing_buildings___selecting_hospital_and_churches_in_urban_areas___n100_building.value,
     )
 
@@ -101,7 +101,7 @@ def building_polygons_to_line():
         Converts building polygons to lines
     """
     arcpy.management.PolygonToLine(
-        in_features=Building_N100.removing_overlapping_polygons_and_points___polygons_NOT_intersecting_road_buffers___n100_building.value,
+        in_features=Building_N100.removing_overlapping_polygons_and_points___building_polygons_not_intersecting_church_hospitals____n100_building.value,
         out_feature_class=Building_N100.finalizing_buildings___polygon_to_line___n100_building.value,
         neighbor_option="IDENTIFY_NEIGHBORS",
     )
@@ -136,7 +136,7 @@ def assigning_final_file_names():
     )
 
     arcpy.management.CopyFeatures(
-        Building_N100.removing_overlapping_polygons_and_points___polygons_NOT_intersecting_road_buffers___n100_building.value,
+        Building_N100.removing_overlapping_polygons_and_points___building_polygons_not_intersecting_church_hospitals____n100_building.value,
         Building_N100.Grunnriss.value,
     )
 

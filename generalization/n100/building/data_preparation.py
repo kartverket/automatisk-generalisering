@@ -22,6 +22,7 @@ from custom_tools.generalization_tools.building.begrensningskurve_land_waterbodi
     BegrensningskurveLandWaterbodies,
 )
 from custom_tools.general_tools.study_area_selector import StudyAreaSelector
+from custom_tools.general_tools.geometry_tools import GeometryValidator
 
 
 @timing_decorator
@@ -70,6 +71,116 @@ def data_selection():
     )
 
     selector.run()
+
+    input_features_validation = {
+        "begrensningskurve": Building_N100.data_selection___begrensningskurve_n100_input_data___n100_building.value,
+        "land_cover": Building_N100.data_selection___land_cover_n100_input_data___n100_building.value,
+        "roads": Building_N100.data_selection___road_n100_input_data___n100_building.value,
+        "railroad_stations": Building_N100.data_selection___railroad_stations_n100_input_data___n100_building.value,
+        "railroad_tracks": Building_N100.data_selection___railroad_tracks_n100_input_data___n100_building.value,
+        "building_points": Building_N100.data_selection___building_point_n50_input_data___n100_building.value,
+        "building_polygons": Building_N100.data_selection___building_polygon_n50_input_data___n100_building.value,
+        "tourist_huts": Building_N100.data_selection___tourist_hut_n50_input_data___n100_building.value,
+        "building_point_matrikkel": Building_N100.data_selection___matrikkel_input_data___n100_building.value,
+        "road_displacement_feature": Building_N100.data_selection___displacement_feature___n100_building.value,
+    }
+
+    data_validation = GeometryValidator(
+        input_features=input_features_validation,
+        output_table_path=Building_N100.data_preparation___geometry_validation___n100_building.value,
+    )
+    # data_validation.check_repair_sequence()
+
+    begrensningskurve = "begrensningskurve"
+    land_cover = "land_cover"
+    roads = "roads"
+    railroad_stations = "railroad_stations"
+    railway_tracks = "railway_tracks"
+    building_points = "building_points"
+    building_polygons = "building_polygons"
+    tourist_huts = "tourist_huts"
+    building_point_matrikkel = "building_point_matrikkel"
+    road_displacement_feature = "road_displacement_feature"
+
+    inputs = {
+        begrensningskurve: [
+            "input",
+            Building_N100.data_selection___begrensningskurve_n100_input_data___n100_building.value,
+        ],
+        land_cover: [
+            "input",
+            Building_N100.data_selection___land_cover_n100_input_data___n100_building.value,
+        ],
+        roads: [
+            "input",
+            Building_N100.data_selection___road_n100_input_data___n100_building.value,
+        ],
+        railroad_stations: [
+            "input",
+            Building_N100.data_selection___railroad_stations_n100_input_data___n100_building.value,
+        ],
+        railway_tracks: [
+            "input",
+            Building_N100.data_selection___railroad_tracks_n100_input_data___n100_building.value,
+        ],
+        building_points: [
+            "input",
+            Building_N100.data_selection___building_point_n50_input_data___n100_building.value,
+        ],
+        building_polygons: [
+            "input",
+            Building_N100.data_selection___building_polygon_n50_input_data___n100_building.value,
+        ],
+        tourist_huts: [
+            "input",
+            Building_N100.data_selection___tourist_hut_n50_input_data___n100_building.value,
+        ],
+        building_point_matrikkel: [
+            "input",
+            Building_N100.data_selection___matrikkel_input_data___n100_building.value,
+        ],
+        road_displacement_feature: [
+            "input",
+            Building_N100.data_selection___displacement_feature___n100_building.value,
+        ],
+    }
+
+    outputs = inputs
+
+    input_features_validation = {
+        "begrensningskurve": ("begrensningskurve", "input"),
+        "land_cover": ("land_cover", "input"),
+        "roads": ("roads", "input"),
+        "railroad_stations": ("railroad_stations", "input"),
+        "railroad_tracks": ("railroad_tracks", "input"),
+        "building_points": ("building_points", "input"),
+        "building_polygons": ("building_polygons", "input"),
+        "tourist_huts": ("tourist_huts", "input"),
+        "building_point_matrikkel": ("building_point_matrikkel", "input"),
+        "road_displacement_feature": ("road_displacement_feature", "input"),
+    }
+
+    process_data_validation = {
+        "class": GeometryValidator,
+        "method": "check_repair_sequence",
+        "params": {
+            "input_features": input_features_validation,
+            "output_table_path": Building_N100.data_preparation___geometry_validation___n100_building.value,
+        },
+    }
+
+    partiotion_data_validation = PartitionIterator(
+        alias_path_data=inputs,
+        alias_path_outputs=outputs,
+        custom_functions=[process_data_validation],
+        root_file_partition_iterator=Building_N100.data_preparation___begrensningskurve_base___n100_building.value,
+        scale=env_setup.global_config.scale_n100,
+        dictionary_documentation_path=Building_N100.data_preparation___begrensingskurve_docu___building_n100.value,
+        feature_count="5000",
+        delete_final_outputs=False,
+    )
+
+    # partiotion_data_validation.run()
 
 
 @timing_decorator

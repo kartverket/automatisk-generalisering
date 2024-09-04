@@ -29,6 +29,7 @@ hospital_church_clusters = "hospital_church_clusters"
 point_displacement_with_buffer = "point_displacement_with_buffer"
 point_resolve_building_conflicts = "point_resolve_building_conflicts"
 finalizing_buildings = "finalizing_buildings"
+data_cleanup = "data_cleanup"
 
 
 # Additional names
@@ -164,6 +165,13 @@ class Building_N100(Enum):
         file_manager.generate_file_name_gdb(
             script_source_name=data_selection,
             description="displacement_feature",
+        )
+    )
+
+    data_preparation___geometry_validation___n100_building = (
+        file_manager.generate_file_name_gdb(
+            script_source_name=data_preparation,
+            description="geometry_validation",
         )
     )
 
@@ -796,7 +804,22 @@ class Building_N100(Enum):
         description="water_features",
     )
 
-    removing_points_and_erasing_polygons_in_water_features___final_points___n100_building = file_manager.generate_file_name_gdb(
+    removing_points_and_erasing_polygons_in_water_features___tourist_cabins___n100_building = file_manager.generate_file_name_gdb(
+        script_source_name=removing_points_and_erasing_polygons_in_water_features,
+        description="tourist_cabins",
+    )
+
+    removing_points_and_erasing_polygons_in_water_features___not_tourist_cabins___n100_building = file_manager.generate_file_name_gdb(
+        script_source_name=removing_points_and_erasing_polygons_in_water_features,
+        description="not_tourist_cabins",
+    )
+
+    removing_points_and_erasing_polygons_in_water_features___merged_points_and_tourist_cabins___n100_building = file_manager.generate_file_name_gdb(
+        script_source_name=removing_points_and_erasing_polygons_in_water_features,
+        description="merged_points_and_tourist_cabins",
+    )
+
+    removing_points_and_erasing_polygons_in_water_features___points_that_do_not_intersect_water_features___n100_building = file_manager.generate_file_name_gdb(
         script_source_name=removing_points_and_erasing_polygons_in_water_features,
         description="points_that_do_not_intersect_water_features",
     )
@@ -931,6 +954,26 @@ class Building_N100(Enum):
         description="hospital_and_church_points",
     )
 
+    removing_overlapping_polygons_and_points___points_to_squares_church_hospitals___n100_building = file_manager.generate_file_name_gdb(
+        script_source_name=removing_overlapping_polygons_and_points,
+        description="points_to_squares_church_hospitals",
+    )
+
+    removing_overlapping_polygons_and_points___building_polygons_not_intersecting_church_hospitals____n100_building = file_manager.generate_file_name_gdb(
+        script_source_name=removing_overlapping_polygons_and_points,
+        description="building_polygons_not_intersecting_church_hospitals_",
+    )
+
+    removing_overlapping_polygons_and_points___road_symbology_no_buffer_addition___n100_building = file_manager.generate_file_name_gdb(
+        script_source_name=removing_overlapping_polygons_and_points,
+        description="road_symbology_no_buffer_addition",
+    )
+
+    removing_overlapping_polygons_and_points___root_file_line_symbology___n100_building = file_manager.generate_file_name_gdb(
+        script_source_name=removing_overlapping_polygons_and_points,
+        description="root_file_line_symbology",
+    )
+
     removing_overlapping_polygons_and_points___polygons_intersecting_road_buffers___n100_building = file_manager.generate_file_name_gdb(
         script_source_name=removing_overlapping_polygons_and_points,
         description="polygons_intersecting_road_buffers",
@@ -1048,9 +1091,24 @@ class Building_N100(Enum):
     #                  POINT RESOLVE BUILDING CONFLICTS
     # ========================================
 
+    point_resolve_building_conflicts___building_points_squares___n100_building = (
+        file_manager.generate_file_name_gdb(
+            script_source_name=point_resolve_building_conflicts,
+            description="building_points_squares",
+        )
+    )
+
+    point_resolve_building_conflicts___geometry_validation___n100_building = (
+        file_manager.generate_file_name_gdb(
+            script_source_name=point_resolve_building_conflicts,
+            description="geometry_validation",
+        )
+    )
+
     point_resolve_building_conflicts___lyrx_root___n100_building = (
         file_manager.generate_file_lyrx_directory(
-            script_source_name=point_resolve_building_conflicts, description="lyrx_root"
+            script_source_name=point_resolve_building_conflicts,
+            description="lyrx_root",
         )
     )
 
@@ -1326,6 +1384,13 @@ class Building_N100(Enum):
         file_manager.generate_file_name_gdb(
             script_source_name=finalizing_buildings,
             description="points_too_close_to_urban_areas",
+        )
+    )
+
+    data_cleanup___geometry_validation___n100_building = (
+        file_manager.generate_file_name_gdb(
+            script_source_name=data_cleanup,
+            description="geometry_validation",
         )
     )
 

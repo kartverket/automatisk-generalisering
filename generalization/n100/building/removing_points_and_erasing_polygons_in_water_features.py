@@ -15,13 +15,12 @@ from custom_tools.decorators.timing_decorator import timing_decorator
 def main():
     environment_setup.main()
     selecting_water_polygon_features()
-    removing_points_in_water_features()
     selecting_water_features_close_to_building_polygons()
+    removing_points_in_water_features()
     buffering_water_polygon_features()
     selecting_building_polygons()
     erasing_parts_of_building_polygons_in_water_features()
     merge_polygons()
-    merge_points()
 
 
 @timing_decorator
@@ -45,17 +44,40 @@ def removing_points_in_water_features():
     Summary:
         Selects points that do not intersect with any water features and applies symbology to the filtered points.
     """
-    # Select points that DO NOT intersect any waterfeatures
-    custom_arcpy.select_location_and_make_permanent_feature(
+    sql_tourist_cabins = "byggtyp_nbr = 956"
+
+    custom_arcpy.select_attribute_and_make_permanent_feature(
         input_layer=Building_N100.point_resolve_building_conflicts___POINT_OUTPUT___n100_building.value,
-        overlap_type=custom_arcpy.OverlapType.INTERSECT,
-        select_features=Building_N100.removing_points_and_erasing_polygons_in_water_features___water_features___n100_building.value,
-        output_name=Building_N100.removing_points_and_erasing_polygons_in_water_features___final_points___n100_building.value,
+        expression=sql_tourist_cabins,
+        output_name=Building_N100.removing_points_and_erasing_polygons_in_water_features___tourist_cabins___n100_building.value,
+    )
+
+    custom_arcpy.select_attribute_and_make_permanent_feature(
+        input_layer=Building_N100.point_resolve_building_conflicts___POINT_OUTPUT___n100_building.value,
+        expression=sql_tourist_cabins,
+        output_name=Building_N100.removing_points_and_erasing_polygons_in_water_features___not_tourist_cabins___n100_building.value,
         inverted=True,
     )
 
+    # Select points that DO NOT intersect any waterfeatures
+    custom_arcpy.select_location_and_make_permanent_feature(
+        input_layer=Building_N100.removing_points_and_erasing_polygons_in_water_features___not_tourist_cabins___n100_building.value,
+        overlap_type=custom_arcpy.OverlapType.INTERSECT,
+        select_features=Building_N100.removing_points_and_erasing_polygons_in_water_features___water_features___n100_building.value,
+        output_name=Building_N100.removing_points_and_erasing_polygons_in_water_features___points_that_do_not_intersect_water_features___n100_building.value,
+        inverted=True,
+    )
+
+    arcpy.management.Merge(
+        inputs=[
+            Building_N100.removing_points_and_erasing_polygons_in_water_features___tourist_cabins___n100_building.value,
+            Building_N100.removing_points_and_erasing_polygons_in_water_features___points_that_do_not_intersect_water_features___n100_building.value,
+        ],
+        output=Building_N100.removing_points_and_erasing_polygons_in_water_features___merged_points_and_tourist_cabins___n100_building.value,
+    )
+
     custom_arcpy.apply_symbology(
-        input_layer=Building_N100.removing_points_and_erasing_polygons_in_water_features___final_points___n100_building.value,
+        input_layer=Building_N100.removing_points_and_erasing_polygons_in_water_features___merged_points_and_tourist_cabins___n100_building.value,
         in_symbology_layer=SymbologyN100.building_point.value,
         output_name=Building_N100.removing_points_and_erasing_polygons_in_water_features___final_points___n100_lyrx.value,  # Used in the next file, "removing_overlapping_polygons_and_points.py"
     )
@@ -71,7 +93,7 @@ def selecting_water_features_close_to_building_polygons():
         input_layer=Building_N100.removing_points_and_erasing_polygons_in_water_features___water_features___n100_building.value,
         overlap_type=custom_arcpy.OverlapType.WITHIN_A_DISTANCE,
         search_distance="100 Meters",
-        select_features=Building_N100.point_resolve_building_conflicts___building_polygons_final___n100_building.value,
+        select_features=Building_N100.point_resolve_building_conflicts___POLYGON_OUTPUT___n100_building.value,
         output_name=Building_N100.removing_points_and_erasing_polygons_in_water_features___water_features_close_to_building_polygons___n100_building.value,
     )
 
@@ -141,21 +163,6 @@ def merge_polygons():
             Building_N100.removing_points_and_erasing_polygons_in_water_features___erased_polygons___n100_building.value,
         ],
         output=Building_N100.removing_points_and_erasing_polygons_in_water_features___final_building_polygons_merged___n100_building.value,
-    )
-
-
-@timing_decorator
-def merge_points():
-    """
-    Summary:
-        Merges multiple point feature layers into a single final output layer.
-    """
-    arcpy.management.Merge(
-        inputs=[
-            Building_N100.removing_points_and_erasing_polygons_in_water_features___final_points___n100_building.value,
-            f"{Building_N100.removing_points_and_erasing_polygons_in_water_features___simplified_polygons___n100_building.value}_Pnt",
-        ],
-        output=Building_N100.removing_points_and_erasing_polygons_in_water_features___final_points_merged___n100_building.value,
     )
 
 
