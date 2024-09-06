@@ -9,6 +9,8 @@ from custom_tools.general_tools.file_utilities import compare_feature_classes
 from custom_tools.general_tools.polygon_processor import PolygonProcessor
 from custom_tools.general_tools.line_to_buffer_symbology import LineToBufferSymbology
 from constants.n100_constants import N100_Symbology
+from input_data.input_symbology import SymbologyN100
+
 
 # Importing custom files
 from file_manager.n100.file_manager_buildings import Building_N100
@@ -25,16 +27,16 @@ from custom_tools.decorators.timing_decorator import timing_decorator
 def main():
     environment_setup.main()
     copying_previous_file()
+    removing_building_polygons_overlapping_church_hospitals()
+    polygons_overlapping_roads_to_points()
     adding_new_hierarchy_value_to_points()
+    remove_points_that_are_overlapping_roads()
     detecting_graphic_conflicts()
     selecting_points_close_to_graphic_conflict_polygons()
     finding_clusters_amongst_the_points()
     selecting_points_in_a_cluster_and_not_in_a_cluster()
     keep_point_with_highest_hierarchy_for_each_cluster()
-    polygons_overlapping_roads_to_points()
     merging_final_points_together()
-    remove_points_that_are_overlapping_roads()
-    removing_building_polygons_overlapping_church_hospitals()
 
 
 @timing_decorator
@@ -65,8 +67,85 @@ def copying_previous_file():
         else:
             print("Field 'CLUSTER_ID' does not exist.")
     except arcpy.ExecuteError as e:
-        # Handle any other arcpy execution errors if needed
-        print(f"An error occurred: {e}")
+        print(f"An error occurred deleting fields: {e}")
+
+
+def removing_building_polygons_overlapping_church_hospitals():
+    custom_arcpy.select_attribute_and_make_permanent_feature(
+        input_layer=Building_N100.removing_overlapping_polygons_and_points___all_building_points___n100_building.value,
+        expression="byggtyp_nbr IN (970, 719, 671, 956)",
+        output_name=Building_N100.removing_overlapping_polygons_and_points___hospital_church_tourist_points___n100_building.value,
+        selection_type=custom_arcpy.SelectionType.NEW_SELECTION,
+    )
+
+    polygon_processor = PolygonProcessor(
+        input_building_points=Building_N100.removing_overlapping_polygons_and_points___hospital_church_tourist_points___n100_building.value,
+        output_polygon_feature_class=Building_N100.removing_overlapping_polygons_and_points___points_to_squares_church_hospitals___n100_building.value,
+        building_symbol_dimensions=N100_Symbology.building_symbol_dimensions.value,
+        symbol_field_name="symbol_val",
+        index_field_name="OBJECTID",
+    )
+    polygon_processor.run()
+
+    custom_arcpy.select_location_and_make_permanent_feature(
+        input_layer=Building_N100.removing_points_and_erasing_polygons_in_water_features___final_building_polygons_merged___n100_building.value,
+        overlap_type=custom_arcpy.OverlapType.WITHIN_A_DISTANCE,
+        select_features=Building_N100.removing_overlapping_polygons_and_points___points_to_squares_church_hospitals___n100_building.value,
+        output_name=Building_N100.removing_overlapping_polygons_and_points___building_polygons_not_intersecting_church_hospitals___n100_building.value,
+        inverted=True,
+        search_distance="30 Meters",
+    )
+
+
+def polygons_overlapping_roads_to_points():
+    """
+    Summary:
+        Processes polygons that overlap with road buffers and transforms them to points.
+        Also identifies and keeps polygons that do not intersect with road buffers.
+    """
+
+    road_lines_to_buffer_symbology = LineToBufferSymbology(
+        input_road_lines=Building_N100.data_preparation___unsplit_roads___n100_building.value,
+        sql_selection_query=N100_SQLResources.road_symbology_size_sql_selection.value,
+        output_road_buffer=Building_N100.removing_overlapping_polygons_and_points___road_symbology_no_buffer_addition___n100_building.value,
+        write_work_files_to_memory=False,
+        keep_work_files=False,
+        root_file=Building_N100.removing_overlapping_polygons_and_points___root_file_line_symbology___n100_building.value,
+        fixed_buffer_addition=0,
+    )
+    road_lines_to_buffer_symbology.run()
+
+    # Select polygons that intersect with road buffers
+    custom_arcpy.select_location_and_make_permanent_feature(
+        input_layer=Building_N100.removing_overlapping_polygons_and_points___building_polygons_not_intersecting_church_hospitals___n100_building.value,
+        overlap_type=custom_arcpy.OverlapType.INTERSECT,
+        select_features=Building_N100.removing_overlapping_polygons_and_points___road_symbology_no_buffer_addition___n100_building.value,
+        output_name=Building_N100.removing_overlapping_polygons_and_points___polygons_intersecting_road_buffers___n100_building.value,
+    )
+
+    # Convert the selected polygons that intersect with road buffers to points
+    arcpy.management.FeatureToPoint(
+        in_features=Building_N100.removing_overlapping_polygons_and_points___polygons_intersecting_road_buffers___n100_building.value,
+        out_feature_class=Building_N100.removing_overlapping_polygons_and_points___polygons_to_points___n100_building.value,
+        point_location="INSIDE",  # Points will be placed inside the polygons
+    )
+
+    # Select polygons that do NOT intersect with road buffers
+    custom_arcpy.select_location_and_make_permanent_feature(
+        input_layer=Building_N100.removing_overlapping_polygons_and_points___building_polygons_not_intersecting_church_hospitals___n100_building.value,
+        overlap_type=custom_arcpy.OverlapType.INTERSECT,
+        select_features=Building_N100.removing_overlapping_polygons_and_points___road_symbology_no_buffer_addition___n100_building.value,
+        output_name=Building_N100.removing_overlapping_polygons_and_points___polygons_NOT_intersecting_road_buffers___n100_building.value,
+        inverted=True,  # Select polygons not intersecting with road buffers
+    )
+
+    arcpy.management.Merge(
+        inputs=[
+            Building_N100.removing_overlapping_polygons_and_points___all_building_points___n100_building.value,
+            Building_N100.removing_overlapping_polygons_and_points___polygons_to_points___n100_building.value,
+        ],
+        output=Building_N100.removing_overlapping_polygons_and_points___merged_points_collapsed_polygon___n100_building.value,
+    )
 
 
 @timing_decorator
@@ -77,7 +156,7 @@ def adding_new_hierarchy_value_to_points():
     """
     # Determining and assigning symbol val
     arcpy.management.CalculateField(
-        in_table=Building_N100.removing_overlapping_polygons_and_points___all_building_points___n100_building.value,
+        in_table=Building_N100.removing_overlapping_polygons_and_points___merged_points_collapsed_polygon___n100_building.value,
         field="hierarchy",
         expression="determineHierarchy(!byggtyp_nbr!)",
         expression_type="PYTHON3",
@@ -92,11 +171,82 @@ def adding_new_hierarchy_value_to_points():
     )
 
     arcpy.CalculateField_management(
-        in_table=Building_N100.removing_overlapping_polygons_and_points___all_building_points___n100_building.value,
+        in_table=Building_N100.removing_overlapping_polygons_and_points___merged_points_collapsed_polygon___n100_building.value,
         field="symbol_val",
         expression="update_symbol_val(!symbol_val!)",
         expression_type="PYTHON3",
         code_block=code_block_update_symbol_val,
+    )
+
+
+def remove_points_that_are_overlapping_roads():
+    """
+    Summary:
+        Processes and filters points to remove those overlapping with road buffers,
+        while preserving hospital and church points.
+    """
+    # Selecting all points that are NOT hospital and churches or tourist huts
+    custom_arcpy.select_attribute_and_make_permanent_feature(
+        input_layer=Building_N100.removing_overlapping_polygons_and_points___merged_points_collapsed_polygon___n100_building.value,
+        expression="byggtyp_nbr IN (970, 719, 671, 956)",
+        output_name=Building_N100.removing_overlapping_polygons_and_points___all_points_not_hospital_and_church__n100_building.value,
+        selection_type=custom_arcpy.SelectionType.NEW_SELECTION,
+        inverted=True,
+    )
+    # Selecting only hospital and churches or tourist huts, they are not going into polygon processor etc
+    custom_arcpy.select_attribute_and_make_permanent_feature(
+        input_layer=Building_N100.removing_overlapping_polygons_and_points___merged_points_collapsed_polygon___n100_building.value,
+        expression="byggtyp_nbr IN (970, 719, 671, 956)",
+        output_name=Building_N100.removing_overlapping_polygons_and_points___hospital_and_church_points__n100_building.value,
+        selection_type=custom_arcpy.SelectionType.NEW_SELECTION,
+    )
+
+    code_block_update_symbol_val = (
+        "def update_symbol_val(symbol_val):\n"
+        "    if symbol_val == -99:\n"
+        "        return 8\n"
+        "    return symbol_val"
+    )
+
+    arcpy.CalculateField_management(
+        in_table=Building_N100.removing_overlapping_polygons_and_points___all_points_not_hospital_and_church__n100_building.value,
+        field="symbol_val",
+        expression="update_symbol_val(!symbol_val!)",
+        expression_type="PYTHON3",
+        code_block=code_block_update_symbol_val,
+    )
+
+    polygon_processor = PolygonProcessor(
+        input_building_points=Building_N100.removing_overlapping_polygons_and_points___all_points_not_hospital_and_church__n100_building.value,
+        output_polygon_feature_class=Building_N100.removing_overlapping_polygons_and_points___points_to_squares___n100_building.value,
+        building_symbol_dimensions=N100_Symbology.building_symbol_dimensions.value,
+        symbol_field_name="symbol_val",
+        index_field_name="OBJECTID",
+    )
+    polygon_processor.run()
+
+    # Selecting only building squares that DOES NOT intersect with road buffers
+    custom_arcpy.select_location_and_make_permanent_feature(
+        input_layer=Building_N100.removing_overlapping_polygons_and_points___points_to_squares___n100_building.value,
+        overlap_type=custom_arcpy.OverlapType.INTERSECT,
+        select_features=Building_N100.removing_overlapping_polygons_and_points___road_symbology_no_buffer_addition___n100_building.value,
+        output_name=Building_N100.point_displacement_with_buffer___squares_not_overlapping_roads___n100_building.value,
+        inverted=True,
+    )
+
+    # Polygon to point to transform squares back to points
+    arcpy.management.FeatureToPoint(
+        in_features=Building_N100.point_displacement_with_buffer___squares_not_overlapping_roads___n100_building.value,
+        out_feature_class=Building_N100.removing_overlapping_polygons_and_points___squares_back_to_points___n100_building.value,
+    )
+
+    # Merge back together with hospital and church points that were selected out earlier
+    arcpy.management.Merge(
+        inputs=[
+            Building_N100.removing_overlapping_polygons_and_points___hospital_and_church_points__n100_building.value,
+            Building_N100.removing_overlapping_polygons_and_points___squares_back_to_points___n100_building.value,
+        ],
+        output=Building_N100.removing_overlapping_polygons_and_points___points_no_road_conflict___n100_building.value,
     )
 
 
@@ -106,12 +256,18 @@ def detecting_graphic_conflicts():
     Summary:
         Detects graphic conflicts within a given set of features based on a 20 meter conflict distance.
     """
+    custom_arcpy.apply_symbology(
+        input_layer=Building_N100.removing_overlapping_polygons_and_points___points_no_road_conflict___n100_building.value,
+        in_symbology_layer=SymbologyN100.building_point.value,
+        output_name=Building_N100.removing_overlapping_polygons_and_points___points_no_road_conflict___n100_building_lyrx.value,
+    )
+
     arcpy.env.referenceScale = "100000"
 
     # Detecting Graphic Conflicts
     arcpy.cartography.DetectGraphicConflict(
-        in_features=Building_N100.removing_points_and_erasing_polygons_in_water_features___final_points___n100_lyrx.value,
-        conflict_features=Building_N100.removing_points_and_erasing_polygons_in_water_features___final_points___n100_lyrx.value,
+        in_features=Building_N100.removing_overlapping_polygons_and_points___points_no_road_conflict___n100_building_lyrx.value,
+        conflict_features=Building_N100.removing_overlapping_polygons_and_points___points_no_road_conflict___n100_building_lyrx.value,
         out_feature_class=Building_N100.removing_overlapping_polygons_and_points___graphic_conflicts_polygon___n100_building.value,
         conflict_distance="20 Meters",
     )
@@ -123,23 +279,45 @@ def selecting_points_close_to_graphic_conflict_polygons():
     Summary:
         Selects points based on their proximity to graphic conflict polygons.
     """
+
+    polygon_processor = PolygonProcessor(
+        input_building_points=Building_N100.removing_overlapping_polygons_and_points___points_no_road_conflict___n100_building.value,
+        output_polygon_feature_class=Building_N100.removing_overlapping_polygons_and_points___points_no_road_conflict_to_squares___n100_building.value,
+        building_symbol_dimensions=N100_Symbology.building_symbol_dimensions.value,
+        symbol_field_name="symbol_val",
+        index_field_name="OBJECTID",
+    )
+    polygon_processor.run()
+
     # Find points that are close to the graphic conflict polygons
     custom_arcpy.select_location_and_make_permanent_feature(
-        input_layer=Building_N100.removing_overlapping_polygons_and_points___all_building_points___n100_building.value,
+        input_layer=Building_N100.removing_overlapping_polygons_and_points___points_no_road_conflict_to_squares___n100_building.value,
         overlap_type=custom_arcpy.OverlapType.WITHIN_A_DISTANCE,
         select_features=Building_N100.removing_overlapping_polygons_and_points___graphic_conflicts_polygon___n100_building.value,
-        output_name=Building_N100.removing_overlapping_polygons_and_points___points_close_to_graphic_conflict_polygons___n100_building.value,
-        search_distance="40 Meters",
+        output_name=Building_N100.removing_overlapping_polygons_and_points___squares_close_to_graphic_conflict_polygons___n100_building.value,
+        search_distance="20 Meters",
     )
 
     # Find points that are close to the graphic conflict polygons
     custom_arcpy.select_location_and_make_permanent_feature(
-        input_layer=Building_N100.removing_overlapping_polygons_and_points___all_building_points___n100_building.value,
+        input_layer=Building_N100.removing_overlapping_polygons_and_points___points_no_road_conflict_to_squares___n100_building.value,
         overlap_type=custom_arcpy.OverlapType.WITHIN_A_DISTANCE,
         select_features=Building_N100.removing_overlapping_polygons_and_points___graphic_conflicts_polygon___n100_building.value,
-        output_name=Building_N100.removing_overlapping_polygons_and_points___points_NOT_close_to_graphic_conflict_polygons___n100_building.value,
-        search_distance="40 Meters",
+        output_name=Building_N100.removing_overlapping_polygons_and_points___squares_not_close_to_graphic_conflict_polygons___n100_building.value,
+        search_distance="20 Meters",
         inverted=True,
+    )
+
+    arcpy.management.FeatureToPoint(
+        in_features=Building_N100.removing_overlapping_polygons_and_points___squares_close_to_graphic_conflict_polygons___n100_building.value,
+        out_feature_class=Building_N100.removing_overlapping_polygons_and_points___points_close_to_graphic_conflict_polygons___n100_building.value,
+        point_location="INSIDE",
+    )
+
+    arcpy.management.FeatureToPoint(
+        in_features=Building_N100.removing_overlapping_polygons_and_points___squares_not_close_to_graphic_conflict_polygons___n100_building.value,
+        out_feature_class=Building_N100.removing_overlapping_polygons_and_points___points_NOT_close_to_graphic_conflict_polygons___n100_building.value,
+        point_location="INSIDE",
     )
 
 
@@ -156,7 +334,7 @@ def finding_clusters_amongst_the_points():
         out_feature_class=Building_N100.removing_overlapping_polygons_and_points___point_clusters___n100_building.value,
         clustering_method="DBSCAN",
         minimum_points="2",
-        search_distance="80 Meters",
+        search_distance="105 Meters",
     )
 
 
@@ -242,49 +420,6 @@ def keep_point_with_highest_hierarchy_for_each_cluster():
                         delete_cursor.deleteRow()
 
 
-def polygons_overlapping_roads_to_points():
-    """
-    Summary:
-        Processes polygons that overlap with road buffers and transforms them to points.
-        Also identifies and keeps polygons that do not intersect with road buffers.
-    """
-
-    road_lines_to_buffer_symbology = LineToBufferSymbology(
-        input_road_lines=Building_N100.data_preparation___unsplit_roads___n100_building.value,
-        sql_selection_query=N100_SQLResources.road_symbology_size_sql_selection.value,
-        output_road_buffer=Building_N100.removing_overlapping_polygons_and_points___road_symbology_no_buffer_addition___n100_building.value,
-        write_work_files_to_memory=False,
-        keep_work_files=False,
-        root_file=Building_N100.removing_overlapping_polygons_and_points___root_file_line_symbology___n100_building.value,
-        fixed_buffer_addition=0,
-    )
-    road_lines_to_buffer_symbology.run()
-
-    # Select polygons that intersect with road buffers
-    custom_arcpy.select_location_and_make_permanent_feature(
-        input_layer=Building_N100.removing_points_and_erasing_polygons_in_water_features___final_building_polygons_merged___n100_building.value,
-        overlap_type=custom_arcpy.OverlapType.INTERSECT,
-        select_features=Building_N100.removing_overlapping_polygons_and_points___road_symbology_no_buffer_addition___n100_building.value,
-        output_name=Building_N100.removing_overlapping_polygons_and_points___polygons_intersecting_road_buffers___n100_building.value,
-    )
-
-    # Convert the selected polygons that intersect with road buffers to points
-    arcpy.management.FeatureToPoint(
-        in_features=Building_N100.removing_overlapping_polygons_and_points___polygons_intersecting_road_buffers___n100_building.value,
-        out_feature_class=Building_N100.removing_overlapping_polygons_and_points___polygons_to_points___n100_building.value,
-        point_location="INSIDE",  # Points will be placed inside the polygons
-    )
-
-    # Select polygons that do NOT intersect with road buffers
-    custom_arcpy.select_location_and_make_permanent_feature(
-        input_layer=Building_N100.removing_points_and_erasing_polygons_in_water_features___final_building_polygons_merged___n100_building.value,
-        overlap_type=custom_arcpy.OverlapType.INTERSECT,
-        select_features=Building_N100.removing_overlapping_polygons_and_points___road_symbology_no_buffer_addition___n100_building.value,
-        output_name=Building_N100.removing_overlapping_polygons_and_points___polygons_NOT_intersecting_road_buffers___n100_building.value,
-        inverted=True,  # Select polygons not intersecting with road buffers
-    )
-
-
 @timing_decorator
 def merging_final_points_together():
     """
@@ -292,105 +427,14 @@ def merging_final_points_together():
         Merges multiple point feature layers into a single final output layer.
     """
     # Merge the final hospital and church layers
+
     arcpy.management.Merge(
         inputs=[
-            Building_N100.removing_overlapping_polygons_and_points___polygons_to_points___n100_building.value,
             Building_N100.removing_overlapping_polygons_and_points___points_NOT_close_to_graphic_conflict_polygons___n100_building.value,
-            Building_N100.removing_overlapping_polygons_and_points___points_in_a_cluster___n100_building.value,
             Building_N100.removing_overlapping_polygons_and_points___points_not_in_a_cluster___n100_building.value,
+            Building_N100.removing_overlapping_polygons_and_points___points_in_a_cluster___n100_building.value,
         ],
         output=Building_N100.removing_overlapping_polygons_and_points___merging_final_points___n100_building.value,
-    )
-
-
-def remove_points_that_are_overlapping_roads():
-    """
-    Summary:
-        Processes and filters points to remove those overlapping with road buffers,
-        while preserving hospital and church points.
-    """
-    # Selecting all points that are NOT hospital and churches or tourist huts
-    custom_arcpy.select_attribute_and_make_permanent_feature(
-        input_layer=Building_N100.removing_overlapping_polygons_and_points___merging_final_points___n100_building.value,
-        expression="byggtyp_nbr IN (970, 719, 671, 956)",
-        output_name=Building_N100.removing_overlapping_polygons_and_points___all_points_not_hospital_and_church__n100_building.value,
-        selection_type=custom_arcpy.SelectionType.NEW_SELECTION,
-        inverted=True,
-    )
-    # Selecting only hospital and churches or tourist huts, they are not going into polygon processor etc
-    custom_arcpy.select_attribute_and_make_permanent_feature(
-        input_layer=Building_N100.removing_overlapping_polygons_and_points___merging_final_points___n100_building.value,
-        expression="byggtyp_nbr IN (970, 719, 671, 956)",
-        output_name=Building_N100.removing_overlapping_polygons_and_points___hospital_and_church_points__n100_building.value,
-        selection_type=custom_arcpy.SelectionType.NEW_SELECTION,
-    )
-
-    code_block_update_symbol_val = (
-        "def update_symbol_val(symbol_val):\n"
-        "    if symbol_val == -99:\n"
-        "        return 8\n"
-        "    return symbol_val"
-    )
-
-    arcpy.CalculateField_management(
-        in_table=Building_N100.removing_overlapping_polygons_and_points___all_points_not_hospital_and_church__n100_building.value,
-        field="symbol_val",
-        expression="update_symbol_val(!symbol_val!)",
-        expression_type="PYTHON3",
-        code_block=code_block_update_symbol_val,
-    )
-
-    polygon_processor = PolygonProcessor(
-        input_building_points=Building_N100.removing_overlapping_polygons_and_points___all_points_not_hospital_and_church__n100_building.value,
-        output_polygon_feature_class=Building_N100.removing_overlapping_polygons_and_points___points_to_squares___n100_building.value,
-        building_symbol_dimensions=N100_Symbology.building_symbol_dimensions.value,
-        symbol_field_name="symbol_val",
-        index_field_name="OBJECTID",
-    )
-    polygon_processor.run()
-
-    # Selecting only building squares that DOES NOT intersect with road buffers
-    custom_arcpy.select_location_and_make_permanent_feature(
-        input_layer=Building_N100.removing_overlapping_polygons_and_points___points_to_squares___n100_building.value,
-        overlap_type=custom_arcpy.OverlapType.INTERSECT,
-        select_features=Building_N100.removing_overlapping_polygons_and_points___road_symbology_no_buffer_addition___n100_building.value,
-        output_name=Building_N100.point_displacement_with_buffer___squares_not_overlapping_roads___n100_building.value,
-        inverted=True,
-    )
-
-    # Polygon to point to transform squares back to points
-    arcpy.management.FeatureToPoint(
-        in_features=Building_N100.point_displacement_with_buffer___squares_not_overlapping_roads___n100_building.value,
-        out_feature_class=Building_N100.removing_overlapping_polygons_and_points___squares_back_to_points___n100_building.value,
-    )
-
-    # Merge back together with hospital and church points that were selected out earlier
-    arcpy.management.Merge(
-        inputs=[
-            Building_N100.removing_overlapping_polygons_and_points___hospital_and_church_points__n100_building.value,
-            Building_N100.removing_overlapping_polygons_and_points___squares_back_to_points___n100_building.value,
-        ],
-        output=Building_N100.removing_overlapping_polygons_and_points___final___n100_building.value,
-    )
-
-
-def removing_building_polygons_overlapping_church_hospitals():
-    polygon_processor = PolygonProcessor(
-        input_building_points=Building_N100.removing_overlapping_polygons_and_points___hospital_and_church_points__n100_building.value,
-        output_polygon_feature_class=Building_N100.removing_overlapping_polygons_and_points___points_to_squares_church_hospitals___n100_building.value,
-        building_symbol_dimensions=N100_Symbology.building_symbol_dimensions.value,
-        symbol_field_name="symbol_val",
-        index_field_name="OBJECTID",
-    )
-    polygon_processor.run()
-
-    custom_arcpy.select_location_and_make_permanent_feature(
-        input_layer=Building_N100.removing_overlapping_polygons_and_points___polygons_NOT_intersecting_road_buffers___n100_building.value,
-        overlap_type=custom_arcpy.OverlapType.WITHIN_A_DISTANCE,
-        select_features=Building_N100.removing_overlapping_polygons_and_points___points_to_squares_church_hospitals___n100_building.value,
-        output_name=Building_N100.removing_overlapping_polygons_and_points___building_polygons_not_intersecting_church_hospitals____n100_building.value,
-        inverted=True,  # Select polygons not intersecting with road buffers
-        search_distance="30 Meters",
     )
 
 

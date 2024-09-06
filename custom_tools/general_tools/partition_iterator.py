@@ -975,7 +975,7 @@ class PartitionIterator:
             object_id (int): The current object_id being processed (for logging).
             error_log (dict): A dictionary to store error information for each iteration.
         """
-        max_retries = 10
+        max_retries = 50
 
         for attempt in range(max_retries):
             try:
