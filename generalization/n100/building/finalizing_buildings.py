@@ -38,7 +38,7 @@ def removing_points_in_and_close_to_urban_areas():
 
     # Selecting building points that are further away than 50 Meters from urban areas
     custom_arcpy.select_location_and_make_permanent_feature(
-        input_layer=Building_N100.removing_overlapping_polygons_and_points___points_no_road_conflict___n100_building.value,
+        input_layer=Building_N100.removing_overlapping_polygons_and_points___merging_final_points___n100_building.value,
         overlap_type=custom_arcpy.OverlapType.WITHIN_A_DISTANCE,
         select_features=Building_N100.finalizing_buildings___urban_areas___n100_building.value,
         search_distance="50 Meters",
