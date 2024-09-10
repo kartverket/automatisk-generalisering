@@ -844,6 +844,26 @@ class Building_N100(Enum):
         description="erased_polygons",
     )
 
+    removing_points_and_erasing_polygons_in_water_features___correct_sized_polygons___n100_building = file_manager.generate_file_name_gdb(
+        script_source_name=removing_points_and_erasing_polygons_in_water_features,
+        description="correct_sized_polygons",
+    )
+
+    removing_points_and_erasing_polygons_in_water_features___too_small_polygons___n100_building = file_manager.generate_file_name_gdb(
+        script_source_name=removing_points_and_erasing_polygons_in_water_features,
+        description="too_small_polygons",
+    )
+
+    removing_points_and_erasing_polygons_in_water_features___polygons_to_points___n100_building = file_manager.generate_file_name_gdb(
+        script_source_name=removing_points_and_erasing_polygons_in_water_features,
+        description="polygons_to_points",
+    )
+
+    removing_points_and_erasing_polygons_in_water_features___points_polygons_to_points_merged___n100_building = file_manager.generate_file_name_gdb(
+        script_source_name=removing_points_and_erasing_polygons_in_water_features,
+        description="points_polygons_to_points_merged",
+    )
+
     removing_points_and_erasing_polygons_in_water_features___simplified_polygons___n100_building = file_manager.generate_file_name_gdb(
         script_source_name=removing_points_and_erasing_polygons_in_water_features,
         description="simplified_polygons",
@@ -1398,6 +1418,13 @@ class Building_N100(Enum):
         file_manager.generate_file_name_gdb(
             script_source_name=finalizing_buildings,
             description="polygon_to_line",
+        )
+    )
+
+    finalizing_buildings___polygon_to_line_joined_fields___n100_building = (
+        file_manager.generate_file_name_gdb(
+            script_source_name=finalizing_buildings,
+            description="polygon_to_line_joined_fields",
         )
     )
 

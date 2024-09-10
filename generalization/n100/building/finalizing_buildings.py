@@ -106,6 +106,20 @@ def building_polygons_to_line():
         neighbor_option="IDENTIFY_NEIGHBORS",
     )
 
+    arcpy.analysis.SpatialJoin(
+        target_features=Building_N100.finalizing_buildings___polygon_to_line___n100_building.value,
+        join_features=Building_N100.removing_overlapping_polygons_and_points___building_polygons_not_intersecting_church_hospitals___n100_building.value,
+        out_feature_class=Building_N100.finalizing_buildings___polygon_to_line_joined_fields___n100_building.value,
+        match_option="SHARE_A_LINE_SEGMENT_WITH",
+    )
+
+    arcpy.CalculateField_management(
+        in_table=Building_N100.finalizing_buildings___polygon_to_line_joined_fields___n100_building.value,
+        field="objtype",
+        expression='"Takkant"',
+        expression_type="PYTHON3",
+    )
+
 
 def selecting_hospital_and_churches_for_pictogram_featureclass():
     """
@@ -141,7 +155,7 @@ def assigning_final_file_names():
     )
 
     arcpy.management.CopyFeatures(
-        Building_N100.finalizing_buildings___polygon_to_line___n100_building.value,
+        Building_N100.finalizing_buildings___polygon_to_line_joined_fields___n100_building.value,
         Building_N100.OmrissLinje.value,
     )
 
