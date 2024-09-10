@@ -135,7 +135,18 @@ class PartitionIterator:
         type_name,
         type_path,
     ):
-        # Check if alias exists, if not, create it
+        """
+        What:
+            Configures an alias by adding or updating a type with a specified path.
+            This function checks if the given alias exists within the `nested_alias_type_data` attribute.
+            If the alias does not exist, it creates a new entry for it. Then, it associates the provided
+            `type_name` with the given `type_path` under the specified alias.
+        Args:
+            alias (str): The alias to be configured. If it does not exist, a new one will be created.
+            type_name (str): The name of the type to be added or updated under the alias.
+            type_path (str): The path associated with the specified type.
+        """
+
         if alias not in self.nested_alias_type_data:
             print(
                 f"Alias '{alias}' not found in nested_alias_type_data. Creating new alias."
@@ -145,29 +156,11 @@ class PartitionIterator:
         self.nested_alias_type_data[alias][type_name] = type_path
         print(f"Set path for type '{type_name}' in alias '{alias}' to: {type_path}")
 
-    def create_new_alias(
-        self,
-        alias,
-        initial_type_name=None,
-        initial_type_path=None,
-    ):
-        # Check if alias already exists
-        if alias in self.nested_alias_type_data:
-            raise ValueError(f"Alias {alias} already exists.")
-
-        # Initialize nested_alias_type_data for alias
-        if initial_type_name:
-            # Create alias with initial type and path
-            self.nested_alias_type_data[alias] = {initial_type_name: initial_type_path}
-        else:
-            # Initialize alias as an empty dictionary
-            self.nested_alias_type_data[alias] = {}
-
-        print(
-            f"Created new alias '{alias}' in nested_alias_type_data with type '{initial_type_name}' and path: {initial_type_path}"
-        )
-
     def create_cartographic_partitions(self):
+        """
+        First deletes existing partitioning feature if it exists.
+        Then creates partitioning feature using input and context features as the in_features.
+        """
         self.delete_feature_class(self.partition_feature)
 
         all_features = [
@@ -204,7 +197,8 @@ class PartitionIterator:
     @staticmethod
     def is_safe_to_delete(file_path: str, safe_directory: str) -> bool:
         """
-        Check if the file path is within the specified safe directory.
+        What:
+            Check if the file path is within the specified safe directory.
 
         Args:
             file_path (str): The path of the file to check.
@@ -246,7 +240,7 @@ class PartitionIterator:
                     )
 
     def delete_iteration_files(self, *file_paths):
-        """Deletes multiple feature classes or files. Detailed alias and output_type logging is not available here."""
+        """Deletes multiple feature classes or files from a list."""
         for file_path in file_paths:
             self.delete_feature_class(file_path)
             print(f"Deleted file: {file_path}")
@@ -266,10 +260,11 @@ class PartitionIterator:
 
     def create_dummy_features(self, types_to_include=["input_copy", "context_copy"]):
         """
-        Creates dummy features for aliases with specified types.
+        What:
+            Creates dummy features for aliases for types specified in types_to_include.
 
         Args:
-            types_to_include (list): Types for which dummy features should be created.
+            types_to_include (list): A list of types for which dummy features should be created.
         """
         for alias, alias_data in self.nested_alias_type_data.items():
             for type_info, path in list(alias_data.items()):
@@ -292,6 +287,7 @@ class PartitionIterator:
                     )
 
     def reset_dummy_used(self):
+        """Sets the dummy_used to false"""
         for alias in self.nested_alias_type_data:
             self.nested_alias_type_data[alias]["dummy_used"] = False
 
@@ -327,13 +323,14 @@ class PartitionIterator:
         iteration: bool,
     ) -> str:
         """
-        Creates a directory at the given root_path for the target_dir.
+        What:
+            Creates a directory at the given root_path for the target_dir.
         Args:
-            root_path: The root directory where initial structure is created
+            root_path: The root directory where target_dir will be located
             target_dir: The target where the created directory should be placed
             iteration: Boolean flag indicating if the iteration_documentation should be added
         Returns:
-            A string containing the absolute path of the created directory.
+            str: A string containing the absolute path of the created directory.
         """
 
         # Determine base directory
@@ -867,10 +864,6 @@ class PartitionIterator:
                 custom_func["params"][param] = resolved_paths[0]
             else:
                 custom_func["params"][param] = resolved_paths
-
-            # print(
-            #     f"Resolved {param_type} path for {param}: {custom_func['params'][param]}"
-            # )
 
     def _handle_tuple_param(self, param_info, object_id):
         """

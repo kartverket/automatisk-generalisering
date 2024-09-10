@@ -17,7 +17,7 @@ Why:
 
 def example_of_small_function():
     """
-    What: Does something needing little explanation outside reading the code.
+    Does something needing little explanation outside reading the code.
     """
     x = 1 + 1
     print(x)
