@@ -103,31 +103,19 @@ class PartitionIterator:
         self.iteration_times_with_input = []
         self.iteration_start_time = None
 
-    def unpack_alias_path_data(self, alias_path_data):
+    @staticmethod
+    def unpack_alias_path(alias_path, target_dict):
         """
-        Process initial alias_path_data for inputs and outputs.
+        Populates target dictionaries with inputs from input parameters.
         """
-        for alias, info in alias_path_data.items():
-            if alias not in self.nested_alias_type_data:
-                self.nested_alias_type_data[alias] = {}
+        for alias, info in alias_path.items():
+            if alias not in target_dict:
+                target_dict[alias] = {}
 
             for i in range(0, len(info), 2):
                 type_info = info[i]
                 path_info = info[i + 1]
-                self.nested_alias_type_data[alias][type_info] = path_info
-
-    def unpack_alias_path_outputs(self, alias_path_outputs):
-        """
-        Process initial alias_path_outputs for outputs.
-        """
-        for alias, info in alias_path_outputs.items():
-            if alias not in self.nested_final_outputs:
-                self.nested_final_outputs[alias] = {}
-
-            for i in range(0, len(info), 2):
-                type_info = info[i]
-                path_info = info[i + 1]
-                self.nested_final_outputs[alias][type_info] = path_info
+                target_dict[alias][type_info] = path_info
 
     def configure_alias_and_type(
         self,
@@ -213,7 +201,9 @@ class PartitionIterator:
         return file_path.startswith(safe_directory)
 
     def delete_final_outputs(self):
-        """Deletes all existing final output files if they exist and are in the safe directory."""
+        """
+        Deletes all existing final output files if they exist and are in the safe directory and self.delete_final_outputs_bool is True.
+        """
 
         # Check if deletion is allowed
         if not self.delete_final_outputs_bool:
@@ -258,7 +248,7 @@ class PartitionIterator:
         )
         print(f"Created feature class: {full_feature_path}")
 
-    def create_dummy_features(self, types_to_include=["input_copy", "context_copy"]):
+    def create_dummy_features(self, types_to_include: list = None):
         """
         What:
             Creates dummy features for aliases for types specified in types_to_include.
@@ -266,6 +256,9 @@ class PartitionIterator:
         Args:
             types_to_include (list): A list of types for which dummy features should be created.
         """
+        if types_to_include is None:
+            types_to_include = ["input_copy", "context_copy"]
+
         for alias, alias_data in self.nested_alias_type_data.items():
             for type_info, path in list(alias_data.items()):
                 if type_info in types_to_include and path:
@@ -319,22 +312,22 @@ class PartitionIterator:
     @staticmethod
     def create_directory_json_documentation(
         root_path: str,
-        target_dir: str,
+        dir_name: str,
         iteration: bool,
     ) -> str:
         """
         What:
             Creates a directory at the given root_path for the target_dir.
         Args:
-            root_path: The root directory where target_dir will be located
-            target_dir: The target where the created directory should be placed
+            root_path: The root directory where dir_name will be located
+            dir_name: The target where the created directory should be placed
             iteration: Boolean flag indicating if the iteration_documentation should be added
         Returns:
             str: A string containing the absolute path of the created directory.
         """
 
         # Determine base directory
-        directory_path = os.path.join(root_path, f"{target_dir}")
+        directory_path = os.path.join(root_path, f"{dir_name}")
 
         # Ensure that the directory exists
         os.makedirs(directory_path, exist_ok=True)
@@ -355,13 +348,14 @@ class PartitionIterator:
         object_id=None,
     ) -> None:
         """
-        Writes dictionary into a json file.
+         What:
+             Writes dictionary into a json file.
 
-           Args:
-               data: The data to write.
-               file_path: The complete path (directory+file_name) where the file should be created
-               file_name: The name of the file to create
-               object_id: If provided, object_id will also be part of the file name.
+        Args:
+            data: The data to write.
+            file_path: The complete path (directory+file_name) where the file should be created
+            file_name: The name of the file to create
+            object_id: If provided, object_id will also be part of the file name.
         """
 
         if object_id:
@@ -384,7 +378,8 @@ class PartitionIterator:
         object_id=None,
     ) -> None:
         """
-        Handles the export of alias type data and final outputs into separate json files.
+        What:
+            Handles the export of alias type data and final outputs into separate json files.
 
         Args:
             file_path: The complete file path where to create the output directories.
@@ -427,7 +422,7 @@ class PartitionIterator:
         """
         return self.create_directory_json_documentation(
             root_path=self.dictionary_documentation_path,
-            target_dir="error_log",
+            dir_name="error_log",
             iteration=False,
         )
 
@@ -436,12 +431,21 @@ class PartitionIterator:
         Saves the error log to a JSON file in the error_log directory.
         """
         error_log_directory = self.create_error_log_directory()
-        self.write_data_to_json(
-            data=error_log, file_path=error_log_directory, file_name="error_log"
-        )
+        # Check if error log is empty
+        if not error_log:
+            self.write_data_to_json(
+                data=error_log,
+                file_path=error_log_directory,
+                file_name="no_errors",
+            )
+        else:
+            self.write_data_to_json(
+                data=error_log, file_path=error_log_directory, file_name="error_log"
+            )
 
     @staticmethod
     def generate_unique_field_name(input_feature, field_name):
+        """Generates a unique field name"""
         existing_field_names = [field.name for field in arcpy.ListFields(input_feature)]
         unique_field_name = field_name
         while unique_field_name in existing_field_names:
@@ -467,6 +471,12 @@ class PartitionIterator:
             print(f"Error in finding max {self.object_id_field}: {e}")
 
     def prepare_input_data(self):
+        """
+        Copies the input data, and set the path of the copy to type input_copy in self.nested_alias_type_data.
+        From now on when the PartitionIterator access the global data for an alias it uses input_copy.
+        If context_selection bool is True, it will only select context features within the search_distance of
+        an input_copy feature, then similar to input data set the new context feature as context_copy.
+        """
         for alias, types in self.nested_alias_type_data.items():
             if "input" in types:
                 input_data_path = types["input"]
@@ -583,9 +593,17 @@ class PartitionIterator:
         alias,
         iteration_partition,
         object_id,
-    ):
+    ) -> bool:
         """
-        Process input features for a given partition.
+        What:
+            For an alias makes selection for the partitioning feature being iterated over.
+            It selects objects with their centerpoint inside the partitioning feature marking it as the objects
+            being generalized in the partitioning feature, but also the objects within a distance so it is taken into consideration.
+            The selection path is marked as type input in the self.nested_alias_type_data.
+            It also counts the objects for input features, if the count is 0 for the input feature the iteration return false.
+            If there is 0 objects in the iteration it loads in the dummy feature.
+        Returns:
+            bool: Returns true or false based if there is an input feature present for the partition.
         """
         if "input_copy" not in self.nested_alias_type_data[alias]:
             # If there are no inputs to process, return None for the aliases and a flag indicating no input was present.
@@ -692,7 +710,19 @@ class PartitionIterator:
             # If there are no inputs to process, return None for the aliases and a flag indicating no input was present.
             return False
 
-    def _process_inputs_in_partition(self, aliases, iteration_partition, object_id):
+    def _process_inputs_in_partition(
+        self,
+        aliases,
+        iteration_partition,
+        object_id,
+    ) -> bool:
+        """
+        What:
+            Process input features using process_input_features function using it on all alias with an input type.
+            If there are one or more input features present it returns true.
+        Returns:
+            bool: Returns true or false based if there are input features present for the partition.
+        """
         inputs_present_in_partition = False
         for alias in aliases:
             if "input_copy" in self.nested_alias_type_data[alias]:
@@ -700,7 +730,7 @@ class PartitionIterator:
                 input_present = self.process_input_features(
                     alias, iteration_partition, object_id
                 )
-                # Sets inputs_present_in_partition as True if any alias in partition has input present. Otherwise it remains False.
+                # Sets inputs_present_in_partition as True if any alias in partition has input present. Otherwise, it remains False.
                 inputs_present_in_partition = (
                     inputs_present_in_partition or input_present
                 )
@@ -708,7 +738,8 @@ class PartitionIterator:
 
     def process_context_features(self, alias, iteration_partition, object_id):
         """
-        Process context features for a given partition if input features are present.
+        Selects objects within self.search_distance for a context feature and sets the selection as type context.
+        If there is no objects within the distance dummy data is loaded in instead.
         """
         if "context_copy" in self.nested_alias_type_data[alias]:
             context_path = self.nested_alias_type_data[alias]["context_copy"]
@@ -749,13 +780,15 @@ class PartitionIterator:
                 )
 
     def _process_context_features(self, aliases, iteration_partition, object_id):
+        """Processes context features fo all alias with a context type using process_context_features"""
         for alias in aliases:
             self.process_context_features(alias, iteration_partition, object_id)
 
     @staticmethod
     def format_time(seconds):
         """
-        Convert seconds to a formatted string: HH:MM:SS.
+        What:
+            Converts seconds to a formatted string: HH:MM:SS.
 
         Args:
             seconds (float): Time in seconds.
@@ -770,7 +803,9 @@ class PartitionIterator:
 
     def track_iteration_time(self, object_id, inputs_present_in_partition):
         """
-        Track the iteration time and estimate the remaining time.
+        What:
+            Tracks the iteration time and estimate the remaining time. It adds the time of iterations
+            with input features to a list, using the average time of this list as baseline for remaining time.
 
         Args:
             object_id (int): The ID of the current partition iteration.
@@ -805,7 +840,17 @@ class PartitionIterator:
 
     def find_io_params_custom_logic(self, object_id):
         """
-        Find and resolve the IO parameters for custom logic functions.
+        What:
+            Find and resolve the input and output (IO) parameters for custom logic functions.
+
+        How:
+            This function iterates over a list of custom functions, which could be either standalone
+            functions or class methods. For each function, it checks if it has partition IO metadata.
+            Functions needs to be decorated with the partition_io_decorator. In this function
+            input and output refers to the parameters of the custom_functions and not alias types.
+
+        Args:
+            object_id: The identifier for the object that the IO parameters will be associated with.
         """
         for custom_func in self.custom_functions:
             if "class" in custom_func:  # Class method
@@ -819,34 +864,38 @@ class PartitionIterator:
                 input_params = metadata.get("inputs", [])
                 output_params = metadata.get("outputs", [])
 
-                # print(f"\nResolving IO Params for object_id {object_id}")
-                # print(f"Before resolving: {custom_func['params']}")
-
                 self.resolve_io_params(
-                    param_type="input",
                     params=input_params,
                     custom_func=custom_func,
                     object_id=object_id,
                 )
                 self.resolve_io_params(
-                    param_type="output",
                     params=output_params,
                     custom_func=custom_func,
                     object_id=object_id,
                 )
 
-                # print(f"After resolving: {custom_func['params']}")
-
-    def resolve_io_params(self, param_type, params, custom_func, object_id):
+    def resolve_io_params(self, params, custom_func, object_id):
         """
-        Resolve paths for input/output parameters of custom functions.
+        What:
+            Resolve the paths for input or output parameters of custom functions.
+
+        How:
+            This function takes a set of input or output parameters and resolves their paths by iterating
+            over the parameters and processing them, depending on their type (tuple, dict, list, etc.).
+            It uses a helper function `resolve_param` to recursively resolve each parameter's path.
+
+        Args:
+            params: A list of parameters to be resolved.
+            custom_func: The custom function containing the parameters to resolve.
+            object_id: The identifier for the object related to these parameters.
         """
 
         def resolve_param(param_info):
             if isinstance(param_info, tuple) and len(param_info) == 2:
                 return self._handle_tuple_param(param_info, object_id)
             elif isinstance(param_info, dict):
-                return {k: resolve_param(v) for k, v in param_info.items()}
+                return {key: resolve_param(value) for key, value in param_info.items()}
             elif isinstance(param_info, list):
                 return [resolve_param(item) for item in param_info]
             else:
@@ -860,14 +909,38 @@ class PartitionIterator:
             resolved_paths = [
                 resolve_param(param_info) for param_info in param_info_list
             ]
+            print(f"Printing param_info_list:\n{param_info_list}")
             if len(resolved_paths) == 1:
                 custom_func["params"][param] = resolved_paths[0]
             else:
                 custom_func["params"][param] = resolved_paths
 
-    def _handle_tuple_param(self, param_info, object_id):
+    def _handle_tuple_param(self, param_info, object_id) -> str:
         """
-        Handle the resolution of parameters that are tuples of (alias, alias_type).
+        What:
+            Handle the resolution of parameters that are tuples of (alias, alias_type).
+
+        How:
+            - This method first checks if the `alias_type` needs to be dynamically updated (if it
+              belongs to `self.types_to_update`). If so, a new path is constructed for the alias and
+              alias_type during each iteration.
+            - If the alias and alias_type are static (i.e., they exist in `self.nested_alias_type_data`),
+              it retrieves and uses the existing path without updating it.
+            - If the alias_type is neither in `self.types_to_update` nor static, it constructs a new
+              path and adds the alias_type to `self.types_to_update` for future updates during iterations.
+
+        Why:
+            - Some alias types are static and only need to be resolved once, which is why their paths
+              are stored in `self.nested_alias_type_data`.
+            - Other alias types require dynamic path reconstruction for each iteration, which is why
+              they are tracked in `self.types_to_update` to ensure they are updated accordingly.
+
+        Args:
+            param_info: A tuple containing an alias and its associated alias_type.
+            object_id: The identifier for the object related to these parameters.
+
+        Returns:
+            str: The resolved path based on the alias and alias_type.
         """
         alias, alias_type = param_info
 
@@ -901,7 +974,7 @@ class PartitionIterator:
 
         return resolved_path
 
-    def construct_path_for_alias_type(self, alias, alias_type, object_id):
+    def construct_path_for_alias_type(self, alias, alias_type, object_id) -> str:
         """
         Construct a new path for a given alias and type specific to the current iteration.
         """
@@ -911,7 +984,17 @@ class PartitionIterator:
 
     def execute_custom_functions(self):
         """
-        Execute custom functions with the resolved input and output paths.
+        What:
+            Execute custom functions with the resolved input and output paths.
+
+        How:
+            This function iterates through custom functions and handles them differently based
+            on whether they are class methods or standalone functions. It extracts the required
+            parameters, resolves their paths, and logs these parameters before executing the
+            corresponding class methods or standalone functions.
+
+            For class methods, it separates parameters for class instantiation and method execution.
+            For standalone functions, it directly prepares and resolves parameters for function execution.
         """
         for custom_func in self.custom_functions:
             resolved_params = {}  # Initialize resolved_params
@@ -962,7 +1045,9 @@ class PartitionIterator:
 
     def resilient_execute_custom_functions(self, object_id):
         """
-        Helper function to execute custom functions with retry logic to handle potential failures.
+        What:
+            Helper function to execute custom functions with retry logic to handle potential failures
+            caused by unreliable 3rd party logic.
 
         Args:
             object_id (int): The current object_id being processed (for logging).
@@ -990,9 +1075,33 @@ class PartitionIterator:
                 self.error_log[object_id]["Error Messages"][attempt + 1] = error_message
 
                 if attempt + 1 == max_retries:
-                    print("Max retries reached. Moving to next iteration.")
+                    print("Max retries reached.")
+                    self.save_error_log(self.error_log)
+                    raise Exception(error_message)
 
     def append_iteration_to_final(self, alias, object_id):
+        """
+        What:
+            Append the result of the current iteration to the final output for a given alias.
+
+        How:
+            - This method checks if the given `alias` exists in `self.nested_final_outputs`. If it does not,
+              the function exits.
+            - For each type associated with the alias, it retrieves the corresponding feature class and appends
+              the result of the current iteration to the final output path.
+            - If the alias is marked as a dummy feature (indicated by `dummy_used` in `self.nested_alias_type_data`),
+              the iteration is skipped.
+            - It selects the features from the input feature class based on a specific partition field and appends
+              them to the final output. If the final output does not exist, it creates the output; otherwise, it appends to it.
+
+        Why:
+            This function is necessary to accumulate the results of each iteration for the given alias in a final output,
+            ensuring the results from multiple iterations are combined into a single dataset.
+
+        Args:
+            alias: A string representing the alias whose output data is to be updated.
+            object_id: The identifier for the current iteration.
+        """
         # Guard clause if alias doesn't exist in nested_final_outputs
         if alias not in self.nested_final_outputs:
             return
@@ -1126,13 +1235,14 @@ class PartitionIterator:
     @timing_decorator
     def run(self):
         self.total_start_time = time.time()
-        self.unpack_alias_path_data(self.raw_input_data)
-
-        if self.raw_output_data is not None:
-            self.unpack_alias_path_outputs(self.raw_output_data)
+        self.unpack_alias_path(
+            alias_path=self.raw_input_data, target_dict=self.nested_alias_type_data
+        )
+        self.unpack_alias_path(
+            alias_path=self.raw_output_data, target_dict=self.nested_final_outputs
+        )
 
         self.export_dictionaries_to_json(file_name="post_initialization")
-        print("Initialization done\n")
 
         print("\nStarting Data Preparation...")
         self.delete_final_outputs()
@@ -1309,11 +1419,13 @@ if __name__ == "__main__":
         root_file_partition_iterator=Building_N100.iteration__partition_iterator__n100.value,
         scale=env_setup.global_config.scale_n100,
         dictionary_documentation_path=Building_N100.iteration___json_documentation___building_n100.value,
-        feature_count="400000",
+        feature_count="800000",
     )
 
     # Run the partition iterator
     partition_iterator.run()
+
+    # partition_iterator.find_io_params_custom_logic(3)
 
     # Instantiate PartitionIterator with necessary parameters
     partition_iterator_2 = PartitionIterator(
