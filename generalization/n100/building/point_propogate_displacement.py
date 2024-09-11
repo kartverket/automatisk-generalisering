@@ -47,7 +47,7 @@ def propagate_displacement_building_points():
     )
 
     arcpy.cartography.PropagateDisplacement(
-        in_features=Building_N100.calculate_point_values___points_going_into_propagate_displacement___n100_building.value,
+        in_features=Building_N100.point_propagate_displacement___points_after_propagate_displacement___n100_building.value,
         displacement_features=Building_N100.data_selection___displacement_feature___n100_building.value,
         adjustment_style="SOLID",
     )
