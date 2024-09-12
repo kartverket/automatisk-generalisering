@@ -174,7 +174,6 @@ def data_selection():
         alias_path_outputs=outputs,
         custom_functions=[process_data_validation],
         root_file_partition_iterator=Building_N100.data_preparation___begrensningskurve_base___n100_building.value,
-        scale=env_setup.global_config.scale_n100,
         dictionary_documentation_path=Building_N100.data_preparation___begrensingskurve_docu___building_n100.value,
         feature_count="5000",
         delete_final_outputs=False,
@@ -238,7 +237,6 @@ def begrensningskurve_land_and_water_bodies():
         alias_path_outputs=outputs,
         custom_functions=[process_begrensningskurve],
         root_file_partition_iterator=Building_N100.data_preparation___begrensningskurve_base___n100_building.value,
-        scale=env_setup.global_config.scale_n100,
         dictionary_documentation_path=Building_N100.data_preparation___begrensingskurve_docu___building_n100.value,
         feature_count="800000",
     )

@@ -261,7 +261,6 @@ class PartitionIterator:
 
         :param alias_path_data: A nested dictionary of input feature class paths with their aliases.
         :param root_file_partition_iterator: Base path for in progress outputs.
-        :param scale: Scale for the partitions.
         :param alias_path_outputs: A nested dictionary of output feature class for final results.
         :param feature_count: Feature count for cartographic partitioning.
         :param partition_method: Method used for creating cartographic partitions.
@@ -278,7 +277,6 @@ class PartitionIterator:
         else:
             self.dictionary_documentation_path = dictionary_documentation_path
 
-        self.scale = scale
         self.search_distance = search_distance
         self.feature_count = feature_count
         self.partition_method = partition_method
