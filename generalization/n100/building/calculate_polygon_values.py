@@ -61,6 +61,39 @@ def adding_symbol_val():
         code_block=N100_SQLResources.nbr_symbol_val_code_block.value,
     )
 
+    code_block_symbol_val_to_nbr = (
+        "def symbol_val_to_nbr(symbol_val, byggtyp_nbr):\n"
+        "    if symbol_val == -99:\n"
+        "        return 729\n"
+        "    return byggtyp_nbr"
+    )
+
+    # Code block to update the symbol_val to reflect the new byggtyp_nbr
+    code_block_update_symbol_val = (
+        "def update_symbol_val(symbol_val):\n"
+        "    if symbol_val == -99:\n"
+        "        return 8\n"
+        "    return symbol_val"
+    )
+
+    # Applying the symbol_val_to_nbr logic
+    arcpy.CalculateField_management(
+        in_table=Building_N100.simplify_polygons___spatial_join_polygons___n100_building.value,
+        field="byggtyp_nbr",
+        expression="symbol_val_to_nbr(!symbol_val!, !byggtyp_nbr!)",
+        expression_type="PYTHON3",
+        code_block=code_block_symbol_val_to_nbr,
+    )
+
+    # Applying the update_symbol_val logic
+    arcpy.CalculateField_management(
+        in_table=Building_N100.simplify_polygons___spatial_join_polygons___n100_building.value,
+        field="symbol_val",
+        expression="update_symbol_val(!symbol_val!)",
+        expression_type="PYTHON3",
+        code_block=code_block_update_symbol_val,
+    )
+
     # Assigning new name to the final building polygons
     print("Making a copy of the feature class...")
     arcpy.management.CopyFeatures(

@@ -20,7 +20,7 @@ from env_setup import environment_setup
 from input_data import input_symbology
 
 # Importing timing decorator
-from custom_tools.decorators.timing_decorator import timing_decorator
+
 from custom_tools.decorators.partition_io_decorator import partition_io_decorator
 
 
@@ -92,7 +92,6 @@ class ResolveBuildingConflicts:
         )
 
         # GDB Work Files
-        self.points_to_squares = "points_to_squares"
         self.results_rbc_1_squares = "results_rbc_1_squares"
         self.results_rbc_1_polygons = "results_rbc_1_polygons"
         self.invisible_polygons_after_rbc_1 = "invisible_polygons_after_rbc_1"
@@ -108,7 +107,6 @@ class ResolveBuildingConflicts:
         self.squares_back_to_points_after_rbc2 = "squares_back_to_points_after_rbc2"
 
         self.working_files_list_gdb = [
-            self.points_to_squares,
             self.results_rbc_1_squares,
             self.results_rbc_1_polygons,
             self.invisible_polygons_after_rbc_1,
@@ -157,34 +155,16 @@ class ResolveBuildingConflicts:
         #                                       LOGICS
         # ========================================
 
-    @timing_decorator
-    def building_points_to_squares(self):
-        """
-        Summary:
-            Transforms all the building points to squares.
-        """
-        # Transforms all the building points to squares
-        polygon_processor = PolygonProcessor(
-            input_building_points=self.input_building_points,
-            output_polygon_feature_class=self.points_to_squares,
-            building_symbol_dimensions=self.building_symbol_dimension,
-            symbol_field_name="symbol_val",
-            index_field_name="OBJECTID",
-        )
-        polygon_processor.run()
-
-        print("Polygon processor is done")
-
-    @timing_decorator
     def apply_symbology_to_the_layers(self):
         """
         Summary:
             Applies symbology to various input layers using lyrx_files
         """
         print("Now starting to apply symbology to layers")
+
         features_for_apply_symbology = [
             {
-                "input_layer": self.points_to_squares,
+                "input_layer": self.input_building_points,
                 "in_symbology_layer": self.building_squares_lyrx,
                 "output_name": self.building_squares_with_lyrx,
             },
@@ -217,8 +197,6 @@ class ResolveBuildingConflicts:
 
         # Loop over the symbology configurations and apply the function
         for symbology_config in features_for_apply_symbology:
-            print("Now starting to apply symbology to layer")
-            print(f"{symbology_config['input_layer']}\n")
             custom_arcpy.apply_symbology(
                 input_layer=symbology_config["input_layer"],
                 in_symbology_layer=symbology_config["in_symbology_layer"],
@@ -250,7 +228,6 @@ class ResolveBuildingConflicts:
 
         return input_barriers_for_rbc
 
-    @timing_decorator
     def resolve_building_conflicts_1(self):
         """
         Summary:
@@ -274,7 +251,6 @@ class ResolveBuildingConflicts:
             print(f"Error in resolve_building_conflicts_1: {e}")
             raise
 
-    @timing_decorator
     def building_squares_and_polygons_to_keep_after_rbc_1(self):
         """
         Summary:
@@ -282,11 +258,12 @@ class ResolveBuildingConflicts:
         """
         # Sql expression to select building squares that are visible + church and hospital points
         sql_expression_resolve_building_conflicts_squares = (
-            "(invisibility = 0) OR (BYGGTYP_NBR IN (970, 719, 671))"
+            "(invisibility = 0) OR (symbol_val IN (1, 2, 3)) OR (byggtyp_nbr = 956)"
         )
+
         # Selecting building squares that are visible OR are hospitals/churches
         custom_arcpy.select_attribute_and_make_permanent_feature(
-            input_layer=self.points_to_squares,
+            input_layer=self.input_building_points,
             expression=sql_expression_resolve_building_conflicts_squares,
             output_name=self.results_rbc_1_squares,
         )
@@ -301,7 +278,6 @@ class ResolveBuildingConflicts:
             output_name=self.results_rbc_1_polygons,
         )
 
-    @timing_decorator
     def transforming_invisible_polygons_to_points_and_then_to_squares(self):
         """
         Summary:
@@ -343,7 +319,6 @@ class ResolveBuildingConflicts:
             output=self.merged_squares_rbc1,
         )
 
-    @timing_decorator
     def calculating_symbol_val_and_nbr_for_squares(self):
         """
         Summary:
@@ -383,7 +358,6 @@ class ResolveBuildingConflicts:
             code_block=code_block_update_symbol_val,
         )
 
-    @timing_decorator
     def adding_symbology_to_layers_being_used_for_rbc_2(self):
         """
         Summary:
@@ -403,7 +377,6 @@ class ResolveBuildingConflicts:
             output_name=self.adding_symbology_to_polygons_going_into_rbc2,
         )
 
-    @timing_decorator
     def resolve_building_conflicts_2(self):
         """
         Summary:
@@ -426,13 +399,14 @@ class ResolveBuildingConflicts:
             hierarchy_field="hierarchy",
         )
 
-    @timing_decorator
     def selecting_features_to_be_kept_after_rbc_2(self):
         """
         Summary:
             Selects and retains building squares and polygons based on visibility and symbol value criteria after the second RBC processing stage.
         """
-        sql_expression_squares = "(invisibility = 0) OR (symbol_val IN (1, 2, 3))"
+        sql_expression_squares = (
+            "(invisibility = 0) OR (symbol_val IN (1, 2, 3)) OR (byggtyp_nbr = 956)"
+        )
 
         sql_expression_polygons = "invisibility = 0"
 
@@ -450,7 +424,6 @@ class ResolveBuildingConflicts:
             output_name=self.polygons_after_rbc2,
         )
 
-    @timing_decorator
     def transforming_squares_back_to_points(self):
         """
         Summary:
@@ -463,7 +436,6 @@ class ResolveBuildingConflicts:
             point_location="INSIDE",
         )
 
-    @timing_decorator
     def assigning_final_names(self):
         """
         Summary:
@@ -501,7 +473,6 @@ class ResolveBuildingConflicts:
             file_names=self.working_files_list_lyrx,
         )
 
-        self.building_points_to_squares()
         self.apply_symbology_to_the_layers()
         self.resolve_building_conflicts_1()
         self.building_squares_and_polygons_to_keep_after_rbc_1()

@@ -152,6 +152,12 @@ class PolygonProcessor:
             tuple: A tuple containing the object ID and its corresponding WKT polygon.
         """
         index, x_coordinate, y_coordinate, object_id, symbol_val = arguments
+
+        if symbol_val not in self.building_symbol_dimensions:
+            raise ValueError(
+                f"Out of bounds value found for symbol_val in Polygon Processor: {symbol_val}"
+            )
+
         polygon_width, polygon_height = self.building_symbol_dimensions[symbol_val]
         half_width = polygon_width / 2
         half_height = polygon_height / 2

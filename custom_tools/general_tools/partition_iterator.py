@@ -18,15 +18,12 @@ from custom_tools.decorators.timing_decorator import timing_decorator
 from input_data import input_n50, input_n100
 from file_manager.n100.file_manager_buildings import Building_N100
 from custom_tools.general_tools.polygon_processor import PolygonProcessor
-from constants.n100_constants import N100_Symbology
 
 
 from custom_tools.generalization_tools.building.buffer_displacement import (
     BufferDisplacement,
 )
 from constants.n100_constants import N100_Symbology, N100_SQLResources, N100_Values
-
-# THIS IS WORK IN PROGRESS NOT READY FOR USE YET
 
 
 class PartitionIterator:
@@ -50,6 +47,7 @@ class PartitionIterator:
         partition_method: Literal["FEATURES", "VERTICES"] = "FEATURES",
         search_distance: str = "500 Meters",
         context_selection: bool = True,
+        delete_final_outputs: bool = True,
         safe_output_final_cleanup: bool = True,
         object_id_field: str = "OBJECTID",
     ):
@@ -81,6 +79,7 @@ class PartitionIterator:
         self.partition_method = partition_method
         self.object_id_field = object_id_field
         self.selection_of_context_features = context_selection
+        self.delete_final_outputs_bool = delete_final_outputs
         self.safe_final_output_cleanup = safe_output_final_cleanup
 
         # Initial processing results
@@ -93,6 +92,7 @@ class PartitionIterator:
         self.current_iteration_id = None
         self.iteration_file_paths_list = []
         self.first_call_directory_documentation = True
+        self.error_log = {}
 
         # Variables related to custom operations
         self.custom_functions = custom_functions or []
@@ -220,6 +220,12 @@ class PartitionIterator:
 
     def delete_final_outputs(self):
         """Deletes all existing final output files if they exist and are in the safe directory."""
+
+        # Check if deletion is allowed
+        if not self.delete_final_outputs_bool:
+            print("Deletion of final outputs is disabled.")
+            return
+
         # Construct the safe directory path
         local_root_directory = config.output_folder
         project_root_directory = env_setup.global_config.main_directory_name
@@ -285,13 +291,7 @@ class PartitionIterator:
                         type_path=dummy_feature_path,
                     )
 
-    def initialize_dummy_used(self):
-        # Assuming `aliases` is a list of all your aliases
-        for alias in self.nested_alias_type_data:
-            self.nested_alias_type_data[alias]["dummy_used"] = False
-
     def reset_dummy_used(self):
-        # Assuming `aliases` is a list of all your aliases
         for alias in self.nested_alias_type_data:
             self.nested_alias_type_data[alias]["dummy_used"] = False
 
@@ -423,6 +423,26 @@ class PartitionIterator:
             final_outputs, final_outputs_directory, file_name, object_id
         )
 
+    def create_error_log_directory(self):
+        """
+        Creates an error_log directory inside self.dictionary_documentation_path.
+        Returns the path to the error_log directory.
+        """
+        return self.create_directory_json_documentation(
+            root_path=self.dictionary_documentation_path,
+            target_dir="error_log",
+            iteration=False,
+        )
+
+    def save_error_log(self, error_log):
+        """
+        Saves the error log to a JSON file in the error_log directory.
+        """
+        error_log_directory = self.create_error_log_directory()
+        self.write_data_to_json(
+            data=error_log, file_path=error_log_directory, file_name="error_log"
+        )
+
     @staticmethod
     def generate_unique_field_name(input_feature, field_name):
         existing_field_names = [field.name for field in arcpy.ListFields(input_feature)]
@@ -456,7 +476,7 @@ class PartitionIterator:
                 input_data_copy = (
                     f"{self.root_file_partition_iterator}_{alias}_input_data_copy"
                 )
-                # self.delete_feature_class(input_data_copy)
+
                 arcpy.management.Copy(
                     in_data=input_data_path,
                     out_data=input_data_copy,
@@ -588,15 +608,15 @@ class PartitionIterator:
                 output_name=input_features_center_in_partition_selection,
             )
 
-            aliases_with_features = {}
             count_points = int(
                 arcpy.management.GetCount(
                     input_features_center_in_partition_selection
                 ).getOutput(0)
             )
-            aliases_with_features[alias] = count_points
 
-            if aliases_with_features[alias] > 0:
+            self.nested_alias_type_data[alias]["count"] = count_points
+
+            if count_points > 0:
                 print(f"{alias} has {count_points} features in {iteration_partition}")
 
                 arcpy.CalculateField_management(
@@ -662,7 +682,7 @@ class PartitionIterator:
                     f"iteration partition {input_features_within_distance_of_partition_selection} appended to {input_data_iteration_selection}"
                 )
                 # Return the processed input features and a flag indicating successful operation
-                return aliases_with_features, True
+                return True
             else:
                 # Loads in dummy feature for this alias for this iteration and sets dummy_used = True
                 self.update_empty_alias_type_with_dummy_file(
@@ -673,14 +693,14 @@ class PartitionIterator:
                     f"iteration partition {object_id} has no features for {alias} in the partition feature"
                 )
             # If there are no inputs to process, return None for the aliases and a flag indicating no input was present.
-            return None, False
+            return False
 
     def _process_inputs_in_partition(self, aliases, iteration_partition, object_id):
         inputs_present_in_partition = False
         for alias in aliases:
             if "input_copy" in self.nested_alias_type_data[alias]:
                 # Using process_input_features to check whether inputs are present
-                _, input_present = self.process_input_features(
+                input_present = self.process_input_features(
                     alias, iteration_partition, object_id
                 )
                 # Sets inputs_present_in_partition as True if any alias in partition has input present. Otherwise it remains False.
@@ -707,29 +727,36 @@ class PartitionIterator:
                 search_distance=self.search_distance,
             )
 
-            self.configure_alias_and_type(
-                alias=alias,
-                type_name="context",
-                type_path=context_data_iteration_selection,
+            count_points = int(
+                arcpy.management.GetCount(context_data_iteration_selection).getOutput(0)
             )
 
-    def _process_context_features_and_others(
-        self, aliases, iteration_partition, object_id
-    ):
-        for alias in aliases:
-            if "context_copy" not in self.nested_alias_type_data[alias]:
+            self.nested_alias_type_data[alias]["count"] = count_points
+
+            if count_points > 0:
+                print(f"{alias} has {count_points} features in {iteration_partition}")
+
+                self.configure_alias_and_type(
+                    alias=alias,
+                    type_name="context",
+                    type_path=context_data_iteration_selection,
+                )
+            else:
                 # Loads in dummy feature for this alias for this iteration and sets dummy_used = True
                 self.update_empty_alias_type_with_dummy_file(
                     alias,
                     type_info="context",
                 )
                 print(
-                    f"iteration partition {object_id} has no context features for {alias} in the partition feature"
+                    f"iteration partition {object_id} has no features for {alias} in the partition feature"
                 )
-            else:
-                self.process_context_features(alias, iteration_partition, object_id)
 
-    def format_time(self, seconds):
+    def _process_context_features(self, aliases, iteration_partition, object_id):
+        for alias in aliases:
+            self.process_context_features(alias, iteration_partition, object_id)
+
+    @staticmethod
+    def format_time(seconds):
         """
         Convert seconds to a formatted string: HH:MM:SS.
 
@@ -795,8 +822,8 @@ class PartitionIterator:
                 input_params = metadata.get("inputs", [])
                 output_params = metadata.get("outputs", [])
 
-                print(f"\nResolving IO Params for object_id {object_id}")
-                print(f"Before resolving: {custom_func['params']}")
+                # print(f"\nResolving IO Params for object_id {object_id}")
+                # print(f"Before resolving: {custom_func['params']}")
 
                 self.resolve_io_params(
                     param_type="input",
@@ -811,7 +838,7 @@ class PartitionIterator:
                     object_id=object_id,
                 )
 
-                print(f"After resolving: {custom_func['params']}")
+                # print(f"After resolving: {custom_func['params']}")
 
     def resolve_io_params(self, param_type, params, custom_func, object_id):
         """
@@ -841,9 +868,9 @@ class PartitionIterator:
             else:
                 custom_func["params"][param] = resolved_paths
 
-            print(
-                f"Resolved {param_type} path for {param}: {custom_func['params'][param]}"
-            )
+            # print(
+            #     f"Resolved {param_type} path for {param}: {custom_func['params'][param]}"
+            # )
 
     def _handle_tuple_param(self, param_info, object_id):
         """
@@ -878,8 +905,7 @@ class PartitionIterator:
             )
 
         self.configure_alias_and_type(alias, alias_type, resolved_path)
-        # print(f"This is object_id {object_id}")
-        # print(f"Added new path for {param_info}: {resolved_path}")
+
         return resolved_path
 
     def construct_path_for_alias_type(self, alias, alias_type, object_id):
@@ -925,7 +951,7 @@ class PartitionIterator:
                 instance = func_class(**class_params)
                 # Call the method with the required parameters
                 method(instance, **method_params)
-                resolved_params = {**class_params, **method_params}
+
             else:
                 # Handle standalone functions
                 method = custom_func["func"]
@@ -935,10 +961,43 @@ class PartitionIterator:
                 resolved_params = {param: path for param, path in func_params.items()}
 
                 # Log the function parameters
-                print(f"Function parameters for {method.__name__}: {resolved_params}")
+                print(f"Function parameters for {method.__name__}:")
+                pprint.pprint(resolved_params, indent=4)
 
                 # Execute the function with resolved parameters
                 method(**resolved_params)
+
+    def resilient_execute_custom_functions(self, object_id):
+        """
+        Helper function to execute custom functions with retry logic to handle potential failures.
+
+        Args:
+            object_id (int): The current object_id being processed (for logging).
+            error_log (dict): A dictionary to store error information for each iteration.
+        """
+        max_retries = 50
+
+        for attempt in range(max_retries):
+            try:
+                self.execute_custom_functions()
+                break  # If successful, exit the retry loop
+            except Exception as e:
+                error_message = str(e)
+                print(f"Attempt {attempt + 1} failed with error: {error_message}")
+
+                # Initialize the log for this iteration if not already done
+                if object_id not in self.error_log:
+                    self.error_log[object_id] = {
+                        "Number of retries": 0,
+                        "Error Messages": {},
+                    }
+
+                # Update the log with the retry attempt and error message
+                self.error_log[object_id]["Number of retries"] += 1
+                self.error_log[object_id]["Error Messages"][attempt + 1] = error_message
+
+                if attempt + 1 == max_retries:
+                    print("Max retries reached. Moving to next iteration.")
 
     def append_iteration_to_final(self, alias, object_id):
         # Guard clause if alias doesn't exist in nested_final_outputs
@@ -988,12 +1047,43 @@ class PartitionIterator:
                     schema_type="NO_TEST",
                 )
 
+    @staticmethod
+    def delete_fields(feature_class_path, fields_to_delete):
+        """
+        Deletes specified fields from the given feature class if they exist.
+
+        :param feature_class_path: The path to the feature class.
+        :param fields_to_delete: A list of field names to delete.
+        """
+        for field_name in fields_to_delete:
+            try:
+                # Check if the field exists
+                if arcpy.ListFields(feature_class_path, field_name):
+                    # Delete the field if it exists
+                    arcpy.management.DeleteField(feature_class_path, field_name)
+                    print(f"Field '{field_name}' deleted successfully.")
+                else:
+                    print(f"Field '{field_name}' does not exist.")
+            except arcpy.ExecuteError as e:
+                print(f"An error occurred while deleting field '{field_name}': {e}")
+
+    def cleanup_final_outputs(self):
+        """
+        Cleanup function to delete unnecessary fields from final output feature classes.
+        """
+        fields_to_delete = [self.PARTITION_FIELD]
+
+        for alias, output_paths in self.nested_final_outputs.items():
+            for output_type, feature_class_path in output_paths.items():
+                print(f"Cleaning up fields in {feature_class_path}...")
+                self.delete_fields(feature_class_path, fields_to_delete)
+
     def partition_iteration(self):
         aliases = self.nested_alias_type_data.keys()
         self.find_maximum_object_id()
 
         self.create_dummy_features(types_to_include=["input_copy", "context_copy"])
-        self.initialize_dummy_used()
+        self.reset_dummy_used()
 
         self.delete_iteration_files(*self.iteration_file_paths_list)
         self.iteration_file_paths_list.clear()
@@ -1004,6 +1094,7 @@ class PartitionIterator:
         }
 
         for object_id in range(1, self.max_object_id + 1):
+            self.current_iteration_id = object_id
             self.iteration_start_time = time.time()
             print(f"\nProcessing Partition: {object_id} out of {self.max_object_id}")
             self.reset_dummy_used()
@@ -1021,16 +1112,16 @@ class PartitionIterator:
             )
 
             if inputs_present_in_partition:
-                self._process_context_features_and_others(
-                    aliases, iteration_partition, object_id
-                )
+                self._process_context_features(aliases, iteration_partition, object_id)
                 self.find_io_params_custom_logic(object_id)
                 self.export_dictionaries_to_json(
                     file_name="iteration",
                     iteration=True,
                     object_id=object_id,
                 )
-                self.execute_custom_functions()
+
+                self.resilient_execute_custom_functions(object_id)
+
             if inputs_present_in_partition:
                 for alias in aliases:
                     self.append_iteration_to_final(alias, object_id)
@@ -1061,6 +1152,8 @@ class PartitionIterator:
         print("\nStarting on Partition Iteration...")
         self.partition_iteration()
         self.export_dictionaries_to_json(file_name="post_runtime")
+        self.cleanup_final_outputs()
+        self.save_error_log(self.error_log)
 
 
 if __name__ == "__main__":
@@ -1227,7 +1320,7 @@ if __name__ == "__main__":
     )
 
     # Run the partition iterator
-    # partition_iterator.run()
+    partition_iterator.run()
 
     # Instantiate PartitionIterator with necessary parameters
     partition_iterator_2 = PartitionIterator(
@@ -1241,4 +1334,4 @@ if __name__ == "__main__":
     )
 
     # Run the partition iterator
-    partition_iterator_2.run()
+    # partition_iterator_2.run()

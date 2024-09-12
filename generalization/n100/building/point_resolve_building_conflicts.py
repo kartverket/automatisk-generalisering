@@ -1,4 +1,6 @@
 # Importing modules
+from xml.sax.handler import feature_validation
+
 import arcpy
 
 # Importing custom files
@@ -15,6 +17,8 @@ from custom_tools.general_tools.partition_iterator import PartitionIterator
 from custom_tools.generalization_tools.building.resolve_building_conflicts import (
     ResolveBuildingConflicts,
 )
+from custom_tools.general_tools.polygon_processor import PolygonProcessor
+from custom_tools.general_tools.geometry_tools import GeometryValidator
 
 
 # Importing environment settings
@@ -33,7 +37,38 @@ def main():
     This script resolves building conflicts, both building polygons and points
     """
     environment_setup.main()
+    transforming_points_squares()
+    fixing_potential_geometry_errors()
+
     resolve_building_conflicts()
+
+
+def transforming_points_squares():
+    polygon_processor = PolygonProcessor(
+        input_building_points=Building_N100.point_displacement_with_buffer___merged_buffer_displaced_points___n100_building.value,
+        output_polygon_feature_class=Building_N100.point_resolve_building_conflicts___building_points_squares___n100_building.value,
+        building_symbol_dimensions=N100_Symbology.building_symbol_dimensions.value,
+        symbol_field_name="symbol_val",
+        index_field_name="OBJECTID",
+    )
+    polygon_processor.run()
+
+
+def fixing_potential_geometry_errors():
+    input_features_validation = {
+        "building_pints": Building_N100.point_resolve_building_conflicts___building_points_squares___n100_building.value,
+        "building_polygons": Building_N100.polygon_resolve_building_conflicts___building_polygons_final___n100_building.value,
+        "road": Building_N100.data_preparation___unsplit_roads___n100_building.value,
+        "railroad_tracks": Building_N100.data_selection___railroad_tracks_n100_input_data___n100_building.value,
+        "railroad_stations": Building_N100.data_preparation___railway_stations_to_polygons___n100_building.value,
+        "begrensningskurver": Building_N100.data_preparation___processed_begrensningskurve___n100_building.value,
+    }
+
+    data_validation = GeometryValidator(
+        input_features=input_features_validation,
+        output_table_path=Building_N100.point_resolve_building_conflicts___geometry_validation___n100_building.value,
+    )
+    data_validation.check_repair_sequence()
 
 
 def resolve_building_conflicts():
@@ -86,7 +121,7 @@ def resolve_building_conflicts():
     inputs = {
         building_points: [
             "input",
-            Building_N100.point_displacement_with_buffer___merged_buffer_displaced_points___n100_building.value,
+            Building_N100.point_resolve_building_conflicts___building_points_squares___n100_building.value,
         ],
         building_polygons: [
             "input",
@@ -98,7 +133,7 @@ def resolve_building_conflicts():
         ],
         railway: [
             "context",
-            input_n100.Bane,
+            Building_N100.data_selection___railroad_tracks_n100_input_data___n100_building.value,
         ],
         railway_station: [
             "context",
@@ -196,7 +231,7 @@ def resolve_building_conflicts():
         root_file_partition_iterator=Building_N100.point_resolve_building_conflicts___root_file___n100_building.value,
         scale=env_setup.global_config.scale_n100,
         dictionary_documentation_path=Building_N100.point_resolve_building_conflicts___documentation___building_n100.value,
-        feature_count="8000",
+        feature_count="100000",
     )
 
     resolve_building_conflicts_partition_iteration.run()
