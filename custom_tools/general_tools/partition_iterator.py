@@ -28,12 +28,10 @@ from constants.n100_constants import N100_Symbology, N100_SQLResources, N100_Val
 
 class PartitionIterator:
     """
-    A class designed to manage and execute custom partition-based logic on geospatial datasets.
-
-    This class supports processing partitioned geospatial datasets, executing custom functions, and handling
-    input/output data across multiple iterations. Each function configured in `custom_functions` is expected
-    to work with specific input and output parameters, which are defined using tuples of (alias, type). These
-    parameters allow the class to automatically handle paths to input and output datasets.
+    This class handles processing of processing intense operations for large data sources using partitions.
+    Differentiating between which data is important and which are needed for context it processes as little
+    data as possible saving time. It then iterates over the partitions selecting data, and doing any amount
+    of logic on the selections, finally appending the defined result to an output file.
 
     **Alias and Type Terminology:**
 
@@ -47,49 +45,47 @@ class PartitionIterator:
 
     **Setting Up `alias_path_data` and `alias_path_outputs`:**
 
-    - `alias_path_data`: A dictionary used to define the input datasets for the class. Each key is an alias,
+    - **`alias_path_data`**: A dictionary used to define the input datasets for the class. Each key is an alias,
       and its value is a list of tuples where the first element is a type, and the second element is the path to the dataset.
       The type of must be either 'input', 'context', 'reference' in `alias_path_data`. In a sense alias_path_data
       works to load in all the data you are going to use in an instance of partition iterator.
       So if you have different logics using inputs all the data used by all logics are entered in alias_path_data.
 
-      Example:
-      ```python
-      alias_path_data = {
-          "building_points": [("input", "path_to_building_points")],
-          "river": [("reference", "path_to_river")]
-      }
-      ```
 
-    - `alias_path_outputs`: A dictionary used to define the output datasets for the class. Each key is an alias,
+    - **`alias_path_outputs`**: A dictionary used to define the output datasets for the class. Each key is an alias,
       and its value is a list of tuples where the first element is the output type (e.g., 'processed_output') and
       the second element is the path where the output should be saved. This means that you can have multiple outputs
       for each alias.
 
-      Example:
-      ```python
-      alias_path_outputs = {
-          "building_points": [("processed_output", "path_to_processed_building_points")]
-      }
-      ```
-
     **Important: Reserved Types for Alias:**
 
     The following types are reserved for use by the class and should not be used to create new output types in logic configs:
-      - **"input"**: Used for input datasets provided to the class. Is the focus of the processing. If you want
-      - **"context"**: Represents context data used during processing, data of this type is
-      - **"reference"**: Represents reference datasets that are not directly processed but are required for context.
-      - **"input_copy"**: Internal type used to represent a copy of the input data.
-      - **"context_copy"**: Internal type used to represent a copy of the context data.
+      - **"input"**:
+        Used for input datasets provided to the class. Is the focus of the processing. If you in a config want to use
+        the partition selection of the original input data as an input this is the type which should be used.
+      - **"context"**:
+        Represents context data used during processing. This data is not central and will be selected based on proximity
+        to input data. If you in a config want to use the partition selection of the original context data as an input
+        this is the type which should be used.
+      - **"reference"**:
+        Represents reference datasets that are completely static and will not be processed in any way.
+        An example could be a lyrx file.
+      - **"input_copy"**:
+        Internal type used to hold a copy of the global input data. Should not be used in configs.
+      - **"context_copy"**:
+        Internal type used to hold a copy of the global context data. Should not be used in configs.
 
-    New types should only be created during the partitioning process for outputs, and they should not use any
-    of the reserved types listed above.
+    New types should only be created during the outputs from configs in custom_functions, and they should not use any
+    of the reserved types listed above if you intend it to be a new output. So for instance an operation doing a buffer
+    on the "input" type of alias should not have an output using the "input" type, but for instance "buffer". If you
+    in the next config want to use the buffer output, use the "buffer" type for the alias as an input for the next config.
 
     **Custom Function Configuration:**
 
     - The `custom_functions` parameter is a list of function configurations, where each configuration describes
       a custom function (standalone or a method of a class) to be executed during the partitioning process.
-    - The input and output parameters for each function are defined as tuples of `(alias, type)`. The alias refers
+    - The input and output parameters needs to be defined using the partition_io_decorator. A logic can have multiple
+      input and output parameter. for each function are defined as tuples of `(alias, type)`. The alias refers
       to a named dataset, while the type specifies whether the dataset is used as an input or an output.
     - Custom functions must be decorated with the `partition_io_decorator` to mark which parameters are inputs
       and which are outputs. Only parameters marked as inputs or outputs will be managed by this system.
@@ -139,100 +135,6 @@ class PartitionIterator:
             Whether to enable safe deletion of outputs during cleanup. Default is True.
         object_id_field (str, optional):
             The field representing the object ID used during partitioning. Default is "OBJECTID".
-
-    Methods:
-        run():
-            Orchestrates the entire partitioning process, including input data preparation, partition creation,
-            custom function execution, and final output generation.
-        partition_iteration():
-            Handles the iteration over data partitions, executing custom logic for each partition.
-        execute_custom_functions():
-            Executes the custom functions with resolved input/output paths for the current iteration.
-        find_io_params_custom_logic(object_id: int):
-            Resolves input/output paths for custom functions based on the current partition.
-        ...
-
-    Examples:
-        Example 1:
-
-        ```python
-        inputs = {
-            "building_points": [
-                "input",
-                "path_to_building_points"
-            ],
-            "river": [
-                "reference",
-                "path_to_river"
-            ]
-        }
-
-        outputs = {
-            "building_points": [
-                "processed_points",
-                "path_to_output_points"
-            ]
-        }
-
-        select_hospitals_config = {
-            "func": custom_arcpy.select_attribute_and_make_permanent_feature,
-            "params": {
-                "input_layer": ("building_points", "input"),
-                "output_name": ("building_points", "hospitals_selection"),
-                "expression": "symbol_val IN (1, 2, 3)",
-            }
-        }
-
-        partition_iterator = PartitionIterator(
-            alias_path_data=inputs,
-            alias_path_outputs=outputs,
-            custom_functions=[select_hospitals_config],
-            root_file_partition_iterator="root_path",
-            scale="1:50000",
-            dictionary_documentation_path="documentation_path",
-        )
-
-        partition_iterator.run()
-        ```
-
-        Example 2:
-
-        ```python
-        inputs = {
-            "land_cover": [
-                "input",
-                "path_to_land_cover"
-            ]
-        }
-
-        outputs = {
-            "land_cover": [
-                "processed_land_cover",
-                "path_to_processed_land_cover"
-            ]
-        }
-
-        process_land_cover = {
-            "class": LandCoverProcessor,
-            "method": "run",
-            "params": {
-                "input_land_cover": ("land_cover", "input"),
-                "output_processed_land_cover": ("land_cover", "processed_land_cover"),
-            }
-        }
-
-        partition_iterator = PartitionIterator(
-            alias_path_data=inputs,
-            alias_path_outputs=outputs,
-            custom_functions=[process_land_cover],
-            root_file_partition_iterator="root_path",
-            scale="1:50000",
-            dictionary_documentation_path="documentation_path",
-        )
-
-        partition_iterator.run()
-        ```
-
     """
 
     # Class-level constants
@@ -257,13 +159,53 @@ class PartitionIterator:
         object_id_field: str = "OBJECTID",
     ):
         """
-        Initialize the PartitionIterator with input datasets for partitioning and processing.
+        Initializes the PartitionIterator with input and output datasets, custom functions, and configuration
+        for partitioning and processing.
 
-        :param alias_path_data: A nested dictionary of input feature class paths with their aliases.
-        :param root_file_partition_iterator: Base path for in progress outputs.
-        :param alias_path_outputs: A nested dictionary of output feature class for final results.
-        :param feature_count: Feature count for cartographic partitioning.
-        :param partition_method: Method used for creating cartographic partitions.
+        Args:
+            alias_path_data (Dict[str, Tuple[str, str]]):
+                A dictionary mapping aliases (names for datasets) to their type and dataset path.
+                Types should be either 'input', 'context', or 'reference'. This parameter sets up the data
+                that will be used across all iterations and logics.
+
+            alias_path_outputs (Dict[str, Tuple[str, str]]):
+                A dictionary mapping aliases to their output type and path where results will be saved.
+                This defines how and where outputs are stored after each iteration of partitioning.
+
+            root_file_partition_iterator (str):
+                The base path for storing intermediate outputs during partitioning.
+
+            custom_functions (list, optional):
+                A list of configurations for custom functions that will be executed during the partitioning process.
+                Each function must be decorated with `partition_io_decorator` and have its input/output parameters
+                specified. Defaults to None.
+
+            dictionary_documentation_path (str, optional):
+                The path where documentation related to the partitioning process (e.g., JSON logs) will be stored.
+                Defaults to None.
+
+            feature_count (str, optional):
+                The maximum number of features allowed in each partition. Defaults to "15000".
+
+            partition_method (Literal['FEATURES', 'VERTICES'], optional):
+                The method used to create partitions, either by feature count ('FEATURES') or vertices ('VERTICES').
+                Defaults to 'FEATURES'.
+
+            search_distance (str, optional):
+                The search distance used to select context features relative to the input features. Defaults to "500 Meters".
+
+            context_selection (bool, optional):
+                Whether to enable context feature selection based on proximity to input features. Defaults to True.
+
+            delete_final_outputs (bool, optional):
+                Whether to delete existing final outputs before starting the partitioning process. Defaults to True.
+
+            safe_output_final_cleanup (bool, optional):
+                Whether to ensure outputs are deleted safely during cleanup by verifying their directory.
+                Defaults to True.
+
+            object_id_field (str, optional):
+                The field representing the object ID used during partitioning. Defaults to "OBJECTID".
         """
 
         # Raw inputs and initial setup
@@ -1405,12 +1347,6 @@ class PartitionIterator:
                     - Exports data from the iteration to JSON.
                     - Executes custom functions.
                     - Appends the output of the current iteration to the final outputs.
-            - Tracks and logs the time taken for each iteration.
-
-        Why:
-            This method controls the process of iterating through partitions, executing custom logic, and
-            accumulating results. It ensures that each partition is processed individually and combined
-            into final outputs.
         """
 
         aliases = self.nested_alias_type_data.keys()
@@ -1477,10 +1413,6 @@ class PartitionIterator:
             - Creates cartographic partitions to organize the data.
             - Runs the partition iteration process by calling `partition_iteration`.
             - Once iterations are complete, it cleans up final outputs, and logs any errors that occurred.
-
-        Why:
-            This function acts as the main entry point for running the class. It handles the entire process from
-            initializing the data to running the partitioning iterations and finalizing the output.
         """
 
         self.total_start_time = time.time()
