@@ -5,14 +5,58 @@ from typing import Union, List, Dict, Tuple
 from env_setup import environment_setup
 from constants.n100_constants import N100_Symbology, N100_SQLResources, N100_Values
 from file_manager.n100.file_manager_buildings import Building_N100
-from input_data import input_n100
-from custom_tools.general_tools import custom_arcpy
 from custom_tools.general_tools.line_to_buffer_symbology import LineToBufferSymbology
 from custom_tools.general_tools.polygon_processor import PolygonProcessor
 from custom_tools.decorators.partition_io_decorator import partition_io_decorator
 
 
 class BufferDisplacement:
+    """
+    This class handles the displacement of building points relative to road buffers based on specified buffer increments.
+    It processes multiple features, mainly focusing on roads taking into account varied symbology width for roads,
+    displacing building points away from roads and other barriers, while iteratively calculating buffer increments.
+
+    **Buffer Displacement Logic:**
+
+    - **Road Buffers:** Buffers are created for road features based on a factor and a fixed buffer addition value.
+    - **Building Points:** Building points are processed by converting them into polygons, erasing any that overlap
+    with the generated road buffers or other barrier features, and then converting them back into points.
+    - **Miscellaneous Objects:** Optional miscellaneous features can be buffered along with roads, and merged into a
+    unified barrier layer to control building point displacement.
+
+    **Increment Calculation:**
+    The buffer increments are calculated based on the largest road dimension and building symbol dimensions. The process
+    ensures that buffers gradually increase up to the target displacement value, while adhering to a set tolerance level.
+
+    **Work File Management:**
+    The class can optionally store working files either in memory or on disk, depending on the parameters provided. It
+    can also automatically clean up working files if unless keep_work_files is set to False.
+
+    Args:
+        input_road_lines (str):
+            Path to the input road line features to be buffered.
+        input_building_points (str):
+            Path to the input building points that will be displaced.
+        output_building_points (str):
+            Path where the final displaced building points will be stored.
+        sql_selection_query (dict):
+            A dictionary where the keys are  SQL queries to select from the input road features based on attribute values,
+            and the values are the corresponding buffer widths representing the road symbology.
+        root_file (str):
+            The base path for storing work files, required if `write_work_files_to_memory` is False or
+            `keep_work_files` is True.
+        buffer_displacement_meter (int, optional):
+            The buffer displacement distance in meters. Default is 30 meters.
+        building_symbol_dimensions (Dict[int, Tuple[int, int]], optional):
+            A dictionary mapping building symbols to their dimensions, used to ensure displacement calculations account for building size.
+        input_misc_objects (Dict[str, List[Union[str, int]]], optional):
+            A dictionary of miscellaneous objects that will also be buffered, where each entry includes the feature name and a buffer width.
+        write_work_files_to_memory (bool, optional):
+            If True, work files are written to memory. Default is True.
+        keep_work_files (bool, optional):
+            If True, work files are retained after the process is complete. Default is False.
+    """
+
     def __init__(
         self,
         input_road_lines: str,
@@ -26,6 +70,13 @@ class BufferDisplacement:
         write_work_files_to_memory: bool = True,
         keep_work_files: bool = False,
     ):
+        """
+        Initialize the BufferDisplacement class with the necessary input data and configuration.
+
+        Args:
+            See class docstring.
+        """
+
         self.input_road_lines = input_road_lines
         self.input_building_points = input_building_points
         self.sql_selection_query = sql_selection_query
@@ -66,7 +117,9 @@ class BufferDisplacement:
         self.working_files_list_2 = []
 
     def initialize_work_file_location(self):
-        """Reset temporary file attributes."""
+        """
+        Determines the file location for temporary work files, either in memory or on disk, based on class parameters.
+        """
         temporary_file = "in_memory\\"
         permanent_file = f"{self.root_file}_"
         if self.root_file is None:
@@ -84,9 +137,10 @@ class BufferDisplacement:
         else:
             self.file_location = permanent_file
 
-    def finding_dimensions(self, buffer_displacement_meter):
+    def finding_dimensions(self, buffer_displacement_meter: int):
         """
-        Finds the smallest building symbol dimension and the largest road dimension.
+        Finds the smallest building symbol dimension and the largest road dimension to calculate the maximum
+        buffer tolerance and target displacement value to prevent loosing buildings due to large increases.
         """
         if not self.building_symbol_dimensions:
             raise ValueError("building_symbol_dimensions is required.")
@@ -104,7 +158,15 @@ class BufferDisplacement:
 
         self.target_value = self.largest_road_dimension + buffer_displacement_meter
 
-    def calculate_buffer_increments(self):
+    def calculate_buffer_increments(self) -> list:
+        """
+        What:
+            Calculates incremental buffer steps based on the road and building dimensions and tolerance, ensuring that
+            buffer increments increase gradually until the target displacement value is reached.
+
+        Returns:
+            list: A list of tuples where each tuple contains a buffer factor and the corresponding buffer addition.
+        """
         iteration_buffer_factor = 0
 
         found_valid_increment = False
@@ -172,7 +234,13 @@ class BufferDisplacement:
         self, factor: Union[int, float], fixed_addition: Union[int, float]
     ):
         """
-        Processes a single buffer factor by creating buffers and displacing points.
+        What:
+            Processes a single buffer factor, creating buffers for the roads and any miscellaneous features, and then
+            displaces the building points based on the calculated buffers.
+
+        Args:
+            factor (Union[int, float]): The buffer factor to be applied.
+            fixed_addition (Union[int, float]): The fixed buffer addition value to be applied.
         """
         factor_name = str(factor).replace(".", "_")
         fixed_addition_name = str(fixed_addition).replace(".", "_")
@@ -257,15 +325,21 @@ class BufferDisplacement:
     def delete_working_files(self, *file_paths):
         """
         Deletes multiple feature classes or files.
+
+        Args:
+            *file_paths: Paths of files to be deleted.
         """
         for file_path in file_paths:
             self.delete_feature_class(file_path)
             print(f"Deleted file: {file_path}")
 
     @staticmethod
-    def delete_feature_class(feature_class_path):
+    def delete_feature_class(feature_class_path: str):
         """
         Deletes a feature class if it exists.
+
+        Args:
+            feature_class_path (str): Path to the feature class to be deleted.
         """
         if arcpy.Exists(feature_class_path):
             arcpy.management.Delete(feature_class_path)
@@ -279,6 +353,10 @@ class BufferDisplacement:
         output_param_names=["output_building_points"],
     )
     def run(self):
+        """
+        Executes the buffer displacement process, running the calculations for buffer increments, applying buffers,
+        displacing building points, and writing the final output.
+        """
         self.initialize_work_file_location()
         self.finding_dimensions(self.buffer_displacement_meter)
         self.calculate_buffer_increments()
@@ -332,3 +410,7 @@ if __name__ == "__main__":
         keep_work_files=False,
     )
     point_displacement.run()
+
+    point_displacement.finding_dimensions(point_displacement.buffer_displacement_meter)
+    point_displacement.calculate_buffer_increments()
+    print(type(point_displacement.increments))
