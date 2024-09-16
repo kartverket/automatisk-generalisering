@@ -163,49 +163,7 @@ class PartitionIterator:
         for partitioning and processing.
 
         Args:
-            alias_path_data (Dict[str, Tuple[str, str]]):
-                A dictionary mapping aliases (names for datasets) to their type and dataset path.
-                Types should be either 'input', 'context', or 'reference'. This parameter sets up the data
-                that will be used across all iterations and logics.
-
-            alias_path_outputs (Dict[str, Tuple[str, str]]):
-                A dictionary mapping aliases to their output type and path where results will be saved.
-                This defines how and where outputs are stored after each iteration of partitioning.
-
-            root_file_partition_iterator (str):
-                The base path for storing intermediate outputs during partitioning.
-
-            custom_functions (list, optional):
-                A list of configurations for custom functions that will be executed during the partitioning process.
-                Each function must be decorated with `partition_io_decorator` and have its input/output parameters
-                specified. Defaults to None.
-
-            dictionary_documentation_path (str, optional):
-                The path where documentation related to the partitioning process (e.g., JSON logs) will be stored.
-                Defaults to None.
-
-            feature_count (str, optional):
-                The maximum number of features allowed in each partition. Defaults to "15000".
-
-            partition_method (Literal['FEATURES', 'VERTICES'], optional):
-                The method used to create partitions, either by feature count ('FEATURES') or vertices ('VERTICES').
-                Defaults to 'FEATURES'.
-
-            search_distance (str, optional):
-                The search distance used to select context features relative to the input features. Defaults to "500 Meters".
-
-            context_selection (bool, optional):
-                Whether to enable context feature selection based on proximity to input features. Defaults to True.
-
-            delete_final_outputs (bool, optional):
-                Whether to delete existing final outputs before starting the partitioning process. Defaults to True.
-
-            safe_output_final_cleanup (bool, optional):
-                Whether to ensure outputs are deleted safely during cleanup by verifying their directory.
-                Defaults to True.
-
-            object_id_field (str, optional):
-                The field representing the object ID used during partitioning. Defaults to "OBJECTID".
+            See class docstring.
         """
 
         # Raw inputs and initial setup
