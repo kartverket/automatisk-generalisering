@@ -105,8 +105,26 @@
 <span id="custom-tools-decorators-partition-io-decorator-module"></span><h2>custom_tools.decorators.partition_io_decorator module<a class="headerlink" href="#module-custom_tools.decorators.partition_io_decorator" title="Link to this heading"></a></h2>
 <dl class="py function">
 <dt class="sig sig-object py" id="custom_tools.decorators.partition_io_decorator.partition_io_decorator">
-<span class="sig-prename descclassname"><span class="pre">custom_tools.decorators.partition_io_decorator.</span></span><span class="sig-name descname"><span class="pre">partition_io_decorator</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">input_param_names</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">output_param_names</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/custom_tools/decorators/partition_io_decorator.html#partition_io_decorator"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#custom_tools.decorators.partition_io_decorator.partition_io_decorator" title="Link to this definition"></a></dt>
-<dd></dd></dl>
+<span class="sig-prename descclassname"><span class="pre">custom_tools.decorators.partition_io_decorator.</span></span><span class="sig-name descname"><span class="pre">partition_io_decorator</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">input_param_names</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">List</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">output_param_names</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">List</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">Callable</span></span></span><a class="reference internal" href="../_modules/custom_tools/decorators/partition_io_decorator.html#partition_io_decorator"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#custom_tools.decorators.partition_io_decorator.partition_io_decorator" title="Link to this definition"></a></dt>
+<dd><dl class="simple">
+<dt>What:</dt><dd><p>A decorator that adds metadata about input and output parameters for partitioning logic functions.</p>
+</dd>
+</dl>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>input_param_names</strong> (<em>Optional</em><em>[</em><em>List</em><em>[</em><em>str</em><em>]</em><em>]</em>) – A list of input parameter names for the decorated function.</p></li>
+<li><p><strong>output_param_names</strong> (<em>Optional</em><em>[</em><em>List</em><em>[</em><em>str</em><em>]</em><em>]</em>) – A list of output parameter names for the decorated function.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>The decorated function with added metadata attributes for inputs and outputs.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Callable</p>
+</dd>
+</dl>
+</dd></dl>
 
 </section>
 <section id="module-custom_tools.decorators.timing_decorator">

@@ -102,13 +102,11 @@
         <span class="n">root_file</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">        Initializes the LineToBufferSymbology class with the specified parameters.</span>
+<span class="sd">        What:</span>
+<span class="sd">            Initializes the LineToBufferSymbology class with the specified parameters.</span>
 
-<span class="sd">        :param input_road_lines: Path to the input road lines.</span>
-<span class="sd">        :param sql_selection_query: Dictionary containing SQL queries and associated buffer widths.</span>
-<span class="sd">        :param output_road_buffer: Path to save the output road buffer.</span>
-<span class="sd">        :param buffer_factor: Multiplicative factor to adjust buffer widths, avoid using 0.</span>
-<span class="sd">        :param fixed_buffer_addition: Additional fixed width to add to buffer widths.</span>
+<span class="sd">        Args:</span>
+<span class="sd">            See class docstring.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">input_road_lines</span> <span class="o">=</span> <span class="n">input_road_lines</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">sql_selection_query</span> <span class="o">=</span> <span class="n">sql_selection_query</span>
@@ -133,9 +131,17 @@
 
 <div class="viewcode-block" id="LineToBufferSymbology.selecting_different_road_lines">
 <a class="viewcode-back" href="../../../generated_docs/custom_tools.general_tools.html#custom_tools.general_tools.line_to_buffer_symbology.LineToBufferSymbology.selecting_different_road_lines">[docs]</a>
-    <span class="k">def</span> <span class="nf">selecting_different_road_lines</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">sql_query</span><span class="p">,</span> <span class="n">selection_output_name</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">selecting_different_road_lines</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">sql_query</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">selection_output_name</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">        Selects road lines based on the provided SQL query and creates a feature layer.</span>
+<span class="sd">        What:</span>
+<span class="sd">            Selects road lines based on the provided SQL query and creates a feature layer or a permanent feature class</span>
+<span class="sd">            depending on the `write_work_files_to_memory` flag.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            sql_query (str): The SQL query string used to select the road lines.</span>
+<span class="sd">            selection_output_name (str): The name for the output feature layer or file.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
 
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">write_work_files_to_memory</span><span class="p">:</span>

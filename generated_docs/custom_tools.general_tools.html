@@ -515,8 +515,20 @@ Can handle a list of file names or a list of lists of file names.</p>
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
 <dl class="py method">
 <dt class="sig sig-object py" id="custom_tools.general_tools.line_to_buffer_symbology.LineToBufferSymbology.selecting_different_road_lines">
-<span class="sig-name descname"><span class="pre">selecting_different_road_lines</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">sql_query</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">selection_output_name</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/custom_tools/general_tools/line_to_buffer_symbology.html#LineToBufferSymbology.selecting_different_road_lines"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#custom_tools.general_tools.line_to_buffer_symbology.LineToBufferSymbology.selecting_different_road_lines" title="Link to this definition"></a></dt>
-<dd><p>Selects road lines based on the provided SQL query and creates a feature layer.</p>
+<span class="sig-name descname"><span class="pre">selecting_different_road_lines</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">sql_query</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">selection_output_name</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/custom_tools/general_tools/line_to_buffer_symbology.html#LineToBufferSymbology.selecting_different_road_lines"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#custom_tools.general_tools.line_to_buffer_symbology.LineToBufferSymbology.selecting_different_road_lines" title="Link to this definition"></a></dt>
+<dd><dl class="simple">
+<dt>What:</dt><dd><p>Selects road lines based on the provided SQL query and creates a feature layer or a permanent feature class
+depending on the <cite>write_work_files_to_memory</cite> flag.</p>
+</dd>
+</dl>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>sql_query</strong> (<em>str</em>) – The SQL query string used to select the road lines.</p></li>
+<li><p><strong>selection_output_name</strong> (<em>str</em>) – The name for the output feature layer or file.</p></li>
+</ul>
+</dd>
+</dl>
 </dd></dl>
 
 <dl class="py method">
