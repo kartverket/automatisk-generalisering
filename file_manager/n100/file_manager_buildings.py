@@ -305,10 +305,10 @@ class Building_N100(Enum):
         )
     )
 
-    data_preperation___matrikkel_n50_touristcabins_points_merged___n100_building = (
+    data_preparation___merged_building_points___n100_building = (
         file_manager.generate_file_name_gdb(
             script_source_name=data_preparation,
-            description="matrikkel_n50_points_touristcabins_merged",
+            description="merged_building_points",
         )
     )
 
