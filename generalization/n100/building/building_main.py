@@ -26,7 +26,15 @@ from generalization.n100.building import finalizing_buildings
 # Main function that runs all the building scripts
 @timing_decorator
 def main():
-    """ """
+    """
+    What:
+        MORE DOCSTRING NEEDED: Runs the building generalization logic.
+    How:
+        data_preparation:
+            Prepares the input data for future building generalization processes, does spatial selections and coverts.
+    Why:
+        MORE DOCSTRING NEEDED: Because we need to processing building information so it is cartographic usable for N100 scale.
+    """
     environment_setup.main()
     data_preparation.main()
     simplify_polygons.main()

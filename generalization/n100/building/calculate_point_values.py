@@ -59,12 +59,12 @@ def adding_original_source_to_points():
     """
     # Adding a field to indicate that the merged building point and matrikkel does not come from building_polygon
     arcpy.AddField_management(
-        in_table=Building_N100.data_preperation___matrikkel_n50_touristcabins_points_merged___n100_building.value,
+        in_table=Building_N100.data_preparation___merged_building_points___n100_building.value,
         field_name="building_polygon",
         field_type="LONG",
     )
     arcpy.CalculateField_management(
-        in_table=Building_N100.data_preperation___matrikkel_n50_touristcabins_points_merged___n100_building.value,
+        in_table=Building_N100.data_preparation___merged_building_points___n100_building.value,
         field="building_polygon",
         expression="0",
     )
@@ -93,7 +93,7 @@ def merge_matrikkel_n50_touristcabins_with_points_from_grunnriss():
     # Merge the merged building point from n50 and matrikkel with points created from building_polygon
     arcpy.management.Merge(
         inputs=[
-            Building_N100.data_preperation___matrikkel_n50_touristcabins_points_merged___n100_building.value,
+            Building_N100.data_preparation___merged_building_points___n100_building.value,
             Building_N100.polygon_to_point___merged_points_final___n100_building.value,
         ],
         output=Building_N100.calculate_point_values___points_going_into_propagate_displacement___n100_building.value,

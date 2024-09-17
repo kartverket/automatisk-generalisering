@@ -35,7 +35,7 @@ class PolygonProcessor:
         output_polygon_feature_class (str):
             The path where the output polygon feature class will be saved.
         building_symbol_dimensions (dict):
-            A dictionary the key is the symbol_val and values are the dimensions of the building symbology.
+            A dictionary the key is the symbol_val and values are the dimensions (width, height) of the building symbology.
         symbol_field_name (str):
             The field in the input feature class that contains the building symbol type.
         index_field_name (str):

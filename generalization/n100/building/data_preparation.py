@@ -9,7 +9,6 @@ from input_data import input_other
 # Importing custom modules
 from file_manager.n100.file_manager_buildings import Building_N100
 from env_setup import environment_setup
-import env_setup.global_config
 import config
 from custom_tools.decorators.timing_decorator import timing_decorator
 from custom_tools.general_tools import custom_arcpy
@@ -28,8 +27,30 @@ from custom_tools.general_tools.geometry_tools import GeometryValidator
 @timing_decorator
 def main():
     """
-    Summary:
-        This is the main function of building data preparation, which aims to prepare the data for future building generalization processing.
+    What:
+        Prepares the input data for future building generalization processes, does spatial selections and coverts.
+    How:
+        data_selection:
+            Used for input datasets provided to the class. Is the focus of the processing. If you in a config want to use
+            the partition selection of the original input data as an input this is the type which should be used.
+        begrensningskurve_land_and_water_bodies:
+            Creates a modified water boundary feature creating a polygon where an offset is erased of the land boundary
+            depending on the size of the waterbody object, thin objects does not get this offset but wide waterbodies does.
+        unsplit_roads_and_make_buffer:
+            Unsplits the road feature to reduce the number of objects, reducing processing time.
+        railway_station_points_to_polygons:
+            Transforms the train station points to polygons representing their symbology size.
+        adding_matrikkel_points_to_areas_that_are_no_longer_urban:
+            Adds building points to the areas which no longer are urban areas in N100.
+        selecting_n50_points_not_in_urban_areas:
+            Making spatial selections of building points not intersecting with urban areas,
+            except for churches and hospitals which are kept no matter what.
+        selecting_polygons_not_in_urban_areas:
+            Adds building polygons which from areas which no longer are urban areas.
+        polygon_selections_based_on_size:
+            Selects building polygons based on their size (minimum 2500 m2) and converts small polygons to points.
+    Why:
+        Prepares the input data and files used in future processing steps.
     """
 
     environment_setup.main()
@@ -38,10 +59,10 @@ def main():
     unsplit_roads_and_make_buffer()
     railway_station_points_to_polygons()
     selecting_urban_areas_by_sql()
-    adding_matrikkel_points_to_areas_that_are_no_longer_urban_in_n100()
+    adding_matrikkel_points_to_areas_that_are_no_longer_urban()
     selecting_n50_points_not_in_urban_areas()
     adding_field_values_to_matrikkel()
-    merge_matrikkel_n50_and_touristcabins_points()
+    merge_building_points()
     selecting_polygons_not_in_urban_areas()
     reclassifying_polygon_values()
     polygon_selections_based_on_size()
@@ -49,6 +70,17 @@ def main():
 
 @timing_decorator
 def data_selection():
+    """
+    What:
+        Selects and copies the input data for the building generalization process.
+    How:
+        input_output_file_dict takes a dictionary where the keys are the input data paths, and the values are the
+        out paths for each data type. Depending on config.select_study_area is True or False it either copies the input
+        data to the out paths, or does a spatial selection to the out path
+    Why:
+        Makes sure that the input data is never modified, and that all future I/O's use the same paths regardless if
+        the script is run for global data or smaller subselection for logic testing.
+    """
     input_output_file_dict = {
         input_n100.BegrensningsKurve: Building_N100.data_selection___begrensningskurve_n100_input_data___n100_building.value,
         input_n100.ArealdekkeFlate: Building_N100.data_selection___land_cover_n100_input_data___n100_building.value,
@@ -185,14 +217,15 @@ def data_selection():
 @timing_decorator
 def begrensningskurve_land_and_water_bodies():
     """
-    Summary:
-        Processes land and water body features from the begrensningskurve dataset.
-
-    Details:
-        This function extracts non-river water features (e.g., lake edges, coastal contours) from the begrensningskurve dataset and nearby land features.
-        It selects these water features based on predefined object types and creates buffers around them.
-        Additionally, it selects land features adjacent to the water bodies and creates buffers around them as well.
-        Finally, it erases overlapping areas between land and water body buffers to delineate distinct land and water body regions.
+    What:
+        Creates a modified water boundary feature creating a polygon where an offset is erased of the land boundary
+        depending on the size of the waterbody object, thin objects does not get this offset but wide waterbodies does.
+    How:
+        Selects water features and creates a water feature polygon. Then depending on the ratio of ares to length
+        it either appends the objects to the final feature or creates a modified water feature polygon.
+    Why:
+        This allows for building objects to graphically slightly move into some water features making it easier
+        to keep buildings when placed between water and road features in future processing.
     """
 
     begrensningskurve = "begrensningskurve"
@@ -246,11 +279,7 @@ def begrensningskurve_land_and_water_bodies():
 @timing_decorator
 def unsplit_roads_and_make_buffer():
     """
-    Summary:
-        Unsplits road features.
-
-    Details:
-        This function unsplit road features in a specified feature class based on certain attributes.
+    Unsplits the road feature to reduce the number of objects, reducing processing time.
     """
 
     arcpy.UnsplitLine_management(
@@ -273,6 +302,9 @@ def unsplit_roads_and_make_buffer():
 
 @timing_decorator
 def railway_station_points_to_polygons():
+    """
+    Transforms the train station points to polygons representing their symbology size.
+    """
     arcpy.management.Copy(
         in_data=Building_N100.data_selection___railroad_tracks_n100_input_data___n100_building.value,
         out_data=Building_N100.data_preparation___railway_station_points_from_n100___n100_building.value,
@@ -318,6 +350,9 @@ def railway_station_points_to_polygons():
 
 @timing_decorator
 def selecting_urban_areas_by_sql():
+    """
+    Creates a polygon of urban areas which was urban areas in N50 but are no longer urban areas in N100.
+    """
     # Defining sql expression to select urban areas
 
     # Selecting urban areas from n100 using sql expression
@@ -351,8 +386,11 @@ def selecting_urban_areas_by_sql():
 
 
 @timing_decorator
-def adding_matrikkel_points_to_areas_that_are_no_longer_urban_in_n100():
-    # Selecting matrikkel building points in areas that were urban in n50, but are NOT longer urban in n100
+def adding_matrikkel_points_to_areas_that_are_no_longer_urban():
+    """
+    Adds building points to the areas which no longer are urban areas in N100.
+    """
+    # Selecting matrikkel building points in areas that were urban in n50, but are no longer urban in n100
     custom_arcpy.select_location_and_make_permanent_feature(
         input_layer=Building_N100.data_selection___matrikkel_input_data___n100_building.value,
         overlap_type=custom_arcpy.OverlapType.INTERSECT,
@@ -363,6 +401,10 @@ def adding_matrikkel_points_to_areas_that_are_no_longer_urban_in_n100():
 
 @timing_decorator
 def selecting_n50_points_not_in_urban_areas():
+    """
+    Making spatial selections of building points not intersecting with urban areas,
+    except for churches and hospitals which are kept no matter what.
+    """
     # Selecting n50 so they are not in urban areas
     custom_arcpy.select_location_and_make_permanent_feature(
         input_layer=Building_N100.data_selection___building_point_n50_input_data___n100_building.value,
@@ -391,12 +433,7 @@ def selecting_n50_points_not_in_urban_areas():
 @timing_decorator
 def adding_field_values_to_matrikkel():
     """
-    Summary:
-        Adds field values to matrikkel building points.
-
-    Details:
-        This function adds a new field called 'byggtyp_nbr' of type 'LONG' to the matrikkel building points dataset.
-        Then, it copies values from an existing field ('bygningstype') into the newly added 'byggtyp_nbr' field for each record.
+    Adds byggtyp_nbr fieldto matrikkel building points and poplates it based on existing bygningstype values.
     """
 
     # Adding transferring the NBR value to the matrikkel building points
@@ -413,16 +450,11 @@ def adding_field_values_to_matrikkel():
 
 
 @timing_decorator
-def merge_matrikkel_n50_and_touristcabins_points():
+def merge_building_points():
     """
-    Summary:
-        Merges points from the n50 building dataset, the matrikkel dataset and tourist cabins.
-
-    Details:
-        This function combines points from the n50 building dataset, the matrikkel dataset and the tourist cabins into a single feature class.
+    Merging building points to a single feature.
     """
 
-    # Merge the n50 building point, matrikkel and tourist cabins
     arcpy.management.Merge(
         inputs=[
             Building_N100.data_preparation___n50_points___n100_building.value,
@@ -430,27 +462,15 @@ def merge_matrikkel_n50_and_touristcabins_points():
             Building_N100.data_preparation___churches_and_hospitals_in_urban_areas___n100_building.value,
             Building_N100.data_selection___tourist_hut_n50_input_data___n100_building.value,
         ],
-        output=Building_N100.data_preperation___matrikkel_n50_touristcabins_points_merged___n100_building.value,
+        output=Building_N100.data_preparation___merged_building_points___n100_building.value,
     )
 
 
 @timing_decorator
 def selecting_polygons_not_in_urban_areas():
     """
-    Summary:
-        Selects polygons not within urban areas.
-
-    Details:
-        This function copies the input data to preserve the original fields, ensuring no modifications are made to the original dataset.
-        Then, it selects building polygons from the copied data based on their spatial relationship with a layer representing areas no longer classified as urban.
-        Polygons that do not intersect with the specified urban area layer are retained and stored as a new feature layer.
+    Adds building polygons which from areas which no longer are urban areas.
     """
-
-    # Copy the input data to not modify the original fields.
-    arcpy.management.Copy(
-        in_data=Building_N100.data_selection___building_polygon_n50_input_data___n100_building.value,
-        out_data=Building_N100.data_preparation___grunnriss_copy___n100_building.value,
-    )
 
     # Selecting n50 building points based on this new urban selection layer
     custom_arcpy.select_location_and_make_permanent_feature(
@@ -464,13 +484,7 @@ def selecting_polygons_not_in_urban_areas():
 @timing_decorator
 def reclassifying_polygon_values():
     """
-    Summary:
-        Reclassifies the values of hospitals and churches in the specified polygon layer to a new value (729), corresponding to "other buildings".
-
-    Details:
-        This function defines a reclassification scheme for hospitals and churches within a polygon layer. Hospitals and churches are identified by their respective values in the 'byggtyp_nbr' field.
-        These values (970, 719, and 671) are mapped to a new value (729) representing "other buildings" using a Python dictionary.
-        The reclassification is applied to the 'byggtyp_nbr' field.
+    Reclassifies the values of hospitals and churches in the specified polygon layer to a new value (729), corresponding to "other buildings".
     """
 
     # Reclassify the hospitals and churches to NBR value 729 ("other buildings" / "andre bygg")
@@ -492,13 +506,7 @@ def reclassifying_polygon_values():
 @timing_decorator
 def polygon_selections_based_on_size():
     """
-    Summary:
-        Selects building polygons based on their size and converts small polygons to points.
-
-    Details:
-        This function performs a selection on building polygons based on their size. It first defines a minimum size threshold of 2500 square units.
-        Then, it selects polygons that meet this threshold (polygons over or equal to 2500 square meters) and those that do not (polygons under 2500 square meters).
-        The selected polygons over the minimum size are retained for further processing, while the smaller polygons are transformed into points.
+    Selects building polygons based on their size (minimum 2500 m2) and converts small polygons to points.
     """
 
     # Selecting only building polygons over 2500 (the rest will be transformed to points due to size)
