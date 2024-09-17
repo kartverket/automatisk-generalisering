@@ -154,7 +154,6 @@ def buffer_displacement():
         alias_path_outputs=outputs,
         custom_functions=[buffer_displacement_config],
         root_file_partition_iterator=Building_N100.point_displacement_with_buffer___root_file___n100_building.value,
-        scale=env_setup.global_config.scale_n100,
         dictionary_documentation_path=Building_N100.point_displacement_with_buffer___documentation___building_n100.value,
         feature_count="1400000",
     )

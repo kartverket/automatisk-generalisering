@@ -14,64 +14,32 @@ from constants.n100_constants import N100_Symbology
 
 class PolygonProcessor:
     """
-    Example
-    -------
-    To use PolygonProcessor to convert building points to polygons:
+    What:
+        This class processes point data representing building locations to generate polygon feature classes,
+        using specified dimensions for each building symbol type. The result is a polygon feature class
+        with polygons sized according to the building's symbol type.
 
-    >>> building_symbol_dimensions = {1: (145, 145), 2: (195, 145)}
-    >>> polygon_processor = PolygonProcessor(
-    ...     input_building_points="path/to/input/building_points",
-    ...     output_polygon_feature_class="path/to/output/polygon_feature_class",
-    ...     building_symbol_dimensions=building_symbol_dimensions,
-    ...     symbol_field_name="symbol_type_field",
-    ...     index_field_name="object_id_field"
-    ... )
-    >>> polygon_processor.run()
+    How:
+        The class takes building points as input and using a dictionary where the key is the symbol_val and values
+        are the dimensions of the building symbology. This is used to create polygon geometries for each point.
+        Depending on the number of objects it is either run single process or parallel processing using batches.
+        The table information from the original data is kept using a join field to the output data.
 
-    Processes building point data to generate polygon feature classes keeping the attributes.
+    Why:
+        For some operations the geometric representation of building point symbology is needed. This class transforms
+        input building points to building polygons so that such operations can be done.
 
-    This class converts point geometries into polygon geometries based on given symbol dimensions.
-    It handles batch processing, joining additional fields, and cleaning up temporary data.
-
-    Parameters
-    ----------
-    input_building_points : str
-        The path to the input building points feature class.
-    output_polygon_feature_class : str
-        The path to the output polygon feature class.
-    building_symbol_dimensions : dict
-        A dictionary mapping symbol types to their width and height dimensions.
-    symbol_field_name : str
-        The name of the field in the input feature class that contains symbol type information.
-    index_field_name : str
-        The name of the field in the input feature class used for indexing during join operations.
-
-    Attributes
-    ----------
-    input_building_points : str
-        The input building points feature class.
-    output_polygon_feature_class : str
-        The output polygon feature class.
-    spatial_reference_system : SpatialReference
-        The spatial reference system used for the feature classes.
-    building_symbol_dimensions : dict
-        The dimensions for each symbol type.
-    symbol_field_name : str
-        The field name for symbol type.
-    index_field_name : str
-        The field name for indexing.
-    origin_id_field : str
-        The generated unique field name for joining operations.
-    IN_MEMORY_WORKSPACE : str
-        The in-memory workspace used for temporary storage.
-    TEMPORARY_FEATURE_CLASS_NAME : str
-        The name of the temporary feature class.
-    BATCH_PERCENTAGE : float
-        The percentage of the total data processed in each batch.
-    NUMBER_OF_SUBSETS : int
-        The number of subsets to divide the data into for processing.
-    PERCENTAGE_OF_CPU_CORES : float
-        The percentage of CPU cores to use for parallel processing.
+    Args:
+        input_building_points (str):
+            The path to the input feature class containing the building points.
+        output_polygon_feature_class (str):
+            The path where the output polygon feature class will be saved.
+        building_symbol_dimensions (dict):
+            A dictionary the key is the symbol_val and values are the dimensions of the building symbology.
+        symbol_field_name (str):
+            The field in the input feature class that contains the building symbol type.
+        index_field_name (str):
+            The field in the input feature class used for indexing during join operations.
     """
 
     # Initialization
@@ -83,6 +51,13 @@ class PolygonProcessor:
         symbol_field_name,
         index_field_name,
     ):
+        """
+        Initializes the PolygonProcessor with required inputs, including paths to the input and output feature
+        classes, symbol dimensions, and field names used in the process.
+
+        Args:
+            See class docstring.
+        """
         self.input_building_points = input_building_points
         self.output_polygon_feature_class = output_polygon_feature_class
         self.building_symbol_dimensions = building_symbol_dimensions
@@ -101,7 +76,19 @@ class PolygonProcessor:
         self.calculate_batch_params(input_building_points)
 
     # Utility Functions
-    def calculate_batch_params(self, input_building_points):
+    def calculate_batch_params(self, input_building_points: str):
+        """
+        What:
+            Calculates the batch size and the number of subsets for processing based on the number of
+            input building points.
+
+        How:
+            If the input dataset is small, processing is done in a single batch. For larger datasets,
+            it divides the data into subsets for more efficient parallel processing.
+
+        Args:
+            input_building_points (str): The input dataset.
+        """
         total_data_points = int(
             arcpy.GetCount_management(input_building_points).getOutput(0)
         )
@@ -115,7 +102,15 @@ class PolygonProcessor:
             self.BATCH_PERCENTAGE = 0.02
             self.NUMBER_OF_SUBSETS = 5
 
-    def generate_unique_field_name(self, dataset, base_name):
+    @staticmethod
+    def generate_unique_field_name(dataset: str, base_name: str):
+        """
+        What:
+            Retrieves the existing field names, and makes sure the added field is unique.
+        Args:
+            dataset (str): The path to the dataset.
+            base_name (str): the base name of the added field
+        """
         existing_field_names = [field.name for field in arcpy.ListFields(dataset)]
         unique_name = base_name
         while unique_name in existing_field_names:
@@ -123,17 +118,22 @@ class PolygonProcessor:
         return unique_name
 
     def setup_spatial_reference_and_origin_id(self):
+        """
+        Sets up the spatial reference system and generates a unique field name for the origin ID,
+        which is used in join operations.
+        """
         self.spatial_reference_system = arcpy.SpatialReference(
             environment_setup.project_spatial_reference
         )
         self.origin_id_field = self.generate_unique_field_name(
-            self.input_building_points, "match_id"
+            dataset=self.input_building_points, base_name="match_id"
         )
 
     @staticmethod
-    def convert_corners_to_wkt(polygon_corners):
+    def convert_corners_to_wkt(polygon_corners: list[tuple[float, float]]) -> str:
         """
-        Converts a list of polygon corner coordinates to a Well-Known Text (WKT) string.
+        What:
+            Converts a list of polygon corner coordinates to a Well-Known Text (WKT) string.
         Args:
             polygon_corners (list): A list of tuples representing the coordinates of the polygon corners.
         Returns:
@@ -143,9 +143,12 @@ class PolygonProcessor:
         return f"POLYGON (({coordinate_strings}))"
 
     # Core Processing Functions
-    def calculate_well_known_text_polygon(self, arguments):
+    def calculate_well_known_text_polygon(
+        self, arguments: tuple[int, float, float, int, int]
+    ) -> tuple[int, str]:
         """
-        Generates the Well-Known Text (WKT) representation of a polygon based on input arguments.
+        What:
+            Generates the Well-Known Text (WKT) representation of a polygon based on input arguments.
         Args:
             arguments (tuple): A tuple containing index, x-coordinate, y-coordinate, object ID, and symbol type.
         Returns:
@@ -172,8 +175,12 @@ class PolygonProcessor:
     # Data Handling and Batch Processing
     def create_output_feature_class_if_not_exists(self):
         """
-        Deletes and creates an output feature class.
-        This ensures that a fresh feature class is created each time the script runs.
+        What:
+            Creates a polygon feature output.
+
+        How:
+            If an existing output feature class is found, it is deleted. A new feature class is then created
+            with the appropriate schema and spatial reference.
         """
         if arcpy.Exists(self.output_polygon_feature_class):
             arcpy.management.Delete(self.output_polygon_feature_class)
@@ -194,9 +201,16 @@ class PolygonProcessor:
             field_type="LONG",
         )
 
-    def process_data_in_batches(self, well_known_text_data):
+    def process_data_in_batches(self, well_known_text_data: list[tuple[int, str]]):
         """
-        Processes data in batches and appends the results to the output feature class.
+        What:
+            Processes the data in batches, creating polygons from the input points and appending them
+            to the output feature class.
+
+        How:
+            The input data is divided into subsets and processed in batches to avoid memory overload.
+            Temporary feature classes are created in-memory for intermediate results, which are appended
+            to the output feature class.
         Args:
             well_known_text_data (list): A list of tuples containing object IDs and their WKT polygons.
         """
@@ -239,7 +253,15 @@ class PolygonProcessor:
             )
             arcpy.DeleteRows_management(temporary_feature_class)
 
-    def prepare_data_for_processing(self):
+    def prepare_data_for_processing(self) -> list[tuple[int, float, float, int, int]]:
+        """
+        What:
+            Extracts the necessary fields from the input building points and prepares the data for processing.
+
+        How:
+            Converts the input data into a NumPy array, which is easier to work with for batch processing.
+            Each record contains coordinates, object IDs, and symbol type information needed to create the polygons.
+        """
         input_data_array = arcpy.da.FeatureClassToNumPyArray(
             self.input_building_points,
             ["SHAPE@X", "SHAPE@Y", self.index_field_name, self.symbol_field_name],
@@ -256,7 +278,17 @@ class PolygonProcessor:
         ]
         return data_to_be_processed
 
-    def process_data(self, data_to_be_processed):
+    def process_data(
+        self, data_to_be_processed: list[tuple[int, float, float, int, int]]
+    ) -> list[tuple[int, str]]:
+        """
+        What:
+            Processes the input data to generate the corresponding Well-Known Text (WKT) polygons.
+
+        How:
+            The method uses either multiprocessing (for large datasets) or sequential processing (for smaller
+            datasets) to convert the building points into polygons based on their symbol dimensions.
+        """
         total_data_points = len(data_to_be_processed)
         if total_data_points >= 10000:
             number_of_cores = int(cpu_count() * self.PERCENTAGE_OF_CPU_CORES)
@@ -274,7 +306,7 @@ class PolygonProcessor:
     # Field Management and Cleanup
     def add_fields_with_join(self):
         """
-        Joins fields from the input building points to the output polygon feature class.
+        Joins fields from the input building points to the generated polygon feature class using the unique ID field.
         """
         # Add index to the join field in the output feature class
         arcpy.management.AddIndex(
@@ -308,7 +340,13 @@ class PolygonProcessor:
     )
     def run(self):
         """
-        Orchestrates the process of converting building points to polygons.
+        What:
+            Executes the entire process of converting building points into polygons, from spatial reference
+            setup to final field joins.
+
+        How:
+            The method orchestrates all the other methods in the correct order, handling data preparation,
+            batch processing, and cleanup to generate the final polygon feature class.
         """
 
         self.setup_spatial_reference_and_origin_id()
