@@ -15,6 +15,29 @@ from custom_tools.decorators.timing_decorator import timing_decorator
 @timing_decorator
 def main():
     """
+    What:
+        Adds required fields for building point for symbology and resolves building conflicts: angle, hierarchy, and invisibility.
+    How:
+        reclassifying_hospital_and_church_points_from_matrikkel:
+            Reclassifies hospitals and churches in the matrikkel dataset to a new NBR value ("Other buildings" / "Andre bygg").
+        adding_original_source_to_points:
+            Adds a field to point features to indicate their original source:
+            `0` for points from merged sources and `1` for points resulting from building polygons.
+        merge_matrikkel_n50_touristcabins_with_points_from_grunnriss:
+            Merges points from the `matrikkel_n50_touristcabins` dataset with points created from building polygons.
+            Adds a field to the merged points to determine and assign a symbol value based on their NBR code.
+        find_undefined_nbr_values:
+            Selects building points with an undefined NBR value (symbol value of -99) from the dataset, and logs it.
+            Then reclassify their NBR values and symbol_val values.
+        calculate_angle_and_visibility:
+            Adds angle and visibility fields, and sets their value to 0
+        calculate_hierarchy:
+            Calculates the hierarchy field based on symbol_val values
+    Why:
+        A lot of field values is required in future processing, this makes sure that all fields are added and populated with the required values.
+    """
+
+    """
     Summary:
         Adds required fields for building point for symbology and resolves building conflicts: angle, hierarchy, and invisibility.
     """
@@ -23,7 +46,6 @@ def main():
     adding_original_source_to_points()
     merge_matrikkel_n50_touristcabins_with_points_from_grunnriss()
     find_undefined_nbr_values()
-    find_each_unique_nbr_value()
     calculate_angle_and_visibility()
     calculate_hierarchy()
 
@@ -31,8 +53,7 @@ def main():
 @timing_decorator
 def reclassifying_hospital_and_church_points_from_matrikkel():
     """
-    Summary:
-        Reclassifies hospitals and churches in the matrikkel dataset to a new NBR value ("Other buildings" / "Andre bygg").
+    Reclassifies hospitals and churches in the matrikkel dataset to a new NBR value ("Other buildings" / "Andre bygg").
     """
     # Reclassify hospitals and churches from matrikken to another NBR value ("Other buildings" / "Andre bygg")
     code_block_hospital_church = (
@@ -53,9 +74,8 @@ def reclassifying_hospital_and_church_points_from_matrikkel():
 @timing_decorator
 def adding_original_source_to_points():
     """
-    Summary:
-        Adds a field to point features to indicate their original source:
-        `0` for points from merged sources and `1` for points resulting from building polygons.
+    Adds a field to point features to indicate their original source:
+    `0` for points from merged sources and `1` for points resulting from building polygons.
     """
     # Adding a field to indicate that the merged building point and matrikkel does not come from building_polygon
     arcpy.AddField_management(
@@ -85,9 +105,8 @@ def adding_original_source_to_points():
 @timing_decorator
 def merge_matrikkel_n50_touristcabins_with_points_from_grunnriss():
     """
-    Summary:
-        Merges points from the `matrikkel_n50_touristcabins` dataset with points created from building polygons.
-        Adds a field to the merged points to determine and assign a symbol value based on their NBR code.
+    Merges points from the `matrikkel_n50_touristcabins` dataset with points created from building polygons.
+    Adds a field to the merged points to determine and assign a symbol value based on their NBR code.
     """
 
     # Merge the merged building point from n50 and matrikkel with points created from building_polygon
@@ -118,8 +137,8 @@ def merge_matrikkel_n50_touristcabins_with_points_from_grunnriss():
 @timing_decorator
 def find_undefined_nbr_values():
     """
-    Summary:
-        Selects building points with an undefined NBR value (symbol value of -99) from the dataset.
+    Selects building points with an undefined NBR value (symbol value of -99) from the dataset, and logs it.
+    Then reclassify their NBR values and symbol_val values.
     """
     custom_arcpy.select_attribute_and_make_feature_layer(
         input_layer=Building_N100.calculate_point_values___points_going_into_propagate_displacement___n100_building.value,
@@ -127,9 +146,6 @@ def find_undefined_nbr_values():
         output_name=Building_N100.calculate_point_values___selection_building_points_with_undefined_nbr_values___n100_building.value,
     )
 
-
-@timing_decorator
-def find_each_unique_nbr_value():
     # Counter to store the count of each unique byggtyp_nbr
     nbr_counter = Counter()
 
@@ -196,6 +212,9 @@ def find_each_unique_nbr_value():
 
 @timing_decorator
 def calculate_angle_and_visibility():
+    """
+    Adds angle and visibility fields, and sets their value to 0
+    """
     # Feature class to check fields existence
     point_feature_class = (
         Building_N100.calculate_point_values___points_going_into_propagate_displacement___n100_building.value
@@ -225,6 +244,9 @@ def calculate_angle_and_visibility():
 
 @timing_decorator
 def calculate_hierarchy():
+    """
+    Calculates the hierarchy field based on symbol_val values
+    """
     # Then run CalculateField with the new code block
     arcpy.management.CalculateField(
         in_table=Building_N100.calculate_point_values___points_going_into_propagate_displacement___n100_building.value,

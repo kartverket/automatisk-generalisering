@@ -277,13 +277,6 @@ class Building_N100(Enum):
         description="n50_points",
     )
 
-    data_preparation___grunnriss_copy___n100_building = (
-        file_manager.generate_file_name_gdb(
-            script_source_name=data_preparation,
-            description="grunnriss_copy",
-        )
-    )
-
     data_preparation___polygons_that_are_large_enough___n100_building = (
         file_manager.generate_file_name_gdb(
             script_source_name=data_preparation,

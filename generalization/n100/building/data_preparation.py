@@ -45,8 +45,6 @@ def main():
         selecting_n50_points_not_in_urban_areas:
             Making spatial selections of building points not intersecting with urban areas,
             except for churches and hospitals which are kept no matter what.
-        selecting_polygons_not_in_urban_areas:
-            Adds building polygons which from areas which no longer are urban areas.
         polygon_selections_based_on_size:
             Selects building polygons based on their size (minimum 2500 m2) and converts small polygons to points.
     Why:
@@ -63,7 +61,6 @@ def main():
     selecting_n50_points_not_in_urban_areas()
     adding_field_values_to_matrikkel()
     merge_building_points()
-    selecting_polygons_not_in_urban_areas()
     reclassifying_polygon_values()
     polygon_selections_based_on_size()
 
@@ -467,21 +464,6 @@ def merge_building_points():
 
 
 @timing_decorator
-def selecting_polygons_not_in_urban_areas():
-    """
-    Adds building polygons which from areas which no longer are urban areas.
-    """
-
-    # Selecting n50 building points based on this new urban selection layer
-    custom_arcpy.select_location_and_make_permanent_feature(
-        input_layer=Building_N100.data_selection___building_polygon_n50_input_data___n100_building.value,
-        overlap_type=custom_arcpy.OverlapType.INTERSECT,
-        select_features=Building_N100.data_preparation___no_longer_urban_areas___n100_building.value,
-        output_name=Building_N100.data_preparation___n50_polygons___n100_building.value,
-    )
-
-
-@timing_decorator
 def reclassifying_polygon_values():
     """
     Reclassifies the values of hospitals and churches in the specified polygon layer to a new value (729), corresponding to "other buildings".
@@ -495,7 +477,7 @@ def reclassifying_polygon_values():
     )
 
     arcpy.CalculateField_management(
-        in_table=Building_N100.data_preparation___n50_polygons___n100_building.value,
+        in_table=Building_N100.data_selection___building_polygon_n50_input_data___n100_building.value,
         field="byggtyp_nbr",
         expression="reclassify(!byggtyp_nbr!)",
         expression_type="PYTHON3",
@@ -519,14 +501,14 @@ def polygon_selections_based_on_size():
 
     # Polygons over or equal to 2500 Square Meters are selected
     custom_arcpy.select_attribute_and_make_permanent_feature(
-        input_layer=Building_N100.data_preparation___grunnriss_copy___n100_building.value,
+        input_layer=Building_N100.data_selection___building_polygon_n50_input_data___n100_building.value,
         expression=sql_expression_correct_size_polygons,
         output_name=Building_N100.data_preparation___polygons_that_are_large_enough___n100_building.value,
     )
 
     # Polygons under 2500 Square Meters are selected
     custom_arcpy.select_attribute_and_make_feature_layer(
-        input_layer=Building_N100.data_preparation___grunnriss_copy___n100_building.value,
+        input_layer=Building_N100.data_selection___building_polygon_n50_input_data___n100_building.value,
         expression=sql_expression_too_small_polygons,
         output_name=Building_N100.data_preparation___polygons_that_are_too_small___n100_building.value,
         selection_type=custom_arcpy.SelectionType.NEW_SELECTION,

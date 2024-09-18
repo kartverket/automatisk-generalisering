@@ -32,6 +32,52 @@ def main():
     How:
         data_preparation:
             Prepares the input data for future building generalization processes, does spatial selections and coverts.
+
+        simplify_polygons:
+            PLACEHOLDER DOCSTRING NEEDS TO BE UPDATED.
+
+        calculate_polygon_values:
+            PLACEHOLDER DOCSTRING NEEDS TO BE UPDATED.
+
+        polygon_propogate_displacement:
+            Propagates displacement for building polygons to ensure their alignment with roads is adjusted
+            after the road generalization process.
+
+        polygon_resolve_building_conflicts:
+            PLACEHOLDER DOCSTRING NEEDS TO BE UPDATED.
+
+        polygon_to_point:
+            PLACEHOLDER DOCSTRING NEEDS TO BE UPDATED.
+
+        calculate_point_values:
+            Adds required fields for building point for symbology and resolves building conflicts: angle, hierarchy, and invisibility.
+
+        point_propogate_displacement:
+            Propagates displacement for building points to ensure their alignment with roads is adjusted
+            after the road generalization process.
+
+        hospital_church_clusters:
+            PLACEHOLDER DOCSTRING NEEDS TO BE UPDATED.
+
+        point_displacement_with_buffer:
+            Displaces building points relative to road buffers based on specified buffer increments.
+            It processes multiple features, mainly focusing on roads taking into account varied symbology width for roads,
+            displacing building points away from roads and other barriers, while iteratively calculating buffer increments.
+
+        point_resolve_building_conflicts:
+            PLACEHOLDER DOCSTRING NEEDS TO BE UPDATED.
+
+        removing_points_and_erasing_polygons_in_water_features:
+            PLACEHOLDER DOCSTRING NEEDS TO BE UPDATED.
+
+        removing_overlapping_polygons_and_points:
+            PLACEHOLDER DOCSTRING NEEDS TO BE UPDATED.
+
+        finalizing_buildings:
+            PLACEHOLDER DOCSTRING NEEDS TO BE UPDATED.
+
+        data_clean_up:
+            PLACEHOLDER DOCSTRING NEEDS TO BE UPDATED.
     Why:
         MORE DOCSTRING NEEDED: Because we need to processing building information so it is cartographic usable for N100 scale.
     """

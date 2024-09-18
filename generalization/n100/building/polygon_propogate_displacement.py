@@ -18,11 +18,8 @@ from custom_tools.decorators.timing_decorator import timing_decorator
 @timing_decorator
 def main():
     """
-    Summary:
-        This script first propagates displacement for building polygons to ensure their alignment with roads
-        at a scale of 1:100,000. Next, it resolves conflicts among all building polygons in Norway,
-        considering various barriers such as roads, waterfeatures, hospital and churches, ensuring proper placement and scaling.
-
+    Propagates displacement for building polygons to ensure their alignment with roads is adjusted
+    after the road generalization process.
     """
     environment_setup.main()
     propagate_displacement_building_polygons()
@@ -31,14 +28,8 @@ def main():
 @timing_decorator
 def propagate_displacement_building_polygons():
     """
-    Summary:
-        Selects displacement features located within a 500-meter radius from building polygons
-        and propagates displacement for the building polygons.
-
-    Details:
-        This function selects displacement features within a specified distance (500 meters) from the building polygons
-        and applies a displacement operation to ensure the building polygons align appropriately with surrounding features,
-        such as roads or other structures.
+    First selects displacement features within a specified distance (500 meters) from the building polygons, then propagates
+    displacement for building polygons to ensure their alignment with roads is adjusted after the road generalization process.
     """
 
     print("MAKE SURE TO SWITCH TO NEW DISPLACEMENT FEATURE (AFTER ROAD GENERALIZATION")
