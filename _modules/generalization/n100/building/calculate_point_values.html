@@ -96,6 +96,29 @@
 <span class="nd">@timing_decorator</span>
 <span class="k">def</span> <span class="nf">main</span><span class="p">():</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    What:</span>
+<span class="sd">        Adds required fields for building point for symbology and resolves building conflicts: angle, hierarchy, and invisibility.</span>
+<span class="sd">    How:</span>
+<span class="sd">        reclassifying_hospital_and_church_points_from_matrikkel:</span>
+<span class="sd">            Reclassifies hospitals and churches in the matrikkel dataset to a new NBR value (&quot;Other buildings&quot; / &quot;Andre bygg&quot;).</span>
+<span class="sd">        adding_original_source_to_points:</span>
+<span class="sd">            Adds a field to point features to indicate their original source:</span>
+<span class="sd">            `0` for points from merged sources and `1` for points resulting from building polygons.</span>
+<span class="sd">        merge_matrikkel_n50_touristcabins_with_points_from_grunnriss:</span>
+<span class="sd">            Merges points from the `matrikkel_n50_touristcabins` dataset with points created from building polygons.</span>
+<span class="sd">            Adds a field to the merged points to determine and assign a symbol value based on their NBR code.</span>
+<span class="sd">        find_undefined_nbr_values:</span>
+<span class="sd">            Selects building points with an undefined NBR value (symbol value of -99) from the dataset, and logs it.</span>
+<span class="sd">            Then reclassify their NBR values and symbol_val values.</span>
+<span class="sd">        calculate_angle_and_visibility:</span>
+<span class="sd">            Adds angle and visibility fields, and sets their value to 0</span>
+<span class="sd">        calculate_hierarchy:</span>
+<span class="sd">            Calculates the hierarchy field based on symbol_val values</span>
+<span class="sd">    Why:</span>
+<span class="sd">        A lot of field values is required in future processing, this makes sure that all fields are added and populated with the required values.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Summary:</span>
 <span class="sd">        Adds required fields for building point for symbology and resolves building conflicts: angle, hierarchy, and invisibility.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
@@ -104,7 +127,6 @@
     <span class="n">adding_original_source_to_points</span><span class="p">()</span>
     <span class="n">merge_matrikkel_n50_touristcabins_with_points_from_grunnriss</span><span class="p">()</span>
     <span class="n">find_undefined_nbr_values</span><span class="p">()</span>
-    <span class="n">find_each_unique_nbr_value</span><span class="p">()</span>
     <span class="n">calculate_angle_and_visibility</span><span class="p">()</span>
     <span class="n">calculate_hierarchy</span><span class="p">()</span></div>
 
@@ -115,8 +137,7 @@
 <span class="nd">@timing_decorator</span>
 <span class="k">def</span> <span class="nf">reclassifying_hospital_and_church_points_from_matrikkel</span><span class="p">():</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">    Summary:</span>
-<span class="sd">        Reclassifies hospitals and churches in the matrikkel dataset to a new NBR value (&quot;Other buildings&quot; / &quot;Andre bygg&quot;).</span>
+<span class="sd">    Reclassifies hospitals and churches in the matrikkel dataset to a new NBR value (&quot;Other buildings&quot; / &quot;Andre bygg&quot;).</span>
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="c1"># Reclassify hospitals and churches from matrikken to another NBR value (&quot;Other buildings&quot; / &quot;Andre bygg&quot;)</span>
     <span class="n">code_block_hospital_church</span> <span class="o">=</span> <span class="p">(</span>
@@ -140,9 +161,8 @@
 <span class="nd">@timing_decorator</span>
 <span class="k">def</span> <span class="nf">adding_original_source_to_points</span><span class="p">():</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">    Summary:</span>
-<span class="sd">        Adds a field to point features to indicate their original source:</span>
-<span class="sd">        `0` for points from merged sources and `1` for points resulting from building polygons.</span>
+<span class="sd">    Adds a field to point features to indicate their original source:</span>
+<span class="sd">    `0` for points from merged sources and `1` for points resulting from building polygons.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="c1"># Adding a field to indicate that the merged building point and matrikkel does not come from building_polygon</span>
     <span class="n">arcpy</span><span class="o">.</span><span class="n">AddField_management</span><span class="p">(</span>
@@ -175,9 +195,8 @@
 <span class="nd">@timing_decorator</span>
 <span class="k">def</span> <span class="nf">merge_matrikkel_n50_touristcabins_with_points_from_grunnriss</span><span class="p">():</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">    Summary:</span>
-<span class="sd">        Merges points from the `matrikkel_n50_touristcabins` dataset with points created from building polygons.</span>
-<span class="sd">        Adds a field to the merged points to determine and assign a symbol value based on their NBR code.</span>
+<span class="sd">    Merges points from the `matrikkel_n50_touristcabins` dataset with points created from building polygons.</span>
+<span class="sd">    Adds a field to the merged points to determine and assign a symbol value based on their NBR code.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="c1"># Merge the merged building point from n50 and matrikkel with points created from building_polygon</span>
@@ -211,21 +230,15 @@
 <span class="nd">@timing_decorator</span>
 <span class="k">def</span> <span class="nf">find_undefined_nbr_values</span><span class="p">():</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">    Summary:</span>
-<span class="sd">        Selects building points with an undefined NBR value (symbol value of -99) from the dataset.</span>
+<span class="sd">    Selects building points with an undefined NBR value (symbol value of -99) from the dataset, and logs it.</span>
+<span class="sd">    Then reclassify their NBR values and symbol_val values.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="n">custom_arcpy</span><span class="o">.</span><span class="n">select_attribute_and_make_feature_layer</span><span class="p">(</span>
         <span class="n">input_layer</span><span class="o">=</span><span class="n">Building_N100</span><span class="o">.</span><span class="n">calculate_point_values___points_going_into_propagate_displacement___n100_building</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
         <span class="n">expression</span><span class="o">=</span><span class="s2">&quot;symbol_val = -99&quot;</span><span class="p">,</span>
         <span class="n">output_name</span><span class="o">=</span><span class="n">Building_N100</span><span class="o">.</span><span class="n">calculate_point_values___selection_building_points_with_undefined_nbr_values___n100_building</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
-    <span class="p">)</span></div>
+    <span class="p">)</span>
 
-
-
-<div class="viewcode-block" id="find_each_unique_nbr_value">
-<a class="viewcode-back" href="../../../../generated_docs/generalization.n100.building.html#generalization.n100.building.calculate_point_values.find_each_unique_nbr_value">[docs]</a>
-<span class="nd">@timing_decorator</span>
-<span class="k">def</span> <span class="nf">find_each_unique_nbr_value</span><span class="p">():</span>
     <span class="c1"># Counter to store the count of each unique byggtyp_nbr</span>
     <span class="n">nbr_counter</span> <span class="o">=</span> <span class="n">Counter</span><span class="p">()</span>
 
@@ -295,6 +308,9 @@
 <a class="viewcode-back" href="../../../../generated_docs/generalization.n100.building.html#generalization.n100.building.calculate_point_values.calculate_angle_and_visibility">[docs]</a>
 <span class="nd">@timing_decorator</span>
 <span class="k">def</span> <span class="nf">calculate_angle_and_visibility</span><span class="p">():</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Adds angle and visibility fields, and sets their value to 0</span>
+<span class="sd">    &quot;&quot;&quot;</span>
     <span class="c1"># Feature class to check fields existence</span>
     <span class="n">point_feature_class</span> <span class="o">=</span> <span class="p">(</span>
         <span class="n">Building_N100</span><span class="o">.</span><span class="n">calculate_point_values___points_going_into_propagate_displacement___n100_building</span><span class="o">.</span><span class="n">value</span>
@@ -327,6 +343,9 @@
 <a class="viewcode-back" href="../../../../generated_docs/generalization.n100.building.html#generalization.n100.building.calculate_point_values.calculate_hierarchy">[docs]</a>
 <span class="nd">@timing_decorator</span>
 <span class="k">def</span> <span class="nf">calculate_hierarchy</span><span class="p">():</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Calculates the hierarchy field based on symbol_val values</span>
+<span class="sd">    &quot;&quot;&quot;</span>
     <span class="c1"># Then run CalculateField with the new code block</span>
     <span class="n">arcpy</span><span class="o">.</span><span class="n">management</span><span class="o">.</span><span class="n">CalculateField</span><span class="p">(</span>
         <span class="n">in_table</span><span class="o">=</span><span class="n">Building_N100</span><span class="o">.</span><span class="n">calculate_point_values___points_going_into_propagate_displacement___n100_building</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>

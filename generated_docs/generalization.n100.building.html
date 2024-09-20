@@ -59,7 +59,6 @@
 <li class="toctree-l3"><a class="reference internal" href="#generalization.n100.building.calculate_point_values.adding_original_source_to_points"><code class="docutils literal notranslate"><span class="pre">adding_original_source_to_points()</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="#generalization.n100.building.calculate_point_values.merge_matrikkel_n50_touristcabins_with_points_from_grunnriss"><code class="docutils literal notranslate"><span class="pre">merge_matrikkel_n50_touristcabins_with_points_from_grunnriss()</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="#generalization.n100.building.calculate_point_values.find_undefined_nbr_values"><code class="docutils literal notranslate"><span class="pre">find_undefined_nbr_values()</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="#generalization.n100.building.calculate_point_values.find_each_unique_nbr_value"><code class="docutils literal notranslate"><span class="pre">find_each_unique_nbr_value()</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="#generalization.n100.building.calculate_point_values.calculate_angle_and_visibility"><code class="docutils literal notranslate"><span class="pre">calculate_angle_and_visibility()</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="#generalization.n100.building.calculate_point_values.calculate_hierarchy"><code class="docutils literal notranslate"><span class="pre">calculate_hierarchy()</span></code></a></li>
 </ul>
@@ -164,7 +163,27 @@
 <dt class="sig sig-object py" id="generalization.n100.building.calculate_point_values.main">
 <span class="sig-prename descclassname"><span class="pre">generalization.n100.building.calculate_point_values.</span></span><span class="sig-name descname"><span class="pre">main</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/generalization/n100/building/calculate_point_values.html#main"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#generalization.n100.building.calculate_point_values.main" title="Link to this definition"></a></dt>
 <dd><dl class="simple">
-<dt>Summary:</dt><dd><p>Adds required fields for building point for symbology and resolves building conflicts: angle, hierarchy, and invisibility.</p>
+<dt>What:</dt><dd><p>Adds required fields for building point for symbology and resolves building conflicts: angle, hierarchy, and invisibility.</p>
+</dd>
+<dt>How:</dt><dd><dl class="simple">
+<dt>reclassifying_hospital_and_church_points_from_matrikkel:</dt><dd><p>Reclassifies hospitals and churches in the matrikkel dataset to a new NBR value (“Other buildings” / “Andre bygg”).</p>
+</dd>
+<dt>adding_original_source_to_points:</dt><dd><p>Adds a field to point features to indicate their original source:
+<cite>0</cite> for points from merged sources and <cite>1</cite> for points resulting from building polygons.</p>
+</dd>
+<dt>merge_matrikkel_n50_touristcabins_with_points_from_grunnriss:</dt><dd><p>Merges points from the <cite>matrikkel_n50_touristcabins</cite> dataset with points created from building polygons.
+Adds a field to the merged points to determine and assign a symbol value based on their NBR code.</p>
+</dd>
+<dt>find_undefined_nbr_values:</dt><dd><p>Selects building points with an undefined NBR value (symbol value of -99) from the dataset, and logs it.
+Then reclassify their NBR values and symbol_val values.</p>
+</dd>
+<dt>calculate_angle_and_visibility:</dt><dd><p>Adds angle and visibility fields, and sets their value to 0</p>
+</dd>
+<dt>calculate_hierarchy:</dt><dd><p>Calculates the hierarchy field based on symbol_val values</p>
+</dd>
+</dl>
+</dd>
+<dt>Why:</dt><dd><p>A lot of field values is required in future processing, this makes sure that all fields are added and populated with the required values.</p>
 </dd>
 </dl>
 </dd></dl>
@@ -172,55 +191,41 @@
 <dl class="py function">
 <dt class="sig sig-object py" id="generalization.n100.building.calculate_point_values.reclassifying_hospital_and_church_points_from_matrikkel">
 <span class="sig-prename descclassname"><span class="pre">generalization.n100.building.calculate_point_values.</span></span><span class="sig-name descname"><span class="pre">reclassifying_hospital_and_church_points_from_matrikkel</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/generalization/n100/building/calculate_point_values.html#reclassifying_hospital_and_church_points_from_matrikkel"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#generalization.n100.building.calculate_point_values.reclassifying_hospital_and_church_points_from_matrikkel" title="Link to this definition"></a></dt>
-<dd><dl class="simple">
-<dt>Summary:</dt><dd><p>Reclassifies hospitals and churches in the matrikkel dataset to a new NBR value (“Other buildings” / “Andre bygg”).</p>
-</dd>
-</dl>
+<dd><p>Reclassifies hospitals and churches in the matrikkel dataset to a new NBR value (“Other buildings” / “Andre bygg”).</p>
 </dd></dl>
 
 <dl class="py function">
 <dt class="sig sig-object py" id="generalization.n100.building.calculate_point_values.adding_original_source_to_points">
 <span class="sig-prename descclassname"><span class="pre">generalization.n100.building.calculate_point_values.</span></span><span class="sig-name descname"><span class="pre">adding_original_source_to_points</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/generalization/n100/building/calculate_point_values.html#adding_original_source_to_points"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#generalization.n100.building.calculate_point_values.adding_original_source_to_points" title="Link to this definition"></a></dt>
-<dd><dl class="simple">
-<dt>Summary:</dt><dd><p>Adds a field to point features to indicate their original source:
+<dd><p>Adds a field to point features to indicate their original source:
 <cite>0</cite> for points from merged sources and <cite>1</cite> for points resulting from building polygons.</p>
-</dd>
-</dl>
 </dd></dl>
 
 <dl class="py function">
 <dt class="sig sig-object py" id="generalization.n100.building.calculate_point_values.merge_matrikkel_n50_touristcabins_with_points_from_grunnriss">
 <span class="sig-prename descclassname"><span class="pre">generalization.n100.building.calculate_point_values.</span></span><span class="sig-name descname"><span class="pre">merge_matrikkel_n50_touristcabins_with_points_from_grunnriss</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/generalization/n100/building/calculate_point_values.html#merge_matrikkel_n50_touristcabins_with_points_from_grunnriss"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#generalization.n100.building.calculate_point_values.merge_matrikkel_n50_touristcabins_with_points_from_grunnriss" title="Link to this definition"></a></dt>
-<dd><dl class="simple">
-<dt>Summary:</dt><dd><p>Merges points from the <cite>matrikkel_n50_touristcabins</cite> dataset with points created from building polygons.
+<dd><p>Merges points from the <cite>matrikkel_n50_touristcabins</cite> dataset with points created from building polygons.
 Adds a field to the merged points to determine and assign a symbol value based on their NBR code.</p>
-</dd>
-</dl>
 </dd></dl>
 
 <dl class="py function">
 <dt class="sig sig-object py" id="generalization.n100.building.calculate_point_values.find_undefined_nbr_values">
 <span class="sig-prename descclassname"><span class="pre">generalization.n100.building.calculate_point_values.</span></span><span class="sig-name descname"><span class="pre">find_undefined_nbr_values</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/generalization/n100/building/calculate_point_values.html#find_undefined_nbr_values"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#generalization.n100.building.calculate_point_values.find_undefined_nbr_values" title="Link to this definition"></a></dt>
-<dd><dl class="simple">
-<dt>Summary:</dt><dd><p>Selects building points with an undefined NBR value (symbol value of -99) from the dataset.</p>
-</dd>
-</dl>
+<dd><p>Selects building points with an undefined NBR value (symbol value of -99) from the dataset, and logs it.
+Then reclassify their NBR values and symbol_val values.</p>
 </dd></dl>
-
-<dl class="py function">
-<dt class="sig sig-object py" id="generalization.n100.building.calculate_point_values.find_each_unique_nbr_value">
-<span class="sig-prename descclassname"><span class="pre">generalization.n100.building.calculate_point_values.</span></span><span class="sig-name descname"><span class="pre">find_each_unique_nbr_value</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/generalization/n100/building/calculate_point_values.html#find_each_unique_nbr_value"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#generalization.n100.building.calculate_point_values.find_each_unique_nbr_value" title="Link to this definition"></a></dt>
-<dd></dd></dl>
 
 <dl class="py function">
 <dt class="sig sig-object py" id="generalization.n100.building.calculate_point_values.calculate_angle_and_visibility">
 <span class="sig-prename descclassname"><span class="pre">generalization.n100.building.calculate_point_values.</span></span><span class="sig-name descname"><span class="pre">calculate_angle_and_visibility</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/generalization/n100/building/calculate_point_values.html#calculate_angle_and_visibility"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#generalization.n100.building.calculate_point_values.calculate_angle_and_visibility" title="Link to this definition"></a></dt>
-<dd></dd></dl>
+<dd><p>Adds angle and visibility fields, and sets their value to 0</p>
+</dd></dl>
 
 <dl class="py function">
 <dt class="sig sig-object py" id="generalization.n100.building.calculate_point_values.calculate_hierarchy">
 <span class="sig-prename descclassname"><span class="pre">generalization.n100.building.calculate_point_values.</span></span><span class="sig-name descname"><span class="pre">calculate_hierarchy</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/generalization/n100/building/calculate_point_values.html#calculate_hierarchy"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#generalization.n100.building.calculate_point_values.calculate_hierarchy" title="Link to this definition"></a></dt>
-<dd></dd></dl>
+<dd><p>Calculates the hierarchy field based on symbol_val values</p>
+</dd></dl>
 
 </section>
 <section id="module-generalization.n100.building.calculate_polygon_values">
@@ -395,37 +400,15 @@ A cluster is defined as two or more points that are closer together than 200 met
 <dl class="py function">
 <dt class="sig sig-object py" id="generalization.n100.building.point_propogate_displacement.main">
 <span class="sig-prename descclassname"><span class="pre">generalization.n100.building.point_propogate_displacement.</span></span><span class="sig-name descname"><span class="pre">main</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/generalization/n100/building/point_propogate_displacement.html#main"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#generalization.n100.building.point_propogate_displacement.main" title="Link to this definition"></a></dt>
-<dd><dl class="simple">
-<dt>Summary:</dt><dd><p>Makes sure that the building points are moved correspondingly to the displacement the road features have been moved during its generalization.</p>
-</dd>
-<dt>Details:</dt><dd><ol class="arabic simple">
-<li><dl class="simple">
-<dt><cite>setup_arcpy_environment</cite>:</dt><dd><p>Sets up the ArcPy environment based on predefined settings defined in <cite>general_setup</cite>.</p>
-</dd>
-</dl>
-</li>
-<li><dl class="simple">
-<dt><cite>propagate_displacement_building_points</cite>:</dt><dd><p>Makes sure that the building points are moved correspondingly to the displacement the road features have been moved during its generalization.</p>
-</dd>
-</dl>
-</li>
-</ol>
-</dd>
-</dl>
+<dd><p>Propagates displacement for building points to ensure their alignment with roads is adjusted
+after the road generalization process.</p>
 </dd></dl>
 
 <dl class="py function">
 <dt class="sig sig-object py" id="generalization.n100.building.point_propogate_displacement.propagate_displacement_building_points">
 <span class="sig-prename descclassname"><span class="pre">generalization.n100.building.point_propogate_displacement.</span></span><span class="sig-name descname"><span class="pre">propagate_displacement_building_points</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/generalization/n100/building/point_propogate_displacement.html#propagate_displacement_building_points"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#generalization.n100.building.point_propogate_displacement.propagate_displacement_building_points" title="Link to this definition"></a></dt>
-<dd><dl class="simple">
-<dt>Summary:</dt><dd><p>Makes sure that the building points are moved correspondingly to the displacement the road features have been moved during its generalization.</p>
-</dd>
-<dt>Details:</dt><dd><ul class="simple">
-<li><p>It copies the original dataset to prevent overwriting the data since PropagateDisplacement modifiy the input data.</p></li>
-<li><p>When using Propagate Displacement, the adjustment style chosen for this process is “SOLID” to prevent the change of shape of input polygons (though not relevant for building points).</p></li>
-</ul>
-</dd>
-</dl>
+<dd><p>First copies the data to be able to compare the changes due to PropagateDisplacement modifies input. Then propagates
+displacement for building polygons to ensure their alignment with roads is adjusted after the road generalization process.</p>
 </dd></dl>
 
 </section>
@@ -437,26 +420,15 @@ A cluster is defined as two or more points that are closer together than 200 met
 <dl class="py function">
 <dt class="sig sig-object py" id="generalization.n100.building.polygon_propogate_displacement.main">
 <span class="sig-prename descclassname"><span class="pre">generalization.n100.building.polygon_propogate_displacement.</span></span><span class="sig-name descname"><span class="pre">main</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/generalization/n100/building/polygon_propogate_displacement.html#main"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#generalization.n100.building.polygon_propogate_displacement.main" title="Link to this definition"></a></dt>
-<dd><dl class="simple">
-<dt>Summary:</dt><dd><p>This script first propagates displacement for building polygons to ensure their alignment with roads
-at a scale of 1:100,000. Next, it resolves conflicts among all building polygons in Norway,
-considering various barriers such as roads, waterfeatures, hospital and churches, ensuring proper placement and scaling.</p>
-</dd>
-</dl>
+<dd><p>Propagates displacement for building polygons to ensure their alignment with roads is adjusted
+after the road generalization process.</p>
 </dd></dl>
 
 <dl class="py function">
 <dt class="sig sig-object py" id="generalization.n100.building.polygon_propogate_displacement.propagate_displacement_building_polygons">
 <span class="sig-prename descclassname"><span class="pre">generalization.n100.building.polygon_propogate_displacement.</span></span><span class="sig-name descname"><span class="pre">propagate_displacement_building_polygons</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/generalization/n100/building/polygon_propogate_displacement.html#propagate_displacement_building_polygons"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#generalization.n100.building.polygon_propogate_displacement.propagate_displacement_building_polygons" title="Link to this definition"></a></dt>
-<dd><dl class="simple">
-<dt>Summary:</dt><dd><p>Selects displacement features located within a 500-meter radius from building polygons
-and propagates displacement for the building polygons.</p>
-</dd>
-<dt>Details:</dt><dd><p>This function selects displacement features within a specified distance (500 meters) from the building polygons
-and applies a displacement operation to ensure the building polygons align appropriately with surrounding features,
-such as roads or other structures.</p>
-</dd>
-</dl>
+<dd><p>First selects displacement features within a specified distance (500 meters) from the building polygons, then propagates
+displacement for building polygons to ensure their alignment with roads is adjusted after the road generalization process.</p>
 </dd></dl>
 
 </section>
@@ -489,112 +461,59 @@ them together with collapsed points from the tools simplify building and simplif
 <dl class="py function">
 <dt class="sig sig-object py" id="generalization.n100.building.simplify_polygons.main">
 <span class="sig-prename descclassname"><span class="pre">generalization.n100.building.simplify_polygons.</span></span><span class="sig-name descname"><span class="pre">main</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/generalization/n100/building/simplify_polygons.html#main"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#generalization.n100.building.simplify_polygons.main" title="Link to this definition"></a></dt>
-<dd></dd></dl>
+<dd><dl class="simple">
+<dt>What:</dt><dd><p>Simplify building polygons to make them easier to read and fit around other features at a N100 map scale.</p>
+</dd>
+<dt>How:</dt><dd><dl class="simple">
+<dt>aggregate_polygons:</dt><dd><p>Aggregates small gaps between building polygons of the same type and fills in holes within building polygons.</p>
+</dd>
+<dt>simplify_buildings_1:</dt><dd><p>Simplifies building polygons to optimize for N100 using SimplifyBuilding. Building polygons that are under the minimum area value will be transformed to points.</p>
+</dd>
+<dt>simplify_polygons:</dt><dd><p>Simplifies building polygons to optimize for N100 using SimplifyPolygon. Building polygons that are under the minimum area value will be transformed to points.</p>
+</dd>
+<dt>simplify_buildings_2:</dt><dd><p>Simplifies building polygons to optimize for N100 using SimplifyBuilding. Building polygons that are under the minimum area value will be transformed to points.
+Does the simplify in multiple steps to get better results.</p>
+</dd>
+<dt>spatial_join_polygons:</dt><dd><p>Performs spatial join between simplified building polygons and original building polygons.
+Adds specific fields and assigns values to the building polygons, which will be useful for later in Resolve Building Conflict</p>
+</dd>
+</dl>
+</dd>
+<dt>Why:</dt><dd><p>Makes the building polygons easier to read at a N100 map scale, and potentially easier to move compared to other features.</p>
+</dd>
+</dl>
+</dd></dl>
 
 <dl class="py function">
 <dt class="sig sig-object py" id="generalization.n100.building.simplify_polygons.aggregate_polygons">
 <span class="sig-prename descclassname"><span class="pre">generalization.n100.building.simplify_polygons.</span></span><span class="sig-name descname"><span class="pre">aggregate_polygons</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/generalization/n100/building/simplify_polygons.html#aggregate_polygons"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#generalization.n100.building.simplify_polygons.aggregate_polygons" title="Link to this definition"></a></dt>
-<dd><dl class="simple">
-<dt>Summary:</dt><dd><p>Aggregates small gaps between building polygons of the same type and fills in holes within building polygons.</p>
-</dd>
-</dl>
-<p>Details:
-- the AggregatePolygon tool is used</p>
-<p>Parameters:
-- Aggregation distance is <strong>`4 Meters`</strong>
-- Minimum Area is <strong>`3200 Square Meters`</strong>
-- Minimum Hole Size is <strong>`10 000 Square Meters`</strong></p>
+<dd><p>Aggregates small gaps between building polygons of the same type and fills in holes within building polygons.</p>
 </dd></dl>
 
 <dl class="py function">
 <dt class="sig sig-object py" id="generalization.n100.building.simplify_polygons.simplify_buildings_1">
 <span class="sig-prename descclassname"><span class="pre">generalization.n100.building.simplify_polygons.</span></span><span class="sig-name descname"><span class="pre">simplify_buildings_1</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/generalization/n100/building/simplify_polygons.html#simplify_buildings_1"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#generalization.n100.building.simplify_polygons.simplify_buildings_1" title="Link to this definition"></a></dt>
-<dd><dl class="simple">
-<dt>Summary:</dt><dd><p>Simplifies building polygons to optimize for a 1:100,000 map scale. Building polygons that are under the minimum area value will be transformed to points.</p>
-</dd>
-<dt>Details:</dt><dd><ul class="simple">
-<li><dl class="simple">
-<dt>The SimplifyBuilding tool is employed to reduce the complexity of building polygons, specifically tailored for the 1:100,000 map scale.</dt><dd><p>It is used to decrease the number of vertices in building polygons, aiming to maintain essential features, but removing details
-for a smoother representation at the 1:100,000 scale.</p>
-</dd>
-</dl>
-</li>
-</ul>
-</dd>
-</dl>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>Meters`</strong> (<em>- Minimum Area is `3200 Square</em>) – Controls the distance at which vertices are removed during the simplification process.</p></li>
-<li><p><strong>Meters`</strong> – Specifies the minimum area a simplified building polygon should have.</p></li>
-<li><p><strong>**`10</strong> (<em>- Minimum Hole Size is</em>) – <p>Sets the minimum size for holes within the building polygons to be retained.</p>
-</p></li>
-<li><p><strong>Meters`**</strong> (<em>000 Square</em>) – Sets the minimum size for holes within the building polygons to be retained.</p></li>
-</ul>
-</dd>
-</dl>
+<dd><p>Simplifies building polygons to optimize for N100 using SimplifyBuilding. Building polygons that are under the minimum area value will be transformed to points.</p>
 </dd></dl>
 
 <dl class="py function">
 <dt class="sig sig-object py" id="generalization.n100.building.simplify_polygons.simplify_polygons">
 <span class="sig-prename descclassname"><span class="pre">generalization.n100.building.simplify_polygons.</span></span><span class="sig-name descname"><span class="pre">simplify_polygons</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/generalization/n100/building/simplify_polygons.html#simplify_polygons"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#generalization.n100.building.simplify_polygons.simplify_polygons" title="Link to this definition"></a></dt>
-<dd><dl>
-<dt>Summary:</dt><dd><p>Reduces the complexity of building polygons even more to optimize for a 1:100,000 map scale,
-where small details of buildings may be perrceived as background noise.</p>
-</dd>
-<dt>Details:</dt><dd><ul class="simple">
-<li><p>This function simplifies the input building polygons even more to enhance visualization at the 1:100,000 map scale.</p></li>
-</ul>
-<p>It reduces the number of vertices. Auto-generated points from the simplified polygons are also saved separately.</p>
-</dd>
-</dl>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>`15`</strong> (<em>- Tolerance is</em>) – It controls the simplification distance.</p></li>
-<li><p><strong>Meters`</strong> (<em>- Minimum Area is `3200 Square</em>) – Specifies the minimum area a simplified building polygon should have.</p></li>
-</ul>
-</dd>
-</dl>
+<dd><p>Simplifies building polygons to optimize for N100 using SimplifyPolygon. Building polygons that are under the minimum area value will be transformed to points.</p>
 </dd></dl>
 
 <dl class="py function">
 <dt class="sig sig-object py" id="generalization.n100.building.simplify_polygons.simplify_buildings_2">
 <span class="sig-prename descclassname"><span class="pre">generalization.n100.building.simplify_polygons.</span></span><span class="sig-name descname"><span class="pre">simplify_buildings_2</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/generalization/n100/building/simplify_polygons.html#simplify_buildings_2"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#generalization.n100.building.simplify_polygons.simplify_buildings_2" title="Link to this definition"></a></dt>
-<dd><dl class="simple">
-<dt>Summary:</dt><dd><p>Simplifies building polygons to optimize for a 1:100,000 map scale. Building polygons that are under the minimum area value will be transformed to points.</p>
-</dd>
-<dt>Details:</dt><dd><ul class="simple">
-<li><dl class="simple">
-<dt>The SimplifyBuilding tool is employed to reduce the complexity of building polygons, specifically tailored for the 1:100,000 map scale.</dt><dd><p>It is used to decrease the number of vertices in building polygons, aiming to maintain essential features, but removing details
-for a smoother representation at the 1:100,000 scale.</p>
-</dd>
-</dl>
-</li>
-</ul>
-</dd>
-</dl>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>Meters`</strong> (<em>- Minimum Area is `3200 Square</em>) – Controls the distance at which vertices are removed during the simplification process.</p></li>
-<li><p><strong>Meters`</strong> – Specifies the minimum area a simplified building polygon should have.</p></li>
-<li><p><strong>**`10</strong> (<em>- Minimum Hole Size is</em>) – <p>Sets the minimum size for holes within the building polygons to be retained.</p>
-</p></li>
-<li><p><strong>Meters`**</strong> (<em>000 Square</em>) – Sets the minimum size for holes within the building polygons to be retained.</p></li>
-</ul>
-</dd>
-</dl>
+<dd><p>Simplifies building polygons to optimize for N100 using SimplifyBuilding. Building polygons that are under the minimum area value will be transformed to points.
+Does the simplify in multiple steps to get better results.</p>
 </dd></dl>
 
 <dl class="py function">
 <dt class="sig sig-object py" id="generalization.n100.building.simplify_polygons.spatial_join_polygons">
 <span class="sig-prename descclassname"><span class="pre">generalization.n100.building.simplify_polygons.</span></span><span class="sig-name descname"><span class="pre">spatial_join_polygons</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/generalization/n100/building/simplify_polygons.html#spatial_join_polygons"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#generalization.n100.building.simplify_polygons.spatial_join_polygons" title="Link to this definition"></a></dt>
-<dd><dl class="simple">
-<dt>Summary:</dt><dd><p>Performs spatial join between simplified building polygons and original building polygons.
+<dd><p>Performs spatial join between simplified building polygons and original building polygons.
 Adds specific fields and assigns values to the building polygons, which will be useful for later in Resolve Building Conflict</p>
-</dd>
-</dl>
 </dd></dl>
 
 </section>

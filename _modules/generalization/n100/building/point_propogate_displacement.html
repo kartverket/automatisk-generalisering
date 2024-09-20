@@ -95,15 +95,8 @@
 <span class="nd">@timing_decorator</span>
 <span class="k">def</span> <span class="nf">main</span><span class="p">():</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">    Summary:</span>
-<span class="sd">        Makes sure that the building points are moved correspondingly to the displacement the road features have been moved during its generalization.</span>
-
-<span class="sd">    Details:</span>
-<span class="sd">        1. `setup_arcpy_environment`:</span>
-<span class="sd">            Sets up the ArcPy environment based on predefined settings defined in `general_setup`.</span>
-
-<span class="sd">        2. `propagate_displacement_building_points`:</span>
-<span class="sd">            Makes sure that the building points are moved correspondingly to the displacement the road features have been moved during its generalization.</span>
+<span class="sd">    Propagates displacement for building points to ensure their alignment with roads is adjusted</span>
+<span class="sd">    after the road generalization process.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="n">environment_setup</span><span class="o">.</span><span class="n">main</span><span class="p">()</span>
     <span class="n">propagate_displacement_building_points</span><span class="p">()</span></div>
@@ -115,12 +108,8 @@
 <span class="nd">@timing_decorator</span>
 <span class="k">def</span> <span class="nf">propagate_displacement_building_points</span><span class="p">():</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">    Summary:</span>
-<span class="sd">        Makes sure that the building points are moved correspondingly to the displacement the road features have been moved during its generalization.</span>
-
-<span class="sd">    Details:</span>
-<span class="sd">        - It copies the original dataset to prevent overwriting the data since PropagateDisplacement modifiy the input data.</span>
-<span class="sd">        - When using Propagate Displacement, the adjustment style chosen for this process is &quot;SOLID&quot; to prevent the change of shape of input polygons (though not relevant for building points).</span>
+<span class="sd">    First copies the data to be able to compare the changes due to PropagateDisplacement modifies input. Then propagates</span>
+<span class="sd">    displacement for building polygons to ensure their alignment with roads is adjusted after the road generalization process.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Point propogate displacement ...&quot;</span><span class="p">)</span>
