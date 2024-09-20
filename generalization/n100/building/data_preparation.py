@@ -33,18 +33,24 @@ def main():
         data_selection:
             Used for input datasets provided to the class. Is the focus of the processing. If you in a config want to use
             the partition selection of the original input data as an input this is the type which should be used.
+
         begrensningskurve_land_and_water_bodies:
             Creates a modified water boundary feature creating a polygon where an offset is erased of the land boundary
             depending on the size of the waterbody object, thin objects does not get this offset but wide waterbodies does.
+
         unsplit_roads_and_make_buffer:
             Unsplits the road feature to reduce the number of objects, reducing processing time.
+
         railway_station_points_to_polygons:
             Transforms the train station points to polygons representing their symbology size.
+
         adding_matrikkel_points_to_areas_that_are_no_longer_urban:
             Adds building points to the areas which no longer are urban areas in N100.
+
         selecting_n50_points_not_in_urban_areas:
             Making spatial selections of building points not intersecting with urban areas,
             except for churches and hospitals which are kept no matter what.
+
         polygon_selections_based_on_size:
             Selects building polygons based on their size (minimum 2500 m2) and converts small polygons to points.
     Why:

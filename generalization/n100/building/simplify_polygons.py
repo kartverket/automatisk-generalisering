@@ -16,8 +16,29 @@ from custom_tools.decorators.timing_decorator import timing_decorator
 @timing_decorator
 def main():
     """
+    What:
+        Simplify building polygons to make them easier to read and fit around other features at a N100 map scale.
+    How:
+        aggregate_polygons:
+            Aggregates small gaps between building polygons of the same type and fills in holes within building polygons.
 
+        simplify_buildings_1:
+            Simplifies building polygons to optimize for N100 using SimplifyBuilding. Building polygons that are under the minimum area value will be transformed to points.
+
+        simplify_polygons:
+            Simplifies building polygons to optimize for N100 using SimplifyPolygon. Building polygons that are under the minimum area value will be transformed to points.
+
+        simplify_buildings_2:
+            Simplifies building polygons to optimize for N100 using SimplifyBuilding. Building polygons that are under the minimum area value will be transformed to points.
+            Does the simplify in multiple steps to get better results.
+
+        spatial_join_polygons:
+            Performs spatial join between simplified building polygons and original building polygons.
+            Adds specific fields and assigns values to the building polygons, which will be useful for later in Resolve Building Conflict
+    Why:
+        Makes the building polygons easier to read at a N100 map scale, and potentially easier to move compared to other features.
     """
+
     environment_setup.main()
     aggregate_polygons()
     simplify_buildings_1()
@@ -29,16 +50,7 @@ def main():
 @timing_decorator
 def aggregate_polygons():
     """
-    Summary:
-        Aggregates small gaps between building polygons of the same type and fills in holes within building polygons.
-
-    Details:
-    - the AggregatePolygon tool is used
-
-    Parameters:
-    - Aggregation distance is **`4 Meters`**
-    - Minimum Area is **`3200 Square Meters`**
-    - Minimum Hole Size is **`10 000 Square Meters`**
+    Aggregates small gaps between building polygons of the same type and fills in holes within building polygons.
     """
     # Aggregating building polygons (very minimal aggregation)
     print("Aggregating building polygons...")
@@ -75,18 +87,7 @@ def aggregate_polygons():
 @timing_decorator
 def simplify_buildings_1():
     """
-    Summary:
-        Simplifies building polygons to optimize for a 1:100,000 map scale. Building polygons that are under the minimum area value will be transformed to points.
-
-    Details:
-        - The SimplifyBuilding tool is employed to reduce the complexity of building polygons, specifically tailored for the 1:100,000 map scale.
-            It is used to decrease the number of vertices in building polygons, aiming to maintain essential features, but removing details
-            for a smoother representation at the 1:100,000 scale.
-
-    Parameters:
-        - Simplification Tolerance is **`75 Meters`**: Controls the distance at which vertices are removed during the simplification process.
-        - Minimum Area is **`3200 Square Meters`**: Specifies the minimum area a simplified building polygon should have.
-        - Minimum Hole Size is **`10,000 Square Meters`**: Sets the minimum size for holes within the building polygons to be retained.
+    Simplifies building polygons to optimize for N100 using SimplifyBuilding. Building polygons that are under the minimum area value will be transformed to points.
     """
 
     print("Simplifying building polygons round 1...")
@@ -104,17 +105,7 @@ def simplify_buildings_1():
 @timing_decorator
 def simplify_polygons():
     """
-    Summary:
-        Reduces the complexity of building polygons even more to optimize for a 1:100,000 map scale,
-        where small details of buildings may be perrceived as background noise.
-
-    Details:
-        - This function simplifies the input building polygons even more to enhance visualization at the 1:100,000 map scale.
-        It reduces the number of vertices. Auto-generated points from the simplified polygons are also saved separately.
-
-    Parameters:
-        - Tolerance is **`15`**: It controls the simplification distance.
-        - Minimum Area is **`3200 Square Meters`**: Specifies the minimum area a simplified building polygon should have.
+    Simplifies building polygons to optimize for N100 using SimplifyPolygon. Building polygons that are under the minimum area value will be transformed to points.
     """
 
     print("Simplifying polygons...")
@@ -133,18 +124,8 @@ def simplify_polygons():
 @timing_decorator
 def simplify_buildings_2():
     """
-    Summary:
-        Simplifies building polygons to optimize for a 1:100,000 map scale. Building polygons that are under the minimum area value will be transformed to points.
-
-    Details:
-        - The SimplifyBuilding tool is employed to reduce the complexity of building polygons, specifically tailored for the 1:100,000 map scale.
-            It is used to decrease the number of vertices in building polygons, aiming to maintain essential features, but removing details
-            for a smoother representation at the 1:100,000 scale.
-
-    Parameters:
-        - Simplification Tolerance is **`75 Meters`**: Controls the distance at which vertices are removed during the simplification process.
-        - Minimum Area is **`3200 Square Meters`**: Specifies the minimum area a simplified building polygon should have.
-        - Minimum Hole Size is **`10,000 Square Meters`**: Sets the minimum size for holes within the building polygons to be retained.
+    Simplifies building polygons to optimize for N100 using SimplifyBuilding. Building polygons that are under the minimum area value will be transformed to points.
+    Does the simplify in multiple steps to get better results.
     """
     print("Simplifying building polygons round 2...")
 
@@ -161,9 +142,8 @@ def simplify_buildings_2():
 @timing_decorator
 def spatial_join_polygons():
     """
-    Summary:
-        Performs spatial join between simplified building polygons and original building polygons.
-        Adds specific fields and assigns values to the building polygons, which will be useful for later in Resolve Building Conflict
+    Performs spatial join between simplified building polygons and original building polygons.
+    Adds specific fields and assigns values to the building polygons, which will be useful for later in Resolve Building Conflict
     """
     # Spatial join between simplified building polygons and original building polygons
     print("Performing spatial join...")

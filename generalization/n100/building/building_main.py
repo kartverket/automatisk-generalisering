@@ -34,7 +34,7 @@ def main():
             Prepares the input data for future building generalization processes, does spatial selections and coverts.
 
         simplify_polygons:
-            PLACEHOLDER DOCSTRING NEEDS TO BE UPDATED.
+            Simplify building polygons to make them easier to read and fit around other features at a N100 map scale.
 
         calculate_polygon_values:
             PLACEHOLDER DOCSTRING NEEDS TO BE UPDATED.
