@@ -196,13 +196,6 @@ def removing_points_in_water_features():
         output=Building_N100.removing_points_and_erasing_polygons_in_water_features___merged_points_and_tourist_cabins___n100_building.value,
     )
 
-    custom_arcpy.apply_symbology(
-        input_layer=Building_N100.removing_points_and_erasing_polygons_in_water_features___merged_points_and_tourist_cabins___n100_building.value,
-        in_symbology_layer=SymbologyN100.building_point.value,
-        output_name=Building_N100.removing_points_and_erasing_polygons_in_water_features___final_points___n100_lyrx.value,
-        # Used in the next file, "removing_overlapping_polygons_and_points.py"
-    )
-
 
 if __name__ == "__main__":
     main()
