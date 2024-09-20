@@ -12,8 +12,18 @@ from custom_tools.decorators.timing_decorator import timing_decorator
 @timing_decorator
 def main():
     """
-    Summary:
+    What:
         Adds required fields for building point for symbology and resolves building conflicts: angle, hierarchy, and invisibility.
+
+    How:
+        adding_angle_hierarchy_invisibility_fields:
+            Adds angle, hierarchy and invisibility fields and set their corresponding values.
+
+        adding_symbol_val:
+            Adds symbol_val and reclassify NBR values for undefined nbr values
+
+    Why:
+        The angle, hierarchy and invisibility fields are used in future processing, such as polygon_processor and RBC.
     """
 
     adding_angle_hierarchy_invisibility_fields()
@@ -21,6 +31,10 @@ def main():
 
 
 def adding_angle_hierarchy_invisibility_fields():
+    """
+    Adds angle, hierarchy and invisibility fields and set their corresponding values.
+    """
+
     # Adding multiple fields
     print("Adding fields...")
     arcpy.management.AddFields(
@@ -39,13 +53,16 @@ def adding_angle_hierarchy_invisibility_fields():
         expression_type="PYTHON3",
         fields=[
             ["angle", "0"],
-            ["hierarchy", "1"],  # Hierachy 1 so buildings can be moved around
+            ["hierarchy", "1"],  # Hierarchy 1 so buildings can be moved around
             ["invisibility", "0"],
         ],
     )
 
 
 def adding_symbol_val():
+    """
+    Adds symbol_val and reclassify NBR values for undefined nbr values
+    """
     arcpy.AddField_management(
         in_table=Building_N100.simplify_polygons___spatial_join_polygons___n100_building.value,
         field_name="symbol_val",
