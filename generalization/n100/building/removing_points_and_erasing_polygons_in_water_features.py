@@ -17,9 +17,8 @@ def main():
     environment_setup.main()
     selecting_water_polygon_features()
     selecting_water_features_close_to_building_polygons()
-    buffering_water_polygon_features()
-    selecting_building_polygons()
     erasing_parts_of_building_polygons_in_water_features()
+    transforming_small_polygons_to_points()
     merge_polygons()
     removing_points_in_water_features()
 
@@ -55,11 +54,12 @@ def selecting_water_features_close_to_building_polygons():
 
 
 @timing_decorator
-def buffering_water_polygon_features():
+def erasing_parts_of_building_polygons_in_water_features():
     """
     Summary:
-        Buffer water features by 15 meters.
+        Erases parts of building polygons that intersect with buffered water features.
     """
+
     # Buffering the water features with 15 Meters
     arcpy.PairwiseBuffer_analysis(
         in_features=Building_N100.removing_points_and_erasing_polygons_in_water_features___water_features_close_to_building_polygons___n100_building.value,
@@ -68,13 +68,6 @@ def buffering_water_polygon_features():
         method="PLANAR",
     )
 
-
-@timing_decorator
-def selecting_building_polygons():
-    """
-    Summary:
-        Select building polygons based on their intersection with buffered water features.
-    """
     # Selecting polygons intersecting water features
     custom_arcpy.select_location_and_make_permanent_feature(
         input_layer=Building_N100.point_resolve_building_conflicts___POLYGON_OUTPUT___n100_building.value,
@@ -92,13 +85,6 @@ def selecting_building_polygons():
         inverted=True,
     )
 
-
-@timing_decorator
-def erasing_parts_of_building_polygons_in_water_features():
-    """
-    Summary:
-        Erases parts of building polygons that intersect with buffered water features.
-    """
     # Erasing the parts of the building polygons that intersect the water feature buffer
     arcpy.PairwiseErase_analysis(
         in_features=Building_N100.removing_points_and_erasing_polygons_in_water_features___building_polygons_too_close_to_water_features___n100_building.value,
@@ -106,6 +92,9 @@ def erasing_parts_of_building_polygons_in_water_features():
         out_feature_class=Building_N100.removing_points_and_erasing_polygons_in_water_features___erased_polygons___n100_building.value,
     )
 
+
+@timing_decorator
+def transforming_small_polygons_to_points():
     sql_expression_correct_size_polygons = (
         f"Shape_Area >= {N100_Values.minimum_selection_building_polygon_size_m2.value}"
     )
