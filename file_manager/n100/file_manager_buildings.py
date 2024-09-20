@@ -197,18 +197,6 @@ class Building_N100(Enum):
         )
     )
 
-    data_preparation___waterfeatures_from_begrensningskurve_rivers___n100_building = (
-        file_manager.generate_file_name_gdb(
-            script_source_name=data_preparation,
-            description="waterfeatures_from_begrensningskurve_rivers",
-        )
-    )
-
-    data_preparation___waterfeatures_from_begrensningskurve_rivers_buffer___n100_building = file_manager.generate_file_name_gdb(
-        script_source_name=data_preparation,
-        description="waterfeatures_from_begrensningskurve_rivers_buffer",
-    )
-
     data_preparation___begrensningskurve_buffer_erase_2___n100_building = (
         file_manager.generate_file_name_gdb(
             script_source_name=data_preparation,
@@ -302,13 +290,6 @@ class Building_N100(Enum):
         file_manager.generate_file_name_gdb(
             script_source_name=data_preparation,
             description="merged_building_points",
-        )
-    )
-
-    data_preparation___n50_polygons___n100_building = (
-        file_manager.generate_file_name_gdb(
-            script_source_name=data_preparation,
-            description="n50_polygons",
         )
     )
 
@@ -585,20 +566,6 @@ class Building_N100(Enum):
         description="invisible_polygons_to_points",
     )
 
-    polygon_resolve_building_conflicts___road_buffer_selection___n100_building = (
-        file_manager.generate_file_name_gdb(
-            script_source_name=polygon_resolve_building_conflicts,
-            description="road_buffer_selection",
-        )
-    )
-
-    polygon_resolve_building_conflicts___road_buffers___n100_building = (
-        file_manager.generate_file_name_gdb(
-            script_source_name=polygon_resolve_building_conflicts,
-            description="road_buffers",
-        )
-    )
-
     polygon_resolve_building_conflicts___building_polygons_final___n100_building = (
         file_manager.generate_file_name_gdb(
             script_source_name=polygon_resolve_building_conflicts,
@@ -817,11 +784,6 @@ class Building_N100(Enum):
         description="points_that_do_not_intersect_water_features",
     )
 
-    removing_points_and_erasing_polygons_in_water_features___final_points___n100_lyrx = file_manager.generate_file_name_lyrx(
-        script_source_name=removing_points_and_erasing_polygons_in_water_features,
-        description="final_points",
-    )
-
     removing_points_and_erasing_polygons_in_water_features___building_polygons_too_close_to_water_features___n100_building = file_manager.generate_file_name_gdb(
         script_source_name=removing_points_and_erasing_polygons_in_water_features,
         description="building_polygons_too_close_to_water_features",
@@ -857,11 +819,6 @@ class Building_N100(Enum):
         description="points_polygons_to_points_merged",
     )
 
-    removing_points_and_erasing_polygons_in_water_features___simplified_polygons___n100_building = file_manager.generate_file_name_gdb(
-        script_source_name=removing_points_and_erasing_polygons_in_water_features,
-        description="simplified_polygons",
-    )
-
     removing_points_and_erasing_polygons_in_water_features___water_features_buffered___n100_building = file_manager.generate_file_name_gdb(
         script_source_name=removing_points_and_erasing_polygons_in_water_features,
         description="water_features_buffered",
@@ -870,10 +827,6 @@ class Building_N100(Enum):
     removing_points_and_erasing_polygons_in_water_features___water_features_close_to_building_polygons___n100_building = file_manager.generate_file_name_gdb(
         script_source_name=removing_points_and_erasing_polygons_in_water_features,
         description="water_feature_buffer_close_to_building_polygons",
-    )
-    removing_points_and_erasing_polygons_in_water_features___final_points_merged___n100_building = file_manager.generate_file_name_gdb(
-        script_source_name=removing_points_and_erasing_polygons_in_water_features,
-        description="final_points_merged",
     )
 
     removing_points_and_erasing_polygons_in_water_features___final_building_polygons_merged___n100_building = file_manager.generate_file_name_gdb(
@@ -1088,13 +1041,6 @@ class Building_N100(Enum):
         )
     )
 
-    point_displacement_with_buffer__displaced_building_points__n100 = (
-        file_manager.generate_file_name_gdb(
-            script_source_name=point_displacement_with_buffer,
-            description="displaced_building_points",
-        )
-    )
-
     point_displacement_with_buffer___squares_not_overlapping_roads___n100_building = (
         file_manager.generate_file_name_gdb(
             script_source_name=point_displacement_with_buffer,
@@ -1172,174 +1118,6 @@ class Building_N100(Enum):
             script_source_name=point_resolve_building_conflicts,
             description="documentation",
             file_type="json",
-        )
-    )
-
-    point_resolve_building_conflicts___transform_points_to_square_polygons___n100_building = file_manager.generate_file_name_gdb(
-        script_source_name=point_resolve_building_conflicts,
-        description="transform_points_to_square_polygons",
-    )
-
-    point_resolve_building_conflicts___selection_area_resolve_building_conflicts___n100_building = file_manager.generate_file_name_gdb(
-        script_source_name=point_resolve_building_conflicts,
-        description="selection_area_resolve_building_conflicts",
-    )
-
-    point_resolve_building_conflicts___building_polygon_selection_rbc___n100_building = file_manager.generate_file_name_gdb(
-        script_source_name=point_resolve_building_conflicts,
-        description="building_polygon_selection_rbc",
-    )
-
-    point_resolve_building_conflicts___building_polygons_to_points_and_then_squares___n100_building = file_manager.generate_file_name_gdb(
-        script_source_name=point_resolve_building_conflicts,
-        description="building_polygons_to_points_and_then_squares",
-    )
-
-    point_resolve_building_conflicts___building_point_selection_rbc___n100_building = (
-        file_manager.generate_file_name_gdb(
-            script_source_name=point_resolve_building_conflicts,
-            description="building_point_selection_rbc",
-        )
-    )
-
-    point_resolve_building_conflicts___begrensningskurve_selection_rbc___n100_building = file_manager.generate_file_name_gdb(
-        script_source_name=point_resolve_building_conflicts,
-        description="begrensningskurve_selection_rbc",
-    )
-
-    point_resolve_building_conflicts___squares_selection_rbc___n100_building = (
-        file_manager.generate_file_name_gdb(
-            script_source_name=point_resolve_building_conflicts,
-            description="drawn_polygon_selection_rbc",
-        )
-    )
-
-    point_resolve_building_conflicts___bygningspunkt_selection___n100_building_lyrx = (
-        file_manager.generate_file_name_lyrx(
-            script_source_name=point_resolve_building_conflicts,
-            description="bygningspunkt_selection",
-        )
-    )
-
-    point_resolve_building_conflicts___grunnriss_selection___n100_building_lyrx = (
-        file_manager.generate_file_name_lyrx(
-            script_source_name=point_resolve_building_conflicts,
-            description="grunnriss_selection",
-        )
-    )
-
-    point_resolve_building_conflicts___building_polygons_to_points_and_then_squares___n100_building_lyrx = file_manager.generate_file_name_lyrx(
-        script_source_name=point_resolve_building_conflicts,
-        description="building_polygons_to_points_and_then_squares",
-    )
-
-    point_resolve_building_conflicts___veg_sti_selection___n100_building_lyrx = (
-        file_manager.generate_file_name_lyrx(
-            script_source_name=point_resolve_building_conflicts,
-            description="veg_sti_selection",
-        )
-    )
-
-    point_resolve_building_conflicts___begrensningskurve_selection___n100_building_lyrx = file_manager.generate_file_name_lyrx(
-        script_source_name=point_resolve_building_conflicts,
-        description="begrensningskurve_selection",
-    )
-
-    point_resolve_building_conflicts___squares_selection___n100_building_lyrx = (
-        file_manager.generate_file_name_lyrx(
-            script_source_name=point_resolve_building_conflicts,
-            description="drawn_polygon_selection",
-        )
-    )
-
-    point_resolve_building_conflicts___squares_to_keep_after_rbc1___n100_building = (
-        file_manager.generate_file_name_gdb(
-            script_source_name=point_resolve_building_conflicts,
-            description="drawn_polygons_result_1",
-        )
-    )
-
-    point_resolve_building_conflicts___building_polygons_to_keep_after_rbc1___n100_building = file_manager.generate_file_name_gdb(
-        script_source_name=point_resolve_building_conflicts,
-        description="building_polygons_visible_result_1",
-    )
-
-    point_resolve_building_conflicts___building_polygons_invisible_result_1___n100_building = file_manager.generate_file_name_gdb(
-        script_source_name=point_resolve_building_conflicts,
-        description="building_polygons_invisible_result_1",
-    )
-
-    point_resolve_building_conflicts___building_polygons_to_points_result_1___n100_building = file_manager.generate_file_name_gdb(
-        script_source_name=point_resolve_building_conflicts,
-        description="building_polygons_to_points_result_1",
-    )
-
-    point_resolve_building_conflicts___squares_to_keep_after_rbc1___n100_building_lyrx = file_manager.generate_file_name_lyrx(
-        script_source_name=point_resolve_building_conflicts,
-        description="squares_to_keep_after_rbc1",
-    )
-
-    point_resolve_building_conflicts___building_polygons_to_keep_after_rbc1___n100_building_lyrx = file_manager.generate_file_name_lyrx(
-        script_source_name=point_resolve_building_conflicts,
-        description="squares_to_keep_after_rbc1",
-    )
-
-    point_resolve_building_conflicts___building_polygons_rbc2___n100_building = (
-        file_manager.generate_file_name_gdb(
-            script_source_name=point_resolve_building_conflicts,
-            description="building_polygons_rbc2",
-        )
-    )
-
-    point_resolve_building_conflicts___squares_from_points_rbc2___n100_building = (
-        file_manager.generate_file_name_gdb(
-            script_source_name=point_resolve_building_conflicts,
-            description="squares_from_points_rbc2",
-        )
-    )
-
-    point_resolve_building_conflicts___squares_from_polygons_rbc2___n100_building = (
-        file_manager.generate_file_name_gdb(
-            script_source_name=point_resolve_building_conflicts,
-            description="squares_from_polygons_rbc2",
-        )
-    )
-
-    point_resolve_building_conflicts___squares_from_points_transformed_back_to_points___n100_building = file_manager.generate_file_name_gdb(
-        script_source_name=point_resolve_building_conflicts,
-        description="squares_from_points_transformed_back_to_points",
-    )
-
-    point_resolve_building_conflicts___squares_from_polygons_transformed_to_points___n100_building = file_manager.generate_file_name_gdb(
-        script_source_name=point_resolve_building_conflicts,
-        description="squares_from_polygons_transformed_to_points",
-    )
-
-    point_resolve_building_conflicts___building_polygons_final___n100_building = (
-        file_manager.generate_file_name_gdb(
-            script_source_name=point_resolve_building_conflicts,
-            description="building_polygons_final",
-        )
-    )
-
-    point_resolve_building_conflicts___final_points_merged___n100_building = (
-        file_manager.generate_file_name_gdb(
-            script_source_name=point_resolve_building_conflicts,
-            description="final_points_merged",
-        )
-    )
-
-    point_resolve_building_conflicts___building_points_final___n100_building = (
-        file_manager.generate_file_name_gdb(
-            script_source_name=point_resolve_building_conflicts,
-            description="building_points_final",
-        )
-    )
-
-    point_resolve_building_conflicts___road_selection_rbc___n100_building = (
-        file_manager.generate_file_name_gdb(
-            script_source_name=point_resolve_building_conflicts,
-            description="road_selection_rbc",
         )
     )
 
