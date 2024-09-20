@@ -27,6 +27,8 @@ from generalization.n100.building import finalizing_buildings
 @timing_decorator
 def main():
     """
+    Building N100 Generalization version 1.0
+
     What:
         MORE DOCSTRING NEEDED: Runs the building generalization logic.
     How:
@@ -37,7 +39,7 @@ def main():
             Simplify building polygons to make them easier to read and fit around other features at a N100 map scale.
 
         calculate_polygon_values:
-            PLACEHOLDER DOCSTRING NEEDS TO BE UPDATED.
+            Adds required fields for building point for symbology and resolves building conflicts: angle, hierarchy, and invisibility.
 
         polygon_propogate_displacement:
             Propagates displacement for building polygons to ensure their alignment with roads is adjusted
@@ -47,7 +49,7 @@ def main():
             PLACEHOLDER DOCSTRING NEEDS TO BE UPDATED.
 
         polygon_to_point:
-            PLACEHOLDER DOCSTRING NEEDS TO BE UPDATED.
+            Merges all points originating from building polygons to a single point feature.
 
         calculate_point_values:
             Adds required fields for building point for symbology and resolves building conflicts: angle, hierarchy, and invisibility.
@@ -68,16 +70,19 @@ def main():
             PLACEHOLDER DOCSTRING NEEDS TO BE UPDATED.
 
         removing_points_and_erasing_polygons_in_water_features:
-            PLACEHOLDER DOCSTRING NEEDS TO BE UPDATED.
+            Fixes geometric conflicts between building polygon/point objects and water-features. Allows for
+            tourist cabins to intersect water-features.
 
         removing_overlapping_polygons_and_points:
-            PLACEHOLDER DOCSTRING NEEDS TO BE UPDATED.
+            Resolves graphic conflicts and overlaps between building features which persist after RBC,
+            prioritizing buildings with higher hierarchy values.
 
         finalizing_buildings:
-            PLACEHOLDER DOCSTRING NEEDS TO BE UPDATED.
+            Separates building points and polygons into their respective features they are going to be delivered as.
 
         data_clean_up:
-            PLACEHOLDER DOCSTRING NEEDS TO BE UPDATED.
+            Deletes all fields for each feature expect the fields which should be kept in the delivered product.
+            Then adds last edited date and finally checks and potentially repairs the geometry of each feature.
     Why:
         MORE DOCSTRING NEEDED: Because we need to processing building information so it is cartographic usable for N100 scale.
     """

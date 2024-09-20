@@ -15,8 +15,12 @@ from custom_tools.decorators.timing_decorator import timing_decorator
 @timing_decorator
 def main():
     """
-    This function creates points from small polygons lost during aggregation, and merges
-    them together with collapsed points from the tools simplify building and simplify polygon.
+    What:
+        Merges all points originating from building polygons to a single point feature.
+    How:
+        building_polygons_to_points:
+            First does a spatial join on all collapsed points from simplify_polygons. Then merges all points from building polygons
+            to a single point feature.
     """
     environment_setup.main()
     building_polygons_to_points()
@@ -24,6 +28,10 @@ def main():
 
 @timing_decorator
 def building_polygons_to_points():
+    """
+    First does a spatial join on all collapsed points from simplify_polygons. Then merges all points from building polygons
+    to a single point feature.
+    """
     # List of building points which will be spatially joined with building polygons
     input_points = [
         f"{Building_N100.simplify_polygons___simplify_polygon___n100_building.value}_Pnt",

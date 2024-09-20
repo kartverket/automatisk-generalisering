@@ -15,17 +15,41 @@ import datetime as dt
 # Main function
 @timing_decorator
 def main():
+    """
+    What:
+        Deletes all fields for each feature expect the fields which should be kept in the delivered product.
+        Then adds last edited date and finally checks and potentially repairs the geometry of each feature.
+    How:
+        keep_necessary_fields:
+            It runs the keep_necessary_fields function for each feature keeping only required fields.
+
+        add_last_edited_date_to_all_feature_classes:
+            Adds a 'last_edited_date' field to specified feature classes and sets it to the current date and time.
+
+        check_and_repair_geometry:
+            Checks and potentially repairs geometry for the final outputs.
+    Why:
+        For each feature there should be no other field present other than the ones which is specified.
+    """
+
     environment_setup.main()
     keep_necessary_fields(
-        Building_N100.BygningsPunkt.value,
-        ["objtype", "byggtyp_nbr", "målemetode", "nøyaktighet", "last_edited_date"],
+        input_layer=Building_N100.BygningsPunkt.value,
+        list_of_fields=[
+            "objtype",
+            "byggtyp_nbr",
+            "målemetode",
+            "nøyaktighet",
+            "last_edited_date",
+        ],
     )
     keep_necessary_fields(
-        Building_N100.Grunnriss.value, ["objtype", "byggtyp_nbr", "last_edited_date"]
+        input_layer=Building_N100.Grunnriss.value,
+        list_of_fields=["objtype", "byggtyp_nbr", "last_edited_date"],
     )
     keep_necessary_fields(
-        Building_N100.TuristHytte.value,
-        [
+        input_layer=Building_N100.TuristHytte.value,
+        list_of_fields=[
             "objtype",
             "byggtyp_nbr",
             "betjeningsgrad",
@@ -38,11 +62,12 @@ def main():
         ],
     )
     keep_necessary_fields(
-        Building_N100.OmrissLinje.value,
-        ["objtype", "målemetode", "nøyaktighet", "last_edited_date"],
+        input_layer=Building_N100.OmrissLinje.value,
+        list_of_fields=["objtype", "målemetode", "nøyaktighet", "last_edited_date"],
     )
     keep_necessary_fields(
-        Building_N100.Piktogram.value, ["byggtyp_nbr", "last_edited_date"]
+        input_layer=Building_N100.Piktogram.value,
+        list_of_fields=["byggtyp_nbr", "last_edited_date"],
     )
 
     check_and_repair_geometry()
@@ -51,10 +76,19 @@ def main():
 
 
 @timing_decorator
-def keep_necessary_fields(input_layer, list_of_fields):
+def keep_necessary_fields(input_layer: str, list_of_fields: list[str]):
     """
-    Summary:
-        Deletes all fields from the input feature class except for a specified set of fields.
+    What:
+        Deletes all fields from the input feature class except for a fields specified in a list.
+
+    How:
+        Retrieves all fields from the input feature. It has a static set of fields always to be kept regardless
+        of parameter input. It then removes all static and provided fields from the list of fields to remove.
+        Then deletes all unspecified fields.
+
+    Args:
+        input_layer (str): The input feature to clean up.
+        list_of_fields (list[str]): The fields to be kept in addition to static fields.
     """
     # Provide the path to your feature class
     feature_class_to_clean_up = input_layer
@@ -89,8 +123,7 @@ def keep_necessary_fields(input_layer, list_of_fields):
 
 def add_last_edited_date_to_all_feature_classes():
     """
-    Summary:
-        Adds a 'last_edited_date' field to specified feature classes and sets it to the current date and time.
+    Adds a 'last_edited_date' field to specified feature classes and sets it to the current date and time.
     """
     all_final_layers = [
         Building_N100.BygningsPunkt.value,
@@ -129,6 +162,9 @@ def add_last_edited_date_to_all_feature_classes():
 
 
 def check_and_repair_geometry():
+    """
+    Checks and potentially repairs geometry for the final outputs.
+    """
     input_features_validation = {
         "building_points": Building_N100.BygningsPunkt.value,
         "building_polygons": Building_N100.Grunnriss.value,
