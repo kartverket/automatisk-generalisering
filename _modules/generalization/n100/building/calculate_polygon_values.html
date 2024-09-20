@@ -93,8 +93,18 @@
 <span class="nd">@timing_decorator</span>
 <span class="k">def</span> <span class="nf">main</span><span class="p">():</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">    Summary:</span>
+<span class="sd">    What:</span>
 <span class="sd">        Adds required fields for building point for symbology and resolves building conflicts: angle, hierarchy, and invisibility.</span>
+
+<span class="sd">    How:</span>
+<span class="sd">        adding_angle_hierarchy_invisibility_fields:</span>
+<span class="sd">            Adds angle, hierarchy and invisibility fields and set their corresponding values.</span>
+
+<span class="sd">        adding_symbol_val:</span>
+<span class="sd">            Adds symbol_val and reclassify NBR values for undefined nbr values</span>
+
+<span class="sd">    Why:</span>
+<span class="sd">        The angle, hierarchy and invisibility fields are used in future processing, such as polygon_processor and RBC.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="n">adding_angle_hierarchy_invisibility_fields</span><span class="p">()</span>
@@ -105,6 +115,10 @@
 <div class="viewcode-block" id="adding_angle_hierarchy_invisibility_fields">
 <a class="viewcode-back" href="../../../../generated_docs/generalization.n100.building.html#generalization.n100.building.calculate_polygon_values.adding_angle_hierarchy_invisibility_fields">[docs]</a>
 <span class="k">def</span> <span class="nf">adding_angle_hierarchy_invisibility_fields</span><span class="p">():</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Adds angle, hierarchy and invisibility fields and set their corresponding values.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
     <span class="c1"># Adding multiple fields</span>
     <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Adding fields...&quot;</span><span class="p">)</span>
     <span class="n">arcpy</span><span class="o">.</span><span class="n">management</span><span class="o">.</span><span class="n">AddFields</span><span class="p">(</span>
@@ -123,7 +137,7 @@
         <span class="n">expression_type</span><span class="o">=</span><span class="s2">&quot;PYTHON3&quot;</span><span class="p">,</span>
         <span class="n">fields</span><span class="o">=</span><span class="p">[</span>
             <span class="p">[</span><span class="s2">&quot;angle&quot;</span><span class="p">,</span> <span class="s2">&quot;0&quot;</span><span class="p">],</span>
-            <span class="p">[</span><span class="s2">&quot;hierarchy&quot;</span><span class="p">,</span> <span class="s2">&quot;1&quot;</span><span class="p">],</span>  <span class="c1"># Hierachy 1 so buildings can be moved around</span>
+            <span class="p">[</span><span class="s2">&quot;hierarchy&quot;</span><span class="p">,</span> <span class="s2">&quot;1&quot;</span><span class="p">],</span>  <span class="c1"># Hierarchy 1 so buildings can be moved around</span>
             <span class="p">[</span><span class="s2">&quot;invisibility&quot;</span><span class="p">,</span> <span class="s2">&quot;0&quot;</span><span class="p">],</span>
         <span class="p">],</span>
     <span class="p">)</span></div>
@@ -133,6 +147,9 @@
 <div class="viewcode-block" id="adding_symbol_val">
 <a class="viewcode-back" href="../../../../generated_docs/generalization.n100.building.html#generalization.n100.building.calculate_polygon_values.adding_symbol_val">[docs]</a>
 <span class="k">def</span> <span class="nf">adding_symbol_val</span><span class="p">():</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Adds symbol_val and reclassify NBR values for undefined nbr values</span>
+<span class="sd">    &quot;&quot;&quot;</span>
     <span class="n">arcpy</span><span class="o">.</span><span class="n">AddField_management</span><span class="p">(</span>
         <span class="n">in_table</span><span class="o">=</span><span class="n">Building_N100</span><span class="o">.</span><span class="n">simplify_polygons___spatial_join_polygons___n100_building</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
         <span class="n">field_name</span><span class="o">=</span><span class="s2">&quot;symbol_val&quot;</span><span class="p">,</span>

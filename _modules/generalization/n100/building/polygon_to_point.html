@@ -96,8 +96,12 @@
 <span class="nd">@timing_decorator</span>
 <span class="k">def</span> <span class="nf">main</span><span class="p">():</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">    This function creates points from small polygons lost during aggregation, and merges</span>
-<span class="sd">    them together with collapsed points from the tools simplify building and simplify polygon.</span>
+<span class="sd">    What:</span>
+<span class="sd">        Merges all points originating from building polygons to a single point feature.</span>
+<span class="sd">    How:</span>
+<span class="sd">        building_polygons_to_points:</span>
+<span class="sd">            First does a spatial join on all collapsed points from simplify_polygons. Then merges all points from building polygons</span>
+<span class="sd">            to a single point feature.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="n">environment_setup</span><span class="o">.</span><span class="n">main</span><span class="p">()</span>
     <span class="n">building_polygons_to_points</span><span class="p">()</span></div>
@@ -108,6 +112,10 @@
 <a class="viewcode-back" href="../../../../generated_docs/generalization.n100.building.html#generalization.n100.building.polygon_to_point.building_polygons_to_points">[docs]</a>
 <span class="nd">@timing_decorator</span>
 <span class="k">def</span> <span class="nf">building_polygons_to_points</span><span class="p">():</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    First does a spatial join on all collapsed points from simplify_polygons. Then merges all points from building polygons</span>
+<span class="sd">    to a single point feature.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
     <span class="c1"># List of building points which will be spatially joined with building polygons</span>
     <span class="n">input_points</span> <span class="o">=</span> <span class="p">[</span>
         <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">Building_N100</span><span class="o">.</span><span class="n">simplify_polygons___simplify_polygon___n100_building</span><span class="o">.</span><span class="n">value</span><span class="si">}</span><span class="s2">_Pnt&quot;</span><span class="p">,</span>

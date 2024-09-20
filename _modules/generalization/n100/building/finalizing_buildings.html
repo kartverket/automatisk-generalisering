@@ -93,6 +93,25 @@
 <div class="viewcode-block" id="main">
 <a class="viewcode-back" href="../../../../generated_docs/generalization.n100.building.html#generalization.n100.building.finalizing_buildings.main">[docs]</a>
 <span class="k">def</span> <span class="nf">main</span><span class="p">():</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    What:</span>
+<span class="sd">        Separates building points and polygons into their respective features they are going to be delivered as.</span>
+<span class="sd">    How:</span>
+<span class="sd">        removing_points_in_and_close_to_urban_areas:</span>
+<span class="sd">            Makes sure there are no building points near urban areas, except for hospital, churches and tourist huts.</span>
+
+<span class="sd">        selecting_all_tourist_cabins:</span>
+<span class="sd">            Selects tourist cabins from building points to be delivered as a separate feature.</span>
+
+<span class="sd">        building_polygons_to_line:</span>
+<span class="sd">            Converts building polygons to lines, to creat omrisslinje feature.</span>
+
+<span class="sd">        selecting_hospital_and_churches_for_pictogram_featureclass:</span>
+<span class="sd">            Selects building points categorized as hospitals or churches for inclusion in a pictogram feature.</span>
+
+<span class="sd">        assigning_final_file_names:</span>
+<span class="sd">            Copies final feature classes to their respective output file locations in the &quot;final_outputs.gdb&quot;</span>
+<span class="sd">    &quot;&quot;&quot;</span>
     <span class="n">environment_setup</span><span class="o">.</span><span class="n">main</span><span class="p">()</span>
     <span class="n">removing_points_in_and_close_to_urban_areas</span><span class="p">()</span>
     <span class="n">selecting_all_tourist_cabins</span><span class="p">()</span>
@@ -107,8 +126,7 @@
 <span class="nd">@timing_decorator</span>
 <span class="k">def</span> <span class="nf">removing_points_in_and_close_to_urban_areas</span><span class="p">():</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">    Summary:</span>
-<span class="sd">        Selects and processes building points based on their proximity to urban areas, keeping those further away and merging specific points.</span>
+<span class="sd">    Makes sure there are no building points near urban areas, except for hospital, churches and tourist huts.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="c1"># Defining sql expression to select urban areas</span>
     <span class="n">urban_areas_sql_expr</span> <span class="o">=</span> <span class="s2">&quot;objtype = &#39;Tettbebyggelse&#39; Or objtype = &#39;Industriområde&#39; Or objtype = &#39;BymessigBebyggelse&#39;&quot;</span>
@@ -162,8 +180,7 @@
 <span class="nd">@timing_decorator</span>
 <span class="k">def</span> <span class="nf">selecting_all_tourist_cabins</span><span class="p">():</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">    Summary:</span>
-<span class="sd">        Selects building points categorized as tourist cabins and distinguishes them from other building points.</span>
+<span class="sd">    Selects tourist cabins from building points to be delivered as a separate feature.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="n">selecting_tourist_cabins</span> <span class="o">=</span> <span class="s2">&quot;byggtyp_nbr = 956&quot;</span>
 
@@ -187,8 +204,7 @@
 <a class="viewcode-back" href="../../../../generated_docs/generalization.n100.building.html#generalization.n100.building.finalizing_buildings.building_polygons_to_line">[docs]</a>
 <span class="k">def</span> <span class="nf">building_polygons_to_line</span><span class="p">():</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">    Summary:</span>
-<span class="sd">        Converts building polygons to lines</span>
+<span class="sd">    Converts building polygons to lines, to creat omrisslinje feature.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="n">arcpy</span><span class="o">.</span><span class="n">management</span><span class="o">.</span><span class="n">PolygonToLine</span><span class="p">(</span>
         <span class="n">in_features</span><span class="o">=</span><span class="n">Building_N100</span><span class="o">.</span><span class="n">removing_overlapping_polygons_and_points___polygons_NOT_intersecting_road_buffers___n100_building</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
@@ -216,8 +232,7 @@
 <a class="viewcode-back" href="../../../../generated_docs/generalization.n100.building.html#generalization.n100.building.finalizing_buildings.selecting_hospital_and_churches_for_pictogram_featureclass">[docs]</a>
 <span class="k">def</span> <span class="nf">selecting_hospital_and_churches_for_pictogram_featureclass</span><span class="p">():</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">    Summary:</span>
-<span class="sd">        Selects building points categorized as hospitals or churches for inclusion in a pictogram feature class.</span>
+<span class="sd">    Selects building points categorized as hospitals or churches for inclusion in a pictogram feature.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="n">custom_arcpy</span><span class="o">.</span><span class="n">select_attribute_and_make_permanent_feature</span><span class="p">(</span>
         <span class="n">input_layer</span><span class="o">=</span><span class="n">Building_N100</span><span class="o">.</span><span class="n">finalizing_buildings___all_points_except_tourist_cabins___n100_building</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
@@ -232,8 +247,7 @@
 <span class="nd">@timing_decorator</span>
 <span class="k">def</span> <span class="nf">assigning_final_file_names</span><span class="p">():</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">    Summary:</span>
-<span class="sd">        Copies final feature classes to their respective output file locations in the &quot;final_outputs.gdb&quot;</span>
+<span class="sd">    Copies final feature classes to their respective output file locations in the &quot;final_outputs.gdb&quot;.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="n">arcpy</span><span class="o">.</span><span class="n">management</span><span class="o">.</span><span class="n">CopyFeatures</span><span class="p">(</span>
         <span class="n">Building_N100</span><span class="o">.</span><span class="n">finalizing_buildings___tourist_cabins___n100_building</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>

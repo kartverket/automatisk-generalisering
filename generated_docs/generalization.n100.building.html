@@ -234,7 +234,16 @@ Then reclassify their NBR values and symbol_val values.</p>
 <dt class="sig sig-object py" id="generalization.n100.building.calculate_polygon_values.main">
 <span class="sig-prename descclassname"><span class="pre">generalization.n100.building.calculate_polygon_values.</span></span><span class="sig-name descname"><span class="pre">main</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/generalization/n100/building/calculate_polygon_values.html#main"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#generalization.n100.building.calculate_polygon_values.main" title="Link to this definition"></a></dt>
 <dd><dl class="simple">
-<dt>Summary:</dt><dd><p>Adds required fields for building point for symbology and resolves building conflicts: angle, hierarchy, and invisibility.</p>
+<dt>What:</dt><dd><p>Adds required fields for building point for symbology and resolves building conflicts: angle, hierarchy, and invisibility.</p>
+</dd>
+<dt>How:</dt><dd><dl class="simple">
+<dt>adding_angle_hierarchy_invisibility_fields:</dt><dd><p>Adds angle, hierarchy and invisibility fields and set their corresponding values.</p>
+</dd>
+<dt>adding_symbol_val:</dt><dd><p>Adds symbol_val and reclassify NBR values for undefined nbr values</p>
+</dd>
+</dl>
+</dd>
+<dt>Why:</dt><dd><p>The angle, hierarchy and invisibility fields are used in future processing, such as polygon_processor and RBC.</p>
 </dd>
 </dl>
 </dd></dl>
@@ -242,12 +251,14 @@ Then reclassify their NBR values and symbol_val values.</p>
 <dl class="py function">
 <dt class="sig sig-object py" id="generalization.n100.building.calculate_polygon_values.adding_angle_hierarchy_invisibility_fields">
 <span class="sig-prename descclassname"><span class="pre">generalization.n100.building.calculate_polygon_values.</span></span><span class="sig-name descname"><span class="pre">adding_angle_hierarchy_invisibility_fields</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/generalization/n100/building/calculate_polygon_values.html#adding_angle_hierarchy_invisibility_fields"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#generalization.n100.building.calculate_polygon_values.adding_angle_hierarchy_invisibility_fields" title="Link to this definition"></a></dt>
-<dd></dd></dl>
+<dd><p>Adds angle, hierarchy and invisibility fields and set their corresponding values.</p>
+</dd></dl>
 
 <dl class="py function">
 <dt class="sig sig-object py" id="generalization.n100.building.calculate_polygon_values.adding_symbol_val">
 <span class="sig-prename descclassname"><span class="pre">generalization.n100.building.calculate_polygon_values.</span></span><span class="sig-name descname"><span class="pre">adding_symbol_val</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/generalization/n100/building/calculate_polygon_values.html#adding_symbol_val"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#generalization.n100.building.calculate_polygon_values.adding_symbol_val" title="Link to this definition"></a></dt>
-<dd></dd></dl>
+<dd><p>Adds symbol_val and reclassify NBR values for undefined nbr values</p>
+</dd></dl>
 
 </section>
 <section id="generalization-n100-building-data-clean-up-module">
@@ -261,51 +272,53 @@ Then reclassify their NBR values and symbol_val values.</p>
 <dl class="py function">
 <dt class="sig sig-object py" id="generalization.n100.building.finalizing_buildings.main">
 <span class="sig-prename descclassname"><span class="pre">generalization.n100.building.finalizing_buildings.</span></span><span class="sig-name descname"><span class="pre">main</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/generalization/n100/building/finalizing_buildings.html#main"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#generalization.n100.building.finalizing_buildings.main" title="Link to this definition"></a></dt>
-<dd></dd></dl>
+<dd><dl class="simple">
+<dt>What:</dt><dd><p>Separates building points and polygons into their respective features they are going to be delivered as.</p>
+</dd>
+<dt>How:</dt><dd><dl class="simple">
+<dt>removing_points_in_and_close_to_urban_areas:</dt><dd><p>Makes sure there are no building points near urban areas, except for hospital, churches and tourist huts.</p>
+</dd>
+<dt>selecting_all_tourist_cabins:</dt><dd><p>Selects tourist cabins from building points to be delivered as a separate feature.</p>
+</dd>
+<dt>building_polygons_to_line:</dt><dd><p>Converts building polygons to lines, to creat omrisslinje feature.</p>
+</dd>
+<dt>selecting_hospital_and_churches_for_pictogram_featureclass:</dt><dd><p>Selects building points categorized as hospitals or churches for inclusion in a pictogram feature.</p>
+</dd>
+<dt>assigning_final_file_names:</dt><dd><p>Copies final feature classes to their respective output file locations in the “final_outputs.gdb”</p>
+</dd>
+</dl>
+</dd>
+</dl>
+</dd></dl>
 
 <dl class="py function">
 <dt class="sig sig-object py" id="generalization.n100.building.finalizing_buildings.removing_points_in_and_close_to_urban_areas">
 <span class="sig-prename descclassname"><span class="pre">generalization.n100.building.finalizing_buildings.</span></span><span class="sig-name descname"><span class="pre">removing_points_in_and_close_to_urban_areas</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/generalization/n100/building/finalizing_buildings.html#removing_points_in_and_close_to_urban_areas"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#generalization.n100.building.finalizing_buildings.removing_points_in_and_close_to_urban_areas" title="Link to this definition"></a></dt>
-<dd><dl class="simple">
-<dt>Summary:</dt><dd><p>Selects and processes building points based on their proximity to urban areas, keeping those further away and merging specific points.</p>
-</dd>
-</dl>
+<dd><p>Makes sure there are no building points near urban areas, except for hospital, churches and tourist huts.</p>
 </dd></dl>
 
 <dl class="py function">
 <dt class="sig sig-object py" id="generalization.n100.building.finalizing_buildings.selecting_all_tourist_cabins">
 <span class="sig-prename descclassname"><span class="pre">generalization.n100.building.finalizing_buildings.</span></span><span class="sig-name descname"><span class="pre">selecting_all_tourist_cabins</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/generalization/n100/building/finalizing_buildings.html#selecting_all_tourist_cabins"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#generalization.n100.building.finalizing_buildings.selecting_all_tourist_cabins" title="Link to this definition"></a></dt>
-<dd><dl class="simple">
-<dt>Summary:</dt><dd><p>Selects building points categorized as tourist cabins and distinguishes them from other building points.</p>
-</dd>
-</dl>
+<dd><p>Selects tourist cabins from building points to be delivered as a separate feature.</p>
 </dd></dl>
 
 <dl class="py function">
 <dt class="sig sig-object py" id="generalization.n100.building.finalizing_buildings.building_polygons_to_line">
 <span class="sig-prename descclassname"><span class="pre">generalization.n100.building.finalizing_buildings.</span></span><span class="sig-name descname"><span class="pre">building_polygons_to_line</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/generalization/n100/building/finalizing_buildings.html#building_polygons_to_line"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#generalization.n100.building.finalizing_buildings.building_polygons_to_line" title="Link to this definition"></a></dt>
-<dd><dl class="simple">
-<dt>Summary:</dt><dd><p>Converts building polygons to lines</p>
-</dd>
-</dl>
+<dd><p>Converts building polygons to lines, to creat omrisslinje feature.</p>
 </dd></dl>
 
 <dl class="py function">
 <dt class="sig sig-object py" id="generalization.n100.building.finalizing_buildings.selecting_hospital_and_churches_for_pictogram_featureclass">
 <span class="sig-prename descclassname"><span class="pre">generalization.n100.building.finalizing_buildings.</span></span><span class="sig-name descname"><span class="pre">selecting_hospital_and_churches_for_pictogram_featureclass</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/generalization/n100/building/finalizing_buildings.html#selecting_hospital_and_churches_for_pictogram_featureclass"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#generalization.n100.building.finalizing_buildings.selecting_hospital_and_churches_for_pictogram_featureclass" title="Link to this definition"></a></dt>
-<dd><dl class="simple">
-<dt>Summary:</dt><dd><p>Selects building points categorized as hospitals or churches for inclusion in a pictogram feature class.</p>
-</dd>
-</dl>
+<dd><p>Selects building points categorized as hospitals or churches for inclusion in a pictogram feature.</p>
 </dd></dl>
 
 <dl class="py function">
 <dt class="sig sig-object py" id="generalization.n100.building.finalizing_buildings.assigning_final_file_names">
 <span class="sig-prename descclassname"><span class="pre">generalization.n100.building.finalizing_buildings.</span></span><span class="sig-name descname"><span class="pre">assigning_final_file_names</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/generalization/n100/building/finalizing_buildings.html#assigning_final_file_names"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#generalization.n100.building.finalizing_buildings.assigning_final_file_names" title="Link to this definition"></a></dt>
-<dd><dl class="simple">
-<dt>Summary:</dt><dd><p>Copies final feature classes to their respective output file locations in the “final_outputs.gdb”</p>
-</dd>
-</dl>
+<dd><p>Copies final feature classes to their respective output file locations in the “final_outputs.gdb”.</p>
 </dd></dl>
 
 </section>
@@ -440,14 +453,24 @@ displacement for building polygons to ensure their alignment with roads is adjus
 <dl class="py function">
 <dt class="sig sig-object py" id="generalization.n100.building.polygon_to_point.main">
 <span class="sig-prename descclassname"><span class="pre">generalization.n100.building.polygon_to_point.</span></span><span class="sig-name descname"><span class="pre">main</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/generalization/n100/building/polygon_to_point.html#main"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#generalization.n100.building.polygon_to_point.main" title="Link to this definition"></a></dt>
-<dd><p>This function creates points from small polygons lost during aggregation, and merges
-them together with collapsed points from the tools simplify building and simplify polygon.</p>
+<dd><dl class="simple">
+<dt>What:</dt><dd><p>Merges all points originating from building polygons to a single point feature.</p>
+</dd>
+<dt>How:</dt><dd><dl class="simple">
+<dt>building_polygons_to_points:</dt><dd><p>First does a spatial join on all collapsed points from simplify_polygons. Then merges all points from building polygons
+to a single point feature.</p>
+</dd>
+</dl>
+</dd>
+</dl>
 </dd></dl>
 
 <dl class="py function">
 <dt class="sig sig-object py" id="generalization.n100.building.polygon_to_point.building_polygons_to_points">
 <span class="sig-prename descclassname"><span class="pre">generalization.n100.building.polygon_to_point.</span></span><span class="sig-name descname"><span class="pre">building_polygons_to_points</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/generalization/n100/building/polygon_to_point.html#building_polygons_to_points"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#generalization.n100.building.polygon_to_point.building_polygons_to_points" title="Link to this definition"></a></dt>
-<dd></dd></dl>
+<dd><p>First does a spatial join on all collapsed points from simplify_polygons. Then merges all points from building polygons
+to a single point feature.</p>
+</dd></dl>
 
 </section>
 <section id="generalization-n100-building-removing-overlapping-polygons-and-points-module">
