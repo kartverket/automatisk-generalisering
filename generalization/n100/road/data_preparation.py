@@ -19,6 +19,7 @@ from input_data.input_symbology import SymbologyN100
 from constants.n100_constants import N100_Symbology, N100_SQLResources, N100_Values
 
 
+@timing_decorator
 def main():
     environment_setup.main()
     selecting_paths_from_n50()
@@ -74,6 +75,7 @@ def adding_fields_to_n50_paths_and_calculating_hierarchy():
             ["characters", "SHORT"],
             ["invisibility_2", "SHORT"],
             ["invisibility_3", "SHORT"],
+            ["invisibility_4", "SHORT"],
         ],
     )
 
@@ -113,11 +115,12 @@ def adding_fields_to_nvdb_and_calculating_values():
         in_table=Road_N100.data_preperation___selecting_everything_but_rampe_nvdb___n100_road.value,
         field_description=[
             ["invisibility_1", "SHORT"],
+            ["invisibility_2", "SHORT"],
+            ["invisibility_3", "SHORT"],
             ["hierarchy", "SHORT"],
             ["merge", "LONG"],
             ["characters", "SHORT"],
-            ["invisibility_2", "SHORT"],
-            ["invisibility_3", "SHORT"],
+            ["invisibility_4", "SHORT"],
         ],
     )
 
@@ -145,6 +148,8 @@ def adding_fields_to_nvdb_and_calculating_values():
         elif road_category == 'Privat veg':
             return 4
         elif road_category == 'Skogsveg':
+            return 5
+        else:
             return 5
     """
 
