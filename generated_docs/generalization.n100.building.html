@@ -327,49 +327,40 @@ Then reclassify their NBR values and symbol_val values.</p>
 <dl class="py function">
 <dt class="sig sig-object py" id="generalization.n100.building.hospital_church_clusters.main">
 <span class="sig-prename descclassname"><span class="pre">generalization.n100.building.hospital_church_clusters.</span></span><span class="sig-name descname"><span class="pre">main</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/generalization/n100/building/hospital_church_clusters.html#main"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#generalization.n100.building.hospital_church_clusters.main" title="Link to this definition"></a></dt>
-<dd><dl class="simple">
-<dt>Summary:</dt><dd><p>This script detects and reduces hospital and church clusters.</p>
-</dd>
-</dl>
+<dd><p>This script detects and reduces hospital and church clusters. As an example can a cluster of 5 close hospital points
+be reduced to only consist of 1 point.</p>
 </dd></dl>
 
 <dl class="py function">
 <dt class="sig sig-object py" id="generalization.n100.building.hospital_church_clusters.selecting_all_other_points_that_are_not_hospital_and_church">
 <span class="sig-prename descclassname"><span class="pre">generalization.n100.building.hospital_church_clusters.</span></span><span class="sig-name descname"><span class="pre">selecting_all_other_points_that_are_not_hospital_and_church</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/generalization/n100/building/hospital_church_clusters.html#selecting_all_other_points_that_are_not_hospital_and_church"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#generalization.n100.building.hospital_church_clusters.selecting_all_other_points_that_are_not_hospital_and_church" title="Link to this definition"></a></dt>
-<dd></dd></dl>
+<dd><p>This script selects all other points that are not classified as hospital, church and touristhuts.</p>
+</dd></dl>
 
 <dl class="py function">
 <dt class="sig sig-object py" id="generalization.n100.building.hospital_church_clusters.hospital_church_selections">
 <span class="sig-prename descclassname"><span class="pre">generalization.n100.building.hospital_church_clusters.</span></span><span class="sig-name descname"><span class="pre">hospital_church_selections</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/generalization/n100/building/hospital_church_clusters.html#hospital_church_selections"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#generalization.n100.building.hospital_church_clusters.hospital_church_selections" title="Link to this definition"></a></dt>
-<dd><dl class="simple">
-<dt>Summary:</dt><dd><p>Selects hospitals and churches from the input point feature class, creating separate feature layers for each category.</p>
-</dd>
-<dt>Details:</dt><dd><ul class="simple">
-<li><p>Hospitals are selected based on ‘byggtyp_nbr’ values 970 and 719.</p></li>
-<li><p>Churches are selected based on ‘byggtyp_nbr’ value 671.</p></li>
-</ul>
-</dd>
-</dl>
+<dd><p>Selects hospitals and churches from the input point feature class, creating separate feature layers for each category.
+Hospitals are selected based on ‘byggtyp_nbr’ values 970 and 719.
+Churches are selected based on ‘byggtyp_nbr’ value 671.</p>
 </dd></dl>
 
 <dl class="py function">
 <dt class="sig sig-object py" id="generalization.n100.building.hospital_church_clusters.find_clusters">
 <span class="sig-prename descclassname"><span class="pre">generalization.n100.building.hospital_church_clusters.</span></span><span class="sig-name descname"><span class="pre">find_clusters</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/generalization/n100/building/hospital_church_clusters.html#find_clusters"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#generalization.n100.building.hospital_church_clusters.find_clusters" title="Link to this definition"></a></dt>
 <dd><dl class="simple">
-<dt>Summary:</dt><dd><p>Finds hospital and church clusters.
+<dt>What:</dt><dd><p>Finds hospital and church clusters.
 A cluster is defined as two or more points that are closer together than 200 meters.</p>
 </dd>
-<dt>Details:</dt><dd><ul class="simple">
-<li><p>Clusters are found for both hospitals and churches using the ‘FindPointClusters’ tool.</p></li>
-<li><p>The CLUSTER_IDs are joined with the original hospital and church feature classes.</p></li>
-<li><p>Points belonging to a hospital or church cluster are selected as new layers.</p></li>
-<li><p>Points not belonging to a cluster are selected as new layers.</p></li>
-</ul>
+<dt>How:</dt><dd><p>Clusters are found for both hospitals and churches using the ‘FindPointClusters’ tool.
+The CLUSTER_IDs are joined with the original hospital and church feature classes.
+Points belonging to a hospital or church cluster are selected as new layers.
+Points not belonging to a cluster are selected as new layers.
+The tool FindPointClusters has a search distance of <strong>‘200 Meters’</strong> and a minimum of <strong>‘2 Points’</strong>.</p>
 </dd>
-</dl>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>Points'.</strong> (<em>- The tool FindPointClusters has a search distance</em><em> of </em><em>'200 Meters' and a minimum</em><em> of </em><em>'2</em>)</p>
+<dt>Why?</dt><dd><p>Clusters amongst hospital and churches are found because it causes “noise” in the map.
+We do not want the map to display clusters of big symbols, this can make the map harder to read.
+Therefore, we want to identify clusters and reduce these.</p>
 </dd>
 </dl>
 </dd></dl>
@@ -378,19 +369,23 @@ A cluster is defined as two or more points that are closer together than 200 met
 <dt class="sig sig-object py" id="generalization.n100.building.hospital_church_clusters.reducing_clusters">
 <span class="sig-prename descclassname"><span class="pre">generalization.n100.building.hospital_church_clusters.</span></span><span class="sig-name descname"><span class="pre">reducing_clusters</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/generalization/n100/building/hospital_church_clusters.html#reducing_clusters"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#generalization.n100.building.hospital_church_clusters.reducing_clusters" title="Link to this definition"></a></dt>
 <dd><dl class="simple">
-<dt>Summary:</dt><dd><p>Reduces hospital and church clusters by keeping only one point for each detected cluster.</p>
+<dt>What:</dt><dd><p>Reduces hospital and church clusters by keeping only one point for each detected cluster. This ensures that
+spatial redundancy is minimized, and each cluster is represented by a single point, which is helpful for
+cleaner visualizations in the map.</p>
 </dd>
-<dt>Details:</dt><dd><ul class="simple">
-<li><p>A minimum bounding polygon is created using the cluster points.</p></li>
-<li><p>The same polygon is transformed into a centerpoint.</p></li>
-<li><p>Only the cluster point nearest to the centerpoint is retained.</p></li>
-<li><p>Hospital and church points not part of a cluster are merged with the selected cluster points.</p></li>
-</ul>
+<dt>Why:</dt><dd><p>Clusters of hospitals or churches may result in overlapping or redundant data points, especially in dense
+areas. Reducing clusters by retaining only the most central point ensures the dataset remains representative
+without unnecessary duplication.</p>
 </dd>
-</dl>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>AREA.</strong> (<em>- Minimum Bounding Geometry is created with the geometry type RECTANGLE BY</em>)</p>
+<dt>How:</dt><dd><p>The function creates a minimum bounding polygon for each cluster of points, which is then converted into a
+center point. The nearest hospital or church point to the center point is identified and retained, while
+the remaining points in the cluster are discarded. Hospital and church points that are not part of a cluster
+are merged with the retained cluster points. The ‘RECTANGLE_BY_AREA’ option is used to create the minimum
+bounding geometry for each cluster. The nearest point to the center of the bounding polygon is identified
+using a ‘Near’ analysis, and a dictionary is used to store the minimum distance values for each cluster.
+If two points have the same distance to the center, one is selected randomly. Finally, the non-clustered
+points are merged with the selected points from clusters, resulting in a merged feature class with reduced
+hospital and church points.</p>
 </dd>
 </dl>
 </dd></dl>
@@ -398,10 +393,9 @@ A cluster is defined as two or more points that are closer together than 200 met
 <dl class="py function">
 <dt class="sig sig-object py" id="generalization.n100.building.hospital_church_clusters.hospitals_and_churches_too_close">
 <span class="sig-prename descclassname"><span class="pre">generalization.n100.building.hospital_church_clusters.</span></span><span class="sig-name descname"><span class="pre">hospitals_and_churches_too_close</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/generalization/n100/building/hospital_church_clusters.html#hospitals_and_churches_too_close"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#generalization.n100.building.hospital_church_clusters.hospitals_and_churches_too_close" title="Link to this definition"></a></dt>
-<dd><dl class="simple">
-<dt>Summary:</dt><dd><p>Selects hospitals and churches, then identifies churches that are more than 215 meters away from hospitals.</p>
-</dd>
-</dl>
+<dd><p>This function identifies and filters out church points that are located too close to hospital points (within 215 meters).
+Only churches that are farther than 215 meters from hospitals are retained, while the rest are excluded from the final dataset.
+The result is a reduced and cleaner spatial dataset of hospitals and churches.</p>
 </dd></dl>
 
 </section>
