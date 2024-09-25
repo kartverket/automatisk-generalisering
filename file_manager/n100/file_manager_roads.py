@@ -130,7 +130,7 @@ class Road_N100(Enum):
     first_generalization____visible_features_after_thin_road_network_1___n100_road = (
         file_manager.generate_file_name_gdb(
             script_source_name=first_generalization,
-            description="visible_features_after_thin_road_network_1_test",
+            description="visible_features_after_thin_road_network_1",
         )
     )
 
@@ -144,7 +144,7 @@ class Road_N100(Enum):
     first_generalization____visible_features_after_thin_road_network_2___n100_road = (
         file_manager.generate_file_name_gdb(
             script_source_name=first_generalization,
-            description="visible_features_after_thin_road_network_2_test",
+            description="visible_features_after_thin_road_network_2",
         )
     )
 
@@ -158,7 +158,105 @@ class Road_N100(Enum):
     first_generalization____visible_features_after_thin_road_network_3___n100_road = (
         file_manager.generate_file_name_gdb(
             script_source_name=first_generalization,
-            description="visible_features_after_thin_road_network_3_test",
+            description="visible_features_after_thin_road_network_3",
+        )
+    )
+
+    data_preperation___going_into_spatial_join___n100_road = (
+        file_manager.generate_file_name_gdb(
+            script_source_name=first_generalization,
+            description="going_into_spatial_join",
+        )
+    )
+
+    data_preperation___functional_road_class_dataset___n100_road = (
+        file_manager.generate_file_name_gdb(
+            script_source_name=first_generalization,
+            description="functional_road_class_dataset",
+        )
+    )
+
+    data_preperation___spatial_join_completed___n100_road = (
+        file_manager.generate_file_name_gdb(
+            script_source_name=first_generalization,
+            description="spatial_join_completed",
+        )
+    )
+
+    first_generalization____visible_features_after_thin_road_network_4___n100_road = (
+        file_manager.generate_file_name_gdb(
+            script_source_name=first_generalization,
+            description="visible_features_after_thin_road_network_4",
+        )
+    )
+
+    first_generalization____selecting_rundkjoring___n100_road = (
+        file_manager.generate_file_name_gdb(
+            script_source_name=first_generalization,
+            description="selecting_rundkjoring",
+        )
+    )
+
+    first_generalization____polygon_created_from_line___n100_road = (
+        file_manager.generate_file_name_gdb(
+            script_source_name=first_generalization,
+            description="polygon_created_from_line",
+        )
+    )
+
+    first_generalization____polygon_feature_class___n100_road = (
+        file_manager.generate_file_name_gdb(
+            script_source_name=first_generalization,
+            description="polygon_feature_class",
+        )
+    )
+
+    first_generalization____selecting_all_road_parts_except_rundkjoring___n100_road = (
+        file_manager.generate_file_name_gdb(
+            script_source_name=first_generalization,
+            description="selecting_all_road_parts_except_rundkjoring",
+        )
+    )
+
+    first_generalization____dissolving_rundkjoring___n100_road = (
+        file_manager.generate_file_name_gdb(
+            script_source_name=first_generalization,
+            description="dissolving_rundkjoring",
+        )
+    )
+
+    first_generalization____feature_to_point___n100_road = (
+        file_manager.generate_file_name_gdb(
+            script_source_name=first_generalization,
+            description="feature_to_point",
+        )
+    )
+
+    first_generalization____roads_going_into_extend_line___n100_road = (
+        file_manager.generate_file_name_gdb(
+            script_source_name=first_generalization,
+            description="roads_going_into_extend_line",
+        )
+    )
+
+    first_generalization____roads_after_snap___n100_road = (
+        file_manager.generate_file_name_gdb(
+            script_source_name=first_generalization,
+            description="roads_after_snap",
+        )
+    )
+
+    first_generalization____rundkjoring_buffer___n100_road = (
+        file_manager.generate_file_name_gdb(
+            script_source_name=first_generalization,
+            description="rundkjoring_buffer",
+        )
+    )
+
+    first_generalization____rundkjoring_buffer_multipart_to_singlepart___n100_road = (
+        file_manager.generate_file_name_gdb(
+            script_source_name=first_generalization,
+            description="rundkjoring_buffer_multipart_to_singlepart",
         )
     )
     # ========================================
