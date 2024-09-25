@@ -25,6 +25,50 @@ from custom_tools.decorators.partition_io_decorator import partition_io_decorato
 
 
 class ResolveBuildingConflicts:
+    """
+    This class handles the resolution of building conflicts based on specified symbology, gap distances,
+    and input barriers. The workflow involves multiple steps, including symbology application, conflict resolution,
+    and transformation of invisible building polygons to squares for further analysis.
+
+    **Building Conflict Resolution Process:**
+
+    - **Symbology Application:** Applies symbology to layers such as building points, building polygons, and barriers
+    to standardize visualization and prepare for conflict resolution.
+    - **Conflict Resolution (RBC Stages):** Building conflicts are resolved in two stages:
+        - **RBC 1:** Processes building polygons and squares, resolving conflicts with respect to road and rail barriers.
+        - **RBC 2:** Refines the results from RBC 1, adjusting for any unresolved conflicts.
+    - **Invisible Polygons:** Any invisible polygons resulting from the conflict resolution process are transformed
+    into points and then converted to squares, ensuring that all relevant features are considered in further analysis.
+
+    **Work File Management:**
+    Work files are managed either in memory or stored in a specified directory, based on the provided parameters.
+    The class also supports automatic cleanup of these files after processing.
+
+    Args:
+        building_inputs (Dict[str, str]):
+            Dictionary containing paths to building points and polygons.
+        building_gap_distance (int):
+            The gap distance (in meters) used for resolving building conflicts.
+        barrier_inputs (Dict[str, str]):
+            Dictionary containing paths to various barrier inputs such as roads and railways.
+        barrier_gap_distances (Dict[str, int]):
+            Dictionary containing gap distances for each barrier type (e.g., road, railway).
+        building_symbol_dimension (Dict[int, tuple]):
+            Dictionary mapping building symbols to their respective dimensions.
+        lyrx_files (Dict[str, str]):
+            Dictionary containing paths to lyrx files used for applying symbology to the features.
+        base_path_for_lyrx (str):
+            The base path for storing lyrx files for the processing workflow.
+        base_path_for_features (str):
+            The base path for storing feature files during processing.
+        output_files (Dict[str, str]):
+            Dictionary containing paths for storing the final output of  building points and polygons.
+        write_work_files_to_memory (bool, optional):
+            If True, work files are written to memory during the process. Default is False.
+        keep_work_files (bool, optional):
+            If True, work files are retained after processing is complete. Default is False.
+    """
+
     def __init__(
         self,
         building_inputs: Dict[str, str],
@@ -157,8 +201,7 @@ class ResolveBuildingConflicts:
 
     def apply_symbology_to_the_layers(self):
         """
-        Summary:
-            Applies symbology to various input layers using lyrx_files
+        Applies symbology to various input layers by looping through the dictionary and using different using lyrx_files
         """
         print("Now starting to apply symbology to layers")
 
@@ -205,8 +248,7 @@ class ResolveBuildingConflicts:
 
     def barriers_for_rbc(self):
         """
-        Summary:
-            Prepares a list of barrier features being used in RBC
+        Prepares and returns a list of barrier features being used in RBC
         """
         input_barriers_for_rbc = [
             [
@@ -230,8 +272,8 @@ class ResolveBuildingConflicts:
 
     def resolve_building_conflicts_1(self):
         """
-        Summary:
-            Resolves building conflicts using specified building and barrier features
+        What:
+            Resolves building conflicts using specified building and barrier features.
         """
         try:
             arcpy.env.referenceScale = "100000"
@@ -253,15 +295,14 @@ class ResolveBuildingConflicts:
 
     def building_squares_and_polygons_to_keep_after_rbc_1(self):
         """
-        Summary:
-            Selects and retains building squares and polygons that are visible or hospital / churches
+        Selects and retains building squares and polygons that are visible or hospital, churches or tourist cabins
         """
-        # Sql expression to select building squares that are visible + church and hospital points
+        # Sql expression to select building squares that are visible + church, hospital, tourist cabin points
         sql_expression_resolve_building_conflicts_squares = (
             "(invisibility = 0) OR (symbol_val IN (1, 2, 3)) OR (byggtyp_nbr = 956)"
         )
 
-        # Selecting building squares that are visible OR are hospitals/churches
+        # Selecting building squares that are visible OR are hospitals/churches/touristcabins
         custom_arcpy.select_attribute_and_make_permanent_feature(
             input_layer=self.input_building_points,
             expression=sql_expression_resolve_building_conflicts_squares,
@@ -280,8 +321,20 @@ class ResolveBuildingConflicts:
 
     def transforming_invisible_polygons_to_points_and_then_to_squares(self):
         """
-        Summary:
+        What:
             Transforms invisible building polygons to points and then to squares.
+
+        How:
+            The invisible polygons are picked out using an expression. Then they are transformed to points
+            using "Feature To Point". Polygon Processor is then used to transform the points to squares.
+            These new squares are in the end merged with the squares (made from building points) from the
+            RBC 1 result.
+
+        Why:
+            The polygons that are set invisible by Resolve Building Conflicts are in conflict with other building points and barriers,
+            this means that even though they can be resized, there still is no space for them. Therefore, they are transformed to
+            points to try to fit them in to the area they are in without having to remove them completely. These points (now squares)  later goes
+            into a second round of RBC.
         """
         # Sql expression to keep only building polygons that have invisbility value 1 after the tool has run
         sql_expression_find_invisible_polygons = "invisibility = 1"
@@ -321,8 +374,15 @@ class ResolveBuildingConflicts:
 
     def calculating_symbol_val_and_nbr_for_squares(self):
         """
-        Summary:
+        What:
             Calculates and updates the `byggtyp_nbr` and `symbol_val` fields for squares
+
+        How:
+            Using Calculate Field with Python-expressions to update the fields.
+
+        Why:
+            The fields are updated because Polygon Processor does not work with the number -99,
+            it is out of range.
         """
         # Features with symbol_val -99 get byggtyp_nbr 729
         code_block_symbol_val_to_nbr = (
@@ -360,8 +420,7 @@ class ResolveBuildingConflicts:
 
     def adding_symbology_to_layers_being_used_for_rbc_2(self):
         """
-        Summary:
-            Applies symbology to building squares and polygons for use in RBC 2 processing.
+        Applies symbology to building squares and polygons for use in RBC 2 processing.
         """
         # Building squares (from points, transformed to squares in the first function) that are kept after rbc 1
         custom_arcpy.apply_symbology(
@@ -379,8 +438,7 @@ class ResolveBuildingConflicts:
 
     def resolve_building_conflicts_2(self):
         """
-        Summary:
-            Resolves building conflicts for the second RBC processing stage using specified building and barrier features
+        Resolves building conflicts for the second RBC processing stage using specified building and barrier features.
         """
         print("Starting resolve building conflicts 2")
         arcpy.env.referenceScale = "100000"
@@ -401,8 +459,7 @@ class ResolveBuildingConflicts:
 
     def selecting_features_to_be_kept_after_rbc_2(self):
         """
-        Summary:
-            Selects and retains building squares and polygons based on visibility and symbol value criteria after the second RBC processing stage.
+        Selects and retains building squares and polygons based on visibility and symbol value criteria after the second RBC processing stage.
         """
         sql_expression_squares = (
             "(invisibility = 0) OR (symbol_val IN (1, 2, 3)) OR (byggtyp_nbr = 956)"
@@ -426,8 +483,7 @@ class ResolveBuildingConflicts:
 
     def transforming_squares_back_to_points(self):
         """
-        Summary:
-            Transforms squares back into points.
+        Transforms squares back into points.
         """
         # Squares from points are transformed back to points
         arcpy.management.FeatureToPoint(
@@ -438,8 +494,7 @@ class ResolveBuildingConflicts:
 
     def assigning_final_names(self):
         """
-        Summary:
-            Copies the final squares and polygons to their respective output feature classes.
+        Copies the final squares and polygons to their respective output feature classes.
         """
         # Squares
         arcpy.management.CopyFeatures(
