@@ -23,47 +23,25 @@ from custom_tools.decorators.timing_decorator import timing_decorator
 @timing_decorator
 def main():
     """
-    Summary:
-        This script first propagates displacement for building polygons to ensure their alignment with roads
-        at a scale of 1:100,000. Next, it resolves conflicts among all building polygons in Norway,
-        considering various barriers such as roads, waterfeatures, hospital and churches, ensuring proper placement and scaling.
+    What:
+        This script processes spatial data to resolve conflicts between building polygons and nearby
+        barriers such as roads, water bodies, hospitals, and churches.
+        It transforms certain building polygons into points based on proximity to barriers and polygon size.
 
-        Following conflict resolution, the script transforms building polygons marked as invisible into points.
-        It also identifies visible building polygons that intersect roads and transforms them into points.
-        Building polygons that do not intersect roads remain unchanged.
+    How:
+        The script begins by selecting roads, water features, and railways within 500 meters of building polygons,
+        which serve as barriers. It processes hospital and church points into squares and applies the correct
+        symbology. Symbology is then applied to the layers, including roads, water barriers, and building polygons.
 
-        The final output consists of two layers: a building polygon layer and a building point layer.
+        Building conflicts are resolved by ensuring appropriate clearances between building polygons and the
+        selected barriers, including roads, hospitals, churches, and water features. Invisible building polygons,
+        building polygons that intersect roads, and building polygons that are considered too small,
+         are converted into points, while the rest of the building polygons are kept as they are.
 
-    Details:
+    Why:
+        The goal is to ensure accurate representation of building polygons in a geospatial dataset where
+        buildings may conflict with barriers like roads or are too small for cartographic visibility.
 
-        1. `propagate_displacement_building_polygons`:
-            Copies building polygons and propagates displacement based on nearby generalized road features, moving the buildings.
-
-        2. `features_500_m_from_building_polygons`:
-            Identifies and selects water features and roads within a 500-meter radius of building polygons, making sure only necessary data is processed.
-
-        3. `apply_symbology_to_layers`:
-            Applies N100 symbology to building polygons, roads, and water features
-
-        4. `resolve_building_conflict_building_polygon`:
-            Resolves conflicts among building polygons, using roads, water features, hospital and churches as barriers
-
-        5. `creating_road_buffer`:
-            Generates buffer zones around various road types based on the thickness of their symbology
-
-        6. `invisible_building_polygons_to_point`:
-            Converts invisible building polygons into points
-
-        7. `intersecting_building_polygons_to_point`:
-            Identifies intersecting building polygons and converts them into points.
-            Building polygons that are not made invisible by the previous function,
-            nor intersecting roads will be kept as they are.
-
-        8. `merging_invisible_intersecting_points`:
-            Combines points derived from invisible and intersecting building polygons.
-
-        9. `small_building_polygons_to_points`:
-            Find
     """
 
     environment_setup.main()
@@ -81,8 +59,7 @@ def main():
 @timing_decorator
 def roads_and_water_barriers_500_m_from_building_polygons():
     """
-    Summary:
-        Selects roads, water barriers, and railways that are within 500 meters of building polygons.
+    Selects roads, water barriers, and railways that are within 500 meters of building polygons.
     """
     print("Selecting features 500 meter from building polygon ...")
     # Selecting begrensningskurve 500 meters from building polygons
@@ -116,8 +93,7 @@ def roads_and_water_barriers_500_m_from_building_polygons():
 @timing_decorator
 def hospital_church_points_to_squares():
     """
-    Summary:
-        Selects hospital and church points, processes them into squares, and applies the appropriate symbology.
+    Selects hospital and church points, processes them into squares, and applies the appropriate symbology.
     """
     # Selecting hospital and churches from n50
     custom_arcpy.select_attribute_and_make_permanent_feature(
@@ -166,9 +142,7 @@ def hospital_church_points_to_squares():
 @timing_decorator
 def apply_symbology_to_layers():
     """
-    Summary:
-        Applies symbology (lyrx files) to building polygons, roads, and water barriers.
-
+    Applies symbology (lyrx files) to building polygons, roads, and water barriers.
     """
     print("Applying symbology ...")
     # Applying symbology to building polygons
@@ -202,13 +176,10 @@ def apply_symbology_to_layers():
 @timing_decorator
 def resolve_building_conflict_building_polygon():
     """
-    Summary:
-        Resolves conflicts among building polygons considering roads, water features, hospitals, and churches as barriers.
-
-    Details:
-        This function resolves conflicts among building polygons by taking into account various barriers such as roads,
-        water features, hospitals, and churches. To incorporate hospital and church points as barriers, these points are first
-        transformed into polygons using the dimensions of their symbology.
+    Resolves conflicts among building polygons considering roads, water features, hospitals, and churches as barriers.
+    This function resolves conflicts among building polygons by taking into account various barriers such as roads,
+    water features, hospitals, and churches. To incorporate hospital and church points as barriers, these points are first
+    transformed into polygons using the dimensions of their symbology.
     """
 
     # Resolving Building Conflicts for building polygons
@@ -265,16 +236,7 @@ def resolve_building_conflict_building_polygon():
 @timing_decorator
 def invisible_building_polygons_to_point():
     """
-    Summary:
-        Converts invisible building polygons to points and separates them from non-invisible polygons.
-
-    Details:
-        This function identifies building polygons marked as invisible (invisibility = 1) within the building
-        polygon layer resulting from the conflict resolution process. It creates a new feature layer containing
-        these invisible polygons and another layer for non-invisible polygons (invisibility = 0). Subsequently,
-        the invisible polygons are transformed into points to represent their locations more accurately. The final
-        output consists of two layers: one with invisible polygons transformed into points and another with non-invisible
-        polygons.
+    Converts invisible building polygons to points and separates them from non-invisible polygons.
     """
     print("Transforming polygons marked with invisibility 1 to points ...")
 
@@ -304,14 +266,7 @@ def invisible_building_polygons_to_point():
 @timing_decorator
 def intersecting_building_polygons_to_point():
     """
-    Summary:
-        Identifies ibuilding polygons that intersects road and converts them into points.
-
-    Details:
-        This function first identifies building polygons that intersect with the road buffer layer and selects
-        them for transformation into points. It performs two selection operations based on intersection with
-        the road buffer layer: one for buildings that do not overlap (inverted=True) and will be retained as
-        polygons, and another for buildings that do overlap (inverted=False) and will be transformed into points.
+    Identifies building polygons that intersects road and converts them into points.
     """
     print("Finding intersecting points... ")
 
@@ -343,8 +298,7 @@ def intersecting_building_polygons_to_point():
 @timing_decorator
 def merging_invisible_intersecting_points():
     """
-    Summary:
-        Merges points representing intersecting building polygons and invisible polygons.
+    Merges points from intersecting building polygons and invisible polygons.
     """
     print("Merging points...")
     arcpy.management.Merge(
@@ -359,12 +313,8 @@ def merging_invisible_intersecting_points():
 @timing_decorator
 def check_if_building_polygons_are_big_enough():
     """
-    Summary:
-        Removes small building polygons from the input layer based on a specified area threshold.
-
-    Details:
-        This function removes building polygons from the input layer that have a shape area smaller than
-        a specified threshold (3200 square meters).
+    Removes building polygons from the input layer that have a shape area smaller than
+    a specified threshold (3200 square meters).
     """
     custom_arcpy.select_attribute_and_make_permanent_feature(
         input_layer=Building_N100.polygon_resolve_building_conflicts___building_polygons_not_invisible_not_intersecting___n100_building.value,
@@ -376,13 +326,7 @@ def check_if_building_polygons_are_big_enough():
 @timing_decorator
 def small_building_polygons_to_points():
     """
-    Summary:
-        Converts small building polygons to points.
-
-    Details:
-        This function selects small building polygons based on a specified area threshold and transforms them into points.
-        It first selects building polygons with an area less than 3200 square units using the select_attribute_and_make_permanent_feature function.
-        Then, it uses arcpy's FeatureToPoint tool to convert these selected polygons into point features.
+    Selects small building polygons based on a specified area threshold and transforms them into points.
     """
 
     custom_arcpy.select_attribute_and_make_permanent_feature(
