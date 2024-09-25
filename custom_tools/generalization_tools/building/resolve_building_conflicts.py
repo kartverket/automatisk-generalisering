@@ -26,23 +26,29 @@ from custom_tools.decorators.partition_io_decorator import partition_io_decorato
 
 class ResolveBuildingConflicts:
     """
-    This class handles the resolution of building conflicts based on specified symbology, gap distances,
-    and input barriers. The workflow involves multiple steps, including symbology application, conflict resolution,
-    and transformation of invisible building polygons to squares for further analysis.
 
-    **Building Conflict Resolution Process:**
+    What:
+        This class handles the resolution of building conflicts based on specified symbology, gap distances,
+        and input barriers. The workflow involves multiple steps, including symbology application, conflict resolution,
+        and transformation of invisible building polygons to squares for further analysis.
 
-    - **Symbology Application:** Applies symbology to layers such as building points, building polygons, and barriers
-    to standardize visualization and prepare for conflict resolution.
-    - **Conflict Resolution (RBC Stages):** Building conflicts are resolved in two stages:
-        - **RBC 1:** Processes building polygons and squares, resolving conflicts with respect to road and rail barriers.
-        - **RBC 2:** Refines the results from RBC 1, adjusting for any unresolved conflicts.
-    - **Invisible Polygons:** Any invisible polygons resulting from the conflict resolution process are transformed
-    into points and then converted to squares, ensuring that all relevant features are considered in further analysis.
+    How:
+        Symbology Application: This function applies symbology to layers such as building points,
+        building polygons, and barriers to standardize visualization and prepare for conflict resolution.
 
-    **Work File Management:**
-    Work files are managed either in memory or stored in a specified directory, based on the provided parameters.
-    The class also supports automatic cleanup of these files after processing.
+        Conflict Resolution (RBC Stages): Building conflicts are resolved in two stages.
+
+        RBC 1: This stage processes building polygons and squares, resolving conflicts with respect
+        to road and rail barriers.
+
+        RBC 2: This stage refines the results from RBC 1, adjusting for any unresolved conflicts.
+
+        Invisible Polygons: Any invisible polygons resulting from the conflict resolution process
+        are transformed into points and then converted to squares, ensuring that all relevant features
+        are considered in further analysis.
+
+    Why:
+        Resolve building conflicts for a cleaner map look.
 
     Args:
         building_inputs (Dict[str, str]):
