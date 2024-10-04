@@ -263,80 +263,144 @@ class Road_N100(Enum):
     #                                TEST1
     # ========================================
 
-    test1___roadbuffer___n100_road = (
-        file_manager.generate_file_name_gdb(
-            script_source_name=test1,
-            description="roadbuffer",
-        )
-    )
-    test1___europaveg___n100_road = (
-        file_manager.generate_file_name_gdb(
-            script_source_name=test1,
-            description="europaveg",
-        )
-    )
-    test1___kjorbare___n100_road = (
-        file_manager.generate_file_name_gdb(
-            script_source_name=test1,
-            description='kjorbare',
-        )
+    test1___komm___n100_road = file_manager.generate_file_name_gdb(
+        script_source_name=test1,
+        description="komm",
     )
 
-    test1___kjorbareutenrampe___n100_road = (
-        file_manager.generate_file_name_gdb(
-            script_source_name=test1,
-            description='kjorbareutenrampe',
-        )
+    test1___komm_buff___n100_road = file_manager.generate_file_name_gdb(
+        script_source_name=test1,
+        description="komm_buff",
     )
 
-    test1___ramper___n100_road = (
-        file_manager.generate_file_name_gdb(
-            script_source_name=test1,
-            description='ramper',
-        )
+    test1___roads_komm___n100_road = file_manager.generate_file_name_gdb(
+        script_source_name=test1,
+        description="roads_komm",
     )
 
-    test1___n50sti___n100_road = (
-        file_manager.generate_file_name_gdb(
-            script_source_name=test1,
-            description='n50sti',
-        )
+    test1___roads_komm_single___n100_road = file_manager.generate_file_name_gdb(
+        script_source_name=test1,
+        description="roads_komm_single",
     )
 
-    test1___vegtrase___n100_road = (
-        file_manager.generate_file_name_gdb(
-            script_source_name=test1,
-            description='vegtrase',
-        )
+    test1___roads_komm_diss___n100_road = file_manager.generate_file_name_gdb(
+        script_source_name=test1,
+        description="roads_komm_diss",
     )
 
-    test1___n50stioslo___n100_road = (
-        file_manager.generate_file_name_gdb(
-            script_source_name=test1,
-            description='n50stioslo',
-        )
+    test1___roads_komm_merge1___n100_road = file_manager.generate_file_name_gdb(
+        script_source_name=test1,
+        description="roads_komm_merge1",
     )
-    test1___oslo___n100_road = (
-        file_manager.generate_file_name_gdb(
-            script_source_name=test1,
-            description='oslo',
-        )
+
+    test1___komm_sti_thin1___n100_road = file_manager.generate_file_name_gdb(
+        script_source_name=test1,
+        description="komm_sti_thin1",
     )
-    test1___n50stioslosingle___n100_road = (
-        file_manager.generate_file_name_gdb(
-            script_source_name=test1,
-            description='n50stioslosingle',
-        )
+
+    test1___komm_bilveg___n100_road = file_manager.generate_file_name_gdb(
+        script_source_name=test1,
+        description="komm_bilveg",
     )
-    test1___elvegsti___n100_road = (
-        file_manager.generate_file_name_gdb(
-            script_source_name=test1,
-            description='elvegsti',
-        )
+
+    test1___komm_thin2___n100_road = file_manager.generate_file_name_gdb(
+        script_source_name=test1,
+        description="komm_thin2",
     )
-    test1___veger1___n100_road = (
-        file_manager.generate_file_name_gdb(
-            script_source_name=test1,
-            description='veger1',
-        )
+
+    test1___komm_thin3___n100_road = file_manager.generate_file_name_gdb(
+        script_source_name=test1,
+        description="komm_thin3",
+    )
+
+    test1___komm_crd1___n100_road = file_manager.generate_file_name_gdb(
+        script_source_name=test1,
+        description="komm_crd1",
+    )
+
+    test1___veg100_bærum___n100_road = file_manager.generate_file_name_gdb(
+        script_source_name=test1,
+        description="veg100_bærum",
+    )
+    test1___veg100_asker___n100_road = file_manager.generate_file_name_gdb(
+        script_source_name=test1,
+        description="veg100_asker",
+    )
+
+    test1___veg100_lier___n100_road = file_manager.generate_file_name_gdb(
+        script_source_name=test1,
+        description="veg100_lier",
+    )
+
+    test1___veg100_drammen___n100_road = file_manager.generate_file_name_gdb(
+        script_source_name=test1,
+        description="veg100_drammen",
+    )
+
+    test1___veg100_oslo___n100_road = file_manager.generate_file_name_gdb(
+        script_source_name=test1,
+        description="veg100_oslo",
+    )
+
+    test1___veg1___n100_road = file_manager.generate_file_name_gdb(
+        script_source_name=test1,
+        description="veg1",
+    )
+    test1___veg1_bil___n100_road = file_manager.generate_file_name_gdb(
+        script_source_name=test1,
+        description="veg1_bil",
+    )
+    test1___veg1_sti___n100_road = file_manager.generate_file_name_gdb(
+        script_source_name=test1,
+        description="veg1_sti",
+    )
+
+    test1___sti2___n100_road = file_manager.generate_file_name_gdb(
+        script_source_name=test1,
+        description="sti2",
+    )
+
+    test1___veg2_bil___n100_road = file_manager.generate_file_name_gdb(
+        script_source_name=test1,
+        description="veg2_bil",
+    )
+
+    test1___veg3_diss___n100_road = file_manager.generate_file_name_gdb(
+        script_source_name=test1,
+        description="veg3_diss",
+    )
+
+    test1___veg4___n100_road = file_manager.generate_file_name_gdb(
+        script_source_name=test1,
+        description="veg4",
+    )
+
+    test1___CDR0___n100_road = file_manager.generate_file_name_gdb(
+        script_source_name=test1,
+        description="CDR0",
+    )
+
+    test1___CDR1___n100_road = file_manager.generate_file_name_gdb(
+        script_source_name=test1,
+        description="CDR1",
+    )
+
+    test1___veg5___n100_road = file_manager.generate_file_name_gdb(
+        script_source_name=test1,
+        description="veg5",
+    )
+
+    test1___MDR1_bilnum___n100_road = file_manager.generate_file_name_gdb(
+        script_source_name=test1,
+        description="MDR1_bilnum",
+    )
+
+    test1___MDR2_bilnum___n100_road = file_manager.generate_file_name_gdb(
+        script_source_name=test1,
+        description="MDR2_bilnum",
+    )
+
+    test1___MDR3_bilmed___n100_road = file_manager.generate_file_name_gdb(
+        script_source_name=test1,
+        description="MDR3_bilmed",
     )
