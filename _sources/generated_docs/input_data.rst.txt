@@ -44,10 +44,26 @@ input\_data.input\_other module
    :undoc-members:
    :show-inheritance:
 
+input\_data.input\_roads module
+-------------------------------
+
+.. automodule:: input_data.input_roads
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
 input\_data.input\_symbology module
 -----------------------------------
 
 .. automodule:: input_data.input_symbology
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+input\_data.input\_veg module
+-----------------------------
+
+.. automodule:: input_data.input_veg
    :members:
    :undoc-members:
    :show-inheritance:
