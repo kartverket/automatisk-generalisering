@@ -1,4 +1,5 @@
 from enum import Enum
+from dataclasses import dataclass
 from typing import Union
 
 
@@ -126,3 +127,18 @@ class N100_SQLResources(Enum):
     }
 
     urban_areas = "objtype = 'Tettbebyggelse' Or objtype = 'Industriområde' Or objtype = 'BymessigBebyggelse'"
+
+
+@dataclass(frozen=True)
+class NvdbAlias:
+    europaveg: str = "E"
+    fylkesveg: str = "F"
+    kommunalveg: str = "K"
+    privatveg: str = "P"
+    riksveg: str = "R"
+    sti_dnt: str = "D"
+    sti_andre: str = "A"
+    sti_umerket: str = "U"
+    gang_og_sykkelveg: str = "G"
+    traktorveg: str = "T"
+    skogsveg: str = "S"  # Blir koded om til private veger
