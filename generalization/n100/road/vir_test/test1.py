@@ -19,9 +19,13 @@ def main():
     komm_buff()
     roads_komm()
     roads_komm_single()
-    adding_fields_to_roads_komm_single()
     roads_komm_diss()
+    adding_fields_to_roads_komm_diss()
     remove()
+    diss_T()
+    kryss_T()
+    diss_UL()
+    merge0()
     merge1()
     thin_sti()
     komm_sti_thin1()
@@ -31,13 +35,13 @@ def main():
     thin_bilveger()
     komm_thin3()
     komm_crd1()
-    veg100_oslo()
+    veg100_bærum()
 
 
 def komm():
     custom_arcpy.select_attribute_and_make_permanent_feature(
         input_layer=input_n50.AdminFlate,
-        expression="NAVN='Oslo'",
+        expression="NAVN='Bærum'",
         output_name=Road_N100.test1___komm___n100_road.value,
         selection_type="NEW_SELECTION",
     )
@@ -53,7 +57,7 @@ def komm_buff():
 
 def roads_komm():
     arcpy.analysis.Clip(
-        in_features=input_roads.elveg_and_sti_oslo,
+        in_features=input_roads.elveg_and_sti,
         clip_features=Road_N100.test1___komm_buff___n100_road.value,
         out_feature_class=Road_N100.test1___roads_komm___n100_road.value,
     )
@@ -66,9 +70,28 @@ def roads_komm_single():
     )
 
 
-def adding_fields_to_roads_komm_single() -> object:
+def roads_komm_diss():
+    arcpy.analysis.PairwiseDissolve(
+        in_features=Road_N100.test1___roads_komm_single___n100_road.value,
+        out_feature_class=Road_N100.test1___roads_komm_diss___n100_road.value,
+        dissolve_field=[
+            "OBJTYPE",
+            "TYPEVEG",
+            "MEDIUM",
+            "VEGFASE",
+            "VEGKATEGORI",
+            "VEGNUMMER",
+            "SUBTYPEKODE",
+            "MOTORVEGTYPE",
+            "UTTEGNING",
+        ],
+        multi_part="SINGLE_PART",
+    )
+
+
+def adding_fields_to_roads_komm_diss() -> object:
     arcpy.management.AddFields(
-        in_table=Road_N100.test1___roads_komm_single___n100_road.value,
+        in_table=Road_N100.test1___roads_komm_diss___n100_road.value,
         field_description=[
             ["inv_sti", "SHORT"],
             ["hiesti", "SHORT"],
@@ -84,7 +107,7 @@ def adding_fields_to_roads_komm_single() -> object:
     )
 
     # Code_block
-    assign_hiesti_to_roads_komm_single = """def Reclass(VEGKATEGORI):
+    assign_hiesti_to_roads_komm_diss = """def Reclass(VEGKATEGORI):
         if VEGKATEGORI == 'T':
             return 1
         elif VEGKATEGORI == 'D':
@@ -101,15 +124,15 @@ def adding_fields_to_roads_komm_single() -> object:
 
     # Calculate field for hiesti
     arcpy.management.CalculateField(
-        in_table=Road_N100.test1___roads_komm_single___n100_road.value,
+        in_table=Road_N100.test1___roads_komm_diss___n100_road.value,
         field="hiesti",
         expression="Reclass(!VEGKATEGORI!)",
         expression_type="PYTHON3",
-        code_block=assign_hiesti_to_roads_komm_single,
+        code_block=assign_hiesti_to_roads_komm_diss,
     )
 
     # Code_block
-    assign_hie_1_to_roads_komm_single = """def Reclass(VEGKATEGORI):
+    assign_hie_1_to_roads_komm_diss = """def Reclass(VEGKATEGORI):
         if VEGKATEGORI == 'E':
             return 1
         elif VEGKATEGORI == 'R':
@@ -128,22 +151,22 @@ def adding_fields_to_roads_komm_single() -> object:
 
     # Calculate field for hie_1
     arcpy.management.CalculateField(
-        in_table=Road_N100.test1___roads_komm_single___n100_road.value,
+        in_table=Road_N100.test1___roads_komm_diss___n100_road.value,
         field="hie_1",
         expression="Reclass(!VEGKATEGORI!)",
         expression_type="PYTHON3",
-        code_block=assign_hie_1_to_roads_komm_single,
+        code_block=assign_hie_1_to_roads_komm_diss,
     )
 
     # Calculate field for merge
     arcpy.management.CalculateField(
-        in_table=Road_N100.test1___roads_komm_single___n100_road.value,
+        in_table=Road_N100.test1___roads_komm_diss___n100_road.value,
         field="merge",
         expression="0 if !VEGNUMMER! is None else !VEGNUMMER!",
         expression_type="PYTHON3",
     )
 
-    assign_merge2_to_roads_komm_single = """def Reclass(MEDIUM):
+    assign_merge2_to_roads_komm_diss = """def Reclass(MEDIUM):
         if MEDIUM == 'T':
             return 1
         elif MEDIUM == 'L':
@@ -156,37 +179,11 @@ def adding_fields_to_roads_komm_single() -> object:
 
     # Calculate field for merge2
     arcpy.management.CalculateField(
-        in_table=Road_N100.test1___roads_komm_single___n100_road.value,
+        in_table=Road_N100.test1___roads_komm_diss___n100_road.value,
         field="merge2",
         expression="Reclass(!MEDIUM!)",
         expression_type="PYTHON3",
-        code_block=assign_merge2_to_roads_komm_single,
-    )
-
-
-def roads_komm_diss():
-    arcpy.analysis.PairwiseDissolve(
-        in_features=Road_N100.test1___roads_komm_single___n100_road.value,
-        out_feature_class=Road_N100.test1___roads_komm_diss___n100_road.value,
-        dissolve_field=[
-            "OBJTYPE",
-            "TYPEVEG",
-            "MEDIUM",
-            "VEGFASE",
-            "VEGKATEGORI",
-            "VEGNUMMER",
-            "inv_sti",
-            "hiesti",
-            "inv_1",
-            "hie_1",
-            "merge",
-            "character",
-            "inv_2",
-            "hie_2",
-            "merge2",
-            "character2",
-        ],
-        multi_part="SINGLE_PART",
+        code_block=assign_merge2_to_roads_komm_diss,
     )
 
 
@@ -197,9 +194,54 @@ def remove():
     )
 
 
+def diss_UL():
+    custom_arcpy.select_attribute_and_make_permanent_feature(
+        input_layer=Road_N100.test1___roads_komm_diss___n100_road.value,
+        expression="MEDIUM IN ('U', 'L')",
+        output_name=Road_N100.test1___diss_UL___n100_road.value,
+        selection_type="NEW_SELECTION",
+    )
+
+
+def diss_T():
+    custom_arcpy.select_attribute_and_make_permanent_feature(
+        input_layer=Road_N100.test1___roads_komm_diss___n100_road.value,
+        expression=" MEDIUM = 'T'",
+        output_name=Road_N100.test1___diss_T___n100_road.value,
+        selection_type="NEW_SELECTION",
+    )
+
+
+def kryss_T():
+    arcpy.management.FeatureToLine(
+        in_features=Road_N100.test1___diss_T___n100_road.value,
+        out_feature_class=Road_N100.test1___kryss_T___n100_road.value,
+    )
+
+    arcpy.management.DeleteField(
+        in_table=Road_N100.test1___kryss_T___n100_road.value,
+        drop_field="FID_test1___diss_T___n100_road",
+    )
+
+    # arcpy.management.Append(
+    #     inputs=Road_N100.test1___diss_UL___n100_road.value,
+    #     target=Road_N100.test1___kryss_T___n100_road.value,
+    # )
+
+
+def merge0():
+    arcpy.management.Merge(
+        inputs=[
+            Road_N100.test1___diss_UL___n100_road.value,
+            Road_N100.test1___kryss_T___n100_road.value,
+        ],
+        output=Road_N100.test1___merge0___n100_road.value,
+    )
+
+
 def merge1():
     arcpy.cartography.MergeDividedRoads(
-        in_features=Road_N100.test1___roads_komm_diss___n100_road.value,
+        in_features=Road_N100.test1___merge0___n100_road.value,
         merge_field="merge",
         merge_distance="150 meters",
         out_features=Road_N100.test1___roads_komm_merge1___n100_road.value,
@@ -209,7 +251,7 @@ def merge1():
 def thin_sti():
     arcpy.cartography.ThinRoadNetwork(
         in_features=Road_N100.test1___roads_komm_merge1___n100_road.value,
-        minimum_length="2000 meters",
+        minimum_length="4000 meters",
         invisibility_field="inv_sti",
         hierarchy_field="hiesti",
     )
@@ -257,7 +299,7 @@ def komm_thin2():
 def thin_bilveger():
     arcpy.cartography.ThinRoadNetwork(
         in_features=Road_N100.test1___komm_thin2___n100_road.value,
-        minimum_length="1000 meters",
+        minimum_length="2000 meters",
         invisibility_field="inv_1",
         hierarchy_field="hie_1",
     )
@@ -280,12 +322,11 @@ def komm_crd1():
     )
 
 
-def veg100_oslo():
-    custom_arcpy.select_attribute_and_make_permanent_feature(
-        input_layer=Road_N100.test1___komm_crd1___n100_road.value,
-        expression="inv_1 = 0",
-        output_name=Road_N100.test1___veg100_oslo___n100_road.value,
-        selection_type="NEW_SELECTION",
+def veg100_bærum():
+    arcpy.analysis.Clip(
+        in_features=Road_N100.test1___komm_crd1___n100_road.value,
+        clip_features=Road_N100.test1___komm___n100_road.value,
+        out_feature_class=Road_N100.test1___veg100_bærum___n100_road.value,
     )
 
 
