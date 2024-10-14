@@ -190,6 +190,26 @@ class Road_N100(Enum):
         description="roads_komm_diss",
     )
 
+    test1___diss_T___n100_road = file_manager.generate_file_name_gdb(
+        script_source_name=test1,
+        description="diss_T",
+    )
+
+    test1___kryss_T___n100_road = file_manager.generate_file_name_gdb(
+        script_source_name=test1,
+        description="kryss_T",
+    )
+
+    test1___diss_UL___n100_road = file_manager.generate_file_name_gdb(
+        script_source_name=test1,
+        description="diss_UL",
+    )
+
+    test1___merge0___n100_road = file_manager.generate_file_name_gdb(
+        script_source_name=test1,
+        description="merge0",
+    )
+
     test1___roads_komm_merge1___n100_road = file_manager.generate_file_name_gdb(
         script_source_name=test1,
         description="roads_komm_merge1",
