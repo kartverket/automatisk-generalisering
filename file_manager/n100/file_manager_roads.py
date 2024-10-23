@@ -59,6 +59,32 @@ class Road_N100(Enum):
     #                                DATA PREPARATION
     # ========================================
 
+    data_selection___nvdb_veglenke___n100_road = file_manager.generate_file_name_gdb(
+        script_source_name=data_selection,
+        description="nvdb_veglenke",
+    )
+
+    data_preperation___merge_divided_roads___n100_road = (
+        file_manager.generate_file_name_gdb(
+            script_source_name=data_preparation,
+            description="merge_divided_roads",
+        )
+    )
+
+    data_preperation___merge_divided_roads_displacement_feature___n100_road = (
+        file_manager.generate_file_name_gdb(
+            script_source_name=data_preparation,
+            description="merge_divided_roads_displacement_feature",
+        )
+    )
+
+    data_selection___thin_road_network_selection___n100_road = (
+        file_manager.generate_file_name_gdb(
+            script_source_name=data_selection,
+            description="thin_road_network_selection",
+        )
+    )
+
     data_preperation___paths_n50___n100_road = file_manager.generate_file_name_gdb(
         script_source_name=data_preparation,
         description="paths_n50",
