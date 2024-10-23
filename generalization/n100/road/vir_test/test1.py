@@ -5,337 +5,397 @@ from input_data import input_n50, input_n100
 from file_manager.n100.file_manager_roads import Road_N100
 from env_setup import environment_setup
 from custom_tools.general_tools import custom_arcpy
-from input_data import input_elveg
-from custom_tools.decorators import timing_decorator
+
+# from input_data import input_elveg
+# from input_data import input_veg
+from input_data import input_roads
+
+# from custom_tools.decorators import timing_decorator
 
 
 def main():
     environment_setup.main()
-    #    creating_road_buffer()
-    #    select_europaveg()
-    select_kjorbare()
-    select_kjorbareutenrampe()
-    select_ramper()
-    select_vegtrase()
-    oslo()
-    n50sti()
-    n50stioslo()
-    adding_fields_to_sti()
-    adding_fields_to_vegtrase()
-    n50stioslosingle()
-    thin2000_sti()
-    elvegsti()
-    # delete_unwanted_fields()
-    veger1()
+    komm()
+    komm_buff()
+    roads_komm()
+    roads_komm_single()
+    roads_komm_diss()
+    adding_fields_to_roads_komm_diss()
+    remove()
+    diss_T()
+    kryss_T()
+    diss_UL()
+    merge0()
+    merge1()
+    thin_sti()
+    komm_sti_thin1()
+    komm_bilveg()
+    komm_copy()
+    komm_thin2()
+    thin_bilveger()
+    komm_thin3()
+    komm_crd1()
+    veg100_bærum()
 
 
-# velg alle kjørbare veger
-def select_kjorbare():
-    custom_arcpy.select_attribute_and_make_permanent_feature(
-        input_layer=input_elveg.Veglenke,
-        expression="TYPEVEG = 'enkelBilveg' OR TYPEVEG = 'kanalisertVeg' OR TYPEVEG = 'rampe' OR TYPEVEG = 'rundkjøring'",
-        output_name=Road_N100.test1___kjorbare___n100_road.value,
-        selection_type="NEW_SELECTION",
-    )
-
-
-def select_kjorbareutenrampe():
-    custom_arcpy.select_attribute_and_make_permanent_feature(
-        input_layer=Road_N100.test1___kjorbare___n100_road.value,
-        expression="TYPEVEG='enkelBilveg' OR TYPEVEG='kanalisertVeg' OR TYPEVEG='rundkjøring'",
-        output_name=Road_N100.test1___kjorbareutenrampe___n100_road.value,
-        selection_type="NEW SELECTION",
-    )
-
-
-def select_ramper():
-    custom_arcpy.select_attribute_and_make_permanent_feature(
-        input_layer=Road_N100.test1___kjorbare___n100_road.value,
-        expression="TYPEVEG='rampe'",
-        output_name=Road_N100.test1___ramper___n100_road.value,
-        selection_type="NEW SELECTION",
-    )
-
-
-def select_vegtrase():
-    custom_arcpy.select_attribute_and_make_permanent_feature(
-        input_layer=Road_N100.test1___kjorbareutenrampe___n100_road.value,
-        expression="DETALJNIVA IS NULL",
-        output_name=Road_N100.test1___vegtrase___n100_road.value,
-        selection_type="NEW SELECTION",
-    )
-
-
-def oslo():
+def komm():
     custom_arcpy.select_attribute_and_make_permanent_feature(
         input_layer=input_n50.AdminFlate,
-        expression="NAVN='Oslo'",
-        output_name=Road_N100.test1___oslo___n100_road.value,
+        expression="NAVN='Bærum'",
+        output_name=Road_N100.test1___komm___n100_road.value,
         selection_type="NEW_SELECTION",
     )
 
 
-def n50sti():
-    custom_arcpy.select_attribute_and_make_permanent_feature(
-        input_layer=input_n50.VegSti,
-        expression="OBJTYPE='Sti' OR OBJTYPE='GangSykkelveg' OR OBJTYPE='Traktorveg' OR OBJTYPE='Barmarksløype'",
-        output_name=Road_N100.test1___n50sti___n100_road.value,
-        selection_type="NEW SELECTION",
+def komm_buff():
+    arcpy.analysis.PairwiseBuffer(
+        in_features=Road_N100.test1___komm___n100_road.value,
+        out_feature_class=Road_N100.test1___komm_buff___n100_road.value,
+        buffer_distance_or_field="1000 meters",
     )
 
 
-def n50stioslo():
+def roads_komm():
     arcpy.analysis.Clip(
-        in_features=Road_N100.test1___n50sti___n100_road.value,
-        clip_features=Road_N100.test1___oslo___n100_road.value,
-        out_feature_class=Road_N100.test1___n50stioslo___n100_road.value,
+        in_features=input_roads.elveg_and_sti,
+        clip_features=Road_N100.test1___komm_buff___n100_road.value,
+        out_feature_class=Road_N100.test1___roads_komm___n100_road.value,
     )
 
 
-def adding_fields_to_sti():
+def roads_komm_single():
+    arcpy.management.MultipartToSinglepart(
+        in_features=Road_N100.test1___roads_komm___n100_road.value,
+        out_feature_class=Road_N100.test1___roads_komm_single___n100_road.value,
+    )
+
+
+def roads_komm_diss():
+    arcpy.analysis.PairwiseDissolve(
+        in_features=Road_N100.test1___roads_komm_single___n100_road.value,
+        out_feature_class=Road_N100.test1___roads_komm_diss___n100_road.value,
+        dissolve_field=[
+            "OBJTYPE",
+            "TYPEVEG",
+            "MEDIUM",
+            "VEGFASE",
+            "VEGKATEGORI",
+            "VEGNUMMER",
+            "SUBTYPEKODE",
+            "MOTORVEGTYPE",
+            "UTTEGNING",
+        ],
+        multi_part="SINGLE_PART",
+    )
+
+
+def adding_fields_to_roads_komm_diss() -> object:
     arcpy.management.AddFields(
-        in_table=Road_N100.test1___n50stioslo___n100_road.value,
+        in_table=Road_N100.test1___roads_komm_diss___n100_road.value,
         field_description=[
             ["inv_sti", "SHORT"],
-            ["hie_sti", "SHORT"],
+            ["hiesti", "SHORT"],
             ["inv_1", "SHORT"],
             ["hie_1", "SHORT"],
             ["merge", "LONG"],
             ["character", "SHORT"],
             ["inv_2", "SHORT"],
             ["hie_2", "SHORT"],
+            ["merge2", "LONG"],
+            ["character2", "SHORT"],
         ],
     )
-    # Reclass function with added return statement for unmatched cases
-    assign_hie_sti_to_sti = """def Reclass(subtypekode):
-        if subtypekode == 6:
+
+    # Code_block
+    assign_hiesti_to_roads_komm_diss = """def Reclass(VEGKATEGORI):
+        if VEGKATEGORI == 'T':
             return 1
-        elif subtypekode == 8:
+        elif VEGKATEGORI == 'D':
             return 2
-        elif subtypekode == 10:
+        elif VEGKATEGORI == 'A':
+            return 2
+        elif VEGKATEGORI == 'U':
+            return 4
+        elif VEGKATEGORI == 'G':
             return 3
-        elif subtypekode == 11:
-            return 4
-        elif subtypekode == 9:
-            return 10
-        elif subtypekode == 7:
-            return 3
-        else:
-            return None  # Return None or 0 for unmatched cases
-    """
+        elif VEGKATEGORI  in ('E', 'R', 'F', 'K', 'P', 'S'):
+            return 0
+        """
 
-    # Calculate field for hie_1
+    # Calculate field for hiesti
     arcpy.management.CalculateField(
-        in_table=Road_N100.test1___n50stioslo___n100_road.value,
-        field="hie_sti",
-        expression="Reclass(!subtypekode!)",
+        in_table=Road_N100.test1___roads_komm_diss___n100_road.value,
+        field="hiesti",
+        expression="Reclass(!VEGKATEGORI!)",
         expression_type="PYTHON3",
-        code_block=assign_hie_sti_to_sti,
+        code_block=assign_hiesti_to_roads_komm_diss,
     )
 
-    assign_hie_1_to_sti = """def Reclass(subtypekode):
-        if subtypekode == 6:
-            return 4
-        elif subtypekode == 8:
-            return 4
-        elif subtypekode == 10:
-            return 4
-        elif subtypekode == 11:
-            return 10
-        elif subtypekode == 9:
-            return 10
-        elif subtypekode == 7:
-            return 4
-        else:
-            return None  # Return None or 0 for unmatched cases
-    """
-
-    # Calculate field for hie_1
-    arcpy.management.CalculateField(
-        in_table=Road_N100.test1___n50stioslo___n100_road.value,
-        field="hie_1",
-        expression="Reclass(!subtypekode!)",
-        expression_type="PYTHON3",
-        code_block=assign_hie_1_to_sti,
-    )
-
-
-def adding_fields_to_vegtrase():
-    arcpy.management.AddFields(
-        in_table=Road_N100.test1___vegtrase___n100_road.value,
-        field_description=[
-            ["inv_1", "SHORT"],
-            ["hie_1", "SHORT"],
-            ["merge", "LONG"],
-            ["character", "SHORT"],
-            ["inv_2", "SHORT"],
-            ["hie_2", "SHORT"],
-        ],
-    )
-    # Reclass function with added return statement for unmatched cases
-    assign_hie_1_to_vegtrase = """def Reclass(VEGKATEGORI):
+    # Code_block
+    assign_hie_1_to_roads_komm_diss = """def Reclass(VEGKATEGORI):
         if VEGKATEGORI == 'E':
             return 1
         elif VEGKATEGORI == 'R':
             return 1
         elif VEGKATEGORI == 'F':
-            return 1
-        elif VEGKATEGORI == 'K':
             return 2
-        elif VEGKATEGORI == 'P':
+        elif VEGKATEGORI == 'K':
             return 3
+        elif VEGKATEGORI == 'P':
+            return 4
         elif VEGKATEGORI == 'S':
-            return 10
-        else:
-            return None  # Return None or 0 for unmatched cases
-    """
+            return 5
+        elif VEGKATEGORI  in ('T', 'D', 'A', 'U', 'G'):
+            return 0
+        """
 
     # Calculate field for hie_1
     arcpy.management.CalculateField(
-        in_table=Road_N100.test1___vegtrase___n100_road.value,
+        in_table=Road_N100.test1___roads_komm_diss___n100_road.value,
         field="hie_1",
         expression="Reclass(!VEGKATEGORI!)",
         expression_type="PYTHON3",
-        code_block=assign_hie_1_to_vegtrase,
+        code_block=assign_hie_1_to_roads_komm_diss,
     )
+
     # Calculate field for merge
     arcpy.management.CalculateField(
-        in_table=Road_N100.test1___vegtrase___n100_road.value,
+        in_table=Road_N100.test1___roads_komm_diss___n100_road.value,
         field="merge",
-        expression="!VEGNUMMER!",
+        expression="0 if !VEGNUMMER! is None else !VEGNUMMER!",
         expression_type="PYTHON3",
     )
 
-    assign_character_to_vegtrase = """def Reclass(TYPEVEG):
-        if TYPEVEG == 'rundkjøring':
-            return 0
-        elif TYPEVEG == 'rampe':
+    assign_merge2_to_roads_komm_diss = """def Reclass(MEDIUM):
+        if MEDIUM == 'T':
+            return 1
+        elif MEDIUM == 'L':
             return 2
-        elif TYPEVEG == 'enkelBilveg':
-            return 1
-        elif TYPEVEG == 'kanalisertVeg':
-            return 1
-        else:
-            return None  # Return None or 0 for unmatched cases
+        elif MEDIUM == 'U':
+            return 3
+        elif MEDIUM == 'B':
+            return 4
     """
 
-    # Calculate field for character
+    # Calculate field for merge2
     arcpy.management.CalculateField(
-        in_table=Road_N100.test1___vegtrase___n100_road.value,
-        field="character",
-        expression="Reclass(!TYPEVEG!)",
+        in_table=Road_N100.test1___roads_komm_diss___n100_road.value,
+        field="merge2",
+        expression="Reclass(!MEDIUM!)",
         expression_type="PYTHON3",
-        code_block=assign_character_to_vegtrase,
+        code_block=assign_merge2_to_roads_komm_diss,
     )
 
 
-def n50stioslosingle():
-    arcpy.management.MultipartToSinglepart(
-        in_features=Road_N100.test1___n50stioslo___n100_road.value,
-        out_feature_class=Road_N100.test1___n50stioslosingle___n100_road.value,
+def remove():
+    arcpy.topographic.RemoveSmallLines(
+        in_features=Road_N100.test1___roads_komm_diss___n100_road.value,
+        minimum_length="100 meters",
     )
 
 
-def thin2000_sti():
-    arcpy.cartography.ThinRoadNetwork(
-        in_features=Road_N100.test1___n50stioslosingle___n100_road.value,
-        minimum_length="2000 METER",
-        invisibility_field="inv_sti",
-        hierarchy_field="hie_sti",
+def diss_UL():
+    custom_arcpy.select_attribute_and_make_permanent_feature(
+        input_layer=Road_N100.test1___roads_komm_diss___n100_road.value,
+        expression="MEDIUM IN ('U', 'L')",
+        output_name=Road_N100.test1___diss_UL___n100_road.value,
+        selection_type="NEW_SELECTION",
     )
 
 
-def elvegsti():
-    # List fields from both datasets
-    vegtrase_fields = [
-        f.name for f in arcpy.ListFields(Road_N100.test1___vegtrase___n100_road.value)
-    ]
-    n50_fields = [
-        f.name for f in arcpy.ListFields(Road_N100.test1___n50stioslo___n100_road.value)
-    ]
-
-    print("vegtrase fields:", vegtrase_fields)
-    print("n50stioslosingle fields:", n50_fields)
-
-
-def veger1():
-    # Define feature classes
-    fc1 = Road_N100.test1___n50stioslo___n100_road.value
-    fc2 = Road_N100.test1___vegtrase___n100_road.value
-
-    # Check if feature classes exist
-    if arcpy.Exists(fc1) and arcpy.Exists(fc2):
-        print(f"{fc1} and {fc2} exist and are ready for merging.")
-    else:
-        raise Exception(f"One or both datasets do not exist: {fc1}, {fc2}")
-
-    # Want to merge these two feature classes together. Have a field that has the
-    # same content but the names are slightly different: n50stioslo has subtypekode
-    # and vegtrase has VEGKATEGORI. Name the output SUBTYP_VEGKAT.
-
-    # Create FieldMappings object to manage merge output fields
-    fieldMappings = arcpy.FieldMappings()
-    fieldMappings.addTable(Road_N100.test1___n50stioslo___n100_road.value)
-    fieldMappings.addTable(Road_N100.test1___vegtrase___n100_road.value)
-
-    # # First get the subtypekode fieldmap. Then add the VEGKATEGORI field from vegtrase
-    # # as an input field. Then replace the fieldmap within the fieldmappings object.
-    fieldmap = fieldMappings.getFieldMap(fieldMappings.findFieldMapIndex("vegkategori"))
-    fieldmap.addInputField(Road_N100.test1___vegtrase___n100_road.value, "VEGKATEGORI")
-    fieldMappings.replaceFieldMap(
-        fieldMappings.findFieldMapIndex("vegkategori"), fieldmap
+def diss_T():
+    custom_arcpy.select_attribute_and_make_permanent_feature(
+        input_layer=Road_N100.test1___roads_komm_diss___n100_road.value,
+        expression=" MEDIUM = 'T'",
+        output_name=Road_N100.test1___diss_T___n100_road.value,
+        selection_type="NEW_SELECTION",
     )
 
-    # Remove the TRACTCODE fieldmap.
-    # fieldMappings.removeFieldMap(fieldmappings.findFieldMapIndex("VEGKATEGORI"))
 
-    # #Run Merge
+def kryss_T():
+    arcpy.management.FeatureToLine(
+        in_features=Road_N100.test1___diss_T___n100_road.value,
+        out_feature_class=Road_N100.test1___kryss_T___n100_road.value,
+    )
+
+    arcpy.management.DeleteField(
+        in_table=Road_N100.test1___kryss_T___n100_road.value,
+        drop_field="FID_test1___diss_T___n100_road",
+    )
+
+    # arcpy.management.Append(
+    #     inputs=Road_N100.test1___diss_UL___n100_road.value,
+    #     target=Road_N100.test1___kryss_T___n100_road.value,
+    # )
+
+
+def merge0():
     arcpy.management.Merge(
         inputs=[
-            "Road_N100.test1___n50stioslo___n100_road.value",
-            "Road_N100.test1___vegtrase___n100_road.value",
+            Road_N100.test1___diss_UL___n100_road.value,
+            Road_N100.test1___kryss_T___n100_road.value,
         ],
-        output="Road_N100.test1___veger1___n100_road.value",
-        field_mappings="fieldMappings",
+        output=Road_N100.test1___merge0___n100_road.value,
     )
 
 
-# def elvegsti():
-#     # Create FieldMappings object to manage merging of fields
-#     field_mappings = arcpy.FieldMappings()
-#
-#     # Add fields from the first dataset (vegtrase)
-#     vegtrase_fields = arcpy.ListFields(Road_N100.test1___vegtrase___n100_road.value)
-#     for field in vegtrase_fields:
-#         field_map = arcpy.FieldMap()
-#         field_map.addInputField(Road_N100.test1___vegtrase___n100_road.value, field.name)
-#         field_mappings.addFieldMap(field_map)
-#
-#     # Add fields from the second dataset (n50stioslosingle)
-#     n50_fields = arcpy.ListFields(Road_N100.test1___n50stioslosingle___n100_road.value)
-#     for field in n50_fields:
-#         field_map = arcpy.FieldMap()
-#         field_map.addInputField(Road_N100.test1___n50stioslosingle___n100_road.value, field.name)
-#
-#         # If the field already exists in the field mappings, merge them
-#         if field.name in [f.outputField.name for f in field_mappings.fields]:
-#             for existing_field_map in field_mappings.fields:
-#                 if existing_field_map.outputField.name == field.name:
-#                     existing_field_map.addInputField(Road_N100.test1___n50stioslosingle___n100_road.value, field.name)
-#         else:
-#             # If the field doesn't exist, just add it
-#             field_mappings.addFieldMap(field_map)
-#
-#     # Merge the datasets with field mapping
-#     arcpy.management.Merge(
-#         inputs=[
-#             Road_N100.test1___vegtrase___n100_road.value,
-#             Road_N100.test1___n50stioslosingle___n100_road.value,
-#         ],
-#         output=Road_N100.test1___elvegsti___n100_road.value,
-#         field_mappings=field_mappings  # Pass the field mappings
-#     )
+def merge1():
+    arcpy.cartography.MergeDividedRoads(
+        in_features=Road_N100.test1___merge0___n100_road.value,
+        merge_field="merge",
+        merge_distance="150 meters",
+        out_features=Road_N100.test1___roads_komm_merge1___n100_road.value,
+    )
+
+
+def thin_sti():
+    arcpy.cartography.ThinRoadNetwork(
+        in_features=Road_N100.test1___roads_komm_merge1___n100_road.value,
+        minimum_length="4000 meters",
+        invisibility_field="inv_sti",
+        hierarchy_field="hiesti",
+    )
+
+
+def komm_sti_thin1():
+    custom_arcpy.select_attribute_and_make_permanent_feature(
+        input_layer=Road_N100.test1___roads_komm_merge1___n100_road.value,
+        expression="OBJTYPE IN ('Sti', 'Traktorveg', 'GangSykkelveg') AND inv_sti = 0",
+        output_name=Road_N100.test1___komm_sti_thin1___n100_road.value,
+        selection_type="NEW_SELECTION",
+    )
+    # Calculate field for hie_1
+    arcpy.management.CalculateField(
+        in_table=Road_N100.test1___komm_sti_thin1___n100_road.value,
+        field="hie_1",
+        expression="5",
+        expression_type="PYTHON3",
+    )
+
+
+def komm_bilveg():
+    custom_arcpy.select_attribute_and_make_permanent_feature(
+        input_layer=Road_N100.test1___roads_komm_merge1___n100_road.value,
+        expression="OBJTYPE = 'Veglenke'",
+        output_name=Road_N100.test1___komm_bilveg___n100_road.value,
+        selection_type="NEW_SELECTION",
+    )
+
+
+def komm_copy():
+    arcpy.management.CopyFeatures(
+        in_features=Road_N100.test1___komm_bilveg___n100_road.value,
+        out_feature_class=Road_N100.test1___komm_thin2___n100_road.value,
+    )
+
+
+def komm_thin2():
+    arcpy.management.Append(
+        inputs=Road_N100.test1___komm_sti_thin1___n100_road.value,
+        target=Road_N100.test1___komm_thin2___n100_road.value,
+    )
+
+
+def thin_bilveger():
+    arcpy.cartography.ThinRoadNetwork(
+        in_features=Road_N100.test1___komm_thin2___n100_road.value,
+        minimum_length="2000 meters",
+        invisibility_field="inv_1",
+        hierarchy_field="hie_1",
+    )
+
+
+def komm_thin3():
+    custom_arcpy.select_attribute_and_make_permanent_feature(
+        input_layer=Road_N100.test1___komm_thin2___n100_road.value,
+        expression="inv_1 = 0",
+        output_name=Road_N100.test1___komm_thin3___n100_road.value,
+        selection_type="NEW_SELECTION",
+    )
+
+
+def komm_crd1():
+    arcpy.cartography.CollapseRoadDetail(
+        in_features=Road_N100.test1___komm_thin3___n100_road.value,
+        collapse_distance="60 meters",
+        output_feature_class=Road_N100.test1___komm_crd1___n100_road.value,
+    )
+
+
+def veg100_bærum():
+    arcpy.analysis.Clip(
+        in_features=Road_N100.test1___komm_crd1___n100_road.value,
+        clip_features=Road_N100.test1___komm___n100_road.value,
+        out_feature_class=Road_N100.test1___veg100_bærum___n100_road.value,
+    )
 
 
 if __name__ == "__main__":
     main()
+
+
+# def field_names():
+#     feature_class = Road_N100.test1___sti2___n100_road.value
+#     field_names = arcpy.ListFields(feature_class)
+#
+#     for field in field_names:
+#         print(f"{field.name}")
+#
+#     arcpy.management.DeleteField(
+#         in_table=Road_N100.test1___sti2___n100_road.value,
+#         drop_field=[
+#             "FELTOVERSIKT",
+#             "KONNEKTERINGSLENKE",
+#             "SIDEVEG",
+#             "ADSKILTELOP",
+#             "SIDEANLEGGSDEL",
+#             "_CLIPPED",
+#             "ORIG_FID",
+#         ],
+#     )
+#
+#
+#
+# def MDR1_bilnum():
+#     arcpy.cartography.MergeDividedRoads(
+#         in_features=Road_N100.test1___veg4___n100_road.value,
+#         merge_field="merge",
+#         merge_distance="40 meters",
+#         out_features=Road_N100.test1___MDR1_bilnum___n100_road.value,
+#         character_field="character",
+#     )
+#
+#
+# def adding_locks_to_veg4():
+#     arcpy.management.AddFields(
+#         in_table=Road_N100.test1___veg4___n100_road.value,
+#         field_description=[
+#             ["LOCK_TL", "SHORT"],
+#             ["LOCK_TU", "SHORT"],
+#             ["LOCK_UL", "SHORT"],
+#         ],
+#     )
+#     assign_LOCK_TL_to_veg4 = """def Reclass(MEDIUM):
+#          if MEDIUM == 'T':
+#              return 1
+#          elif MEDIUM == 'L':
+#              return 1
+#          elif MEDIUM == 'U':
+#              return 0
+#          """
+#
+#
+# def CDR1():
+#     arcpy.cartography.CollapseRoadDetail(
+#         in_features=Road_N100.test1___MDR1_bilnum___n100_road.value,
+#         collapse_distance="60 meters",
+#         output_feature_class=Road_N100.test1___CDR1___n100_road.value,
+#         # locking_field="LOCK_UL",
+#     )
+#
+# def CDR0():
+#     arcpy.cartography.CollapseRoadDetail(
+#         in_features=Road_N100.test1___veg4___n100_road.value,
+#         collapse_distance="60 meters",
+#         output_feature_class=Road_N100.test1___CDR0___n100_road.value,
+#     )
