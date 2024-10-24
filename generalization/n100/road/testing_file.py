@@ -27,16 +27,18 @@ def main():
     # give_vegnummer_to_paths()
     # calculate_values_for_merge_divided_roads()
     # merge_divided_roads()
+    # collapse_road_detail()
     # calculate_hierarchy_for_thin_road_network()
-    thin_road_network_500_straight_to_3000()
-    thin_road_network_500_to_1000_to_2000_to_3000()
-    thinning_out_kommunal_veg_500_3000()
+    # thin_road_network_500_straight_to_3000()
+    # thinning_out_kommunal_roads_500_3000()
+    # removing_rundkjoring_and_fixing_gaps()
+    assign_subtypekode_for_symbology_in_the_map()
 
 
 @timing_decorator
 def adding_fields_to_roads():
     arcpy.management.CopyFeatures(
-        config.path_to_roads_nvdb,
+        config.path_to_roads_nvdb_many_kommuner,
         Road_N100.testing_file___roads_copy___n100_road.value,
     )
     arcpy.management.AddFields(
@@ -70,7 +72,8 @@ def multipart_to_singlepart():
     )
 
 
-def give_vegnummer_to_paths():
+@timing_decorator
+def give_road_number_to_paths():
     arcpy.management.CalculateField(
         in_table=Road_N100.testing_file___multipart_to_singlepart___n100_road.value,
         field="VEGNUMMER",
@@ -113,6 +116,15 @@ def calculate_values_for_merge_divided_roads():
 
 
 @timing_decorator
+def collapse_road_detail():
+    arcpy.cartography.CollapseRoadDetail(
+        in_features=Road_N100.testing_file___multipart_to_singlepart___n100_road.value,
+        collapse_distance="90 Meters",
+        output_feature_class=Road_N100.testing_file___collapse_road_detail___n100_road.value,
+    )
+
+
+@timing_decorator
 def merge_divided_roads():
     """
     Road character field:
@@ -126,7 +138,7 @@ def merge_divided_roads():
     """
     # Execute Merge Divided Roads
     arcpy.cartography.MergeDividedRoads(
-        in_features=Road_N100.testing_file___multipart_to_singlepart___n100_road.value,
+        in_features=Road_N100.testing_file___collapse_road_detail___n100_road.value,
         merge_field="VEGNUMMER",
         merge_distance="50 Meters",
         out_features=Road_N100.testing_file___merge_divided_roads_output___n100_road.value,
@@ -135,6 +147,7 @@ def merge_divided_roads():
     )
 
 
+@timing_decorator
 def calculate_hierarchy_for_thin_road_network():
     assign_hierarchy_to_nvdb_roads = """def Reclass(VEGKATEGORI):
         if VEGKATEGORI == 'E':  # Europaveg
@@ -201,108 +214,7 @@ def thin_road_network_500_straight_to_3000():
 
 
 @timing_decorator
-def thin_road_network_500_to_1000_to_2000_to_3000():
-    # 500
-    arcpy.management.CopyFeatures(
-        Road_N100.testing_file___thin_road_network_500_visible_features___n100_road.value,  # 500 m from the first function
-        Road_N100.testing_file___road_input_500_1000_2000_3000___n100_road.value,
-    )
-
-    # 1000
-    arcpy.env.referenceScale = "100000"
-    arcpy.cartography.ThinRoadNetwork(
-        in_features=Road_N100.testing_file___road_input_500_1000_2000_3000___n100_road.value,
-        minimum_length="1000 Meters",
-        invisibility_field="invisibility_1000",
-        hierarchy_field="hierarchy",
-    )
-    custom_arcpy.select_attribute_and_make_permanent_feature(
-        input_layer=Road_N100.testing_file___road_input_500_1000_2000_3000___n100_road.value,
-        expression="invisibility_1000 = 0",
-        output_name=Road_N100.testing_file___thin_road_network_1000___n100_road.value,
-        selection_type=custom_arcpy.SelectionType.NEW_SELECTION,
-    )
-
-    # 2000
-    arcpy.env.referenceScale = "100000"
-    arcpy.cartography.ThinRoadNetwork(
-        in_features=Road_N100.testing_file___thin_road_network_1000___n100_road.value,
-        minimum_length="2000 Meters",
-        invisibility_field="invisibility_2000",
-        hierarchy_field="hierarchy",
-    )
-    custom_arcpy.select_attribute_and_make_permanent_feature(
-        input_layer=Road_N100.testing_file___thin_road_network_1000___n100_road.value,
-        expression="invisibility_2000 = 0",
-        output_name=Road_N100.testing_file___thin_road_network_2000___n100_road.value,
-        selection_type=custom_arcpy.SelectionType.NEW_SELECTION,
-    )
-
-    # 3000
-
-    arcpy.env.referenceScale = "100000"
-    arcpy.cartography.ThinRoadNetwork(
-        in_features=Road_N100.testing_file___thin_road_network_2000___n100_road.value,
-        minimum_length="3000 Meters",
-        invisibility_field="invisibility_3000_2",
-        hierarchy_field="hierarchy",
-    )
-    custom_arcpy.select_attribute_and_make_permanent_feature(
-        input_layer=Road_N100.testing_file___thin_road_network_2000___n100_road.value,
-        expression="invisibility_3000_2 = 0",
-        output_name=Road_N100.testing_file___thin_road_network_3000_2___n100_road.value,
-        selection_type=custom_arcpy.SelectionType.NEW_SELECTION,
-    )
-
-
-def thinning_out_kommunal_veg():
-    arcpy.management.CopyFeatures(
-        Road_N100.testing_file___thin_road_network_3000_2___n100_road.value,
-        Road_N100.testing_file___thinning_kommunal_veg___n100_road.value,
-    )
-
-    thinning_kommunal_veg = """
-def Reclass(VEGKATEGORI):
-    if VEGKATEGORI == 'E':  # Europaveg
-        return 1
-    elif VEGKATEGORI == 'R':  # Riksveg
-        return 2
-    elif VEGKATEGORI == 'P':  # Privatveg
-        return 3
-    elif VEGKATEGORI in ['D', 'A', 'U', 'G', 'T']:  # Sti, Gang- og sykkelveg, Traktorveg
-        return 4
-    elif VEGKATEGORI == 'K':  # Kommunalveg
-        return 5
-    else:
-        return 5
-"""
-
-    # Calculate field for hierarchy
-    arcpy.management.CalculateField(
-        in_table=Road_N100.testing_file___thinning_kommunal_veg___n100_road.value,
-        field="hierarchy_kommunal_veg",
-        expression="Reclass(!VEGKATEGORI!)",
-        expression_type="PYTHON3",
-        code_block=thinning_kommunal_veg,
-    )
-
-    arcpy.env.referenceScale = "100000"
-    arcpy.cartography.ThinRoadNetwork(
-        in_features=Road_N100.testing_file___thinning_kommunal_veg___n100_road.value,
-        minimum_length="500 Meters",
-        invisibility_field="invisibility_kommunal_veg",
-        hierarchy_field="hierarchy_kommunal_veg",
-    )
-
-    custom_arcpy.select_attribute_and_make_permanent_feature(
-        input_layer=Road_N100.testing_file___thinning_kommunal_veg___n100_road.value,
-        expression="invisibility_kommunal_veg = 0",
-        output_name=Road_N100.testing_file___thinning_kommunal_veg_visible_roads___n100_road.value,
-        selection_type=custom_arcpy.SelectionType.NEW_SELECTION,
-    )
-
-
-def thinning_out_kommunal_veg_500_3000():
+def thinning_out_kommunal_roads_500_3000():
     arcpy.management.CopyFeatures(
         Road_N100.testing_file___thin_road_network_3000_1___n100_road.value,
         Road_N100.testing_file___thinning_kommunal_veg___n100_road.value,
@@ -346,6 +258,92 @@ def Reclass(VEGKATEGORI):
         expression="invisibility_kommunal_veg = 0",
         output_name=Road_N100.testing_file___thinning_kommunal_veg_visible_roads___n100_road.value,
         selection_type=custom_arcpy.SelectionType.NEW_SELECTION,
+    )
+
+
+@timing_decorator
+def removing_rundkjoring_and_fixing_gaps():
+    arcpy.management.CopyFeatures(
+        in_features=Road_N100.testing_file___thinning_kommunal_veg_visible_roads___n100_road.value,
+        out_feature_class=Road_N100.testing_file___thinning_kommunal_veg_visible_roads_copy___n100_road.value,
+    )
+
+    # Choosing all line segments that does not have TYPEVEG rundkjoring
+    custom_arcpy.select_attribute_and_make_permanent_feature(
+        input_layer=Road_N100.testing_file___thinning_kommunal_veg_visible_roads_copy___n100_road.value,
+        expression="TYPEVEG = 'rundkjøring'",
+        output_name=Road_N100.testing_file___roads_without_rundkjoring___n100_road.value,
+        selection_type=custom_arcpy.SelectionType.NEW_SELECTION,
+        inverted=True,
+    )
+
+    # Extending line to close the gaps that occur when I remove rundkjoring
+    arcpy.edit.ExtendLine(
+        Road_N100.testing_file___roads_without_rundkjoring___n100_road.value,
+        "50 Meters",
+        "EXTENSION",
+    )
+
+
+@timing_decorator
+def assign_subtypekode_for_symbology_in_the_map():
+    # Check if the 'subtypekode_symbology' field already exists
+    field_list = [
+        f.name
+        for f in arcpy.ListFields(
+            Road_N100.testing_file___roads_without_rundkjoring___n100_road.value
+        )
+    ]
+    print("Fields in table:", field_list)  # Print field names for debugging
+
+    if "subtypekode_symbology" not in field_list:
+        try:
+            arcpy.management.AddFields(
+                in_table=Road_N100.testing_file___roads_without_rundkjoring___n100_road.value,
+                field_description=[["subtypekode_symbology", "SHORT"]],
+            )
+            print("Field 'subtypekode_symbology' added successfully.")
+        except arcpy.ExecuteError:
+            print(
+                "Field 'subtypekode_symbology' already exists. Skipping field addition."
+            )
+
+    # Define the function for calculating the subtypekode
+    assigning_subtypekode = """
+def Reclass(VEGKATEGORI):
+    if VEGKATEGORI == 'E':  # Europaveg
+        return 4
+    elif VEGKATEGORI == 'R':  # Riksveg
+        return 2
+    elif VEGKATEGORI == 'F':  # Fylkesveg
+        return 3
+    elif VEGKATEGORI == 'K':  # Kommunal veg
+        return 1
+    elif VEGKATEGORI in ['P', 'S']:  # Privat veg og skogsveg
+        return 5
+    elif VEGKATEGORI == 'T':  # Traktorveg
+        return 6
+    elif VEGKATEGORI == 'D':  # Sti DNT
+        return 7
+    elif VEGKATEGORI == 'G':  # Gang- og sykkelveg
+        return 8
+    elif VEGKATEGORI == 'B':  # Barmarksløype
+        return 9
+    elif VEGKATEGORI == 'A':  # Sti merket
+        return 10
+    elif VEGKATEGORI == 'U':  # Sti ikke merket
+        return 11
+    else:
+        return None
+"""
+
+    # Perform the field calculation using the defined Reclass function
+    arcpy.management.CalculateField(
+        in_table=Road_N100.testing_file___roads_without_rundkjoring___n100_road.value,
+        field="subtypekode_symbology",
+        expression="Reclass(!VEGKATEGORI!)",
+        expression_type="PYTHON3",
+        code_block=assigning_subtypekode,
     )
 
 
