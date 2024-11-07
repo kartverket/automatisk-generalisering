@@ -17,6 +17,7 @@ from custom_tools.general_tools.polygon_processor import PolygonProcessor
 from custom_tools.general_tools.line_to_buffer_symbology import LineToBufferSymbology
 from input_data.input_symbology import SymbologyN100
 from constants.n100_constants import N100_Symbology, N100_SQLResources, N100_Values
+from custom_tools.general_tools.study_area_selector import StudyAreaSelector
 
 
 @timing_decorator
@@ -24,15 +25,19 @@ def main():
     environment_setup.main()
     # adding_fields_to_roads()
     # multipart_to_singlepart()
-    # give_vegnummer_to_paths()
+    # give_road_number_to_paths()
     # calculate_values_for_merge_divided_roads()
     # merge_divided_roads()
     # collapse_road_detail()
     # calculate_hierarchy_for_thin_road_network()
     # thin_road_network_500_straight_to_3000()
     # thinning_out_kommunal_roads_500_3000()
-    # removing_rundkjoring_and_fixing_gaps()
-    assign_subtypekode_for_symbology_in_the_map()
+    choose_data_in_area()
+    add_and_calculate_hierarchy_field()
+    apply_lyrx_to_features()
+    copy_features_before_rbc()
+    resolve_road_conflict()
+    dissolve_roads()
 
 
 @timing_decorator
@@ -262,88 +267,118 @@ def Reclass(VEGKATEGORI):
 
 
 @timing_decorator
-def removing_rundkjoring_and_fixing_gaps():
-    arcpy.management.CopyFeatures(
-        in_features=Road_N100.testing_file___thinning_kommunal_veg_visible_roads___n100_road.value,
-        out_feature_class=Road_N100.testing_file___thinning_kommunal_veg_visible_roads_copy___n100_road.value,
+def choose_data_in_area():
+    custom_arcpy.select_attribute_and_make_feature_layer(
+        input_layer=input_n100.BegrensningsKurve,
+        expression="""objtype IN ('Innsjøkant', 'InnsjøkantRegulert', 'Kystkontur', 'ElvBekkKant')""",
+        output_name=Road_N100.testing_file___begrensningskurve_vann___n100_road.value,
+    )
+    selector = StudyAreaSelector(
+        input_output_file_dict={
+            Road_N100.testing_file___begrensningskurve_vann___n100_road.value: Road_N100.testing_file___begrensningskurve_water_area___n100_road.value,
+            input_n100.Bane: Road_N100.testing_file___railway_area___n100_road.value,
+            Road_N100.testing_file___thinning_kommunal_veg_visible_roads___n100_road.value: Road_N100.testing_file___roads_area___n100_road.value,
+        },
+        selecting_file=input_n100.AdminFlate,
+        selecting_sql_expression="navn IN ('Asker', 'Oslo', 'Trondheim', 'Ringerike')",
+        select_local=False,
+    )
+    selector.run()
+
+
+@timing_decorator
+def add_and_calculate_hierarchy_field():
+    # Add hierarchy field for water area
+    arcpy.management.AddField(
+        in_table=Road_N100.testing_file___begrensningskurve_water_area___n100_road.value,
+        field_name="hierarchy",
+        field_type="SHORT",
+    )
+    # Add hierarchy field for railway
+    arcpy.management.AddField(
+        in_table=Road_N100.testing_file___railway_area___n100_road.value,
+        field_name="hierarchy",
+        field_type="SHORT",
     )
 
-    # Choosing all line segments that does not have TYPEVEG rundkjoring
-    custom_arcpy.select_attribute_and_make_permanent_feature(
-        input_layer=Road_N100.testing_file___thinning_kommunal_veg_visible_roads_copy___n100_road.value,
-        expression="TYPEVEG = 'rundkjøring'",
-        output_name=Road_N100.testing_file___roads_without_rundkjoring___n100_road.value,
-        selection_type=custom_arcpy.SelectionType.NEW_SELECTION,
-        inverted=True,
+    # Calculate the field "hierarchy_kommunal_veg" to be 0
+    arcpy.management.CalculateField(
+        in_table=Road_N100.testing_file___begrensningskurve_water_area___n100_road.value,
+        field="hierarchy",
+        expression="0",
+        expression_type="PYTHON3",
     )
-
-    # Extending line to close the gaps that occur when I remove rundkjoring
-    arcpy.edit.ExtendLine(
-        Road_N100.testing_file___roads_without_rundkjoring___n100_road.value,
-        "50 Meters",
-        "EXTENSION",
+    # Calculate the field "hierarchy_kommunal_veg" to be 0
+    arcpy.management.CalculateField(
+        in_table=Road_N100.testing_file___railway_area___n100_road.value,
+        field="hierarchy",
+        expression="0",
+        expression_type="PYTHON3",
     )
 
 
 @timing_decorator
-def assign_subtypekode_for_symbology_in_the_map():
-    # Check if the 'subtypekode_symbology' field already exists
-    field_list = [
-        f.name
-        for f in arcpy.ListFields(
-            Road_N100.testing_file___roads_without_rundkjoring___n100_road.value
-        )
-    ]
-    print("Fields in table:", field_list)  # Print field names for debugging
+def apply_lyrx_to_features():
+    # Apply symbology to the water area features using the specified layer
+    custom_arcpy.apply_symbology(
+        input_layer=Road_N100.testing_file___begrensningskurve_water_area___n100_road.value,
+        in_symbology_layer=config.begrensningskure_water_lyrx,
+        output_name=Road_N100.testing_file___begrensningskurve_water_area_lyrx___n100_road.value,
+    )
 
-    if "subtypekode_symbology" not in field_list:
-        try:
-            arcpy.management.AddFields(
-                in_table=Road_N100.testing_file___roads_without_rundkjoring___n100_road.value,
-                field_description=[["subtypekode_symbology", "SHORT"]],
-            )
-            print("Field 'subtypekode_symbology' added successfully.")
-        except arcpy.ExecuteError:
-            print(
-                "Field 'subtypekode_symbology' already exists. Skipping field addition."
-            )
+    # Apply symbology to the railway area features using the specified layer
+    custom_arcpy.apply_symbology(
+        input_layer=Road_N100.testing_file___railway_area___n100_road.value,
+        in_symbology_layer=config.railway_lyrx,
+        output_name=Road_N100.testing_file___railway_area__lyrx___n100_road.value,
+    )
 
-    # Define the function for calculating the subtypekode
-    assigning_subtypekode = """
-def Reclass(VEGKATEGORI):
-    if VEGKATEGORI == 'E':  # Europaveg
-        return 4
-    elif VEGKATEGORI == 'R':  # Riksveg
-        return 2
-    elif VEGKATEGORI == 'F':  # Fylkesveg
-        return 3
-    elif VEGKATEGORI == 'K':  # Kommunal veg
-        return 1
-    elif VEGKATEGORI in ['P', 'S']:  # Privat veg og skogsveg
-        return 5
-    elif VEGKATEGORI == 'T':  # Traktorveg
-        return 6
-    elif VEGKATEGORI == 'D':  # Sti DNT
-        return 7
-    elif VEGKATEGORI == 'G':  # Gang- og sykkelveg
-        return 8
-    elif VEGKATEGORI == 'B':  # Barmarksløype
-        return 9
-    elif VEGKATEGORI == 'A':  # Sti merket
-        return 10
-    elif VEGKATEGORI == 'U':  # Sti ikke merket
-        return 11
-    else:
-        return None
-"""
+    # Apply symbology to the general roads area features using the specified layer
+    custom_arcpy.apply_symbology(
+        input_layer=Road_N100.testing_file___roads_area___n100_road.value,
+        in_symbology_layer=config.roads_midlertidig_lyrx,
+        output_name=Road_N100.testing_file___roads_area_lyrx___n100_road.value,
+    )
 
-    # Perform the field calculation using the defined Reclass function
-    arcpy.management.CalculateField(
-        in_table=Road_N100.testing_file___roads_without_rundkjoring___n100_road.value,
-        field="subtypekode_symbology",
-        expression="Reclass(!VEGKATEGORI!)",
-        expression_type="PYTHON3",
-        code_block=assigning_subtypekode,
+
+@timing_decorator
+def copy_features_before_rbc():
+    arcpy.management.CopyFeatures(
+        in_features=Road_N100.testing_file___begrensningskurve_water_area___n100_road.value,
+        out_feature_class=Road_N100.testing_file___begrensningskurve_water_area_copy___n100_road.value,
+    )
+    arcpy.management.CopyFeatures(
+        in_features=Road_N100.testing_file___railway_area___n100_road.value,
+        out_feature_class=Road_N100.testing_file___railway_area_copy___n100_road.value,
+    )
+    arcpy.management.CopyFeatures(
+        in_features=Road_N100.testing_file___roads_area___n100_road.value,
+        out_feature_class=Road_N100.testing_file___roads_area_copy___n100_road.value,
+    )
+
+
+@timing_decorator
+def resolve_road_conflict():
+    arcpy.env.referenceScale = "100000"
+
+    arcpy.cartography.ResolveRoadConflicts(
+        in_layers=[
+            Road_N100.testing_file___roads_area_lyrx___n100_road.value,
+            Road_N100.testing_file___railway_area__lyrx___n100_road.value,
+            Road_N100.testing_file___begrensningskurve_water_area_lyrx___n100_road.value,
+        ],
+        hierarchy_field="hierarchy",
+        out_displacement_features=Road_N100.testing_file___displacement_feature_after_resolve_road_conflict___n100_road.value,
+    )
+
+
+@timing_decorator
+def dissolve_roads():
+    arcpy.management.Dissolve(
+        in_features=Road_N100.testing_file___roads_area___n100_road.value,
+        out_feature_class=Road_N100.testing_file___dissolve_roads___n100_road.value,
+        dissolve_field="MEDIUM",
+        multi_part="MULTI_PART",
     )
 
 

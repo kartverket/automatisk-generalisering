@@ -15,65 +15,60 @@ from input_data import input_roads
 
 def main():
     environment_setup.main()
-    komm()
-    komm_buff()
-    roads_komm()
-    roads_komm_single()
-    roads_komm_diss()
-    adding_fields_to_roads_komm_diss()
-    remove()
-    diss_T()
-    kryss_T()
-    diss_UL()
-    merge0()
-    merge1()
+    kommune()
+    kommune_buffer()
+    elveg_and_sti_kommune()
+    elveg_and_sti_kommune_singlepart()
+    elveg_and_sti_kommune_singlepart_dissolve()
+    adding_fields_to_elveg_and_sti_kommune_singlepart_dissolve()
+    removesmalllines()
+    medium_ul()
+    medium_t()
+    kryss()
+    mergedividedroads()
     thin_sti()
-    komm_sti_thin1()
-    komm_bilveg()
-    komm_copy()
-    komm_thin2()
-    thin_bilveger()
-    komm_thin3()
-    komm_crd1()
-    veg100_bærum()
+    veglenke()
+    thin2()
+    crd()
+    veg100_ringerike()
 
 
-def komm():
+def kommune():
     custom_arcpy.select_attribute_and_make_permanent_feature(
         input_layer=input_n50.AdminFlate,
-        expression="NAVN='Bærum'",
-        output_name=Road_N100.test1___komm___n100_road.value,
+        expression="NAVN='Ringerike'",
+        output_name=Road_N100.test1___kommune___n100_road.value,
         selection_type="NEW_SELECTION",
     )
 
 
-def komm_buff():
+def kommune_buffer():
     arcpy.analysis.PairwiseBuffer(
-        in_features=Road_N100.test1___komm___n100_road.value,
-        out_feature_class=Road_N100.test1___komm_buff___n100_road.value,
+        in_features=Road_N100.test1___kommune___n100_road.value,
+        out_feature_class=Road_N100.test1___kommune_buffer___n100_road.value,
         buffer_distance_or_field="1000 meters",
     )
 
 
-def roads_komm():
+def elveg_and_sti_kommune():
     arcpy.analysis.Clip(
         in_features=input_roads.elveg_and_sti,
-        clip_features=Road_N100.test1___komm_buff___n100_road.value,
-        out_feature_class=Road_N100.test1___roads_komm___n100_road.value,
+        clip_features=Road_N100.test1___kommune_buffer___n100_road.value,
+        out_feature_class=Road_N100.test1___elveg_and_sti_kommune___n100_road.value,
     )
 
 
-def roads_komm_single():
+def elveg_and_sti_kommune_singlepart():
     arcpy.management.MultipartToSinglepart(
-        in_features=Road_N100.test1___roads_komm___n100_road.value,
-        out_feature_class=Road_N100.test1___roads_komm_single___n100_road.value,
+        in_features=Road_N100.test1___elveg_and_sti_kommune___n100_road.value,
+        out_feature_class=Road_N100.test1___elveg_and_sti_kommune_singlepart___n100_road.value,
     )
 
 
-def roads_komm_diss():
+def elveg_and_sti_kommune_singlepart_dissolve():
     arcpy.analysis.PairwiseDissolve(
-        in_features=Road_N100.test1___roads_komm_single___n100_road.value,
-        out_feature_class=Road_N100.test1___roads_komm_diss___n100_road.value,
+        in_features=Road_N100.test1___elveg_and_sti_kommune_singlepart___n100_road.value,
+        out_feature_class=Road_N100.test1___elveg_and_sti_kommune_singlepart_dissolve___n100_road.value,
         dissolve_field=[
             "OBJTYPE",
             "TYPEVEG",
@@ -89,9 +84,9 @@ def roads_komm_diss():
     )
 
 
-def adding_fields_to_roads_komm_diss() -> object:
+def adding_fields_to_elveg_and_sti_kommune_singlepart_dissolve() -> object:
     arcpy.management.AddFields(
-        in_table=Road_N100.test1___roads_komm_diss___n100_road.value,
+        in_table=Road_N100.test1___elveg_and_sti_kommune_singlepart_dissolve___n100_road.value,
         field_description=[
             ["inv_sti", "SHORT"],
             ["hiesti", "SHORT"],
@@ -107,7 +102,7 @@ def adding_fields_to_roads_komm_diss() -> object:
     )
 
     # Code_block
-    assign_hiesti_to_roads_komm_diss = """def Reclass(VEGKATEGORI):
+    assign_hiesti_to_elveg_and_sti_kommune_singlepart_dissolve = """def Reclass(VEGKATEGORI):
         if VEGKATEGORI == 'T':
             return 1
         elif VEGKATEGORI == 'D':
@@ -124,15 +119,15 @@ def adding_fields_to_roads_komm_diss() -> object:
 
     # Calculate field for hiesti
     arcpy.management.CalculateField(
-        in_table=Road_N100.test1___roads_komm_diss___n100_road.value,
+        in_table=Road_N100.test1___elveg_and_sti_kommune_singlepart_dissolve___n100_road.value,
         field="hiesti",
         expression="Reclass(!VEGKATEGORI!)",
         expression_type="PYTHON3",
-        code_block=assign_hiesti_to_roads_komm_diss,
+        code_block=assign_hiesti_to_elveg_and_sti_kommune_singlepart_dissolve,
     )
 
     # Code_block
-    assign_hie_1_to_roads_komm_diss = """def Reclass(VEGKATEGORI):
+    assign_hie_1_to_elveg_and_sti_kommune_singlepart_dissolve = """def Reclass(VEGKATEGORI):
         if VEGKATEGORI == 'E':
             return 1
         elif VEGKATEGORI == 'R':
@@ -151,22 +146,22 @@ def adding_fields_to_roads_komm_diss() -> object:
 
     # Calculate field for hie_1
     arcpy.management.CalculateField(
-        in_table=Road_N100.test1___roads_komm_diss___n100_road.value,
+        in_table=Road_N100.test1___elveg_and_sti_kommune_singlepart_dissolve___n100_road.value,
         field="hie_1",
         expression="Reclass(!VEGKATEGORI!)",
         expression_type="PYTHON3",
-        code_block=assign_hie_1_to_roads_komm_diss,
+        code_block=assign_hie_1_to_elveg_and_sti_kommune_singlepart_dissolve,
     )
 
     # Calculate field for merge
     arcpy.management.CalculateField(
-        in_table=Road_N100.test1___roads_komm_diss___n100_road.value,
+        in_table=Road_N100.test1___elveg_and_sti_kommune_singlepart_dissolve___n100_road.value,
         field="merge",
         expression="0 if !VEGNUMMER! is None else !VEGNUMMER!",
         expression_type="PYTHON3",
     )
 
-    assign_merge2_to_roads_komm_diss = """def Reclass(MEDIUM):
+    assign_merge2_to_elveg_and_sti_kommune_singlepart_dissolve = """def Reclass(MEDIUM):
         if MEDIUM == 'T':
             return 1
         elif MEDIUM == 'L':
@@ -179,154 +174,131 @@ def adding_fields_to_roads_komm_diss() -> object:
 
     # Calculate field for merge2
     arcpy.management.CalculateField(
-        in_table=Road_N100.test1___roads_komm_diss___n100_road.value,
+        in_table=Road_N100.test1___elveg_and_sti_kommune_singlepart_dissolve___n100_road.value,
         field="merge2",
         expression="Reclass(!MEDIUM!)",
         expression_type="PYTHON3",
-        code_block=assign_merge2_to_roads_komm_diss,
+        code_block=assign_merge2_to_elveg_and_sti_kommune_singlepart_dissolve,
     )
 
 
-def remove():
+def removesmalllines():
     arcpy.topographic.RemoveSmallLines(
-        in_features=Road_N100.test1___roads_komm_diss___n100_road.value,
+        in_features=Road_N100.test1___elveg_and_sti_kommune_singlepart_dissolve___n100_road.value,
         minimum_length="100 meters",
     )
 
 
-def diss_UL():
+def medium_ul():
     custom_arcpy.select_attribute_and_make_permanent_feature(
-        input_layer=Road_N100.test1___roads_komm_diss___n100_road.value,
+        input_layer=Road_N100.test1___elveg_and_sti_kommune_singlepart_dissolve___n100_road.value,
         expression="MEDIUM IN ('U', 'L')",
-        output_name=Road_N100.test1___diss_UL___n100_road.value,
+        output_name=Road_N100.test1___elveg_and_sti_kommune_singlepart_dissolve_medium_ul___n100_road.value,
         selection_type="NEW_SELECTION",
     )
 
 
-def diss_T():
+def medium_t():
     custom_arcpy.select_attribute_and_make_permanent_feature(
-        input_layer=Road_N100.test1___roads_komm_diss___n100_road.value,
+        input_layer=Road_N100.test1___elveg_and_sti_kommune_singlepart_dissolve___n100_road.value,
         expression=" MEDIUM = 'T'",
-        output_name=Road_N100.test1___diss_T___n100_road.value,
+        output_name=Road_N100.test1___elveg_and_sti_kommune_singlepart_dissolve_medium_t___n100_road.value,
         selection_type="NEW_SELECTION",
     )
 
 
-def kryss_T():
+def kryss():
     arcpy.management.FeatureToLine(
-        in_features=Road_N100.test1___diss_T___n100_road.value,
-        out_feature_class=Road_N100.test1___kryss_T___n100_road.value,
+        in_features=Road_N100.test1___elveg_and_sti_kommune_singlepart_dissolve_medium_t___n100_road.value,
+        out_feature_class=Road_N100.test1___elveg_and_sti_kommune_singlepart_dissolve_medium_t_kryss___n100_road.value,
     )
 
     arcpy.management.DeleteField(
-        in_table=Road_N100.test1___kryss_T___n100_road.value,
-        drop_field="FID_test1___diss_T___n100_road",
+        in_table=Road_N100.test1___elveg_and_sti_kommune_singlepart_dissolve_medium_t_kryss___n100_road.value,
+        drop_field="FID_test1___elveg_and_sti_kommune_singlepart_dissolve_medium_t__",
     )
 
-    # arcpy.management.Append(
-    #     inputs=Road_N100.test1___diss_UL___n100_road.value,
-    #     target=Road_N100.test1___kryss_T___n100_road.value,
-    # )
-
-
-def merge0():
-    arcpy.management.Merge(
-        inputs=[
-            Road_N100.test1___diss_UL___n100_road.value,
-            Road_N100.test1___kryss_T___n100_road.value,
-        ],
-        output=Road_N100.test1___merge0___n100_road.value,
+    arcpy.management.Append(
+        inputs=Road_N100.test1___elveg_and_sti_kommune_singlepart_dissolve_medium_ul___n100_road.value,
+        target=Road_N100.test1___elveg_and_sti_kommune_singlepart_dissolve_medium_t_kryss___n100_road.value,
     )
 
 
-def merge1():
+def mergedividedroads():
     arcpy.cartography.MergeDividedRoads(
-        in_features=Road_N100.test1___merge0___n100_road.value,
+        in_features=Road_N100.test1___elveg_and_sti_kommune_singlepart_dissolve_medium_t_kryss___n100_road.value,
         merge_field="merge",
         merge_distance="150 meters",
-        out_features=Road_N100.test1___roads_komm_merge1___n100_road.value,
+        out_features=Road_N100.test1___elveg_and_sti_kommune_singlepart_dissolve_medium_t_kryss_mergedividedroads___n100_road.value,
     )
 
 
 def thin_sti():
     arcpy.cartography.ThinRoadNetwork(
-        in_features=Road_N100.test1___roads_komm_merge1___n100_road.value,
-        minimum_length="4000 meters",
+        in_features=Road_N100.test1___elveg_and_sti_kommune_singlepart_dissolve_medium_t_kryss_mergedividedroads___n100_road.value,
+        minimum_length="3000 meters",
         invisibility_field="inv_sti",
         hierarchy_field="hiesti",
     )
 
-
-def komm_sti_thin1():
     custom_arcpy.select_attribute_and_make_permanent_feature(
-        input_layer=Road_N100.test1___roads_komm_merge1___n100_road.value,
+        input_layer=Road_N100.test1___elveg_and_sti_kommune_singlepart_dissolve_medium_t_kryss_mergedividedroads___n100_road.value,
         expression="OBJTYPE IN ('Sti', 'Traktorveg', 'GangSykkelveg') AND inv_sti = 0",
-        output_name=Road_N100.test1___komm_sti_thin1___n100_road.value,
+        output_name=Road_N100.test1___elveg_and_sti_kommune_singlepart_dissolve_medium_t_kryss_mergedividedroads_thin_sti___n100_road.value,
         selection_type="NEW_SELECTION",
     )
     # Calculate field for hie_1
     arcpy.management.CalculateField(
-        in_table=Road_N100.test1___komm_sti_thin1___n100_road.value,
+        in_table=Road_N100.test1___elveg_and_sti_kommune_singlepart_dissolve_medium_t_kryss_mergedividedroads_thin_sti___n100_road.value,
         field="hie_1",
         expression="5",
         expression_type="PYTHON3",
     )
 
 
-def komm_bilveg():
+def veglenke():
     custom_arcpy.select_attribute_and_make_permanent_feature(
-        input_layer=Road_N100.test1___roads_komm_merge1___n100_road.value,
+        input_layer=Road_N100.test1___elveg_and_sti_kommune_singlepart_dissolve_medium_t_kryss_mergedividedroads___n100_road.value,
         expression="OBJTYPE = 'Veglenke'",
-        output_name=Road_N100.test1___komm_bilveg___n100_road.value,
+        output_name=Road_N100.test1___elveg_and_sti_kommune_singlepart_dissolve_medium_t_kryss_mergedividedroads_veglenke___n100_road.value,
         selection_type="NEW_SELECTION",
     )
 
-
-def komm_copy():
-    arcpy.management.CopyFeatures(
-        in_features=Road_N100.test1___komm_bilveg___n100_road.value,
-        out_feature_class=Road_N100.test1___komm_thin2___n100_road.value,
-    )
-
-
-def komm_thin2():
     arcpy.management.Append(
-        inputs=Road_N100.test1___komm_sti_thin1___n100_road.value,
-        target=Road_N100.test1___komm_thin2___n100_road.value,
+        inputs=Road_N100.test1___elveg_and_sti_kommune_singlepart_dissolve_medium_t_kryss_mergedividedroads_thin_sti___n100_road.value,
+        target=Road_N100.test1___elveg_and_sti_kommune_singlepart_dissolve_medium_t_kryss_mergedividedroads_veglenke___n100_road.value,
     )
 
 
-def thin_bilveger():
+def thin2():
     arcpy.cartography.ThinRoadNetwork(
-        in_features=Road_N100.test1___komm_thin2___n100_road.value,
+        in_features=Road_N100.test1___elveg_and_sti_kommune_singlepart_dissolve_medium_t_kryss_mergedividedroads_veglenke___n100_road.value,
         minimum_length="2000 meters",
         invisibility_field="inv_1",
         hierarchy_field="hie_1",
     )
 
-
-def komm_thin3():
     custom_arcpy.select_attribute_and_make_permanent_feature(
-        input_layer=Road_N100.test1___komm_thin2___n100_road.value,
+        input_layer=Road_N100.test1___elveg_and_sti_kommune_singlepart_dissolve_medium_t_kryss_mergedividedroads_veglenke___n100_road.value,
         expression="inv_1 = 0",
-        output_name=Road_N100.test1___komm_thin3___n100_road.value,
+        output_name=Road_N100.test1___elveg_and_sti_kommune_singlepart_dissolve_medium_t_kryss_mergedividedroads_veglenke_thin2___n100_road.value,
         selection_type="NEW_SELECTION",
     )
 
 
-def komm_crd1():
+def crd():
     arcpy.cartography.CollapseRoadDetail(
-        in_features=Road_N100.test1___komm_thin3___n100_road.value,
+        in_features=Road_N100.test1___elveg_and_sti_kommune_singlepart_dissolve_medium_t_kryss_mergedividedroads_veglenke_thin2___n100_road.value,
         collapse_distance="60 meters",
-        output_feature_class=Road_N100.test1___komm_crd1___n100_road.value,
+        output_feature_class=Road_N100.test1___elveg_and_sti_kommune_singlepart_dissolve_medium_t_kryss_mergedividedroads_veglenke_thin2_crd___n100_road.value,
     )
 
 
-def veg100_bærum():
+def veg100_ringerike():
     arcpy.analysis.Clip(
-        in_features=Road_N100.test1___komm_crd1___n100_road.value,
-        clip_features=Road_N100.test1___komm___n100_road.value,
-        out_feature_class=Road_N100.test1___veg100_bærum___n100_road.value,
+        in_features=Road_N100.test1___elveg_and_sti_kommune_singlepart_dissolve_medium_t_kryss_mergedividedroads_veglenke_thin2_crd___n100_road.value,
+        clip_features=Road_N100.test1___kommune___n100_road.value,
+        out_feature_class=Road_N100.test1___veg100_ringerike___n100_road.value,
     )
 
 
