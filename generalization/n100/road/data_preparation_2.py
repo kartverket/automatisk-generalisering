@@ -1,6 +1,7 @@
 # Importing packages
 import arcpy
 
+
 # Importing custom input files modules
 from input_data import input_n50
 from input_data import input_n100
@@ -35,7 +36,7 @@ def main():
     arcpy.env.referenceScale = 100000
     data_selection()
     table_management()
-    dissolve_and_merge_divided_roads()
+    dissolve_merge_and_reduce_roads()
     # run_dissolve_partition()
     # thin_roadnetwork()
 
@@ -146,7 +147,7 @@ def table_management():
 
 
 @timing_decorator
-def dissolve_and_merge_divided_roads():
+def dissolve_merge_and_reduce_roads():
     arcpy.management.MultipartToSinglepart(
         in_features=Road_N100.data_selection___nvdb_roads___n100_road.value,
         out_feature_class=Road_N100.data_preparation___road_single_part___n100_road.value,
@@ -154,7 +155,7 @@ def dissolve_and_merge_divided_roads():
 
     arcpy.analysis.PairwiseDissolve(
         in_features=Road_N100.data_preparation___road_single_part___n100_road.value,
-        out_feature_class=Road_N100.data_preperation___dissolved_road_feature___n100_road.value,
+        out_feature_class=Road_N100.data_preparation___dissolved_road_feature___n100_road.value,
         dissolve_field=[
             "OBJTYPE",
             "TYPEVEG",
@@ -169,89 +170,29 @@ def dissolve_and_merge_divided_roads():
     )
 
     arcpy.cartography.MergeDividedRoads(
-        in_features=Road_N100.data_preperation___dissolved_road_feature___n100_road.value,
+        in_features=Road_N100.data_preparation___dissolved_road_feature___n100_road.value,
         merge_field="VEGNUMMER",
         merge_distance="100 Meters",
-        out_features=Road_N100.data_preperation___merge_divided_roads___n100_road.value,
-        out_displacement_features=Road_N100.data_preperation___merge_divided_roads_displacement_feature___n100_road.value,
+        out_features=Road_N100.data_preparation___merge_divided_roads___n100_road.value,
+        out_displacement_features=Road_N100.data_preparation___merge_divided_roads_displacement_feature___n100_road.value,
         character_field="character",
     )
 
-
-@partition_io_decorator(
-    input_param_names=["input_road"], output_param_names=["output_road"]
-)
-def dissolve_partition(input_road: str = None, output_road: str = None) -> None:
-    work_output_file = f"{output_road}_work_out"
-    work_displacement_file = f"{output_road}_work_displacement"
-    arcpy.cartography.MergeDividedRoads(
-        in_features=input_road,
-        merge_field="VEGNUMMER",
-        merge_distance="100 Meters",
-        out_features=work_output_file,
-        out_displacement_features=work_displacement_file,
-        character_field="character",
+    arcpy.management.CopyFeatures(
+        in_features=Road_N100.data_preparation___merge_divided_roads___n100_road.value,
+        out_feature_class=Road_N100.data_preparation___remove_small_road_lines___n100_road.value,
     )
 
-    arcpy.analysis.PairwiseDissolve(
-        in_features=work_output_file,
-        out_feature_class=output_road,
-        dissolve_field=[
-            "OBJTYPE",
-            "TYPEVEG",
-            "MEDIUM",
-            "VEGFASE",
-            "VEGKATEGORI",
-            "VEGNUMMER",
-            "partition_select",
-            "SUBTYPEKODE",
-            "MOTORVEGTYPE",
-            "UTTEGNING",
-        ],
-        multi_part="SINGLE_PART",
+    arcpy.topographic.RemoveSmallLines(
+        in_features=Road_N100.data_preparation___remove_small_road_lines___n100_road.value,
+        minimum_length="100 meters",
     )
-
-
-def run_dissolve_partition():
-    road_lines = "road_lines"
-    inputs = {
-        road_lines: [
-            "input",
-            Road_N100.data_selection___nvdb_roads___n100_road.value,
-        ],
-    }
-
-    outputs = {
-        road_lines: [
-            "dissolve_output",
-            Road_N100.data_preperation___partition_dissolve_output___n100_road.value,
-        ],
-    }
-
-    dissolve_partition_config = {
-        "func": dissolve_partition,
-        "params": {
-            "input_road": (f"{road_lines}", "input"),
-            "output_road": (f"{road_lines}", "dissolve_output"),
-        },
-    }
-
-    dissolve_partition_partition_iteration = PartitionIterator(
-        alias_path_data=inputs,
-        alias_path_outputs=outputs,
-        custom_functions=[dissolve_partition_config],
-        root_file_partition_iterator=Road_N100.data_preperation___partition_dissolve_root___n100_road.value,
-        dictionary_documentation_path=Road_N100.data_preparation___json_documentation___n100_road.value,
-        feature_count="4000",
-    )
-
-    dissolve_partition_partition_iteration.run()
 
 
 @timing_decorator
 def thin_roadnetwork():
     arcpy.cartography.ThinRoadNetwork(
-        in_features=Road_N100.data_preperation___merge_divided_roads___n100_road.value,
+        in_features=Road_N100.data_preparation___merge_divided_roads___n100_road.value,
         minimum_length="2000 Meters",
         invisibility_field="invisibility",
         hierarchy_field="hierarchy",
@@ -260,7 +201,7 @@ def thin_roadnetwork():
     custom_arcpy.select_attribute_and_make_permanent_feature(
         input_layer=Road_N100.first_generalization____merge_divided_roads_features___n100_road.value,
         expression="invisibility = 0",
-        output_name=Road_N100.data_selection___thin_road_network_selection___n100_road.value,
+        output_name=Road_N100.data_preparation___thin_road_network_selection___n100_road.value,
         selection_type=custom_arcpy.SelectionType.NEW_SELECTION,
     )
 

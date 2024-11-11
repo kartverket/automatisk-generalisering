@@ -71,59 +71,37 @@ class Road_N100(Enum):
         )
     )
 
-    data_preperation___copy_road_feature___n100_road = (
-        file_manager.generate_file_name_gdb(
-            script_source_name=data_preparation,
-            description="copy_road_feature",
-        )
-    )
-
-    data_preperation___dissolved_road_feature___n100_road = (
+    data_preparation___dissolved_road_feature___n100_road = (
         file_manager.generate_file_name_gdb(
             script_source_name=data_preparation,
             description="dissolved_road_feature",
         )
     )
 
-    data_preperation___merge_divided_roads___n100_road = (
+    data_preparation___merge_divided_roads___n100_road = (
         file_manager.generate_file_name_gdb(
             script_source_name=data_preparation,
             description="merge_divided_roads",
         )
     )
 
-    data_preperation___partition_dissolve_output___n100_road = (
-        file_manager.generate_file_name_gdb(
-            script_source_name=data_preparation,
-            description="partition_dissolve_output",
-        )
-    )
-
-    data_preperation___partition_dissolve_root___n100_road = (
-        file_manager.generate_file_name_gdb(
-            script_source_name=data_preparation,
-            description="partition_dissolve_root",
-        )
-    )
-
-    data_preparation___json_documentation___n100_road = (
-        file_manager.generate_file_name_general_files(
-            script_source_name=data_preparation,
-            description="json_documentation",
-            file_type="json",
-        )
-    )
-
-    data_preperation___merge_divided_roads_displacement_feature___n100_road = (
+    data_preparation___merge_divided_roads_displacement_feature___n100_road = (
         file_manager.generate_file_name_gdb(
             script_source_name=data_preparation,
             description="merge_divided_roads_displacement_feature",
         )
     )
 
-    data_selection___thin_road_network_selection___n100_road = (
+    data_preparation___remove_small_road_lines___n100_road = (
         file_manager.generate_file_name_gdb(
-            script_source_name=data_selection,
+            script_source_name=data_preparation,
+            description="remove_small_road_lines",
+        )
+    )
+
+    data_preparation___thin_road_network_selection___n100_road = (
+        file_manager.generate_file_name_gdb(
+            script_source_name=data_preparation,
             description="thin_road_network_selection",
         )
     )
