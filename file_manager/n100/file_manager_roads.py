@@ -59,15 +59,58 @@ class Road_N100(Enum):
     #                                DATA PREPARATION
     # ========================================
 
-    data_selection___nvdb_veglenke___n100_road = file_manager.generate_file_name_gdb(
+    data_selection___nvdb_roads___n100_road = file_manager.generate_file_name_gdb(
         script_source_name=data_selection,
-        description="nvdb_veglenke",
+        description="nvdb_roads",
+    )
+
+    data_preparation___road_single_part___n100_road = (
+        file_manager.generate_file_name_gdb(
+            script_source_name=data_preparation,
+            description="road_single_part",
+        )
+    )
+
+    data_preperation___copy_road_feature___n100_road = (
+        file_manager.generate_file_name_gdb(
+            script_source_name=data_preparation,
+            description="copy_road_feature",
+        )
+    )
+
+    data_preperation___dissolved_road_feature___n100_road = (
+        file_manager.generate_file_name_gdb(
+            script_source_name=data_preparation,
+            description="dissolved_road_feature",
+        )
     )
 
     data_preperation___merge_divided_roads___n100_road = (
         file_manager.generate_file_name_gdb(
             script_source_name=data_preparation,
             description="merge_divided_roads",
+        )
+    )
+
+    data_preperation___partition_dissolve_output___n100_road = (
+        file_manager.generate_file_name_gdb(
+            script_source_name=data_preparation,
+            description="partition_dissolve_output",
+        )
+    )
+
+    data_preperation___partition_dissolve_root___n100_road = (
+        file_manager.generate_file_name_gdb(
+            script_source_name=data_preparation,
+            description="partition_dissolve_root",
+        )
+    )
+
+    data_preparation___json_documentation___n100_road = (
+        file_manager.generate_file_name_general_files(
+            script_source_name=data_preparation,
+            description="json_documentation",
+            file_type="json",
         )
     )
 
