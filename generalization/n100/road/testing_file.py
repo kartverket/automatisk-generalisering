@@ -362,21 +362,21 @@ def multipart_to_singlepart_again():
 def apply_lyrx_to_features():
     # Apply symbology to the water area features using the specified layer
     custom_arcpy.apply_symbology(
-        input_layer=Road_N100.testing_file___begrensningskurve_water_area___n100_road.value,
+        input_layer=Road_N100.testing_file____begrensningskurve_water_area_multipart_to_singlepart___n100_road.value,
         in_symbology_layer=config.begrensningskure_water_lyrx,
         output_name=Road_N100.testing_file___begrensningskurve_water_area_lyrx___n100_road.value,
     )
 
     # Apply symbology to the railway area features using the specified layer
     custom_arcpy.apply_symbology(
-        input_layer=Road_N100.testing_file___railway_area___n100_road.value,
+        input_layer=Road_N100.testing_file___railway_area_multipart_to_singlepart___n100_road.value,
         in_symbology_layer=config.railway_lyrx,
         output_name=Road_N100.testing_file___railway_area_lyrx___n100_road.value,
     )
 
     # Apply symbology to the general roads area features using the specified layer
     custom_arcpy.apply_symbology(
-        input_layer=Road_N100.testing_file___roads_area___n100_road.value,
+        input_layer=Road_N100.testing_file___roads_area_multipart_to_singlepart___n100_road.value,
         in_symbology_layer=config.roads_midlertidig_lyrx,
         output_name=Road_N100.testing_file___roads_area_lyrx___n100_road.value,
     )
