@@ -32,10 +32,11 @@ def main():
     # calculate_hierarchy_for_thin_road_network()
     # thin_road_network_500_straight_to_3000()
     # thinning_out_kommunal_roads_500_3000()
-    choose_data_in_area()
-    add_and_calculate_hierarchy_field()
-    apply_lyrx_to_features()
+    # choose_data_in_area()
+    # add_and_calculate_hierarchy_field()
     copy_features_before_rbc()
+    multipart_to_singlepart_again()
+    apply_lyrx_to_features()
     resolve_road_conflict()
     dissolve_roads()
 
@@ -318,30 +319,6 @@ def add_and_calculate_hierarchy_field():
 
 
 @timing_decorator
-def apply_lyrx_to_features():
-    # Apply symbology to the water area features using the specified layer
-    custom_arcpy.apply_symbology(
-        input_layer=Road_N100.testing_file___begrensningskurve_water_area___n100_road.value,
-        in_symbology_layer=config.begrensningskure_water_lyrx,
-        output_name=Road_N100.testing_file___begrensningskurve_water_area_lyrx___n100_road.value,
-    )
-
-    # Apply symbology to the railway area features using the specified layer
-    custom_arcpy.apply_symbology(
-        input_layer=Road_N100.testing_file___railway_area___n100_road.value,
-        in_symbology_layer=config.railway_lyrx,
-        output_name=Road_N100.testing_file___railway_area__lyrx___n100_road.value,
-    )
-
-    # Apply symbology to the general roads area features using the specified layer
-    custom_arcpy.apply_symbology(
-        input_layer=Road_N100.testing_file___roads_area___n100_road.value,
-        in_symbology_layer=config.roads_midlertidig_lyrx,
-        output_name=Road_N100.testing_file___roads_area_lyrx___n100_road.value,
-    )
-
-
-@timing_decorator
 def copy_features_before_rbc():
     arcpy.management.CopyFeatures(
         in_features=Road_N100.testing_file___begrensningskurve_water_area___n100_road.value,
@@ -358,13 +335,61 @@ def copy_features_before_rbc():
 
 
 @timing_decorator
+def multipart_to_singlepart_again():
+    """
+    This tool is useful when you need to break up multipart geometries
+     into their individual geometries for further analysis or processing.
+     For example, in road networks, you may want to analyze each
+      road segment individually rather than as part of a larger multipart feature.
+    """
+    arcpy.management.MultipartToSinglepart(
+        in_features=Road_N100.testing_file___begrensningskurve_water_area___n100_road.value,
+        out_feature_class=Road_N100.testing_file____begrensningskurve_water_area_multipart_to_singlepart___n100_road.value,
+    )
+
+    arcpy.management.MultipartToSinglepart(
+        in_features=Road_N100.testing_file___railway_area___n100_road.value,
+        out_feature_class=Road_N100.testing_file___railway_area_multipart_to_singlepart___n100_road.value,
+    )
+
+    arcpy.management.MultipartToSinglepart(
+        in_features=Road_N100.testing_file___roads_area___n100_road.value,
+        out_feature_class=Road_N100.testing_file___roads_area_multipart_to_singlepart___n100_road.value,
+    )
+
+
+@timing_decorator
+def apply_lyrx_to_features():
+    # Apply symbology to the water area features using the specified layer
+    custom_arcpy.apply_symbology(
+        input_layer=Road_N100.testing_file___begrensningskurve_water_area___n100_road.value,
+        in_symbology_layer=config.begrensningskure_water_lyrx,
+        output_name=Road_N100.testing_file___begrensningskurve_water_area_lyrx___n100_road.value,
+    )
+
+    # Apply symbology to the railway area features using the specified layer
+    custom_arcpy.apply_symbology(
+        input_layer=Road_N100.testing_file___railway_area___n100_road.value,
+        in_symbology_layer=config.railway_lyrx,
+        output_name=Road_N100.testing_file___railway_area_lyrx___n100_road.value,
+    )
+
+    # Apply symbology to the general roads area features using the specified layer
+    custom_arcpy.apply_symbology(
+        input_layer=Road_N100.testing_file___roads_area___n100_road.value,
+        in_symbology_layer=config.roads_midlertidig_lyrx,
+        output_name=Road_N100.testing_file___roads_area_lyrx___n100_road.value,
+    )
+
+
+@timing_decorator
 def resolve_road_conflict():
     arcpy.env.referenceScale = "100000"
 
     arcpy.cartography.ResolveRoadConflicts(
         in_layers=[
             Road_N100.testing_file___roads_area_lyrx___n100_road.value,
-            Road_N100.testing_file___railway_area__lyrx___n100_road.value,
+            Road_N100.testing_file___railway_area_lyrx___n100_road.value,
             Road_N100.testing_file___begrensningskurve_water_area_lyrx___n100_road.value,
         ],
         hierarchy_field="hierarchy",
