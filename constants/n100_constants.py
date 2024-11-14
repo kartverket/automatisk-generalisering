@@ -148,4 +148,4 @@ class NvdbAlias:
 class MediumAlias:
     tunnel: str = "U"
     bridge: str = "L"
-    ground: str = "T"
+    on_surface: str = "T"
