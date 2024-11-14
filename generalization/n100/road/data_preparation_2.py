@@ -1,5 +1,6 @@
 # Importing packages
 import arcpy
+import os
 
 
 # Importing custom input files modules
@@ -19,6 +20,7 @@ from custom_tools.decorators.partition_io_decorator import partition_io_decorato
 from custom_tools.general_tools.partition_iterator import PartitionIterator
 from custom_tools.general_tools.study_area_selector import StudyAreaSelector
 from custom_tools.general_tools import custom_arcpy
+from custom_tools.general_tools import file_utilities
 from custom_tools.general_tools.polygon_processor import PolygonProcessor
 from custom_tools.general_tools.line_to_buffer_symbology import LineToBufferSymbology
 from input_data.input_symbology import SymbologyN100
@@ -27,17 +29,24 @@ from constants.n100_constants import (
     N100_SQLResources,
     N100_Values,
     NvdbAlias,
+    MediumAlias,
 )
 
 
 @timing_decorator
 def main():
     environment_setup.main()
+
+    file_utilities.deleting_added_field_from_feature_to_x(
+        input_feature=Road_N100.test1___elveg_and_sti_kommune_singlepart_dissolve_medium_t_kryss___n100_road.value
+    )
+
     arcpy.env.referenceScale = 100000
     data_selection()
     table_management()
     dissolve_merge_and_reduce_roads()
-    # run_dissolve_partition()
+    manage_intersections()
+
     # thin_roadnetwork()
 
 
@@ -45,7 +54,7 @@ def main():
 def data_selection():
     selector = StudyAreaSelector(
         input_output_file_dict={
-            input_roads.elveg_and_sti: Road_N100.data_selection___nvdb_roads___n100_road.value,
+            input_roads.roads: Road_N100.data_selection___nvdb_roads___n100_road.value,
         },
         selecting_file=input_n100.AdminFlate,
         selecting_sql_expression="navn IN ('Oslo', 'Ringerike')",
@@ -189,20 +198,33 @@ def dissolve_merge_and_reduce_roads():
     )
 
 
-@timing_decorator
-def thin_roadnetwork():
-    arcpy.cartography.ThinRoadNetwork(
-        in_features=Road_N100.data_preparation___merge_divided_roads___n100_road.value,
-        minimum_length="2000 Meters",
-        invisibility_field="invisibility",
-        hierarchy_field="hierarchy",
+def manage_intersections():
+    custom_arcpy.select_attribute_and_make_permanent_feature(
+        input_layer=Road_N100.data_preparation___remove_small_road_lines___n100_road.value,
+        expression=f"MEDIUM IN ('{MediumAlias.on_surface}', '{MediumAlias.bridge}')",
+        output_name=Road_N100.test1___elveg_and_sti_kommune_singlepart_dissolve_medium_ul___n100_road.value,
+        selection_type="NEW_SELECTION",
     )
 
     custom_arcpy.select_attribute_and_make_permanent_feature(
-        input_layer=Road_N100.first_generalization____merge_divided_roads_features___n100_road.value,
-        expression="invisibility = 0",
-        output_name=Road_N100.data_preparation___thin_road_network_selection___n100_road.value,
-        selection_type=custom_arcpy.SelectionType.NEW_SELECTION,
+        input_layer=Road_N100.data_preparation___remove_small_road_lines___n100_road.value,
+        expression=f" MEDIUM = '{MediumAlias.tunnel}'",
+        output_name=Road_N100.test1___elveg_and_sti_kommune_singlepart_dissolve_medium_t___n100_road.value,
+        selection_type="NEW_SELECTION",
+    )
+
+    arcpy.management.FeatureToLine(
+        in_features=Road_N100.test1___elveg_and_sti_kommune_singlepart_dissolve_medium_t___n100_road.value,
+        out_feature_class=Road_N100.test1___elveg_and_sti_kommune_singlepart_dissolve_medium_t_kryss___n100_road.value,
+    )
+
+    file_utilities.deleting_added_field_from_feature_to_x(
+        input_feature=Road_N100.test1___elveg_and_sti_kommune_singlepart_dissolve_medium_t_kryss___n100_road.value
+    )
+
+    arcpy.management.Append(
+        inputs=Road_N100.test1___elveg_and_sti_kommune_singlepart_dissolve_medium_ul___n100_road.value,
+        target=Road_N100.test1___elveg_and_sti_kommune_singlepart_dissolve_medium_t_kryss___n100_road.value,
     )
 
 
