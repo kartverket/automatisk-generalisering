@@ -138,28 +138,49 @@
     <span class="c1">#                                DATA PREPARATION</span>
     <span class="c1"># ========================================</span>
 
-    <span class="n">data_selection___nvdb_veglenke___n100_road</span> <span class="o">=</span> <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_gdb</span><span class="p">(</span>
+    <span class="n">data_selection___nvdb_roads___n100_road</span> <span class="o">=</span> <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_gdb</span><span class="p">(</span>
         <span class="n">script_source_name</span><span class="o">=</span><span class="n">data_selection</span><span class="p">,</span>
-        <span class="n">description</span><span class="o">=</span><span class="s2">&quot;nvdb_veglenke&quot;</span><span class="p">,</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">&quot;nvdb_roads&quot;</span><span class="p">,</span>
     <span class="p">)</span>
 
-    <span class="n">data_preperation___merge_divided_roads___n100_road</span> <span class="o">=</span> <span class="p">(</span>
+    <span class="n">data_preparation___road_single_part___n100_road</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_gdb</span><span class="p">(</span>
+            <span class="n">script_source_name</span><span class="o">=</span><span class="n">data_preparation</span><span class="p">,</span>
+            <span class="n">description</span><span class="o">=</span><span class="s2">&quot;road_single_part&quot;</span><span class="p">,</span>
+        <span class="p">)</span>
+    <span class="p">)</span>
+
+    <span class="n">data_preparation___dissolved_road_feature___n100_road</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_gdb</span><span class="p">(</span>
+            <span class="n">script_source_name</span><span class="o">=</span><span class="n">data_preparation</span><span class="p">,</span>
+            <span class="n">description</span><span class="o">=</span><span class="s2">&quot;dissolved_road_feature&quot;</span><span class="p">,</span>
+        <span class="p">)</span>
+    <span class="p">)</span>
+
+    <span class="n">data_preparation___merge_divided_roads___n100_road</span> <span class="o">=</span> <span class="p">(</span>
         <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_gdb</span><span class="p">(</span>
             <span class="n">script_source_name</span><span class="o">=</span><span class="n">data_preparation</span><span class="p">,</span>
             <span class="n">description</span><span class="o">=</span><span class="s2">&quot;merge_divided_roads&quot;</span><span class="p">,</span>
         <span class="p">)</span>
     <span class="p">)</span>
 
-    <span class="n">data_preperation___merge_divided_roads_displacement_feature___n100_road</span> <span class="o">=</span> <span class="p">(</span>
+    <span class="n">data_preparation___merge_divided_roads_displacement_feature___n100_road</span> <span class="o">=</span> <span class="p">(</span>
         <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_gdb</span><span class="p">(</span>
             <span class="n">script_source_name</span><span class="o">=</span><span class="n">data_preparation</span><span class="p">,</span>
             <span class="n">description</span><span class="o">=</span><span class="s2">&quot;merge_divided_roads_displacement_feature&quot;</span><span class="p">,</span>
         <span class="p">)</span>
     <span class="p">)</span>
 
-    <span class="n">data_selection___thin_road_network_selection___n100_road</span> <span class="o">=</span> <span class="p">(</span>
+    <span class="n">data_preparation___remove_small_road_lines___n100_road</span> <span class="o">=</span> <span class="p">(</span>
         <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_gdb</span><span class="p">(</span>
-            <span class="n">script_source_name</span><span class="o">=</span><span class="n">data_selection</span><span class="p">,</span>
+            <span class="n">script_source_name</span><span class="o">=</span><span class="n">data_preparation</span><span class="p">,</span>
+            <span class="n">description</span><span class="o">=</span><span class="s2">&quot;remove_small_road_lines&quot;</span><span class="p">,</span>
+        <span class="p">)</span>
+    <span class="p">)</span>
+
+    <span class="n">data_preparation___thin_road_network_selection___n100_road</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_gdb</span><span class="p">(</span>
+            <span class="n">script_source_name</span><span class="o">=</span><span class="n">data_preparation</span><span class="p">,</span>
             <span class="n">description</span><span class="o">=</span><span class="s2">&quot;thin_road_network_selection&quot;</span><span class="p">,</span>
         <span class="p">)</span>
     <span class="p">)</span>

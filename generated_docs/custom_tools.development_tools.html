@@ -50,6 +50,7 @@
 <li class="toctree-l3"><a class="reference internal" href="custom_tools.decorators.html">custom_tools.decorators package</a></li>
 <li class="toctree-l3 current"><a class="current reference internal" href="#">custom_tools.development_tools package</a><ul>
 <li class="toctree-l4"><a class="reference internal" href="#submodules">Submodules</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#module-custom_tools.development_tools.clean_data">custom_tools.development_tools.clean_data module</a></li>
 <li class="toctree-l4"><a class="reference internal" href="#module-custom_tools.development_tools.find_unused_files">custom_tools.development_tools.find_unused_files module</a></li>
 <li class="toctree-l4"><a class="reference internal" href="#custom-tools-development-tools-gpt-file-path-masker-module">custom_tools.development_tools.gpt_file_path_masker module</a></li>
 <li class="toctree-l4"><a class="reference internal" href="#module-custom_tools.development_tools">Module contents</a></li>
@@ -98,6 +99,42 @@
 <h1>custom_tools.development_tools package<a class="headerlink" href="#custom-tools-development-tools-package" title="Link to this heading"></a></h1>
 <section id="submodules">
 <h2>Submodules<a class="headerlink" href="#submodules" title="Link to this heading"></a></h2>
+</section>
+<section id="module-custom_tools.development_tools.clean_data">
+<span id="custom-tools-development-tools-clean-data-module"></span><h2>custom_tools.development_tools.clean_data module<a class="headerlink" href="#module-custom_tools.development_tools.clean_data" title="Link to this heading"></a></h2>
+<dl class="py function">
+<dt class="sig sig-object py" id="custom_tools.development_tools.clean_data.main">
+<span class="sig-prename descclassname"><span class="pre">custom_tools.development_tools.clean_data.</span></span><span class="sig-name descname"><span class="pre">main</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/custom_tools/development_tools/clean_data.html#main"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#custom_tools.development_tools.clean_data.main" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="custom_tools.development_tools.clean_data.run_cleanup">
+<span class="sig-prename descclassname"><span class="pre">custom_tools.development_tools.clean_data.</span></span><span class="sig-name descname"><span class="pre">run_cleanup</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/custom_tools/development_tools/clean_data.html#run_cleanup"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#custom_tools.development_tools.clean_data.run_cleanup" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="custom_tools.development_tools.clean_data.keep_necessary_fields">
+<span class="sig-prename descclassname"><span class="pre">custom_tools.development_tools.clean_data.</span></span><span class="sig-name descname"><span class="pre">keep_necessary_fields</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">input_layers</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">list_of_fields</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/custom_tools/development_tools/clean_data.html#keep_necessary_fields"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#custom_tools.development_tools.clean_data.keep_necessary_fields" title="Link to this definition"></a></dt>
+<dd><dl class="simple">
+<dt>What:</dt><dd><p>Deletes all fields from the input feature class except for a fields specified in a list.</p>
+</dd>
+<dt>How:</dt><dd><p>Retrieves all fields from the input feature. It has a static set of fields always to be kept regardless
+of parameter input. It then removes all static and provided fields from the list of fields to remove.
+Then deletes all unspecified fields.</p>
+</dd>
+</dl>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>input_layer</strong> (<em>str</em>) – The input feature to clean up.</p></li>
+<li><p><strong>list_of_fields</strong> (<em>list</em><em>[</em><em>str</em><em>]</em>) – The fields to be kept in addition to static fields.</p></li>
+</ul>
+</dd>
+</dl>
+<p>:param : param list_of_fields:
+:param : param input_layers:</p>
+</dd></dl>
+
 </section>
 <section id="module-custom_tools.development_tools.find_unused_files">
 <span id="custom-tools-development-tools-find-unused-files-module"></span><h2>custom_tools.development_tools.find_unused_files module<a class="headerlink" href="#module-custom_tools.development_tools.find_unused_files" title="Link to this heading"></a></h2>
