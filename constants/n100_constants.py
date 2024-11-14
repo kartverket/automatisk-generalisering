@@ -142,3 +142,10 @@ class NvdbAlias:
     gang_og_sykkelveg: str = "G"
     traktorveg: str = "T"
     skogsveg: str = "S"  # Blir kodet om til private veger
+
+
+@dataclass(frozen=True)
+class MediumAlias:
+    tunnel: str = "U"
+    bridge: str = "L"
+    on_surface: str = "T"

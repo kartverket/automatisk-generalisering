@@ -1,3 +1,5 @@
+from dataclasses import field
+
 import arcpy
 import os
 
@@ -201,3 +203,45 @@ def compare_feature_classes(feature_class_1, feature_class_2):
         print(f"There are {-difference} fewer features in the second feature class.")
     else:
         print("Both feature classes have the same number of features.")
+
+
+def deleting_added_field_from_feature_to_x(input_feature: str = None) -> None:
+    directory_path, split_file_name = os.path.split(input_feature)
+
+    print("Directory path:", directory_path)
+    print("Filename:", split_file_name)
+    esri_added_prefix = "FID_"
+    generated_field_name = f"{esri_added_prefix}{split_file_name}"[:64]
+    generated_field_name_with_underscore = (
+        f"{generated_field_name[:-1]}_"
+        if len(generated_field_name) == 64
+        else generated_field_name
+    )
+
+    # List fields in the feature
+    feature_fields = arcpy.ListFields(input_feature)
+    list_of_fields = [field_object.name for field_object in feature_fields]
+
+    if generated_field_name in list_of_fields:
+        field_to_delete = generated_field_name
+    elif generated_field_name_with_underscore in list_of_fields:
+        field_to_delete = generated_field_name_with_underscore
+    else:
+        raise ValueError(
+            f"""
+                The generated field name by Esri Geoprocessing tool did not match the predicted naming convention for the file:\n
+                {input_feature}\n
+                Expected name (without underscore): {generated_field_name}\n
+                Expected name (with underscore): {generated_field_name_with_underscore}\n
+                Available fields:\n{list_of_fields}
+            """
+        )
+
+    try:
+        arcpy.management.DeleteField(
+            in_table=input_feature,
+            drop_field=field_to_delete,
+        )
+        print(f"Deleted field: {field_to_delete}")
+    except Exception as e:
+        print(f"An error occurred: {e}")

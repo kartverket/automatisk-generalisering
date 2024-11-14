@@ -59,28 +59,49 @@ class Road_N100(Enum):
     #                                DATA PREPARATION
     # ========================================
 
-    data_selection___nvdb_veglenke___n100_road = file_manager.generate_file_name_gdb(
+    data_selection___nvdb_roads___n100_road = file_manager.generate_file_name_gdb(
         script_source_name=data_selection,
-        description="nvdb_veglenke",
+        description="nvdb_roads",
     )
 
-    data_preperation___merge_divided_roads___n100_road = (
+    data_preparation___road_single_part___n100_road = (
+        file_manager.generate_file_name_gdb(
+            script_source_name=data_preparation,
+            description="road_single_part",
+        )
+    )
+
+    data_preparation___dissolved_road_feature___n100_road = (
+        file_manager.generate_file_name_gdb(
+            script_source_name=data_preparation,
+            description="dissolved_road_feature",
+        )
+    )
+
+    data_preparation___merge_divided_roads___n100_road = (
         file_manager.generate_file_name_gdb(
             script_source_name=data_preparation,
             description="merge_divided_roads",
         )
     )
 
-    data_preperation___merge_divided_roads_displacement_feature___n100_road = (
+    data_preparation___merge_divided_roads_displacement_feature___n100_road = (
         file_manager.generate_file_name_gdb(
             script_source_name=data_preparation,
             description="merge_divided_roads_displacement_feature",
         )
     )
 
-    data_selection___thin_road_network_selection___n100_road = (
+    data_preparation___remove_small_road_lines___n100_road = (
         file_manager.generate_file_name_gdb(
-            script_source_name=data_selection,
+            script_source_name=data_preparation,
+            description="remove_small_road_lines",
+        )
+    )
+
+    data_preparation___thin_road_network_selection___n100_road = (
+        file_manager.generate_file_name_gdb(
+            script_source_name=data_preparation,
             description="thin_road_network_selection",
         )
     )
