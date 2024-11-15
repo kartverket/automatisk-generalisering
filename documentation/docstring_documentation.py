@@ -17,7 +17,7 @@ Why:
 
 def example_of_small_function():
     """
-    What: Does something needing little explanation outside reading the code.
+    Does something needing little explanation outside reading the code.
     """
     x = 1 + 1
     print(x)
@@ -31,7 +31,7 @@ def example_small_function_taking_args_with_returns(parameter: str) -> str:
         is what is required from the parameter, and what it returns.
 
     Args:
-        parameter: The string used in something. Important information regarding the parameter is informed about.
+        parameter (str): The string used in something. Important information regarding the parameter is informed about.
 
     Returns:
         str: A modified string used for something else.
@@ -75,9 +75,9 @@ def example_of_callable_function(
         it is important to put focus on how the function is supposed to be used since it is intended to be called.
 
     Args:
-        parameter: A string that will be included in the printed or constructed message.
-        parameter_2: An integer representing the number of iterations.
-        parameter_3: A boolean that determines whether to print the message or construct it silently.
+        parameter (str): A string that will be included in the printed or constructed message.
+        parameter_2 (int): An integer representing the number of iterations.
+        parameter_3 (bool): A boolean that determines whether to print the message or construct it silently.
 
     Returns:
         str: The final value constructed in the loop.
@@ -146,9 +146,9 @@ class ExampleClass:
             Initializes the class with three parameters that will be processed in various utility methods.
 
         Args:
-            parameter: A string that will be processed in various class methods.
-            parameter_2: An integer used to control the number of iterations in loops.
-            parameter_3: A boolean controlling how parameters are processed or printed.
+            parameter (str): A string that will be processed in various class methods.
+            parameter_2 (int): An integer used to control the number of iterations in loops.
+            parameter_3 (bool): A boolean controlling how parameters are processed or printed.
         """
         self.parameter = parameter
         self.parameter_2 = parameter_2
@@ -171,7 +171,7 @@ class ExampleClass:
             and returns a modified string based on the current state of the class.
 
         Args:
-            additional_param: An additional string that will be combined with `self.parameter`.
+            additional_param (str): An additional string that will be combined with `self.parameter`.
 
         Returns:
             str: A modified string that combines `self.parameter` and `additional_param`.

@@ -21,13 +21,11 @@ class LineToBufferSymbology:
         root_file: str = None,
     ):
         """
-        Initializes the LineToBufferSymbology class with the specified parameters.
+        What:
+            Initializes the LineToBufferSymbology class with the specified parameters.
 
-        :param input_road_lines: Path to the input road lines.
-        :param sql_selection_query: Dictionary containing SQL queries and associated buffer widths.
-        :param output_road_buffer: Path to save the output road buffer.
-        :param buffer_factor: Multiplicative factor to adjust buffer widths, avoid using 0.
-        :param fixed_buffer_addition: Additional fixed width to add to buffer widths.
+        Args:
+            See class docstring.
         """
         self.input_road_lines = input_road_lines
         self.sql_selection_query = sql_selection_query
@@ -50,9 +48,17 @@ class LineToBufferSymbology:
                 "buffer_factor should not be 0 to avoid non-buffer creation."
             )
 
-    def selecting_different_road_lines(self, sql_query, selection_output_name):
+    def selecting_different_road_lines(
+        self, sql_query: str, selection_output_name: str
+    ):
         """
-        Selects road lines based on the provided SQL query and creates a feature layer.
+        What:
+            Selects road lines based on the provided SQL query and creates a feature layer or a permanent feature class
+            depending on the `write_work_files_to_memory` flag.
+
+        Args:
+            sql_query (str): The SQL query string used to select the road lines.
+            selection_output_name (str): The name for the output feature layer or file.
         """
 
         if self.write_work_files_to_memory:

@@ -363,7 +363,7 @@ def apply_symbology(
 
     Example:
         >>> custom_arcpy.apply_symbology_to_the_layers(
-        ...     input_layer=Building_N100.point_resolve_building_conflicts___building_polygon_selection_rbc___n100_building.value,
+        ...     input_layer=Building_N100.point_displacement_with_buffer___merged_buffer_displaced_points___n100_building.value,
         ...     in_symbology_layer=config.symbology_n100_grunnriss,
         ...     output_name=Building_N100.polygon_resolve_building_conflicts___building_polygon___n100_building_lyrx.value,
         ... )

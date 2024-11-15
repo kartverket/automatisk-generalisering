@@ -1,4 +1,5 @@
 from enum import Enum
+from dataclasses import dataclass
 from typing import Union
 
 
@@ -18,6 +19,12 @@ class N100_Values(Enum):
 
 
 class N100_Symbology(Enum):
+    """Class holding project wide constants for N100 map scale"""
+
+    """
+    Symbol value is the key, where the value is dimensions.
+    First value in dimensions are width second is height.
+    """
     building_symbol_dimensions = {
         1: (175, 175),  # Hospital
         2: (175, 175),  # Hospital
@@ -27,7 +34,7 @@ class N100_Symbology(Enum):
         6: (45, 45),
         7: (45, 45),
         8: (45, 45),
-        9: (65, 55),
+        9: (55, 65),
         10: (130, 130),  # Railway station
         11: (130, 130),  # Tourist Cabin
     }
@@ -94,6 +101,8 @@ class N100_SQLResources(Enum):
         "        return 10\n"
     )
 
+    """Dictionary where keys are SQL expressions for road features, and the values are the corresponding
+    road width in meters."""
     road_symbology_size_sql_selection = {
         "motorvegtype = 'Motorveg'": 43,
         """ 
@@ -118,3 +127,25 @@ class N100_SQLResources(Enum):
     }
 
     urban_areas = "objtype = 'Tettbebyggelse' Or objtype = 'Industriområde' Or objtype = 'BymessigBebyggelse'"
+
+
+@dataclass(frozen=True)
+class NvdbAlias:
+    europaveg: str = "E"
+    fylkesveg: str = "F"
+    kommunalveg: str = "K"
+    privatveg: str = "P"
+    riksveg: str = "R"
+    sti_dnt: str = "D"
+    sti_andre: str = "A"
+    sti_umerket: str = "U"
+    gang_og_sykkelveg: str = "G"
+    traktorveg: str = "T"
+    skogsveg: str = "S"  # Blir kodet om til private veger
+
+
+@dataclass(frozen=True)
+class MediumAlias:
+    tunnel: str = "U"
+    bridge: str = "L"
+    on_surface: str = "T"

@@ -20,8 +20,8 @@ from custom_tools.decorators.timing_decorator import timing_decorator
 @timing_decorator
 def main():
     """
-    Summary:
-        This script detects and reduces hospital and church clusters.
+    This script detects and reduces hospital and church clusters. As an example can a cluster of 5 close hospital points
+    be reduced to only consist of 1 point.
     """
 
     environment_setup.main()
@@ -33,6 +33,9 @@ def main():
 
 
 def selecting_all_other_points_that_are_not_hospital_and_church():
+    """
+    This script selects all other points that are not classified as hospital, church and touristhuts.
+    """
     # Selecting all hospitals and making feature layer
     custom_arcpy.select_attribute_and_make_permanent_feature(
         input_layer=Building_N100.point_propagate_displacement___points_after_propagate_displacement___n100_building.value,
@@ -46,12 +49,9 @@ def selecting_all_other_points_that_are_not_hospital_and_church():
 @timing_decorator
 def hospital_church_selections():
     """
-    Summary:
-        Selects hospitals and churches from the input point feature class, creating separate feature layers for each category.
-
-    Details:
-        - Hospitals are selected based on 'byggtyp_nbr' values 970 and 719.
-        - Churches are selected based on 'byggtyp_nbr' value 671.
+    Selects hospitals and churches from the input point feature class, creating separate feature layers for each category.
+    Hospitals are selected based on 'byggtyp_nbr' values 970 and 719.
+    Churches are selected based on 'byggtyp_nbr' value 671.
     """
 
     # SQL-expressions to select hospitals and churches
@@ -79,18 +79,21 @@ def hospital_church_selections():
 @timing_decorator
 def find_clusters():
     """
-    Summary:
+    What:
         Finds hospital and church clusters.
         A cluster is defined as two or more points that are closer together than 200 meters.
 
-    Details:
-        - Clusters are found for both hospitals and churches using the 'FindPointClusters' tool.
-        - The CLUSTER_IDs are joined with the original hospital and church feature classes.
-        - Points belonging to a hospital or church cluster are selected as new layers.
-        - Points not belonging to a cluster are selected as new layers.
+    How:
+        Clusters are found for both hospitals and churches using the 'FindPointClusters' tool.
+        The CLUSTER_IDs are joined with the original hospital and church feature classes.
+        Points belonging to a hospital or church cluster are selected as new layers.
+        Points not belonging to a cluster are selected as new layers.
+        The tool FindPointClusters has a search distance of **'200 Meters'** and a minimum of **'2 Points'**.
 
-    Parameters:
-        - The tool FindPointClusters has a search distance of **'200 Meters'** and a minimum of **'2 Points'**.
+    Why?
+        Clusters amongst hospital and churches are found because it causes "noise" in the map.
+        We do not want the map to display clusters of big symbols, this can make the map harder to read.
+        Therefore, we want to identify clusters and reduce these.
     """
 
     print("Finding hospital and church clusters...")
@@ -170,17 +173,25 @@ def find_clusters():
 @timing_decorator
 def reducing_clusters():
     """
-    Summary:
-        Reduces hospital and church clusters by keeping only one point for each detected cluster.
+    What:
+        Reduces hospital and church clusters by keeping only one point for each detected cluster. This ensures that
+        spatial redundancy is minimized, and each cluster is represented by a single point, which is helpful for
+        cleaner visualizations in the map.
+    Why:
+        Clusters of hospitals or churches may result in overlapping or redundant data points, especially in dense
+        areas. Reducing clusters by retaining only the most central point ensures the dataset remains representative
+        without unnecessary duplication.
 
-    Details:
-        - A minimum bounding polygon is created using the cluster points.
-        - The same polygon is transformed into a centerpoint.
-        - Only the cluster point nearest to the centerpoint is retained.
-        - Hospital and church points not part of a cluster are merged with the selected cluster points.
-
-    Parameters:
-        - Minimum Bounding Geometry is created with the geometry type RECTANGLE BY AREA.
+    How:
+        The function creates a minimum bounding polygon for each cluster of points, which is then converted into a
+        center point. The nearest hospital or church point to the center point is identified and retained, while
+        the remaining points in the cluster are discarded. Hospital and church points that are not part of a cluster
+        are merged with the retained cluster points. The 'RECTANGLE_BY_AREA' option is used to create the minimum
+        bounding geometry for each cluster. The nearest point to the center of the bounding polygon is identified
+        using a 'Near' analysis, and a dictionary is used to store the minimum distance values for each cluster.
+        If two points have the same distance to the center, one is selected randomly. Finally, the non-clustered
+        points are merged with the selected points from clusters, resulting in a merged feature class with reduced
+        hospital and church points.
     """
 
     # List of hospital and church layers to merge at the end
@@ -366,8 +377,9 @@ def reducing_clusters():
 @timing_decorator
 def hospitals_and_churches_too_close():
     """
-    Summary:
-        Selects hospitals and churches, then identifies churches that are more than 215 meters away from hospitals.
+    This function identifies and filters out church points that are located too close to hospital points (within 215 meters).
+    Only churches that are farther than 215 meters from hospitals are retained, while the rest are excluded from the final dataset.
+    The result is a reduced and cleaner spatial dataset of hospitals and churches.
     """
     # SQL-expressions to select hospitals and churches
     sql_select_all_hospital = "byggtyp_nbr IN (970, 719)"

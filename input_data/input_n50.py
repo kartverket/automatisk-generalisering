@@ -83,3 +83,7 @@ def check_paths():
             print(f"Failed on {dataset}: {e}")
         else:
             print(f"Success on {dataset}")
+
+
+if __name__ == "__main__":
+    check_paths()

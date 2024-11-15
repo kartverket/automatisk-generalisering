@@ -20,25 +20,19 @@ from custom_tools.general_tools import custom_arcpy
 @timing_decorator
 def main():
     """
-    Summary:
-        Needs summary
+    What:
+        Displaces building points relative to road buffers based on specified buffer increments.
+        It processes multiple features, mainly focusing on roads taking into account varied symbology width for roads,
+        displacing building points away from roads and other barriers, while iteratively calculating buffer increments.
 
-    Details:
-        1. `setup_arcpy_environment`:
-            Sets up the ArcPy environment based on predefined settings defined in `general_setup`.
-            This function ensures that the ArcPy environment is properly configured for the specific project by utilizing
-            the `general_setup` function from the `environment_setup` module.
+    How:
+        Selects hospitals, churches and tourist huts so that they are not potentially lost in the buffer displacement process.
+        Then runs the buffer displacement logic on the remaining points (see `BufferDisplacement` documentation for more details.
+        Finally merges the output of the BufferDisplacement with the previous hospital, church and tourist hut selection.
 
-        2. `selection`:
-            Makes the selection of the relevant input features using a sub selection since the operation is too processing heavy to be done for the global dataset. Small scale test logic untill this logic is made OOP.
-
-        3. `creating_raod_buffer`:
-            This function creates a buffered feature with a size corresponding to the road width in its symbology.
-            Then it iterates through the road features first creating a smaller buffer and gradually increasing the size.
-            For each iteration uses the erase tool to erase the polgon created from building points to gradually move it away from road features to prevent overlapp with road features.
-
-        4. `copy_output_feature`:
-            Copies the last output of the `creating_raod_buffer` iteration to be able to integrate it into our `file_manager` system.
+    Why:
+        To make sure there are no graphic conflicts with buildings and roads prior to RBC improving the result of RBC,
+        but also the processing speed.
     """
     environment_setup.main()
 
@@ -73,6 +67,15 @@ def extracting_churches_hospitals():
 
 @timing_decorator
 def buffer_displacement():
+    """
+    What:
+        Displaces building points relative to road buffers based on specified buffer increments.
+        It processes multiple features, mainly focusing on roads taking into account varied symbology width for roads,
+        displacing building points away from roads and other barriers, while iteratively calculating buffer increments.
+
+    How:
+        Runs the BufferDisplacement using the PartitionIterator. See `BufferDisplacement` documentation for more details.
+    """
     building_points = "building_points"
     bane = "bane"
     river = "river"
@@ -154,7 +157,6 @@ def buffer_displacement():
         alias_path_outputs=outputs,
         custom_functions=[buffer_displacement_config],
         root_file_partition_iterator=Building_N100.point_displacement_with_buffer___root_file___n100_building.value,
-        scale=env_setup.global_config.scale_n100,
         dictionary_documentation_path=Building_N100.point_displacement_with_buffer___documentation___building_n100.value,
         feature_count="1400000",
     )

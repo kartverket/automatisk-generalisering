@@ -25,6 +25,50 @@ from custom_tools.decorators.timing_decorator import timing_decorator
 
 @timing_decorator
 def main():
+    """
+    What:
+        Resolves graphic conflicts and overlaps between building features which persist after RBC,
+        prioritizing buildings with higher hierarchy values.
+    How:
+        copying_previous_file:
+            Copies the input file and makes sure the CLUSTER_ID field is not present.
+
+        removing_building_polygons_overlapping_church_hospitals:
+            Removes building polygons overlapping hospitals, churches or tourist huts
+
+        polygons_overlapping_roads_to_points:
+            Transforms building polygons intersecting roads to points, then merges these points with other point features.
+
+        adding_new_hierarchy_value_to_points:
+            Calculates and assigns a new hierarchy value to building points based on their nbr code
+
+        remove_points_that_are_overlapping_roads:
+            Removes points that are overlapping with roads but makes sure not to lose any hospitals, churches, or tourist huts
+
+        detecting_graphic_conflicts:
+            Detects graphic conflicts within a given set of features based on a 20 meter conflict distance.
+
+        selecting_points_close_to_graphic_conflict_polygons:
+            Selects points based on their proximity to graphic conflict polygons.
+
+        finding_clusters_amongst_the_points:
+            Identifies clusters amongst points close to graphic conflict polygons. The distance needs to be large enough
+            to prevent graphic overlap to be in different clusters, however small enough to not merge close graphic cluster patterns
+            in a single super cluster.
+
+        selecting_points_in_a_cluster_and_not_in_a_cluster:
+            Selects points that have been found in clusters.
+
+        keep_point_with_highest_hierarchy_for_each_cluster:
+            Iterates through each cluster and retains the point with the highest hierarchy value within the cluster.
+            Deletes all other points in the cluster.
+
+        merging_final_points_together:
+            Merges all point outputs to a single point feature.
+
+    Why:
+        There should be no graphic conflicts between buildings in the final output.
+    """
     environment_setup.main()
     copying_previous_file()
     removing_building_polygons_overlapping_church_hospitals()
@@ -42,8 +86,7 @@ def main():
 @timing_decorator
 def copying_previous_file():
     """
-    Summary:
-        Copies an existing feature class and assigns it a new name.
+    Copies the input file and makes sure the CLUSTER_ID field is not present.
     """
 
     # Copying and assigning new name to layer
@@ -71,6 +114,9 @@ def copying_previous_file():
 
 
 def removing_building_polygons_overlapping_church_hospitals():
+    """
+    Removes building polygons overlapping hospitals, churches or tourist huts
+    """
     custom_arcpy.select_attribute_and_make_permanent_feature(
         input_layer=Building_N100.removing_overlapping_polygons_and_points___all_building_points___n100_building.value,
         expression="byggtyp_nbr IN (970, 719, 671, 956)",
@@ -99,9 +145,7 @@ def removing_building_polygons_overlapping_church_hospitals():
 
 def polygons_overlapping_roads_to_points():
     """
-    Summary:
-        Processes polygons that overlap with road buffers and transforms them to points.
-        Also identifies and keeps polygons that do not intersect with road buffers.
+    Transforms building polygons intersecting roads to points, then merges these points with other point features.
     """
 
     road_lines_to_buffer_symbology = LineToBufferSymbology(
@@ -151,8 +195,7 @@ def polygons_overlapping_roads_to_points():
 @timing_decorator
 def adding_new_hierarchy_value_to_points():
     """
-    Summary:
-        Calculates and assigns a new hierarchy value to building points based on their nbr code
+    Calculates and assigns a new hierarchy value to building points based on their nbr code
     """
     # Determining and assigning symbol val
     arcpy.management.CalculateField(
@@ -181,9 +224,7 @@ def adding_new_hierarchy_value_to_points():
 
 def remove_points_that_are_overlapping_roads():
     """
-    Summary:
-        Processes and filters points to remove those overlapping with road buffers,
-        while preserving hospital and church points.
+    Removes points that are overlapping with roads but makes sure not to lose any hospitals, churches, or tourist huts
     """
     # Selecting all points that are NOT hospital and churches or tourist huts
     custom_arcpy.select_attribute_and_make_permanent_feature(
@@ -253,8 +294,7 @@ def remove_points_that_are_overlapping_roads():
 @timing_decorator
 def detecting_graphic_conflicts():
     """
-    Summary:
-        Detects graphic conflicts within a given set of features based on a 20 meter conflict distance.
+    Detects graphic conflicts within a given set of features based on a 20 meter conflict distance.
     """
     custom_arcpy.apply_symbology(
         input_layer=Building_N100.removing_overlapping_polygons_and_points___points_no_road_conflict___n100_building.value,
@@ -276,8 +316,7 @@ def detecting_graphic_conflicts():
 @timing_decorator
 def selecting_points_close_to_graphic_conflict_polygons():
     """
-    Summary:
-        Selects points based on their proximity to graphic conflict polygons.
+    Selects points based on their proximity to graphic conflict polygons.
     """
 
     polygon_processor = PolygonProcessor(
@@ -324,9 +363,9 @@ def selecting_points_close_to_graphic_conflict_polygons():
 @timing_decorator
 def finding_clusters_amongst_the_points():
     """
-    Summary:
-        Identifies clusters among points based on proximity and density.
-        Specifically, finds clusters of points that are close to graphic conflict polygons.
+    Identifies clusters amongst points close to graphic conflict polygons. The distance needs to be large enough
+    to prevent graphic overlap to be in different clusters, however small enough to not merge close graphic cluster patterns
+    in a single super cluster.
     """
     # Finding church clusters
     arcpy.gapro.FindPointClusters(
@@ -341,9 +380,7 @@ def finding_clusters_amongst_the_points():
 @timing_decorator
 def selecting_points_in_a_cluster_and_not_in_a_cluster():
     """
-    Summary:
-        Selects and categorizes points based on their cluster status.
-        Points are divided into those that are within a cluster and those that are not.
+    Selects points that have been found in clusters.
     """
     expression_cluster = "CLUSTER_ID > 0"
     expression_not_cluster = "CLUSTER_ID < 0"
@@ -374,9 +411,8 @@ def selecting_points_in_a_cluster_and_not_in_a_cluster():
 @timing_decorator
 def keep_point_with_highest_hierarchy_for_each_cluster():
     """
-    Summary:
-        Iterates through each cluster and retains the point with the highest hierarchy value within the cluster.
-        Deletes all other points in the cluster.
+    Iterates through each cluster and retains the point with the highest hierarchy value within the cluster.
+    Deletes all other points in the cluster.
     """
     # Iterate over each cluster
     with arcpy.da.SearchCursor(
@@ -423,8 +459,7 @@ def keep_point_with_highest_hierarchy_for_each_cluster():
 @timing_decorator
 def merging_final_points_together():
     """
-    Summary:
-        Merges multiple point feature layers into a single final output layer.
+    Merges all point outputs to a single point feature.
     """
     # Merge the final hospital and church layers
 
