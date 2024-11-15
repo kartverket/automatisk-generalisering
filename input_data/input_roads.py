@@ -1,5 +1,6 @@
 from config import roads_path
 
+elveg = rf"{roads_path}\elveg"
 annet_elveg = rf"{roads_path}\annet_elveg"
 elveg_and_sti = rf"{roads_path}\elveg_and_sti"
 elveg_and_sti_oslo = rf"{roads_path}\elveg_and_sti_Oslo"
