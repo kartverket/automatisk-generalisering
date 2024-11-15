@@ -339,50 +339,56 @@ class Road_N100(Enum):
         )
     )
 
-    test1___elveg_and_sti_kommune_singlepart_dissolve_medium_ul___n100_road = (
+    test1___elveg_and_sti_kommune_singlepart_dissolve_mergedividedroads___n100_road = (
         file_manager.generate_file_name_gdb(
             script_source_name=test1,
-            description="elveg_and_sti_kommune_singlepart_dissolve_medium_ul",
+            description="elveg_and_sti_kommune_singlepart_dissolve_mergedividedroads",
         )
     )
 
-    test1___elveg_and_sti_kommune_singlepart_dissolve_medium_t___n100_road = (
-        file_manager.generate_file_name_gdb(
-            script_source_name=test1,
-            description="elveg_and_sti_kommune_singlepart_dissolve_medium_t",
-        )
-    )
-
-    test1___elveg_and_sti_kommune_singlepart_dissolve_medium_t_kryss___n100_road = (
-        file_manager.generate_file_name_gdb(
-            script_source_name=test1,
-            description="elveg_and_sti_kommune_singlepart_dissolve_medium_t_kryss",
-        )
-    )
-
-    test1___elveg_and_sti_kommune_singlepart_dissolve_medium_t_kryss_mergedividedroads___n100_road = file_manager.generate_file_name_gdb(
+    test1___elveg_and_sti_kommune_singlepart_dissolve_mergedividedroads_crd___n100_road = file_manager.generate_file_name_gdb(
         script_source_name=test1,
-        description="elveg_and_sti_kommune_singlepart_dissolve_medium_t_kryss_mergedividedroads",
+        description="elveg_and_sti_kommune_singlepart_dissolve_mergedividedroads_crd",
     )
 
-    test1___elveg_and_sti_kommune_singlepart_dissolve_medium_t_kryss_mergedividedroads_thin_sti___n100_road = file_manager.generate_file_name_gdb(
+    test1___elveg_and_sti_kommune_singlepart_dissolve_mergedividedroads_crd_medium_ul___n100_road = file_manager.generate_file_name_gdb(
         script_source_name=test1,
-        description="elveg_and_sti_kommune_singlepart_dissolve_medium_t_kryss_mergedividedroads_thin_sti",
+        description="elveg_and_sti_kommune_singlepart_dissolve_mergedividedroads_crd_medium_ul",
     )
 
-    test1___elveg_and_sti_kommune_singlepart_dissolve_medium_t_kryss_mergedividedroads_veglenke___n100_road = file_manager.generate_file_name_gdb(
+    test1___elveg_and_sti_kommune_singlepart_dissolve_mergedividedroads_crd_medium_t___n100_road = file_manager.generate_file_name_gdb(
         script_source_name=test1,
-        description="elveg_and_sti_kommune_singlepart_dissolve_medium_t_kryss_mergedividedroads_veglenke",
+        description="elveg_and_sti_kommune_singlepart_dissolve_mergedividedroads_crd_medium_t",
     )
 
-    test1___elveg_and_sti_kommune_singlepart_dissolve_medium_t_kryss_mergedividedroads_veglenke_thin2___n100_road = file_manager.generate_file_name_gdb(
+    test1___elveg_and_sti_kommune_singlepart_dissolve_mergedividedroads_crd_kryss___n100_road = file_manager.generate_file_name_gdb(
         script_source_name=test1,
-        description="elveg_and_sti_kommune_singlepart_dissolve_medium_t_kryss_mergedividedroads_veglenke_thin2",
+        description="elveg_and_sti_kommune_singlepart_dissolve_mergedividedroads_crd_kryss",
     )
 
-    test1___elveg_and_sti_kommune_singlepart_dissolve_medium_t_kryss_mergedividedroads_veglenke_thin2_crd___n100_road = file_manager.generate_file_name_gdb(
+    test1___elveg_and_sti_kommune_singlepart_dissolve_mergedividedroads_crd_kryss_thin_sti___n100_road = file_manager.generate_file_name_gdb(
         script_source_name=test1,
-        description="elveg_and_sti_kommune_singlepart_dissolve_medium_t_kryss_mergedividedroads_veglenke_thin2_crd",
+        description="elveg_and_sti_kommune_singlepart_dissolve_mergedividedroads_crd_kryss_thin_sti",
+    )
+
+    test1___elveg_and_sti_kommune_singlepart_dissolve_mergedividedroads_crd_kryss_veglenke___n100_road = file_manager.generate_file_name_gdb(
+        script_source_name=test1,
+        description="elveg_and_sti_kommune_singlepart_dissolve_mergedividedroads_crd_kryss_veglenke",
+    )
+
+    test1___elveg_and_sti_kommune_singlepart_dissolve_mergedividedroads_crd_kryss_veglenke_thinveg2___n100_road = file_manager.generate_file_name_gdb(
+        script_source_name=test1,
+        description="elveg_and_sti_kommune_singlepart_dissolve_mergedividedroads_crd_kryss_veglenke_thinveg2",
+    )
+
+    test1___elveg_and_sti_kommune_singlepart_dissolve_mergedividedroads_crd_kryss_veglenke_thin3vegklasse___n100_road = file_manager.generate_file_name_gdb(
+        script_source_name=test1,
+        description="elveg_and_sti_kommune_singlepart_dissolve_mergedividedroads_crd_kryss_veglenke_thin3vegklasse",
+    )
+
+    test1___elveg_and_sti_kommune_singlepart_dissolve_mergedividedroads_crd_kryss_veglenke_thin4vegklasse___n100_road = file_manager.generate_file_name_gdb(
+        script_source_name=test1,
+        description="elveg_and_sti_kommune_singlepart_dissolve_mergedividedroads_crd_kryss_veglenke_thin4vegklasse",
     )
 
     test1___veg100_bærum___n100_road = file_manager.generate_file_name_gdb(

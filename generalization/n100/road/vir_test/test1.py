@@ -35,6 +35,7 @@ def main():
     veg100_oslo()
 
 
+# dette er sånn midlertidig, siden jeg ikke kan gjøre noe bedre må jeg skrive kommunenavn 4 steder linjer 35, 42, 375 og 379
 def kommune():
     custom_arcpy.select_attribute_and_make_permanent_feature(
         input_layer=input_n50.AdminFlate,
@@ -52,6 +53,7 @@ def kommune_buffer():
     )
 
 
+# lager en buffer så clipper til admingrense etterpå og veger treffer riktig
 def elveg_and_sti_kommune():
     arcpy.analysis.Clip(
         in_features=input_roads.elveg,
@@ -60,6 +62,7 @@ def elveg_and_sti_kommune():
     )
 
 
+# singlepart er krav til flere verktøy
 def elveg_and_sti_kommune_singlepart():
     arcpy.management.MultipartToSinglepart(
         in_features=Road_N100.test1___elveg_and_sti_kommune___n100_road.value,
@@ -67,6 +70,7 @@ def elveg_and_sti_kommune_singlepart():
     )
 
 
+# dissolve slik at RemoveSmallLines fungerer bedre, mange små stubber hvor veglenker som vi ikke trenger splitter
 def elveg_and_sti_kommune_singlepart_dissolve():
     arcpy.analysis.PairwiseDissolve(
         in_features=Road_N100.test1___elveg_and_sti_kommune_singlepart___n100_road.value,
@@ -87,6 +91,7 @@ def elveg_and_sti_kommune_singlepart_dissolve():
     )
 
 
+# field names burde endres til f eks hie_vegkat eller hie_klasse så de viser hvilke attributt hierarchy baseres på i Thin
 def adding_fields_to_elveg_and_sti_kommune_singlepart_dissolve() -> object:
     arcpy.management.AddFields(
         in_table=Road_N100.test1___elveg_and_sti_kommune_singlepart_dissolve___n100_road.value,
@@ -120,7 +125,7 @@ def adding_fields_to_elveg_and_sti_kommune_singlepart_dissolve() -> object:
             return 0
         """
 
-    # Calculate field for hiesti
+    # Calculate field for hiesti som skal brukes i Thin av stiene og andre ikke-kjørbare veger
     arcpy.management.CalculateField(
         in_table=Road_N100.test1___elveg_and_sti_kommune_singlepart_dissolve___n100_road.value,
         field="hiesti",
@@ -147,7 +152,7 @@ def adding_fields_to_elveg_and_sti_kommune_singlepart_dissolve() -> object:
             return 0
         """
 
-    # Calculate field for hie_1
+    # Calculate field for hie_1 som skal brukes i Thin av kjørbare veger basert på vegkategori
     arcpy.management.CalculateField(
         in_table=Road_N100.test1___elveg_and_sti_kommune_singlepart_dissolve___n100_road.value,
         field="hie_1",
@@ -210,7 +215,7 @@ def adding_fields_to_elveg_and_sti_kommune_singlepart_dissolve() -> object:
             return 10
         """
 
-    # Calculate field for hie_2
+    # Calculate field for hie_2 som skal brukes i Thin basert på funksjonellvegklasse
     arcpy.management.CalculateField(
         in_table=Road_N100.test1___elveg_and_sti_kommune_singlepart_dissolve___n100_road.value,
         field="hie_2",
@@ -220,6 +225,7 @@ def adding_fields_to_elveg_and_sti_kommune_singlepart_dissolve() -> object:
     )
 
 
+# remove small line fjerner mange små veger og gjør at datasett blir "lettere"
 def removesmalllines():
     arcpy.topographic.RemoveSmallLines(
         in_features=Road_N100.test1___elveg_and_sti_kommune_singlepart_dissolve___n100_road.value,
@@ -227,6 +233,7 @@ def removesmalllines():
     )
 
 
+# MDR skal kjøres før CRD, her er det potensiall for bedre prossessering hvis man ser på MDR ved vegnummer, medium og ansre attributter
 def mergedividedroads():
     arcpy.cartography.MergeDividedRoads(
         in_features=Road_N100.test1___elveg_and_sti_kommune_singlepart_dissolve___n100_road.value,
@@ -236,6 +243,8 @@ def mergedividedroads():
     )
 
 
+# ikke alle rundkjøringer som blir fjernet; noen rndkjøringer i i forskjellige plan enn veger som kjrysser under eller over;
+# noen rundkjøringer har deler i luft og deler på bakken
 def crd():
     arcpy.cartography.CollapseRoadDetail(
         in_features=Road_N100.test1___elveg_and_sti_kommune_singlepart_dissolve_mergedividedroads___n100_road.value,
@@ -244,6 +253,7 @@ def crd():
     )
 
 
+# brukes ikke foreløpig
 def medium_ul():
     custom_arcpy.select_attribute_and_make_permanent_feature(
         input_layer=Road_N100.test1___elveg_and_sti_kommune_singlepart_dissolve_mergedividedroads_crd___n100_road.value,
@@ -253,6 +263,7 @@ def medium_ul():
     )
 
 
+# brukes for å lage kryss etter dissolve
 def medium_t():
     custom_arcpy.select_attribute_and_make_permanent_feature(
         input_layer=Road_N100.test1___elveg_and_sti_kommune_singlepart_dissolve_mergedividedroads_crd___n100_road.value,
@@ -262,6 +273,7 @@ def medium_t():
     )
 
 
+# lager kryss for alle veger som er på bakken, den prossess skaper en ny field som må slettes så append etterpå fungerer
 def kryss():
     arcpy.management.FeatureToLine(
         in_features=Road_N100.test1___elveg_and_sti_kommune_singlepart_dissolve_mergedividedroads_crd_medium_t___n100_road.value,
@@ -279,6 +291,9 @@ def kryss():
     )
 
 
+# første thin kjøres på ikke-kjørbare veger
+# lages egen datasett med alle som fikk invisibility 0 og
+# for disse kodes hie_1 til 5 slik at de skal være med, men med lav viktighet i neste THin
 def thin_sti():
     arcpy.cartography.ThinRoadNetwork(
         in_features=Road_N100.test1___elveg_and_sti_kommune_singlepart_dissolve_mergedividedroads_crd_kryss___n100_road.value,
@@ -309,6 +324,7 @@ def thin_sti():
     )
 
 
+# lager datasett med kjørbare veger og blir sett sammen med stiene som er igkjen etter Thin
 def veglenke():
     custom_arcpy.select_attribute_and_make_permanent_feature(
         input_layer=Road_N100.test1___elveg_and_sti_kommune_singlepart_dissolve_mergedividedroads_crd_kryss___n100_road.value,
@@ -323,6 +339,7 @@ def veglenke():
     )
 
 
+# andre runde på Thin kjøres på kjørbareveger og stiene som fikk bli igjen med har hierarchy 5
 def thinveg2():
     arcpy.cartography.ThinRoadNetwork(
         in_features=Road_N100.test1___elveg_and_sti_kommune_singlepart_dissolve_mergedividedroads_crd_kryss_veglenke___n100_road.value,
@@ -339,6 +356,7 @@ def thinveg2():
     )
 
 
+# lager enda en datasett hvor kjørbareveger Thin med hierarchy etter vegklasse med 2000m
 def thin3vegklasse():
     arcpy.cartography.ThinRoadNetwork(
         in_features=Road_N100.test1___elveg_and_sti_kommune_singlepart_dissolve_mergedividedroads_crd_kryss_veglenke___n100_road.value,
@@ -355,6 +373,7 @@ def thin3vegklasse():
     )
 
 
+# lager enda en datasett hvor kjørbareveger Thin med hierarchy etter vegklasse og større min lengde
 def thin4vegklasse():
     arcpy.cartography.ThinRoadNetwork(
         in_features=Road_N100.test1___elveg_and_sti_kommune_singlepart_dissolve_mergedividedroads_crd_kryss_veglenke___n100_road.value,
@@ -371,6 +390,7 @@ def thin4vegklasse():
     )
 
 
+# lager en datasett med resultatet som har kommunenavn i filnavn
 def veg100_oslo():
     arcpy.analysis.Clip(
         in_features=Road_N100.test1___elveg_and_sti_kommune_singlepart_dissolve_mergedividedroads_crd_kryss_veglenke_thin3vegklasse___n100_road.value,
@@ -381,43 +401,3 @@ def veg100_oslo():
 
 if __name__ == "__main__":
     main()
-
-
-# def field_names():
-#     feature_class = Road_N100.test1___sti2___n100_road.value
-#     field_names = arcpy.ListFields(feature_class)
-#
-#     for field in field_names:
-#         print(f"{field.name}")
-#
-#     arcpy.management.DeleteField(
-#         in_table=Road_N100.test1___sti2___n100_road.value,
-#         drop_field=[
-#             "FELTOVERSIKT",
-#             "KONNEKTERINGSLENKE",
-#             "SIDEVEG",
-#             "ADSKILTELOP",
-#             "SIDEANLEGGSDEL",
-#             "_CLIPPED",
-#             "ORIG_FID",
-#         ],
-#     )
-#
-# def adding_locks_to_veg4():
-#     arcpy.management.AddFields(
-#         in_table=Road_N100.test1___veg4___n100_road.value,
-#         field_description=[
-#             ["LOCK_TL", "SHORT"],
-#             ["LOCK_TU", "SHORT"],
-#             ["LOCK_UL", "SHORT"],
-#         ],
-#     )
-#     assign_LOCK_TL_to_veg4 = """def Reclass(MEDIUM):
-#          if MEDIUM == 'T':
-#              return 1
-#          elif MEDIUM == 'L':
-#              return 1
-#          elif MEDIUM == 'U':
-#              return 0
-#          """
-#
