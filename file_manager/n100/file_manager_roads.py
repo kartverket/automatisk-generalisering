@@ -425,3 +425,7 @@ class Road_N100(Enum):
         script_source_name=test1,
         description="veg100_ringerike",
     )
+    test1___veg100_nordrefollo___n100_road = file_manager.generate_file_name_gdb(
+        script_source_name=test1,
+        description="veg100_nordrefollo",
+    )
