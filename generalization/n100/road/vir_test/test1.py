@@ -32,14 +32,16 @@ def main():
     thinveg2()
     thin3vegklasse()
     thin4vegklasse()
-    veg100_oslo()
+    veg100_ringerike0()
+    veg100_ringerike1()
+    veg100_ringerike2()
 
 
 # dette er sånn midlertidig, siden jeg ikke kan gjøre noe bedre må jeg skrive kommunenavn 4 steder linjer 35, 42, 375 og 379
 def kommune():
     custom_arcpy.select_attribute_and_make_permanent_feature(
         input_layer=input_n50.AdminFlate,
-        expression="NAVN='Oslo'",
+        expression="NAVN='Ringerike'",
         output_name=Road_N100.test1___kommune___n100_road.value,
         selection_type="NEW_SELECTION",
     )
@@ -389,13 +391,29 @@ def thin4vegklasse():
         selection_type="NEW_SELECTION",
     )
 
+# lager en datasett med resultatet fra Thin etter evgkatgori
+def veg100_ringerike0():
+    arcpy.analysis.Clip(
+        in_features=Road_N100.test1___elveg_and_sti_kommune_singlepart_dissolve_mergedividedroads_crd_kryss_veglenke_thinveg2___n100_road.value,
+        clip_features=Road_N100.test1___kommune___n100_road.value,
+        out_feature_class=Road_N100.test1___veg100_ringerike0___n100_road.value,
+    )
 
-# lager en datasett med resultatet som har kommunenavn i filnavn
-def veg100_oslo():
+
+# lager en datasett med resultatet fra Thin etter vegklasse og 2000m
+def veg100_ringerike1():
     arcpy.analysis.Clip(
         in_features=Road_N100.test1___elveg_and_sti_kommune_singlepart_dissolve_mergedividedroads_crd_kryss_veglenke_thin3vegklasse___n100_road.value,
         clip_features=Road_N100.test1___kommune___n100_road.value,
-        out_feature_class=Road_N100.test1___veg100_oslo___n100_road.value,
+        out_feature_class=Road_N100.test1___veg100_ringerike1___n100_road.value,
+    )
+
+# lager en datasett med resultatet fra Thin etter vegklasse og 3000m
+def veg100_ringerike2():
+    arcpy.analysis.Clip(
+        in_features=Road_N100.test1___elveg_and_sti_kommune_singlepart_dissolve_mergedividedroads_crd_kryss_veglenke_thin4vegklasse___n100_road.value,
+        clip_features=Road_N100.test1___kommune___n100_road.value,
+        out_feature_class=Road_N100.test1___veg100_ringerike2___n100_road.value,
     )
 
 
