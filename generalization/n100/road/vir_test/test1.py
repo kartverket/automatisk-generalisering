@@ -391,6 +391,7 @@ def thin4vegklasse():
         selection_type="NEW_SELECTION",
     )
 
+
 # lager en datasett med resultatet fra Thin etter evgkatgori
 def veg100_ringerike0():
     arcpy.analysis.Clip(
@@ -407,6 +408,7 @@ def veg100_ringerike1():
         clip_features=Road_N100.test1___kommune___n100_road.value,
         out_feature_class=Road_N100.test1___veg100_ringerike1___n100_road.value,
     )
+
 
 # lager en datasett med resultatet fra Thin etter vegklasse og 3000m
 def veg100_ringerike2():
