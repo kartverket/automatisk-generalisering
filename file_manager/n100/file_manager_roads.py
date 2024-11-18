@@ -425,7 +425,93 @@ class Road_N100(Enum):
         script_source_name=test1,
         description="veg100_ringerike",
     )
-    test1___veg100_nordrefollo___n100_road = file_manager.generate_file_name_gdb(
+
+    test1___veg100_nordrefollo0___n100_road = file_manager.generate_file_name_gdb(
         script_source_name=test1,
-        description="veg100_nordrefollo",
+        description="veg100_nordrefollo0",
+    )
+
+    test1___veg100_nordrefollo1___n100_road = file_manager.generate_file_name_gdb(
+        script_source_name=test1,
+        description="veg100_nordrefollo1",
+    )
+
+    test1___veg100_nordrefollo2___n100_road = file_manager.generate_file_name_gdb(
+        script_source_name=test1,
+        description="veg100_nordrefollo2",
+    )
+
+    test1___veg100_enebakk0___n100_road = file_manager.generate_file_name_gdb(
+        script_source_name=test1,
+        description="veg100_enebakk0",
+    )
+
+    test1___veg100_enebakk1___n100_road = file_manager.generate_file_name_gdb(
+        script_source_name=test1,
+        description="veg100_enebakk1",
+    )
+
+    test1___veg100_enebakk2___n100_road = file_manager.generate_file_name_gdb(
+        script_source_name=test1,
+        description="veg100_enebakk2",
+    )
+
+    test1___veg100_lørenskog0___n100_road = file_manager.generate_file_name_gdb(
+        script_source_name=test1,
+        description="veg100_lørenskog0",
+    )
+
+    test1___veg100_lørenskog1___n100_road = file_manager.generate_file_name_gdb(
+        script_source_name=test1,
+        description="veg100_lørenskog1",
+    )
+
+    test1___veg100_lørenskog2___n100_road = file_manager.generate_file_name_gdb(
+        script_source_name=test1,
+        description="veg100_lørenskog2",
+    )
+
+    test1___veg100_oslo0___n100_road = file_manager.generate_file_name_gdb(
+        script_source_name=test1,
+        description="veg100_oslo0",
+    )
+
+    test1___veg100_oslo1___n100_road = file_manager.generate_file_name_gdb(
+        script_source_name=test1,
+        description="veg100_oslo1",
+    )
+
+    test1___veg100_oslo2___n100_road = file_manager.generate_file_name_gdb(
+        script_source_name=test1,
+        description="veg100_oslo2",
+    )
+
+    test1___veg100_bærum0___n100_road = file_manager.generate_file_name_gdb(
+        script_source_name=test1,
+        description="veg100_bærum0",
+    )
+
+    test1___veg100_bærum1___n100_road = file_manager.generate_file_name_gdb(
+        script_source_name=test1,
+        description="veg100_bærum1",
+    )
+
+    test1___veg100_bærum2___n100_road = file_manager.generate_file_name_gdb(
+        script_source_name=test1,
+        description="veg100_bærum2",
+    )
+
+    test1___veg100_ringerike0___n100_road = file_manager.generate_file_name_gdb(
+        script_source_name=test1,
+        description="veg100_ringerike0",
+    )
+
+    test1___veg100_ringerike1___n100_road = file_manager.generate_file_name_gdb(
+        script_source_name=test1,
+        description="veg100_ringerike1",
+    )
+
+    test1___veg100_ringerike2___n100_road = file_manager.generate_file_name_gdb(
+        script_source_name=test1,
+        description="veg100_ringerike2",
     )
