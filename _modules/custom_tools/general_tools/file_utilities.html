@@ -305,8 +305,11 @@
 
 <div class="viewcode-block" id="deleting_added_field_from_feature_to_x">
 <a class="viewcode-back" href="../../../generated_docs/custom_tools.general_tools.html#custom_tools.general_tools.file_utilities.deleting_added_field_from_feature_to_x">[docs]</a>
-<span class="k">def</span> <span class="nf">deleting_added_field_from_feature_to_x</span><span class="p">(</span><span class="n">input_feature</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-    <span class="n">directory_path</span><span class="p">,</span> <span class="n">split_file_name</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="n">input_feature</span><span class="p">)</span>
+<span class="k">def</span> <span class="nf">deleting_added_field_from_feature_to_x</span><span class="p">(</span>
+    <span class="n">input_file_feature</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">field_name_feature</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+    <span class="n">directory_path</span><span class="p">,</span> <span class="n">split_file_name</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="n">field_name_feature</span><span class="p">)</span>
 
     <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Directory path:&quot;</span><span class="p">,</span> <span class="n">directory_path</span><span class="p">)</span>
     <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Filename:&quot;</span><span class="p">,</span> <span class="n">split_file_name</span><span class="p">)</span>
@@ -319,7 +322,7 @@
     <span class="p">)</span>
 
     <span class="c1"># List fields in the feature</span>
-    <span class="n">feature_fields</span> <span class="o">=</span> <span class="n">arcpy</span><span class="o">.</span><span class="n">ListFields</span><span class="p">(</span><span class="n">input_feature</span><span class="p">)</span>
+    <span class="n">feature_fields</span> <span class="o">=</span> <span class="n">arcpy</span><span class="o">.</span><span class="n">ListFields</span><span class="p">(</span><span class="n">input_file_feature</span><span class="p">)</span>
     <span class="n">list_of_fields</span> <span class="o">=</span> <span class="p">[</span><span class="n">field_object</span><span class="o">.</span><span class="n">name</span> <span class="k">for</span> <span class="n">field_object</span> <span class="ow">in</span> <span class="n">feature_fields</span><span class="p">]</span>
 
     <span class="k">if</span> <span class="n">generated_field_name</span> <span class="ow">in</span> <span class="n">list_of_fields</span><span class="p">:</span>
@@ -330,7 +333,7 @@
         <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
             <span class="sa">f</span><span class="s2">&quot;&quot;&quot;</span>
 <span class="s2">                The generated field name by Esri Geoprocessing tool did not match the predicted naming convention for the file:</span><span class="se">\n</span>
-<span class="s2">                </span><span class="si">{</span><span class="n">input_feature</span><span class="si">}</span><span class="se">\n</span>
+<span class="s2">                </span><span class="si">{</span><span class="n">input_file_feature</span><span class="si">}</span><span class="se">\n</span>
 <span class="s2">                Expected name (without underscore): </span><span class="si">{</span><span class="n">generated_field_name</span><span class="si">}</span><span class="se">\n</span>
 <span class="s2">                Expected name (with underscore): </span><span class="si">{</span><span class="n">generated_field_name_with_underscore</span><span class="si">}</span><span class="se">\n</span>
 <span class="s2">                Available fields:</span><span class="se">\n</span><span class="si">{</span><span class="n">list_of_fields</span><span class="si">}</span>
@@ -339,7 +342,7 @@
 
     <span class="k">try</span><span class="p">:</span>
         <span class="n">arcpy</span><span class="o">.</span><span class="n">management</span><span class="o">.</span><span class="n">DeleteField</span><span class="p">(</span>
-            <span class="n">in_table</span><span class="o">=</span><span class="n">input_feature</span><span class="p">,</span>
+            <span class="n">in_table</span><span class="o">=</span><span class="n">input_file_feature</span><span class="p">,</span>
             <span class="n">drop_field</span><span class="o">=</span><span class="n">field_to_delete</span><span class="p">,</span>
         <span class="p">)</span>
         <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Deleted field: </span><span class="si">{</span><span class="n">field_to_delete</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
