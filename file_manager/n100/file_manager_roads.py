@@ -15,6 +15,7 @@ data_selection = "data_selection"
 data_preparation = "data_preparation"
 first_generalization = "first_generalization"
 test1 = "test1"
+testing_file = "testing_file"
 
 
 """"
@@ -582,4 +583,272 @@ class Road_N100(Enum):
     test1___veg100_ringerike2___n100_road = file_manager.generate_file_name_gdb(
         script_source_name=test1,
         description="veg100_ringerike2",
+    )
+
+    # ========================================
+    #                                TESTING FILE
+    # ========================================
+
+    testing_file___roads_copy___n100_road = file_manager.generate_file_name_gdb(
+        script_source_name=testing_file,
+        description="roads_copy",
+    )
+
+    testing_file___multipart_to_singlepart___n100_road = (
+        file_manager.generate_file_name_gdb(
+            script_source_name=testing_file,
+            description="multipart_to_singlepart",
+        )
+    )
+
+    testing_file___merge_divided_roads_displacement_feature___n100_road = (
+        file_manager.generate_file_name_gdb(
+            script_source_name=testing_file,
+            description="merge_divided_roads_displacement_feature",
+        )
+    )
+
+    testing_file___merge_divided_roads_output___n100_road = (
+        file_manager.generate_file_name_gdb(
+            script_source_name=testing_file,
+            description="merge_divided_roads_output",
+        )
+    )
+
+    testing_file___thin_road_network_3000_1___n100_road = (
+        file_manager.generate_file_name_gdb(
+            script_source_name=testing_file,
+            description="thin_road_network_3000_1",
+        )
+    )
+
+    testing_file___thin_road_network_2___n100_road = (
+        file_manager.generate_file_name_gdb(
+            script_source_name=testing_file,
+            description="thin_road_network_2",
+        )
+    )
+
+    testing_file___thin_road_network_2_visible_features___n100_road = (
+        file_manager.generate_file_name_gdb(
+            script_source_name=testing_file,
+            description="thin_road_network_2_visible_features",
+        )
+    )
+
+    testing_file___road_input_500_straight_to_3000___n100_road = (
+        file_manager.generate_file_name_gdb(
+            script_source_name=testing_file,
+            description="road_input_500_straight_to_3000",
+        )
+    )
+
+    testing_file___thin_road_network_3___n100_road = (
+        file_manager.generate_file_name_gdb(
+            script_source_name=testing_file,
+            description="thin_road_network_3",
+        )
+    )
+
+    testing_file___thin_road_network_3_visible_features___n100_road = (
+        file_manager.generate_file_name_gdb(
+            script_source_name=testing_file,
+            description="thin_road_network_3_visible_features",
+        )
+    )
+
+    testing_file___thin_road_network_4___n100_road = (
+        file_manager.generate_file_name_gdb(
+            script_source_name=testing_file,
+            description="thin_road_network_4",
+        )
+    )
+
+    testing_file___thin_road_network_500_visible_features___n100_road = (
+        file_manager.generate_file_name_gdb(
+            script_source_name=testing_file,
+            description="thin_road_network_500_visible_features",
+        )
+    )
+
+    testing_file___road_input_500_1000_2000_3000___n100_road = (
+        file_manager.generate_file_name_gdb(
+            script_source_name=testing_file,
+            description="road_input_500_1000_2000_3000",
+        )
+    )
+
+    testing_file___thin_road_network_1000___n100_road = (
+        file_manager.generate_file_name_gdb(
+            script_source_name=testing_file,
+            description="thin_road_network_1000",
+        )
+    )
+
+    testing_file___thin_road_network_2000___n100_road = (
+        file_manager.generate_file_name_gdb(
+            script_source_name=testing_file,
+            description="thin_road_network_2000",
+        )
+    )
+
+    testing_file___thin_road_network_3000_2___n100_road = (
+        file_manager.generate_file_name_gdb(
+            script_source_name=testing_file,
+            description="thin_road_network_3000_2",
+        )
+    )
+
+    testing_file___thinning_kommunal_veg___n100_road = (
+        file_manager.generate_file_name_gdb(
+            script_source_name=testing_file,
+            description="thinning_kommunal_veg",
+        )
+    )
+
+    testing_file___thinning_kommunal_veg_visible_roads___n100_road = (
+        file_manager.generate_file_name_gdb(
+            script_source_name=testing_file,
+            description="thinning_kommunal_veg_visible_roads",
+        )
+    )
+
+    testing_file___thinning_all_roads_a_lot___n100_road = (
+        file_manager.generate_file_name_gdb(
+            script_source_name=testing_file,
+            description="thinning_all_roads_a_lot",
+        )
+    )
+
+    testing_file___thinning_all_roads_a_lot_visible_features___n100_road = (
+        file_manager.generate_file_name_gdb(
+            script_source_name=testing_file,
+            description="thinning_all_roads_a_lot_visible_features",
+        )
+    )
+
+    testing_file___roads_without_rundkjoring___n100_road = (
+        file_manager.generate_file_name_gdb(
+            script_source_name=testing_file,
+            description="roads_without_rundkjoring",
+        )
+    )
+
+    testing_file___thinning_kommunal_veg_visible_roads_copy___n100_road = (
+        file_manager.generate_file_name_gdb(
+            script_source_name=testing_file,
+            description="thinning_kommunal_veg_visible_roads_copy",
+        )
+    )
+
+    testing_file___collapse_road_detail___n100_road = (
+        file_manager.generate_file_name_gdb(
+            script_source_name=testing_file,
+            description="collapse_road_detail",
+        )
+    )
+
+    testing_file___begrensningskurve_vann___n100_road = (
+        file_manager.generate_file_name_gdb(
+            script_source_name=testing_file,
+            description="begrensningskurve_vann",
+        )
+    )
+
+    testing_file___displacement_feature_after_resolve_road_conflict___n100_road = (
+        file_manager.generate_file_name_gdb(
+            script_source_name=testing_file,
+            description="displacement_feature_after_resolve_road_conflict",
+        )
+    )
+
+    testing_file___begrensningskurve_water_area___n100_road = (
+        file_manager.generate_file_name_gdb(
+            script_source_name=testing_file,
+            description="begrensningskurve_water_area",
+        )
+    )
+
+    testing_file___railway_area___n100_road = file_manager.generate_file_name_gdb(
+        script_source_name=testing_file,
+        description="railway_area",
+    )
+
+    testing_file___roads_area___n100_road = file_manager.generate_file_name_gdb(
+        script_source_name=testing_file,
+        description="roads_area",
+    )
+
+    testing_file___begrensningskurve_water_area_lyrx___n100_road = (
+        file_manager.generate_file_name_lyrx(
+            script_source_name=testing_file,
+            description="begrensningskurve_water_area_lyrx",
+        )
+    )
+
+    testing_file___railway_area_lyrx___n100_road = file_manager.generate_file_name_lyrx(
+        script_source_name=testing_file,
+        description="railway_area_lyrx",
+    )
+
+    testing_file___roads_area_lyrx___n100_road = file_manager.generate_file_name_lyrx(
+        script_source_name=testing_file,
+        description="roads_area_lyrx",
+    )
+
+    testing_file___begrensningskurve_water_area_copy___n100_road = (
+        file_manager.generate_file_name_gdb(
+            script_source_name=testing_file,
+            description="begrensningskurve_water_area_copy",
+        )
+    )
+
+    testing_file___railway_area_copy___n100_road = file_manager.generate_file_name_gdb(
+        script_source_name=testing_file,
+        description="railway_area_copy",
+    )
+
+    testing_file___roads_area_copy___n100_road = file_manager.generate_file_name_gdb(
+        script_source_name=testing_file,
+        description="roads_area_copy",
+    )
+
+    testing_file___dissolve_roads___n100_road = file_manager.generate_file_name_gdb(
+        script_source_name=testing_file,
+        description="dissolve_roads",
+    )
+
+    testing_file____begrensningskurve_water_area_multipart_to_singlepart___n100_road = (
+        file_manager.generate_file_name_gdb(
+            script_source_name=testing_file,
+            description="begrensningskurve_water_area_multipart_to_singlepart",
+        )
+    )
+
+    testing_file___railway_area_multipart_to_singlepart___n100_road = (
+        file_manager.generate_file_name_gdb(
+            script_source_name=testing_file,
+            description="railway_area_multipart_to_singlepart",
+        )
+    )
+
+    testing_file___roads_area_multipart_to_singlepart___n100_road = (
+        file_manager.generate_file_name_gdb(
+            script_source_name=testing_file,
+            description="roads_area_multipart_to_singlepart",
+        )
+    )
+
+    testing_file___road_input_functional_roadclass___n100_road = (
+        file_manager.generate_file_name_gdb(
+            script_source_name=testing_file,
+            description="road_input_functional_roadclass",
+        )
+    )
+
+    testing_file___visible_functional_roadclass___n100_road = (
+        file_manager.generate_file_name_gdb(
+            script_source_name=testing_file,
+            description="road_input_functional_roadclass",
+        )
     )
