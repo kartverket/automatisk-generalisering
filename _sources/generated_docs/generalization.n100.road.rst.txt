@@ -28,6 +28,14 @@ generalization.n100.road.first\_generalization module
    :undoc-members:
    :show-inheritance:
 
+generalization.n100.road.resolve\_road\_conflict module
+-------------------------------------------------------
+
+.. automodule:: generalization.n100.road.resolve_road_conflict
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
 generalization.n100.road.road\_main module
 ------------------------------------------
 
