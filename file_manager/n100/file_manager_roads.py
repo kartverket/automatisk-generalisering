@@ -64,6 +64,32 @@ class Road_N100(Enum):
         description="nvdb_roads",
     )
 
+    data_selection___railroad___n100_road = file_manager.generate_file_name_gdb(
+        script_source_name=data_selection,
+        description="railroad",
+    )
+
+    data_selection___begrensningskurve___n100_road = (
+        file_manager.generate_file_name_gdb(
+            script_source_name=data_selection,
+            description="begrensningskurve",
+        )
+    )
+
+    data_preparation___geometry_validation___n100_road = (
+        file_manager.generate_file_name_gdb(
+            script_source_name=data_preparation,
+            description="geometry_validation",
+        )
+    )
+
+    data_preparation___water_feature_outline___n100_road = (
+        file_manager.generate_file_name_gdb(
+            script_source_name=data_preparation,
+            description="water_feature_outline",
+        )
+    )
+
     data_preparation___road_single_part___n100_road = (
         file_manager.generate_file_name_gdb(
             script_source_name=data_preparation,
@@ -71,10 +97,45 @@ class Road_N100(Enum):
         )
     )
 
+    data_preparation___road_single_part_2___n100_road = (
+        file_manager.generate_file_name_gdb(
+            script_source_name=data_preparation,
+            description="road_single_part_2",
+        )
+    )
+
+    data_preparation___on_surface_selection___n100_road = (
+        file_manager.generate_file_name_gdb(
+            script_source_name=data_preparation,
+            description="on_surface_selection",
+        )
+    )
+
+    data_preparation___bridge_selection___n100_road = (
+        file_manager.generate_file_name_gdb(
+            script_source_name=data_preparation,
+            description="bridge_selection",
+        )
+    )
+
+    data_preparation___tunnel_selection___n100_road = (
+        file_manager.generate_file_name_gdb(
+            script_source_name=data_preparation,
+            description="tunnel_selection",
+        )
+    )
+
     data_preparation___dissolved_road_feature___n100_road = (
         file_manager.generate_file_name_gdb(
             script_source_name=data_preparation,
             description="dissolved_road_feature",
+        )
+    )
+
+    data_preparation___feature_to_line___n100_road = (
+        file_manager.generate_file_name_gdb(
+            script_source_name=data_preparation,
+            description="feature_to_line",
         )
     )
 
@@ -89,6 +150,13 @@ class Road_N100(Enum):
         file_manager.generate_file_name_gdb(
             script_source_name=data_preparation,
             description="merge_divided_roads_displacement_feature",
+        )
+    )
+
+    data_preparation___divided_roads_merged_outputs___n100_road = (
+        file_manager.generate_file_name_gdb(
+            script_source_name=data_preparation,
+            description="divided_roads_merged_outputs",
         )
     )
 
