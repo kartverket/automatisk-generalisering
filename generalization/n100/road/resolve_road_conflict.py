@@ -19,5 +19,3 @@ from input_data.input_symbology import SymbologyN100
 from constants.n100_constants import N100_Symbology, N100_SQLResources, N100_Values
 from custom_tools.general_tools.study_area_selector import StudyAreaSelector
 from input_data import input_roads
-
-
