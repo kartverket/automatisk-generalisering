@@ -24,12 +24,12 @@ from input_data import input_roads
 @timing_decorator
 def main():
     environment_setup.main()
-    # adding_fields_to_roads()
-    # multipart_to_singlepart()
-    # give_road_number_to_paths()
-    # calculate_values_for_merge_divided_roads()
-    # merge_divided_roads()
-    # collapse_road_detail()
+    adding_fields_to_roads()
+    multipart_to_singlepart()
+    give_road_number_to_paths()
+    calculate_values_for_merge_divided_roads()
+    merge_divided_roads()
+    collapse_road_detail()
     thin_with_functional_road_class_as_hierarchy()
     # calculate_hierarchy_for_thin_road_network()
     # thin_road_network_500_straight_to_3000()
@@ -126,15 +126,6 @@ def calculate_values_for_merge_divided_roads():
 
 
 @timing_decorator
-def collapse_road_detail():
-    arcpy.cartography.CollapseRoadDetail(
-        in_features=Road_N100.testing_file___multipart_to_singlepart___n100_road.value,
-        collapse_distance="90 Meters",
-        output_feature_class=Road_N100.testing_file___collapse_road_detail___n100_road.value,
-    )
-
-
-@timing_decorator
 def merge_divided_roads():
     """
     Road character field:
@@ -155,6 +146,65 @@ def merge_divided_roads():
         out_displacement_features=Road_N100.first_generalization____merge_divided_roads_displacement_feature___n100_road.value,
         character_field="character",
     )
+
+
+@timing_decorator
+def collapse_road_detail():
+    arcpy.cartography.CollapseRoadDetail(
+        in_features=Road_N100.testing_file___merge_divided_roads_output___n100_road.value,
+        collapse_distance="90 Meters",
+        output_feature_class=Road_N100.testing_file___collapse_road_detail___n100_road.value,
+    )
+
+
+@timing_decorator
+def thin_with_functional_road_class_as_hierarchy():
+    arcpy.management.CopyFeatures(
+        Road_N100.testing_file___collapse_road_detail___n100_road.value,
+        Road_N100.testing_file___road_input_functional_roadclass___n100_road.value,
+    )
+
+    hierarchy_functional_roadclass = """def Reclass(VEGKLASSE):
+        if VEGKLASSE in [0, 1]:
+            return 1
+        elif VEGKLASSE in [2, 3]:
+            return 2
+        elif VEGKLASSE in [4, 5]:
+            return 3
+        elif VEGKLASSE == 6:
+            return 4
+        elif VEGKLASSE in [7, 8, 9]:
+            return 5
+        elif VEGKLASSE is None:
+            return 10
+    """
+
+    arcpy.management.CalculateField(
+        in_table=Road_N100.testing_file___road_input_functional_roadclass___n100_road.value,
+        field="functional_hierarchy",
+        expression="Reclass(!VEGKLASSE!)",
+        expression_type="PYTHON3",
+        code_block=hierarchy_functional_roadclass,
+    )
+
+    arcpy.env.referenceScale = "100000"
+
+    arcpy.cartography.ThinRoadNetwork(
+        in_features=Road_N100.testing_file___road_input_functional_roadclass___n100_road.value,
+        minimum_length="500 Meters",
+        invisibility_field="invisibility_functional_roadclass",
+        hierarchy_field="functional_hierarchy",
+    )
+
+    custom_arcpy.select_attribute_and_make_permanent_feature(
+        input_layer=Road_N100.testing_file___road_input_functional_roadclass___n100_road.value,
+        expression="invisibility_functional_roadclass = 0",
+        output_name=Road_N100.testing_file___visible_functional_roadclass___n100_road.value,
+        selection_type=custom_arcpy.SelectionType.NEW_SELECTION,
+    )
+
+
+######################################################
 
 
 @timing_decorator
@@ -267,63 +317,6 @@ def Reclass(VEGKATEGORI):
         input_layer=Road_N100.testing_file___thinning_kommunal_veg___n100_road.value,
         expression="invisibility_kommunal_veg = 0",
         output_name=Road_N100.testing_file___thinning_kommunal_veg_visible_roads___n100_road.value,
-        selection_type=custom_arcpy.SelectionType.NEW_SELECTION,
-    )
-
-
-@timing_decorator
-def thin_with_functional_road_class_as_hierarchy():
-    arcpy.management.CopyFeatures(
-        Road_N100.testing_file___merge_divided_roads_output___n100_road.value,
-        Road_N100.testing_file___road_input_functional_roadclass___n100_road.value,
-    )
-
-    hierarchy_functional_roadclass = """def Reclass(VEGKLASSE):
-        if VEGKLASSE == 0:
-            return 1
-        elif VEGKLASSE == 1:
-            return 1
-        elif VEGKLASSE == 2:
-            return 2
-        elif VEGKLASSE == 3:
-            return 2
-        elif VEGKLASSE == 4:
-            return 3
-        elif VEGKLASSE == 5:
-            return 3
-        elif VEGKLASSE == 6:
-            return 4
-        elif VEGKLASSE == 7:
-            return 5
-        elif VEGKLASSE == 8:
-            return 5
-        elif VEGKLASSE == 9:
-            return 5
-        elif VEGKLASSE is None:
-            return 10
-        """
-
-    arcpy.management.CalculateField(
-        in_table=Road_N100.testing_file___road_input_functional_roadclass___n100_road.value,
-        field="functional_hierarchy",
-        expression="Reclass(!VEGKLASSE!)",
-        expression_type="PYTHON3",
-        code_block=hierarchy_functional_roadclass,
-    )
-
-    arcpy.env.referenceScale = "100000"
-
-    arcpy.cartography.ThinRoadNetwork(
-        in_features=Road_N100.testing_file___road_input_functional_roadclass___n100_road.value,
-        minimum_length="500 Meters",
-        invisibility_field="invisibility_functional_roadclass",
-        hierarchy_field="functional_hierarchy",
-    )
-
-    custom_arcpy.select_attribute_and_make_permanent_feature(
-        input_layer=Road_N100.testing_file___road_input_functional_roadclass___n100_road.value,
-        expression="invisibility_functional_roadclass = 0",
-        output_name=Road_N100.testing_file___visible_functional_roadclass___n100_road.value,
         selection_type=custom_arcpy.SelectionType.NEW_SELECTION,
     )
 
