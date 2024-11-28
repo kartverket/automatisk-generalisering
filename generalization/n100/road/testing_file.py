@@ -18,6 +18,7 @@ from custom_tools.general_tools.line_to_buffer_symbology import LineToBufferSymb
 from input_data.input_symbology import SymbologyN100
 from constants.n100_constants import N100_Symbology, N100_SQLResources, N100_Values
 from custom_tools.general_tools.study_area_selector import StudyAreaSelector
+from input_data import input_roads
 
 
 @timing_decorator
@@ -29,22 +30,23 @@ def main():
     # calculate_values_for_merge_divided_roads()
     # merge_divided_roads()
     # collapse_road_detail()
+    thin_with_functional_road_class_as_hierarchy()
     # calculate_hierarchy_for_thin_road_network()
     # thin_road_network_500_straight_to_3000()
     # thinning_out_kommunal_roads_500_3000()
     # choose_data_in_area()
     # add_and_calculate_hierarchy_field()
-    copy_features_before_rbc()
-    multipart_to_singlepart_again()
-    apply_lyrx_to_features()
-    resolve_road_conflict()
-    dissolve_roads()
+    # copy_features_before_rrc()
+    # multipart_to_singlepart_again()
+    # apply_lyrx_to_features()
+    # resolve_road_conflict()
+    # dissolve_roads()
 
 
 @timing_decorator
 def adding_fields_to_roads():
     arcpy.management.CopyFeatures(
-        config.path_to_roads_nvdb_many_kommuner,
+        input_roads.roads,
         Road_N100.testing_file___roads_copy___n100_road.value,
     )
     arcpy.management.AddFields(
@@ -60,6 +62,8 @@ def adding_fields_to_roads():
             ["hierarchy", "SHORT"],
             ["merge_field", "LONG"],
             ["character", "SHORT"],
+            ["functional_hierarchy", "SHORT"],
+            ["invisibility_functional_roadclass", "SHORT"],
         ],
     )
 
@@ -122,15 +126,6 @@ def calculate_values_for_merge_divided_roads():
 
 
 @timing_decorator
-def collapse_road_detail():
-    arcpy.cartography.CollapseRoadDetail(
-        in_features=Road_N100.testing_file___multipart_to_singlepart___n100_road.value,
-        collapse_distance="90 Meters",
-        output_feature_class=Road_N100.testing_file___collapse_road_detail___n100_road.value,
-    )
-
-
-@timing_decorator
 def merge_divided_roads():
     """
     Road character field:
@@ -151,6 +146,75 @@ def merge_divided_roads():
         out_displacement_features=Road_N100.first_generalization____merge_divided_roads_displacement_feature___n100_road.value,
         character_field="character",
     )
+
+
+@timing_decorator
+def collapse_road_detail():
+    arcpy.cartography.CollapseRoadDetail(
+        in_features=Road_N100.testing_file___merge_divided_roads_output___n100_road.value,
+        collapse_distance="90 Meters",
+        output_feature_class=Road_N100.testing_file___collapse_road_detail___n100_road.value,
+    )
+
+
+@timing_decorator
+def thin_with_functional_road_class_as_hierarchy():
+    arcpy.management.CopyFeatures(
+        Road_N100.testing_file___collapse_road_detail___n100_road.value,
+        Road_N100.testing_file___road_input_functional_roadclass___n100_road.value,
+    )
+
+    selector = StudyAreaSelector(
+        input_output_file_dict={
+            Road_N100.testing_file___road_input_functional_roadclass___n100_road.value: Road_N100.testing_file___road_input_functional_roadclass_studyarea_selector___n100_road.value,
+        },
+        selecting_file=input_n100.AdminFlate,
+        selecting_sql_expression="navn IN ('Asker', 'Oslo'')",
+        select_local=False,
+    )
+    selector.run()
+
+    hierarchy_functional_roadclass = """def Reclass(VEGKLASSE):
+        if VEGKLASSE in [0, 1]:
+            return 1
+        elif VEGKLASSE in [2, 3]:
+            return 2
+        elif VEGKLASSE in [4, 5]:
+            return 3
+        elif VEGKLASSE == 6:
+            return 4
+        elif VEGKLASSE in [7, 8, 9]:
+            return 5
+        elif VEGKLASSE is None:
+            return 5
+    """
+
+    arcpy.management.CalculateField(
+        in_table=Road_N100.testing_file___road_input_functional_roadclass_studyarea_selector___n100_road.value,
+        field="functional_hierarchy",
+        expression="Reclass(!VEGKLASSE!)",
+        expression_type="PYTHON3",
+        code_block=hierarchy_functional_roadclass,
+    )
+
+    arcpy.env.referenceScale = "100000"
+
+    arcpy.cartography.ThinRoadNetwork(
+        in_features=Road_N100.testing_file___road_input_functional_roadclass_studyarea_selector___n100_road.value,
+        minimum_length="3000 Meters",
+        invisibility_field="invisibility_functional_roadclass",
+        hierarchy_field="functional_hierarchy",
+    )
+
+    custom_arcpy.select_attribute_and_make_permanent_feature(
+        input_layer=Road_N100.testing_file___road_input_functional_roadclass_studyarea_selector___n100_road.value,
+        expression="invisibility_functional_roadclass = 0",
+        output_name=Road_N100.testing_file___visible_functional_roadclass___n100_road.value,
+        selection_type=custom_arcpy.SelectionType.NEW_SELECTION,
+    )
+
+
+######################################################
 
 
 @timing_decorator
@@ -319,7 +383,7 @@ def add_and_calculate_hierarchy_field():
 
 
 @timing_decorator
-def copy_features_before_rbc():
+def copy_features_before_rrc():
     arcpy.management.CopyFeatures(
         in_features=Road_N100.testing_file___begrensningskurve_water_area___n100_road.value,
         out_feature_class=Road_N100.testing_file___begrensningskurve_water_area_copy___n100_road.value,
@@ -384,7 +448,7 @@ def apply_lyrx_to_features():
 
 @timing_decorator
 def resolve_road_conflict():
-    arcpy.env.referenceScale = "100000"
+    arcpy.env.referenceScale = "150000"
 
     arcpy.cartography.ResolveRoadConflicts(
         in_layers=[

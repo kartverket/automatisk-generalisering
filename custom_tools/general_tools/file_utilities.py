@@ -205,8 +205,11 @@ def compare_feature_classes(feature_class_1, feature_class_2):
         print("Both feature classes have the same number of features.")
 
 
-def deleting_added_field_from_feature_to_x(input_feature: str = None) -> None:
-    directory_path, split_file_name = os.path.split(input_feature)
+def deleting_added_field_from_feature_to_x(
+    input_file_feature: str = None,
+    field_name_feature: str = None,
+) -> None:
+    directory_path, split_file_name = os.path.split(field_name_feature)
 
     print("Directory path:", directory_path)
     print("Filename:", split_file_name)
@@ -219,7 +222,7 @@ def deleting_added_field_from_feature_to_x(input_feature: str = None) -> None:
     )
 
     # List fields in the feature
-    feature_fields = arcpy.ListFields(input_feature)
+    feature_fields = arcpy.ListFields(input_file_feature)
     list_of_fields = [field_object.name for field_object in feature_fields]
 
     if generated_field_name in list_of_fields:
@@ -230,7 +233,7 @@ def deleting_added_field_from_feature_to_x(input_feature: str = None) -> None:
         raise ValueError(
             f"""
                 The generated field name by Esri Geoprocessing tool did not match the predicted naming convention for the file:\n
-                {input_feature}\n
+                {input_file_feature}\n
                 Expected name (without underscore): {generated_field_name}\n
                 Expected name (with underscore): {generated_field_name_with_underscore}\n
                 Available fields:\n{list_of_fields}
@@ -239,7 +242,7 @@ def deleting_added_field_from_feature_to_x(input_feature: str = None) -> None:
 
     try:
         arcpy.management.DeleteField(
-            in_table=input_feature,
+            in_table=input_file_feature,
             drop_field=field_to_delete,
         )
         print(f"Deleted field: {field_to_delete}")
