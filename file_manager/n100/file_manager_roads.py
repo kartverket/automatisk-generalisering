@@ -849,6 +849,13 @@ class Road_N100(Enum):
     testing_file___visible_functional_roadclass___n100_road = (
         file_manager.generate_file_name_gdb(
             script_source_name=testing_file,
-            description="road_input_functional_roadclass",
+            description="visible_functional_roadclass",
+        )
+    )
+
+    testing_file___road_input_functional_roadclass_studyarea_selector___n100_road = (
+        file_manager.generate_file_name_gdb(
+            script_source_name=testing_file,
+            description="road_input_functional_roadclass_studyarea_selector",
         )
     )
