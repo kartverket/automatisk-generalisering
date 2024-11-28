@@ -10,9 +10,11 @@ from custom_tools.general_tools import custom_arcpy
 # from input_data import input_veg
 from input_data import input_roads
 
-# from custom_tools.decorators import timing_decorator
+
+from custom_tools.decorators.timing_decorator import timing_decorator
 
 
+@timing_decorator
 def main():
     environment_setup.main()
     kommune()
@@ -29,24 +31,28 @@ def main():
     kryss()
     thin_sti()
     veglenke()
-    thinveg2()
-    thin3vegklasse()
+    # thinveg2()
+    # thin3vegklasse()
     thin4vegklasse()
-    veg100_ringerike0()
-    veg100_ringerike1()
-    veg100_ringerike2()
+    # veg100_lunner0()
+    # veg100_lunner1()
+    veg100_lunner2()
 
 
 # dette er sånn midlertidig, siden jeg ikke kan gjøre noe bedre må jeg skrive kommunenavn 4 steder linjer 35, 42, 375 og 379
 def kommune():
     custom_arcpy.select_attribute_and_make_permanent_feature(
         input_layer=input_n50.AdminFlate,
-        expression="NAVN='Ringerike'",
+        expression="NAVN='Lunner'",
         output_name=Road_N100.test1___kommune___n100_road.value,
         selection_type="NEW_SELECTION",
     )
 
 
+# "NAVN='Bardu' OR NAVN='Balsfjord' OR NAVN='Salangen' OR NAVN='Sørreisa' OR NAVN='Senja' OR NAVN='Dyrøy' OR NAVN='Målselv' OR NAVN='	Loabák'",
+
+
+@timing_decorator
 def kommune_buffer():
     arcpy.analysis.PairwiseBuffer(
         in_features=Road_N100.test1___kommune___n100_road.value,
@@ -58,13 +64,15 @@ def kommune_buffer():
 # lager en buffer så clipper til admingrense etterpå og veger treffer riktig
 def elveg_and_sti_kommune():
     arcpy.analysis.Clip(
-        in_features=input_roads.elveg,
+        in_features=input_roads.vegsenterlinje,
         clip_features=Road_N100.test1___kommune_buffer___n100_road.value,
         out_feature_class=Road_N100.test1___elveg_and_sti_kommune___n100_road.value,
     )
 
 
 # singlepart er krav til flere verktøy
+
+
 def elveg_and_sti_kommune_singlepart():
     arcpy.management.MultipartToSinglepart(
         in_features=Road_N100.test1___elveg_and_sti_kommune___n100_road.value,
@@ -74,20 +82,21 @@ def elveg_and_sti_kommune_singlepart():
 
 # dissolve slik at RemoveSmallLines fungerer bedre, mange små stubber hvor veglenker som vi ikke trenger splitter
 def elveg_and_sti_kommune_singlepart_dissolve():
-    arcpy.analysis.PairwiseDissolve(
+    arcpy.management.Dissolve(
         in_features=Road_N100.test1___elveg_and_sti_kommune_singlepart___n100_road.value,
         out_feature_class=Road_N100.test1___elveg_and_sti_kommune_singlepart_dissolve___n100_road.value,
         dissolve_field=[
-            "OBJTYPE",
-            "TYPEVEG",
-            "MEDIUM",
-            "VEGFASE",
-            "VEGKATEGORI",
-            "VEGNUMMER",
-            "VEGKLASSE",
-            "MOTORVEGTYPE",
-            "SUBTYPEKODE",
-            "UTTEGNING",
+            "objtype",
+            "subtypekode",
+            "vegstatus",
+            "typeveg",
+            "vegkategori",
+            "vegnummer",
+            "motorvegtype",
+            "vegklasse",
+            "rutemerking",
+            "medium",
+            "uttegning",
         ],
         multi_part="SINGLE_PART",
     )
@@ -112,18 +121,18 @@ def adding_fields_to_elveg_and_sti_kommune_singlepart_dissolve() -> object:
     )
 
     # Code_block
-    assign_hiesti_to_elveg_and_sti_kommune_singlepart_dissolve = """def Reclass(VEGKATEGORI):
-        if VEGKATEGORI == 'T':
+    assign_hiesti_to_elveg_and_sti_kommune_singlepart_dissolve = """def Reclass(vegkategori):
+        if vegkategori == 'T':
             return 1
-        elif VEGKATEGORI == 'D':
+        elif vegkategori == 'D':
             return 2
-        elif VEGKATEGORI == 'A':
+        elif vegkategori == 'A':
             return 2
-        elif VEGKATEGORI == 'U':
+        elif vegkategori == 'U':
             return 4
-        elif VEGKATEGORI == 'G':
+        elif vegkategori == 'G':
             return 3
-        elif VEGKATEGORI  in ('E', 'R', 'F', 'K', 'P', 'S'):
+        elif vegkategori  in ('E', 'R', 'F', 'K', 'P', 'S'):
             return 0
         """
 
@@ -131,26 +140,26 @@ def adding_fields_to_elveg_and_sti_kommune_singlepart_dissolve() -> object:
     arcpy.management.CalculateField(
         in_table=Road_N100.test1___elveg_and_sti_kommune_singlepart_dissolve___n100_road.value,
         field="hiesti",
-        expression="Reclass(!VEGKATEGORI!)",
+        expression="Reclass(!vegkategori!)",
         expression_type="PYTHON3",
         code_block=assign_hiesti_to_elveg_and_sti_kommune_singlepart_dissolve,
     )
 
     # Code_block
-    assign_hie_1_to_elveg_and_sti_kommune_singlepart_dissolve = """def Reclass(VEGKATEGORI):
-        if VEGKATEGORI == 'E':
+    assign_hie_1_to_elveg_and_sti_kommune_singlepart_dissolve = """def Reclass(vegkategori):
+        if vegkategori == 'E':
             return 1
-        elif VEGKATEGORI == 'R':
+        elif vegkategori == 'R':
             return 1
-        elif VEGKATEGORI == 'F':
+        elif vegkategori == 'F':
             return 2
-        elif VEGKATEGORI == 'K':
+        elif vegkategori == 'K':
             return 3
-        elif VEGKATEGORI == 'P':
+        elif vegkategori == 'P':
             return 4
-        elif VEGKATEGORI == 'S':
+        elif vegkategori == 'S':
             return 5
-        elif VEGKATEGORI  in ('T', 'D', 'A', 'U', 'G'):
+        elif vegkategori  in ('T', 'D', 'A', 'U', 'G'):
             return 0
         """
 
@@ -158,7 +167,7 @@ def adding_fields_to_elveg_and_sti_kommune_singlepart_dissolve() -> object:
     arcpy.management.CalculateField(
         in_table=Road_N100.test1___elveg_and_sti_kommune_singlepart_dissolve___n100_road.value,
         field="hie_1",
-        expression="Reclass(!VEGKATEGORI!)",
+        expression="Reclass(!vegkategori!)",
         expression_type="PYTHON3",
         code_block=assign_hie_1_to_elveg_and_sti_kommune_singlepart_dissolve,
     )
@@ -167,18 +176,18 @@ def adding_fields_to_elveg_and_sti_kommune_singlepart_dissolve() -> object:
     arcpy.management.CalculateField(
         in_table=Road_N100.test1___elveg_and_sti_kommune_singlepart_dissolve___n100_road.value,
         field="merge",
-        expression="0 if !VEGNUMMER! is None else !VEGNUMMER!",
+        expression="0 if !vegnummer! is None else !vegnummer!",
         expression_type="PYTHON3",
     )
 
-    assign_merge2_to_elveg_and_sti_kommune_singlepart_dissolve = """def Reclass(MEDIUM):
-        if MEDIUM == 'T':
+    assign_merge2_to_elveg_and_sti_kommune_singlepart_dissolve = """def Reclass(medium):
+        if medium == 'T':
             return 1
-        elif MEDIUM == 'L':
+        elif medium == 'L':
             return 2
-        elif MEDIUM == 'U':
+        elif medium == 'U':
             return 3
-        elif MEDIUM == 'B':
+        elif medium == 'B':
             return 4
     """
 
@@ -186,34 +195,34 @@ def adding_fields_to_elveg_and_sti_kommune_singlepart_dissolve() -> object:
     arcpy.management.CalculateField(
         in_table=Road_N100.test1___elveg_and_sti_kommune_singlepart_dissolve___n100_road.value,
         field="merge2",
-        expression="Reclass(!MEDIUM!)",
+        expression="Reclass(!medium!)",
         expression_type="PYTHON3",
         code_block=assign_merge2_to_elveg_and_sti_kommune_singlepart_dissolve,
     )
 
     # Code_block
-    assign_hie_2_to_elveg_and_sti_kommune_singlepart_dissolve = """def Reclass(VEGKLASSE):
-        if VEGKLASSE == 0:
+    assign_hie_2_to_elveg_and_sti_kommune_singlepart_dissolve = """def Reclass(vegklasse):
+        if vegklasse == 0:
             return 1
-        elif VEGKLASSE == 1:
+        elif vegklasse == 1:
             return 1
-        elif VEGKLASSE == 2:
+        elif vegklasse == 2:
             return 2
-        elif VEGKLASSE == 3:
+        elif vegklasse == 3:
             return 2
-        elif VEGKLASSE == 4:
+        elif vegklasse == 4:
             return 3
-        elif VEGKLASSE == 5:
+        elif vegklasse == 5:
             return 3
-        elif VEGKLASSE == 6:
+        elif vegklasse == 6:
             return 4
-        elif VEGKLASSE == 7:
+        elif vegklasse == 7:
             return 5
-        elif VEGKLASSE == 8:
+        elif vegklasse == 8:
             return 5
-        elif VEGKLASSE == 9:
+        elif vegklasse == 9:
             return 5
-        elif VEGKLASSE is None:
+        elif vegklasse is None:
             return 10
         """
 
@@ -221,7 +230,7 @@ def adding_fields_to_elveg_and_sti_kommune_singlepart_dissolve() -> object:
     arcpy.management.CalculateField(
         in_table=Road_N100.test1___elveg_and_sti_kommune_singlepart_dissolve___n100_road.value,
         field="hie_2",
-        expression="Reclass(!VEGKLASSE!)",
+        expression="Reclass(!vegklasse!)",
         expression_type="PYTHON3",
         code_block=assign_hie_2_to_elveg_and_sti_kommune_singlepart_dissolve,
     )
@@ -247,6 +256,9 @@ def mergedividedroads():
 
 # ikke alle rundkjøringer som blir fjernet; noen rndkjøringer i i forskjellige plan enn veger som kjrysser under eller over;
 # noen rundkjøringer har deler i luft og deler på bakken
+
+
+@timing_decorator
 def crd():
     arcpy.cartography.CollapseRoadDetail(
         in_features=Road_N100.test1___elveg_and_sti_kommune_singlepart_dissolve_mergedividedroads___n100_road.value,
@@ -259,7 +271,7 @@ def crd():
 def medium_ul():
     custom_arcpy.select_attribute_and_make_permanent_feature(
         input_layer=Road_N100.test1___elveg_and_sti_kommune_singlepart_dissolve_mergedividedroads_crd___n100_road.value,
-        expression="MEDIUM IN ('U', 'L')",
+        expression="medium IN ('U', 'L')",
         output_name=Road_N100.test1___elveg_and_sti_kommune_singlepart_dissolve_mergedividedroads_crd_medium_ul___n100_road.value,
         selection_type="NEW_SELECTION",
     )
@@ -269,7 +281,7 @@ def medium_ul():
 def medium_t():
     custom_arcpy.select_attribute_and_make_permanent_feature(
         input_layer=Road_N100.test1___elveg_and_sti_kommune_singlepart_dissolve_mergedividedroads_crd___n100_road.value,
-        expression=" MEDIUM = 'T'",
+        expression=" medium = 'T'",
         output_name=Road_N100.test1___elveg_and_sti_kommune_singlepart_dissolve_mergedividedroads_crd_medium_t___n100_road.value,
         selection_type="NEW_SELECTION",
     )
@@ -296,6 +308,7 @@ def kryss():
 # første thin kjøres på ikke-kjørbare veger
 # lages egen datasett med alle som fikk invisibility 0 og
 # for disse kodes hie_1 til 5 slik at de skal være med, men med lav viktighet i neste THin
+@timing_decorator
 def thin_sti():
     arcpy.cartography.ThinRoadNetwork(
         in_features=Road_N100.test1___elveg_and_sti_kommune_singlepart_dissolve_mergedividedroads_crd_kryss___n100_road.value,
@@ -306,7 +319,7 @@ def thin_sti():
 
     custom_arcpy.select_attribute_and_make_permanent_feature(
         input_layer=Road_N100.test1___elveg_and_sti_kommune_singlepart_dissolve_mergedividedroads_crd_kryss___n100_road.value,
-        expression="OBJTYPE IN ('Sti', 'Traktorveg', 'GangSykkelveg') AND inv_sti = 0",
+        expression="objtype IN ('Sti', 'Traktorveg', 'GangSykkelveg') AND inv_sti = 0",
         output_name=Road_N100.test1___elveg_and_sti_kommune_singlepart_dissolve_mergedividedroads_crd_kryss_thin_sti___n100_road.value,
         selection_type="NEW_SELECTION",
     )
@@ -330,7 +343,7 @@ def thin_sti():
 def veglenke():
     custom_arcpy.select_attribute_and_make_permanent_feature(
         input_layer=Road_N100.test1___elveg_and_sti_kommune_singlepart_dissolve_mergedividedroads_crd_kryss___n100_road.value,
-        expression="OBJTYPE = 'Veglenke'",
+        expression="objtype = 'VegSenterlinje'",
         output_name=Road_N100.test1___elveg_and_sti_kommune_singlepart_dissolve_mergedividedroads_crd_kryss_veglenke___n100_road.value,
         selection_type="NEW_SELECTION",
     )
@@ -341,41 +354,43 @@ def veglenke():
     )
 
 
-# andre runde på Thin kjøres på kjørbareveger og stiene som fikk bli igjen med har hierarchy 5
-def thinveg2():
-    arcpy.cartography.ThinRoadNetwork(
-        in_features=Road_N100.test1___elveg_and_sti_kommune_singlepart_dissolve_mergedividedroads_crd_kryss_veglenke___n100_road.value,
-        minimum_length="2000 meters",
-        invisibility_field="inv_1",
-        hierarchy_field="hie_1",
-    )
+# # andre runde på Thin kjøres på kjørbareveger og stiene som fikk bli igjen med har hierarchy 5
+# @timing_decorator
+# def thinveg2():
+#     arcpy.cartography.ThinRoadNetwork(
+#         in_features=Road_N100.test1___elveg_and_sti_kommune_singlepart_dissolve_mergedividedroads_crd_kryss_veglenke___n100_road.value,
+#         minimum_length="2000 meters",
+#         invisibility_field="inv_1",
+#         hierarchy_field="hie_1",
+#     )
+#
+#     custom_arcpy.select_attribute_and_make_permanent_feature(
+#         input_layer=Road_N100.test1___elveg_and_sti_kommune_singlepart_dissolve_mergedividedroads_crd_kryss_veglenke___n100_road.value,
+#         expression="inv_1 = 0",
+#         output_name=Road_N100.test1___elveg_and_sti_kommune_singlepart_dissolve_mergedividedroads_crd_kryss_veglenke_thinveg2___n100_road.value,
+#         selection_type="NEW_SELECTION",
+#     )
 
-    custom_arcpy.select_attribute_and_make_permanent_feature(
-        input_layer=Road_N100.test1___elveg_and_sti_kommune_singlepart_dissolve_mergedividedroads_crd_kryss_veglenke___n100_road.value,
-        expression="inv_1 = 0",
-        output_name=Road_N100.test1___elveg_and_sti_kommune_singlepart_dissolve_mergedividedroads_crd_kryss_veglenke_thinveg2___n100_road.value,
-        selection_type="NEW_SELECTION",
-    )
 
-
-# lager enda en datasett hvor kjørbareveger Thin med hierarchy etter vegklasse med 2000m
-def thin3vegklasse():
-    arcpy.cartography.ThinRoadNetwork(
-        in_features=Road_N100.test1___elveg_and_sti_kommune_singlepart_dissolve_mergedividedroads_crd_kryss_veglenke___n100_road.value,
-        minimum_length="2000 meters",
-        invisibility_field="inv_2",
-        hierarchy_field="hie_2",
-    )
-
-    custom_arcpy.select_attribute_and_make_permanent_feature(
-        input_layer=Road_N100.test1___elveg_and_sti_kommune_singlepart_dissolve_mergedividedroads_crd_kryss_veglenke___n100_road.value,
-        expression="inv_2 = 0",
-        output_name=Road_N100.test1___elveg_and_sti_kommune_singlepart_dissolve_mergedividedroads_crd_kryss_veglenke_thin3vegklasse___n100_road.value,
-        selection_type="NEW_SELECTION",
-    )
+# # lager enda en datasett hvor kjørbareveger Thin med hierarchy etter vegklasse med 2000m
+# def thin3vegklasse():
+#     arcpy.cartography.ThinRoadNetwork(
+#         in_features=Road_N100.test1___elveg_and_sti_kommune_singlepart_dissolve_mergedividedroads_crd_kryss_veglenke___n100_road.value,
+#         minimum_length="2000 meters",
+#         invisibility_field="inv_2",
+#         hierarchy_field="hie_2",
+#     )
+#
+#     custom_arcpy.select_attribute_and_make_permanent_feature(
+#         input_layer=Road_N100.test1___elveg_and_sti_kommune_singlepart_dissolve_mergedividedroads_crd_kryss_veglenke___n100_road.value,
+#         expression="inv_2 = 0",
+#         output_name=Road_N100.test1___elveg_and_sti_kommune_singlepart_dissolve_mergedividedroads_crd_kryss_veglenke_thin3vegklasse___n100_road.value,
+#         selection_type="NEW_SELECTION",
+#     )
 
 
 # lager enda en datasett hvor kjørbareveger Thin med hierarchy etter vegklasse og større min lengde
+@timing_decorator
 def thin4vegklasse():
     arcpy.cartography.ThinRoadNetwork(
         in_features=Road_N100.test1___elveg_and_sti_kommune_singlepart_dissolve_mergedividedroads_crd_kryss_veglenke___n100_road.value,
@@ -392,30 +407,31 @@ def thin4vegklasse():
     )
 
 
-# lager en datasett med resultatet fra Thin etter evgkatgori
-def veg100_ringerike0():
-    arcpy.analysis.Clip(
-        in_features=Road_N100.test1___elveg_and_sti_kommune_singlepart_dissolve_mergedividedroads_crd_kryss_veglenke_thinveg2___n100_road.value,
-        clip_features=Road_N100.test1___kommune___n100_road.value,
-        out_feature_class=Road_N100.test1___veg100_ringerike0___n100_road.value,
-    )
-
-
-# lager en datasett med resultatet fra Thin etter vegklasse og 2000m
-def veg100_ringerike1():
-    arcpy.analysis.Clip(
-        in_features=Road_N100.test1___elveg_and_sti_kommune_singlepart_dissolve_mergedividedroads_crd_kryss_veglenke_thin3vegklasse___n100_road.value,
-        clip_features=Road_N100.test1___kommune___n100_road.value,
-        out_feature_class=Road_N100.test1___veg100_ringerike1___n100_road.value,
-    )
+#
+# # lager en datasett med resultatet fra Thin etter evgkatgori
+# def veg100_lunner0():
+#     arcpy.analysis.Clip(
+#         in_features=Road_N100.test1___elveg_and_sti_kommune_singlepart_dissolve_mergedividedroads_crd_kryss_veglenke_thinveg2___n100_road.value,
+#         clip_features=Road_N100.test1___kommune___n100_road.value,
+#         out_feature_class=Road_N100.test1___veg100_lunner0___n100_road.value,
+#     )
+#
+#
+# # lager en datasett med resultatet fra Thin etter vegklasse og 2000m
+# def veg100_lunner1():
+#     arcpy.analysis.Clip(
+#         in_features=Road_N100.test1___elveg_and_sti_kommune_singlepart_dissolve_mergedividedroads_crd_kryss_veglenke_thin3vegklasse___n100_road.value,
+#         clip_features=Road_N100.test1___kommune___n100_road.value,
+#         out_feature_class=Road_N100.test1___veg100_lunner1___n100_road.value,
+#     )
 
 
 # lager en datasett med resultatet fra Thin etter vegklasse og 3000m
-def veg100_ringerike2():
+def veg100_lunner2():
     arcpy.analysis.Clip(
         in_features=Road_N100.test1___elveg_and_sti_kommune_singlepart_dissolve_mergedividedroads_crd_kryss_veglenke_thin4vegklasse___n100_road.value,
         clip_features=Road_N100.test1___kommune___n100_road.value,
-        out_feature_class=Road_N100.test1___veg100_ringerike2___n100_road.value,
+        out_feature_class=Road_N100.test1___veg100_lunner2___n100_road.value,
     )
 
 
