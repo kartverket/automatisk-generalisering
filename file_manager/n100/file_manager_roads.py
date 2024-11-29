@@ -168,6 +168,13 @@ class Road_N100(Enum):
         )
     )
 
+    data_preparation___collapse_road_detail___n100_road = (
+        file_manager.generate_file_name_gdb(
+            script_source_name=data_preparation,
+            description="collapse_road_detail",
+        )
+    )
+
     data_preparation___thin_road_network_selection___n100_road = (
         file_manager.generate_file_name_gdb(
             script_source_name=data_preparation,
