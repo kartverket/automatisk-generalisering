@@ -343,6 +343,8 @@ def apply_symbology(
     input_layer,
     in_symbology_layer,
     output_name,
+    grouped_lyrx=False,
+    target_layer_name=None,
 ):
     """
     Summary:
@@ -360,6 +362,8 @@ def apply_symbology(
         input_layer (str): The path or name of the input feature layer to which symbology will be applied.
         in_symbology_layer (str): The path to the layer file (.lyrx) containing the desired symbology settings.
         output_name (str): The name (including path) for the output layer file (.lyrx) with the applied symbology.
+        grouped_lyrx (bool, optional): If True, the symbology is applied to the entire layer group. Defaults to False.
+        target_layer_name (str, optional): The name of the target layer within the layer group to which symbology is applied. Defaults to None.
 
     Example:
         >>> custom_arcpy.apply_symbology_to_the_layers(
@@ -369,25 +373,62 @@ def apply_symbology(
         ... )
         'apply_symbology_to_layers__building_polygon__n100__lyrx.lyrx file created.'
     """
-    arcpy.management.MakeFeatureLayer(
-        in_features=input_layer,
-        out_layer=f"{input_layer}_tmp",
-    )
 
-    arcpy.management.ApplySymbologyFromLayer(
-        in_layer=f"{input_layer}_tmp",
-        in_symbology_layer=in_symbology_layer,
-        update_symbology="MAINTAIN",
-    )
+    def apply_symbology_to_single_layer(
+        target_layer,
+        apply_symbology_layer,
+        created_lrx_file_name,
+    ):
+        arcpy.management.MakeFeatureLayer(
+            in_features=target_layer,
+            out_layer=f"{input_layer}_tmp",
+        )
 
-    arcpy.management.SaveToLayerFile(
-        in_layer=f"{input_layer}_tmp",
-        out_layer=output_name,
-        is_relative_path="ABSOLUTE",
-    )
+        arcpy.management.ApplySymbologyFromLayer(
+            in_layer=f"{target_layer}_tmp",
+            in_symbology_layer=apply_symbology_layer,
+            update_symbology="MAINTAIN",
+        )
 
-    arcpy.management.Delete(
-        f"{input_layer}_tmp",
-    )
+        arcpy.management.SaveToLayerFile(
+            in_layer=f"{target_layer}_tmp",
+            out_layer=output_name,
+            is_relative_path="ABSOLUTE",
+        )
 
-    print(f"{output_name} lyrx file created.")
+        arcpy.management.Delete(
+            f"{target_layer}_tmp",
+        )
+
+        print(f"{created_lrx_file_name} lyrx file created.")
+
+    if not grouped_lyrx:
+        apply_symbology_to_single_layer(
+            target_layer=input_layer,
+            apply_symbology_layer=in_symbology_layer,
+            created_lrx_file_name=output_name,
+        )
+
+    elif grouped_lyrx and target_layer_name is None:
+        raise Exception("This feature has not been implemented please do not use yet")
+
+    elif grouped_lyrx and target_layer_name is not None:
+        group_lyrx_layer_file = arcpy.mp.LayerFile(in_symbology_layer)
+        listed_layers = group_lyrx_layer_file.listLayers()
+        symbology_layer = None
+
+        for layer in listed_layers:
+            if layer.name == target_layer_name:
+                symbology_layer = layer
+                print(f"Layer {target_layer_name} found in {in_symbology_layer}.")
+                break
+
+        if symbology_layer is None:
+            print(f"Layer {target_layer_name} not found in {in_symbology_layer}.")
+            return None
+
+        apply_symbology_to_single_layer(
+            target_layer=input_layer,
+            apply_symbology_layer=symbology_layer,
+            created_lrx_file_name=output_name,
+        )
