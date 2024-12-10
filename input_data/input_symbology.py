@@ -6,6 +6,7 @@ import config
 # Defining universal paths for other files regardless of local path env_setup
 class SymbologyN100(Enum):
     road = config.symbology_n100_roads
+    road_buffer = config.symbology_n100_drawn_polygon
     begrensnings_kurve_buffer = config.symbology_n100_begrensningskurve_buffer
     begrensnings_kurve_line = config.symbology_n100_begrensningskurve_line
     begrensningskurve_polygon = config.symbology_n100_begrensningskurve_buffer
