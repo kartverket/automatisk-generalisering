@@ -443,6 +443,8 @@
     <span class="n">input_layer</span><span class="p">,</span>
     <span class="n">in_symbology_layer</span><span class="p">,</span>
     <span class="n">output_name</span><span class="p">,</span>
+    <span class="n">grouped_lyrx</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+    <span class="n">target_layer_name</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
 <span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Summary:</span>
@@ -460,6 +462,8 @@
 <span class="sd">        input_layer (str): The path or name of the input feature layer to which symbology will be applied.</span>
 <span class="sd">        in_symbology_layer (str): The path to the layer file (.lyrx) containing the desired symbology settings.</span>
 <span class="sd">        output_name (str): The name (including path) for the output layer file (.lyrx) with the applied symbology.</span>
+<span class="sd">        grouped_lyrx (bool, optional): If True, the symbology is applied to the entire layer group. Defaults to False.</span>
+<span class="sd">        target_layer_name (str, optional): The name of the target layer within the layer group to which symbology is applied. Defaults to None.</span>
 
 <span class="sd">    Example:</span>
 <span class="sd">        &gt;&gt;&gt; custom_arcpy.apply_symbology_to_the_layers(</span>
@@ -469,28 +473,65 @@
 <span class="sd">        ... )</span>
 <span class="sd">        &#39;apply_symbology_to_layers__building_polygon__n100__lyrx.lyrx file created.&#39;</span>
 <span class="sd">    &quot;&quot;&quot;</span>
-    <span class="n">arcpy</span><span class="o">.</span><span class="n">management</span><span class="o">.</span><span class="n">MakeFeatureLayer</span><span class="p">(</span>
-        <span class="n">in_features</span><span class="o">=</span><span class="n">input_layer</span><span class="p">,</span>
-        <span class="n">out_layer</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">input_layer</span><span class="si">}</span><span class="s2">_tmp&quot;</span><span class="p">,</span>
-    <span class="p">)</span>
 
-    <span class="n">arcpy</span><span class="o">.</span><span class="n">management</span><span class="o">.</span><span class="n">ApplySymbologyFromLayer</span><span class="p">(</span>
-        <span class="n">in_layer</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">input_layer</span><span class="si">}</span><span class="s2">_tmp&quot;</span><span class="p">,</span>
-        <span class="n">in_symbology_layer</span><span class="o">=</span><span class="n">in_symbology_layer</span><span class="p">,</span>
-        <span class="n">update_symbology</span><span class="o">=</span><span class="s2">&quot;MAINTAIN&quot;</span><span class="p">,</span>
-    <span class="p">)</span>
+    <span class="k">def</span> <span class="nf">apply_symbology_to_single_layer</span><span class="p">(</span>
+        <span class="n">target_layer</span><span class="p">,</span>
+        <span class="n">apply_symbology_layer</span><span class="p">,</span>
+        <span class="n">created_lrx_file_name</span><span class="p">,</span>
+    <span class="p">):</span>
+        <span class="n">arcpy</span><span class="o">.</span><span class="n">management</span><span class="o">.</span><span class="n">MakeFeatureLayer</span><span class="p">(</span>
+            <span class="n">in_features</span><span class="o">=</span><span class="n">target_layer</span><span class="p">,</span>
+            <span class="n">out_layer</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">input_layer</span><span class="si">}</span><span class="s2">_tmp&quot;</span><span class="p">,</span>
+        <span class="p">)</span>
 
-    <span class="n">arcpy</span><span class="o">.</span><span class="n">management</span><span class="o">.</span><span class="n">SaveToLayerFile</span><span class="p">(</span>
-        <span class="n">in_layer</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">input_layer</span><span class="si">}</span><span class="s2">_tmp&quot;</span><span class="p">,</span>
-        <span class="n">out_layer</span><span class="o">=</span><span class="n">output_name</span><span class="p">,</span>
-        <span class="n">is_relative_path</span><span class="o">=</span><span class="s2">&quot;ABSOLUTE&quot;</span><span class="p">,</span>
-    <span class="p">)</span>
+        <span class="n">arcpy</span><span class="o">.</span><span class="n">management</span><span class="o">.</span><span class="n">ApplySymbologyFromLayer</span><span class="p">(</span>
+            <span class="n">in_layer</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">target_layer</span><span class="si">}</span><span class="s2">_tmp&quot;</span><span class="p">,</span>
+            <span class="n">in_symbology_layer</span><span class="o">=</span><span class="n">apply_symbology_layer</span><span class="p">,</span>
+            <span class="n">update_symbology</span><span class="o">=</span><span class="s2">&quot;MAINTAIN&quot;</span><span class="p">,</span>
+        <span class="p">)</span>
 
-    <span class="n">arcpy</span><span class="o">.</span><span class="n">management</span><span class="o">.</span><span class="n">Delete</span><span class="p">(</span>
-        <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">input_layer</span><span class="si">}</span><span class="s2">_tmp&quot;</span><span class="p">,</span>
-    <span class="p">)</span>
+        <span class="n">arcpy</span><span class="o">.</span><span class="n">management</span><span class="o">.</span><span class="n">SaveToLayerFile</span><span class="p">(</span>
+            <span class="n">in_layer</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">target_layer</span><span class="si">}</span><span class="s2">_tmp&quot;</span><span class="p">,</span>
+            <span class="n">out_layer</span><span class="o">=</span><span class="n">output_name</span><span class="p">,</span>
+            <span class="n">is_relative_path</span><span class="o">=</span><span class="s2">&quot;ABSOLUTE&quot;</span><span class="p">,</span>
+        <span class="p">)</span>
 
-    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">output_name</span><span class="si">}</span><span class="s2"> lyrx file created.&quot;</span><span class="p">)</span></div>
+        <span class="n">arcpy</span><span class="o">.</span><span class="n">management</span><span class="o">.</span><span class="n">Delete</span><span class="p">(</span>
+            <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">target_layer</span><span class="si">}</span><span class="s2">_tmp&quot;</span><span class="p">,</span>
+        <span class="p">)</span>
+
+        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">created_lrx_file_name</span><span class="si">}</span><span class="s2"> lyrx file created.&quot;</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">grouped_lyrx</span><span class="p">:</span>
+        <span class="n">apply_symbology_to_single_layer</span><span class="p">(</span>
+            <span class="n">target_layer</span><span class="o">=</span><span class="n">input_layer</span><span class="p">,</span>
+            <span class="n">apply_symbology_layer</span><span class="o">=</span><span class="n">in_symbology_layer</span><span class="p">,</span>
+            <span class="n">created_lrx_file_name</span><span class="o">=</span><span class="n">output_name</span><span class="p">,</span>
+        <span class="p">)</span>
+
+    <span class="k">elif</span> <span class="n">grouped_lyrx</span> <span class="ow">and</span> <span class="n">target_layer_name</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="s2">&quot;This feature has not been implemented please do not use yet&quot;</span><span class="p">)</span>
+
+    <span class="k">elif</span> <span class="n">grouped_lyrx</span> <span class="ow">and</span> <span class="n">target_layer_name</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">group_lyrx_layer_file</span> <span class="o">=</span> <span class="n">arcpy</span><span class="o">.</span><span class="n">mp</span><span class="o">.</span><span class="n">LayerFile</span><span class="p">(</span><span class="n">in_symbology_layer</span><span class="p">)</span>
+        <span class="n">listed_layers</span> <span class="o">=</span> <span class="n">group_lyrx_layer_file</span><span class="o">.</span><span class="n">listLayers</span><span class="p">()</span>
+        <span class="n">symbology_layer</span> <span class="o">=</span> <span class="kc">None</span>
+
+        <span class="k">for</span> <span class="n">layer</span> <span class="ow">in</span> <span class="n">listed_layers</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">layer</span><span class="o">.</span><span class="n">name</span> <span class="o">==</span> <span class="n">target_layer_name</span><span class="p">:</span>
+                <span class="n">symbology_layer</span> <span class="o">=</span> <span class="n">layer</span>
+                <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Layer </span><span class="si">{</span><span class="n">target_layer_name</span><span class="si">}</span><span class="s2"> found in </span><span class="si">{</span><span class="n">in_symbology_layer</span><span class="si">}</span><span class="s2">.&quot;</span><span class="p">)</span>
+                <span class="k">break</span>
+
+        <span class="k">if</span> <span class="n">symbology_layer</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Layer </span><span class="si">{</span><span class="n">target_layer_name</span><span class="si">}</span><span class="s2"> not found in </span><span class="si">{</span><span class="n">in_symbology_layer</span><span class="si">}</span><span class="s2">.&quot;</span><span class="p">)</span>
+            <span class="k">return</span> <span class="kc">None</span>
+
+        <span class="n">apply_symbology_to_single_layer</span><span class="p">(</span>
+            <span class="n">target_layer</span><span class="o">=</span><span class="n">input_layer</span><span class="p">,</span>
+            <span class="n">apply_symbology_layer</span><span class="o">=</span><span class="n">symbology_layer</span><span class="p">,</span>
+            <span class="n">created_lrx_file_name</span><span class="o">=</span><span class="n">output_name</span><span class="p">,</span>
+        <span class="p">)</span></div>
 
 </pre></div>
 

@@ -156,6 +156,13 @@
         <span class="p">)</span>
     <span class="p">)</span>
 
+    <span class="n">data_selection___new_road_symbology___n100_road_lyrx</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_lyrx</span><span class="p">(</span>
+            <span class="n">script_source_name</span><span class="o">=</span><span class="n">data_selection</span><span class="p">,</span>
+            <span class="n">description</span><span class="o">=</span><span class="s2">&quot;new_road_symbology&quot;</span><span class="p">,</span>
+        <span class="p">)</span>
+    <span class="p">)</span>
+
     <span class="n">data_preparation___geometry_validation___n100_road</span> <span class="o">=</span> <span class="p">(</span>
         <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_gdb</span><span class="p">(</span>
             <span class="n">script_source_name</span><span class="o">=</span><span class="n">data_preparation</span><span class="p">,</span>
@@ -244,6 +251,13 @@
         <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_gdb</span><span class="p">(</span>
             <span class="n">script_source_name</span><span class="o">=</span><span class="n">data_preparation</span><span class="p">,</span>
             <span class="n">description</span><span class="o">=</span><span class="s2">&quot;remove_small_road_lines&quot;</span><span class="p">,</span>
+        <span class="p">)</span>
+    <span class="p">)</span>
+
+    <span class="n">data_preparation___collapse_road_detail___n100_road</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_gdb</span><span class="p">(</span>
+            <span class="n">script_source_name</span><span class="o">=</span><span class="n">data_preparation</span><span class="p">,</span>
+            <span class="n">description</span><span class="o">=</span><span class="s2">&quot;collapse_road_detail&quot;</span><span class="p">,</span>
         <span class="p">)</span>
     <span class="p">)</span>
 
@@ -879,7 +893,6 @@
         <span class="n">script_source_name</span><span class="o">=</span><span class="n">test1</span><span class="p">,</span>
         <span class="n">description</span><span class="o">=</span><span class="s2">&quot;veg100_troms_m2&quot;</span><span class="p">,</span>
     <span class="p">)</span>
-
 
     <span class="c1"># ========================================</span>
     <span class="c1">#                                TESTING FILE</span>

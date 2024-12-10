@@ -419,7 +419,7 @@ and creates a new, permanent feature class as an output.</p>
 
 <dl class="py function">
 <dt class="sig sig-object py" id="custom_tools.general_tools.custom_arcpy.apply_symbology">
-<span class="sig-prename descclassname"><span class="pre">custom_tools.general_tools.custom_arcpy.</span></span><span class="sig-name descname"><span class="pre">apply_symbology</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">input_layer</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">in_symbology_layer</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">output_name</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/custom_tools/general_tools/custom_arcpy.html#apply_symbology"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#custom_tools.general_tools.custom_arcpy.apply_symbology" title="Link to this definition"></a></dt>
+<span class="sig-prename descclassname"><span class="pre">custom_tools.general_tools.custom_arcpy.</span></span><span class="sig-name descname"><span class="pre">apply_symbology</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">input_layer</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">in_symbology_layer</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">output_name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">grouped_lyrx</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">target_layer_name</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/custom_tools/general_tools/custom_arcpy.html#apply_symbology"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#custom_tools.general_tools.custom_arcpy.apply_symbology" title="Link to this definition"></a></dt>
 <dd><dl class="simple">
 <dt>Summary:</dt><dd><p>Applies symbology from a specified lyrx file to an input feature layer and saves the result as a new lyrx file.</p>
 </dd>
@@ -439,6 +439,8 @@ and creates a new, permanent feature class as an output.</p>
 <li><p><strong>input_layer</strong> (<em>str</em>) – The path or name of the input feature layer to which symbology will be applied.</p></li>
 <li><p><strong>in_symbology_layer</strong> (<em>str</em>) – The path to the layer file (.lyrx) containing the desired symbology settings.</p></li>
 <li><p><strong>output_name</strong> (<em>str</em>) – The name (including path) for the output layer file (.lyrx) with the applied symbology.</p></li>
+<li><p><strong>grouped_lyrx</strong> (<em>bool</em><em>, </em><em>optional</em>) – If True, the symbology is applied to the entire layer group. Defaults to False.</p></li>
+<li><p><strong>target_layer_name</strong> (<em>str</em><em>, </em><em>optional</em>) – The name of the target layer within the layer group to which symbology is applied. Defaults to None.</p></li>
 </ul>
 </dd>
 </dl>
