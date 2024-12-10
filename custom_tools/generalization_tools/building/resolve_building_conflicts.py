@@ -243,6 +243,7 @@ class ResolveBuildingConflicts:
                 "output_name": self.railway_stations_with_lyrx,
             },
         ]
+        print(f"Features for applying symbology: {features_for_apply_symbology}\n")
 
         # Loop over the symbology configurations and apply the function
         for symbology_config in features_for_apply_symbology:
@@ -272,7 +273,13 @@ class ResolveBuildingConflicts:
                 "false",
                 f"{self.railway_barrier_gap} Meters",
             ],
+            [
+                self.road_barrier_lyrx,
+                "false",
+                f"{self.road_barrier_gap} Meters",
+            ],
         ]
+        print(f"Input barriers for RBC: {input_barriers_for_rbc}\n")
 
         return input_barriers_for_rbc
 
@@ -287,6 +294,7 @@ class ResolveBuildingConflicts:
                 self.polygons_with_lyrx,
                 self.building_squares_with_lyrx,
             ]
+            print(f"Input buildings for RBC 1: {input_buildings_rbc_1}\n")
             arcpy.cartography.ResolveBuildingConflicts(
                 in_buildings=input_buildings_rbc_1,
                 invisibility_field="invisibility",

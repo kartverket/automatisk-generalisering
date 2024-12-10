@@ -77,6 +77,13 @@ class Road_N100(Enum):
         )
     )
 
+    data_selection___new_road_symbology___n100_road_lyrx = (
+        file_manager.generate_file_name_lyrx(
+            script_source_name=data_selection,
+            description="new_road_symbology",
+        )
+    )
+
     data_preparation___geometry_validation___n100_road = (
         file_manager.generate_file_name_gdb(
             script_source_name=data_preparation,
@@ -807,7 +814,6 @@ class Road_N100(Enum):
         script_source_name=test1,
         description="veg100_troms_m2",
     )
-
 
     # ========================================
     #                                TESTING FILE
