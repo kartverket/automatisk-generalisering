@@ -101,11 +101,12 @@ def data_selection():
     }
 
     small_local_selection = "navn IN ('Asker', 'Oslo', 'Ringerike')"
+    plot_area = "navn IN ('Asker', 'Bærum', 'Drammen', 'Frogn', 'Hole', 'Holmestrand', 'Horten', 'Jevnaker', 'Kongsberg', 'Larvik', 'Lier', 'Lunner', 'Modum', 'Nesodden', 'Oslo', 'Ringerike', 'Tønsberg', 'Øvre Eiker')"
 
     selector = StudyAreaSelector(
         input_output_file_dict=input_output_file_dict,
         selecting_file=input_n100.AdminFlate,
-        selecting_sql_expression="navn IN ('Asker', 'Bærum', 'Drammen', 'Frogn', 'Hole', 'Holmestrand', 'Horten', 'Jevnaker', 'Kongsberg', 'Larvik', 'Lier', 'Lunner', 'Modum', 'Nesodden', 'Oslo', 'Ringerike', 'Tønsberg', 'Øvre Eiker')",
+        selecting_sql_expression=plot_area,
         select_local=config.select_study_area,
     )
 
@@ -307,7 +308,7 @@ def unsplit_roads_and_make_buffer():
         write_work_files_to_memory=False,
         keep_work_files=False,
         root_file=Building_N100.data_preparation___root_file_line_symbology___n100_building.value,
-        fixed_buffer_addition=N100_Values.rbc_barrier_clearance_distance_m.value,
+        fixed_buffer_addition=0,
     )
     road_lines_to_buffer_symbology.run()
 
