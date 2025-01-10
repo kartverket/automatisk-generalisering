@@ -1,4 +1,7 @@
+import re
 import arcpy
+
+import env_setup.global_config
 from input_data import input_n100
 from file_manager.n100.file_manager_buildings import Building_N100
 from file_manager.n100.file_manager_roads import Road_N100
@@ -10,6 +13,9 @@ from env_setup import environment_setup
 
 
 class WorkFileManager:
+    general_files_directory_name = env_setup.global_config.general_files_name
+    lyrx_directory_name = env_setup.global_config.lyrx_directory_name
+
     def __init__(
         self,
         unique_id: int,
@@ -35,6 +41,27 @@ class WorkFileManager:
 
         self.file_location = "memory/" if self.write_to_memory else f"{self.root_file}_"
 
+    def modify_path(self) -> str:
+        """
+        Modifies the given path by removing the unwanted portion up to the scale directory.
+
+        Returns:
+            str: The modified path.
+        """
+        # Define regex pattern to find the scale directory (ends with a digit followed by \\)
+        match = re.search(r"\\\w+\d0\\", self.root_file)
+        if not match:
+            raise ValueError("Scale directory pattern not found in the path.")
+        if self.write_to_memory:
+            raise ValueError(
+                "Other file types than gdb are not supported in memory mode."
+            )
+
+        # Extract the root up to the scale directory
+        scale_path = self.root_file[: match.end()]
+
+        return scale_path
+
     def _build_file_path(
         self,
         file_name: str,
@@ -43,12 +70,17 @@ class WorkFileManager:
         """
         Constructs a file path based on the file name and type.
         """
+
         if file_type == "gdb":
             path = f"{self.file_location}{file_name}_{self.unique_id}"
-        elif file_type == "lyrx":
-            path = f"{self.file_location}{file_name}_{self.unique_id}.lyrx"
         else:
-            raise ValueError(f"Unsupported file type: {file_type}")
+            scale_path = self.modify_path()
+
+            if file_type == "lyrx":
+                path = rf"{scale_path}{self.lyrx_directory_name}\{file_name}_{self.unique_id}.lyrx"
+
+            else:
+                path = rf"{scale_path}{self.general_files_directory_name}\{file_name}_{self.unique_id}.{file_type}"
 
         self.created_paths.append(path)
         return path
@@ -219,6 +251,7 @@ class PrintClass:
             instance=self,
             file_structure=self.structure_with_files,
             keys_to_update="output",
+            file_type="txt",
         )
         print(f"output_files_files:\n{self.output_files_files}\n")
 
