@@ -6,7 +6,7 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>generalization.n100.river.preparing_river_network &mdash; Automatisk Generalisering 0.0.1 documentation</title>
-      <link rel="stylesheet" type="text/css" href="../../../../_static/pygments.css?v=80d5e7a1" />
+      <link rel="stylesheet" type="text/css" href="../../../../_static/pygments.css?v=b86133f3" />
       <link rel="stylesheet" type="text/css" href="../../../../_static/css/theme.css?v=e59714d7" />
       <link rel="stylesheet" type="text/css" href="../../../../_static/custom.css" />
 
@@ -76,19 +76,19 @@
              
   <h1>Source code for generalization.n100.river.preparing_river_network</h1><div class="highlight"><pre>
 <span></span><span class="c1"># Importing modules</span>
-<span class="kn">import</span> <span class="nn">arcpy</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">arcpy</span>
 
 <span class="c1"># Importing custom tools</span>
-<span class="kn">from</span> <span class="nn">custom_tools.general_tools</span> <span class="kn">import</span> <span class="n">custom_arcpy</span>
-<span class="kn">from</span> <span class="nn">env_setup</span> <span class="kn">import</span> <span class="n">environment_setup</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">custom_tools.general_tools</span><span class="w"> </span><span class="kn">import</span> <span class="n">custom_arcpy</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">env_setup</span><span class="w"> </span><span class="kn">import</span> <span class="n">environment_setup</span>
 
 <span class="c1"># Importing file manager</span>
-<span class="kn">from</span> <span class="nn">file_manager.n100.file_manager_rivers</span> <span class="kn">import</span> <span class="n">River_N100</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">file_manager.n100.file_manager_rivers</span><span class="w"> </span><span class="kn">import</span> <span class="n">River_N100</span>
 
 
 <div class="viewcode-block" id="main">
 <a class="viewcode-back" href="../../../../generated_docs/generalization.n100.river.html#generalization.n100.river.preparing_river_network.main">[docs]</a>
-<span class="k">def</span> <span class="nf">main</span><span class="p">():</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">main</span><span class="p">():</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Summary:</span>
 <span class="sd">        This script prepares the river network for the 1:100,000 scale by setting line directions and thinning hydrology lines.</span>
@@ -110,7 +110,7 @@
 <span class="c1"># This function sets the direction of each stream segment in the river network</span>
 <div class="viewcode-block" id="set_line_direction">
 <a class="viewcode-back" href="../../../../generated_docs/generalization.n100.river.html#generalization.n100.river.preparing_river_network.set_line_direction">[docs]</a>
-<span class="k">def</span> <span class="nf">set_line_direction</span><span class="p">():</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">set_line_direction</span><span class="p">():</span>
     <span class="n">arcpy</span><span class="o">.</span><span class="n">topographic</span><span class="o">.</span><span class="n">SetLineDirection</span><span class="p">(</span>
         <span class="n">in_line_features</span><span class="o">=</span><span class="s2">&quot;placeholder&quot;</span><span class="p">,</span>
         <span class="n">digital_elevation_model</span><span class="o">=</span><span class="s2">&quot;placeholder_for_DTM&quot;</span><span class="p">,</span>
@@ -122,7 +122,7 @@
 <span class="c1"># This function thins the river network</span>
 <div class="viewcode-block" id="thin_hydrology_lines">
 <a class="viewcode-back" href="../../../../generated_docs/generalization.n100.river.html#generalization.n100.river.preparing_river_network.thin_hydrology_lines">[docs]</a>
-<span class="k">def</span> <span class="nf">thin_hydrology_lines</span><span class="p">():</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">thin_hydrology_lines</span><span class="p">():</span>
     <span class="n">arcpy</span><span class="o">.</span><span class="n">topographic</span><span class="o">.</span><span class="n">ThinHydrologyLines</span><span class="p">(</span>
         <span class="n">in_features</span><span class="o">=</span><span class="s2">&quot;placeholder_for_streamnetwork&quot;</span><span class="p">,</span>
         <span class="n">invisibility_field</span><span class="o">=</span><span class="s2">&quot;invisibility&quot;</span><span class="p">,</span>

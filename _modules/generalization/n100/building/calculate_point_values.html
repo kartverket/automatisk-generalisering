@@ -6,7 +6,7 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>generalization.n100.building.calculate_point_values &mdash; Automatisk Generalisering 0.0.1 documentation</title>
-      <link rel="stylesheet" type="text/css" href="../../../../_static/pygments.css?v=80d5e7a1" />
+      <link rel="stylesheet" type="text/css" href="../../../../_static/pygments.css?v=b86133f3" />
       <link rel="stylesheet" type="text/css" href="../../../../_static/css/theme.css?v=e59714d7" />
       <link rel="stylesheet" type="text/css" href="../../../../_static/custom.css" />
 
@@ -76,23 +76,23 @@
              
   <h1>Source code for generalization.n100.building.calculate_point_values</h1><div class="highlight"><pre>
 <span></span><span class="c1"># Importing custom files relative to the root path</span>
-<span class="kn">from</span> <span class="nn">custom_tools.general_tools</span> <span class="kn">import</span> <span class="n">custom_arcpy</span>
-<span class="kn">from</span> <span class="nn">env_setup</span> <span class="kn">import</span> <span class="n">environment_setup</span>
-<span class="kn">from</span> <span class="nn">file_manager.n100.file_manager_buildings</span> <span class="kn">import</span> <span class="n">Building_N100</span>
-<span class="kn">from</span> <span class="nn">constants.n100_constants</span> <span class="kn">import</span> <span class="n">N100_SQLResources</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">custom_tools.general_tools</span><span class="w"> </span><span class="kn">import</span> <span class="n">custom_arcpy</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">env_setup</span><span class="w"> </span><span class="kn">import</span> <span class="n">environment_setup</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">file_manager.n100.file_manager_buildings</span><span class="w"> </span><span class="kn">import</span> <span class="n">Building_N100</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">constants.n100_constants</span><span class="w"> </span><span class="kn">import</span> <span class="n">N100_SQLResources</span>
 
 <span class="c1"># Importing general packages</span>
-<span class="kn">import</span> <span class="nn">arcpy</span>
-<span class="kn">from</span> <span class="nn">collections</span> <span class="kn">import</span> <span class="n">Counter</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">arcpy</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">collections</span><span class="w"> </span><span class="kn">import</span> <span class="n">Counter</span>
 
 <span class="c1"># Importing timing decorator</span>
-<span class="kn">from</span> <span class="nn">custom_tools.decorators.timing_decorator</span> <span class="kn">import</span> <span class="n">timing_decorator</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">custom_tools.decorators.timing_decorator</span><span class="w"> </span><span class="kn">import</span> <span class="n">timing_decorator</span>
 
 
 <div class="viewcode-block" id="main">
 <a class="viewcode-back" href="../../../../generated_docs/generalization.n100.building.html#generalization.n100.building.calculate_point_values.main">[docs]</a>
 <span class="nd">@timing_decorator</span>
-<span class="k">def</span> <span class="nf">main</span><span class="p">():</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">main</span><span class="p">():</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    What:</span>
 <span class="sd">        Adds required fields for building point for symbology and resolves building conflicts: angle, hierarchy, and invisibility.</span>
@@ -133,7 +133,7 @@
 <div class="viewcode-block" id="reclassifying_hospital_and_church_points_from_matrikkel">
 <a class="viewcode-back" href="../../../../generated_docs/generalization.n100.building.html#generalization.n100.building.calculate_point_values.reclassifying_hospital_and_church_points_from_matrikkel">[docs]</a>
 <span class="nd">@timing_decorator</span>
-<span class="k">def</span> <span class="nf">reclassifying_hospital_and_church_points_from_matrikkel</span><span class="p">():</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">reclassifying_hospital_and_church_points_from_matrikkel</span><span class="p">():</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Reclassifies hospitals and churches in the matrikkel dataset to a new NBR value (&quot;Other buildings&quot; / &quot;Andre bygg&quot;).</span>
 <span class="sd">    &quot;&quot;&quot;</span>
@@ -157,7 +157,7 @@
 <div class="viewcode-block" id="adding_original_source_to_points">
 <a class="viewcode-back" href="../../../../generated_docs/generalization.n100.building.html#generalization.n100.building.calculate_point_values.adding_original_source_to_points">[docs]</a>
 <span class="nd">@timing_decorator</span>
-<span class="k">def</span> <span class="nf">adding_original_source_to_points</span><span class="p">():</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">adding_original_source_to_points</span><span class="p">():</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Adds a field to point features to indicate their original source:</span>
 <span class="sd">    `0` for points from merged sources and `1` for points resulting from building polygons.</span>
@@ -191,7 +191,7 @@
 <div class="viewcode-block" id="merge_matrikkel_n50_touristcabins_with_points_from_grunnriss">
 <a class="viewcode-back" href="../../../../generated_docs/generalization.n100.building.html#generalization.n100.building.calculate_point_values.merge_matrikkel_n50_touristcabins_with_points_from_grunnriss">[docs]</a>
 <span class="nd">@timing_decorator</span>
-<span class="k">def</span> <span class="nf">merge_matrikkel_n50_touristcabins_with_points_from_grunnriss</span><span class="p">():</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">merge_matrikkel_n50_touristcabins_with_points_from_grunnriss</span><span class="p">():</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Merges points from the `matrikkel_n50_touristcabins` dataset with points created from building polygons.</span>
 <span class="sd">    Adds a field to the merged points to determine and assign a symbol value based on their NBR code.</span>
@@ -226,7 +226,7 @@
 <div class="viewcode-block" id="find_undefined_nbr_values">
 <a class="viewcode-back" href="../../../../generated_docs/generalization.n100.building.html#generalization.n100.building.calculate_point_values.find_undefined_nbr_values">[docs]</a>
 <span class="nd">@timing_decorator</span>
-<span class="k">def</span> <span class="nf">find_undefined_nbr_values</span><span class="p">():</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">find_undefined_nbr_values</span><span class="p">():</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Selects building points with an undefined NBR value (symbol value of -99) from the dataset, and logs it.</span>
 <span class="sd">    Then reclassify their NBR values and symbol_val values.</span>
@@ -305,7 +305,7 @@
 <div class="viewcode-block" id="calculate_angle_and_visibility">
 <a class="viewcode-back" href="../../../../generated_docs/generalization.n100.building.html#generalization.n100.building.calculate_point_values.calculate_angle_and_visibility">[docs]</a>
 <span class="nd">@timing_decorator</span>
-<span class="k">def</span> <span class="nf">calculate_angle_and_visibility</span><span class="p">():</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">calculate_angle_and_visibility</span><span class="p">():</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Adds angle and visibility fields, and sets their value to 0</span>
 <span class="sd">    &quot;&quot;&quot;</span>
@@ -340,7 +340,7 @@
 <div class="viewcode-block" id="calculate_hierarchy">
 <a class="viewcode-back" href="../../../../generated_docs/generalization.n100.building.html#generalization.n100.building.calculate_point_values.calculate_hierarchy">[docs]</a>
 <span class="nd">@timing_decorator</span>
-<span class="k">def</span> <span class="nf">calculate_hierarchy</span><span class="p">():</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">calculate_hierarchy</span><span class="p">():</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Calculates the hierarchy field based on symbol_val values</span>
 <span class="sd">    &quot;&quot;&quot;</span>

@@ -6,7 +6,7 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>generalization.n100.building.point_propogate_displacement &mdash; Automatisk Generalisering 0.0.1 documentation</title>
-      <link rel="stylesheet" type="text/css" href="../../../../_static/pygments.css?v=80d5e7a1" />
+      <link rel="stylesheet" type="text/css" href="../../../../_static/pygments.css?v=b86133f3" />
       <link rel="stylesheet" type="text/css" href="../../../../_static/css/theme.css?v=e59714d7" />
       <link rel="stylesheet" type="text/css" href="../../../../_static/custom.css" />
 
@@ -76,22 +76,22 @@
              
   <h1>Source code for generalization.n100.building.point_propogate_displacement</h1><div class="highlight"><pre>
 <span></span><span class="c1"># Importing modules</span>
-<span class="kn">import</span> <span class="nn">arcpy</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">arcpy</span>
 
 <span class="c1"># Importing environment settings</span>
-<span class="kn">from</span> <span class="nn">env_setup</span> <span class="kn">import</span> <span class="n">environment_setup</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">env_setup</span><span class="w"> </span><span class="kn">import</span> <span class="n">environment_setup</span>
 
 <span class="c1"># Importing file manager</span>
-<span class="kn">from</span> <span class="nn">file_manager.n100.file_manager_buildings</span> <span class="kn">import</span> <span class="n">Building_N100</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">file_manager.n100.file_manager_buildings</span><span class="w"> </span><span class="kn">import</span> <span class="n">Building_N100</span>
 
 <span class="c1"># Importing timing decorator</span>
-<span class="kn">from</span> <span class="nn">custom_tools.decorators.timing_decorator</span> <span class="kn">import</span> <span class="n">timing_decorator</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">custom_tools.decorators.timing_decorator</span><span class="w"> </span><span class="kn">import</span> <span class="n">timing_decorator</span>
 
 
 <div class="viewcode-block" id="main">
 <a class="viewcode-back" href="../../../../generated_docs/generalization.n100.building.html#generalization.n100.building.point_propogate_displacement.main">[docs]</a>
 <span class="nd">@timing_decorator</span>
-<span class="k">def</span> <span class="nf">main</span><span class="p">():</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">main</span><span class="p">():</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Propagates displacement for building points to ensure their alignment with roads is adjusted</span>
 <span class="sd">    after the road generalization process.</span>
@@ -104,7 +104,7 @@
 <div class="viewcode-block" id="propagate_displacement_building_points">
 <a class="viewcode-back" href="../../../../generated_docs/generalization.n100.building.html#generalization.n100.building.point_propogate_displacement.propagate_displacement_building_points">[docs]</a>
 <span class="nd">@timing_decorator</span>
-<span class="k">def</span> <span class="nf">propagate_displacement_building_points</span><span class="p">():</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">propagate_displacement_building_points</span><span class="p">():</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    First copies the data to be able to compare the changes due to PropagateDisplacement modifies input. Then propagates</span>
 <span class="sd">    displacement for building polygons to ensure their alignment with roads is adjusted after the road generalization process.</span>

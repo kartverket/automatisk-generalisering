@@ -6,7 +6,7 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>file_manager.base_file_manager &mdash; Automatisk Generalisering 0.0.1 documentation</title>
-      <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=80d5e7a1" />
+      <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=b86133f3" />
       <link rel="stylesheet" type="text/css" href="../../_static/css/theme.css?v=e59714d7" />
       <link rel="stylesheet" type="text/css" href="../../_static/custom.css" />
 
@@ -75,15 +75,15 @@
            <div itemprop="articleBody">
              
   <h1>Source code for file_manager.base_file_manager</h1><div class="highlight"><pre>
-<span></span><span class="kn">import</span> <span class="nn">re</span>
+<span></span><span class="kn">import</span><span class="w"> </span><span class="nn">re</span>
 
-<span class="kn">import</span> <span class="nn">config</span>
-<span class="kn">import</span> <span class="nn">env_setup.global_config</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">config</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">env_setup.global_config</span>
 
 
 <div class="viewcode-block" id="BaseFileManager">
 <a class="viewcode-back" href="../../generated_docs/file_manager.html#file_manager.base_file_manager.BaseFileManager">[docs]</a>
-<span class="k">class</span> <span class="nc">BaseFileManager</span><span class="p">:</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">BaseFileManager</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    The core file manager class handles the creation of absolute paths across our project,</span>
 <span class="sd">    imported in different file managers.</span>
@@ -120,7 +120,7 @@
     <span class="n">general_files_directory_name</span> <span class="o">=</span> <span class="n">env_setup</span><span class="o">.</span><span class="n">global_config</span><span class="o">.</span><span class="n">general_files_name</span>
     <span class="n">lyrx_directory_name</span> <span class="o">=</span> <span class="n">env_setup</span><span class="o">.</span><span class="n">global_config</span><span class="o">.</span><span class="n">lyrx_directory_name</span>
 
-    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
         <span class="n">scale</span><span class="p">,</span>
         <span class="n">object_name</span><span class="p">,</span>
@@ -141,27 +141,27 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">relative_path_final_outputs</span> <span class="o">=</span> <span class="sa">rf</span><span class="s2">&quot;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">local_root_directory</span><span class="si">}</span><span class="s2">\</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">project_root_directory</span><span class="si">}</span><span class="s2">\</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">scale</span><span class="si">}</span><span class="s2">\</span><span class="si">{</span><span class="n">env_setup</span><span class="o">.</span><span class="n">global_config</span><span class="o">.</span><span class="n">final_outputs</span><span class="si">}</span><span class="s2">.gdb&quot;</span>
 
     <span class="nd">@property</span>
-    <span class="k">def</span> <span class="nf">script_source_name</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">script_source_name</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_script_source_name</span>
 
     <span class="nd">@script_source_name</span><span class="o">.</span><span class="n">setter</span>
-    <span class="k">def</span> <span class="nf">script_source_name</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">value</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">script_source_name</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">value</span><span class="p">):</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">_validate_input</span><span class="p">(</span><span class="n">value</span><span class="p">):</span>
             <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;script_source_name must not contain spaces or dots.&quot;</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_script_source_name</span> <span class="o">=</span> <span class="n">value</span>
 
     <span class="nd">@property</span>
-    <span class="k">def</span> <span class="nf">description</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">description</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_description</span>
 
     <span class="nd">@description</span><span class="o">.</span><span class="n">setter</span>
-    <span class="k">def</span> <span class="nf">description</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">value</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">description</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">value</span><span class="p">):</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">_validate_input</span><span class="p">(</span><span class="n">value</span><span class="p">):</span>
             <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;description must not contain spaces or dots.&quot;</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_description</span> <span class="o">=</span> <span class="n">value</span>
 
     <span class="nd">@staticmethod</span>
-    <span class="k">def</span> <span class="nf">_validate_input</span><span class="p">(</span><span class="n">value</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_validate_input</span><span class="p">(</span><span class="n">value</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Validate the input to ensure it does not contain illegal characters for filenames or whitespace.&quot;&quot;&quot;</span>
         <span class="n">illegal_characters</span> <span class="o">=</span> <span class="sa">r</span><span class="s1">&#39;[&lt;&gt;:&quot;/\|?*\s]&#39;</span>
         <span class="k">if</span> <span class="n">re</span><span class="o">.</span><span class="n">search</span><span class="p">(</span><span class="n">illegal_characters</span><span class="p">,</span> <span class="n">value</span><span class="p">):</span>
@@ -170,7 +170,7 @@
 
 <div class="viewcode-block" id="BaseFileManager.validate_inputs">
 <a class="viewcode-back" href="../../generated_docs/file_manager.html#file_manager.base_file_manager.BaseFileManager.validate_inputs">[docs]</a>
-    <span class="k">def</span> <span class="nf">validate_inputs</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">validate_inputs</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Uses the validate_input method to validate the input.&quot;&quot;&quot;</span>
         <span class="k">for</span> <span class="n">arg</span> <span class="ow">in</span> <span class="n">args</span><span class="p">:</span>
             <span class="k">if</span> <span class="n">arg</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">_validate_input</span><span class="p">(</span><span class="n">arg</span><span class="p">):</span>
@@ -179,7 +179,7 @@
 
 <div class="viewcode-block" id="BaseFileManager.generate_file_name_gdb">
 <a class="viewcode-back" href="../../generated_docs/file_manager.html#file_manager.base_file_manager.BaseFileManager.generate_file_name_gdb">[docs]</a>
-    <span class="k">def</span> <span class="nf">generate_file_name_gdb</span><span class="p">(</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">generate_file_name_gdb</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
         <span class="n">script_source_name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
         <span class="n">description</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
@@ -200,7 +200,7 @@
 
 <div class="viewcode-block" id="BaseFileManager.generate_file_name_general_files">
 <a class="viewcode-back" href="../../generated_docs/file_manager.html#file_manager.base_file_manager.BaseFileManager.generate_file_name_general_files">[docs]</a>
-    <span class="k">def</span> <span class="nf">generate_file_name_general_files</span><span class="p">(</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">generate_file_name_general_files</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
         <span class="n">script_source_name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
         <span class="n">description</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
@@ -223,7 +223,7 @@
 
 <div class="viewcode-block" id="BaseFileManager.generate_file_name_general_directory">
 <a class="viewcode-back" href="../../generated_docs/file_manager.html#file_manager.base_file_manager.BaseFileManager.generate_file_name_general_directory">[docs]</a>
-    <span class="k">def</span> <span class="nf">generate_file_name_general_directory</span><span class="p">(</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">generate_file_name_general_directory</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
         <span class="n">script_source_name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
         <span class="n">description</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
@@ -246,7 +246,7 @@
 
 <div class="viewcode-block" id="BaseFileManager.generate_file_name_lyrx">
 <a class="viewcode-back" href="../../generated_docs/file_manager.html#file_manager.base_file_manager.BaseFileManager.generate_file_name_lyrx">[docs]</a>
-    <span class="k">def</span> <span class="nf">generate_file_name_lyrx</span><span class="p">(</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">generate_file_name_lyrx</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
         <span class="n">script_source_name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
         <span class="n">description</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
@@ -267,7 +267,7 @@
 
 <div class="viewcode-block" id="BaseFileManager.generate_file_lyrx_directory">
 <a class="viewcode-back" href="../../generated_docs/file_manager.html#file_manager.base_file_manager.BaseFileManager.generate_file_lyrx_directory">[docs]</a>
-    <span class="k">def</span> <span class="nf">generate_file_lyrx_directory</span><span class="p">(</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">generate_file_lyrx_directory</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
         <span class="n">script_source_name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
         <span class="n">description</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
@@ -288,7 +288,7 @@
 
 <div class="viewcode-block" id="BaseFileManager.generate_final_outputs">
 <a class="viewcode-back" href="../../generated_docs/file_manager.html#file_manager.base_file_manager.BaseFileManager.generate_final_outputs">[docs]</a>
-    <span class="k">def</span> <span class="nf">generate_final_outputs</span><span class="p">(</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">generate_final_outputs</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
         <span class="n">file_name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
     <span class="p">):</span>

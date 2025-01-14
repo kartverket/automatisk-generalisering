@@ -6,7 +6,7 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>custom_tools.generalization_tools.building.begrensningskurve_land_waterbodies &mdash; Automatisk Generalisering 0.0.1 documentation</title>
-      <link rel="stylesheet" type="text/css" href="../../../../_static/pygments.css?v=80d5e7a1" />
+      <link rel="stylesheet" type="text/css" href="../../../../_static/pygments.css?v=b86133f3" />
       <link rel="stylesheet" type="text/css" href="../../../../_static/css/theme.css?v=e59714d7" />
       <link rel="stylesheet" type="text/css" href="../../../../_static/custom.css" />
 
@@ -75,24 +75,24 @@
            <div itemprop="articleBody">
              
   <h1>Source code for custom_tools.generalization_tools.building.begrensningskurve_land_waterbodies</h1><div class="highlight"><pre>
-<span></span><span class="kn">import</span> <span class="nn">arcpy</span>
+<span></span><span class="kn">import</span><span class="w"> </span><span class="nn">arcpy</span>
 
 
-<span class="kn">from</span> <span class="nn">input_data</span> <span class="kn">import</span> <span class="n">input_n100</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">input_data</span><span class="w"> </span><span class="kn">import</span> <span class="n">input_n100</span>
 
 <span class="c1"># Importing custom modules</span>
-<span class="kn">from</span> <span class="nn">file_manager.n100.file_manager_buildings</span> <span class="kn">import</span> <span class="n">Building_N100</span>
-<span class="kn">from</span> <span class="nn">env_setup</span> <span class="kn">import</span> <span class="n">environment_setup</span>
-<span class="kn">from</span> <span class="nn">custom_tools.decorators.partition_io_decorator</span> <span class="kn">import</span> <span class="n">partition_io_decorator</span>
-<span class="kn">from</span> <span class="nn">custom_tools.general_tools</span> <span class="kn">import</span> <span class="n">custom_arcpy</span>
-<span class="kn">from</span> <span class="nn">custom_tools.general_tools.file_utilities</span> <span class="kn">import</span> <span class="n">WorkFileManager</span>
-<span class="kn">from</span> <span class="nn">constants.n100_constants</span> <span class="kn">import</span> <span class="n">N100_Values</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">file_manager.n100.file_manager_buildings</span><span class="w"> </span><span class="kn">import</span> <span class="n">Building_N100</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">env_setup</span><span class="w"> </span><span class="kn">import</span> <span class="n">environment_setup</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">custom_tools.decorators.partition_io_decorator</span><span class="w"> </span><span class="kn">import</span> <span class="n">partition_io_decorator</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">custom_tools.general_tools</span><span class="w"> </span><span class="kn">import</span> <span class="n">custom_arcpy</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">custom_tools.general_tools.file_utilities</span><span class="w"> </span><span class="kn">import</span> <span class="n">WorkFileManager</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">constants.n100_constants</span><span class="w"> </span><span class="kn">import</span> <span class="n">N100_Values</span>
 
 
 <div class="viewcode-block" id="BegrensningskurveLandWaterbodies">
 <a class="viewcode-back" href="../../../../generated_docs/custom_tools.generalization_tools.building.html#custom_tools.generalization_tools.building.begrensningskurve_land_waterbodies.BegrensningskurveLandWaterbodies">[docs]</a>
-<span class="k">class</span> <span class="nc">BegrensningskurveLandWaterbodies</span><span class="p">:</span>
-    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">BegrensningskurveLandWaterbodies</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
         <span class="n">input_begrensningskurve</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
         <span class="n">input_land_cover_features</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
@@ -160,7 +160,7 @@
 
 <div class="viewcode-block" id="BegrensningskurveLandWaterbodies.selections">
 <a class="viewcode-back" href="../../../../generated_docs/custom_tools.generalization_tools.building.html#custom_tools.generalization_tools.building.begrensningskurve_land_waterbodies.BegrensningskurveLandWaterbodies.selections">[docs]</a>
-    <span class="k">def</span> <span class="nf">selections</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">selections</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">write_work_files_to_memory</span><span class="p">:</span>
             <span class="n">custom_arcpy</span><span class="o">.</span><span class="n">select_attribute_and_make_feature_layer</span><span class="p">(</span>
                 <span class="n">input_layer</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">input_begrensningskurve</span><span class="p">,</span>
@@ -216,7 +216,7 @@
 
 <div class="viewcode-block" id="BegrensningskurveLandWaterbodies.field_management">
 <a class="viewcode-back" href="../../../../generated_docs/custom_tools.generalization_tools.building.html#custom_tools.generalization_tools.building.begrensningskurve_land_waterbodies.BegrensningskurveLandWaterbodies.field_management">[docs]</a>
-    <span class="k">def</span> <span class="nf">field_management</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">field_management</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="n">arcpy</span><span class="o">.</span><span class="n">management</span><span class="o">.</span><span class="n">AddField</span><span class="p">(</span>
             <span class="n">in_table</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">water_features_area</span><span class="p">,</span>
             <span class="n">field_name</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">area_length_ratio_field_name</span><span class="p">,</span>
@@ -233,7 +233,7 @@
 
 <div class="viewcode-block" id="BegrensningskurveLandWaterbodies.finding_narrow_or_not">
 <a class="viewcode-back" href="../../../../generated_docs/custom_tools.generalization_tools.building.html#custom_tools.generalization_tools.building.begrensningskurve_land_waterbodies.BegrensningskurveLandWaterbodies.finding_narrow_or_not">[docs]</a>
-    <span class="k">def</span> <span class="nf">finding_narrow_or_not</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">finding_narrow_or_not</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="n">sql_expression_narrow</span> <span class="o">=</span> <span class="sa">f</span><span class="s1">&#39;&quot;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">area_length_ratio_field_name</span><span class="si">}</span><span class="s1">&quot; &lt; 100&#39;</span>
         <span class="n">sql_expression_wide</span> <span class="o">=</span> <span class="sa">f</span><span class="s1">&#39;&quot;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">area_length_ratio_field_name</span><span class="si">}</span><span class="s1">&quot; &gt;= 100&#39;</span>
 
@@ -280,7 +280,7 @@
 
 <div class="viewcode-block" id="BegrensningskurveLandWaterbodies.creating_buffers">
 <a class="viewcode-back" href="../../../../generated_docs/custom_tools.generalization_tools.building.html#custom_tools.generalization_tools.building.begrensningskurve_land_waterbodies.BegrensningskurveLandWaterbodies.creating_buffers">[docs]</a>
-    <span class="k">def</span> <span class="nf">creating_buffers</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">creating_buffers</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="n">arcpy</span><span class="o">.</span><span class="n">analysis</span><span class="o">.</span><span class="n">PairwiseBuffer</span><span class="p">(</span>
             <span class="n">in_features</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">selected_land_features</span><span class="p">,</span>
             <span class="n">out_feature_class</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">land_features_buffer</span><span class="p">,</span>
@@ -298,7 +298,7 @@
 
 <div class="viewcode-block" id="BegrensningskurveLandWaterbodies.erase_buffers">
 <a class="viewcode-back" href="../../../../generated_docs/custom_tools.generalization_tools.building.html#custom_tools.generalization_tools.building.begrensningskurve_land_waterbodies.BegrensningskurveLandWaterbodies.erase_buffers">[docs]</a>
-    <span class="k">def</span> <span class="nf">erase_buffers</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">erase_buffers</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="n">arcpy</span><span class="o">.</span><span class="n">analysis</span><span class="o">.</span><span class="n">Erase</span><span class="p">(</span>
             <span class="n">in_features</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">begrensningskurve_waterfeatures_buffer</span><span class="p">,</span>
             <span class="n">erase_features</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">land_features_buffer</span><span class="p">,</span>
@@ -314,7 +314,7 @@
 
 <div class="viewcode-block" id="BegrensningskurveLandWaterbodies.merge_water_features">
 <a class="viewcode-back" href="../../../../generated_docs/custom_tools.generalization_tools.building.html#custom_tools.generalization_tools.building.begrensningskurve_land_waterbodies.BegrensningskurveLandWaterbodies.merge_water_features">[docs]</a>
-    <span class="k">def</span> <span class="nf">merge_water_features</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">merge_water_features</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="n">arcpy</span><span class="o">.</span><span class="n">management</span><span class="o">.</span><span class="n">Merge</span><span class="p">(</span>
             <span class="n">inputs</span><span class="o">=</span><span class="p">[</span>
                 <span class="bp">self</span><span class="o">.</span><span class="n">water_features_area_narrow</span><span class="p">,</span>
@@ -330,7 +330,7 @@
         <span class="n">input_param_names</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;input_begrensningskurve&quot;</span><span class="p">,</span> <span class="s2">&quot;input_land_cover_features&quot;</span><span class="p">],</span>
         <span class="n">output_param_names</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;output_begrensningskurve&quot;</span><span class="p">],</span>
     <span class="p">)</span>
-    <span class="k">def</span> <span class="nf">run</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">run</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="n">environment_setup</span><span class="o">.</span><span class="n">main</span><span class="p">()</span>
 
         <span class="bp">self</span><span class="o">.</span><span class="n">work_file_manager</span><span class="o">.</span><span class="n">setup_work_file_paths</span><span class="p">(</span>

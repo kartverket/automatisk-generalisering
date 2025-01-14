@@ -6,7 +6,7 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>generalization.n100.river.mst_loop &mdash; Automatisk Generalisering 0.0.1 documentation</title>
-      <link rel="stylesheet" type="text/css" href="../../../../_static/pygments.css?v=80d5e7a1" />
+      <link rel="stylesheet" type="text/css" href="../../../../_static/pygments.css?v=b86133f3" />
       <link rel="stylesheet" type="text/css" href="../../../../_static/css/theme.css?v=e59714d7" />
       <link rel="stylesheet" type="text/css" href="../../../../_static/custom.css" />
 
@@ -75,19 +75,19 @@
            <div itemprop="articleBody">
              
   <h1>Source code for generalization.n100.river.mst_loop</h1><div class="highlight"><pre>
-<span></span><span class="kn">import</span> <span class="nn">arcpy</span>
-<span class="kn">import</span> <span class="nn">os</span>
+<span></span><span class="kn">import</span><span class="w"> </span><span class="nn">arcpy</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">os</span>
 
-<span class="kn">from</span> <span class="nn">env_setup</span> <span class="kn">import</span> <span class="n">environment_setup</span>
-<span class="kn">from</span> <span class="nn">custom_tools.general_tools</span> <span class="kn">import</span> <span class="n">custom_arcpy</span>
-<span class="kn">from</span> <span class="nn">file_manager.n100.file_manager_rivers</span> <span class="kn">import</span> <span class="n">River_N100</span>
-<span class="kn">from</span> <span class="nn">input_data</span> <span class="kn">import</span> <span class="n">input_n50</span>
-<span class="kn">from</span> <span class="nn">custom_tools.general_tools.file_utilities</span> <span class="kn">import</span> <span class="n">FeatureClassCreator</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">env_setup</span><span class="w"> </span><span class="kn">import</span> <span class="n">environment_setup</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">custom_tools.general_tools</span><span class="w"> </span><span class="kn">import</span> <span class="n">custom_arcpy</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">file_manager.n100.file_manager_rivers</span><span class="w"> </span><span class="kn">import</span> <span class="n">River_N100</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">input_data</span><span class="w"> </span><span class="kn">import</span> <span class="n">input_n50</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">custom_tools.general_tools.file_utilities</span><span class="w"> </span><span class="kn">import</span> <span class="n">FeatureClassCreator</span>
 
 
 <div class="viewcode-block" id="main">
 <a class="viewcode-back" href="../../../../generated_docs/generalization.n100.river.html#generalization.n100.river.mst_loop.main">[docs]</a>
-<span class="k">def</span> <span class="nf">main</span><span class="p">():</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">main</span><span class="p">():</span>
     <span class="n">environment_setup</span><span class="o">.</span><span class="n">main</span><span class="p">()</span>
     <span class="n">prepare_data</span><span class="p">()</span>
     <span class="n">create_collapsed_centerline</span><span class="p">()</span>
@@ -121,7 +121,7 @@
 
 <div class="viewcode-block" id="prepare_data">
 <a class="viewcode-back" href="../../../../generated_docs/generalization.n100.river.html#generalization.n100.river.mst_loop.prepare_data">[docs]</a>
-<span class="k">def</span> <span class="nf">prepare_data</span><span class="p">():</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">prepare_data</span><span class="p">():</span>
     <span class="n">sql_expression_water_features</span> <span class="o">=</span> <span class="s2">&quot;OBJTYPE = &#39;FerskvannTørrfall&#39; Or OBJTYPE = &#39;Innsjø&#39; Or OBJTYPE = &#39;InnsjøRegulert&#39; Or OBJTYPE = &#39;ElvBekk&#39;&quot;</span>
     <span class="n">custom_arcpy</span><span class="o">.</span><span class="n">select_attribute_and_make_permanent_feature</span><span class="p">(</span>
         <span class="n">input_layer</span><span class="o">=</span><span class="n">input_n50</span><span class="o">.</span><span class="n">ArealdekkeFlate</span><span class="p">,</span>
@@ -241,7 +241,7 @@
 
 <div class="viewcode-block" id="extract_closed_lines">
 <a class="viewcode-back" href="../../../../generated_docs/generalization.n100.river.html#generalization.n100.river.mst_loop.extract_closed_lines">[docs]</a>
-<span class="k">def</span> <span class="nf">extract_closed_lines</span><span class="p">(</span><span class="n">input_feature_class</span><span class="p">,</span> <span class="n">output_feature_class</span><span class="p">):</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">extract_closed_lines</span><span class="p">(</span><span class="n">input_feature_class</span><span class="p">,</span> <span class="n">output_feature_class</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Extracts lines that start and end at the same point from the input feature class and</span>
 <span class="sd">    creates a new feature class containing only these closed lines.</span>
@@ -300,7 +300,7 @@
 
 <div class="viewcode-block" id="create_collapsed_centerline">
 <a class="viewcode-back" href="../../../../generated_docs/generalization.n100.river.html#generalization.n100.river.mst_loop.create_collapsed_centerline">[docs]</a>
-<span class="k">def</span> <span class="nf">create_collapsed_centerline</span><span class="p">():</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">create_collapsed_centerline</span><span class="p">():</span>
     <span class="n">custom_arcpy</span><span class="o">.</span><span class="n">select_location_and_make_permanent_feature</span><span class="p">(</span>
         <span class="n">input_layer</span><span class="o">=</span><span class="n">input_rivers</span><span class="p">,</span>
         <span class="n">overlap_type</span><span class="o">=</span><span class="n">custom_arcpy</span><span class="o">.</span><span class="n">OverlapType</span><span class="o">.</span><span class="n">BOUNDARY_TOUCHES</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
@@ -373,7 +373,7 @@
 
 <div class="viewcode-block" id="filter_complicated_lakes">
 <a class="viewcode-back" href="../../../../generated_docs/generalization.n100.river.html#generalization.n100.river.mst_loop.filter_complicated_lakes">[docs]</a>
-<span class="k">def</span> <span class="nf">filter_complicated_lakes</span><span class="p">():</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">filter_complicated_lakes</span><span class="p">():</span>
     <span class="n">arcpy</span><span class="o">.</span><span class="n">management</span><span class="o">.</span><span class="n">FeatureVerticesToPoints</span><span class="p">(</span>
         <span class="n">in_features</span><span class="o">=</span><span class="n">River_N100</span><span class="o">.</span><span class="n">centerline_pruning_loop__collapsed_hydropolygon__n100</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
         <span class="n">out_feature_class</span><span class="o">=</span><span class="n">River_N100</span><span class="o">.</span><span class="n">centerline_pruning_loop__centerline_start_end_vertex__n100</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
@@ -571,7 +571,7 @@
 
 <div class="viewcode-block" id="create_feature_class">
 <a class="viewcode-back" href="../../../../generated_docs/generalization.n100.river.html#generalization.n100.river.mst_loop.create_feature_class">[docs]</a>
-<span class="k">def</span> <span class="nf">create_feature_class</span><span class="p">():</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">create_feature_class</span><span class="p">():</span>
     <span class="c1"># create_lake_centerline_feature = FeatureClassCreator(</span>
     <span class="c1">#     template_fc=input_rivers,</span>
     <span class="c1">#     input_fc=River_N100.centerline_pruning_loop__simple_centerlines__n100.value,</span>

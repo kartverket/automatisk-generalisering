@@ -6,7 +6,7 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>file_manager.n100.file_manager_buildings &mdash; Automatisk Generalisering 0.0.1 documentation</title>
-      <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=80d5e7a1" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=b86133f3" />
       <link rel="stylesheet" type="text/css" href="../../../_static/css/theme.css?v=e59714d7" />
       <link rel="stylesheet" type="text/css" href="../../../_static/custom.css" />
 
@@ -76,9 +76,9 @@
              
   <h1>Source code for file_manager.n100.file_manager_buildings</h1><div class="highlight"><pre>
 <span></span><span class="c1"># Imports</span>
-<span class="kn">from</span> <span class="nn">enum</span> <span class="kn">import</span> <span class="n">Enum</span>
-<span class="kn">from</span> <span class="nn">env_setup</span> <span class="kn">import</span> <span class="n">global_config</span>
-<span class="kn">from</span> <span class="nn">file_manager.base_file_manager</span> <span class="kn">import</span> <span class="n">BaseFileManager</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">enum</span><span class="w"> </span><span class="kn">import</span> <span class="n">Enum</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">env_setup</span><span class="w"> </span><span class="kn">import</span> <span class="n">global_config</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">file_manager.base_file_manager</span><span class="w"> </span><span class="kn">import</span> <span class="n">BaseFileManager</span>
 
 
 <span class="c1"># Initialize BaseFileManager</span>
@@ -120,7 +120,7 @@
 
 <div class="viewcode-block" id="Building_N100">
 <a class="viewcode-back" href="../../../generated_docs/file_manager.n100.html#file_manager.n100.file_manager_buildings.Building_N100">[docs]</a>
-<span class="k">class</span> <span class="nc">Building_N100</span><span class="p">(</span><span class="n">Enum</span><span class="p">):</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">Building_N100</span><span class="p">(</span><span class="n">Enum</span><span class="p">):</span>
 
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    An enumeration for building-related geospatial data file paths within the N100 scale and building object context.</span>
@@ -1317,6 +1317,13 @@
 
     <span class="n">Piktogram</span> <span class="o">=</span> <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_final_outputs</span><span class="p">(</span>
         <span class="n">file_name</span><span class="o">=</span><span class="s2">&quot;Piktogram&quot;</span><span class="p">,</span>
+    <span class="p">)</span>
+
+    <span class="n">point_resolve_building_conflicts___new_workfile_managger___n100_building</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_gdb</span><span class="p">(</span>
+            <span class="n">script_source_name</span><span class="o">=</span><span class="n">overview</span><span class="p">,</span>
+            <span class="n">description</span><span class="o">=</span><span class="s2">&quot;new_workfile_managger&quot;</span><span class="p">,</span>
+        <span class="p">)</span>
     <span class="p">)</span></div>
 
 </pre></div>

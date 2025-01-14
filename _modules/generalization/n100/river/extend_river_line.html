@@ -6,7 +6,7 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>generalization.n100.river.extend_river_line &mdash; Automatisk Generalisering 0.0.1 documentation</title>
-      <link rel="stylesheet" type="text/css" href="../../../../_static/pygments.css?v=80d5e7a1" />
+      <link rel="stylesheet" type="text/css" href="../../../../_static/pygments.css?v=b86133f3" />
       <link rel="stylesheet" type="text/css" href="../../../../_static/css/theme.css?v=e59714d7" />
       <link rel="stylesheet" type="text/css" href="../../../../_static/custom.css" />
 
@@ -75,16 +75,16 @@
            <div itemprop="articleBody">
              
   <h1>Source code for generalization.n100.river.extend_river_line</h1><div class="highlight"><pre>
-<span></span><span class="kn">import</span> <span class="nn">arcpy</span>
-<span class="kn">import</span> <span class="nn">os</span>
+<span></span><span class="kn">import</span><span class="w"> </span><span class="nn">arcpy</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">os</span>
 
-<span class="kn">from</span> <span class="nn">env_setup</span> <span class="kn">import</span> <span class="n">environment_setup</span>
-<span class="kn">from</span> <span class="nn">file_manager.n100.file_manager_rivers</span> <span class="kn">import</span> <span class="n">River_N100</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">env_setup</span><span class="w"> </span><span class="kn">import</span> <span class="n">environment_setup</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">file_manager.n100.file_manager_rivers</span><span class="w"> </span><span class="kn">import</span> <span class="n">River_N100</span>
 
 
 <div class="viewcode-block" id="main">
 <a class="viewcode-back" href="../../../../generated_docs/generalization.n100.river.html#generalization.n100.river.extend_river_line.main">[docs]</a>
-<span class="k">def</span> <span class="nf">main</span><span class="p">():</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">main</span><span class="p">():</span>
     <span class="n">environment_setup</span><span class="o">.</span><span class="n">main</span><span class="p">()</span>
     <span class="n">problematic_dangles</span><span class="p">,</span> <span class="n">all_rivers</span><span class="p">,</span> <span class="n">water_polygon</span> <span class="o">=</span> <span class="n">processing_preparation</span><span class="p">()</span>
 
@@ -116,7 +116,7 @@
 
 <div class="viewcode-block" id="processing_preparation">
 <a class="viewcode-back" href="../../../../generated_docs/generalization.n100.river.html#generalization.n100.river.extend_river_line.processing_preparation">[docs]</a>
-<span class="k">def</span> <span class="nf">processing_preparation</span><span class="p">():</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">processing_preparation</span><span class="p">():</span>
     <span class="n">arcpy</span><span class="o">.</span><span class="n">management</span><span class="o">.</span><span class="n">CopyFeatures</span><span class="p">(</span>
         <span class="n">in_features</span><span class="o">=</span><span class="n">River_N100</span><span class="o">.</span><span class="n">unconnected_river_geometry__river_area_selection__n100</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
         <span class="n">out_feature_class</span><span class="o">=</span><span class="n">River_N100</span><span class="o">.</span><span class="n">extending_river_geometry__input_rivers_copy__n100</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
@@ -155,7 +155,7 @@
 
 <div class="viewcode-block" id="exclude_originating_line">
 <a class="viewcode-back" href="../../../../generated_docs/generalization.n100.river.html#generalization.n100.river.extend_river_line.exclude_originating_line">[docs]</a>
-<span class="k">def</span> <span class="nf">exclude_originating_line</span><span class="p">(</span><span class="n">all_rivers</span><span class="p">,</span> <span class="n">dangle_oid</span><span class="p">,</span> <span class="n">id_field</span><span class="p">):</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">exclude_originating_line</span><span class="p">(</span><span class="n">all_rivers</span><span class="p">,</span> <span class="n">dangle_oid</span><span class="p">,</span> <span class="n">id_field</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Create a feature layer that excludes the line from which the dangle originates.</span>
 
@@ -175,7 +175,7 @@
 
 <div class="viewcode-block" id="generate_near_table">
 <a class="viewcode-back" href="../../../../generated_docs/generalization.n100.river.html#generalization.n100.river.extend_river_line.generate_near_table">[docs]</a>
-<span class="k">def</span> <span class="nf">generate_near_table</span><span class="p">(</span><span class="n">dangle</span><span class="p">,</span> <span class="n">near_features</span><span class="p">,</span> <span class="n">water_polygon</span><span class="p">):</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">generate_near_table</span><span class="p">(</span><span class="n">dangle</span><span class="p">,</span> <span class="n">near_features</span><span class="p">,</span> <span class="n">water_polygon</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Generate a near table for a dangle point to find the nearest feature&#39;s closest point,</span>
 <span class="sd">    considering both river and water polygon features.</span>
@@ -214,7 +214,7 @@
 
 <div class="viewcode-block" id="get_xy_coordinates">
 <a class="viewcode-back" href="../../../../generated_docs/generalization.n100.river.html#generalization.n100.river.extend_river_line.get_xy_coordinates">[docs]</a>
-<span class="k">def</span> <span class="nf">get_xy_coordinates</span><span class="p">(</span><span class="n">near_table</span><span class="p">):</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">get_xy_coordinates</span><span class="p">(</span><span class="n">near_table</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Extract the XY coordinates from the near table.</span>
 
@@ -239,7 +239,7 @@
 
 <div class="viewcode-block" id="create_lines_from_coordinates">
 <a class="viewcode-back" href="../../../../generated_docs/generalization.n100.river.html#generalization.n100.river.extend_river_line.create_lines_from_coordinates">[docs]</a>
-<span class="k">def</span> <span class="nf">create_lines_from_coordinates</span><span class="p">(</span><span class="n">line_points</span><span class="p">,</span> <span class="n">all_rivers</span><span class="p">):</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">create_lines_from_coordinates</span><span class="p">(</span><span class="n">line_points</span><span class="p">,</span> <span class="n">all_rivers</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Create new line features from the pairs of XY coordinates.</span>
 
@@ -268,7 +268,7 @@
 
 <div class="viewcode-block" id="process_new_lines">
 <a class="viewcode-back" href="../../../../generated_docs/generalization.n100.river.html#generalization.n100.river.extend_river_line.process_new_lines">[docs]</a>
-<span class="k">def</span> <span class="nf">process_new_lines</span><span class="p">(</span><span class="n">new_lines</span><span class="p">,</span> <span class="n">all_rivers</span><span class="p">):</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">process_new_lines</span><span class="p">(</span><span class="n">new_lines</span><span class="p">,</span> <span class="n">all_rivers</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Merge new line features with original river features and remove duplicates.</span>
 

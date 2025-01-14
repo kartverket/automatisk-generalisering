@@ -6,7 +6,7 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>generalization.n100.river.unconnected_river_geometry &mdash; Automatisk Generalisering 0.0.1 documentation</title>
-      <link rel="stylesheet" type="text/css" href="../../../../_static/pygments.css?v=80d5e7a1" />
+      <link rel="stylesheet" type="text/css" href="../../../../_static/pygments.css?v=b86133f3" />
       <link rel="stylesheet" type="text/css" href="../../../../_static/css/theme.css?v=e59714d7" />
       <link rel="stylesheet" type="text/css" href="../../../../_static/custom.css" />
 
@@ -75,20 +75,20 @@
            <div itemprop="articleBody">
              
   <h1>Source code for generalization.n100.river.unconnected_river_geometry</h1><div class="highlight"><pre>
-<span></span><span class="kn">import</span> <span class="nn">arcpy</span>
-<span class="kn">import</span> <span class="nn">multiprocessing</span>
-<span class="kn">from</span> <span class="nn">multiprocessing</span> <span class="kn">import</span> <span class="n">Pool</span><span class="p">,</span> <span class="n">Manager</span>
+<span></span><span class="kn">import</span><span class="w"> </span><span class="nn">arcpy</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">multiprocessing</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">multiprocessing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Pool</span><span class="p">,</span> <span class="n">Manager</span>
 
-<span class="kn">import</span> <span class="nn">config</span>
-<span class="kn">from</span> <span class="nn">env_setup</span> <span class="kn">import</span> <span class="n">environment_setup</span>
-<span class="kn">from</span> <span class="nn">input_data</span> <span class="kn">import</span> <span class="n">input_n50</span>
-<span class="kn">from</span> <span class="nn">custom_tools.general_tools</span> <span class="kn">import</span> <span class="n">custom_arcpy</span>
-<span class="kn">from</span> <span class="nn">file_manager.n100.file_manager_rivers</span> <span class="kn">import</span> <span class="n">River_N100</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">config</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">env_setup</span><span class="w"> </span><span class="kn">import</span> <span class="n">environment_setup</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">input_data</span><span class="w"> </span><span class="kn">import</span> <span class="n">input_n50</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">custom_tools.general_tools</span><span class="w"> </span><span class="kn">import</span> <span class="n">custom_arcpy</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">file_manager.n100.file_manager_rivers</span><span class="w"> </span><span class="kn">import</span> <span class="n">River_N100</span>
 
 
 <div class="viewcode-block" id="main">
 <a class="viewcode-back" href="../../../../generated_docs/generalization.n100.river.html#generalization.n100.river.unconnected_river_geometry.main">[docs]</a>
-<span class="k">def</span> <span class="nf">main</span><span class="p">():</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">main</span><span class="p">():</span>
     <span class="n">geomotry_search_tolerance</span> <span class="o">=</span> <span class="mi">15</span>
     <span class="n">id_field</span> <span class="o">=</span> <span class="s2">&quot;orig_ob_id&quot;</span>
     <span class="n">dangle_id_field</span> <span class="o">=</span> <span class="s2">&quot;dang_id&quot;</span>
@@ -149,7 +149,7 @@
 
 <div class="viewcode-block" id="copy_input_features">
 <a class="viewcode-back" href="../../../../generated_docs/generalization.n100.river.html#generalization.n100.river.unconnected_river_geometry.copy_input_features">[docs]</a>
-<span class="k">def</span> <span class="nf">copy_input_features</span><span class="p">(</span><span class="n">geomotry_search_tolerance</span><span class="p">):</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">copy_input_features</span><span class="p">(</span><span class="n">geomotry_search_tolerance</span><span class="p">):</span>
     <span class="n">custom_arcpy</span><span class="o">.</span><span class="n">select_location_and_make_permanent_feature</span><span class="p">(</span>
         <span class="n">input_layer</span><span class="o">=</span><span class="n">input_n50</span><span class="o">.</span><span class="n">ElvBekk</span><span class="p">,</span>
         <span class="n">overlap_type</span><span class="o">=</span><span class="n">custom_arcpy</span><span class="o">.</span><span class="n">OverlapType</span><span class="o">.</span><span class="n">WITHIN_A_DISTANCE</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
@@ -246,7 +246,7 @@
 
 <div class="viewcode-block" id="process_batch">
 <a class="viewcode-back" href="../../../../generated_docs/generalization.n100.river.html#generalization.n100.river.unconnected_river_geometry.process_batch">[docs]</a>
-<span class="k">def</span> <span class="nf">process_batch</span><span class="p">(</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">process_batch</span><span class="p">(</span>
     <span class="n">start</span><span class="p">,</span>
     <span class="n">end</span><span class="p">,</span>
     <span class="n">line_fc</span><span class="p">,</span>
@@ -293,7 +293,7 @@
 
 <div class="viewcode-block" id="resolve_geometry">
 <a class="viewcode-back" href="../../../../generated_docs/generalization.n100.river.html#generalization.n100.river.unconnected_river_geometry.resolve_geometry">[docs]</a>
-<span class="k">def</span> <span class="nf">resolve_geometry</span><span class="p">(</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">resolve_geometry</span><span class="p">(</span>
     <span class="n">id_field</span><span class="p">,</span>
     <span class="n">dangle_id_field</span><span class="p">,</span>
     <span class="n">all_problematic_ids</span><span class="p">,</span>

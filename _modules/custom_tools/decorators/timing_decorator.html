@@ -6,7 +6,7 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>custom_tools.decorators.timing_decorator &mdash; Automatisk Generalisering 0.0.1 documentation</title>
-      <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=80d5e7a1" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=b86133f3" />
       <link rel="stylesheet" type="text/css" href="../../../_static/css/theme.css?v=e59714d7" />
       <link rel="stylesheet" type="text/css" href="../../../_static/custom.css" />
 
@@ -75,12 +75,12 @@
            <div itemprop="articleBody">
              
   <h1>Source code for custom_tools.decorators.timing_decorator</h1><div class="highlight"><pre>
-<span></span><span class="kn">import</span> <span class="nn">time</span>
-<span class="kn">import</span> <span class="nn">inspect</span>
-<span class="kn">import</span> <span class="nn">os</span>
-<span class="kn">from</span> <span class="nn">functools</span> <span class="kn">import</span> <span class="n">wraps</span>
+<span></span><span class="kn">import</span><span class="w"> </span><span class="nn">time</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">inspect</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">os</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">functools</span><span class="w"> </span><span class="kn">import</span> <span class="n">wraps</span>
 
-<span class="kn">from</span> <span class="nn">file_manager.n100.file_manager_buildings</span> <span class="kn">import</span> <span class="n">Building_N100</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">file_manager.n100.file_manager_buildings</span><span class="w"> </span><span class="kn">import</span> <span class="n">Building_N100</span>
 
 
 <span class="n">TIMING_DECORATOR_LOG_FILE_USED</span> <span class="o">=</span> <span class="kc">False</span>
@@ -88,11 +88,11 @@
 
 <div class="viewcode-block" id="timing_decorator">
 <a class="viewcode-back" href="../../../generated_docs/custom_tools.decorators.html#custom_tools.decorators.timing_decorator.timing_decorator">[docs]</a>
-<span class="k">def</span> <span class="nf">timing_decorator</span><span class="p">(</span><span class="n">func</span><span class="p">):</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">timing_decorator</span><span class="p">(</span><span class="n">func</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Logs the execution time of a function to both the console and a log file&quot;&quot;&quot;</span>
 
     <span class="nd">@wraps</span><span class="p">(</span><span class="n">func</span><span class="p">)</span>
-    <span class="k">def</span> <span class="nf">wrapper</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">wrapper</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
         <span class="n">start_time</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span>
 
         <span class="n">result</span> <span class="o">=</span> <span class="n">func</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
@@ -121,7 +121,7 @@
 
 <div class="viewcode-block" id="format_time">
 <a class="viewcode-back" href="../../../generated_docs/custom_tools.decorators.html#custom_tools.decorators.timing_decorator.format_time">[docs]</a>
-<span class="k">def</span> <span class="nf">format_time</span><span class="p">(</span><span class="n">seconds</span><span class="p">):</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">format_time</span><span class="p">(</span><span class="n">seconds</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Convert seconds to a formatted string: HH:MM:SS.</span>
 
@@ -140,7 +140,7 @@
 
 <div class="viewcode-block" id="log_to_console_and_file">
 <a class="viewcode-back" href="../../../generated_docs/custom_tools.decorators.html#custom_tools.decorators.timing_decorator.log_to_console_and_file">[docs]</a>
-<span class="k">def</span> <span class="nf">log_to_console_and_file</span><span class="p">(</span><span class="n">function_name</span><span class="p">,</span> <span class="n">elapsed_time</span><span class="p">):</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">log_to_console_and_file</span><span class="p">(</span><span class="n">function_name</span><span class="p">,</span> <span class="n">elapsed_time</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Logs a message to both the console and a file&quot;&quot;&quot;</span>
     <span class="n">output</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">function_name</span><span class="si">}</span><span class="s2"> Execution time: </span><span class="si">{</span><span class="n">elapsed_time</span><span class="si">}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">ljust</span><span class="p">(</span><span class="mi">60</span><span class="p">)</span>
 
@@ -151,7 +151,7 @@
 
 <div class="viewcode-block" id="log_to_console">
 <a class="viewcode-back" href="../../../generated_docs/custom_tools.decorators.html#custom_tools.decorators.timing_decorator.log_to_console">[docs]</a>
-<span class="k">def</span> <span class="nf">log_to_console</span><span class="p">(</span><span class="n">message</span><span class="p">):</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">log_to_console</span><span class="p">(</span><span class="n">message</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Prints a given message to the console&quot;&quot;&quot;</span>
     <span class="nb">print</span><span class="p">(</span><span class="n">message</span><span class="p">)</span></div>
 
@@ -159,7 +159,7 @@
 
 <div class="viewcode-block" id="log_to_file">
 <a class="viewcode-back" href="../../../generated_docs/custom_tools.decorators.html#custom_tools.decorators.timing_decorator.log_to_file">[docs]</a>
-<span class="k">def</span> <span class="nf">log_to_file</span><span class="p">(</span><span class="n">message</span><span class="p">):</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">log_to_file</span><span class="p">(</span><span class="n">message</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Writes a given message to a log file&quot;&quot;&quot;</span>
 
     <span class="k">global</span> <span class="n">TIMING_DECORATOR_LOG_FILE_USED</span>

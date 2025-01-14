@@ -6,7 +6,7 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>generalization.n100.building.simplify_polygons &mdash; Automatisk Generalisering 0.0.1 documentation</title>
-      <link rel="stylesheet" type="text/css" href="../../../../_static/pygments.css?v=80d5e7a1" />
+      <link rel="stylesheet" type="text/css" href="../../../../_static/pygments.css?v=b86133f3" />
       <link rel="stylesheet" type="text/css" href="../../../../_static/css/theme.css?v=e59714d7" />
       <link rel="stylesheet" type="text/css" href="../../../../_static/custom.css" />
 
@@ -76,24 +76,24 @@
              
   <h1>Source code for generalization.n100.building.simplify_polygons</h1><div class="highlight"><pre>
 <span></span><span class="c1"># Importing modules</span>
-<span class="kn">import</span> <span class="nn">arcpy</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">arcpy</span>
 
 <span class="c1"># Importing custom modules</span>
-<span class="kn">from</span> <span class="nn">env_setup</span> <span class="kn">import</span> <span class="n">environment_setup</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">env_setup</span><span class="w"> </span><span class="kn">import</span> <span class="n">environment_setup</span>
 
-<span class="kn">from</span> <span class="nn">file_manager.n100.file_manager_buildings</span> <span class="kn">import</span> <span class="n">Building_N100</span>
-<span class="kn">from</span> <span class="nn">custom_tools.general_tools</span> <span class="kn">import</span> <span class="n">custom_arcpy</span>
-<span class="kn">from</span> <span class="nn">constants.n100_constants</span> <span class="kn">import</span> <span class="n">N100_Values</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">file_manager.n100.file_manager_buildings</span><span class="w"> </span><span class="kn">import</span> <span class="n">Building_N100</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">custom_tools.general_tools</span><span class="w"> </span><span class="kn">import</span> <span class="n">custom_arcpy</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">constants.n100_constants</span><span class="w"> </span><span class="kn">import</span> <span class="n">N100_Values</span>
 
 <span class="c1"># Importing timing decorator</span>
-<span class="kn">from</span> <span class="nn">custom_tools.decorators.timing_decorator</span> <span class="kn">import</span> <span class="n">timing_decorator</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">custom_tools.decorators.timing_decorator</span><span class="w"> </span><span class="kn">import</span> <span class="n">timing_decorator</span>
 
 
 <span class="c1"># Main function</span>
 <div class="viewcode-block" id="main">
 <a class="viewcode-back" href="../../../../generated_docs/generalization.n100.building.html#generalization.n100.building.simplify_polygons.main">[docs]</a>
 <span class="nd">@timing_decorator</span>
-<span class="k">def</span> <span class="nf">main</span><span class="p">():</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">main</span><span class="p">():</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    What:</span>
 <span class="sd">        Simplify building polygons to make them easier to read and fit around other features at a N100 map scale.</span>
@@ -130,7 +130,7 @@
 <div class="viewcode-block" id="aggregate_polygons">
 <a class="viewcode-back" href="../../../../generated_docs/generalization.n100.building.html#generalization.n100.building.simplify_polygons.aggregate_polygons">[docs]</a>
 <span class="nd">@timing_decorator</span>
-<span class="k">def</span> <span class="nf">aggregate_polygons</span><span class="p">():</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">aggregate_polygons</span><span class="p">():</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Aggregates small gaps between building polygons of the same type and fills in holes within building polygons.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
@@ -170,7 +170,7 @@
 <div class="viewcode-block" id="simplify_buildings_1">
 <a class="viewcode-back" href="../../../../generated_docs/generalization.n100.building.html#generalization.n100.building.simplify_polygons.simplify_buildings_1">[docs]</a>
 <span class="nd">@timing_decorator</span>
-<span class="k">def</span> <span class="nf">simplify_buildings_1</span><span class="p">():</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">simplify_buildings_1</span><span class="p">():</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Simplifies building polygons to optimize for N100 using SimplifyBuilding. Building polygons that are under the minimum area value will be transformed to points.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
@@ -191,7 +191,7 @@
 <div class="viewcode-block" id="simplify_polygons">
 <a class="viewcode-back" href="../../../../generated_docs/generalization.n100.building.html#generalization.n100.building.simplify_polygons.simplify_polygons">[docs]</a>
 <span class="nd">@timing_decorator</span>
-<span class="k">def</span> <span class="nf">simplify_polygons</span><span class="p">():</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">simplify_polygons</span><span class="p">():</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Simplifies building polygons to optimize for N100 using SimplifyPolygon. Building polygons that are under the minimum area value will be transformed to points.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
@@ -213,7 +213,7 @@
 <div class="viewcode-block" id="simplify_buildings_2">
 <a class="viewcode-back" href="../../../../generated_docs/generalization.n100.building.html#generalization.n100.building.simplify_polygons.simplify_buildings_2">[docs]</a>
 <span class="nd">@timing_decorator</span>
-<span class="k">def</span> <span class="nf">simplify_buildings_2</span><span class="p">():</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">simplify_buildings_2</span><span class="p">():</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Simplifies building polygons to optimize for N100 using SimplifyBuilding. Building polygons that are under the minimum area value will be transformed to points.</span>
 <span class="sd">    Does the simplify in multiple steps to get better results.</span>
@@ -234,7 +234,7 @@
 <div class="viewcode-block" id="spatial_join_polygons">
 <a class="viewcode-back" href="../../../../generated_docs/generalization.n100.building.html#generalization.n100.building.simplify_polygons.spatial_join_polygons">[docs]</a>
 <span class="nd">@timing_decorator</span>
-<span class="k">def</span> <span class="nf">spatial_join_polygons</span><span class="p">():</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">spatial_join_polygons</span><span class="p">():</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Performs spatial join between simplified building polygons and original building polygons.</span>
 <span class="sd">    Adds specific fields and assigns values to the building polygons, which will be useful for later in Resolve Building Conflict</span>

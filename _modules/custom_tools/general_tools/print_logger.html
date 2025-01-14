@@ -6,7 +6,7 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>custom_tools.general_tools.print_logger &mdash; Automatisk Generalisering 0.0.1 documentation</title>
-      <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=80d5e7a1" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=b86133f3" />
       <link rel="stylesheet" type="text/css" href="../../../_static/css/theme.css?v=e59714d7" />
       <link rel="stylesheet" type="text/css" href="../../../_static/custom.css" />
 
@@ -75,11 +75,11 @@
            <div itemprop="articleBody">
              
   <h1>Source code for custom_tools.general_tools.print_logger</h1><div class="highlight"><pre>
-<span></span><span class="kn">import</span> <span class="nn">logging</span>
-<span class="kn">import</span> <span class="nn">os</span>
+<span></span><span class="kn">import</span><span class="w"> </span><span class="nn">logging</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">os</span>
 
-<span class="kn">import</span> <span class="nn">env_setup.global_config</span>
-<span class="kn">import</span> <span class="nn">config</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">env_setup.global_config</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">config</span>
 
 <span class="c1"># Local root directory</span>
 <span class="n">local_root_directory</span> <span class="o">=</span> <span class="n">config</span><span class="o">.</span><span class="n">output_folder</span>
@@ -96,7 +96,7 @@
 
 <div class="viewcode-block" id="LogPath">
 <a class="viewcode-back" href="../../../generated_docs/custom_tools.general_tools.html#custom_tools.general_tools.print_logger.LogPath">[docs]</a>
-<span class="k">class</span> <span class="nc">LogPath</span><span class="p">:</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">LogPath</span><span class="p">:</span>
     <span class="n">N100Building</span> <span class="o">=</span> <span class="sa">rf</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">local_root_directory</span><span class="si">}</span><span class="s2">\</span><span class="si">{</span><span class="n">project_root_directory</span><span class="si">}</span><span class="s2">\</span><span class="si">{</span><span class="n">env_setup</span><span class="o">.</span><span class="n">global_config</span><span class="o">.</span><span class="n">scale_n100</span><span class="si">}</span><span class="s2">\</span><span class="si">{</span><span class="n">env_setup</span><span class="o">.</span><span class="n">global_config</span><span class="o">.</span><span class="n">object_bygning</span><span class="si">}</span><span class="s2">\</span><span class="si">{</span><span class="n">general_files_directory_name</span><span class="si">}</span><span class="s2">\</span><span class="si">{</span><span class="n">logging_file_name</span><span class="si">}</span><span class="s2">&quot;</span>
     <span class="n">N100River</span> <span class="o">=</span> <span class="sa">rf</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">local_root_directory</span><span class="si">}</span><span class="s2">\</span><span class="si">{</span><span class="n">project_root_directory</span><span class="si">}</span><span class="s2">\</span><span class="si">{</span><span class="n">env_setup</span><span class="o">.</span><span class="n">global_config</span><span class="o">.</span><span class="n">scale_n100</span><span class="si">}</span><span class="s2">\</span><span class="si">{</span><span class="n">env_setup</span><span class="o">.</span><span class="n">global_config</span><span class="o">.</span><span class="n">object_elv_bekk</span><span class="si">}</span><span class="s2">\</span><span class="si">{</span><span class="n">general_files_directory_name</span><span class="si">}</span><span class="s2">\</span><span class="si">{</span><span class="n">logging_file_name</span><span class="si">}</span><span class="s2">&quot;</span></div>
 
@@ -104,7 +104,7 @@
 
 <div class="viewcode-block" id="setup_logger">
 <a class="viewcode-back" href="../../../generated_docs/custom_tools.general_tools.html#custom_tools.general_tools.print_logger.setup_logger">[docs]</a>
-<span class="k">def</span> <span class="nf">setup_logger</span><span class="p">(</span><span class="n">scale</span><span class="p">,</span> <span class="n">object_type</span><span class="p">,</span> <span class="n">log_directory</span><span class="o">=</span><span class="s2">&quot;logs&quot;</span><span class="p">,</span> <span class="n">filename</span><span class="o">=</span><span class="n">logging_file_name</span><span class="p">):</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">setup_logger</span><span class="p">(</span><span class="n">scale</span><span class="p">,</span> <span class="n">object_type</span><span class="p">,</span> <span class="n">log_directory</span><span class="o">=</span><span class="s2">&quot;logs&quot;</span><span class="p">,</span> <span class="n">filename</span><span class="o">=</span><span class="n">logging_file_name</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    WORK IN PROGRESS NOT DONE</span>
 <span class="sd">    Creates a logger for the specified scale and object type.</span>

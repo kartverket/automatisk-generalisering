@@ -6,7 +6,7 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>env_setup.environment_setup &mdash; Automatisk Generalisering 0.0.1 documentation</title>
-      <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=80d5e7a1" />
+      <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=b86133f3" />
       <link rel="stylesheet" type="text/css" href="../../_static/css/theme.css?v=e59714d7" />
       <link rel="stylesheet" type="text/css" href="../../_static/custom.css" />
 
@@ -75,12 +75,12 @@
            <div itemprop="articleBody">
              
   <h1>Source code for env_setup.environment_setup</h1><div class="highlight"><pre>
-<span></span><span class="kn">import</span> <span class="nn">arcpy</span>
-<span class="kn">import</span> <span class="nn">os</span>
-<span class="kn">from</span> <span class="nn">datetime</span> <span class="kn">import</span> <span class="n">datetime</span>
+<span></span><span class="kn">import</span><span class="w"> </span><span class="nn">arcpy</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">os</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">datetime</span><span class="w"> </span><span class="kn">import</span> <span class="n">datetime</span>
 
-<span class="kn">import</span> <span class="nn">config</span>
-<span class="kn">from</span> <span class="nn">env_setup.global_config</span> <span class="kn">import</span> <span class="p">(</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">config</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">env_setup.global_config</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
     <span class="n">final_outputs</span><span class="p">,</span>
     <span class="n">scale_n50</span><span class="p">,</span>
     <span class="n">scale_n100</span><span class="p">,</span>
@@ -101,7 +101,7 @@
 
 <div class="viewcode-block" id="main">
 <a class="viewcode-back" href="../../generated_docs/env_setup.html#env_setup.environment_setup.main">[docs]</a>
-<span class="k">def</span> <span class="nf">main</span><span class="p">():</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">main</span><span class="p">():</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Initializes and executes the setup for ArcGIS Pro environment and project directory structure.</span>
 
@@ -125,7 +125,7 @@
 
 <div class="viewcode-block" id="StartTimePrinter">
 <a class="viewcode-back" href="../../generated_docs/env_setup.html#env_setup.environment_setup.StartTimePrinter">[docs]</a>
-<span class="k">class</span> <span class="nc">StartTimePrinter</span><span class="p">:</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">StartTimePrinter</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Prints the start time/date when it is called for the first time.</span>
 
@@ -142,7 +142,7 @@
 <div class="viewcode-block" id="StartTimePrinter.print_start_time">
 <a class="viewcode-back" href="../../generated_docs/env_setup.html#env_setup.environment_setup.StartTimePrinter.print_start_time">[docs]</a>
     <span class="nd">@classmethod</span>
-    <span class="k">def</span> <span class="nf">print_start_time</span><span class="p">(</span><span class="bp">cls</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">print_start_time</span><span class="p">(</span><span class="bp">cls</span><span class="p">):</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="bp">cls</span><span class="o">.</span><span class="n">_has_printed</span><span class="p">:</span>
             <span class="n">start_time</span> <span class="o">=</span> <span class="n">datetime</span><span class="o">.</span><span class="n">now</span><span class="p">()</span><span class="o">.</span><span class="n">strftime</span><span class="p">(</span><span class="s2">&quot;%Y-%m-</span><span class="si">%d</span><span class="s2"> %H:%M:%S&quot;</span><span class="p">)</span>
             <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2">Script start time: </span><span class="si">{</span><span class="n">start_time</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
@@ -153,7 +153,7 @@
 
 <div class="viewcode-block" id="ArcGisEnvironmentSetup">
 <a class="viewcode-back" href="../../generated_docs/env_setup.html#env_setup.environment_setup.ArcGisEnvironmentSetup">[docs]</a>
-<span class="k">class</span> <span class="nc">ArcGisEnvironmentSetup</span><span class="p">:</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">ArcGisEnvironmentSetup</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Configures and initializes the ArcGIS Pro environment settings.</span>
 
@@ -176,7 +176,7 @@
 
     <span class="n">_setup_done_globally</span> <span class="o">=</span> <span class="kc">False</span>
 
-    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
         <span class="n">workspace</span><span class="o">=</span><span class="n">config</span><span class="o">.</span><span class="n">default_project_workspace</span><span class="p">,</span>
         <span class="n">spatial_reference</span><span class="o">=</span><span class="mi">25833</span><span class="p">,</span>
@@ -186,7 +186,7 @@
 
 <div class="viewcode-block" id="ArcGisEnvironmentSetup.setup">
 <a class="viewcode-back" href="../../generated_docs/env_setup.html#env_setup.environment_setup.ArcGisEnvironmentSetup.setup">[docs]</a>
-    <span class="k">def</span> <span class="nf">setup</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">setup</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="k">if</span> <span class="n">ArcGisEnvironmentSetup</span><span class="o">.</span><span class="n">_setup_done_globally</span><span class="p">:</span>
             <span class="k">return</span>
 
@@ -214,7 +214,7 @@
 
 <div class="viewcode-block" id="ProjectDirectorySetup">
 <a class="viewcode-back" href="../../generated_docs/env_setup.html#env_setup.environment_setup.ProjectDirectorySetup">[docs]</a>
-<span class="k">class</span> <span class="nc">ProjectDirectorySetup</span><span class="p">:</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">ProjectDirectorySetup</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Creates and configures the project directory structure and geodatabases.</span>
 
@@ -236,7 +236,7 @@
 
     <span class="n">_setup_done_globally</span> <span class="o">=</span> <span class="kc">False</span>
 
-    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">base_directory</span><span class="o">=</span><span class="n">config</span><span class="o">.</span><span class="n">output_folder</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">base_directory</span><span class="o">=</span><span class="n">config</span><span class="o">.</span><span class="n">output_folder</span><span class="p">):</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">base_directory</span> <span class="o">=</span> <span class="n">base_directory</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">sub_directories</span> <span class="o">=</span> <span class="p">[</span>
             <span class="n">scale_n50</span><span class="p">,</span>
@@ -255,7 +255,7 @@
 
 <div class="viewcode-block" id="ProjectDirectorySetup.setup">
 <a class="viewcode-back" href="../../generated_docs/env_setup.html#env_setup.environment_setup.ProjectDirectorySetup.setup">[docs]</a>
-    <span class="k">def</span> <span class="nf">setup</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">setup</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="k">if</span> <span class="n">ProjectDirectorySetup</span><span class="o">.</span><span class="n">_setup_done_globally</span><span class="p">:</span>
             <span class="k">return</span>
 
@@ -275,7 +275,7 @@
 
 <div class="viewcode-block" id="ProjectDirectorySetup.create_directory_structure">
 <a class="viewcode-back" href="../../generated_docs/env_setup.html#env_setup.environment_setup.ProjectDirectorySetup.create_directory_structure">[docs]</a>
-    <span class="k">def</span> <span class="nf">create_directory_structure</span><span class="p">(</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">create_directory_structure</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
         <span class="n">main_directory_path</span><span class="p">,</span>
     <span class="p">):</span>
@@ -290,7 +290,7 @@
 
 <div class="viewcode-block" id="ProjectDirectorySetup.create_gdbs_in_subdirectories">
 <a class="viewcode-back" href="../../generated_docs/env_setup.html#env_setup.environment_setup.ProjectDirectorySetup.create_gdbs_in_subdirectories">[docs]</a>
-    <span class="k">def</span> <span class="nf">create_gdbs_in_subdirectories</span><span class="p">(</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">create_gdbs_in_subdirectories</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
         <span class="n">main_directory_path</span><span class="p">,</span>
     <span class="p">):</span>
@@ -310,7 +310,7 @@
 
 <div class="viewcode-block" id="ProjectDirectorySetup.create_subdirectory_structure">
 <a class="viewcode-back" href="../../generated_docs/env_setup.html#env_setup.environment_setup.ProjectDirectorySetup.create_subdirectory_structure">[docs]</a>
-    <span class="k">def</span> <span class="nf">create_subdirectory_structure</span><span class="p">(</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">create_subdirectory_structure</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
         <span class="n">main_directory_path</span><span class="p">,</span>
         <span class="n">subdir_structure</span><span class="p">,</span>

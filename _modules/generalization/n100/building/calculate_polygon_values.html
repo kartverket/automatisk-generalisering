@@ -6,7 +6,7 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>generalization.n100.building.calculate_polygon_values &mdash; Automatisk Generalisering 0.0.1 documentation</title>
-      <link rel="stylesheet" type="text/css" href="../../../../_static/pygments.css?v=80d5e7a1" />
+      <link rel="stylesheet" type="text/css" href="../../../../_static/pygments.css?v=b86133f3" />
       <link rel="stylesheet" type="text/css" href="../../../../_static/css/theme.css?v=e59714d7" />
       <link rel="stylesheet" type="text/css" href="../../../../_static/custom.css" />
 
@@ -76,20 +76,20 @@
              
   <h1>Source code for generalization.n100.building.calculate_polygon_values</h1><div class="highlight"><pre>
 <span></span><span class="c1"># Importing custom files</span>
-<span class="kn">from</span> <span class="nn">file_manager.n100.file_manager_buildings</span> <span class="kn">import</span> <span class="n">Building_N100</span>
-<span class="kn">from</span> <span class="nn">constants.n100_constants</span> <span class="kn">import</span> <span class="n">N100_SQLResources</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">file_manager.n100.file_manager_buildings</span><span class="w"> </span><span class="kn">import</span> <span class="n">Building_N100</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">constants.n100_constants</span><span class="w"> </span><span class="kn">import</span> <span class="n">N100_SQLResources</span>
 
 <span class="c1"># Importing general packages</span>
-<span class="kn">import</span> <span class="nn">arcpy</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">arcpy</span>
 
 <span class="c1"># Importing timing decorator</span>
-<span class="kn">from</span> <span class="nn">custom_tools.decorators.timing_decorator</span> <span class="kn">import</span> <span class="n">timing_decorator</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">custom_tools.decorators.timing_decorator</span><span class="w"> </span><span class="kn">import</span> <span class="n">timing_decorator</span>
 
 
 <div class="viewcode-block" id="main">
 <a class="viewcode-back" href="../../../../generated_docs/generalization.n100.building.html#generalization.n100.building.calculate_polygon_values.main">[docs]</a>
 <span class="nd">@timing_decorator</span>
-<span class="k">def</span> <span class="nf">main</span><span class="p">():</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">main</span><span class="p">():</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    What:</span>
 <span class="sd">        Adds required fields for building point for symbology and resolves building conflicts: angle, hierarchy, and invisibility.</span>
@@ -112,7 +112,7 @@
 
 <div class="viewcode-block" id="adding_angle_hierarchy_invisibility_fields">
 <a class="viewcode-back" href="../../../../generated_docs/generalization.n100.building.html#generalization.n100.building.calculate_polygon_values.adding_angle_hierarchy_invisibility_fields">[docs]</a>
-<span class="k">def</span> <span class="nf">adding_angle_hierarchy_invisibility_fields</span><span class="p">():</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">adding_angle_hierarchy_invisibility_fields</span><span class="p">():</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Adds angle, hierarchy and invisibility fields and set their corresponding values.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
@@ -144,7 +144,7 @@
 
 <div class="viewcode-block" id="adding_symbol_val">
 <a class="viewcode-back" href="../../../../generated_docs/generalization.n100.building.html#generalization.n100.building.calculate_polygon_values.adding_symbol_val">[docs]</a>
-<span class="k">def</span> <span class="nf">adding_symbol_val</span><span class="p">():</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">adding_symbol_val</span><span class="p">():</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Adds symbol_val and reclassify NBR values for undefined nbr values</span>
 <span class="sd">    &quot;&quot;&quot;</span>
