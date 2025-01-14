@@ -1239,3 +1239,10 @@ class Building_N100(Enum):
     Piktogram = file_manager.generate_final_outputs(
         file_name="Piktogram",
     )
+
+    point_resolve_building_conflicts___new_workfile_managger___n100_building = (
+        file_manager.generate_file_name_gdb(
+            script_source_name=overview,
+            description="new_workfile_managger",
+        )
+    )

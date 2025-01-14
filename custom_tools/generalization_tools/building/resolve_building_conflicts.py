@@ -273,11 +273,11 @@ class ResolveBuildingConflicts:
                 "false",
                 f"{self.railway_barrier_gap} Meters",
             ],
-            [
-                self.road_barrier_lyrx,
-                "false",
-                f"{self.road_barrier_gap} Meters",
-            ],
+            # [
+            #     self.road_barrier_lyrx,
+            #     "false",
+            #     f"{self.road_barrier_gap} Meters",
+            # ],
         ]
         print(f"Input barriers for RBC: {input_barriers_for_rbc}\n")
 
