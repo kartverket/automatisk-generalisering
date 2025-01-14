@@ -110,23 +110,22 @@ class WorkFileManager:
         if isinstance(file_structure, dict):
             updated = {}
             for key, value in file_structure.items():
-                if keys_to_update is None or key in keys_to_update:
+                if keys_to_update == "ALL" or (
+                    keys_to_update and key in keys_to_update
+                ):
                     updated[key] = self.setup_work_file_paths(
                         instance,
                         value,
                         keys_to_update,
-                        add_key,
-                        file_type,
+                        add_key=None,
+                        file_type=file_type,
                     )
                 else:
                     updated[key] = value
             if add_key:
-                updated[add_key] = [
-                    self._build_file_path(
-                        file_name=f"{add_key}_{i}", file_type=file_type
-                    )
-                    for i in range(len(file_structure))
-                ]
+                updated[add_key] = self._build_file_path(
+                    file_name=add_key, file_type=file_type
+                )
             return updated
 
         raise TypeError(f"Unsupported file structure type: {type(file_structure)}")
@@ -259,6 +258,7 @@ class PrintClass:
             instance=self,
             file_structure=self.structure_with_files,
             add_key="output",
+            file_type="txt",
         )
         print(f"output_files_files 2:\n{self.output_files_files_2}\n")
 
@@ -495,6 +495,41 @@ if __name__ == "__main__":
         },
     ]
 
+    example_structure_3 = [
+        {
+            "input": Building_N100.data_selection___begrensningskurve_n100_input_data___n100_building.value,
+        },
+        {
+            "input": Building_N100.data_selection___land_cover_n100_input_data___n100_building.value,
+        },
+        {
+            "input": Building_N100.data_selection___road_n100_input_data___n100_building.value,
+        },
+        {
+            "input": Building_N100.data_selection___railroad_stations_n100_input_data___n100_building.value,
+        },
+        {
+            "input": Building_N100.data_selection___railroad_tracks_n100_input_data___n100_building.value,
+        },
+        {
+            "input": Building_N100.data_selection___land_cover_n50_input_data___n100_building.value,
+        },
+        {
+            "input": Building_N100.data_selection___building_point_n50_input_data___n100_building.value,
+        },
+        {
+            "input": Building_N100.data_selection___building_polygon_n50_input_data___n100_building.value,
+        },
+        {
+            "input": Building_N100.data_selection___tourist_hut_n50_input_data___n100_building.value,
+        },
+        {
+            "input": Building_N100.data_selection___matrikkel_input_data___n100_building.value,
+        },
+        {
+            "input": Building_N100.data_selection___displacement_feature___n100_building.value,
+        },
+    ]
     input_output_file_dict = {
         input_n100.BegrensningsKurve: Building_N100.data_selection___begrensningskurve_n100_input_data___n100_building.value,
         input_n100.ArealdekkeFlate: Building_N100.data_selection___land_cover_n100_input_data___n100_building.value,
@@ -516,7 +551,7 @@ if __name__ == "__main__":
         dict_of_list_inputs=dict_of_list_inputs,
         list_of_dicts_inputs=example_structure,
         dictionary_of_dictionaries_inputs=dictionary_of_dictionaries_inputs,
-        structure_with_files=example_structure_2,
+        structure_with_files=example_structure_3,
         root_file=Building_N100.point_resolve_building_conflicts___new_workfile_managger___n100_building.value,
     )
     print_class.run()
