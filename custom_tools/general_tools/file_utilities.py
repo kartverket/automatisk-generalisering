@@ -2,6 +2,9 @@ from dataclasses import field
 
 import arcpy
 import os
+import re
+
+import env_setup.global_config
 
 
 class FeatureClassCreator:
@@ -93,6 +96,212 @@ class FeatureClassCreator:
             for row in s_cursor:
                 i_cursor.insertRow(row)
         print("Appended geometry to the feature class.")
+
+
+class WorkFileManager2:
+    general_files_directory_name = env_setup.global_config.general_files_name
+    lyrx_directory_name = env_setup.global_config.lyrx_directory_name
+
+    def __init__(
+        self,
+        unique_id: int,
+        root_file: str = None,
+        write_to_memory: bool = True,
+        keep_files: bool = False,
+    ):
+        self.unique_id = unique_id
+        self.root_file = root_file
+        self.write_to_memory = write_to_memory
+        self.keep_files = keep_files
+        self.created_paths = []
+
+        if not self.write_to_memory and not self.root_file:
+            raise ValueError(
+                "Need to specify root_file path to write to disk for work files."
+            )
+
+        if self.keep_files and not self.root_file:
+            raise ValueError(
+                "Need to specify root_file path and write to disk to keep work files."
+            )
+
+        self.file_location = "memory/" if self.write_to_memory else f"{self.root_file}_"
+
+    def modify_path(self) -> str:
+        """
+        Modifies the given path by removing the unwanted portion up to the scale directory.
+
+        Returns:
+            str: The modified path.
+        """
+        # Define regex pattern to find the scale directory (ends with a digit followed by \\)
+        match = re.search(r"\\\w+\d0\\", self.root_file)
+        if not match:
+            raise ValueError("Scale directory pattern not found in the path.")
+        if self.write_to_memory:
+            raise ValueError(
+                "Other file types than gdb are not supported in memory mode."
+            )
+
+        # Extract the root up to the scale directory
+        scale_path = self.root_file[: match.end()]
+
+        return scale_path
+
+    def _build_file_path(
+        self,
+        file_name: str,
+        file_type: str = "gdb",
+    ) -> str:
+        """
+        Constructs a file path based on the file name and type.
+        """
+
+        if file_type == "gdb":
+            path = f"{self.file_location}{file_name}_{self.unique_id}"
+        else:
+            scale_path = self.modify_path()
+
+            if file_type == "lyrx":
+                path = rf"{scale_path}{self.lyrx_directory_name}\{file_name}_{self.unique_id}.lyrx"
+
+            else:
+                path = rf"{scale_path}{self.general_files_directory_name}\{file_name}_{self.unique_id}.{file_type}"
+
+        self.created_paths.append(path)
+        return path
+
+    def setup_work_file_paths(
+        self,
+        instance,
+        file_structure,
+        keys_to_update=None,
+        add_key=None,
+        file_type="gdb",
+    ):
+        """
+        Generates file paths for supported structures and sets them as attributes on the instance.
+
+        Parameters:
+        - instance: The class instance to set attributes on.
+        - file_structure: The input structure (str, list, dict) containing file names.
+        - keys_to_update: (Optional) Keys to update in the file_structure. Pass "ALL" to update all keys.
+        - add_key: (Optional) Add a new key to the structure with constructed paths.
+        - file_type: The type of file for path construction (default: "gdb").
+        """
+        if isinstance(file_structure, str):
+            path = self._build_file_path(file_structure, file_type)
+            setattr(instance, file_structure, path)
+            return path
+
+        if isinstance(file_structure, list):
+            updated_list = [
+                self.setup_work_file_paths(
+                    instance, item, keys_to_update, add_key, file_type
+                )
+                for item in file_structure
+            ]
+            setattr(instance, "file_list", updated_list)
+            return updated_list
+
+        if isinstance(file_structure, dict):
+            updated = {}
+            for key, value in file_structure.items():
+                if keys_to_update == "ALL" or (
+                    keys_to_update and key in keys_to_update
+                ):
+                    updated_value = self.setup_work_file_paths(
+                        instance,
+                        value,
+                        keys_to_update=None,
+                        add_key=None,
+                        file_type=file_type,
+                    )
+                    updated[key] = updated_value
+                    setattr(instance, key, updated_value)
+                else:
+                    updated[key] = value
+
+            if add_key:
+                # Construct paths for the added key and set them as an attribute
+                added_path = self._build_file_path(
+                    file_name=add_key, file_type=file_type
+                )
+                updated[add_key] = added_path
+                setattr(instance, add_key, added_path)
+
+            return updated
+
+        raise TypeError(f"Unsupported file structure type: {type(file_structure)}")
+
+    def delete_created_files(
+        self,
+        delete_targets=None,
+        exceptions=None,
+        delete_files=None,
+    ):
+        """
+        Deletes created file paths, optionally filtering by targets or exceptions.
+
+        Parameters:
+        - delete_targets: (Optional) List of paths to delete. Defaults to all created paths.
+        - exceptions: (Optional) List of paths to exclude from deletion.
+        - delete_files: (Optional) Boolean flag to determine whether to delete files.
+                        Defaults to the value of `self.keep_files`.
+        """
+        # Default to `self.keep_files` if `delete_files` is not explicitly provided
+        if delete_files is None:
+            delete_files = not self.keep_files
+
+        if not delete_files:
+            print("Deletion is disabled. No files deleted.")
+            return
+
+        # Use all tracked paths if delete_targets is not provided
+        targets = delete_targets or self.created_paths
+
+        # Apply exceptions, if provided
+        if exceptions:
+            targets = [path for path in targets if path not in exceptions]
+
+        for path in targets:
+            self._delete_file(path)
+
+    @staticmethod
+    def _delete_file(file_path: str):
+        try:
+            if arcpy.Exists(file_path):
+                arcpy.management.Delete(file_path)
+                print(f"Deleted: {file_path}")
+            else:
+                print(f"File did not exist: {file_path}")
+        except arcpy.ExecuteError as e:
+            print(f"Error deleting file {file_path}: {e}")
+
+    @staticmethod
+    def apply_to_dicts(data_list, func, **key_map):
+        """
+        Applies a function to each dictionary in a list by matching specified keys.
+
+        Args:
+            data_list (list[dict]): The list of dictionaries to process.
+            func (callable): The function to apply. The keys in `key_map` should match the function parameters.
+            **key_map (str): Mapping of function parameter names to dictionary keys.
+
+        Raises:
+            KeyError: If a required key is missing from a dictionary.
+        """
+        if isinstance(data_list, list) and all(
+            isinstance(item, dict) for item in data_list
+        ):
+            print(f"\n\ndata_list is a list: {data_list}\n\n")
+
+        for dictionary in data_list:
+            try:
+                # Map function parameters to the corresponding dictionary values
+                func(**{param: dictionary[key] for param, key in key_map.items()})
+            except KeyError as e:
+                raise KeyError(f"Missing key {e} in dictionary: {dictionary}")
 
 
 class WorkFileManager:

@@ -95,17 +95,28 @@ class WorkFileManager2:
     ):
         """
         Generates file paths for supported structures and sets them as attributes on the instance.
+
+        Parameters:
+        - instance: The class instance to set attributes on.
+        - file_structure: The input structure (str, list, dict) containing file names.
+        - keys_to_update: (Optional) Keys to update in the file_structure. Pass "ALL" to update all keys.
+        - add_key: (Optional) Add a new key to the structure with constructed paths.
+        - file_type: The type of file for path construction (default: "gdb").
         """
         if isinstance(file_structure, str):
-            return self._build_file_path(file_structure, file_type)
+            path = self._build_file_path(file_structure, file_type)
+            setattr(instance, file_structure, path)
+            return path
 
         if isinstance(file_structure, list):
-            return [
+            updated_list = [
                 self.setup_work_file_paths(
                     instance, item, keys_to_update, add_key, file_type
                 )
                 for item in file_structure
             ]
+            setattr(instance, "file_list", updated_list)
+            return updated_list
 
         if isinstance(file_structure, dict):
             updated = {}
@@ -113,19 +124,26 @@ class WorkFileManager2:
                 if keys_to_update == "ALL" or (
                     keys_to_update and key in keys_to_update
                 ):
-                    updated[key] = self.setup_work_file_paths(
+                    updated_value = self.setup_work_file_paths(
                         instance,
                         value,
-                        keys_to_update,
+                        keys_to_update=None,
                         add_key=None,
                         file_type=file_type,
                     )
+                    updated[key] = updated_value
+                    setattr(instance, key, updated_value)
                 else:
                     updated[key] = value
+
             if add_key:
-                updated[add_key] = self._build_file_path(
+                # Construct paths for the added key and set them as an attribute
+                added_path = self._build_file_path(
                     file_name=add_key, file_type=file_type
                 )
+                updated[add_key] = added_path
+                setattr(instance, add_key, added_path)
+
             return updated
 
         raise TypeError(f"Unsupported file structure type: {type(file_structure)}")
@@ -340,8 +358,8 @@ class PrintClass:
         )
 
     def run(self):
-        # self.print_inputs_pre_work_manger()
-        # self.print_inputs_post_work_manger()
+        self.print_inputs_pre_work_manger()
+        self.print_inputs_post_work_manger()
         # print("\n")
         # self.selection_logic()
         # print("testing workfile manger func\n")

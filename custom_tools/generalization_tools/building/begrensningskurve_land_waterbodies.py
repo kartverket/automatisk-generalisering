@@ -1,5 +1,5 @@
 import arcpy
-
+from jinja2.nodes import Break
 
 from input_data import input_n100
 
@@ -8,7 +8,7 @@ from file_manager.n100.file_manager_buildings import Building_N100
 from env_setup import environment_setup
 from custom_tools.decorators.partition_io_decorator import partition_io_decorator
 from custom_tools.general_tools import custom_arcpy
-from custom_tools.general_tools.file_utilities import WorkFileManager
+from custom_tools.general_tools.file_utilities import WorkFileManager2
 from constants.n100_constants import N100_Values
 
 
@@ -40,7 +40,7 @@ class BegrensningskurveLandWaterbodies:
 
         self.area_length_ratio_field_name = "area_length_ratio"
 
-        self.work_file_manager = WorkFileManager(
+        self.work_file_manager = WorkFileManager2(
             unique_id=id(self),
             root_file=root_file,
             write_to_memory=write_work_files_to_memory,
@@ -234,9 +234,9 @@ class BegrensningskurveLandWaterbodies:
     def run(self):
         environment_setup.main()
 
-        self.work_file_manager.setup_work_file_paths(
+        self.work_file_list = self.work_file_manager.setup_work_file_paths(
             instance=self,
-            file_names=self.work_file_list,
+            file_structure=self.work_file_list,
         )
 
         self.selections()
@@ -246,7 +246,7 @@ class BegrensningskurveLandWaterbodies:
         self.erase_buffers()
         self.merge_water_features()
 
-        self.work_file_manager.cleanup_files(self.work_file_list)
+        self.work_file_manager.delete_created_files()
 
 
 if __name__ == "__main__":
