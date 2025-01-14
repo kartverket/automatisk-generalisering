@@ -12,7 +12,7 @@ import config
 from env_setup import environment_setup
 
 
-class WorkFileManager:
+class WorkFileManager2:
     general_files_directory_name = env_setup.global_config.general_files_name
     lyrx_directory_name = env_setup.global_config.lyrx_directory_name
 
@@ -151,18 +151,6 @@ class WorkFileManager:
     def print_created_files(self):
         print(f"Created files: {self.created_paths}")
 
-    def cleanup_files(self, file_paths):
-        """
-        Deletes files. Can handle a list of file paths or a list of lists of file paths.
-        """
-        if isinstance(file_paths[0], list):
-            for sublist in file_paths:
-                for path in sublist:
-                    self._delete_file(path)
-        else:
-            for path in file_paths:
-                self._delete_file(path)
-
     @staticmethod
     def _delete_file(file_path: str):
         try:
@@ -173,16 +161,6 @@ class WorkFileManager:
                 print(f"File did not exist: {file_path}")
         except arcpy.ExecuteError as e:
             print(f"Error deleting file {file_path}: {e}")
-
-    @staticmethod
-    def match_listed_dictionary(listed_dictionary, input_file_key, matching_file_key):
-        for listed_dict, dictionary in enumerate(listed_dictionary):
-            input_file = dictionary[input_file_key]
-            matching_file = dictionary[matching_file_key]
-
-            print(
-                f"Matching logic:\nInput file: {input_file}\nOutput file: {matching_file}\n"
-            )
 
     @staticmethod
     def apply_to_dicts(data_list, func, **key_map):
@@ -231,7 +209,7 @@ class PrintClass:
         self.root_file = root_file
         self.structure_with_files = structure_with_files
 
-        self.work_file_manager = WorkFileManager(
+        self.work_file_manager = WorkFileManager2(
             unique_id=id(self),
             root_file=root_file,
             write_to_memory=False,
@@ -341,7 +319,7 @@ class PrintClass:
                 f"Input file:{input_file}\nMatching file:{matching_file}\nOutput file: {output_file}\n"
             )
 
-        WorkFileManager.apply_to_dicts(
+        WorkFileManager2.apply_to_dicts(
             data_list=self.selection_files_list_of_dict,
             func=something_func,
             input_file="gdb",
@@ -354,7 +332,7 @@ class PrintClass:
             arcpy.management.Copy(input_file, output_file)
             print(f"Copied {input_file} to {output_file}")
 
-        WorkFileManager.apply_to_dicts(
+        WorkFileManager2.apply_to_dicts(
             data_list=self.structure_with_files,
             func=copy_func,
             input_file="input",
