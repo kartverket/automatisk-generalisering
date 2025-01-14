@@ -13,7 +13,7 @@ import input_data.input_n100
 from input_data.input_symbology import SymbologyN100
 from file_manager.n100.file_manager_buildings import Building_N100
 from file_manager.base_file_manager import BaseFileManager
-from custom_tools.general_tools.file_utilities import WorkFileManager
+from custom_tools.general_tools.file_utilities import WorkFileManager2
 from constants.n100_constants import N100_Symbology, N100_Values
 from custom_tools.general_tools.polygon_processor import PolygonProcessor
 from env_setup import environment_setup
@@ -127,14 +127,14 @@ class ResolveBuildingConflicts:
         self.output_points = output_files["building_points"]
         self.output_polygons = output_files["building_polygons"]
 
-        self.work_file_manager_gdb = WorkFileManager(
+        self.work_file_manager_gdb = WorkFileManager2(
             unique_id=id(self),
             root_file=base_path_for_features,
             write_to_memory=write_work_files_to_memory,
             keep_files=keep_work_files,
         )
 
-        self.work_file_manager_lyrx = WorkFileManager(
+        self.work_file_manager_lyrx = WorkFileManager2(
             unique_id=id(self),
             root_file=base_path_for_lyrx,
             write_to_memory=write_work_files_to_memory,
@@ -532,14 +532,15 @@ class ResolveBuildingConflicts:
     def run(self):
         environment_setup.main()
 
-        self.work_file_manager_gdb.setup_work_file_paths(
+        self.working_files_list_gdb = self.work_file_manager_gdb.setup_work_file_paths(
             instance=self,
-            file_names=self.working_files_list_gdb,
+            file_structure=self.working_files_list_gdb,
         )
 
-        self.work_file_manager_lyrx.setup_work_file_paths_lyrx(
+        self.working_files_list_gdb = self.work_file_manager_lyrx.setup_work_file_paths(
             instance=self,
-            file_names=self.working_files_list_lyrx,
+            file_structure=self.working_files_list_lyrx,
+            file_type="lyrx",
         )
 
         self.apply_symbology_to_the_layers()
@@ -553,9 +554,7 @@ class ResolveBuildingConflicts:
         self.transforming_squares_back_to_points()
         self.assigning_final_names()
 
-        self.work_file_manager_gdb.cleanup_files(
-            [self.working_files_list_gdb, self.working_files_list_lyrx]
-        )
+        self.work_file_manager_gdb.delete_created_files()
 
 
 if __name__ == "__main__":
