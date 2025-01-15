@@ -1,7 +1,7 @@
 import arcpy
 from typing import Union, List, Dict, Tuple
 
-from custom_tools.general_tools.file_utilities import WorkFileManager
+from custom_tools.general_tools.file_utilities import WorkFileManager2
 from env_setup import environment_setup
 from custom_tools.general_tools import custom_arcpy
 from file_manager.n100.file_manager_roads import Road_N100
@@ -31,7 +31,7 @@ class ResolveRoadConflicts:
             line_feature, _ = input_layer
             self.selection_copy = ""
 
-        self.work_file_manager = WorkFileManager(
+        self.work_file_manager = WorkFileManager2(
             unique_id=id(self),
             root_file=root_file,
             write_to_memory=write_work_files_to_memory,
