@@ -182,29 +182,35 @@ class WorkFileManager:
         self,
         file_name: str,
         file_type: str = "gdb",
+        index: int = None,
     ) -> str:
         """
-        What:
-            Generates a filepath for the given file name and type.
+        Generates a file path based on the file name, type, and an optional index.
 
         Args:
             file_name (str): The name of the file.
             file_type (str): The type of file to generate the path for.
+            index (int, optional): An optional index to append for uniqueness.
 
         Returns:
             str: A string representing the file path.
         """
-
+        suffix = f"___{index}" if index is not None else ""
         if file_type == "gdb":
-            path = f"{self.file_location}{file_name}_{self.unique_id}"
+            path = f"{self.file_location}{file_name}_{self.unique_id}{suffix}"
         else:
             scale_path = self._modify_path()
 
             if file_type == "lyrx":
-                path = rf"{scale_path}{self.lyrx_directory_name}\{file_name}_{self.unique_id}.lyrx"
-
+                path = rf"{scale_path}{self.lyrx_directory_name}\{file_name}_{self.unique_id}{suffix}.lyrx"
             else:
-                path = rf"{scale_path}{self.general_files_directory_name}\{file_name}_{self.unique_id}.{file_type}"
+                path = rf"{scale_path}{self.general_files_directory_name}\{file_name}_{self.unique_id}{suffix}.{file_type}"
+
+        if path in self.created_paths:
+            raise ValueError(
+                f"Duplicate path detected: {path}. "
+                "This may lead to unexpected behavior. Ensure unique file names or indices."
+            )
 
         self.created_paths.append(path)
         return path
@@ -216,6 +222,7 @@ class WorkFileManager:
         keys_to_update: str = None,
         add_key: str = None,
         file_type: str = "gdb",
+        index: int = None,
     ) -> Any:
         """
         What:
@@ -232,50 +239,77 @@ class WorkFileManager:
             keys_to_update (str, optional): Keys to update if file_structure is a dictionary.
             add_key (str, optional): An additional key to add to the dictionary.
             file_type (str, optional): The type of file path to generate. Defaults to "gdb".
+            index (int, optional): Index to ensure uniqueness in file names when processing lists of dicts.
 
         Returns:
             Any: The same structure as file_structure, updated with generated file paths.
         """
         if isinstance(file_structure, str):
-            path = self._build_file_path(file_structure, file_type)
+            # Handle single string case
+            path = self._build_file_path(file_structure, file_type, index=index)
             setattr(instance, file_structure, path)
             return path
 
         if isinstance(file_structure, list):
-            updated_list = [
-                self.setup_work_file_paths(
-                    instance, item, keys_to_update, add_key, file_type
-                )
-                for item in file_structure
-            ]
-            setattr(instance, "file_list", updated_list)
-            return updated_list
+            if all(isinstance(item, dict) for item in file_structure):
+                # Handle list of dictionaries, appending index for uniqueness
+                updated_list = []
+                for idx, dictionary in enumerate(file_structure):
+                    updated_dict = {}
+                    for key, value in dictionary.items():
+                        if keys_to_update == "ALL" or (
+                            keys_to_update and key in keys_to_update
+                        ):
+                            updated_dict[key] = self.setup_work_file_paths(
+                                instance,
+                                value,
+                                keys_to_update=None,
+                                add_key=None,
+                                file_type=file_type,
+                                index=idx,
+                            )
+                        else:
+                            updated_dict[key] = value
+                    if add_key:
+                        # Append index for uniqueness
+                        updated_dict[add_key] = self._build_file_path(
+                            file_name=add_key, file_type=file_type, index=idx
+                        )
+                    updated_list.append(updated_dict)
+                return updated_list
+            else:
+                # Handle list of strings or other items
+                updated_list = [
+                    self.setup_work_file_paths(
+                        instance, item, keys_to_update, add_key, file_type
+                    )
+                    for item in file_structure
+                ]
+                return updated_list
 
         if isinstance(file_structure, dict):
+            # Handle dictionaries
             updated = {}
             for key, value in file_structure.items():
                 if keys_to_update == "ALL" or (
                     keys_to_update and key in keys_to_update
                 ):
-                    updated_value = self.setup_work_file_paths(
+                    updated[key] = self.setup_work_file_paths(
                         instance,
                         value,
                         keys_to_update=None,
                         add_key=None,
                         file_type=file_type,
                     )
-                    updated[key] = updated_value
-                    setattr(instance, key, updated_value)
                 else:
                     updated[key] = value
 
             if add_key:
-                # Construct paths for the added key and set them as an attribute
-                added_path = self._build_file_path(
-                    file_name=add_key, file_type=file_type
+                # Append index for uniqueness
+                updated[add_key] = self._build_file_path(
+                    file_name=add_key, file_type=file_type, index=index
                 )
-                updated[add_key] = added_path
-                setattr(instance, add_key, added_path)
+                setattr(instance, add_key, updated[add_key])
 
             return updated
 
@@ -314,6 +348,24 @@ class WorkFileManager:
 
         for path in targets:
             self._delete_file(path)
+
+    @staticmethod
+    def list_contents(data: Any, title: str = "Contents"):
+        """
+        Pretty prints the contents of a data structure (list, dict, or other serializable objects).
+
+        Args:
+            data (Any): The data structure to print (list, dict, or other serializable objects).
+            title (str, optional): A title to display before printing. Defaults to "Contents".
+        """
+        print(f"\n{f' Start of: {title} ':=^120}")
+        if isinstance(data, (list, dict)):
+            import pprint
+
+            pprint.pprint(data, indent=4)
+        else:
+            print(data)
+        print(f"{f' End of: {title} ':=^120}\n")
 
     @staticmethod
     def _delete_file(file_path: str):

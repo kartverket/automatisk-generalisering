@@ -41,28 +41,24 @@ class PrintClass:
             keep_files=False,
         )
 
-        self.selection_files_list_of_dict = (
-            self.work_file_manager.setup_work_file_paths(
-                instance=self,
-                file_structure=self.list_of_dicts_inputs,
-                keys_to_update=["gdb"],
-            )
-        )
-
         self.output_files_files = self.work_file_manager.setup_work_file_paths(
             instance=self,
             file_structure=self.structure_with_files,
             keys_to_update="output",
-            file_type="txt",
         )
-        print(f"output_files_files:\n{self.output_files_files}\n")
+        # print(f"output_files_files:\n{self.output_files_files}\n")
+        self.work_file_manager.list_contents(
+            data=self.output_files_files, title="Output files"
+        )
 
         self.output_files_files_2 = self.work_file_manager.setup_work_file_paths(
             instance=self,
-            file_structure=self.structure_with_files,
-            keys_to_update="output",
+            file_structure=self.output_files_files,
+            add_key="new_output",
         )
-        print(f"output_files_files 2:\n{self.output_files_files_2}\n")
+        self.work_file_manager.list_contents(
+            data=self.output_files_files_2, title="New output files"
+        )
 
     def print_inputs_pre_work_manger(self):
         print("Printing inputs pre-work manager:\n")
@@ -85,13 +81,11 @@ class PrintClass:
         dict_inputs_post_work_manger = self.work_file_manager.setup_work_file_paths(
             instance=self,
             file_structure=self.dict_inputs,
-            keys_to_update=["gdb"],
         )
         dict_of_list_inputs_post_work_manger = (
             self.work_file_manager.setup_work_file_paths(
                 instance=self,
                 file_structure=self.dict_of_list_inputs,
-                keys_to_update="key2",
             )
         )
         list_of_dicts_inputs_post_work_manger = (
@@ -103,7 +97,6 @@ class PrintClass:
             self.work_file_manager.setup_work_file_paths(
                 instance=self,
                 file_structure=self.dictionary_of_dictionaries_inputs,
-                keys_to_update="key22",
             )
         )
 
@@ -116,28 +109,6 @@ class PrintClass:
         print(
             f"Dict of dicts input: {dictionary_of_dictionaries_inputs_post_work_manger}"
         )
-        print("\n")
-        print(f"single key update test\n: {self.selection_files_list_of_dict}\n")
-
-    @staticmethod
-    def matching_logic(input_file, matching_file):
-        print(f"Matching logic for {input_file} and {matching_file}")
-
-    def selection_logic(self):
-        for listed_dict, dictionary in enumerate(self.selection_files_list_of_dict):
-            # Ensure the item is a dictionary
-            if not isinstance(dictionary, dict):
-                raise TypeError(
-                    f"Expected a dictionary at index {dictionary}, got {type(listed_dict)}"
-                )
-
-            # Access the values
-            input_file = dictionary["gdb"]
-            matching_file = dictionary["lyrx"]
-            print(f"Input file: {input_file}")
-            print(f"Matching file: {matching_file}")
-            self.matching_logic(input_file=input_file, matching_file=matching_file)
-            print("\n")
 
     def copy_files(self):
         def copy_func(input_file, lyrx_file, output_file):
@@ -147,7 +118,7 @@ class PrintClass:
             )
 
         self.work_file_manager.apply_to_dicts(
-            data_list=self.output_files_files_2,
+            data_list=self.output_files_files,
             func=copy_func,
             input_file="input",
             lyrx_file="lyrx",
@@ -157,16 +128,13 @@ class PrintClass:
     def run(self):
         # self.print_inputs_pre_work_manger()
         # self.print_inputs_post_work_manger()
-        # print("\n")
-        # self.selection_logic()
-        # print("testing workfile manger func\n")
-        # WorkFileManager.match_listed_dictionary(
-        #     listed_dictionary=self.selection_files_list_of_dict,
-        #     input_file_key="gdb",
-        #     matching_file_key="lyrx",
-        # )
-        # self.some_logic()
+        # print(f"Structure:\n{self.output_files_files}\n\n")
+        # print(f"Structure:\n{self.output_files_files_2}\n\n")
+        # print(f"Created files:\n{self.work_file_manager.created_paths}\n")
         self.copy_files()
+        self.work_file_manager.list_contents(
+            data=self.work_file_manager.created_paths, title="Created files"
+        )
         self.work_file_manager.delete_created_files()
 
 
