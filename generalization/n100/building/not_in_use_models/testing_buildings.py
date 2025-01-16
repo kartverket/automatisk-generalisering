@@ -60,6 +60,16 @@ class PrintClass:
             data=self.output_files_files_2, title="New output files"
         )
 
+        self.output_files_files_3 = self.work_file_manager.setup_work_file_paths(
+            instance=self,
+            file_structure=self.output_files_files,
+            add_key="new_type",
+            file_type="lyrx",
+        )
+        self.work_file_manager.list_contents(
+            data=self.output_files_files_3, title="New output files"
+        )
+
     def print_inputs_pre_work_manger(self):
         print("Printing inputs pre-work manager:\n")
         print(f"String input: {self.string_inputs}")
@@ -131,11 +141,11 @@ class PrintClass:
         # print(f"Structure:\n{self.output_files_files}\n\n")
         # print(f"Structure:\n{self.output_files_files_2}\n\n")
         # print(f"Created files:\n{self.work_file_manager.created_paths}\n")
-        self.copy_files()
+        # self.copy_files()
         self.work_file_manager.list_contents(
             data=self.work_file_manager.created_paths, title="Created files"
         )
-        self.work_file_manager.delete_created_files()
+        # self.work_file_manager.delete_created_files()
 
 
 if __name__ == "__main__":

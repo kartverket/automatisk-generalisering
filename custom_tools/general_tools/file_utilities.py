@@ -156,13 +156,13 @@ class WorkFileManager:
 
         self.file_location = "memory/" if self.write_to_memory else f"{self.root_file}_"
 
-    def _modify_path(self) -> str:
+    def _modify_path(self) -> tuple[str, str]:
         """
         What:
             Modifies the given path by removing the unwanted portion up to the scale directory.
 
         Returns:
-            str: The modified path.
+            tuple[str,str]: The modified path.
         """
         # Define regex pattern to find the scale directory (ends with a digit followed by \\)
         match = re.search(r"\\\w+\d0\\", self.root_file)
@@ -176,7 +176,9 @@ class WorkFileManager:
         # Extract the root up to the scale directory
         scale_path = self.root_file[: match.end()]
 
-        return scale_path
+        # Extract the origin file name from the remaining path
+        origin_file_name = self.root_file[match.end() :].rstrip("\\")
+        return scale_path, origin_file_name
 
     def _build_file_path(
         self,
@@ -199,12 +201,12 @@ class WorkFileManager:
         if file_type == "gdb":
             path = f"{self.file_location}{file_name}_{self.unique_id}{suffix}"
         else:
-            scale_path = self._modify_path()
+            scale_path, origin_file_name = self._modify_path()
 
             if file_type == "lyrx":
-                path = rf"{scale_path}{self.lyrx_directory_name}\{file_name}_{self.unique_id}{suffix}.lyrx"
+                path = rf"{scale_path}{self.lyrx_directory_name}\{origin_file_name}_{file_name}_{self.unique_id}{suffix}.lyrx"
             else:
-                path = rf"{scale_path}{self.general_files_directory_name}\{file_name}_{self.unique_id}{suffix}.{file_type}"
+                path = rf"{scale_path}{self.general_files_directory_name}\{origin_file_name}_{file_name}_{self.unique_id}{suffix}.{file_type}"
 
         if path in self.created_paths:
             raise ValueError(
