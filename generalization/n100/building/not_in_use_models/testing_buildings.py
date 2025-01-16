@@ -127,8 +127,8 @@ class PrintClass:
                 f"\n\nCopied:\n{input_file}\nOutput:\n{output_file}\nLyrx file:\n{lyrx_file}"
             )
 
-        self.work_file_manager.apply_to_dicts(
-            data_list=self.output_files_files,
+        self.work_file_manager.apply_to_structure(
+            data=self.output_files_files,
             func=copy_func,
             input_file="input",
             lyrx_file="lyrx",
@@ -141,11 +141,11 @@ class PrintClass:
         # print(f"Structure:\n{self.output_files_files}\n\n")
         # print(f"Structure:\n{self.output_files_files_2}\n\n")
         # print(f"Created files:\n{self.work_file_manager.created_paths}\n")
-        # self.copy_files()
+        self.copy_files()
         self.work_file_manager.list_contents(
             data=self.work_file_manager.created_paths, title="Created files"
         )
-        # self.work_file_manager.delete_created_files()
+        self.work_file_manager.delete_created_files()
 
 
 if __name__ == "__main__":

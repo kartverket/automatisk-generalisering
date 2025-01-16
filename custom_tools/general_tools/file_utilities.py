@@ -246,76 +246,47 @@ class WorkFileManager:
         Returns:
             Any: The same structure as file_structure, updated with generated file paths.
         """
-        if isinstance(file_structure, str):
-            # Handle single string case
-            path = self._build_file_path(file_structure, file_type, index=index)
-            setattr(instance, file_structure, path)
-            return path
 
-        if isinstance(file_structure, list):
-            if all(isinstance(item, dict) for item in file_structure):
-                # Handle list of dictionaries, appending index for uniqueness
-                updated_list = []
-                for idx, dictionary in enumerate(file_structure):
-                    updated_dict = {}
-                    for key, value in dictionary.items():
-                        if keys_to_update == "ALL" or (
-                            keys_to_update and key in keys_to_update
-                        ):
-                            updated_dict[key] = self.setup_work_file_paths(
-                                instance,
-                                value,
-                                keys_to_update=None,
-                                add_key=None,
-                                file_type=file_type,
-                                index=idx,
-                            )
-                        else:
-                            updated_dict[key] = value
-                    if add_key:
-                        # Append index for uniqueness
-                        updated_dict[add_key] = self._build_file_path(
-                            file_name=add_key, file_type=file_type, index=idx
-                        )
-                    updated_list.append(updated_dict)
-                return updated_list
+        def process_item(item, idx=None):
+            """Processes a single item, determining its type and handling it accordingly."""
+            if isinstance(item, str):
+                return self._build_file_path(item, file_type, index=idx)
+            elif isinstance(item, dict):
+                return process_dict(item, idx)
+            elif isinstance(item, list):
+                return process_list(item)
             else:
-                # Handle list of strings or other items
-                updated_list = [
-                    self.setup_work_file_paths(
-                        instance, item, keys_to_update, add_key, file_type
-                    )
-                    for item in file_structure
-                ]
-                return updated_list
+                raise TypeError(f"Unsupported file structure type: {type(item)}")
 
-        if isinstance(file_structure, dict):
-            # Handle dictionaries
-            updated = {}
-            for key, value in file_structure.items():
+        def process_list(items):
+            """Processes a list structure."""
+            if all(isinstance(item, dict) for item in items):
+                # List of dictionaries
+                return [process_dict(item, idx) for idx, item in enumerate(items)]
+            else:
+                # List of other items (e.g., strings)
+                return [process_item(item) for item in items]
+
+        def process_dict(dictionary, idx=None):
+            """Processes a dictionary structure."""
+            updated_dict = {}
+            for key, value in dictionary.items():
                 if keys_to_update == "ALL" or (
                     keys_to_update and key in keys_to_update
                 ):
-                    updated[key] = self.setup_work_file_paths(
-                        instance,
-                        value,
-                        keys_to_update=None,
-                        add_key=None,
-                        file_type=file_type,
-                    )
+                    updated_dict[key] = process_item(value, idx)
                 else:
-                    updated[key] = value
+                    updated_dict[key] = value
 
             if add_key:
-                # Append index for uniqueness
-                updated[add_key] = self._build_file_path(
-                    file_name=add_key, file_type=file_type, index=index
+                updated_dict[add_key] = self._build_file_path(
+                    add_key, file_type, index=idx
                 )
-                setattr(instance, add_key, updated[add_key])
 
-            return updated
+            return updated_dict
 
-        raise TypeError(f"Unsupported file structure type: {type(file_structure)}")
+        # Determine the type of the top-level structure and process accordingly
+        return process_item(file_structure)
 
     def delete_created_files(
         self,
@@ -329,9 +300,9 @@ class WorkFileManager:
             but can target or exclude specific paths.
 
         Args:
-            delete_targets List[str]: List of paths to delete. Defaults to None.
-            exceptions List[str]: List of paths to exclude from deletion. Defaults to None.
-            delete_files (bool): Set too False to disable deletion. Defaults to None, which uses `self.keep_files`.
+            delete_targets (list[str], optional): List of paths to delete. Defaults to None.
+            exceptions (list[str], optional): List of paths to exclude from deletion. Defaults to None.
+            delete_files (bool, optional): Whether to delete files. Defaults to None, which uses `self.keep_files`.
         """
         # Default to `self.keep_files` if `delete_files` is not explicitly provided
         if delete_files is None:
@@ -384,26 +355,51 @@ class WorkFileManager:
             print(f"Error deleting file {file_path}: {e}")
 
     @staticmethod
-    def apply_to_dicts(data_list, func, **key_map):
+    def apply_to_structure(data, func, **key_map):
         """
         What:
-            Applies a function to a list of dictionaries.
+            Applies a function to elements within a supported data structure.
+            Designed to work with dictionaries, lists of dictionaries, and extensible for other structures.
 
         How:
-
+            Maps specified keys in the data structure to the function's parameters
+            and applies the function to each valid element.
 
         Args:
-            data_list (list[dict]): The list of dictionaries to process.
+            data (Union[dict, list[dict]]): The data structure to process.
             func (callable): The function to apply. The keys in `key_map` should match the function parameters.
-            **key_map (str): Mapping of function parameter names to dictionary keys.
+            **key_map (str): Mapping of function parameter names to keys in the data structure.
+
+        Raises:
+            TypeError: If the data type is unsupported.
+            KeyError: If a required key is missing in a dictionary.
         """
 
-        for dictionary in data_list:
+        def process_item(item):
+            """Helper function to process a single dictionary."""
             try:
-                # Map function parameters to the corresponding dictionary values
-                func(**{param: dictionary[key] for param, key in key_map.items()})
+                func(**{param: item[key] for param, key in key_map.items()})
             except KeyError as e:
-                raise KeyError(f"Missing key {e} in dictionary: {dictionary}")
+                raise KeyError(f"Missing key {e} in dictionary: {item}")
+
+        if isinstance(data, dict):
+            process_item(data)
+
+        elif isinstance(data, list):
+            if all(isinstance(item, dict) for item in data):
+                for item in data:
+                    process_item(item)
+            else:
+                raise TypeError(
+                    "List must contain only dictionaries. "
+                    f"Found invalid item in list: {data}"
+                )
+
+        else:
+            raise TypeError(
+                f"Unsupported data type: {type(data)}. "
+                "Expected a dictionary or a list of dictionaries."
+            )
 
 
 def compare_feature_classes(feature_class_1, feature_class_2):
