@@ -532,14 +532,15 @@ class ResolveBuildingConflicts:
     def run(self):
         environment_setup.main()
 
-        self.work_file_manager_gdb.setup_work_file_paths(
+        self.working_files_list_gdb = self.work_file_manager_gdb.setup_work_file_paths(
             instance=self,
-            file_names=self.working_files_list_gdb,
+            file_structure=self.working_files_list_gdb,
         )
 
-        self.work_file_manager_lyrx.setup_work_file_paths_lyrx(
+        self.working_files_list_gdb = self.work_file_manager_lyrx.setup_work_file_paths(
             instance=self,
-            file_names=self.working_files_list_lyrx,
+            file_structure=self.working_files_list_lyrx,
+            file_type="lyrx",
         )
 
         self.apply_symbology_to_the_layers()
@@ -553,9 +554,7 @@ class ResolveBuildingConflicts:
         self.transforming_squares_back_to_points()
         self.assigning_final_names()
 
-        self.work_file_manager_gdb.cleanup_files(
-            [self.working_files_list_gdb, self.working_files_list_lyrx]
-        )
+        self.work_file_manager_gdb.delete_created_files()
 
 
 if __name__ == "__main__":

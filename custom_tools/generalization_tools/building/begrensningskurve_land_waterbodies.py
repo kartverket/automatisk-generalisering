@@ -1,5 +1,5 @@
 import arcpy
-
+from jinja2.nodes import Break
 
 from input_data import input_n100
 
@@ -234,9 +234,9 @@ class BegrensningskurveLandWaterbodies:
     def run(self):
         environment_setup.main()
 
-        self.work_file_manager.setup_work_file_paths(
+        self.work_file_list = self.work_file_manager.setup_work_file_paths(
             instance=self,
-            file_names=self.work_file_list,
+            file_structure=self.work_file_list,
         )
 
         self.selections()
@@ -246,7 +246,7 @@ class BegrensningskurveLandWaterbodies:
         self.erase_buffers()
         self.merge_water_features()
 
-        self.work_file_manager.cleanup_files(self.work_file_list)
+        self.work_file_manager.delete_created_files()
 
 
 if __name__ == "__main__":
