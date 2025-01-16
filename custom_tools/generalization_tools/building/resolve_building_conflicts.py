@@ -13,7 +13,7 @@ import input_data.input_n100
 from input_data.input_symbology import SymbologyN100
 from file_manager.n100.file_manager_buildings import Building_N100
 from file_manager.base_file_manager import BaseFileManager
-from custom_tools.general_tools.file_utilities import WorkFileManager2
+from custom_tools.general_tools.file_utilities import WorkFileManager
 from constants.n100_constants import N100_Symbology, N100_Values
 from custom_tools.general_tools.polygon_processor import PolygonProcessor
 from env_setup import environment_setup
@@ -127,14 +127,14 @@ class ResolveBuildingConflicts:
         self.output_points = output_files["building_points"]
         self.output_polygons = output_files["building_polygons"]
 
-        self.work_file_manager_gdb = WorkFileManager2(
+        self.work_file_manager_gdb = WorkFileManager(
             unique_id=id(self),
             root_file=base_path_for_features,
             write_to_memory=write_work_files_to_memory,
             keep_files=keep_work_files,
         )
 
-        self.work_file_manager_lyrx = WorkFileManager2(
+        self.work_file_manager_lyrx = WorkFileManager(
             unique_id=id(self),
             root_file=base_path_for_lyrx,
             write_to_memory=write_work_files_to_memory,
