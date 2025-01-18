@@ -250,13 +250,24 @@ class WorkFileManager:
         def process_item(item, idx=None):
             """Processes a single item, determining its type and handling it accordingly."""
             if isinstance(item, str):
-                return self._build_file_path(item, file_type, index=idx)
+                return process_string(item, idx)
             elif isinstance(item, dict):
                 return process_dict(item, idx)
             elif isinstance(item, list):
                 return process_list(item)
             else:
                 raise TypeError(f"Unsupported file structure type: {type(item)}")
+
+        def process_string(item, idx=None):
+            """Processes a string item."""
+            # Update the instance attribute if it exists
+            for attr_name, attr_value in instance.__dict__.items():
+                if attr_value == item:
+                    updated_path = self._build_file_path(item, file_type, index=idx)
+                    setattr(instance, attr_name, updated_path)
+                    return updated_path
+
+            return self._build_file_path(item, file_type, index=idx)
 
         def process_list(items):
             """Processes a list structure."""
@@ -265,7 +276,7 @@ class WorkFileManager:
                 return [process_dict(item, idx) for idx, item in enumerate(items)]
             else:
                 # List of other items (e.g., strings)
-                return [process_item(item) for item in items]
+                return [process_item(item, idx) for idx, item in enumerate(items)]
 
         def process_dict(dictionary, idx=None):
             """Processes a dictionary structure."""
