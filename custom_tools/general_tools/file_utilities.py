@@ -274,8 +274,11 @@ class WorkFileManager:
             if all(isinstance(item, dict) for item in items):
                 # List of dictionaries
                 return [process_dict(item, idx) for idx, item in enumerate(items)]
+            elif all(isinstance(item, str) for item in items):
+                # List of unique strings
+                return [process_string(item) for item in items]
             else:
-                # List of other items (e.g., strings)
+                # Mixed list
                 return [process_item(item, idx) for idx, item in enumerate(items)]
 
         def process_dict(dictionary, idx=None):
