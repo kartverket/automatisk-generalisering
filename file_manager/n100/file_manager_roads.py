@@ -408,31 +408,17 @@ class Road_N100(Enum):
         )
     )
 
-    test1___elveg_and_sti_kommune_singlepart_dissolve_simpl5___n100_road = (
-        file_manager.generate_file_name_gdb(
-            script_source_name=test1,
-            description="elveg_and_sti_kommune_singlepart_dissolve_simpl5",
-        )
-    )
-
-    test1___elveg_and_sti_kommune_singlepart_dissolve_simpl5_mdr___n100_road = (
-        file_manager.generate_file_name_gdb(
-            script_source_name=test1,
-            description="elveg_and_sti_kommune_singlepart_dissolve_simpl5_mdr",
-        )
-    )
-
-    test1___elveg_and_sti_kommune_singlepart_dissolve_simpl5_mdr_crd___n100_road = (
-        file_manager.generate_file_name_gdb(
-            script_source_name=test1,
-            description="elveg_and_sti_kommune_singlepart_dissolve_simpl5_mdr_crd",
-        )
-    )
-
     test1___elveg_and_sti_kommune_singlepart_dissolve_mergedividedroads___n100_road = (
         file_manager.generate_file_name_gdb(
             script_source_name=test1,
             description="elveg_and_sti_kommune_singlepart_dissolve_mergedividedroads",
+        )
+    )
+
+    test1___elveg_and_sti_kommune_singlepart_dissolve_mergedividedroads2___n100_road = (
+        file_manager.generate_file_name_gdb(
+            script_source_name=test1,
+            description="elveg_and_sti_kommune_singlepart_dissolve_mergedividedroads2",
         )
     )
 
@@ -456,11 +442,6 @@ class Road_N100(Enum):
         description="elveg_and_sti_kommune_singlepart_dissolve_mergedividedroads_crd_kryss",
     )
 
-    test1___elveg_and_sti_kommune_singlepart_dissolve_mergedividedroads_crd_kryss_mdr2___n100_road = file_manager.generate_file_name_gdb(
-        script_source_name=test1,
-        description="elveg_and_sti_kommune_singlepart_dissolve_mergedividedroads_crd_kryss_mdr2",
-    )
-
     test1___elveg_and_sti_kommune_singlepart_dissolve_mergedividedroads_crd_kryss_thin_sti___n100_road = file_manager.generate_file_name_gdb(
         script_source_name=test1,
         description="elveg_and_sti_kommune_singlepart_dissolve_mergedividedroads_crd_kryss_thin_sti",
@@ -471,64 +452,29 @@ class Road_N100(Enum):
         description="elveg_and_sti_kommune_singlepart_dissolve_mergedividedroads_crd_kryss_veglenke",
     )
 
-    test1___elveg_and_sti_kommune_singlepart_dissolve_mergedividedroads_crd_kryss_veglenke_thinveg2___n100_road = file_manager.generate_file_name_gdb(
+    test1___elveg_and_sti_kommune_singlepart_dissolve_mergedividedroads_crd_kryss_veglenke_thin_vegklasse___n100_road = file_manager.generate_file_name_gdb(
         script_source_name=test1,
-        description="elveg_and_sti_kommune_singlepart_dissolve_mergedividedroads_crd_kryss_veglenke_thinveg2",
+        description="elveg_and_sti_kommune_singlepart_dissolve_mergedividedroads_crd_kryss_veglenke_thin_vegklasse",
     )
 
-    test1___elveg_and_sti_kommune_singlepart_dissolve_mergedividedroads_crd_kryss_veglenke_thin3vegklasse___n100_road = file_manager.generate_file_name_gdb(
+    test1___simplified___n100_road = file_manager.generate_file_name_gdb(
         script_source_name=test1,
-        description="elveg_and_sti_kommune_singlepart_dissolve_mergedividedroads_crd_kryss_veglenke_thin3vegklasse",
+        description="simplified",
     )
 
-    test1___elveg_and_sti_kommune_singlepart_dissolve_mergedividedroads_crd_kryss_veglenke_thin4vegklasse___n100_road = file_manager.generate_file_name_gdb(
+    test1___simplified_thin_sti___n100_road = file_manager.generate_file_name_gdb(
         script_source_name=test1,
-        description="elveg_and_sti_kommune_singlepart_dissolve_mergedividedroads_crd_kryss_veglenke_thin4vegklasse",
+        description="simplified_thin_sti",
     )
 
-    test1___veg100_nordrefollo0___n100_road = file_manager.generate_file_name_gdb(
+    test1___veglenke2___n100_road = file_manager.generate_file_name_gdb(
         script_source_name=test1,
-        description="veg100_nordrefollo0",
+        description="veglenke2",
     )
 
-    test1___veg100_nordrefollo1___n100_road = file_manager.generate_file_name_gdb(
+    test1___thin_vegklasse2___n100_road = file_manager.generate_file_name_gdb(
         script_source_name=test1,
-        description="veg100_nordrefollo1",
-    )
-
-    test1___veg100_nordrefollo2___n100_road = file_manager.generate_file_name_gdb(
-        script_source_name=test1,
-        description="veg100_nordrefollo2",
-    )
-
-    test1___veg100_enebakk0___n100_road = file_manager.generate_file_name_gdb(
-        script_source_name=test1,
-        description="veg100_enebakk0",
-    )
-
-    test1___veg100_enebakk1___n100_road = file_manager.generate_file_name_gdb(
-        script_source_name=test1,
-        description="veg100_enebakk1",
-    )
-
-    test1___veg100_enebakk2___n100_road = file_manager.generate_file_name_gdb(
-        script_source_name=test1,
-        description="veg100_enebakk2",
-    )
-
-    test1___veg100_lørenskog0___n100_road = file_manager.generate_file_name_gdb(
-        script_source_name=test1,
-        description="veg100_lørenskog0",
-    )
-
-    test1___veg100_lørenskog1___n100_road = file_manager.generate_file_name_gdb(
-        script_source_name=test1,
-        description="veg100_lørenskog1",
-    )
-
-    test1___veg100_lørenskog2___n100_road = file_manager.generate_file_name_gdb(
-        script_source_name=test1,
-        description="veg100_lørenskog2",
+        description="thin_vegklasse2",
     )
 
     test1___veg100_oslo0___n100_road = file_manager.generate_file_name_gdb(
@@ -546,261 +492,20 @@ class Road_N100(Enum):
         description="veg100_oslo2",
     )
 
-    test1___veg100_asker0___n100_road = file_manager.generate_file_name_gdb(
+    test1___veg100_oslo3___n100_road = file_manager.generate_file_name_gdb(
         script_source_name=test1,
-        description="veg100_asker0",
+        description="veg100_oslo3",
     )
 
-    test1___veg100_asker1___n100_road = file_manager.generate_file_name_gdb(
+    test1___veg100_østfold1___n100_road = file_manager.generate_file_name_gdb(
         script_source_name=test1,
-        description="veg100_asker1",
+        description="veg100_østfold1",
     )
 
-    test1___veg100_asker2___n100_road = file_manager.generate_file_name_gdb(
+    test1___veg100_østfold2___n100_road = file_manager.generate_file_name_gdb(
         script_source_name=test1,
-        description="veg100_asker2",
+        description="veg100_østfold2",
     )
-
-    test1___veg100_bærum0___n100_road = file_manager.generate_file_name_gdb(
-        script_source_name=test1,
-        description="veg100_bærum0",
-    )
-
-    test1___veg100_bærum1___n100_road = file_manager.generate_file_name_gdb(
-        script_source_name=test1,
-        description="veg100_bærum1",
-    )
-
-    test1___veg100_bærum2___n100_road = file_manager.generate_file_name_gdb(
-        script_source_name=test1,
-        description="veg100_bærum2",
-    )
-
-    test1___veg100_ringerike0___n100_road = file_manager.generate_file_name_gdb(
-        script_source_name=test1,
-        description="veg100_ringerike0",
-    )
-
-    test1___veg100_ringerike1___n100_road = file_manager.generate_file_name_gdb(
-        script_source_name=test1,
-        description="veg100_ringerike1",
-    )
-
-    test1___veg100_ringerike2___n100_road = file_manager.generate_file_name_gdb(
-        script_source_name=test1,
-        description="veg100_ringerike2",
-    )
-
-    test1___veg100_hole0___n100_road = file_manager.generate_file_name_gdb(
-        script_source_name=test1,
-        description="veg100_hole0",
-    )
-
-    test1___veg100_hole1___n100_road = file_manager.generate_file_name_gdb(
-        script_source_name=test1,
-        description="veg100_hole1",
-    )
-
-    test1___veg100_hole2___n100_road = file_manager.generate_file_name_gdb(
-        script_source_name=test1,
-        description="veg100_hole2",
-    )
-
-    test1___veg100_jevnaker0___n100_road = file_manager.generate_file_name_gdb(
-        script_source_name=test1,
-        description="veg100_jevnaker0",
-    )
-
-    test1___veg100_jevnaker1___n100_road = file_manager.generate_file_name_gdb(
-        script_source_name=test1,
-        description="veg100_jevnaker1",
-    )
-
-    test1___veg100_jevnaker2___n100_road = file_manager.generate_file_name_gdb(
-        script_source_name=test1,
-        description="veg100_jevnaker2",
-    )
-
-    test1___veg100_modum0___n100_road = file_manager.generate_file_name_gdb(
-        script_source_name=test1,
-        description="veg100_modum0",
-    )
-
-    test1___veg100_modum1___n100_road = file_manager.generate_file_name_gdb(
-        script_source_name=test1,
-        description="veg100_modum1",
-    )
-
-    test1___veg100_modum2___n100_road = file_manager.generate_file_name_gdb(
-        script_source_name=test1,
-        description="veg100_modum2",
-    )
-
-    test1___veg100_krødsherad0___n100_road = file_manager.generate_file_name_gdb(
-        script_source_name=test1,
-        description="veg100_krødsherad0",
-    )
-
-    test1___veg100_krødsherad1___n100_road = file_manager.generate_file_name_gdb(
-        script_source_name=test1,
-        description="veg100_krødsherad1",
-    )
-
-    test1___veg100_krødsherad2___n100_road = file_manager.generate_file_name_gdb(
-        script_source_name=test1,
-        description="veg100_krødsherad2",
-    )
-
-    test1___veg100_lier0___n100_road = file_manager.generate_file_name_gdb(
-        script_source_name=test1,
-        description="veg100_lier0",
-    )
-
-    test1___veg100_lier1___n100_road = file_manager.generate_file_name_gdb(
-        script_source_name=test1,
-        description="veg100_lier1",
-    )
-
-    test1___veg100_lier2___n100_road = file_manager.generate_file_name_gdb(
-        script_source_name=test1,
-        description="veg100_lier2",
-    )
-
-    test1___veg100_vestby0___n100_road = file_manager.generate_file_name_gdb(
-        script_source_name=test1,
-        description="veg100_vestby0",
-    )
-
-    test1___veg100_vestby1___n100_road = file_manager.generate_file_name_gdb(
-        script_source_name=test1,
-        description="veg100_vestby1",
-    )
-
-    test1___veg100_vestby2___n100_road = file_manager.generate_file_name_gdb(
-        script_source_name=test1,
-        description="veg100_vestby2",
-    )
-
-    test1___veg100_drammen0___n100_road = file_manager.generate_file_name_gdb(
-        script_source_name=test1,
-        description="veg100_drammen0",
-    )
-
-    test1___veg100_drammen1___n100_road = file_manager.generate_file_name_gdb(
-        script_source_name=test1,
-        description="veg100_drammen1",
-    )
-
-    test1___veg100_drammen2___n100_road = file_manager.generate_file_name_gdb(
-        script_source_name=test1,
-        description="veg100_drammen2",
-    )
-
-    test1___veg100_ås0___n100_road = file_manager.generate_file_name_gdb(
-        script_source_name=test1,
-        description="veg100_ås0",
-    )
-
-    test1___veg100_ås1___n100_road = file_manager.generate_file_name_gdb(
-        script_source_name=test1,
-        description="veg100_ås1",
-    )
-
-    test1___veg100_ås2___n100_road = file_manager.generate_file_name_gdb(
-        script_source_name=test1,
-        description="veg100_ås2",
-    )
-
-    test1___veg100_frogn0___n100_road = file_manager.generate_file_name_gdb(
-        script_source_name=test1,
-        description="veg100_frogn0",
-    )
-
-    test1___veg100_frogn1___n100_road = file_manager.generate_file_name_gdb(
-        script_source_name=test1,
-        description="veg100_frogn1",
-    )
-
-    test1___veg100_frogn2___n100_road = file_manager.generate_file_name_gdb(
-        script_source_name=test1,
-        description="veg100_frogn2",
-    )
-
-    test1___veg100_nesodden0___n100_road = file_manager.generate_file_name_gdb(
-        script_source_name=test1,
-        description="veg100_nesodden0",
-    )
-
-    test1___veg100_nesodden1___n100_road = file_manager.generate_file_name_gdb(
-        script_source_name=test1,
-        description="veg100_nesodden1",
-    )
-
-    test1___veg100_nesodden2___n100_road = file_manager.generate_file_name_gdb(
-        script_source_name=test1,
-        description="veg100_nesodden2",
-    )
-
-    test1___veg100_lunner0___n100_road = file_manager.generate_file_name_gdb(
-        script_source_name=test1,
-        description="veg100_lunner0",
-    )
-
-    test1___veg100_lunner1___n100_road = file_manager.generate_file_name_gdb(
-        script_source_name=test1,
-        description="veg100_lunner1",
-    )
-
-    test1___veg100_lunner2___n100_road = file_manager.generate_file_name_gdb(
-        script_source_name=test1,
-        description="veg100_lunner2",
-    )
-
-    test1___veg100_flere0___n100_road = file_manager.generate_file_name_gdb(
-        script_source_name=test1,
-        description="veg100_flere0",
-    )
-
-    test1___veg100_flere1___n100_road = file_manager.generate_file_name_gdb(
-        script_source_name=test1,
-        description="veg100_flere1",
-    )
-
-    test1___veg100_flere2___n100_road = file_manager.generate_file_name_gdb(
-        script_source_name=test1,
-        description="veg100_flere2",
-    )
-
-    test1___veg100_tromsø0___n100_road = file_manager.generate_file_name_gdb(
-        script_source_name=test1,
-        description="veg100_tromsø0",
-    )
-
-    test1___veg100_tromsø1___n100_road = file_manager.generate_file_name_gdb(
-        script_source_name=test1,
-        description="veg100_tromsø1",
-    )
-
-    test1___veg100_tromsø2___n100_road = file_manager.generate_file_name_gdb(
-        script_source_name=test1,
-        description="veg100_tromsø2",
-    )
-
-    test1___veg100_troms_m0___n100_road = file_manager.generate_file_name_gdb(
-        script_source_name=test1,
-        description="veg100_troms_m0",
-    )
-
-    test1___veg100_troms_m1___n100_road = file_manager.generate_file_name_gdb(
-        script_source_name=test1,
-        description="veg100_troms_m1",
-    )
-
-    test1___veg100_troms_m2___n100_road = file_manager.generate_file_name_gdb(
-        script_source_name=test1,
-        description="veg100_troms_m2",
-    )
-
 
     # ========================================
     #                                TESTING FILE
