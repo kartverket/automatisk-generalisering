@@ -243,6 +243,7 @@ class ResolveBuildingConflicts:
                 "output_name": self.railway_stations_with_lyrx,
             },
         ]
+        print(f"Features for applying symbology: {features_for_apply_symbology}\n")
 
         # Loop over the symbology configurations and apply the function
         for symbology_config in features_for_apply_symbology:
@@ -272,7 +273,13 @@ class ResolveBuildingConflicts:
                 "false",
                 f"{self.railway_barrier_gap} Meters",
             ],
+            # [
+            #     self.road_barrier_lyrx,
+            #     "false",
+            #     f"{self.road_barrier_gap} Meters",
+            # ],
         ]
+        print(f"Input barriers for RBC: {input_barriers_for_rbc}\n")
 
         return input_barriers_for_rbc
 
@@ -287,6 +294,7 @@ class ResolveBuildingConflicts:
                 self.polygons_with_lyrx,
                 self.building_squares_with_lyrx,
             ]
+            print(f"Input buildings for RBC 1: {input_buildings_rbc_1}\n")
             arcpy.cartography.ResolveBuildingConflicts(
                 in_buildings=input_buildings_rbc_1,
                 invisibility_field="invisibility",
@@ -524,14 +532,15 @@ class ResolveBuildingConflicts:
     def run(self):
         environment_setup.main()
 
-        self.work_file_manager_gdb.setup_work_file_paths(
+        self.working_files_list_gdb = self.work_file_manager_gdb.setup_work_file_paths(
             instance=self,
-            file_names=self.working_files_list_gdb,
+            file_structure=self.working_files_list_gdb,
         )
 
-        self.work_file_manager_lyrx.setup_work_file_paths_lyrx(
+        self.working_files_list_gdb = self.work_file_manager_lyrx.setup_work_file_paths(
             instance=self,
-            file_names=self.working_files_list_lyrx,
+            file_structure=self.working_files_list_lyrx,
+            file_type="lyrx",
         )
 
         self.apply_symbology_to_the_layers()
@@ -545,9 +554,7 @@ class ResolveBuildingConflicts:
         self.transforming_squares_back_to_points()
         self.assigning_final_names()
 
-        self.work_file_manager_gdb.cleanup_files(
-            [self.working_files_list_gdb, self.working_files_list_lyrx]
-        )
+        self.work_file_manager_gdb.delete_created_files()
 
 
 if __name__ == "__main__":

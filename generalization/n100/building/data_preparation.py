@@ -5,6 +5,7 @@ import arcpy
 from input_data import input_n50
 from input_data import input_n100
 from input_data import input_other
+from input_data import input_roads
 
 # Importing custom modules
 from file_manager.n100.file_manager_buildings import Building_N100
@@ -84,10 +85,11 @@ def data_selection():
         Makes sure that the input data is never modified, and that all future I/O's use the same paths regardless if
         the script is run for global data or smaller subselection for logic testing.
     """
+    print(input_roads.road_output_1)
     input_output_file_dict = {
         input_n100.BegrensningsKurve: Building_N100.data_selection___begrensningskurve_n100_input_data___n100_building.value,
         input_n100.ArealdekkeFlate: Building_N100.data_selection___land_cover_n100_input_data___n100_building.value,
-        input_n100.VegSti: Building_N100.data_selection___road_n100_input_data___n100_building.value,
+        input_roads.road_output_1: Building_N100.data_selection___road_n100_input_data___n100_building.value,
         input_n100.JernbaneStasjon: Building_N100.data_selection___railroad_stations_n100_input_data___n100_building.value,
         input_n100.Bane: Building_N100.data_selection___railroad_tracks_n100_input_data___n100_building.value,
         input_n50.ArealdekkeFlate: Building_N100.data_selection___land_cover_n50_input_data___n100_building.value,
@@ -98,10 +100,13 @@ def data_selection():
         config.displacement_feature: Building_N100.data_selection___displacement_feature___n100_building.value,
     }
 
+    small_local_selection = "navn IN ('Asker', 'Oslo', 'Ringerike')"
+    plot_area = "navn IN ('Asker', 'Bærum', 'Drammen', 'Frogn', 'Hole', 'Holmestrand', 'Horten', 'Jevnaker', 'Kongsberg', 'Larvik', 'Lier', 'Lunner', 'Modum', 'Nesodden', 'Oslo', 'Ringerike', 'Tønsberg', 'Øvre Eiker')"
+
     selector = StudyAreaSelector(
         input_output_file_dict=input_output_file_dict,
         selecting_file=input_n100.AdminFlate,
-        selecting_sql_expression="navn IN ('Asker', 'Oslo', 'Trondheim', 'Ringerike')",
+        selecting_sql_expression=plot_area,
         select_local=config.select_study_area,
     )
 
@@ -285,20 +290,25 @@ def unsplit_roads_and_make_buffer():
     Unsplits the road feature to reduce the number of objects, reducing processing time.
     """
 
-    arcpy.UnsplitLine_management(
+    arcpy.CopyFeatures_management(
         in_features=Building_N100.data_selection___road_n100_input_data___n100_building.value,
         out_feature_class=Building_N100.data_preparation___unsplit_roads___n100_building.value,
-        dissolve_field=["subtypekode", "motorvegtype", "uttegning"],
     )
+    #
+    # arcpy.UnsplitLine_management(
+    #     in_features=Building_N100.data_selection___road_n100_input_data___n100_building.value,
+    #     out_feature_class=Building_N100.data_preparation___unsplit_roads___n100_building.value,
+    #     dissolve_field=["subtypekode", "motorvegtype", "uttegning"],
+    # )
 
     road_lines_to_buffer_symbology = LineToBufferSymbology(
         input_road_lines=Building_N100.data_preparation___unsplit_roads___n100_building.value,
-        sql_selection_query=N100_SQLResources.road_symbology_size_sql_selection.value,
+        sql_selection_query=N100_SQLResources.new_road_symbology_size_sql_selection.value,
         output_road_buffer=Building_N100.data_preparation___road_symbology_buffers___n100_building.value,
         write_work_files_to_memory=False,
         keep_work_files=False,
         root_file=Building_N100.data_preparation___root_file_line_symbology___n100_building.value,
-        fixed_buffer_addition=N100_Values.rbc_barrier_clearance_distance_m.value,
+        fixed_buffer_addition=0,
     )
     road_lines_to_buffer_symbology.run()
 

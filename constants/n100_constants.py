@@ -126,6 +126,17 @@ class N100_SQLResources(Enum):
         """: 8,
     }
 
+    new_road_symbology_size_sql_selection = {
+        """(subtypekode = 2 And motorvegtype = 'Motorveg') 
+        Or (subtypekode = 4 And motorvegtype = 'Motorveg')""": 47.5,  # Red and Yellow lines
+        """(subtypekode = 2 And motorvegtype <> 'Motorveg') 
+        Or (subtypekode = 4 And motorvegtype <> 'Motorveg')
+        Or subtypekode = 3""": 32.5,  # Red lines
+        "subtypekode = 1": 30,  # Orange with black outline
+        "subtypekode IN (5, 6, 9)": 25,  # White lines
+        "subtypekode IN (8,7,10,11)": 7.5,  # Thin black lines
+    }
+
     urban_areas = "objtype = 'Tettbebyggelse' Or objtype = 'Industriområde' Or objtype = 'BymessigBebyggelse'"
 
 

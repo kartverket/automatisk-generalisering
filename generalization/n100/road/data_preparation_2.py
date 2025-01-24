@@ -167,7 +167,7 @@ def table_management():
 
     define_character_field = f"""def Reclass(TYPEVEG):
         if TYPEVEG == 'rundkjøring':
-            return 1
+            return 0
         elif TYPEVEG in 'kanalisertVeg':
             return 1
         elif TYPEVEG == 'enkelBilveg':
@@ -175,7 +175,7 @@ def table_management():
         elif TYPEVEG == 'rampe':
             return 2
         else: 
-            return 999
+            return 1
     """
 
     arcpy.management.CalculateField(
@@ -244,10 +244,16 @@ def dissolve_merge_and_reduce_roads():
     arcpy.cartography.MergeDividedRoads(
         in_features=Road_N100.data_preparation___road_single_part_2___n100_road.value,
         merge_field="VEGNUMMER",
-        merge_distance="150 Meters",
+        merge_distance="50 Meters",
         out_features=Road_N100.data_preparation___merge_divided_roads___n100_road.value,
         out_displacement_features=Road_N100.data_preparation___merge_divided_roads_displacement_feature___n100_road.value,
         character_field="character",
+    )
+
+    arcpy.cartography.CollapseRoadDetail(
+        in_features=Road_N100.data_preparation___merge_divided_roads___n100_road.value,
+        collapse_distance="90 Meters",
+        output_feature_class=Road_N100.data_preparation___collapse_road_detail___n100_road.value,
     )
 
 
@@ -321,6 +327,21 @@ def merge_divided_roads():
         ],
         output=Road_N100.data_preparation___divided_roads_merged_outputs___n100_road.value,
     )
+
+    def resolve_road_conflict(
+        input_line_layers: list[str], output_displacement_feature: str
+    ):
+        arcpy.env.referenceScale = "100000"
+
+        arcpy.cartography.ResolveRoadConflicts(
+            in_layers=[
+                Road_N100.testing_file___roads_area_lyrx___n100_road.value,
+                Road_N100.testing_file___railway_area_lyrx___n100_road.value,
+                Road_N100.testing_file___begrensningskurve_water_area_lyrx___n100_road.value,
+            ],
+            hierarchy_field="hierarchy",
+            out_displacement_features=Road_N100.testing_file___displacement_feature_after_resolve_road_conflict___n100_road.value,
+        )
 
 
 def manage_intersections():

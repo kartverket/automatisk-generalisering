@@ -129,7 +129,7 @@ def resolve_building_conflicts():
         ],
         road: [
             "context",
-            Building_N100.data_preparation___unsplit_roads___n100_building.value,
+            Building_N100.data_preparation___road_symbology_buffers___n100_building.value,
         ],
         railway: [
             "context",
@@ -157,7 +157,7 @@ def resolve_building_conflicts():
         ],
         road_lyrx: [
             "reference",
-            input_symbology.SymbologyN100.road.value,
+            input_symbology.SymbologyN100.road_buffer.value,
         ],
         railway_station_lyrx: [
             "reference",
@@ -230,7 +230,7 @@ def resolve_building_conflicts():
         custom_functions=[resolve_building_conflicts_config],
         root_file_partition_iterator=Building_N100.point_resolve_building_conflicts___root_file___n100_building.value,
         dictionary_documentation_path=Building_N100.point_resolve_building_conflicts___documentation___building_n100.value,
-        feature_count="100000",
+        feature_count="500000",
     )
 
     resolve_building_conflicts_partition_iteration.run()
