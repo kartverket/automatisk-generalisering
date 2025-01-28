@@ -500,12 +500,12 @@ class Road_N100(Enum):
         description="elveg_and_sti_kommune_singlepart_dissolve_mergedividedroads_crd_kryss_veglenke_thin4vegklasse",
     )
 
-    test1___veg100_innlandet-c1___n100_road = file_manager.generate_file_name_gdb(
+    test1___veg100_innlandet_c1___n100_road = file_manager.generate_file_name_gdb(
         script_source_name=test1,
         description="veg100_innlandet-c1",
     )
 
-    test1___veg100_innlandet-c2___n100_road = file_manager.generate_file_name_gdb(
+    test1___veg100_innlandet_c2___n100_road = file_manager.generate_file_name_gdb(
         script_source_name=test1,
         description="veg100_innlandet-c2",
     )
