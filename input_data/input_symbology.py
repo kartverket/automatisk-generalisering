@@ -7,7 +7,7 @@ import config
 class SymbologyN100(Enum):
     road = config.symbology_n100_roads
     road_buffer = config.symbology_n100_drawn_polygon
-    begrensnings_kurve_buffer = config.symbology_n100_begrensningskurve_buffer
+    begrensngings_kurve_buffer = config.symbology_n100_begrensningskurve_buffer
     begrensnings_kurve_line = config.symbology_n100_begrensningskurve_line
     begrensningskurve_polygon = config.symbology_n100_begrensningskurve_buffer
     building_point = config.symbology_n100_bygningspunkt

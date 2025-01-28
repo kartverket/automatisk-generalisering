@@ -992,6 +992,11 @@ class Road_N100(Enum):
         )
     )
 
+    test1___root_file___n100_road = file_manager.generate_file_name_gdb(
+        script_source_name=test1,
+        description="root_file",
+    )
+
     testing_file___begrensningskurve_water_area___n100_road = (
         file_manager.generate_file_name_gdb(
             script_source_name=testing_file,
