@@ -537,10 +537,12 @@ class ResolveBuildingConflicts:
             file_structure=self.working_files_list_gdb,
         )
 
-        self.working_files_list_gdb = self.work_file_manager_lyrx.setup_work_file_paths(
-            instance=self,
-            file_structure=self.working_files_list_lyrx,
-            file_type="lyrx",
+        self.working_files_list_lyrx = (
+            self.work_file_manager_lyrx.setup_work_file_paths(
+                instance=self,
+                file_structure=self.working_files_list_lyrx,
+                file_type="lyrx",
+            )
         )
 
         self.apply_symbology_to_the_layers()

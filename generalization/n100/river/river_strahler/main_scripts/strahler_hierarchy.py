@@ -9,18 +9,20 @@ Instructions:
    - False: The script will process the river data from the specified geodatabase and drainage basin.
 
 2. Set the 'use_common_ancestor' variable to True or False.
-   - True: The script will use the common ancestor logic to avoid incrementing Strahler values 
+   - True: The script will use the common ancestor logic to avoid incrementing Strahler values
      for segments that diverge and rejoin. This ensures more accurate Strahler values but increases
      the time complexity.
-   - False: The script will skip the common ancestor check, resulting in faster processing but 
+   - False: The script will skip the common ancestor check, resulting in faster processing but
      potentially less accurate Strahler values in cases of divergence and rejoining.
 """
+
 import networkx as nx
 import geopandas as gpd
 from shapely.geometry import Point
 import arcpy
 import re
 import config
+
 
 def main():
     n50_path = config.n50_path
@@ -34,7 +36,9 @@ def main():
 
     if use_shapefile:
         print(f"Processing shapefile: {shapefile_path}")
-        strahler_fc = build_network_and_calculate_strahler(shapefile_path, use_common_ancestor)
+        strahler_fc = build_network_and_calculate_strahler(
+            shapefile_path, use_common_ancestor
+        )
         convert_to_gdb(strahler_fc, output_gdb)
     else:
         basin_list = ["HERREGÅRDSBEKKEN"]
@@ -42,17 +46,23 @@ def main():
         total_basins = len(basin_list)
         for i, basin in enumerate(basin_list):
             print(f"Processing basin {i + 1}/{total_basins}: {basin}")
-            output_fc = join_river_and_basin(n50_path, drainage_basin_path, output_folder, basin)
+            output_fc = join_river_and_basin(
+                n50_path, drainage_basin_path, output_folder, basin
+            )
             if output_fc is None:
                 print(f"Skipping basin {basin} due to previous errors.")
                 continue
 
-            strahler_fc = build_network_and_calculate_strahler(output_fc, use_common_ancestor)
+            strahler_fc = build_network_and_calculate_strahler(
+                output_fc, use_common_ancestor
+            )
             convert_to_gdb(strahler_fc, output_gdb)
+
 
 def sanitize_filename(name):
     """Sanitizes a filename by replacing invalid characters with underscores."""
-    return re.sub(r'[^a-zA-Z0-9_ØÆÅæøå]', '_', name)
+    return re.sub(r"[^a-zA-Z0-9_ØÆÅæøå]", "_", name)
+
 
 def get_all_basins(gdb_path, feature_class, column_name):
     """
@@ -72,6 +82,7 @@ def get_all_basins(gdb_path, feature_class, column_name):
         for row in cursor:
             unique_values.add(row[0])
     return list(unique_values)
+
 
 def join_river_and_basin(gdb_path, drainage_basin_path, output_folder, basin):
     """
@@ -104,7 +115,9 @@ def join_river_and_basin(gdb_path, drainage_basin_path, output_folder, basin):
     arcpy.MakeFeatureLayer_management(basins_fc, "basins_layer")
 
     basin_query = f"nedborfelt = '{basin}'"
-    arcpy.SelectLayerByAttribute_management("basins_layer", "NEW_SELECTION", basin_query)
+    arcpy.SelectLayerByAttribute_management(
+        "basins_layer", "NEW_SELECTION", basin_query
+    )
 
     arcpy.SelectLayerByLocation_management("rivers_layer", "INTERSECT", "basins_layer")
     arcpy.CopyFeatures_management("rivers_layer", output_fc)
@@ -115,13 +128,14 @@ def join_river_and_basin(gdb_path, drainage_basin_path, output_folder, basin):
 
     return output_fc
 
+
 def build_network_and_calculate_strahler(rivers_fc, use_common_ancestor):
     """
     Builds a directed graph from river segments and calculates Strahler numbers.
 
     Parameters:
     rivers_fc (str): Path to the feature class containing river data.
-    use_common_ancestor (bool): Whether to use common ancestor logic to avoid incrementing Strahler values 
+    use_common_ancestor (bool): Whether to use common ancestor logic to avoid incrementing Strahler values
                                 for segments that diverge and rejoin.
 
     Returns:
@@ -152,7 +166,9 @@ def build_network_and_calculate_strahler(rivers_fc, use_common_ancestor):
         cycles = list(nx.simple_cycles(G))
         while cycles:
             for cycle in cycles:
-                highest_upstream_node = min(cycle, key=lambda node: list(G.nodes).index(node))
+                highest_upstream_node = min(
+                    cycle, key=lambda node: list(G.nodes).index(node)
+                )
                 out_edges = list(G.out_edges(highest_upstream_node))
                 if out_edges:
                     edge_to_remove = out_edges[0]
@@ -196,35 +212,49 @@ def build_network_and_calculate_strahler(rivers_fc, use_common_ancestor):
 
         Parameters:
         G (networkx.DiGraph): Directed graph representing the river network.
-        use_common_ancestor (bool): Whether to use common ancestor logic to avoid incrementing Strahler values 
+        use_common_ancestor (bool): Whether to use common ancestor logic to avoid incrementing Strahler values
                                     for segments that diverge and rejoin.
         """
         strahler_numbers = {}
         precomputed_ancestors = precompute_ancestors(G)
 
         for node in nx.topological_sort(G):
-            in_edges = list(G.in_edges(node, data=True)) # Get all incoming edges to the current node
+            in_edges = list(
+                G.in_edges(node, data=True)
+            )  # Get all incoming edges to the current node
             if not in_edges:
-                max_strahler = 1 # If no incoming edges, assign strahler number 1
+                max_strahler = 1  # If no incoming edges, assign strahler number 1
             else:
-                max_strahler = max(strahler_numbers[e[2]['index']] for e in in_edges) # Find max Strahler number from incoming edges to the node
-                if sum(strahler_numbers[e[2]['index']] == max_strahler for e in in_edges) > 1: # Check if more than 1 incomming edge have the same max strahler
+                max_strahler = max(
+                    strahler_numbers[e[2]["index"]] for e in in_edges
+                )  # Find max Strahler number from incoming edges to the node
+                if (
+                    sum(
+                        strahler_numbers[e[2]["index"]] == max_strahler
+                        for e in in_edges
+                    )
+                    > 1
+                ):  # Check if more than 1 incomming edge have the same max strahler
                     increase = True
                     if use_common_ancestor:
                         for i in range(len(in_edges)):
                             for j in range(i + 1, len(in_edges)):
-                                common_ancestor = find_common_ancestor(precomputed_ancestors, in_edges[i][0], in_edges[j][0])
+                                common_ancestor = find_common_ancestor(
+                                    precomputed_ancestors,
+                                    in_edges[i][0],
+                                    in_edges[j][0],
+                                )
                                 if common_ancestor:
                                     increase = False
                                     break
                             if not increase:
                                 break
                     if increase:
-                        max_strahler += 1 # Increment Strahler number if multiple edges have the same strahler value
+                        max_strahler += 1  # Increment Strahler number if multiple edges have the same strahler value
             for _, _, data in G.out_edges(node, data=True):
-                strahler_numbers[data['index']] = max_strahler
+                strahler_numbers[data["index"]] = max_strahler
         for idx in range(len(strahler_df)):
-            strahler_df.at[idx, 'strahler'] = strahler_numbers.get(idx, 1)
+            strahler_df.at[idx, "strahler"] = strahler_numbers.get(idx, 1)
 
     remove_cycles(G)
     calculate_strahler(G, use_common_ancestor)
@@ -235,11 +265,13 @@ def build_network_and_calculate_strahler(rivers_fc, use_common_ancestor):
 
     return output_strahler_fc
 
+
 def convert_to_gdb(shapefile, output_gdb):
     """Converts a shapefile to a feature class in a geodatabase."""
     gdb_fc_name = shapefile.split("\\")[-1].replace(".shp", "")
     arcpy.FeatureClassToFeatureClass_conversion(shapefile, output_gdb, gdb_fc_name)
     print(f"Converted {shapefile} to {output_gdb}\\{gdb_fc_name}")
+
 
 if __name__ == "__main__":
     main()

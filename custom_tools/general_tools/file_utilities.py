@@ -176,8 +176,9 @@ class WorkFileManager:
         # Extract the root up to the scale directory
         scale_path = self.root_file[: match.end()]
 
-        # Extract the origin file name from the remaining path
-        origin_file_name = self.root_file[match.end() :].rstrip("\\")
+        remaining_path = self.root_file[match.end() :]
+        origin_file_name = remaining_path.split("\\", 1)[-1]
+
         return scale_path, origin_file_name
 
     def _build_file_path(
@@ -204,7 +205,12 @@ class WorkFileManager:
             scale_path, origin_file_name = self._modify_path()
 
             if file_type == "lyrx":
+                print("lyrx file path detected:")
                 path = rf"{scale_path}{self.lyrx_directory_name}\{origin_file_name}_{file_name}_{self.unique_id}{suffix}.lyrx"
+                print(f"Path: {path}")
+                print(
+                    f"Scale path: {scale_path}\nOrigin file name: {origin_file_name}\n"
+                )
             else:
                 path = rf"{scale_path}{self.general_files_directory_name}\{origin_file_name}_{file_name}_{self.unique_id}{suffix}.{file_type}"
 
@@ -250,7 +256,7 @@ class WorkFileManager:
         def process_item(item, idx=None):
             """Processes a single item, determining its type and handling it accordingly."""
             if isinstance(item, str):
-                return self._build_file_path(item, file_type, index=idx)
+                return process_string(item, idx)
             elif isinstance(item, dict):
                 return process_dict(item, idx)
             elif isinstance(item, list):
@@ -258,14 +264,28 @@ class WorkFileManager:
             else:
                 raise TypeError(f"Unsupported file structure type: {type(item)}")
 
+        def process_string(item, idx=None):
+            """Processes a string item."""
+            # Update the instance attribute if it exists
+            for attr_name, attr_value in instance.__dict__.items():
+                if attr_value == item:
+                    updated_path = self._build_file_path(item, file_type, index=idx)
+                    setattr(instance, attr_name, updated_path)
+                    return updated_path
+
+            return self._build_file_path(item, file_type, index=idx)
+
         def process_list(items):
             """Processes a list structure."""
             if all(isinstance(item, dict) for item in items):
                 # List of dictionaries
                 return [process_dict(item, idx) for idx, item in enumerate(items)]
+            elif all(isinstance(item, str) for item in items):
+                # List of unique strings
+                return [process_string(item) for item in items]
             else:
-                # List of other items (e.g., strings)
-                return [process_item(item) for item in items]
+                # Mixed list
+                return [process_item(item, idx) for idx, item in enumerate(items)]
 
         def process_dict(dictionary, idx=None):
             """Processes a dictionary structure."""
@@ -400,6 +420,66 @@ class WorkFileManager:
                 f"Unsupported data type: {type(data)}. "
                 "Expected a dictionary or a list of dictionaries."
             )
+
+    @staticmethod
+    def extract_key_by_alias(data: list[dict], unique_alias: str, key: str) -> str:
+        """
+        Extracts the value of a specific key from the dictionary with the specified alias.
+
+        Args:
+            data (list[dict]): The input list of dictionaries.
+            unique_alias (str): The alias identifying the target dictionary.
+            key (str): The key to extract the value from.
+
+        Returns:
+            str: The value associated with the key in the specified dictionary.
+
+        Raises:
+            ValueError: If no dictionary with the specified alias is found.
+            KeyError: If the key does not exist in the identified dictionary.
+        """
+        for item in data:
+            if item.get("unique_alias") == unique_alias:
+                if key in item:
+                    return item[key]
+                raise KeyError(
+                    f"Key '{key}' not found in dictionary with alias '{unique_alias}'."
+                )
+        raise ValueError(f"No dictionary with alias '{unique_alias}' found.")
+
+    @staticmethod
+    def extract_key_all(data: list[dict], key: str) -> list[str]:
+        """
+        Extracts all values for a specific key across all dictionaries.
+        """
+        return [item[key] for item in data if key in item]
+
+    @staticmethod
+    def update_key_by_alias(
+        data: list[dict], unique_alias: str, key: str, new_value: str
+    ) -> None:
+        """
+        Updates the value of a specific key in the dictionary with the specified alias.
+
+        Args:
+            data (list[dict]): The input list of dictionaries.
+            unique_alias (str): The alias identifying the target dictionary.
+            key (str): The key to update the value for.
+            new_value (str): The new value to set for the key.
+
+        Raises:
+            ValueError: If no dictionary with the specified alias is found.
+            KeyError: If the key does not exist in the identified dictionary.
+        """
+        for item in data:
+            if item.get("unique_alias") == unique_alias:
+                if key in item:
+                    item[key] = new_value
+                    return
+                raise KeyError(
+                    f"Key '{key}' not found in dictionary with alias '{unique_alias}'."
+                )
+        raise ValueError(f"No dictionary with alias '{unique_alias}' found.")
 
 
 def compare_feature_classes(feature_class_1, feature_class_2):

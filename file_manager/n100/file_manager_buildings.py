@@ -42,7 +42,6 @@ begrensingskurve_land_water = "begrensingskurve_land_water"
 
 
 class Building_N100(Enum):
-
     """
     An enumeration for building-related geospatial data file paths within the N100 scale and building object context.
 

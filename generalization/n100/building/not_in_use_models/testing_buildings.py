@@ -67,7 +67,28 @@ class PrintClass:
             file_type="lyrx",
         )
         self.work_file_manager.list_contents(
-            data=self.output_files_files_3, title="New output files"
+            data=self.output_files_files_3, title="New output lyrx files"
+        )
+
+        self.road_lyrx = "road_lyrx"
+        self.building_lyrx = "building_lyrx"
+        self.water_lyrx = "water_lyrx"
+        self.railroad_tracks_lyrx = "railroad_tracks_lyrx"
+        self.railroad_stations_lyrx = "railroad_stations_lyrx"
+        self.river_lyrx = "river_lyrx"
+        self.list_of_lyrx_files = [
+            self.road_lyrx,
+            self.building_lyrx,
+            self.water_lyrx,
+            self.railroad_tracks_lyrx,
+            self.railroad_stations_lyrx,
+            self.river_lyrx,
+        ]
+        self.list_of_lyrx_files = self.work_file_manager.setup_work_file_paths(
+            instance=self, file_structure=self.list_of_lyrx_files, file_type="lyrx"
+        )
+        self.work_file_manager.list_contents(
+            data=self.list_of_lyrx_files, title="List of Lyrx files"
         )
 
     def print_inputs_pre_work_manger(self):
@@ -141,11 +162,11 @@ class PrintClass:
         # print(f"Structure:\n{self.output_files_files}\n\n")
         # print(f"Structure:\n{self.output_files_files_2}\n\n")
         # print(f"Created files:\n{self.work_file_manager.created_paths}\n")
-        self.copy_files()
+        # self.copy_files()
         self.work_file_manager.list_contents(
             data=self.work_file_manager.created_paths, title="Created files"
         )
-        self.work_file_manager.delete_created_files()
+        # self.work_file_manager.delete_created_files()
 
 
 if __name__ == "__main__":

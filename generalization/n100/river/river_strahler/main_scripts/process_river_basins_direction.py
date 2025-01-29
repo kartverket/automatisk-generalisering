@@ -1,7 +1,7 @@
 """
 This script processes river network data to correct the direction of river segments.
-It reads river and basin data, extracts elevation information, constructs 3D river 
-networks, identifies and corrects flow direction errors, and outputs the corrected 
+It reads river and basin data, extracts elevation information, constructs 3D river
+networks, identifies and corrects flow direction errors, and outputs the corrected
 river segments to a shapefile.
 
 Instructions:
@@ -14,6 +14,7 @@ Instructions:
 2. Set the 'basin_list' variable to include the names of drainage basins to process. You can use the get_all_basins() function
 to get a list of all possible basins in the feature class.
 """
+
 import arcpy
 import geopandas as gpd
 from shapely.geometry import Point, LineString
@@ -21,12 +22,13 @@ import networkx as nx
 import config
 import re
 
+
 def main():
     gdb_path = config.n50_path
     drainage_basin_path = config.drainage_basin_path
     output_folder = config.output_folder
     raster_path = config.raster_path
-    basin_list = ["VEGÅRSVASSDRAGET"] 
+    basin_list = ["VEGÅRSVASSDRAGET"]
 
     all_flipped_paths = []
     total_flipped_segments = 0
@@ -35,29 +37,40 @@ def main():
 
     for i, basin in enumerate(basin_list):
         print(f"Processing basin {i + 1}/{total_basins}: {basin}")
-        output_fc = join_river_and_basin(basin, gdb_path, drainage_basin_path, output_folder)
+        output_fc = join_river_and_basin(
+            basin, gdb_path, drainage_basin_path, output_folder
+        )
         if output_fc is None:
             print(f"Skipping basin {basin} due to previous errors.")
             continue
-        updated_lines_fc, intermediate_files = extract_height_and_reconstruct_3d_lines(output_fc, raster_path)
-        flipped_fc, num_flipped_segments, num_segments = build_network_and_flip_lines(updated_lines_fc, output_fc, output_folder)
+        updated_lines_fc, intermediate_files = extract_height_and_reconstruct_3d_lines(
+            output_fc, raster_path
+        )
+        flipped_fc, num_flipped_segments, num_segments = build_network_and_flip_lines(
+            updated_lines_fc, output_fc, output_folder
+        )
         if flipped_fc:
             all_flipped_paths.append(flipped_fc)
         total_flipped_segments += num_flipped_segments
         total_segments += num_segments
 
     if all_flipped_paths:
-        arcpy.Merge_management(all_flipped_paths, f"{output_folder}\\final_flipped_rivers.shp")
+        arcpy.Merge_management(
+            all_flipped_paths, f"{output_folder}\\final_flipped_rivers.shp"
+        )
     else:
         print("No basins required flipping. No merged shapefile created.")
 
+
 def sanitize_filename(name):
     """Sanitizes a filename by replacing invalid characters with underscores."""
-    return re.sub(r'[^a-zA-Z0-9_ØÆÅæøå]', '_', name)
+    return re.sub(r"[^a-zA-Z0-9_ØÆÅæøå]", "_", name)
+
 
 def sanitize_query_string(value):
     """Sanitizes a query string by doubling single quotes."""
     return value.replace("'", "''")
+
 
 def join_river_and_basin(basin, gdb_path, drainage_basin_path, output_folder):
     """
@@ -77,7 +90,7 @@ def join_river_and_basin(basin, gdb_path, drainage_basin_path, output_folder):
     arcpy.env.workspace = gdb_path
 
     rivers_fc = "ElvBekk"
-    basins_fc = shp_path  
+    basins_fc = shp_path
 
     sanitized_basin = sanitize_filename(basin)
     output_fc = f"{output_folder}\\river_basin_combined_{sanitized_basin}.shp"
@@ -96,7 +109,9 @@ def join_river_and_basin(basin, gdb_path, drainage_basin_path, output_folder):
     print(f"Executing query: {basin_query}")
 
     try:
-        arcpy.SelectLayerByAttribute_management("basins_layer", "NEW_SELECTION", basin_query)
+        arcpy.SelectLayerByAttribute_management(
+            "basins_layer", "NEW_SELECTION", basin_query
+        )
     except Exception as e:
         print(f"Error selecting basin with query: {basin_query}")
         print(e)
@@ -108,8 +123,9 @@ def join_river_and_basin(basin, gdb_path, drainage_basin_path, output_folder):
 
     arcpy.management.Delete("rivers_layer")
     arcpy.management.Delete("basins_layer")
-    
+
     return output_fc
+
 
 def extract_height_and_reconstruct_3d_lines(output_fc, raster_path):
     """
@@ -127,7 +143,13 @@ def extract_height_and_reconstruct_3d_lines(output_fc, raster_path):
     updated_lines_fc = output_fc.replace(".shp", "_3D.shp")
 
     arcpy.FeatureVerticesToPoints_management(output_fc, output_points_fc, "BOTH_ENDS")
-    arcpy.sa.ExtractValuesToPoints(output_points_fc, raster_path, height_points_fc, interpolate_values="NONE", add_attributes="VALUE_ONLY")
+    arcpy.sa.ExtractValuesToPoints(
+        output_points_fc,
+        raster_path,
+        height_points_fc,
+        interpolate_values="NONE",
+        add_attributes="VALUE_ONLY",
+    )
 
     height_gdf = gpd.read_file(height_points_fc)
 
@@ -145,16 +167,20 @@ def extract_height_and_reconstruct_3d_lines(output_fc, raster_path):
         lines = []
 
         for name, group in grouped:
-            points = [Point(xy) for xy in zip(group.geometry.x, group.geometry.y, group["RASTERVALU"])]
+            points = [
+                Point(xy)
+                for xy in zip(group.geometry.x, group.geometry.y, group["RASTERVALU"])
+            ]
             lines.append(LineString(points))
-        
+
         return gpd.GeoDataFrame(geometry=lines, crs=df.crs)
 
     lines_gdf = create_3d_lines(height_gdf)
     lines_gdf.to_file(updated_lines_fc)
     print(f"New 3D lines feature class created: {updated_lines_fc}")
-    
+
     return updated_lines_fc, [output_points_fc, height_points_fc]
+
 
 def build_network_and_flip_lines(updated_lines_fc, original_fc, output_folder):
     """
@@ -186,7 +212,7 @@ def build_network_and_flip_lines(updated_lines_fc, original_fc, output_folder):
         G_3d.add_edge(start, end, index=idx, z_value=max(start[2], end[2]))
 
     starting_node = None
-    min_z = float('inf')
+    min_z = float("inf")
 
     for node in G_3d.nodes:
         z_value = node[2]
@@ -204,7 +230,9 @@ def build_network_and_flip_lines(updated_lines_fc, original_fc, output_folder):
         while True:
             try:
                 cycle = nx.find_cycle(G)
-                max_z_edge = max(cycle, key=lambda edge: G.get_edge_data(*edge)['z_value'])
+                max_z_edge = max(
+                    cycle, key=lambda edge: G.get_edge_data(*edge)["z_value"]
+                )
                 G.remove_edge(*max_z_edge)
                 removed_edges.append(max_z_edge)
             except nx.NetworkXNoCycle:
@@ -217,11 +245,9 @@ def build_network_and_flip_lines(updated_lines_fc, original_fc, output_folder):
     original_fids = river_df.index
     data = river_df["geometry"]
     flipped_val = [0] * len(data)
-    to_be_flipped_df = gpd.GeoDataFrame({
-        "geometry": data,
-        "flipped": flipped_val,
-        "original_fid": original_fids
-    })
+    to_be_flipped_df = gpd.GeoDataFrame(
+        {"geometry": data, "flipped": flipped_val, "original_fid": original_fids}
+    )
 
     def extract_start_end_coords(line):
         """Extracts start and end coordinates from a line segment."""
@@ -246,34 +272,36 @@ def build_network_and_flip_lines(updated_lines_fc, original_fc, output_folder):
 
         while stack:
             current_node = stack.pop()
-            
+
             if current_node in visited:
                 continue
 
             visited.add(current_node)
-            
+
             for neighbor in G.neighbors(current_node):
                 edge_data = G.get_edge_data(current_node, neighbor)
-                segment_index = edge_data['index']
+                segment_index = edge_data["index"]
                 if segment_index in visited_edges:
                     continue
 
                 visited_edges.add(segment_index)
-                start, end = extract_start_end_coords(to_be_flipped_df.at[segment_index, 'geometry'])
-                
+                start, end = extract_start_end_coords(
+                    to_be_flipped_df.at[segment_index, "geometry"]
+                )
+
                 if (current_node == end) and (neighbor == start):
-                    to_be_flipped_df.at[segment_index, 'flipped'] = 0
+                    to_be_flipped_df.at[segment_index, "flipped"] = 0
                 elif (current_node == start) and (neighbor == end):
-                    to_be_flipped_df.at[segment_index, 'flipped'] = 1
-                
+                    to_be_flipped_df.at[segment_index, "flipped"] = 1
+
                 stack.append(neighbor)
 
     dfs_check_flip(G, starting_node_2d, to_be_flipped_df)
 
     num_segments = len(to_be_flipped_df)
-    num_flipped_segments = to_be_flipped_df['flipped'].sum()
+    num_flipped_segments = to_be_flipped_df["flipped"].sum()
 
-    segments_to_flip = to_be_flipped_df[to_be_flipped_df['flipped'] == 1]
+    segments_to_flip = to_be_flipped_df[to_be_flipped_df["flipped"] == 1]
 
     arcpy.env.workspace = output_folder
     arcpy.env.overwriteOutput = True
@@ -281,8 +309,10 @@ def build_network_and_flip_lines(updated_lines_fc, original_fc, output_folder):
     arcpy.management.MakeFeatureLayer(flipped_river_basin_path, "river_basin_layer")
 
     for idx, row in segments_to_flip.iterrows():
-        original_fid = row['original_fid']
-        arcpy.management.SelectLayerByAttribute("river_basin_layer", "NEW_SELECTION", f"\"FID\" = {original_fid}")
+        original_fid = row["original_fid"]
+        arcpy.management.SelectLayerByAttribute(
+            "river_basin_layer", "NEW_SELECTION", f'"FID" = {original_fid}'
+        )
         arcpy.edit.FlipLine("river_basin_layer")
 
     arcpy.management.Delete("river_basin_layer")
@@ -294,6 +324,7 @@ def build_network_and_flip_lines(updated_lines_fc, original_fc, output_folder):
 
     return flipped_river_basin_path, num_flipped_segments, num_segments
 
+
 def get_all_basins(feature_class, column_name, gdb_path):
     arcpy.env.workspace = gdb_path
     unique_values = set()
@@ -302,6 +333,7 @@ def get_all_basins(feature_class, column_name, gdb_path):
             unique_values.add(row[0])
 
     return list(unique_values)
+
 
 if __name__ == "__main__":
     main()

@@ -50,7 +50,7 @@ def main():
 def data_selection_and_validation():
     selector = StudyAreaSelector(
         input_output_file_dict={
-            input_roads.roads: Road_N100.data_selection___nvdb_roads___n100_road.value,
+            input_roads.road_output_1: Road_N100.data_selection___nvdb_roads___n100_road.value,
             input_n100.Bane: Road_N100.data_selection___railroad___n100_road.value,
             input_n100.BegrensningsKurve: Road_N100.data_selection___begrensningskurve___n100_road.value,
         },

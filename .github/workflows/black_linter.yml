@@ -1,0 +1,26 @@
+name: Black Code Formatter
+
+on:
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  black-check:
+    name: Black Lint Check
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install black
+        run: pip install black
+
+      - name: Run black
+        run: black --check .

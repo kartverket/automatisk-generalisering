@@ -1,6 +1,7 @@
 """
 This script joins river and drainage basin data, selecting rivers within a specified basin and saving the results to a new shapefile.
 """
+
 import arcpy
 import geopandas as gpd
 import config
@@ -11,7 +12,7 @@ shp_path = config.drainage_basin_path
 arcpy.env.workspace = gdb_path
 
 rivers_fc = "ElvBekk"
-basins_fc = shp_path  
+basins_fc = shp_path
 
 output_fc = config.output_folder + r"\river_basin_combined"
 
@@ -21,7 +22,9 @@ arcpy.MakeFeatureLayer_management(basins_fc, "basins_layer")
 
 # You can change this to any drainage basin
 specified_basin_query = "nedborfelt = 'HOMLA'"
-arcpy.SelectLayerByAttribute_management("basins_layer", "NEW_SELECTION", specified_basin_query)
+arcpy.SelectLayerByAttribute_management(
+    "basins_layer", "NEW_SELECTION", specified_basin_query
+)
 
 arcpy.SelectLayerByLocation_management("rivers_layer", "INTERSECT", "basins_layer")
 arcpy.CopyFeatures_management("rivers_layer", output_fc)
