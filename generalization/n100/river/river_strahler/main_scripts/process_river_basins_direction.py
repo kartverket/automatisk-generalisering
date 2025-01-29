@@ -1,7 +1,7 @@
 """
 This script processes river network data to correct the direction of river segments.
-It reads river and basin data, extracts elevation information, constructs 3D river 
-networks, identifies and corrects flow direction errors, and outputs the corrected 
+It reads river and basin data, extracts elevation information, constructs 3D river
+networks, identifies and corrects flow direction errors, and outputs the corrected
 river segments to a shapefile.
 
 Instructions:
@@ -14,6 +14,7 @@ Instructions:
 2. Set the 'basin_list' variable to include the names of drainage basins to process. You can use the get_all_basins() function
 to get a list of all possible basins in the feature class.
 """
+
 import arcpy
 import geopandas as gpd
 from shapely.geometry import Point, LineString

@@ -1,6 +1,7 @@
 """
 Copy the contents of this file into a new file named config.py and update the paths as needed.
 """
+
 # WORKSPACE ENVIRONMENT PATHS
 default_project_workspace = r"path\to\folder\or\file"
 

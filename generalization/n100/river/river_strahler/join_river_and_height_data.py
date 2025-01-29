@@ -1,6 +1,7 @@
 """
 This script extracts height data for river points, reconstructs 3D river lines, and saves the new 3D lines to a shapefile.
 """
+
 import arcpy
 import geopandas as gpd
 from shapely.geometry import Point, LineString

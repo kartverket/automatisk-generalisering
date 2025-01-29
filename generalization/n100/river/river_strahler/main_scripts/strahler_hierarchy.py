@@ -9,12 +9,13 @@ Instructions:
    - False: The script will process the river data from the specified geodatabase and drainage basin.
 
 2. Set the 'use_common_ancestor' variable to True or False.
-   - True: The script will use the common ancestor logic to avoid incrementing Strahler values 
+   - True: The script will use the common ancestor logic to avoid incrementing Strahler values
      for segments that diverge and rejoin. This ensures more accurate Strahler values but increases
      the time complexity.
-   - False: The script will skip the common ancestor check, resulting in faster processing but 
+   - False: The script will skip the common ancestor check, resulting in faster processing but
      potentially less accurate Strahler values in cases of divergence and rejoining.
 """
+
 import networkx as nx
 import geopandas as gpd
 from shapely.geometry import Point

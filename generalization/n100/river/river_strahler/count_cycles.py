@@ -50,9 +50,11 @@ print(f"Percentage of edges in cycles: {100 * num_edges_in_cycles / total_edges:
 def display_graph_with_cycles(G, edges_in_cycles):
     pos = {node: node[:2] for node in G.nodes}
     edge_colors = [
-        "red"
-        if edge in edges_in_cycles or (edge[1], edge[0]) in edges_in_cycles
-        else "black"
+        (
+            "red"
+            if edge in edges_in_cycles or (edge[1], edge[0]) in edges_in_cycles
+            else "black"
+        )
         for edge in G.edges
     ]
     nx.draw(G, pos, with_labels=True, node_size=50, font_size=3, edge_color=edge_colors)

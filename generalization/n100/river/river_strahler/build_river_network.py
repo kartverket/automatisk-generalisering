@@ -1,6 +1,7 @@
 """
 Script to build the network of rivers that can be traversed.
 """
+
 import geopandas as gpd
 import networkx as nx
 import matplotlib.pyplot as plt
