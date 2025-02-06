@@ -429,16 +429,16 @@ class Road_N100(Enum):
         )
     )
 
-    test1___elveg_and_sti_kommune_singlepart_dissolve_mergedividedroads_crd___n100_road = file_manager.generate_file_name_gdb(
-        script_source_name=test1,
-        description="elveg_and_sti_kommune_singlepart_dissolve_mergedividedroads_crd",
-    )
-
     test1___elveg_and_sti_kommune_singlepart_dissolve_mergedividedroads2___n100_road = (
         file_manager.generate_file_name_gdb(
             script_source_name=test1,
             description="elveg_and_sti_kommune_singlepart_dissolve_mergedividedroads2",
         )
+    )
+
+    test1___elveg_and_sti_kommune_singlepart_dissolve_mergedividedroads_crd___n100_road = file_manager.generate_file_name_gdb(
+        script_source_name=test1,
+        description="elveg_and_sti_kommune_singlepart_dissolve_mergedividedroads_crd",
     )
 
     test1___elveg_and_sti_kommune_singlepart_dissolve_mergedividedroads_crd_medium_ul___n100_road = file_manager.generate_file_name_gdb(
@@ -463,7 +463,7 @@ class Road_N100(Enum):
 
     test1___simplified_thin_sti___n100_road = file_manager.generate_file_name_gdb(
         script_source_name=test1,
-        description="elveg_and_sti_kommune_singlepart_dissolve_mergedividedroads_crd_kryss_thin_sti",
+        description="simplified_thin_sti",
     )
 
     test1___veglenke2___n100_road = file_manager.generate_file_name_gdb(
@@ -486,14 +486,9 @@ class Road_N100(Enum):
         description="diss",
     )
 
-    test1___veg100_akershusc1___n100_road = file_manager.generate_file_name_gdb(
+    test1___veg100_finnmarkc_modell3___n100_road = file_manager.generate_file_name_gdb(
         script_source_name=test1,
-        description="veg100_akershusc1",
-    )
-
-    test1___veg100_akershusc2___n100_road = file_manager.generate_file_name_gdb(
-        script_source_name=test1,
-        description="veg100_akershusc2",
+        description="veg100_finnmarkc_modell3",
     )
 
     # ========================================
