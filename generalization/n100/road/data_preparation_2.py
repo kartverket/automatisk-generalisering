@@ -39,9 +39,11 @@ def main():
     environment_setup.main()
     arcpy.env.referenceScale = 100000
     data_selection_and_validation()
-    preparing_context_features()
-    table_management()
-    dissolve_merge_and_reduce_roads()
+    trim_road_details()
+    adding_fields()
+    merge_divided_roads()
+    # old_table_management()
+    # dissolve_merge_and_reduce_roads()
     # merge_divided_roads()
     # manage_intersections()
 
@@ -73,8 +75,59 @@ def data_selection_and_validation():
     road_data_validation.check_repair_sequence()
 
 
+def trim_road_details():
+    arcpy.management.MultipartToSinglepart(
+        in_features=Road_N100.data_selection___nvdb_roads___n100_road.value,
+        out_feature_class=Road_N100.data_preparation___road_single_part___n100_road.value,
+    )
+
+    arcpy.analysis.PairwiseDissolve(
+        in_features=Road_N100.data_preparation___road_single_part___n100_road.value,
+        out_feature_class=Road_N100.data_preparation___dissolved_road_feature___n100_road.value,
+        dissolve_field=[
+            "objtype",
+            "subtypekode",
+            "vegstatus",
+            "typeveg",
+            "vegkategori",
+            "vegnummer",
+            "motorvegtype",
+            "vegklasse",
+            "rutemerking",
+            "medium",
+            "uttegning",
+        ],
+        multi_part="SINGLE_PART",
+    )
+
+    arcpy.management.CopyFeatures(
+        in_features=Road_N100.data_preparation___dissolved_road_feature___n100_road.value,
+        out_feature_class=Road_N100.data_preparation___remove_small_road_lines___n100_road.value,
+    )
+
+    arcpy.topographic.RemoveSmallLines(
+        in_features=Road_N100.data_preparation___remove_small_road_lines___n100_road.value,
+        minimum_length="100 meters",
+    )
+
+    arcpy.management.FeatureToLine(
+        in_features=Road_N100.data_preparation___remove_small_road_lines___n100_road.value,
+        out_feature_class=Road_N100.data_preparation___feature_to_line___n100_road.value,
+    )
+
+    file_utilities.deleting_added_field_from_feature_to_x(
+        input_file_feature=Road_N100.data_preparation___feature_to_line___n100_road.value,
+        field_name_feature=Road_N100.data_preparation___remove_small_road_lines___n100_road.value,
+    )
+
+    arcpy.management.MultipartToSinglepart(
+        in_features=Road_N100.data_preparation___feature_to_line___n100_road.value,
+        out_feature_class=Road_N100.data_preparation___road_single_part_2___n100_road.value,
+    )
+
+
 @timing_decorator
-def preparing_context_features():
+def adding_fields():
     custom_arcpy.select_attribute_and_make_permanent_feature(
         input_layer=Road_N100.data_selection___begrensningskurve___n100_road.value,
         expression="""objtype IN ('Innsjøkant', 'InnsjøkantRegulert', 'Kystkontur', 'ElvBekkKant')""",
@@ -99,9 +152,54 @@ def preparing_context_features():
             expression_type="PYTHON3",
         )
 
+    file_utilities.reclassify_value(
+        input_table=Road_N100.data_preparation___road_single_part_2___n100_road.value,
+        target_field="VEGNUMMER",
+        target_value="None",
+        replace_value="-99",
+        reference_field="VEGNUMMER",
+    )
+
+    arcpy.management.AddFields(
+        in_table=Road_N100.data_preparation___road_single_part_2___n100_road.value,
+        field_description=[
+            ["invisibility", "SHORT"],
+            ["hierarchy", "SHORT"],
+            ["character", "SHORT"],
+            ["merge_divided_id", "LONG"],
+        ],
+    )
+
+
+def merge_divided_roads():
+    file_utilities.reclassify_value(
+        input_table=Road_N100.data_preparation___road_single_part_2___n100_road.value,
+        target_field="merge_divided_id",
+        target_value="-99",
+        replace_value="0",
+        reference_field="VEGNUMMER",
+    )
+
+    arcpy.cartography.MergeDividedRoads(
+        in_features=Road_N100.data_preparation___road_single_part_2___n100_road.value,
+        merge_field="merge_divided_id",
+        merge_distance="150 Meters",
+        out_features=Road_N100.data_preparation___merge_divided_roads___n100_road.value,
+        out_displacement_features=Road_N100.data_preparation___merge_divided_roads_displacement_feature___n100_road.value,
+        character_field="character",
+    )
+
+
+def collapse_road_detail():
+    arcpy.cartography.CollapseRoadDetail(
+        in_features=Road_N100.data_preparation___merge_divided_roads___n100_road.value,
+        collapse_distance="90 Meters",
+        output_feature_class=Road_N100.data_preparation___collapse_road_detail___n100_road.value,
+    )
+
 
 @timing_decorator
-def table_management():
+def old_table_management():
     reclassify_missing_vegnummer = """def Reclass(value):
         if value is None:
             return -99
@@ -257,7 +355,7 @@ def dissolve_merge_and_reduce_roads():
     )
 
 
-def merge_divided_roads():
+def old_merge_divided_roads():
     custom_arcpy.select_attribute_and_make_permanent_feature(
         input_layer=Road_N100.data_preparation___road_single_part_2___n100_road.value,
         expression=f" MEDIUM = '{MediumAlias.on_surface}'",

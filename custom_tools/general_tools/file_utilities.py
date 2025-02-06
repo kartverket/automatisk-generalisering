@@ -501,6 +501,32 @@ def compare_feature_classes(feature_class_1, feature_class_2):
         print("Both feature classes have the same number of features.")
 
 
+def reclassify_value(
+    input_table: str,
+    target_field: str,
+    target_value: str,
+    replace_value: str,
+    reference_field: str = None,
+    logic_format: str = "PYTHON3",
+) -> None:
+    update_missing_block = f"""def Reclass(value):
+        if value == {target_value}:
+            return {replace_value}
+        else:
+            return value
+    """
+
+    value_field = reference_field if reference_field else target_field
+
+    arcpy.management.CalculateField(
+        in_table=input_table,
+        field=target_field,
+        expression=f"Reclass(!{value_field}!)",
+        expression_type=logic_format,
+        code_block=update_missing_block,
+    )
+
+
 def deleting_added_field_from_feature_to_x(
     input_file_feature: str = None,
     field_name_feature: str = None,
