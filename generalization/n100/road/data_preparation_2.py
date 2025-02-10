@@ -22,6 +22,7 @@ from custom_tools.general_tools.study_area_selector import StudyAreaSelector
 from custom_tools.general_tools.geometry_tools import GeometryValidator
 from custom_tools.general_tools import custom_arcpy
 from custom_tools.general_tools import file_utilities
+from custom_tools.generalization_tools.road.thin_road_network import ThinRoadNetwork
 from custom_tools.general_tools.polygon_processor import PolygonProcessor
 from custom_tools.general_tools.line_to_buffer_symbology import LineToBufferSymbology
 from input_data.input_symbology import SymbologyN100
@@ -42,10 +43,10 @@ def main():
     trim_road_details()
     adding_fields()
     merge_divided_roads()
-    # old_table_management()
-    # dissolve_merge_and_reduce_roads()
-    # merge_divided_roads()
-    # manage_intersections()
+    collapse_road_detail()
+    separate_bridge_and_tunnel_from_surface_roads()
+    simplify_road()
+    thin_sti_and_forest_roads()
 
 
 @timing_decorator
@@ -193,9 +194,87 @@ def merge_divided_roads():
 def collapse_road_detail():
     arcpy.cartography.CollapseRoadDetail(
         in_features=Road_N100.data_preparation___merge_divided_roads___n100_road.value,
-        collapse_distance="90 Meters",
+        collapse_distance="60 Meters",
         output_feature_class=Road_N100.data_preparation___collapse_road_detail___n100_road.value,
     )
+
+
+def separate_bridge_and_tunnel_from_surface_roads():
+    custom_arcpy.select_attribute_and_make_permanent_feature(
+        input_layer=Road_N100.data_preparation___collapse_road_detail___n100_road.value,
+        expression=f"medium IN ('{MediumAlias.tunnel}', '{MediumAlias.bridge}')",
+        output_name=Road_N100.data_preparation___road_bridge_and_tunnel_selection___n100_road.value,
+    )
+    custom_arcpy.select_attribute_and_make_permanent_feature(
+        input_layer=Road_N100.data_preparation___collapse_road_detail___n100_road.value,
+        expression=f"medium = '{MediumAlias.on_surface}')",
+        output_name=Road_N100.data_preparation___road_on_surface_selection___n100_road.value,
+    )
+
+
+def create_intersections_for_on_surface_roads():
+    arcpy.management.FeatureToLine(
+        in_features=Road_N100.data_preparation___road_on_surface_selection___n100_road.value,
+        out_feature_class=Road_N100.data_preparation___on_surface_feature_to_line___n100_road.value,
+    )
+
+    file_utilities.deleting_added_field_from_feature_to_x(
+        input_file_feature=Road_N100.data_preparation___on_surface_feature_to_line___n100_road.value,
+        field_name_feature=Road_N100.data_preparation___road_on_surface_selection___n100_road.value,
+    )
+
+    arcpy.management.Append(
+        inputs=Road_N100.data_preparation___road_bridge_and_tunnel_selection___n100_road.value,
+        target=Road_N100.data_preparation___on_surface_feature_to_line___n100_road.value,
+    )
+
+
+def simplify_road():
+    arcpy.cartography.SimplifyLine(
+        in_features=Road_N100.data_preparation___on_surface_feature_to_line___n100_road.value,
+        out_feature_class=Road_N100.data_preparation___simplified_road___n100_road.value,
+        algorithm="POINT_REMOVE",
+        tolerance="2 meters",
+        error_option="RESOLVE_ERRORS",
+    )
+
+
+def thin_sti_and_forest_roads():
+    road = "road"
+    input_dict = {
+        road: [
+            "input",
+            Road_N100.data_preparation___simplified_road___n100_road.value,
+        ]
+    }
+
+    output_dict = {
+        road: [
+            "thin_road",
+            Road_N100.data_preparation___thin_road_network_output___n100_road.value,
+        ]
+    }
+    thin_road_network_config = {
+        "class": ThinRoadNetwork,
+        "method": "run",
+        "params": {
+            "road_network_input": ("road", "input"),
+            "road_network_output": ("road", "thin_road"),
+            "root_file": Road_N100.data_preparation___thin_road_network_root___n100_road.value,
+            "minimum_length": "2000 meters",
+            "invisibility_field_name": "invisibility",
+            "hierarchy_field_name": "hierarchy",
+        },
+    }
+    partition_thin_roads = PartitionIterator(
+        alias_path_data=input_dict,
+        alias_path_outputs=output_dict,
+        custom_functions=[thin_road_network_config],
+        root_file_partition_iterator=Road_N100.data_preparation___thin_road_partition_root___n100_road.value,
+        dictionary_documentation_path=Road_N100.data_preparation___thin_roads_docu___n100_road.value,
+        feature_count="800000",
+    )
+    partition_thin_roads.run()
 
 
 @timing_decorator
