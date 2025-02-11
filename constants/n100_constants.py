@@ -152,6 +152,7 @@ class NvdbAlias:
     sti_umerket: str = "U"
     gang_og_sykkelveg: str = "G"
     traktorveg: str = "T"
+    barmarksløype: str = "B"
     skogsveg: str = "S"  # Blir kodet om til private veger
 
 

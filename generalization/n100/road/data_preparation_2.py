@@ -34,18 +34,21 @@ from constants.n100_constants import (
     MediumAlias,
 )
 
+CHANGES_BOOLEAN = True
+
 
 @timing_decorator
 def main():
     environment_setup.main()
     arcpy.env.referenceScale = 100000
-    data_selection_and_validation()
-    trim_road_details()
-    adding_fields()
-    merge_divided_roads()
-    collapse_road_detail()
-    separate_bridge_and_tunnel_from_surface_roads()
-    simplify_road()
+    # data_selection_and_validation()
+    # trim_road_details()
+    # adding_fields()
+    # merge_divided_roads()
+    # collapse_road_detail()
+    # separate_bridge_and_tunnel_from_surface_roads()
+    # create_intersections_for_on_surface_roads()
+    # simplify_road()
     thin_sti_and_forest_roads()
 
 
@@ -181,6 +184,28 @@ def merge_divided_roads():
         reference_field="VEGNUMMER",
     )
 
+    if CHANGES_BOOLEAN:
+        define_character_field = f"""def Reclass(TYPEVEG):
+            if TYPEVEG == 'rundkjøring':
+                return 0
+            elif TYPEVEG in 'kanalisertVeg':
+                return 1
+            elif TYPEVEG == 'enkelBilveg':
+                return 1
+            elif TYPEVEG == 'rampe':
+                return 2
+            else: 
+                return 1
+        """
+
+        arcpy.management.CalculateField(
+            in_table=Road_N100.data_preparation___road_single_part_2___n100_road.value,
+            field="character",
+            expression="Reclass(!TYPEVEG!)",
+            expression_type="PYTHON3",
+            code_block=define_character_field,
+        )
+
     arcpy.cartography.MergeDividedRoads(
         in_features=Road_N100.data_preparation___road_single_part_2___n100_road.value,
         merge_field="merge_divided_id",
@@ -207,12 +232,15 @@ def separate_bridge_and_tunnel_from_surface_roads():
     )
     custom_arcpy.select_attribute_and_make_permanent_feature(
         input_layer=Road_N100.data_preparation___collapse_road_detail___n100_road.value,
-        expression=f"medium = '{MediumAlias.on_surface}')",
+        expression=f"medium = '{MediumAlias.on_surface}'",
         output_name=Road_N100.data_preparation___road_on_surface_selection___n100_road.value,
     )
 
 
 def create_intersections_for_on_surface_roads():
+    # print(
+    #     f"Input:\n{Road_N100.data_preparation___road_on_surface_selection___n100_road.value}\nOutput:\n {Road_N100.data_preparation___on_surface_feature_to_line___n100_road}"
+    # )
     arcpy.management.FeatureToLine(
         in_features=Road_N100.data_preparation___road_on_surface_selection___n100_road.value,
         out_feature_class=Road_N100.data_preparation___on_surface_feature_to_line___n100_road.value,
@@ -240,6 +268,43 @@ def simplify_road():
 
 
 def thin_sti_and_forest_roads():
+    otpional_sti_and_forest_hierarchy = f"""def Reclass(vegkategori):
+        if vegkategori  in ('{NvdbAlias.europaveg}', '{NvdbAlias.riksveg}', '{NvdbAlias.fylkesveg}', '{NvdbAlias.kommunalveg}', '{NvdbAlias.privatveg}', '{NvdbAlias.skogsveg}'):
+            return 0
+        elif vegkategori in ('{NvdbAlias.traktorveg}', '{NvdbAlias.barmarksløype}'):
+            return 1
+        elif vegkategori in ('{NvdbAlias.sti_dnt}', '{NvdbAlias.sti_andre}', None):
+            return 2
+        elif vegkategori == '{NvdbAlias.gang_og_sykkelveg}':
+            return 3
+        elif vegkategori == '{NvdbAlias.sti_umerket}':
+            return 4
+        else:
+            return 5
+        """
+
+    # It seems from source code that having 2 as an else return is intended function if not revert to `otpional_sti_and_forest_hierarchy`
+    sti_and_forest_hierarchy = f"""def Reclass(vegkategori):
+        if vegkategori  in ('{NvdbAlias.europaveg}', '{NvdbAlias.riksveg}', '{NvdbAlias.fylkesveg}', '{NvdbAlias.kommunalveg}', '{NvdbAlias.privatveg}', '{NvdbAlias.skogsveg}'):
+            return 0
+        elif vegkategori in ('{NvdbAlias.traktorveg}', '{NvdbAlias.barmarksløype}'):
+            return 1
+        elif vegkategori in ('{NvdbAlias.sti_dnt}', '{NvdbAlias.sti_andre}'):
+            return 2
+        elif vegkategori == '{NvdbAlias.gang_og_sykkelveg}':
+            return 3
+        elif vegkategori == '{NvdbAlias.sti_umerket}':
+            return 4
+        else:
+            return 2
+        """
+    arcpy.management.CalculateField(
+        in_table=Road_N100.data_preparation___simplified_road___n100_road.value,
+        field="hierarchy",
+        expression="Reclass(!vegkategori!)",
+        expression_type="PYTHON3",
+        code_block=sti_and_forest_hierarchy,
+    )
     road = "road"
     input_dict = {
         road: [
@@ -251,7 +316,7 @@ def thin_sti_and_forest_roads():
     output_dict = {
         road: [
             "thin_road",
-            Road_N100.data_preparation___thin_road_network_output___n100_road.value,
+            Road_N100.data_preparation___thin_road_sti_output___n100_road.value,
         ]
     }
     thin_road_network_config = {
@@ -260,7 +325,86 @@ def thin_sti_and_forest_roads():
         "params": {
             "road_network_input": ("road", "input"),
             "road_network_output": ("road", "thin_road"),
-            "root_file": Road_N100.data_preparation___thin_road_network_root___n100_road.value,
+            "root_file": Road_N100.data_preparation___thin_road_sti_root___n100_road.value,
+            "minimum_length": "2000 meters",
+            "invisibility_field_name": "invisibility",
+            "hierarchy_field_name": "hierarchy",
+        },
+    }
+    partition_thin_roads = PartitionIterator(
+        alias_path_data=input_dict,
+        alias_path_outputs=output_dict,
+        custom_functions=[thin_road_network_config],
+        root_file_partition_iterator=Road_N100.data_preparation___thin_sti_partition_root___n100_road.value,
+        dictionary_documentation_path=Road_N100.data_preparation___thin_sti_docu___n100_road.value,
+        feature_count="800000",
+    )
+    partition_thin_roads.run()
+
+
+def thin_roads():
+    optional_road_hierarchy = f"""def Reclass(vegkategori):
+        if vegkategori  in ('{NvdbAlias.traktorveg}', '{NvdbAlias.sti_dnt}', '{NvdbAlias.sti_andre}', '{NvdbAlias.sti_umerket}', '{NvdbAlias.gang_og_sykkelveg}', '{NvdbAlias.barmarksløype}'):
+            return 0
+        elif vegkategori in ('{NvdbAlias.europaveg}', '{NvdbAlias.riksveg}'):
+            return 1
+        elif vegkategori == '{NvdbAlias.fylkesveg}':
+            return 2
+        elif vegkategori == '{NvdbAlias.kommunalveg}':
+            return 3
+        elif vegkategori in ('{NvdbAlias.privatveg}', None):
+            return 4
+        elif vegkategori == '{NvdbAlias.skogsveg}':
+            return 5
+        else:
+            return 6
+        """
+
+    # It seems from source code that having 4 as an else return is intended function if not revert to `optional_road_hierarchy`
+    road_hierarchy = f"""def Reclass(vegkategori):
+        if vegkategori  in ('{NvdbAlias.traktorveg}', '{NvdbAlias.sti_dnt}', '{NvdbAlias.sti_andre}', '{NvdbAlias.sti_umerket}', '{NvdbAlias.gang_og_sykkelveg}', '{NvdbAlias.barmarksløype}'):
+            return 0
+        elif vegkategori in ('{NvdbAlias.europaveg}', '{NvdbAlias.riksveg}'):
+            return 1
+        elif vegkategori == '{NvdbAlias.fylkesveg}':
+            return 2
+        elif vegkategori == '{NvdbAlias.kommunalveg}':
+            return 3
+        elif vegkategori == '{NvdbAlias.privatveg}':
+            return 4
+        elif vegkategori == '{NvdbAlias.skogsveg}':
+            return 5
+        else:
+            return 4
+        """
+    arcpy.management.CalculateField(
+        in_table=Road_N100.data_preparation___thin_road_sti_output___n100_road.value,
+        field="hierarchy",
+        expression="Reclass(!vegkategori!)",
+        expression_type="PYTHON3",
+        code_block=road_hierarchy,
+    )
+    road = "road"
+    input_dict = {
+        road: [
+            "input",
+            Road_N100.data_preparation___thin_road_sti_output___n100_road.value,
+        ]
+    }
+
+    output_dict = {
+        road: [
+            "thin_road",
+            Road_N100.data_preparation___thin_road_output___n100_road.value,
+        ]
+    }
+    thin_road_network_config = {
+        "class": ThinRoadNetwork,
+        "method": "run",
+        "params": {
+            "road_network_input": ("road", "input"),
+            "road_network_output": ("road", "thin_road"),
+            "root_file": Road_N100.data_preparation___thin_road_root___n100_road.value,
             "minimum_length": "2000 meters",
             "invisibility_field_name": "invisibility",
             "hierarchy_field_name": "hierarchy",
@@ -271,7 +415,7 @@ def thin_sti_and_forest_roads():
         alias_path_outputs=output_dict,
         custom_functions=[thin_road_network_config],
         root_file_partition_iterator=Road_N100.data_preparation___thin_road_partition_root___n100_road.value,
-        dictionary_documentation_path=Road_N100.data_preparation___thin_roads_docu___n100_road.value,
+        dictionary_documentation_path=Road_N100.data_preparation___thin_road_docu___n100_road.value,
         feature_count="800000",
     )
     partition_thin_roads.run()
