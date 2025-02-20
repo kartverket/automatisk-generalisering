@@ -21,6 +21,7 @@ class ThinRoadNetwork:
         minimum_length: str,
         invisibility_field_name: str,
         hierarchy_field_name: str,
+        special_selection_sql: str = None,
         write_work_files_to_memory: bool = False,
         keep_work_files: bool = False,
     ):
@@ -29,12 +30,15 @@ class ThinRoadNetwork:
         self.minimum_length = minimum_length
         self.invisibility_field_name = invisibility_field_name
         self.hierarchy_field_name = hierarchy_field_name
-        self.write_work_files_to_memory = write_work_files_to_memory
+        if write_work_files_to_memory:
+            print("Writing to memory Currently not supported.")
+        self.write_work_files_to_memory = False  # Currently not supporting memory
+        self.special_selection_sql = special_selection_sql
 
         self.work_file_manager = WorkFileManager(
             unique_id=id(self),
             root_file=root_file,
-            write_to_memory=write_work_files_to_memory,
+            write_to_memory=self.write_work_files_to_memory,
             keep_files=keep_work_files,
         )
 
@@ -54,18 +58,25 @@ class ThinRoadNetwork:
         )
 
     def thin_road_network_output_selection(self):
+        if self.special_selection_sql:
+            sql_expression = (
+                f"{self.special_selection_sql} OR {self.invisibility_field_name} = 0"
+            )
+        else:
+            sql_expression = f"{self.invisibility_field_name} = 0"
+
         if self.write_work_files_to_memory:
             custom_arcpy.select_attribute_and_make_feature_layer(
                 input_layer=self.road_network_input,
-                expression=f"{self.invisibility_field_name} = 0",
-                output_name=self.thin_road_network_output,
+                expression=sql_expression,
+                output_name=self.road_network_output,
             )
 
         if not self.write_work_files_to_memory:
             custom_arcpy.select_attribute_and_make_permanent_feature(
                 input_layer=self.road_network_input,
-                expression=f"{self.invisibility_field_name} = 0",
-                output_name=self.thin_road_network_output,
+                expression=sql_expression,
+                output_name=self.road_network_output,
             )
 
     @partition_io_decorator(
