@@ -34,22 +34,24 @@ from constants.n100_constants import (
     MediumAlias,
 )
 
-CHANGES_BOOLEAN = True
+CHANGES_BOOLEAN = False
 
 
 @timing_decorator
 def main():
     environment_setup.main()
     arcpy.env.referenceScale = 100000
-    # data_selection_and_validation()
-    # trim_road_details()
-    # adding_fields()
-    # merge_divided_roads()
-    # collapse_road_detail()
-    # separate_bridge_and_tunnel_from_surface_roads()
-    # create_intersections_for_on_surface_roads()
-    # simplify_road()
+    data_selection_and_validation()
+    trim_road_details()
+    adding_fields()
+    merge_divided_roads()
+    collapse_road_detail()
+    separate_bridge_and_tunnel_from_surface_roads()
+    create_intersections_for_on_surface_roads()
+    simplify_road()
     thin_sti_and_forest_roads()
+    thin_roads()
+    smooth_line()
 
 
 @timing_decorator
@@ -79,6 +81,7 @@ def data_selection_and_validation():
     road_data_validation.check_repair_sequence()
 
 
+@timing_decorator
 def trim_road_details():
     arcpy.management.MultipartToSinglepart(
         in_features=Road_N100.data_selection___nvdb_roads___n100_road.value,
@@ -175,6 +178,7 @@ def adding_fields():
     )
 
 
+@timing_decorator
 def merge_divided_roads():
     file_utilities.reclassify_value(
         input_table=Road_N100.data_preparation___road_single_part_2___n100_road.value,
@@ -216,6 +220,7 @@ def merge_divided_roads():
     )
 
 
+@timing_decorator
 def collapse_road_detail():
     arcpy.cartography.CollapseRoadDetail(
         in_features=Road_N100.data_preparation___merge_divided_roads___n100_road.value,
@@ -224,6 +229,7 @@ def collapse_road_detail():
     )
 
 
+@timing_decorator
 def separate_bridge_and_tunnel_from_surface_roads():
     custom_arcpy.select_attribute_and_make_permanent_feature(
         input_layer=Road_N100.data_preparation___collapse_road_detail___n100_road.value,
@@ -237,10 +243,8 @@ def separate_bridge_and_tunnel_from_surface_roads():
     )
 
 
+@timing_decorator
 def create_intersections_for_on_surface_roads():
-    # print(
-    #     f"Input:\n{Road_N100.data_preparation___road_on_surface_selection___n100_road.value}\nOutput:\n {Road_N100.data_preparation___on_surface_feature_to_line___n100_road}"
-    # )
     arcpy.management.FeatureToLine(
         in_features=Road_N100.data_preparation___road_on_surface_selection___n100_road.value,
         out_feature_class=Road_N100.data_preparation___on_surface_feature_to_line___n100_road.value,
@@ -257,6 +261,7 @@ def create_intersections_for_on_surface_roads():
     )
 
 
+@timing_decorator
 def simplify_road():
     arcpy.cartography.SimplifyLine(
         in_features=Road_N100.data_preparation___on_surface_feature_to_line___n100_road.value,
@@ -267,6 +272,7 @@ def simplify_road():
     )
 
 
+@timing_decorator
 def thin_sti_and_forest_roads():
     otpional_sti_and_forest_hierarchy = f"""def Reclass(vegkategori):
         if vegkategori  in ('{NvdbAlias.europaveg}', '{NvdbAlias.riksveg}', '{NvdbAlias.fylkesveg}', '{NvdbAlias.kommunalveg}', '{NvdbAlias.privatveg}', '{NvdbAlias.skogsveg}'):
@@ -326,9 +332,10 @@ def thin_sti_and_forest_roads():
             "road_network_input": ("road", "input"),
             "road_network_output": ("road", "thin_road"),
             "root_file": Road_N100.data_preparation___thin_road_sti_root___n100_road.value,
-            "minimum_length": "2000 meters",
+            "minimum_length": "1500 meters",
             "invisibility_field_name": "invisibility",
             "hierarchy_field_name": "hierarchy",
+            "special_selection_sql": "objtype IN ('Barmarksløype', 'Sti', 'Traktorveg', 'GangSykkelveg')",
         },
     }
     partition_thin_roads = PartitionIterator(
@@ -337,11 +344,12 @@ def thin_sti_and_forest_roads():
         custom_functions=[thin_road_network_config],
         root_file_partition_iterator=Road_N100.data_preparation___thin_sti_partition_root___n100_road.value,
         dictionary_documentation_path=Road_N100.data_preparation___thin_sti_docu___n100_road.value,
-        feature_count="800000",
+        feature_count="6000",
     )
     partition_thin_roads.run()
 
 
+@timing_decorator
 def thin_roads():
     optional_road_hierarchy = f"""def Reclass(vegkategori):
         if vegkategori  in ('{NvdbAlias.traktorveg}', '{NvdbAlias.sti_dnt}', '{NvdbAlias.sti_andre}', '{NvdbAlias.sti_umerket}', '{NvdbAlias.gang_og_sykkelveg}', '{NvdbAlias.barmarksløype}'):
@@ -361,9 +369,9 @@ def thin_roads():
         """
 
     # It seems from source code that having 4 as an else return is intended function if not revert to `optional_road_hierarchy`
-    road_hierarchy = f"""def Reclass(vegkategori):
+    unused_road_hierarchy = f"""def Reclass(vegkategori):
         if vegkategori  in ('{NvdbAlias.traktorveg}', '{NvdbAlias.sti_dnt}', '{NvdbAlias.sti_andre}', '{NvdbAlias.sti_umerket}', '{NvdbAlias.gang_og_sykkelveg}', '{NvdbAlias.barmarksløype}'):
-            return 0
+            return 11
         elif vegkategori in ('{NvdbAlias.europaveg}', '{NvdbAlias.riksveg}'):
             return 1
         elif vegkategori == '{NvdbAlias.fylkesveg}':
@@ -377,10 +385,35 @@ def thin_roads():
         else:
             return 4
         """
+
     arcpy.management.CalculateField(
         in_table=Road_N100.data_preparation___thin_road_sti_output___n100_road.value,
         field="hierarchy",
         expression="Reclass(!vegkategori!)",
+        expression_type="PYTHON3",
+        code_block=unused_road_hierarchy,
+    )
+    road_hierarchy = """def Reclass(vegklasse):
+        if vegklasse in (0, 1):
+            return 1
+        elif vegklasse in (2, 3):
+            return 2
+        elif vegklasse in (4, 5):
+            return 3
+        elif vegklasse == 6:
+            return 4
+        elif vegklasse in (7, 8 , 9):
+            return 5
+        elif vegklasse is None:
+            return 10
+    """
+
+    # NEED TO LOOK AT `vegklasse` for hierarchy :wa
+
+    arcpy.management.CalculateField(
+        in_table=Road_N100.data_preparation___thin_road_sti_output___n100_road.value,
+        field="hierarchy",
+        expression="Reclass(!vegklasse!)",
         expression_type="PYTHON3",
         code_block=road_hierarchy,
     )
@@ -416,9 +449,20 @@ def thin_roads():
         custom_functions=[thin_road_network_config],
         root_file_partition_iterator=Road_N100.data_preparation___thin_road_partition_root___n100_road.value,
         dictionary_documentation_path=Road_N100.data_preparation___thin_road_docu___n100_road.value,
-        feature_count="800000",
+        feature_count="6000",
     )
     partition_thin_roads.run()
+
+
+@timing_decorator
+def smooth_line():
+    arcpy.cartography.SmoothLine(
+        in_features=Road_N100.data_preparation___thin_road_output___n100_road.value,
+        out_feature_class=Road_N100.data_preparation___smooth_road___n100_road.value,
+        algorithm="PAEK",
+        tolerance="300 meters",
+        error_option="RESOLVE_ERRORS",
+    )
 
 
 @timing_decorator

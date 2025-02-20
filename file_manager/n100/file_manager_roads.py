@@ -265,6 +265,11 @@ class Road_N100(Enum):
         )
     )
 
+    data_preparation___smooth_road___n100_road = file_manager.generate_file_name_gdb(
+        script_source_name=data_preparation,
+        description="smooth_road",
+    )
+
     data_preperation___paths_n50___n100_road = file_manager.generate_file_name_gdb(
         script_source_name=data_preparation,
         description="paths_n50",
