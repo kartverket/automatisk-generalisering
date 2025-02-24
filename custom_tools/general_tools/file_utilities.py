@@ -308,6 +308,29 @@ class WorkFileManager:
         # Determine the type of the top-level structure and process accordingly
         return process_item(file_structure)
 
+    def setup_dynamic_file_paths(
+        self,
+        base_name: str,
+        count: int,
+        file_type: str = "gdb",
+    ) -> list[str]:
+        """
+        Generates a list of file paths for a dynamic number of files based on a base name.
+
+        Args:
+            base_name (str): The base name to use for generating file paths.
+            count (int): The number of file paths to generate.
+            file_type (str, optional): The file type for the generated paths. Defaults to "gdb".
+
+        Returns:
+            list[str]: A list of generated file paths.
+        """
+        dynamic_paths = []
+        for idx in range(count):
+            path = self._build_file_path(base_name, file_type, index=idx)
+            dynamic_paths.append(path)
+        return dynamic_paths
+
     def delete_created_files(
         self,
         delete_targets: list[str] = None,

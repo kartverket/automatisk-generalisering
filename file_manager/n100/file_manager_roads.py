@@ -140,10 +140,38 @@ class Road_N100(Enum):
         )
     )
 
+    data_preparation___intersections_root___n100_road = (
+        file_manager.generate_file_name_gdb(
+            script_source_name=data_preparation,
+            description="intersections_root",
+        )
+    )
+
+    data_preparation___dissolved_road_feature_2___n100_road = (
+        file_manager.generate_file_name_gdb(
+            script_source_name=data_preparation,
+            description="dissolved_road_feature_2",
+        )
+    )
+
     data_preparation___feature_to_line___n100_road = (
         file_manager.generate_file_name_gdb(
             script_source_name=data_preparation,
             description="feature_to_line",
+        )
+    )
+
+    data_preparation___intersections_root_2___n100_road = (
+        file_manager.generate_file_name_gdb(
+            script_source_name=data_preparation,
+            description="intersections_root_2",
+        )
+    )
+
+    data_preparation___feature_to_line_2___n100_road = (
+        file_manager.generate_file_name_gdb(
+            script_source_name=data_preparation,
+            description="feature_to_line_2",
         )
     )
 
@@ -243,10 +271,38 @@ class Road_N100(Enum):
         description="thin_road_root",
     )
 
+    data_preparation___thin_road_root_2___n100_road = (
+        file_manager.generate_file_name_gdb(
+            script_source_name=data_preparation,
+            description="thin_road_root_2",
+        )
+    )
+
+    data_preparation___thin_road_root_3___n100_road = (
+        file_manager.generate_file_name_gdb(
+            script_source_name=data_preparation,
+            description="thin_road_root_3",
+        )
+    )
+
     data_preparation___thin_road_partition_root___n100_road = (
         file_manager.generate_file_name_gdb(
             script_source_name=data_preparation,
             description="thin_road_partition_root",
+        )
+    )
+
+    data_preparation___thin_road_partition_root_2___n100_road = (
+        file_manager.generate_file_name_gdb(
+            script_source_name=data_preparation,
+            description="thin_road_partition_root_2",
+        )
+    )
+
+    data_preparation___thin_road_partition_root_3___n100_road = (
+        file_manager.generate_file_name_gdb(
+            script_source_name=data_preparation,
+            description="thin_road_partition_root_3",
         )
     )
 
@@ -258,10 +314,40 @@ class Road_N100(Enum):
         )
     )
 
+    data_preparation___thin_road_docu_2___n100_road = (
+        file_manager.generate_file_name_general_files(
+            script_source_name=data_preparation,
+            description="thin_road_docu_2",
+            file_type="json",
+        )
+    )
+
+    data_preparation___thin_road_docu_3___n100_road = (
+        file_manager.generate_file_name_general_files(
+            script_source_name=data_preparation,
+            description="thin_road_docu_3",
+            file_type="json",
+        )
+    )
+
     data_preparation___thin_road_output___n100_road = (
         file_manager.generate_file_name_gdb(
             script_source_name=data_preparation,
             description="thin_road_output",
+        )
+    )
+
+    data_preparation___thin_road_output_2___n100_road = (
+        file_manager.generate_file_name_gdb(
+            script_source_name=data_preparation,
+            description="thin_road_output_2",
+        )
+    )
+
+    data_preparation___thin_road_output_3___n100_road = (
+        file_manager.generate_file_name_gdb(
+            script_source_name=data_preparation,
+            description="thin_road_output_3",
         )
     )
 
