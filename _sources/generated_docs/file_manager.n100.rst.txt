@@ -9,29 +9,29 @@ file\_manager.n100.file\_manager\_buildings module
 
 .. automodule:: file_manager.n100.file_manager_buildings
    :members:
-   :undoc-members:
    :show-inheritance:
+   :undoc-members:
 
 file\_manager.n100.file\_manager\_rivers module
 -----------------------------------------------
 
 .. automodule:: file_manager.n100.file_manager_rivers
    :members:
-   :undoc-members:
    :show-inheritance:
+   :undoc-members:
 
 file\_manager.n100.file\_manager\_roads module
 ----------------------------------------------
 
 .. automodule:: file_manager.n100.file_manager_roads
    :members:
-   :undoc-members:
    :show-inheritance:
+   :undoc-members:
 
 Module contents
 ---------------
 
 .. automodule:: file_manager.n100
    :members:
-   :undoc-members:
    :show-inheritance:
+   :undoc-members:

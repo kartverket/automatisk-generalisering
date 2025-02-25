@@ -9,21 +9,21 @@ env\_setup.environment\_setup module
 
 .. automodule:: env_setup.environment_setup
    :members:
-   :undoc-members:
    :show-inheritance:
+   :undoc-members:
 
 env\_setup.global\_config module
 --------------------------------
 
 .. automodule:: env_setup.global_config
    :members:
-   :undoc-members:
    :show-inheritance:
+   :undoc-members:
 
 Module contents
 ---------------
 
 .. automodule:: env_setup
    :members:
-   :undoc-members:
    :show-inheritance:
+   :undoc-members:

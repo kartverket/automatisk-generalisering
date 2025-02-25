@@ -9,53 +9,53 @@ generalization.n100.road.data\_preparation module
 
 .. automodule:: generalization.n100.road.data_preparation
    :members:
-   :undoc-members:
    :show-inheritance:
+   :undoc-members:
 
 generalization.n100.road.data\_preparation\_2 module
 ----------------------------------------------------
 
 .. automodule:: generalization.n100.road.data_preparation_2
    :members:
-   :undoc-members:
    :show-inheritance:
+   :undoc-members:
 
 generalization.n100.road.first\_generalization module
 -----------------------------------------------------
 
 .. automodule:: generalization.n100.road.first_generalization
    :members:
-   :undoc-members:
    :show-inheritance:
+   :undoc-members:
 
 generalization.n100.road.resolve\_road\_conflict module
 -------------------------------------------------------
 
 .. automodule:: generalization.n100.road.resolve_road_conflict
    :members:
-   :undoc-members:
    :show-inheritance:
+   :undoc-members:
 
 generalization.n100.road.road\_main module
 ------------------------------------------
 
 .. automodule:: generalization.n100.road.road_main
    :members:
-   :undoc-members:
    :show-inheritance:
+   :undoc-members:
 
 generalization.n100.road.testing\_file module
 ---------------------------------------------
 
 .. automodule:: generalization.n100.road.testing_file
    :members:
-   :undoc-members:
    :show-inheritance:
+   :undoc-members:
 
 Module contents
 ---------------
 
 .. automodule:: generalization.n100.road
    :members:
-   :undoc-members:
    :show-inheritance:
+   :undoc-members:

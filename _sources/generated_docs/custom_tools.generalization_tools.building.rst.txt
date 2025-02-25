@@ -9,29 +9,29 @@ custom\_tools.generalization\_tools.building.begrensningskurve\_land\_waterbodie
 
 .. automodule:: custom_tools.generalization_tools.building.begrensningskurve_land_waterbodies
    :members:
-   :undoc-members:
    :show-inheritance:
+   :undoc-members:
 
 custom\_tools.generalization\_tools.building.buffer\_displacement module
 ------------------------------------------------------------------------
 
 .. automodule:: custom_tools.generalization_tools.building.buffer_displacement
    :members:
-   :undoc-members:
    :show-inheritance:
+   :undoc-members:
 
 custom\_tools.generalization\_tools.building.resolve\_building\_conflicts module
 --------------------------------------------------------------------------------
 
 .. automodule:: custom_tools.generalization_tools.building.resolve_building_conflicts
    :members:
-   :undoc-members:
    :show-inheritance:
+   :undoc-members:
 
 Module contents
 ---------------
 
 .. automodule:: custom_tools.generalization_tools.building
    :members:
-   :undoc-members:
    :show-inheritance:
+   :undoc-members:

@@ -14,5 +14,5 @@ Module contents
 
 .. automodule:: custom_tools.generalization_tools
    :members:
-   :undoc-members:
    :show-inheritance:
+   :undoc-members:

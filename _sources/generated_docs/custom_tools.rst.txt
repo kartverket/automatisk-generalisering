@@ -17,5 +17,5 @@ Module contents
 
 .. automodule:: custom_tools
    :members:
-   :undoc-members:
    :show-inheritance:
+   :undoc-members:

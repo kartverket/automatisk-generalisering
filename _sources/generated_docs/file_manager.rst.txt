@@ -17,13 +17,13 @@ file\_manager.base\_file\_manager module
 
 .. automodule:: file_manager.base_file_manager
    :members:
-   :undoc-members:
    :show-inheritance:
+   :undoc-members:
 
 Module contents
 ---------------
 
 .. automodule:: file_manager
    :members:
-   :undoc-members:
    :show-inheritance:
+   :undoc-members:

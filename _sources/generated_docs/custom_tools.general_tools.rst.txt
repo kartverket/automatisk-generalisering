@@ -9,69 +9,69 @@ custom\_tools.general\_tools.custom\_arcpy module
 
 .. automodule:: custom_tools.general_tools.custom_arcpy
    :members:
-   :undoc-members:
    :show-inheritance:
+   :undoc-members:
 
 custom\_tools.general\_tools.file\_utilities module
 ---------------------------------------------------
 
 .. automodule:: custom_tools.general_tools.file_utilities
    :members:
-   :undoc-members:
    :show-inheritance:
+   :undoc-members:
 
 custom\_tools.general\_tools.geometry\_tools module
 ---------------------------------------------------
 
 .. automodule:: custom_tools.general_tools.geometry_tools
    :members:
-   :undoc-members:
    :show-inheritance:
+   :undoc-members:
 
 custom\_tools.general\_tools.line\_to\_buffer\_symbology module
 ---------------------------------------------------------------
 
 .. automodule:: custom_tools.general_tools.line_to_buffer_symbology
    :members:
-   :undoc-members:
    :show-inheritance:
+   :undoc-members:
 
 custom\_tools.general\_tools.partition\_iterator module
 -------------------------------------------------------
 
 .. automodule:: custom_tools.general_tools.partition_iterator
    :members:
-   :undoc-members:
    :show-inheritance:
+   :undoc-members:
 
 custom\_tools.general\_tools.polygon\_processor module
 ------------------------------------------------------
 
 .. automodule:: custom_tools.general_tools.polygon_processor
    :members:
-   :undoc-members:
    :show-inheritance:
+   :undoc-members:
 
 custom\_tools.general\_tools.print\_logger module
 -------------------------------------------------
 
 .. automodule:: custom_tools.general_tools.print_logger
    :members:
-   :undoc-members:
    :show-inheritance:
+   :undoc-members:
 
 custom\_tools.general\_tools.study\_area\_selector module
 ---------------------------------------------------------
 
 .. automodule:: custom_tools.general_tools.study_area_selector
    :members:
-   :undoc-members:
    :show-inheritance:
+   :undoc-members:
 
 Module contents
 ---------------
 
 .. automodule:: custom_tools.general_tools
    :members:
-   :undoc-members:
    :show-inheritance:
+   :undoc-members:

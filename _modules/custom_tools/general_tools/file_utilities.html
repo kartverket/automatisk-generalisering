@@ -396,6 +396,32 @@
         <span class="k">return</span> <span class="n">process_item</span><span class="p">(</span><span class="n">file_structure</span><span class="p">)</span></div>
 
 
+<div class="viewcode-block" id="WorkFileManager.setup_dynamic_file_paths">
+<a class="viewcode-back" href="../../../generated_docs/custom_tools.general_tools.html#custom_tools.general_tools.file_utilities.WorkFileManager.setup_dynamic_file_paths">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">setup_dynamic_file_paths</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">base_name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+        <span class="n">count</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+        <span class="n">file_type</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;gdb&quot;</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Generates a list of file paths for a dynamic number of files based on a base name.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            base_name (str): The base name to use for generating file paths.</span>
+<span class="sd">            count (int): The number of file paths to generate.</span>
+<span class="sd">            file_type (str, optional): The file type for the generated paths. Defaults to &quot;gdb&quot;.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            list[str]: A list of generated file paths.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">dynamic_paths</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">idx</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">count</span><span class="p">):</span>
+            <span class="n">path</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_build_file_path</span><span class="p">(</span><span class="n">base_name</span><span class="p">,</span> <span class="n">file_type</span><span class="p">,</span> <span class="n">index</span><span class="o">=</span><span class="n">idx</span><span class="p">)</span>
+            <span class="n">dynamic_paths</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">path</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">dynamic_paths</span></div>
+
+
 <div class="viewcode-block" id="WorkFileManager.delete_created_files">
 <a class="viewcode-back" href="../../../generated_docs/custom_tools.general_tools.html#custom_tools.general_tools.file_utilities.WorkFileManager.delete_created_files">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">delete_created_files</span><span class="p">(</span>
@@ -611,6 +637,35 @@
 
 
 
+<div class="viewcode-block" id="reclassify_value">
+<a class="viewcode-back" href="../../../generated_docs/custom_tools.general_tools.html#custom_tools.general_tools.file_utilities.reclassify_value">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">reclassify_value</span><span class="p">(</span>
+    <span class="n">input_table</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+    <span class="n">target_field</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+    <span class="n">target_value</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+    <span class="n">replace_value</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+    <span class="n">reference_field</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">logic_format</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;PYTHON3&quot;</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+    <span class="n">update_missing_block</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;&quot;&quot;def Reclass(value):</span>
+<span class="s2">        if value == </span><span class="si">{</span><span class="n">target_value</span><span class="si">}</span><span class="s2">:</span>
+<span class="s2">            return </span><span class="si">{</span><span class="n">replace_value</span><span class="si">}</span>
+<span class="s2">        else:</span>
+<span class="s2">            return value</span>
+<span class="s2">    &quot;&quot;&quot;</span>
+
+    <span class="n">value_field</span> <span class="o">=</span> <span class="n">reference_field</span> <span class="k">if</span> <span class="n">reference_field</span> <span class="k">else</span> <span class="n">target_field</span>
+
+    <span class="n">arcpy</span><span class="o">.</span><span class="n">management</span><span class="o">.</span><span class="n">CalculateField</span><span class="p">(</span>
+        <span class="n">in_table</span><span class="o">=</span><span class="n">input_table</span><span class="p">,</span>
+        <span class="n">field</span><span class="o">=</span><span class="n">target_field</span><span class="p">,</span>
+        <span class="n">expression</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;Reclass(!</span><span class="si">{</span><span class="n">value_field</span><span class="si">}</span><span class="s2">!)&quot;</span><span class="p">,</span>
+        <span class="n">expression_type</span><span class="o">=</span><span class="n">logic_format</span><span class="p">,</span>
+        <span class="n">code_block</span><span class="o">=</span><span class="n">update_missing_block</span><span class="p">,</span>
+    <span class="p">)</span></div>
+
+
+
 <div class="viewcode-block" id="deleting_added_field_from_feature_to_x">
 <a class="viewcode-back" href="../../../generated_docs/custom_tools.general_tools.html#custom_tools.general_tools.file_utilities.deleting_added_field_from_feature_to_x">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">deleting_added_field_from_feature_to_x</span><span class="p">(</span>
@@ -656,6 +711,20 @@
         <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Deleted field: </span><span class="si">{</span><span class="n">field_to_delete</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
     <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
         <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;An error occurred: </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="get_all_fields">
+<a class="viewcode-back" href="../../../generated_docs/custom_tools.general_tools.html#custom_tools.general_tools.file_utilities.get_all_fields">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">get_all_fields</span><span class="p">(</span><span class="n">input_fields</span><span class="p">,</span> <span class="o">*</span><span class="n">added_field_sets</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Combines an input fields list with any number of additional field sets.</span>
+<span class="sd">    Assumes each added field set is a list of [field_name, field_type] pairs.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">combined</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">input_fields</span><span class="p">)</span>
+    <span class="k">for</span> <span class="n">fields</span> <span class="ow">in</span> <span class="n">added_field_sets</span><span class="p">:</span>
+        <span class="n">combined</span><span class="o">.</span><span class="n">extend</span><span class="p">([</span><span class="n">item</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="k">for</span> <span class="n">item</span> <span class="ow">in</span> <span class="n">fields</span><span class="p">])</span>
+    <span class="k">return</span> <span class="n">combined</span></div>
 
 </pre></div>
 

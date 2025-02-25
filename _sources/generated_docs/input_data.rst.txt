@@ -9,69 +9,69 @@ input\_data.input\_elveg module
 
 .. automodule:: input_data.input_elveg
    :members:
-   :undoc-members:
    :show-inheritance:
+   :undoc-members:
 
 input\_data.input\_fkb module
 -----------------------------
 
 .. automodule:: input_data.input_fkb
    :members:
-   :undoc-members:
    :show-inheritance:
+   :undoc-members:
 
 input\_data.input\_n100 module
 ------------------------------
 
 .. automodule:: input_data.input_n100
    :members:
-   :undoc-members:
    :show-inheritance:
+   :undoc-members:
 
 input\_data.input\_n50 module
 -----------------------------
 
 .. automodule:: input_data.input_n50
    :members:
-   :undoc-members:
    :show-inheritance:
+   :undoc-members:
 
 input\_data.input\_other module
 -------------------------------
 
 .. automodule:: input_data.input_other
    :members:
-   :undoc-members:
    :show-inheritance:
+   :undoc-members:
 
 input\_data.input\_roads module
 -------------------------------
 
 .. automodule:: input_data.input_roads
    :members:
-   :undoc-members:
    :show-inheritance:
+   :undoc-members:
 
 input\_data.input\_symbology module
 -----------------------------------
 
 .. automodule:: input_data.input_symbology
    :members:
-   :undoc-members:
    :show-inheritance:
+   :undoc-members:
 
 input\_data.input\_veg module
 -----------------------------
 
 .. automodule:: input_data.input_veg
    :members:
-   :undoc-members:
    :show-inheritance:
+   :undoc-members:
 
 Module contents
 ---------------
 
 .. automodule:: input_data
    :members:
-   :undoc-members:
    :show-inheritance:
+   :undoc-members:
