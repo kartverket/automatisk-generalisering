@@ -69,9 +69,6 @@ class DissolveWithIntersections:
         )
 
     def _dissolve_feature(self):
-        print(
-            f"Dissolving feature:\n{self.input_line_feature}\nFields:\n{self.dissolve_field_list}"
-        )
         arcpy.analysis.PairwiseDissolve(
             in_features=self.input_line_feature,
             out_feature_class=self.dissolved_feature,
