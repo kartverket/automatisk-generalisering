@@ -593,3 +593,14 @@ def deleting_added_field_from_feature_to_x(
         print(f"Deleted field: {field_to_delete}")
     except Exception as e:
         print(f"An error occurred: {e}")
+
+
+def get_all_fields(input_fields, *added_field_sets):
+    """
+    Combines an input fields list with any number of additional field sets.
+    Assumes each added field set is a list of [field_name, field_type] pairs.
+    """
+    combined = list(input_fields)
+    for fields in added_field_sets:
+        combined.extend([item[0] for item in fields])
+    return combined
