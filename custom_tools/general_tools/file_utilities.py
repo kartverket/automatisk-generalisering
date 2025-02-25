@@ -308,6 +308,29 @@ class WorkFileManager:
         # Determine the type of the top-level structure and process accordingly
         return process_item(file_structure)
 
+    def setup_dynamic_file_paths(
+        self,
+        base_name: str,
+        count: int,
+        file_type: str = "gdb",
+    ) -> list[str]:
+        """
+        Generates a list of file paths for a dynamic number of files based on a base name.
+
+        Args:
+            base_name (str): The base name to use for generating file paths.
+            count (int): The number of file paths to generate.
+            file_type (str, optional): The file type for the generated paths. Defaults to "gdb".
+
+        Returns:
+            list[str]: A list of generated file paths.
+        """
+        dynamic_paths = []
+        for idx in range(count):
+            path = self._build_file_path(base_name, file_type, index=idx)
+            dynamic_paths.append(path)
+        return dynamic_paths
+
     def delete_created_files(
         self,
         delete_targets: list[str] = None,
@@ -501,6 +524,32 @@ def compare_feature_classes(feature_class_1, feature_class_2):
         print("Both feature classes have the same number of features.")
 
 
+def reclassify_value(
+    input_table: str,
+    target_field: str,
+    target_value: str,
+    replace_value: str,
+    reference_field: str = None,
+    logic_format: str = "PYTHON3",
+) -> None:
+    update_missing_block = f"""def Reclass(value):
+        if value == {target_value}:
+            return {replace_value}
+        else:
+            return value
+    """
+
+    value_field = reference_field if reference_field else target_field
+
+    arcpy.management.CalculateField(
+        in_table=input_table,
+        field=target_field,
+        expression=f"Reclass(!{value_field}!)",
+        expression_type=logic_format,
+        code_block=update_missing_block,
+    )
+
+
 def deleting_added_field_from_feature_to_x(
     input_file_feature: str = None,
     field_name_feature: str = None,
@@ -544,3 +593,14 @@ def deleting_added_field_from_feature_to_x(
         print(f"Deleted field: {field_to_delete}")
     except Exception as e:
         print(f"An error occurred: {e}")
+
+
+def get_all_fields(input_fields, *added_field_sets):
+    """
+    Combines an input fields list with any number of additional field sets.
+    Assumes each added field set is a list of [field_name, field_type] pairs.
+    """
+    combined = list(input_fields)
+    for fields in added_field_sets:
+        combined.extend([item[0] for item in fields])
+    return combined

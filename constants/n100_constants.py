@@ -1,6 +1,6 @@
 from enum import Enum
 from dataclasses import dataclass
-from typing import Union
+from custom_tools.general_tools.file_utilities import get_all_fields
 
 
 class N100_Values(Enum):
@@ -140,6 +140,32 @@ class N100_SQLResources(Enum):
     urban_areas = "objtype = 'Tettbebyggelse' Or objtype = 'Industriområde' Or objtype = 'BymessigBebyggelse'"
 
 
+class FieldNames(Enum):
+    road_input_fields = [
+        "objtype",
+        "subtypekode",
+        "vegstatus",
+        "typeveg",
+        "vegkategori",
+        "vegnummer",
+        "motorvegtype",
+        "vegklasse",
+        "rutemerking",
+        "medium",
+        "uttegning",
+    ]
+    road_added_fields = [
+        ["invisibility", "SHORT"],
+        ["hierarchy", "SHORT"],
+        ["character", "SHORT"],
+        ["merge_divided_id", "LONG"],
+    ]
+
+    @classmethod
+    def road_all_fields(cls):
+        return get_all_fields(cls.road_input_fields.value, cls.road_added_fields.value)
+
+
 @dataclass(frozen=True)
 class NvdbAlias:
     europaveg: str = "E"
@@ -152,6 +178,7 @@ class NvdbAlias:
     sti_umerket: str = "U"
     gang_og_sykkelveg: str = "G"
     traktorveg: str = "T"
+    barmarksløype: str = "B"
     skogsveg: str = "S"  # Blir kodet om til private veger
 
 
