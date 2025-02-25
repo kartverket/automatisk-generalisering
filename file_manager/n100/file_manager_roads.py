@@ -154,10 +154,10 @@ class Road_N100(Enum):
         )
     )
 
-    data_preparation___feature_to_line___n100_road = (
+    data_preparation___dissolved_intersections___n100_road = (
         file_manager.generate_file_name_gdb(
             script_source_name=data_preparation,
-            description="feature_to_line",
+            description="dissolved_intersections",
         )
     )
 
@@ -168,10 +168,52 @@ class Road_N100(Enum):
         )
     )
 
-    data_preparation___feature_to_line_2___n100_road = (
+    data_preparation___intersections_root_3___n100_road = (
         file_manager.generate_file_name_gdb(
             script_source_name=data_preparation,
-            description="feature_to_line_2",
+            description="intersections_root_3",
+        )
+    )
+
+    data_preparation___intersections_root_4___n100_road = (
+        file_manager.generate_file_name_gdb(
+            script_source_name=data_preparation,
+            description="intersections_root_4",
+        )
+    )
+
+    data_preparation___intersections_root_5___n100_road = (
+        file_manager.generate_file_name_gdb(
+            script_source_name=data_preparation,
+            description="intersections_root_5",
+        )
+    )
+
+    data_preparation___dissolved_intersections_2___n100_road = (
+        file_manager.generate_file_name_gdb(
+            script_source_name=data_preparation,
+            description="dissolved_intersections_2",
+        )
+    )
+
+    data_preparation___dissolved_intersections_3___n100_road = (
+        file_manager.generate_file_name_gdb(
+            script_source_name=data_preparation,
+            description="dissolved_intersections_3",
+        )
+    )
+
+    data_preparation___dissolved_intersections_4___n100_road = (
+        file_manager.generate_file_name_gdb(
+            script_source_name=data_preparation,
+            description="dissolved_intersections_4",
+        )
+    )
+
+    data_preparation___dissolved_intersections_5___n100_road = (
+        file_manager.generate_file_name_gdb(
+            script_source_name=data_preparation,
+            description="dissolved_intersections_5",
         )
     )
 
