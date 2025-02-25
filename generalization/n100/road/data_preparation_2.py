@@ -23,16 +23,14 @@ from custom_tools.general_tools.geometry_tools import GeometryValidator
 from custom_tools.general_tools import custom_arcpy
 from custom_tools.general_tools import file_utilities
 from custom_tools.generalization_tools.road.thin_road_network import ThinRoadNetwork
-from custom_tools.generalization_tools.road.create_intersections import (
-    CreateIntersections,
+from custom_tools.generalization_tools.road.dissolve_with_intersections import (
+    DissolveWithIntersections,
 )
 from custom_tools.general_tools.polygon_processor import PolygonProcessor
 from custom_tools.general_tools.line_to_buffer_symbology import LineToBufferSymbology
 from input_data.input_symbology import SymbologyN100
 from constants.n100_constants import (
-    N100_Symbology,
-    N100_SQLResources,
-    N100_Values,
+    FieldNames,
     NvdbAlias,
     MediumAlias,
 )
@@ -44,19 +42,19 @@ CHANGES_BOOLEAN = False
 def main():
     environment_setup.main()
     arcpy.env.referenceScale = 100000
-    # data_selection_and_validation()
-    # trim_road_details()
-    # adding_fields()
-    # merge_divided_roads()
-    # collapse_road_detail()
-    # separate_bridge_and_tunnel_from_surface_roads()
-    # create_intersections_for_on_surface_roads()
-    # simplify_road()
-    # thin_sti_and_forest_roads()
+    data_selection_and_validation()
+    trim_road_details()
+    adding_fields()
+    merge_divided_roads()
+    collapse_road_detail()
+    separate_bridge_and_tunnel_from_surface_roads()
+    create_intersections_for_on_surface_roads()
+    simplify_road()
+    thin_sti_and_forest_roads()
     thin_roads()
     thin_road_2()
     thin_road_3()
-    # smooth_line()
+    smooth_line()
 
 
 @timing_decorator
@@ -86,14 +84,6 @@ def data_selection_and_validation():
     road_data_validation.check_repair_sequence()
 
 
-def dissolve_with_intersections(
-    input_line_feature: str,
-    root_file: str,
-    output_processed_feature: str,
-):
-    pass
-
-
 @timing_decorator
 def trim_road_details():
     arcpy.management.MultipartToSinglepart(
@@ -101,34 +91,11 @@ def trim_road_details():
         out_feature_class=Road_N100.data_preparation___road_single_part___n100_road.value,
     )
 
-    arcpy.analysis.PairwiseDissolve(
-        in_features=Road_N100.data_preparation___road_single_part___n100_road.value,
-        out_feature_class=Road_N100.data_preparation___dissolved_road_feature___n100_road.value,
-        dissolve_field=[
-            "objtype",
-            "subtypekode",
-            "vegstatus",
-            "typeveg",
-            "vegkategori",
-            "vegnummer",
-            "motorvegtype",
-            "vegklasse",
-            "rutemerking",
-            "medium",
-            "uttegning",
-        ],
-        multi_part="SINGLE_PART",
-    )
-
-    # arcpy.management.CopyFeatures(
-    #     in_features=Road_N100.data_preparation___dissolved_road_feature___n100_road.value,
-    #     out_feature_class=Road_N100.data_preparation___remove_small_road_lines___n100_road.value,
-    # )
-
-    create_intersections = CreateIntersections(
-        input_line_feature=Road_N100.data_preparation___dissolved_road_feature___n100_road.value,
+    create_intersections = DissolveWithIntersections(
+        input_line_feature=Road_N100.data_preparation___road_single_part___n100_road.value,
         root_file=Road_N100.data_preparation___intersections_root___n100_road.value,
-        output_processed_feature=Road_N100.data_preparation___feature_to_line___n100_road.value,
+        output_processed_feature=Road_N100.data_preparation___dissolved_intersections___n100_road.value,
+        dissolve_field_list=FieldNames.road_input_fields.value,
         list_of_sql_expressions=[
             f" MEDIUM = '{MediumAlias.tunnel}'",
             f" MEDIUM = '{MediumAlias.bridge}'",
@@ -137,63 +104,27 @@ def trim_road_details():
     )
     create_intersections.run()
 
-    # arcpy.management.FeatureToLine(
-    #     in_features=Road_N100.data_preparation___dissolved_road_feature___n100_road.value,
-    #     out_feature_class=Road_N100.data_preparation___feature_to_line___n100_road.value,
-    # )
-    #
-    # file_utilities.deleting_added_field_from_feature_to_x(
-    #     input_file_feature=Road_N100.data_preparation___feature_to_line___n100_road.value,
-    #     field_name_feature=Road_N100.data_preparation___dissolved_road_feature___n100_road.value,
-    # )
-
     arcpy.topographic.RemoveSmallLines(
-        in_features=Road_N100.data_preparation___feature_to_line___n100_road.value,
+        in_features=Road_N100.data_preparation___dissolved_intersections___n100_road.value,
         minimum_length="100 meters",
         recursive="RECURSIVE",
     )
 
-    arcpy.analysis.PairwiseDissolve(
-        in_features=Road_N100.data_preparation___feature_to_line___n100_road.value,
-        out_feature_class=Road_N100.data_preparation___dissolved_road_feature_2___n100_road.value,
-        dissolve_field=[
-            "objtype",
-            "subtypekode",
-            "vegstatus",
-            "typeveg",
-            "vegkategori",
-            "vegnummer",
-            "motorvegtype",
-            "vegklasse",
-            "rutemerking",
-            "medium",
-            "uttegning",
-        ],
-        multi_part="SINGLE_PART",
-    )
-
-    create_intersections = CreateIntersections(
-        input_line_feature=Road_N100.data_preparation___dissolved_road_feature_2___n100_road.value,
+    create_intersections_2 = DissolveWithIntersections(
+        input_line_feature=Road_N100.data_preparation___dissolved_intersections___n100_road.value,
         root_file=Road_N100.data_preparation___intersections_root_2___n100_road.value,
-        output_processed_feature=Road_N100.data_preparation___feature_to_line_2___n100_road.value,
+        output_processed_feature=Road_N100.data_preparation___dissolved_intersections_2___n100_road.value,
+        dissolve_field_list=FieldNames.road_input_fields.value,
         list_of_sql_expressions=[
             f" MEDIUM = '{MediumAlias.tunnel}'",
             f" MEDIUM = '{MediumAlias.bridge}'",
             f" MEDIUM = '{MediumAlias.on_surface}'",
         ],
     )
-    create_intersections.run()
-    # arcpy.management.FeatureToLine(
-    #     in_features=Road_N100.data_preparation___dissolved_road_feature_2___n100_road.value,
-    #     out_feature_class=Road_N100.data_preparation___feature_to_line_2___n100_road.value,
-    # )
-    #
-    # file_utilities.deleting_added_field_from_feature_to_x(
-    #     input_file_feature=Road_N100.data_preparation___feature_to_line_2___n100_road.value,
-    #     field_name_feature=Road_N100.data_preparation___dissolved_road_feature_2___n100_road.value,
-    # )
+    create_intersections_2.run()
+
     arcpy.management.MultipartToSinglepart(
-        in_features=Road_N100.data_preparation___feature_to_line_2___n100_road.value,
+        in_features=Road_N100.data_preparation___dissolved_intersections_2___n100_road.value,
         out_feature_class=Road_N100.data_preparation___road_single_part_2___n100_road.value,
     )
 
@@ -234,12 +165,7 @@ def adding_fields():
 
     arcpy.management.AddFields(
         in_table=Road_N100.data_preparation___road_single_part_2___n100_road.value,
-        field_description=[
-            ["invisibility", "SHORT"],
-            ["hierarchy", "SHORT"],
-            ["character", "SHORT"],
-            ["merge_divided_id", "LONG"],
-        ],
+        field_description=FieldNames.road_added_fields.value,
     )
 
 
@@ -339,21 +265,6 @@ def simplify_road():
 
 @timing_decorator
 def thin_sti_and_forest_roads():
-    otpional_sti_and_forest_hierarchy = f"""def Reclass(vegkategori):
-        if vegkategori  in ('{NvdbAlias.europaveg}', '{NvdbAlias.riksveg}', '{NvdbAlias.fylkesveg}', '{NvdbAlias.kommunalveg}', '{NvdbAlias.privatveg}', '{NvdbAlias.skogsveg}'):
-            return 0
-        elif vegkategori in ('{NvdbAlias.traktorveg}', '{NvdbAlias.barmarksløype}'):
-            return 1
-        elif vegkategori in ('{NvdbAlias.sti_dnt}', '{NvdbAlias.sti_andre}', None):
-            return 2
-        elif vegkategori == '{NvdbAlias.gang_og_sykkelveg}':
-            return 3
-        elif vegkategori == '{NvdbAlias.sti_umerket}':
-            return 4
-        else:
-            return 5
-        """
-
     # It seems from source code that having 2 as an else return is intended function if not revert to `otpional_sti_and_forest_hierarchy`
     sti_and_forest_hierarchy = f"""def Reclass(vegkategori):
         if vegkategori  in ('{NvdbAlias.europaveg}', '{NvdbAlias.riksveg}', '{NvdbAlias.fylkesveg}', '{NvdbAlias.kommunalveg}', '{NvdbAlias.privatveg}', '{NvdbAlias.skogsveg}'):
@@ -416,48 +327,19 @@ def thin_sti_and_forest_roads():
 
 @timing_decorator
 def thin_roads():
-    optional_road_hierarchy = f"""def Reclass(vegkategori):
-        if vegkategori  in ('{NvdbAlias.traktorveg}', '{NvdbAlias.sti_dnt}', '{NvdbAlias.sti_andre}', '{NvdbAlias.sti_umerket}', '{NvdbAlias.gang_og_sykkelveg}', '{NvdbAlias.barmarksløype}'):
-            return 0
-        elif vegkategori in ('{NvdbAlias.europaveg}', '{NvdbAlias.riksveg}'):
-            return 1
-        elif vegkategori == '{NvdbAlias.fylkesveg}':
-            return 2
-        elif vegkategori == '{NvdbAlias.kommunalveg}':
-            return 3
-        elif vegkategori in ('{NvdbAlias.privatveg}', None):
-            return 4
-        elif vegkategori == '{NvdbAlias.skogsveg}':
-            return 5
-        else:
-            return 6
-        """
-
-    # It seems from source code that having 4 as an else return is intended function if not revert to `optional_road_hierarchy`
-    unused_road_hierarchy = f"""def Reclass(vegkategori):
-        if vegkategori  in ('{NvdbAlias.traktorveg}', '{NvdbAlias.sti_dnt}', '{NvdbAlias.sti_andre}', '{NvdbAlias.sti_umerket}', '{NvdbAlias.gang_og_sykkelveg}', '{NvdbAlias.barmarksløype}'):
-            return 11
-        elif vegkategori in ('{NvdbAlias.europaveg}', '{NvdbAlias.riksveg}'):
-            return 1
-        elif vegkategori == '{NvdbAlias.fylkesveg}':
-            return 2
-        elif vegkategori == '{NvdbAlias.kommunalveg}':
-            return 3
-        elif vegkategori == '{NvdbAlias.privatveg}':
-            return 4
-        elif vegkategori == '{NvdbAlias.skogsveg}':
-            return 5
-        else:
-            return 4
-        """
-
-    arcpy.management.CalculateField(
-        in_table=Road_N100.data_preparation___thin_road_sti_output___n100_road.value,
-        field="hierarchy",
-        expression="Reclass(!vegkategori!)",
-        expression_type="PYTHON3",
-        code_block=unused_road_hierarchy,
+    create_intersections = DissolveWithIntersections(
+        input_line_feature=Road_N100.data_preparation___thin_road_sti_output___n100_road.value,
+        root_file=Road_N100.data_preparation___intersections_root_3___n100_road.value,
+        output_processed_feature=Road_N100.data_preparation___dissolved_intersections_3___n100_road.value,
+        dissolve_field_list=FieldNames.road_all_fields(),
+        list_of_sql_expressions=[
+            f" MEDIUM = '{MediumAlias.tunnel}'",
+            f" MEDIUM = '{MediumAlias.bridge}'",
+            f" MEDIUM = '{MediumAlias.on_surface}'",
+        ],
     )
+    create_intersections.run()
+
     road_hierarchy = f"""def Reclass(vegklasse, vegkategori):
         if vegklasse in (0, 1, 2, 3):
             return 1
@@ -476,7 +358,7 @@ def thin_roads():
     """
 
     arcpy.management.CalculateField(
-        in_table=Road_N100.data_preparation___thin_road_sti_output___n100_road.value,
+        in_table=Road_N100.data_preparation___dissolved_intersections_3___n100_road.value,
         field="hierarchy",
         expression="Reclass(!vegklasse!, !vegkategori!)",
         expression_type="PYTHON3",
@@ -486,7 +368,7 @@ def thin_roads():
     input_dict = {
         road: [
             "input",
-            Road_N100.data_preparation___thin_road_sti_output___n100_road.value,
+            Road_N100.data_preparation___dissolved_intersections_3___n100_road.value,
         ]
     }
 
@@ -520,11 +402,24 @@ def thin_roads():
 
 
 def thin_road_2():
+    create_intersections = DissolveWithIntersections(
+        input_line_feature=Road_N100.data_preparation___thin_road_output___n100_road.value,
+        root_file=Road_N100.data_preparation___intersections_root_4___n100_road.value,
+        output_processed_feature=Road_N100.data_preparation___dissolved_intersections_4___n100_road.value,
+        dissolve_field_list=FieldNames.road_all_fields(),
+        list_of_sql_expressions=[
+            f" MEDIUM = '{MediumAlias.tunnel}'",
+            f" MEDIUM = '{MediumAlias.bridge}'",
+            f" MEDIUM = '{MediumAlias.on_surface}'",
+        ],
+    )
+    create_intersections.run()
+
     road = "road"
     input_dict = {
         road: [
             "input",
-            Road_N100.data_preparation___thin_road_output___n100_road.value,
+            Road_N100.data_preparation___dissolved_intersections_4___n100_road.value,
         ]
     }
 
@@ -558,11 +453,24 @@ def thin_road_2():
 
 
 def thin_road_3():
+    create_intersections = DissolveWithIntersections(
+        input_line_feature=Road_N100.data_preparation___thin_road_output_2___n100_road.value,
+        root_file=Road_N100.data_preparation___intersections_root_5___n100_road.value,
+        output_processed_feature=Road_N100.data_preparation___dissolved_intersections_5___n100_road.value,
+        dissolve_field_list=FieldNames.road_all_fields(),
+        list_of_sql_expressions=[
+            f" MEDIUM = '{MediumAlias.tunnel}'",
+            f" MEDIUM = '{MediumAlias.bridge}'",
+            f" MEDIUM = '{MediumAlias.on_surface}'",
+        ],
+    )
+    create_intersections.run()
+
     road = "road"
     input_dict = {
         road: [
             "input",
-            Road_N100.data_preparation___thin_road_output_2___n100_road.value,
+            Road_N100.data_preparation___dissolved_intersections_5___n100_road.value,
         ]
     }
 
@@ -605,235 +513,6 @@ def smooth_line():
         error_option="RESOLVE_ERRORS",
     )
 
-
-@timing_decorator
-def old_table_management():
-    reclassify_missing_vegnummer = """def Reclass(value):
-        if value is None:
-            return -99
-        else:
-            return value
-    """
-
-    arcpy.management.CalculateField(
-        in_table=Road_N100.data_selection___nvdb_roads___n100_road.value,
-        field="VEGNUMMER",
-        expression="Reclass(!VEGNUMMER!)",
-        expression_type="PYTHON3",
-        code_block=reclassify_missing_vegnummer,
-    )
-
-    arcpy.management.AddFields(
-        in_table=Road_N100.data_selection___nvdb_roads___n100_road.value,
-        field_description=[
-            ["invisibility", "SHORT"],
-            ["hierarchy", "SHORT"],
-            ["character", "SHORT"],
-        ],
-    )
-
-    assign_hierarchy_to_nvdb_roads = f"""def Reclass(VEGKATEGORI):
-        if VEGKATEGORI == '{NvdbAlias.europaveg}':
-            return 1
-        elif VEGKATEGORI in ['{NvdbAlias.riksveg}', '{NvdbAlias.fylkesveg}']:
-            return 2
-        elif VEGKATEGORI == '{NvdbAlias.kommunalveg}':
-            return 3
-        elif VEGKATEGORI == '{NvdbAlias.privatveg}':
-            return 4
-        elif VEGKATEGORI == '{NvdbAlias.skogsveg}':
-            return 5
-        
-        else:
-            return 5
-    """
-
-    arcpy.management.CalculateField(
-        in_table=Road_N100.data_selection___nvdb_roads___n100_road.value,
-        field="hierarchy",
-        expression="Reclass(!VEGKATEGORI!)",
-        expression_type="PYTHON3",
-        code_block=assign_hierarchy_to_nvdb_roads,
-    )
-
-    reclassify_null_values = f"""def Reclass(VEGKATEGORI):
-        if VEGKATEGORI is None:
-            return 5
-        else:
-            return VEGKATEGORI
-    """
-
-    arcpy.management.CalculateField(
-        in_table=Road_N100.data_selection___nvdb_roads___n100_road.value,
-        field="hierarchy",
-        expression="Reclass(!VEGKATEGORI!)",
-        expression_type="PYTHON3",
-        code_block=reclassify_null_values,
-    )
-
-    define_character_field = f"""def Reclass(TYPEVEG):
-        if TYPEVEG == 'rundkjøring':
-            return 0
-        elif TYPEVEG in 'kanalisertVeg':
-            return 1
-        elif TYPEVEG == 'enkelBilveg':
-            return 1
-        elif TYPEVEG == 'rampe':
-            return 2
-        else: 
-            return 1
-    """
-
-    arcpy.management.CalculateField(
-        in_table=Road_N100.data_selection___nvdb_roads___n100_road.value,
-        field="character",
-        expression="Reclass(!TYPEVEG!)",
-        expression_type="PYTHON3",
-        code_block=define_character_field,
-    )
-
-    arcpy.management.CalculateField(
-        in_table=Road_N100.data_selection___nvdb_roads___n100_road.value,
-        field="invisibility",
-        expression=0,
-    )
-
-
-@timing_decorator
-def dissolve_merge_and_reduce_roads():
-    arcpy.management.MultipartToSinglepart(
-        in_features=Road_N100.data_selection___nvdb_roads___n100_road.value,
-        out_feature_class=Road_N100.data_preparation___road_single_part___n100_road.value,
-    )
-
-    arcpy.analysis.PairwiseDissolve(
-        in_features=Road_N100.data_preparation___road_single_part___n100_road.value,
-        out_feature_class=Road_N100.data_preparation___dissolved_road_feature___n100_road.value,
-        dissolve_field=[
-            "OBJTYPE",
-            "TYPEVEG",
-            "MEDIUM",
-            "VEGFASE",
-            "VEGKATEGORI",
-            "VEGNUMMER",
-            "SUBTYPEKODE",
-            "character",
-        ],
-        multi_part="SINGLE_PART",
-    )
-
-    arcpy.management.CopyFeatures(
-        in_features=Road_N100.data_preparation___dissolved_road_feature___n100_road.value,
-        out_feature_class=Road_N100.data_preparation___remove_small_road_lines___n100_road.value,
-    )
-
-    arcpy.topographic.RemoveSmallLines(
-        in_features=Road_N100.data_preparation___remove_small_road_lines___n100_road.value,
-        minimum_length="100 meters",
-    )
-
-    arcpy.management.FeatureToLine(
-        in_features=Road_N100.data_preparation___remove_small_road_lines___n100_road.value,
-        out_feature_class=Road_N100.data_preparation___feature_to_line___n100_road.value,
-    )
-
-    file_utilities.deleting_added_field_from_feature_to_x(
-        input_file_feature=Road_N100.data_preparation___feature_to_line___n100_road.value,
-        field_name_feature=Road_N100.data_preparation___remove_small_road_lines___n100_road.value,
-    )
-
-    arcpy.management.MultipartToSinglepart(
-        in_features=Road_N100.data_preparation___feature_to_line___n100_road.value,
-        out_feature_class=Road_N100.data_preparation___road_single_part_2___n100_road.value,
-    )
-
-    arcpy.cartography.MergeDividedRoads(
-        in_features=Road_N100.data_preparation___road_single_part_2___n100_road.value,
-        merge_field="VEGNUMMER",
-        merge_distance="50 Meters",
-        out_features=Road_N100.data_preparation___merge_divided_roads___n100_road.value,
-        out_displacement_features=Road_N100.data_preparation___merge_divided_roads_displacement_feature___n100_road.value,
-        character_field="character",
-    )
-
-    arcpy.cartography.CollapseRoadDetail(
-        in_features=Road_N100.data_preparation___merge_divided_roads___n100_road.value,
-        collapse_distance="90 Meters",
-        output_feature_class=Road_N100.data_preparation___collapse_road_detail___n100_road.value,
-    )
-
-
-def old_merge_divided_roads():
-    custom_arcpy.select_attribute_and_make_permanent_feature(
-        input_layer=Road_N100.data_preparation___road_single_part_2___n100_road.value,
-        expression=f" MEDIUM = '{MediumAlias.on_surface}'",
-        output_name=Road_N100.data_preparation___on_surface_selection___n100_road.value,
-        selection_type="NEW_SELECTION",
-    )
-
-    custom_arcpy.select_attribute_and_make_permanent_feature(
-        input_layer=Road_N100.data_preparation___road_single_part_2___n100_road.value,
-        expression=f" MEDIUM = '{MediumAlias.bridge}'",
-        output_name=Road_N100.data_preparation___bridge_selection___n100_road.value,
-        selection_type="NEW_SELECTION",
-    )
-
-    custom_arcpy.select_attribute_and_make_permanent_feature(
-        input_layer=Road_N100.data_preparation___road_single_part_2___n100_road.value,
-        expression=f" MEDIUM = '{MediumAlias.tunnel}'",
-        output_name=Road_N100.data_preparation___tunnel_selection___n100_road.value,
-        selection_type="NEW_SELECTION",
-    )
-
-    on_surface_output = f"{Road_N100.data_preparation___merge_divided_roads___n100_road.value}_on_surface"
-    on_surface_displacement = f"{Road_N100.data_preparation___merge_divided_roads_displacement_feature___n100_road.value}_on_surface"
-
-    bridge_output = (
-        f"{Road_N100.data_preparation___merge_divided_roads___n100_road.value}_bridge"
-    )
-    bridge_displacement = f"{Road_N100.data_preparation___merge_divided_roads_displacement_feature___n100_road.value}_bridge"
-
-    tunnel_output = (
-        f"{Road_N100.data_preparation___merge_divided_roads___n100_road.value}_tunnel"
-    )
-    tunnel_displacement = f"{Road_N100.data_preparation___merge_divided_roads_displacement_feature___n100_road.value}_tunnel"
-
-    arcpy.cartography.MergeDividedRoads(
-        in_features=Road_N100.data_preparation___on_surface_selection___n100_road.value,
-        merge_field="VEGNUMMER",
-        merge_distance="150 Meters",
-        out_features=on_surface_output,
-        out_displacement_features=on_surface_displacement,
-        character_field="character",
-    )
-
-    arcpy.cartography.MergeDividedRoads(
-        in_features=Road_N100.data_preparation___bridge_selection___n100_road.value,
-        merge_field="VEGNUMMER",
-        merge_distance="150 Meters",
-        out_features=bridge_output,
-        out_displacement_features=bridge_displacement,
-        character_field="character",
-    )
-
-    arcpy.cartography.MergeDividedRoads(
-        in_features=Road_N100.data_preparation___tunnel_selection___n100_road.value,
-        merge_field="VEGNUMMER",
-        merge_distance="150 Meters",
-        out_features=tunnel_output,
-        out_displacement_features=tunnel_displacement,
-        character_field="character",
-    )
-
-    arcpy.management.Merge(
-        inputs=[
-            on_surface_output,
-            bridge_output,
-            tunnel_output,
-        ],
-        output=Road_N100.data_preparation___divided_roads_merged_outputs___n100_road.value,
-    )
-
     def resolve_road_conflict(
         input_line_layers: list[str], output_displacement_feature: str
     ):
@@ -848,36 +527,6 @@ def old_merge_divided_roads():
             hierarchy_field="hierarchy",
             out_displacement_features=Road_N100.testing_file___displacement_feature_after_resolve_road_conflict___n100_road.value,
         )
-
-
-def manage_intersections():
-    custom_arcpy.select_attribute_and_make_permanent_feature(
-        input_layer=Road_N100.data_preparation___remove_small_road_lines___n100_road.value,
-        expression=f"MEDIUM IN ('{MediumAlias.on_surface}', '{MediumAlias.bridge}')",
-        output_name=Road_N100.test1___elveg_and_sti_kommune_singlepart_dissolve_medium_ul___n100_road.value,
-        selection_type="NEW_SELECTION",
-    )
-
-    custom_arcpy.select_attribute_and_make_permanent_feature(
-        input_layer=Road_N100.data_preparation___remove_small_road_lines___n100_road.value,
-        expression=f" MEDIUM = '{MediumAlias.tunnel}'",
-        output_name=Road_N100.test1___elveg_and_sti_kommune_singlepart_dissolve_medium_t___n100_road.value,
-        selection_type="NEW_SELECTION",
-    )
-
-    arcpy.management.FeatureToLine(
-        in_features=Road_N100.test1___elveg_and_sti_kommune_singlepart_dissolve_medium_t___n100_road.value,
-        out_feature_class=Road_N100.test1___elveg_and_sti_kommune_singlepart_dissolve_medium_t_kryss___n100_road.value,
-    )
-
-    file_utilities.deleting_added_field_from_feature_to_x(
-        field_name_feature=Road_N100.test1___elveg_and_sti_kommune_singlepart_dissolve_medium_t_kryss___n100_road.value
-    )
-
-    arcpy.management.Append(
-        inputs=Road_N100.test1___elveg_and_sti_kommune_singlepart_dissolve_medium_ul___n100_road.value,
-        target=Road_N100.test1___elveg_and_sti_kommune_singlepart_dissolve_medium_t_kryss___n100_road.value,
-    )
 
 
 if __name__ == "__main__":
