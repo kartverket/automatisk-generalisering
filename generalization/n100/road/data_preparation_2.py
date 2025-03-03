@@ -26,6 +26,9 @@ from custom_tools.generalization_tools.road.thin_road_network import ThinRoadNet
 from custom_tools.generalization_tools.road.dissolve_with_intersections import (
     DissolveWithIntersections,
 )
+from custom_tools.generalization_tools.road.resolve_road_conflicts import (
+    ResolveRoadConflicts,
+)
 from custom_tools.general_tools.polygon_processor import PolygonProcessor
 from custom_tools.general_tools.line_to_buffer_symbology import LineToBufferSymbology
 from input_data.input_symbology import SymbologyN100
@@ -53,6 +56,7 @@ def main():
     thin_road_2()
     thin_road_3()
     smooth_line()
+    resolve_road_conflicts()
 
 
 @timing_decorator
@@ -272,6 +276,14 @@ def simplify_road():
 
 @timing_decorator
 def thin_sti_and_forest_roads():
+    road_data_validation = GeometryValidator(
+        input_features={
+            "roads": Road_N100.data_preparation___simplified_road___n100_road.value
+        },
+        output_table_path=f"{Road_N100.data_preparation___geometry_validation___n100_road.value}_2",
+    )
+    road_data_validation.check_repair_sequence()
+
     # It seems from source code that having 2 as an else return is intended function if not revert to `otpional_sti_and_forest_hierarchy`
     sti_and_forest_hierarchy = f"""def Reclass(vegkategori):
         if vegkategori  in ('{NvdbAlias.europaveg}', '{NvdbAlias.riksveg}', '{NvdbAlias.fylkesveg}', '{NvdbAlias.kommunalveg}', '{NvdbAlias.privatveg}', '{NvdbAlias.skogsveg}'):
@@ -301,7 +313,7 @@ def thin_sti_and_forest_roads():
         output_feature=Road_N100.data_preparation___thin_road_sti_output___n100_road.value,
         docu_path=Road_N100.data_preparation___thin_sti_docu___n100_road.value,
         min_length="1500 meters",
-        feature_count="6000",
+        feature_count="10000",
     )
 
 
@@ -312,6 +324,14 @@ def thin_roads():
         output_processed_feature=Road_N100.data_preparation___dissolved_intersections_3___n100_road.value,
         dissolve_field_list=FieldNames.road_all_fields(),
     )
+
+    road_data_validation = GeometryValidator(
+        input_features={
+            "roads": Road_N100.data_preparation___dissolved_intersections_3___n100_road.value
+        },
+        output_table_path=f"{Road_N100.data_preparation___geometry_validation___n100_road.value}_3",
+    )
+    road_data_validation.check_repair_sequence()
 
     road_hierarchy = f"""def Reclass(vegklasse, vegkategori):
         if vegklasse in (0, 1, 2, 3):
@@ -344,7 +364,7 @@ def thin_roads():
         output_feature=Road_N100.data_preparation___thin_road_output___n100_road.value,
         docu_path=Road_N100.data_preparation___thin_road_docu___n100_road.value,
         min_length="2000 meters",
-        feature_count="6000",
+        feature_count="10000",
     )
 
 
@@ -356,13 +376,21 @@ def thin_road_2():
         dissolve_field_list=FieldNames.road_all_fields(),
     )
 
+    road_data_validation = GeometryValidator(
+        input_features={
+            "roads": Road_N100.data_preparation___dissolved_intersections_4___n100_road.value
+        },
+        output_table_path=f"{Road_N100.data_preparation___geometry_validation___n100_road.value}_4",
+    )
+    road_data_validation.check_repair_sequence()
+
     run_thin_roads(
         input_feature=Road_N100.data_preparation___dissolved_intersections_4___n100_road.value,
         partition_root_file=Road_N100.data_preparation___thin_road_partition_root_2___n100_road.value,
         output_feature=Road_N100.data_preparation___thin_road_output_2___n100_road.value,
         docu_path=Road_N100.data_preparation___thin_road_docu_2___n100_road.value,
         min_length="2000 meters",
-        feature_count="6000",
+        feature_count="10000",
     )
 
 
@@ -374,25 +402,118 @@ def thin_road_3():
         dissolve_field_list=FieldNames.road_all_fields(),
     )
 
+    road_data_validation = GeometryValidator(
+        input_features={
+            "roads": Road_N100.data_preparation___dissolved_intersections_5___n100_road.value
+        },
+        output_table_path=f"{Road_N100.data_preparation___geometry_validation___n100_road.value}_5",
+    )
+    road_data_validation.check_repair_sequence()
+
     run_thin_roads(
         input_feature=Road_N100.data_preparation___dissolved_intersections_5___n100_road.value,
         partition_root_file=Road_N100.data_preparation___thin_road_partition_root_3___n100_road.value,
         output_feature=Road_N100.data_preparation___thin_road_output_3___n100_road.value,
         docu_path=Road_N100.data_preparation___thin_road_docu_3___n100_road.value,
         min_length="2000 meters",
-        feature_count="6000",
+        feature_count="10000",
     )
 
 
 @timing_decorator
 def smooth_line():
     arcpy.cartography.SmoothLine(
-        in_features=Road_N100.data_preparation___thin_road_output___n100_road.value,
+        in_features=Road_N100.data_preparation___thin_road_output_3___n100_road.value,
         out_feature_class=Road_N100.data_preparation___smooth_road___n100_road.value,
         algorithm="PAEK",
         tolerance="300 meters",
         error_option="RESOLVE_ERRORS",
     )
+
+
+def resolve_road_conflicts():
+    road_data_validation = GeometryValidator(
+        input_features={
+            "roads": Road_N100.data_preparation___smooth_road___n100_road.value
+        },
+        output_table_path=f"{Road_N100.data_preparation___geometry_validation___n100_road.value}_6",
+    )
+    road_data_validation.check_repair_sequence()
+
+    road = "road"
+    railroad = "railroad"
+    begrensningskurve = "begrensningskurve"
+    displacement = "displacement"
+
+    inputs = {
+        road: ["input", Road_N100.data_preparation___smooth_road___n100_road.value],
+        railroad: ["context", Road_N100.data_selection___railroad___n100_road.value],
+        begrensningskurve: [
+            "context",
+            Road_N100.data_preparation___water_feature_outline___n100_road.value,
+        ],
+    }
+
+    outputs = {
+        road: [
+            "resolve_road_conflicts",
+            Road_N100.data_preparation___resolve_road_conflicts___n100_road.value,
+        ],
+        displacement: [
+            "displacement_feature",
+            Road_N100.data_preparation___resolve_road_conflicts_displacement_feature___n100_road.value,
+        ],
+    }
+
+    input_data_structure = [
+        {
+            "unique_alias": road,
+            "input_line_feature": (road, "input"),
+            "input_lyrx_feature": config.symbology_samferdsel,
+            "grouped_lyrx": True,
+            "target_layer_name": "N100_Samferdsel_senterlinje_veg_bru_L2",
+        },
+        {
+            "unique_alias": railroad,
+            "input_line_feature": (railroad, "context"),
+            "input_lyrx_feature": config.symbology_samferdsel,
+            "grouped_lyrx": True,
+            "target_layer_name": "N100_Samferdsel_senterlinje_jernbane_terreng_sort_maske",
+        },
+        {
+            "unique_alias": begrensningskurve,
+            "input_line_feature": (begrensningskurve, "context"),
+            "input_lyrx_feature": SymbologyN100.begrensnings_kurve_line.value,
+            "grouped_lyrx": False,
+            "target_layer_name": None,
+        },
+    ]
+
+    resolve_road_conflicts_config = {
+        "class": ResolveRoadConflicts,
+        "method": "run",
+        "params": {
+            "input_list_of_dicts_data_structure": input_data_structure,
+            "root_file": Road_N100.data_preparation___resolve_road_root___n100_road.value,
+            "output_road_feature": (road, "resolve_road_conflicts"),
+            "output_displacement_feature": (
+                displacement,
+                "displacement_feature",
+            ),
+            "map_scale": "100000",
+        },
+    }
+
+    partition_resolve_road_conflicts = PartitionIterator(
+        alias_path_data=inputs,
+        alias_path_outputs=outputs,
+        custom_functions=[resolve_road_conflicts_config],
+        root_file_partition_iterator=Road_N100.data_preparation___resolve_road_partition_root___n100_road.value,
+        dictionary_documentation_path=Road_N100.data_preparation___resolve_road_docu___n100_road.value,
+        feature_count="10000",
+        search_distance="1500 Meters",
+    )
+    partition_resolve_road_conflicts.run()
 
 
 if __name__ == "__main__":
