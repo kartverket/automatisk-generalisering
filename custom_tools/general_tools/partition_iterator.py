@@ -242,7 +242,7 @@ class PartitionIterator:
             print(
                 f"Alias '{alias}' not found in nested_alias_type_data. Creating new alias."
             )
-            self.nested_alias_type_data[alias] = {}
+            self.nested_alias_type_data[alias] = {"dummy_used": False}
 
         self.nested_alias_type_data[alias][type_name] = type_path
         print(f"Set path for type '{type_name}' in alias '{alias}' to: {type_path}")
