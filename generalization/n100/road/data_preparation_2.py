@@ -1,6 +1,9 @@
 # Importing packages
+from types import SimpleNamespace
+
 import arcpy
 import os
+import textwrap
 
 
 # Importing custom input files modules
@@ -22,7 +25,9 @@ from custom_tools.general_tools.study_area_selector import StudyAreaSelector
 from custom_tools.general_tools.geometry_tools import GeometryValidator
 from custom_tools.general_tools import custom_arcpy
 from custom_tools.general_tools import file_utilities
+from custom_tools.general_tools.file_utilities import WorkFileManager
 from custom_tools.generalization_tools.road.thin_road_network import ThinRoadNetwork
+from custom_tools.generalization_tools.road.collapse_road import collapse_road
 from custom_tools.generalization_tools.road.dissolve_with_intersections import (
     DissolveWithIntersections,
 )
@@ -51,6 +56,7 @@ def main():
     merge_divided_roads()
     collapse_road_detail()
     simplify_road()
+    new_thin_roads()
     thin_sti_and_forest_roads()
     thin_roads()
     thin_road_2()
@@ -61,6 +67,8 @@ def main():
 
 @timing_decorator
 def data_selection_and_validation():
+    plot_area = "navn IN ('Asker', 'Bærum', 'Drammen', 'Frogn', 'Hole', 'Holmestrand', 'Horten', 'Jevnaker', 'Kongsberg', 'Larvik', 'Lier', 'Lunner', 'Modum', 'Nesodden', 'Oslo', 'Ringerike', 'Tønsberg', 'Øvre Eiker')"
+
     selector = StudyAreaSelector(
         input_output_file_dict={
             input_roads.road_output_1: Road_N100.data_selection___nvdb_roads___n100_road.value,
@@ -113,6 +121,7 @@ def run_thin_roads(
     docu_path,
     min_length,
     feature_count,
+    special_selection_sql=None,
 ):
     alias = "road"
     input_dict = {alias: ["input", input_feature]}
@@ -127,6 +136,7 @@ def run_thin_roads(
             "minimum_length": min_length,
             "invisibility_field_name": "invisibility",
             "hierarchy_field_name": "hierarchy",
+            "special_selection_sql": special_selection_sql,
         },
     }
     partition_thin_roads = PartitionIterator(
@@ -256,11 +266,45 @@ def merge_divided_roads():
 
 @timing_decorator
 def collapse_road_detail():
-    arcpy.cartography.CollapseRoadDetail(
-        in_features=Road_N100.data_preparation___merge_divided_roads___n100_road.value,
-        collapse_distance="60 Meters",
-        output_feature_class=Road_N100.data_preparation___collapse_road_detail___n100_road.value,
+    input_dict = {
+        "roads": (
+            "input",
+            Road_N100.data_preparation___merge_divided_roads___n100_road.value,
+        )
+    }
+
+    output_dict = {
+        "roads": (
+            "road_detail",
+            Road_N100.data_preparation___collapse_road_detail___n100_road.value,
+        )
+    }
+
+    collapse_road_detail_config = {
+        "func": collapse_road,
+        "params": {
+            "road_network_input": ("roads", "input"),
+            "road_network_output": ("roads", "road_detail"),
+            "merge_distance": "60 Meters",
+        },
+    }
+
+    partition_collapse_road_detail = PartitionIterator(
+        alias_path_data=input_dict,
+        alias_path_outputs=output_dict,
+        custom_functions=[collapse_road_detail_config],
+        root_file_partition_iterator=Road_N100.data_preparation___thin_road_partition_root___n100_road.value,
+        dictionary_documentation_path=Road_N100.data_preparation___thin_road_docu___n100_road.value,
+        feature_count="6000",
+        search_distance="1500 Meters",
     )
+    partition_collapse_road_detail.run()
+
+    # arcpy.cartography.CollapseRoadDetail(
+    #     in_features=Road_N100.data_preparation___merge_divided_roads___n100_road.value,
+    #     collapse_distance="60 Meters",
+    #     output_feature_class=Road_N100.data_preparation___collapse_road_detail___n100_road.value,
+    # )
 
 
 @timing_decorator
@@ -313,7 +357,7 @@ def thin_sti_and_forest_roads():
         output_feature=Road_N100.data_preparation___thin_road_sti_output___n100_road.value,
         docu_path=Road_N100.data_preparation___thin_sti_docu___n100_road.value,
         min_length="1500 meters",
-        feature_count="10000",
+        feature_count="6000",
     )
 
 
@@ -364,7 +408,7 @@ def thin_roads():
         output_feature=Road_N100.data_preparation___thin_road_output___n100_road.value,
         docu_path=Road_N100.data_preparation___thin_road_docu___n100_road.value,
         min_length="2000 meters",
-        feature_count="10000",
+        feature_count="6000",
     )
 
 
@@ -390,7 +434,7 @@ def thin_road_2():
         output_feature=Road_N100.data_preparation___thin_road_output_2___n100_road.value,
         docu_path=Road_N100.data_preparation___thin_road_docu_2___n100_road.value,
         min_length="2000 meters",
-        feature_count="10000",
+        feature_count="6000",
     )
 
 
@@ -416,7 +460,7 @@ def thin_road_3():
         output_feature=Road_N100.data_preparation___thin_road_output_3___n100_road.value,
         docu_path=Road_N100.data_preparation___thin_road_docu_3___n100_road.value,
         min_length="2000 meters",
-        feature_count="10000",
+        feature_count="6000",
     )
 
 
@@ -510,10 +554,177 @@ def resolve_road_conflicts():
         custom_functions=[resolve_road_conflicts_config],
         root_file_partition_iterator=Road_N100.data_preparation___resolve_road_partition_root___n100_road.value,
         dictionary_documentation_path=Road_N100.data_preparation___resolve_road_docu___n100_road.value,
-        feature_count="10000",
+        feature_count="6000",
         search_distance="1500 Meters",
     )
     partition_resolve_road_conflicts.run()
+
+
+def run_thin_sequence(
+    input_feature: str,
+    sequence_root_file: str,
+    output_feature: str,
+    min_length: str,
+    feature_count: str,
+    keep_files: bool = True,
+    sql_selection: str = None,
+    target_field: str = None,
+    sql_expression: str = None,
+    special_sql_selection: str = None,
+):
+    dummy_instance = SimpleNamespace()
+
+    work_file_manager = WorkFileManager(
+        unique_id=id(dummy_instance),
+        root_file=sequence_root_file,
+        write_to_memory=False,
+        keep_files=keep_files,
+    )
+    dissolved_intersections = "dissolved_intersections"
+    multipart_to_singlepart = "multipart_to_singlepart"
+    check_geometry_table = "check_geometry_table"
+    partition_root_file = "partition_root_file"
+
+    gdb_list = [
+        dissolved_intersections,
+        multipart_to_singlepart,
+        check_geometry_table,
+        partition_root_file,
+    ]
+    work_file_manager.setup_work_file_paths(
+        instance=dummy_instance,
+        file_structure=gdb_list,
+    )
+
+    print(f"gdb list:\n{gdb_list}\n")
+
+    thin_road_docu = "thin_road_docu"
+    json_list = [thin_road_docu]
+    work_file_manager.setup_work_file_paths(
+        instance=dummy_instance,
+        file_structure=json_list,
+        file_type="json",
+    )
+
+    required_sql_params = (sql_selection, target_field, sql_expression)
+
+    # Validate that either all or none of the dependent fields are provided
+    if any(field is not None for field in required_sql_params):
+        if None in required_sql_params:
+            raise ValueError(
+                "If any of 'sql_selection', 'target_field', or 'sql_expression' is defined, then all must be defined."
+            )
+
+    if sql_selection is not None:
+        arcpy.management.CalculateField(
+            in_table=input_feature,
+            field=target_field,
+            expression=sql_expression,
+            expression_type="PYTHON3",
+            code_block=sql_selection,
+        )
+
+    run_dissolve_with_intersections(
+        input_line_feature=input_feature,
+        output_processed_feature=dissolved_intersections,
+        dissolve_field_list=FieldNames.road_all_fields(),
+    )
+
+    arcpy.management.MultipartToSinglepart(
+        in_features=dissolved_intersections,
+        out_feature_class=multipart_to_singlepart,
+    )
+
+    data_validation_instance = GeometryValidator(
+        input_features={"roads": input_feature},
+        output_table_path=check_geometry_table,
+    )
+    data_validation_instance.check_repair_sequence()
+
+    run_thin_roads(
+        input_feature=multipart_to_singlepart,
+        partition_root_file=partition_root_file,
+        output_feature=output_feature,
+        docu_path=thin_road_docu,
+        min_length=min_length,
+        feature_count=feature_count,
+    )
+
+    work_file_manager.delete_created_files()
+
+
+def new_thin_roads():
+    sti_and_forest_hierarchy = f"""def Reclass(vegkategori):
+        if vegkategori  in ('{NvdbAlias.europaveg}', '{NvdbAlias.riksveg}', '{NvdbAlias.fylkesveg}', '{NvdbAlias.kommunalveg}', '{NvdbAlias.privatveg}', '{NvdbAlias.skogsveg}'):
+            return 0
+        elif vegkategori in ('{NvdbAlias.traktorveg}', '{NvdbAlias.barmarksløype}'):
+            return 1
+        elif vegkategori in ('{NvdbAlias.sti_dnt}', '{NvdbAlias.sti_andre}'):
+            return 2
+        elif vegkategori == '{NvdbAlias.gang_og_sykkelveg}':
+            return 3
+        elif vegkategori == '{NvdbAlias.sti_umerket}':
+            return 4
+        else:
+            return 2
+        """
+
+    run_thin_sequence(
+        input_feature=Road_N100.data_preparation___simplified_road___n100_road.value,
+        sequence_root_file=Road_N100.data_preparation___thin_sti_partition_root___n100_road.value,
+        output_feature=Road_N100.data_preparation___thin_road_sti_output___n100_road.value,
+        min_length="1500 meters",
+        feature_count="6000",
+        sql_selection=sti_and_forest_hierarchy,
+        target_field="hierarchy",
+        sql_expression="Reclass(!vegkategori!)",
+        special_sql_selection="objtype IN ('Barmarksløype', 'Sti', 'Traktorveg', 'GangSykkelveg')",
+    )
+
+    road_hierarchy = f"""def Reclass(vegklasse, vegkategori):
+        if vegklasse in (0, 1, 2, 3):
+            return 1
+        elif vegklasse == 4:
+            return 2
+        elif vegklasse == 5:
+            return 3
+        elif vegklasse == 6:
+            return 4
+        elif vegklasse == 7 or vegkategori in ('{NvdbAlias.traktorveg}', '{NvdbAlias.barmarksløype}'):
+            return 5
+        elif vegklasse in (8 , 9):
+            return 6
+        elif vegklasse is None:
+            return 6
+    """
+
+    run_thin_sequence(
+        input_feature=Road_N100.data_preparation___thin_road_sti_output___n100_road.value,
+        sequence_root_file=Road_N100.data_preparation___thin_road_partition_root___n100_road.value,
+        output_feature=Road_N100.data_preparation___thin_road_output___n100_road.value,
+        min_length="2000 meters",
+        feature_count="6000",
+        sql_selection=road_hierarchy,
+        target_field="hierarchy",
+        sql_expression="Reclass(!vegklasse!, !vegkategori!)",
+        special_sql_selection=None,
+    )
+
+    run_thin_sequence(
+        input_feature=Road_N100.data_preparation___thin_road_output___n100_road.value,
+        sequence_root_file=Road_N100.data_preparation___thin_road_partition_root_2___n100_road.value,
+        output_feature=Road_N100.data_preparation___thin_road_output_2___n100_road.value,
+        min_length="2000 meters",
+        feature_count="6000",
+    )
+
+    run_thin_sequence(
+        input_feature=Road_N100.data_preparation___thin_road_output_2___n100_road.value,
+        sequence_root_file=Road_N100.data_preparation___thin_road_partition_root_3___n100_road.value,
+        output_feature=Road_N100.data_preparation___thin_road_output_3___n100_road.value,
+        min_length="2000 meters",
+        feature_count="6000",
+    )
 
 
 if __name__ == "__main__":
