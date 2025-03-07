@@ -398,6 +398,42 @@ class Road_N100(Enum):
         description="smooth_road",
     )
 
+    data_preparation___resolve_road_conflicts___n100_road = (
+        file_manager.generate_file_name_gdb(
+            script_source_name=data_preparation,
+            description="resolve_road_conflicts",
+        )
+    )
+
+    data_preparation___resolve_road_partition_root___n100_road = (
+        file_manager.generate_file_name_gdb(
+            script_source_name=data_preparation,
+            description="resolve_road_partition_root",
+        )
+    )
+
+    data_preparation___resolve_road_docu___n100_road = (
+        file_manager.generate_file_name_general_files(
+            script_source_name=data_preparation,
+            description="resolve_road_docu",
+            file_type="json",
+        )
+    )
+
+    data_preparation___resolve_road_root___n100_road = (
+        file_manager.generate_file_name_gdb(
+            script_source_name=data_preparation,
+            description="resolve_road_root",
+        )
+    )
+
+    data_preparation___resolve_road_conflicts_displacement_feature___n100_road = (
+        file_manager.generate_file_name_gdb(
+            script_source_name=data_preparation,
+            description="resolve_road_conflicts_displacement_feature",
+        )
+    )
+
     data_preperation___paths_n50___n100_road = file_manager.generate_file_name_gdb(
         script_source_name=data_preparation,
         description="paths_n50",
@@ -915,6 +951,13 @@ class Road_N100(Enum):
     testing_file___roads_area_lyrx___n100_road = file_manager.generate_file_name_lyrx(
         script_source_name=testing_file,
         description="roads_area_lyrx",
+    )
+
+    testing_file___resolve_road_conflict_output___n100_road = (
+        file_manager.generate_file_name_gdb(
+            script_source_name=testing_file,
+            description="resolve_road_conflict_output",
+        )
     )
 
     testing_file___begrensningskurve_water_area_copy___n100_road = (
