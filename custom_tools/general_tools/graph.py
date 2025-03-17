@@ -2,6 +2,8 @@ import arcpy
 import networkx as nx
 from collections import defaultdict
 
+from custom_tools.general_tools import custom_arcpy
+from custom_tools.general_tools.file_utilities import WorkFileManager
 from file_manager.n100.file_manager_roads import Road_N100
 
 
@@ -14,16 +16,6 @@ class GISGraph:
         geometry_field: str = "SHAPE",
         directed: bool = False,
     ):
-        """
-        Constructs a graph from a GDB point feature class.
-
-        :param input_path: Full path to the GDB feature class containing point data.
-                           Example: r'C:\path\to\your.gdb\point_feature_class'
-        :param object_id: Name of the field uniquely identifying each point (e.g., "OBJECTID").
-        :param original_id: Name of the field representing the original line ID shared by two endpoints.
-        :param geometry_field: Name of the geometry field (defaults to "SHAPE").
-        :param directed: Whether the graph is directed. Defaults to False (undirected).
-        """
         self.input_path = input_path
         self.object_id = object_id
         self.original_id = original_id
@@ -41,6 +33,8 @@ class GISGraph:
         Reads point features from the input GDB feature class using ArcPy,
         groups them by the original line ID, and creates edges between nodes
         (points) that share the same original line ID (if exactly two exist).
+        Instead of using the raw object_id, nodes are created based on their
+        geometry to merge intersections properly.
         """
         data_rows = []
         fields = [self.object_id, self.original_id, self.geometry_field]
@@ -48,9 +42,6 @@ class GISGraph:
         # Use ArcPy's SearchCursor to iterate over the feature class
         with arcpy.da.SearchCursor(self.input_path, fields) as cursor:
             for row in cursor:
-                # print(f"Processing row 0:\n{row[0]}")
-                # print(f"Processing row 1:\n{row[1]}")
-                # print(f"Processing row 2:\n{row[2]}")
                 row_dict = {
                     self.object_id: row[0],
                     self.original_id: row[1],
@@ -63,49 +54,50 @@ class GISGraph:
         for row in data_rows:
             lines[row[self.original_id]].append(row)
 
-        # For each group, if there are exactly two points, create an edge
+        # Helper function: convert geometry to a hashable node key.
+
+        def geometry_to_node_key(geom):
+            """
+            Converts a geometry to a hashable tuple. If `geom` is a tuple, assume it is already (x, y).
+            Otherwise, assume it is an ArcPy geometry and extract the firstPoint.
+            The tolerance (tol) can be used if needed.
+            """
+            if isinstance(geom, tuple):
+                x = round(geom[0], 10)  # Adjust precision as needed
+                y = round(geom[1], 10)
+            else:
+                # Assuming geom is an ArcPy geometry
+                x = round(geom.firstPoint.X, 11)
+                y = round(geom.firstPoint.Y, 11)
+            return (x, y)
+
+        # Build a list of edge tuples to add using add_edges_from.
+        edges_to_add = []
         for line_id, endpoints in lines.items():
             if len(endpoints) == 2:
                 point_a, point_b = endpoints
-                node_a = point_a[self.object_id]
-                node_b = point_b[self.object_id]
+                node_key_a = geometry_to_node_key(point_a[self.geometry_field])
+                node_key_b = geometry_to_node_key(point_b[self.geometry_field])
 
-                # Add nodes with attributes (geometry and original_line_id)
-                print(
-                    f"Adding nodes {node_a} and {node_b} with original_line_id {line_id}\n"
-                )
-                print(f"geom node a: {point_a[self.geometry_field]}")
-                print(f"geom node b: {point_b[self.geometry_field]}")
-                if node_a not in self.graph:
+                # Optionally, add nodes with attributes (like full geometry)
+                if node_key_a not in self.graph:
                     self.graph.add_node(
-                        node_a,
-                        geometry=point_a[self.geometry_field],
-                        original_line_id=line_id,
+                        node_key_a, geometry=point_a[self.geometry_field]
                     )
-                if node_b not in self.graph:
+                if node_key_b not in self.graph:
                     self.graph.add_node(
-                        node_b,
-                        geometry=point_b[self.geometry_field],
-                        original_line_id=line_id,
+                        node_key_b, geometry=point_b[self.geometry_field]
                     )
 
-                # Create an edge between the two nodes and store the original line id as an attribute
-                self.graph.add_edge(node_a, node_b, original_line_id=line_id)
-                print(
-                    f"Added edge between {node_a} and {node_b} with original_line_id {line_id}"
+                # Create an edge with the original_line_id as an attribute.
+                edges_to_add.append(
+                    (node_key_a, node_key_b, {"original_line_id": line_id})
                 )
+
+        # Add all edges at once.
+        self.graph.add_edges_from(edges_to_add)
 
     def detect_cycle(self):
-        """
-        Uses Networkx's built-in methods to detect cycles in the graph.
-
-        For an undirected graph, the cycle_basis method is used. For directed graphs,
-        find_cycle is employed.
-
-        :return: A tuple (cycle_found, cycle_info) where cycle_found is True if a cycle exists.
-                 For undirected graphs, cycle_info is a list of cycles (each cycle is a list of nodes).
-                 For directed graphs, cycle_info is the first cycle found.
-        """
         if self.directed:
             try:
                 cycle = nx.find_cycle(self.graph, orientation="original")
@@ -120,26 +112,60 @@ class GISGraph:
                 return False, None
 
     def print_graph_info(self):
-        """
-        Prints a summary of the graph (number of nodes and edges).
-        """
         print("Number of nodes:", self.graph.number_of_nodes())
         print("Number of edges:", self.graph.number_of_edges())
 
-    # After cycle detection, you might mark nodes that are in a cycle:
     def mark_cycle_nodes(self):
         cycle_found, cycle_info = self.detect_cycle()
         if cycle_found:
             if self.directed:
-                # For a directed graph, cycle_info is a list of edges in the cycle.
                 for u, v, _ in cycle_info:
                     self.graph.nodes[u]["cycle"] = True
                     self.graph.nodes[v]["cycle"] = True
             else:
-                # For an undirected graph, cycle_info is a list of cycles (each a list of nodes).
                 for cycle in cycle_info:
                     for node in cycle:
                         self.graph.nodes[node]["cycle"] = True
+
+    def get_cycle_line_sql(self):
+        """
+        Detects cycles in the graph, collects the original line IDs from edges that are part of the cycle,
+        and returns a SQL expression that can be used to select the original lines.
+
+        :return: A SQL expression (string) that selects records with original_line_id in the cycle,
+                 or None if no cycle is found.
+        """
+        cycle_found, cycle_info = self.detect_cycle()
+        if not cycle_found:
+            return None
+
+        cycle_line_ids = set()
+
+        if self.directed:
+            # For directed graphs, cycle_info is a list of edges (u, v, orientation)
+            for u, v, _ in cycle_info:
+                edge_data = self.graph.get_edge_data(u, v)
+                if edge_data and "original_line_id" in edge_data:
+                    cycle_line_ids.add(edge_data["original_line_id"])
+        else:
+            # For undirected graphs, cycle_info is a list of cycles (each cycle is a list of nodes).
+            # For each cycle, loop pairwise (wrapping around) to get the edge between adjacent nodes.
+            for cycle in cycle_info:
+                n = len(cycle)
+                for i in range(n):
+                    u = cycle[i]
+                    v = cycle[(i + 1) % n]  # Wrap around to the first node.
+                    edge_data = self.graph.get_edge_data(u, v)
+                    if edge_data and "original_line_id" in edge_data:
+                        cycle_line_ids.add(edge_data["original_line_id"])
+
+        if cycle_line_ids:
+            # Build a SQL expression. Adjust quoting if your original_line_id is text.
+            ids_str = ", ".join(str(x) for x in cycle_line_ids)
+            sql = f"{self.object_id} IN ({ids_str})"
+            return sql
+        else:
+            return None
 
 
 # Example usage
@@ -164,3 +190,12 @@ if __name__ == "__main__":
         print(cycle_info)
     else:
         print("No cycles detected.")
+
+    sql_expression = gis_graph.get_cycle_line_sql()
+    print(sql_expression)
+
+    custom_arcpy.select_attribute_and_make_permanent_feature(
+        input_layer=Road_N100.data_preparation___resolve_road_conflicts___n100_road.value,
+        expression=sql_expression,
+        output_name=f"{Road_N100.testing_file___removed_triangles___n100_road.value}_cycle_edges_selection",
+    )
