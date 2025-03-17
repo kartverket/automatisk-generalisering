@@ -44,11 +44,13 @@ class RemoveRoadTriangles:
 
         self.dissolved_feature = "dissolved_feature"
         self.internal_root = "internal_root"
+        self.line_nodes = "line_nodes"
         self.short_roads = "short_roads"
 
         self.gdb_files_list = [
             self.dissolved_feature,
             self.internal_root,
+            self.line_nodes,
             self.short_roads,
         ]
         self.gdb_files_list = self.work_file_manager.setup_work_file_paths(
@@ -70,13 +72,14 @@ class RemoveRoadTriangles:
         )
         dissolve_obj.run()
 
-    def filter_short_roads(self):
-        print(
-            f"Input layer: {self.dissolved_feature},"
-            f"Expression: Shape_Length <= {self.minimum_length}"
-            f"Output: {self.short_roads}"
+    def create_start_end_nodes(self):
+        arcpy.management.FeatureVerticesToPoints(
+            in_features=self.dissolved_feature,
+            out_feature_class=self.line_nodes,
+            point_location="BOTH_ENDS",
         )
 
+    def filter_short_roads(self):
         custom_arcpy.select_attribute_and_make_permanent_feature(
             input_layer=self.dissolved_feature,
             expression=f"Shape_Length <= {self.minimum_length}",
@@ -85,13 +88,13 @@ class RemoveRoadTriangles:
 
     def create_output(self):
         arcpy.management.CopyFeatures(
-            in_features=self.short_roads,
+            in_features=self.line_nodes,
             out_feature_class=self.output_processed_feature,
         )
 
     def run(self):
         self.simplify_road_network()
-        self.filter_short_roads()
+        self.create_start_end_nodes()
         self.create_output()
         self.work_file_manager.delete_created_files()
 
