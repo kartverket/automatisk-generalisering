@@ -886,6 +886,11 @@ class Road_N100(Enum):
         description="roads_copy",
     )
 
+    testing_file___graph_root___n100_road = file_manager.generate_file_name_gdb(
+        script_source_name=testing_file,
+        description="graph_root",
+    )
+
     testing_file___remove_triangles_root___n100_road = (
         file_manager.generate_file_name_gdb(
             script_source_name=testing_file,
