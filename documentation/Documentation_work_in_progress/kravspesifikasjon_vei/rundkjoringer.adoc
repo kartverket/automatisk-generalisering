@@ -1,0 +1,7 @@
+== Rundkjøringer
+
+I 1:100 000 skal det ikke eksistere rundkjøringer for å forenkle kartbildet.
+
+[figure]
+image::bilder\rundkjoringer.PNG[align="center", alt ="Fjerne rundkjøringer for å begrense støy i kartbildet"]
+

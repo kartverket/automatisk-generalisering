@@ -1,0 +1,5 @@
+== Alle vegene som krysser riksgrensa skal beholdes
+
+I tidligere versjoner av N100K-vegen har det vært utfordringer med at veier som krysser riksgrensen ikke har blitt inkludert. Dette skyldes at disse veiene ofte behandles som løse endepunkter, som kan bli utelatt under generaliseringsprosesser, spesielt hvis de er av mindre størrelse.
+
+image::bilder\riksgrense.PNG\riksgrense.PNG[align="center", alt = N100K-veg mangler kjent bru over til Svergie i første versjon]

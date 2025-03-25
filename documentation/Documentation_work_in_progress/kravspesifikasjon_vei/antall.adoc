@@ -1,0 +1,15 @@
+== Antall veger
+
+Generaliseringsregler angir den omtrentlige mengden objektreduksjon når man går fra én målestokk til en annen. I denne sammenhengen ser vi bort fra at objekttettheten kan variere avhengig av hva kartet skal brukes til. Dersom vi kun ser på resultatene kvantitativt, kan vi formulere følgende regel:
+
+[cols="2,5,5"]
+|===
+| Målestokk | reduksjon fra opprinnelse |  Antall km vei
+
+| 1:50 000 | Opprinnelse | 404 000 km
+| 1:100 000 | 50% av 1:50 000 | 202 000 km 
+| 1:250 000 | 20% av 1:50 000 |  81 000 km
+| 1:500 000 | 10% av 1:50 000 |  40 000 km
+|===
+
+Nå er dagen 1:250 000 kart med ca. 200 000 km vei og gjør denne oppgaven noe utfordrende siden N100K skal også passe inn i zoomnivåer. Det er imidlertid viktig å se til tabellen for å legge seg på riktig nivå.

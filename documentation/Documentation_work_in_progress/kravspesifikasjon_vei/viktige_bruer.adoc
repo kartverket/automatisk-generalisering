@@ -1,0 +1,3 @@
+== Viktige bruer skal ikke forsvinne
+
+Bruer som krysser riksgrensen eller leder til øygrupper skal alltid inkluderes. Fokus på bruer er viktig da de er spesielt utsatt for feil under automatisk generalisering. Det er avgjørende at modellen gir et resultat som beholder disse bruene.

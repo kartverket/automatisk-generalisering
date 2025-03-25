@@ -1,0 +1,39 @@
+= Kravspesifikasjon veg N100
+
+versjon 1
+
+Første versjonen av kravspesifikasjonen er produsert vår 2025 i sammenheng med oppdatering av generaliseringsmodellen for N100K-veg.  
+
+
+[cols="2,2"]
+|===
+| Dato | bidragsytre
+| 25.03.2025 | Virginia Antonijevic, Elling Aronsen Oftedal og Ida Hope Barth
+|===
+
+En liste over krav i prioritert rekkefølge, hvor enkelte krav er nødvendige for å kunne levere N100K-veg-produktet til Forsvaret og Geonorge.
+
+[cols="6,2"]
+|===
+| Krav | Påkrevd
+
+| Alle vegene som krysser riksgrensa skal beholdes | Ja
+| Motorveg skal være lik N50K | Ja
+| N100K-visningen skal fungere på ferdig generalisert veg | Ja
+| Veg skal ikke være i grafisk konflikt med vann eller jernbane | Ja
+| Viktige bruer skal ikke forsvinne | Ja
+| Modellen må være stabil, der maks 5% endring i geometri fra kjøring til kjøring | Ja
+| Vegantallet skal være nær som mulig halvparten av N50K veg i antall km | Nei
+| Ingen rundkjøringer | Nei
+| Ingen små trekanter eller områder i veinettverket | Nei
+|===
+
+include::C:\Users\hopida\GitHub\AG\automatisk-generalisering\documentation\Documentation_work_in_progress\kravspesifikasjon_vei/veg_riksgrensa.adoc[]
+
+include::kravspesifikasjon_vei/motorveg.adoc[]
+
+include::kravspesifikasjon_vei/visning.adoc[]
+
+include::kravspesifikasjon_vei/grafisk_konflikt.adoc[]
+
+include::kravspesifikasjon_vei/viktige_bruer.adoc[]

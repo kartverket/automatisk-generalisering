@@ -1,0 +1,13 @@
+== Vegene i N100K skal være tilpasset målestokken og bruk
+
+=== Rundkjøringer
+
+I 1:100 000 skal det ikke eksistere rundkjøringer for å forenkle kartbildet. Under er ett bilde av dagens N100K. Neste versjon av veier skal inneholde færre veger.
+
+[figure]
+image::bilder\rundkjoringer.PNG[align="center", alt ="Fjerne rundkjøringer for å begrense støy i kartbildet"]
+
+
+=== "Fjerning av trekanter"
+
+I målestokk 1:100 000 skal de viktigste veiene inkluderes, sammen med mindre viktige veier, for å gi et kartbilde som reflekterer den faktiske veitettheten uten at kartet blir vanskelig å lese. Veiene skal beholde sitt mønster, men avstanden mellom dem skal økes. Minste areal imellom veier skal ikke være mindre en 1 kvadratkilometer (1mm X 1mm på kartet).

@@ -1,0 +1,17 @@
+== N100K-visningen skal fungere på ferdig generalisert veg
+
+Visningene lagd for N100K er basert på bestemte egenskaper som må eksistere i det ferdige produktet. En oversikt er presentert under:
+
+[cols="2,5"]
+|===
+| egenskapsnavn | variasjon
+
+| Vegkategori | E, F, K, P, R, S, Udefinert
+| Medium | B, L, U, T
+| Subtypekode | 1 - 11 
+| Motorvegtype | Motorveg, Ikke motorveg, Motortrafikkveg og Udefinert
+| Uttegning | <Null>, 1 vinge, ingen vinger, nedklassifisering, høy prioritet
+| Vegstatus | P, V, Udefinert
+| Objekttype | VegSenterlinje, Barmarksløype, GangSykkelveg, Sti, Traktorveg 
+| Rutemerking | JA, NEI, Udefinert
+|===

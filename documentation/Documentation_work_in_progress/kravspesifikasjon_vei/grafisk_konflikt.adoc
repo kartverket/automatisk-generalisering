@@ -1,0 +1,17 @@
+== Veg skal ikke være i grafisk konflikt med vann eller jernbane 
+
+Symbologien i 1:100 000 dekker ett større område enn hva veien gjør i virkeligheten. Grovt regnet (under i tabell) ser vi at symbolstørrelsen vil dekke ca 30 meter utenfor hvor veien faktisk ligger. Er veien i nærheten av jernbane eller kystlinje/innsjø linje vil det oppså en grafisk konflikt. Dette må løses ved at enten veien eller andre objekter veien er i gafisk konflik med må flyttes.
+
+[cols="1,1,1,2"]
+|===
+| Veg | mm i kartet | m i virkeligheten | symbologi dekker i virkeligheten
+
+| Motorveg | 0,85 mm | 30 m | 85 m
+|===
+
+[figure]
+image::bilder\grafisk_konflikt.PNG[align="center", alt ="Veien ligger mindre enn 30 meter unna kystkontur og må flyttes inn i landet for å unngå grafisk konflikt"]
+
+
+[figure]
+image::bilder\grafisk_konflikt_2.PNG[width=400,height=200, align="center", alt ="Veien er flyttet vekk fra kystkonturen"]
