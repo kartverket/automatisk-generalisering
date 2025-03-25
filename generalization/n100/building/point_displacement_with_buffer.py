@@ -143,7 +143,7 @@ def buffer_displacement():
             "input_building_points": ("building_points", "input"),
             "input_misc_objects": misc_objects,
             "output_building_points": ("building_points", "buffer_displacement"),
-            "sql_selection_query": N100_SQLResources.road_symbology_size_sql_selection.value,
+            "sql_selection_query": N100_SQLResources.new_road_symbology_size_sql_selection.value,
             "root_file": Building_N100.point_displacement_with_buffer___root_file___n100_building.value,
             "building_symbol_dimensions": N100_Symbology.building_symbol_dimensions.value,
             "buffer_displacement_meter": N100_Values.buffer_clearance_distance_m.value,

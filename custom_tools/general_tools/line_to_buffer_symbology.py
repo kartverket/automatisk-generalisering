@@ -189,7 +189,7 @@ if __name__ == "__main__":
     environment_setup.main()
     line_to_buffer_symbology = LineToBufferSymbology(
         input_road_lines=Building_N100.data_preparation___unsplit_roads___n100_building.value,
-        sql_selection_query=N100_SQLResources.road_symbology_size_sql_selection.value,
+        sql_selection_query=N100_SQLResources.new_road_symbology_size_sql_selection.value,
         output_road_buffer=Building_N100.line_to_buffer_symbology___test___n100_building.value,
         write_work_files_to_memory=False,
         keep_work_files=False,
