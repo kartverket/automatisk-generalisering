@@ -1,0 +1,51 @@
+= Metodologi-dokumentasjon
+
+Beskriver hvordan vi har valgt å gå frem for å oppnå resultatene, hvilke metoder og tilnærminger vi har brukt, samt hvorfor disse valgene ble gjort. Dokumentet inkluderer forklaring på prosessene, teknikkene og verktøy som ble brukt for å utvikle modellen.
+
+[cols="2,2"]
+|===
+| Dato | bidragsytre
+
+| 25.03.2025 | Virginia Antonijevic, Elling Aronsen Oftedal og Ida Hope Barth
+|===
+
+= Kilde
+Ved utviklingen av N100K ble N50K benyttet som kilde, et valg som ble gjort for å forenkle harmoniseringen med de øvrige målestokkene. Det var også et ønske om at N50K skulle være den primære kilden der det var mulig. I ettertid har det imidlertid vist seg utfordrende å skille mellom viktige og mindre viktige veier, noe som er en grunnleggende forutsetning for automatisk generalisering.
+
+I forbindelse med oppdateringen av modellen for 2024/2025 ble N50K, NVDB og Elveg vurdert som potensielle kilder for generaliseringen av veiene til N100K.
+
+== NVDB
+NVDB står for Nasjonal Vegdatabank, som er et felles nasjonalt system i Norge for lagring, forvaltning og tilgjengeliggjøring av vegrelaterte data. Det er et viktig verktøy for vei- og transportforvaltning i Norge, og det inneholder veldig detaljert informasjon om det norske veinettet.
+
+
+- NVDB/N50K
+ * Hva skal hentes ut: vegtrase. Var det andre muligheter som ble vurdert?
+ * Hierarki, fokus på hvorfor bruke NVDB som kilde+
+    -> Funksjonellveiklasse +
+    -> Vegkategori +
+    -> Funksjonklasse +
+- Stier og div må hentes ut fra N50K
+- Beskrivelse av FME løype. Beskrive hvordan vi tenker at denne delen skal gjøres i fremtiden.
+- Beskrivelse av oversettelse fra NVDB språk til N100K, for å møte krav om egenskaper.
+    
+= Smidig tilnærming eller stabil leveranse
+
+= Stabilitet
+- partisjoner
+* faste partisjoner?
+* maksimalt antall linjer?
+* buffer rundt partisjoner
+- "Thin Road network"
+- Andre tilpassninger for stabilitet?
+
+= Hierarki 
+
+fokus hvordan gruppere hierarkiet og hvordan finne fram til beste løsning.
+
+* dokumentasjon verktøy
+* Beskrivelse av funksjonellveiklasse, og andre hierarki vi har vurdert.
+
+= Oppbyggning av modell
+
+Rekkefølge på verktøy og hvorfor vi bruker dem. Begrensninger og fordeler.
+Beskrivelse av alle parametere. Samle parameterne?
