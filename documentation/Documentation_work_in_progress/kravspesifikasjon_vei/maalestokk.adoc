@@ -1,4 +1,4 @@
-== Vegene i N100K skal være tilpasset målestokken og bruk
+== Vegene i N100K skal være tilpasset målestokk og bruk
 
 === Rundkjøringer
 
