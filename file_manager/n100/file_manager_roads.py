@@ -393,6 +393,13 @@ class Road_N100(Enum):
         )
     )
 
+    data_preparation___final_merged_thin_iteration_output___n100_road = (
+        file_manager.generate_file_name_gdb(
+            script_source_name=data_preparation,
+            description="final_merged_thin_iteration_output",
+        )
+    )
+
     data_preparation___smooth_road___n100_road = file_manager.generate_file_name_gdb(
         script_source_name=data_preparation,
         description="smooth_road",

@@ -56,13 +56,19 @@ def main():
     merge_divided_roads()
     collapse_road_detail()
     simplify_road()
-    new_thin_roads()
+    # new_thin_roads()
     thin_sti_and_forest_roads()
     thin_roads()
     thin_road_2()
     thin_road_3()
-    smooth_line()
-    resolve_road_conflicts()
+    thin_road_4()
+    thin_road_5()
+    thin_road_6()
+    thin_road_7()
+    combine_results()
+
+    # smooth_line()
+    # resolve_road_conflicts()
 
 
 @timing_decorator
@@ -461,6 +467,158 @@ def thin_road_3():
         docu_path=Road_N100.data_preparation___thin_road_docu_3___n100_road.value,
         min_length="2000 meters",
         feature_count="6000",
+    )
+
+
+output_dissolved_intersections = (
+    f"{Road_N100.data_preparation___dissolved_intersections_5___n100_road.value}_2"
+)
+output_table_path = (
+    f"{Road_N100.data_preparation___geometry_validation___n100_road.value}_5_2"
+)
+partition_root_file = (
+    f"{Road_N100.data_preparation___thin_road_partition_root_3___n100_road.value}_2"
+)
+docu_path = f"{Road_N100.data_preparation___thin_road_docu_3___n100_road.value}_2"
+output_thin_road = (
+    f"{Road_N100.data_preparation___thin_road_output_3___n100_road.value}_2"
+)
+
+
+@timing_decorator
+def thin_road_4():
+    run_dissolve_with_intersections(
+        input_line_feature=Road_N100.data_preparation___thin_road_output_3___n100_road.value,
+        output_processed_feature=output_dissolved_intersections,
+        dissolve_field_list=FieldNames.road_all_fields(),
+    )
+
+    run_thin_roads(
+        input_feature=output_dissolved_intersections,
+        partition_root_file=partition_root_file,
+        output_feature=output_thin_road,
+        docu_path=docu_path,
+        min_length="2000 meters",
+        feature_count="6000",
+    )
+
+
+output_dissolved_intersections_2 = (
+    f"{Road_N100.data_preparation___dissolved_intersections_5___n100_road.value}_3"
+)
+output_table_path_2 = (
+    f"{Road_N100.data_preparation___geometry_validation___n100_road.value}_5_3"
+)
+partition_root_file_2 = (
+    f"{Road_N100.data_preparation___thin_road_partition_root_3___n100_road.value}_3"
+)
+docu_path_2 = f"{Road_N100.data_preparation___thin_road_docu_3___n100_road.value}_3"
+output_thin_road_2 = (
+    f"{Road_N100.data_preparation___thin_road_output_3___n100_road.value}_3"
+)
+
+
+@timing_decorator
+def thin_road_5():
+    run_dissolve_with_intersections(
+        input_line_feature=output_thin_road,
+        output_processed_feature=output_dissolved_intersections_2,
+        dissolve_field_list=FieldNames.road_all_fields(),
+    )
+
+    run_thin_roads(
+        input_feature=output_dissolved_intersections_2,
+        partition_root_file=partition_root_file_2,
+        output_feature=output_thin_road_2,
+        docu_path=docu_path,
+        min_length="2000 meters",
+        feature_count="6000",
+    )
+
+
+output_dissolved_intersections_3 = (
+    f"{Road_N100.data_preparation___dissolved_intersections_5___n100_road.value}_4"
+)
+output_table_path_3 = (
+    f"{Road_N100.data_preparation___geometry_validation___n100_road.value}_5_4"
+)
+partition_root_file_3 = (
+    f"{Road_N100.data_preparation___thin_road_partition_root_3___n100_road.value}_4"
+)
+docu_path_3 = f"{Road_N100.data_preparation___thin_road_docu_3___n100_road.value}_4"
+output_thin_road_3 = (
+    f"{Road_N100.data_preparation___thin_road_output_3___n100_road.value}_4"
+)
+
+
+@timing_decorator
+def thin_road_6():
+    run_dissolve_with_intersections(
+        input_line_feature=output_thin_road_2,
+        output_processed_feature=output_dissolved_intersections_3,
+        dissolve_field_list=FieldNames.road_all_fields(),
+    )
+
+    run_thin_roads(
+        input_feature=output_dissolved_intersections_3,
+        partition_root_file=partition_root_file_3,
+        output_feature=output_thin_road_3,
+        docu_path=docu_path,
+        min_length="2000 meters",
+        feature_count="6000",
+    )
+
+
+output_dissolved_intersections_4 = (
+    f"{Road_N100.data_preparation___dissolved_intersections_5___n100_road.value}_5"
+)
+output_table_path_4 = (
+    f"{Road_N100.data_preparation___geometry_validation___n100_road.value}_5_5"
+)
+partition_root_file_4 = (
+    f"{Road_N100.data_preparation___thin_road_partition_root_3___n100_road.value}_5"
+)
+docu_path_4 = f"{Road_N100.data_preparation___thin_road_docu_3___n100_road.value}_5"
+output_thin_road_4 = (
+    f"{Road_N100.data_preparation___thin_road_output_3___n100_road.value}_5"
+)
+
+
+@timing_decorator
+def thin_road_7():
+    run_dissolve_with_intersections(
+        input_line_feature=output_thin_road_3,
+        output_processed_feature=output_dissolved_intersections_4,
+        dissolve_field_list=FieldNames.road_all_fields(),
+    )
+
+    run_thin_roads(
+        input_feature=output_dissolved_intersections_4,
+        partition_root_file=partition_root_file_4,
+        output_feature=output_thin_road_4,
+        docu_path=docu_path,
+        min_length="2000 meters",
+        feature_count="6000",
+    )
+
+
+def combine_results():
+    arcpy.management.AddField(
+        in_table=output_thin_road_4,
+        field_name="iteration",
+        field_type="SHORT",
+    )
+    arcpy.management.CalculateField(
+        in_table=output_thin_road_4,
+        field="iteration",
+        expression="24",
+        expression_type="PYTHON3",
+    )
+
+    arcpy.management.Append(
+        inputs=output_thin_road_4,
+        target=Road_N100.data_preparation___final_merged_thin_iteration_output___n100_road.value,
+        schema_type="NO_TEST",
     )
 
 
