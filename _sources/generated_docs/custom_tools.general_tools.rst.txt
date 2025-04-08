@@ -28,6 +28,14 @@ custom\_tools.general\_tools.geometry\_tools module
    :show-inheritance:
    :undoc-members:
 
+custom\_tools.general\_tools.graph module
+-----------------------------------------
+
+.. automodule:: custom_tools.general_tools.graph
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
 custom\_tools.general\_tools.line\_to\_buffer\_symbology module
 ---------------------------------------------------------------
 
