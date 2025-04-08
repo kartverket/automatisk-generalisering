@@ -89,7 +89,7 @@ def data_selection():
     input_output_file_dict = {
         input_n100.BegrensningsKurve: Building_N100.data_selection___begrensningskurve_n100_input_data___n100_building.value,
         input_n100.ArealdekkeFlate: Building_N100.data_selection___land_cover_n100_input_data___n100_building.value,
-        input_n100.VegSti: Building_N100.data_selection___road_n100_input_data___n100_building.value,
+        input_roads.road_output_1: Building_N100.data_selection___road_n100_input_data___n100_building.value,
         input_n100.JernbaneStasjon: Building_N100.data_selection___railroad_stations_n100_input_data___n100_building.value,
         input_n100.Bane: Building_N100.data_selection___railroad_tracks_n100_input_data___n100_building.value,
         input_n50.ArealdekkeFlate: Building_N100.data_selection___land_cover_n50_input_data___n100_building.value,

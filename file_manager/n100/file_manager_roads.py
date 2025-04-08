@@ -393,6 +393,13 @@ class Road_N100(Enum):
         )
     )
 
+    data_preparation___final_merged_thin_iteration_output___n100_road = (
+        file_manager.generate_file_name_gdb(
+            script_source_name=data_preparation,
+            description="final_merged_thin_iteration_output",
+        )
+    )
+
     data_preparation___smooth_road___n100_road = file_manager.generate_file_name_gdb(
         script_source_name=data_preparation,
         description="smooth_road",
@@ -884,6 +891,23 @@ class Road_N100(Enum):
     testing_file___roads_copy___n100_road = file_manager.generate_file_name_gdb(
         script_source_name=testing_file,
         description="roads_copy",
+    )
+
+    testing_file___graph_root___n100_road = file_manager.generate_file_name_gdb(
+        script_source_name=testing_file,
+        description="graph_root",
+    )
+
+    testing_file___remove_triangles_root___n100_road = (
+        file_manager.generate_file_name_gdb(
+            script_source_name=testing_file,
+            description="remove_triangles_root",
+        )
+    )
+
+    testing_file___removed_triangles___n100_road = file_manager.generate_file_name_gdb(
+        script_source_name=testing_file,
+        description="removed_triangles",
     )
 
     testing_file___multipart_to_singlepart___n100_road = (
