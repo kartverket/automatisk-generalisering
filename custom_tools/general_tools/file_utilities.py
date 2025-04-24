@@ -224,6 +224,32 @@ class WorkFileManager:
         self.created_paths.append(path)
         return path
 
+    def generate_output(
+        self,
+        instance: object,
+        name: str,
+        iteration_index: int,
+    ) -> str:
+        """
+        What:
+            Generates a unique file path for a given base name and iteration index.
+            Designed to allow users of WorkFileManager to generate indexed outputs in a loop.
+
+        Args:
+            instance (object): The caller instance to update attributes on if needed.
+            name (str): The base name of the work file.
+            iteration_index (int): The current iteration index for uniqueness.
+            instance (object): The caller instance to update attributes on if needed.
+
+        Returns:
+            str: The generated file path.
+        """
+        return self.setup_work_file_paths(
+            instance=instance,
+            file_structure=name,
+            index=iteration_index,
+        )
+
     def setup_work_file_paths(
         self,
         instance: object,
@@ -608,3 +634,8 @@ def get_all_fields(input_fields, *added_field_sets):
     for fields in added_field_sets:
         combined.extend([item[0] for item in fields])
     return combined
+
+
+def count_objects(input_layer):
+    count = int(arcpy.management.GetCount(input_layer).getOutput(0))
+    return count

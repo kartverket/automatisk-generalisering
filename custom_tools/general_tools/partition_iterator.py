@@ -13,7 +13,7 @@ import inspect
 import env_setup.global_config
 import config
 from env_setup import environment_setup
-from custom_tools.general_tools import custom_arcpy
+from custom_tools.general_tools import custom_arcpy, file_utilities
 from custom_tools.decorators.timing_decorator import timing_decorator
 
 from input_data import input_n50, input_n100
@@ -192,6 +192,7 @@ class PartitionIterator:
 
         # Variables related to features and iterations
         self.partition_feature = f"{root_file_partition_iterator}_partition_feature"
+        self.used_partition_size = None
         self.max_object_id = None
         self.current_iteration_id = None
         self.iteration_file_paths_list = []
@@ -247,6 +248,15 @@ class PartitionIterator:
 
         self.nested_alias_type_data[alias][type_name] = type_path
         print(f"Set path for type '{type_name}' in alias '{alias}' to: {type_path}")
+
+    def _filter_context_features(self):
+        pass
+
+    def _find_partition_size(self):
+        pass
+
+    def _create_cartographic_partitions(self):
+        pass
 
     def create_cartographic_partitions(self):
         """
@@ -727,10 +737,8 @@ class PartitionIterator:
                 output_name=input_features_center_in_partition_selection,
             )
 
-            count_points = int(
-                arcpy.management.GetCount(
-                    input_features_center_in_partition_selection
-                ).getOutput(0)
+            count_points = file_utilities.count_objects(
+                input_layer=input_features_center_in_partition_selection
             )
 
             self.nested_alias_type_data[alias]["count"] = count_points
@@ -859,8 +867,8 @@ class PartitionIterator:
                 search_distance=self.search_distance,
             )
 
-            count_points = int(
-                arcpy.management.GetCount(context_data_iteration_selection).getOutput(0)
+            count_points = file_utilities.count_objects(
+                input_layer=context_data_iteration_selection
             )
 
             self.nested_alias_type_data[alias]["count"] = count_points

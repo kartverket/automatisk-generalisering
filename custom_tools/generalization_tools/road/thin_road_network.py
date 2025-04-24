@@ -1,6 +1,7 @@
 import arcpy
 
-from custom_tools.general_tools.file_utilities import WorkFileManager
+from custom_tools.general_tools import file_utilities
+from custom_tools.general_tools.file_utilities import WorkFileManager, count_objects
 from custom_tools.decorators.partition_io_decorator import partition_io_decorator
 
 from custom_tools.generalization_tools.road.dissolve_with_intersections import (
@@ -82,17 +83,9 @@ class ThinRoadNetwork:
             )
 
     @staticmethod
-    def count_objects(input_layer):
+    def count_objects_old(input_layer):
         count = int(arcpy.management.GetCount(input_layer).getOutput(0))
         return count
-
-    def generate_output(self, name, iteration_index):
-        road_output = self.work_file_manager.setup_work_file_paths(
-            instance=self,
-            file_structure=name,
-            index=iteration_index,
-        )
-        return road_output
 
     def thin_road_network_output_selection(
         self,
@@ -144,7 +137,7 @@ class ThinRoadNetwork:
         dissolve_obj.run()
 
     def thin_road_cycle(self):
-        input_count = self.count_objects(input_layer=self.road_network_input)
+        input_count = file_utilities.count_objects(input_layer=self.road_network_input)
 
         print(f"Starting thin roads cycle with: {input_count}")
 
@@ -158,14 +151,20 @@ class ThinRoadNetwork:
             iteration_number = iteration_number + 1
             print(f"Starting iteration: {iteration_number}")
 
-            thin_selection = self.generate_output(
-                name="thin_road_selection", iteration_index=iteration_number
+            thin_selection = self.work_file_manager.generate_output(
+                instance=self,
+                name="thin_road_selection",
+                iteration_index=iteration_number,
             )
-            root = self.generate_output(
-                name="dissolve_root", iteration_index=iteration_number
+            root = self.work_file_manager.generate_output(
+                instance=self,
+                name="dissolve_root",
+                iteration_index=iteration_number,
             )
-            current_output = self.generate_output(
-                name="dissolved_roads", iteration_index=iteration_number
+            current_output = self.work_file_manager.generate_output(
+                instance=self,
+                name="dissolved_roads",
+                iteration_index=iteration_number,
             )
 
             self.thin_road_network_output_selection(
@@ -175,8 +174,8 @@ class ThinRoadNetwork:
                 dissolved_output=current_output,
             )
 
-            end_count = self.count_objects(input_layer=current_output)
-            start_count = self.count_objects(input_layer=current_input)
+            end_count = file_utilities.count_objects(input_layer=current_output)
+            start_count = file_utilities.count_objects(input_layer=current_input)
             print(f"start count: {start_count}\nend count {end_count}\n")
             current_input = current_output
 
