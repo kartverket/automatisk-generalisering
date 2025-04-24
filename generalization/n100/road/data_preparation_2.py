@@ -50,13 +50,12 @@ CHANGES_BOOLEAN = False
 def main():
     environment_setup.main()
     arcpy.env.referenceScale = 100000
-    data_selection_and_validation()
-    trim_road_details()
-    adding_fields()
-    merge_divided_roads()
-    collapse_road_detail()
-    simplify_road()
-    # new_thin_roads()
+    # data_selection_and_validation()
+    # trim_road_details()
+    # adding_fields()
+    # merge_divided_roads()
+    # collapse_road_detail()
+    # simplify_road()
     thin_sti_and_forest_roads()
     thin_roads()
     # thin_road_2()
@@ -141,6 +140,7 @@ def run_thin_roads(
             "root_file": Road_N100.data_preparation___thin_road_root___n100_road.value,
             "minimum_length": min_length,
             "invisibility_field_name": "invisibility",
+            "partition_field_name": "",
             "hierarchy_field_name": "hierarchy",
             "special_selection_sql": special_selection_sql,
         },

@@ -8,6 +8,7 @@ from typing import Dict, Tuple, Literal
 import time
 from datetime import datetime
 import pprint
+import inspect
 
 import env_setup.global_config
 import config
@@ -941,6 +942,40 @@ class PartitionIterator:
         print(f"Current runtime: {formatted_total_runtime}")
         print(f"Estimated remaining time: {formatted_estimated_remaining_time}")
 
+    def _inject_partition_field_to_custom_functions(self):
+        """
+        Injects self.PARTITION_FIELD into custom functions that declare 'partition_field_name' in their params.
+        This enables any logic to receive the dynamically generated partition field if it supports it.
+        """
+        for func_config in self.custom_functions:
+            params = func_config.get("params", {})
+
+            # Check directly in the params dict first
+            if "partition_field_name" in params:
+                params["partition_field_name"] = self.PARTITION_FIELD
+                continue
+
+            # Fall back to checking method signature if not explicitly defined
+            target_callable = None
+            if "class" in func_config:
+                cls = func_config["class"]
+                method = func_config["method"]
+                try:
+                    target_callable = getattr(cls, method)
+                except AttributeError:
+                    continue
+            elif "func" in func_config:
+                target_callable = func_config["func"]
+
+            if target_callable:
+                try:
+                    sig = inspect.signature(target_callable)
+                    if "partition_field_name" in sig.parameters:
+                        params["partition_field_name"] = self.PARTITION_FIELD
+                except (TypeError, ValueError):
+                    # Happens if the target isn't introspectable — ignore
+                    continue
+
     def find_io_params_custom_logic(self, object_id: int):
         """
         What:
@@ -1342,6 +1377,7 @@ class PartitionIterator:
             if inputs_present_in_partition:
                 self._process_context_features(aliases, iteration_partition, object_id)
                 self.find_io_params_custom_logic(object_id)
+                self._inject_partition_field_to_custom_functions()
                 self.export_dictionaries_to_json(
                     file_name="iteration",
                     iteration=True,

@@ -2,8 +2,14 @@ import arcpy
 
 from custom_tools.general_tools.file_utilities import WorkFileManager
 from custom_tools.decorators.partition_io_decorator import partition_io_decorator
+
+from custom_tools.generalization_tools.road.dissolve_with_intersections import (
+    DissolveWithIntersections,
+)
 from env_setup import environment_setup
 from custom_tools.general_tools import custom_arcpy
+
+from constants.n100_constants import FieldNames, MediumAlias
 
 
 class ThinRoadNetwork:
@@ -15,6 +21,7 @@ class ThinRoadNetwork:
         minimum_length: str,
         invisibility_field_name: str,
         hierarchy_field_name: str,
+        partition_field_name: str,
         special_selection_sql: str | None = None,
         write_work_files_to_memory: bool = False,
         keep_work_files: bool = False,
@@ -24,6 +31,7 @@ class ThinRoadNetwork:
         self.minimum_length = minimum_length
         self.invisibility_field_name = invisibility_field_name
         self.hierarchy_field_name = hierarchy_field_name
+        self.partition_field_name = partition_field_name
         if write_work_files_to_memory:
             print("Writing to memory Currently not supported.")
         self.write_work_files_to_memory = False  # Currently not supporting memory
@@ -78,15 +86,21 @@ class ThinRoadNetwork:
         count = int(arcpy.management.GetCount(input_layer).getOutput(0))
         return count
 
-    def generate_output(self, iteration_index):
+    def generate_output(self, name, iteration_index):
         road_output = self.work_file_manager.setup_work_file_paths(
             instance=self,
-            file_structure="thin_roads_output",
+            file_structure=name,
             index=iteration_index,
         )
         return road_output
 
-    def thin_road_network_output_selection(self, input, selection_output):
+    def thin_road_network_output_selection(
+        self,
+        input,
+        selection_output,
+        root_file,
+        dissolved_output,
+    ):
         arcpy.cartography.ThinRoadNetwork(
             in_features=input,
             minimum_length=self.minimum_length,
@@ -115,6 +129,20 @@ class ThinRoadNetwork:
                 output_name=selection_output,
             )
 
+        dissolve_obj = DissolveWithIntersections(
+            input_line_feature=selection_output,
+            root_file=root_file,
+            output_processed_feature=dissolved_output,
+            dissolve_field_list=FieldNames.road_all_fields()
+            + [self.partition_field_name],
+            list_of_sql_expressions=[
+                f" MEDIUM = '{MediumAlias.tunnel}'",
+                f" MEDIUM = '{MediumAlias.bridge}'",
+                f" MEDIUM = '{MediumAlias.on_surface}'",
+            ],
+        )
+        dissolve_obj.run()
+
     def thin_road_cycle(self):
         input_count = self.count_objects(input_layer=self.road_network_input)
 
@@ -130,11 +158,21 @@ class ThinRoadNetwork:
             iteration_number = iteration_number + 1
             print(f"Starting iteration: {iteration_number}")
 
-            current_output = self.generate_output(iteration_index=iteration_number)
+            thin_selection = self.generate_output(
+                name="thin_road_selection", iteration_index=iteration_number
+            )
+            root = self.generate_output(
+                name="dissolve_root", iteration_index=iteration_number
+            )
+            current_output = self.generate_output(
+                name="dissolved_roads", iteration_index=iteration_number
+            )
 
             self.thin_road_network_output_selection(
                 input=current_input,
-                selection_output=current_output,
+                selection_output=thin_selection,
+                root_file=root,
+                dissolved_output=current_output,
             )
 
             end_count = self.count_objects(input_layer=current_output)

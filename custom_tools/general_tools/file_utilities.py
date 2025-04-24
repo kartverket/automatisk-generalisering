@@ -91,9 +91,10 @@ class FeatureClassCreator:
         Appends geometry from the input feature class to the output feature class.
         This method assumes the output feature class already exists or was just created.
         """
-        with arcpy.da.SearchCursor(
-            self.input_fc, ["SHAPE@"]
-        ) as s_cursor, arcpy.da.InsertCursor(self.output_fc, ["SHAPE@"]) as i_cursor:
+        with (
+            arcpy.da.SearchCursor(self.input_fc, ["SHAPE@"]) as s_cursor,
+            arcpy.da.InsertCursor(self.output_fc, ["SHAPE@"]) as i_cursor,
+        ):
             for row in s_cursor:
                 i_cursor.insertRow(row)
         print("Appended geometry to the feature class.")
@@ -306,7 +307,10 @@ class WorkFileManager:
             return updated_dict
 
         # Determine the type of the top-level structure and process accordingly
-        return process_item(file_structure)
+        if isinstance(file_structure, str):
+            return process_string(file_structure, idx=index)
+        else:
+            return process_item(file_structure)
 
     def setup_dynamic_file_paths(
         self,
