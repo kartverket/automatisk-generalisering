@@ -69,12 +69,20 @@ class DissolveWithIntersections:
         )
 
     def _dissolve_feature(self):
-        arcpy.analysis.PairwiseDissolve(
-            in_features=self.input_line_feature,
-            out_feature_class=self.dissolved_feature,
-            dissolve_field=self.dissolve_field_list,
-            multi_part="SINGLE_PART",
-        )
+        if self.dissolve_field_list is None:
+            arcpy.analysis.PairwiseDissolve(
+                in_features=self.input_line_feature,
+                out_feature_class=self.dissolved_feature,
+                multi_part="SINGLE_PART",
+            )
+
+        else:
+            arcpy.analysis.PairwiseDissolve(
+                in_features=self.input_line_feature,
+                out_feature_class=self.dissolved_feature,
+                dissolve_field=self.dissolve_field_list,
+                multi_part="SINGLE_PART",
+            )
 
     @staticmethod
     def _create_intersections(input_line: str, output: str):

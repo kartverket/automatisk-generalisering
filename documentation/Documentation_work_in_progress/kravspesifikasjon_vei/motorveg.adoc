@@ -1,3 +1,3 @@
 == Motorveg skal være lik N50K
 
-Motorveg i N50K og NVDB er ikke det samme. Det ligger flere veier som skal være motorveg i N50K enn det som er registrert i NVDB. Siden kilde er flyttet fra å være N50K veg til NVDB, må vi ta hensyn til harmoniseringen fra N50 - N100 - N250. Dette kan gjøres manuelt eller løses automatisk så lenge resultatet er likt.
+Motorveg i N50K og NVDB er ikke det samme. Det ligger flere verdier for Motorvegtype i N50K enn det som er registrert i NVDB. Siden kilde er flyttet fra å være N50K veg til NVDB, må vi ta hensyn til harmoniseringen fra N50 - N100 - N250. Dette kan gjøres manuelt eller løses automatisk så lenge resultatet er likt.
