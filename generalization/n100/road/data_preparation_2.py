@@ -50,14 +50,17 @@ CHANGES_BOOLEAN = False
 def main():
     environment_setup.main()
     arcpy.env.referenceScale = 100000
-    # data_selection_and_validation()
-    # trim_road_details()
-    # adding_fields()
-    # merge_divided_roads()
-    # collapse_road_detail()
-    # simplify_road()
-    thin_sti_and_forest_roads()
+    data_selection_and_validation()
+    trim_road_details()
+    adding_fields()
+    merge_divided_roads()
+    collapse_road_detail()
+    simplify_road()
     thin_roads()
+    thin_sti_and_forest_roads()
+
+    smooth_line()
+    resolve_road_conflicts()
     # thin_road_2()
     # thin_road_3()
     # thin_road_4()
@@ -81,7 +84,7 @@ def data_selection_and_validation():
             input_n100.BegrensningsKurve: Road_N100.data_selection___begrensningskurve___n100_road.value,
         },
         selecting_file=input_n100.AdminFlate,
-        selecting_sql_expression="navn IN ('Oslo', 'Ringerike')",
+        selecting_sql_expression="navn IN ('Oslo', 'Ringerike', 'Asker')",
         select_local=config.select_study_area,
     )
 
@@ -152,7 +155,7 @@ def run_thin_roads(
         root_file_partition_iterator=partition_root_file,
         dictionary_documentation_path=docu_path,
         feature_count=feature_count,
-        search_distance="1500 Meters",
+        search_distance="3000 Meters",
     )
     partition_thin_roads.run()
 
@@ -173,7 +176,7 @@ def trim_road_details():
     arcpy.topographic.RemoveSmallLines(
         in_features=Road_N100.data_preparation___dissolved_intersections___n100_road.value,
         minimum_length="100 meters",
-        recursive="RECURSIVE",
+        recursive="NON_RECURSIVE",
     )
 
     run_dissolve_with_intersections(
@@ -301,8 +304,8 @@ def collapse_road_detail():
         custom_functions=[collapse_road_detail_config],
         root_file_partition_iterator=Road_N100.data_preparation___thin_road_partition_root___n100_road.value,
         dictionary_documentation_path=Road_N100.data_preparation___thin_road_docu___n100_road.value,
-        feature_count="6000",
-        search_distance="1500 Meters",
+        feature_count=10000,
+        search_distance="3000 Meters",
     )
     partition_collapse_road_detail.run()
 
@@ -325,10 +328,62 @@ def simplify_road():
 
 
 @timing_decorator
-def thin_sti_and_forest_roads():
+def thin_roads():
+    run_dissolve_with_intersections(
+        input_line_feature=Road_N100.data_preparation___simplified_road___n100_road.value,
+        output_processed_feature=Road_N100.data_preparation___dissolved_intersections_3___n100_road.value,
+        dissolve_field_list=FieldNames.road_all_fields(),
+    )
+
     road_data_validation = GeometryValidator(
         input_features={
-            "roads": Road_N100.data_preparation___simplified_road___n100_road.value
+            "roads": Road_N100.data_preparation___dissolved_intersections_3___n100_road.value
+        },
+        output_table_path=f"{Road_N100.data_preparation___geometry_validation___n100_road.value}_3",
+    )
+    road_data_validation.check_repair_sequence()
+
+    road_hierarchy = f"""def Reclass(vegklasse, vegkategori):
+        if vegklasse in (0, 1, 2, 3, 4):
+            return 1
+        elif vegklasse == 5:
+            return 2
+        elif vegklasse == 6:
+            return 3
+        elif vegklasse == 7:
+            return 4
+        else:
+            return 5
+    """
+
+    arcpy.management.CalculateField(
+        in_table=Road_N100.data_preparation___dissolved_intersections_3___n100_road.value,
+        field="hierarchy",
+        expression="Reclass(!vegklasse!, !vegkategori!)",
+        expression_type="PYTHON3",
+        code_block=road_hierarchy,
+    )
+
+    run_thin_roads(
+        input_feature=Road_N100.data_preparation___dissolved_intersections_3___n100_road.value,
+        partition_root_file=Road_N100.data_preparation___thin_road_partition_root___n100_road.value,
+        output_feature=Road_N100.data_preparation___thin_road_output___n100_road.value,
+        docu_path=Road_N100.data_preparation___thin_road_docu___n100_road.value,
+        min_length="1500 meters",
+        feature_count=10000,
+    )
+
+
+@timing_decorator
+def thin_sti_and_forest_roads():
+    run_dissolve_with_intersections(
+        input_line_feature=Road_N100.data_preparation___thin_road_output___n100_road.value,
+        output_processed_feature=Road_N100.data_preparation___dissolved_intersections_4___n100_road.value,
+        dissolve_field_list=FieldNames.road_all_fields(),
+    )
+    road_data_validation = GeometryValidator(
+        input_features={
+            "roads": Road_N100.data_preparation___dissolved_intersections_4___n100_road.value
         },
         output_table_path=f"{Road_N100.data_preparation___geometry_validation___n100_road.value}_2",
     )
@@ -347,10 +402,10 @@ def thin_sti_and_forest_roads():
         elif vegkategori == '{NvdbAlias.sti_umerket}':
             return 4
         else:
-            return 2
+            return 4
         """
     arcpy.management.CalculateField(
-        in_table=Road_N100.data_preparation___simplified_road___n100_road.value,
+        in_table=Road_N100.data_preparation___dissolved_intersections_4___n100_road.value,
         field="hierarchy",
         expression="Reclass(!vegkategori!)",
         expression_type="PYTHON3",
@@ -358,64 +413,64 @@ def thin_sti_and_forest_roads():
     )
 
     run_thin_roads(
-        input_feature=Road_N100.data_preparation___simplified_road___n100_road.value,
+        input_feature=Road_N100.data_preparation___dissolved_intersections_4___n100_road.value,
         partition_root_file=Road_N100.data_preparation___thin_sti_partition_root___n100_road.value,
         output_feature=Road_N100.data_preparation___thin_road_sti_output___n100_road.value,
         docu_path=Road_N100.data_preparation___thin_sti_docu___n100_road.value,
-        min_length="1500 meters",
-        feature_count="6000",
-    )
-
-
-@timing_decorator
-def thin_roads():
-    run_dissolve_with_intersections(
-        input_line_feature=Road_N100.data_preparation___thin_road_sti_output___n100_road.value,
-        output_processed_feature=Road_N100.data_preparation___dissolved_intersections_3___n100_road.value,
-        dissolve_field_list=FieldNames.road_all_fields(),
-    )
-
-    road_data_validation = GeometryValidator(
-        input_features={
-            "roads": Road_N100.data_preparation___dissolved_intersections_3___n100_road.value
-        },
-        output_table_path=f"{Road_N100.data_preparation___geometry_validation___n100_road.value}_3",
-    )
-    road_data_validation.check_repair_sequence()
-
-    road_hierarchy = f"""def Reclass(vegklasse, vegkategori):
-        if vegklasse in (0, 1, 2, 3):
-            return 1
-        elif vegklasse == 4:
-            return 2
-        elif vegklasse == 5:
-            return 3
-        elif vegklasse == 6:
-            return 4
-        elif vegklasse == 7 or vegkategori in ('{NvdbAlias.traktorveg}', '{NvdbAlias.barmarksløype}'):
-            return 5
-        elif vegklasse in (8 , 9):
-            return 6
-        elif vegklasse is None:
-            return 6
-    """
-
-    arcpy.management.CalculateField(
-        in_table=Road_N100.data_preparation___dissolved_intersections_3___n100_road.value,
-        field="hierarchy",
-        expression="Reclass(!vegklasse!, !vegkategori!)",
-        expression_type="PYTHON3",
-        code_block=road_hierarchy,
-    )
-
-    run_thin_roads(
-        input_feature=Road_N100.data_preparation___dissolved_intersections_3___n100_road.value,
-        partition_root_file=Road_N100.data_preparation___thin_road_partition_root___n100_road.value,
-        output_feature=Road_N100.data_preparation___thin_road_output___n100_road.value,
-        docu_path=Road_N100.data_preparation___thin_road_docu___n100_road.value,
         min_length="2000 meters",
-        feature_count="6000",
+        feature_count=10000,
     )
+
+
+# @timing_decorator
+# def thin_roads():
+#     run_dissolve_with_intersections(
+#         input_line_feature=Road_N100.data_preparation___thin_road_sti_output___n100_road.value,
+#         output_processed_feature=Road_N100.data_preparation___dissolved_intersections_3___n100_road.value,
+#         dissolve_field_list=FieldNames.road_all_fields(),
+#     )
+#
+#     road_data_validation = GeometryValidator(
+#         input_features={
+#             "roads": Road_N100.data_preparation___dissolved_intersections_3___n100_road.value
+#         },
+#         output_table_path=f"{Road_N100.data_preparation___geometry_validation___n100_road.value}_3",
+#     )
+#     road_data_validation.check_repair_sequence()
+#
+#     road_hierarchy = f"""def Reclass(vegklasse, vegkategori):
+#         if vegklasse in (0, 1, 2, 3):
+#             return 1
+#         elif vegklasse == 4:
+#             return 2
+#         elif vegklasse == 5:
+#             return 3
+#         elif vegklasse == 6:
+#             return 4
+#         elif vegklasse == 7 or vegkategori in ('{NvdbAlias.traktorveg}', '{NvdbAlias.barmarksløype}'):
+#             return 5
+#         elif vegklasse in (8 , 9):
+#             return 6
+#         elif vegklasse is None:
+#             return 6
+#     """
+#
+#     arcpy.management.CalculateField(
+#         in_table=Road_N100.data_preparation___dissolved_intersections_3___n100_road.value,
+#         field="hierarchy",
+#         expression="Reclass(!vegklasse!, !vegkategori!)",
+#         expression_type="PYTHON3",
+#         code_block=road_hierarchy,
+#     )
+#
+#     run_thin_roads(
+#         input_feature=Road_N100.data_preparation___dissolved_intersections_3___n100_road.value,
+#         partition_root_file=Road_N100.data_preparation___thin_road_partition_root___n100_road.value,
+#         output_feature=Road_N100.data_preparation___thin_road_output___n100_road.value,
+#         docu_path=Road_N100.data_preparation___thin_road_docu___n100_road.value,
+#         min_length="3000 meters",
+#         feature_count=10000,
+#     )
 
 
 @timing_decorator
@@ -625,7 +680,7 @@ def combine_results():
 @timing_decorator
 def smooth_line():
     arcpy.cartography.SmoothLine(
-        in_features=Road_N100.data_preparation___thin_road_output_3___n100_road.value,
+        in_features=Road_N100.data_preparation___thin_road_sti_output___n100_road.value,
         out_feature_class=Road_N100.data_preparation___smooth_road___n100_road.value,
         algorithm="PAEK",
         tolerance="300 meters",
@@ -642,13 +697,20 @@ def resolve_road_conflicts():
     )
     road_data_validation.check_repair_sequence()
 
+    arcpy.management.MultipartToSinglepart(
+        in_features=Road_N100.data_preparation___smooth_road___n100_road.value,
+        out_feature_class=Road_N100.data_preparation___road_single_part_3___n100_road.value,
+    )
     road = "road"
     railroad = "railroad"
     begrensningskurve = "begrensningskurve"
     displacement = "displacement"
 
     inputs = {
-        road: ["input", Road_N100.data_preparation___smooth_road___n100_road.value],
+        road: [
+            "input",
+            Road_N100.data_preparation___road_single_part_3___n100_road.value,
+        ],
         railroad: ["context", Road_N100.data_selection___railroad___n100_road.value],
         begrensningskurve: [
             "context",
@@ -712,8 +774,8 @@ def resolve_road_conflicts():
         custom_functions=[resolve_road_conflicts_config],
         root_file_partition_iterator=Road_N100.data_preparation___resolve_road_partition_root___n100_road.value,
         dictionary_documentation_path=Road_N100.data_preparation___resolve_road_docu___n100_road.value,
-        feature_count="6000",
-        search_distance="1500 Meters",
+        feature_count=10000,
+        search_distance="3000 Meters",
     )
     partition_resolve_road_conflicts.run()
 

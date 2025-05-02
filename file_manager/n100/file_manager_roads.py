@@ -405,6 +405,13 @@ class Road_N100(Enum):
         description="smooth_road",
     )
 
+    data_preparation___road_single_part_3___n100_road = (
+        file_manager.generate_file_name_gdb(
+            script_source_name=data_preparation,
+            description="road_single_part_3",
+        )
+    )
+
     data_preparation___resolve_road_conflicts___n100_road = (
         file_manager.generate_file_name_gdb(
             script_source_name=data_preparation,

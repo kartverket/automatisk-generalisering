@@ -151,7 +151,7 @@ class PartitionIterator:
         root_file_partition_iterator: str,
         custom_functions=None,
         dictionary_documentation_path: str = None,
-        feature_count: str = "15000",
+        feature_count: int = 15000,
         partition_method: Literal["FEATURES", "VERTICES"] = "FEATURES",
         search_distance: str = "500 Meters",
         context_selection: bool = True,
@@ -180,6 +180,7 @@ class PartitionIterator:
 
         self.search_distance = search_distance
         self.feature_count = feature_count
+        self.final_partition_feature_count = None
         self.partition_method = partition_method
         self.object_id_field = object_id_field
         self.selection_of_context_features = context_selection
@@ -249,14 +250,134 @@ class PartitionIterator:
         self.nested_alias_type_data[alias][type_name] = type_path
         print(f"Set path for type '{type_name}' in alias '{alias}' to: {type_path}")
 
-    def _filter_context_features(self):
-        pass
+    def _create_cartographic_partitions(self, feature_count: int) -> None:
+        """
+        What:
+            Creates cartographic partitions based on the given feature_count.
+            Overwrites any existing partition feature.
 
-    def _find_partition_size(self):
-        pass
+        Args:
+            feature_count (int): The feature count used to limit partition size.
+        """
+        self.delete_feature_class(self.partition_feature)
 
-    def _create_cartographic_partitions(self):
-        pass
+        all_features = [
+            path
+            for alias, types in self.nested_alias_type_data.items()
+            for type_key, path in types.items()
+            if type_key in ["input_copy", "context_copy"] and path is not None
+        ]
+
+        if all_features:
+            arcpy.cartography.CreateCartographicPartitions(
+                in_features=all_features,
+                out_features=self.partition_feature,
+                feature_count=feature_count,
+                partition_method=self.partition_method,
+            )
+        else:
+            raise ValueError("No input or context features available for partitioning.")
+
+    def _count_maximum_objects_in_partition(self) -> int:
+        """
+        What:
+            Loops through each partition, selects it, and counts the number of input and context features
+            found within the search distance buffer for that partition.
+
+        How:
+            Uses select_partition_feature, _process_inputs_in_partition, and _process_context_features
+            to perform selections and access updated count values.
+            Cleans up temp iteration files after each partition.
+
+        Returns:
+            int: The highest number of total features (input + context) across all partitions.
+        """
+        self.find_maximum_object_id()
+        total_processed_objects = 0
+        max_partition_load = 0
+        aliases = list(self.nested_alias_type_data.keys())
+
+        for object_id in range(1, self.max_object_id + 1):
+            iteration_partition = (
+                f"{self.root_file_partition_iterator}_partition_{object_id}"
+            )
+            total_processed_objects = 0
+            self.iteration_file_paths_list.clear()
+
+            self.select_partition_feature(iteration_partition, object_id)
+
+            inputs_present = self._process_inputs_in_partition(
+                aliases, iteration_partition, object_id
+            )
+            if not inputs_present:
+                self.delete_iteration_files(*self.iteration_file_paths_list)
+                continue
+
+            self._process_context_features(aliases, iteration_partition, object_id)
+
+            total_processed_objects += sum(
+                self.nested_alias_type_data[alias].get("processed_objects_count", 0)
+                for alias in aliases
+            )
+            max_partition_load = max(max_partition_load, total_processed_objects)
+
+            print(
+                f"\nPartition: {object_id}\nCurrent total found: {total_processed_objects}\nCrurrent maxumum found: {max_partition_load}"
+            )
+
+            self.delete_iteration_files(*self.iteration_file_paths_list)
+
+        return max_partition_load
+
+    def _find_partition_size(self) -> int:
+        """
+        What:
+            Iteratively finds the largest feature_count value that produces partitions whose
+            max buffered processing load (input + context) does not exceed max_allowed_objects.
+
+        How:
+            Starts with feature_count = max_allowed_objects and decreases until a valid config is found.
+
+        Returns:
+            int: The highest valid feature_count to use in partition creation.
+
+        Raises:
+            RuntimeError: If no valid feature count is found.
+        """
+        candidate = int(self.feature_count)
+
+        max_found = int(self.feature_count * 1.01)
+        min_candidate = self.feature_count
+        attempts = 0
+
+        def _find_increment(current_number: int) -> int:
+            min_increment = int(self.feature_count * 0.01)
+            overage = current_number - min_candidate
+            reduce = max(min_increment, int(overage * 0.5) + min_increment)
+            return reduce
+
+        while max_found > min_candidate:
+            attempts += 1
+            print(
+                f"\n\nAttempt: {attempts}\nTesting candidate feature_count: {candidate}"
+            )
+            self._create_cartographic_partitions(feature_count=candidate)
+            max_found = self._count_maximum_objects_in_partition()
+
+            print(f" -> max partition load found: {max_found}")
+            if max_found <= min_candidate:
+                print(f"Selected feature_count: {candidate}")
+                self.final_partition_feature_count = candidate
+                return candidate
+
+            reduce_with = _find_increment(current_number=max_found)
+            print(f"Reducing with: {reduce_with}")
+            candidate = int(candidate - reduce_with)
+
+        raise RuntimeError(
+            f"No valid feature count found below max={self.feature_count}. "
+            f"Minimum candidate tested was {min_candidate}."
+        )
 
     def create_cartographic_partitions(self):
         """
@@ -805,6 +926,14 @@ class PartitionIterator:
                     type_path=input_data_iteration_selection,
                 )
 
+                count_processed_objects = file_utilities.count_objects(
+                    input_layer=input_data_iteration_selection
+                )
+
+                self.nested_alias_type_data[alias]["processed_objects_count"] = (
+                    count_processed_objects
+                )
+
                 print(
                     f"iteration partition {input_features_within_distance_of_partition_selection} appended to {input_data_iteration_selection}"
                 )
@@ -880,6 +1009,14 @@ class PartitionIterator:
                     alias=alias,
                     type_name="context",
                     type_path=context_data_iteration_selection,
+                )
+
+                count_processed_objects = file_utilities.count_objects(
+                    input_layer=context_data_iteration_selection
+                )
+
+                self.nested_alias_type_data[alias]["processed_objects_count"] = (
+                    count_processed_objects
                 )
             else:
                 # Loads in dummy feature for this alias for this iteration and sets dummy_used = True
@@ -1431,9 +1568,10 @@ class PartitionIterator:
         self.delete_final_outputs()
         self.prepare_input_data()
         self.export_dictionaries_to_json(file_name="post_data_preparation")
+        self._find_partition_size()
 
         print("\nCreating Cartographic Partitions...")
-        self.create_cartographic_partitions()
+        self._create_cartographic_partitions(feature_count=self.feature_count)
 
         print("\nStarting on Partition Iteration...")
         self.partition_iteration()
