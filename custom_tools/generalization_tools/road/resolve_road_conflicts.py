@@ -122,12 +122,14 @@ class ResolveRoadConflicts:
             data=self.output_lyrx_features, key="lyrx_output"
         )
         print(resolve_road_conflicts_inputs)
+        self.work_file_manager.list_contents(data=resolve_road_conflicts_inputs)
 
         arcpy.cartography.ResolveRoadConflicts(
             in_layers=resolve_road_conflicts_inputs,
             hierarchy_field=self.hierarchy_field,
             out_displacement_features=self.displacement_feature,
         )
+        print("\n\ResolveRoadConflicts Complete!\n\n")
 
         resolve_road_conflicts_output = self.work_file_manager.extract_key_by_alias(
             data=self.output_lyrx_features,

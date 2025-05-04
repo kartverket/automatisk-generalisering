@@ -152,6 +152,7 @@ class PartitionIterator:
         custom_functions=None,
         dictionary_documentation_path: str = None,
         feature_count: int = 15000,
+        run_partition_optimization: bool = True,
         partition_method: Literal["FEATURES", "VERTICES"] = "FEATURES",
         search_distance: str = "500 Meters",
         context_selection: bool = True,
@@ -180,7 +181,8 @@ class PartitionIterator:
 
         self.search_distance = search_distance
         self.feature_count = feature_count
-        self.final_partition_feature_count = None
+        self.run_partition_optimization = run_partition_optimization
+        self.final_partition_feature_count = 0
         self.partition_method = partition_method
         self.object_id_field = object_id_field
         self.selection_of_context_features = context_selection
@@ -1568,10 +1570,15 @@ class PartitionIterator:
         self.delete_final_outputs()
         self.prepare_input_data()
         self.export_dictionaries_to_json(file_name="post_data_preparation")
-        self._find_partition_size()
+        if self.run_partition_optimization:
+            self._find_partition_size()
 
         print("\nCreating Cartographic Partitions...")
-        self._create_cartographic_partitions(feature_count=self.feature_count)
+        if not self.run_partition_optimization:
+            self.final_partition_feature_count = self.feature_count
+        self._create_cartographic_partitions(
+            feature_count=self.final_partition_feature_count
+        )
 
         print("\nStarting on Partition Iteration...")
         self.partition_iteration()
