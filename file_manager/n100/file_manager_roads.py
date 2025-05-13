@@ -668,18 +668,39 @@ class Road_N100(Enum):
         )
     )
 
-    test1___elveg_and_sti_kommune_singlepart_rsl___n100_road = (
-        file_manager.generate_file_name_gdb(
-            script_source_name=test1,
-            description="elveg_and_sti_kommune_singlepart_rsl",
-        )
+    test1___rsl___n100_road = file_manager.generate_file_name_gdb(
+        script_source_name=test1,
+        description="rsl",
     )
 
-    test1___elveg_and_sti_kommune_singlepart_rsl_crd60___n100_road = (
-        file_manager.generate_file_name_gdb(
-            script_source_name=test1,
-            description="elveg_and_sti_kommune_singlepart_rsl_crd60",
-        )
+    test1___rsl_mdr_crd60___n100_road = file_manager.generate_file_name_gdb(
+        script_source_name=test1,
+        description="rsl_mdr_crd60",
+    )
+
+    test1___rsl_crd60___n100_road = file_manager.generate_file_name_gdb(
+        script_source_name=test1,
+        description="rsl_crd60",
+    )
+
+    test1___diss0___n100_road = file_manager.generate_file_name_gdb(
+        script_source_name=test1,
+        description="diss0",
+    )
+
+    test1___medium_ul0___n100_road = file_manager.generate_file_name_gdb(
+        script_source_name=test1,
+        description="medium_ul0",
+    )
+
+    test1___medium_t0___n100_road = file_manager.generate_file_name_gdb(
+        script_source_name=test1,
+        description="medium_t0",
+    )
+
+    test1___kryss0___n100_road = file_manager.generate_file_name_gdb(
+        script_source_name=test1,
+        description="kryss0",
     )
 
     test1___diss1___n100_road = file_manager.generate_file_name_gdb(
@@ -759,47 +780,9 @@ class Road_N100(Enum):
         description="thin3",
     )
 
-    test1___diss4___n100_road = file_manager.generate_file_name_gdb(
-        script_source_name=test1,
-        description="diss4",
-    )
-
-    test1___medium_ul4___n100_road = file_manager.generate_file_name_gdb(
-        script_source_name=test1,
-        description="medium_ul4",
-    )
-    test1___medium_t4___n100_road = file_manager.generate_file_name_gdb(
-        script_source_name=test1,
-        description="medium_t4",
-    )
-
-    test1___kryss4___n100_road = file_manager.generate_file_name_gdb(
-        script_source_name=test1,
-        description="kryss4",
-    )
-
     test1___thin4___n100_road = file_manager.generate_file_name_gdb(
         script_source_name=test1,
         description="thin4",
-    )
-
-    test1___diss5___n100_road = file_manager.generate_file_name_gdb(
-        script_source_name=test1,
-        description="diss5",
-    )
-
-    test1___medium_ul5___n100_road = file_manager.generate_file_name_gdb(
-        script_source_name=test1,
-        description="medium_ul5",
-    )
-    test1___medium_t5___n100_road = file_manager.generate_file_name_gdb(
-        script_source_name=test1,
-        description="medium_t5",
-    )
-
-    test1___kryss5___n100_road = file_manager.generate_file_name_gdb(
-        script_source_name=test1,
-        description="kryss5",
     )
 
     test1___thin5___n100_road = file_manager.generate_file_name_gdb(
@@ -807,47 +790,9 @@ class Road_N100(Enum):
         description="thin5",
     )
 
-    test1___diss6___n100_road = file_manager.generate_file_name_gdb(
-        script_source_name=test1,
-        description="diss6",
-    )
-
-    test1___medium_ul6___n100_road = file_manager.generate_file_name_gdb(
-        script_source_name=test1,
-        description="medium_ul6",
-    )
-    test1___medium_t6___n100_road = file_manager.generate_file_name_gdb(
-        script_source_name=test1,
-        description="medium_t6",
-    )
-
-    test1___kryss6___n100_road = file_manager.generate_file_name_gdb(
-        script_source_name=test1,
-        description="kryss6",
-    )
-
     test1___thin6___n100_road = file_manager.generate_file_name_gdb(
         script_source_name=test1,
         description="thin6",
-    )
-
-    test1___diss7___n100_road = file_manager.generate_file_name_gdb(
-        script_source_name=test1,
-        description="diss7",
-    )
-
-    test1___medium_ul7___n100_road = file_manager.generate_file_name_gdb(
-        script_source_name=test1,
-        description="medium_ul7",
-    )
-    test1___medium_t7___n100_road = file_manager.generate_file_name_gdb(
-        script_source_name=test1,
-        description="medium_t7",
-    )
-
-    test1___kryss7___n100_road = file_manager.generate_file_name_gdb(
-        script_source_name=test1,
-        description="kryss7",
     )
 
     test1___thin7___n100_road = file_manager.generate_file_name_gdb(
@@ -855,6 +800,25 @@ class Road_N100(Enum):
         description="thin7",
     )
 
+    test1___thin8___n100_road = file_manager.generate_file_name_gdb(
+        script_source_name=test1,
+        description="thin8",
+    )
+
+    test1___thin9___n100_road = file_manager.generate_file_name_gdb(
+        script_source_name=test1,
+        description="thin9",
+    )
+
+    test1___thin10___n100_road = file_manager.generate_file_name_gdb(
+        script_source_name=test1,
+        description="thin10",
+    )
+
+    test1___mdr0___n100_road = file_manager.generate_file_name_gdb(
+        script_source_name=test1,
+        description="mdr0",
+    )
     test1___mdr___n100_road = file_manager.generate_file_name_gdb(
         script_source_name=test1,
         description="mdr",
@@ -877,11 +841,9 @@ class Road_N100(Enum):
         description="dissx",
     )
 
-    test1___veg100_oslosentrum1_modell3___n100_road = (
-        file_manager.generate_file_name_gdb(
-            script_source_name=test1,
-            description="veg100_oslosentrum1_modell3",
-        )
+    test1___veg100_Oslo_modell3___n100_road = file_manager.generate_file_name_gdb(
+        script_source_name=test1,
+        description="veg100_Oslo_modell3",
     )
 
     # ========================================
