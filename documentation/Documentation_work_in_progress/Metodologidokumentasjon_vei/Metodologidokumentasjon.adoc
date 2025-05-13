@@ -69,7 +69,12 @@ Det kan diskuteres om man bør skille kjørbar vei-generaliseringen med stigener
 |===
 | Sti-type |  Hierarkiverdi
 
-| Merket-sti |  1
+| Traktorveg |  1
+| Barmerksløyper| 1
+|Merket sti - DNT | 2
+| Merket sti - Andre |2
+|Umerket sti| 3
+|Gang og Sykkelveg|4
 
 |===
 
@@ -135,18 +140,53 @@ I sammenligning med N50K må kryss og på- og avkjøringsramper forenkles, rundk
 == Forenklet forklaring på modellen
 Selve scriptet dokumenterer i detalj oppbygningen av modellen, men for ikke programmeringsdyktige kommer en forklaring på modellen under
 
+=== Data tilpasning
+Vi benytter to kilder som hentes og tilpasses for videre bruk i automatisk generalisering. Disse kildene inkluderer veinettet fra NVDB, som for øyeblikket leveres som en spesialleveranse fra grunndata, og N50K Sti og traktorveg. Tilpasningen av disse dataene utføres ikke ved dokumentert kode i GitHub, men vil bli lagt til der i ettertid.
 
-Det er 4 aktuelle kartografiske verktøy i ESRI sin verktøykasse. 
+I dag brukes FME-løype (ansvarlig for modell, Virginia Antonijeciv)
 
-- merge divided roads
-- collapse road detail
-- Thin road network
-- Resolve road conflict
+image::bilder\sositofgdb.png[align="center", alt = Dokumentasjon N100_Vei_FME]
 
-=== Merge divided roads
+==== Beskrivelse av data tilpasningen
+Første del innebærer en prosess hvor .zip-filer med kommunevis sosi-filer eksporteres fra Grunndata. Disse filene inneholder elvegdata på alle nivåer, inkludert vegtrase. Deretter pakkes filene ut til fylkesvise mapper, med en sos-fil for hver kommune. Videre konverteres sosi-filer til fgdb-format og kombineres med objekter fra Kartdata, og skaper en fgdb for hvert fylke med funksjonell vegklasse, motorveg og "elveg og sti". Fra elveg inkluderes kun kjørbare veger, ikke vegtyper som fortau og trapp, mens Kartdata bidrar med alt unntatt bilveger, som sti, traktorveg, barmarksløype og gang- og sykkelveg. Deretter settes hele landet sammen og kombinerer funksjonell vegklasse og motorvegtype, og skriver til fgdb som er input til AG. Til slutt utføres en geometrisjekk hvor veglinjen dissolveres på tvers av egenskapene og lager kryss etter medium på nytt. Noen egenskaper blir tilpasset for videre bruk.
+
+Under er det et bilde av egenskapene til FGDBen "elveg_and_sti" som er utgangspunktet for den automatiske generaliseringsmodellen.
+
+image::bilder\utgangspunkt_fgdb.png[align="center", alt = Utgansgspunkt for videre generalisering]
+
+==== Generalisering
+
+Valg av rekkefølge og bruk av ulike generaliseringsverktøy er basert på ESRI-anbefalinger for veg-generalisering og ved gjentatte tester. Dette er den overordent modellen for Vei-generalisering for N100K.
+
+[cols="2,4"]
+|===
+| Verktøy | Hvorfor
+
+| Multipart to singelpart | For å få den rette oppdelingen av vegsegmenter.
+| Hierarki | For differansiering mellom viktighet av vei, må vi definere ett hierarki. For kjørbare veier blir hierarkiet bygd fra Funksjonellveiklasse, beskrevet tidligere i dokumentet. Siden Funksjonellveiklasse kun er for veier fra NVDB, brukes veikategori for å sette opp hierakriet for alt untatt bilveger.
+| Remove small lines | Fjerner alle linjer under 100 m for å fjerne unødvenig smårusk
+| Colapse Road detail | Fjerner de fleste rundkjøringer og annet smårusk
+| Simplify | Forenkler linjene ved å fjærne undøvendige punkter i linjen.
+| Thin Road network: Vei | Beholder veimønster men fjerner detaljene. 
+
+Dette verktøyet ga i første omgang ulikt resultat for hver gang det kjørte og vi startet arbeidet med å stabilisere resultatet (beskrevet tidligere i dokumentet). Det ble derfor lagd en iterasjon som gjør flere operasjoner i flere omganger, helt til det ikke lenger skjer endring fra omgang til omgang. Under er rekkefølgen beskrevet:
+
+En omgang = +
+1) Dissolve +
+2) Select & make permanent MEDIUM = U +
+3) Select & make permanent MEDIUM = T +
+4) Feature to Line ( + delete fields) +
+5) Append + 
+6) Thin! +
+| Thin Road network: Sti| Beholder stimønsteret men fjerner detaljene. Til slutt kjøres en tynning av stiene.
+| Smooth Line | For å gjøre vegsegmentene mer naturlige og mindre hakkete
+| Resolve Road Conflict | For å flytte vei vekk fra andre linjer med betydning som f.eks vannkontur eller jernbanelinje.
+| Dissolve | For å forenkle vegnettet før leveranse
+|===
 
 
-=== Collapse road detail
+
+
 
 
 
