@@ -118,7 +118,7 @@ def adding_fields_to_elveg_and_sti_kommune_singlepart() -> object:
         elif vegkategori == 'U':
             return 4
         elif vegkategori == 'G':
-            return 3
+            return 5
         elif vegkategori == 'B':
             return 1
         elif vegkategori  in ('E', 'R', 'F', 'K', 'P', 'S'):
@@ -349,6 +349,10 @@ def simplify():
         algorithm="POINT_REMOVE",
         tolerance="2 meters",
         error_option="RESOLVE_ERRORS",
+    )
+    arcpy.management.Integrate(
+        in_features=Road_N100.test1___simplified___n100_road.value,
+        cluster_tolerance="2 meters",
     )
     arcpy.management.DeleteField(
         in_table=Road_N100.test1___simplified___n100_road.value,
