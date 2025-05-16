@@ -26,56 +26,35 @@ def main():
     elveg_and_sti_kommune()
     elveg_and_sti_kommune_singlepart()
     adding_fields_to_elveg_and_sti_kommune_singlepart()
+    diss0()
+    medium_ul0()
+    medium_t0()
+    kryss0()
     removesmalllines()
     crd1()
     simplify()
-    # lista()
     diss1()
     medium_ul1()
     medium_t1()
     kryss1()
-    # veglenke()
     thin_vegklasse1()
-    diss2()
-    medium_ul2()
-    medium_t2()
-    kryss2()
     thin_vegklasse2()
-    diss3()
-    medium_ul3()
-    medium_t3()
-    kryss3()
     thin_vegklasse3()
-    diss4()
-    medium_ul4()
-    medium_t4()
-    kryss4()
     thin_vegklasse4()
-    # run_dissolve_with_intersections()
-    # box5()
-    diss5()
-    medium_ul5()
-    medium_t5()
-    kryss5()
-    thin5_sti1()
-    diss6()
-    medium_ul6()
-    medium_t6()
-    kryss6()
-    thin6_sti2()
-    diss7()
-    medium_ul7()
-    medium_t7()
-    kryss7()
-    thin7_sti3()
-    veg100_oslosentrum1()
+    thin_vegklasse5()
+    thin6_sti1()
+    thin7_sti2()
+    thin8_sti3()
+    thin9_sti4()
+    thin10()
+    veg100_Oslo()
 
 
 # dette er sånn midlertidig, siden jeg ikke kan gjøre noe bedre må jeg skrive kommunenavn 4 steder linjer 35, 42, 388 og 418
 def kommune():
     custom_arcpy.select_attribute_and_make_permanent_feature(
         input_layer=input_n50.AdminFlate,
-        expression="NAVN='oslosentrum1'",
+        expression="NAVN='Oslo'",
         output_name=Road_N100.test1___kommune___n100_road.value,
         selection_type="NEW_SELECTION",
     )
@@ -86,7 +65,7 @@ def kommune_buffer():
     arcpy.analysis.PairwiseBuffer(
         in_features=Road_N100.test1___kommune___n100_road.value,
         out_feature_class=Road_N100.test1___kommune_buffer___n100_road.value,
-        buffer_distance_or_field="3000 meters",
+        buffer_distance_or_field="5000 meters",
     )
 
 
@@ -139,7 +118,7 @@ def adding_fields_to_elveg_and_sti_kommune_singlepart() -> object:
         elif vegkategori == 'U':
             return 4
         elif vegkategori == 'G':
-            return 3
+            return 5
         elif vegkategori == 'B':
             return 1
         elif vegkategori  in ('E', 'R', 'F', 'K', 'P', 'S'):
@@ -269,54 +248,116 @@ def adding_fields_to_elveg_and_sti_kommune_singlepart() -> object:
     )
 
 
+@timing_decorator
+def diss0():  # Perform the dissolve operation
+    arcpy.management.Dissolve(
+        in_features=Road_N100.test1___elveg_and_sti_kommune_singlepart___n100_road.value,
+        out_feature_class=Road_N100.test1___diss0___n100_road.value,
+        dissolve_field=[
+            "objtype",
+            "subtypekode",
+            "vegstatus",
+            "typeveg",
+            "vegkategori",
+            "vegnummer",
+            "motorvegtype",
+            "vegklasse",
+            "rutemerking",
+            "medium",
+            "uttegning",
+            "inv_sti",
+            "hiesti",
+            "inv_1",
+            "hie_1",
+            "merge",
+            "character",
+            "inv_2",
+            "hie_2",
+            "merge2",
+            "character2",
+        ],
+        multi_part="SINGLE_PART",
+    )
+
+
+# brukes ikke foreløpig
+def medium_ul0():
+    custom_arcpy.select_attribute_and_make_permanent_feature(
+        input_layer=Road_N100.test1___diss0___n100_road.value,
+        expression="medium IN ('U', 'L')",
+        output_name=Road_N100.test1___medium_ul0___n100_road.value,
+        selection_type="NEW_SELECTION",
+    )
+
+
+# brukes for å lage kryss etter dissolve
+def medium_t0():
+    custom_arcpy.select_attribute_and_make_permanent_feature(
+        input_layer=Road_N100.test1___diss0___n100_road.value,
+        expression=" medium = 'T'",
+        output_name=Road_N100.test1___medium_t0___n100_road.value,
+        selection_type="NEW_SELECTION",
+    )
+
+
+# lager kryss for alle veger som er på bakken, den prossess skaper en ny field som må slettes så append etterpå fungerer
+def kryss0():
+    arcpy.management.FeatureToLine(
+        in_features=Road_N100.test1___medium_t0___n100_road.value,
+        out_feature_class=Road_N100.test1___kryss0___n100_road.value,
+    )
+
+    arcpy.management.DeleteField(
+        in_table=Road_N100.test1___kryss0___n100_road.value,
+        drop_field="FID_test1___medium_t0___n100_road",
+    )
+
+    arcpy.management.Append(
+        inputs=Road_N100.test1___medium_ul0___n100_road.value,
+        target=Road_N100.test1___kryss0___n100_road.value,
+    )
+
+
 # remove small line fjerner mange små veger og gjør at datasett blir "lettere"
 @timing_decorator
 def removesmalllines():
     arcpy.topographic.RemoveSmallLines(
-        in_features=Road_N100.test1___elveg_and_sti_kommune_singlepart___n100_road.value,
+        in_features=Road_N100.test1___kryss0___n100_road.value,
         minimum_length="100 meters",
+        recursive="RECURSIVE",
     )
     arcpy.management.MultipartToSinglepart(
-        in_features=Road_N100.test1___elveg_and_sti_kommune_singlepart___n100_road.value,
-        out_feature_class=Road_N100.test1___elveg_and_sti_kommune_singlepart_rsl___n100_road.value,
+        in_features=Road_N100.test1___kryss0___n100_road.value,
+        out_feature_class=Road_N100.test1___rsl___n100_road.value,
     )
 
 
 @timing_decorator
 def crd1():
     arcpy.cartography.CollapseRoadDetail(
-        in_features=Road_N100.test1___elveg_and_sti_kommune_singlepart_rsl___n100_road.value,
+        in_features=Road_N100.test1___rsl___n100_road.value,
         collapse_distance="60 meters",
-        output_feature_class=Road_N100.test1___elveg_and_sti_kommune_singlepart_rsl_crd60___n100_road.value,
+        output_feature_class=Road_N100.test1___rsl_crd60___n100_road.value,
     )
 
 
 @timing_decorator
 def simplify():
     arcpy.cartography.SimplifyLine(
-        in_features=Road_N100.test1___elveg_and_sti_kommune_singlepart_rsl_crd60___n100_road.value,
+        in_features=Road_N100.test1___rsl_crd60___n100_road.value,
         out_feature_class=Road_N100.test1___simplified___n100_road.value,
         algorithm="POINT_REMOVE",
         tolerance="2 meters",
         error_option="RESOLVE_ERRORS",
     )
+    arcpy.management.Integrate(
+        in_features=Road_N100.test1___simplified___n100_road.value,
+        cluster_tolerance="2 meters",
+    )
     arcpy.management.DeleteField(
         in_table=Road_N100.test1___simplified___n100_road.value,
         drop_field=["InLine_FID", "SimLnFlag", "MaxSimpTol", "MinSimpTol"],
     )
-
-
-# @timing_decorator
-# def lista():
-#     # Get a list of fields
-#     fields = arcpy.ListFields(
-#         Road_N100.test1___elveg_and_sti_kommune_singlepart_rsl_crd60___n100_road.value
-#     )
-#
-#     # Print field names
-#     for field in fields:
-#         print(field.name)
-#
 
 
 @timing_decorator
@@ -407,86 +448,16 @@ def thin_vegklasse1():
 
 
 @timing_decorator
-def diss2():  # Perform the dissolve operation
-    arcpy.management.Dissolve(
-        in_features=Road_N100.test1___thin1___n100_road.value,
-        out_feature_class=Road_N100.test1___diss2___n100_road.value,
-        dissolve_field=[
-            "objtype",
-            "subtypekode",
-            "vegstatus",
-            "typeveg",
-            "vegkategori",
-            "vegnummer",
-            "motorvegtype",
-            "vegklasse",
-            "rutemerking",
-            "medium",
-            "uttegning",
-            "inv_sti",
-            "hiesti",
-            "inv_1",
-            "hie_1",
-            "merge",
-            "character",
-            "inv_2",
-            "hie_2",
-            "merge2",
-            "character2",
-        ],
-        multi_part="SINGLE_PART",
-    )
-
-
-# brukes ikke foreløpig
-def medium_ul2():
-    custom_arcpy.select_attribute_and_make_permanent_feature(
-        input_layer=Road_N100.test1___diss2___n100_road.value,
-        expression="medium IN ('U', 'L')",
-        output_name=Road_N100.test1___medium_ul2___n100_road.value,
-        selection_type="NEW_SELECTION",
-    )
-
-
-# brukes for å lage kryss etter dissolve
-def medium_t2():
-    custom_arcpy.select_attribute_and_make_permanent_feature(
-        input_layer=Road_N100.test1___diss2___n100_road.value,
-        expression=" medium = 'T'",
-        output_name=Road_N100.test1___medium_t2___n100_road.value,
-        selection_type="NEW_SELECTION",
-    )
-
-
-# lager kryss for alle veger som er på bakken, den prossess skaper en ny field som må slettes så append etterpå fungerer
-def kryss2():
-    arcpy.management.FeatureToLine(
-        in_features=Road_N100.test1___medium_t2___n100_road.value,
-        out_feature_class=Road_N100.test1___kryss2___n100_road.value,
-    )
-
-    arcpy.management.DeleteField(
-        in_table=Road_N100.test1___kryss2___n100_road.value,
-        drop_field="FID_test1___medium_t2___n100_road",
-    )
-
-    arcpy.management.Append(
-        inputs=Road_N100.test1___medium_ul2___n100_road.value,
-        target=Road_N100.test1___kryss2___n100_road.value,
-    )
-
-
-@timing_decorator
 def thin_vegklasse2():
     arcpy.cartography.ThinRoadNetwork(
-        in_features=Road_N100.test1___kryss2___n100_road.value,
-        minimum_length="1000 meters",
+        in_features=Road_N100.test1___thin1___n100_road.value,
+        minimum_length="1500 meters",
         invisibility_field="inv_2",
         hierarchy_field="hie_2",
     )
 
     custom_arcpy.select_attribute_and_make_permanent_feature(
-        input_layer=Road_N100.test1___kryss2___n100_road.value,
+        input_layer=Road_N100.test1___thin1___n100_road.value,
         expression="inv_2 = 0",
         output_name=Road_N100.test1___thin2___n100_road.value,
         selection_type="NEW_SELECTION",
@@ -494,86 +465,16 @@ def thin_vegklasse2():
 
 
 @timing_decorator
-def diss3():  # Perform the dissolve operation
-    arcpy.management.Dissolve(
-        in_features=Road_N100.test1___thin2___n100_road.value,
-        out_feature_class=Road_N100.test1___diss3___n100_road.value,
-        dissolve_field=[
-            "objtype",
-            "subtypekode",
-            "vegstatus",
-            "typeveg",
-            "vegkategori",
-            "vegnummer",
-            "motorvegtype",
-            "vegklasse",
-            "rutemerking",
-            "medium",
-            "uttegning",
-            "inv_sti",
-            "hiesti",
-            "inv_1",
-            "hie_1",
-            "merge",
-            "character",
-            "inv_2",
-            "hie_2",
-            "merge2",
-            "character2",
-        ],
-        multi_part="SINGLE_PART",
-    )
-
-
-# brukes ikke foreløpig
-def medium_ul3():
-    custom_arcpy.select_attribute_and_make_permanent_feature(
-        input_layer=Road_N100.test1___diss3___n100_road.value,
-        expression="medium IN ('U', 'L')",
-        output_name=Road_N100.test1___medium_ul3___n100_road.value,
-        selection_type="NEW_SELECTION",
-    )
-
-
-# brukes for å lage kryss etter dissolve
-def medium_t3():
-    custom_arcpy.select_attribute_and_make_permanent_feature(
-        input_layer=Road_N100.test1___diss3___n100_road.value,
-        expression=" medium = 'T'",
-        output_name=Road_N100.test1___medium_t3___n100_road.value,
-        selection_type="NEW_SELECTION",
-    )
-
-
-# lager kryss for alle veger som er på bakken, den prossess skaper en ny field som må slettes så append etterpå fungerer
-def kryss3():
-    arcpy.management.FeatureToLine(
-        in_features=Road_N100.test1___medium_t3___n100_road.value,
-        out_feature_class=Road_N100.test1___kryss3___n100_road.value,
-    )
-
-    arcpy.management.DeleteField(
-        in_table=Road_N100.test1___kryss3___n100_road.value,
-        drop_field="FID_test1___medium_t3___n100_road",
-    )
-
-    arcpy.management.Append(
-        inputs=Road_N100.test1___medium_ul3___n100_road.value,
-        target=Road_N100.test1___kryss3___n100_road.value,
-    )
-
-
-@timing_decorator
 def thin_vegklasse3():
     arcpy.cartography.ThinRoadNetwork(
-        in_features=Road_N100.test1___kryss3___n100_road.value,
+        in_features=Road_N100.test1___thin2___n100_road.value,
         minimum_length="1500 meters",
         invisibility_field="inv_2",
         hierarchy_field="hie_2",
     )
 
     custom_arcpy.select_attribute_and_make_permanent_feature(
-        input_layer=Road_N100.test1___kryss3___n100_road.value,
+        input_layer=Road_N100.test1___thin2___n100_road.value,
         expression="inv_2 = 0",
         output_name=Road_N100.test1___thin3___n100_road.value,
         selection_type="NEW_SELECTION",
@@ -581,309 +482,49 @@ def thin_vegklasse3():
 
 
 @timing_decorator
-def diss4():  # Perform the dissolve operation
-    arcpy.management.Dissolve(
-        in_features=Road_N100.test1___thin3___n100_road.value,
-        out_feature_class=Road_N100.test1___diss4___n100_road.value,
-        dissolve_field=[
-            "objtype",
-            "subtypekode",
-            "vegstatus",
-            "typeveg",
-            "vegkategori",
-            "vegnummer",
-            "motorvegtype",
-            "vegklasse",
-            "rutemerking",
-            "medium",
-            "uttegning",
-            "inv_sti",
-            "hiesti",
-            "inv_1",
-            "hie_1",
-            "merge",
-            "character",
-            "inv_2",
-            "hie_2",
-            "merge2",
-            "character2",
-        ],
-        multi_part="SINGLE_PART",
-    )
-
-
-# brukes ikke foreløpig
-def medium_ul4():
-    custom_arcpy.select_attribute_and_make_permanent_feature(
-        input_layer=Road_N100.test1___diss4___n100_road.value,
-        expression="medium IN ('U', 'L')",
-        output_name=Road_N100.test1___medium_ul4___n100_road.value,
-        selection_type="NEW_SELECTION",
-    )
-
-
-# brukes for å lage kryss etter dissolve
-def medium_t4():
-    custom_arcpy.select_attribute_and_make_permanent_feature(
-        input_layer=Road_N100.test1___diss4___n100_road.value,
-        expression=" medium = 'T'",
-        output_name=Road_N100.test1___medium_t4___n100_road.value,
-        selection_type="NEW_SELECTION",
-    )
-
-
-# lager kryss for alle veger som er på bakken, den prossess skaper en ny field som må slettes så append etterpå fungerer
-def kryss4():
-    arcpy.management.FeatureToLine(
-        in_features=Road_N100.test1___medium_t4___n100_road.value,
-        out_feature_class=Road_N100.test1___kryss4___n100_road.value,
-    )
-
-    arcpy.management.DeleteField(
-        in_table=Road_N100.test1___kryss4___n100_road.value,
-        drop_field="FID_test1___medium_t4___n100_road",
-    )
-
-    arcpy.management.Append(
-        inputs=Road_N100.test1___medium_ul4___n100_road.value,
-        target=Road_N100.test1___kryss4___n100_road.value,
-    )
-
-
-@timing_decorator
 def thin_vegklasse4():
     arcpy.cartography.ThinRoadNetwork(
-        in_features=Road_N100.test1___kryss4___n100_road.value,
+        in_features=Road_N100.test1___thin3___n100_road.value,
         minimum_length="1500 meters",
         invisibility_field="inv_2",
         hierarchy_field="hie_2",
     )
 
     custom_arcpy.select_attribute_and_make_permanent_feature(
-        input_layer=Road_N100.test1___kryss4___n100_road.value,
+        input_layer=Road_N100.test1___thin3___n100_road.value,
         expression="inv_2 = 0",
         output_name=Road_N100.test1___thin4___n100_road.value,
         selection_type="NEW_SELECTION",
     )
 
 
-#
-# # Helper Functions
-# def run_dissolve_with_intersections(
-#     input_line_feature,
-#     output_processed_feature,
-#     dissolve_field_list,
-# ):
-#     dissolve_obj = DissolveWithIntersections(
-#         input_line_feature=input_line_feature,
-#         root_file=Road_N100.data_preparation___intersections_root___n100_road.value,
-#         output_processed_feature=output_processed_feature,
-#         dissolve_field_list=dissolve_field_list,
-#         list_of_sql_expressions=[
-#             f" MEDIUM = '{MediumAlias.tunnel}'",
-#             f" MEDIUM = '{MediumAlias.bridge}'",
-#             f" MEDIUM = '{MediumAlias.on_surface}'",
-#         ],
-#     )
-#     dissolve_obj.run()
-#
-#
-# def box5():
-#     run_dissolve_with_intersections(
-#         input_line_feature=Road_N100.test1___thin4___n100_road.value,
-#         output_processed_feature=Road_N100.test1___diss5___n100_road.value,
-#         dissolve_field_list=[
-#             "objtype",
-#             "subtypekode",
-#             "vegstatus",
-#             "typeveg",
-#             "vegkategori",
-#             "vegnummer",
-#             "motorvegtype",
-#             "vegklasse",
-#             "rutemerking",
-#             "medium",
-#             "uttegning",
-#             "inv_sti",
-#             "hiesti",
-#             "inv_1",
-#             "hie_1",
-#             "merge",
-#             "character",
-#             "inv_2",
-#             "hie_2",
-#             "merge2",
-#             "character2",
-#         ],
-#     )
-
-
 @timing_decorator
-def diss5():  # Perform the dissolve operation
-    arcpy.management.Dissolve(
-        in_features=Road_N100.test1___thin4___n100_road.value,
-        out_feature_class=Road_N100.test1___diss5___n100_road.value,
-        dissolve_field=[
-            "objtype",
-            "subtypekode",
-            "vegstatus",
-            "typeveg",
-            "vegkategori",
-            "vegnummer",
-            "motorvegtype",
-            "vegklasse",
-            "rutemerking",
-            "medium",
-            "uttegning",
-            "inv_sti",
-            "hiesti",
-            "inv_1",
-            "hie_1",
-            "merge",
-            "character",
-            "inv_2",
-            "hie_2",
-            "merge2",
-            "character2",
-        ],
-        multi_part="SINGLE_PART",
-    )
-
-
-# brukes ikke foreløpig
-def medium_ul5():
-    custom_arcpy.select_attribute_and_make_permanent_feature(
-        input_layer=Road_N100.test1___diss5___n100_road.value,
-        expression="medium IN ('U', 'L')",
-        output_name=Road_N100.test1___medium_ul5___n100_road.value,
-        selection_type="NEW_SELECTION",
-    )
-
-
-# brukes for å lage kryss etter dissolve
-def medium_t5():
-    custom_arcpy.select_attribute_and_make_permanent_feature(
-        input_layer=Road_N100.test1___diss5___n100_road.value,
-        expression=" medium = 'T'",
-        output_name=Road_N100.test1___medium_t5___n100_road.value,
-        selection_type="NEW_SELECTION",
-    )
-
-
-# lager kryss for alle veger som er på bakken, den prossess skaper en ny field som må slettes så append etterpå fungerer
-def kryss5():
-    arcpy.management.FeatureToLine(
-        in_features=Road_N100.test1___medium_t5___n100_road.value,
-        out_feature_class=Road_N100.test1___kryss5___n100_road.value,
-    )
-
-    arcpy.management.DeleteField(
-        in_table=Road_N100.test1___kryss5___n100_road.value,
-        drop_field="FID_test1___medium_t5___n100_road",
-    )
-
-    arcpy.management.Append(
-        inputs=Road_N100.test1___medium_ul5___n100_road.value,
-        target=Road_N100.test1___kryss5___n100_road.value,
-    )
-
-
-@timing_decorator
-def thin5_sti1():
+def thin_vegklasse5():
     arcpy.cartography.ThinRoadNetwork(
-        in_features=Road_N100.test1___kryss5___n100_road.value,
+        in_features=Road_N100.test1___thin4___n100_road.value,
         minimum_length="1500 meters",
-        invisibility_field="inv_sti",
-        hierarchy_field="hiesti",
+        invisibility_field="inv_2",
+        hierarchy_field="hie_2",
     )
+
     custom_arcpy.select_attribute_and_make_permanent_feature(
-        input_layer=Road_N100.test1___kryss5___n100_road.value,
-        expression="inv_sti = 0",
+        input_layer=Road_N100.test1___thin4___n100_road.value,
+        expression="inv_2 = 0",
         output_name=Road_N100.test1___thin5___n100_road.value,
         selection_type="NEW_SELECTION",
     )
 
 
 @timing_decorator
-def diss6():  # Perform the dissolve operation
-    arcpy.management.Dissolve(
-        in_features=Road_N100.test1___thin5___n100_road.value,
-        out_feature_class=Road_N100.test1___diss6___n100_road.value,
-        dissolve_field=[
-            "objtype",
-            "subtypekode",
-            "vegstatus",
-            "typeveg",
-            "vegkategori",
-            "vegnummer",
-            "motorvegtype",
-            "vegklasse",
-            "rutemerking",
-            "medium",
-            "uttegning",
-            "inv_sti",
-            "hiesti",
-            "inv_1",
-            "hie_1",
-            "merge",
-            "character",
-            "inv_2",
-            "hie_2",
-            "merge2",
-            "character2",
-        ],
-        multi_part="SINGLE_PART",
-    )
-
-
-# brukes ikke foreløpig
-def medium_ul6():
-    custom_arcpy.select_attribute_and_make_permanent_feature(
-        input_layer=Road_N100.test1___diss6___n100_road.value,
-        expression="medium IN ('U', 'L')",
-        output_name=Road_N100.test1___medium_ul6___n100_road.value,
-        selection_type="NEW_SELECTION",
-    )
-
-
-# brukes for å lage kryss etter dissolve
-def medium_t6():
-    custom_arcpy.select_attribute_and_make_permanent_feature(
-        input_layer=Road_N100.test1___diss6___n100_road.value,
-        expression=" medium = 'T'",
-        output_name=Road_N100.test1___medium_t6___n100_road.value,
-        selection_type="NEW_SELECTION",
-    )
-
-
-# lager kryss for alle veger som er på bakken, den prossess skaper en ny field som må slettes så append etterpå fungerer
-def kryss6():
-    arcpy.management.FeatureToLine(
-        in_features=Road_N100.test1___medium_t6___n100_road.value,
-        out_feature_class=Road_N100.test1___kryss6___n100_road.value,
-    )
-
-    arcpy.management.DeleteField(
-        in_table=Road_N100.test1___kryss6___n100_road.value,
-        drop_field="FID_test1___medium_t6___n100_road",
-    )
-
-    arcpy.management.Append(
-        inputs=Road_N100.test1___medium_ul6___n100_road.value,
-        target=Road_N100.test1___kryss6___n100_road.value,
-    )
-
-
-@timing_decorator
-def thin6_sti2():
+def thin6_sti1():
     arcpy.cartography.ThinRoadNetwork(
-        in_features=Road_N100.test1___kryss6___n100_road.value,
-        minimum_length="2000 meters",
+        in_features=Road_N100.test1___thin5___n100_road.value,
+        minimum_length="1500 meters",
         invisibility_field="inv_sti",
         hierarchy_field="hiesti",
     )
     custom_arcpy.select_attribute_and_make_permanent_feature(
-        input_layer=Road_N100.test1___kryss6___n100_road.value,
+        input_layer=Road_N100.test1___thin5___n100_road.value,
         expression="inv_sti = 0",
         output_name=Road_N100.test1___thin6___n100_road.value,
         selection_type="NEW_SELECTION",
@@ -891,96 +532,77 @@ def thin6_sti2():
 
 
 @timing_decorator
-def diss7():  # Perform the dissolve operation
-    arcpy.management.Dissolve(
-        in_features=Road_N100.test1___thin6___n100_road.value,
-        out_feature_class=Road_N100.test1___diss7___n100_road.value,
-        dissolve_field=[
-            "objtype",
-            "subtypekode",
-            "vegstatus",
-            "typeveg",
-            "vegkategori",
-            "vegnummer",
-            "motorvegtype",
-            "vegklasse",
-            "rutemerking",
-            "medium",
-            "uttegning",
-            "inv_sti",
-            "hiesti",
-            "inv_1",
-            "hie_1",
-            "merge",
-            "character",
-            "inv_2",
-            "hie_2",
-            "merge2",
-            "character2",
-        ],
-        multi_part="SINGLE_PART",
-    )
-
-
-# brukes ikke foreløpig
-def medium_ul7():
-    custom_arcpy.select_attribute_and_make_permanent_feature(
-        input_layer=Road_N100.test1___diss7___n100_road.value,
-        expression="medium IN ('U', 'L')",
-        output_name=Road_N100.test1___medium_ul7___n100_road.value,
-        selection_type="NEW_SELECTION",
-    )
-
-
-# brukes for å lage kryss etter dissolve
-def medium_t7():
-    custom_arcpy.select_attribute_and_make_permanent_feature(
-        input_layer=Road_N100.test1___diss7___n100_road.value,
-        expression=" medium = 'T'",
-        output_name=Road_N100.test1___medium_t7___n100_road.value,
-        selection_type="NEW_SELECTION",
-    )
-
-
-# lager kryss for alle veger som er på bakken, den prossess skaper en ny field som må slettes så append etterpå fungerer
-def kryss7():
-    arcpy.management.FeatureToLine(
-        in_features=Road_N100.test1___medium_t7___n100_road.value,
-        out_feature_class=Road_N100.test1___kryss7___n100_road.value,
-    )
-
-    arcpy.management.DeleteField(
-        in_table=Road_N100.test1___kryss7___n100_road.value,
-        drop_field="FID_test1___medium_t7___n100_road",
-    )
-
-    arcpy.management.Append(
-        inputs=Road_N100.test1___medium_ul7___n100_road.value,
-        target=Road_N100.test1___kryss7___n100_road.value,
-    )
-
-
-def thin7_sti3():
+def thin7_sti2():
     arcpy.cartography.ThinRoadNetwork(
-        in_features=Road_N100.test1___kryss7___n100_road.value,
-        minimum_length="2000 meters",
+        in_features=Road_N100.test1___thin6___n100_road.value,
+        minimum_length="1500 meters",
         invisibility_field="inv_sti",
         hierarchy_field="hiesti",
     )
-
     custom_arcpy.select_attribute_and_make_permanent_feature(
-        input_layer=Road_N100.test1___kryss7___n100_road.value,
+        input_layer=Road_N100.test1___thin6___n100_road.value,
         expression="inv_sti = 0",
         output_name=Road_N100.test1___thin7___n100_road.value,
         selection_type="NEW_SELECTION",
     )
 
 
+@timing_decorator
+def thin8_sti3():
+    arcpy.cartography.ThinRoadNetwork(
+        in_features=Road_N100.test1___thin7___n100_road.value,
+        minimum_length="2000 meters",
+        invisibility_field="inv_sti",
+        hierarchy_field="hiesti",
+    )
+
+    custom_arcpy.select_attribute_and_make_permanent_feature(
+        input_layer=Road_N100.test1___thin7___n100_road.value,
+        expression="inv_sti = 0",
+        output_name=Road_N100.test1___thin8___n100_road.value,
+        selection_type="NEW_SELECTION",
+    )
+
+
+@timing_decorator
+def thin9_sti4():
+    arcpy.cartography.ThinRoadNetwork(
+        in_features=Road_N100.test1___thin8___n100_road.value,
+        minimum_length="2000 meters",
+        invisibility_field="inv_sti",
+        hierarchy_field="hiesti",
+    )
+
+    custom_arcpy.select_attribute_and_make_permanent_feature(
+        input_layer=Road_N100.test1___thin8___n100_road.value,
+        expression="inv_sti = 0",
+        output_name=Road_N100.test1___thin9___n100_road.value,
+        selection_type="NEW_SELECTION",
+    )
+
+
+@timing_decorator
+def thin10():
+    arcpy.cartography.ThinRoadNetwork(
+        in_features=Road_N100.test1___thin9___n100_road.value,
+        minimum_length="1500 meters",
+        invisibility_field="inv_2",
+        hierarchy_field="hie_2",
+    )
+
+    custom_arcpy.select_attribute_and_make_permanent_feature(
+        input_layer=Road_N100.test1___thin9___n100_road.value,
+        expression="inv_2 = 0",
+        output_name=Road_N100.test1___thin10___n100_road.value,
+        selection_type="NEW_SELECTION",
+    )
+
+
 # lager en datasett med resultatet fra Thin etter vegklasse og 2000m
 @timing_decorator
-def veg100_oslosentrum1():
+def veg100_Oslo():
     arcpy.cartography.MergeDividedRoads(
-        in_features=Road_N100.test1___thin7___n100_road.value,
+        in_features=Road_N100.test1___thin10___n100_road.value,
         merge_field="merge",
         merge_distance="60 meters",
         out_features=Road_N100.test1___mdr___n100_road.value,
@@ -993,14 +615,15 @@ def veg100_oslosentrum1():
         out_features=Road_N100.test1___mdr2___n100_road.value,
         character_field="character",
     )
-    # trenger ikke en tredje runde, ingen forskjell
+
     # arcpy.cartography.MergeDividedRoads(
     #     in_features=Road_N100.test1___mdr2___n100_road.value,
-    #     merge_field="merge",
-    #     merge_distance="60 meters",
+    #     merge_field="merge2",
+    #     merge_distance="30 meters",
     #     out_features=Road_N100.test1___mdr3___n100_road.value,
     #     character_field="character",
     # )
+
     arcpy.cartography.SmoothLine(
         in_features=Road_N100.test1___mdr2___n100_road.value,
         out_feature_class=Road_N100.test1___sm300___n100_road.value,
@@ -1030,7 +653,7 @@ def veg100_oslosentrum1():
     arcpy.analysis.Clip(
         in_features=Road_N100.test1___dissx___n100_road.value,
         clip_features=Road_N100.test1___kommune___n100_road.value,
-        out_feature_class=Road_N100.test1___veg100_oslosentrum1_modell3___n100_road.value,
+        out_feature_class=Road_N100.test1___veg100_Oslo_modell3___n100_road.value,
     )
 
 
