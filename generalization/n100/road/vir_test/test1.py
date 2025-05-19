@@ -324,7 +324,7 @@ def removesmalllines():
     arcpy.topographic.RemoveSmallLines(
         in_features=Road_N100.test1___kryss0___n100_road.value,
         minimum_length="100 meters",
-        recursive="RECURSIVE",
+        recursive="NON-RECURSIVE",
     )
     arcpy.management.MultipartToSinglepart(
         in_features=Road_N100.test1___kryss0___n100_road.value,
@@ -350,20 +350,24 @@ def simplify():
         tolerance="2 meters",
         error_option="RESOLVE_ERRORS",
     )
-    arcpy.management.Integrate(
-        in_features=Road_N100.test1___simplified___n100_road.value,
-        cluster_tolerance="2 meters",
-    )
     arcpy.management.DeleteField(
         in_table=Road_N100.test1___simplified___n100_road.value,
         drop_field=["InLine_FID", "SimLnFlag", "MaxSimpTol", "MinSimpTol"],
     )
 
+    arcpy.management.CopyFeatures(
+        in_features=Road_N100.test1___simplified___n100_road.value,
+        out_feature_class=Road_N100.test1___integrate___n100_road.value,
+    )
+    arcpy.management.Integrate(
+        in_features=Road_N100.test1___integrate___n100_road.value,
+        cluster_tolerance="2 meters",
+    )
 
 @timing_decorator
 def diss1():  # Perform the dissolve operation
     arcpy.management.Dissolve(
-        in_features=Road_N100.test1___simplified___n100_road.value,
+        in_features=Road_N100.test1___integrate___n100_road.value,
         out_feature_class=Road_N100.test1___diss1___n100_road.value,
         dissolve_field=[
             "objtype",
