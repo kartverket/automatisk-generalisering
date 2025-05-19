@@ -139,28 +139,19 @@ def adding_fields_to_elveg_and_sti_kommune_singlepart() -> object:
     # Code_block - egentlig blir dette ikke brukt - Thin går på vegklasse, dvs hie_2
 
     assign_hie_1_to_elveg_and_sti_kommune_singlepart = """def Reclass(vegklasse):
-    if vegklasse == 0:
+    if vegklasse in (None, ''):  # Handle NULL or empty values first
+        return 5  
+    elif vegklasse in ('0', '1', '2', '3', '4'):
         return 1
-    elif vegklasse == 1:
-        return 1
-    elif vegklasse == 2:
-        return 1
-    elif vegklasse == 3:
-        return 1
-    elif vegklasse == 4:
-        return 1
-    elif vegklasse == 5:
+    elif vegklasse == '5':
         return 2
-    elif vegklasse == 6:
+    elif vegklasse == '6':
         return 3
-    elif vegklasse == 7:
-        return 7
-    elif vegklasse == 8:
+    elif vegklasse == '7':
+        return 4
+    elif vegklasse in ('8', '9'):
         return 5
-    elif vegklasse == 9:
-        return 5
-    elif vegklasse is None:
-        return 5
+    return 5  # Default return to prevent errors
 """
 
     # Calculate field for hie_1 som skal brukes i Thin av kjørbare veger basert på vegkategori
@@ -333,7 +324,7 @@ def removesmalllines():
     arcpy.topographic.RemoveSmallLines(
         in_features=Road_N100.test1___kryss0___n100_road.value,
         minimum_length="100 meters",
-        recursive="NON_RECURSIVE",
+        recursive="NON-RECURSIVE",
     )
     arcpy.management.MultipartToSinglepart(
         in_features=Road_N100.test1___kryss0___n100_road.value,
@@ -352,17 +343,8 @@ def crd1():
 
 @timing_decorator
 def simplify():
-    arcpy.management.CopyFeatures(
-        in_features=Road_N100.test1___rsl_crd60___n100_road.value,
-        out_feature_class=Road_N100.test1___integrate___n100_road.value,
-    )
-    arcpy.management.Integrate(
-        in_features=Road_N100.test1___integrate___n100_road.value,
-        cluster_tolerance="2 meters",
-    )
-
     arcpy.cartography.SimplifyLine(
-        in_features=Road_N100.test1___integrate___n100_road.value,
+        in_features=Road_N100.test1___rsl_crd60___n100_road.value,
         out_feature_class=Road_N100.test1___simplified___n100_road.value,
         algorithm="POINT_REMOVE",
         tolerance="2 meters",
@@ -373,11 +355,19 @@ def simplify():
         drop_field=["InLine_FID", "SimLnFlag", "MaxSimpTol", "MinSimpTol"],
     )
 
+    arcpy.management.CopyFeatures(
+        in_features=Road_N100.test1___simplified___n100_road.value,
+        out_feature_class=Road_N100.test1___integrate___n100_road.value,
+    )
+    arcpy.management.Integrate(
+        in_features=Road_N100.test1___integrate___n100_road.value,
+        cluster_tolerance="2 meters",
+    )
 
 @timing_decorator
 def diss1():  # Perform the dissolve operation
     arcpy.management.Dissolve(
-        in_features=Road_N100.test1___simplified___n100_road.value,
+        in_features=Road_N100.test1___integrate___n100_road.value,
         out_feature_class=Road_N100.test1___diss1___n100_road.value,
         dissolve_field=[
             "objtype",
