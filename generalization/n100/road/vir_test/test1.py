@@ -151,7 +151,8 @@ def adding_fields_to_elveg_and_sti_kommune_singlepart() -> object:
         return 4
     elif vegklasse in ('8', '9'):
         return 5
-    return 5  # Default return to prevent errors
+    else:
+        return 5  # Default return to prevent errors
 """
 
     # Calculate field for hie_1 som skal brukes i Thin av kjørbare veger basert på vegkategori
@@ -324,7 +325,7 @@ def removesmalllines():
     arcpy.topographic.RemoveSmallLines(
         in_features=Road_N100.test1___kryss0___n100_road.value,
         minimum_length="100 meters",
-        recursive="NON-RECURSIVE",
+        recursive="NON_RECURSIVE",
     )
     arcpy.management.MultipartToSinglepart(
         in_features=Road_N100.test1___kryss0___n100_road.value,
