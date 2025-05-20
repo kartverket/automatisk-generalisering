@@ -47,14 +47,14 @@ def main():
     thin8_sti3()
     thin9_sti4()
     thin10()
-    veg100_Oslo()
+    veg100_Lier()
 
 
 # dette er sånn midlertidig, siden jeg ikke kan gjøre noe bedre må jeg skrive kommunenavn 4 steder linjer 35, 42, 388 og 418
 def kommune():
     custom_arcpy.select_attribute_and_make_permanent_feature(
         input_layer=input_n50.AdminFlate,
-        expression="NAVN='Oslo'",
+        expression="NAVN='Lier'",
         output_name=Road_N100.test1___kommune___n100_road.value,
         selection_type="NEW_SELECTION",
     )
@@ -154,7 +154,7 @@ def adding_fields_to_elveg_and_sti_kommune_singlepart() -> object:
     elif vegklasse == 6:
         return 3
     elif vegklasse == 7:
-        return 7
+        return 4
     elif vegklasse == 8:
         return 5
     elif vegklasse == 9:
@@ -614,7 +614,7 @@ def thin10():
 
 # lager en datasett med resultatet fra Thin etter vegklasse og 2000m
 @timing_decorator
-def veg100_Oslo():
+def veg100_Lier():
     arcpy.cartography.MergeDividedRoads(
         in_features=Road_N100.test1___thin10___n100_road.value,
         merge_field="merge",
@@ -667,7 +667,7 @@ def veg100_Oslo():
     arcpy.analysis.Clip(
         in_features=Road_N100.test1___dissx___n100_road.value,
         clip_features=Road_N100.test1___kommune___n100_road.value,
-        out_feature_class=Road_N100.test1___veg100_Oslo_modell3___n100_road.value,
+        out_feature_class=Road_N100.test1___veg100_Lier_modell3___n100_road.value,
     )
 
 
