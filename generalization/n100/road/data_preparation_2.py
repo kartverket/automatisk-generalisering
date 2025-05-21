@@ -50,21 +50,22 @@ CHANGES_BOOLEAN = False
 def main():
     environment_setup.main()
     arcpy.env.referenceScale = 100000
-    data_selection_and_validation()
-    trim_road_details()
-    adding_fields()
-    merge_divided_roads()
+    # data_selection_and_validation()
+    # trim_road_details()
+    # adding_fields()
     collapse_road_detail()
     simplify_road()
     thin_roads()
     thin_sti_and_forest_roads()
 
+    merge_divided_roads()
     smooth_line()
     pre_resolve_road_conflicts()
     resolve_road_conflicts()
 
 
-SEARCH_DISTANCE = "7000 Meters"
+SEARCH_DISTANCE = "5000 Meters"
+OBJECT_LIMIT = 30_000
 
 
 @timing_decorator
@@ -72,9 +73,9 @@ def data_selection_and_validation():
     plot_area = "navn IN ('Asker', 'Bærum', 'Drammen', 'Frogn', 'Hole', 'Holmestrand', 'Horten', 'Jevnaker', 'Kongsberg', 'Larvik', 'Lier', 'Lunner', 'Modum', 'Nesodden', 'Oslo', 'Ringerike', 'Tønsberg', 'Øvre Eiker')"
     small_plot_area = "navn IN ('Oslo', 'Ringerike')"
 
-    input_roads.road_output_1 = (
-        Road_N100.data_preparation___resolve_road_conflicts___n100_road.value
-    )
+    # input_roads.road_output_1 = (
+    #     Road_N100.data_preparation___resolve_road_conflicts___n100_road.value
+    # )
     selector = StudyAreaSelector(
         input_output_file_dict={
             input_roads.road_output_1: Road_N100.data_selection___nvdb_roads___n100_road.value,
@@ -177,6 +178,11 @@ def trim_road_details():
         recursive="NON_RECURSIVE",
     )
 
+    arcpy.analysis.PairwiseIntegrate(
+        in_features=Road_N100.data_preparation___dissolved_intersections___n100_road.value,
+        cluster_tolerance="2 Meters",
+    )
+
     run_dissolve_with_intersections(
         input_line_feature=Road_N100.data_preparation___dissolved_intersections___n100_road.value,
         output_processed_feature=Road_N100.data_preparation___dissolved_intersections_2___n100_road.value,
@@ -229,46 +235,46 @@ def adding_fields():
     )
 
 
-@timing_decorator
-def merge_divided_roads():
-    file_utilities.reclassify_value(
-        input_table=Road_N100.data_preparation___road_single_part_2___n100_road.value,
-        target_field="merge_divided_id",
-        target_value="-99",
-        replace_value="0",
-        reference_field="VEGNUMMER",
-    )
-
-    if CHANGES_BOOLEAN:
-        define_character_field = f"""def Reclass(TYPEVEG):
-            if TYPEVEG == 'rundkjøring':
-                return 0
-            elif TYPEVEG in 'kanalisertVeg':
-                return 1
-            elif TYPEVEG == 'enkelBilveg':
-                return 1
-            elif TYPEVEG == 'rampe':
-                return 2
-            else: 
-                return 1
-        """
-
-        arcpy.management.CalculateField(
-            in_table=Road_N100.data_preparation___road_single_part_2___n100_road.value,
-            field="character",
-            expression="Reclass(!TYPEVEG!)",
-            expression_type="PYTHON3",
-            code_block=define_character_field,
-        )
-
-    arcpy.cartography.MergeDividedRoads(
-        in_features=Road_N100.data_preparation___road_single_part_2___n100_road.value,
-        merge_field="merge_divided_id",
-        merge_distance="150 Meters",
-        out_features=Road_N100.data_preparation___merge_divided_roads___n100_road.value,
-        out_displacement_features=Road_N100.data_preparation___merge_divided_roads_displacement_feature___n100_road.value,
-        character_field="character",
-    )
+# @timing_decorator
+# def merge_divided_roads():
+#     file_utilities.reclassify_value(
+#         input_table=Road_N100.data_preparation___road_single_part_2___n100_road.value,
+#         target_field="merge_divided_id",
+#         target_value="-99",
+#         replace_value="0",
+#         reference_field="VEGNUMMER",
+#     )
+#
+#     if CHANGES_BOOLEAN:
+#         define_character_field = f"""def Reclass(TYPEVEG):
+#             if TYPEVEG == 'rundkjøring':
+#                 return 0
+#             elif TYPEVEG in 'kanalisertVeg':
+#                 return 1
+#             elif TYPEVEG == 'enkelBilveg':
+#                 return 1
+#             elif TYPEVEG == 'rampe':
+#                 return 2
+#             else:
+#                 return 1
+#         """
+#
+#         arcpy.management.CalculateField(
+#             in_table=Road_N100.data_preparation___road_single_part_2___n100_road.value,
+#             field="character",
+#             expression="Reclass(!TYPEVEG!)",
+#             expression_type="PYTHON3",
+#             code_block=define_character_field,
+#         )
+#
+#     arcpy.cartography.MergeDividedRoads(
+#         in_features=Road_N100.data_preparation___road_single_part_2___n100_road.value,
+#         merge_field="merge_divided_id",
+#         merge_distance="150 Meters",
+#         out_features=Road_N100.data_preparation___merge_divided_roads___n100_road.value,
+#         out_displacement_features=Road_N100.data_preparation___merge_divided_roads_displacement_feature___n100_road.value,
+#         character_field="character",
+#     )
 
 
 @timing_decorator
@@ -276,7 +282,7 @@ def collapse_road_detail():
     input_dict = {
         "roads": (
             "input",
-            Road_N100.data_preparation___merge_divided_roads___n100_road.value,
+            Road_N100.data_preparation___road_single_part_2___n100_road.value,
         )
     }
 
@@ -302,7 +308,7 @@ def collapse_road_detail():
         custom_functions=[collapse_road_detail_config],
         root_file_partition_iterator=Road_N100.data_preparation___thin_road_partition_root___n100_road.value,
         dictionary_documentation_path=Road_N100.data_preparation___thin_road_docu___n100_road.value,
-        feature_count=50000,
+        feature_count=OBJECT_LIMIT,
         run_partition_optimization=True,
         search_distance=SEARCH_DISTANCE,
     )
@@ -369,7 +375,7 @@ def thin_roads():
         output_feature=Road_N100.data_preparation___thin_road_output___n100_road.value,
         docu_path=Road_N100.data_preparation___thin_road_docu___n100_road.value,
         min_length="1500 meters",
-        feature_count=50000,
+        feature_count=OBJECT_LIMIT,
     )
 
 
@@ -417,14 +423,56 @@ def thin_sti_and_forest_roads():
         output_feature=Road_N100.data_preparation___thin_road_sti_output___n100_road.value,
         docu_path=Road_N100.data_preparation___thin_sti_docu___n100_road.value,
         min_length="2000 meters",
-        feature_count=50000,
+        feature_count=OBJECT_LIMIT,
+    )
+
+
+@timing_decorator
+def merge_divided_roads():
+    file_utilities.reclassify_value(
+        input_table=Road_N100.data_preparation___thin_road_sti_output___n100_road.value,
+        target_field="merge_divided_id",
+        target_value="-99",
+        replace_value="0",
+        reference_field="VEGNUMMER",
+    )
+
+    if CHANGES_BOOLEAN:
+        define_character_field = f"""def Reclass(TYPEVEG):
+            if TYPEVEG == 'rundkjøring':
+                return 0
+            elif TYPEVEG in 'kanalisertVeg':
+                return 1
+            elif TYPEVEG == 'enkelBilveg':
+                return 1
+            elif TYPEVEG == 'rampe':
+                return 2
+            else: 
+                return 1
+        """
+
+        arcpy.management.CalculateField(
+            in_table=Road_N100.data_preparation___road_single_part_2___n100_road.value,
+            field="character",
+            expression="Reclass(!TYPEVEG!)",
+            expression_type="PYTHON3",
+            code_block=define_character_field,
+        )
+
+    arcpy.cartography.MergeDividedRoads(
+        in_features=Road_N100.data_preparation___thin_road_sti_output___n100_road.value,
+        merge_field="merge_divided_id",
+        merge_distance="150 Meters",
+        out_features=Road_N100.data_preparation___merge_divided_roads___n100_road.value,
+        out_displacement_features=Road_N100.data_preparation___merge_divided_roads_displacement_feature___n100_road.value,
+        character_field="character",
     )
 
 
 @timing_decorator
 def smooth_line():
     arcpy.cartography.SmoothLine(
-        in_features=Road_N100.data_preparation___thin_road_sti_output___n100_road.value,
+        in_features=Road_N100.data_preparation___merge_divided_roads___n100_road.value,
         out_feature_class=Road_N100.data_preparation___smooth_road___n100_road.value,
         algorithm="PAEK",
         tolerance="300 meters",
@@ -539,7 +587,7 @@ def resolve_road_conflicts():
         custom_functions=[resolve_road_conflicts_config],
         root_file_partition_iterator=Road_N100.data_preparation___resolve_road_partition_root___n100_road.value,
         dictionary_documentation_path=Road_N100.data_preparation___resolve_road_docu___n100_road.value,
-        feature_count=50000,
+        feature_count=OBJECT_LIMIT,
         run_partition_optimization=True,
         search_distance=SEARCH_DISTANCE,
     )

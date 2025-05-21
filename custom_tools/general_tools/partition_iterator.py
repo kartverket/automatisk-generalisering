@@ -350,6 +350,8 @@ class PartitionIterator:
 
         max_found = int(self.feature_count * 1.01)
         min_candidate = self.feature_count
+        current_iteration_number = 0
+        previous_iteration_number = 0
         attempts = 0
 
         def _find_increment(current_number: int) -> int:
@@ -364,6 +366,21 @@ class PartitionIterator:
                 f"\n\nAttempt: {attempts}\nTesting candidate feature_count: {candidate}"
             )
             self._create_cartographic_partitions(feature_count=candidate)
+
+            self.find_maximum_object_id()
+            current_iteration_number = self.max_object_id
+
+            if current_iteration_number == previous_iteration_number:
+                reduce_with = int(self.feature_count * 0.01)
+                candidate = int(candidate - reduce_with)
+                previous_iteration_number = self.max_object_id
+                print(
+                    f"Identical partition generated. Reduced feature_count with: {reduce_with}"
+                )
+                continue
+
+            previous_iteration_number = current_iteration_number
+
             max_found = self._count_maximum_objects_in_partition()
 
             print(f" -> max partition load found: {max_found}")
