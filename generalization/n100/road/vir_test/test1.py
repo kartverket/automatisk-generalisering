@@ -154,7 +154,7 @@ def adding_fields_to_elveg_and_sti_kommune_singlepart() -> object:
     elif vegklasse == 6:
         return 3
     elif vegklasse == 7:
-        return 7
+        return 4
     elif vegklasse == 8:
         return 5
     elif vegklasse == 9:
