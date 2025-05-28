@@ -16,16 +16,13 @@ from input_data import input_roads
 # Importing custom modules
 from file_manager.n100.file_manager_roads import Road_N100
 from env_setup import environment_setup
-import env_setup.global_config
 import config
 from custom_tools.decorators.timing_decorator import timing_decorator
-from custom_tools.decorators.partition_io_decorator import partition_io_decorator
 from custom_tools.general_tools.partition_iterator import PartitionIterator
 from custom_tools.general_tools.study_area_selector import StudyAreaSelector
 from custom_tools.general_tools.geometry_tools import GeometryValidator
 from custom_tools.general_tools import custom_arcpy
 from custom_tools.general_tools import file_utilities
-from custom_tools.general_tools.file_utilities import WorkFileManager
 from custom_tools.generalization_tools.road.thin_road_network import ThinRoadNetwork
 from custom_tools.generalization_tools.road.collapse_road import collapse_road
 from custom_tools.generalization_tools.road.dissolve_with_intersections import (
@@ -34,8 +31,6 @@ from custom_tools.generalization_tools.road.dissolve_with_intersections import (
 from custom_tools.generalization_tools.road.resolve_road_conflicts import (
     ResolveRoadConflicts,
 )
-from custom_tools.general_tools.polygon_processor import PolygonProcessor
-from custom_tools.general_tools.line_to_buffer_symbology import LineToBufferSymbology
 from input_data.input_symbology import SymbologyN100
 from constants.n100_constants import (
     FieldNames,
@@ -43,16 +38,16 @@ from constants.n100_constants import (
     MediumAlias,
 )
 
-CHANGES_BOOLEAN = False
+MERGE_DIVIDED_ROADS_ALTERATIVE = False
 
 
 @timing_decorator
 def main():
     environment_setup.main()
     arcpy.env.referenceScale = 100000
-    # data_selection_and_validation()
-    # trim_road_details()
-    # adding_fields()
+    data_selection_and_validation()
+    trim_road_details()
+    adding_fields()
     collapse_road_detail()
     simplify_road()
     thin_roads()
@@ -65,7 +60,7 @@ def main():
 
 
 SEARCH_DISTANCE = "5000 Meters"
-OBJECT_LIMIT = 30_000
+OBJECT_LIMIT = 100_000
 
 
 @timing_decorator
@@ -73,9 +68,6 @@ def data_selection_and_validation():
     plot_area = "navn IN ('Asker', 'Bærum', 'Drammen', 'Frogn', 'Hole', 'Holmestrand', 'Horten', 'Jevnaker', 'Kongsberg', 'Larvik', 'Lier', 'Lunner', 'Modum', 'Nesodden', 'Oslo', 'Ringerike', 'Tønsberg', 'Øvre Eiker')"
     small_plot_area = "navn IN ('Oslo', 'Ringerike')"
 
-    # input_roads.road_output_1 = (
-    #     Road_N100.data_preparation___resolve_road_conflicts___n100_road.value
-    # )
     selector = StudyAreaSelector(
         input_output_file_dict={
             input_roads.road_output_1: Road_N100.data_selection___nvdb_roads___n100_road.value,
@@ -235,48 +227,6 @@ def adding_fields():
     )
 
 
-# @timing_decorator
-# def merge_divided_roads():
-#     file_utilities.reclassify_value(
-#         input_table=Road_N100.data_preparation___road_single_part_2___n100_road.value,
-#         target_field="merge_divided_id",
-#         target_value="-99",
-#         replace_value="0",
-#         reference_field="VEGNUMMER",
-#     )
-#
-#     if CHANGES_BOOLEAN:
-#         define_character_field = f"""def Reclass(TYPEVEG):
-#             if TYPEVEG == 'rundkjøring':
-#                 return 0
-#             elif TYPEVEG in 'kanalisertVeg':
-#                 return 1
-#             elif TYPEVEG == 'enkelBilveg':
-#                 return 1
-#             elif TYPEVEG == 'rampe':
-#                 return 2
-#             else:
-#                 return 1
-#         """
-#
-#         arcpy.management.CalculateField(
-#             in_table=Road_N100.data_preparation___road_single_part_2___n100_road.value,
-#             field="character",
-#             expression="Reclass(!TYPEVEG!)",
-#             expression_type="PYTHON3",
-#             code_block=define_character_field,
-#         )
-#
-#     arcpy.cartography.MergeDividedRoads(
-#         in_features=Road_N100.data_preparation___road_single_part_2___n100_road.value,
-#         merge_field="merge_divided_id",
-#         merge_distance="150 Meters",
-#         out_features=Road_N100.data_preparation___merge_divided_roads___n100_road.value,
-#         out_displacement_features=Road_N100.data_preparation___merge_divided_roads_displacement_feature___n100_road.value,
-#         character_field="character",
-#     )
-
-
 @timing_decorator
 def collapse_road_detail():
     input_dict = {
@@ -313,12 +263,6 @@ def collapse_road_detail():
         search_distance=SEARCH_DISTANCE,
     )
     partition_collapse_road_detail.run()
-
-    # arcpy.cartography.CollapseRoadDetail(
-    #     in_features=Road_N100.data_preparation___merge_divided_roads___n100_road.value,
-    #     collapse_distance="60 Meters",
-    #     output_feature_class=Road_N100.data_preparation___collapse_road_detail___n100_road.value,
-    # )
 
 
 @timing_decorator
@@ -437,7 +381,7 @@ def merge_divided_roads():
         reference_field="VEGNUMMER",
     )
 
-    if CHANGES_BOOLEAN:
+    if MERGE_DIVIDED_ROADS_ALTERATIVE:
         define_character_field = f"""def Reclass(TYPEVEG):
             if TYPEVEG == 'rundkjøring':
                 return 0
