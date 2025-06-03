@@ -352,17 +352,17 @@ def crd1():
 
 @timing_decorator
 def simplify():
-    arcpy.management.CopyFeatures(
-        in_features=Road_N100.test1___rsl_crd60___n100_road.value,
-        out_feature_class=Road_N100.test1___integrate___n100_road.value,
-    )
-    arcpy.management.Integrate(
-        in_features=Road_N100.test1___integrate___n100_road.value,
-        cluster_tolerance="2 meters",
-    )
+    # arcpy.management.CopyFeatures(
+    #     in_features=Road_N100.test1___rsl_crd60___n100_road.value,
+    #     out_feature_class=Road_N100.test1___integrate___n100_road.value,
+    # )
+    # arcpy.management.Integrate(
+    #     in_features=Road_N100.test1___integrate___n100_road.value,
+    #     cluster_tolerance="2 meters",
+    # )
 
     arcpy.cartography.SimplifyLine(
-        in_features=Road_N100.test1___integrate___n100_road.value,
+        in_features=Road_N100.test1___rsl_crd60___n100_road.value,
         out_feature_class=Road_N100.test1___simplified___n100_road.value,
         algorithm="POINT_REMOVE",
         tolerance="2 meters",
@@ -465,7 +465,7 @@ def thin_vegklasse1():
 def thin_vegklasse2():
     arcpy.cartography.ThinRoadNetwork(
         in_features=Road_N100.test1___thin1___n100_road.value,
-        minimum_length="1500 meters",
+        minimum_length="1000 meters",
         invisibility_field="inv_2",
         hierarchy_field="hie_2",
     )
@@ -482,7 +482,7 @@ def thin_vegklasse2():
 def thin_vegklasse3():
     arcpy.cartography.ThinRoadNetwork(
         in_features=Road_N100.test1___thin2___n100_road.value,
-        minimum_length="1500 meters",
+        minimum_length="1400 meters",
         invisibility_field="inv_2",
         hierarchy_field="hie_2",
     )
@@ -499,7 +499,7 @@ def thin_vegklasse3():
 def thin_vegklasse4():
     arcpy.cartography.ThinRoadNetwork(
         in_features=Road_N100.test1___thin3___n100_road.value,
-        minimum_length="1500 meters",
+        minimum_length="1400 meters",
         invisibility_field="inv_2",
         hierarchy_field="hie_2",
     )
@@ -516,7 +516,7 @@ def thin_vegklasse4():
 def thin_vegklasse5():
     arcpy.cartography.ThinRoadNetwork(
         in_features=Road_N100.test1___thin4___n100_road.value,
-        minimum_length="1500 meters",
+        minimum_length="1400 meters",
         invisibility_field="inv_2",
         hierarchy_field="hie_2",
     )
@@ -565,7 +565,7 @@ def thin7_sti2():
 def thin8_sti3():
     arcpy.cartography.ThinRoadNetwork(
         in_features=Road_N100.test1___thin7___n100_road.value,
-        minimum_length="2000 meters",
+        minimum_length="1800 meters",
         invisibility_field="inv_sti",
         hierarchy_field="hiesti",
     )
@@ -582,7 +582,7 @@ def thin8_sti3():
 def thin9_sti4():
     arcpy.cartography.ThinRoadNetwork(
         in_features=Road_N100.test1___thin8___n100_road.value,
-        minimum_length="2000 meters",
+        minimum_length="1800 meters",
         invisibility_field="inv_sti",
         hierarchy_field="hiesti",
     )
@@ -599,7 +599,7 @@ def thin9_sti4():
 def thin10():
     arcpy.cartography.ThinRoadNetwork(
         in_features=Road_N100.test1___thin9___n100_road.value,
-        minimum_length="1500 meters",
+        minimum_length="1400 meters",
         invisibility_field="inv_2",
         hierarchy_field="hie_2",
     )
