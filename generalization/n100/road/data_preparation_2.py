@@ -164,16 +164,41 @@ def trim_road_details():
         dissolve_field_list=FieldNames.road_input_fields.value,
     )
 
-    arcpy.topographic.RemoveSmallLines(
-        in_features=Road_N100.data_preparation___dissolved_intersections___n100_road.value,
-        minimum_length="100 meters",
-        recursive="NON_RECURSIVE",
-    )
+    def safe_remove_lines():
+        custom_arcpy.select_attribute_and_make_permanent_feature(
+            input_layer=input_n100.AdminGrense,
+            expression="OBJTYPE = 'Riksgrense'",
+            output_name=Road_N100.data_preparation___country_boarder___n100_road.value,
+        )
 
-    arcpy.analysis.PairwiseIntegrate(
-        in_features=Road_N100.data_preparation___dissolved_intersections___n100_road.value,
-        cluster_tolerance="2 Meters",
-    )
+        arcpy.analysis.PairwiseBuffer(
+            in_features=Road_N100.data_preparation___country_boarder___n100_road.value,
+            out_feature_class=Road_N100.data_preparation___country_boarder_buffer___n100_road.value,
+            buffer_distance_or_field="500 Meters",
+        )
+
+        custom_arcpy.select_location_and_make_permanent_feature(
+            input_layer=Road_N100.data_preparation___dissolved_intersections___n100_road.value,
+            overlap_type=custom_arcpy.OverlapType.INTERSECT.value,
+            select_features=Road_N100.data_preparation___country_boarder_buffer___n100_road.value,
+            output_name=Road_N100.data_preparation___roads_near_boarder___n100_road.value,
+        )
+
+        arcpy.topographic.RemoveSmallLines(
+            in_features=Road_N100.data_preparation___dissolved_intersections___n100_road.value,
+            minimum_length="100 meters",
+            recursive="NON_RECURSIVE",
+        )
+
+        custom_arcpy.select_location_and_make_permanent_feature(
+            input_layer=Road_N100.data_preparation___roads_near_boarder___n100_road.value,
+            overlap_type=custom_arcpy.OverlapType.ARE_IDENTICAL_TO.value,
+            select_features=Road_N100.data_preparation___dissolved_intersections___n100_road.value,
+            output_name=Road_N100.data_preparation___removed_roads_near_boarder___n100_road.value,
+            inverted=True,
+        )
+
+    # safe_remove_lines()
 
     run_dissolve_with_intersections(
         input_line_feature=Road_N100.data_preparation___dissolved_intersections___n100_road.value,
@@ -318,7 +343,7 @@ def thin_roads():
         partition_root_file=Road_N100.data_preparation___thin_road_partition_root___n100_road.value,
         output_feature=Road_N100.data_preparation___thin_road_output___n100_road.value,
         docu_path=Road_N100.data_preparation___thin_road_docu___n100_road.value,
-        min_length="1500 meters",
+        min_length="1400 meters",
         feature_count=OBJECT_LIMIT,
     )
 
@@ -366,7 +391,7 @@ def thin_sti_and_forest_roads():
         partition_root_file=Road_N100.data_preparation___thin_sti_partition_root___n100_road.value,
         output_feature=Road_N100.data_preparation___thin_road_sti_output___n100_road.value,
         docu_path=Road_N100.data_preparation___thin_sti_docu___n100_road.value,
-        min_length="2000 meters",
+        min_length="1800 meters",
         feature_count=OBJECT_LIMIT,
     )
 
