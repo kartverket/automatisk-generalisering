@@ -66,6 +66,7 @@ OBJECT_LIMIT = 100_000
 @timing_decorator
 def data_selection_and_validation():
     plot_area = "navn IN ('Asker', 'Bærum', 'Drammen', 'Frogn', 'Hole', 'Holmestrand', 'Horten', 'Jevnaker', 'Kongsberg', 'Larvik', 'Lier', 'Lunner', 'Modum', 'Nesodden', 'Oslo', 'Ringerike', 'Tønsberg', 'Øvre Eiker')"
+    resolve_road_conflicts_test = "navn IN ('Jevnaker', 'Gran', 'Søndre Land')"
     small_plot_area = "navn IN ('Oslo', 'Ringerike')"
 
     selector = StudyAreaSelector(
@@ -75,7 +76,7 @@ def data_selection_and_validation():
             input_n100.BegrensningsKurve: Road_N100.data_selection___begrensningskurve___n100_road.value,
         },
         selecting_file=input_n100.AdminFlate,
-        selecting_sql_expression=plot_area,
+        selecting_sql_expression=resolve_road_conflicts_test,
         select_local=config.select_study_area,
     )
 
@@ -556,9 +557,9 @@ def resolve_road_conflicts():
         custom_functions=[resolve_road_conflicts_config],
         root_file_partition_iterator=Road_N100.data_preparation___resolve_road_partition_root___n100_road.value,
         dictionary_documentation_path=Road_N100.data_preparation___resolve_road_docu___n100_road.value,
-        feature_count=OBJECT_LIMIT,
+        feature_count=25_000,
         run_partition_optimization=True,
-        search_distance=SEARCH_DISTANCE,
+        search_distance="500 Meters",
     )
     partition_resolve_road_conflicts.run()
 

@@ -949,9 +949,9 @@ class PartitionIterator:
                     input_layer=input_data_iteration_selection
                 )
 
-                self.nested_alias_type_data[alias]["processed_objects_count"] = (
-                    count_processed_objects
-                )
+                self.nested_alias_type_data[alias][
+                    "processed_objects_count"
+                ] = count_processed_objects
 
                 print(
                     f"iteration partition {input_features_within_distance_of_partition_selection} appended to {input_data_iteration_selection}"
@@ -1034,9 +1034,9 @@ class PartitionIterator:
                     input_layer=context_data_iteration_selection
                 )
 
-                self.nested_alias_type_data[alias]["processed_objects_count"] = (
-                    count_processed_objects
-                )
+                self.nested_alias_type_data[alias][
+                    "processed_objects_count"
+                ] = count_processed_objects
             else:
                 # Loads in dummy feature for this alias for this iteration and sets dummy_used = True
                 self.update_empty_alias_type_with_dummy_file(
