@@ -161,6 +161,34 @@ class Road_N100(Enum):
         )
     )
 
+    data_preparation___country_boarder___n100_road = (
+        file_manager.generate_file_name_gdb(
+            script_source_name=data_preparation,
+            description="country_boarder",
+        )
+    )
+
+    data_preparation___country_boarder_buffer___n100_road = (
+        file_manager.generate_file_name_gdb(
+            script_source_name=data_preparation,
+            description="country_boarder_buffer",
+        )
+    )
+
+    data_preparation___roads_near_boarder___n100_road = (
+        file_manager.generate_file_name_gdb(
+            script_source_name=data_preparation,
+            description="roads_near_boarder",
+        )
+    )
+
+    data_preparation___removed_roads_near_boarder___n100_road = (
+        file_manager.generate_file_name_gdb(
+            script_source_name=data_preparation,
+            description="removed_roads_near_boarder",
+        )
+    )
+
     data_preparation___intersections_root_2___n100_road = (
         file_manager.generate_file_name_gdb(
             script_source_name=data_preparation,
@@ -403,6 +431,27 @@ class Road_N100(Enum):
     data_preparation___smooth_road___n100_road = file_manager.generate_file_name_gdb(
         script_source_name=data_preparation,
         description="smooth_road",
+    )
+
+    data_preparation___road_single_part_3___n100_road = (
+        file_manager.generate_file_name_gdb(
+            script_source_name=data_preparation,
+            description="road_single_part_3",
+        )
+    )
+
+    data_preparation___railroad_single_part___n100_road = (
+        file_manager.generate_file_name_gdb(
+            script_source_name=data_preparation,
+            description="railroad_single_part",
+        )
+    )
+
+    data_preparation___water_feature_outline_single_part___n100_road = (
+        file_manager.generate_file_name_gdb(
+            script_source_name=data_preparation,
+            description="water_feature_outline_single_part",
+        )
     )
 
     data_preparation___resolve_road_conflicts___n100_road = (
