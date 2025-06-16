@@ -173,9 +173,10 @@
 <span class="sd">        Appends geometry from the input feature class to the output feature class.</span>
 <span class="sd">        This method assumes the output feature class already exists or was just created.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="k">with</span> <span class="n">arcpy</span><span class="o">.</span><span class="n">da</span><span class="o">.</span><span class="n">SearchCursor</span><span class="p">(</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">input_fc</span><span class="p">,</span> <span class="p">[</span><span class="s2">&quot;SHAPE@&quot;</span><span class="p">]</span>
-        <span class="p">)</span> <span class="k">as</span> <span class="n">s_cursor</span><span class="p">,</span> <span class="n">arcpy</span><span class="o">.</span><span class="n">da</span><span class="o">.</span><span class="n">InsertCursor</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">output_fc</span><span class="p">,</span> <span class="p">[</span><span class="s2">&quot;SHAPE@&quot;</span><span class="p">])</span> <span class="k">as</span> <span class="n">i_cursor</span><span class="p">:</span>
+        <span class="k">with</span> <span class="p">(</span>
+            <span class="n">arcpy</span><span class="o">.</span><span class="n">da</span><span class="o">.</span><span class="n">SearchCursor</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">input_fc</span><span class="p">,</span> <span class="p">[</span><span class="s2">&quot;SHAPE@&quot;</span><span class="p">])</span> <span class="k">as</span> <span class="n">s_cursor</span><span class="p">,</span>
+            <span class="n">arcpy</span><span class="o">.</span><span class="n">da</span><span class="o">.</span><span class="n">InsertCursor</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">output_fc</span><span class="p">,</span> <span class="p">[</span><span class="s2">&quot;SHAPE@&quot;</span><span class="p">])</span> <span class="k">as</span> <span class="n">i_cursor</span><span class="p">,</span>
+        <span class="p">):</span>
             <span class="k">for</span> <span class="n">row</span> <span class="ow">in</span> <span class="n">s_cursor</span><span class="p">:</span>
                 <span class="n">i_cursor</span><span class="o">.</span><span class="n">insertRow</span><span class="p">(</span><span class="n">row</span><span class="p">)</span>
         <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Appended geometry to the feature class.&quot;</span><span class="p">)</span></div>
@@ -308,6 +309,35 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">created_paths</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">path</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">path</span>
 
+<div class="viewcode-block" id="WorkFileManager.generate_output">
+<a class="viewcode-back" href="../../../generated_docs/custom_tools.general_tools.html#custom_tools.general_tools.file_utilities.WorkFileManager.generate_output">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">generate_output</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">instance</span><span class="p">:</span> <span class="nb">object</span><span class="p">,</span>
+        <span class="n">name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+        <span class="n">iteration_index</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        What:</span>
+<span class="sd">            Generates a unique file path for a given base name and iteration index.</span>
+<span class="sd">            Designed to allow users of WorkFileManager to generate indexed outputs in a loop.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            instance (object): The caller instance to update attributes on if needed.</span>
+<span class="sd">            name (str): The base name of the work file.</span>
+<span class="sd">            iteration_index (int): The current iteration index for uniqueness.</span>
+<span class="sd">            instance (object): The caller instance to update attributes on if needed.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            str: The generated file path.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">setup_work_file_paths</span><span class="p">(</span>
+            <span class="n">instance</span><span class="o">=</span><span class="n">instance</span><span class="p">,</span>
+            <span class="n">file_structure</span><span class="o">=</span><span class="n">name</span><span class="p">,</span>
+            <span class="n">index</span><span class="o">=</span><span class="n">iteration_index</span><span class="p">,</span>
+        <span class="p">)</span></div>
+
+
 <div class="viewcode-block" id="WorkFileManager.setup_work_file_paths">
 <a class="viewcode-back" href="../../../generated_docs/custom_tools.general_tools.html#custom_tools.general_tools.file_utilities.WorkFileManager.setup_work_file_paths">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">setup_work_file_paths</span><span class="p">(</span>
@@ -393,7 +423,10 @@
             <span class="k">return</span> <span class="n">updated_dict</span>
 
         <span class="c1"># Determine the type of the top-level structure and process accordingly</span>
-        <span class="k">return</span> <span class="n">process_item</span><span class="p">(</span><span class="n">file_structure</span><span class="p">)</span></div>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">file_structure</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
+            <span class="k">return</span> <span class="n">process_string</span><span class="p">(</span><span class="n">file_structure</span><span class="p">,</span> <span class="n">idx</span><span class="o">=</span><span class="n">index</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">process_item</span><span class="p">(</span><span class="n">file_structure</span><span class="p">)</span></div>
 
 
 <div class="viewcode-block" id="WorkFileManager.setup_dynamic_file_paths">
@@ -725,6 +758,14 @@
     <span class="k">for</span> <span class="n">fields</span> <span class="ow">in</span> <span class="n">added_field_sets</span><span class="p">:</span>
         <span class="n">combined</span><span class="o">.</span><span class="n">extend</span><span class="p">([</span><span class="n">item</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="k">for</span> <span class="n">item</span> <span class="ow">in</span> <span class="n">fields</span><span class="p">])</span>
     <span class="k">return</span> <span class="n">combined</span></div>
+
+
+
+<div class="viewcode-block" id="count_objects">
+<a class="viewcode-back" href="../../../generated_docs/custom_tools.general_tools.html#custom_tools.general_tools.file_utilities.count_objects">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">count_objects</span><span class="p">(</span><span class="n">input_layer</span><span class="p">):</span>
+    <span class="n">count</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">arcpy</span><span class="o">.</span><span class="n">management</span><span class="o">.</span><span class="n">GetCount</span><span class="p">(</span><span class="n">input_layer</span><span class="p">)</span><span class="o">.</span><span class="n">getOutput</span><span class="p">(</span><span class="mi">0</span><span class="p">))</span>
+    <span class="k">return</span> <span class="n">count</span></div>
 
 </pre></div>
 

@@ -509,6 +509,32 @@ any parameters.</p>
 <dd></dd></dl>
 
 <dl class="py method">
+<dt class="sig sig-object py" id="custom_tools.general_tools.file_utilities.WorkFileManager.generate_output">
+<span class="sig-name descname"><span class="pre">generate_output</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">instance</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">object</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">name</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">iteration_index</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">str</span></span></span><a class="reference internal" href="../_modules/custom_tools/general_tools/file_utilities.html#WorkFileManager.generate_output"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#custom_tools.general_tools.file_utilities.WorkFileManager.generate_output" title="Link to this definition"></a></dt>
+<dd><dl class="simple">
+<dt>What:</dt><dd><p>Generates a unique file path for a given base name and iteration index.
+Designed to allow users of WorkFileManager to generate indexed outputs in a loop.</p>
+</dd>
+</dl>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>instance</strong> (<em>object</em>) – The caller instance to update attributes on if needed.</p></li>
+<li><p><strong>name</strong> (<em>str</em>) – The base name of the work file.</p></li>
+<li><p><strong>iteration_index</strong> (<em>int</em>) – The current iteration index for uniqueness.</p></li>
+<li><p><strong>instance</strong> – The caller instance to update attributes on if needed.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>The generated file path.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>str</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
 <dt class="sig sig-object py" id="custom_tools.general_tools.file_utilities.WorkFileManager.setup_work_file_paths">
 <span class="sig-name descname"><span class="pre">setup_work_file_paths</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">instance</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">object</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">file_structure</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Any</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">keys_to_update</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">add_key</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">file_type</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'gdb'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">index</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">Any</span></span></span><a class="reference internal" href="../_modules/custom_tools/general_tools/file_utilities.html#WorkFileManager.setup_work_file_paths"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#custom_tools.general_tools.file_utilities.WorkFileManager.setup_work_file_paths" title="Link to this definition"></a></dt>
 <dd><dl class="simple">
@@ -700,6 +726,11 @@ and applies the function to each valid element.</p>
 <dd><p>Combines an input fields list with any number of additional field sets.
 Assumes each added field set is a list of [field_name, field_type] pairs.</p>
 </dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="custom_tools.general_tools.file_utilities.count_objects">
+<span class="sig-prename descclassname"><span class="pre">custom_tools.general_tools.file_utilities.</span></span><span class="sig-name descname"><span class="pre">count_objects</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">input_layer</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/custom_tools/general_tools/file_utilities.html#count_objects"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#custom_tools.general_tools.file_utilities.count_objects" title="Link to this definition"></a></dt>
+<dd></dd></dl>
 
 </section>
 <section id="custom-tools-general-tools-geometry-tools-module">
