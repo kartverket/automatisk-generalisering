@@ -75,6 +75,7 @@ def data_selection_and_validation():
             input_roads.road_output_1: Road_N100.data_selection___nvdb_roads___n100_road.value,
             input_n100.Bane: Road_N100.data_selection___railroad___n100_road.value,
             input_n100.BegrensningsKurve: Road_N100.data_selection___begrensningskurve___n100_road.value,
+            input_n100.AdminGrense: Road_N100.data_selection___admin_boundary___n100_road.value,
         },
         selecting_file=input_n100.AdminFlate,
         selecting_sql_expression=presentation_area,
@@ -167,8 +168,9 @@ def trim_road_details():
     )
 
     def safe_remove_lines():
+
         custom_arcpy.select_attribute_and_make_permanent_feature(
-            input_layer=input_n100.AdminGrense,
+            input_layer=Road_N100.data_selection___admin_boundary___n100_road.value,
             expression="OBJTYPE = 'Riksgrense'",
             output_name=Road_N100.data_preparation___country_boarder___n100_road.value,
         )
@@ -442,12 +444,23 @@ def merge_divided_roads():
 
 @timing_decorator
 def smooth_line():
+
+    custom_arcpy.select_attribute_and_make_permanent_feature(
+        input_layer=Road_N100.data_selection___admin_boundary___n100_road.value,
+        expression="OBJTYPE = 'Riksgrense'",
+        output_name=Road_N100.data_preparation___country_boarder___n100_road.value,
+    )
     arcpy.cartography.SmoothLine(
         in_features=Road_N100.data_preparation___merge_divided_roads___n100_road.value,
         out_feature_class=Road_N100.data_preparation___smooth_road___n100_road.value,
         algorithm="PAEK",
         tolerance="300 meters",
         error_option="RESOLVE_ERRORS",
+        in_barriers=[
+            Road_N100.data_preparation___water_feature_outline___n100_road.value,
+            Road_N100.data_selection___railroad___n100_road.value,
+            Road_N100.data_preparation___country_boarder___n100_road.value,
+        ],
     )
 
 

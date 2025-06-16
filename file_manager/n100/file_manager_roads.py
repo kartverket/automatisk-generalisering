@@ -70,6 +70,11 @@ class Road_N100(Enum):
         description="railroad",
     )
 
+    data_selection___admin_boundary___n100_road = file_manager.generate_file_name_gdb(
+        script_source_name=data_selection,
+        description="admin_boundary",
+    )
+
     data_selection___begrensningskurve___n100_road = (
         file_manager.generate_file_name_gdb(
             script_source_name=data_selection,
