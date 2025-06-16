@@ -91,9 +91,10 @@ class FeatureClassCreator:
         Appends geometry from the input feature class to the output feature class.
         This method assumes the output feature class already exists or was just created.
         """
-        with arcpy.da.SearchCursor(
-            self.input_fc, ["SHAPE@"]
-        ) as s_cursor, arcpy.da.InsertCursor(self.output_fc, ["SHAPE@"]) as i_cursor:
+        with (
+            arcpy.da.SearchCursor(self.input_fc, ["SHAPE@"]) as s_cursor,
+            arcpy.da.InsertCursor(self.output_fc, ["SHAPE@"]) as i_cursor,
+        ):
             for row in s_cursor:
                 i_cursor.insertRow(row)
         print("Appended geometry to the feature class.")
@@ -223,6 +224,32 @@ class WorkFileManager:
         self.created_paths.append(path)
         return path
 
+    def generate_output(
+        self,
+        instance: object,
+        name: str,
+        iteration_index: int,
+    ) -> str:
+        """
+        What:
+            Generates a unique file path for a given base name and iteration index.
+            Designed to allow users of WorkFileManager to generate indexed outputs in a loop.
+
+        Args:
+            instance (object): The caller instance to update attributes on if needed.
+            name (str): The base name of the work file.
+            iteration_index (int): The current iteration index for uniqueness.
+            instance (object): The caller instance to update attributes on if needed.
+
+        Returns:
+            str: The generated file path.
+        """
+        return self.setup_work_file_paths(
+            instance=instance,
+            file_structure=name,
+            index=iteration_index,
+        )
+
     def setup_work_file_paths(
         self,
         instance: object,
@@ -306,7 +333,10 @@ class WorkFileManager:
             return updated_dict
 
         # Determine the type of the top-level structure and process accordingly
-        return process_item(file_structure)
+        if isinstance(file_structure, str):
+            return process_string(file_structure, idx=index)
+        else:
+            return process_item(file_structure)
 
     def setup_dynamic_file_paths(
         self,
@@ -604,3 +634,8 @@ def get_all_fields(input_fields, *added_field_sets):
     for fields in added_field_sets:
         combined.extend([item[0] for item in fields])
     return combined
+
+
+def count_objects(input_layer):
+    count = int(arcpy.management.GetCount(input_layer).getOutput(0))
+    return count

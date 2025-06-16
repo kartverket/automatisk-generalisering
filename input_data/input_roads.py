@@ -21,7 +21,7 @@ Veglenke = rf"{roads_path}\Veglenke"
 Vegtrase = rf"{roads_path}\Vegtrase"
 roads = rf"{roads_path}\roads"
 
-road_output_1 = rf"{road_output}\n100_Veg2025_Norge4"
+road_output_1 = rf"{road_output}\elveg_and_sti"
 
 if __name__ == "__main__":
     environment_setup.main()
