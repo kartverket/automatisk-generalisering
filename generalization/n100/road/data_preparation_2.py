@@ -68,15 +68,17 @@ def data_selection_and_validation():
     plot_area = "navn IN ('Asker', 'Bærum', 'Drammen', 'Frogn', 'Hole', 'Holmestrand', 'Horten', 'Jevnaker', 'Kongsberg', 'Larvik', 'Lier', 'Lunner', 'Modum', 'Nesodden', 'Oslo', 'Ringerike', 'Tønsberg', 'Øvre Eiker')"
     resolve_road_conflicts_test = "navn IN ('Jevnaker', 'Gran', 'Søndre Land')"
     small_plot_area = "navn IN ('Oslo', 'Ringerike')"
+    presentation_area = "navn IN ('Asker', 'Bærum', 'Oslo', 'Enebakk', 'Nittedal', 'Nordre Follo', 'Hole', 'Nesodden', 'Lørenskog', 'Sandnes', 'Stavanger', 'Gjesdal', 'Sola', 'Klepp', 'Strand', 'Time', 'Randaberg')"
 
     selector = StudyAreaSelector(
         input_output_file_dict={
             input_roads.road_output_1: Road_N100.data_selection___nvdb_roads___n100_road.value,
             input_n100.Bane: Road_N100.data_selection___railroad___n100_road.value,
             input_n100.BegrensningsKurve: Road_N100.data_selection___begrensningskurve___n100_road.value,
+            input_n100.AdminGrense: Road_N100.data_selection___admin_boundary___n100_road.value,
         },
         selecting_file=input_n100.AdminFlate,
-        selecting_sql_expression=resolve_road_conflicts_test,
+        selecting_sql_expression=presentation_area,
         select_local=config.select_study_area,
     )
 
@@ -166,8 +168,9 @@ def trim_road_details():
     )
 
     def safe_remove_lines():
+
         custom_arcpy.select_attribute_and_make_permanent_feature(
-            input_layer=input_n100.AdminGrense,
+            input_layer=Road_N100.data_selection___admin_boundary___n100_road.value,
             expression="OBJTYPE = 'Riksgrense'",
             output_name=Road_N100.data_preparation___country_boarder___n100_road.value,
         )
@@ -441,12 +444,23 @@ def merge_divided_roads():
 
 @timing_decorator
 def smooth_line():
+
+    custom_arcpy.select_attribute_and_make_permanent_feature(
+        input_layer=Road_N100.data_selection___admin_boundary___n100_road.value,
+        expression="OBJTYPE = 'Riksgrense'",
+        output_name=Road_N100.data_preparation___country_boarder___n100_road.value,
+    )
     arcpy.cartography.SmoothLine(
         in_features=Road_N100.data_preparation___merge_divided_roads___n100_road.value,
         out_feature_class=Road_N100.data_preparation___smooth_road___n100_road.value,
         algorithm="PAEK",
         tolerance="300 meters",
         error_option="RESOLVE_ERRORS",
+        in_barriers=[
+            Road_N100.data_preparation___water_feature_outline___n100_road.value,
+            Road_N100.data_selection___railroad___n100_road.value,
+            Road_N100.data_preparation___country_boarder___n100_road.value,
+        ],
     )
 
 
@@ -481,6 +495,28 @@ def pre_resolve_road_conflicts():
 
 
 def resolve_road_conflicts():
+
+    road_hierarchy = """def Reclass(vegklasse, vegkategori):
+        if vegklasse in (0, 1, 2, 3, 4):
+            return 1
+        elif vegklasse == 5:
+            return 2
+        elif vegklasse == 6:
+            return 3
+        elif vegklasse == 7:
+            return 4
+        else:
+            return 5
+    """
+
+    arcpy.management.CalculateField(
+        in_table=Road_N100.data_preparation___road_single_part_3___n100_road.value,
+        field="hierarchy",
+        expression="Reclass(!vegklasse!, !vegkategori!)",
+        expression_type="PYTHON3",
+        code_block=road_hierarchy,
+    )
+
     road = "road"
     railroad = "railroad"
     begrensningskurve = "begrensningskurve"
