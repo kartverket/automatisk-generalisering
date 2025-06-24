@@ -221,6 +221,7 @@ def trim_road_details():
     )
 
 
+@timing_decorator
 def admin_boarder():
 
     custom_arcpy.select_attribute_and_make_permanent_feature(
@@ -658,7 +659,7 @@ def final_output():
 
     custom_arcpy.select_attribute_and_make_permanent_feature(
         input_layer=Road_N100.data_preparation___resolve_road_conflicts___n100_road.value,
-        expression="typeveg = 'bilferje'",
+        expression="typeveg IN ('bilferje', 'passasjerferje')",
         output_name=Road_N100.data_preparation___road_final_output___n100_road.value,
         inverted=True,
     )
