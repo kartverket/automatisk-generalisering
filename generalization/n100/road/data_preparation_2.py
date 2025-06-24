@@ -47,6 +47,7 @@ def main():
     arcpy.env.referenceScale = 100000
     data_selection_and_validation()
     trim_road_details()
+    admin_boarder()
     adding_fields()
     collapse_road_detail()
     simplify_road()
@@ -57,6 +58,7 @@ def main():
     smooth_line()
     pre_resolve_road_conflicts()
     resolve_road_conflicts()
+    final_output()
 
 
 SEARCH_DISTANCE = "5000 Meters"
@@ -66,7 +68,7 @@ OBJECT_LIMIT = 100_000
 @timing_decorator
 def data_selection_and_validation():
     plot_area = "navn IN ('Asker', 'Bærum', 'Drammen', 'Frogn', 'Hole', 'Holmestrand', 'Horten', 'Jevnaker', 'Kongsberg', 'Larvik', 'Lier', 'Lunner', 'Modum', 'Nesodden', 'Oslo', 'Ringerike', 'Tønsberg', 'Øvre Eiker')"
-    resolve_road_conflicts_test = "navn IN ('Jevnaker', 'Gran', 'Søndre Land')"
+    ferry_admin_test = "navn IN ('Frøya', 'Hitra', 'Aurskog-Høland')"
     small_plot_area = "navn IN ('Oslo', 'Ringerike')"
     presentation_area = "navn IN ('Asker', 'Bærum', 'Oslo', 'Enebakk', 'Nittedal', 'Nordre Follo', 'Hole', 'Nesodden', 'Lørenskog', 'Sandnes', 'Stavanger', 'Gjesdal', 'Sola', 'Klepp', 'Strand', 'Time', 'Randaberg')"
 
@@ -78,7 +80,7 @@ def data_selection_and_validation():
             input_n100.AdminGrense: Road_N100.data_selection___admin_boundary___n100_road.value,
         },
         selecting_file=input_n100.AdminFlate,
-        selecting_sql_expression=presentation_area,
+        selecting_sql_expression=ferry_admin_test,
         select_local=config.select_study_area,
     )
 
@@ -154,6 +156,46 @@ def run_thin_roads(
     partition_thin_roads.run()
 
 
+def calculate_boarder_road_hierarchy(
+    input_road: str,
+    root_file: str,
+    input_boarder_dagnle: str,
+    output_road: str,
+):
+    boarder_intersecting_roads = f"{root_file}_1"
+    boarder_intersecting_roads_inverted = f"{root_file}_2"
+
+    custom_arcpy.select_location_and_make_permanent_feature(
+        input_layer=input_road,
+        overlap_type=custom_arcpy.OverlapType.INTERSECT.value,
+        select_features=input_boarder_dagnle,
+        output_name=boarder_intersecting_roads,
+    )
+
+    custom_arcpy.select_location_and_make_permanent_feature(
+        input_layer=input_road,
+        overlap_type=custom_arcpy.OverlapType.INTERSECT.value,
+        select_features=input_boarder_dagnle,
+        output_name=boarder_intersecting_roads_inverted,
+        inverted=True,
+    )
+
+    arcpy.management.CalculateField(
+        in_table=boarder_intersecting_roads,
+        field="hierarchy",
+        expression="0",
+        expression_type="PYTHON3",
+    )
+
+    arcpy.management.Merge(
+        inputs=[
+            boarder_intersecting_roads,
+            boarder_intersecting_roads_inverted,
+        ],
+        output=output_road,
+    )
+
+
 @timing_decorator
 def trim_road_details():
     arcpy.management.MultipartToSinglepart(
@@ -167,43 +209,6 @@ def trim_road_details():
         dissolve_field_list=FieldNames.road_input_fields.value,
     )
 
-    def safe_remove_lines():
-
-        custom_arcpy.select_attribute_and_make_permanent_feature(
-            input_layer=Road_N100.data_selection___admin_boundary___n100_road.value,
-            expression="OBJTYPE = 'Riksgrense'",
-            output_name=Road_N100.data_preparation___country_boarder___n100_road.value,
-        )
-
-        arcpy.analysis.PairwiseBuffer(
-            in_features=Road_N100.data_preparation___country_boarder___n100_road.value,
-            out_feature_class=Road_N100.data_preparation___country_boarder_buffer___n100_road.value,
-            buffer_distance_or_field="500 Meters",
-        )
-
-        custom_arcpy.select_location_and_make_permanent_feature(
-            input_layer=Road_N100.data_preparation___dissolved_intersections___n100_road.value,
-            overlap_type=custom_arcpy.OverlapType.INTERSECT.value,
-            select_features=Road_N100.data_preparation___country_boarder_buffer___n100_road.value,
-            output_name=Road_N100.data_preparation___roads_near_boarder___n100_road.value,
-        )
-
-        arcpy.topographic.RemoveSmallLines(
-            in_features=Road_N100.data_preparation___dissolved_intersections___n100_road.value,
-            minimum_length="100 meters",
-            recursive="NON_RECURSIVE",
-        )
-
-        custom_arcpy.select_location_and_make_permanent_feature(
-            input_layer=Road_N100.data_preparation___roads_near_boarder___n100_road.value,
-            overlap_type=custom_arcpy.OverlapType.ARE_IDENTICAL_TO.value,
-            select_features=Road_N100.data_preparation___dissolved_intersections___n100_road.value,
-            output_name=Road_N100.data_preparation___removed_roads_near_boarder___n100_road.value,
-            inverted=True,
-        )
-
-    # safe_remove_lines()
-
     run_dissolve_with_intersections(
         input_line_feature=Road_N100.data_preparation___dissolved_intersections___n100_road.value,
         output_processed_feature=Road_N100.data_preparation___dissolved_intersections_2___n100_road.value,
@@ -213,6 +218,36 @@ def trim_road_details():
     arcpy.management.MultipartToSinglepart(
         in_features=Road_N100.data_preparation___dissolved_intersections_2___n100_road.value,
         out_feature_class=Road_N100.data_preparation___road_single_part_2___n100_road.value,
+    )
+
+
+@timing_decorator
+def admin_boarder():
+
+    custom_arcpy.select_attribute_and_make_permanent_feature(
+        input_layer=Road_N100.data_selection___admin_boundary___n100_road.value,
+        expression="OBJTYPE = 'Riksgrense'",
+        output_name=Road_N100.data_preparation___country_boarder___n100_road.value,
+    )
+
+    custom_arcpy.select_attribute_and_make_permanent_feature(
+        input_layer=Road_N100.data_preparation___road_single_part_2___n100_road.value,
+        expression=f"vegkategori  in ('{NvdbAlias.europaveg}', '{NvdbAlias.riksveg}', '{NvdbAlias.fylkesveg}', '{NvdbAlias.kommunalveg}', '{NvdbAlias.privatveg}', '{NvdbAlias.skogsveg}')",
+        output_name=Road_N100.data_preparation___car_raod___n100_road.value,
+    )
+
+    arcpy.management.FeatureVerticesToPoints(
+        in_features=Road_N100.data_preparation___car_raod___n100_road.value,
+        out_feature_class=Road_N100.data_preparation___road_dangle___n100_road.value,
+        point_location="DANGLE",
+    )
+
+    custom_arcpy.select_location_and_make_permanent_feature(
+        input_layer=Road_N100.data_preparation___road_dangle___n100_road.value,
+        overlap_type=custom_arcpy.OverlapType.WITHIN_A_DISTANCE.value,
+        search_distance="1 Meters",
+        select_features=Road_N100.data_preparation___country_boarder___n100_road.value,
+        output_name=Road_N100.data_preparation___boarder_road_dangle___n100_road.value,
     )
 
 
@@ -321,8 +356,10 @@ def thin_roads():
     )
     road_data_validation.check_repair_sequence()
 
-    road_hierarchy = """def Reclass(vegklasse, vegkategori):
-        if vegklasse in (0, 1, 2, 3, 4):
+    road_hierarchy = """def Reclass(vegklasse, typeveg):
+        if typeveg == 'bilferje':
+            return 0
+        elif vegklasse in (0, 1, 2, 3, 4):
             return 1
         elif vegklasse == 5:
             return 2
@@ -337,13 +374,20 @@ def thin_roads():
     arcpy.management.CalculateField(
         in_table=Road_N100.data_preparation___dissolved_intersections_3___n100_road.value,
         field="hierarchy",
-        expression="Reclass(!vegklasse!, !vegkategori!)",
+        expression="Reclass(!vegklasse!, !typeveg!)",
         expression_type="PYTHON3",
         code_block=road_hierarchy,
     )
 
+    calculate_boarder_road_hierarchy(
+        input_road=Road_N100.data_preparation___dissolved_intersections_3___n100_road.value,
+        root_file=Road_N100.data_preparation___root_calculate_boarder_hierarchy___n100_road.value,
+        input_boarder_dagnle=Road_N100.data_preparation___boarder_road_dangle___n100_road.value,
+        output_road=Road_N100.data_preparation___calculated_boarder_hierarchy___n100_road.value,
+    )
+
     run_thin_roads(
-        input_feature=Road_N100.data_preparation___dissolved_intersections_3___n100_road.value,
+        input_feature=Road_N100.data_preparation___calculated_boarder_hierarchy___n100_road.value,
         partition_root_file=Road_N100.data_preparation___thin_road_partition_root___n100_road.value,
         output_feature=Road_N100.data_preparation___thin_road_output___n100_road.value,
         docu_path=Road_N100.data_preparation___thin_road_docu___n100_road.value,
@@ -368,8 +412,10 @@ def thin_sti_and_forest_roads():
     road_data_validation.check_repair_sequence()
 
     # It seems from source code that having 2 as an else return is intended function if not revert to `otpional_sti_and_forest_hierarchy`
-    sti_and_forest_hierarchy = f"""def Reclass(vegkategori):
+    sti_and_forest_hierarchy = f"""def Reclass(vegkategori, typeveg):
         if vegkategori  in ('{NvdbAlias.europaveg}', '{NvdbAlias.riksveg}', '{NvdbAlias.fylkesveg}', '{NvdbAlias.kommunalveg}', '{NvdbAlias.privatveg}', '{NvdbAlias.skogsveg}'):
+            return 0
+        elif typeveg == 'bilferje':
             return 0
         elif vegkategori in ('{NvdbAlias.traktorveg}', '{NvdbAlias.barmarksløype}'):
             return 1
@@ -385,7 +431,7 @@ def thin_sti_and_forest_roads():
     arcpy.management.CalculateField(
         in_table=Road_N100.data_preparation___dissolved_intersections_4___n100_road.value,
         field="hierarchy",
-        expression="Reclass(!vegkategori!)",
+        expression="Reclass(!vegkategori!, !typeveg!)",
         expression_type="PYTHON3",
         code_block=sti_and_forest_hierarchy,
     )
@@ -445,11 +491,11 @@ def merge_divided_roads():
 @timing_decorator
 def smooth_line():
 
-    custom_arcpy.select_attribute_and_make_permanent_feature(
-        input_layer=Road_N100.data_selection___admin_boundary___n100_road.value,
-        expression="OBJTYPE = 'Riksgrense'",
-        output_name=Road_N100.data_preparation___country_boarder___n100_road.value,
-    )
+    # custom_arcpy.select_attribute_and_make_permanent_feature(
+    #     input_layer=Road_N100.data_selection___admin_boundary___n100_road.value,
+    #     expression="OBJTYPE = 'Riksgrense'",
+    #     output_name=Road_N100.data_preparation___country_boarder___n100_road.value,
+    # )
     arcpy.cartography.SmoothLine(
         in_features=Road_N100.data_preparation___merge_divided_roads___n100_road.value,
         out_feature_class=Road_N100.data_preparation___smooth_road___n100_road.value,
@@ -496,8 +542,10 @@ def pre_resolve_road_conflicts():
 
 def resolve_road_conflicts():
 
-    road_hierarchy = """def Reclass(vegklasse, vegkategori):
-        if vegklasse in (0, 1, 2, 3, 4):
+    road_hierarchy = """def Reclass(vegklasse, typeveg):
+        if typeveg == 'bilferje':
+            return 0
+        elif vegklasse in (0, 1, 2, 3, 4):
             return 1
         elif vegklasse == 5:
             return 2
@@ -512,9 +560,16 @@ def resolve_road_conflicts():
     arcpy.management.CalculateField(
         in_table=Road_N100.data_preparation___road_single_part_3___n100_road.value,
         field="hierarchy",
-        expression="Reclass(!vegklasse!, !vegkategori!)",
+        expression="Reclass(!vegklasse!, !typeveg!)",
         expression_type="PYTHON3",
         code_block=road_hierarchy,
+    )
+
+    calculate_boarder_road_hierarchy(
+        input_road=Road_N100.data_preparation___road_single_part_3___n100_road.value,
+        root_file=Road_N100.data_preparation___root_calculate_boarder_hierarchy_2___n100_road.value,
+        input_boarder_dagnle=Road_N100.data_preparation___boarder_road_dangle___n100_road.value,
+        output_road=Road_N100.data_preparation___calculated_boarder_hierarchy_2___n100_road.value,
     )
 
     road = "road"
@@ -525,7 +580,7 @@ def resolve_road_conflicts():
     inputs = {
         road: [
             "input",
-            Road_N100.data_preparation___road_single_part_3___n100_road.value,
+            Road_N100.data_preparation___calculated_boarder_hierarchy_2___n100_road.value,
         ],
         railroad: [
             "context",
@@ -598,6 +653,16 @@ def resolve_road_conflicts():
         search_distance="500 Meters",
     )
     partition_resolve_road_conflicts.run()
+
+
+def final_output():
+
+    custom_arcpy.select_attribute_and_make_permanent_feature(
+        input_layer=Road_N100.data_preparation___resolve_road_conflicts___n100_road.value,
+        expression="typeveg IN ('bilferje', 'passasjerferje')",
+        output_name=Road_N100.data_preparation___road_final_output___n100_road.value,
+        inverted=True,
+    )
 
 
 if __name__ == "__main__":

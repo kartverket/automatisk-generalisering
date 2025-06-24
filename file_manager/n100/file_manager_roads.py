@@ -117,6 +117,28 @@ class Road_N100(Enum):
         )
     )
 
+    data_preparation___car_raod___n100_road = file_manager.generate_file_name_gdb(
+        script_source_name=data_preparation,
+        description="car_raod",
+    )
+
+    data_preparation___road_dangle___n100_road = file_manager.generate_file_name_gdb(
+        script_source_name=data_preparation,
+        description="road_dangle",
+    )
+
+    data_preparation___boarder_road_dangle___n100_road = (
+        file_manager.generate_file_name_gdb(
+            script_source_name=data_preparation,
+            description="boarder_road_dangle",
+        )
+    )
+
+    data_preparation___boarder_road___n100_road = file_manager.generate_file_name_gdb(
+        script_source_name=data_preparation,
+        description="boarder_road",
+    )
+
     data_preparation___on_surface_selection___n100_road = (
         file_manager.generate_file_name_gdb(
             script_source_name=data_preparation,
@@ -233,6 +255,20 @@ class Road_N100(Enum):
         file_manager.generate_file_name_gdb(
             script_source_name=data_preparation,
             description="dissolved_intersections_3",
+        )
+    )
+
+    data_preparation___root_calculate_boarder_hierarchy___n100_road = (
+        file_manager.generate_file_name_gdb(
+            script_source_name=data_preparation,
+            description="root_calculate_boarder_hierarchy",
+        )
+    )
+
+    data_preparation___calculated_boarder_hierarchy___n100_road = (
+        file_manager.generate_file_name_gdb(
+            script_source_name=data_preparation,
+            description="calculated_boarder_hierarchy",
         )
     )
 
@@ -445,6 +481,20 @@ class Road_N100(Enum):
         )
     )
 
+    data_preparation___calculated_boarder_hierarchy_2___n100_road = (
+        file_manager.generate_file_name_gdb(
+            script_source_name=data_preparation,
+            description="calculated_boarder_hierarchy_2",
+        )
+    )
+
+    data_preparation___root_calculate_boarder_hierarchy_2___n100_road = (
+        file_manager.generate_file_name_gdb(
+            script_source_name=data_preparation,
+            description="root_calculate_boarder_hierarchy_2",
+        )
+    )
+
     data_preparation___railroad_single_part___n100_road = (
         file_manager.generate_file_name_gdb(
             script_source_name=data_preparation,
@@ -463,6 +513,13 @@ class Road_N100(Enum):
         file_manager.generate_file_name_gdb(
             script_source_name=data_preparation,
             description="resolve_road_conflicts",
+        )
+    )
+
+    data_preparation___road_final_output___n100_road = (
+        file_manager.generate_file_name_gdb(
+            script_source_name=data_preparation,
+            description="road_final_output",
         )
     )
 
