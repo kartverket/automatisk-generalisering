@@ -167,6 +167,18 @@ class Building_N100(Enum):
         )
     )
 
+    data_selection___anleggslinje___n100_building = file_manager.generate_file_name_gdb(
+        script_source_name=data_selection,
+        description="anleggslinje",
+    )
+
+    data_selection___power_grid_lines___n100_building = (
+        file_manager.generate_file_name_gdb(
+            script_source_name=data_selection,
+            description="power_grid_lines",
+        )
+    )
+
     data_preparation___geometry_validation___n100_building = (
         file_manager.generate_file_name_gdb(
             script_source_name=data_preparation,

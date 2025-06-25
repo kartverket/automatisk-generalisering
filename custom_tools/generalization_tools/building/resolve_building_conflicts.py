@@ -77,6 +77,7 @@ class ResolveBuildingConflicts:
 
     def __init__(
         self,
+        input_list_of_dicts_data_structure,
         building_inputs: Dict[str, str],
         building_gap_distance: int,
         barrier_inputs: Dict[str, str],
@@ -93,6 +94,7 @@ class ResolveBuildingConflicts:
         #                              INITIALIZING VARIABLES
         # ========================================
 
+        self.input_list_of_dicts_data_structure = input_list_of_dicts_data_structure
         #  Building inputs
         self.input_building_points = building_inputs["building_points"]
         self.input_building_polygons = building_inputs["building_polygons"]
@@ -560,7 +562,53 @@ class ResolveBuildingConflicts:
 
 
 if __name__ == "__main__":
+    input_data_structure = [
+        {
+            "unique_alias": "building_points",
+            "input_feature": Building_N100.point_displacement_with_buffer___merged_buffer_displaced_points___n100_building.value,
+            "lyrx_file": input_symbology.SymbologyN100.squares.value,
+            "grouped_lyrx": False,
+            "target_layer_name": "",
+        },
+        {
+            "unique_alias": "building_polygons",
+            "input_feature": Building_N100.polygon_resolve_building_conflicts___building_polygons_final___n100_building.value,
+            "lyrx_file": input_symbology.SymbologyN100.building_polygon.value,
+            "grouped_lyrx": False,
+            "target_layer_name": "",
+        },
+        {
+            "unique_alias": "road",
+            "input_feature": Building_N100.data_preparation___unsplit_roads___n100_building.value,
+            "lyrx_file": config.symbology_samferdsel,
+            "grouped_lyrx": True,
+            "target_layer_name": "N100_Samferdsel_senterlinje_veg_bru_L2",
+        },
+        {
+            "unique_alias": "railroad",
+            "input_feature": input_data.input_n100.Bane,
+            "lyrx_file": config.symbology_samferdsel,
+            "grouped_lyrx": True,
+            "target_layer_name": "N100_Samferdsel_senterlinje_jernbane_terreng_sort_maske",
+        },
+        {
+            "unique_alias": "railroad_station",
+            "input_feature": Building_N100.data_preparation___railway_stations_to_polygons___n100_building.value,
+            "lyrx_file": input_symbology.SymbologyN100.railway_station_squares.value,
+            "grouped_lyrx": False,
+            "target_layer_name": "",
+        },
+        {
+            "unique_alias": "begrensningskurve",
+            "input_feature": Building_N100.data_preparation___begrensningskurve_buffer_erase_2___n100_building.value,
+            "lyrx_file": input_symbology.SymbologyN100.begrensningskurve_polygon.value,
+            "grouped_lyrx": False,
+            "target_layer_name": "",
+        },
+    ]
+
     resolve_building_conflicts = ResolveBuildingConflicts(
+        input_list_of_dicts_data_structure=None,
         building_inputs={
             "building_points": Building_N100.point_displacement_with_buffer___merged_buffer_displaced_points___n100_building.value,
             "building_polygons": Building_N100.polygon_resolve_building_conflicts___building_polygons_final___n100_building.value,
