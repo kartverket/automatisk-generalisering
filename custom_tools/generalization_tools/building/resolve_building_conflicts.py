@@ -605,6 +605,13 @@ if __name__ == "__main__":
             "grouped_lyrx": False,
             "target_layer_name": "",
         },
+        {
+            "unique_alias": "power_grid_lines",
+            "input_feature": Building_N100.data_preparation___power_grid_lines___n100_building.value,
+            "lyrx_file": config.symbology_samferdsel,
+            "grouped_lyrx": True,
+            "target_layer_name": "AnleggsLinje_maske_sort",
+        },
     ]
 
     resolve_building_conflicts = ResolveBuildingConflicts(

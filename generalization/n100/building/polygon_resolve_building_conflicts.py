@@ -2,7 +2,7 @@
 import arcpy
 
 # Importing custom modules
-
+import config
 from custom_tools.general_tools import custom_arcpy
 from custom_tools.general_tools.polygon_processor import PolygonProcessor
 from custom_tools.general_tools.line_to_buffer_symbology import LineToBufferSymbology
@@ -86,6 +86,13 @@ def roads_and_water_barriers_500_m_from_building_polygons():
         overlap_type=custom_arcpy.OverlapType.WITHIN_A_DISTANCE,
         select_features=Building_N100.polygon_propogate_displacement___building_polygons_after_displacement___n100_building.value,
         output_name=Building_N100.polygon_resolve_building_conflicts___railroads_500m_from_displaced_polygon___n100_building.value,
+        search_distance="500 Meters",
+    )
+    custom_arcpy.select_location_and_make_permanent_feature(
+        input_layer=Building_N100.data_preparation___power_grid_lines___n100_building.value,
+        overlap_type=custom_arcpy.OverlapType.WITHIN_A_DISTANCE,
+        select_features=Building_N100.polygon_propogate_displacement___building_polygons_after_displacement___n100_building.value,
+        output_name=Building_N100.data_selection___power_grid_lines_500m_selection___n100_building.value,
         search_distance="500 Meters",
     )
 
@@ -172,6 +179,14 @@ def apply_symbology_to_layers():
         output_name=Building_N100.polygon_resolve_building_conflicts___railway___n100_building_lyrx.value,
     )
 
+    custom_arcpy.apply_symbology(
+        input_layer=Building_N100.data_selection___power_grid_lines_500m_selection___n100_building.value,
+        in_symbology_layer=config.symbology_samferdsel,
+        output_name=Building_N100.polygon_resolve_building_conflicts___power_grid_lines___n100_building_lyrx.value,
+        grouped_lyrx=True,
+        target_layer_name="AnleggsLinje_maske_sort",
+    )
+
 
 @timing_decorator
 def resolve_building_conflict_building_polygon():
@@ -211,6 +226,11 @@ def resolve_building_conflict_building_polygon():
         ],
         [
             Building_N100.polygon_resolve_building_conflicts___railway___n100_building_lyrx.value,
+            "false",
+            f"{N100_Values.rbc_barrier_clearance_distance_m.value} Meters",
+        ],
+        [
+            Building_N100.polygon_resolve_building_conflicts___power_grid_lines___n100_building_lyrx.value,
             "false",
             f"{N100_Values.rbc_barrier_clearance_distance_m.value} Meters",
         ],

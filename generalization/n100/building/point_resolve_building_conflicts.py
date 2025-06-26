@@ -62,6 +62,7 @@ def fixing_potential_geometry_errors():
         "railroad_tracks": Building_N100.data_selection___railroad_tracks_n100_input_data___n100_building.value,
         "railroad_stations": Building_N100.data_preparation___railway_stations_to_polygons___n100_building.value,
         "begrensningskurver": Building_N100.data_preparation___processed_begrensningskurve___n100_building.value,
+        "power_grid_lines": Building_N100.data_preparation___power_grid_lines___n100_building.value,
     }
 
     data_validation = GeometryValidator(
@@ -117,6 +118,7 @@ def resolve_building_conflicts():
     road_lyrx = "road_lyrx"
     railway_station_lyrx = "railway_station_lyrx"
     railway_lyrx = "railway_lyrx"
+    power_grid_lines = "power_grid_lines"
 
     inputs = {
         building_points: [
@@ -142,6 +144,10 @@ def resolve_building_conflicts():
         begrensningskurve: [
             "context",
             Building_N100.data_preparation___processed_begrensningskurve___n100_building.value,
+        ],
+        power_grid_lines: [
+            "context",
+            Building_N100.data_preparation___power_grid_lines___n100_building.value,
         ],
         building_squares_lyrx: [
             "reference",

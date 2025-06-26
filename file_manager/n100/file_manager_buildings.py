@@ -172,10 +172,17 @@ class Building_N100(Enum):
         description="anleggslinje",
     )
 
-    data_selection___power_grid_lines___n100_building = (
+    data_preparation___power_grid_lines___n100_building = (
+        file_manager.generate_file_name_gdb(
+            script_source_name=data_preparation,
+            description="power_grid_lines",
+        )
+    )
+
+    data_selection___power_grid_lines_500m_selection___n100_building = (
         file_manager.generate_file_name_gdb(
             script_source_name=data_selection,
-            description="power_grid_lines",
+            description="power_grid_lines_500m_selection",
         )
     )
 
@@ -622,6 +629,13 @@ class Building_N100(Enum):
         file_manager.generate_file_name_lyrx(
             script_source_name=polygon_resolve_building_conflicts,
             description="railway",
+        )
+    )
+
+    polygon_resolve_building_conflicts___power_grid_lines___n100_building_lyrx = (
+        file_manager.generate_file_name_lyrx(
+            script_source_name=polygon_resolve_building_conflicts,
+            description="power_grid_lines",
         )
     )
 
