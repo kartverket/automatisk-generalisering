@@ -522,6 +522,28 @@ class Building_N100(Enum):
         description="railroads_500m_from_displaced_polygon",
     )
 
+    polygon_resolve_building_conflicts___root_file___n100_building = (
+        file_manager.generate_file_name_gdb(
+            script_source_name=polygon_resolve_building_conflicts,
+            description="root_file",
+        )
+    )
+
+    polygon_resolve_building_conflicts___partition_root_file___n100_building = (
+        file_manager.generate_file_name_gdb(
+            script_source_name=polygon_resolve_building_conflicts,
+            description="partition_root_file",
+        )
+    )
+
+    polygon_resolve_building_conflicts___begrensingskurve_docu___building_n100 = (
+        file_manager.generate_file_name_general_files(
+            script_source_name=polygon_resolve_building_conflicts,
+            description="begrensingskurve_docu",
+            file_type="json",
+        )
+    )
+
     polygon_resolve_building_conflicts___building_polygon___n100_building_lyrx = (
         file_manager.generate_file_name_lyrx(
             script_source_name=polygon_resolve_building_conflicts,

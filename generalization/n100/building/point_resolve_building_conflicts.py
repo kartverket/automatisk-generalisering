@@ -186,10 +186,62 @@ def resolve_building_conflicts():
         ],
     }
 
+    input_data_structure = [
+        {
+            "unique_alias": "building_points",
+            "input_feature": (building_points, "input"),
+            "lyrx_file": input_symbology.SymbologyN100.squares.value,
+            "grouped_lyrx": False,
+            "target_layer_name": "",
+        },
+        {
+            "unique_alias": "building_polygons",
+            "input_feature": (building_polygons, "input"),
+            "lyrx_file": input_symbology.SymbologyN100.building_polygon.value,
+            "grouped_lyrx": False,
+            "target_layer_name": "",
+        },
+        {
+            "unique_alias": "road",
+            "input_feature": (road, "context"),
+            "lyrx_file": config.symbology_samferdsel,
+            "grouped_lyrx": True,
+            "target_layer_name": "N100_Samferdsel_senterlinje_veg_bru_L2",
+        },
+        {
+            "unique_alias": "railroad",
+            "input_feature": (railway, "context"),
+            "lyrx_file": config.symbology_samferdsel,
+            "grouped_lyrx": True,
+            "target_layer_name": "N100_Samferdsel_senterlinje_jernbane_terreng_sort_maske",
+        },
+        {
+            "unique_alias": "railroad_station",
+            "input_feature": (railway_station, "context"),
+            "lyrx_file": input_symbology.SymbologyN100.railway_station_squares.value,
+            "grouped_lyrx": False,
+            "target_layer_name": "",
+        },
+        {
+            "unique_alias": "begrensningskurve",
+            "input_feature": (begrensningskurve, "context"),
+            "lyrx_file": input_symbology.SymbologyN100.begrensningskurve_polygon.value,
+            "grouped_lyrx": False,
+            "target_layer_name": "",
+        },
+        {
+            "unique_alias": "power_grid_lines",
+            "input_feature": (power_grid_lines, "context"),
+            "lyrx_file": config.symbology_samferdsel,
+            "grouped_lyrx": True,
+            "target_layer_name": "AnleggsLinje_maske_sort",
+        },
+    ]
     resolve_building_conflicts_config = {
         "class": ResolveBuildingConflicts,
         "method": "run",
         "params": {
+            "input_list_of_dicts_data_structure": input_data_structure,
             "building_inputs": {
                 "building_points": (building_points, "input"),
                 "building_polygons": (building_polygons, "input"),
@@ -200,12 +252,14 @@ def resolve_building_conflicts():
                 "road": (road, "context"),
                 "railway_station": (railway_station, "context"),
                 "railway": (railway, "context"),
+                "power_grid_lines": (power_grid_lines, "context"),
             },
             "barrier_gap_distances": {
                 "begrensningskurve": N100_Values.rbc_barrier_clearance_distance_m.value,
                 "road": N100_Values.rbc_barrier_clearance_distance_m.value,
                 "railway_station": N100_Values.rbc_barrier_clearance_distance_m.value,
                 "railway": N100_Values.rbc_barrier_clearance_distance_m.value,
+                "power_grid_lines": N100_Values.rbc_barrier_clearance_distance_m.value,
             },
             "building_symbol_dimension": N100_Symbology.building_symbol_dimensions.value,
             "lyrx_files": {
@@ -215,9 +269,10 @@ def resolve_building_conflicts():
                 "road": (road_lyrx, "reference"),
                 "railway_station": (railway_station_lyrx, "reference"),
                 "railway": (railway_lyrx, "reference"),
+                "power_grid_lines": (begrensningskurve_lyrx, "reference"),
             },
             "base_path_for_lyrx": Building_N100.point_resolve_building_conflicts___lyrx_root___n100_building.value,
-            "base_path_for_features": Building_N100.point_resolve_building_conflicts___base_path_for_features___n100_building.value,
+            "root_path": Building_N100.point_resolve_building_conflicts___base_path_for_features___n100_building.value,
             "output_files": {
                 "building_points": (
                     building_points,
@@ -228,6 +283,7 @@ def resolve_building_conflicts():
                     "building_polygons_after_rbc",
                 ),
             },
+            "map_scale": "100000",
         },
     }
     resolve_building_conflicts_partition_iteration = PartitionIterator(
@@ -236,7 +292,7 @@ def resolve_building_conflicts():
         custom_functions=[resolve_building_conflicts_config],
         root_file_partition_iterator=Building_N100.point_resolve_building_conflicts___root_file___n100_building.value,
         dictionary_documentation_path=Building_N100.point_resolve_building_conflicts___documentation___building_n100.value,
-        feature_count="500000",
+        feature_count=500000,
     )
 
     resolve_building_conflicts_partition_iteration.run()

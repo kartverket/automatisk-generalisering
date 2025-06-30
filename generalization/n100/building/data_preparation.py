@@ -9,6 +9,7 @@ from input_data import input_roads
 
 # Importing custom modules
 from file_manager.n100.file_manager_buildings import Building_N100
+from file_manager.n100.file_manager_roads import Road_N100
 from env_setup import environment_setup
 import config
 from custom_tools.decorators.timing_decorator import timing_decorator
@@ -98,7 +99,7 @@ def data_selection():
         input_n50.Grunnriss: Building_N100.data_selection___building_polygon_n50_input_data___n100_building.value,
         input_n50.TuristHytte: Building_N100.data_selection___tourist_hut_n50_input_data___n100_building.value,
         input_other.matrikkel_bygningspunkt: Building_N100.data_selection___matrikkel_input_data___n100_building.value,
-        config.displacement_feature: Building_N100.data_selection___displacement_feature___n100_building.value,
+        Road_N100.data_preparation___resolve_road_conflicts_displacement_feature___n100_road.value: Building_N100.data_selection___displacement_feature___n100_building.value,
         input_n100.AnleggsLinje: Building_N100.data_selection___anleggslinje___n100_building.value,
     }
 
@@ -288,7 +289,7 @@ def begrensningskurve_land_and_water_bodies():
         custom_functions=[process_begrensningskurve],
         root_file_partition_iterator=Building_N100.data_preparation___begrensningskurve_base___n100_building.value,
         dictionary_documentation_path=Building_N100.data_preparation___begrensingskurve_docu___building_n100.value,
-        feature_count="800000",
+        feature_count=800000,
     )
     partition_begrensningskurve.run()
 

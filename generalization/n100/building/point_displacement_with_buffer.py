@@ -167,7 +167,7 @@ def buffer_displacement():
         custom_functions=[buffer_displacement_config],
         root_file_partition_iterator=Building_N100.point_displacement_with_buffer___root_file___n100_building.value,
         dictionary_documentation_path=Building_N100.point_displacement_with_buffer___documentation___building_n100.value,
-        feature_count="1400000",
+        feature_count=1400000,
     )
 
     buffer_displacement_partition_iteration.run()
