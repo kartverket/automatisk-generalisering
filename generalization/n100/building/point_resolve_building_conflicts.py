@@ -15,7 +15,7 @@ from env_setup import environment_setup
 from input_data import input_symbology
 from custom_tools.general_tools.partition_iterator import PartitionIterator
 from custom_tools.generalization_tools.building.resolve_building_conflicts import (
-    ResolveBuildingConflicts,
+    ResolveBuildingConflictsPoints,
 )
 from custom_tools.general_tools.polygon_processor import PolygonProcessor
 from custom_tools.general_tools.geometry_tools import GeometryValidator
@@ -238,7 +238,7 @@ def resolve_building_conflicts():
         },
     ]
     resolve_building_conflicts_config = {
-        "class": ResolveBuildingConflicts,
+        "class": ResolveBuildingConflictsPoints,
         "method": "run",
         "params": {
             "input_list_of_dicts_data_structure": input_data_structure,

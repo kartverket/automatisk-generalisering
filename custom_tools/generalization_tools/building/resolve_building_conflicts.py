@@ -24,7 +24,7 @@ from input_data import input_symbology
 from custom_tools.decorators.partition_io_decorator import partition_io_decorator
 
 
-class ResolveBuildingConflicts:
+class ResolveBuildingConflictsPoints:
     """
 
     What:
@@ -731,6 +731,200 @@ class ResolveBuildingConflicts:
         self.work_file_manager.delete_created_files()
 
 
+class ResolveBuildingConflictsPolygon:
+    def __init__(
+        self,
+        input_list_of_dicts_data_structure: list[dict[str, str]] = None,
+        root_file: str = None,
+        output_building_polygons: str = None,
+        # output_building_points: str = None,
+        write_work_files_to_memory: bool = False,
+        keep_work_files: bool = False,
+    ):
+        self.input_data = input_list_of_dicts_data_structure
+        self.root_path = root_file
+        self.output_building_polygons = output_building_polygons
+        # self.output_building_points = output_building_points
+
+        self.work_file_manager = WorkFileManager(
+            unique_id=id(self),
+            root_file=root_file,
+            write_to_memory=write_work_files_to_memory,
+            keep_files=keep_work_files,
+        )
+
+        self.feature_copies = self.work_file_manager.setup_work_file_paths(
+            instance=self,
+            file_structure=self.input_data,
+            add_key="feature_copy",
+        )
+
+        self.lyrx_outputs = self.work_file_manager.setup_work_file_paths(
+            instance=self,
+            file_structure=self.feature_copies,
+            add_key="lyrx_output",
+            file_type="lyrx",
+        )
+
+        self.building_polygon_rbc_output = "building_polygon_rbc_output"
+        self.invisible_polygons = "invisible_polygons"
+        self.feature_to_points = "feature_to_points"
+
+        self.gdb_files_list = [
+            self.building_polygon_rbc_output,
+            self.invisible_polygons,
+            self.feature_to_points,
+        ]
+
+        self.gdb_files_list = self.work_file_manager.setup_work_file_paths(
+            instance=self,
+            file_structure=self.gdb_files_list,
+        )
+
+    def copy_input_layers(self):
+        def copy_input(
+            input_feature: str = None,
+            feature_copy: str = None,
+        ):
+            arcpy.management.CopyFeatures(
+                in_features=input_feature,
+                out_feature_class=feature_copy,
+            )
+
+        self.work_file_manager.list_contents(
+            data=self.lyrx_outputs, title="Pre CopyFeatures"
+        )
+        self.work_file_manager.apply_to_structure(
+            data=self.feature_copies,
+            func=copy_input,
+            input_feature="input_layer",
+            feature_copy="feature_copy",
+        )
+        print("Copy Done")
+
+    def apply_symbology(self):
+        def apply_symbology(
+            feature_copy: str = None,
+            lyrx_file: str = None,
+            output_name: str = None,
+            grouped_lyrx: bool = False,
+            target_layer_name: str = None,
+        ):
+            if grouped_lyrx:
+                custom_arcpy.apply_symbology(
+                    input_layer=feature_copy,
+                    in_symbology_layer=lyrx_file,
+                    output_name=output_name,
+                    grouped_lyrx=True,
+                    target_layer_name=target_layer_name,
+                )
+            else:
+                custom_arcpy.apply_symbology(
+                    input_layer=feature_copy,
+                    in_symbology_layer=lyrx_file,
+                    output_name=output_name,
+                )
+
+        self.work_file_manager.list_contents(
+            data=self.lyrx_outputs, title="Pre Apply Symbology"
+        )
+        self.work_file_manager.apply_to_structure(
+            data=self.lyrx_outputs,
+            func=apply_symbology,
+            feature_copy="feature_copy",
+            lyrx_file="input_lyrx_feature",
+            output_name="lyrx_output",
+            grouped_lyrx="grouped_lyrx",
+            target_layer_name="target_layer_name",
+        )
+
+    def resolve_building_conflicts(self):
+        self.work_file_manager.list_contents(data=self.lyrx_outputs, title="Pre RBC")
+        building_layer = self.work_file_manager.extract_key_by_alias(
+            data=self.lyrx_outputs,
+            unique_alias="building",
+            key="lyrx_output",
+        )
+
+        barriers = [
+            ["begrensningskurve", "false", "30 Meters"],
+            ["railroad", "false", "30 Meters"],
+            ["hospital_churches", "false", "30 Meters"],
+            ["railroad_station", "false", "30 Meters"],
+            ["power_grid_lines", "false", "30 Meters"],
+            ["building", "false", "30 Meters"],
+        ]
+
+        resolved_barriers = [
+            [
+                self.work_file_manager.extract_key_by_alias(
+                    data=self.lyrx_outputs,
+                    unique_alias=alias,
+                    key="lyrx_output",
+                ),
+                flag,
+                gap,
+            ]
+            for alias, flag, gap in barriers
+        ]
+
+        arcpy.cartography.ResolveBuildingConflicts(
+            in_buildings=building_layer,
+            invisibility_field="invisibility",
+            in_barriers=resolved_barriers,
+            building_gap=f"{N100_Values.rbc_building_clearance_distance_m.value} Meters",
+            minimum_size="1 meters",
+        )
+
+        arcpy.management.Copy(
+            in_data=self.work_file_manager.extract_key_by_alias(
+                data=self.lyrx_outputs,
+                unique_alias="building",
+                key="feature_copy",
+            ),
+            out_data=self.output_building_polygons,
+        )
+
+    def invisibility_selections(self):
+
+        custom_arcpy.select_attribute_and_make_permanent_feature(
+            input_layer=self.building_polygon_rbc_output,
+            expression="invisibility = 1",
+            output_name=self.invisible_polygons,
+        )
+
+        custom_arcpy.select_attribute_and_make_permanent_feature(
+            input_layer=self.building_polygon_rbc_output,
+            expression="invisibility = 0",
+            output_name=self.output_building_polygons,
+        )
+
+        arcpy.management.FeatureToPoint(
+            in_features=self.invisible_polygons,
+            out_feature_class=self.feature_to_points,
+        )
+
+        arcpy.management.Copy(
+            in_data=self.feature_to_points,
+            out_data=self.output_building_points,
+        )
+
+    @partition_io_decorator(
+        input_param_names=["input_list_of_dicts_data_structure"],
+        output_param_names=[
+            "output_building_polygons",
+            # "output_building_points",
+        ],
+    )
+    def run(self):
+        arcpy.env.referenceScale = "100000"
+        environment_setup.main()
+        self.copy_input_layers()
+        self.apply_symbology()
+        self.resolve_building_conflicts()
+        # self.invisibility_selections()
+
+
 if __name__ == "__main__":
     input_data_structure = [
         {
@@ -784,7 +978,7 @@ if __name__ == "__main__":
         },
     ]
 
-    resolve_building_conflicts = ResolveBuildingConflicts(
+    resolve_building_conflicts = ResolveBuildingConflictsPoints(
         input_list_of_dicts_data_structure=input_data_structure,
         building_inputs={
             "building_points": Building_N100.point_displacement_with_buffer___merged_buffer_displaced_points___n100_building.value,

@@ -324,10 +324,10 @@ class ResolveBuildingConflictsPolygon:
                     unique_alias=alias,
                     key="lyrx_output",
                 ),
-                flag,
+                boolian,
                 gap,
             ]
-            for alias, flag, gap in barriers
+            for alias, boolian, gap in barriers
         ]
 
         arcpy.cartography.ResolveBuildingConflicts(
@@ -390,6 +390,7 @@ class ResolveBuildingConflictsPolygon:
 def resolve_building_conflicts_polygon():
     building = "building"
     railroad = "railroad"
+    road = "road"
     begrensningskurve = "begrensningskurve"
     power_grid_lines = "power_grid_lines"
     hospital_churches = "hospital_churches"
@@ -404,6 +405,10 @@ def resolve_building_conflicts_polygon():
         railroad: [
             "context",
             Building_N100.polygon_resolve_building_conflicts___railroads_500m_from_displaced_polygon___n100_building.value,
+        ],
+        road: [
+            "context",
+            Building_N100.data_preparation___road_symbology_buffers___n100_building.value,
         ],
         begrensningskurve: [
             "context",
@@ -425,9 +430,13 @@ def resolve_building_conflicts_polygon():
 
     outputs = {
         building: [
-            "not_invisible_polygons_after_rbc",
+            "after_rbc",
             Building_N100.polygon_resolve_building_conflicts___after_rbc___n100_building.value,
         ],
+        # building: [
+        #     "not_invisible_polygons_after_rbc",
+        #     Building_N100.polygon_resolve_building_conflicts___not_invisible_polygons_after_rbc___n100_building.value,
+        # ],
         # building_points: [
         #     "invisible_polygons_to_points",
         #     Building_N100.polygon_resolve_building_conflicts___invisible_polygons_to_points___n100_building.value,
@@ -439,6 +448,13 @@ def resolve_building_conflicts_polygon():
             "unique_alias": building,
             "input_layer": (building, "input"),
             "input_lyrx_feature": input_symbology.SymbologyN100.building_polygon.value,
+            "grouped_lyrx": False,
+            "target_layer_name": None,
+        },
+        {
+            "unique_alias": road,
+            "input_layer": (road, "context"),
+            "input_lyrx_feature": input_symbology.SymbologyN100.road_buffer.value,
             "grouped_lyrx": False,
             "target_layer_name": None,
         },
@@ -485,7 +501,7 @@ def resolve_building_conflicts_polygon():
         "params": {
             "input_list_of_dicts_data_structure": input_data_structure,
             "root_file": Building_N100.polygon_resolve_building_conflicts___root_file___n100_building.value,
-            "output_building_polygons": (building, "not_invisible_polygons_after_rbc"),
+            "output_building_polygons": (building, "after_rbc"),
             # "output_building_points": (building_points, "invisible_polygons_to_points"),
         },
     }
