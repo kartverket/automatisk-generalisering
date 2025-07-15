@@ -791,9 +791,6 @@ class ResolveBuildingConflictsPolygon:
                 out_feature_class=feature_copy,
             )
 
-        self.work_file_manager.list_contents(
-            data=self.lyrx_outputs, title="Pre CopyFeatures"
-        )
         self.work_file_manager.apply_to_structure(
             data=self.feature_copies,
             func=copy_input,
@@ -825,9 +822,6 @@ class ResolveBuildingConflictsPolygon:
                     output_name=output_name,
                 )
 
-        self.work_file_manager.list_contents(
-            data=self.lyrx_outputs, title="Pre Apply Symbology"
-        )
         self.work_file_manager.apply_to_structure(
             data=self.lyrx_outputs,
             func=apply_symbology,
