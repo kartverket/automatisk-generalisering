@@ -508,30 +508,26 @@ class WorkFileManager:
         return [item[key] for item in data if key in item]
 
     @staticmethod
-    def update_key_by_alias(
+    def set_key_by_alias(
         data: list[dict], unique_alias: str, key: str, new_value: str
     ) -> None:
         """
-        Updates the value of a specific key in the dictionary with the specified alias.
+        Sets the value of a key in the dictionary with the specified alias.
+        Adds the key if it does not exist.
 
         Args:
             data (list[dict]): The input list of dictionaries.
             unique_alias (str): The alias identifying the target dictionary.
-            key (str): The key to update the value for.
-            new_value (str): The new value to set for the key.
+            key (str): The key to set or update.
+            new_value (str): The value to set for the key.
 
         Raises:
             ValueError: If no dictionary with the specified alias is found.
-            KeyError: If the key does not exist in the identified dictionary.
         """
         for item in data:
             if item.get("unique_alias") == unique_alias:
-                if key in item:
-                    item[key] = new_value
-                    return
-                raise KeyError(
-                    f"Key '{key}' not found in dictionary with alias '{unique_alias}'."
-                )
+                item[key] = new_value
+                return
         raise ValueError(f"No dictionary with alias '{unique_alias}' found.")
 
 

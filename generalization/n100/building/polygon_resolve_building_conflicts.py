@@ -1,13 +1,14 @@
-# Importing modules
 import arcpy
-
-# Importing custom modules
-
+import config
 from custom_tools.general_tools import custom_arcpy
+from custom_tools.general_tools.partition_iterator import PartitionIterator
 from custom_tools.general_tools.polygon_processor import PolygonProcessor
-from custom_tools.general_tools.line_to_buffer_symbology import LineToBufferSymbology
+
+from custom_tools.generalization_tools.building.resolve_building_conflicts import (
+    ResolveBuildingConflictsPolygon,
+)
 from input_data import input_symbology
-from constants.n100_constants import N100_Symbology, N100_SQLResources, N100_Values
+
 
 # Importing environment settings
 from env_setup import environment_setup
@@ -45,49 +46,14 @@ def main():
     """
 
     environment_setup.main()
-    roads_and_water_barriers_500_m_from_building_polygons()
     hospital_church_points_to_squares()
     apply_symbology_to_layers()
-    resolve_building_conflict_building_polygon()
+    resolve_building_conflicts_polygon()
     invisible_building_polygons_to_point()
     intersecting_building_polygons_to_point()
     merging_invisible_intersecting_points()
     check_if_building_polygons_are_big_enough()
     small_building_polygons_to_points()
-
-
-@timing_decorator
-def roads_and_water_barriers_500_m_from_building_polygons():
-    """
-    Selects roads, water barriers, and railways that are within 500 meters of building polygons.
-    """
-    print("Selecting features 500 meter from building polygon ...")
-    # Selecting begrensningskurve 500 meters from building polygons
-    custom_arcpy.select_location_and_make_permanent_feature(
-        input_layer=Building_N100.data_preparation___processed_begrensningskurve___n100_building.value,
-        overlap_type=custom_arcpy.OverlapType.WITHIN_A_DISTANCE,
-        select_features=Building_N100.polygon_propogate_displacement___building_polygons_after_displacement___n100_building.value,
-        output_name=Building_N100.polygon_resolve_building_conflicts___begrensningskurve_500m_from_displaced_polygon___n100_building.value,
-        search_distance="500 Meters",
-    )
-
-    # Selecting roads 500 meters from building polygons
-    custom_arcpy.select_location_and_make_permanent_feature(
-        input_layer=Building_N100.data_preparation___road_symbology_buffers___n100_building.value,
-        overlap_type=custom_arcpy.OverlapType.WITHIN_A_DISTANCE,
-        select_features=Building_N100.polygon_propogate_displacement___building_polygons_after_displacement___n100_building.value,
-        output_name=Building_N100.polygon_resolve_building_conflicts___roads_500m_from_displaced_polygon___n100_building.value,
-        search_distance="500 Meters",
-    )
-
-    # Selecting railway 500 meters from building polygons
-    custom_arcpy.select_location_and_make_permanent_feature(
-        input_layer=Building_N100.data_selection___railroad_tracks_n100_input_data___n100_building.value,
-        overlap_type=custom_arcpy.OverlapType.WITHIN_A_DISTANCE,
-        select_features=Building_N100.polygon_propogate_displacement___building_polygons_after_displacement___n100_building.value,
-        output_name=Building_N100.polygon_resolve_building_conflicts___railroads_500m_from_displaced_polygon___n100_building.value,
-        search_distance="500 Meters",
-    )
 
 
 @timing_decorator
@@ -172,65 +138,144 @@ def apply_symbology_to_layers():
         output_name=Building_N100.polygon_resolve_building_conflicts___railway___n100_building_lyrx.value,
     )
 
+    custom_arcpy.apply_symbology(
+        input_layer=Building_N100.data_selection___power_grid_lines_500m_selection___n100_building.value,
+        in_symbology_layer=config.symbology_samferdsel,
+        output_name=Building_N100.polygon_resolve_building_conflicts___power_grid_lines___n100_building_lyrx.value,
+        grouped_lyrx=True,
+        target_layer_name="N100_Samferdsel_senterlinje_veg_anlegg_sort_maske",
+    )
 
-@timing_decorator
-def resolve_building_conflict_building_polygon():
-    """
-    Resolves conflicts among building polygons considering roads, water features, hospitals, and churches as barriers.
-    This function resolves conflicts among building polygons by taking into account various barriers such as roads,
-    water features, hospitals, and churches. To incorporate hospital and church points as barriers, these points are first
-    transformed into polygons using the dimensions of their symbology.
-    """
 
-    # Resolving Building Conflicts for building polygons
-    print("Resolving building conflicts ...")
-    # Setting scale to 1: 100 000
-    arcpy.env.referenceScale = "100000"
+def resolve_building_conflicts_polygon():
+    building = "building"
+    railroad = "railroad"
+    road = "road"
+    begrensningskurve = "begrensningskurve"
+    power_grid_lines = "power_grid_lines"
+    hospital_churches = "hospital_churches"
+    railroad_station = "railroad_station"
+    # building_points = "building_points"
 
-    # Barriers: roads, begrensningskurve, hospital and church squares
-    input_barriers = [
-        [
-            Building_N100.polygon_resolve_building_conflicts___roads___n100_building_lyrx.value,
-            "false",
-            f"{N100_Values.rbc_barrier_clearance_distance_m.value} Meters",  # 30 Meters for all barriers
+    inputs = {
+        building: [
+            "input",
+            Building_N100.polygon_propogate_displacement___building_polygons_after_displacement___n100_building.value,
         ],
-        [
-            Building_N100.polygon_resolve_building_conflicts___begrensningskurve___n100_building_lyrx.value,
-            "false",
-            f"{N100_Values.rbc_barrier_clearance_distance_m.value} Meters",
+        railroad: [
+            "context",
+            Building_N100.data_selection___railroad_tracks_n100_input_data___n100_building.value,
         ],
-        [
-            Building_N100.polygon_resolve_building_conflicts___polygonprocessor_symbology___n100_building_lyrx.value,
-            "false",
-            f"{N100_Values.rbc_barrier_clearance_distance_m.value} Meters",
+        road: [
+            "context",
+            Building_N100.data_preparation___road_symbology_buffers___n100_building.value,
         ],
-        [
-            Building_N100.data_preparation___railway_stations_to_polygons_symbology___n100_building_lyrx.value,
-            "false",
-            f"{N100_Values.rbc_barrier_clearance_distance_m.value} Meters",
+        begrensningskurve: [
+            "context",
+            Building_N100.data_preparation___processed_begrensningskurve___n100_building.value,
         ],
-        [
-            Building_N100.polygon_resolve_building_conflicts___railway___n100_building_lyrx.value,
-            "false",
-            f"{N100_Values.rbc_barrier_clearance_distance_m.value} Meters",
+        power_grid_lines: [
+            "context",
+            Building_N100.data_preparation___power_grid_lines___n100_building.value,
         ],
+        hospital_churches: [
+            "context",
+            Building_N100.polygon_resolve_building_conflicts___hospital_church_squares___n100_building.value,
+        ],
+        railroad_station: [
+            "context",
+            Building_N100.data_preparation___railway_stations_to_polygons___n100_building.value,
+        ],
+    }
+
+    outputs = {
+        building: [
+            "after_rbc",
+            Building_N100.polygon_resolve_building_conflicts___after_rbc___n100_building.value,
+        ],
+        # building: [
+        #     "not_invisible_polygons_after_rbc",
+        #     Building_N100.polygon_resolve_building_conflicts___not_invisible_polygons_after_rbc___n100_building.value,
+        # ],
+        # building: [
+        #     "invisible_polygons_to_points",
+        #     Building_N100.polygon_resolve_building_conflicts___invisible_polygons_to_points___n100_building.value,
+        # ],
+    }
+
+    input_data_structure = [
+        {
+            "unique_alias": building,
+            "input_layer": (building, "input"),
+            "input_lyrx_feature": input_symbology.SymbologyN100.building_polygon.value,
+            "grouped_lyrx": False,
+            "target_layer_name": None,
+        },
+        {
+            "unique_alias": road,
+            "input_layer": (road, "context"),
+            "input_lyrx_feature": input_symbology.SymbologyN100.road_buffer.value,
+            "grouped_lyrx": False,
+            "target_layer_name": None,
+        },
+        {
+            "unique_alias": railroad,
+            "input_layer": (railroad, "context"),
+            "input_lyrx_feature": input_symbology.SymbologyN100.railway.value,
+            "grouped_lyrx": False,
+            "target_layer_name": None,
+        },
+        {
+            "unique_alias": begrensningskurve,
+            "input_layer": (begrensningskurve, "context"),
+            "input_lyrx_feature": input_symbology.SymbologyN100.begrensningskurve_polygon.value,
+            "grouped_lyrx": False,
+            "target_layer_name": None,
+        },
+        {
+            "unique_alias": power_grid_lines,
+            "input_layer": (power_grid_lines, "context"),
+            "input_lyrx_feature": config.symbology_samferdsel,
+            "grouped_lyrx": True,
+            "target_layer_name": "N100_Samferdsel_senterlinje_veg_anlegg_sort_maske",
+        },
+        {
+            "unique_alias": hospital_churches,
+            "input_layer": (hospital_churches, "context"),
+            "input_lyrx_feature": input_symbology.SymbologyN100.building_polygon.value,
+            "grouped_lyrx": False,
+            "target_layer_name": None,
+        },
+        {
+            "unique_alias": railroad_station,
+            "input_layer": (railroad_station, "context"),
+            "input_lyrx_feature": input_symbology.SymbologyN100.railway_station_squares.value,
+            "grouped_lyrx": False,
+            "target_layer_name": None,
+        },
     ]
 
-    # Resolve Building Conflict with building polygons and barriers
-    arcpy.cartography.ResolveBuildingConflicts(
-        in_buildings=Building_N100.polygon_resolve_building_conflicts___building_polygon___n100_building_lyrx.value,
-        invisibility_field="invisibility",
-        in_barriers=input_barriers,
-        building_gap=f"{N100_Values.rbc_building_clearance_distance_m.value} Meters",
-        minimum_size="1 meters",
-    )
+    resolve_building_conflicts_config = {
+        "class": ResolveBuildingConflictsPolygon,
+        "method": "run",
+        "params": {
+            "input_list_of_dicts_data_structure": input_data_structure,
+            "root_file": Building_N100.polygon_resolve_building_conflicts___root_file___n100_building.value,
+            "output_building_polygons": (building, "after_rbc"),
+        },
+    }
 
-    # Copying and assigning new name to layer
-    arcpy.management.Copy(
-        in_data=Building_N100.polygon_propogate_displacement___building_polygons_after_displacement___n100_building.value,
-        out_data=Building_N100.polygon_resolve_building_conflicts___after_rbc___n100_building.value,
+    partition_rbc_polygon = PartitionIterator(
+        alias_path_data=inputs,
+        alias_path_outputs=outputs,
+        custom_functions=[resolve_building_conflicts_config],
+        root_file_partition_iterator=Building_N100.polygon_resolve_building_conflicts___partition_root_file___n100_building.value,
+        dictionary_documentation_path=Building_N100.polygon_resolve_building_conflicts___begrensingskurve_docu___building_n100.value,
+        feature_count=25_000,
+        run_partition_optimization=True,
+        search_distance="500 Meters",
     )
-    print("Finished")
+    partition_rbc_polygon.run()
 
 
 @timing_decorator

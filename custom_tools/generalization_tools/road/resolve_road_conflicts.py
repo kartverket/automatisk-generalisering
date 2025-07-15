@@ -129,7 +129,7 @@ class ResolveRoadConflicts:
             hierarchy_field=self.hierarchy_field,
             out_displacement_features=self.displacement_feature,
         )
-        print("\n\ResolveRoadConflicts Complete!\n\n")
+        print("\nResolveRoadConflicts Complete!\n\n")
 
         resolve_road_conflicts_output = self.work_file_manager.extract_key_by_alias(
             data=self.output_lyrx_features,
@@ -179,6 +179,7 @@ class ResolveRoadConflicts:
         self.work_file_manager.list_contents(
             data=self.output_lyrx_features, title="output_lyrx_features"
         )
+        self.work_file_manager.delete_created_files()
 
 
 if __name__ == "__main__":

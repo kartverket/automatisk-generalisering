@@ -9,6 +9,7 @@ from input_data import input_roads
 
 # Importing custom modules
 from file_manager.n100.file_manager_buildings import Building_N100
+from file_manager.n100.file_manager_roads import Road_N100
 from env_setup import environment_setup
 import config
 from custom_tools.decorators.timing_decorator import timing_decorator
@@ -63,6 +64,7 @@ def main():
     begrensningskurve_land_and_water_bodies()
     unsplit_roads_and_make_buffer()
     railway_station_points_to_polygons()
+    selecting_power_grid_lines()
     selecting_urban_areas_by_sql()
     adding_matrikkel_points_to_areas_that_are_no_longer_urban()
     selecting_n50_points_not_in_urban_areas()
@@ -89,7 +91,7 @@ def data_selection():
     input_output_file_dict = {
         input_n100.BegrensningsKurve: Building_N100.data_selection___begrensningskurve_n100_input_data___n100_building.value,
         input_n100.ArealdekkeFlate: Building_N100.data_selection___land_cover_n100_input_data___n100_building.value,
-        input_roads.road_output_1: Building_N100.data_selection___road_n100_input_data___n100_building.value,
+        input_n100.VegSti: Building_N100.data_selection___road_n100_input_data___n100_building.value,
         input_n100.JernbaneStasjon: Building_N100.data_selection___railroad_stations_n100_input_data___n100_building.value,
         input_n100.Bane: Building_N100.data_selection___railroad_tracks_n100_input_data___n100_building.value,
         input_n50.ArealdekkeFlate: Building_N100.data_selection___land_cover_n50_input_data___n100_building.value,
@@ -97,7 +99,8 @@ def data_selection():
         input_n50.Grunnriss: Building_N100.data_selection___building_polygon_n50_input_data___n100_building.value,
         input_n50.TuristHytte: Building_N100.data_selection___tourist_hut_n50_input_data___n100_building.value,
         input_other.matrikkel_bygningspunkt: Building_N100.data_selection___matrikkel_input_data___n100_building.value,
-        config.displacement_feature: Building_N100.data_selection___displacement_feature___n100_building.value,
+        Road_N100.data_preparation___resolve_road_conflicts_displacement_feature___n100_road.value: Building_N100.data_selection___displacement_feature___n100_building.value,
+        input_n100.AnleggsLinje: Building_N100.data_selection___anleggslinje___n100_building.value,
     }
 
     small_local_selection = "navn IN ('Asker', 'Oslo', 'Ringerike')"
@@ -123,6 +126,7 @@ def data_selection():
         "tourist_huts": Building_N100.data_selection___tourist_hut_n50_input_data___n100_building.value,
         "building_point_matrikkel": Building_N100.data_selection___matrikkel_input_data___n100_building.value,
         "road_displacement_feature": Building_N100.data_selection___displacement_feature___n100_building.value,
+        "anleggslinje": Building_N100.data_selection___anleggslinje___n100_building.value,
     }
 
     data_validation = GeometryValidator(
@@ -141,6 +145,7 @@ def data_selection():
     tourist_huts = "tourist_huts"
     building_point_matrikkel = "building_point_matrikkel"
     road_displacement_feature = "road_displacement_feature"
+    anleggslinje = "anleggslinje"
 
     inputs = {
         begrensningskurve: [
@@ -183,6 +188,10 @@ def data_selection():
             "input",
             Building_N100.data_selection___displacement_feature___n100_building.value,
         ],
+        anleggslinje: [
+            "input",
+            Building_N100.data_selection___anleggslinje___n100_building.value,
+        ],
     }
 
     outputs = inputs
@@ -198,6 +207,7 @@ def data_selection():
         "tourist_huts": ("tourist_huts", "input"),
         "building_point_matrikkel": ("building_point_matrikkel", "input"),
         "road_displacement_feature": ("road_displacement_feature", "input"),
+        "anleggslinje": ("anleggslinje", "input"),
     }
 
     process_data_validation = {
@@ -279,7 +289,7 @@ def begrensningskurve_land_and_water_bodies():
         custom_functions=[process_begrensningskurve],
         root_file_partition_iterator=Building_N100.data_preparation___begrensningskurve_base___n100_building.value,
         dictionary_documentation_path=Building_N100.data_preparation___begrensingskurve_docu___building_n100.value,
-        feature_count="800000",
+        feature_count=800000,
     )
     partition_begrensningskurve.run()
 
@@ -318,10 +328,6 @@ def railway_station_points_to_polygons():
     """
     Transforms the train station points to polygons representing their symbology size.
     """
-    arcpy.management.Copy(
-        in_data=Building_N100.data_selection___railroad_tracks_n100_input_data___n100_building.value,
-        out_data=Building_N100.data_preparation___railway_station_points_from_n100___n100_building.value,
-    )
     # Railway stations from input data
     railway_stations = (
         Building_N100.data_selection___railroad_stations_n100_input_data___n100_building.value
@@ -358,6 +364,15 @@ def railway_station_points_to_polygons():
         input_layer=Building_N100.data_preparation___railway_stations_to_polygons___n100_building.value,
         in_symbology_layer=SymbologyN100.railway_station_squares.value,
         output_name=Building_N100.data_preparation___railway_stations_to_polygons_symbology___n100_building_lyrx.value,
+    )
+
+
+@timing_decorator
+def selecting_power_grid_lines():
+    custom_arcpy.select_attribute_and_make_permanent_feature(
+        input_layer=Building_N100.data_selection___anleggslinje___n100_building.value,
+        expression="objtype = 'LuftledningLH'",
+        output_name=Building_N100.data_preparation___power_grid_lines___n100_building.value,
     )
 
 
