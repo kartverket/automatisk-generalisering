@@ -246,6 +246,25 @@
         <span class="p">)</span>
     <span class="p">)</span>
 
+    <span class="n">data_selection___anleggslinje___n100_building</span> <span class="o">=</span> <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_gdb</span><span class="p">(</span>
+        <span class="n">script_source_name</span><span class="o">=</span><span class="n">data_selection</span><span class="p">,</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">&quot;anleggslinje&quot;</span><span class="p">,</span>
+    <span class="p">)</span>
+
+    <span class="n">data_preparation___power_grid_lines___n100_building</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_gdb</span><span class="p">(</span>
+            <span class="n">script_source_name</span><span class="o">=</span><span class="n">data_preparation</span><span class="p">,</span>
+            <span class="n">description</span><span class="o">=</span><span class="s2">&quot;power_grid_lines&quot;</span><span class="p">,</span>
+        <span class="p">)</span>
+    <span class="p">)</span>
+
+    <span class="n">data_selection___power_grid_lines_500m_selection___n100_building</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_gdb</span><span class="p">(</span>
+            <span class="n">script_source_name</span><span class="o">=</span><span class="n">data_selection</span><span class="p">,</span>
+            <span class="n">description</span><span class="o">=</span><span class="s2">&quot;power_grid_lines_500m_selection&quot;</span><span class="p">,</span>
+        <span class="p">)</span>
+    <span class="p">)</span>
+
     <span class="n">data_preparation___geometry_validation___n100_building</span> <span class="o">=</span> <span class="p">(</span>
         <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_gdb</span><span class="p">(</span>
             <span class="n">script_source_name</span><span class="o">=</span><span class="n">data_preparation</span><span class="p">,</span>
@@ -582,6 +601,28 @@
         <span class="n">description</span><span class="o">=</span><span class="s2">&quot;railroads_500m_from_displaced_polygon&quot;</span><span class="p">,</span>
     <span class="p">)</span>
 
+    <span class="n">polygon_resolve_building_conflicts___root_file___n100_building</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_gdb</span><span class="p">(</span>
+            <span class="n">script_source_name</span><span class="o">=</span><span class="n">polygon_resolve_building_conflicts</span><span class="p">,</span>
+            <span class="n">description</span><span class="o">=</span><span class="s2">&quot;root_file&quot;</span><span class="p">,</span>
+        <span class="p">)</span>
+    <span class="p">)</span>
+
+    <span class="n">polygon_resolve_building_conflicts___partition_root_file___n100_building</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_gdb</span><span class="p">(</span>
+            <span class="n">script_source_name</span><span class="o">=</span><span class="n">polygon_resolve_building_conflicts</span><span class="p">,</span>
+            <span class="n">description</span><span class="o">=</span><span class="s2">&quot;partition_root_file&quot;</span><span class="p">,</span>
+        <span class="p">)</span>
+    <span class="p">)</span>
+
+    <span class="n">polygon_resolve_building_conflicts___begrensingskurve_docu___building_n100</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_general_files</span><span class="p">(</span>
+            <span class="n">script_source_name</span><span class="o">=</span><span class="n">polygon_resolve_building_conflicts</span><span class="p">,</span>
+            <span class="n">description</span><span class="o">=</span><span class="s2">&quot;begrensingskurve_docu&quot;</span><span class="p">,</span>
+            <span class="n">file_type</span><span class="o">=</span><span class="s2">&quot;json&quot;</span><span class="p">,</span>
+        <span class="p">)</span>
+    <span class="p">)</span>
+
     <span class="n">polygon_resolve_building_conflicts___building_polygon___n100_building_lyrx</span> <span class="o">=</span> <span class="p">(</span>
         <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_lyrx</span><span class="p">(</span>
             <span class="n">script_source_name</span><span class="o">=</span><span class="n">polygon_resolve_building_conflicts</span><span class="p">,</span>
@@ -689,6 +730,13 @@
         <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_lyrx</span><span class="p">(</span>
             <span class="n">script_source_name</span><span class="o">=</span><span class="n">polygon_resolve_building_conflicts</span><span class="p">,</span>
             <span class="n">description</span><span class="o">=</span><span class="s2">&quot;railway&quot;</span><span class="p">,</span>
+        <span class="p">)</span>
+    <span class="p">)</span>
+
+    <span class="n">polygon_resolve_building_conflicts___power_grid_lines___n100_building_lyrx</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_lyrx</span><span class="p">(</span>
+            <span class="n">script_source_name</span><span class="o">=</span><span class="n">polygon_resolve_building_conflicts</span><span class="p">,</span>
+            <span class="n">description</span><span class="o">=</span><span class="s2">&quot;power_grid_lines&quot;</span><span class="p">,</span>
         <span class="p">)</span>
     <span class="p">)</span>
 
