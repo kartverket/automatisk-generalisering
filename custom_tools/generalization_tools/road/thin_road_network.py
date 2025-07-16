@@ -1,7 +1,7 @@
 import arcpy
 
 from custom_tools.general_tools import file_utilities
-from custom_tools.general_tools.file_utilities import WorkFileManager, count_objects
+from file_manager import WorkFileManager
 from custom_tools.decorators.partition_io_decorator import partition_io_decorator
 
 from custom_tools.generalization_tools.road.dissolve_with_intersections import (

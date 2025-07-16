@@ -4,21 +4,18 @@ from enum import Enum
 
 from custom_tools.decorators.partition_io_decorator import partition_io_decorator
 from custom_tools.general_tools.file_utilities import (
-    WorkFileManager,
     deleting_added_field_from_feature_to_x,
 )
 from custom_tools.generalization_tools.road.dissolve_with_intersections import (
     DissolveWithIntersections,
 )
 from custom_tools.general_tools import custom_arcpy
-from custom_tools.general_tools.file_utilities import (
-    deleting_added_field_from_feature_to_x,
-)
 from custom_tools.general_tools.graph import GISGraph
 from env_setup import environment_setup
 from constants.n100_constants import MediumAlias
 
 from file_manager.n100.file_manager_roads import Road_N100
+from file_manager import WorkFileManager
 
 
 class RemoveRoadTriangles:

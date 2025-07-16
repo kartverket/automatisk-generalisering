@@ -13,7 +13,8 @@ import input_data.input_n100
 from input_data.input_symbology import SymbologyN100
 from file_manager.n100.file_manager_buildings import Building_N100
 from file_manager.base_file_manager import BaseFileManager
-from custom_tools.general_tools.file_utilities import WorkFileManager
+
+from file_manager import WorkFileManager
 from constants.n100_constants import N100_Symbology, N100_Values
 from custom_tools.general_tools.polygon_processor import PolygonProcessor
 from env_setup import environment_setup
@@ -833,7 +834,6 @@ class ResolveBuildingConflictsPolygon:
         )
 
     def resolve_building_conflicts(self):
-        self.work_file_manager.list_contents(data=self.lyrx_outputs, title="Pre RBC")
         building_layer = self.work_file_manager.extract_key_by_alias(
             data=self.lyrx_outputs,
             unique_alias="building",
