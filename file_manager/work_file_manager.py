@@ -30,7 +30,9 @@ class WorkFileManager:
 
     general_files_directory_name = env_setup.global_config.general_files_name
     lyrx_directory_name = env_setup.global_config.lyrx_directory_name
+
     _global_counter = 0
+    # mmdd_HHMM makes session prefix sortable: newer instances appear lower when sorted
     _session_prefix = datetime.now().strftime("%m%d_%H%M")
 
     def __init__(
