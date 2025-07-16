@@ -3,7 +3,7 @@ import networkx as nx
 from collections import defaultdict
 
 from custom_tools.general_tools import custom_arcpy
-from custom_tools.general_tools.file_utilities import WorkFileManager
+from file_manager import WorkFileManager
 from file_manager.n100.file_manager_roads import Road_N100
 
 
