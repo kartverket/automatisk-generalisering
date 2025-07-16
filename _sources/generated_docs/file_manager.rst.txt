@@ -20,6 +20,14 @@ file\_manager.base\_file\_manager module
    :show-inheritance:
    :undoc-members:
 
+file\_manager.work\_file\_manager module
+----------------------------------------
+
+.. automodule:: file_manager.work_file_manager
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
 Module contents
 ---------------
 
