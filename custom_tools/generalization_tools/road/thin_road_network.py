@@ -1,7 +1,9 @@
 import arcpy
 
+import config
 from custom_tools.general_tools import file_utilities
 from file_manager import WorkFileManager
+from composition_configs.base_logic_config import WorkFileConfig
 from custom_tools.decorators.partition_io_decorator import partition_io_decorator
 
 from custom_tools.generalization_tools.road.dissolve_with_intersections import (
@@ -17,15 +19,13 @@ class ThinRoadNetwork:
     def __init__(
         self,
         road_network_input: str,
-        root_file: str,
         road_network_output: str,
+        work_file_manager_config: WorkFileConfig,
         minimum_length: str,
         invisibility_field_name: str,
         hierarchy_field_name: str,
         partition_field_name: str,
         special_selection_sql: str | None = None,
-        write_work_files_to_memory: bool = False,
-        keep_work_files: bool = False,
     ):
         self.road_network_input = road_network_input
         self.road_network_output = road_network_output
@@ -33,17 +33,15 @@ class ThinRoadNetwork:
         self.invisibility_field_name = invisibility_field_name
         self.hierarchy_field_name = hierarchy_field_name
         self.partition_field_name = partition_field_name
-        if write_work_files_to_memory:
-            print("Writing to memory Currently not supported.")
-        self.write_work_files_to_memory = False  # Currently not supporting memory
         self.special_selection_sql = special_selection_sql
 
-        self.work_file_manager = WorkFileManager(
-            unique_id=id(self),
-            root_file=root_file,
-            write_to_memory=self.write_work_files_to_memory,
-            keep_files=keep_work_files,
-        )
+        self.write_work_files_to_memory = work_file_manager_config.write_to_memory
+
+        if self.write_work_files_to_memory:
+            print("Writing to memory Currently not supported. Set to false")
+            self.write_work_files_to_memory = False
+
+        self.work_file_manager = WorkFileManager(config=work_file_manager_config)
 
         self.thin_road_network_output = "thin_road_network_output"
         self.gdb_files_list = [self.thin_road_network_output]
