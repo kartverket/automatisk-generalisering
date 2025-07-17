@@ -2,6 +2,8 @@ import arcpy
 import re
 from datetime import datetime
 
+
+from composition_configs import base_logic_config
 import env_setup.global_config
 from typing import Any
 
@@ -22,10 +24,7 @@ class WorkFileManager:
         any parameters.
 
     Args:
-        unique_id (int): Used to generate unique file names, can be self value or an iterated number.
-        root_file (str): The core file name used to generate unique file names.
-        write_to_memory (bool): Defaults to True, write to memory if True, write to disk if False.
-        keep_files (bool): Defaults to False, delete work files if True, keep work files if False.
+        config (WorkFileConfig): Configuration object containing work file options.
     """
 
     general_files_directory_name = env_setup.global_config.general_files_name
@@ -37,23 +36,22 @@ class WorkFileManager:
 
     def __init__(
         self,
-        unique_id: int,
-        root_file: str = None,
-        write_to_memory: bool = True,
-        keep_files: bool = False,
+        config: base_logic_config.WorkFileConfig,
     ):
         """
-        Initializes the WorkFileManager with the desired parameters.
+        Initializes the WorkFileManager with the provided configuration.
 
         Args:
-            See class docstring.
+            config (WorkFileConfig): Configuration object for controlling work file behavior.
         """
 
         WorkFileManager._global_counter += 1
+
         self.unique_id = f"id{self._session_prefix}_{WorkFileManager._global_counter}"
-        self.root_file = root_file
-        self.write_to_memory = write_to_memory
-        self.keep_files = keep_files
+
+        self.root_file = config.root_file
+        self.write_to_memory = config.write_to_memory
+        self.keep_files = config.keep_files
         self.created_paths = []
 
         if not self.write_to_memory and not self.root_file:
