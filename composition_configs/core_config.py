@@ -1,4 +1,4 @@
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from typing import Dict, List, Optional, Tuple, Union
 from enum import Enum
 
@@ -28,7 +28,8 @@ class IOType(Enum):
 
 @dataclass(frozen=True)
 class InputEntry:
-    type: IOType
+    tag: str
+    input_type: IOType
     path: str
 
 
@@ -40,12 +41,30 @@ class OutputEntry:
 
 @dataclass
 class PartitionInputConfig:
-    inputs: Dict[str, InputEntry]
+    entries: List[InputEntry] = field(default_factory=list)
+
+    def __post_init__(self):
+        self._inputs: Dict[str, InputEntry] = {
+            entry.tag: entry for entry in self.entries
+        }
+
+    @property
+    def inputs(self) -> Dict[str, InputEntry]:
+        return self._inputs
 
 
 @dataclass
 class PartitionOutputConfig:
-    outputs: Dict[str, OutputEntry]
+    entries: List[OutputEntry] = field(default_factory=list)
+
+    def __post_init__(self):
+        self._outputs: Dict[str, OutputEntry] = {
+            entry.tag: entry for entry in self.entries
+        }
+
+    @property
+    def outputs(self) -> Dict[str, OutputEntry]:
+        return self._outputs
 
 
 @dataclass
@@ -55,73 +74,26 @@ class PartitionIOConfig:
     dictionary_documentation_path: Optional[str] = None
 
 
-test_input = PartitionInputConfig(
-    inputs={
-        "road": InputEntry(
-            type=IOType.INPUT,
-            path="test_input_path",
-        ),
-        "building": InputEntry(
-            type=IOType.CONTEXT,
-            path="test_input_path",
-        ),
-    }
-)
-
-test_output = PartitionOutputConfig(
-    outputs={
-        "road": OutputEntry(
-            tag="merge_output",
-            path="output_path",
-        )
-    }
-)
-
-partition_io_config = PartitionIOConfig(
-    input_config=test_input,
-    output_config=test_output,
-)
-
-partition_io_2 = PartitionIOConfig(
-    input_config=PartitionInputConfig(
-        inputs={
-            "railroad": InputEntry(
-                type=IOType.INPUT,
-                path="some_path",
-            )
-        }
-    ),
-    output_config=PartitionOutputConfig(
-        {
-            "railroad": OutputEntry(
-                tag="some_output",
-                path="some_path",
-            )
-        }
-    ),
-)
-
-input_2 = PartitionInputConfig(
-    inputs={
-        "some_object": InputEntry(
-            type=IOType.INPUT,
+input_config = PartitionInputConfig(
+    entries=[
+        InputEntry(
+            tag="building",
+            input_type=IOType.INPUT,
             path="some_path",
         )
-    }
+    ]
 )
 
-output_2 = PartitionOutputConfig(
-    outputs={
-        "some_object": OutputEntry(
-            tag="some_output",
+output_config = PartitionOutputConfig(
+    entries=[
+        OutputEntry(
+            tag="building",
             path="some_path",
-        )
-    }
+        ),
+    ]
 )
-
-test_io_config_2 = PartitionIOConfig(
-    input_config=input_2,
-    output_config=output_2,
+partitio_io_config = PartitionIOConfig(
+    input_config=input_config, output_config=output_config
 )
 
 
