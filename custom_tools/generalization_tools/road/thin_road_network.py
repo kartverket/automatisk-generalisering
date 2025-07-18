@@ -3,7 +3,7 @@ import arcpy
 import config
 from custom_tools.general_tools import file_utilities
 from file_manager import WorkFileManager
-from composition_configs.base_logic_config import WorkFileConfig
+from composition_configs import WorkFileConfig
 from custom_tools.decorators.partition_io_decorator import partition_io_decorator
 
 from custom_tools.generalization_tools.road.dissolve_with_intersections import (

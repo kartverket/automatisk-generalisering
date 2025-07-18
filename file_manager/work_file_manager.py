@@ -3,7 +3,7 @@ import re
 from datetime import datetime
 
 
-from composition_configs import base_logic_config
+from composition_configs import WorkFileConfig
 import env_setup.global_config
 from typing import Any
 
@@ -36,7 +36,7 @@ class WorkFileManager:
 
     def __init__(
         self,
-        config: base_logic_config.WorkFileConfig,
+        config: WorkFileConfig,
     ):
         """
         Initializes the WorkFileManager with the provided configuration.
