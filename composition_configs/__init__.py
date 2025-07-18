@@ -1,3 +1,3 @@
-from composition_configs.base_logic_config import WorkFileConfig
+from composition_configs.core_config import WorkFileConfig
 
 __all__ = ["WorkFileConfig"]
