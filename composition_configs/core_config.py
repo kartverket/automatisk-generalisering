@@ -20,21 +20,22 @@ class WorkFileConfig:
     keep_files: bool = False
 
 
-class IOType(Enum):
-    INPUT = "input"
+class InputTag(Enum):
+    PROCESSING = "processing"
     CONTEXT = "context"
     REFERENCE = "reference"
 
 
 @dataclass(frozen=True)
 class InputEntry:
-    tag: str
-    input_type: IOType
+    object: str
+    tag: InputTag
     path: str
 
 
 @dataclass(frozen=True)
 class OutputEntry:
+    object: str
     tag: str
     path: str
 
@@ -45,7 +46,7 @@ class PartitionInputConfig:
 
     def __post_init__(self):
         self._inputs: Dict[str, InputEntry] = {
-            entry.tag: entry for entry in self.entries
+            entry.object: entry for entry in self.entries
         }
 
     @property
@@ -59,7 +60,7 @@ class PartitionOutputConfig:
 
     def __post_init__(self):
         self._outputs: Dict[str, OutputEntry] = {
-            entry.tag: entry for entry in self.entries
+            entry.object: entry for entry in self.entries
         }
 
     @property
@@ -74,27 +75,69 @@ class PartitionIOConfig:
     dictionary_documentation_path: Optional[str] = None
 
 
+class PartitionMethod(Enum):
+    FEATURES = "FEATURES"
+    VERTICES = "VERTICES"
+
+
+@dataclass
+class PartitionRunConfig:
+    max_elements_per_partition: int
+    context_radius_meters: int
+    run_partition_optimization: bool = True
+    partition_method: PartitionMethod = PartitionMethod.FEATURES
+    object_id_column: str = "OBJECTID"
+
+
 input_config = PartitionInputConfig(
     entries=[
         InputEntry(
-            tag="building",
-            input_type=IOType.INPUT,
+            object="building_points",
+            tag=InputTag.PROCESSING,
             path="some_path",
-        )
+        ),
+        InputEntry(
+            object="building_polygons",
+            tag=InputTag.PROCESSING,
+            path="some_path",
+        ),
+        InputEntry(
+            object="road",
+            tag=InputTag.CONTEXT,
+            path="some_path",
+        ),
     ]
 )
 
 output_config = PartitionOutputConfig(
     entries=[
         OutputEntry(
-            tag="building",
+            object="building_points",
+            tag="some_logic",
+            path="some_path",
+        ),
+        OutputEntry(
+            object="building_polygons",
+            tag="some_logic",
             path="some_path",
         ),
     ]
 )
 partitio_io_config = PartitionIOConfig(
-    input_config=input_config, output_config=output_config
+    input_config=input_config,
+    output_config=output_config,
 )
+
+input_config = PartitionInputConfig(
+    entries=[
+        InputEntry(
+            object="",
+            tag=InputTag.PROCESSING,
+            path="",
+        )
+    ]
+)
+partition_io_2 = PartitionIOConfig()
 
 
 @dataclass

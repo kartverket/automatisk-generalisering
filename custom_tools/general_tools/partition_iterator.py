@@ -10,6 +10,7 @@ from datetime import datetime
 import pprint
 import inspect
 
+from composition_configs.core_config import PartitionIOConfig
 import env_setup.global_config
 import config
 from env_setup import environment_setup
@@ -144,6 +145,7 @@ class PartitionIterator:
 
     def __init__(
         self,
+        partitio_io_config: PartitionIOConfig,
         alias_path_data: Dict[
             str, Tuple[Literal["input", "context", "reference"], str]
         ],
