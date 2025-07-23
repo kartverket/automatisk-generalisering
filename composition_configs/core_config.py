@@ -1,5 +1,5 @@
 from dataclasses import dataclass, field
-from typing import Dict, List, Optional, Tuple, Union
+from typing import Dict, List, Literal, Optional, Tuple, Union
 from enum import Enum
 
 
@@ -20,7 +20,7 @@ class WorkFileConfig:
     keep_files: bool = False
 
 
-class InputTag(Enum):
+class InputType(Enum):
     PROCESSING = "processing"
     CONTEXT = "context"
     REFERENCE = "reference"
@@ -29,7 +29,8 @@ class InputTag(Enum):
 @dataclass(frozen=True)
 class InputEntry:
     object: str
-    tag: InputTag
+    input_type: InputType
+    tag: str
     path: str
 
 
@@ -40,32 +41,22 @@ class OutputEntry:
     path: str
 
 
-@dataclass
+@dataclass(frozen=True)
+class ResolvedEntry:
+    object: str
+    tag: str
+    path: str
+    input_type: Optional[str] = None
+
+
+@dataclass(frozen=True)
 class PartitionInputConfig:
-    entries: List[InputEntry] = field(default_factory=list)
-
-    def __post_init__(self):
-        self._inputs: Dict[str, InputEntry] = {
-            entry.object: entry for entry in self.entries
-        }
-
-    @property
-    def inputs(self) -> Dict[str, InputEntry]:
-        return self._inputs
+    entries: List[InputEntry]
 
 
-@dataclass
+@dataclass(frozen=True)
 class PartitionOutputConfig:
-    entries: List[OutputEntry] = field(default_factory=list)
-
-    def __post_init__(self):
-        self._outputs: Dict[str, OutputEntry] = {
-            entry.object: entry for entry in self.entries
-        }
-
-    @property
-    def outputs(self) -> Dict[str, OutputEntry]:
-        return self._outputs
+    entries: List[OutputEntry]
 
 
 @dataclass
@@ -93,17 +84,20 @@ input_config = PartitionInputConfig(
     entries=[
         InputEntry(
             object="building_points",
-            tag=InputTag.PROCESSING,
+            input_type=InputType.PROCESSING,
+            tag="input",
             path="some_path",
         ),
         InputEntry(
             object="building_polygons",
-            tag=InputTag.PROCESSING,
+            input_type=InputType.PROCESSING,
+            tag="input",
             path="some_path",
         ),
         InputEntry(
             object="road",
-            tag=InputTag.CONTEXT,
+            input_type=InputType.CONTEXT,
+            tag="input",
             path="some_path",
         ),
     ]
@@ -132,7 +126,7 @@ input_config = PartitionInputConfig(
     entries=[
         InputEntry(
             object="",
-            tag=InputTag.PROCESSING,
+            input_type=InputType.PROCESSING,
             path="",
         )
     ]

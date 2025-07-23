@@ -4,13 +4,14 @@ import re
 import shutil
 import random
 import json
-from typing import Dict, Tuple, Literal
+from typing import Dict, Tuple, Literal, Union, List
 import time
 from datetime import datetime
 import pprint
 import inspect
 
 from composition_configs.core_config import PartitionIOConfig
+from composition_configs import core_config
 import env_setup.global_config
 import config
 from env_setup import environment_setup
@@ -145,7 +146,7 @@ class PartitionIterator:
 
     def __init__(
         self,
-        partitio_io_config: PartitionIOConfig,
+        partition_io_config: core_config.PartitionIOConfig,
         alias_path_data: Dict[
             str, Tuple[Literal["input", "context", "reference"], str]
         ],
@@ -171,6 +172,38 @@ class PartitionIterator:
         """
 
         # Raw inputs and initial setup
+        self.nested_input_object_tag: Dict[str, Dict[str, str]] = {}
+        self.nested_output_object_tag: Dict[str, Dict[str, str]] = {}
+
+        input_entries_resolved = [
+            core_config.ResolvedEntry(
+                object=e.object,
+                tag=e.tag,
+                path=e.path,
+                input_type=e.input_type.value,
+            )
+            for e in partition_io_config.input_config.entries
+        ]
+
+        output_entries_resolved = [
+            core_config.ResolvedEntry(
+                object=e.object,
+                tag=e.tag,
+                path=e.path,
+            )
+            for e in partition_io_config.output_config.entries
+        ]
+
+        self.resolve_partition_io_config(
+            entries=input_entries_resolved,
+            target_dict=self.nested_input_object_tag,
+        )
+
+        self.resolve_partition_io_config(
+            entries=output_entries_resolved,
+            target_dict=self.nested_output_object_tag,
+        )
+
         self.raw_input_data = alias_path_data
         self.raw_output_data = alias_path_outputs or {}
         self.root_file_partition_iterator = root_file_partition_iterator
@@ -212,6 +245,16 @@ class PartitionIterator:
         self.total_start_time = None
         self.iteration_times_with_input = []
         self.iteration_start_time = None
+
+    @staticmethod
+    def resolve_partition_io_config(
+        entries: List[core_config.ResolvedEntry],
+        target_dict: Dict[str, Dict[str, str]],
+    ) -> None:
+        for entry in entries:
+            if entry.object not in target_dict:
+                target_dict[entry.object] = {}
+            target_dict[entry.object][entry.tag] = entry.path
 
     @staticmethod
     def unpack_alias_path(alias_path, target_dict):
