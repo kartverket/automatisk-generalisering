@@ -254,7 +254,22 @@ class PartitionIterator:
         for entry in entries:
             if entry.object not in target_dict:
                 target_dict[entry.object] = {}
+            if entry.input_type is not None:
+                target_dict[entry.object]["input_type"] = entry.input_type
             target_dict[entry.object][entry.tag] = entry.path
+
+    def check_new_io_config_resolving(self):
+
+        self.write_data_to_json(
+            data=self.nested_input_object_tag,
+            file_path=self.dictionary_documentation_path,
+            file_name="io_config_input",
+        )
+        self.write_data_to_json(
+            data=self.nested_output_object_tag,
+            file_path=self.dictionary_documentation_path,
+            file_name="io_config_output",
+        )
 
     @staticmethod
     def unpack_alias_path(alias_path, target_dict):
