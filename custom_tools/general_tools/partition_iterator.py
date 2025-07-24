@@ -4,7 +4,7 @@ import re
 import shutil
 import random
 import json
-from typing import Dict, Tuple, Literal, Union, List
+from typing import Dict, Tuple, Literal, Union, List, Any
 import time
 from datetime import datetime
 import pprint
@@ -141,6 +141,7 @@ class PartitionIterator:
     """
 
     # Class-level constants
+    INPUT_TYPE_KEY = "input_type"
     PARTITION_FIELD = "partition_select"
     ORIGINAL_ID_FIELD = "original_id_field"
 
@@ -246,8 +247,8 @@ class PartitionIterator:
         self.iteration_times_with_input = []
         self.iteration_start_time = None
 
-    @staticmethod
     def resolve_partition_io_config(
+        self,
         entries: List[core_config.ResolvedEntry],
         target_dict: Dict[str, Dict[str, str]],
     ) -> None:
@@ -255,7 +256,7 @@ class PartitionIterator:
             if entry.object not in target_dict:
                 target_dict[entry.object] = {}
             if entry.input_type is not None:
-                target_dict[entry.object]["input_type"] = entry.input_type
+                target_dict[entry.object][self.INPUT_TYPE_KEY] = entry.input_type
             target_dict[entry.object][entry.tag] = entry.path
 
     def check_new_io_config_resolving(self):
@@ -285,32 +286,28 @@ class PartitionIterator:
                 path_info = info[i + 1]
                 target_dict[alias][type_info] = path_info
 
-    def configure_alias_and_type(
+    def _configure_nested_dict(
         self,
-        alias,
-        type_name,
-        type_path,
-    ):
+        outer_key: str,
+        inner_key: str,
+        value: Any,
+    ) -> None:
         """
         What:
-            Configures an alias by adding or updating a type with a specified path.
-            This function checks if the given alias exists within the `nested_alias_type_data` attribute.
-            If the alias does not exist, it creates a new entry for it. Then, it associates the provided
-            `type_name` with the given `type_path` under the specified alias.
+            Adds or updates a value for a nested dictionary using two-level keys.
+
         Args:
-            alias (str): The alias to be configured. If it does not exist, a new one will be created.
-            type_name (str): The name of the type to be added or updated under the alias.
-            type_path (str): The path associated with the specified type.
+            outer_key: The primary key (e.g., an object name like 'building').
+            inner_key: The secondary key (e.g., a tag like 'input_copy' or 'dummy_used').
+            value: The value to assign under the nested key (can be a path, bool, etc.).
         """
+        if outer_key not in self.nested_alias_type_data:
+            self.nested_alias_type_data[outer_key] = {}
 
-        if alias not in self.nested_alias_type_data:
-            print(
-                f"Alias '{alias}' not found in nested_alias_type_data. Creating new alias."
-            )
-            self.nested_alias_type_data[alias] = {"dummy_used": False}
-
-        self.nested_alias_type_data[alias][type_name] = type_path
-        print(f"Set path for type '{type_name}' in alias '{alias}' to: {type_path}")
+        self.nested_alias_type_data[outer_key][inner_key] = value
+        print(
+            f"Set value for inner key '{inner_key}' in outer key '{outer_key}' to: {value}"
+        )
 
     def _create_cartographic_partitions(self, feature_count: int) -> None:
         """
@@ -570,9 +567,6 @@ class PartitionIterator:
         Args:
             types_to_include (list): A list of types for which dummy features should be created.
         """
-        if types_to_include is None:
-            types_to_include = ["input_copy", "context_copy"]
-
         for alias, alias_data in self.nested_alias_type_data.items():
             for type_info, path in list(alias_data.items()):
                 if type_info in types_to_include and path:
@@ -587,10 +581,10 @@ class PartitionIterator:
                         f"Created dummy feature class for {alias} of type {type_info}: {dummy_feature_path}"
                     )
                     # Update alias state to include this new dummy type and its path
-                    self.configure_alias_and_type(
-                        alias=alias,
-                        type_name="dummy",
-                        type_path=dummy_feature_path,
+                    self._configure_nested_dict(
+                        outer_key=alias,
+                        inner_key="dummy",
+                        value=dummy_feature_path,
                     )
 
     def reset_dummy_used(self):
@@ -805,10 +799,10 @@ class PartitionIterator:
                 print(f"Copied input nested_alias_type_data for: {alias}")
 
                 # Add a new type for the alias the copied input nested_alias_type_data
-                self.configure_alias_and_type(
-                    alias=alias,
-                    type_name="input_copy",
-                    type_path=input_data_copy,
+                self._configure_nested_dict(
+                    outer_key=alias,
+                    inner_key="input_copy",
+                    value=input_data_copy,
                 )
 
                 # Making sure the field is unique if it exists a field with the same name
@@ -885,10 +879,10 @@ class PartitionIterator:
                     )
                     print(f"Copied context data for: {alias}")
 
-                self.configure_alias_and_type(
-                    alias=alias,
-                    type_name="context_copy",
-                    type_path=context_data_copy,
+                self._configure_nested_dict(
+                    outer_key=alias,
+                    inner_key="context_copy",
+                    value=context_data_copy,
                 )
 
     def select_partition_feature(self, iteration_partition, object_id):
@@ -999,10 +993,10 @@ class PartitionIterator:
                     schema_type="NO_TEST",
                 )
 
-                self.configure_alias_and_type(
-                    alias=alias,
-                    type_name="input",
-                    type_path=input_data_iteration_selection,
+                self._configure_nested_dict(
+                    outer_key=alias,
+                    inner_key="input",
+                    value=input_data_iteration_selection,
                 )
 
                 count_processed_objects = file_utilities.count_objects(
@@ -1084,10 +1078,10 @@ class PartitionIterator:
             if count_points > 0:
                 print(f"{alias} has {count_points} features in {iteration_partition}")
 
-                self.configure_alias_and_type(
-                    alias=alias,
-                    type_name="context",
-                    type_path=context_data_iteration_selection,
+                self._configure_nested_dict(
+                    outer_key=alias,
+                    inner_key="context",
+                    value=context_data_iteration_selection,
                 )
 
                 count_processed_objects = file_utilities.count_objects(
@@ -1333,7 +1327,16 @@ class PartitionIterator:
                 f"Constructed new path for {param_info}: {resolved_path} and added {alias_type} to types_to_update"
             )
 
-        self.configure_alias_and_type(alias, alias_type, resolved_path)
+        self._configure_nested_dict(
+            outer_key=alias,
+            inner_key=alias_type,
+            value=resolved_path,
+        )
+        self._configure_nested_dict(
+            outer_key=alias,
+            inner_key="dummy_used",
+            value=False,
+        )
 
         return resolved_path
 
@@ -1341,8 +1344,8 @@ class PartitionIterator:
         """
         Construct a new path for a given alias and type specific to the current iteration.
         """
-        base_path = self.root_file_partition_iterator
-        constructed_path = f"{base_path}_{alias}_{alias_type}_{object_id}"
+        root_path = self.root_file_partition_iterator
+        constructed_path = f"{root_path}_{alias}_{alias_type}_{object_id}"
         return constructed_path
 
     def execute_custom_functions(self):
