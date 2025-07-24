@@ -30,7 +30,7 @@ class InputType(Enum):
 class InputEntry:
     object: str
     input_type: InputType
-    tag: str
+    tag: Literal["input"]
     path: str
 
 
@@ -121,22 +121,3 @@ partitio_io_config = PartitionIOConfig(
     input_config=input_config,
     output_config=output_config,
 )
-
-input_config = PartitionInputConfig(
-    entries=[
-        InputEntry(
-            object="",
-            input_type=InputType.PROCESSING,
-            path="",
-        )
-    ]
-)
-partition_io_2 = PartitionIOConfig()
-
-
-@dataclass
-class TempPartConfig:
-    alias_path_data: Dict[str, Tuple[Literal["input", "context", "reference"], str]]
-    alias_path_outputs: Dict[str, Tuple[str, str]]
-    custom_functions: Optional[List] = None
-    dictionary_documentation_path: Optional[str] = None
