@@ -42,6 +42,12 @@ class OutputEntry:
 
 
 @dataclass(frozen=True)
+class InjectIO:
+    object: str
+    tag: str
+
+
+@dataclass(frozen=True)
 class ResolvedEntry:
     object: str
     tag: str
