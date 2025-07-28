@@ -9,6 +9,7 @@ import time
 from datetime import datetime
 import pprint
 import inspect
+import copy
 
 from composition_configs.core_config import PartitionIOConfig
 from composition_configs import core_config
@@ -240,6 +241,7 @@ class PartitionIterator:
 
         # Variables related to custom operations
         self.custom_functions = custom_functions or []
+        self.resolved_methods: list[dict[str, Any]] = []
         self.custom_func_io_params = {}
         self.types_to_update = []
 
@@ -301,10 +303,10 @@ class PartitionIterator:
             inner_key: The secondary key (e.g., a tag like 'input_copy' or 'dummy_used').
             value: The value to assign under the nested key (can be a path, bool, etc.).
         """
-        if outer_key not in self.nested_alias_type_data:
-            self.nested_alias_type_data[outer_key] = {}
+        if outer_key not in self.nested_input_object_tag:
+            self.nested_input_object_tag[outer_key] = {}
 
-        self.nested_alias_type_data[outer_key][inner_key] = value
+        self.nested_input_object_tag[outer_key][inner_key] = value
         print(
             f"Set value for inner key '{inner_key}' in outer key '{outer_key}' to: {value}"
         )
@@ -1302,7 +1304,7 @@ class PartitionIterator:
         alias, alias_type = param_info
 
         if alias_type in self.types_to_update:
-            resolved_path = self.construct_path_for_alias_type(
+            resolved_path = self.construct_partition_path_for_object_tag(
                 alias,
                 alias_type,
                 object_id,
@@ -1317,7 +1319,7 @@ class PartitionIterator:
             resolved_path = self.nested_alias_type_data[alias][alias_type]
             print(f"Using existing path for {param_info}: {resolved_path}")
         else:
-            resolved_path = self.construct_path_for_alias_type(
+            resolved_path = self.construct_partition_path_for_object_tag(
                 alias,
                 alias_type,
                 object_id,
@@ -1340,13 +1342,83 @@ class PartitionIterator:
 
         return resolved_path
 
-    def construct_path_for_alias_type(self, alias, alias_type, object_id) -> str:
+    def resolve_injections_for_methods(
+        self,
+        method_entries: list[dict[str, Any]],
+        partition_id: int,
+    ) -> list[dict[str, Any]]:
+        resolved_configs = []
+
+        for method_entry in method_entries:
+            config_copy = copy.deepcopy(method_entry)
+            resolved_params = self.resolve_param_injections(
+                method_config=config_copy["params"],
+                partition_id=partition_id,
+            )
+            config_copy["params"] = resolved_params
+            resolved_configs.append(config_copy)
+
+        return resolved_configs
+
+    def resolve_param_injections(
+        self,
+        method_config: dict[str, Any],
+        partition_id: int,
+    ) -> dict[str, Any]:
+        resolved = {}
+        for key, val in method_config.items():
+            if isinstance(val, core_config.InjectIO):
+                resolved_path = self.resolve_inject_entry(
+                    inject=val,
+                    partition_id=partition_id,
+                )
+                resolved[key] = resolved_path
+            else:
+                resolved[key] = val
+        return resolved
+
+    def resolve_inject_entry(
+        self, inject: core_config.InjectIO, partition_id: int
+    ) -> str:
+        if inject.tag == "input":
+            return self.nested_input_object_tag[inject.object][inject.tag]
+
+        path = self.construct_partition_path_for_object_tag(
+            object=inject.object,
+            tag=inject.tag,
+            partition_id=partition_id,
+        )
+
+        self._configure_nested_dict(
+            outer_key=inject.object,
+            inner_key=inject.tag,
+            value=path,
+        )
+
+        if "dummy_used" not in self.nested_input_object_tag.get(inject.object, {}):
+            self._configure_nested_dict(
+                outer_key=inject.object,
+                inner_key="dummy_used",
+                value=False,
+            )
+
+        return path
+
+    def construct_partition_path_for_object_tag(self, object, tag, partition_id) -> str:
         """
         Construct a new path for a given alias and type specific to the current iteration.
         """
         root_path = self.root_file_partition_iterator
-        constructed_path = f"{root_path}_{alias}_{alias_type}_{object_id}"
+        constructed_path = f"{root_path}_{object}_{tag}_iteration_{partition_id}"
         return constructed_path
+
+    def test_new_inject_method(self, partition_id):
+
+        resolved_methods = self.resolve_injections_for_methods(
+            method_entries=self.custom_functions,
+            partition_id=partition_id,
+        )
+        return resolved_methods
 
     def execute_custom_functions(self):
         """
@@ -1604,6 +1676,10 @@ class PartitionIterator:
             if inputs_present_in_partition:
                 self._process_context_features(aliases, iteration_partition, object_id)
                 self.find_io_params_custom_logic(object_id)
+                resolved_methods = self.resolve_injections_for_methods(
+                    method_entries=self.custom_functions,
+                    partition_id=object_id,
+                )
                 self._inject_partition_field_to_custom_functions()
                 self.export_dictionaries_to_json(
                     file_name="iteration",
