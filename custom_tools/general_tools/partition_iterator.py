@@ -149,6 +149,8 @@ class PartitionIterator:
     def __init__(
         self,
         partition_io_config: core_config.PartitionIOConfig,
+        partition_method_inject_config: core_config.MethodEntriesConfig,
+        # partition_iterator_run_config: core_config.PartitionRunConfig,
         alias_path_data: Dict[
             str, Tuple[Literal["input", "context", "reference"], str]
         ],
@@ -206,6 +208,8 @@ class PartitionIterator:
             target_dict=self.nested_output_object_tag,
         )
 
+        self.list_of_methods = partition_method_inject_config
+
         self.raw_input_data = alias_path_data
         self.raw_output_data = alias_path_outputs or {}
         self.root_file_partition_iterator = root_file_partition_iterator
@@ -260,6 +264,42 @@ class PartitionIterator:
             if entry.input_type is not None:
                 target_dict[entry.object][self.INPUT_TYPE_KEY] = entry.input_type
             target_dict[entry.object][entry.tag] = entry.path
+
+    def prepare_method_configs(
+        self,
+        method_entries: list[
+            Union[
+                core_config.FuncMethodEntryConfig,
+                core_config.ClassMethodEntryConfig,
+            ]
+        ],
+    ) -> list[dict[str, Any]]:
+        """
+        Convert typed method entry configs into standard dicts.
+        These are not yet resolved (InjectIOs still exist).
+        """
+        prepared = []
+
+        for entry in method_entries:
+            if isinstance(entry, core_config.FuncMethodEntryConfig):
+                prepared.append(
+                    {
+                        "func": entry.func,
+                        "params": copy.deepcopy(entry.params),
+                    }
+                )
+            elif isinstance(entry, core_config.ClassMethodEntryConfig):
+                prepared.append(
+                    {
+                        "class": entry.class_,
+                        "method": entry.method,
+                        "params": copy.deepcopy(entry.params),
+                    }
+                )
+            else:
+                raise TypeError(f"Unsupported method entry type: {type(entry)}")
+
+        return prepared
 
     def check_new_io_config_resolving(self):
 
@@ -591,8 +631,17 @@ class PartitionIterator:
 
     def reset_dummy_used(self):
         """Sets the dummy_used to false"""
-        for alias in self.nested_alias_type_data:
-            self.nested_alias_type_data[alias]["dummy_used"] = False
+        for object in self.nested_input_object_tag:
+            self.nested_alias_type_data[object]["dummy_used"] = False
+
+    def ensure_dummy_flag_for_all_objects(self):
+        for object_key in self.nested_input_object_tag:
+            if "dummy_used" not in self.nested_input_object_tag[object_key]:
+                self._configure_nested_dict(
+                    outer_key=object_key,
+                    inner_key="dummy_used",
+                    value=False,
+                )
 
     def update_empty_alias_type_with_dummy_file(self, alias, type_info):
         # Check if the dummy type exists in the alias nested_alias_type_data
@@ -1342,23 +1391,41 @@ class PartitionIterator:
 
         return resolved_path
 
-    def resolve_injections_for_methods(
+    def resolve_injected_io_for_methods(
         self,
-        method_entries: list[dict[str, Any]],
+        method_entries_config: core_config.MethodEntriesConfig,
         partition_id: int,
-    ) -> list[dict[str, Any]]:
+    ) -> core_config.MethodEntriesConfig:
+        """
+        Inject concrete paths into each method entry by resolving InjectIO objects.
+        Returns a new MethodEntriesConfig with fully resolved params.
+        """
         resolved_configs = []
 
-        for method_entry in method_entries:
-            config_copy = copy.deepcopy(method_entry)
+        for entry in method_entries_config.entries:
             resolved_params = self.resolve_param_injections(
-                method_config=config_copy["params"],
+                method_config=copy.deepcopy(entry.params),
                 partition_id=partition_id,
             )
-            config_copy["params"] = resolved_params
-            resolved_configs.append(config_copy)
 
-        return resolved_configs
+            if isinstance(entry, core_config.FuncMethodEntryConfig):
+                resolved_configs.append(
+                    core_config.FuncMethodEntryConfig(
+                        func=entry.func, params=resolved_params
+                    )
+                )
+            elif isinstance(entry, core_config.ClassMethodEntryConfig):
+                resolved_configs.append(
+                    core_config.ClassMethodEntryConfig(
+                        class_=entry.class_,
+                        method=entry.method,
+                        params=resolved_params,
+                    )
+                )
+            else:
+                raise TypeError(f"Unsupported method entry type: {type(entry)}")
+
+        return core_config.MethodEntriesConfig(entries=resolved_configs)
 
     def resolve_param_injections(
         self,
@@ -1395,13 +1462,6 @@ class PartitionIterator:
             value=path,
         )
 
-        if "dummy_used" not in self.nested_input_object_tag.get(inject.object, {}):
-            self._configure_nested_dict(
-                outer_key=inject.object,
-                inner_key="dummy_used",
-                value=False,
-            )
-
         return path
 
     def construct_partition_path_for_object_tag(self, object, tag, partition_id) -> str:
@@ -1414,75 +1474,62 @@ class PartitionIterator:
 
     def test_new_inject_method(self, partition_id):
 
-        resolved_methods = self.resolve_injections_for_methods(
-            method_entries=self.custom_functions,
+        resolved_methods = self.resolve_injected_io_for_methods(
+            method_entries_config=self.list_of_methods,
             partition_id=partition_id,
         )
         return resolved_methods
 
-    def execute_custom_functions(self):
+    def execute_injected_methods(
+        self, method_entries_config: core_config.MethodEntriesConfig
+    ) -> None:
         """
         What:
-            Execute custom functions with the resolved input and output paths.
+            Execute injected methods whose parameter paths have already been resolved.
 
         How:
-            This function iterates through custom functions and handles them differently based
-            on whether they are class methods or standalone functions. It extracts the required
-            parameters, resolves their paths, and logs these parameters before executing the
-            corresponding class methods or standalone functions.
-
-            For class methods, it separates parameters for class instantiation and method execution.
-            For standalone functions, it directly prepares and resolves parameters for function execution.
+            For class-based methods:
+                - Instantiate the class using constructor parameters.
+                - Call the specified method with the remaining parameters.
+            For function-based methods:
+                - Call the function with all parameters.
         """
+        for entry in method_entries_config.entries:
+            if isinstance(entry, core_config.ClassMethodEntryConfig):
+                cls = entry.class_
+                method_name = entry.method
+                method = getattr(cls, method_name)
 
-        for custom_func in self.custom_functions:
-            resolved_params = {}  # Initialize resolved_params
-
-            if "class" in custom_func:
-                # Handle class methods
-                func_class = custom_func["class"]
-                method = getattr(func_class, custom_func["method"])
-
-                # Prepare parameters for the class instantiation and method call
                 class_params = {}
                 method_params = {}
 
-                for param, path in custom_func["params"].items():
-                    # Determine if the parameter is for the constructor or method
-                    if param in func_class.__init__.__code__.co_varnames:
-                        class_params[param] = path
-                    else:
-                        method_params[param] = path
+                init_params = cls.__init__.__code__.co_varnames
 
-                # Log the class parameters
-                print(f"Class parameters for {func_class.__name__}:")
+                for param, value in entry.params.items():
+                    if param in init_params:
+                        class_params[param] = value
+                    else:
+                        method_params[param] = value
+
+                print(f"Class parameters for {cls.__name__}:")
                 pprint.pprint(class_params, indent=4)
 
-                # Log the method parameters
-                print(f"Method parameters for {method.__name__}:")
+                print(f"Method parameters for {method_name}:")
                 pprint.pprint(method_params, indent=4)
 
-                # Instantiate the class with the required parameters
-                instance = func_class(**class_params)
-                # Call the method with the required parameters
+                instance = cls(**class_params)
                 method(instance, **method_params)
 
+            elif isinstance(entry, core_config.FuncMethodEntryConfig):
+                func = entry.func
+                print(f"Function parameters for {func.__name__}:")
+                pprint.pprint(entry.params, indent=4)
+                func(**entry.params)
+
             else:
-                # Handle standalone functions
-                method = custom_func["func"]
+                raise TypeError(f"Unsupported method entry type: {type(entry)}")
 
-                # Prepare parameters for the function call
-                func_params = custom_func["params"]
-                resolved_params = {param: path for param, path in func_params.items()}
-
-                # Log the function parameters
-                print(f"Function parameters for {method.__name__}:")
-                pprint.pprint(resolved_params, indent=4)
-
-                # Execute the function with resolved parameters
-                method(**resolved_params)
-
-    def resilient_execute_custom_functions(self, object_id: int):
+    def resilient_execute_custom_methods(self, object_id: int):
         """
         What:
             Helper function to execute custom functions with retry logic to handle potential failures
@@ -1495,7 +1542,7 @@ class PartitionIterator:
 
         for attempt in range(max_retries):
             try:
-                self.execute_custom_functions()
+                self.execute_injected_methods()
                 break  # If successful, exit the retry loop
             except Exception as e:
                 error_message = str(e)
@@ -1676,10 +1723,11 @@ class PartitionIterator:
             if inputs_present_in_partition:
                 self._process_context_features(aliases, iteration_partition, object_id)
                 self.find_io_params_custom_logic(object_id)
-                resolved_methods = self.resolve_injections_for_methods(
+                resolved_methods = self.resolve_injected_io_for_methods(
                     method_entries=self.custom_functions,
                     partition_id=object_id,
                 )
+                self.ensure_dummy_flag_for_all_objects()
                 self._inject_partition_field_to_custom_functions()
                 self.export_dictionaries_to_json(
                     file_name="iteration",
@@ -1687,7 +1735,7 @@ class PartitionIterator:
                     object_id=object_id,
                 )
 
-                self.resilient_execute_custom_functions(object_id)
+                self.resilient_execute_custom_methods(object_id)
 
             if inputs_present_in_partition:
                 for alias in aliases:
