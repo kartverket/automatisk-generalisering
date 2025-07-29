@@ -1529,7 +1529,7 @@ class PartitionIterator:
             else:
                 raise TypeError(f"Unsupported method entry type: {type(entry)}")
 
-    def resilient_execute_custom_methods(self, object_id: int):
+    def execute_injected_methods_with_retry(self, object_id: int):
         """
         What:
             Helper function to execute custom functions with retry logic to handle potential failures
@@ -1542,7 +1542,15 @@ class PartitionIterator:
 
         for attempt in range(max_retries):
             try:
-                self.execute_injected_methods()
+                resolved_injection_method_configs = (
+                    self.resolve_injected_io_for_methods(
+                        method_entries_config=self.list_of_methods,
+                        partition_id=object_id,
+                    )
+                )
+                self.execute_injected_methods(
+                    method_entries_config=resolved_injection_method_configs
+                )
                 break  # If successful, exit the retry loop
             except Exception as e:
                 error_message = str(e)
@@ -1723,11 +1731,6 @@ class PartitionIterator:
             if inputs_present_in_partition:
                 self._process_context_features(aliases, iteration_partition, object_id)
                 self.find_io_params_custom_logic(object_id)
-                resolved_methods = self.resolve_injected_io_for_methods(
-                    method_entries=self.custom_functions,
-                    partition_id=object_id,
-                )
-                self.ensure_dummy_flag_for_all_objects()
                 self._inject_partition_field_to_custom_functions()
                 self.export_dictionaries_to_json(
                     file_name="iteration",
@@ -1735,7 +1738,8 @@ class PartitionIterator:
                     object_id=object_id,
                 )
 
-                self.resilient_execute_custom_methods(object_id)
+                self.execute_injected_methods_with_retry(object_id)
+                self.ensure_dummy_flag_for_all_objects()
 
             if inputs_present_in_partition:
                 for alias in aliases:

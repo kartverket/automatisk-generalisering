@@ -1,8 +1,10 @@
 import arcpy
+from pprint import pprint
 import config
 from custom_tools.general_tools import custom_arcpy
 from custom_tools.general_tools.partition_iterator import PartitionIterator
 from custom_tools.general_tools.polygon_processor import PolygonProcessor
+from composition_configs import core_config
 
 from custom_tools.generalization_tools.building.resolve_building_conflicts import (
     ResolveBuildingConflictsPolygon,
@@ -47,14 +49,14 @@ def main():
     """
 
     environment_setup.main()
-    hospital_church_points_to_squares()
-    apply_symbology_to_layers()
+    # hospital_church_points_to_squares()
+    # apply_symbology_to_layers()
     resolve_building_conflicts_polygon()
-    invisible_building_polygons_to_point()
-    intersecting_building_polygons_to_point()
-    merging_invisible_intersecting_points()
-    check_if_building_polygons_are_big_enough()
-    small_building_polygons_to_points()
+    # invisible_building_polygons_to_point()
+    # intersecting_building_polygons_to_point()
+    # merging_invisible_intersecting_points()
+    # check_if_building_polygons_are_big_enough()
+    # small_building_polygons_to_points()
 
 
 @timing_decorator
@@ -266,17 +268,122 @@ def resolve_building_conflicts_polygon():
         },
     }
 
+    resolve_building_conflicts_config_2 = {
+        "input_list_of_dicts_data_structure": input_data_structure,
+        "root_file": Building_N100.polygon_resolve_building_conflicts___root_file___n100_building.value,
+        "output_building_polygons": (building, "after_rbc"),
+        "input_building_polygons2": core_config.InjectIO(object=building, tag="input"),
+        "output_building_polygons2": core_config.InjectIO(
+            object=building, tag="after_rbc"
+        ),
+        "new_object": core_config.InjectIO(object="new_object", tag="new_tag"),
+        "something": core_config.InjectIO(object="building", tag="new_output"),
+    }
+
+    rbc_method_test = core_config.MethodEntriesConfig(
+        entries=[
+            core_config.ClassMethodEntryConfig(
+                class_=ResolveBuildingConflictsPolygon,
+                method="run",
+                params=resolve_building_conflicts_config_2,
+            )
+        ]
+    )
+
+    rbc_input_config = core_config.PartitionInputConfig(
+        entries=[
+            core_config.InputEntry(
+                object=building,
+                input_type=core_config.InputType.PROCESSING,
+                tag="input",
+                path=Building_N100.polygon_propogate_displacement___building_polygons_after_displacement___n100_building.value,
+            ),
+            core_config.InputEntry(
+                object=railroad,
+                input_type=core_config.InputType.CONTEXT,
+                tag="input",
+                path=Building_N100.data_selection___railroad_tracks_n100_input_data___n100_building.value,
+            ),
+            core_config.InputEntry(
+                object=railroad_station,
+                input_type=core_config.InputType.CONTEXT,
+                tag="input",
+                path=Building_N100.data_preparation___railway_stations_to_polygons___n100_building.value,
+            ),
+            core_config.InputEntry(
+                object=road,
+                input_type=core_config.InputType.CONTEXT,
+                tag="input",
+                path=Building_N100.data_preparation___road_symbology_buffers___n100_building.value,
+            ),
+            core_config.InputEntry(
+                object=begrensningskurve,
+                input_type=core_config.InputType.CONTEXT,
+                tag="input",
+                path=Building_N100.data_preparation___processed_begrensningskurve___n100_building.value,
+            ),
+            core_config.InputEntry(
+                object=power_grid_lines,
+                input_type=core_config.InputType.CONTEXT,
+                tag="input",
+                path=Building_N100.data_preparation___power_grid_lines___n100_building.value,
+            ),
+            core_config.InputEntry(
+                object=hospital_churches,
+                input_type=core_config.InputType.CONTEXT,
+                tag="input",
+                path=Building_N100.polygon_resolve_building_conflicts___hospital_church_squares___n100_building.value,
+            ),
+        ]
+    )
+
+    rbc_output_config = core_config.PartitionOutputConfig(
+        entries=[
+            core_config.OutputEntry(
+                object=building,
+                tag="after_rbc",
+                path=Building_N100.polygon_resolve_building_conflicts___after_rbc___n100_building.value,
+            )
+        ]
+    )
+
+    rbc_partition_io_config = core_config.PartitionIOConfig(
+        input_config=rbc_input_config,
+        output_config=rbc_output_config,
+    )
+
     partition_rbc_polygon = PartitionIterator(
+        partition_io_config=rbc_partition_io_config,
+        partition_method_inject_config=rbc_method_test,
         alias_path_data=inputs,
         alias_path_outputs=outputs,
-        custom_functions=[resolve_building_conflicts_config],
+        custom_functions=[resolve_building_conflicts_config_2],
         root_file_partition_iterator=Building_N100.polygon_resolve_building_conflicts___partition_root_file___n100_building.value,
         dictionary_documentation_path=Building_N100.polygon_resolve_building_conflicts___begrensingskurve_docu___building_n100.value,
         feature_count=25_000,
         run_partition_optimization=True,
         search_distance="500 Meters",
     )
-    partition_rbc_polygon.run()
+
+    print("\nPrinting: Raw pre resolve resolve_injection_configs_batch:\n")
+    pprint(partition_rbc_polygon.custom_functions)
+    resolved_configs = partition_rbc_polygon.test_new_inject_method(partition_id=1)
+    print("\nPrinting nested dict after 1:\n")
+    pprint(partition_rbc_polygon.nested_input_object_tag)
+
+    print("\nPrinting resolved method configs:\n")
+    pprint(resolved_configs)
+
+    print("\nPrinting: Raw after resolve resolve_injection_configs_batch:\n")
+    pprint(partition_rbc_polygon.custom_functions)
+
+    resolved_configs2 = partition_rbc_polygon.test_new_inject_method(partition_id=2)
+    print("\nPrinting resolved method configs 2:\n")
+    pprint(resolved_configs2)
+    print("\nPrinting nested dict after 2:\n")
+    pprint(partition_rbc_polygon.nested_input_object_tag)
+    # partition_rbc_polygon.test_resolve_injection_io()
+    # partition_rbc_polygon.run()
 
 
 @timing_decorator
