@@ -1,5 +1,5 @@
 from dataclasses import dataclass, field
-from typing import Dict, List, Literal, Optional, Tuple, Union
+from typing import Dict, List, Literal, Optional, Tuple, Union, Any, Callable
 from enum import Enum
 
 
@@ -75,6 +75,24 @@ class PartitionIOConfig:
 class PartitionMethod(Enum):
     FEATURES = "FEATURES"
     VERTICES = "VERTICES"
+
+
+@dataclass
+class FuncMethodEntryConfig:
+    func: Callable
+    params: dict[str, Any] = field(default_factory=dict)
+
+
+@dataclass
+class ClassMethodEntryConfig:
+    class_: type
+    method: str
+    params: dict[str, Any] = field(default_factory=dict)
+
+
+@dataclass
+class MethodEntriesConfig:
+    entries: list[Union[FuncMethodEntryConfig, ClassMethodEntryConfig]]
 
 
 @dataclass
