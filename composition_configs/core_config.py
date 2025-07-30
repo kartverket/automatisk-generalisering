@@ -23,7 +23,6 @@ class WorkFileConfig:
 class InputType(Enum):
     PROCESSING = "processing"
     CONTEXT = "context"
-    REFERENCE = "reference"
 
 
 @dataclass(frozen=True)
