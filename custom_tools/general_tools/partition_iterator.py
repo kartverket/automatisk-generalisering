@@ -265,42 +265,6 @@ class PartitionIterator:
                 target_dict[entry.object][self.INPUT_TYPE_KEY] = entry.input_type
             target_dict[entry.object][entry.tag] = entry.path
 
-    def prepare_method_configs(
-        self,
-        method_entries: list[
-            Union[
-                core_config.FuncMethodEntryConfig,
-                core_config.ClassMethodEntryConfig,
-            ]
-        ],
-    ) -> list[dict[str, Any]]:
-        """
-        Convert typed method entry configs into standard dicts.
-        These are not yet resolved (InjectIOs still exist).
-        """
-        prepared = []
-
-        for entry in method_entries:
-            if isinstance(entry, core_config.FuncMethodEntryConfig):
-                prepared.append(
-                    {
-                        "func": entry.func,
-                        "params": copy.deepcopy(entry.params),
-                    }
-                )
-            elif isinstance(entry, core_config.ClassMethodEntryConfig):
-                prepared.append(
-                    {
-                        "class": entry.class_,
-                        "method": entry.method,
-                        "params": copy.deepcopy(entry.params),
-                    }
-                )
-            else:
-                raise TypeError(f"Unsupported method entry type: {type(entry)}")
-
-        return prepared
-
     def check_new_io_config_resolving(self):
 
         self.write_data_to_json(
@@ -351,33 +315,38 @@ class PartitionIterator:
             f"Set value for inner key '{inner_key}' in outer key '{outer_key}' to: {value}"
         )
 
-    def _create_cartographic_partitions(self, feature_count: int) -> None:
+    def _create_cartographic_partitions(self, element_limit: int) -> None:
         """
         What:
-            Creates cartographic partitions based on the given feature_count.
+            Creates cartographic partitions based on the given element_limit.
             Overwrites any existing partition feature.
 
         Args:
             feature_count (int): The feature count used to limit partition size.
         """
         self.delete_feature_class(self.partition_feature)
+        VALID_TAGS = {"input_copy", "context_copy"}
 
-        all_features = [
+        in_features = [
             path
-            for alias, types in self.nested_alias_type_data.items()
-            for type_key, path in types.items()
-            if type_key in ["input_copy", "context_copy"] and path is not None
+            for object_, tag_dict in self.nested_input_object_tag.items()
+            for tag, path in tag_dict.items()
+            if tag in VALID_TAGS and path is not None
         ]
 
-        if all_features:
-            arcpy.cartography.CreateCartographicPartitions(
-                in_features=all_features,
-                out_features=self.partition_feature,
-                feature_count=feature_count,
-                partition_method=self.partition_method,
-            )
-        else:
-            raise ValueError("No input or context features available for partitioning.")
+        if not in_features:
+            print("No input or context features available for creating partitions.")
+            return
+
+        print(f"Creating cartographic partitions from features: {in_features}")
+
+        arcpy.cartography.CreateCartographicPartitions(
+            in_features=in_features,
+            out_features=self.partition_feature,
+            feature_count=element_limit,
+            partition_method=self.partition_method,
+        )
+        print(f"Created partitions in {self.partition_feature}")
 
     def _count_maximum_objects_in_partition(self) -> int:
         """
@@ -464,7 +433,7 @@ class PartitionIterator:
             print(
                 f"\n\nAttempt: {attempts}\nTesting candidate feature_count: {candidate}"
             )
-            self._create_cartographic_partitions(feature_count=candidate)
+            self._create_cartographic_partitions(element_limit=candidate)
 
             self.find_maximum_object_id()
             current_iteration_number = self.max_object_id
@@ -829,7 +798,7 @@ class PartitionIterator:
         except Exception as e:
             print(f"Error in finding max {self.object_id_field}: {e}")
 
-    def prepare_input_data(self):
+    def prepare_input_data_old(self):
         """
         Copies the input data, and set the path of the copy to type input_copy in self.nested_alias_type_data.
         From now on when the PartitionIterator access the global data for an alias it uses input_copy.
@@ -935,6 +904,100 @@ class PartitionIterator:
                     inner_key="context_copy",
                     value=context_data_copy,
                 )
+
+    def prepare_input_data(self):
+        for object_key, tag_dict in self.nested_input_object_tag.items():
+            input_type = tag_dict.get(self.INPUT_TYPE_KEY)
+            input_path = tag_dict.get("input")
+
+            if input_type == core_config.InputType.PROCESSING.value:
+                self._prepare_processing_input(
+                    object_key=object_key, input_path=input_path
+                )
+
+            elif input_type == core_config.InputType.CONTEXT.value:
+                self._prepare_context_input(
+                    object_key=object_key, input_path=input_path
+                )
+
+    def _prepare_processing_input(self, object_key: str, input_path: str) -> None:
+        copy_path = f"{self.root_file_partition_iterator}_{object_key}_input_data_copy"
+
+        arcpy.management.Copy(in_data=input_path, out_data=copy_path)
+        print(f"Copied processing input for: {object_key}")
+
+        self._configure_nested_dict(
+            outer_key=object_key,
+            inner_key="input_copy",
+            value=copy_path,
+        )
+
+        self.PARTITION_FIELD = self.generate_unique_field_name(
+            input_feature=copy_path,
+            field_name=self.PARTITION_FIELD,
+        )
+        self.ORIGINAL_ID_FIELD = self.generate_unique_field_name(
+            input_feature=copy_path,
+            field_name=self.ORIGINAL_ID_FIELD,
+        )
+
+        arcpy.AddField_management(copy_path, self.PARTITION_FIELD, "LONG")
+        print(f"Added field {self.PARTITION_FIELD}")
+
+        arcpy.AddField_management(copy_path, self.ORIGINAL_ID_FIELD, "LONG")
+        print(f"Added field {self.ORIGINAL_ID_FIELD}")
+
+        arcpy.CalculateField_management(
+            copy_path, self.ORIGINAL_ID_FIELD, f"!{self.object_id_field}!"
+        )
+        print(f"Calculated field {self.ORIGINAL_ID_FIELD}")
+
+    def _prepare_context_input(self, object_key: str, input_path: str) -> None:
+        copy_path = (
+            f"{self.root_file_partition_iterator}_{object_key}_context_data_copy"
+        )
+
+        if self.selection_of_context_features:
+            PartitionIterator.create_feature_class(
+                full_feature_path=copy_path,
+                template_feature=input_path,
+            )
+
+            for input_obj, tag_dict in self.nested_input_object_tag.items():
+                if (
+                    tag_dict.get(self.INPUT_TYPE_KEY)
+                    == core_config.InputType.PROCESSING.value
+                    and "input_copy" in tag_dict
+                ):
+                    input_copy_path = tag_dict["input_copy"]
+                    memory_layer = (
+                        f"memory/{object_key}_context_near_{input_obj}_selection"
+                    )
+
+                    custom_arcpy.select_location_and_make_feature_layer(
+                        input_layer=input_path,
+                        overlap_type=custom_arcpy.OverlapType.WITHIN_A_DISTANCE,
+                        select_features=input_copy_path,
+                        output_name=memory_layer,
+                        search_distance=self.search_distance,
+                    )
+
+                    arcpy.management.Append(
+                        memory_layer, copy_path, schema_type="NO_TEST"
+                    )
+                    arcpy.management.Delete(memory_layer)
+
+            print(f"Processed selected context features for: {object_key}")
+
+        else:
+            arcpy.management.Copy(in_data=input_path, out_data=copy_path)
+            print(f"Copied full context data for: {object_key}")
+
+        self._configure_nested_dict(
+            outer_key=object_key,
+            inner_key="context_copy",
+            value=copy_path,
+        )
 
     def select_partition_feature(self, iteration_partition, object_id):
         """
@@ -1776,7 +1839,7 @@ class PartitionIterator:
 
         print("\nStarting Data Preparation...")
         self.delete_final_outputs()
-        self.prepare_input_data()
+        self.prepare_input_data_old()
         self.export_dictionaries_to_json(file_name="post_data_preparation")
         if self.run_partition_optimization:
             self._find_partition_size()
@@ -1785,7 +1848,7 @@ class PartitionIterator:
         if not self.run_partition_optimization:
             self.final_partition_feature_count = self.feature_count
         self._create_cartographic_partitions(
-            feature_count=self.final_partition_feature_count
+            element_limit=self.final_partition_feature_count
         )
 
         print("\nStarting on Partition Iteration...")
