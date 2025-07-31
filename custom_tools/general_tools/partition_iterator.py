@@ -144,6 +144,7 @@ class PartitionIterator:
     # Class-level constants
     INPUT_TYPE_KEY = "input_type"
     INPUT_TAG_KEY = "input"
+    INJECTABLE_INPUT_TAG_KEY = INPUT_TAG_KEY
     RAW_INPUT_TAG = "raw_input"
     PARTITION_FIELD = "partition_selection_field"
     ORIGINAL_ID_FIELD = "original_id_field"
@@ -178,8 +179,8 @@ class PartitionIterator:
         """
 
         # Raw inputs and initial setup
-        self.nested_input_object_tag: Dict[str, Dict[str, str]] = {}
-        self.nested_output_object_tag: Dict[str, Dict[str, str]] = {}
+        self.nested_input_object_tag: Dict[str, Dict[str, Any]] = {}
+        self.nested_output_object_tag: Dict[str, Dict[str, Any]] = {}
 
         input_entries_resolved = [
             core_config.ResolvedInputEntry(
@@ -396,7 +397,7 @@ class PartitionIterator:
                 self.delete_iteration_files(*self.iteration_file_paths_list)
                 continue
 
-            self._process_context_features(aliases, iteration_partition, object_id)
+            self._process_context_features_old(aliases, iteration_partition, object_id)
 
             total_processed_objects += sum(
                 self.nested_alias_type_data[alias].get("processed_objects_count", 0)
@@ -599,7 +600,7 @@ class PartitionIterator:
                     value=False,
                 )
 
-    def update_empty_alias_type_with_dummy_file(self, alias, type_info):
+    def update_empty_alias_type_with_dummy_file_old(self, alias, type_info):
         # Check if the dummy type exists in the alias nested_alias_type_data
         if "dummy" in self.nested_alias_type_data[alias]:
             # Check if the input type exists in the alias nested_alias_type_data
@@ -623,6 +624,40 @@ class PartitionIterator:
             print(
                 f"'dummy' type does not exist for alias '{alias}' in nested_alias_type_data."
             )
+
+    def update_empty_object_tag_with_dummy_file(
+        self, object_key: str, tag: str
+    ) -> None:
+        """
+        Replaces the value for the given tag with the dummy path if available for the object_key.
+        Marks 'dummy_used' as True for traceability.
+        """
+        tag_dict = self.nested_input_object_tag.get(object_key)
+        if tag_dict is None:
+            print(f"Object '{object_key}' not found.")
+            return
+
+        dummy_path = tag_dict.get("dummy")
+        if dummy_path is None:
+            print(f"No dummy path for '{object_key}'.")
+            return
+
+        if tag not in tag_dict:
+            print(f"Tag '{tag}' not defined for '{object_key}'. Skipping.")
+            return
+
+        self._configure_nested_dict(
+            outer_key=object_key,
+            inner_key=tag,
+            value=dummy_path,
+        )
+        self._configure_nested_dict(
+            outer_key=object_key,
+            inner_key="dummy_used",
+            value=True,
+        )
+
+        print(f"Dummy path for tag '{tag}' on '{object_key}' set to: {dummy_path}")
 
     @staticmethod
     def create_directory_json_documentation(
@@ -1102,7 +1137,7 @@ class PartitionIterator:
                 return True
             else:
                 # Loads in dummy feature for this alias for this iteration and sets dummy_used = True
-                self.update_empty_alias_type_with_dummy_file(
+                self.update_empty_alias_type_with_dummy_file_old(
                     alias,
                     type_info="input",
                 )
@@ -1181,7 +1216,7 @@ class PartitionIterator:
                 ] = count_processed_objects
             else:
                 # Loads in dummy feature for this alias for this iteration and sets dummy_used = True
-                self.update_empty_alias_type_with_dummy_file(
+                self.update_empty_alias_type_with_dummy_file_old(
                     alias,
                     type_info="context",
                 )
@@ -1189,10 +1224,177 @@ class PartitionIterator:
                     f"iteration partition {object_id} has no features for {alias} in the partition feature"
                 )
 
-    def _process_context_features(self, aliases, iteration_partition, object_id):
+    def _process_context_features_old(self, aliases, iteration_partition, object_id):
         """Processes context features fo all alias with a context type using process_context_features"""
         for alias in aliases:
             self.process_context_features(alias, iteration_partition, object_id)
+
+    def process_single_processing_input(
+        self,
+        object_key: str,
+        input_path: str,
+        iteration_partition: str,
+        partition_id: str,
+    ) -> bool:
+        selection_memory_path = (
+            f"memory/{object_key}_processing_center_in_{partition_id}"
+        )
+        self.iteration_file_paths_list.append(selection_memory_path)
+
+        # Select features whose center is in partition
+        custom_arcpy.select_location_and_make_feature_layer(
+            input_layer=input_path,
+            overlap_type=custom_arcpy.OverlapType.HAVE_THEIR_CENTER_IN,
+            select_features=iteration_partition,
+            output_name=selection_memory_path,
+        )
+
+        count_center = file_utilities.count_objects(selection_memory_path)
+        if count_center == 0:
+            self.update_empty_object_tag_with_dummy_file(
+                object_key=object_key, tag=self.INJECTABLE_INPUT_TAG_KEY
+            )
+            return False
+
+        print(f"{object_key} has {count_center} features in {iteration_partition}")
+        arcpy.CalculateField_management(
+            selection_memory_path, self.PARTITION_FIELD, "1"
+        )
+
+        output_path = (
+            f"{self.root_file_partition_iterator}_{object_key}_iteration_{partition_id}"
+        )
+        self.iteration_file_paths_list.append(output_path)
+
+        self.create_feature_class(output_path, selection_memory_path)
+        arcpy.management.Append(
+            inputs=selection_memory_path,
+            target=output_path,
+            schema_type="NO_TEST",
+        )
+
+        # Now add nearby features not centered in partition
+        nearby_selection = f"memory/{object_key}_processing_near_{partition_id}"
+        self.iteration_file_paths_list.append(nearby_selection)
+
+        custom_arcpy.select_location_and_make_feature_layer(
+            input_layer=input_path,
+            overlap_type=custom_arcpy.OverlapType.WITHIN_A_DISTANCE,
+            select_features=iteration_partition,
+            output_name=nearby_selection,
+            selection_type=custom_arcpy.SelectionType.NEW_SELECTION,
+            search_distance=self.search_distance,
+        )
+
+        arcpy.management.SelectLayerByLocation(
+            in_layer=nearby_selection,
+            overlap_type="HAVE_THEIR_CENTER_IN",
+            select_features=iteration_partition,
+            selection_type="REMOVE_FROM_SELECTION",
+        )
+
+        arcpy.CalculateField_management(
+            in_table=nearby_selection,
+            field=self.PARTITION_FIELD,
+            expression="0",
+        )
+        arcpy.management.Append(
+            inputs=nearby_selection,
+            target=output_path,
+            schema_type="NO_TEST",
+        )
+
+        self._configure_nested_dict(
+            outer_key=object_key,
+            inner_key=self.INJECTABLE_INPUT_TAG_KEY,
+            value=output_path,
+        )
+        return True
+
+    def process_all_processing_inputs(
+        self, iteration_partition: str, partition_id: str
+    ) -> bool:
+        has_inputs = False
+
+        for object_key, tag_dict in self.nested_input_object_tag.items():
+            if (
+                tag_dict.get(self.INPUT_TYPE_KEY)
+                != core_config.InputType.PROCESSING.value
+            ):
+                continue
+            if self.RAW_INPUT_TAG not in tag_dict:
+                continue
+
+            input_path = tag_dict[self.RAW_INPUT_TAG]
+
+            result = self.process_single_processing_input(
+                object_key=object_key,
+                input_path=input_path,
+                iteration_partition=iteration_partition,
+                partition_id=partition_id,
+            )
+
+            has_inputs = has_inputs or result
+        return has_inputs
+
+    def process_single_context_input(
+        self,
+        object_key: str,
+        input_path: str,
+        iteration_partition: str,
+        partition_id: str,
+    ) -> None:
+        output_path = (
+            f"{self.root_file_partition_iterator}_{object_key}_context_{partition_id}"
+        )
+        self.iteration_file_paths_list.append(output_path)
+
+        custom_arcpy.select_location_and_make_permanent_feature(
+            input_layer=input_path,
+            overlap_type=custom_arcpy.OverlapType.WITHIN_A_DISTANCE,
+            select_features=iteration_partition,
+            output_name=output_path,
+            selection_type=custom_arcpy.SelectionType.NEW_SELECTION,
+            search_distance=self.search_distance,
+        )
+
+        count = file_utilities.count_objects(output_path)
+
+        if count > 0:
+            print(f"{object_key} has {count} context features in {iteration_partition}")
+            self._configure_nested_dict(
+                outer_key=object_key,
+                inner_key=self.INJECTABLE_INPUT_TAG_KEY,
+                value=output_path,
+            )
+
+            self.nested_input_object_tag[object_key]["count"] = count
+            self.nested_input_object_tag[object_key]["processed_objects_count"] = count
+
+        else:
+            self.update_empty_object_tag_with_dummy_file(
+                object_key=object_key, tag=self.INJECTABLE_INPUT_TAG_KEY
+            )
+            print(
+                f"iteration partition {partition_id} has no context features for {object_key}"
+            )
+
+    def process_all_context_inputs(
+        self, iteration_partition: str, partition_id: str
+    ) -> None:
+        for object_key, tag_dict in self.nested_input_object_tag.items():
+            if tag_dict.get(self.INPUT_TYPE_KEY) != core_config.InputType.CONTEXT.value:
+                continue
+            if self.RAW_INPUT_TAG not in tag_dict:
+                continue
+
+            input_path = tag_dict[self.RAW_INPUT_TAG]
+            self.process_single_context_input(
+                object_key=object_key,
+                input_path=input_path,
+                iteration_partition=iteration_partition,
+                partition_id=partition_id,
+            )
 
     @staticmethod
     def format_time(seconds):
@@ -1766,7 +1968,9 @@ class PartitionIterator:
             )
 
             if inputs_present_in_partition:
-                self._process_context_features(aliases, iteration_partition, object_id)
+                self._process_context_features_old(
+                    aliases, iteration_partition, object_id
+                )
                 self.find_io_params_custom_logic(object_id)
                 self._inject_partition_field_to_custom_functions()
                 self.export_dictionaries_to_json(
