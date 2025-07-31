@@ -25,6 +25,10 @@ class InputType(Enum):
     CONTEXT = "context"
 
 
+class outputType(Enum):
+    VECTOR = "vector"
+
+
 @dataclass(frozen=True)
 class InputEntry:
     object: str
@@ -47,11 +51,18 @@ class InjectIO:
 
 
 @dataclass(frozen=True)
-class ResolvedEntry:
+class ResolvedInputEntry:
     object: str
     tag: str
     path: str
-    input_type: Optional[str] = None
+    input_type: str
+
+
+@dataclass(frozen=True)
+class ResolvedOutputEntry:
+    object: str
+    tag: str
+    path: str
 
 
 @dataclass(frozen=True)
