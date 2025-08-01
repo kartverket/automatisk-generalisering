@@ -215,9 +215,12 @@ class PartitionIterator:
             partition_iterator_run_config.max_elements_per_partition
         )
 
-        self.object_id_field = core_config.PartitionRunConfig.object_id_column
+        self.object_id_field = partition_iterator_run_config.object_id_column
         self.run_partition_optimization = (
-            core_config.PartitionRunConfig.run_partition_optimization
+            partition_iterator_run_config.run_partition_optimization
+        )
+        self.partition_method: Literal["FEATURES", "VERTICES"] = (
+            partition_iterator_run_config.partition_method.value
         )
 
         ##
@@ -235,9 +238,7 @@ class PartitionIterator:
         else:
             self.dictionary_documentation_path = dictionary_documentation_path
 
-        self.feature_count = feature_count
         self.final_partition_feature_count = 0
-        self.partition_method = partition_method
         self.selection_of_context_features = context_selection
         self.delete_final_outputs_bool = delete_final_outputs
         self.safe_final_output_cleanup = safe_output_final_cleanup
@@ -437,7 +438,7 @@ class PartitionIterator:
         Raises:
             RuntimeError: If no valid feature_count is found.
         """
-        candidate = int(self.feature_count)
+        candidate = int(self.max_elements_per_partition)
         max_allowed = candidate
         previous_partitions = 0
         attempts = 0
@@ -1514,7 +1515,7 @@ class PartitionIterator:
 
         print("\nCreating Cartographic Partitions...")
         if not self.run_partition_optimization:
-            self.final_partition_feature_count = self.feature_count
+            self.final_partition_feature_count = self.max_elements_per_partition
         self._create_cartographic_partitions(
             element_limit=self.final_partition_feature_count
         )
