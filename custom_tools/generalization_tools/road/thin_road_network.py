@@ -2,8 +2,10 @@ import arcpy
 
 import config
 from custom_tools.general_tools import file_utilities
+from custom_tools.general_tools import partition_iterator
 from file_manager import WorkFileManager
 from composition_configs import WorkFileConfig
+from custom_tools.general_tools.partition_iterator import PartitionIterator
 from custom_tools.decorators.partition_io_decorator import partition_io_decorator
 
 from custom_tools.generalization_tools.road.dissolve_with_intersections import (
@@ -24,7 +26,6 @@ class ThinRoadNetwork:
         minimum_length: str,
         invisibility_field_name: str,
         hierarchy_field_name: str,
-        partition_field_name: str,
         special_selection_sql: str | None = None,
     ):
         self.road_network_input = road_network_input
@@ -32,7 +33,7 @@ class ThinRoadNetwork:
         self.minimum_length = minimum_length
         self.invisibility_field_name = invisibility_field_name
         self.hierarchy_field_name = hierarchy_field_name
-        self.partition_field_name = partition_field_name
+        self.partition_field_name = PartitionIterator.PARTITION_FIELD
         self.special_selection_sql = special_selection_sql
 
         self.write_work_files_to_memory = work_file_manager_config.write_to_memory

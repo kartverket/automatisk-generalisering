@@ -141,7 +141,6 @@ def run_thin_roads(
             "root_file": Road_N100.data_preparation___thin_road_root___n100_road.value,
             "minimum_length": min_length,
             "invisibility_field_name": "invisibility",
-            "partition_field_name": "",
             "hierarchy_field_name": "hierarchy",
             "special_selection_sql": special_selection_sql,
         },
