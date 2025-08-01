@@ -214,6 +214,19 @@ class PartitionIterator:
         self.list_of_methods = partition_method_inject_config
 
         self.search_distance = partition_iterator_run_config.context_radius_meters
+        self.max_elements_per_partition = (
+            partition_iterator_run_config.max_elements_per_partition
+        )
+
+        self.object_id_field = core_config.PartitionRunConfig.object_id_column
+        self.run_partition_optimization = (
+            core_config.PartitionRunConfig.run_partition_optimization
+        )
+
+        ##
+        self.max_partition_count: int
+
+        ############### OLD CLASS VARIABLES
 
         self.raw_input_data = alias_path_data
         self.raw_output_data = alias_path_outputs or {}
@@ -225,12 +238,9 @@ class PartitionIterator:
         else:
             self.dictionary_documentation_path = dictionary_documentation_path
 
-        self.search_distance_old = search_distance
         self.feature_count = feature_count
-        self.run_partition_optimization = run_partition_optimization
         self.final_partition_feature_count = 0
         self.partition_method = partition_method
-        self.object_id_field = object_id_field
         self.selection_of_context_features = context_selection
         self.delete_final_outputs_bool = delete_final_outputs
         self.safe_final_output_cleanup = safe_output_final_cleanup
@@ -365,48 +375,53 @@ class PartitionIterator:
     def _count_maximum_objects_in_partition(self) -> int:
         """
         What:
-            Loops through each partition, selects it, and counts the number of input and context features
-            found within the search distance buffer for that partition.
+            Iterates over all partitions and determines the highest number of total processed features
+            (processing + context) found in any single partition.
 
         How:
-            Uses select_partition_feature, _process_inputs_in_partition, and _process_context_features
-            to perform selections and access updated count values.
-            Cleans up temp iteration files after each partition.
+            For each partition:
+            - Select the partition geometry.
+            - Run processing and context logic.
+            - Track total processed objects.
+            - Cleanup intermediate files.
 
         Returns:
-            int: The highest number of total features (input + context) across all partitions.
+            int: Maximum number of features found in a partition across all iterations.
         """
-        self.find_maximum_object_id()
-        total_processed_objects = 0
+        self.update_max_partition_count()
         max_partition_load = 0
-        aliases = list(self.nested_alias_type_data.keys())
 
-        for object_id in range(1, self.max_object_id + 1):
+        for partition_id in range(1, self.max_partition_count + 1):
             iteration_partition = (
-                f"{self.root_file_partition_iterator}_partition_{object_id}"
+                f"{self.root_file_partition_iterator}_partition_{partition_id}"
             )
-            total_processed_objects = 0
             self.iteration_file_paths_list.clear()
 
-            self.select_partition_feature(iteration_partition, object_id)
+            self.select_partition_feature(iteration_partition, partition_id)
 
-            inputs_present = self._process_inputs_in_partition_old(
-                aliases, iteration_partition, object_id
+            has_inputs = self.process_all_processing_inputs(
+                iteration_partition=iteration_partition,
+                partition_id=partition_id,
             )
-            if not inputs_present:
+            if not has_inputs:
                 self.delete_iteration_files(*self.iteration_file_paths_list)
                 continue
 
-            self._process_context_features_old(aliases, iteration_partition, object_id)
-
-            total_processed_objects += sum(
-                self.nested_alias_type_data[alias].get("processed_objects_count", 0)
-                for alias in aliases
+            self.process_all_context_inputs(
+                iteration_partition=iteration_partition,
+                partition_id=partition_id,
             )
-            max_partition_load = max(max_partition_load, total_processed_objects)
+
+            total_objects = sum(
+                self.nested_input_object_tag[obj_key].get("processed_objects_count", 0)
+                for obj_key in self.nested_input_object_tag
+            )
+            max_partition_load = max(max_partition_load, total_objects)
 
             print(
-                f"\nPartition: {object_id}\nCurrent total found: {total_processed_objects}\nCrurrent maxumum found: {max_partition_load}"
+                f"\nPartition: {partition_id}\n"
+                f"Current total found: {total_objects}\n"
+                f"Current maximum found: {max_partition_load}"
             )
 
             self.delete_iteration_files(*self.iteration_file_paths_list)
@@ -416,68 +431,61 @@ class PartitionIterator:
     def _find_partition_size(self) -> int:
         """
         What:
-            Iteratively finds the largest feature_count value that produces partitions whose
-            max buffered processing load (input + context) does not exceed max_allowed_objects.
+            Searches for the optimal `feature_count` that ensures partitioned processing does not exceed
+            the allowed maximum number of features in any single partition.
 
         How:
-            Starts with feature_count = max_allowed_objects and decreases until a valid config is found.
+            Starts at the configured feature_count and decreases in steps until a valid configuration is found.
+            Validity is determined by calling _count_maximum_objects_in_partition.
 
         Returns:
-            int: The highest valid feature_count to use in partition creation.
+            int: A valid feature_count value that respects object limits.
 
         Raises:
-            RuntimeError: If no valid feature count is found.
+            RuntimeError: If no valid feature_count is found.
         """
         candidate = int(self.feature_count)
-
-        max_found = int(self.feature_count * 1.01)
-        min_candidate = self.feature_count
-        current_iteration_number = 0
-        previous_iteration_number = 0
+        max_allowed = candidate
+        previous_partitions = 0
         attempts = 0
 
-        def _find_increment(current_number: int) -> int:
-            min_increment = int(self.feature_count * 0.01)
-            overage = current_number - min_candidate
-            reduce = max(min_increment, int(overage * 0.5) + min_increment)
-            return reduce
+        def _calculate_decrement(current: int) -> int:
+            base = int(max_allowed * 0.01)
+            diff = max(1, int((current - max_allowed) * 0.5))
+            return max(base, diff)
 
-        while max_found > min_candidate:
+        while True:
             attempts += 1
             print(
-                f"\n\nAttempt: {attempts}\nTesting candidate feature_count: {candidate}"
+                f"\n\nAttempt {attempts}: Testing candidate feature_count = {candidate}"
             )
             self._create_cartographic_partitions(element_limit=candidate)
+            self.update_max_partition_count()
 
-            self.find_maximum_object_id()
-            current_iteration_number = self.max_object_id
-
-            if current_iteration_number == previous_iteration_number:
-                reduce_with = int(self.feature_count * 0.01)
-                candidate = int(candidate - reduce_with)
-                previous_iteration_number = self.max_object_id
-                print(
-                    f"Identical partition generated. Reduced feature_count with: {reduce_with}"
-                )
+            # Prevent retry loops on stable output
+            if self.max_partition_count == previous_partitions:
+                candidate -= int(max_allowed * 0.01)
+                print(f"Stable partition count. Reducing candidate to {candidate}")
                 continue
 
-            previous_iteration_number = current_iteration_number
+            previous_partitions = self.max_partition_count
+            max_objects_found = self._count_maximum_objects_in_partition()
 
-            max_found = self._count_maximum_objects_in_partition()
-
-            print(f" -> max partition load found: {max_found}")
-            if max_found <= min_candidate:
+            print(f" -> Max objects found in a partition: {max_objects_found}")
+            if max_objects_found <= max_allowed:
                 print(f"Selected feature_count: {candidate}")
                 self.final_partition_feature_count = candidate
                 return candidate
 
-            reduce_with = _find_increment(current_number=max_found)
-            print(f"Reducing with: {reduce_with}")
-            candidate = int(candidate - reduce_with)
+            decrement = _calculate_decrement(max_objects_found)
+            candidate -= decrement
+
+            if candidate < 1:
+                break
 
         raise RuntimeError(
-            f"No valid feature count found below max={self.feature_count}. "
-            f"Minimum candidate tested was {min_candidate}."
+            f"No valid feature count found under limit={max_allowed}. "
+            f"Minimum candidate tested: {candidate}."
         )
 
     @staticmethod
@@ -558,33 +566,42 @@ class PartitionIterator:
         )
         print(f"Created feature class: {full_feature_path}")
 
-    def create_dummy_features(self, types_to_include: list = None):
+    def create_dummy_features(self, tag: str) -> None:
         """
         What:
-            Creates dummy features for aliases for types specified in types_to_include.
+            Creates a dummy feature class for each object that contains a valid path for the given tag.
+
+        How:
+            For each object in nested_input_object_tag:
+            - If the given tag exists and has a valid path, use it as a template to create a dummy feature.
+            - The dummy path is stored under the 'dummy' key in the object's tag dictionary.
 
         Args:
-            types_to_include (list): A list of types for which dummy features should be created.
+            tag (str): The inner key (e.g. "raw_input") to check and use as template.
         """
-        for alias, alias_data in self.nested_alias_type_data.items():
-            for type_info, path in list(alias_data.items()):
-                if type_info in types_to_include and path:
-                    dummy_feature_path = (
-                        f"{self.root_file_partition_iterator}_{alias}_dummy_feature"
-                    )
-                    PartitionIterator.create_feature_class(
-                        full_feature_path=dummy_feature_path,
-                        template_feature=path,
-                    )
-                    print(
-                        f"Created dummy feature class for {alias} of type {type_info}: {dummy_feature_path}"
-                    )
-                    # Update alias state to include this new dummy type and its path
-                    self._configure_nested_dict(
-                        outer_key=alias,
-                        inner_key="dummy",
-                        value=dummy_feature_path,
-                    )
+        for object_key, tag_dict in self.nested_input_object_tag.items():
+            template_path = tag_dict.get(tag)
+            if not template_path:
+                continue
+
+            dummy_feature_path = (
+                f"{self.root_file_partition_iterator}_{object_key}_dummy_feature"
+            )
+
+            self.create_feature_class(
+                full_feature_path=dummy_feature_path,
+                template_feature=template_path,
+            )
+
+            print(
+                f"Created dummy feature for '{object_key}' using tag '{tag}': {dummy_feature_path}"
+            )
+
+            self._configure_nested_dict(
+                outer_key=object_key,
+                inner_key="dummy",
+                value=dummy_feature_path,
+            )
 
     def reset_dummy_used(self):
         """Sets the dummy_used to false"""
@@ -599,31 +616,6 @@ class PartitionIterator:
                     inner_key="dummy_used",
                     value=False,
                 )
-
-    def update_empty_alias_type_with_dummy_file_old(self, alias, type_info):
-        # Check if the dummy type exists in the alias nested_alias_type_data
-        if "dummy" in self.nested_alias_type_data[alias]:
-            # Check if the input type exists in the alias nested_alias_type_data
-            if (
-                type_info in self.nested_alias_type_data[alias]
-                and self.nested_alias_type_data[alias][type_info] is not None
-            ):
-                # Get the dummy path from the alias nested_alias_type_data
-                dummy_path = self.nested_alias_type_data[alias]["dummy"]
-                # Set the value of the existing type_info to the dummy path
-                self.nested_alias_type_data[alias][type_info] = dummy_path
-                self.nested_alias_type_data[alias]["dummy_used"] = True
-                print(
-                    f"The '{type_info}' for alias '{alias}' was updated with dummy path: {dummy_path}"
-                )
-            else:
-                print(
-                    f"'{type_info}' does not exist for alias '{alias}' in nested_alias_type_data."
-                )
-        else:
-            print(
-                f"'dummy' type does not exist for alias '{alias}' in nested_alias_type_data."
-            )
 
     def update_empty_object_tag_with_dummy_file(
         self, object_key: str, tag: str
@@ -802,130 +794,23 @@ class PartitionIterator:
             unique_field_name = f"{unique_field_name}_{random.randint(0, 9)}"
         return unique_field_name
 
-    def find_maximum_object_id(self):
+    def update_max_partition_count(self) -> None:
         """
         Determine the maximum OBJECTID for partitioning.
         """
         try:
             # Use a search cursor to find the maximum OBJECTID
             with arcpy.da.SearchCursor(
-                self.partition_feature,
-                self.object_id_field,
+                in_table=self.partition_feature,
+                field_names=self.object_id_field,
                 sql_clause=(None, f"ORDER BY {self.object_id_field} DESC"),
             ) as cursor:
-                self.max_object_id = next(cursor)[0]
+                self.max_partition_count = next(cursor)[0]
 
-            print(f"Maximum {self.object_id_field} found: {self.max_object_id}")
+            print(f"Maximum {self.object_id_field} found: {self.max_partition_count}")
 
         except Exception as e:
             print(f"Error in finding max {self.object_id_field}: {e}")
-
-    def prepare_input_data_old(self):
-        """
-        Copies the input data, and set the path of the copy to type input_copy in self.nested_alias_type_data.
-        From now on when the PartitionIterator access the global data for an alias it uses input_copy.
-        If context_selection bool is True, it will only select context features within the search_distance of
-        an input_copy feature, then similar to input data set the new context feature as context_copy.
-        """
-        for alias, types in self.nested_alias_type_data.items():
-            if "input" in types:
-                input_data_path = types["input"]
-                input_data_copy = (
-                    f"{self.root_file_partition_iterator}_{alias}_input_data_copy"
-                )
-
-                arcpy.management.Copy(
-                    in_data=input_data_path,
-                    out_data=input_data_copy,
-                )
-                print(f"Copied input nested_alias_type_data for: {alias}")
-
-                # Add a new type for the alias the copied input nested_alias_type_data
-                self._configure_nested_dict(
-                    outer_key=alias,
-                    inner_key="input_copy",
-                    value=input_data_copy,
-                )
-
-                # Making sure the field is unique if it exists a field with the same name
-                self.PARTITION_FIELD = self.generate_unique_field_name(
-                    input_feature=input_data_copy,
-                    field_name=self.PARTITION_FIELD,
-                )
-
-                self.ORIGINAL_ID_FIELD = self.generate_unique_field_name(
-                    input_feature=input_data_copy,
-                    field_name=self.ORIGINAL_ID_FIELD,
-                )
-
-                arcpy.AddField_management(
-                    in_table=input_data_copy,
-                    field_name=self.PARTITION_FIELD,
-                    field_type="LONG",
-                )
-                print(f"Added field {self.PARTITION_FIELD}")
-
-                arcpy.AddField_management(
-                    in_table=input_data_copy,
-                    field_name=self.ORIGINAL_ID_FIELD,
-                    field_type="LONG",
-                )
-                print(f"Added field {self.ORIGINAL_ID_FIELD}")
-
-                arcpy.CalculateField_management(
-                    in_table=input_data_copy,
-                    field=self.ORIGINAL_ID_FIELD,
-                    expression=f"!{self.object_id_field}!",
-                )
-                print(f"Calculated field {self.ORIGINAL_ID_FIELD}")
-
-        for alias, types in self.nested_alias_type_data.items():
-            if "context" in types:
-                context_data_path = types["context"]
-                context_data_copy = (
-                    f"{self.root_file_partition_iterator}_{alias}_context_data_copy"
-                )
-                if self.selection_of_context_features:
-                    PartitionIterator.create_feature_class(
-                        full_feature_path=context_data_copy,
-                        template_feature=context_data_path,
-                    )
-
-                    for input_alias, input_types in self.nested_alias_type_data.items():
-                        if "input_copy" in input_types:
-                            input_data_copy = input_types["input_copy"]
-
-                            context_features_near_input_selection = f"memory/{alias}_context_features_near_{input_alias}_selection"
-
-                            custom_arcpy.select_location_and_make_feature_layer(
-                                input_layer=context_data_path,
-                                overlap_type=custom_arcpy.OverlapType.WITHIN_A_DISTANCE,
-                                select_features=input_data_copy,
-                                output_name=context_features_near_input_selection,
-                                search_distance=self.search_distance_old,
-                            )
-                            arcpy.management.Append(
-                                inputs=context_features_near_input_selection,
-                                target=context_data_copy,
-                                schema_type="NO_TEST",
-                            )
-                            arcpy.management.Delete(
-                                context_features_near_input_selection
-                            )
-                    print(f"Processed context feature for: {alias}")
-
-                else:
-                    arcpy.management.Copy(
-                        in_data=context_data_path,
-                        out_data=context_data_copy,
-                    )
-                    print(f"Copied context data for: {alias}")
-
-                self._configure_nested_dict(
-                    outer_key=alias,
-                    inner_key="context_copy",
-                    value=context_data_copy,
-                )
 
     def prepare_input_data(self):
         for object_key, tag_dict in self.nested_input_object_tag.items():
@@ -1019,222 +904,12 @@ class PartitionIterator:
             output_name=iteration_partition,
         )
 
-    def process_input_features_old(
-        self,
-        alias,
-        iteration_partition,
-        object_id,
-    ) -> bool:
-        """
-        What:
-            For an alias makes selection for the partitioning feature being iterated over.
-            It selects objects with their centerpoint inside the partitioning feature marking it as the objects
-            being generalized in the partitioning feature, but also the objects within a distance so it is taken into consideration.
-            The selection path is marked as type input in the self.nested_alias_type_data.
-            It also counts the objects for input features, if the count is 0 for the input feature the iteration return false.
-            If there is 0 objects in the iteration it loads in the dummy feature.
-        Returns:
-            bool: Returns true or false based if there is an input feature present for the partition.
-        """
-        if "input_copy" not in self.nested_alias_type_data[alias]:
-            # If there are no inputs to process, return None for the aliases and a flag indicating no input was present.
-            return None, False
-
-        if "input_copy" in self.nested_alias_type_data[alias]:
-            input_path = self.nested_alias_type_data[alias]["input_copy"]
-            input_features_center_in_partition_selection = f"memory/{alias}_input_features_center_in_partition_selection_{object_id}"
-            self.iteration_file_paths_list.append(
-                input_features_center_in_partition_selection
-            )
-
-            custom_arcpy.select_location_and_make_feature_layer(
-                input_layer=input_path,
-                overlap_type=custom_arcpy.OverlapType.HAVE_THEIR_CENTER_IN.value,
-                select_features=iteration_partition,
-                output_name=input_features_center_in_partition_selection,
-            )
-
-            count_points = file_utilities.count_objects(
-                input_layer=input_features_center_in_partition_selection
-            )
-
-            self.nested_alias_type_data[alias]["count"] = count_points
-
-            if count_points > 0:
-                print(f"{alias} has {count_points} features in {iteration_partition}")
-
-                arcpy.CalculateField_management(
-                    in_table=input_features_center_in_partition_selection,
-                    field=self.PARTITION_FIELD,
-                    expression="1",
-                )
-
-                input_data_iteration_selection = f"{self.root_file_partition_iterator}_{alias}_input_data_iteration_selection_{object_id}"
-                self.iteration_file_paths_list.append(input_data_iteration_selection)
-
-                PartitionIterator.create_feature_class(
-                    full_feature_path=input_data_iteration_selection,
-                    template_feature=input_features_center_in_partition_selection,
-                )
-
-                arcpy.management.Append(
-                    inputs=input_features_center_in_partition_selection,
-                    target=input_data_iteration_selection,
-                    schema_type="NO_TEST",
-                )
-
-                input_features_within_distance_of_partition_selection = f"memory/{alias}_input_features_within_distance_of_partition_selection_{object_id}"
-                self.iteration_file_paths_list.append(
-                    input_features_within_distance_of_partition_selection
-                )
-
-                custom_arcpy.select_location_and_make_feature_layer(
-                    input_layer=input_path,
-                    overlap_type=custom_arcpy.OverlapType.WITHIN_A_DISTANCE,
-                    select_features=iteration_partition,
-                    output_name=input_features_within_distance_of_partition_selection,
-                    selection_type=custom_arcpy.SelectionType.NEW_SELECTION.value,
-                    search_distance=self.search_distance_old,
-                )
-
-                arcpy.management.SelectLayerByLocation(
-                    in_layer=input_features_within_distance_of_partition_selection,
-                    overlap_type="HAVE_THEIR_CENTER_IN",
-                    select_features=iteration_partition,
-                    selection_type="REMOVE_FROM_SELECTION",
-                )
-
-                arcpy.CalculateField_management(
-                    in_table=input_features_within_distance_of_partition_selection,
-                    field=self.PARTITION_FIELD,
-                    expression="0",
-                )
-
-                arcpy.management.Append(
-                    inputs=input_features_within_distance_of_partition_selection,
-                    target=input_data_iteration_selection,
-                    schema_type="NO_TEST",
-                )
-
-                self._configure_nested_dict(
-                    outer_key=alias,
-                    inner_key="input",
-                    value=input_data_iteration_selection,
-                )
-
-                count_processed_objects = file_utilities.count_objects(
-                    input_layer=input_data_iteration_selection
-                )
-
-                self.nested_alias_type_data[alias][
-                    "processed_objects_count"
-                ] = count_processed_objects
-
-                print(
-                    f"iteration partition {input_features_within_distance_of_partition_selection} appended to {input_data_iteration_selection}"
-                )
-                # Return the processed input features and a flag indicating successful operation
-                return True
-            else:
-                # Loads in dummy feature for this alias for this iteration and sets dummy_used = True
-                self.update_empty_alias_type_with_dummy_file_old(
-                    alias,
-                    type_info="input",
-                )
-                print(
-                    f"iteration partition {object_id} has no features for {alias} in the partition feature"
-                )
-            # If there are no inputs to process, return None for the aliases and a flag indicating no input was present.
-            return False
-
-    def _process_inputs_in_partition_old(
-        self,
-        aliases,
-        iteration_partition,
-        object_id,
-    ) -> bool:
-        """
-        What:
-            Process input features using process_input_features function using it on all alias with an input type.
-            If there are one or more input features present it returns true.
-        Returns:
-            bool: Returns true or false based if there are input features present for the partition.
-        """
-        inputs_present_in_partition = False
-        for alias in aliases:
-            if "input_copy" in self.nested_alias_type_data[alias]:
-                # Using process_input_features to check whether inputs are present
-                input_present = self.process_input_features_old(
-                    alias, iteration_partition, object_id
-                )
-                # Sets inputs_present_in_partition as True if any alias in partition has input present. Otherwise, it remains False.
-                inputs_present_in_partition = (
-                    inputs_present_in_partition or input_present
-                )
-        return inputs_present_in_partition
-
-    def process_context_features(self, alias, iteration_partition, object_id):
-        """
-        Selects objects within self.search_distance for a context feature and sets the selection as type context.
-        If there is no objects within the distance dummy data is loaded in instead.
-        """
-        if "context_copy" in self.nested_alias_type_data[alias]:
-            context_path = self.nested_alias_type_data[alias]["context_copy"]
-            context_data_iteration_selection = f"{self.root_file_partition_iterator}_{alias}_context_data_iteration_selection_{object_id}"
-            self.iteration_file_paths_list.append(context_data_iteration_selection)
-
-            custom_arcpy.select_location_and_make_permanent_feature(
-                input_layer=context_path,
-                overlap_type=custom_arcpy.OverlapType.WITHIN_A_DISTANCE,
-                select_features=iteration_partition,
-                output_name=context_data_iteration_selection,
-                selection_type=custom_arcpy.SelectionType.NEW_SELECTION.value,
-                search_distance=self.search_distance_old,
-            )
-
-            count_points = file_utilities.count_objects(
-                input_layer=context_data_iteration_selection
-            )
-
-            self.nested_alias_type_data[alias]["count"] = count_points
-
-            if count_points > 0:
-                print(f"{alias} has {count_points} features in {iteration_partition}")
-
-                self._configure_nested_dict(
-                    outer_key=alias,
-                    inner_key="context",
-                    value=context_data_iteration_selection,
-                )
-
-                count_processed_objects = file_utilities.count_objects(
-                    input_layer=context_data_iteration_selection
-                )
-
-                self.nested_alias_type_data[alias][
-                    "processed_objects_count"
-                ] = count_processed_objects
-            else:
-                # Loads in dummy feature for this alias for this iteration and sets dummy_used = True
-                self.update_empty_alias_type_with_dummy_file_old(
-                    alias,
-                    type_info="context",
-                )
-                print(
-                    f"iteration partition {object_id} has no features for {alias} in the partition feature"
-                )
-
-    def _process_context_features_old(self, aliases, iteration_partition, object_id):
-        """Processes context features fo all alias with a context type using process_context_features"""
-        for alias in aliases:
-            self.process_context_features(alias, iteration_partition, object_id)
-
     def process_single_processing_input(
         self,
         object_key: str,
         input_path: str,
         iteration_partition: str,
-        partition_id: str,
+        partition_id: int,
     ) -> bool:
         selection_memory_path = (
             f"memory/{object_key}_processing_center_in_{partition_id}"
@@ -1312,7 +987,9 @@ class PartitionIterator:
         return True
 
     def process_all_processing_inputs(
-        self, iteration_partition: str, partition_id: str
+        self,
+        iteration_partition: str,
+        partition_id: int,
     ) -> bool:
         has_inputs = False
 
@@ -1342,7 +1019,7 @@ class PartitionIterator:
         object_key: str,
         input_path: str,
         iteration_partition: str,
-        partition_id: str,
+        partition_id: int,
     ) -> None:
         output_path = (
             f"{self.root_file_partition_iterator}_{object_key}_context_{partition_id}"
@@ -1368,8 +1045,16 @@ class PartitionIterator:
                 value=output_path,
             )
 
-            self.nested_input_object_tag[object_key]["count"] = count
-            self.nested_input_object_tag[object_key]["processed_objects_count"] = count
+            self._configure_nested_dict(
+                outer_key=object_key,
+                inner_key="count",
+                value=count,
+            )
+            self._configure_nested_dict(
+                outer_key=object_key,
+                inner_key="processed_objects_count",
+                value=count,
+            )
 
         else:
             self.update_empty_object_tag_with_dummy_file(
@@ -1380,7 +1065,9 @@ class PartitionIterator:
             )
 
     def process_all_context_inputs(
-        self, iteration_partition: str, partition_id: str
+        self,
+        iteration_partition: str,
+        partition_id: int,
     ) -> None:
         for object_key, tag_dict in self.nested_input_object_tag.items():
             if tag_dict.get(self.INPUT_TYPE_KEY) != core_config.InputType.CONTEXT.value:
@@ -1438,7 +1125,7 @@ class PartitionIterator:
             )
 
         total_runtime = time.time() - self.total_start_time
-        remaining_iterations = self.max_object_id - object_id
+        remaining_iterations = self.max_partition_count - object_id
         estimated_remaining_time = remaining_iterations * average_runtime_per_iteration
 
         formatted_total_runtime = self.format_time(total_runtime)
@@ -1449,40 +1136,6 @@ class PartitionIterator:
         print(f"\nCurrent time: {current_time_date}")
         print(f"Current runtime: {formatted_total_runtime}")
         print(f"Estimated remaining time: {formatted_estimated_remaining_time}")
-
-    def _inject_partition_field_to_custom_functions(self):
-        """
-        Injects self.PARTITION_FIELD into custom functions that declare 'partition_field_name' in their params.
-        This enables any logic to receive the dynamically generated partition field if it supports it.
-        """
-        for func_config in self.custom_functions:
-            params = func_config.get("params", {})
-
-            # Check directly in the params dict first
-            if "partition_field_name" in params:
-                params["partition_field_name"] = self.PARTITION_FIELD
-                continue
-
-            # Fall back to checking method signature if not explicitly defined
-            target_callable = None
-            if "class" in func_config:
-                cls = func_config["class"]
-                method = func_config["method"]
-                try:
-                    target_callable = getattr(cls, method)
-                except AttributeError:
-                    continue
-            elif "func" in func_config:
-                target_callable = func_config["func"]
-
-            if target_callable:
-                try:
-                    sig = inspect.signature(target_callable)
-                    if "partition_field_name" in sig.parameters:
-                        params["partition_field_name"] = self.PARTITION_FIELD
-                except (TypeError, ValueError):
-                    # Happens if the target isn't introspectable — ignore
-                    continue
 
     def find_io_params_custom_logic(self, object_id: int):
         """
@@ -1936,9 +1589,8 @@ class PartitionIterator:
         """
 
         aliases = self.nested_alias_type_data.keys()
-        self.find_maximum_object_id()
+        self.update_max_partition_count()
 
-        self.create_dummy_features(types_to_include=["input_copy", "context_copy"])
         self.reset_dummy_used()
 
         self.delete_iteration_files(*self.iteration_file_paths_list)
@@ -1949,10 +1601,10 @@ class PartitionIterator:
             for custom_func in self.custom_functions
         }
 
-        for object_id in range(1, self.max_object_id + 1):
-            self.current_iteration_id = object_id
+        for partition_id in range(1, self.max_partition_count + 1):
+            self.current_iteration_id = partition_id
             self.iteration_start_time = time.time()
-            print(f"\nProcessing Partition: {object_id} out of {self.max_object_id}")
+            print(f"\nProcessing Partition: {partition_id} out of {self.max_object_id}")
             self.reset_dummy_used()
             for custom_func in self.custom_functions:
                 custom_func["params"] = dict(
@@ -1960,35 +1612,36 @@ class PartitionIterator:
                 )
 
             self.iteration_file_paths_list.clear()
-            iteration_partition = f"{self.partition_feature}_{object_id}"
-            self.select_partition_feature(iteration_partition, object_id)
+            iteration_partition = f"{self.partition_feature}_{partition_id}"
+            self.select_partition_feature(iteration_partition, partition_id)
 
-            inputs_present_in_partition = self._process_inputs_in_partition_old(
-                aliases, iteration_partition, object_id
+            inputs_present_in_partition = self.process_all_processing_inputs(
+                iteration_partition=iteration_partition,
+                partition_id=partition_id,
             )
 
             if inputs_present_in_partition:
-                self._process_context_features_old(
-                    aliases, iteration_partition, object_id
+                self.process_all_context_inputs(
+                    iteration_partition=iteration_partition, partition_id=partition_id
                 )
-                self.find_io_params_custom_logic(object_id)
+                self.find_io_params_custom_logic(partition_id)
                 self._inject_partition_field_to_custom_functions()
                 self.export_dictionaries_to_json(
                     file_name="iteration",
                     iteration=True,
-                    object_id=object_id,
+                    object_id=partition_id,
                 )
 
-                self.execute_injected_methods_with_retry(object_id)
+                self.execute_injected_methods_with_retry(partition_id)
                 self.ensure_dummy_flag_for_all_objects()
 
             if inputs_present_in_partition:
                 for alias in aliases:
-                    self.append_iteration_to_final(alias, object_id)
+                    self.append_iteration_to_final(alias, partition_id)
                 self.delete_iteration_files(*self.iteration_file_paths_list)
             else:
                 self.delete_iteration_files(*self.iteration_file_paths_list)
-            self.track_iteration_time(object_id, inputs_present_in_partition)
+            self.track_iteration_time(partition_id, inputs_present_in_partition)
 
     @timing_decorator
     def run(self):
@@ -2017,7 +1670,8 @@ class PartitionIterator:
 
         print("\nStarting Data Preparation...")
         self.delete_final_outputs()
-        self.prepare_input_data_old()
+        self.prepare_input_data()
+        self.create_dummy_features(tag=self.RAW_INPUT_TAG)
         self.export_dictionaries_to_json(file_name="post_data_preparation")
         if self.run_partition_optimization:
             self._find_partition_size()
