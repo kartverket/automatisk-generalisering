@@ -162,13 +162,10 @@ class PartitionIterator:
         custom_functions=None,
         dictionary_documentation_path: str = None,
         feature_count: int = 15000,
-        run_partition_optimization: bool = True,
         partition_method: Literal["FEATURES", "VERTICES"] = "FEATURES",
-        search_distance: str = "500 Meters",
         context_selection: bool = True,
         delete_final_outputs: bool = True,
         safe_output_final_cleanup: bool = True,
-        object_id_field: str = "OBJECTID",
     ):
         """
         Initializes the PartitionIterator with input and output datasets, custom functions, and configuration
@@ -259,10 +256,6 @@ class PartitionIterator:
         self.error_log = {}
 
         # Variables related to custom operations
-        self.custom_functions = custom_functions or []
-        self.resolved_methods: list[dict[str, Any]] = []
-        self.custom_func_io_params = {}
-        self.types_to_update = []
 
         self.total_start_time = None
         self.iteration_times_with_input = []
@@ -1137,152 +1130,6 @@ class PartitionIterator:
         print(f"Current runtime: {formatted_total_runtime}")
         print(f"Estimated remaining time: {formatted_estimated_remaining_time}")
 
-    def find_io_params_custom_logic(self, object_id: int):
-        """
-        What:
-            Find and resolve the input and output (IO) parameters for custom logic functions.
-
-        How:
-            This function iterates over a list of custom functions, which could be either standalone
-            functions or class methods. For each function, it checks if it has partition IO metadata.
-            Functions needs to be decorated with the partition_io_decorator. In this function
-            input and output refers to the parameters of the custom_functions and not alias types.
-
-        Args:
-            object_id (int): The identifier for the object that the IO parameters will be associated with.
-        """
-        for custom_func in self.custom_functions:
-            if "class" in custom_func:  # Class method
-                func = custom_func["class"]
-                method = getattr(func, custom_func["method"])
-            else:  # Standalone function
-                method = custom_func["func"]
-
-            if hasattr(method, "_partition_io_metadata"):
-                metadata = method._partition_io_metadata
-                input_params = metadata.get("inputs", [])
-                output_params = metadata.get("outputs", [])
-
-                self.resolve_io_params(
-                    params=input_params,
-                    custom_func=custom_func,
-                    object_id=object_id,
-                )
-                self.resolve_io_params(
-                    params=output_params,
-                    custom_func=custom_func,
-                    object_id=object_id,
-                )
-
-    def resolve_io_params(self, params: list, custom_func: dict, object_id: int):
-        """
-        What:
-            Resolve the paths for input or output parameters of custom functions.
-
-        How:
-            This function takes a set of input or output parameters and resolves their paths by iterating
-            over the parameters and processing them, depending on their type (tuple, dict, list, etc.).
-            It uses a helper function `resolve_param` to recursively resolve each parameter's path.
-
-        Args:
-            params (list): A list of parameters to be resolved.
-            custom_func (dict): The custom function containing the parameters to resolve.
-            object_id (int): The identifier for the object related to these parameters.
-        """
-
-        def resolve_param(param_info):
-            if isinstance(param_info, tuple) and len(param_info) == 2:
-                return self._handle_tuple_param(param_info, object_id)
-            elif isinstance(param_info, dict):
-                return {key: resolve_param(value) for key, value in param_info.items()}
-            elif isinstance(param_info, list):
-                return [resolve_param(item) for item in param_info]
-            else:
-                return param_info
-
-        for param in params:
-            param_info_list = custom_func["params"].get(param, [])
-            if not isinstance(param_info_list, list):
-                param_info_list = [param_info_list]
-
-            resolved_paths = [
-                resolve_param(param_info) for param_info in param_info_list
-            ]
-            print(f"Printing param_info_list:\n{param_info_list}")
-            if len(resolved_paths) == 1:
-                custom_func["params"][param] = resolved_paths[0]
-            else:
-                custom_func["params"][param] = resolved_paths
-
-    def _handle_tuple_param(self, param_info: tuple, object_id: int) -> str:
-        """
-        What:
-            Handle the resolution of parameters that are tuples of (alias, alias_type).
-
-        How:
-            - This method first checks if the `alias_type` needs to be dynamically updated (if it
-              belongs to `self.types_to_update`). If so, a new path is constructed for the alias and
-              alias_type during each iteration.
-            - If the alias and alias_type are static (i.e., they exist in `self.nested_alias_type_data`),
-              it retrieves and uses the existing path without updating it.
-            - If the alias_type is neither in `self.types_to_update` nor static, it constructs a new
-              path and adds the alias_type to `self.types_to_update` for future updates during iterations.
-
-        Why:
-            - Some alias types are static and only need to be resolved once, which is why their paths
-              are stored in `self.nested_alias_type_data`.
-            - Other alias types require dynamic path reconstruction for each iteration, which is why
-              they are tracked in `self.types_to_update` to ensure they are updated accordingly.
-
-        Args:
-            param_info (tuple): A tuple containing an alias and its associated alias_type.
-            object_id (int): The identifier for the object related to these parameters.
-
-        Returns:
-            str: The resolved path based on the alias and alias_type.
-        """
-
-        alias, alias_type = param_info
-
-        if alias_type in self.types_to_update:
-            resolved_path = self.construct_partition_path_for_object_tag(
-                alias,
-                alias_type,
-                object_id,
-            )
-            print(
-                f"Updated path for {param_info}: {resolved_path} (type is in types_to_update)"
-            )
-        elif (
-            alias in self.nested_alias_type_data
-            and alias_type in self.nested_alias_type_data[alias]
-        ):
-            resolved_path = self.nested_alias_type_data[alias][alias_type]
-            print(f"Using existing path for {param_info}: {resolved_path}")
-        else:
-            resolved_path = self.construct_partition_path_for_object_tag(
-                alias,
-                alias_type,
-                object_id,
-            )
-            self.types_to_update.append(alias_type)
-            print(
-                f"Constructed new path for {param_info}: {resolved_path} and added {alias_type} to types_to_update"
-            )
-
-        self._configure_nested_dict(
-            outer_key=alias,
-            inner_key=alias_type,
-            value=resolved_path,
-        )
-        self._configure_nested_dict(
-            outer_key=alias,
-            inner_key="dummy_used",
-            value=False,
-        )
-
-        return resolved_path
-
     def resolve_injected_io_for_methods(
         self,
         method_entries_config: core_config.MethodEntriesConfig,
@@ -1596,20 +1443,11 @@ class PartitionIterator:
         self.delete_iteration_files(*self.iteration_file_paths_list)
         self.iteration_file_paths_list.clear()
 
-        original_custom_func_params = {
-            id(custom_func): dict(custom_func["params"])
-            for custom_func in self.custom_functions
-        }
-
         for partition_id in range(1, self.max_partition_count + 1):
             self.current_iteration_id = partition_id
             self.iteration_start_time = time.time()
             print(f"\nProcessing Partition: {partition_id} out of {self.max_object_id}")
             self.reset_dummy_used()
-            for custom_func in self.custom_functions:
-                custom_func["params"] = dict(
-                    original_custom_func_params[id(custom_func)]
-                )
 
             self.iteration_file_paths_list.clear()
             iteration_partition = f"{self.partition_feature}_{partition_id}"
@@ -1624,8 +1462,6 @@ class PartitionIterator:
                 self.process_all_context_inputs(
                     iteration_partition=iteration_partition, partition_id=partition_id
                 )
-                self.find_io_params_custom_logic(partition_id)
-                self._inject_partition_field_to_custom_functions()
                 self.export_dictionaries_to_json(
                     file_name="iteration",
                     iteration=True,
