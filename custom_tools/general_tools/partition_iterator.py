@@ -2,19 +2,14 @@ import arcpy
 import os
 import re
 import shutil
-import random
 import json
-from typing import Dict, Tuple, Literal, Union, List, Any
+from typing import Dict, Tuple, Literal, List, Any
 import time
 from datetime import datetime
 import pprint
-import inspect
 import copy
 
-from composition_configs.core_config import PartitionIOConfig
 from composition_configs import core_config
-import env_setup.global_config
-import config
 from env_setup import environment_setup
 from custom_tools.general_tools import custom_arcpy, file_utilities
 from custom_tools.decorators.timing_decorator import timing_decorator
@@ -154,18 +149,7 @@ class PartitionIterator:
         partition_io_config: core_config.PartitionIOConfig,
         partition_method_inject_config: core_config.MethodEntriesConfig,
         partition_iterator_run_config: core_config.PartitionRunConfig,
-        alias_path_data: Dict[
-            str, Tuple[Literal["input", "context", "reference"], str]
-        ],
-        alias_path_outputs: Dict[str, Tuple[str, str]],
         root_file_partition_iterator: str,
-        custom_functions=None,
-        dictionary_documentation_path: str = None,
-        feature_count: int = 15000,
-        partition_method: Literal["FEATURES", "VERTICES"] = "FEATURES",
-        context_selection: bool = True,
-        delete_final_outputs: bool = True,
-        safe_output_final_cleanup: bool = True,
     ):
         """
         Initializes the PartitionIterator with input and output datasets, custom functions, and configuration
@@ -208,6 +192,8 @@ class PartitionIterator:
             target_dict=self.nested_output_object_tag,
         )
 
+        self.documentation_directory = partition_io_config.dictionary_documentation_path
+
         self.list_of_methods = partition_method_inject_config
 
         self.search_distance = partition_iterator_run_config.context_radius_meters
@@ -225,42 +211,22 @@ class PartitionIterator:
 
         ##
         self.max_partition_count: int
+        self.final_partition_feature_count: int
+        self.error_log = {}
 
         ############### OLD CLASS VARIABLES
 
-        self.raw_input_data = alias_path_data
-        self.raw_output_data = alias_path_outputs or {}
         self.root_file_partition_iterator = root_file_partition_iterator
-        if "." in dictionary_documentation_path:
-            self.dictionary_documentation_path = re.sub(
-                r"\.[^.]*$", "", dictionary_documentation_path
-            )
-        else:
-            self.dictionary_documentation_path = dictionary_documentation_path
-
-        self.final_partition_feature_count = 0
-        self.selection_of_context_features = context_selection
-        self.delete_final_outputs_bool = delete_final_outputs
-        self.safe_final_output_cleanup = safe_output_final_cleanup
-
-        # Initial processing results
-        self.nested_alias_type_data = {}
-        self.nested_final_outputs = {}
 
         # Variables related to features and iterations
         self.partition_feature = f"{root_file_partition_iterator}_partition_feature"
-        self.used_partition_size = None
-        self.max_object_id = None
-        self.current_iteration_id = None
         self.iteration_file_paths_list = []
-        self.first_call_directory_documentation = True
-        self.error_log = {}
 
         # Variables related to custom operations
 
-        self.total_start_time = None
+        self.total_start_time: float
         self.iteration_times_with_input = []
-        self.iteration_start_time = None
+        self.iteration_start_time: float
 
     def resolve_partition_input_config(
         self,
@@ -282,33 +248,6 @@ class PartitionIterator:
             if entry.object not in target_dict:
                 target_dict[entry.object] = {}
             target_dict[entry.object][entry.tag] = entry.path
-
-    def check_new_io_config_resolving(self):
-
-        self.write_data_to_json(
-            data=self.nested_input_object_tag,
-            file_path=self.dictionary_documentation_path,
-            file_name="io_config_input",
-        )
-        self.write_data_to_json(
-            data=self.nested_output_object_tag,
-            file_path=self.dictionary_documentation_path,
-            file_name="io_config_output",
-        )
-
-    @staticmethod
-    def unpack_alias_path(alias_path, target_dict):
-        """
-        Populates target dictionaries with inputs from input parameters.
-        """
-        for alias, info in alias_path.items():
-            if alias not in target_dict:
-                target_dict[alias] = {}
-
-            for i in range(0, len(info), 2):
-                type_info = info[i]
-                path_info = info[i + 1]
-                target_dict[alias][type_info] = path_info
 
     def _configure_nested_dict(
         self,
@@ -342,7 +281,7 @@ class PartitionIterator:
         Args:
             feature_count (int): The feature count used to limit partition size.
         """
-        self.delete_feature_class(self.partition_feature)
+        file_utilities.delete_feature(input_feature=self.partition_feature)
         VALID_TAGS = {"input_copy", "context_copy"}
 
         in_features = [
@@ -482,69 +421,22 @@ class PartitionIterator:
             f"Minimum candidate tested: {candidate}."
         )
 
-    @staticmethod
-    def delete_feature_class(feature_class_path, alias=None, output_type=None):
-        """Deletes a feature class if it exists."""
-        if arcpy.Exists(feature_class_path):
-            arcpy.management.Delete(feature_class_path)
-            if alias and output_type:
-                print(
-                    f"Deleted existing output feature class for '{alias}' of type '{output_type}': {feature_class_path}"
-                )
-            else:
-                print(f"Deleted feature class: {feature_class_path}")
-
-    @staticmethod
-    def is_safe_to_delete(file_path: str, safe_directory: str) -> bool:
-        """
-        What:
-            Check if the file path is within the specified safe directory.
-
-        Args:
-            file_path (str): The path of the file to check.
-            safe_directory (str): The directory considered safe for deletion.
-
-        Returns:
-            bool: True if the file is within the safe directory, False otherwise.
-        """
-        # Ensure safe directory ends with a backslash for correct comparison
-        if not safe_directory.endswith(os.path.sep):
-            safe_directory += os.path.sep
-        return file_path.startswith(safe_directory)
-
     def delete_final_outputs(self):
         """
-        Deletes all existing final output files if they exist and are in the safe directory and self.delete_final_outputs_bool is True.
+        Deletes all final output feature classes if they exist.
+
+        How:
+            - Iterates over all object/tag pairs in `nested_output_object_tag`.
+            - Deletes each final output path using the shared utility.
         """
-
-        # Check if deletion is allowed
-        if not self.delete_final_outputs_bool:
-            print("Deletion of final outputs is disabled.")
-            return
-
-        # Construct the safe directory path
-        local_root_directory = config.output_folder
-        project_root_directory = env_setup.global_config.main_directory_name
-        safe_directory = rf"{local_root_directory}\{project_root_directory}"
-
-        for alias in self.nested_final_outputs:
-            for _, output_file_path in self.nested_final_outputs[alias].items():
-                if self.is_safe_to_delete(output_file_path, safe_directory):
-                    if arcpy.Exists(output_file_path):
-                        arcpy.management.Delete(output_file_path)
-                        print(f"Deleted file: {output_file_path}")
-                else:
-                    print(
-                        f"""Skipped deletion for {output_file_path}, the provided path is not in safe directory.
-                        If you intend to delete this file outside of the project directory change the 
-                        'safe_output_final_cleanup' param to 'false'
-                        """
-                    )
+        for object_key, tag_dict in self.nested_output_object_tag.items():
+            for tag, final_output_path in tag_dict.items():
+                file_utilities.delete_feature(input_feature=final_output_path)
 
     def delete_iteration_files(self, *file_paths):
         """Deletes multiple feature classes or files from a list."""
         for file_path in file_paths:
-            self.delete_feature_class(file_path)
+            file_utilities.delete_feature(input_feature=file_path)
             print(f"Deleted file: {file_path}")
 
     @staticmethod
@@ -600,7 +492,7 @@ class PartitionIterator:
     def reset_dummy_used(self):
         """Sets the dummy_used to false"""
         for object in self.nested_input_object_tag:
-            self.nested_alias_type_data[object]["dummy_used"] = False
+            self.nested_input_object_tag[object]["dummy_used"] = False
 
     def ensure_dummy_flag_for_all_objects(self):
         for object_key in self.nested_input_object_tag:
@@ -645,148 +537,18 @@ class PartitionIterator:
 
         print(f"Dummy path for tag '{tag}' on '{object_key}' set to: {dummy_path}")
 
-    @staticmethod
-    def create_directory_json_documentation(
-        root_path: str,
-        dir_name: str,
-        iteration: bool,
-    ) -> str:
+    def write_documentation(self, name: str, dict_data: dict) -> None:
         """
-        What:
-            Creates a directory at the given root_path for the target_dir.
-        Args:
-            root_path (str): The root directory where dir_name will be located
-            dir_name (str): The target where the created directory should be placed
-            iteration (bool): Boolean flag indicating if the iteration_documentation should be added
-        Returns:
-            str: A string containing the absolute path of the created directory.
-        """
-
-        # Determine base directory
-        directory_path = os.path.join(root_path, f"{dir_name}")
-
-        # Ensure that the directory exists
-        os.makedirs(directory_path, exist_ok=True)
-
-        if iteration:
-            iteration_documentation_dir = os.path.join(directory_path, "iteration")
-            os.makedirs(iteration_documentation_dir, exist_ok=True)
-
-            return iteration_documentation_dir
-
-        return directory_path
-
-    @staticmethod
-    def write_data_to_json(
-        data: dict,
-        file_path: str,
-        file_name: str,
-        object_id: int = None,
-    ) -> None:
-        """
-         What:
-             Writes dictionary into a json file.
+        Writes a documentation JSON file to the configured documentation directory.
 
         Args:
-            data (dict): The data to write.
-            file_path (str): The complete path (directory+file_name) where the file should be created
-            file_name (str): The name of the file to create
-            object_id (int): If provided, object_id will also be part of the file name.
+            name (str): File name, e.g., 'error_log'
+            data (dict): Dictionary to serialize into JSON.
         """
-
-        if object_id:
-            complete_file_path = os.path.join(
-                file_path, f"{file_name}_{object_id}.json"
-            )
-        else:
-            complete_file_path = os.path.join(file_path, f"{file_name}.json")
-
-        with open(complete_file_path, "w") as f:
-            json.dump(data, f, indent=4)
-
-    def export_dictionaries_to_json(
-        self,
-        file_path: str = None,
-        alias_type_data: dict = None,
-        final_outputs: dict = None,
-        file_name: str = None,
-        iteration: bool = False,
-        object_id: int = None,
-    ) -> None:
-        """
-        What:
-            Handles the export of alias type data and final outputs into separate json files.
-
-        Args:
-            file_path (str): The complete file path where to create the output directories.
-            alias_type_data (dict): The alias type data to export.
-            final_outputs (dict): The final outputs data to export.
-            file_name (str): The name of the file to create
-            iteration (bool): Boolean flag indicating if the iteration_documentation should be added
-            object_id (int): Object ID to be included in the file name if it's an iteration (`iteration==True`). If `None`, will not be used.
-        """
-
-        if file_path is None:
-            file_path = self.dictionary_documentation_path
-        if alias_type_data is None:
-            alias_type_data = self.nested_alias_type_data
-        if final_outputs is None:
-            final_outputs = self.nested_final_outputs
-
-        if self.first_call_directory_documentation and os.path.exists(file_path):
-            shutil.rmtree(file_path)
-            self.first_call_directory_documentation = False
-
-        alias_type_data_directory = self.create_directory_json_documentation(
-            file_path, "alias_type", iteration
+        file_utilities.write_dict_to_json(
+            path=rf"{self.documentation_directory}\{name}.json",
+            dict_data=dict_data,
         )
-        final_outputs_directory = self.create_directory_json_documentation(
-            file_path, "outputs", iteration
-        )
-
-        self.write_data_to_json(
-            alias_type_data, alias_type_data_directory, file_name, object_id
-        )
-        self.write_data_to_json(
-            final_outputs, final_outputs_directory, file_name, object_id
-        )
-
-    def create_error_log_directory(self):
-        """
-        Creates an error_log directory inside self.dictionary_documentation_path.
-        Returns the path to the error_log directory.
-        """
-        return self.create_directory_json_documentation(
-            root_path=self.dictionary_documentation_path,
-            dir_name="error_log",
-            iteration=False,
-        )
-
-    def save_error_log(self, error_log):
-        """
-        Saves the error log to a JSON file in the error_log directory.
-        """
-        error_log_directory = self.create_error_log_directory()
-        # Check if error log is empty
-        if not error_log:
-            self.write_data_to_json(
-                data=error_log,
-                file_path=error_log_directory,
-                file_name="no_errors",
-            )
-        else:
-            self.write_data_to_json(
-                data=error_log, file_path=error_log_directory, file_name="error_log"
-            )
-
-    @staticmethod
-    def generate_unique_field_name(input_feature, field_name):
-        """Generates a unique field name"""
-        existing_field_names = [field.name for field in arcpy.ListFields(input_feature)]
-        unique_field_name = field_name
-        while unique_field_name in existing_field_names:
-            unique_field_name = f"{unique_field_name}_{random.randint(0, 9)}"
-        return unique_field_name
 
     def update_max_partition_count(self) -> None:
         """
@@ -1078,7 +840,7 @@ class PartitionIterator:
             )
 
     @staticmethod
-    def format_time(seconds):
+    def format_time(seconds) -> str:
         """
         What:
             Converts seconds to a formatted string: HH:MM:SS.
@@ -1309,112 +1071,92 @@ class PartitionIterator:
 
                 if attempt + 1 == max_retries:
                     print("Max retries reached.")
-                    self.save_error_log(self.error_log)
+                    self.write_documentation(name="error_log", dict_data=self.error_log)
                     raise Exception(error_message)
 
-    def append_iteration_to_final(self, alias: str, object_id: int):
+    def _append_tag_output_if_valid(
+        self, object_key: str, tag: str, final_output_path: str, partition_id: int
+    ) -> None:
         """
-        What:
-            Append the result of the current iteration to the final output for a given alias.
-
-        How:
-            - This method checks if the given `alias` exists in `self.nested_final_outputs`. If it does not,
-              the function exits.
-            - For each type associated with the alias, it retrieves the corresponding feature class and appends
-              the result of the current iteration to the final output path.
-            - If the alias is marked as a dummy feature (indicated by `dummy_used` in `self.nested_alias_type_data`),
-              the iteration is skipped.
-            - It selects the features from the input feature class based on a specific partition field and appends
-              them to the final output. If the final output does not exist, it creates the output; otherwise, it appends to it.
-
-        Why:
-            This function is necessary to accumulate the results of each iteration for the given alias in a final output,
-            ensuring the results from multiple iterations are combined into a single dataset.
+        Checks whether the intermediate result for the given object and tag is valid,
+        and appends it to the final output if so.
 
         Args:
-            alias (str): A string representing the alias whose output data is to be updated.
-            object_id (int): The identifier for the current iteration.
+            object_key (str): The object identifier (e.g. 'building_polygons').
+            tag (str): The processing tag (e.g. 'some_logic').
+            final_output_path (str): Destination output path.
+            partition_id (int): Current partition identifier.
         """
+        input_tag_data = self.nested_input_object_tag.get(object_key, {})
+        input_feature_path = input_tag_data.get(tag)
 
-        # Guard clause if alias doesn't exist in nested_final_outputs
-        if alias not in self.nested_final_outputs:
+        if not input_feature_path:
             return
 
-        # For each type under current alias, append the result of the current iteration
-        for type_info, final_output_path in self.nested_final_outputs[alias].items():
-            # Skipping append if the alias is a dummy feature
-            if self.nested_alias_type_data[alias]["dummy_used"]:
+        if (
+            not arcpy.Exists(input_feature_path)
+            or int(arcpy.GetCount_management(input_feature_path).getOutput(0)) <= 0
+        ):
+            print(f"Skipping empty or missing path for {object_key}:{tag}")
+            return
+
+        partition_selection_path = (
+            f"memory/{object_key}_{tag}_partition_target_selection_{partition_id}"
+        )
+        self.iteration_file_paths_list.append(partition_selection_path)
+        self.iteration_file_paths_list.append(input_feature_path)
+
+        custom_arcpy.select_attribute_and_make_permanent_feature(
+            input_layer=input_feature_path,
+            expression=f"{self.PARTITION_FIELD} = 1",
+            output_name=partition_selection_path,
+        )
+
+        if not arcpy.Exists(final_output_path):
+            arcpy.management.CopyFeatures(
+                in_features=partition_selection_path,
+                out_feature_class=final_output_path,
+            )
+            print(f"Created final output for {object_key}:{tag}")
+        else:
+            arcpy.management.Append(
+                inputs=partition_selection_path,
+                target=final_output_path,
+                schema_type="NO_TEST",
+            )
+            print(f"Appended to final output for {object_key}:{tag}")
+
+    def append_iteration_outputs_to_final(self, partition_id: int) -> None:
+        """
+        Appends all valid outputs for the current iteration to their final output paths.
+
+        Skips any objects marked as dummy and ensures only non-empty, valid inputs are appended.
+        """
+        for object_key, tag_dict in self.nested_output_object_tag.items():
+            if self.nested_input_object_tag.get(object_key, {}).get("dummy_used"):
                 continue
 
-            input_feature_class = self.nested_alias_type_data[alias][type_info]
-
-            if (
-                not arcpy.Exists(input_feature_class)
-                or int(arcpy.GetCount_management(input_feature_class).getOutput(0)) <= 0
-            ):
-                print(
-                    f"No features found in partition target selection: {input_feature_class}"
+            for tag, final_output_path in tag_dict.items():
+                self._append_tag_output_if_valid(
+                    object_key=object_key,
+                    tag=tag,
+                    final_output_path=final_output_path,
+                    partition_id=partition_id,
                 )
-                continue
-
-            partition_target_selection = (
-                f"memory/{alias}_{type_info}_partition_target_selection_{object_id}"
-            )
-            self.iteration_file_paths_list.append(partition_target_selection)
-            self.iteration_file_paths_list.append(input_feature_class)
-
-            # Apply feature selection
-            custom_arcpy.select_attribute_and_make_permanent_feature(
-                input_layer=input_feature_class,
-                expression=f"{self.PARTITION_FIELD} = 1",
-                output_name=partition_target_selection,
-            )
-
-            if not arcpy.Exists(final_output_path):
-                arcpy.management.CopyFeatures(
-                    in_features=partition_target_selection,
-                    out_feature_class=final_output_path,
-                )
-
-            else:
-                arcpy.management.Append(
-                    inputs=partition_target_selection,
-                    target=final_output_path,
-                    schema_type="NO_TEST",
-                )
-
-    @staticmethod
-    def delete_fields(feature_class_path: str, fields_to_delete: list):
-        """
-        What:
-            Deletes specified fields from the given feature class if they exist.
-
-        Args:
-            feature_class_path (str): The path to the feature class.
-            fields_to_delete (list): A list of field names to delete.
-        """
-        for field_name in fields_to_delete:
-            try:
-                # Check if the field exists
-                if arcpy.ListFields(feature_class_path, field_name):
-                    # Delete the field if it exists
-                    arcpy.management.DeleteField(feature_class_path, field_name)
-                    print(f"Field '{field_name}' deleted successfully.")
-                else:
-                    print(f"Field '{field_name}' does not exist.")
-            except arcpy.ExecuteError as e:
-                print(f"An error occurred while deleting field '{field_name}': {e}")
 
     def cleanup_final_outputs(self):
         """
         Cleanup function to delete unnecessary fields from final output feature classes.
         """
         fields_to_delete = [self.PARTITION_FIELD]
+        # delete fields moved to custom utils
 
-        for alias, output_paths in self.nested_final_outputs.items():
-            for output_type, feature_class_path in output_paths.items():
-                print(f"Cleaning up fields in {feature_class_path}...")
-                self.delete_fields(feature_class_path, fields_to_delete)
+        for object_key, tag_dict in self.nested_output_object_tag.items():
+            for tag, final_output_path in tag_dict.items():
+                print(f"Cleaning fields in: {final_output_path}")
+                file_utilities.delete_fields_if_exist(
+                    final_output_path, fields_to_delete
+                )
 
     def partition_iteration(self):
         """
@@ -1436,7 +1178,6 @@ class PartitionIterator:
                     - Appends the output of the current iteration to the final outputs.
         """
 
-        aliases = self.nested_alias_type_data.keys()
         self.update_max_partition_count()
 
         self.reset_dummy_used()
@@ -1445,9 +1186,10 @@ class PartitionIterator:
         self.iteration_file_paths_list.clear()
 
         for partition_id in range(1, self.max_partition_count + 1):
-            self.current_iteration_id = partition_id
             self.iteration_start_time = time.time()
-            print(f"\nProcessing Partition: {partition_id} out of {self.max_object_id}")
+            print(
+                f"\nProcessing Partition: {partition_id} out of {self.max_partition_count}"
+            )
             self.reset_dummy_used()
 
             self.iteration_file_paths_list.clear()
@@ -1463,18 +1205,14 @@ class PartitionIterator:
                 self.process_all_context_inputs(
                     iteration_partition=iteration_partition, partition_id=partition_id
                 )
-                self.export_dictionaries_to_json(
-                    file_name="iteration",
-                    iteration=True,
-                    object_id=partition_id,
+                self.write_documentation(
+                    name=f"iteration_{partition_id}",
+                    dict_data=self.nested_input_object_tag,
                 )
 
                 self.execute_injected_methods_with_retry(partition_id)
                 self.ensure_dummy_flag_for_all_objects()
-
-            if inputs_present_in_partition:
-                for alias in aliases:
-                    self.append_iteration_to_final(alias, partition_id)
+                self.append_iteration_outputs_to_final(partition_id=partition_id)
                 self.delete_iteration_files(*self.iteration_file_paths_list)
             else:
                 self.delete_iteration_files(*self.iteration_file_paths_list)
@@ -1496,20 +1234,22 @@ class PartitionIterator:
         """
 
         self.total_start_time = time.time()
-        self.unpack_alias_path(
-            alias_path=self.raw_input_data, target_dict=self.nested_alias_type_data
-        )
-        self.unpack_alias_path(
-            alias_path=self.raw_output_data, target_dict=self.nested_final_outputs
-        )
 
-        self.export_dictionaries_to_json(file_name="post_initialization")
+        self.write_documentation(
+            name="post_init", dict_data=self.nested_input_object_tag
+        )
+        self.write_documentation(
+            name="output_dict", dict_data=self.nested_output_object_tag
+        )
 
         print("\nStarting Data Preparation...")
         self.delete_final_outputs()
         self.prepare_input_data()
         self.create_dummy_features(tag=self.RAW_INPUT_TAG)
-        self.export_dictionaries_to_json(file_name="post_data_preparation")
+
+        self.write_documentation(
+            name="post_data_prep", dict_data=self.nested_input_object_tag
+        )
         if self.run_partition_optimization:
             self._find_partition_size()
 
@@ -1522,9 +1262,12 @@ class PartitionIterator:
 
         print("\nStarting on Partition Iteration...")
         self.partition_iteration()
-        self.export_dictionaries_to_json(file_name="post_runtime")
+
+        self.write_documentation(
+            name="post_runtime", dict_data=self.nested_input_object_tag
+        )
         self.cleanup_final_outputs()
-        self.save_error_log(self.error_log)
+        self.write_documentation(name="error_log", dict_data=self.error_log)
 
 
 if __name__ == "__main__":

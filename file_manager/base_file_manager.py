@@ -1,7 +1,9 @@
 import re
+import os
 
 import config
 import env_setup.global_config
+from composition_configs import types
 
 
 class BaseFileManager:
@@ -204,3 +206,20 @@ class BaseFileManager:
         """
         self.validate_inputs(file_name)
         return rf"{self.relative_path_final_outputs}\{file_name}"
+
+    def generate_general_subdirectory(self, description: str) -> str:
+        """
+        Generates a subdirectory path under the general files directory.
+
+        Args:
+            description (str): A short descriptor for the subdirectory purpose.
+
+        Returns:
+            str: Absolute path of the subdirectory.
+        """
+        self.validate_inputs(description)
+
+        dir_name = f"{description}___{self.scale}_{self.object}"
+        full_path = rf"{self.relative_path_general_files}\{dir_name}"
+        os.makedirs(full_path)
+        return types.SubdirectoryPath(full_path)
