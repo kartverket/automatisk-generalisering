@@ -2,6 +2,8 @@ from dataclasses import dataclass, field
 from typing import Dict, List, Literal, Optional, Tuple, Union, Any, Callable
 from enum import Enum
 
+from composition_configs import types
+
 
 @dataclass
 class WorkFileConfig:
@@ -79,7 +81,7 @@ class PartitionOutputConfig:
 class PartitionIOConfig:
     input_config: PartitionInputConfig
     output_config: PartitionOutputConfig
-    dictionary_documentation_path: Optional[str] = None
+    dictionary_documentation_path: types.SubdirectoryPath
 
 
 class PartitionMethod(Enum):
@@ -155,3 +157,4 @@ partitio_io_config = PartitionIOConfig(
     input_config=input_config,
     output_config=output_config,
 )
+partition_method_config = MethodEntriesConfig(entries=[ClassMethodEntryConfig(class_=some_class, method="run", params={"some_param:" InjectIO(object="some_object", tag="some_logic2")})])
