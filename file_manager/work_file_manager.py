@@ -438,3 +438,41 @@ class WorkFileManager:
                 item[key] = new_value
                 return
         raise ValueError(f"No dictionary with alias '{unique_alias}' found.")
+
+
+class PartitionWorkFileManager(WorkFileManager):
+    """
+    Extension of WorkFileManager to support partition-aware file path generation.
+    Intended for use inside PartitionIterator or similar partition-based logic.
+    """
+
+    def generate_partition_path(
+        self,
+        object_name: str,
+        tag: str,
+        partition_id: int | None = None,
+        suffix: str = "",
+        extension: str = "gdb",
+    ) -> str:
+        """
+        Constructs a consistent file path for work files. If a partition_id is provided,
+        it becomes a partition-aware path; otherwise, it generates a general work path.
+
+        Args:
+            object_name (str): Identifier for the object (e.g., layer).
+            tag (str): Tag (e.g., 'input', 'context', 'copy', etc.).
+            partition_id (int | None, optional): Partition number. Defaults to None.
+            suffix (str, optional): Extra string to differentiate logic. Defaults to "".
+            extension (str, optional): File type or extension. Defaults to 'gdb'.
+
+        Returns:
+            str: Constructed file path.
+        """
+        extra = f"_{suffix}" if suffix else ""
+
+        if partition_id is not None:
+            file_name = f"{object_name}_{tag}_iteration_{partition_id}{extra}"
+        else:
+            file_name = f"{object_name}_{tag}{extra}"
+
+        return self._build_file_path(file_name=file_name, file_type=extension)

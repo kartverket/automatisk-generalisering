@@ -572,6 +572,12 @@ class Building_N100(Enum):
         )
     )
 
+    rbc_polygon_documentation_n100_building = (
+        file_manager.generate_general_subdirectory(
+            description="rbc_polygon_documentation"
+        )
+    )
+
     polygon_resolve_building_conflicts___hospital_church_points___n100_building = (
         file_manager.generate_file_name_gdb(
             script_source_name=polygon_resolve_building_conflicts,

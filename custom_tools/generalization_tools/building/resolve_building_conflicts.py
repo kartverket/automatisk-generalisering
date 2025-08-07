@@ -3,6 +3,7 @@ import arcpy
 
 # Importing custom files
 import config
+from composition_configs import core_config
 import constants.n100_constants
 from custom_tools.general_tools import custom_arcpy
 from input_data import input_n100
@@ -735,24 +736,14 @@ class ResolveBuildingConflictsPoints:
 class ResolveBuildingConflictsPolygon:
     def __init__(
         self,
-        input_list_of_dicts_data_structure: list[dict[str, str]] = None,
-        root_file: str = None,
-        output_building_polygons: str = None,
-        # output_building_points: str = None,
-        write_work_files_to_memory: bool = False,
-        keep_work_files: bool = False,
+        input_list_of_dicts_data_structure: list[dict[str, str]],
+        output_building_polygons: str,
+        work_file_manager_config: core_config.WorkFileConfig,
     ):
         self.input_data = input_list_of_dicts_data_structure
-        self.root_path = root_file
         self.output_building_polygons = output_building_polygons
-        # self.output_building_points = output_building_points
 
-        self.work_file_manager = WorkFileManager(
-            unique_id=id(self),
-            root_file=root_file,
-            write_to_memory=write_work_files_to_memory,
-            keep_files=keep_work_files,
-        )
+        self.work_file_manager = WorkFileManager(config=work_file_manager_config)
 
         self.feature_copies = self.work_file_manager.setup_work_file_paths(
             instance=self,
