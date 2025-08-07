@@ -5,7 +5,7 @@ from datetime import datetime
 
 from composition_configs import WorkFileConfig
 import env_setup.global_config
-from typing import Any
+from typing import Any, Optional
 
 
 class WorkFileManager:
@@ -449,9 +449,9 @@ class PartitionWorkFileManager(WorkFileManager):
     def generate_partition_path(
         self,
         object_name: str,
-        tag: str,
-        partition_id: int | None = None,
-        suffix: str = "",
+        tag: Optional[str | None] = None,
+        partition_id: Optional[int | None] = None,
+        suffix: Optional[str] = "",
         extension: str = "gdb",
     ) -> str:
         """
@@ -460,19 +460,20 @@ class PartitionWorkFileManager(WorkFileManager):
 
         Args:
             object_name (str): Identifier for the object (e.g., layer).
-            tag (str): Tag (e.g., 'input', 'context', 'copy', etc.).
+            tag (str, optional): Tag (e.g., 'input', 'context', 'copy', etc.).
             partition_id (int | None, optional): Partition number. Defaults to None.
             suffix (str, optional): Extra string to differentiate logic. Defaults to "".
-            extension (str, optional): File type or extension. Defaults to 'gdb'.
+            extension (str): File type or extension. Defaults to 'gdb'.
 
         Returns:
             str: Constructed file path.
         """
         extra = f"_{suffix}" if suffix else ""
+        tag_string = f"_{tag}" if tag else ""
 
         if partition_id is not None:
-            file_name = f"{object_name}_{tag}_iteration_{partition_id}{extra}"
+            file_name = f"{object_name}{tag}_iteration_{partition_id}{extra}"
         else:
-            file_name = f"{object_name}_{tag}{extra}"
+            file_name = f"{object_name}{tag_string}{extra}"
 
         return self._build_file_path(file_name=file_name, file_type=extension)

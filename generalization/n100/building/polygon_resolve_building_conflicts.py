@@ -280,6 +280,7 @@ def resolve_building_conflicts_polygon_old():
         run_partition_optimization=True,
         search_distance="500 Meters",
     )
+    partition_rbc_polygon.run()
 
 
 def resolve_building_conflicts_polygon():
@@ -431,11 +432,16 @@ def resolve_building_conflicts_polygon():
         run_partition_optimization=False,
     )
 
+    rbc_parition_work_file_manager_config = core_config.WorkFileConfig(
+        root_file=Building_N100.polygon_resolve_building_conflicts___partition_root_file___n100_building.value,
+        keep_files=True,
+    )
+
     partition_polygon_rbc = PartitionIterator(
         partition_io_config=rbc_io_config,
         partition_method_inject_config=rbc_method_injects_config,
         partition_iterator_run_config=rbc_partition_run_config,
-        root_file_partition_iterator=Building_N100.polygon_resolve_building_conflicts___partition_root_file___n100_building.value,
+        work_file_manager_config=rbc_parition_work_file_manager_config,
     )
 
     partition_polygon_rbc.run()
