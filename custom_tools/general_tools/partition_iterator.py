@@ -1,26 +1,18 @@
 import arcpy
 import os
-from typing import Dict, Tuple, Literal, List, Any
+from typing import Dict, Optional, Tuple, Literal, List, Any
 import time
 from datetime import datetime
 import pprint
 import copy
+from dataclasses import replace
 
 from composition_configs import core_config
 from env_setup import environment_setup
 from custom_tools.general_tools import custom_arcpy, file_utilities
 from custom_tools.decorators.timing_decorator import timing_decorator
 
-from file_manager.work_file_manager import WorkFileManager
-from input_data import input_n50, input_n100
-from file_manager.n100.file_manager_buildings import Building_N100
-from custom_tools.general_tools.polygon_processor import PolygonProcessor
-
-
-from custom_tools.generalization_tools.building.buffer_displacement import (
-    BufferDisplacement,
-)
-from constants.n100_constants import N100_Symbology, N100_SQLResources, N100_Values
+from file_manager.work_file_manager import PartitionWorkFileManager
 
 
 class PartitionIterator:
@@ -148,7 +140,6 @@ class PartitionIterator:
         partition_method_inject_config: core_config.MethodEntriesConfig,
         partition_iterator_run_config: core_config.PartitionRunConfig,
         work_file_manager_config: core_config.WorkFileConfig,
-        root_file_partition_iterator: str,
     ):
         """
         Initializes the PartitionIterator with input and output datasets, custom functions, and configuration
@@ -213,25 +204,31 @@ class PartitionIterator:
         self.final_partition_feature_count: int
         self.error_log = {}
 
-        self.work_file_manager_temp_files = WorkFileManager(
-            config=work_file_manager_config
+        # PartitionIterator currently needs particular configuration for work files, at some steps
+        temp_config = replace(
+            work_file_manager_config, write_to_memory=True, keep_files=False
         )
-        self.work_file_manager_iteration_files = WorkFileManager(
-            config=work_file_manager_config
+        iteration_config = replace(
+            work_file_manager_config, write_to_memory=False, keep_files=False
         )
-        self.work_file_manager_permanent_files = WorkFileManager(
-            config=work_file_manager_config
+        persistent_config = replace(work_file_manager_config, write_to_memory=False)
+
+        self.work_file_manager_temp_files = PartitionWorkFileManager(config=temp_config)
+        self.work_file_manager_iteration_files = PartitionWorkFileManager(
+            config=iteration_config
+        )
+        self.work_file_manager_persistent_files = PartitionWorkFileManager(
+            config=persistent_config
+        )
+        self.work_file_manager_partition_feature = PartitionWorkFileManager(
+            config=iteration_config
         )
 
-        ############### OLD CLASS VARIABLES
-
-        self.root_file_partition_iterator = root_file_partition_iterator
-
-        # Variables related to features and iterations
-        self.partition_feature = f"{root_file_partition_iterator}_partition_feature"
-        self.iteration_file_paths_list = []
-
-        # Variables related to custom operations
+        self.partition_feature = (
+            self.work_file_manager_partition_feature.generate_partition_path(
+                object_name="partition_feature",
+            )
+        )
 
         self.total_start_time: float
         self.iteration_times_with_input = []
@@ -290,7 +287,7 @@ class PartitionIterator:
         Args:
             feature_count (int): The feature count used to limit partition size.
         """
-        file_utilities.delete_feature(input_feature=self.partition_feature)
+        self.work_file_manager_partition_feature.delete_created_files()
         VALID_TAGS = {self.RAW_INPUT_TAG}
 
         in_features = [
@@ -335,18 +332,22 @@ class PartitionIterator:
 
         for partition_id in range(1, self.max_partition_count + 1):
             iteration_partition = (
-                f"{self.root_file_partition_iterator}_partition_{partition_id}"
+                self.work_file_manager_iteration_files.generate_partition_path(
+                    object_name="partition_feature_iteration_selection",
+                    partition_id=partition_id,
+                )
             )
-            self.iteration_file_paths_list.clear()
 
-            self.select_partition_feature(iteration_partition, partition_id)
+            self.select_partition_feature(
+                iteration_partition=iteration_partition, object_id=partition_id
+            )
 
             has_inputs = self.process_all_processing_inputs(
                 iteration_partition=iteration_partition,
                 partition_id=partition_id,
             )
             if not has_inputs:
-                self.delete_iteration_files(*self.iteration_file_paths_list)
+                self.work_file_manager_iteration_files.delete_created_files()
                 continue
 
             self.process_all_context_inputs(
@@ -366,7 +367,7 @@ class PartitionIterator:
                 f"Current maximum found: {max_partition_load}"
             )
 
-            self.delete_iteration_files(*self.iteration_file_paths_list)
+            self.work_file_manager_iteration_files.delete_created_files()
 
         return max_partition_load
 
@@ -480,7 +481,10 @@ class PartitionIterator:
                 continue
 
             dummy_feature_path = (
-                f"{self.root_file_partition_iterator}_{object_key}_dummy_feature"
+                self.work_file_manager_persistent_files.generate_partition_path(
+                    object_name=object_key,
+                    tag="dummy_feature",
+                )
             )
 
             self.create_feature_class(
@@ -594,7 +598,9 @@ class PartitionIterator:
 
     def _prepare_processing_input(self, object_key: str, input_path: str) -> None:
         print(f"Copied processing input for: {object_key}")
-        copy_path = f"{self.root_file_partition_iterator}_{object_key}_input_data_copy"
+        copy_path = self.work_file_manager_persistent_files.generate_partition_path(
+            object_name=object_key, tag="raw_input"
+        )
         arcpy.management.Copy(in_data=input_path, out_data=copy_path)
 
         self._configure_nested_dict(
@@ -610,8 +616,8 @@ class PartitionIterator:
         )
 
     def _prepare_context_input(self, object_key: str, input_path: str) -> None:
-        copy_path = (
-            f"{self.root_file_partition_iterator}_{object_key}_context_data_copy"
+        copy_path = self.work_file_manager_persistent_files.generate_partition_path(
+            object_name=object_key, tag="input_contex_filtered"
         )
 
         if self.search_distance > 0:
@@ -628,7 +634,9 @@ class PartitionIterator:
                 ):
                     input_copy_path = tag_dict[self.RAW_INPUT_TAG]
                     memory_layer = (
-                        f"memory/{object_key}_context_near_{input_obj}_selection"
+                        self.work_file_manager_temp_files.generate_partition_path(
+                            object_name=object_key, tag=f"near_{input_obj}_selection"
+                        )
                     )
 
                     custom_arcpy.select_location_and_make_feature_layer(
@@ -644,7 +652,7 @@ class PartitionIterator:
                         target=copy_path,
                         schema_type="NO_TEST",
                     )
-                    arcpy.management.Delete(in_data=memory_layer)
+                    self.work_file_manager_temp_files.delete_created_files()
 
             print(f"Processed selected context features for: {object_key}")
 
@@ -662,7 +670,6 @@ class PartitionIterator:
         """
         Selects partition feature based on OBJECTID.
         """
-        self.iteration_file_paths_list.append(iteration_partition)
         custom_arcpy.select_attribute_and_make_permanent_feature(
             input_layer=self.partition_feature,
             expression=f"{self.object_id_field} = {object_id}",
@@ -677,9 +684,12 @@ class PartitionIterator:
         partition_id: int,
     ) -> bool:
         selection_memory_path = (
-            f"memory/{object_key}_processing_center_in_{partition_id}"
+            self.work_file_manager_temp_files.generate_partition_path(
+                object_name=object_key,
+                partition_id=partition_id,
+                suffix="centerpoint_in_partition",
+            )
         )
-        self.iteration_file_paths_list.append(selection_memory_path)
 
         # Select features whose center is in partition
         custom_arcpy.select_location_and_make_feature_layer(
@@ -701,10 +711,11 @@ class PartitionIterator:
             selection_memory_path, self.PARTITION_FIELD, "1"
         )
 
-        output_path = (
-            f"{self.root_file_partition_iterator}_{object_key}_iteration_{partition_id}"
+        output_path = self.work_file_manager_iteration_files.generate_partition_path(
+            object_name=object_key,
+            partition_id=partition_id,
+            suffix="iteration_selection",
         )
-        self.iteration_file_paths_list.append(output_path)
 
         self.create_feature_class(output_path, selection_memory_path)
         arcpy.management.Append(
@@ -713,42 +724,48 @@ class PartitionIterator:
             schema_type="NO_TEST",
         )
 
-        # Now add nearby features not centered in partition
-        nearby_selection = f"memory/{object_key}_processing_near_{partition_id}"
-        self.iteration_file_paths_list.append(nearby_selection)
+        if self.search_distance > 0:
+            nearby_selection = (
+                self.work_file_manager_temp_files.generate_partition_path(
+                    object_name=object_key,
+                    partition_id=partition_id,
+                    suffix="near_partiton_selection",
+                )
+            )
 
-        custom_arcpy.select_location_and_make_feature_layer(
-            input_layer=input_path,
-            overlap_type=custom_arcpy.OverlapType.WITHIN_A_DISTANCE,
-            select_features=iteration_partition,
-            output_name=nearby_selection,
-            selection_type=custom_arcpy.SelectionType.NEW_SELECTION,
-            search_distance=self.search_distance,
-        )
+            custom_arcpy.select_location_and_make_feature_layer(
+                input_layer=input_path,
+                overlap_type=custom_arcpy.OverlapType.WITHIN_A_DISTANCE,
+                select_features=iteration_partition,
+                output_name=nearby_selection,
+                selection_type=custom_arcpy.SelectionType.NEW_SELECTION,
+                search_distance=self.search_distance,
+            )
 
-        arcpy.management.SelectLayerByLocation(
-            in_layer=nearby_selection,
-            overlap_type="HAVE_THEIR_CENTER_IN",
-            select_features=iteration_partition,
-            selection_type="REMOVE_FROM_SELECTION",
-        )
+            arcpy.management.SelectLayerByLocation(
+                in_layer=nearby_selection,
+                overlap_type="HAVE_THEIR_CENTER_IN",
+                select_features=iteration_partition,
+                selection_type="REMOVE_FROM_SELECTION",
+            )
 
-        arcpy.CalculateField_management(
-            in_table=nearby_selection,
-            field=self.PARTITION_FIELD,
-            expression="0",
-        )
-        arcpy.management.Append(
-            inputs=nearby_selection,
-            target=output_path,
-            schema_type="NO_TEST",
-        )
+            arcpy.CalculateField_management(
+                in_table=nearby_selection,
+                field=self.PARTITION_FIELD,
+                expression="0",
+            )
+            arcpy.management.Append(
+                inputs=nearby_selection,
+                target=output_path,
+                schema_type="NO_TEST",
+            )
 
         self._configure_nested_dict(
             outer_key=object_key,
             inner_key=self.INJECTABLE_INPUT_TAG_KEY,
             value=output_path,
         )
+        self.work_file_manager_temp_files.delete_created_files()
         return True
 
     def process_all_processing_inputs(
@@ -786,10 +803,11 @@ class PartitionIterator:
         iteration_partition: str,
         partition_id: int,
     ) -> None:
-        output_path = (
-            f"{self.root_file_partition_iterator}_{object_key}_context_{partition_id}"
+        output_path = self.work_file_manager_iteration_files.generate_partition_path(
+            object_name=object_key,
+            partition_id=partition_id,
+            suffix="iteration_selection",
         )
-        self.iteration_file_paths_list.append(output_path)
 
         custom_arcpy.select_location_and_make_permanent_feature(
             input_layer=input_path,
@@ -999,9 +1017,11 @@ class PartitionIterator:
         """
         Construct a new path for a given alias and type specific to the current iteration.
         """
-        root_path = self.root_file_partition_iterator
-        constructed_path = f"{root_path}_{object}_{tag}_iteration_{partition_id}"
-        return constructed_path
+        return self.work_file_manager_iteration_files.generate_partition_path(
+            object_name=object,
+            tag=tag,
+            partition_id=partition_id,
+        )
 
     def execute_injected_methods(
         self, method_entries_config: core_config.MethodEntriesConfig
@@ -1122,10 +1142,13 @@ class PartitionIterator:
             return
 
         partition_selection_path = (
-            f"memory/{object_key}_{tag}_partition_target_selection_{partition_id}"
+            self.work_file_manager_temp_files.generate_partition_path(
+                object_name=object_key,
+                tag=tag,
+                partition_id=partition_id,
+                suffix="partition_target_selection",
+            )
         )
-        self.iteration_file_paths_list.append(partition_selection_path)
-        self.iteration_file_paths_list.append(input_feature_path)
 
         custom_arcpy.select_attribute_and_make_permanent_feature(
             input_layer=input_feature_path,
@@ -1146,6 +1169,7 @@ class PartitionIterator:
                 schema_type="NO_TEST",
             )
             print(f"Appended to final output for {object_key}:{tag}")
+        self.work_file_manager_temp_files.delete_created_files()
 
     def append_iteration_outputs_to_final(self, partition_id: int) -> None:
         """
@@ -1203,8 +1227,7 @@ class PartitionIterator:
 
         self.reset_dummy_used()
 
-        self.delete_iteration_files(*self.iteration_file_paths_list)
-        self.iteration_file_paths_list.clear()
+        self.work_file_manager_iteration_files.delete_created_files()
 
         for partition_id in range(1, self.max_partition_count + 1):
             self.iteration_start_time = time.time()
@@ -1213,9 +1236,15 @@ class PartitionIterator:
             )
             self.reset_dummy_used()
 
-            self.iteration_file_paths_list.clear()
-            iteration_partition = f"{self.partition_feature}_{partition_id}"
-            self.select_partition_feature(iteration_partition, partition_id)
+            iteration_partition = (
+                self.work_file_manager_iteration_files.generate_partition_path(
+                    object_name="partition_feature_iteration_selection",
+                    partition_id=partition_id,
+                )
+            )
+            self.select_partition_feature(
+                iteration_partition=iteration_partition, object_id=partition_id
+            )
 
             inputs_present_in_partition = self.process_all_processing_inputs(
                 iteration_partition=iteration_partition,
@@ -1234,9 +1263,9 @@ class PartitionIterator:
                 self.execute_injected_methods_with_retry(partition_id)
                 self.ensure_dummy_flag_for_all_objects()
                 self.append_iteration_outputs_to_final(partition_id=partition_id)
-                self.delete_iteration_files(*self.iteration_file_paths_list)
+                self.work_file_manager_iteration_files.delete_created_files()
             else:
-                self.delete_iteration_files(*self.iteration_file_paths_list)
+                self.work_file_manager_iteration_files.delete_created_files()
             self.track_iteration_time(partition_id, inputs_present_in_partition)
 
     @timing_decorator
@@ -1288,186 +1317,9 @@ class PartitionIterator:
             name="post_runtime", dict_data=self.nested_input_object_tag
         )
         self.cleanup_final_outputs()
+        self.work_file_manager_persistent_files.delete_created_files()
         self.write_documentation(name="error_log", dict_data=self.error_log)
 
 
 if __name__ == "__main__":
     environment_setup.main()
-    # Define your input feature classes and their aliases
-    building_points = "building_points"
-    building_polygons = "building_polygons"
-    church_hospital = "church_hospital"
-    restriction_lines = "restriction_lines"
-    bane = "bane"
-    river = "river"
-    train_stations = "train_stations"
-    urban_area = "urban_area"
-    roads = "roads"
-
-    inputs = {
-        building_points: [
-            "input",
-            Building_N100.point_propagate_displacement___points_after_propagate_displacement___n100_building.value,
-        ],
-        building_polygons: [
-            "context",
-            input_n50.Grunnriss,
-        ],
-        bane: [
-            "context",
-            input_n50.Bane,
-        ],
-        river: [
-            "reference",
-            input_n50.ElvBekk,
-        ],
-    }
-
-    outputs = {
-        building_points: [
-            "polygon_processor",
-            Building_N100.iteration__partition_iterator_final_output_points__n100.value,
-        ],
-    }
-
-    inputs3 = {
-        building_points: [
-            "input",
-            Building_N100.point_displacement_with_buffer___building_points_selection___n100_building.value,
-        ],
-        roads: [
-            "input",
-            Building_N100.data_preparation___unsplit_roads___n100_building.value,
-        ],
-        river: [
-            "context",
-            Building_N100.data_preparation___processed_begrensningskurve___n100_building.value,
-        ],
-        urban_area: [
-            "context",
-            Building_N100.data_preparation___urban_area_selection_n100___n100_building.value,
-        ],
-        train_stations: [
-            "reference",
-            Building_N100.data_selection___railroad_stations_n100_input_data___n100_building.value,
-        ],
-        bane: [
-            "context",
-            input_n100.Bane,
-        ],
-    }
-
-    outputs3 = {
-        building_points: [
-            "buffer_displacement",
-            Building_N100.line_to_buffer_symbology___buffer_displaced_building_points___n100_building.value,
-        ],
-    }
-    misc_objects = {
-        "begrensningskurve": [
-            ("river", "context"),
-            0,
-        ],
-        "urban_areas": [
-            ("urban_area", "context"),
-            1,
-        ],
-        "bane_station": [
-            ("train_stations", "reference"),
-            1,
-        ],
-        "bane_lines": [
-            ("bane", "context"),
-            1,
-        ],
-    }
-
-    buffer_displacement_config = {
-        "class": BufferDisplacement,
-        "method": "run",
-        "params": {
-            "input_road_lines": ("roads", "input"),
-            "input_building_points": ("building_points", "input"),
-            "input_misc_objects": misc_objects,
-            "output_building_points": ("building_points", "buffer_displacement"),
-            "sql_selection_query": N100_SQLResources.new_road_symbology_size_sql_selection.value,
-            "root_file": Building_N100.line_to_buffer_symbology___test___n100_building.value,
-            "building_symbol_dimensions": N100_Symbology.building_symbol_dimensions.value,
-            "buffer_displacement_meter": N100_Values.buffer_clearance_distance_m.value,
-            "write_work_files_to_memory": True,
-            "keep_work_files": False,
-        },
-    }
-
-    input_dict = {
-        "building_points": [
-            ("building_points", "input"),
-            ("river", "input"),
-            "10",
-        ],
-        "train_stations": [
-            ("train_stations", "input"),
-            ("bane", "input"),
-            "10",
-        ],
-    }
-
-    output_dict = {
-        "building_points": [
-            ("building_points", "buffer_1"),
-            ("river", "buffer_1"),
-        ],
-        "train_stations": [
-            ("train_stations", "buffer_1"),
-            ("bane", "buffer_1"),
-        ],
-    }
-
-    select_hospitals_config = {
-        "func": custom_arcpy.select_attribute_and_make_permanent_feature,
-        "params": {
-            "input_layer": ("building_points", "input"),
-            "output_name": ("building_points", "hospitals_selection"),
-            "expression": "symbol_val IN (1, 2, 3)",
-        },
-    }
-
-    polygon_processor_config = {
-        "class": PolygonProcessor,
-        "method": "run",
-        "params": {
-            "input_building_points": ("building_points", "hospitals_selection"),
-            "output_polygon_feature_class": ("building_points", "polygon_processor"),
-            "building_symbol_dimensions": N100_Symbology.building_symbol_dimensions.value,
-            "symbol_field_name": "symbol_val",
-            "index_field_name": "OBJECTID",
-        },
-    }
-
-    partition_iterator = PartitionIterator(
-        alias_path_data=inputs,
-        alias_path_outputs=outputs,
-        custom_functions=[select_hospitals_config, polygon_processor_config],
-        root_file_partition_iterator=Building_N100.iteration__partition_iterator__n100.value,
-        dictionary_documentation_path=Building_N100.iteration___json_documentation___building_n100.value,
-        feature_count="800000",
-    )
-
-    # Run the partition iterator
-    partition_iterator.run()
-    # partition_iterator.find_io_params_custom_logic(1)
-
-    # partition_iterator.find_io_params_custom_logic(3)
-
-    # Instantiate PartitionIterator with necessary parameters
-    partition_iterator_2 = PartitionIterator(
-        alias_path_data=inputs3,
-        alias_path_outputs=outputs3,
-        custom_functions=[buffer_displacement_config],
-        root_file_partition_iterator=Building_N100.iteration__partition_iterator__n100.value,
-        dictionary_documentation_path=Building_N100.iteration___json_documentation___building_n100.value,
-        feature_count="33000",
-    )
-
-    # Run the partition iterator
-    # partition_iterator_2.run()
