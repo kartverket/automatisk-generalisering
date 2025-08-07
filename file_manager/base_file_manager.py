@@ -207,7 +207,7 @@ class BaseFileManager:
         self.validate_inputs(file_name)
         return rf"{self.relative_path_final_outputs}\{file_name}"
 
-    def generate_general_subdirectory(self, description: str) -> str:
+    def generate_general_subdirectory(self, description: str) -> types.SubdirectoryPath:
         """
         Generates a subdirectory path under the general files directory.
 
@@ -221,5 +221,5 @@ class BaseFileManager:
 
         dir_name = f"{description}___{self.scale}_{self.object}"
         full_path = rf"{self.relative_path_general_files}\{dir_name}"
-        os.makedirs(full_path)
+        os.makedirs(full_path, exist_ok=True)
         return types.SubdirectoryPath(full_path)

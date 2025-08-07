@@ -150,7 +150,7 @@ def apply_symbology_to_layers():
     )
 
 
-def resolve_building_conflicts_polygon():
+def resolve_building_conflicts_polygon_old():
     building = "building"
     railroad = "railroad"
     road = "road"
@@ -263,32 +263,34 @@ def resolve_building_conflicts_polygon():
         "method": "run",
         "params": {
             "input_list_of_dicts_data_structure": input_data_structure,
-            "root_file": Building_N100.polygon_resolve_building_conflicts___root_file___n100_building.value,
             "output_building_polygons": (building, "after_rbc"),
+            "work_file_manager_config": core_config.WorkFileConfig(
+                root_file=Building_N100.polygon_resolve_building_conflicts___root_file___n100_building.value
+            ),
         },
     }
 
-    resolve_building_conflicts_config_2 = {
-        "input_list_of_dicts_data_structure": input_data_structure,
-        "root_file": Building_N100.polygon_resolve_building_conflicts___root_file___n100_building.value,
-        "output_building_polygons": (building, "after_rbc"),
-        "input_building_polygons2": core_config.InjectIO(object=building, tag="input"),
-        "output_building_polygons2": core_config.InjectIO(
-            object=building, tag="after_rbc"
-        ),
-        "new_object": core_config.InjectIO(object="new_object", tag="new_tag"),
-        "something": core_config.InjectIO(object="building", tag="new_output"),
-    }
-
-    rbc_method_test = core_config.MethodEntriesConfig(
-        entries=[
-            core_config.ClassMethodEntryConfig(
-                class_=ResolveBuildingConflictsPolygon,
-                method="run",
-                params=resolve_building_conflicts_config_2,
-            )
-        ]
+    partition_rbc_polygon = PartitionIterator(
+        alias_path_data=inputs,
+        alias_path_outputs=outputs,
+        custom_functions=[resolve_building_conflicts_config],
+        root_file_partition_iterator=Building_N100.polygon_resolve_building_conflicts___partition_root_file___n100_building.value,
+        dictionary_documentation_path=Building_N100.polygon_resolve_building_conflicts___begrensingskurve_docu___building_n100.value,
+        feature_count=25_000,
+        run_partition_optimization=True,
+        search_distance="500 Meters",
     )
+
+
+def resolve_building_conflicts_polygon():
+
+    building = "building"
+    railroad = "railroad"
+    road = "road"
+    begrensningskurve = "begrensningskurve"
+    power_grid_lines = "power_grid_lines"
+    hospital_churches = "hospital_churches"
+    railroad_station = "railroad_station"
 
     rbc_input_config = core_config.PartitionInputConfig(
         entries=[
@@ -347,43 +349,96 @@ def resolve_building_conflicts_polygon():
         ]
     )
 
-    rbc_partition_io_config = core_config.PartitionIOConfig(
+    rbc_io_config = core_config.PartitionIOConfig(
         input_config=rbc_input_config,
         output_config=rbc_output_config,
+        documentation_directory=Building_N100.rbc_polygon_documentation_n100_building.value,
     )
 
-    partition_rbc_polygon = PartitionIterator(
-        partition_io_config=rbc_partition_io_config,
-        partition_method_inject_config=rbc_method_test,
-        alias_path_data=inputs,
-        alias_path_outputs=outputs,
-        custom_functions=[resolve_building_conflicts_config_2],
+    polygon_rbc_input_data_structure = [
+        {
+            "unique_alias": building,
+            "input_layer": core_config.InjectIO(object=building, tag="input"),
+            "input_lyrx_feature": input_symbology.SymbologyN100.building_polygon.value,
+            "grouped_lyrx": False,
+            "target_layer_name": None,
+        },
+        {
+            "unique_alias": road,
+            "input_layer": core_config.InjectIO(object=road, tag="input"),
+            "input_lyrx_feature": input_symbology.SymbologyN100.road_buffer.value,
+            "grouped_lyrx": False,
+            "target_layer_name": None,
+        },
+        {
+            "unique_alias": railroad,
+            "input_layer": core_config.InjectIO(object=railroad, tag="input"),
+            "input_lyrx_feature": input_symbology.SymbologyN100.railway.value,
+            "grouped_lyrx": False,
+            "target_layer_name": None,
+        },
+        {
+            "unique_alias": railroad_station,
+            "input_layer": core_config.InjectIO(object=railroad_station, tag="input"),
+            "input_lyrx_feature": input_symbology.SymbologyN100.railway_station_squares.value,
+            "grouped_lyrx": False,
+            "target_layer_name": None,
+        },
+        {
+            "unique_alias": begrensningskurve,
+            "input_layer": core_config.InjectIO(object=begrensningskurve, tag="input"),
+            "input_lyrx_feature": input_symbology.SymbologyN100.begrensningskurve_polygon.value,
+            "grouped_lyrx": False,
+            "target_layer_name": None,
+        },
+        {
+            "unique_alias": power_grid_lines,
+            "input_layer": core_config.InjectIO(object=power_grid_lines, tag="input"),
+            "input_lyrx_feature": config.symbology_samferdsel,
+            "grouped_lyrx": True,
+            "target_layer_name": "N100_Samferdsel_senterlinje_veg_anlegg_sort_maske",
+        },
+        {
+            "unique_alias": hospital_churches,
+            "input_layer": core_config.InjectIO(object=hospital_churches, tag="input"),
+            "input_lyrx_feature": input_symbology.SymbologyN100.building_polygon.value,
+            "grouped_lyrx": False,
+            "target_layer_name": None,
+        },
+    ]
+
+    polygon_rbc_method = core_config.ClassMethodEntryConfig(
+        class_=ResolveBuildingConflictsPolygon,
+        method="run",
+        params={
+            "input_list_of_dicts_data_structure": polygon_rbc_input_data_structure,
+            "output_building_polygons": core_config.InjectIO(
+                object=building, tag="after_rbc"
+            ),
+            "work_file_manager_config": core_config.WorkFileConfig(
+                root_file=Building_N100.polygon_resolve_building_conflicts___root_file___n100_building.value
+            ),
+        },
+    )
+
+    rbc_method_injects_config = core_config.MethodEntriesConfig(
+        entries=[polygon_rbc_method]
+    )
+
+    rbc_partition_run_config = core_config.PartitionRunConfig(
+        max_elements_per_partition=25_000,
+        context_radius_meters=500,
+        run_partition_optimization=False,
+    )
+
+    partition_polygon_rbc = PartitionIterator(
+        partition_io_config=rbc_io_config,
+        partition_method_inject_config=rbc_method_injects_config,
+        partition_iterator_run_config=rbc_partition_run_config,
         root_file_partition_iterator=Building_N100.polygon_resolve_building_conflicts___partition_root_file___n100_building.value,
-        dictionary_documentation_path=Building_N100.polygon_resolve_building_conflicts___begrensingskurve_docu___building_n100.value,
-        feature_count=25_000,
-        run_partition_optimization=True,
-        search_distance="500 Meters",
     )
 
-    print("\nPrinting: Raw pre resolve resolve_injection_configs_batch:\n")
-    pprint(partition_rbc_polygon.custom_functions)
-    resolved_configs = partition_rbc_polygon.test_new_inject_method(partition_id=1)
-    print("\nPrinting nested dict after 1:\n")
-    pprint(partition_rbc_polygon.nested_input_object_tag)
-
-    print("\nPrinting resolved method configs:\n")
-    pprint(resolved_configs)
-
-    print("\nPrinting: Raw after resolve resolve_injection_configs_batch:\n")
-    pprint(partition_rbc_polygon.custom_functions)
-
-    resolved_configs2 = partition_rbc_polygon.test_new_inject_method(partition_id=2)
-    print("\nPrinting resolved method configs 2:\n")
-    pprint(resolved_configs2)
-    print("\nPrinting nested dict after 2:\n")
-    pprint(partition_rbc_polygon.nested_input_object_tag)
-    # partition_rbc_polygon.test_resolve_injection_io()
-    # partition_rbc_polygon.run()
+    partition_polygon_rbc.run()
 
 
 @timing_decorator

@@ -1,8 +1,5 @@
 import arcpy
 import os
-import re
-import shutil
-import json
 from typing import Dict, Tuple, Literal, List, Any
 import time
 from datetime import datetime
@@ -14,6 +11,7 @@ from env_setup import environment_setup
 from custom_tools.general_tools import custom_arcpy, file_utilities
 from custom_tools.decorators.timing_decorator import timing_decorator
 
+from file_manager.work_file_manager import WorkFileManager
 from input_data import input_n50, input_n100
 from file_manager.n100.file_manager_buildings import Building_N100
 from custom_tools.general_tools.polygon_processor import PolygonProcessor
@@ -149,6 +147,7 @@ class PartitionIterator:
         partition_io_config: core_config.PartitionIOConfig,
         partition_method_inject_config: core_config.MethodEntriesConfig,
         partition_iterator_run_config: core_config.PartitionRunConfig,
+        work_file_manager_config: core_config.WorkFileConfig,
         root_file_partition_iterator: str,
     ):
         """
@@ -192,7 +191,7 @@ class PartitionIterator:
             target_dict=self.nested_output_object_tag,
         )
 
-        self.documentation_directory = partition_io_config.dictionary_documentation_path
+        self.documentation_directory = partition_io_config.documentation_directory
 
         self.list_of_methods = partition_method_inject_config
 
@@ -210,9 +209,19 @@ class PartitionIterator:
         )
 
         ##
-        self.max_partition_count: int
+        self.max_partition_count: int = 1
         self.final_partition_feature_count: int
         self.error_log = {}
+
+        self.work_file_manager_temp_files = WorkFileManager(
+            config=work_file_manager_config
+        )
+        self.work_file_manager_iteration_files = WorkFileManager(
+            config=work_file_manager_config
+        )
+        self.work_file_manager_permanent_files = WorkFileManager(
+            config=work_file_manager_config
+        )
 
         ############### OLD CLASS VARIABLES
 
@@ -282,7 +291,7 @@ class PartitionIterator:
             feature_count (int): The feature count used to limit partition size.
         """
         file_utilities.delete_feature(input_feature=self.partition_feature)
-        VALID_TAGS = {"input_copy", "context_copy"}
+        VALID_TAGS = {self.RAW_INPUT_TAG}
 
         in_features = [
             path
@@ -352,7 +361,7 @@ class PartitionIterator:
             max_partition_load = max(max_partition_load, total_objects)
 
             print(
-                f"\nPartition: {partition_id}\n"
+                f"\nCounting objects for Partition: {partition_id}\n"
                 f"Current total found: {total_objects}\n"
                 f"Current maximum found: {max_partition_load}"
             )
@@ -929,22 +938,42 @@ class PartitionIterator:
 
         return core_config.MethodEntriesConfig(entries=resolved_configs)
 
-    def resolve_param_injections(
-        self,
-        method_config: dict[str, Any],
-        partition_id: int,
-    ) -> dict[str, Any]:
-        resolved = {}
-        for key, val in method_config.items():
-            if isinstance(val, core_config.InjectIO):
-                resolved_path = self.resolve_inject_entry(
-                    inject=val,
-                    partition_id=partition_id,
-                )
-                resolved[key] = resolved_path
-            else:
-                resolved[key] = val
-        return resolved
+    def resolve_param_injections(self, method_config: Any, partition_id: int) -> Any:
+        """
+        Recursively resolve InjectIO instances in any nested structure.
+        Supports dicts, lists, tuples, and sets.
+        """
+        if isinstance(method_config, core_config.InjectIO):
+            return self.resolve_inject_entry(
+                inject=method_config, partition_id=partition_id
+            )
+
+        elif isinstance(method_config, dict):
+            return {
+                key: self.resolve_param_injections(value, partition_id)
+                for key, value in method_config.items()
+            }
+
+        elif isinstance(method_config, list):
+            return [
+                self.resolve_param_injections(item, partition_id)
+                for item in method_config
+            ]
+
+        elif isinstance(method_config, tuple):
+            return tuple(
+                self.resolve_param_injections(item, partition_id)
+                for item in method_config
+            )
+
+        elif isinstance(method_config, set):
+            return {
+                self.resolve_param_injections(item, partition_id)
+                for item in method_config
+            }
+
+        else:
+            return method_config
 
     def resolve_inject_entry(
         self, inject: core_config.InjectIO, partition_id: int
@@ -973,14 +1002,6 @@ class PartitionIterator:
         root_path = self.root_file_partition_iterator
         constructed_path = f"{root_path}_{object}_{tag}_iteration_{partition_id}"
         return constructed_path
-
-    def test_new_inject_method(self, partition_id):
-
-        resolved_methods = self.resolve_injected_io_for_methods(
-            method_entries_config=self.list_of_methods,
-            partition_id=partition_id,
-        )
-        return resolved_methods
 
     def execute_injected_methods(
         self, method_entries_config: core_config.MethodEntriesConfig
