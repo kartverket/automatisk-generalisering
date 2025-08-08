@@ -1,11 +1,11 @@
 import arcpy
 import os
-from typing import Dict, Optional, Tuple, Literal, List, Any
+from typing import Dict, Literal, List, Any
 import time
 from datetime import datetime
 import pprint
 import copy
-from dataclasses import replace
+from dataclasses import replace, fields, is_dataclass, asdict
 
 from composition_configs import core_config
 from env_setup import environment_setup
@@ -973,6 +973,15 @@ class PartitionIterator:
                 inject=method_config, partition_id=partition_id
             )
 
+        elif is_dataclass(method_config) and not isinstance(method_config, type):
+            resolved_values = {
+                f.name: self.resolve_param_injections(
+                    getattr(method_config, f.name), partition_id
+                )
+                for f in fields(method_config)
+            }
+            return replace(method_config, **resolved_values)
+
         elif isinstance(method_config, dict):
             return {
                 key: self.resolve_param_injections(value, partition_id)
@@ -1055,7 +1064,13 @@ class PartitionIterator:
 
                 init_params = cls.__init__.__code__.co_varnames
 
-                for param, value in entry.params.items():
+                if is_dataclass(entry.params) and not isinstance(entry.params, type):
+                    param_dict = asdict(entry.params)
+                else:
+                    assert isinstance(entry.params, dict)
+                    param_dict = entry.params
+
+                for param, value in param_dict.items():
                     if param in init_params:
                         class_params[param] = value
                     else:

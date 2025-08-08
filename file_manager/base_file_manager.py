@@ -120,7 +120,7 @@ class BaseFileManager:
         script_source_name: str,
         description: str,
         file_type: str,
-    ):
+    ) -> types.GdbFilePath:
         """
         Generates a file path for general files (e.g., CSV, TXT). After validating the input.
 
@@ -133,7 +133,8 @@ class BaseFileManager:
             str: The absolute path for the general file, including the file extension.
         """
         self.validate_inputs(script_source_name, description, file_type)
-        return rf"{self.relative_path_general_files}\{script_source_name}___{description}___{self.scale}_{self.object}.{file_type}"
+        full_path = rf"{self.relative_path_general_files}\{script_source_name}___{description}___{self.scale}_{self.object}.{file_type}"
+        return types.GdbFilePath(full_path)
 
     def generate_file_name_general_directory(
         self,
@@ -159,7 +160,7 @@ class BaseFileManager:
         self,
         script_source_name: str,
         description: str,
-    ):
+    ) -> types.LyrxFilePath:
         """
         Generates a file path for ArcGIS layer files (.lyrx). After validating the input.
 
@@ -171,7 +172,8 @@ class BaseFileManager:
             str: The absolute path for the .lyrx file.
         """
         self.validate_inputs(script_source_name, description)
-        return rf"{self.relative_path_lyrx}\{script_source_name}___{description}___{self.scale}_{self.object}.lyrx"
+        full_path = rf"{self.relative_path_lyrx}\{script_source_name}___{description}___{self.scale}_{self.object}.lyrx"
+        return types.LyrxFilePath(full_path)
 
     def generate_file_lyrx_directory(
         self,

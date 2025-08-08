@@ -894,13 +894,6 @@ class ResolveBuildingConflictsPolygon:
             out_data=self.output_building_points,
         )
 
-    @partition_io_decorator(
-        input_param_names=["input_list_of_dicts_data_structure"],
-        output_param_names=[
-            "output_building_polygons",
-            # "output_building_points",
-        ],
-    )
     def run(self):
         arcpy.env.referenceScale = "100000"
         environment_setup.main()
