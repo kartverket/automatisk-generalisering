@@ -128,6 +128,7 @@ class PartitionIterator:
 
     # Class-level constants
     INPUT_TYPE_KEY = "input_type"
+    DATA_TYPE_KEY = "data_type"
     INPUT_TAG_KEY = "input"
     INJECTABLE_INPUT_TAG_KEY = INPUT_TAG_KEY
     RAW_INPUT_TAG = "raw_input"
@@ -159,6 +160,7 @@ class PartitionIterator:
                 tag=e.tag,
                 path=e.path,
                 input_type=e.input_type.value,
+                data_type=e.data_type.value,
             )
             for e in partition_io_config.input_config.entries
         ]
@@ -168,6 +170,7 @@ class PartitionIterator:
                 object=e.object,
                 tag=e.tag,
                 path=e.path,
+                data_type=e.data_type.value,
             )
             for e in partition_io_config.output_config.entries
         ]
@@ -240,10 +243,10 @@ class PartitionIterator:
         target_dict: Dict[str, Dict[str, str]],
     ) -> None:
         for entry in entries:
-            if entry.object not in target_dict:
-                target_dict[entry.object] = {}
-            target_dict[entry.object][self.INPUT_TYPE_KEY] = entry.input_type
-            target_dict[entry.object][entry.tag] = entry.path
+            entry_dict = target_dict.setdefault(entry.object, {})
+            entry_dict[self.INPUT_TYPE_KEY] = entry.input_type
+            entry_dict[self.DATA_TYPE_KEY] = entry.data_type
+            entry_dict[entry.tag] = entry.path
 
     def resolve_partition_output_config(
         self,
@@ -251,9 +254,9 @@ class PartitionIterator:
         target_dict: Dict[str, Dict[str, str]],
     ) -> None:
         for entry in entries:
-            if entry.object not in target_dict:
-                target_dict[entry.object] = {}
-            target_dict[entry.object][entry.tag] = entry.path
+            entry_dict = target_dict.setdefault(entry.object, {})
+            entry_dict[self.DATA_TYPE_KEY] = entry.data_type
+            entry_dict[entry.tag] = entry.path
 
     def _configure_nested_dict(
         self,
@@ -439,8 +442,12 @@ class PartitionIterator:
             - Iterates over all object/tag pairs in `nested_output_object_tag`.
             - Deletes each final output path using the shared utility.
         """
+        skip_keys = {self.DATA_TYPE_KEY}
+
         for object_key, tag_dict in self.nested_output_object_tag.items():
             for tag, final_output_path in tag_dict.items():
+                if tag in skip_keys:
+                    continue
                 file_utilities.delete_feature(input_feature=final_output_path)
 
     def delete_iteration_files(self, *file_paths):

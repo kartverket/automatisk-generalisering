@@ -295,46 +295,32 @@ def resolve_building_conflicts_polygon():
 
     rbc_input_config = core_config.PartitionInputConfig(
         entries=[
-            core_config.InputEntry(
+            core_config.InputEntry.processing_input(
                 object=building,
-                input_type=core_config.InputType.PROCESSING,
-                tag="input",
                 path=Building_N100.polygon_propogate_displacement___building_polygons_after_displacement___n100_building.value,
             ),
-            core_config.InputEntry(
+            core_config.InputEntry.context_input(
                 object=railroad,
-                input_type=core_config.InputType.CONTEXT,
-                tag="input",
                 path=Building_N100.data_selection___railroad_tracks_n100_input_data___n100_building.value,
             ),
-            core_config.InputEntry(
+            core_config.InputEntry.context_input(
                 object=railroad_station,
-                input_type=core_config.InputType.CONTEXT,
-                tag="input",
                 path=Building_N100.data_preparation___railway_stations_to_polygons___n100_building.value,
             ),
-            core_config.InputEntry(
+            core_config.InputEntry.context_input(
                 object=road,
-                input_type=core_config.InputType.CONTEXT,
-                tag="input",
                 path=Building_N100.data_preparation___road_symbology_buffers___n100_building.value,
             ),
-            core_config.InputEntry(
+            core_config.InputEntry.context_input(
                 object=begrensningskurve,
-                input_type=core_config.InputType.CONTEXT,
-                tag="input",
                 path=Building_N100.data_preparation___processed_begrensningskurve___n100_building.value,
             ),
-            core_config.InputEntry(
+            core_config.InputEntry.context_input(
                 object=power_grid_lines,
-                input_type=core_config.InputType.CONTEXT,
-                tag="input",
                 path=Building_N100.data_preparation___power_grid_lines___n100_building.value,
             ),
-            core_config.InputEntry(
+            core_config.InputEntry.context_input(
                 object=hospital_churches,
-                input_type=core_config.InputType.CONTEXT,
-                tag="input",
                 path=Building_N100.polygon_resolve_building_conflicts___hospital_church_squares___n100_building.value,
             ),
         ]
@@ -342,7 +328,7 @@ def resolve_building_conflicts_polygon():
 
     rbc_output_config = core_config.PartitionOutputConfig(
         entries=[
-            core_config.OutputEntry(
+            core_config.OutputEntry.vector_output(
                 object=building,
                 tag="after_rbc",
                 path=Building_N100.polygon_resolve_building_conflicts___after_rbc___n100_building.value,
