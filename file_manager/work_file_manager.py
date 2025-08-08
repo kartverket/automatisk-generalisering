@@ -303,6 +303,8 @@ class WorkFileManager:
 
         for path in targets:
             self._delete_file(path)
+            if path in self.created_paths:
+                self.created_paths.remove(path)
 
     @staticmethod
     def list_contents(data: Any, title: str = "Contents"):
@@ -449,9 +451,9 @@ class PartitionWorkFileManager(WorkFileManager):
     def generate_partition_path(
         self,
         object_name: str,
-        tag: Optional[str | None] = None,
-        partition_id: Optional[int | None] = None,
-        suffix: Optional[str] = "",
+        tag: Optional[str] = None,
+        partition_id: Optional[int] = None,
+        suffix: str = "",
         extension: str = "gdb",
     ) -> str:
         """
@@ -472,7 +474,7 @@ class PartitionWorkFileManager(WorkFileManager):
         tag_string = f"_{tag}" if tag else ""
 
         if partition_id is not None:
-            file_name = f"{object_name}{tag}_iteration_{partition_id}{extra}"
+            file_name = f"{object_name}{tag_string}_iteration_{partition_id}{extra}"
         else:
             file_name = f"{object_name}{tag_string}{extra}"
 

@@ -27,23 +27,78 @@ class InputType(Enum):
     CONTEXT = "context"
 
 
-class outputType(Enum):
+class DataType(Enum):
     VECTOR = "vector"
+    # Future: RASTER = "raster"
 
 
 @dataclass(frozen=True)
 class InputEntry:
     object: str
     input_type: InputType
+    data_type: DataType
     tag: Literal["input"]
     path: str
+    """
+    Represents a single input feature used in partitioned processing.
+
+    Users should prefer the factory methods `processing_input()` or `context_input()`
+    over manual initialization to ensure correct and future-proof configuration.
+
+    Attributes:
+        object: Unique identifier used across the partitioning logic.
+        input_type: Indicates whether the input is for processing or context.
+        data_type: Describes the data format (e.g., vector).
+        tag: Should always be 'input' for now. Set automatically by factory methods.
+        path: Path to the input dataset.
+    """
+
+    @classmethod
+    def processing_input(cls, object: str, path: str) -> "InputEntry":
+        """Create a processing input (vector) entry with default tag."""
+        return cls(
+            object=object,
+            input_type=InputType.PROCESSING,
+            data_type=DataType.VECTOR,
+            tag="input",
+            path=path,
+        )
+
+    @classmethod
+    def context_input(cls, object: str, path: str) -> "InputEntry":
+        """Create a context input (vector) entry with default tag."""
+        return cls(
+            object=object,
+            input_type=InputType.CONTEXT,
+            data_type=DataType.VECTOR,
+            tag="input",
+            path=path,
+        )
 
 
 @dataclass(frozen=True)
 class OutputEntry:
     object: str
+    data_type: DataType
     tag: str
     path: str
+    """
+    Represents a single output feature to be produced in partitioned processing.
+
+    Users should prefer the factory method `vector_output()` for correct setup,
+    and to allow future support for other data types (e.g., raster).
+
+    Attributes:
+        object: Unique identifier used across the partitioning logic.
+        data_type: Describes the data format (e.g., vector).
+        tag: Identifier for the output version (e.g., 'after_rbc').
+        path: Path where the output dataset will be written.
+    """
+
+    @classmethod
+    def vector_output(cls, object: str, tag: str, path: str) -> "OutputEntry":
+        """Create a vector output entry."""
+        return cls(object=object, data_type=DataType.VECTOR, tag=tag, path=path)
 
 
 @dataclass(frozen=True)
@@ -58,6 +113,7 @@ class ResolvedInputEntry:
     tag: str
     path: str
     input_type: str
+    data_type: str
 
 
 @dataclass(frozen=True)
@@ -65,6 +121,7 @@ class ResolvedOutputEntry:
     object: str
     tag: str
     path: str
+    data_type: str
 
 
 @dataclass(frozen=True)
@@ -114,42 +171,3 @@ class PartitionRunConfig:
     run_partition_optimization: bool = True
     partition_method: PartitionMethod = PartitionMethod.FEATURES
     object_id_column: str = "OBJECTID"
-
-
-input_config = PartitionInputConfig(
-    entries=[
-        InputEntry(
-            object="building_points",
-            input_type=InputType.PROCESSING,
-            tag="input",
-            path="some_path",
-        ),
-        InputEntry(
-            object="building_polygons",
-            input_type=InputType.PROCESSING,
-            tag="input",
-            path="some_path",
-        ),
-        InputEntry(
-            object="road",
-            input_type=InputType.CONTEXT,
-            tag="input",
-            path="some_path",
-        ),
-    ]
-)
-
-output_config = PartitionOutputConfig(
-    entries=[
-        OutputEntry(
-            object="building_points",
-            tag="some_logic",
-            path="some_path",
-        ),
-        OutputEntry(
-            object="building_polygons",
-            tag="some_logic",
-            path="some_path",
-        ),
-    ]
-)
