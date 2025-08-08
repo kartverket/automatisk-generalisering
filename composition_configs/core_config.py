@@ -149,14 +149,14 @@ class PartitionMethod(Enum):
 @dataclass
 class FuncMethodEntryConfig:
     func: Callable
-    params: dict[str, Any] = field(default_factory=dict)
+    params: Any
 
 
 @dataclass
 class ClassMethodEntryConfig:
     class_: type
     method: str
-    params: dict[str, Any] = field(default_factory=dict)
+    params: Any
 
 
 @dataclass
