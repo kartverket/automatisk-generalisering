@@ -64,7 +64,9 @@ class WorkFileManager:
                 "Need to specify root_file path and write to disk to keep work files."
             )
 
-        self.file_location = "memory/" if self.write_to_memory else f"{self.root_file}_"
+        self.file_location = (
+            "\\memory\\" if self.write_to_memory else f"{self.root_file}_"
+        )
 
     def _modify_path(self) -> tuple[str, str]:
         """
@@ -303,8 +305,7 @@ class WorkFileManager:
 
         for path in targets:
             self._delete_file(path)
-            if path in self.created_paths:
-                self.created_paths.remove(path)
+            self.created_paths.remove(path)
 
     @staticmethod
     def list_contents(data: Any, title: str = "Contents"):
@@ -332,9 +333,6 @@ class WorkFileManager:
         try:
             if arcpy.Exists(file_path):
                 arcpy.management.Delete(file_path)
-                print(f"Deleted: {file_path}")
-            else:
-                print(f"File did not exist: {file_path}")
         except arcpy.ExecuteError as e:
             print(f"Error deleting file {file_path}: {e}")
 
