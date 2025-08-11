@@ -1,3 +1,4 @@
+from typing import Dict, Literal, List, Any
 import arcpy
 import os
 import json
@@ -95,12 +96,19 @@ class FeatureClassCreator:
         print("Appended geometry to the feature class.")
 
 
+def create_feature_class(template_feature: str, new_feature: str) -> None:
+    """Creates a new feature from a templete feature class"""
+    out_path, out_name = os.path.split(new_feature)
+    delete_feature(input_feature=new_feature)
+    arcpy.management.CreateFeatureclass(
+        out_path=out_path, out_name=out_name, template=template_feature
+    )
+
+
 def delete_feature(input_feature):
     """Deletes a feature class if it exists."""
     if arcpy.Exists(input_feature):
         arcpy.management.Delete(input_feature)
-    else:
-        print(f"{input_feature} did not exist")
 
 
 def compare_feature_classes(feature_class_1, feature_class_2):
@@ -236,3 +244,15 @@ def write_dict_to_json(path: str, dict_data: dict) -> None:
     """Writes a dictionary to a specified JSON file path."""
     with open(path, "w", encoding="utf-8") as f:
         json.dump(dict_data, f, indent=4)
+
+
+def configure_nested_dict(
+    input_dict,
+    outer_key,
+    inner_key,
+    value,
+) -> None:
+    """Configures a nested dictionary"""
+    if outer_key not in input_dict:
+        input_dict[outer_key] = {}
+    input_dict[outer_key][inner_key] = value

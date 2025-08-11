@@ -1,3 +1,4 @@
+from re import search
 import arcpy
 import os
 from typing import Dict, Literal, List, Any
@@ -131,6 +132,9 @@ class PartitionIterator:
     DATA_TYPE_KEY = "data_type"
     INPUT_TAG_KEY = "input"
     INJECTABLE_INPUT_TAG_KEY = INPUT_TAG_KEY
+    DUMMY = "dummy"
+    COUNT = "count"
+    DUMMY_USED = "dummy_used"
     RAW_INPUT_TAG = "raw_input"
     PARTITION_FIELD = "partition_selection_field"
     ORIGINAL_ID_FIELD = "original_id_field"
@@ -151,8 +155,9 @@ class PartitionIterator:
         """
 
         # Raw inputs and initial setup
-        self.nested_input_object_tag: Dict[str, Dict[str, Any]] = {}
-        self.nested_output_object_tag: Dict[str, Dict[str, Any]] = {}
+        self.input_catalog: Dict[str, Dict[str, Any]] = {}
+        self.output_catalog: Dict[str, Dict[str, Any]] = {}
+        self.iteration_catalog: Dict[str, Dict[str, Any]] = {}
 
         input_entries_resolved = [
             core_config.ResolvedInputEntry(
@@ -177,12 +182,12 @@ class PartitionIterator:
 
         self.resolve_partition_input_config(
             entries=input_entries_resolved,
-            target_dict=self.nested_input_object_tag,
+            target_dict=self.input_catalog,
         )
 
         self.resolve_partition_output_config(
             entries=output_entries_resolved,
-            target_dict=self.nested_output_object_tag,
+            target_dict=self.output_catalog,
         )
 
         self.documentation_directory = partition_io_config.documentation_directory
@@ -258,29 +263,6 @@ class PartitionIterator:
             entry_dict[self.DATA_TYPE_KEY] = entry.data_type
             entry_dict[entry.tag] = entry.path
 
-    def _configure_nested_dict(
-        self,
-        outer_key: str,
-        inner_key: str,
-        value: Any,
-    ) -> None:
-        """
-        What:
-            Adds or updates a value for a nested dictionary using two-level keys.
-
-        Args:
-            outer_key: The primary key (e.g., an object name like 'building').
-            inner_key: The secondary key (e.g., a tag like 'input_copy' or 'dummy_used').
-            value: The value to assign under the nested key (can be a path, bool, etc.).
-        """
-        if outer_key not in self.nested_input_object_tag:
-            self.nested_input_object_tag[outer_key] = {}
-
-        self.nested_input_object_tag[outer_key][inner_key] = value
-        print(
-            f"Set value for inner key '{inner_key}' in outer key '{outer_key}' to: {value}"
-        )
-
     def _create_cartographic_partitions(self, element_limit: int) -> None:
         """
         What:
@@ -295,7 +277,7 @@ class PartitionIterator:
 
         in_features = [
             path
-            for object_, tag_dict in self.nested_input_object_tag.items()
+            for object_, tag_dict in self.input_catalog.items()
             for tag, path in tag_dict.items()
             if tag in VALID_TAGS and path is not None
         ]
@@ -359,8 +341,8 @@ class PartitionIterator:
             )
 
             total_objects = sum(
-                self.nested_input_object_tag[obj_key].get("processed_objects_count", 0)
-                for obj_key in self.nested_input_object_tag
+                self.input_catalog[obj_key].get(self.COUNT, 0)
+                for obj_key in self.input_catalog
             )
             max_partition_load = max(max_partition_load, total_objects)
 
@@ -444,7 +426,7 @@ class PartitionIterator:
         """
         skip_keys = {self.DATA_TYPE_KEY}
 
-        for object_key, tag_dict in self.nested_output_object_tag.items():
+        for object_key, tag_dict in self.output_catalog.items():
             for tag, final_output_path in tag_dict.items():
                 if tag in skip_keys:
                     continue
@@ -455,19 +437,6 @@ class PartitionIterator:
         for file_path in file_paths:
             file_utilities.delete_feature(input_feature=file_path)
             print(f"Deleted file: {file_path}")
-
-    @staticmethod
-    def create_feature_class(full_feature_path, template_feature):
-        """Creates a new feature class from a template feature class, given a full path."""
-        out_path, out_name = os.path.split(full_feature_path)
-        if arcpy.Exists(full_feature_path):
-            arcpy.management.Delete(full_feature_path)
-            print(f"Deleted existing feature class: {full_feature_path}")
-
-        arcpy.management.CreateFeatureclass(
-            out_path=out_path, out_name=out_name, template=template_feature
-        )
-        print(f"Created feature class: {full_feature_path}")
 
     def create_dummy_features(self, tag: str) -> None:
         """
@@ -482,7 +451,7 @@ class PartitionIterator:
         Args:
             tag (str): The inner key (e.g. "raw_input") to check and use as template.
         """
-        for object_key, tag_dict in self.nested_input_object_tag.items():
+        for object_key, tag_dict in self.input_catalog.items():
             template_path = tag_dict.get(tag)
             if not template_path:
                 continue
@@ -494,34 +463,20 @@ class PartitionIterator:
                 )
             )
 
-            self.create_feature_class(
-                full_feature_path=dummy_feature_path,
-                template_feature=template_path,
+            file_utilities.create_feature_class(
+                template_feature=template_path, new_feature=dummy_feature_path
             )
-
-            print(
-                f"Created dummy feature for '{object_key}' using tag '{tag}': {dummy_feature_path}"
-            )
-
-            self._configure_nested_dict(
-                outer_key=object_key,
-                inner_key="dummy",
-                value=dummy_feature_path,
-            )
+            self.input_catalog[object_key][self.DUMMY] = dummy_feature_path
 
     def reset_dummy_used(self):
         """Sets the dummy_used to false"""
-        for object in self.nested_input_object_tag:
-            self.nested_input_object_tag[object]["dummy_used"] = False
+        for object in self.input_catalog:
+            self.input_catalog[object][self.DUMMY_USED] = False
 
     def ensure_dummy_flag_for_all_objects(self):
-        for object_key in self.nested_input_object_tag:
-            if "dummy_used" not in self.nested_input_object_tag[object_key]:
-                self._configure_nested_dict(
-                    outer_key=object_key,
-                    inner_key="dummy_used",
-                    value=False,
-                )
+        for object_key in self.input_catalog:
+            if self.DUMMY_USED not in self.input_catalog[object_key]:
+                self.input_catalog.setdefault(object_key, {})[self.DUMMY_USED] = False
 
     def update_empty_object_tag_with_dummy_file(
         self, object_key: str, tag: str
@@ -530,30 +485,19 @@ class PartitionIterator:
         Replaces the value for the given tag with the dummy path if available for the object_key.
         Marks 'dummy_used' as True for traceability.
         """
-        tag_dict = self.nested_input_object_tag.get(object_key)
+        tag_dict = self.input_catalog.get(object_key)
         if tag_dict is None:
-            print(f"Object '{object_key}' not found.")
             return
 
-        dummy_path = tag_dict.get("dummy")
+        dummy_path = tag_dict.get(self.DUMMY)
         if dummy_path is None:
-            print(f"No dummy path for '{object_key}'.")
             return
 
         if tag not in tag_dict:
-            print(f"Tag '{tag}' not defined for '{object_key}'. Skipping.")
             return
 
-        self._configure_nested_dict(
-            outer_key=object_key,
-            inner_key=tag,
-            value=dummy_path,
-        )
-        self._configure_nested_dict(
-            outer_key=object_key,
-            inner_key="dummy_used",
-            value=True,
-        )
+        self.input_catalog[object_key][tag] = [dummy_path]
+        self.input_catalog[object_key][self.DUMMY_USED] = True
 
         print(f"Dummy path for tag '{tag}' on '{object_key}' set to: {dummy_path}")
 
@@ -589,7 +533,7 @@ class PartitionIterator:
             print(f"Error in finding max {self.object_id_field}: {e}")
 
     def prepare_input_data(self):
-        for object_key, tag_dict in self.nested_input_object_tag.items():
+        for object_key, tag_dict in self.input_catalog.items():
             input_type = tag_dict.get(self.INPUT_TYPE_KEY)
             input_path = tag_dict[self.INPUT_TAG_KEY]
 
@@ -610,11 +554,7 @@ class PartitionIterator:
         )
         arcpy.management.Copy(in_data=input_path, out_data=copy_path)
 
-        self._configure_nested_dict(
-            outer_key=object_key,
-            inner_key=self.RAW_INPUT_TAG,
-            value=copy_path,
-        )
+        self.input_catalog[object_key][self.RAW_INPUT_TAG] = copy_path
 
         arcpy.AddField_management(
             in_table=copy_path,
@@ -628,24 +568,21 @@ class PartitionIterator:
         )
 
         if self.search_distance > 0:
-            PartitionIterator.create_feature_class(
-                full_feature_path=copy_path,
-                template_feature=input_path,
+            file_utilities.create_feature_class(
+                template_feature=input_path, new_feature=copy_path
             )
-
-            for input_obj, tag_dict in self.nested_input_object_tag.items():
+            for object, tag in self.input_catalog.items():
                 if (
-                    tag_dict.get(self.INPUT_TYPE_KEY)
+                    tag.get(self.INPUT_TYPE_KEY)
                     == core_config.InputType.PROCESSING.value
-                    and self.RAW_INPUT_TAG in tag_dict
+                    and self.RAW_INPUT_TAG in tag
                 ):
-                    input_copy_path = tag_dict[self.RAW_INPUT_TAG]
+                    input_copy_path = tag[self.RAW_INPUT_TAG]
                     memory_layer = (
                         self.work_file_manager_temp_files.generate_partition_path(
-                            object_name=object_key, tag=f"near_{input_obj}_selection"
+                            object_name=object_key, tag=f"near_{object}_selection"
                         )
                     )
-
                     custom_arcpy.select_location_and_make_feature_layer(
                         input_layer=input_path,
                         overlap_type=custom_arcpy.OverlapType.WITHIN_A_DISTANCE,
@@ -667,11 +604,7 @@ class PartitionIterator:
             arcpy.management.Copy(in_data=input_path, out_data=copy_path)
             print(f"Copied full context data for: {object_key}")
 
-        self._configure_nested_dict(
-            outer_key=object_key,
-            inner_key=self.RAW_INPUT_TAG,
-            value=copy_path,
-        )
+        self.input_catalog[object_key][self.RAW_INPUT_TAG] = copy_path
 
     def select_partition_feature(self, iteration_partition, object_id):
         """
@@ -711,6 +644,7 @@ class PartitionIterator:
             self.update_empty_object_tag_with_dummy_file(
                 object_key=object_key, tag=self.INJECTABLE_INPUT_TAG_KEY
             )
+            self.input_catalog[object_key][self.COUNT] = count_center
             return False
 
         print(f"{object_key} has {count_center} features in {iteration_partition}")
@@ -724,7 +658,9 @@ class PartitionIterator:
             suffix="iteration_selection",
         )
 
-        self.create_feature_class(output_path, selection_memory_path)
+        file_utilities.create_feature_class(
+            template_feature=selection_memory_path, new_feature=output_path
+        )
         arcpy.management.Append(
             inputs=selection_memory_path,
             target=output_path,
@@ -766,12 +702,13 @@ class PartitionIterator:
                 target=output_path,
                 schema_type="NO_TEST",
             )
+            count = file_utilities.count_objects(input_layer=output_path)
+            self.input_catalog[object_key][self.COUNT] = count
 
-        self._configure_nested_dict(
-            outer_key=object_key,
-            inner_key=self.INJECTABLE_INPUT_TAG_KEY,
-            value=output_path,
-        )
+        if self.search_distance <= 0:
+            self.input_catalog[object_key][self.COUNT] = count_center
+
+        self.input_catalog[object_key][self.INJECTABLE_INPUT_TAG_KEY] = output_path
         self.work_file_manager_temp_files.delete_created_files()
         return True
 
@@ -782,7 +719,7 @@ class PartitionIterator:
     ) -> bool:
         has_inputs = False
 
-        for object_key, tag_dict in self.nested_input_object_tag.items():
+        for object_key, tag_dict in self.input_catalog.items():
             if (
                 tag_dict.get(self.INPUT_TYPE_KEY)
                 != core_config.InputType.PROCESSING.value
@@ -829,22 +766,7 @@ class PartitionIterator:
 
         if count > 0:
             print(f"{object_key} has {count} context features in {iteration_partition}")
-            self._configure_nested_dict(
-                outer_key=object_key,
-                inner_key=self.INJECTABLE_INPUT_TAG_KEY,
-                value=output_path,
-            )
-
-            self._configure_nested_dict(
-                outer_key=object_key,
-                inner_key="count",
-                value=count,
-            )
-            self._configure_nested_dict(
-                outer_key=object_key,
-                inner_key="processed_objects_count",
-                value=count,
-            )
+            self.input_catalog[object_key][self.INJECTABLE_INPUT_TAG_KEY] = output_path
 
         else:
             self.update_empty_object_tag_with_dummy_file(
@@ -853,13 +775,14 @@ class PartitionIterator:
             print(
                 f"iteration partition {partition_id} has no context features for {object_key}"
             )
+        self.input_catalog[object_key][self.COUNT] = count
 
     def process_all_context_inputs(
         self,
         iteration_partition: str,
         partition_id: int,
     ) -> None:
-        for object_key, tag_dict in self.nested_input_object_tag.items():
+        for object_key, tag_dict in self.input_catalog.items():
             if tag_dict.get(self.INPUT_TYPE_KEY) != core_config.InputType.CONTEXT.value:
                 continue
             if self.RAW_INPUT_TAG not in tag_dict:
@@ -1012,20 +935,15 @@ class PartitionIterator:
     def resolve_inject_entry(
         self, inject: core_config.InjectIO, partition_id: int
     ) -> str:
-        if inject.tag == "input":
-            return self.nested_input_object_tag[inject.object][inject.tag]
+        if inject.tag == self.INJECTABLE_INPUT_TAG_KEY:
+            return self.input_catalog[inject.object][inject.tag]
 
         path = self.construct_partition_path_for_object_tag(
             object=inject.object,
             tag=inject.tag,
             partition_id=partition_id,
         )
-
-        self._configure_nested_dict(
-            outer_key=inject.object,
-            inner_key=inject.tag,
-            value=path,
-        )
+        self.input_catalog.setdefault(inject.object, {})[inject.tag] = path
 
         return path
 
@@ -1150,7 +1068,7 @@ class PartitionIterator:
             final_output_path (str): Destination output path.
             partition_id (int): Current partition identifier.
         """
-        input_tag_data = self.nested_input_object_tag.get(object_key, {})
+        input_tag_data = self.input_catalog.get(object_key, {})
         input_feature_path = input_tag_data.get(tag)
 
         if not input_feature_path:
@@ -1199,8 +1117,8 @@ class PartitionIterator:
 
         Skips any objects marked as dummy and ensures only non-empty, valid inputs are appended.
         """
-        for object_key, tag_dict in self.nested_output_object_tag.items():
-            if self.nested_input_object_tag.get(object_key, {}).get("dummy_used"):
+        for object_key, tag_dict in self.output_catalog.items():
+            if self.input_catalog.get(object_key, {}).get("dummy_used"):
                 continue
 
             for tag, final_output_path in tag_dict.items():
@@ -1218,7 +1136,7 @@ class PartitionIterator:
         fields_to_delete = [self.PARTITION_FIELD]
         # delete fields moved to custom utils
 
-        for object_key, tag_dict in self.nested_output_object_tag.items():
+        for object_key, tag_dict in self.output_catalog.items():
             for tag, final_output_path in tag_dict.items():
                 print(f"Cleaning fields in: {final_output_path}")
                 file_utilities.delete_fields_if_exist(
@@ -1279,7 +1197,7 @@ class PartitionIterator:
                 )
                 self.write_documentation(
                     name=f"iteration_{partition_id}",
-                    dict_data=self.nested_input_object_tag,
+                    dict_data=self.input_catalog,
                 )
 
                 self.execute_injected_methods_with_retry(partition_id)
@@ -1307,21 +1225,15 @@ class PartitionIterator:
 
         self.total_start_time = time.time()
 
-        self.write_documentation(
-            name="post_init", dict_data=self.nested_input_object_tag
-        )
-        self.write_documentation(
-            name="output_dict", dict_data=self.nested_output_object_tag
-        )
+        self.write_documentation(name="post_init", dict_data=self.input_catalog)
+        self.write_documentation(name="output_dict", dict_data=self.output_catalog)
 
         print("\nStarting Data Preparation...")
         self.delete_final_outputs()
         self.prepare_input_data()
         self.create_dummy_features(tag=self.RAW_INPUT_TAG)
 
-        self.write_documentation(
-            name="post_data_prep", dict_data=self.nested_input_object_tag
-        )
+        self.write_documentation(name="post_data_prep", dict_data=self.input_catalog)
         if self.run_partition_optimization:
             self._find_partition_size()
 
@@ -1335,9 +1247,7 @@ class PartitionIterator:
         print("\nStarting on Partition Iteration...")
         self.partition_iteration()
 
-        self.write_documentation(
-            name="post_runtime", dict_data=self.nested_input_object_tag
-        )
+        self.write_documentation(name="post_runtime", dict_data=self.input_catalog)
         self.cleanup_final_outputs()
         self.work_file_manager_persistent_files.delete_created_files()
         self.write_documentation(name="error_log", dict_data=self.error_log)
