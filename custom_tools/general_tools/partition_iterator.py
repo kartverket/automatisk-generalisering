@@ -1,7 +1,7 @@
 from re import search
 import arcpy
 import os
-from typing import Dict, Literal, List, Any
+from typing import Dict, Literal, List, Any, Tuple
 import time
 from datetime import datetime
 import pprint
@@ -131,13 +131,9 @@ class PartitionIterator:
     INPUT_TYPE_KEY = "input_type"
     DATA_TYPE_KEY = "data_type"
     INPUT_TAG_KEY = "input"
-    INJECTABLE_INPUT_TAG_KEY = INPUT_TAG_KEY
     DUMMY = "dummy"
     COUNT = "count"
-    DUMMY_USED = "dummy_used"
-    RAW_INPUT_TAG = "raw_input"
     PARTITION_FIELD = "partition_selection_field"
-    ORIGINAL_ID_FIELD = "original_id_field"
 
     def __init__(
         self,
@@ -273,7 +269,7 @@ class PartitionIterator:
             feature_count (int): The feature count used to limit partition size.
         """
         self.work_file_manager_partition_feature.delete_created_files()
-        VALID_TAGS = {self.RAW_INPUT_TAG}
+        VALID_TAGS = {self.INPUT_TAG_KEY}
 
         in_features = [
             path
@@ -316,6 +312,7 @@ class PartitionIterator:
         max_partition_load = 0
 
         for partition_id in range(1, self.max_partition_count + 1):
+            self.iteration_catalog = {}
             iteration_partition = (
                 self.work_file_manager_iteration_files.generate_partition_path(
                     object_name="partition_feature_iteration_selection",
@@ -341,8 +338,7 @@ class PartitionIterator:
             )
 
             total_objects = sum(
-                self.input_catalog[obj_key].get(self.COUNT, 0)
-                for obj_key in self.input_catalog
+                row.get(self.COUNT, 0) for row in self.iteration_catalog.values()
             )
             max_partition_load = max(max_partition_load, total_objects)
 
@@ -468,22 +464,11 @@ class PartitionIterator:
             )
             self.input_catalog[object_key][self.DUMMY] = dummy_feature_path
 
-    def reset_dummy_used(self):
-        """Sets the dummy_used to false"""
-        for object in self.input_catalog:
-            self.input_catalog[object][self.DUMMY_USED] = False
-
-    def ensure_dummy_flag_for_all_objects(self):
-        for object_key in self.input_catalog:
-            if self.DUMMY_USED not in self.input_catalog[object_key]:
-                self.input_catalog.setdefault(object_key, {})[self.DUMMY_USED] = False
-
     def update_empty_object_tag_with_dummy_file(
         self, object_key: str, tag: str
     ) -> None:
         """
         Replaces the value for the given tag with the dummy path if available for the object_key.
-        Marks 'dummy_used' as True for traceability.
         """
         tag_dict = self.input_catalog.get(object_key)
         if tag_dict is None:
@@ -496,10 +481,7 @@ class PartitionIterator:
         if tag not in tag_dict:
             return
 
-        self.input_catalog[object_key][tag] = [dummy_path]
-        self.input_catalog[object_key][self.DUMMY_USED] = True
-
-        print(f"Dummy path for tag '{tag}' on '{object_key}' set to: {dummy_path}")
+        self.iteration_catalog[object_key][tag] = dummy_path
 
     def write_documentation(self, name: str, dict_data: dict) -> None:
         """
@@ -518,93 +500,97 @@ class PartitionIterator:
         """
         Determine the maximum OBJECTID for partitioning.
         """
-        try:
-            # Use a search cursor to find the maximum OBJECTID
-            with arcpy.da.SearchCursor(
-                in_table=self.partition_feature,
-                field_names=self.object_id_field,
-                sql_clause=(None, f"ORDER BY {self.object_id_field} DESC"),
-            ) as cursor:
-                self.max_partition_count = next(cursor)[0]
+        self.max_partition_count = file_utilities.count_objects(self.partition_feature)
 
-            print(f"Maximum {self.object_id_field} found: {self.max_partition_count}")
-
-        except Exception as e:
-            print(f"Error in finding max {self.object_id_field}: {e}")
+    def _is_vector_of_type(
+        self, tag_dict: dict, input_type: core_config.InputType
+    ) -> bool:
+        return (
+            tag_dict.get(self.INPUT_TYPE_KEY) == input_type.value
+            and tag_dict.get(self.DATA_TYPE_KEY) == core_config.DataType.VECTOR.value
+            and self.INPUT_TAG_KEY in tag_dict
+        )
 
     def prepare_input_data(self):
         for object_key, tag_dict in self.input_catalog.items():
-            input_type = tag_dict.get(self.INPUT_TYPE_KEY)
-            input_path = tag_dict[self.INPUT_TAG_KEY]
-
-            if input_type == core_config.InputType.PROCESSING.value:
+            if self._is_vector_of_type(
+                tag_dict=tag_dict, input_type=core_config.InputType.PROCESSING
+            ):
                 self._prepare_processing_input(
-                    object_key=object_key, input_path=input_path
+                    object_key=object_key, input_path=tag_dict[self.INPUT_TAG_KEY]
                 )
 
-            elif input_type == core_config.InputType.CONTEXT.value:
+            elif self._is_vector_of_type(
+                tag_dict=tag_dict, input_type=core_config.InputType.CONTEXT
+            ):
                 self._prepare_context_input(
-                    object_key=object_key, input_path=input_path
+                    object_key=object_key, input_path=tag_dict[self.INPUT_TAG_KEY]
                 )
+            else:
+                continue
 
     def _prepare_processing_input(self, object_key: str, input_path: str) -> None:
-        print(f"Copied processing input for: {object_key}")
-        copy_path = self.work_file_manager_persistent_files.generate_partition_path(
-            object_name=object_key, tag="raw_input"
-        )
-        arcpy.management.Copy(in_data=input_path, out_data=copy_path)
+        self.input_catalog[object_key][self.INPUT_TAG_KEY] = input_path
 
-        self.input_catalog[object_key][self.RAW_INPUT_TAG] = copy_path
-
+        existing_fields = {field.name for field in arcpy.ListFields(input_path)}
+        if self.PARTITION_FIELD in existing_fields:
+            arcpy.management.DeleteField(
+                in_table=input_path,
+                drop_field=self.PARTITION_FIELD,
+            )
         arcpy.AddField_management(
-            in_table=copy_path,
+            in_table=input_path,
             field_name=self.PARTITION_FIELD,
             field_type="LONG",
         )
 
     def _prepare_context_input(self, object_key: str, input_path: str) -> None:
-        copy_path = self.work_file_manager_persistent_files.generate_partition_path(
-            object_name=object_key, tag="input_contex_filtered"
+        if self.search_distance <= 0:
+            self.input_catalog[object_key][self.INPUT_TAG_KEY] = input_path
+            return
+
+        processing_input_objects: List[Tuple[str, str]] = []
+        for processing_object, processing_entry in self.input_catalog.items():
+            if self._is_vector_of_type(
+                tag_dict=processing_entry,
+                input_type=core_config.InputType.PROCESSING,
+            ):
+                processing_input_objects.append(
+                    (processing_object, processing_entry[self.INPUT_TAG_KEY])
+                )
+
+        if not processing_input_objects:
+            self.input_catalog[object_key][self.INPUT_TAG_KEY] = input_path
+            return
+
+        filtered_context_path = (
+            self.work_file_manager_persistent_files.generate_partition_path(
+                object_name=object_key, tag="input_contex_filtered"
+            )
         )
 
-        if self.search_distance > 0:
-            file_utilities.create_feature_class(
-                template_feature=input_path, new_feature=copy_path
+        file_utilities.create_feature_class(
+            template_feature=input_path, new_feature=filtered_context_path
+        )
+        for processing_object, path in processing_input_objects:
+            memory_layer = self.work_file_manager_temp_files.generate_partition_path(
+                object_name=object_key, tag=f"near_{processing_object}_selection"
             )
-            for object, tag in self.input_catalog.items():
-                if (
-                    tag.get(self.INPUT_TYPE_KEY)
-                    == core_config.InputType.PROCESSING.value
-                    and self.RAW_INPUT_TAG in tag
-                ):
-                    input_copy_path = tag[self.RAW_INPUT_TAG]
-                    memory_layer = (
-                        self.work_file_manager_temp_files.generate_partition_path(
-                            object_name=object_key, tag=f"near_{object}_selection"
-                        )
-                    )
-                    custom_arcpy.select_location_and_make_feature_layer(
-                        input_layer=input_path,
-                        overlap_type=custom_arcpy.OverlapType.WITHIN_A_DISTANCE,
-                        select_features=input_copy_path,
-                        output_name=memory_layer,
-                        search_distance=self.search_distance,
-                    )
+            custom_arcpy.select_location_and_make_feature_layer(
+                input_layer=input_path,
+                overlap_type=custom_arcpy.OverlapType.WITHIN_A_DISTANCE,
+                select_features=path,
+                output_name=memory_layer,
+                search_distance=self.search_distance,
+            )
 
-                    arcpy.management.Append(
-                        inputs=memory_layer,
-                        target=copy_path,
-                        schema_type="NO_TEST",
-                    )
-                    self.work_file_manager_temp_files.delete_created_files()
-
-            print(f"Processed selected context features for: {object_key}")
-
-        else:
-            arcpy.management.Copy(in_data=input_path, out_data=copy_path)
-            print(f"Copied full context data for: {object_key}")
-
-        self.input_catalog[object_key][self.RAW_INPUT_TAG] = copy_path
+            arcpy.management.Append(
+                inputs=memory_layer,
+                target=filtered_context_path,
+                schema_type="NO_TEST",
+            )
+            self.work_file_manager_temp_files.delete_created_files()
+        self.input_catalog[object_key][self.INPUT_TAG_KEY] = filtered_context_path
 
     def select_partition_feature(self, iteration_partition, object_id):
         """
@@ -623,6 +609,8 @@ class PartitionIterator:
         iteration_partition: str,
         partition_id: int,
     ) -> bool:
+        iteration_entry = self.iteration_catalog.setdefault(object_key, {})
+
         selection_memory_path = (
             self.work_file_manager_temp_files.generate_partition_path(
                 object_name=object_key,
@@ -631,7 +619,6 @@ class PartitionIterator:
             )
         )
 
-        # Select features whose center is in partition
         custom_arcpy.select_location_and_make_feature_layer(
             input_layer=input_path,
             overlap_type=custom_arcpy.OverlapType.HAVE_THEIR_CENTER_IN,
@@ -639,17 +626,17 @@ class PartitionIterator:
             output_name=selection_memory_path,
         )
 
-        count_center = file_utilities.count_objects(selection_memory_path)
-        if count_center == 0:
+        center_count = file_utilities.count_objects(selection_memory_path)
+
+        if center_count == 0:
+            iteration_entry[self.COUNT] = center_count
             self.update_empty_object_tag_with_dummy_file(
-                object_key=object_key, tag=self.INJECTABLE_INPUT_TAG_KEY
+                object_key=object_key, tag=self.INPUT_TAG_KEY
             )
-            self.input_catalog[object_key][self.COUNT] = count_center
             return False
 
-        print(f"{object_key} has {count_center} features in {iteration_partition}")
         arcpy.CalculateField_management(
-            selection_memory_path, self.PARTITION_FIELD, "1"
+            in_table=selection_memory_path, field=self.PARTITION_FIELD, expression="1"
         )
 
         output_path = self.work_file_manager_iteration_files.generate_partition_path(
@@ -702,13 +689,13 @@ class PartitionIterator:
                 target=output_path,
                 schema_type="NO_TEST",
             )
-            count = file_utilities.count_objects(input_layer=output_path)
-            self.input_catalog[object_key][self.COUNT] = count
 
-        if self.search_distance <= 0:
-            self.input_catalog[object_key][self.COUNT] = count_center
-
-        self.input_catalog[object_key][self.INJECTABLE_INPUT_TAG_KEY] = output_path
+        iteration_entry[self.COUNT] = (
+            file_utilities.count_objects(input_layer=output_path)
+            if self.search_distance > 0
+            else center_count
+        )
+        iteration_entry[self.INPUT_TAG_KEY] = output_path
         self.work_file_manager_temp_files.delete_created_files()
         return True
 
@@ -720,15 +707,12 @@ class PartitionIterator:
         has_inputs = False
 
         for object_key, tag_dict in self.input_catalog.items():
-            if (
-                tag_dict.get(self.INPUT_TYPE_KEY)
-                != core_config.InputType.PROCESSING.value
+            if not self._is_vector_of_type(
+                tag_dict=tag_dict, input_type=core_config.InputType.PROCESSING
             ):
                 continue
-            if self.RAW_INPUT_TAG not in tag_dict:
-                continue
 
-            input_path = tag_dict[self.RAW_INPUT_TAG]
+            input_path = tag_dict[self.INPUT_TAG_KEY]
 
             result = self.process_single_processing_input(
                 object_key=object_key,
@@ -747,6 +731,7 @@ class PartitionIterator:
         iteration_partition: str,
         partition_id: int,
     ) -> None:
+        iteration_entry = self.iteration_catalog.setdefault(object_key, {})
         output_path = self.work_file_manager_iteration_files.generate_partition_path(
             object_name=object_key,
             partition_id=partition_id,
@@ -765,17 +750,13 @@ class PartitionIterator:
         count = file_utilities.count_objects(output_path)
 
         if count > 0:
-            print(f"{object_key} has {count} context features in {iteration_partition}")
-            self.input_catalog[object_key][self.INJECTABLE_INPUT_TAG_KEY] = output_path
+            iteration_entry[self.INPUT_TAG_KEY] = output_path
 
         else:
             self.update_empty_object_tag_with_dummy_file(
-                object_key=object_key, tag=self.INJECTABLE_INPUT_TAG_KEY
+                object_key=object_key, tag=self.INPUT_TAG_KEY
             )
-            print(
-                f"iteration partition {partition_id} has no context features for {object_key}"
-            )
-        self.input_catalog[object_key][self.COUNT] = count
+        iteration_entry[self.COUNT] = count
 
     def process_all_context_inputs(
         self,
@@ -783,12 +764,12 @@ class PartitionIterator:
         partition_id: int,
     ) -> None:
         for object_key, tag_dict in self.input_catalog.items():
-            if tag_dict.get(self.INPUT_TYPE_KEY) != core_config.InputType.CONTEXT.value:
-                continue
-            if self.RAW_INPUT_TAG not in tag_dict:
+            if not self._is_vector_of_type(
+                tag_dict=tag_dict, input_type=core_config.InputType.CONTEXT
+            ):
                 continue
 
-            input_path = tag_dict[self.RAW_INPUT_TAG]
+            input_path = tag_dict[self.INPUT_TAG_KEY]
             self.process_single_context_input(
                 object_key=object_key,
                 input_path=input_path,
@@ -935,27 +916,17 @@ class PartitionIterator:
     def resolve_inject_entry(
         self, inject: core_config.InjectIO, partition_id: int
     ) -> str:
-        if inject.tag == self.INJECTABLE_INPUT_TAG_KEY:
-            return self.input_catalog[inject.object][inject.tag]
+        if inject.tag == self.INPUT_TAG_KEY:
+            return self.iteration_catalog[inject.object][inject.tag]
 
-        path = self.construct_partition_path_for_object_tag(
-            object=inject.object,
+        path = self.work_file_manager_iteration_files.generate_partition_path(
+            object_name=inject.object,
             tag=inject.tag,
             partition_id=partition_id,
         )
-        self.input_catalog.setdefault(inject.object, {})[inject.tag] = path
+        self.iteration_catalog.setdefault(inject.object, {})[inject.tag] = path
 
         return path
-
-    def construct_partition_path_for_object_tag(self, object, tag, partition_id) -> str:
-        """
-        Construct a new path for a given alias and type specific to the current iteration.
-        """
-        return self.work_file_manager_iteration_files.generate_partition_path(
-            object_name=object,
-            tag=tag,
-            partition_id=partition_id,
-        )
 
     def execute_injected_methods(
         self, method_entries_config: core_config.MethodEntriesConfig
@@ -1055,8 +1026,13 @@ class PartitionIterator:
                     self.write_documentation(name="error_log", dict_data=self.error_log)
                     raise Exception(error_message)
 
-    def _append_tag_output_if_valid(
-        self, object_key: str, tag: str, final_output_path: str, partition_id: int
+    def _append_partition_selected_features(
+        self,
+        object_key: str,
+        tag: str,
+        iteration_path: Any,
+        final_output_path: str,
+        partition_id: int,
     ) -> None:
         """
         Checks whether the intermediate result for the given object and tag is valid,
@@ -1068,17 +1044,7 @@ class PartitionIterator:
             final_output_path (str): Destination output path.
             partition_id (int): Current partition identifier.
         """
-        input_tag_data = self.input_catalog.get(object_key, {})
-        input_feature_path = input_tag_data.get(tag)
-
-        if not input_feature_path:
-            return
-
-        if (
-            not arcpy.Exists(input_feature_path)
-            or int(arcpy.GetCount_management(input_feature_path).getOutput(0)) <= 0
-        ):
-            print(f"Skipping empty or missing path for {object_key}:{tag}")
+        if not file_utilities.feature_has_rows(input=iteration_path):
             return
 
         partition_selection_path = (
@@ -1086,30 +1052,35 @@ class PartitionIterator:
                 object_name=object_key,
                 tag=tag,
                 partition_id=partition_id,
-                suffix="partition_target_selection",
+                suffix="partition_final_output_append_selection",
             )
         )
 
-        custom_arcpy.select_attribute_and_make_permanent_feature(
-            input_layer=input_feature_path,
+        custom_arcpy.select_attribute_and_make_feature_layer(
+            input_layer=iteration_path,
             expression=f"{self.PARTITION_FIELD} = 1",
             output_name=partition_selection_path,
         )
 
-        if not arcpy.Exists(final_output_path):
-            arcpy.management.CopyFeatures(
-                in_features=partition_selection_path,
-                out_feature_class=final_output_path,
-            )
-            print(f"Created final output for {object_key}:{tag}")
-        else:
-            arcpy.management.Append(
-                inputs=partition_selection_path,
-                target=final_output_path,
-                schema_type="NO_TEST",
-            )
-            print(f"Appended to final output for {object_key}:{tag}")
-        self.work_file_manager_temp_files.delete_created_files()
+        try:
+            if not file_utilities.feature_has_rows(input=partition_selection_path):
+                return
+            if not arcpy.Exists(final_output_path):
+                arcpy.management.CopyFeatures(
+                    in_features=partition_selection_path,
+                    out_feature_class=final_output_path,
+                )
+                print(f"Created final output for {object_key}:{tag}")
+            else:
+                arcpy.management.Append(
+                    inputs=partition_selection_path,
+                    target=final_output_path,
+                    schema_type="NO_TEST",
+                )
+                print(f"Appended to final output for {object_key}:{tag}")
+
+        finally:
+            self.work_file_manager_temp_files.delete_created_files()
 
     def append_iteration_outputs_to_final(self, partition_id: int) -> None:
         """
@@ -1117,14 +1088,28 @@ class PartitionIterator:
 
         Skips any objects marked as dummy and ensures only non-empty, valid inputs are appended.
         """
-        for object_key, tag_dict in self.output_catalog.items():
-            if self.input_catalog.get(object_key, {}).get("dummy_used"):
+        for object_key, output_tag_dict in self.output_catalog.items():
+            if (
+                output_tag_dict.get(self.DATA_TYPE_KEY)
+                != core_config.DataType.VECTOR.value
+            ):
+                continue
+            iteration_entry = self.iteration_catalog.get(object_key)
+            if not iteration_entry:
                 continue
 
-            for tag, final_output_path in tag_dict.items():
-                self._append_tag_output_if_valid(
+            matching_tags = set(iteration_entry.keys()).intersection(
+                key for key in output_tag_dict.keys() if key != self.DATA_TYPE_KEY
+            )
+
+            for tag in matching_tags:
+                iteration_paths = iteration_entry.get(tag)
+                final_output_path = output_tag_dict[tag]
+
+                self._append_partition_selected_features(
                     object_key=object_key,
                     tag=tag,
+                    iteration_path=iteration_paths,
                     final_output_path=final_output_path,
                     partition_id=partition_id,
                 )
@@ -1165,16 +1150,14 @@ class PartitionIterator:
 
         self.update_max_partition_count()
 
-        self.reset_dummy_used()
-
         self.work_file_manager_iteration_files.delete_created_files()
 
         for partition_id in range(1, self.max_partition_count + 1):
             self.iteration_start_time = time.time()
+            self.iteration_catalog = {}
             print(
                 f"\nProcessing Partition: {partition_id} out of {self.max_partition_count}"
             )
-            self.reset_dummy_used()
 
             iteration_partition = (
                 self.work_file_manager_iteration_files.generate_partition_path(
@@ -1195,13 +1178,12 @@ class PartitionIterator:
                 self.process_all_context_inputs(
                     iteration_partition=iteration_partition, partition_id=partition_id
                 )
-                self.write_documentation(
-                    name=f"iteration_{partition_id}",
-                    dict_data=self.input_catalog,
-                )
 
                 self.execute_injected_methods_with_retry(partition_id)
-                self.ensure_dummy_flag_for_all_objects()
+                self.write_documentation(
+                    name=f"iteration_{partition_id}",
+                    dict_data=self.iteration_catalog,
+                )
                 self.append_iteration_outputs_to_final(partition_id=partition_id)
                 self.work_file_manager_iteration_files.delete_created_files()
             else:
@@ -1225,15 +1207,14 @@ class PartitionIterator:
 
         self.total_start_time = time.time()
 
-        self.write_documentation(name="post_init", dict_data=self.input_catalog)
-        self.write_documentation(name="output_dict", dict_data=self.output_catalog)
+        self.write_documentation(name="output_catalog", dict_data=self.output_catalog)
 
         print("\nStarting Data Preparation...")
         self.delete_final_outputs()
         self.prepare_input_data()
-        self.create_dummy_features(tag=self.RAW_INPUT_TAG)
+        self.create_dummy_features(tag=self.INPUT_TAG_KEY)
 
-        self.write_documentation(name="post_data_prep", dict_data=self.input_catalog)
+        self.write_documentation(name="input_catalog", dict_data=self.input_catalog)
         if self.run_partition_optimization:
             self._find_partition_size()
 
@@ -1247,7 +1228,6 @@ class PartitionIterator:
         print("\nStarting on Partition Iteration...")
         self.partition_iteration()
 
-        self.write_documentation(name="post_runtime", dict_data=self.input_catalog)
         self.cleanup_final_outputs()
         self.work_file_manager_persistent_files.delete_created_files()
         self.write_documentation(name="error_log", dict_data=self.error_log)

@@ -1,4 +1,4 @@
-from typing import Dict, Literal, List, Any
+from typing import Dict, Literal, List, Any, Optional
 import arcpy
 import os
 import json
@@ -246,13 +246,9 @@ def write_dict_to_json(path: str, dict_data: dict) -> None:
         json.dump(dict_data, f, indent=4)
 
 
-def configure_nested_dict(
-    input_dict,
-    outer_key,
-    inner_key,
-    value,
-) -> None:
-    """Configures a nested dictionary"""
-    if outer_key not in input_dict:
-        input_dict[outer_key] = {}
-    input_dict[outer_key][inner_key] = value
+def feature_has_rows(input: Optional[str]) -> bool:
+    if not input:
+        return False
+    if not arcpy.Exists(input):
+        return False
+    return count_objects(input_layer=input) > 0
