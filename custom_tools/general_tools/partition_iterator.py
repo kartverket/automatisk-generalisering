@@ -125,10 +125,9 @@ class PartitionIterator:
             The field representing the object ID used during partitioning. Default is "OBJECTID".
     """
 
-    # Class-level constants
     INPUT_TYPE_KEY = "input_type"
     DATA_TYPE_KEY = "data_type"
-    INPUT_TAG_KEY = "input"
+    INPUT_KEY = "input"
     DUMMY = "dummy"
     COUNT = "count"
     PARTITION_FIELD = "partition_selection_field"
@@ -148,7 +147,6 @@ class PartitionIterator:
             See class docstring.
         """
 
-        # Raw inputs and initial setup
         self.input_catalog: Dict[str, Dict[str, Any]] = {}
         self.output_catalog: Dict[str, Dict[str, Any]] = {}
         self.iteration_catalog: Dict[str, Dict[str, Any]] = {}
@@ -201,7 +199,6 @@ class PartitionIterator:
             partition_iterator_run_config.partition_method.value
         )
 
-        ##
         self.max_partition_count: int = 1
         self.final_partition_feature_count: int
         self.error_log = {}
@@ -273,7 +270,7 @@ class PartitionIterator:
             feature_count (int): The feature count used to limit partition size.
         """
         self.work_file_manager_partition_feature.delete_created_files()
-        VALID_TAGS = {self.INPUT_TAG_KEY}
+        VALID_TAGS = {self.INPUT_KEY}
 
         in_features = [
             path
@@ -390,7 +387,6 @@ class PartitionIterator:
             self._create_cartographic_partitions(element_limit=candidate)
             self.update_max_partition_count()
 
-            # Prevent retry loops on stable output
             if self.max_partition_count == previous_partitions:
                 candidate -= int(max_allowed * 0.01)
                 print(f"Stable partition count. Reducing candidate to {candidate}")
@@ -512,7 +508,7 @@ class PartitionIterator:
         return (
             tag_dict.get(self.INPUT_TYPE_KEY) == input_type.value
             and tag_dict.get(self.DATA_TYPE_KEY) == core_config.DataType.VECTOR.value
-            and self.INPUT_TAG_KEY in tag_dict
+            and self.INPUT_KEY in tag_dict
         )
 
     def _processing_items(self) -> Iterator[Tuple[str, str]]:
@@ -520,14 +516,27 @@ class PartitionIterator:
             if self._is_vector_of_type(
                 tag_dict=tag, input_type=core_config.InputType.PROCESSING
             ):
-                yield object_key, tag[self.INPUT_TAG_KEY]
+                yield object_key, tag[self.INPUT_KEY]
 
     def _context_items(self) -> Iterator[Tuple[str, str]]:
         for object_key, tag in self.input_catalog.items():
             if self._is_vector_of_type(
                 tag_dict=tag, input_type=core_config.InputType.CONTEXT
             ):
-                yield object_key, tag[self.INPUT_TAG_KEY]
+                yield object_key, tag[self.INPUT_KEY]
+
+    def _output_vector_items(self) -> Iterator[Tuple[str, str, str]]:
+        """
+        Yield (object_key, tag, final_output_path) for vector outputs only.
+        Mirrors _processing_items/_context_items for consistency.
+        """
+        for object_key, tag_dict in self.output_catalog.items():
+            if tag_dict.get(self.DATA_TYPE_KEY) != core_config.DataType.VECTOR.value:
+                continue
+            for tag, final_output_path in tag_dict.items():
+                if tag == self.DATA_TYPE_KEY:
+                    continue
+                yield object_key, tag, final_output_path
 
     def prepare_input_data(self):
         for object_key, input_path in self._processing_items():
@@ -537,7 +546,7 @@ class PartitionIterator:
             self._prepare_context_input(object_key=object_key, input_path=input_path)
 
     def _prepare_processing_input(self, object_key: str, input_path: str) -> None:
-        self.input_catalog[object_key][self.INPUT_TAG_KEY] = input_path
+        self.input_catalog[object_key][self.INPUT_KEY] = input_path
         self.input_catalog[object_key][self.COUNT] = file_utilities.count_objects(
             input_layer=input_path
         )
@@ -556,17 +565,13 @@ class PartitionIterator:
 
     def _prepare_context_input(self, object_key: str, input_path: str) -> None:
         if self.search_distance <= 0:
-            self.input_catalog[object_key][self.INPUT_TAG_KEY] = input_path
+            self.input_catalog[object_key][self.INPUT_KEY] = input_path
             self.input_catalog[object_key][self.COUNT] = file_utilities.count_objects(
                 input_layer=input_path
             )
             return
 
         processing_input_objects: List[Tuple[str, str]] = list(self._processing_items())
-
-        if not processing_input_objects:
-            self.input_catalog[object_key][self.INPUT_TAG_KEY] = input_path
-            return
 
         filtered_context_path = (
             self.work_file_manager_persistent_files.generate_partition_path(
@@ -596,7 +601,7 @@ class PartitionIterator:
             )
             self.work_file_manager_temp_files.delete_created_files()
 
-        self.input_catalog[object_key][self.INPUT_TAG_KEY] = filtered_context_path
+        self.input_catalog[object_key][self.INPUT_KEY] = filtered_context_path
         self.input_catalog[object_key][self.COUNT] = file_utilities.count_objects(
             input_layer=filtered_context_path
         )
@@ -640,7 +645,7 @@ class PartitionIterator:
         if center_count == 0:
             iteration_entry[self.COUNT] = center_count
             self.update_empty_object_tag_with_dummy_file(
-                object_key=object_key, tag=self.INPUT_TAG_KEY
+                object_key=object_key, tag=self.INPUT_KEY
             )
             return False
 
@@ -704,7 +709,7 @@ class PartitionIterator:
             if self.search_distance > 0
             else center_count
         )
-        iteration_entry[self.INPUT_TAG_KEY] = output_path
+        iteration_entry[self.INPUT_KEY] = output_path
         self.work_file_manager_temp_files.delete_created_files()
         return True
 
@@ -753,11 +758,11 @@ class PartitionIterator:
         count = file_utilities.count_objects(output_path)
 
         if count > 0:
-            iteration_entry[self.INPUT_TAG_KEY] = output_path
+            iteration_entry[self.INPUT_KEY] = output_path
 
         else:
             self.update_empty_object_tag_with_dummy_file(
-                object_key=object_key, tag=self.INPUT_TAG_KEY
+                object_key=object_key, tag=self.INPUT_KEY
             )
         iteration_entry[self.COUNT] = count
 
@@ -786,7 +791,7 @@ class PartitionIterator:
         Returns:
             str: Formatted time string.
         """
-        seconds = int(seconds)  # Convert to integer for rounding
+        seconds = int(seconds)
         hours, remainder = divmod(seconds, 3600)
         minutes, seconds = divmod(remainder, 60)
         return f"{hours} hours, {minutes} minutes, {seconds} seconds"
@@ -913,7 +918,7 @@ class PartitionIterator:
     def resolve_inject_entry(
         self, inject: core_config.InjectIO, partition_id: int
     ) -> str:
-        if inject.tag == self.INPUT_TAG_KEY and inject.object in self.input_catalog:
+        if inject.tag == self.INPUT_KEY and inject.object in self.input_catalog:
             return self.iteration_catalog[inject.object][inject.tag]
 
         path = self.work_file_manager_iteration_files.generate_partition_path(
@@ -1002,19 +1007,17 @@ class PartitionIterator:
                 self.execute_injected_methods(
                     method_entries_config=resolved_injection_method_configs
                 )
-                break  # If successful, exit the retry loop
+                break
             except Exception as e:
                 error_message = str(e)
                 print(f"Attempt {attempt + 1} failed with error: {error_message}")
 
-                # Initialize the log for this iteration if not already done
                 if object_id not in self.error_log:
                     self.error_log[object_id] = {
                         "Number of retries": 0,
                         "Error Messages": {},
                     }
 
-                # Update the log with the retry attempt and error message
                 self.error_log[object_id]["Number of retries"] += 1
                 self.error_log[object_id]["Error Messages"][attempt + 1] = error_message
 
@@ -1085,38 +1088,25 @@ class PartitionIterator:
 
         Skips any objects marked as dummy and ensures only non-empty, valid inputs are appended.
         """
-        for object_key, output_tag_dict in self.output_catalog.items():
-            if (
-                output_tag_dict.get(self.DATA_TYPE_KEY)
-                != core_config.DataType.VECTOR.value
-            ):
-                continue
+        for object_key, tag, final_output_path in self._output_vector_items():
             iteration_entry = self.iteration_catalog.get(object_key)
             if not iteration_entry:
                 continue
 
-            matching_tags = set(iteration_entry.keys()).intersection(
-                key for key in output_tag_dict.keys() if key != self.DATA_TYPE_KEY
+            iteration_paths = iteration_entry.get(tag)
+            self._append_partition_selected_features(
+                object_key=object_key,
+                tag=tag,
+                iteration_path=iteration_paths,
+                final_output_path=final_output_path,
+                partition_id=partition_id,
             )
-
-            for tag in matching_tags:
-                iteration_paths = iteration_entry.get(tag)
-                final_output_path = output_tag_dict[tag]
-
-                self._append_partition_selected_features(
-                    object_key=object_key,
-                    tag=tag,
-                    iteration_path=iteration_paths,
-                    final_output_path=final_output_path,
-                    partition_id=partition_id,
-                )
 
     def cleanup_final_outputs(self):
         """
         Cleanup function to delete unnecessary fields from final output feature classes.
         """
         fields_to_delete = [self.PARTITION_FIELD]
-        # delete fields moved to custom utils
 
         for object_key, tag_dict in self.output_catalog.items():
             for tag, final_output_path in tag_dict.items():
@@ -1211,7 +1201,7 @@ class PartitionIterator:
         print("\nStarting Data Preparation...")
         self.delete_final_outputs()
         self.prepare_input_data()
-        self.create_dummy_features(tag=self.INPUT_TAG_KEY)
+        self.create_dummy_features(tag=self.INPUT_KEY)
         self.write_documentation(name="input_catalog", dict_data=self.input_catalog)
 
         print("\nCreating Cartographic Partitions...")
