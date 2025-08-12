@@ -246,9 +246,9 @@ def write_dict_to_json(path: str, dict_data: dict) -> None:
         json.dump(dict_data, f, indent=4)
 
 
-def feature_has_rows(input: Optional[str]) -> bool:
-    if not input:
+def feature_has_rows(feature: Optional[str]) -> bool:
+    if not feature:
         return False
-    if not arcpy.Exists(input):
+    if not arcpy.Exists(feature):
         return False
-    return count_objects(input_layer=input) > 0
+    return count_objects(input_layer=feature) > 0
