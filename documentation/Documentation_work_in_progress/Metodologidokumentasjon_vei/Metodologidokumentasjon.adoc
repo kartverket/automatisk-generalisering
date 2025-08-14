@@ -9,40 +9,57 @@
 
 = Introduksjon
 
-Denne metodologidokumentasjonen beskriver prosessen og metodene som ble brukt for å utvikle en automatisk generaliseringsløype for veidata fra Nasjonal Vegdatabank (NVDB) til N100K, et kartdatasett tilpasset en målestokk på 1:100 000. Målet med prosjektet var å oppdatere eller skifte ut eksisterende modell med en modell som skulle gi et bedre kartografisk resultat enn forrige versjon lagd i 2018.
+Denne metodologidokumentasjonen beskriver prosessen og metodene som ble brukt for å utvikle en automatisk generaliseringsløype for vegdata fra Nasjonal Vegdatabank (NVDB) til N100K, et kartdatasett tilpasset en målestokk på 1:100 000. Målet med prosjektet var å oppdatere eller erstatte den eksisterende modellen med en ny modell som skulle gi et bedre kartografisk resultat enn den forrige versjonen fra 2018.
 
-I den første versjonen av N100K ble N50K benyttet som kilde for å forenkle harmoniseringen med de øvrige målestokkene. Dette valget ble gjort med tanke på at N50K skulle være den primære kilden der det var mulig. Imidlertid oppstod det utfordringer med å skille mellom viktige og mindre viktige veier, noe som er en grunnleggende forutsetning for automatisk generalisering. Resultatene fra N50K oppfylte ikke de ønskede kravene, og det ble derfor nødvendig å se etter andre kilder for å oppnå bedre resultater.
+I den første versjonen av N100K ble N50K benyttet som kilde for å forenkle harmoniseringen med de øvrige målestokkene. Dette valget ble tatt med tanke på at N50K skulle være den primære kilden der det var mulig. Imidlertid oppstod det utfordringer med å skille mellom viktige og mindre viktige veger, noe som er en grunnleggende forutsetning for automatisk generalisering. Resultatene fra N50K oppfylte ikke de ønskede kravene, og det ble derfor nødvendig å se etter andre kilder for å oppnå bedre resultater.
 
-I forbindelse med oppdateringen av modellen for 2024/2025 ble NVDB, sammen med N50K og Elveg, vurdert som potensielle kilder for generaliseringen av veiene til N100K. NVDB er et nasjonalt system i Norge for lagring, forvaltning og tilgjengeliggjøring av vegrelaterte data. Det inneholder svært detaljert informasjon om det norske veinettet og er et viktig verktøy for vei- og transportforvaltning i Norge. Ved å bruke NVDB som kilde, kunne vi dra nytte av dens detaljerte data og hierarkiske struktur for å utvikle en robust og nøyaktig generaliseringsmodell.
+I forbindelse med oppdateringen av modellen for 2024/2025 ble NVDB, sammen med N50K, vurdert som potensielle kilder for generaliseringen av veiene til N100K. NVDB er et nasjonalt system i Norge for lagring, forvaltning og tilgjengeliggjøring av vegrelaterte data. Det inneholder svært detaljert informasjon om det norske vegnettet og er et viktig verktøy for veg- og transportforvaltning i Norge. Ved å bruke NVDB som kilde, kunne vi dra nytte av dens detaljerte data og hierarkiske struktur for å utvikle en robust og nøyaktig generaliseringsmodell.
 
 Denne dokumentasjonen vil gå i detalj på de metodene og teknikkene som ble brukt, inkludert valg av kilder, hierarkisk strukturering, og oversettelse fra NVDB-språk til N100K. Videre vil vi diskutere de ulike verktøyene og parameterne som er vurdert og enten avvist eller tatt med i den ferdige modellen, samt tiltak for å sikre stabilitet og nøyaktighet.
 
 = Kilde
-I arbeidet med å utvikle en automatisk generaliseringsløype for veidata fra NVDB til N100K, vurderte vi flere potensielle kilder for generaliseringen. De viktigste kildene vi vurderte var N50K, NVDB og Elveg. Hver av disse kildene har sine fordeler og ulemper, og vi gjennomførte en grundig evaluering for å finne den mest egnede kilden for vårt formål.
+I arbeidet med å utvikle en automatisk generaliseringsløype for vegdata fra NVDB til N100K, vurderte vi flere potensielle kilder for generaliseringen. De viktigste kildene vi vurderte var N50K, og ulike uttrekk fra NVDB. Hver av disse kildene har sine fordeler og ulemper, og vi gjennomførte en grundig evaluering for å finne den mest egnede kilden for vårt formål.
 
-N50K ble opprinnelig brukt som kilde i den første versjonen av N100K. Dette valget ble gjort for å forenkle harmoniseringen med de øvrige målestokkene. Imidlertid oppstod det utfordringer med å skille mellom viktige og mindre viktige veier, noe som er en grunnleggende forutsetning for automatisk generalisering. Resultatene fra N50K oppfylte ikke de ønskede kravene, og det ble derfor nødvendig å se etter andre kilder.
+== N50K
+Som nevnt i innledningen har N50K for lite differensiering mellom viktige og mindre viktige veger, og er derfor ikke ønsket som kilde for de automatiske generaliseringsrutinene.
 
 == NVDB og Vegtrase
-Etter en grundig vurdering av NVDB og Elveg, valgte vi å bruke vegtrase fra NVDB som utgangspunkt for generaliseringen. Vegtrase representerer en konstruert senterlinje som den fysiske veien ikke nødvendigvis følger, spesielt ved fysisk adskilte kjørebaner. Dette valget ble gjort fordi vegtrase allerede er generalisert, noe som gjør generaliseringen lettere for oss. Det er viktig å merke seg at vegtrase eksisterer i NVDB og ikke i Elveg, og vi måtte derfor ta et uttrekk fra NVDB.
+Etter en grundig vurdering av ulike uttrekk/produkter fra NVDB, valgte vi å bruke vegtrase fra NVDB som utgangspunkt for generaliseringen. Vegtrase representerer en konstruert senterlinje som den fysiske veien ikke nødvendigvis følger, spesielt ved fysisk adskilte kjørebaner. Dette valget ble gjort fordi vegtrase allerede er forenklet og danner et fint grunnlag for videre generalisering til 1:100 000 målestokk. Det er viktig å merke seg at vegtrase eksisterer i NVDB og ikke i Elveg, og vi måtte derfor ta et eget uttrekk fra NVDB.
 
-Vi anser at vegtrase passer godt som utgangspunkt for generaliseringen, da det gir oss en nøyaktig og brukervennlig representasjon av veinettet, samtidig som det forenkler prosessen med å skille mellom viktige og mindre viktige veier.
+Vi anser at vegtrase passer godt som utgangspunkt for generaliseringen, da det gir oss en nøyaktig og brukervennlig representasjon av vegnettet, samtidig som det forenkler prosessen med å skille mellom viktige og mindre viktige veier.
 
 === Hierarki
-I arbeidet med å utvikle en automatisk generaliseringsløype for veidata fra NVDB til N100K, var det viktig å etablere et hierarki for veiene. Hierarkiet hjelper oss med å skille mellom viktige og mindre viktige veier, og sikrer at kartdataene gir en nøyaktig og brukervennlig representasjon av veinettet.
+I arbeidet med å utvikle en automatisk generaliseringsløype for vegdata fra NVDB til N100K, var det viktig å etablere et hierarki for vegene. Hierarkiet hjelper oss med å skille mellom viktige og mindre viktige veger, og sikrer at kartdataene gir en nøyaktig og brukervennlig representasjon av vegnettet.
 
 ==== Vurdering av Hierarkier
-Vi vurderte flere hierarkier for å finne den beste måten å skille mellom viktige og mindre viktige veier. De hierarkiene vi vurderte var vegkategori, funksjonellveiklasse og funksjonsklasse. Vegkategori, som egentlig beskriver hvem som eier veien, ble brukt i den første versjonen da vi hadde N50K som utgangspunkt. Imidlertid ga vegkategori spesielt i Oslo et dårlig skille mellom viktige og mindre viktige veier, og alt for mange veier ble beholdt under generaliseringen ved bruk av vegkategori.
+Vi vurderte flere hierarkier for å diffrensiere vegene. De hierarkiene vi vurderte var vegkategori, funksjonellvegklasse og funksjonsklasse.
 
-===== Funksjonellveiklasse
-Funksjonellveiklasse, som er basert på ruting, gir en verdi mellom 1 og 9 for hva som er viktige veier og mindre viktige veier. Spesielt i Oslo gir dette en god differensiering i veiviktighet. Viktigere kommunale veier skilles fra mindre viktige kommunale veier. Da Oslo er både en kommune og et fylke, og de aller fleste veiene er registrert som kommunale, er dette spesielt viktig.
+===== Vegkategori
+Vegkategori beskriver hvem som eier veien og ble brukt i den første versjonen da vi hadde N50K som utgangspunkt. Imidlertid ga vegkategori, spesielt i Oslo, et dårlig skille mellom viktige og mindre viktige veger, og alt for mange veger ble beholdt under generaliseringen.
+
+===== Funksjonellvegklasse
+FunksjonellVegklasse, som er basert på ruting, gir en verdi mellom 1 og 9 for å indikere viktigheten av vegene. Spesielt i Oslo gir dette en god differensiering i vegviktighet. Viktigere kommunale veger skilles fra mindre viktige kommunale veger. Da Oslo er både en kommune og et fylke, og de aller fleste vegene er registrert som kommunale, er dette spesielt viktig.
 
 ===== Funksjonsklasse
-Funksjonsklasse er et annet hierarki som også eksisterer i NVDB. Dette hierarkiet er primært brukt for å differensiere de viktigste veiene, som Europa- og riksveier. De aller fleste av disse veiene blir uansett tatt med i N100K, og vi ser derfor ikke nytten av å bruke dette hierarkiet. Det kan imidlertid være nyttig å se på en kombinasjon mellom funksjonellveiklasse og funksjonsklasse i fremtiden for å gi en enda bedre differensiering, spesielt hvis vi skulle bruke denne modellen til å generalisere videre til N250.
+Funksjonsklasse er et annet hierarki som også eksisterer i NVDB. Dette hierarkiet er primært brukt for å differensiere de viktigste veiene, som Europa- og riksveier. De aller fleste av disse veiene blir uansett tatt med i N100K, og vi ser derfor ikke nytten av å bruke dette hierarkiet. Det kan imidlertid være nyttig å se på en kombinasjon mellom FunksjonellVegklasse og funksjonsklasse i fremtiden for å gi en enda bedre differensiering, spesielt hvis vi skulle bruke denne modellen til å generalisere videre til N250K.
 
 ===== Viktigheten av Hierarki for ESRI-verktøy
-Det er flere verktøy fra ESRI som krever hierarki for å gjøre en utvelgelse. Derfor er det viktig at hierarkiet er differensiert, selv om det kan være noen ulemper. Et godt differensiert hierarki sikrer at verktøyene kan utføre nøyaktige analyser og utvelgelser, noe som er avgjørende for å oppnå et godt kartografisk resultat.
+Flere verktøy fra ESRI krever et nyansert hierarki for å kunne utføre nøyaktige utvelgelser. Derfor er det viktig at hierarkiet er godt strukturert, selv om det kan medføre noen ulemper. Et godt strukturert hierarki sikrer at verktøyene kan utføre presise analyser og utvelgelser, noe som er avgjørende for å oppnå et optimalt kartografisk resultat.
 
-Det er imdtlertidig slik at verktøyene fungerer best med maksimalt 5 hierarkiverdier(Se dokumentasjon ESRI) og vi måtte gjøre en vurdering for å opptimalisere grupperingen av verdiene. Siden vi ønsker å beholde de viktigste veiene i N100K og at de i utgangspunktet ikke ligger så nærme hverandre, har vi samlet alle de viktigste veiene i samme hierarki. Vi har testet ulike varianter av gruppering av funksjonellveiklasse og det gir litt ulikt resultat om man er i urbane strøk eller ikke. Etter mye testing har vi falt på at det som gir best reultat i Oslo er det vi bruker, siden hierarkiet har mer å si for områder der veinettet er tett og mange veier må vike for å tilpasses målestokken. Derfor er det viktig å skille mellom funksjonellveiklasse 5 og 6, som skiller ringveiene fra de resterende kommunale veiene i Oslo.
+Det er imdtlertidig slik at verktøyene fungerer best med maksimalt 5 hierarkiverdier (Se dokumentasjon ESRI) og vi måtte gjøre en vurdering for å optimalisere grupperingen av verdiene. Siden vi ønsker å beholde de viktigste vegene i N100K og at de i utgangspunktet ikke lager for tett vegnett, har vi samlet alle de viktigste vegene i samme hierarkinivå.
+
+Vi har testet ulike varianter av gruppering av funksjonellveiklasse. Kvaliteten på resultatet avhenger av om det er i urbant eller ikke urbant område. Etter mye testing har vi falt på at det som gir best reultat i Oslo, er det vi bruker. Begrunnelsen for valget er at hierarkiet har mer å si for urbane områder der flere veger må fjernes. Spesielt for Oslo er at det er viktig å skille mellom funksjonellvegklasse 5 og 6, som skiller ringvegene fra de resterende kommunale vegene i Oslo.
+
+Flere av ESRI-verktøyene forutsetter et nyansert og gjennomtenkt hierarki for å kunne utføre nøyaktige utvelgelser. Derfor er det avgjørende at hierarkiet er godt strukturert, selv om dette kan medføre enkelte kompromisser. Et solid hierarki legger til rette for presise analyser og utvelgelser, noe som er essensielt for å oppnå et optimalt kartografisk resultat.
+
+Begrensninger og tilpasninger
+Ifølge ESRI-dokumentasjonen fungerer verktøyene best med maksimalt fem hierarkiverdier. Dette har krevd en nøye vurdering av hvordan verdiene skal grupperes for å oppnå best mulig funksjonalitet. Ettersom vi ønsker å beholde de viktigste vegene i N100K og disse vanligvis ikke bidrar til et for tett vegnett, har vi valgt å samle dem i samme hierarkinivå.
+
+Testing og valg av gruppering
+Vi har testet flere varianter av gruppering basert på funksjonell vegklasse, og resultatene viser at kvaliteten varierer avhengig av om området er urbant eller ikke. Etter omfattende testing har vi valgt den løsningen som gir best resultat i Oslo. Valget er begrunnet med at hierarkiet har størst betydning i urbane områder, der flere veger må filtreres bort for å oppnå ønsket kartografisk uttrykk.
+
+Spesielt for Oslo
+I Oslo er det særlig viktig å skille mellom funksjonell vegklasse 5 og 6. Dette skillet er avgjørende for å kunne skille ringvegene fra øvrige kommunale veger, og bidrar til en mer presis og meningsfull kartfremstilling.
 
 
 [cols="1,7,1"]
@@ -61,9 +78,12 @@ Det er imdtlertidig slik at verktøyene fungerer best med maksimalt 5 hierarkive
 | 9 | De minst viktige vegene i et vegnettverk, f.eks. veger det ikke er anbefalt å kjøre på, men mulig å kjøre på. | 5
 |===
 
-Det har også vist seg at vi må bruke "Thin Road network" i flere omganger for å få stabilitet, men også for å kunne bruke hierarkiet på en mer effektiv måte. Det er mange veier med ulik hierarki og reduksjonen fra 10 - 5 klasser, gjør at stier ikke blir differensiert og blir noe tett for 1:100 000. Derfor etter flere omganger med "Thin road network" med samme hierarki, blir det til slutt kjørt en "thin road network" kun for stiene, der alle kjørbare veier er låst. Dette fører til at vi også får generalisert stinettverket. Vi har prøvd å generalisere stinetverket først og så låst stiene for generalisering av veier i etter kant, men dette førte til at noen privatveier ble borte men stiene ble beholdt. Når vi generaliserer veinettet blir stiene aldri låst, men ved grundig generalisering av stiene låser vi veiene slik at stiene aldri trumfer en kjørbar vei. 
+For å oppnå stabilitet og effektiv utnyttelse av hierarkiet, har det vist seg nødvendig å kjøre "Thin Road Network"-prosessen i flere omganger. Reduksjonen fra ti til fem hierarkiklasser medfører at stier ikke differensieres tilstrekkelig, noe som gir et for tett nettverk ved målestokk 1:100 000.
 
-Det kan diskuteres om man bør skille kjørbar vei-generaliseringen med stigeneraliseringen, men da mister vi nettverket og overgang fra vei til sti.
+Etter gjentatte kjøringer med samme hierarki, gjennomføres en egen "Thin Road Network"-prosess for stier, der alle kjørbare veger er låst. Dette sikrer en generalisering av stinettverket uten at stiene påvirker vegene. Alternativet – å generalisere stiene først og deretter låse dem – resulterte i at enkelte privatveger ble fjernet, mens stiene ble beholdt. Ved generalisering av vegnettet forblir stiene ulåst, men ved målrettet generalisering av stier låses vegene, slik at stier aldri overstyrer kjørbare veger.
+
+Det kan vurderes å skille generaliseringen av kjørbare veger og stier, men dette vil bryte nettverket og svekke overgangen mellom veg og sti.
+
 
 [cols="4,1"]
 |===
@@ -78,19 +98,20 @@ Det kan diskuteres om man bør skille kjørbar vei-generaliseringen med stigener
 
 |===
 
-=== N50K Stier
+=== N50K VegSti
 
-Hovedkilden er NVDB. Det er imidlertid slik at stier idag ikke er fullstedig i NVDB. Det gjøres en jobb for å få datasettet oppdatert og planen er at stinettet, samt barmarksløyper og traktorvei skal ligge og ajourføres i NVDB i framtiden. I dag derimot bruker vi N50K som kilde for sti, traktorvei og barmarksløyper og legger det sammen med kjørbareveier fra NVDB før vi starter generaliseringsrutinene. 
+Hoveddatakilden for vegnettverket er NVDB. Per i dag er imidlertid dekningen av stier i NVDB ufullstendig. Det pågår et arbeid for å forbedre datagrunnlaget, med mål om at stinett, barmarksløyper og traktorveger skal inngå og ajourføres i NVDB fremover. Inntil dette er på plass, benyttes N50K som supplerende kilde for stier, traktorveger, barmarksløyper og gang- og sykkelveger. Disse datasettene kombineres med kjørbare veger fra NVDB før generaliseringsprosessene igangsettes.
+
 
 == Tilpassninger
 For å få det datasettet vi ønsker må vi hente og sette sammen flere datasett, objekter og verdier. Dette gjøres i en FME-Løype. 
 
 === NVDB
-I førsteomgang har vi fått en tilpasset leveranse fra grunndata med utdrag av NVDB, men vil etter vært koble oss på API for å få fortløpende oppdateringer. Dette utdraget av NVDB inneholder følgene geometrier:
+I førsteomgang har vi fått en tilpasset leveranse fra grunndata med utdrag av NVDB, men vil etter vært koble oss på API for å få fortløpende oppdateringer. Dette utdraget av NVDB inneholder følgene objekter med egne geometrier:
 
 - FunksjonellVegklasse
 - Motorveg
-- vegsenterlinje med følgende egenskaper:
+- Veglenke/Vegsenterlinje med følgende egenskaper:
 
    Typeveg = enkelBilveg, rundkjøringer og kanaliserteVeg
    Detaljnivå = vegtrase
@@ -100,17 +121,22 @@ Som en del av krevspesifikasjonen så kreves subtypekode som en egenskap i resul
 === N50K
 Vi henter ut alle ikke kjørbare veier fra N50K, siden N50K er den mest oppdaterte kilden til dette formålet.
 
-- vegsenterlinje med følgene egenskaper:
+- Vi henter ut alle veger/sti som ikke bilveg er med følgene egenskaper:
 
-   OBJTYPE = Sti, Traktorveg, Barmarksløyper og GangogSykkelveg
+OBJTYPE = Sti, Traktorveg, Barmarksløyper og GangogSykkelveg
    
-Deretter kombineres funksjonellvegklasse og motorvegtype. Alle Europa- og Riksveier som ikke overlapper med Motorveg fra NVDB får MOTORVEGTYPE = ikke motorveg slik som kravspesifikasjonen krever.
+Deretter får veglenke nye egenskaper overført fra objektene funksjonellvegklasse og motorvegtype. Alle Europa- og Riksveier som ikke overlapper med Motorveg fra NVDB får MOTORVEGTYPE = ikke motorveg slik som kravspesifikasjonen krever. 
+
+Merk: Inntil videre må klassifisering av motorveg oppdateres manuelt, ettersom definisjonen i kartproduktene ikke er i samsvar med motorvegklassifiseringen i NVDB
 
 = Smidig tilnærming eller stabil leveranse
-Opprinnelig var målet vårt å levere en versjon så snart vi hadde oppfylt de primære kravene for N100K vei. Dette fordi N100K vei ikke har blitt oppdatert på to år, og den forrige versjonen ikke fungerer med nyere versjoner av ArcGIS Pro. Det har imidlertid vist seg at alle mottakerne våre foretrekker en stabil leveranse, der utvelgelsen av veier ikke endrer seg vesentlig fra første til andre versjon. Etter å ha klargjort dette leveransekravet, har vi gjort en grundig testing for å finne en løsning som gir konsistente resultater.
+Opprinnelig var målet vårt å levere en versjon så snart vi hadde oppfylt de primære kravene for N100K veg. Dette fordi N100K veg ikke har blitt oppdatert på to år, og den forrige versjonen ikke fungerer med nyere versjoner av ArcGIS Pro. Det har imidlertid vist seg at alle mottakerne våre foretrekker en stabil leveranse, der utvelgelsen av veger ikke endrer seg vesentlig fra første til andre versjon. Etter å ha klargjort dette leveransekravet, har vi gjort en grundig testing for å finne en løsning som gir konsistente resultater.
 
 === ESRI-Verktøy
-Basert på dokumentasjonen for ESRI-verktøyene har vi en klar forståelse av hva vi forventer av resultatene. Imidlertid fungerer de kartografiske ESRI-algoritmene som svarte bokser, og vi opplever at de ikke gir konsistente resultater. Dette er bekymringsfullt og utfordrende. Vi har vært i kontakt med ESRI sentralt, og de har forklart at algoritmene kan feile i de kartografiske verktøyene fra ESRI, uten å gi feilmelding. De har anbefalt oss å bruke små partisjoner, for å unngå denne problematikken. På bakgrunn av dette har vi prøvd å optimalisere modellen for å oppnå så konsistente resultater som mulig. I kravspesifikasjonen har vi angitt at ved to kjøringer med samme kildegrunnlag må minst 95 % av resultatene være geometrisk like.
+Basert på dokumentasjonen for ESRI-verktøyene har vi en tydelig forventning til resultatene. I praksis viser det seg imidlertid at de kartografiske algoritmene fungerer som «svarte bokser» og gir varierende resultater uten konsistens. Dette skaper både faglige utfordringer og bekymring.
+Dialog med ESRI sentralt har avdekket at algoritmene i enkelte tilfeller kan feile uten å generere feilmeldinger. For å redusere risikoen for slike feil, anbefales det å benytte små partisjoner. På bakgrunn av dette har vi optimalisert modellen med mål om å oppnå størst mulig konsistens i resultatene.
+I kravspesifikasjonen er det definert at ved to kjøringer med identisk kildegrunnlag skal minimum 95 % av resultatene være geometrisk like.
+
 
 === Optimalisering 
 For å optimalisere stabiliteten til modellen har vi gjennomført grundige undersøkelser av følgende parametere:
@@ -121,24 +147,50 @@ For å optimalisere stabiliteten til modellen har vi gjennomført grundige under
 - Flere kjøringer av ikke-deterministiske verktøy fra ESRI
 
 ==== Fremgangsmåte
-Etter kontakt med ESRI-sentralt ble det klart at vi må gå for små partisjoner med færre objekter enn det som faktisk er oppgitt i dokumentasjonen til verktøyet. Etter litt testing er det klart at det er flere parametere som spiller en rolle for hvor stabil modellen kan bli. Vi har prøvd å avgrense de ulike parameterne for så å teste hver for seg. Det er imidlertidig slik at alle må være til stede i en hvis grad for å få ett konsistent resultat
+Etter dialog med ESRI sentralt har det blitt tydelig at verktøyet krever mindre partisjoner med færre objekter enn det som fremgår av den offisielle dokumentasjonen. Gjennom omfattende testing har vi identifisert flere parametere som påvirker modellens stabilitet. Disse er testet individuelt, men det er nødvendig at alle inngår i en balansert kombinasjon for å oppnå konsistente resultater.
 
-- Det aller viktigste er å kjøre det "thin road network" verktøyet flere ganger. Hvorfor dette er nødvendig er vanskelig å svare på siden vi ikke har fullstendig oversikt over hva verktøyet faktisk gjør, siden dette ikke er dokumentert fra ESRI sin side. Det som imidlertid er dokumentert er at verktøyet "Thin road network" bør kjøres opp til flere ganger for å nærme seg ett ønsket deterministisk modell. Vi har prøvd å kjøre "thin road network" opp til 7 ganger. Kjører vi imidlertid "thin road network" kun en gang, vil uansett partisjon eller størrelse på bøffer ikke gi oss konsistent resultat.
+- Iterativ kjøring av "Thin Road Network
+Den mest kritiske faktoren er gjentatt kjøring av verktøyet "Thin Road Network". Selv om dette ikke er dokumentert av ESRI, viser erfaring at flere iterasjoner er nødvendig for å nærme seg en deterministisk modell. Vi har testet opptil syv kjøringer. Ved kun én kjøring oppnås ikke konsistens, uavhengig av partisjon eller bufferstørrelse. Prosessen avsluttes når antall vegsegmenter forblir uendret mellom to påfølgende iterasjoner.
 
-- Hvor mange veier eller vertices som kan prossesseres samtidig er ikke dokumentert, men med litt testing ser det ut til å være mellom ca. 6000 til 10 000 veier. Dette gjelder da både de som skal bli med videre og de veiene som er tatt med som kontekst for å gjøre generalisreen så lik som mulig. Det er her buffer avstanden kommer inn. Hadde vi ikke tatt med en buffer ville det alltid bli forskjellig generalisering i utkanten av partisjonen fordi de ville blitt behandlet som endelinjer og ikke en del av nettverket. Spørsmålet da er hvor stor bufferen må være for at veiene i partisjonen alltid vil bli behandlet likt. For å teste dette ble flere partisjoner kjørt flere ganger, da med mange omganger av "thin road network" som vi vet må til for å få ett konsist resultat. Ved en partisjon + buffer på ca. 8000 linjer, der buffern er 3000 m, ble resultatet helt likt ved flere kjøringer etter hverandre. En test vi kjørte med mindre buffer på 1500 m ble resultatet noe ulikt, men fortsatt under 5% endring.
+
+- Partisjonsstørrelse og prosesseringskapasite
+Det foreligger ingen offisiell dokumentasjon som angir hvor mange vegsegmenter eller vertices som kan prosesseres samtidig. Basert på omfattende testing er det imidlertid indikasjoner på at systemet håndterer opptil rundt 100 000 vegsegmenter før ytelsen blir upålitelig.
+
+I den innledende fasen ble det valgt å prosessere et begrenset antall vegsegmenter for å sikre et konsistent og pålitelig resultat. Etter overgang til en iterativ kjørestrategi for "Thin Road Network"-prosessen, ble det mulig å håndtere et større datavolum uten å kompromittere stabiliteten. En kjent utfordring med "Thin Road Network" er at prosessen kan avsluttes uventet uten feilmelding, særlig når antallet vegsegmenter overstiger en viss grense. Dette gjør det krevende å identifisere feilårsaker og stille presise krav til datamengde.
+
+For å oppnå en konsistent generalisering er det avgjørende å inkludere tilstrekkelig kontekst rundt de vegsegmentene som skal videreføres. Dette omfatter både segmenter som inngår i den endelige modellen og tilstøtende veger som bidrar til å bevare strukturelle og geografiske sammenhenger. Bufferavstanden benyttes her som et verktøy for å definere hvor mye kontekst som skal inkluderes i hver iterasjon. Partisjonsmodellen er konstruert med klare begrensninger, slik at den totale mengden data – både for kontekst og for veggeneralisering – aldri overskrider den fastsatte maksimalverdien. Dette sikrer at prosesseringen holder seg innenfor systemets kapasitetsgrenser og bidrar til en robust og skalerbar arbeidsflyt
+
+
+- Bufferens betydning
+Uten buffer behandles vegsegmenter i ytterkantene av en partisjon som endelinjer, noe som gir inkonsistent generalisering. For at output skal representere kjernen i et større sammenhengende vegnett, må vegene prosesseres med tilstrekkelig kontekst. Testing med bufferstørrelser fra 1 000 til 5 000 meter viste at en buffer på 5 000 meter gir mest stabile og gjentakbare resultater, spesielt ved iterativ kjøring.
 
 ==== Ettertanke
-Etter optimaliseringen ble det en diskursjon om vi trenger faste partisjoner eller ikke. Modellen er satt opp slik at partisjonene blir beregnet ut i fra antall veier i kilden og er derfor i utgangspunktet ikke fast. Er det ingen endring vil heller ikke partisjonen endre seg, men når det er endringer vil partisjonene tilpasse seg endringene. Etter mange tester ser vi at en fast partisjon vil gi ett mer konsistent resultat, selv om det er vanskelig å si i hvor stor grad. Grunnlaget for diskursjonen er allikevel at så lenge kilden endrer seg så endrer også premisset for selve generaliseringen. Velger vi å ha faste partisjoner vil vi ikke ha kontroll om maksimal antall veier i partisjonene. Ut i fra denne diskursjonen ble det bestemt at vi prøver å optimalisere antall linjer/verier og buffer avstand i tillegg til antall omganger "thin road network". En test for ulik partisjoner vil bli tatt etter at alle de andre forholdene er optimalisert.
+Etter optimaliseringen oppstod en faglig diskusjon om behovet for faste partisjoner. Modellen er i utgangspunktet dynamisk og beregner partisjoner basert på antall vegsegmenter i datakilden. Dersom kilden forblir uendret, vil også partisjonene være stabile. Ved endringer i datagrunnlaget tilpasses partisjonene automatisk.
+Gjennom omfattende testing har vi observert at faste partisjoner kan gi mer konsistente resultater, selv om det er utfordrende å kvantifisere effekten. Diskusjonen dreier seg i hovedsak om at endringer i kilden også endrer forutsetningene for generaliseringen. Ved bruk av faste partisjoner mister vi kontroll over maksimalmengden vegsegmenter per partisjon, noe som kan påvirke modellens stabilitet.
+På bakgrunn av dette er det besluttet å fokusere på optimalisering av tre sentrale parametere: antall linjer/vertices per partisjon, bufferavstand, og antall iterasjoner med "Thin Road Network".
+
 
 
 = Oppbyggning av modell
 
-Målet for N100K veier er å vise veinettet og de viktige gjennomgående veiene. Det er fokus på at de viktigste veiene som motorveger, europaveier, riksveier skal med, men at kommunale og private er med for å gi inntrykk av tetthet i veinettverket.
+Målet for N100K veger er å vise vegnettet og de viktige gjennomgående vegene. Det er fokus på at de viktigste vegene som motorveger, europaveier, riksveier skal med, men at kommunale og private er med for å gi inntrykk av tetthet i vegnettverket.
 
 I sammenligning med N50K må kryss og på- og avkjøringsramper forenkles, rundkjøringer enten forstørres eller fjernes, og den generelle tettheten av veier må reduseres.
 
 == Forenklet forklaring på modellen
-Selve scriptet dokumenterer i detalj oppbygningen av modellen, men for ikke programmeringsdyktige kommer en forklaring på modellen under
+Selve scriptet dokumenterer i detalj oppbygningen av modellen, men for ikke programmeringsdyktige kommer en forklaring på modellen under. Se til GitHub for åpen kildekode for alle detaljer: https://github.com/kartverket/automatisk-generalisering
+
+=== Datatilpasning
+Vi benytter to kilder som hentes og tilpasses for videre bruk i automatisk generalisering. Disse kildene inkluderer veinettet fra NVDB, som for øyeblikket leveres som en spesialleveranse fra grunndata, og N50K VegSti. Tilpasningen av disse dataene utføres ikke ved dokumentert kode i GitHub, men vil bli lagt til der i ettertid.
+
+
+I dag brukes FME-løype (ansvarlig for modell, Virginia Antonijeciv)
+
+image::bilder/sositofgdb.png[]
+
+
+==== Beskrivelse av datatilpasningen
+Første del innebærer en prosess hvor .zip-filer med kommunevis sosi-filer eksporteres fra Grunndata. Disse filene inneholder elvegdata på alle nivåer, inkludert vegtrase. Deretter pakkes filene ut til fylkesvise mapper, med en sos-fil for hver kommune. Videre konverteres sosi-filer til fgdb-format og kombineres med objekter fra Kartdata, og skaper en fgdb for hvert fylke med funksjonell vegklasse, motorveg og "elveg og sti". Fra elveg inkluderes kun kjørbare veger, ikke vegtyper som fortau og trapp, mens Kartdata bidrar med alt unntatt bilveger, som sti, traktorveg, barmarksløype og gang- og sykkelveg. Deretter settes hele landet sammen der egenskaper fra funksjonellvegklasse og motorvegtype overføres til veglenke/vegsenterlinje, og skriver til fgdb som er input til AG. Til slutt utføres en geometrisjekk hvor veglinjen dissolves på tvers av egenskapene og lager kryss etter medium på nytt. Noen egenskaper blir tilpasset for videre bruk.
 
 === Data tilpasning
 Vi benytter to kilder som hentes og tilpasses for videre bruk i automatisk generalisering. Disse kildene inkluderer veinettet fra NVDB, som for øyeblikket leveres som en spesialleveranse fra grunndata, og N50K Sti og traktorveg. Tilpasningen av disse dataene utføres ikke ved dokumentert kode i GitHub, men vil bli lagt til der i ettertid.
@@ -150,17 +202,23 @@ image::bilder\sositofgdb.png[align="center", alt = Dokumentasjon N100_Vei_FME]
 ==== Beskrivelse av data tilpasningen
 Første del innebærer en prosess hvor .zip-filer med kommunevis sosi-filer eksporteres fra Grunndata. Disse filene inneholder elvegdata på alle nivåer, inkludert vegtrase. Deretter pakkes filene ut til fylkesvise mapper, med en sos-fil for hver kommune. Videre konverteres sosi-filer til fgdb-format og kombineres med objekter fra Kartdata, og skaper en fgdb for hvert fylke med funksjonell vegklasse, motorveg og "elveg og sti". Fra elveg inkluderes kun kjørbare veger, ikke vegtyper som fortau og trapp, mens Kartdata bidrar med alt unntatt bilveger, som sti, traktorveg, barmarksløype og gang- og sykkelveg. Deretter settes hele landet sammen og kombinerer funksjonell vegklasse og motorvegtype, og skriver til fgdb som er input til AG. Til slutt utføres en geometrisjekk hvor veglinjen dissolveres på tvers av egenskapene og lager kryss etter medium på nytt. Noen egenskaper blir tilpasset for videre bruk.
 
+
 Under er det et bilde av egenskapene til FGDBen "elveg_and_sti" som er utgangspunktet for den automatiske generaliseringsmodellen.
 
 image::bilder\utgangspunkt_fgdb.png[align="center", alt = Utgansgspunkt for videre generalisering]
 
 ==== Generalisering
 
+
+Valg av rekkefølge og bruk av ulike generaliseringsverktøy er basert på ESRI-anbefalinger for veg-generalisering og ved gjentatte tester. Dette er den overordent modellen for Veg-generalisering for N100K.
+
 Valg av rekkefølge og bruk av ulike generaliseringsverktøy er basert på ESRI-anbefalinger for veg-generalisering og ved gjentatte tester. Dette er den overordent modellen for Vei-generalisering for N100K.
+
 
 [cols="2,4"]
 |===
 | Verktøy | Hvorfor
+
 
 | Multipart to singelpart | For å få den rette oppdelingen av vegsegmenter.
 | Hierarki | For differansiering mellom viktighet av vei, må vi definere ett hierarki. For kjørbare veier blir hierarkiet bygd fra Funksjonellveiklasse, beskrevet tidligere i dokumentet. Siden Funksjonellveiklasse kun er for veier fra NVDB, brukes veikategori for å sette opp hierakriet for alt untatt bilveger.
@@ -178,9 +236,18 @@ En omgang = +
 4) Feature to Line ( + delete fields) +
 5) Append + 
 6) Thin! +
-| Thin Road network: Sti| Beholder stimønsteret men fjerner detaljene. Til slutt kjøres en tynning av stiene.
-| Smooth Line | For å gjøre vegsegmentene mer naturlige og mindre hakkete
-| Resolve Road Conflict | For å flytte vei vekk fra andre linjer med betydning som f.eks vannkontur eller jernbanelinje.
+
+
+Selv om vi er fornøyd med resultatet er det fortsatt "små trekanter" som burde vært erstattet med enkle kryss. Dette er ikke løst i første versjon, men vi må jobbe med å lage en ekstra løsning for akkurat dette problemet. 
+
+
+| Thin Road network: Sti| Beholder stimønsteret men fjerner detaljene. 
+| Merge Divided Roads| Siden vi bruker Vegtrase som input geometri er mange av veiene allerede en trase. For å ikke slå sammen for mange veier må man angi egenskaper som må være like for at to veier/kjørebaner kan legges sammen til en veg. Det ble testet flere egenskaper, blant annet medium, men dette ble ikke valgt fordi det ble forlite differansiering og litt for mye av det som ikke skulle legges sammen til en veg, ble satt sammen til en veg. Den egenskapen vi falt på var Vegnummer. Det generaliserer i riktig grad i henhold til ønsket resultat, men når vi valgte vegnummer ble det klart at vi måtte kjøre "thin Road Network" før "Merge Divided Roads", for å slippe merging av "ikke" parallelle privat-/kommunalveger der veg-nummereringen kan gå i loop.
+
+image::bilder\MergeDividedRoads.png[align="center", alt = Utgansgspunkt for videre generalisering]
+
+| Smooth Line | For å gjøre vegsegmentene mer naturlige og mindre hakkete.
+| Resolve Road Conflict | For å flytte veg vekk fra andre linjer med betydning som f.eks vannkontur eller jernbanelinje.
 | Dissolve | For å forenkle vegnettet før leveranse
 |===
 

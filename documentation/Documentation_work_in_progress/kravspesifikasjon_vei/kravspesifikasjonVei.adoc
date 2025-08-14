@@ -43,3 +43,16 @@ include::stabilitet.adoc[]
 include::antall.adoc[]
 
 include::maalestokk.adoc[]
+
+== Tilbakemeldinger versjon 1
+Det vil ettervært komme inn flere ønsker om endringer
+
+[cols="3,2"]
+|===
+| Tilbakemelding | Krav
+
+| Det har blitt observert viktige avkjøringer fra store veier som er borte. | Dette bør bli ett krav, men hva som gjør en avkjøring viktig må defineres.
+| Gårdssymbol uten tilknyttning til vei | Det må avklares om dette er viktig eller ok for denne målestokken.
+| Stier og traktorveger er noe problematisk utvelgelse | Dette skal vurderes.
+| Revurdere fjerning av Bruer og tunnelser | Dette skal vurderes.
+|===
