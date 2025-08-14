@@ -1,0 +1,76 @@
+= Kravspesifikasjon: N250 - VEG
+
+== Innledning
+Kravspesifikasjonen skal definere kriteriene for N250-veg på en måte som er tilpasset automatisk generalisering. Dagens kriterier, slik de er beskrevet i arbeidsbeskrivelsen og produktspesifikasjonen, er utviklet for manuell generalisering og er ofte ikke direkte anvendbare i automatiserte prosesser. 
+
+== Modellspesifikt
+Modellspesifikt er egenskapene som skal være med for å dekke hva som skal leveres i henhold til produktspesifikasjonen, men også interne krav til egenskaper knyttet til symbologi. Verdiene som skal med i generaliseringen er under: Tabell  1: Egenskaper.
+
+:table-caption: Tabell
+:table-caption!:
+
+[cols="1,3,1", width="100%",options="header",title="Tabell 1: Egenskaper"]
+|====================
+|Navn  |Godkjente verdier  |  Påkrevd 
+|objtype|Vegsenterlinje, Barmarksløype, Sti, Traktorveg|ja 
+|vegkategori |E, F, K, P, R, Udefinert|Ja, (Udefinert)
+|vegstatus | __*A* (anlegg)__, *P* (planlagt), *V* (eksisterendeVeg), Udenfinert|Ja, (Udefinert)
+|vegnummer  |nummer, (-9999) Udefinert |Ja, (-9999) Udefinert))  
+|motorvegtype|Ikke motorveg, motortrafikkveg, motorveg, Udefinert|Ja, (Udefinert)  
+|rutemerkering|Ja, Nei, Udefinert|Ja, (Udefinert)
+|vedlikeh|Andre, DNT eller ukjent|Ja, (Udefinert)
+|medium| *B* (I bygning), *L* (I luft), *T* (På terrenget), *U* (Under terrenget)|Ja, (Udefinert)
+|oppdateringsdato||ja
+|målemetode|gen|ja
+|nøyaktighet|5000|ja
+|====================
+
+== Kartografisk 
+For å få et resultat vi ønsker må en del kriterier og ønsker om hvordan det skal se ut oversettes til parametere. I utgangspunktet ønsker vi å etterligne det kartografen har gjort manuelt, men det er ikke lett å oversette erfaringbasert og beskrivende arbeidsbeskrivelser (som ta med de viktigste veiene). Dette er første forsøk på å fastsette dette før oppstart.
+
+=== Generalisering basert på Vegkategori
+
+===== Alt som skal med og skal ikke forsvinne under generaliseringen:
+
+- Europaveger
+- Riksveger
+
+===== Skal ha med de fleste vegene men må generaliseres i noen grad
+
+- Fylkesveg: I egenskapen Funksjonellveiklasse er viktige fylkesveier angitt med verdi 5, alle disse skal med. Fylkesveier med verdi 6 skal kun med hvis nettverket [underline]#__ikke er for tett__#. Endeveier skal kun tas med hvis de er større en 3000 meter eller lengere og de går inn til tettbebyggelse, industriområde eller endepunktet ligger nærmere 500 m unna grunnriss, skole, industribygg eller kirker.
+
+++++
+<span style="background-color: yellow;">Her må vi legge inn tallverdi på hva vi mener er for tett, da tatt med symbologi tiltak</span>
+++++
+
+===== Kun ett utvalg for å få med mønsteret og viktige gjennomfartsårer 
+
+- Kommunale veger: Kommunale veger som er klassifisert som viktigere enn andre via egenskapen funksjonell vegklasse, skal inkluderes dersom følgende kriterier er oppfylt:
+    * En del av ett nettverk 
+    * Eller er større enn 3000 meter og fører til tettbebyggelse, industriområde eller endepunktet ligger nærmere enn 500 m unna grunnriss, skole, industribygg eller kirker.
+    * Kommunale veger under/over jernbanenett tas med
+    * Parallelle kommunale veger (lengde mer enn 2000 meter) som er nærmere en 1000 meter, må den ene fjernes.
+
+===== Skal kun tas med for å binde vegnett sammen eller koblinger til annen infrastrukur eller bygninger.
+
+
+- Private veger skal kun med hvis de er bindeledd mellom Kommunale, Fylkesveg, Riksveg eller Europaveger. 
+- Frilengde på endeveier tas bare med hvis de er større en 4000 m og fører til tettbebyggelse, industriområde eller endepunktet ligger nærmere enn 500 m unna grunnriss, skole, industribygg eller kirker.
+- Parallelle private veger (lengde mer enn 2000 meter) som er nærmere en 1000 meter, må den ene fjernes.
+- Kommunale veger under/over jernbanenett tas med
+
+=== Generalisering av sti og traktorveg
+
+===== Skal kun med hvis segmentet fører til en hyttefelt eller hytte
+- Merkede stier mellom naturlige endepunkt (tettbebyggelse, veger, fjelltopper, vann og hytter). minimum 4000
+- Traktorveger med naturlige endepunkt (tettbebyggelse, veger, stier, fjelltopper, vann og hytter). minimum 4000
+- I bynære strøk, der det er tett med merka stier, velges hovedtraseer om mulig. *Hvordan velge hovedtraseer?*
+- Sti flyttes der den kommer i konflikt med bebyggelse og vannkontur.
+- Sti og traktorveg under jernbanenett tas med.
+- Parallelle stier eller traktorveger (lengde mer enn 2000 meter) som er nærmere en 1000 meter, må den ene fjernes.
+
+
+=== Generalisering ved tanke på andre temadatasett:
+
+- Så lenge midtlinjen av vegen ikke går ut i innsjø/hav/elv så trengs ikke veisegmentet å flyttes.
+
