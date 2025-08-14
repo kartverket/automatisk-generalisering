@@ -1,7 +1,6 @@
 import arcpy
 from typing import List, Dict
 
-from custom_tools.general_tools.file_utilities import WorkFileManager
 from custom_tools.decorators.partition_io_decorator import partition_io_decorator
 from env_setup import environment_setup
 from custom_tools.general_tools import custom_arcpy

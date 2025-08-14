@@ -183,6 +183,7 @@ Selve scriptet dokumenterer i detalj oppbygningen av modellen, men for ikke prog
 === Datatilpasning
 Vi benytter to kilder som hentes og tilpasses for videre bruk i automatisk generalisering. Disse kildene inkluderer veinettet fra NVDB, som for øyeblikket leveres som en spesialleveranse fra grunndata, og N50K VegSti. Tilpasningen av disse dataene utføres ikke ved dokumentert kode i GitHub, men vil bli lagt til der i ettertid.
 
+
 I dag brukes FME-løype (ansvarlig for modell, Virginia Antonijeciv)
 
 image::bilder/sositofgdb.png[]
@@ -191,24 +192,40 @@ image::bilder/sositofgdb.png[]
 ==== Beskrivelse av datatilpasningen
 Første del innebærer en prosess hvor .zip-filer med kommunevis sosi-filer eksporteres fra Grunndata. Disse filene inneholder elvegdata på alle nivåer, inkludert vegtrase. Deretter pakkes filene ut til fylkesvise mapper, med en sos-fil for hver kommune. Videre konverteres sosi-filer til fgdb-format og kombineres med objekter fra Kartdata, og skaper en fgdb for hvert fylke med funksjonell vegklasse, motorveg og "elveg og sti". Fra elveg inkluderes kun kjørbare veger, ikke vegtyper som fortau og trapp, mens Kartdata bidrar med alt unntatt bilveger, som sti, traktorveg, barmarksløype og gang- og sykkelveg. Deretter settes hele landet sammen der egenskaper fra funksjonellvegklasse og motorvegtype overføres til veglenke/vegsenterlinje, og skriver til fgdb som er input til AG. Til slutt utføres en geometrisjekk hvor veglinjen dissolves på tvers av egenskapene og lager kryss etter medium på nytt. Noen egenskaper blir tilpasset for videre bruk.
 
+=== Data tilpasning
+Vi benytter to kilder som hentes og tilpasses for videre bruk i automatisk generalisering. Disse kildene inkluderer veinettet fra NVDB, som for øyeblikket leveres som en spesialleveranse fra grunndata, og N50K Sti og traktorveg. Tilpasningen av disse dataene utføres ikke ved dokumentert kode i GitHub, men vil bli lagt til der i ettertid.
+
+I dag brukes FME-løype (ansvarlig for modell, Virginia Antonijeciv)
+
+image::bilder\sositofgdb.png[align="center", alt = Dokumentasjon N100_Vei_FME]
+
+==== Beskrivelse av data tilpasningen
+Første del innebærer en prosess hvor .zip-filer med kommunevis sosi-filer eksporteres fra Grunndata. Disse filene inneholder elvegdata på alle nivåer, inkludert vegtrase. Deretter pakkes filene ut til fylkesvise mapper, med en sos-fil for hver kommune. Videre konverteres sosi-filer til fgdb-format og kombineres med objekter fra Kartdata, og skaper en fgdb for hvert fylke med funksjonell vegklasse, motorveg og "elveg og sti". Fra elveg inkluderes kun kjørbare veger, ikke vegtyper som fortau og trapp, mens Kartdata bidrar med alt unntatt bilveger, som sti, traktorveg, barmarksløype og gang- og sykkelveg. Deretter settes hele landet sammen og kombinerer funksjonell vegklasse og motorvegtype, og skriver til fgdb som er input til AG. Til slutt utføres en geometrisjekk hvor veglinjen dissolveres på tvers av egenskapene og lager kryss etter medium på nytt. Noen egenskaper blir tilpasset for videre bruk.
+
+
 Under er det et bilde av egenskapene til FGDBen "elveg_and_sti" som er utgangspunktet for den automatiske generaliseringsmodellen.
 
 image::bilder\utgangspunkt_fgdb.png[align="center", alt = Utgansgspunkt for videre generalisering]
 
 ==== Generalisering
 
+
 Valg av rekkefølge og bruk av ulike generaliseringsverktøy er basert på ESRI-anbefalinger for veg-generalisering og ved gjentatte tester. Dette er den overordent modellen for Veg-generalisering for N100K.
+
+Valg av rekkefølge og bruk av ulike generaliseringsverktøy er basert på ESRI-anbefalinger for veg-generalisering og ved gjentatte tester. Dette er den overordent modellen for Vei-generalisering for N100K.
+
 
 [cols="2,4"]
 |===
 | Verktøy | Hvorfor
 
-| Multipart to singelpart | For å få den rette oppdelingen av vegsegmenter. Nødvendig for de fleste kartografiske generaliseringsverktøyene som kjøres i ettertid. 
-| Hierarki | For differansiering mellom viktighet av veg, må vi definere ett hierarki. For kjørbare veger blir hierarkiet bygd fra Funksjonellvegklasse, beskrevet tidligere i dokumentet. Siden Funksjonellvegklasse kun er for veger fra NVDB, brukes vegkategori for å sette opp hierakriet for alt untatt bilveger.
+
+| Multipart to singelpart | For å få den rette oppdelingen av vegsegmenter.
+| Hierarki | For differansiering mellom viktighet av vei, må vi definere ett hierarki. For kjørbare veier blir hierarkiet bygd fra Funksjonellveiklasse, beskrevet tidligere i dokumentet. Siden Funksjonellveiklasse kun er for veier fra NVDB, brukes veikategori for å sette opp hierakriet for alt untatt bilveger.
 | Remove small lines | Fjerner alle linjer under 100 m for å fjerne unødvenig smårusk
-| Colapse Road detail | Fjerner de fleste rundkjøringer. Problemer vi ikke kan løse i førsteomgang er rundkjøringer med ulik medium, slik som i Sinsenkrysset. Dette er per dags dato ikke løst. Det er også slik at det er 122 objekter (tilsvarer en del færre rundkjøringer), som ikke collasper ved den modellen som kjøres i dag. Det er prøvd en del ulike parametere men gir aldri 100% collapse av alle rundkjrøingene. Ved ulike parametere så er det alltid ulik hvilke rundkjøringer som collapser. Den parameteren som foreligger i dag, gir flest collapse. Det vil i neste versjon jobbes med å utvikle ett eget verktøy for å løse dette. 
+| Colapse Road detail | Fjerner de fleste rundkjøringer og annet smårusk
 | Simplify | Forenkler linjene ved å fjærne undøvendige punkter i linjen.
-| Thin Road network: Vei | Beholder vegmønster men fjerner detaljene. 
+| Thin Road network: Vei | Beholder veimønster men fjerner detaljene. 
 
 Dette verktøyet ga i første omgang ulikt resultat for hver gang det kjørte og vi startet arbeidet med å stabilisere resultatet (beskrevet tidligere i dokumentet). Det ble derfor lagd en iterasjon som gjør flere operasjoner i flere omganger, helt til det ikke lenger skjer endring fra omgang til omgang. Under er rekkefølgen beskrevet:
 
@@ -219,6 +236,7 @@ En omgang = +
 4) Feature to Line ( + delete fields) +
 5) Append + 
 6) Thin! +
+
 
 Selv om vi er fornøyd med resultatet er det fortsatt "små trekanter" som burde vært erstattet med enkle kryss. Dette er ikke løst i første versjon, men vi må jobbe med å lage en ekstra løsning for akkurat dette problemet. 
 

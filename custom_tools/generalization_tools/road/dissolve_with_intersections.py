@@ -4,13 +4,11 @@ from enum import Enum
 
 from custom_tools.decorators.partition_io_decorator import partition_io_decorator
 from custom_tools.general_tools.file_utilities import (
-    WorkFileManager,
     deleting_added_field_from_feature_to_x,
 )
+
+from file_manager import WorkFileManager
 from custom_tools.general_tools import custom_arcpy
-from custom_tools.general_tools.file_utilities import (
-    deleting_added_field_from_feature_to_x,
-)
 from env_setup import environment_setup
 from constants.n100_constants import MediumAlias
 
@@ -69,12 +67,20 @@ class DissolveWithIntersections:
         )
 
     def _dissolve_feature(self):
-        arcpy.analysis.PairwiseDissolve(
-            in_features=self.input_line_feature,
-            out_feature_class=self.dissolved_feature,
-            dissolve_field=self.dissolve_field_list,
-            multi_part="SINGLE_PART",
-        )
+        if self.dissolve_field_list is None:
+            arcpy.analysis.PairwiseDissolve(
+                in_features=self.input_line_feature,
+                out_feature_class=self.dissolved_feature,
+                multi_part="SINGLE_PART",
+            )
+
+        else:
+            arcpy.analysis.PairwiseDissolve(
+                in_features=self.input_line_feature,
+                out_feature_class=self.dissolved_feature,
+                dissolve_field=self.dissolve_field_list,
+                multi_part="SINGLE_PART",
+            )
 
     @staticmethod
     def _create_intersections(input_line: str, output: str):

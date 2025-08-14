@@ -1,7 +1,7 @@
 import arcpy
 from typing import List, Dict
 
-from custom_tools.general_tools.file_utilities import WorkFileManager
+from file_manager import WorkFileManager
 from env_setup import environment_setup
 from custom_tools.general_tools import custom_arcpy
 from custom_tools.decorators.partition_io_decorator import partition_io_decorator
@@ -122,12 +122,14 @@ class ResolveRoadConflicts:
             data=self.output_lyrx_features, key="lyrx_output"
         )
         print(resolve_road_conflicts_inputs)
+        self.work_file_manager.list_contents(data=resolve_road_conflicts_inputs)
 
         arcpy.cartography.ResolveRoadConflicts(
             in_layers=resolve_road_conflicts_inputs,
             hierarchy_field=self.hierarchy_field,
             out_displacement_features=self.displacement_feature,
         )
+        print("\nResolveRoadConflicts Complete!\n\n")
 
         resolve_road_conflicts_output = self.work_file_manager.extract_key_by_alias(
             data=self.output_lyrx_features,
@@ -177,6 +179,7 @@ class ResolveRoadConflicts:
         self.work_file_manager.list_contents(
             data=self.output_lyrx_features, title="output_lyrx_features"
         )
+        self.work_file_manager.delete_created_files()
 
 
 if __name__ == "__main__":

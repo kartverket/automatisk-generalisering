@@ -167,6 +167,25 @@ class Building_N100(Enum):
         )
     )
 
+    data_selection___anleggslinje___n100_building = file_manager.generate_file_name_gdb(
+        script_source_name=data_selection,
+        description="anleggslinje",
+    )
+
+    data_preparation___power_grid_lines___n100_building = (
+        file_manager.generate_file_name_gdb(
+            script_source_name=data_preparation,
+            description="power_grid_lines",
+        )
+    )
+
+    data_selection___power_grid_lines_500m_selection___n100_building = (
+        file_manager.generate_file_name_gdb(
+            script_source_name=data_selection,
+            description="power_grid_lines_500m_selection",
+        )
+    )
+
     data_preparation___geometry_validation___n100_building = (
         file_manager.generate_file_name_gdb(
             script_source_name=data_preparation,
@@ -503,6 +522,28 @@ class Building_N100(Enum):
         description="railroads_500m_from_displaced_polygon",
     )
 
+    polygon_resolve_building_conflicts___root_file___n100_building = (
+        file_manager.generate_file_name_gdb(
+            script_source_name=polygon_resolve_building_conflicts,
+            description="root_file",
+        )
+    )
+
+    polygon_resolve_building_conflicts___partition_root_file___n100_building = (
+        file_manager.generate_file_name_gdb(
+            script_source_name=polygon_resolve_building_conflicts,
+            description="partition_root_file",
+        )
+    )
+
+    polygon_resolve_building_conflicts___begrensingskurve_docu___building_n100 = (
+        file_manager.generate_file_name_general_files(
+            script_source_name=polygon_resolve_building_conflicts,
+            description="begrensingskurve_docu",
+            file_type="json",
+        )
+    )
+
     polygon_resolve_building_conflicts___building_polygon___n100_building_lyrx = (
         file_manager.generate_file_name_lyrx(
             script_source_name=polygon_resolve_building_conflicts,
@@ -610,6 +651,13 @@ class Building_N100(Enum):
         file_manager.generate_file_name_lyrx(
             script_source_name=polygon_resolve_building_conflicts,
             description="railway",
+        )
+    )
+
+    polygon_resolve_building_conflicts___power_grid_lines___n100_building_lyrx = (
+        file_manager.generate_file_name_lyrx(
+            script_source_name=polygon_resolve_building_conflicts,
+            description="power_grid_lines",
         )
     )
 

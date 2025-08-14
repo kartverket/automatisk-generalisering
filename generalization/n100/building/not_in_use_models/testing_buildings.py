@@ -10,7 +10,7 @@ from input_data import input_n50
 from input_data import input_other
 import config
 from env_setup import environment_setup
-from custom_tools.general_tools.file_utilities import WorkFileManager
+from file_manager import WorkFileManager
 
 
 class PrintClass:

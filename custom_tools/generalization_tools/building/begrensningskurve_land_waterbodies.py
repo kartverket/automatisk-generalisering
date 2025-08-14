@@ -7,7 +7,7 @@ from file_manager.n100.file_manager_buildings import Building_N100
 from env_setup import environment_setup
 from custom_tools.decorators.partition_io_decorator import partition_io_decorator
 from custom_tools.general_tools import custom_arcpy
-from custom_tools.general_tools.file_utilities import WorkFileManager
+from file_manager import WorkFileManager
 from constants.n100_constants import N100_Values
 
 

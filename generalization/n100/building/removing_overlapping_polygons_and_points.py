@@ -150,7 +150,7 @@ def polygons_overlapping_roads_to_points():
 
     road_lines_to_buffer_symbology = LineToBufferSymbology(
         input_road_lines=Building_N100.data_preparation___unsplit_roads___n100_building.value,
-        sql_selection_query=N100_SQLResources.road_symbology_size_sql_selection.value,
+        sql_selection_query=N100_SQLResources.new_road_symbology_size_sql_selection.value,
         output_road_buffer=Building_N100.removing_overlapping_polygons_and_points___road_symbology_no_buffer_addition___n100_building.value,
         write_work_files_to_memory=False,
         keep_work_files=False,

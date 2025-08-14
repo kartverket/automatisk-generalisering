@@ -82,6 +82,7 @@ def buffer_displacement():
     train_stations = "train_stations"
     urban_area = "urban_area"
     roads = "roads"
+    power_grid_lines = "power_grid_lines"
 
     inputs = {
         building_points: [
@@ -108,6 +109,10 @@ def buffer_displacement():
             "context",
             Building_N100.data_selection___railroad_tracks_n100_input_data___n100_building.value,
         ],
+        power_grid_lines: [
+            "context",
+            Building_N100.data_preparation___power_grid_lines___n100_building.value,
+        ],
     }
 
     outputs = {
@@ -133,6 +138,10 @@ def buffer_displacement():
             ("bane", "context"),
             1,
         ],
+        "power_grid_lines": [
+            ("power_grid_lines", "context"),
+            1,
+        ],
     }
 
     buffer_displacement_config = {
@@ -143,7 +152,7 @@ def buffer_displacement():
             "input_building_points": ("building_points", "input"),
             "input_misc_objects": misc_objects,
             "output_building_points": ("building_points", "buffer_displacement"),
-            "sql_selection_query": N100_SQLResources.road_symbology_size_sql_selection.value,
+            "sql_selection_query": N100_SQLResources.new_road_symbology_size_sql_selection.value,
             "root_file": Building_N100.point_displacement_with_buffer___root_file___n100_building.value,
             "building_symbol_dimensions": N100_Symbology.building_symbol_dimensions.value,
             "buffer_displacement_meter": N100_Values.buffer_clearance_distance_m.value,
@@ -158,7 +167,7 @@ def buffer_displacement():
         custom_functions=[buffer_displacement_config],
         root_file_partition_iterator=Building_N100.point_displacement_with_buffer___root_file___n100_building.value,
         dictionary_documentation_path=Building_N100.point_displacement_with_buffer___documentation___building_n100.value,
-        feature_count="1400000",
+        feature_count=1400000,
     )
 
     buffer_displacement_partition_iteration.run()
