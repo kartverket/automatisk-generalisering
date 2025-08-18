@@ -1,11 +1,16 @@
+import os
 import arcpy
-from typing import Dict, Literal, List, Any, Tuple, Iterator
+from typing import Dict, Literal, List, Any, Optional, Tuple, Iterator
 import time
+import traceback
+import inspect
 from datetime import datetime
 import pprint
 import copy
 from dataclasses import replace, fields, is_dataclass, asdict
+from pathlib import Path
 
+from arcpy._na import json
 from composition_configs import core_config
 from env_setup import environment_setup
 from custom_tools.general_tools import custom_arcpy, file_utilities
@@ -232,6 +237,7 @@ class PartitionIterator:
         self.total_start_time: float
         self.iteration_times_with_input = []
         self.iteration_start_time: float
+        self._last_injected_log = None
 
     def resolve_partition_input_config(
         self,
@@ -483,7 +489,9 @@ class PartitionIterator:
 
         self.iteration_catalog[object_key][tag] = dummy_path
 
-    def write_documentation(self, name: str, dict_data: dict) -> None:
+    def write_documentation(
+        self, name: str, dict_data: dict, sub_dir: Optional[str] = None
+    ) -> None:
         """
         Writes a documentation JSON file to the configured documentation directory.
 
@@ -491,10 +499,37 @@ class PartitionIterator:
             name (str): File name, e.g., 'error_log'
             data (dict): Dictionary to serialize into JSON.
         """
-        file_utilities.write_dict_to_json(
-            path=rf"{self.documentation_directory}\{name}.json",
-            dict_data=dict_data,
-        )
+        if sub_dir:
+            dir_path = os.path.join(self.documentation_directory, sub_dir)
+            os.makedirs(dir_path, exist_ok=True)
+            json_path = os.path.join(dir_path, f"{name}.json")
+
+        else:
+            json_path = os.path.join(self.documentation_directory, f"{name}.json")
+
+        file_utilities.write_dict_to_json(path=json_path, dict_data=dict_data)
+
+    def _jsonify(self, obj: Any) -> Any:
+        """
+        Make params JSON-safe:
+        - dataclasses -> asdict
+        - Path -> str
+        - sets -> lists
+        - dict/list/tuple -> recurse
+        - otherwise return as-is
+        """
+        if is_dataclass(obj) and not isinstance(obj, type):
+            return self._jsonify(asdict(obj))
+        if isinstance(obj, Path):
+            return str(obj)
+        if isinstance(obj, dict):
+            return {str(key): self._jsonify(value) for key, value in obj.items()}
+        if isinstance(obj, (list, tuple)):
+            t = [self._jsonify(x) for x in obj]
+            return t if isinstance(obj, list) else tuple(t)
+        if isinstance(obj, set):
+            return [self._jsonify(x) for x in obj]
+        return obj
 
     def update_max_partition_count(self) -> None:
         """
@@ -930,9 +965,45 @@ class PartitionIterator:
 
         return path
 
+    def _split_init_and_method_params(
+        self, cls, params: Dict[str, Any]
+    ) -> Tuple[Dict[str, Any], Dict[str, Any]]:
+        signature = inspect.signature(cls.__init__)
+        init_param_names = {
+            name
+            for name, parameter in signature.parameters.items()
+            if name != "self"
+            and parameter.kind
+            in (
+                inspect.Parameter.POSITIONAL_OR_KEYWORD,
+                inspect.Parameter.KEYWORD_ONLY,
+            )
+        }
+
+        class_params: Dict[str, Any] = {}
+        method_params: Dict[str, Any] = {}
+        for key, value in params.items():
+            (class_params if key in init_param_names else method_params)[key] = value
+
+        return class_params, method_params
+
+    def _format_exception(self, exc: BaseException) -> Dict[str, Any]:
+        """
+        Return a JSON-safe dict with exception type, message, and full formatted traceback.
+        """
+        tb = traceback.TracebackException.from_exception(exc)
+        return {
+            "type": getattr(type(exc), "__name__", str(type(exc))),
+            "message": str(exc),
+            "traceback": list(tb.format()),
+        }
+
     def execute_injected_methods(
-        self, method_entries_config: core_config.MethodEntriesConfig
-    ) -> None:
+        self,
+        method_entries_config: core_config.MethodEntriesConfig,
+        partition_id: int,
+        attempt: int,
+    ) -> Dict[str, Any]:
         """
         What:
             Execute injected methods whose parameter paths have already been resolved.
@@ -944,87 +1015,148 @@ class PartitionIterator:
             For function-based methods:
                 - Call the function with all parameters.
         """
-        for entry in method_entries_config.entries:
-            if isinstance(entry, core_config.ClassMethodEntryConfig):
-                cls = entry.class_
-                method_name = entry.method
-                method = getattr(cls, method_name)
+        execution_log: Dict[str, Any] = {
+            "partition_id": partition_id,
+            "stage": "execute",
+            "attempt": attempt,
+            "entries": [],
+        }
 
-                class_params = {}
-                method_params = {}
+        for index, entry in enumerate(method_entries_config.entries):
+            record: Dict[str, Any] = {"index": index}
 
-                init_params = cls.__init__.__code__.co_varnames
-
-                if is_dataclass(entry.params) and not isinstance(entry.params, type):
-                    param_dict = asdict(entry.params)
-                else:
-                    assert isinstance(entry.params, dict)
-                    param_dict = entry.params
-
-                for param, value in param_dict.items():
-                    if param in init_params:
-                        class_params[param] = value
-                    else:
-                        method_params[param] = value
-
-                print(f"Class parameters for {cls.__name__}:")
-                pprint.pprint(class_params, indent=4)
-
-                print(f"Method parameters for {method_name}:")
-                pprint.pprint(method_params, indent=4)
-
-                instance = cls(**class_params)
-                method(instance, **method_params)
-
-            elif isinstance(entry, core_config.FuncMethodEntryConfig):
-                func = entry.func
-                print(f"Function parameters for {func.__name__}:")
-                pprint.pprint(entry.params, indent=4)
-                func(**entry.params)
-
+            if is_dataclass(entry.params) and not isinstance(entry.params, type):
+                raw_params = asdict(entry.params)
             else:
-                raise TypeError(f"Unsupported method entry type: {type(entry)}")
+                assert isinstance(entry.params, dict)
+                raw_params = entry.params
 
-    def execute_injected_methods_with_retry(self, object_id: int):
+            record["raw_params"] = self._jsonify(raw_params)
+
+            try:
+                if isinstance(entry, core_config.ClassMethodEntryConfig):
+                    cls = entry.class_
+                    method_name = entry.method
+                    method = getattr(cls, method_name)
+                    record.update(
+                        {"type": "class", "class": cls.__name__, "method": method_name}
+                    )
+
+                    class_params, method_params = self._split_init_and_method_params(
+                        cls, raw_params
+                    )
+
+                    if class_params:
+                        print(f"Class parameters for {cls.__name__}:")
+                        pprint.pprint(class_params, indent=4)
+                    if method_params:
+                        print(f"Method parameters for {method_name}:")
+                        pprint.pprint(method_params, indent=4)
+
+                    record["class_params"] = self._jsonify(class_params)
+                    record["method_params"] = self._jsonify(method_params)
+
+                    instance = cls(**class_params)
+                    method(instance, **method_params)
+
+                    record["status"] = "ok"
+                    execution_log["entries"].append(record)
+
+                elif isinstance(entry, core_config.FuncMethodEntryConfig):
+                    func = entry.func
+                    record.update({"type": "function", "function": func.__name__})
+
+                    print(f"Function parameters for {func.__name__}:")
+                    pprint.pprint(raw_params, indent=4)
+
+                    record["func_params"] = self._jsonify(raw_params)
+
+                    func(**raw_params)
+
+                    record["status"] = "ok"
+                    execution_log["entries"].append(record)
+
+                else:
+                    raise TypeError(f"Unsupported method entry type: {type(entry)}")
+
+            except Exception as e:
+                record["status"] = "error"
+                record["error"] = str(e)
+                record["exception"] = self._format_exception(e)
+                execution_log["entries"].append(record)
+
+                self._last_injected_log = self._jsonify(execution_log)
+                raise
+
+        self._last_injected_log = self._jsonify(execution_log)
+        return execution_log
+
+    def execute_injected_methods_with_retry(self, partition_id: int):
         """
         What:
             Helper function to execute custom functions with retry logic to handle potential failures
             caused by unreliable 3rd party logic.
 
         Args:
-            object_id (int): The current object_id being processed (for logging).
+            partition_id (int): The current object_id being processed (for logging).
         """
         max_retries = 50
 
-        for attempt in range(max_retries):
-            try:
-                resolved_injection_method_configs = (
-                    self.resolve_injected_io_for_methods(
-                        method_entries_config=self.list_of_methods,
-                        partition_id=object_id,
-                    )
-                )
-                self.execute_injected_methods(
-                    method_entries_config=resolved_injection_method_configs
-                )
-                break
-            except Exception as e:
-                error_message = str(e)
-                print(f"Attempt {attempt + 1} failed with error: {error_message}")
+        for attempt in range(1, max_retries + 1):
+            self._last_injected_log = None
 
-                if object_id not in self.error_log:
-                    self.error_log[object_id] = {
+            try:
+                resolved = self.resolve_injected_io_for_methods(
+                    method_entries_config=self.list_of_methods,
+                    partition_id=partition_id,
+                )
+                execution_log = self.execute_injected_methods(
+                    method_entries_config=resolved,
+                    partition_id=partition_id,
+                    attempt=attempt,
+                )
+
+                self.write_documentation(
+                    name=f"method_log_{partition_id}",
+                    dict_data=self._jsonify(execution_log),
+                    sub_dir=os.path.join("method_logs"),
+                )
+                return
+
+            except Exception as e:
+                attempt_log = getattr(self, "_last_injected_log", None)
+                if attempt_log is None:
+                    attempt_log = {
+                        "partition_id": partition_id,
+                        "attempt": attempt,
+                        "stage": "resolve",
+                        "entries": [],
+                        "exception": self._format_exception(e),
+                    }
+
+                self.write_documentation(
+                    name=f"attempt_{attempt}_error",
+                    dict_data=self._jsonify(attempt_log),
+                    sub_dir=os.path.join("error_logs", f"error_{partition_id}"),
+                )
+
+                error_message = str(e)
+                print(f"Attempt {attempt} failed with error: {error_message}")
+
+                if partition_id not in self.error_log:
+                    self.error_log[partition_id] = {
                         "Number of retries": 0,
                         "Error Messages": {},
                     }
 
-                self.error_log[object_id]["Number of retries"] += 1
-                self.error_log[object_id]["Error Messages"][attempt + 1] = error_message
+                self.error_log[partition_id]["Number of retries"] += 1
+                self.error_log[partition_id]["Error Messages"][attempt] = error_message
 
-                if attempt + 1 == max_retries:
+                if attempt == max_retries:
                     print("Max retries reached.")
                     self.write_documentation(name="error_log", dict_data=self.error_log)
-                    raise Exception(error_message)
+
+                    raise
 
     def _append_partition_selected_features(
         self,
@@ -1170,10 +1302,11 @@ class PartitionIterator:
                     iteration_partition=iteration_partition, partition_id=partition_id
                 )
 
-                self.execute_injected_methods_with_retry(partition_id)
+                self.execute_injected_methods_with_retry(partition_id=partition_id)
                 self.write_documentation(
-                    name=f"iteration_{partition_id}",
+                    name=f"catalog_{partition_id}",
                     dict_data=self.iteration_catalog,
+                    sub_dir="iteration_catalog",
                 )
                 self.append_iteration_outputs_to_final(partition_id=partition_id)
 

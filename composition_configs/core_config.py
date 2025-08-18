@@ -98,7 +98,12 @@ class OutputEntry:
     @classmethod
     def vector_output(cls, object: str, tag: str, path: str) -> "OutputEntry":
         """Create a vector output entry."""
-        return cls(object=object, data_type=DataType.VECTOR, tag=tag, path=path)
+        return cls(
+            object=object,
+            data_type=DataType.VECTOR,
+            tag=tag,
+            path=path,
+        )
 
 
 @dataclass(frozen=True)
