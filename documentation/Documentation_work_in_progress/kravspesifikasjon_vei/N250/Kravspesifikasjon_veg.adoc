@@ -74,3 +74,7 @@ For å få et resultat vi ønsker må en del kriterier og ønsker om hvordan det
 
 - Så lenge midtlinjen av vegen ikke går ut i innsjø/hav/elv så trengs ikke veisegmentet å flyttes.
 
+- Alle vegene som krysser riksgrensa skal beholdes.
+- Alle bruer, og tunneler skal beholdes i generaliseringsrutinen, men symboliseres som medium terreng så lenge de er under 1000 m.
+- Alle større kryss og avkjøringer fra Europaveg, Riksveg skal med, men en generalisert utgave uten ramper og påkjøringsfelt.
+
