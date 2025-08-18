@@ -97,7 +97,7 @@ class WorkFileManager:
         self,
         file_name: str,
         file_type: str = "gdb",
-        index: int = None,
+        index: Optional[int] = None,
     ) -> str:
         """
         Generates a file path based on the file name, type, and an optional index.
