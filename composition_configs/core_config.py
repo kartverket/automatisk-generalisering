@@ -2,7 +2,7 @@ from dataclasses import dataclass, field
 from typing import Dict, List, Literal, Optional, Tuple, Union, Any, Callable
 from enum import Enum
 
-from composition_configs import types
+from composition_configs import type_defs
 
 
 @dataclass
@@ -143,7 +143,7 @@ class PartitionOutputConfig:
 class PartitionIOConfig:
     input_config: PartitionInputConfig
     output_config: PartitionOutputConfig
-    documentation_directory: types.SubdirectoryPath
+    documentation_directory: type_defs.SubdirectoryPath
 
 
 class PartitionMethod(Enum):
