@@ -211,3 +211,5 @@ Ved generalisering av vegnett for N250-produkter må det tas hensyn til både ge
 * Hva er terskelverdien for "for tett" vegnett?
 * Skal avskilte kjørebaner slås sammen, og i så fall ved hvilken avstand?
 * Hvordan identifiseres hovedtraseer i bynære områder med tett nettverk av stier?
+
+
