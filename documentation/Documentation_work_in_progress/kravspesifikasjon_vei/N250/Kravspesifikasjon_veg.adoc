@@ -74,3 +74,9 @@ For å få et resultat vi ønsker må en del kriterier og ønsker om hvordan det
 
 - Så lenge midtlinjen av vegen ikke går ut i innsjø/hav/elv så trengs ikke veisegmentet å flyttes.
 
+=== Generalisering av passasjer og bilferge
+
+- Går bilferge og passasjerferge parallelt fra anløpssted beholdes kun bilferge
+- Dersom en bilferge har to ulike vegnummre beholdes det laveste nummeret. 
+- Passasjerferge lengre enn 250 m på innsjø beholdes dersom den inngår i vegnett eller stinett. *Hvordan sjekke at den er åpen store deler av året - kan dette omgås på noe vis?* 
+- Ferger må kobles til vegnettet eller stinettet 
