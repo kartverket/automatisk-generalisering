@@ -213,3 +213,9 @@ Ved generalisering av vegnett for N250-produkter må det tas hensyn til både ge
 * Hvordan identifiseres hovedtraseer i bynære områder med tett nettverk av stier?
 
 
+=== Generalisering av passasjer og bilferge
+
+- Går bilferge og passasjerferge parallelt fra anløpssted beholdes kun bilferge
+- Dersom en bilferge har to ulike vegnummre beholdes det laveste nummeret. 
+- Passasjerferge lengre enn 250 m på innsjø beholdes dersom den inngår i vegnett eller stinett. *Hvordan sjekke at den er åpen store deler av året - kan dette omgås på noe vis?* 
+- Ferger må kobles til vegnettet eller stinettet 
