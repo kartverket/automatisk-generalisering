@@ -1,4 +1,5 @@
 import os
+import shutil
 import arcpy
 from typing import Dict, Literal, List, Any, Optional, Tuple, Iterator
 import time
@@ -10,8 +11,8 @@ import copy
 from dataclasses import replace, fields, is_dataclass, asdict
 from pathlib import Path
 
-from arcpy._na import json
 from composition_configs import core_config
+from composition_configs import type_defs
 from env_setup import environment_setup
 from custom_tools.general_tools import custom_arcpy, file_utilities
 from custom_tools.decorators.timing_decorator import timing_decorator
@@ -489,24 +490,36 @@ class PartitionIterator:
 
         self.iteration_catalog[object_key][tag] = dummy_path
 
+    def _reset_documentation_dir(self) -> None:
+        """
+        Ensure documentation_directory is ready for this run.
+        Deletes the whole directory if it exists, then recreates it.
+        """
+        docu_dir = self.documentation_directory
+        if not isinstance(docu_dir, type_defs.SubdirectoryPath):
+            raise TypeError(
+                f"documentation_directory must be SubdirectoryPath, got {type(docu_dir).__name__}"
+            )
+        docu_dir_path = Path(docu_dir).resolve()
+        if docu_dir_path == docu_dir_path.anchor:
+            raise ValueError(f"Refusing to delete root directory: {docu_dir_path}")
+
+        if docu_dir_path.exists():
+            shutil.rmtree(docu_dir_path, ignore_errors=True)
+        docu_dir_path.mkdir(parents=True, exist_ok=True)
+
     def write_documentation(
         self, name: str, dict_data: dict, sub_dir: Optional[str] = None
     ) -> None:
         """
-        Writes a documentation JSON file to the configured documentation directory.
-
-        Args:
-            name (str): File name, e.g., 'error_log'
-            data (dict): Dictionary to serialize into JSON.
+        Writes a JSON file to documentation_directory or its subdirectory.
+        Ensures the destination directory exists.
         """
-        if sub_dir:
-            dir_path = os.path.join(self.documentation_directory, sub_dir)
-            os.makedirs(dir_path, exist_ok=True)
-            json_path = os.path.join(dir_path, f"{name}.json")
+        base_dir = self.documentation_directory
+        out_dir = os.path.join(base_dir, sub_dir) if sub_dir else base_dir
+        os.makedirs(out_dir, exist_ok=True)
 
-        else:
-            json_path = os.path.join(self.documentation_directory, f"{name}.json")
-
+        json_path = os.path.join(out_dir, f"{name}.json")
         file_utilities.write_dict_to_json(path=json_path, dict_data=dict_data)
 
     def _jsonify(self, obj: Any) -> Any:
@@ -1329,6 +1342,7 @@ class PartitionIterator:
             - Once iterations are complete, it cleans up final outputs, and logs any errors that occurred.
         """
         self.total_start_time = time.time()
+        self._reset_documentation_dir()
         self.write_documentation(name="output_catalog", dict_data=self.output_catalog)
 
         print("\nStarting Data Preparation...")

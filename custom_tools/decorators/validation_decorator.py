@@ -3,7 +3,7 @@ import dataclasses
 from typing import Any, Optional, get_type_hints, Type
 
 from composition_configs import core_config
-from composition_configs import types
+from composition_configs import type_defs
 
 
 def validate_method_param_class(
@@ -56,7 +56,7 @@ def validated_against(target_callable: Any):
             param_dataclass=cls,
             target_callable=target_callable,
             allowed_type_subs={
-                types.GdbFilePath: (core_config.InjectIO, types.GdbFilePath),
+                type_defs.GdbFilePath: (core_config.InjectIO, type_defs.GdbFilePath),
                 str: (core_config.InjectIO, str),
             },
         )

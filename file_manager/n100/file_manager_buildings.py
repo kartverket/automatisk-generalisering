@@ -1146,7 +1146,7 @@ class Building_N100(Enum):
     )
 
     point_resolve_building_conflicts___lyrx_root___n100_building = (
-        file_manager.generate_file_lyrx_directory(
+        file_manager.generate_file_lyrx_directory_deprecated(
             script_source_name=point_resolve_building_conflicts,
             description="lyrx_root",
         )
