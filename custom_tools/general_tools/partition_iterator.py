@@ -10,6 +10,7 @@ import pprint
 import copy
 from dataclasses import replace, fields, is_dataclass, asdict
 from pathlib import Path
+from datetime import timedelta
 
 from composition_configs import core_config
 from composition_configs import type_defs
@@ -827,59 +828,30 @@ class PartitionIterator:
                 partition_id=partition_id,
             )
 
-    @staticmethod
-    def format_time(seconds) -> str:
+    def track_iteration_time(self, object_id: int, inputs_present: bool) -> None:
         """
-        What:
-            Converts seconds to a formatted string: HH:MM:SS.
-
-        Args:
-            seconds (float): Time in seconds.
-
-        Returns:
-            str: Formatted time string.
-        """
-        seconds = int(seconds)
-        hours, remainder = divmod(seconds, 3600)
-        minutes, seconds = divmod(remainder, 60)
-        return f"{hours} hours, {minutes} minutes, {seconds} seconds"
-
-    def track_iteration_time(self, object_id, inputs_present_in_partition):
-        """
-        What:
-            Tracks the iteration time and estimate the remaining time. It adds the time of iterations
-            with input features to a list, using the average time of this list as baseline for remaining time.
-
-        Args:
-            object_id (int): The ID of the current partition iteration.
-            inputs_present_in_partition (bool): Flag indicating if there were input features in the iteration.
+        Tracks runtime and estimates remaining time based on iterations with inputs.
+        Prints current time, elapsed runtime, and estimated remaining runtime.
         """
         iteration_time = time.time() - self.iteration_start_time
-        if inputs_present_in_partition:
+        if inputs_present:
             self.iteration_times_with_input.append(iteration_time)
-            average_runtime_per_iteration = sum(self.iteration_times_with_input) / len(
-                self.iteration_times_with_input
-            )
-        else:
-            average_runtime_per_iteration = (
-                sum(self.iteration_times_with_input)
-                / len(self.iteration_times_with_input)
-                if self.iteration_times_with_input
-                else 0
-            )
+
+        avg_runtime = (
+            sum(self.iteration_times_with_input) / len(self.iteration_times_with_input)
+            if self.iteration_times_with_input
+            else 0
+        )
 
         total_runtime = time.time() - self.total_start_time
         remaining_iterations = self.max_partition_count - object_id
-        estimated_remaining_time = remaining_iterations * average_runtime_per_iteration
+        estimate_remaining = remaining_iterations * avg_runtime
 
-        formatted_total_runtime = self.format_time(total_runtime)
-        formatted_estimated_remaining_time = self.format_time(estimated_remaining_time)
+        now_str = datetime.now().strftime("%d-%m %H:%M:%S")
+        total_str = str(timedelta(seconds=int(total_runtime)))
+        estimate_str = str(timedelta(seconds=int(estimate_remaining)))
 
-        current_time_date = datetime.now().strftime("%m-%d %H:%M:%S")
-
-        print(f"\nCurrent time: {current_time_date}")
-        print(f"Current runtime: {formatted_total_runtime}")
-        print(f"Estimated remaining time: {formatted_estimated_remaining_time}")
+        print(f"\n[{now_str}] " f"Runtime: {total_str} | " f"Remaining: {estimate_str}")
 
     def resolve_injected_io_for_methods(
         self,
