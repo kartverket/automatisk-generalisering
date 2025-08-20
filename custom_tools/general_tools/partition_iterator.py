@@ -23,113 +23,127 @@ from file_manager.work_file_manager import PartitionWorkFileManager
 
 class PartitionIterator:
     """
-    This class handles processing of processing intense operations for large data sources using partitions.
-    Differentiating between which data is important and which are needed for context it processes as little
-    data as possible saving time. It then iterates over the partitions selecting data, and doing any amount
-    of logic on the selections, finally appending the defined result to an output file.
+    Partitioned processing pipeline for large vector datasets with context-aware selection
+    and configurable, injected methods.
 
-    **Alias and Type Terminology:**
+    # Overview
+    This iterator splits work into *cartographic partitions* and processes only the
+    features relevant to each partition. It distinguishes between:
+      - **processing inputs**: primary datasets to process, and
+      - **context inputs**: ancillary datasets selected within a configurable distance
+        of the processing features.
 
-    - **Alias:** A named reference to a dataset. Each alias represents a specific dataset that will be used
-      as an input during partitioning. Aliases allow the class to organize and reference datasets
-      consistently across different logics.
+    For each partition, the iterator:
+      1. Selects processing features (center-in partition, plus optional near-by radius).
+      2. Selects context features (within the same radius of the partition).
+      3. Resolves and executes *injected methods* (functions or class methods) whose
+         parameters may include injected I/O paths.
+      4. Appends the partition’s outputs to the configured final outputs.
+      5. Logs iteration catalogs, method parameters, attempts, and errors to a
+         documentation directory.
 
-    - **Type:** Each alias can have multiple types, indicating different versions the dataset can be accessed during
-      partitioning process. A type holds a path. This makes it so that if you run multiple logics in partition iterator
-      you can still access any of the outputs at any point for each alias.
+    # Catalogs
+    The iterator maintains three dictionaries:
+      - `input_catalog`: per *object* (dataset name) stores metadata and the global input
+        paths; populated from `PartitionIOConfig`.
+      - `output_catalog`: per object stores final output paths; populated from
+        `PartitionIOConfig`.
+      - `iteration_catalog`: per partition, per object, stores iteration-specific paths
+        (e.g., the selected subset path, produced outputs) and counts.
 
-    **Setting Up `alias_path_data` and `alias_path_outputs`:**
+    The following keys are used inside catalogs:
+      - `INPUT_TYPE_KEY` / `DATA_TYPE_KEY`: metadata about each object’s role and data type.
+      - `INPUT_KEY`: the canonical tag for the active input path of an object.
+      - `COUNT`: number of selected features this iteration.
+      - `DUMMY`: a dummy feature path used to keep downstream logic stable when a
+        particular object has no features in a partition.
 
-    - **`alias_path_data`**: A dictionary used to define the input datasets for the class. Each key is an alias,
-      and its value is a list of tuples where the first element is a type, and the second element is the path to the dataset.
-      The type of must be either 'input', 'context', 'reference' in `alias_path_data`. In a sense alias_path_data
-      works to load in all the data you are going to use in an instance of partition iterator.
-      So if you have different logics using inputs all the data used by all logics are entered in alias_path_data.
+    # Injection & method execution
+    Injected method configs (functions or class methods) may include `InjectIO(object, tag)`
+    placeholders that refer to a *catalog object* (dataset key) and a *tag* (path key).
 
+    Path resolution rules per partition:
+    - `InjectIO(obj, "input")`: always resolves to the **selected features for this partition**
+        (never the global dataset), ensuring your method receives only the slice relevant
+        to the current partition.
+    - `InjectIO(obj, some_tag)` where `some_tag != "input"` resolves to a **new, unique
+        iteration-scoped path** under the iteration work directory. If no such entry exists
+        yet for `(obj, some_tag)`, the iterator creates and registers it in the
+        `iteration_catalog[obj][some_tag]`. Your injected method is expected to write to it.
+    - You may introduce **new tags for an existing object** (e.g., `"buffer"`, `"cleaned"`)
+        or even **new objects** via `InjectIO(new_object, new_tag)`. The iterator will allocate
+        paths and track them in `iteration_catalog` as those tags/objects appear in params.
 
-    - **`alias_path_outputs`**: A dictionary used to define the output datasets for the class. Each key is an alias,
-      and its value is a list of tuples where the first element is the output type (e.g., 'processed_output') and
-      the second element is the path where the output should be saved. This means that you can have multiple outputs
-      for each alias.
+    Resolution & execution flow:
+    1. `resolve_injected_io_for_methods(...)` deep-walks params (dataclasses, dicts, lists,
+        tuples, sets), replacing every `InjectIO` with a concrete, partition-scoped path, and
+        returns a *resolved* config.
+    2. `execute_injected_methods_with_retry(...)` runs the resolved methods with retry
+        semantics. For class methods, constructor vs method kwargs are split automatically
+        (only names present on `__init__` are sent to the constructor).
+    3. Each attempt produces JSON logs (params, status, exceptions with tracebacks). On
+        success, a consolidated `method_log_{partition_id}.json` is written. On failure,
+        per-attempt logs live under `error_logs/error_{partition_id}/attempt_{n}_error.json`.
 
-    **Important: Reserved Types for Alias:**
+    Notes:
+    - The iterator does **not** implicitly copy data into non-"input" targets; it only
+        allocates file paths. Your injected method is responsible for creating/writing those
+        outputs.
+    - Using `"input"` guarantees you receive the *current partition’s selection*, not the
+        global source.
 
-    The following types are reserved for use by the class and should not be used to create new output types in logic configs:
-      - **"input"**:
-        Used for input datasets provided to the class. Is the focus of the processing. If you in a config want to use
-        the partition selection of the original input data as an input this is the type which should be used.
-      - **"context"**:
-        Represents context data used during processing. This data is not central and will be selected based on proximity
-        to input data. If you in a config want to use the partition selection of the original context data as an input
-        this is the type which should be used.
-      - **"reference"**:
-        Represents reference datasets that are completely static and will not be processed in any way.
-        An example could be a lyrx file.
-      - **"input_copy"**:
-        Internal type used to hold a copy of the global input data. Should not be used in configs.
-      - **"context_copy"**:
-        Internal type used to hold a copy of the global context data. Should not be used in configs.
+    # Partition creation & selection
+    Cartographic partitions are created from all configured processing inputs.
+    For each partition:
+      - Processing features are selected by "center in partition" and optionally augmented
+        with "near partition" features (radius = `context_radius_meters`), with a
+        `PARTITION_FIELD` set to 1 (center-in) or 0 (nearby) to preserve provenance.
+      - Context features are selected by distance to the same partition (using the
+        configured radius).
 
-    New types should only be created during the outputs from configs in custom_functions, and they should not use any
-    of the reserved types listed above if you intend it to be a new output. So for instance an operation doing a buffer
-    on the "input" type of alias should not have an output using the "input" type, but for instance "buffer". If you
-    in the next config want to use the buffer output, use the "buffer" type for the alias as an input for the next config.
+    # Logging (documentation directory)
+    At the start of `run()`, the configured `documentation_directory` is cleared and
+    recreated (with safety checks). The iterator writes:
+      - `input_catalog.json`, `output_catalog.json` (initial state),
+      - `iteration_catalog/catalog_{partition_id}.json` (per-partition selection),
+      - `method_logs/method_log_{partition_id}.json` (final success per partition),
+      - `error_logs/error_{partition_id}/attempt_{n}_error.json` (per attempt, on error),
+      - `error_log.json` (retry summary across partitions).
 
-    **Custom Function Configuration:**
+    # Args (configs)
+    - `partition_io_config (core_config.PartitionIOConfig)`: Declares input objects
+      (processing/context) and output objects (vector outputs) with their paths and
+      data types. Also provides `documentation_directory`.
+    - `partition_method_inject_config (core_config.MethodEntriesConfig)`: The list of
+      injected methods (functions or class methods) with their parameter configs. Any
+      `InjectIO` placeholders will be resolved per partition.
+    - `partition_iterator_run_config (core_config.PartitionRunConfig)`: Runtime knobs:
+      context radius (meters), max elements per partition, partition method
+      ("FEATURES" or "VERTICES"), object ID field, and whether to auto-optimize the
+      partition feature count.
+    - `work_file_manager_config (core_config.WorkFileConfig)`: Controls where and how
+      temporary/iteration/persistent paths are generated.
 
-    - The `custom_functions` parameter is a list of function configurations, where each configuration describes
-      a custom function (standalone or a method of a class) to be executed during the partitioning process.
-    - The input and output parameters needs to be defined using the partition_io_decorator. A logic can have multiple
-      input and output parameter. for each function are defined as tuples of `(alias, type)`. The alias refers
-      to a named dataset, while the type specifies whether the dataset is used as an input or an output.
-    - Custom functions must be decorated with the `partition_io_decorator` to mark which parameters are inputs
-      and which are outputs. Only parameters marked as inputs or outputs will be managed by this system.
-    - Outputs can create new types associated with an alias, and these new types will have paths dynamically
-      generated by the class. These new types can then be used as inputs for other functions in subsequent
-      iterations.
-    - The class itself can write any existing alias to its final output, but it cannot create new types for
-      the alias.
+    # Side effects
+    - Creates and deletes intermediate feature classes and layers.
+    - Writes JSON logs under `documentation_directory` (safe-guarded).
+    - Appends to final outputs as partitions complete.
+    - Adds then removes (via cleanup) the `PARTITION_FIELD` as needed.
 
-    **Important Notes:**
+    # Raises
+    - `ValueError` for duplicate input objects.
+    - `RuntimeError` when no valid partition size can be found (if optimization is enabled).
+    - Any exception thrown inside injected methods is captured, logged, and retried up to
+      the configured maximum. If all retries fail, the exception is re-raised.
 
-    - Any function (or class method) included in `custom_functions` must be decorated with the `partition_io_decorator`.
-      For class methods, this means the method being used in `custom_functions`, not the entire class, must be decorated.
-    - During processing, the class dynamically resolves the paths for both input and output datasets based on the
-      `(alias, type)` tuples. New paths for outputs will be created automatically, and these outputs can then be used
-      in future iterations as inputs with the corresponding alias and type.
-    - Multiple outputs for a single alias can exist, but only previously defined types can be used as inputs for
-      the class’s output.
-
-    Args:
-        alias_path_data (Dict[str, Tuple[str, str]]):
-            A dictionary where the key is an alias (representing a dataset), and the value is a tuple containing
-            the type of data (e.g., 'input', 'context') and the path to the dataset.
-        alias_path_outputs (Dict[str, Tuple[str, str]]):
-            A dictionary where the key is an alias (representing a dataset), and the value is a tuple containing
-            the type of output and the path where the results should be saved.
-        root_file_partition_iterator (str):
-            The base path for intermediate outputs generated during the partitioning process.
-        custom_functions (list, optional):
-            A list of configurations for the custom functions that will be executed during the partitioning process.
-            Each function must be configured with the `partition_io_decorator` and have its input/output parameters
-            specified.
-        dictionary_documentation_path (str, optional):
-            The path where documentation related to the partitioning process (e.g., JSON logs) will be stored.
-        feature_count (str, optional):
-            The maximum number of features allowed in each partition. Default is "15000".
-        partition_method (Literal['FEATURES', 'VERTICES'], optional):
-            The method used to create partitions, either by the number of features ('FEATURES') or vertices ('VERTICES').
-            Default is 'FEATURES'.
-        search_distance (str, optional):
-            The distance within which context features are selected relative to input features. Default is '500 Meters'.
-        context_selection (bool, optional):
-            Whether to enable context feature selection based on proximity to input features. Default is True.
-        delete_final_outputs (bool, optional):
-            Whether to delete existing final outputs before starting the partitioning process. Default is True.
-        safe_output_final_cleanup (bool, optional):
-            Whether to enable safe deletion of outputs during cleanup. Default is True.
-        object_id_field (str, optional):
-            The field representing the object ID used during partitioning. Default is "OBJECTID".
+    # Example (high level)
+        iterator = PartitionIterator(
+            partition_io_config=io_config,
+            partition_method_inject_config=methods_config,
+            partition_iterator_run_config=run_config,
+            work_file_manager_config=wm_config,
+        )
+        iterator.run()
     """
 
     INPUT_TYPE_KEY = "input_type"
@@ -147,11 +161,19 @@ class PartitionIterator:
         work_file_manager_config: core_config.WorkFileConfig,
     ):
         """
-        Initializes the PartitionIterator with input and output datasets, custom functions, and configuration
-        for partitioning and processing.
-
         Args:
-            See class docstring.
+            partition_io_config: Declares input objects (processing/context) and output objects
+                (vector outputs) with paths and data types; includes `documentation_directory`.
+            partition_method_inject_config:
+                Declares the injected methods (functions or class methods) with their parameter configs.
+                These configs are expected to include `InjectIO(object, tag)` placeholders that resolve
+                to partition-scoped paths at runtime. Without `InjectIO`, the iterator cannot pass
+                partition selections or allocate iteration outputs, making the class effectively useless.
+                See class docstring section *Injection & method execution* for details.
+            partition_iterator_run_config: Runtime settings (context radius in meters, max
+                elements per partition, partition method "FEATURES"/"VERTICES", object ID
+                field, whether to optimize partition size).
+            work_file_manager_config: Controls generation of temp/iteration/persistent paths.
         """
 
         self.input_catalog: Dict[str, Dict[str, Any]] = {}
@@ -246,6 +268,11 @@ class PartitionIterator:
         entries: List[core_config.ResolvedInputEntry],
         target_dict: Dict[str, Dict[str, str]],
     ) -> None:
+        """
+        Add resolved input entries to `target_dict`.
+
+        Ensures each object appears only once; raises on duplicates.
+        """
         seen_objects = set()
         for entry in entries:
             if entry.object in seen_objects or entry.object in target_dict:
@@ -263,19 +290,25 @@ class PartitionIterator:
         entries: List[core_config.ResolvedOutputEntry],
         target_dict: Dict[str, Dict[str, str]],
     ) -> None:
+        """
+        Add resolved output entries to `target_dict`.
+
+        Ensures each (object, tag) pair is unique; raises on duplicate tags
+        within the same object.
+        """
         for entry in entries:
             entry_dict = target_dict.setdefault(entry.object, {})
+            if entry.tag in entry_dict:
+                raise ValueError(
+                    f"Duplicate output tag '{entry.tag}' detected for object '{entry.object}'"
+                )
             entry_dict[self.DATA_TYPE_KEY] = entry.data_type
             entry_dict[entry.tag] = entry.path
 
     def _create_cartographic_partitions(self, element_limit: int) -> None:
         """
-        What:
-            Creates cartographic partitions based on the given element_limit.
-            Overwrites any existing partition feature.
-
-        Args:
-            feature_count (int): The feature count used to limit partition size.
+        Creates cartographic partitions based on the given element_limit.
+        Overwrites any existing partition feature.
         """
         self.work_file_manager_partition_feature.delete_created_files()
         VALID_TAGS = {self.INPUT_KEY}
@@ -288,10 +321,8 @@ class PartitionIterator:
         ]
 
         if not in_features:
-            print("No input or context features available for creating partitions.")
+            print("No input features available for creating partitions.")
             return
-
-        print(f"Creating cartographic partitions from features: {in_features}")
 
         arcpy.cartography.CreateCartographicPartitions(
             in_features=in_features,
@@ -299,18 +330,18 @@ class PartitionIterator:
             feature_count=element_limit,
             partition_method=self.partition_method,
         )
-        print(f"Created partitions in {self.partition_feature}")
+        print(f"Created partition feature: {self.partition_feature}")
 
     def _count_maximum_objects_in_partition(self) -> int:
         """
         What:
-            Iterates over all partitions and determines the highest number of total processed features
-            (processing + context) found in any single partition.
+            Iterates over all partitions and determines the highest number of total processed
+            input features (processing + context) found in any single partition.
 
         How:
             For each partition:
             - Select the partition geometry.
-            - Run processing and context logic.
+            - Run processing and context selection logic.
             - Track total processed objects.
             - Cleanup intermediate files.
 
@@ -421,13 +452,7 @@ class PartitionIterator:
         )
 
     def delete_final_outputs(self):
-        """
-        Deletes all final output feature classes if they exist.
-
-        How:
-            - Iterates over all object/tag pairs in `nested_output_object_tag`.
-            - Deletes each final output path using the shared utility.
-        """
+        """Deletes all final output feature classes if they exist."""
         skip_keys = {self.DATA_TYPE_KEY}
 
         for object_key, tag_dict in self.output_catalog.items():
@@ -444,16 +469,9 @@ class PartitionIterator:
 
     def create_dummy_features(self, tag: str) -> None:
         """
-        What:
-            Creates a dummy feature class for each object that contains a valid path for the given tag.
-
-        How:
-            For each object in nested_input_object_tag:
-            - If the given tag exists and has a valid path, use it as a template to create a dummy feature.
-            - The dummy path is stored under the 'dummy' key in the object's tag dictionary.
-
-        Args:
-            tag (str): The inner key (e.g. "raw_input") to check and use as template.
+        Create dummy feature classes for all objects that have a valid path
+        under the given tag. Used to provide stable placeholder inputs when
+        a partition produces no features.
         """
         for object_key, tag_dict in self.input_catalog.items():
             template_path = tag_dict.get(tag)
@@ -502,7 +520,7 @@ class PartitionIterator:
                 f"documentation_directory must be SubdirectoryPath, got {type(docu_dir).__name__}"
             )
         docu_dir_path = Path(docu_dir).resolve()
-        if docu_dir_path == docu_dir_path.anchor:
+        if docu_dir_path.parent == docu_dir_path:
             raise ValueError(f"Refusing to delete root directory: {docu_dir_path}")
 
         if docu_dir_path.exists():
@@ -554,6 +572,10 @@ class PartitionIterator:
     def _is_vector_of_type(
         self, tag_dict: dict, input_type: core_config.InputType
     ) -> bool:
+        """
+        Return True iff `tag_dict` represents a vector dataset of the given `input_type`
+        (PROCESSING or CONTEXT) and has an active `INPUT_KEY` path.
+        """
         return (
             tag_dict.get(self.INPUT_TYPE_KEY) == input_type.value
             and tag_dict.get(self.DATA_TYPE_KEY) == core_config.DataType.VECTOR.value
@@ -561,6 +583,9 @@ class PartitionIterator:
         )
 
     def _processing_items(self) -> Iterator[Tuple[str, str]]:
+        """
+        Yield (object_key, input_path) for all PROCESSING vector inputs present in `input_catalog`.
+        """
         for object_key, tag in self.input_catalog.items():
             if self._is_vector_of_type(
                 tag_dict=tag, input_type=core_config.InputType.PROCESSING
@@ -568,6 +593,9 @@ class PartitionIterator:
                 yield object_key, tag[self.INPUT_KEY]
 
     def _context_items(self) -> Iterator[Tuple[str, str]]:
+        """
+        Yield (object_key, input_path) for all CONTEXT vector inputs present in `input_catalog`.
+        """
         for object_key, tag in self.input_catalog.items():
             if self._is_vector_of_type(
                 tag_dict=tag, input_type=core_config.InputType.CONTEXT
@@ -588,6 +616,13 @@ class PartitionIterator:
                 yield object_key, tag, final_output_path
 
     def prepare_input_data(self):
+        """
+        Prepare all inputs for partitioning.
+
+        - Processing inputs: counted and tagged with a `PARTITION_FIELD`.
+        - Context inputs: either counted directly (if search_distance <= 0)
+        or filtered to features within the search radius of processing inputs.
+        """
         for object_key, input_path in self._processing_items():
             self._prepare_processing_input(object_key=object_key, input_path=input_path)
 
@@ -595,6 +630,14 @@ class PartitionIterator:
             self._prepare_context_input(object_key=object_key, input_path=input_path)
 
     def _prepare_processing_input(self, object_key: str, input_path: str) -> None:
+        """
+        Initialize a processing input for partitioning.
+
+        - Registers the input path and feature count in `input_catalog`.
+        - Deletes `PARTITION_FIELD` if it exists, then creates the field.
+        - This helper field is required during partitioning and will later
+        be removed by `cleanup_partition_fields` to restore clean inputs.
+        """
         self.input_catalog[object_key][self.INPUT_KEY] = input_path
         self.input_catalog[object_key][self.COUNT] = file_utilities.count_objects(
             input_layer=input_path
@@ -613,6 +656,16 @@ class PartitionIterator:
         )
 
     def _prepare_context_input(self, object_key: str, input_path: str) -> None:
+        """
+        Initialize a context input for partitioning.
+
+        - If `search_distance <= 0`: registers the raw input and its feature count.
+        - Otherwise:
+            * Creates a filtered copy of the input,
+            * Selects features within `search_distance` of each processing input,
+            * Appends them into the filtered dataset,
+            * Registers the filtered dataset and its feature count in `input_catalog`.
+        """
         if self.search_distance <= 0:
             self.input_catalog[object_key][self.INPUT_KEY] = input_path
             self.input_catalog[object_key][self.COUNT] = file_utilities.count_objects(
@@ -672,6 +725,23 @@ class PartitionIterator:
         iteration_partition: str,
         partition_id: int,
     ) -> bool:
+        """
+        Select and prepare a single processing input for one partition.
+
+        How:
+        - Selects features whose center lies within the partition.
+        - Marks them with `PARTITION_FIELD = 1` and copies to an iteration-scoped dataset.
+        - If `search_distance > 0`, also selects nearby features:
+            * Includes features within the search radius but not center-in,
+            * Marks them with `PARTITION_FIELD = 0`,
+            * Appends them to the same iteration dataset.
+        - Updates `iteration_catalog` with path and feature count.
+        - Creates a dummy feature if no features are found.
+
+        Returns:
+            bool: True if the partition contains any features for this object,
+            False otherwise.
+        """
         iteration_entry = self.iteration_catalog.setdefault(object_key, {})
 
         selection_memory_path = (
@@ -768,6 +838,16 @@ class PartitionIterator:
         partition_id: int,
     ) -> bool:
         has_inputs = False
+        """
+        Process all configured processing inputs for one partition.
+    
+        - Calls `process_single_processing_input` for each processing object.
+        - Aggregates results to track whether any inputs produced features.
+    
+        Returns:
+            bool: True if at least one processing input had features,
+            False if all were empty.
+        """
 
         for object_key, input_path in self._processing_items():
             result = self.process_single_processing_input(
@@ -788,6 +868,18 @@ class PartitionIterator:
         iteration_partition: str,
         partition_id: int,
     ) -> None:
+        """
+        Select and prepare a single context input for one partition.
+
+        How:
+        - Selects features within `search_distance` of the partition geometry.
+        - Writes the selection to an iteration-scoped dataset.
+        - Updates `iteration_catalog` with feature count and path.
+        - If no features are found, assigns a dummy feature path.
+
+        Side effects:
+            Creates/deletes temporary feature classes and updates `iteration_catalog`.
+        """
         iteration_entry = self.iteration_catalog.setdefault(object_key, {})
         output_path = self.work_file_manager_iteration_files.generate_partition_path(
             object_name=object_key,
@@ -820,6 +912,12 @@ class PartitionIterator:
         iteration_partition: str,
         partition_id: int,
     ) -> None:
+        """
+        Process all configured context inputs for one partition.
+
+        Calls `process_single_context_input` for each context object
+        and records results in `iteration_catalog`.
+        """
         for object_key, input_path in self._context_items():
             self.process_single_context_input(
                 object_key=object_key,
@@ -938,6 +1036,7 @@ class PartitionIterator:
     def resolve_inject_entry(
         self, inject: core_config.InjectIO, partition_id: int
     ) -> str:
+        """Resolve a single `InjectIO` placeholder to a concrete path for this partition."""
         if inject.tag == self.INPUT_KEY and inject.object in self.input_catalog:
             return self.iteration_catalog[inject.object][inject.tag]
 
@@ -953,6 +1052,17 @@ class PartitionIterator:
     def _split_init_and_method_params(
         self, cls, params: Dict[str, Any]
     ) -> Tuple[Dict[str, Any], Dict[str, Any]]:
+        """
+        Split parameters into constructor vs. method kwargs for a class.
+
+        Why:
+            When executing injected class methods, parameters may apply either to the
+            class constructor (`__init__`) or to the method itself. This function ensures
+            the correct arguments are routed to the right place.
+
+        Returns:
+            Tuple[dict, dict]: (init_params, method_params)
+        """
         signature = inspect.signature(cls.__init__)
         init_param_names = {
             name
@@ -990,15 +1100,30 @@ class PartitionIterator:
         attempt: int,
     ) -> Dict[str, Any]:
         """
-        What:
-            Execute injected methods whose parameter paths have already been resolved.
+        Execute a fully *resolved* set of injected methods for one partition/attempt.
 
-        How:
-            For class-based methods:
-                - Instantiate the class using constructor parameters.
-                - Call the specified method with the remaining parameters.
-            For function-based methods:
-                - Call the function with all parameters.
+        For each entry:
+        - If it's a class method: split kwargs into constructor vs. method args,
+            instantiate the class, then call the method.
+        - If it's a function: call it with the provided kwargs.
+
+        Logging:
+        - Builds an in-memory `execution_log` with:
+            - per-entry raw params (JSON-safe), split class/method params (for classes),
+            - status ("ok" or "error"), and full exception info (type/message/traceback) on error.
+        - On any exception, stores the partial log in `self._last_injected_log` and re-raises;
+            the retry layer is responsible for persisting per-attempt error logs.
+
+        Args:
+            method_entries_config: The *resolved* (no remaining InjectIO) method entries.
+            partition_id: Current partition identifier (for log context).
+            attempt: 1-based attempt number (for log context).
+
+        Returns:
+            Dict[str, Any]: The complete per-attempt execution log when all entries succeed.
+
+        Raises:
+            Exception: Re-raises the first failure after recording it in `self._last_injected_log`.
         """
         execution_log: Dict[str, Any] = {
             "partition_id": partition_id,
@@ -1078,12 +1203,23 @@ class PartitionIterator:
 
     def execute_injected_methods_with_retry(self, partition_id: int):
         """
-        What:
-            Helper function to execute custom functions with retry logic to handle potential failures
-            caused by unreliable 3rd party logic.
+        Execute injected methods for a partition with retries and structured logging.
+
+        Flow per attempt:
+        1) Reset `self._last_injected_log` to ensure clean state.
+        2) Resolve InjectIO placeholders to concrete, partition-scoped paths.
+            - If resolution fails, write an error attempt log with stage="resolve".
+        3) Run `execute_injected_methods(...)`.
+            - On success: write `method_logs/method_log_{partition_id}.json` and return.
+            - On failure: write `error_logs/error_{partition_id}/attempt_{n}_error.json`,
+            increment `self.error_log[partition_id]`, and retry until max_retries.
 
         Args:
-            partition_id (int): The current object_id being processed (for logging).
+            partition_id: Current partition identifier.
+
+        Raises:
+            Exception: Re-raises the last error after exhausting retries; also writes
+            `error_log.json` and the final per-attempt error snapshot.
         """
         max_retries = 50
 
@@ -1219,9 +1355,13 @@ class PartitionIterator:
                 partition_id=partition_id,
             )
 
-    def cleanup_final_outputs(self):
+    def cleanup_helper_fields(self) -> None:
         """
-        Cleanup function to delete unnecessary fields from final output feature classes.
+        Delete the helper field `PARTITION_FIELD` from:
+        - All final output feature classes.
+        - All processing input feature classes (since it was injected for partitioning).
+
+        Ensures that only clean data structures remain after the workflow.
         """
         fields_to_delete = [self.PARTITION_FIELD]
 
@@ -1232,6 +1372,10 @@ class PartitionIterator:
                     final_output_path, fields_to_delete
                 )
 
+        for object_key, input_path in self._processing_items():
+            print(f"Cleaning fields in processing input: {input_path}")
+            file_utilities.delete_fields_if_exist(input_path, fields_to_delete)
+
     def _reset_iteration_state(self, partition_id: int) -> None:
         print(
             f"\nProcessing Partition: {partition_id} out of {self.max_partition_count}"
@@ -1241,22 +1385,18 @@ class PartitionIterator:
 
     def partition_iteration(self):
         """
-        What:
-            Processes each data partition in multiple iterations.
+        Process every cartographic partition end-to-end.
 
-        How:
-            - Iterates over partitions based on `object_id`, from 1 to `max_object_id`.
-            - For each iteration:
-                - Creates and resets dummy features.
-                - Deletes files from the previous iteration and clears the file path list.
-                - Backs up the original parameters for custom functions.
-                - Selects a partition feature and processes the inputs for that partition.
-                - If inputs are present:
-                    - Processes context features.
-                    - Finds input/output parameters for custom logic.
-                    - Exports data from the iteration to JSON.
-                    - Executes custom functions.
-                    - Appends the output of the current iteration to the final outputs.
+        Workflow (per partition):
+        1) Reset iteration state and select the partition geometry.
+        2) Select processing inputs (center-in; optionally add near-by features).
+            - If no processing features are present, skip this partition.
+        3) Select context inputs within the configured search radius.
+        4) Execute injected methods with retry and structured logging.
+        5) Persist the iteration catalog and append valid outputs to final outputs.
+
+        Raises:
+        - Propagates any unhandled exception from injected methods after retries are exhausted.
         """
 
         self.update_max_partition_count()
@@ -1302,16 +1442,24 @@ class PartitionIterator:
     @timing_decorator
     def run(self):
         """
-        What:
-            Orchestrates the entire workflow for the class, from data preparation to final output generation.
+        Orchestrate the full pipeline: preparation → partitioning → iteration → cleanup.
 
-        How:
-            - Initializes by unpacking input and output paths into `nested_alias_type_data` and `nested_final_outputs`.
-            - Exports the initialized dictionaries to JSON for future reference.
-            - Prepares the input data, including deleting old final outputs and processing the raw input data.
-            - Creates cartographic partitions to organize the data.
-            - Runs the partition iteration process by calling `partition_iteration`.
-            - Once iterations are complete, it cleans up final outputs, and logs any errors that occurred.
+        Steps:
+        1) Reset the documentation directory (with safety checks) and write `output_catalog.json`.
+        2) Data preparation:
+            - Optionally delete existing final outputs.
+            - Prepare processing and context inputs (add PARTITION_FIELD, pre-filter context).
+            - Create per-object dummy features.
+            - Write `input_catalog.json`.
+        3) Partitioning:
+            - Determine feature count (optimize if enabled) and create cartographic partitions.
+        4) Iteration:
+            - Call `partition_iteration()` to process all partitions, execute injected methods,
+            and append per-partition results to final outputs.
+        5) Cleanup & logs:
+            - Remove helper fields from final outputs (e.g., PARTITION_FIELD).
+            - Delete persistent temp files.
+            - Write aggregated `error_log.json`.
         """
         self.total_start_time = time.time()
         self._reset_documentation_dir()
@@ -1336,7 +1484,7 @@ class PartitionIterator:
         print("\nStarting on Partition Iteration...")
         self.partition_iteration()
 
-        self.cleanup_final_outputs()
+        self.cleanup_helper_fields()
         self.work_file_manager_persistent_files.delete_created_files()
         self.write_documentation(name="error_log", dict_data=self.error_log)
 
