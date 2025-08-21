@@ -39,6 +39,8 @@ Disse reglene er strukturert etter vegkategori og type, og inneholder både abso
 == Generalisering per Vegkategori
 
 === Europaveger og Riksveger
+[.text-center]
+image::bilder\Europaveg_riksveg.png[]
 
 [.formelboks]
 ====
@@ -56,6 +58,8 @@ Disse reglene er strukturert etter vegkategori og type, og inneholder både abso
 ****
 
 === Generalisering av fylkesveger
+[.text-center]
+image::bilder\Fylkesveger.png[]
 
 Vegnettet skal i hovedsak inkludere de fleste fylkesveger, men med en viss grad av generalisering for å sikre lesbarhet og hensiktsmessig kartpresentasjon. Fylkesveiene kategoriseres som enten funksjonell vegklasse 3, 4 eller 5. 
 
@@ -97,7 +101,8 @@ Fylkesveger med Funksjonellveiklasse 4 eller 5, skal kun inkluderes dersom vegne
 ====
 
 ==== Generalisering av kommunale veger
-
+[.text-center]
+image::bilder\kommunaleveger.png[]
 Kommunale veger er klassifisert i to funksjonelle vegklasser, hvor 5 representerer veger med høyere betydning. Det er imidlertid kjent at kvaliteten på denne klassifiseringen varierer mellom kommuner, og at det ikke alltid er konsekvent skille mellom viktige og mindre viktige kommunale veger.
 
 [cols="1,1", frame="none", grid="none"]
@@ -138,7 +143,8 @@ I områder med tett vegnett vil kun de viktigste kommunale vegene beholdes, base
 ====
 
 ==== Generalisering av private veger
-
+[.text-center]
+image::bilder\private.png[]
 Private veger skal kun inkluderes i N250-produkter dersom de har en funksjonell rolle i å binde sammen det overordnede vegnettet eller koble til annen relevant infrastruktur. Formålet er å redusere detaljnivået samtidig som viktige forbindelser bevares.
 
 ====
@@ -158,7 +164,8 @@ Private veger skal kun inkluderes i N250-produkter dersom de har en funksjonell 
 * Private veger med registrert bom skal fjernes dersom det finnes alternativ veg til samme endepunkt.
 ====
 === Generalisering av sti og traktorveg
-
+[.text-center]
+image::bilder\traktorveg_sti.png[]
 Ved generalisering av stier og traktorveger for N250-produkter skal kun relevante og funksjonelle forbindelser inkluderes. Formålet er å bevare viktige ferdselsårer mellom naturlige og menneskeskapte endepunkter, samtidig som kartet forenkles og tilpasses målestokken.
 
 ==== Inkludering basert på funksjon og tilknytning
@@ -182,29 +189,86 @@ Ved generalisering av stier og traktorveger for N250-produkter skal kun relevant
 
 Ved generalisering av vegnett for N250-produkter må det tas hensyn til både geometriske forenklinger og samspillet med andre temadatasett. Følgende retningslinjer skal sikre at viktige forbindelser og strukturer bevares, samtidig som kartografisk lesbarhet og tematisk konsistens opprettholdes:
 
-* *Bevaring av veggeometri i vannområder*  
-  Vegsegmenter skal ikke flyttes dersom midtlinjen ikke krysser innsjø, hav eller elv. 
 
-* *Vegobjekter som krysser riksgrensen*  
-  Alle veger som krysser nasjonal grense skal beholdes i datasettet, uavhengig av type eller funksjon. Dette sikrer kontinuitet og sammenheng i det overordnede vegnettet.
+* *Bevaring av veggeometri i vannområder*  
+  
+[cols="1,2", frame="none", grid="none"]
+
+|===
+|Vegsegmenter skal ikke flyttes dersom midtlinjen ikke krysser innsjø, hav eller elv.
+a|image::bilder\Bevaring_avveggeometri.png[width=150, align=center]
+|===
+
+* *Vegobjekter som krysser riksgrensen*
+
+[cols="1,2", frame="none", grid="none"]
+
+|===
+|Alle veger som krysser nasjonal grense skal beholdes i datasettet, uavhengig av type eller funksjon. Dette sikrer kontinuitet og sammenheng i det overordnede vegnettet.
+a|image::bilder\riksgrense_2.PNG[width=200, align=center]
+|===
+  
 
 * *Bruer og tunneler*  
-  Alle bruer og tunneler skal inkluderes i generaliseringen. Dersom lengden er under 1000 meter, skal de symboliseres som _medium terreng_ for å opprettholde tegnerekkefølge på vegene.
+
+[cols="1,2", frame="none", grid="none"]
+
+|===
+|Alle bruer og tunneler skal inkluderes i generaliseringen. Dersom lengden er under 1000 meter, skal de symboliseres som _medium terreng_ for å opprettholde tegnerekkefølge på vegene. 
+a|
+image::bilder/bru.png[width=150, align=center]
+|===
+
 
 * *Større kryss og avkjøringer*  
-  Kryss og avkjøringer fra Europaveger og Riksveger skal inkluderes, men i en forenklet form. Ramper, påkjøringsfelt og detaljerte strukturer skal utelates, og erstattes med en generalisert kryssrepresentasjon.
 
-* *Veger over dammer*  
-  Veger som krysser demninger skal justeres slik at demningen vises tydelig i kartet. Veglinjen skal flyttes til nedsiden av demningen og krysse elv i stedet for innsjø. Det skal være minimum 140 meter mellom senterlinjen til demningen og veglinjen for å sikre visuell separasjon.
+[cols="1,2", frame="none", grid="none"]
+
+|===
+|Kryss og avkjøringer fra Europaveger og Riksveger skal inkluderes, men i en forenklet form. Ramper, påkjøringsfelt og detaljerte strukturer skal utelates, og erstattes med en generalisert kryssrepresentasjon.
+a|image::bilder\mangler_avkjøringsrampe.png[Mangler avkjøringsrampe Hønefoss, width=150, align=center]
+|===
+  
+
+
+* *Veger over dammer* 
+
+[cols="1,2", frame="none", grid="none"]
+
+|===
+|Veger som krysser demninger skal justeres slik at demningen vises tydelig i kartet. Veglinjen skal flyttes til nedsiden av demningen og krysse elv i stedet for innsjø. Det skal være minimum 140 meter mellom senterlinjen til demningen og veglinjen for å sikre visuell separasjon.
+a|image::bilder\Demning_veg.png[width=150, align=center]
+|===
+ 
 
 * *Fergesamband*  
-  Alle ferger skal være korrekt tilknyttet vegnett på land. Manglende koblinger skal identifiseres og korrigeres for å sikre sammenhengende transportlinjer.
+
+[cols="1,2", frame="none", grid="none"]
+
+|===
+|Alle ferger skal være korrekt tilknyttet vegnett på land. Manglende koblinger skal identifiseres og korrigeres for å sikre sammenhengende transportlinjer.
+a|image::bilder\ferge.png[width=150, align=center]
+|===
+  
 
 * *Bruer og tunneler over hav*  
-  Bruer og tunneler som krysser havområder skal alltid inkluderes, uavhengig av vegens klassifisering. Dette er spesielt viktig for å representere forbindelser til øysamfunn, der vegnettet ellers kan være begrenset.
+
+[cols="1,2", frame="none", grid="none"]
+
+|===
+|Bruer og tunneler som krysser havområder skal alltid inkluderes, uavhengig av vegens klassifisering. Dette er spesielt viktig for å representere forbindelser til øysamfunn, der vegnettet ellers kan være begrenset.
+a|image::bilder\bru_hav.png[width=150, align=center]
+|===
+  
 
 * *Rundkjøringer*  
-  Rundkjøringer skal ikke inkluderes som egne objekter i N250 Kartdata. I stedet skal de erstattes med vanlige kryss, for å forenkle geometrien og forbedre lesbarheten i målestokken.
+
+[cols="1,2", frame="none", grid="none"]
+
+|===
+|Rundkjøringer skal ikke inkluderes som egne objekter i N250 Kartdata. I stedet skal de erstattes med vanlige kryss, for å forenkle geometrien og forbedre lesbarheten i målestokken.
+a|
+|===
   
 == 7. Spørsmål og avklaringspunkter
 
