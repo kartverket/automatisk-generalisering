@@ -53,7 +53,7 @@ def fetch_data():
     print("Fetching data")
     # Roads
     custom_arcpy.select_attribute_and_make_permanent_feature(
-        input_layer= input_n100.VegSti, # input_roads.road_output_1,
+        input_layer= Road_N100.data_preparation___calculated_boarder_hierarchy_2___n100_road.value, # input_roads.road_output_1, # input_n100.VegSti,
         expression="",
         output_name=Road_N100.test_dam__road_input__n100_road.value,
         selection_type=custom_arcpy.SelectionType.NEW_SELECTION
