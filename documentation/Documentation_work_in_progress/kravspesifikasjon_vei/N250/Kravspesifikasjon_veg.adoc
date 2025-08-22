@@ -202,6 +202,7 @@ Alle ferger skal være korrekt tilknyttet det kjørbare vegnettet på land for �
 Ved generalisering av vegnett for N250-produkter må det tas hensyn til både geometriske forenklinger og samspillet med andre temadatasett. Følgende retningslinjer skal sikre at viktige forbindelser og strukturer bevares, samtidig som kartografisk lesbarhet og tematisk konsistens opprettholdes:
 
 
+
 * *Vegsegmenter skal flyttes bort fra vannkonturen*  
   
 [cols="2,1", frame="none", grid="none"]
@@ -213,6 +214,7 @@ a|image::bilder\Bevaring_avveggeometri.png[width=150, align=center]
 
 * *Vegobjekter som krysser riksgrensen*
 
+
 [cols="2,1", frame="none", grid="none"]
 
 |===
@@ -223,16 +225,17 @@ a|image::bilder\riksgrense_2.PNG[width=200, align=center]
 
 * *Bruer og tunneler*  
 
+
 [cols="2,1", frame="none", grid="none"]
 
 |===
 |Alle bruer og tunneler skal inkluderes i generaliseringen, uavhengig av lengde. Verdien for medium skal beholdes uendret under hele generaliseringsprossessen. Det er først i symboliseringen at veger med lengde under 1000 meter skal vises som medium terreng, og ikke som medium luft, som normalt representerer bruer. Dette er nødvendig for å opprettholde korrekt tegnerekkefølge og sikre visuell kontinuitet i vegnettet.
-a|
-image::bilder/bru.png[width=150, align=center]
+a|image::bilder/bru.png[width=150, align=center]
 |===
 
 
 * *Større kryss og avkjøringer*  
+
 
 [cols="2,1", frame="none", grid="none"]
 
@@ -240,11 +243,9 @@ image::bilder/bru.png[width=150, align=center]
 |Kryss og avkjøringer skal inkluderes i datasettet, men vises i forenklet form. Ramper, påkjøringsfelt og komplekse kryssstrukturer utelates og erstattes med en generalisert kryssrepresentasjon som ivaretar vegforbindelsen uten tekniske detaljer.
 
 Innkjøringsvinkel i kryss skal være minimum 30 grader for å sikre lesbarhet. Ved symbolisering skal på- og avkjøringsramper nedklassifiseres dersom kun rampen har motorvegstatus, og tilknyttet veg ikke er motorveg. Nedklassifisering justerer vegtypen, for eksempel fra motorveg til motortrafikkveg.
-
 a|image::bilder\mangler_avkjøringsrampe.png[Mangler avkjøringsrampe Hønefoss, width=150, align=center]
 |===
   
-
 
 * *Veger over dammer* 
 
@@ -264,20 +265,20 @@ a|image::bilder\Demning_veg.png[width=150, align=center]
 |Bruer og tunneler som krysser havområder skal alltid inkluderes i datasettet, uavhengig av vegens klassifisering, funksjon eller lengde. Dette gjelder både hovedveger og mindre lokale forbindelser, så lenge de utgjør en fysisk og kjørbar forbindelse over eller under sjø.
 
 Slik inkludering er særlig viktig for å sikre en korrekt og helhetlig representasjon av vegnettet i områder med øysamfunn, der tilgangen til fastlandet ofte er begrenset og avhengig av slike konstruksjoner. Uten disse forbindelsene vil vegnettet fremstå som fragmentert, og viktige transportlinjer kan gå tapt i kartframstillingen.
-
 a|image::bilder\bru_hav.png[width=150, align=center]
 |===
   
 
 * *Rundkjøringer*  
 
+
 [cols="2,1", frame="none", grid="none"]
 
 |===
 |Rundkjøringer skal ikke vises som egne objekter i N250 Kartdata, men forenkles til vanlige kryss. Dette gjøres for å redusere geometrisk kompleksitet og forbedre lesbarheten i målestokken 1:250 000.
 Ved forenkling skal tilknyttede vegsegmenter tegnes med en minimumsvinkel på 30 grader mellom hver arm. Dersom den faktiske vinkelen er mindre, skal geometrien justeres for å oppnå tydelig kryssstruktur uten å forvrenge vegretningen.
-
 a|image::bilder\forenklet_rundkjoring.png[width=150, align=center]
+
 |===
   
 == 7. Spørsmål og avklaringspunkter
@@ -289,5 +290,3 @@ a|image::bilder\forenklet_rundkjoring.png[width=150, align=center]
 * Hvordan sjekke at passasjerferge er åpen store deler av året - kan dette omgås på noe vis?
 * 250 meter på passasjerferge, er ikke det litt kort? 
 * Skal bruer og tunneler under andre veger beholdes uansett hva? Dette gjelder jernbane, men bør dette også gjelde i forhold i hvertfall veger som krysser store veger?
-
-
