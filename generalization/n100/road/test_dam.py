@@ -46,15 +46,14 @@ def main():
 
     # Editing the roads
     resolve_road_conflicts(field)
-    snap_roads()
-    smooth_roads()
+    removing_noisy_roads()
 
 @timing_decorator
 def fetch_data():
     print("Fetching data")
     # Roads
     custom_arcpy.select_attribute_and_make_permanent_feature(
-        input_layer=input_roads.road_output_1, #input_n100.VegSti,
+        input_layer= input_n100.VegSti, # input_roads.road_output_1,
         expression="",
         output_name=Road_N100.test_dam__road_input__n100_road.value,
         selection_type=custom_arcpy.SelectionType.NEW_SELECTION
@@ -294,38 +293,148 @@ def resolve_road_conflicts(hierarchy):
     print("Road conflicts resolved! 8)")
 
 @timing_decorator
-def snap_roads():
-    print("Starts snapping roads")
+def removing_noisy_roads():
+    roads_fc = Road_N100.test_dam__resolve_road_conflicts__n100_road.value
+    buffer_fc = Road_N100.test_dam__buffer_dam__n100_road.value
+    in_fc = Road_N100.test_dam__in_roads__n100_road.value
+    out_fc = Road_N100.test_dam__out_roads__n100_road.value
+    cleaned_roads_fc = Road_N100.test_dam__cleaned_roads__n100_road.value
+    print("Fetching relevant layers...")
     arcpy.management.MakeFeatureLayer(
-        in_features=Road_N100.test_dam__resolve_road_conflicts__n100_road.value,
-        out_layer="relevant_roads_lyr"
+        in_features=roads_fc,
+        out_layer="roads_to_edit_lyr"
     )
     arcpy.management.SelectLayerByLocation(
-        in_layer="relevant_roads_lyr",
-        overlap_type="INTERSECT",
-        select_features=Road_N100.test_dam__buffer_dam__n100_road.value,
+        in_layer="roads_to_edit_lyr",
+        overlap_type="WITHIN_A_DISTANCE",
+        search_distance="1 Meters",
+        select_features=buffer_fc,
         selection_type="NEW_SELECTION"
     )
+    arcpy.management.CopyFeatures(
+        in_features="roads_to_edit_lyr",
+        out_feature_class=in_fc
+    )
+    arcpy.analysis.Erase(
+        in_features=roads_fc,
+        erase_features=buffer_fc,
+        out_feature_class=out_fc
+    )
+    print("Snapping roads to buffer...")
     arcpy.edit.Snap(
-        "relevant_roads_lyr",
-        [[
-            Road_N100.test_dam__buffer_dam__n100_road.value,
+        in_features=in_fc,
+        snap_environment=[[
+            buffer_fc,
             "VERTEX",
             "100 Meters"
         ]]
     )
-    print("Roads snapped")
 
-@timing_decorator
-def smooth_roads():
-    print("Starts smoothing roads")
-    arcpy.cartography.SimplifyLine(
-        in_features=Road_N100.test_dam__resolve_road_conflicts__n100_road.value,
-        out_feature_class=Road_N100.test_dam__smooth_roads__n100_road.value,
-        algorithm="POINT_REMOVE",
-        tolerance="10 Meters"
+    """
+    print("Finding intersection points...")
+    intersect_points = "memory/intersect_points"
+    arcpy.analysis.Intersect(
+        in_features=[in_fc, out_fc],
+        out_feature_class=intersect_points,
+        join_attributes="ALL",
+        output_type="POINT"
     )
-    print("Roads smoothed")
+    print("Splitting roads at intersection points...")
+    split_in_fc = "memory/split_in_fc"
+    arcpy.management.SplitLineAtPoint(
+        in_features=in_fc,
+        point_features=intersect_points,
+        out_feature_class=split_in_fc,
+        search_radius="1 Meters"
+    )
+    print("Extracting start and end points...")
+    start_points = "memory/start_points"
+    end_points = "memory/end_points"
+    arcpy.management.FeatureVerticesToPoints(
+        split_in_fc,
+        start_points,
+        "START"
+    )
+    arcpy.management.FeatureVerticesToPoints(
+        split_in_fc,
+        end_points,
+        "END"
+    )
+    print("Performing spatial join to find closest points...")
+    start_join = "memory/start_join"
+    end_join = "memory/end_join"
+    arcpy.analysis.SpatialJoin(
+        start_points,
+        intersect_points,
+        start_join,
+        "JOIN_ONE_TO_ONE",
+        match_option="CLOSEST",
+        search_radius="1 Meters"
+    )
+    arcpy.analysis.SpatialJoin(
+        end_points,
+        intersect_points,
+        end_join, "JOIN_ONE_TO_ONE",
+        match_option="CLOSEST",
+        search_radius="1 Meters"
+    )
+    print("Identifying segments that start and end at intersection points...")
+    start_ids = set()
+    with arcpy.da.SearchCursor(start_join, ["ORIG_FID", "Join_Count"]) as cursor:
+        for row in cursor:
+            if row[1] > 0:
+                start_ids.add(row[0])
+    end_ids = set()
+    with arcpy.da.SearchCursor(end_join, ["ORIG_FID", "Join_Count"]) as cursor:
+        for row in cursor:
+            if row[1] > 0:
+                end_ids.add(row[0])
+    segment_ids = start_ids & end_ids
+    selected_segments = "memory/selected_segments"
+    where_clause = f"OBJECTID IN ({','.join(map(str, segment_ids))})"
+    arcpy.management.MakeFeatureLayer(
+        split_in_fc,
+        "split_in_fc_lyr"
+    )
+    arcpy.management.SelectLayerByAttribute(
+        "split_in_fc_lyr",
+        "NEW_SELECTION",
+        where_clause
+    )
+    arcpy.management.CopyFeatures(
+        "split_in_fc_lyr",
+        selected_segments
+    )
+    print("Merging selected segments...")
+    arcpy.management.Merge(
+        inputs=[selected_segments, out_fc],
+        output=cleaned_roads_fc
+    )
+    arcpy.management.Integrate(
+        in_features=[cleaned_roads_fc],
+        cluster_tolerance="5 Meters"
+    )
+"""
+
+
+
+
+    #"""
+    print("Connects roads together...")
+    arcpy.Snap_edit(
+        in_features=in_fc,
+        snap_environment=[[
+            out_fc,
+            "END",
+            "10 Meters"
+        ]]
+    )
+    arcpy.management.Merge(
+        inputs=[in_fc, out_fc],
+        output=cleaned_roads_fc
+    )
+    #"""
+    print("Roads modified and cleaned!")
 
 if __name__=="__main__":
     main()

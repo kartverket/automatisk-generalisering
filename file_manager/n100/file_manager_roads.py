@@ -1321,7 +1321,17 @@ class Road_N100(Enum):
         description="resolve_road_docu"
     )
 
-    test_dam__smooth_roads__n100_road = file_manager.generate_file_name_gdb(
+    test_dam__in_roads__n100_road = file_manager.generate_file_name_gdb(
         script_source_name=dam_file,
-        description="smooth_roads"
+        description="in_roads"
+    )
+
+    test_dam__out_roads__n100_road = file_manager.generate_file_name_gdb(
+        script_source_name=dam_file,
+        description="out_roads"
+    )
+
+    test_dam__cleaned_roads__n100_road = file_manager.generate_file_name_gdb(
+        script_source_name=dam_file,
+        description="cleaned_roads"
     )
