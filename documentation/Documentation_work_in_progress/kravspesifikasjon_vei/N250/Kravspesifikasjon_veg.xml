@@ -1,0 +1,617 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?asciidoc-toc?>
+<?asciidoc-numbered?>
+<article xmlns="http://docbook.org/ns/docbook" xmlns:xl="http://www.w3.org/1999/xlink" version="5.0" xml:lang="en">
+<info>
+<title>Kravspesifikasjon</title>
+<subtitle>N250 - VEG</subtitle>
+<date>2025-08-22</date>
+</info>
+<section xml:id="_innledning">
+<title>Innledning</title>
+<simpara>Denne kravspesifikasjonen har som formål å definere kriteriene for N250-veg på en måte som er tilpasset automatisert generalisering. Eksisterende kriterier, slik de fremkommer i gjeldende arbeidsbeskrivelse og produktspesifikasjon, er i hovedsak utviklet med tanke på manuelle generaliseringsprosesser. Dette medfører at de ofte ikke lar seg direkte anvende i automatiserte arbeidsflyter. For å sikre konsistens, kvalitet og effektivitet i digital kartproduksjon, er det derfor nødvendig med en revidert spesifikasjon som ivaretar kravene til automatisering.</simpara>
+</section>
+<section xml:id="_modellspesifikt">
+<title>Modellspesifikt</title>
+<simpara>Modellspesifikke egenskaper omfatter både de attributtene som kreves for å oppfylle produktspesifikasjonen, og interne krav knyttet til visuell representasjon og symbologi. Disse egenskapene danner grunnlaget for hvilke data som skal inkluderes i den automatiserte generaliseringen av N250-veg, og sikrer at resultatet er både teknisk korrekt og kartografisk lesbart. Oversikt over relevante egenskaper og tillatte verdier fremgår av Tabell 1.</simpara>
+<table frame="all" rowsep="1" colsep="1">
+<title>Tabell 1: Egenskaper</title>
+<?dbhtml table-width="100%"?>
+<?dbfo table-width="100%"?>
+<?dblatex table-width="100%"?>
+<tgroup cols="3">
+<colspec colname="col_1" colwidth="85*"/>
+<colspec colname="col_2" colwidth="255*"/>
+<colspec colname="col_3" colwidth="85*"/>
+<thead>
+<row>
+<entry align="left" valign="top">Navn</entry>
+<entry align="left" valign="top">Godkjente verdier</entry>
+<entry align="left" valign="top">Påkrevd</entry>
+</row>
+</thead>
+<tbody>
+<row>
+<entry align="left" valign="top"><simpara>objtype</simpara></entry>
+<entry align="left" valign="top"><simpara>Vegsenterlinje, Barmarksløype, Sti, Traktorveg</simpara></entry>
+<entry align="left" valign="top"><simpara>ja</simpara></entry>
+</row>
+<row>
+<entry align="left" valign="top"><simpara>vegkategori</simpara></entry>
+<entry align="left" valign="top"><simpara>E, F, K, P, R, Udefinert</simpara></entry>
+<entry align="left" valign="top"><simpara>Ja, (Udefinert)</simpara></entry>
+</row>
+<row>
+<entry align="left" valign="top"><simpara>vegstatus</simpara></entry>
+<entry align="left" valign="top"><simpara><emphasis>*A* (anlegg)</emphasis>, <emphasis role="strong">P</emphasis> (planlagt), <emphasis role="strong">V</emphasis> (eksisterendeVeg), Udefinert</simpara></entry>
+<entry align="left" valign="top"><simpara>Ja, (Udefinert)</simpara></entry>
+</row>
+<row>
+<entry align="left" valign="top"><simpara>vegnummer</simpara></entry>
+<entry align="left" valign="top"><simpara>nummer, (-9999) Udefinert</simpara></entry>
+<entry align="left" valign="top"><simpara>Ja, ((-9999) Udefinert)</simpara></entry>
+</row>
+<row>
+<entry align="left" valign="top"><simpara>motorvegtype</simpara></entry>
+<entry align="left" valign="top"><simpara>Ikke motorveg, motortrafikkveg, motorveg, Udefinert</simpara></entry>
+<entry align="left" valign="top"><simpara>Ja, (Udefinert)</simpara></entry>
+</row>
+<row>
+<entry align="left" valign="top"><simpara>rutemerkering</simpara></entry>
+<entry align="left" valign="top"><simpara>Ja, Nei, Udefinert</simpara></entry>
+<entry align="left" valign="top"><simpara>Ja, (Udefinert)</simpara></entry>
+</row>
+<row>
+<entry align="left" valign="top"><simpara>vedlikeh</simpara></entry>
+<entry align="left" valign="top"><simpara>Andre, DNT eller ukjent</simpara></entry>
+<entry align="left" valign="top"><simpara>Ja, (Udefinert)</simpara></entry>
+</row>
+<row>
+<entry align="left" valign="top"><simpara>medium</simpara></entry>
+<entry align="left" valign="top"><simpara><emphasis role="strong">B</emphasis> (I bygning), <emphasis role="strong">L</emphasis> (I luft), <emphasis role="strong">T</emphasis> (På terrenget), <emphasis role="strong">U</emphasis> (Under terrenget)</simpara></entry>
+<entry align="left" valign="top"><simpara>Ja, (Udefinert)</simpara></entry>
+</row>
+<row>
+<entry align="left" valign="top"><simpara>oppdateringsdato</simpara></entry>
+<entry align="left" valign="top"></entry>
+<entry align="left" valign="top"><simpara>ja</simpara></entry>
+</row>
+<row>
+<entry align="left" valign="top"><simpara>målemetode</simpara></entry>
+<entry align="left" valign="top"><simpara>gen</simpara></entry>
+<entry align="left" valign="top"><simpara>ja</simpara></entry>
+</row>
+<row>
+<entry align="left" valign="top"><simpara>nøyaktighet</simpara></entry>
+<entry align="left" valign="top"><simpara>5000</simpara></entry>
+<entry align="left" valign="top"><simpara>ja</simpara></entry>
+</row>
+</tbody>
+</tgroup>
+</table>
+</section>
+<section xml:id="_kartografiske_prinsipper">
+<title>Kartografiske prinsipper</title>
+<simpara>For å operasjonalisere kravene til N250-veg må kartografiske vurderinger og visuelle prioriteringer oversettes til presise regler og parametere. Dette dokumentet søker å konkretisere disse vurderingene, slik at automatisert generalisering kan etterligne manuelle prosesser. I de følgende seksjonene presenteres kriterier for hvilke vegobjekter som skal inkluderes, forenkles eller utelates, basert på egenskaper som vegkategori, funksjonell betydning, geografisk kontekst og tilknytning til annen infrastruktur.</simpara>
+<simpara>Disse reglene er strukturert etter vegkategori og type, og inneholder både absolutte krav og skjønnsmessige vurderinger som må kvantifiseres for å kunne implementeres teknisk. Spørsmål og avklaringspunkter er markert for videre diskusjon og presisering.</simpara>
+</section>
+<section xml:id="_generalisering_per_vegkategori">
+<title>Generalisering per Vegkategori</title>
+<section xml:id="_europaveger_og_riksveger">
+<title>Europaveger og Riksveger</title>
+<informalfigure role="text-center">
+<mediaobject>
+<imageobject>
+<imagedata fileref="images/bilder/Europaveg_riksveg.png"/>
+</imageobject>
+<textobject><phrase>Europaveg riksveg</phrase></textobject>
+</mediaobject>
+</informalfigure>
+<informalexample role="formelboks">
+<itemizedlist>
+<title>Utvalgskriterier:</title>
+<listitem>
+<simpara>Alle veger av vegkategori Europa- og Riksveger skal med i N250 Kartdata</simpara>
+</listitem>
+<listitem>
+<simpara>Motorvegtype skal være like som N50 Kartdata.</simpara>
+</listitem>
+</itemizedlist>
+</informalexample>
+<sidebar role="formelboks">
+<itemizedlist>
+<title>Geometriregler:</title>
+<listitem>
+<simpara>Alle på- og avkjøringsramper på europa og riksveger skal med i forenklet form.</simpara>
+</listitem>
+</itemizedlist>
+</sidebar>
+</section>
+<section xml:id="_generalisering_av_fylkesveger">
+<title>Generalisering av fylkesveger</title>
+<informalfigure role="text-center">
+<mediaobject>
+<imageobject>
+<imagedata fileref="images/bilder/Fylkesveger.png"/>
+</imageobject>
+<textobject><phrase>Fylkesveger</phrase></textobject>
+</mediaobject>
+</informalfigure>
+<simpara>Vegnettet skal i hovedsak inkludere de fleste fylkesveger, men med en viss grad av generalisering for å sikre lesbarhet og hensiktsmessig kartpresentasjon. Fylkesveiene kategoriseres som enten funksjonell vegklasse 3, 4 eller 5.</simpara>
+<section xml:id="_filtrering_basert_på_funksjonell_vegklasse">
+<title>filtrering basert på funksjonell vegklasse</title>
+<informaltable frame="none" rowsep="0" colsep="0">
+<tgroup cols="2">
+<colspec colname="col_1" colwidth="50*"/>
+<colspec colname="col_2" colwidth="50*"/>
+<tbody>
+<row>
+<entry align="left" valign="top"><sidebar role="formelboks">
+<simpara><emphasis role="strong">Funksjonell vegklasse = 3</emphasis></simpara>
+<simpara>Alle fylkesveger med funksjonellvegklasse 3, skal <emphasis role="strong">alltid</emphasis> med i N250 kartdata.</simpara>
+</sidebar></entry>
+<entry align="left" valign="top"><sidebar role="formelboks">
+<simpara><emphasis role="strong">Funksjonell vegklasse = 4 og 5</emphasis></simpara>
+<simpara>Fylkesveger med Funksjonellveiklasse 4 eller 5, skal kun inkluderes dersom vegnettet i området ikke er for tett.</simpara>
+</sidebar></entry>
+</row>
+</tbody>
+</tgroup>
+</informaltable>
+</section>
+<section xml:id="_kriterier_for_fylkeveger_med_funksjonell_vegklasse_4_og_5">
+<title>Kriterier for Fylkeveger med funksjonell vegklasse 4 og 5</title>
+<informalexample>
+<itemizedlist>
+<title>Utvalgskriterier:</title>
+<listitem>
+<simpara>Lengde er større enn 3000 meter</simpara>
+</listitem>
+<listitem>
+<simpara>Vegen fører inn til:</simpara>
+<itemizedlist>
+<listitem>
+<simpara>Tettbebyggelse</simpara>
+</listitem>
+<listitem>
+<simpara>Industriområde</simpara>
+</listitem>
+</itemizedlist>
+</listitem>
+<listitem>
+<simpara>Endepunkt ligger nærmere enn 500 meter fra:</simpara>
+<itemizedlist>
+<listitem>
+<simpara>Grunnriss</simpara>
+</listitem>
+<listitem>
+<simpara>Skole</simpara>
+</listitem>
+<listitem>
+<simpara>Industribygg</simpara>
+</listitem>
+<listitem>
+<simpara>Kirke</simpara>
+</listitem>
+</itemizedlist>
+</listitem>
+<listitem>
+<simpara>Alle Fylkeveger som krysse jernbanenettet skal med i N250 Kartdata.</simpara>
+</listitem>
+</itemizedlist>
+</informalexample>
+</section>
+<section xml:id="_generalisering_av_kommunale_veger">
+<title>Generalisering av kommunale veger</title>
+<informalfigure role="text-center">
+<mediaobject>
+<imageobject>
+<imagedata fileref="images/bilder/kommunaleveger.png"/>
+</imageobject>
+<textobject><phrase>kommunaleveger</phrase></textobject>
+</mediaobject>
+</informalfigure>
+<simpara>Kommunale veger er klassifisert i to funksjonelle vegklasser, hvor 5 representerer veger med høyere betydning. Det er imidlertid kjent at kvaliteten på denne klassifiseringen varierer mellom kommuner, og at det ikke alltid er konsekvent skille mellom viktige og mindre viktige kommunale veger.</simpara>
+<informaltable frame="none" rowsep="0" colsep="0">
+<tgroup cols="2">
+<colspec colname="col_1" colwidth="50*"/>
+<colspec colname="col_2" colwidth="50*"/>
+<tbody>
+<row>
+<entry align="left" valign="top"><sidebar role="formelboks">
+<simpara><emphasis role="strong">Funksjonell vegklasse = 5</emphasis></simpara>
+<simpara>I områder med grafiske konflikter mellom kommunaleveger med verdier 5 og 6, skal 6 vike.</simpara>
+</sidebar></entry>
+<entry align="left" valign="top"><sidebar role="formelboks">
+<simpara><emphasis role="strong">Funksjonell vegklasse = 6</emphasis></simpara>
+<simpara>Fylkesveger med Funksjonellveiklasse 6, skal kun med hvis den har en viktig funksjon beskrevet nedenfor</simpara>
+</sidebar></entry>
+</row>
+</tbody>
+</tgroup>
+</informaltable>
+<simpara>I områder med tett vegnett vil kun de viktigste kommunale vegene beholdes, basert på tilgjengelig klassifisering. Øvrige kommunale veger vurderes for inkludering dersom ett eller flere av følgende kriterier er oppfylt:</simpara>
+<informalexample>
+<itemizedlist>
+<title>Utvalgskriterier:</title>
+<listitem>
+<simpara>Vegen er lengre enn 3000 meter</simpara>
+</listitem>
+<listitem>
+<simpara>fører inn til</simpara>
+<itemizedlist>
+<listitem>
+<simpara>tettbebyggelse,</simpara>
+</listitem>
+<listitem>
+<simpara>industriområde</simpara>
+</listitem>
+<listitem>
+<simpara>eller har endepunkt nærmere enn 500 meter fra</simpara>
+<itemizedlist>
+<listitem>
+<simpara>grunnriss,</simpara>
+</listitem>
+<listitem>
+<simpara>skole,</simpara>
+</listitem>
+<listitem>
+<simpara>industribygg eller</simpara>
+</listitem>
+<listitem>
+<simpara>kirke</simpara>
+</listitem>
+</itemizedlist>
+</listitem>
+</itemizedlist>
+</listitem>
+<listitem>
+<simpara>Vegen går under eller over jernbanenett</simpara>
+</listitem>
+<listitem>
+<simpara>Vegen er parallelle med annen kommunal veg, men den ene traseen kan fjernes dersom avstanden mellom dem er under 1000 meter og begge er over 2000 meter lange</simpara>
+</listitem>
+<listitem>
+<simpara>Vegen kan fjernes hvis det er registrert en bom og det finnes alternativ veg til samme endepunkt</simpara>
+</listitem>
+</itemizedlist>
+</informalexample>
+</section>
+<section xml:id="_generalisering_av_private_veger">
+<title>Generalisering av private veger</title>
+<informalfigure role="text-center">
+<mediaobject>
+<imageobject>
+<imagedata fileref="images/bilder/private.png"/>
+</imageobject>
+<textobject><phrase>private</phrase></textobject>
+</mediaobject>
+</informalfigure>
+<simpara>Private veger skal kun inkluderes i N250-produkter dersom de har en funksjonell rolle i å binde sammen det overordnede vegnettet eller koble til annen relevant infrastruktur. Formålet er å redusere detaljnivået samtidig som viktige forbindelser bevares.</simpara>
+<informalexample>
+<itemizedlist>
+<title>Utvalgskriterier:</title>
+<listitem>
+<simpara>Vegen er lengre enn 4000 meter</simpara>
+</listitem>
+<listitem>
+<simpara>fører inn til</simpara>
+<itemizedlist>
+<listitem>
+<simpara>tettbebyggelse,</simpara>
+</listitem>
+<listitem>
+<simpara>industriområde</simpara>
+</listitem>
+<listitem>
+<simpara>eller har endepunkt nærmere enn 500 meter fra</simpara>
+<itemizedlist>
+<listitem>
+<simpara>grunnriss,</simpara>
+</listitem>
+<listitem>
+<simpara>skole,</simpara>
+</listitem>
+<listitem>
+<simpara>industribygg eller</simpara>
+</listitem>
+<listitem>
+<simpara>kirke</simpara>
+</listitem>
+</itemizedlist>
+</listitem>
+</itemizedlist>
+</listitem>
+<listitem>
+<simpara>Private veger skal inkluderes dersom de fungerer som bindeledd mellom kommunale veger, fylkesveger, riksveger eller europaveger.</simpara>
+</listitem>
+<listitem>
+<simpara>Parallelle private veger med lengde over 2000 meter og som ligger nærmere enn 1000 meter fra hverandre, skal en av traseene fjernes.</simpara>
+</listitem>
+<listitem>
+<simpara>Private veger under/over jernbanenett tas med.</simpara>
+</listitem>
+<listitem>
+<simpara>Private veger med registrert bom skal fjernes dersom det finnes alternativ veg til samme endepunkt.</simpara>
+</listitem>
+</itemizedlist>
+</informalexample>
+</section>
+</section>
+<section xml:id="_generalisering_av_sti_og_traktorveg">
+<title>Generalisering av sti og traktorveg</title>
+<informalfigure role="text-center">
+<mediaobject>
+<imageobject>
+<imagedata fileref="images/bilder/traktorveg_sti.png"/>
+</imageobject>
+<textobject><phrase>traktorveg sti</phrase></textobject>
+</mediaobject>
+</informalfigure>
+<simpara>Ved generalisering av stier og traktorveger for N250-produkter skal kun relevante og funksjonelle forbindelser inkluderes. Formålet er å bevare viktige ferdselsårer mellom naturlige og menneskeskapte endepunkter, samtidig som kartet forenkles og tilpasses målestokken.</simpara>
+<section xml:id="_inkludering_basert_på_funksjon_og_tilknytning">
+<title>Inkludering basert på funksjon og tilknytning</title>
+<itemizedlist>
+<listitem>
+<simpara><emphasis role="strong">Merkede stier</emphasis> skal inkluderes dersom de forbinder naturlige endepunkter som tettbebyggelse, veger, fjelltopper, vann eller hytter, og har en lengde på minimum 4000 meter.</simpara>
+</listitem>
+<listitem>
+<simpara><emphasis role="strong">Traktorveger</emphasis> skal inkluderes på samme vilkår: de må ha naturlige endepunkter og være minst 4000 meter lange.</simpara>
+</listitem>
+<listitem>
+<simpara>I bynære områder med tett nettverk av merkede stier skal hovedtraseer prioriteres.</simpara>
+</listitem>
+</itemizedlist>
+</section>
+<section xml:id="_justering_og_filtrering">
+<title>Justering og filtrering</title>
+<itemizedlist>
+<listitem>
+<simpara>Stier som kommer i konflikt med bebyggelse eller vannkontur skal flyttes for å unngå overlapp og sikre lesbarhet.</simpara>
+</listitem>
+<listitem>
+<simpara>Stier og traktorveger som går under jernbanenett skal beholdes.</simpara>
+</listitem>
+<listitem>
+<simpara>Parallelle stier eller traktorveger med lengde over 2000 meter og som ligger nærmere enn 1000 meter fra hverandre, skal vurderes for sammenslåing eller fjerning av én av traseene.</simpara>
+</listitem>
+<listitem>
+<simpara>Stier som krysser isbreer skal utelates fra datasettet.</simpara>
+</listitem>
+<listitem>
+<simpara>Stier med mediumverdi <emphasis role="strong">L</emphasis> (luft) skal ikke inkluderes.
+I N50 Kartdata forekommer dette i enkelte tilfeller, men for N250 er det vurdert som overflødig informasjon.</simpara>
+</listitem>
+</itemizedlist>
+</section>
+</section>
+<section xml:id="_fergeforbindelser_i_n250_kartdata">
+<title>Fergeforbindelser i N250 Kartdata</title>
+<informalfigure role="text-center">
+<mediaobject>
+<imageobject>
+<imagedata fileref="images/bilder/ferige_2.png"/>
+</imageobject>
+<textobject><phrase>ferige 2</phrase></textobject>
+</mediaobject>
+</informalfigure>
+<simpara>Alle ferger skal være korrekt tilknyttet det kjørbare vegnettet på land for å sikre sammenhengende transportlinjer. Dette gjelder uavhengig av vegtype – enten det er privat veg, kommunal veg, fylkesveg, riksveg eller Europaveg – så lenge vegen er kjørbar. Fergeforbindelser skal kobles til nærmeste tilgjengelige vegpunkt på begge sider av overfarten, slik at det ikke oppstår brudd i nettverket.</simpara>
+<section xml:id="_ved_registrering_av_ferger_gjelder_følgende_retningslinjer">
+<title>Ved registrering av ferger gjelder følgende retningslinjer:</title>
+<itemizedlist>
+<listitem>
+<simpara>Dersom bilferge og passasjerferge går parallelt fra samme anløpssted, skal kun bilfergen beholdes.</simpara>
+</listitem>
+<listitem>
+<simpara>Hvis en bilferge er tilknyttet to ulike vegnummere, skal det laveste nummeret benyttes.</simpara>
+</listitem>
+<listitem>
+<simpara>Passasjerferger over innsjøer med lengde over 250 meter skal beholdes dersom de inngår i vegnett eller stinett.</simpara>
+</listitem>
+<listitem>
+<simpara>Alle ferger må være koblet til enten vegnettet eller stinettet for å sikre nettverkets kontinuitet.</simpara>
+</listitem>
+</itemizedlist>
+</section>
+</section>
+<section xml:id="_tematiske_hensyn_og_spesialtilfeller">
+<title>Tematiske hensyn og spesialtilfeller</title>
+<simpara>Ved generalisering av vegnett for N250-produkter må det tas hensyn til både geometriske forenklinger og samspillet med andre temadatasett. Følgende retningslinjer skal sikre at viktige forbindelser og strukturer bevares, samtidig som kartografisk lesbarhet og tematisk konsistens opprettholdes:</simpara>
+<itemizedlist>
+<listitem>
+<simpara><emphasis role="strong">Vegsegmenter skal flyttes bort fra vannkonturen</emphasis></simpara>
+</listitem>
+</itemizedlist>
+<informaltable frame="none" rowsep="0" colsep="0">
+<tgroup cols="2">
+<colspec colname="col_1" colwidth="66.6666*"/>
+<colspec colname="col_2" colwidth="33.3334*"/>
+<tbody>
+<row>
+<entry align="left" valign="top"><simpara>Det er tillatt at vegsegmentet ligger inntil vannkonturen, men den må flyttes dersom den krysser eller ligger i vann. For å unngå visuell overlapp, anbefales en minimumsavstand på 60 meter i N250, tilsvarende 0,25 mm på kartet. Dette er en ønsket avstand, men ikke et absolutt krav.</simpara></entry>
+<entry align="left" valign="top"><informalfigure>
+<mediaobject>
+<imageobject>
+<imagedata fileref="images/bilder/Bevaring_avveggeometri.png" contentwidth="150" align="center"/>
+</imageobject>
+<textobject><phrase>Bevaring avveggeometri</phrase></textobject>
+</mediaobject>
+</informalfigure></entry>
+</row>
+</tbody>
+</tgroup>
+</informaltable>
+<itemizedlist>
+<listitem>
+<simpara><emphasis role="strong">Vegobjekter som krysser riksgrensen</emphasis></simpara>
+</listitem>
+</itemizedlist>
+<informaltable frame="none" rowsep="0" colsep="0">
+<tgroup cols="2">
+<colspec colname="col_1" colwidth="66.6666*"/>
+<colspec colname="col_2" colwidth="33.3334*"/>
+<tbody>
+<row>
+<entry align="left" valign="top"><simpara>Alle veger som krysser den nasjonale grensen skal inkluderes i datasettet, uavhengig av vegtype, funksjon eller klassifisering. Dette gjelder både hovedveger, lokalveger, stier og andre forbindelser. Formålet er å sikre kontinuitet og sammenheng i det overordnede vegnettet, slik at kartdataene gir en helhetlig og korrekt fremstilling av infrastrukturen på tvers av landegrenser. Dette er særlig viktig for navigasjon, analyse og planlegging, der fullstendig nettverksinformasjon er avgjørende.</simpara></entry>
+<entry align="left" valign="top"><informalfigure>
+<mediaobject>
+<imageobject>
+<imagedata fileref="images/bilder/riksgrense_2.PNG" contentwidth="200" align="center"/>
+</imageobject>
+<textobject><phrase>riksgrense 2</phrase></textobject>
+</mediaobject>
+</informalfigure></entry>
+</row>
+</tbody>
+</tgroup>
+</informaltable>
+<itemizedlist>
+<listitem>
+<simpara><emphasis role="strong">Bruer og tunneler</emphasis></simpara>
+</listitem>
+</itemizedlist>
+<informaltable frame="none" rowsep="0" colsep="0">
+<tgroup cols="2">
+<colspec colname="col_1" colwidth="66.6666*"/>
+<colspec colname="col_2" colwidth="33.3334*"/>
+<tbody>
+<row>
+<entry align="left" valign="top"><simpara>Alle bruer og tunneler skal inkluderes i generaliseringen, uavhengig av lengde. Verdien for medium skal beholdes uendret under hele generaliseringsprossessen. Det er først i symboliseringen at veger med lengde under 1000 meter skal vises som medium terreng, og ikke som medium luft, som normalt representerer bruer. Dette er nødvendig for å opprettholde korrekt tegnerekkefølge og sikre visuell kontinuitet i vegnettet.</simpara></entry>
+<entry align="left" valign="top"><informalfigure>
+<mediaobject>
+<imageobject>
+<imagedata fileref="images/bilder/bru.png" contentwidth="150" align="center"/>
+</imageobject>
+<textobject><phrase>bru</phrase></textobject>
+</mediaobject>
+</informalfigure></entry>
+</row>
+</tbody>
+</tgroup>
+</informaltable>
+<itemizedlist>
+<listitem>
+<simpara><emphasis role="strong">Større kryss og avkjøringer</emphasis></simpara>
+</listitem>
+</itemizedlist>
+<informaltable frame="none" rowsep="0" colsep="0">
+<tgroup cols="2">
+<colspec colname="col_1" colwidth="66.6666*"/>
+<colspec colname="col_2" colwidth="33.3334*"/>
+<tbody>
+<row>
+<entry align="left" valign="top"><simpara>Kryss og avkjøringer skal inkluderes i datasettet, men vises i forenklet form. Ramper, påkjøringsfelt og komplekse kryssstrukturer utelates og erstattes med en generalisert kryssrepresentasjon som ivaretar vegforbindelsen uten tekniske detaljer.</simpara><simpara>Innkjøringsvinkel i kryss skal være minimum 30 grader for å sikre lesbarhet. Ved symbolisering skal på- og avkjøringsramper nedklassifiseres dersom kun rampen har motorvegstatus, og tilknyttet veg ikke er motorveg. Nedklassifisering justerer vegtypen, for eksempel fra motorveg til motortrafikkveg.</simpara></entry>
+<entry align="left" valign="top"><informalfigure>
+<mediaobject>
+<imageobject>
+<imagedata fileref="images/bilder/mangler_avkjøringsrampe.png" contentwidth="150" align="center"/>
+</imageobject>
+<textobject><phrase>Mangler avkjøringsrampe Hønefoss</phrase></textobject>
+</mediaobject>
+</informalfigure></entry>
+</row>
+</tbody>
+</tgroup>
+</informaltable>
+<itemizedlist>
+<listitem>
+<simpara><emphasis role="strong">Veger over dammer</emphasis></simpara>
+</listitem>
+</itemizedlist>
+<informaltable frame="none" rowsep="0" colsep="0">
+<tgroup cols="2">
+<colspec colname="col_1" colwidth="66.6666*"/>
+<colspec colname="col_2" colwidth="33.3334*"/>
+<tbody>
+<row>
+<entry align="left" valign="top"><simpara>Veger som krysser demninger skal justeres slik at demningen vises klart i kartet. Veglinjen flyttes til nedsiden av demningen og skal krysse eventuelt elva, ikke innsjøen, for å unngå visuell konflikt. For å  Det skal være minimum 140 meter mellom senterlinjen til demningen og veglinjen for å sikre tydelig separasjon og god lesbarhet.</simpara></entry>
+<entry align="left" valign="top"><informalfigure>
+<mediaobject>
+<imageobject>
+<imagedata fileref="images/bilder/Demning_veg.png" contentwidth="150" align="center"/>
+</imageobject>
+<textobject><phrase>Demning veg</phrase></textobject>
+</mediaobject>
+</informalfigure></entry>
+</row>
+</tbody>
+</tgroup>
+</informaltable>
+<itemizedlist>
+<listitem>
+<simpara><emphasis role="strong">Bruer og tunneler over hav</emphasis></simpara>
+</listitem>
+</itemizedlist>
+<informaltable frame="none" rowsep="0" colsep="0">
+<tgroup cols="2">
+<colspec colname="col_1" colwidth="66.6666*"/>
+<colspec colname="col_2" colwidth="33.3334*"/>
+<tbody>
+<row>
+<entry align="left" valign="top"><simpara>Bruer og tunneler som krysser havområder skal alltid inkluderes i datasettet, uavhengig av vegens klassifisering, funksjon eller lengde. Dette gjelder både hovedveger og mindre lokale forbindelser, så lenge de utgjør en fysisk og kjørbar forbindelse over eller under sjø.</simpara><simpara>Slik inkludering er særlig viktig for å sikre en korrekt og helhetlig representasjon av vegnettet i områder med øysamfunn, der tilgangen til fastlandet ofte er begrenset og avhengig av slike konstruksjoner. Uten disse forbindelsene vil vegnettet fremstå som fragmentert, og viktige transportlinjer kan gå tapt i kartframstillingen.</simpara></entry>
+<entry align="left" valign="top"><informalfigure>
+<mediaobject>
+<imageobject>
+<imagedata fileref="images/bilder/bru_hav.png" contentwidth="150" align="center"/>
+</imageobject>
+<textobject><phrase>bru hav</phrase></textobject>
+</mediaobject>
+</informalfigure></entry>
+</row>
+</tbody>
+</tgroup>
+</informaltable>
+<itemizedlist>
+<listitem>
+<simpara><emphasis role="strong">Rundkjøringer</emphasis></simpara>
+</listitem>
+</itemizedlist>
+<informaltable frame="none" rowsep="0" colsep="0">
+<tgroup cols="2">
+<colspec colname="col_1" colwidth="66.6666*"/>
+<colspec colname="col_2" colwidth="33.3334*"/>
+<tbody>
+<row>
+<entry align="left" valign="top"><simpara>Rundkjøringer skal ikke vises som egne objekter i N250 Kartdata, men forenkles til vanlige kryss. Dette gjøres for å redusere geometrisk kompleksitet og forbedre lesbarheten i målestokken 1:250 000.
+Ved forenkling skal tilknyttede vegsegmenter tegnes med en minimumsvinkel på 30 grader mellom hver arm. Dersom den faktiske vinkelen er mindre, skal geometrien justeres for å oppnå tydelig kryssstruktur uten å forvrenge vegretningen.</simpara></entry>
+<entry align="left" valign="top"><informalfigure>
+<mediaobject>
+<imageobject>
+<imagedata fileref="images/bilder/forenklet_rundkjoring.png" contentwidth="150" align="center"/>
+</imageobject>
+<textobject><phrase>forenklet rundkjoring</phrase></textobject>
+</mediaobject>
+</informalfigure></entry>
+</row>
+</tbody>
+</tgroup>
+</informaltable>
+</section>
+</section>
+<section xml:id="_7_spørsmål_og_avklaringspunkter">
+<title>7. Spørsmål og avklaringspunkter</title>
+<itemizedlist>
+<listitem>
+<simpara>Hva er terskelverdien for "for tett" vegnett?</simpara>
+</listitem>
+<listitem>
+<simpara>Skal avskilte kjørebaner slås sammen, og i så fall ved hvilken avstand?</simpara>
+</listitem>
+<listitem>
+<simpara>Hvordan identifiseres hovedtraseer i bynære områder med tett nettverk av stier?</simpara>
+</listitem>
+<listitem>
+<simpara>Hva er en for spiss vinkel inn i ett kryss? Jeg har satt 30, men har vi noe tall på dette?</simpara>
+</listitem>
+<listitem>
+<simpara>Hvordan sjekke at passasjerferge er åpen store deler av året - kan dette omgås på noe vis?</simpara>
+</listitem>
+<listitem>
+<simpara>250 meter på passasjerferge, er ikke det litt kort?</simpara>
+</listitem>
+<listitem>
+<simpara>Skal bruer og tunneler under andre veger beholdes uansett hva? Dette gjelder jernbane, men bør dette også gjelde i forhold i hvertfall veger som krysser store veger?</simpara>
+</listitem>
+</itemizedlist>
+</section>
+</article>
