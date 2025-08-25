@@ -1271,6 +1271,16 @@ class Road_N100(Enum):
         description="relevante_demninger_single"
     )
 
+    test_dam__relevant_water__n100_road = file_manager.generate_file_name_gdb(
+        script_source_name=dam_file,
+        description="relevante_vann"
+    )
+
+    test_dam__relevant_water_single__n100_road = file_manager.generate_file_name_gdb(
+        script_source_name=dam_file,
+        description="relevante_vann_single"
+    )
+
     test_dam__buffer_dam__n100_road = file_manager.generate_file_name_gdb(
         script_source_name=dam_file,
         description="buffer_rundt_demninger"
@@ -1280,10 +1290,15 @@ class Road_N100(Enum):
         script_source_name=dam_file,
         description="buffer_rundt_demning_som_linjer"
     )
-
+    
     test_dam__buffer_dam_as_line_single__n100_road = file_manager.generate_file_name_gdb(
         script_source_name=dam_file,
         description="buffer_rundt_demning_som_linjer_single"
+    )
+
+    test_dam__buffer_water__n100_road = file_manager.generate_file_name_gdb(
+        script_source_name=dam_file,
+        description="buffer_rundt_vann"
     )
 
     test_dam__roads_intersecting_buffer__n100_road = file_manager.generate_file_name_gdb(
@@ -1321,14 +1336,14 @@ class Road_N100(Enum):
         description="resolve_road_docu"
     )
 
-    test_dam__in_roads__n100_road = file_manager.generate_file_name_gdb(
-        script_source_name=dam_file,
-        description="in_roads"
-    )
 
-    test_dam__out_roads__n100_road = file_manager.generate_file_name_gdb(
+
+
+
+
+    test_dam__buffer_dam_minus_water__n100_road = file_manager.generate_file_name_gdb(
         script_source_name=dam_file,
-        description="out_roads"
+        description="buffer_rundt_demning_minus_vann"
     )
 
     test_dam__cleaned_roads__n100_road = file_manager.generate_file_name_gdb(

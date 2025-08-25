@@ -1,4 +1,5 @@
 # Importing packages
+from collections import defaultdict
 import arcpy
 
 arcpy.env.overwriteOutput = True
@@ -38,23 +39,26 @@ def main():
     buffer_around_dam_as_line()
 
     # Hierarchy implementation
-
+    """
     field = "Hierarchy_analysis_dam"
     
     calculating_competing_areas(field)
     calculate_important_roads(field)
 
     # Editing the roads
-    resolve_road_conflicts(field)
-    removing_noisy_roads()
+    #resolve_road_conflicts(field)
+    #"""
+    # Editing the roads
+    multiToSingle()
+    snap_roads_to_buffer()
 
 @timing_decorator
 def fetch_data():
     print("Fetching data")
     # Roads
-    custom_arcpy.select_attribute_and_make_permanent_feature(
-        input_layer= Road_N100.data_preparation___calculated_boarder_hierarchy_2___n100_road.value, # input_roads.road_output_1, # input_n100.VegSti,
-        expression="",
+    custom_arcpy.select_attribute_and_make_permanent_feature( #"C:\\GIS_Files\\ag_outputs\\n100\\Roads.gdb\\Roads_Shifted",
+        input_layer="C:\\GIS_Files\\ag_outputs\\n100\\Roads.gdb\\Roads_Shifted", # Road_N100.data_preparation___calculated_boarder_hierarchy_2___n100_road.value, # input_roads.road_output_1, # input_n100.VegSti,
+        expression=None,
         output_name=Road_N100.test_dam__road_input__n100_road.value,
         selection_type=custom_arcpy.SelectionType.NEW_SELECTION
     )
@@ -76,7 +80,7 @@ def fetch_data():
     # Water
     custom_arcpy.select_attribute_and_make_permanent_feature(
         input_layer=input_n100.ArealdekkeFlate,
-        expression="OBJTYPE = 'ElvBekk' OR OBJTYPE = 'Havflate' OR OBJTYPE = 'Innsjø' OR OBJTYPE = 'InnsjøRegulert'",
+        expression=f"OBJTYPE = 'Havflate' OR OBJTYPE = 'Innsjø' OR OBJTYPE = 'InnsjøRegulert'",
         output_name=Road_N100.test_dam__water_input__n100_road.value,
         selection_type=custom_arcpy.SelectionType.NEW_SELECTION
     )
@@ -85,36 +89,51 @@ def fetch_data():
 @timing_decorator
 def clip_data():
     print("Cropping data")
+    kommune = Road_N100.test_dam__kommune__n100_road.value
     # Roads
     arcpy.analysis.Clip(
         in_features=Road_N100.test_dam__road_input__n100_road.value,
-        clip_features=Road_N100.test_dam__kommune__n100_road.value,
+        clip_features=kommune,
         out_feature_class=Road_N100.test_dam__relevant_roads__n100_road.value
     )
     # Dam
     arcpy.analysis.Clip(
         in_features=Road_N100.test_dam__dam_input__n100_road.value,
-        clip_features=Road_N100.test_dam__kommune__n100_road.value,
+        clip_features=kommune,
         out_feature_class=Road_N100.test_dam__relevant_dam__n100_road.value
+    )
+    # Water
+    arcpy.analysis.Clip(
+        in_features=Road_N100.test_dam__water_input__n100_road.value,
+        clip_features=kommune,
+        out_feature_class=Road_N100.test_dam__relevant_water__n100_road.value
     )
     print("Data cropped")
 
 @timing_decorator
 def buffer_around_dam_as_line():
+    dam_fc = Road_N100.test_dam__relevant_dam__n100_road.value
+    buffer_output = Road_N100.test_dam__buffer_dam__n100_road.value
+    buffer_line_fc = Road_N100.test_dam__buffer_dam_as_line__n100_road.value
+    
+    if arcpy.Exists(buffer_output):
+        arcpy.management.Delete(buffer_output)
+
     arcpy.analysis.Buffer(
-        in_features=Road_N100.test_dam__relevant_dam__n100_road.value,
-        out_feature_class=Road_N100.test_dam__buffer_dam__n100_road.value,
+        in_features=dam_fc,
+        out_feature_class=buffer_output,
         buffer_distance_or_field="60 Meters",
-        line_end_type="FLAT",
+        line_end_type="ROUND",
         dissolve_option="NONE",
         method="PLANAR"
     )
     print("Buffer created")
     arcpy.management.PolygonToLine(
-        in_features=Road_N100.test_dam__buffer_dam__n100_road.value,
-        out_feature_class=Road_N100.test_dam__buffer_dam_as_line__n100_road.value
+        in_features=buffer_output,
+        out_feature_class=buffer_line_fc
     )
-    print("Buffer converted to line")
+    if arcpy.Exists(buffer_line_fc):
+        print("Buffer converted to line")
 
 @timing_decorator
 def calculating_competing_areas(hierarchy):
@@ -122,12 +141,14 @@ def calculating_competing_areas(hierarchy):
     feature_classes = [
         Road_N100.test_dam__relevant_roads__n100_road.value,
         Road_N100.test_dam__relevant_dam__n100_road.value,
-        Road_N100.test_dam__buffer_dam_as_line__n100_road.value
+        Road_N100.test_dam__buffer_dam_as_line__n100_road.value,
+        Road_N100.test_dam__relevant_water__n100_road.value
     ]
     feature_classes_single = [
         Road_N100.test_dam__relevant_roads_single__n100_road.value,
         Road_N100.test_dam__relevant_dam_single__n100_road.value,
-        Road_N100.test_dam__buffer_dam_as_line_single__n100_road.value
+        Road_N100.test_dam__buffer_dam_as_line_single__n100_road.value,
+        Road_N100.test_dam__relevant_water_single__n100_road.value
     ]
     print("Performing multipart to singlepart...")
     for i in range(len(feature_classes)):
@@ -154,14 +175,19 @@ def calculating_competing_areas(hierarchy):
 @timing_decorator
 def calculate_important_roads(hierarchy):
     print("Calculating important roads")
+
+    roads_fc = Road_N100.test_dam__relevant_roads_single__n100_road.value
+    buffer_dam_fc = Road_N100.test_dam__buffer_dam__n100_road.value
+    buffer_h4 = Road_N100.test_dam__200m_buffer_h4__n100_road.value
+    
     arcpy.management.MakeFeatureLayer(
-        in_features=Road_N100.test_dam__relevant_roads_single__n100_road.value,
+        in_features=roads_fc,
         out_layer="relevant_roads_lyr"
     )
     arcpy.management.SelectLayerByLocation(
         in_layer="relevant_roads_lyr",
         overlap_type="INTERSECT",
-        select_features=Road_N100.test_dam__buffer_dam__n100_road.value
+        select_features=buffer_dam_fc
     )
     arcpy.management.CalculateField(
         in_table="relevant_roads_lyr",
@@ -176,7 +202,7 @@ def calculate_important_roads(hierarchy):
     )
     arcpy.analysis.Buffer(
         in_features="relevant_roads_lyr",
-        out_feature_class=Road_N100.test_dam__200m_buffer_h4__n100_road.value,
+        out_feature_class=buffer_h4,
         buffer_distance_or_field="200 Meters",
         dissolve_option="ALL"
     )
@@ -184,7 +210,7 @@ def calculate_important_roads(hierarchy):
         in_layer="relevant_roads_lyr",
         selection_type="NEW_SELECTION",
         overlap_type="INTERSECT",
-        select_features=Road_N100.test_dam__200m_buffer_h4__n100_road.value
+        select_features=buffer_h4
     )
     arcpy.management.SelectLayerByAttribute(
         in_layer_or_view="relevant_roads_lyr",
@@ -293,147 +319,172 @@ def resolve_road_conflicts(hierarchy):
     print("Road conflicts resolved! 8)")
 
 @timing_decorator
-def removing_noisy_roads():
-    roads_fc = Road_N100.test_dam__resolve_road_conflicts__n100_road.value
+def multiToSingle():
+    feature_classes = [
+        Road_N100.test_dam__relevant_roads__n100_road.value,
+        Road_N100.test_dam__relevant_dam__n100_road.value,
+        Road_N100.test_dam__buffer_dam_as_line__n100_road.value,
+        Road_N100.test_dam__relevant_water__n100_road.value
+    ]
+    feature_classes_single = [
+        Road_N100.test_dam__relevant_roads_single__n100_road.value,
+        Road_N100.test_dam__relevant_dam_single__n100_road.value,
+        Road_N100.test_dam__buffer_dam_as_line_single__n100_road.value,
+        Road_N100.test_dam__relevant_water_single__n100_road.value
+    ]
+    print("Performing multipart to singlepart...")
+    for i in range(len(feature_classes)):
+        if arcpy.Exists(feature_classes_single[i]):
+            arcpy.management.Delete(feature_classes_single[i])
+        arcpy.management.MultipartToSinglepart(
+            in_features=feature_classes[i],
+            out_feature_class=feature_classes_single[i]
+        )
+    print("Multipart to singlepart done")
+
+@timing_decorator
+def snap_roads_to_buffer():
+    print("Removing noisy roads...")
+
+    dam_fc = Road_N100.test_dam__relevant_dam__n100_road.value
     buffer_fc = Road_N100.test_dam__buffer_dam__n100_road.value
-    in_fc = Road_N100.test_dam__in_roads__n100_road.value
-    out_fc = Road_N100.test_dam__out_roads__n100_road.value
+
+    water_fc = Road_N100.test_dam__relevant_water_single__n100_road.value
+    water_buffer_fc = Road_N100.test_dam__buffer_water__n100_road.value
+    
+    roads_fc = Road_N100.test_dam__relevant_roads_single__n100_road.value # Road_N100.test_dam__resolve_road_conflicts__n100_road.value
     cleaned_roads_fc = Road_N100.test_dam__cleaned_roads__n100_road.value
-    print("Fetching relevant layers...")
+
+    buffer_lines_fc = Road_N100.test_dam__buffer_dam_as_line_single__n100_road.value
+    buffer_water_dam_fc = Road_N100.test_dam__buffer_dam_minus_water__n100_road.value
+
+    if arcpy.Exists(buffer_fc):
+        arcpy.management.Delete(buffer_fc)
+    arcpy.analysis.Buffer(
+        in_features=dam_fc,
+        out_feature_class=buffer_fc,
+        buffer_distance_or_field="70 Meters",
+        line_end_type="ROUND",
+        dissolve_option="NONE",
+        method="PLANAR"
+    )
+
+    if arcpy.Exists(water_buffer_fc):
+        arcpy.management.Delete(water_buffer_fc)
+    arcpy.analysis.Buffer(
+        in_features=water_fc,
+        out_feature_class=water_buffer_fc,
+        buffer_distance_or_field="55 Meters",
+        line_end_type="ROUND",
+        dissolve_option="NONE",
+        method="PLANAR"
+    )
+
+    arcpy.management.CopyFeatures(roads_fc, cleaned_roads_fc)
+
     arcpy.management.MakeFeatureLayer(
-        in_features=roads_fc,
-        out_layer="roads_to_edit_lyr"
+        in_features=cleaned_roads_fc,
+        out_layer="roads_lyr"
     )
     arcpy.management.SelectLayerByLocation(
-        in_layer="roads_to_edit_lyr",
-        overlap_type="WITHIN_A_DISTANCE",
-        search_distance="1 Meters",
-        select_features=buffer_fc,
-        selection_type="NEW_SELECTION"
-    )
-    arcpy.management.CopyFeatures(
-        in_features="roads_to_edit_lyr",
-        out_feature_class=in_fc
+        in_layer="roads_lyr",
+        overlap_type="INTERSECT",
+        select_features=buffer_fc
     )
     arcpy.analysis.Erase(
-        in_features=roads_fc,
-        erase_features=buffer_fc,
-        out_feature_class=out_fc
-    )
-    print("Snapping roads to buffer...")
-    arcpy.edit.Snap(
-        in_features=in_fc,
-        snap_environment=[[
-            buffer_fc,
-            "VERTEX",
-            "100 Meters"
-        ]]
+        in_features=buffer_lines_fc,
+        erase_features=water_buffer_fc,
+        out_feature_class=buffer_water_dam_fc
     )
 
-    """
-    print("Finding intersection points...")
-    intersect_points = "memory/intersect_points"
-    arcpy.analysis.Intersect(
-        in_features=[in_fc, out_fc],
-        out_feature_class=intersect_points,
-        join_attributes="ALL",
-        output_type="POINT"
-    )
-    print("Splitting roads at intersection points...")
-    split_in_fc = "memory/split_in_fc"
-    arcpy.management.SplitLineAtPoint(
-        in_features=in_fc,
-        point_features=intersect_points,
-        out_feature_class=split_in_fc,
-        search_radius="1 Meters"
-    )
-    print("Extracting start and end points...")
-    start_points = "memory/start_points"
-    end_points = "memory/end_points"
-    arcpy.management.FeatureVerticesToPoints(
-        split_in_fc,
-        start_points,
-        "START"
-    )
-    arcpy.management.FeatureVerticesToPoints(
-        split_in_fc,
-        end_points,
-        "END"
-    )
-    print("Performing spatial join to find closest points...")
-    start_join = "memory/start_join"
-    end_join = "memory/end_join"
-    arcpy.analysis.SpatialJoin(
-        start_points,
-        intersect_points,
-        start_join,
-        "JOIN_ONE_TO_ONE",
-        match_option="CLOSEST",
-        search_radius="1 Meters"
-    )
-    arcpy.analysis.SpatialJoin(
-        end_points,
-        intersect_points,
-        end_join, "JOIN_ONE_TO_ONE",
-        match_option="CLOSEST",
-        search_radius="1 Meters"
-    )
-    print("Identifying segments that start and end at intersection points...")
-    start_ids = set()
-    with arcpy.da.SearchCursor(start_join, ["ORIG_FID", "Join_Count"]) as cursor:
-        for row in cursor:
-            if row[1] > 0:
-                start_ids.add(row[0])
-    end_ids = set()
-    with arcpy.da.SearchCursor(end_join, ["ORIG_FID", "Join_Count"]) as cursor:
-        for row in cursor:
-            if row[1] > 0:
-                end_ids.add(row[0])
-    segment_ids = start_ids & end_ids
-    selected_segments = "memory/selected_segments"
-    where_clause = f"OBJECTID IN ({','.join(map(str, segment_ids))})"
-    arcpy.management.MakeFeatureLayer(
-        split_in_fc,
-        "split_in_fc_lyr"
-    )
-    arcpy.management.SelectLayerByAttribute(
-        "split_in_fc_lyr",
-        "NEW_SELECTION",
-        where_clause
-    )
-    arcpy.management.CopyFeatures(
-        "split_in_fc_lyr",
-        selected_segments
-    )
-    print("Merging selected segments...")
-    arcpy.management.Merge(
-        inputs=[selected_segments, out_fc],
-        output=cleaned_roads_fc
-    )
-    arcpy.management.Integrate(
-        in_features=[cleaned_roads_fc],
-        cluster_tolerance="5 Meters"
-    )
-"""
+    buffer_polygons = [(row[1], row[0]) for row in arcpy.da.SearchCursor(buffer_fc, ["SHAPE@", "OID@"])]
+    buffer_lines = [(row[1], row[0]) for row in arcpy.da.SearchCursor(buffer_water_dam_fc, ["SHAPE@", "OID@"])]
+    
+    buffer_to_roads = defaultdict(list)
 
+    with arcpy.da.UpdateCursor("roads_lyr", ["OID@", "SHAPE@"]) as road_cursor:
+        for road in road_cursor:
+            road_oid = road[0]
+            line = road[1]
+            min_dist = float('inf')
+            nearest_oid = None
+            for oid, buffer_poly in buffer_polygons:
+                dist = line.distanceTo(buffer_poly)
+                if dist < min_dist:
+                    min_dist = dist
+                    nearest_oid = oid
+            buffer_to_roads[nearest_oid].append((road_oid, line))
+    
+    def cluster_points(points, threshold=1.0):
+        clusters = []
+        for pt, idx in points:
+            found = False
+            for cluster in clusters:
+                if any(pt.distanceTo(other[0]) < threshold for other in cluster):
+                    cluster.append((pt, idx))
+                    found = True
+                    break
+            if not found:
+                clusters.append([(pt, idx)])
+        return clusters
+    
+    for buf_oid, buffer_poly in buffer_polygons:
+        buffer_line = None
+        for oid, line in buffer_lines:
+            dist = line.distanceTo(buffer_poly)
+            if dist < 5:
+                #if oid == buf_oid:
+                buffer_line = line
+                break
+        if buffer_line is None:
+            continue
 
+        roads = buffer_to_roads.get(buf_oid, [])
+        if not roads:
+            continue
 
+        points_to_cluster = []
+        for road_oid, line in roads:
+            for part_idx, part in enumerate(line):
+                for pt_idx, pt in enumerate(part):
+                    if pt is None:
+                        continue
+                    pt_geom = arcpy.PointGeometry(pt, line.spatialReference)
+                    if buffer_poly.contains(pt_geom):
+                        points_to_cluster.append((pt_geom, (road_oid, part_idx, pt_idx)))
 
-    #"""
-    print("Connects roads together...")
-    arcpy.Snap_edit(
-        in_features=in_fc,
-        snap_environment=[[
-            out_fc,
-            "END",
-            "10 Meters"
-        ]]
-    )
-    arcpy.management.Merge(
-        inputs=[in_fc, out_fc],
-        output=cleaned_roads_fc
-    )
-    #"""
+        clusters = cluster_points(points_to_cluster, threshold=1.0)
+
+        snap_points = {}
+        for cluster in clusters:
+            ref_pt = cluster[0][0]
+            m = buffer_line.measureOnLine(ref_pt)
+            snap_pt = buffer_line.positionAlongLine(m).firstPoint
+            for _, idx in cluster:
+                snap_points[idx] = snap_pt
+
+        with arcpy.da.UpdateCursor("roads_lyr", ["OID@", "SHAPE@"]) as update_cursor:
+            for road in update_cursor:
+                road_oid = road[0]
+                line = road[1]
+                changed = False
+                new_parts = []
+                for part_idx, part in enumerate(line):
+                    new_part = []
+                    for pt_idx, pt in enumerate(part):
+                        idx = (road_oid, part_idx, pt_idx)
+                        if idx in snap_points:
+                            new_pt = snap_points[idx]
+                            new_part.append(arcpy.Point(new_pt.X, new_pt.Y))
+                            changed = True
+                        else:
+                            new_part.append(pt)
+                    new_parts.append(arcpy.Array(new_part))
+                if changed:
+                    new_line = arcpy.Polyline(arcpy.Array(new_parts), line.spatialReference)
+                    road[1] = new_line
+                    update_cursor.updateRow(road)
+    
     print("Roads modified and cleaned!")
 
 if __name__=="__main__":
