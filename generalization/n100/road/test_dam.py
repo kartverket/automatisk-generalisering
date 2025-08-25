@@ -5,26 +5,19 @@ import arcpy
 arcpy.env.overwriteOutput = True
 
 # Importing custom input files modules
-from input_data import input_n50
 from input_data import input_n100
-from input_data import input_other
 
 from input_data import input_roads
 
 # Importing custom modules
 from file_manager.n100.file_manager_roads import Road_N100
 from env_setup import environment_setup
-import env_setup.global_config
 import config
 from custom_tools.decorators.timing_decorator import timing_decorator
 from custom_tools.general_tools import custom_arcpy
-from custom_tools.general_tools.polygon_processor import PolygonProcessor
-from custom_tools.general_tools.line_to_buffer_symbology import LineToBufferSymbology
-from input_data.input_symbology import SymbologyN100
-from constants.n100_constants import N100_Symbology, N100_SQLResources, N100_Values
 from custom_tools.general_tools.partition_iterator import PartitionIterator
 from custom_tools.generalization_tools.road.resolve_road_conflicts import (
-    ResolveRoadConflicts,
+    ResolveRoadConflicts
 )
 
 @timing_decorator
@@ -32,6 +25,7 @@ def main():
     
     # Setup
     environment_setup.main()
+    arcpy.Delete_management("in_memory")
 
     # Data preparation
     fetch_data()
@@ -49,76 +43,78 @@ def main():
     #resolve_road_conflicts(field)
     #"""
     # Editing the roads
-    multiToSingle()
+    #multiToSingle()
     snap_roads_to_buffer()
 
 @timing_decorator
 def fetch_data():
-    print("Fetching data")
+    print("Fetching data...")
     # Roads
-    custom_arcpy.select_attribute_and_make_permanent_feature( #"C:\\GIS_Files\\ag_outputs\\n100\\Roads.gdb\\Roads_Shifted",
-        input_layer="C:\\GIS_Files\\ag_outputs\\n100\\Roads.gdb\\Roads_Shifted", # Road_N100.data_preparation___calculated_boarder_hierarchy_2___n100_road.value, # input_roads.road_output_1, # input_n100.VegSti,
+    custom_arcpy.select_attribute_and_make_permanent_feature(
+        input_layer=Road_N100.data_preparation___calculated_boarder_hierarchy_2___n100_road.value, # input_roads.road_output_1, # input_n100.VegSti,
         expression=None,
-        output_name=Road_N100.test_dam__road_input__n100_road.value,
+        output_name=r"in_memory\road_input",
         selection_type=custom_arcpy.SelectionType.NEW_SELECTION
     )
     # Dam
     custom_arcpy.select_attribute_and_make_permanent_feature(
         input_layer=input_n100.AnleggsLinje,
         expression="objtype = 'Dam'",
-        output_name=Road_N100.test_dam__dam_input__n100_road.value,
+        output_name=r"in_memory\dam_input",
         selection_type=custom_arcpy.SelectionType.NEW_SELECTION
     )
     # Area
+
+    ##################################
+    # Choose municipality to work on #
+    ##################################
     kommune = "Steinkjer"
+
     custom_arcpy.select_attribute_and_make_permanent_feature(
         input_layer=input_n100.AdminFlate,
         expression=f"NAVN = '{kommune}'",
-        output_name=Road_N100.test_dam__kommune__n100_road.value,
+        output_name=r"in_memory\kommune",
         selection_type=custom_arcpy.SelectionType.NEW_SELECTION
     )
     # Water
     custom_arcpy.select_attribute_and_make_permanent_feature(
         input_layer=input_n100.ArealdekkeFlate,
         expression=f"OBJTYPE = 'Havflate' OR OBJTYPE = 'Innsjø' OR OBJTYPE = 'InnsjøRegulert'",
-        output_name=Road_N100.test_dam__water_input__n100_road.value,
+        output_name=r"in_memory\water_input",
         selection_type=custom_arcpy.SelectionType.NEW_SELECTION
     )
     print("Data fetched")
 
 @timing_decorator
 def clip_data():
-    print("Cropping data")
-    kommune = Road_N100.test_dam__kommune__n100_road.value
+    print("Clipping data to municipality...")
+    kommune = r"in_memory\kommune"
     # Roads
     arcpy.analysis.Clip(
-        in_features=Road_N100.test_dam__road_input__n100_road.value,
+        in_features=r"in_memory\road_input",
         clip_features=kommune,
         out_feature_class=Road_N100.test_dam__relevant_roads__n100_road.value
     )
     # Dam
     arcpy.analysis.Clip(
-        in_features=Road_N100.test_dam__dam_input__n100_road.value,
+        in_features=r"in_memory\dam_input",
         clip_features=kommune,
         out_feature_class=Road_N100.test_dam__relevant_dam__n100_road.value
     )
     # Water
     arcpy.analysis.Clip(
-        in_features=Road_N100.test_dam__water_input__n100_road.value,
+        in_features=r"in_memory\water_input",
         clip_features=kommune,
-        out_feature_class=Road_N100.test_dam__relevant_water__n100_road.value
+        out_feature_class=r"in_memory\relevant_waters"
     )
-    print("Data cropped")
+    print("Data clipped")
 
 @timing_decorator
 def buffer_around_dam_as_line():
     dam_fc = Road_N100.test_dam__relevant_dam__n100_road.value
-    buffer_output = Road_N100.test_dam__buffer_dam__n100_road.value
-    buffer_line_fc = Road_N100.test_dam__buffer_dam_as_line__n100_road.value
+    buffer_output = r"in_memory\dam_buffer_60m"
+    buffer_line_fc = Road_N100.test_dam__dam_buffer_60m_line__n100_road.value
     
-    if arcpy.Exists(buffer_output):
-        arcpy.management.Delete(buffer_output)
-
     arcpy.analysis.Buffer(
         in_features=dam_fc,
         out_feature_class=buffer_output,
@@ -132,8 +128,7 @@ def buffer_around_dam_as_line():
         in_features=buffer_output,
         out_feature_class=buffer_line_fc
     )
-    if arcpy.Exists(buffer_line_fc):
-        print("Buffer converted to line")
+    print("Buffer converted to line")
 
 @timing_decorator
 def calculating_competing_areas(hierarchy):
@@ -347,19 +342,17 @@ def snap_roads_to_buffer():
     print("Removing noisy roads...")
 
     dam_fc = Road_N100.test_dam__relevant_dam__n100_road.value
-    buffer_fc = Road_N100.test_dam__buffer_dam__n100_road.value
+    buffer_fc = r"in_memory\dam_buffer_60m"
 
-    water_fc = Road_N100.test_dam__relevant_water_single__n100_road.value
-    water_buffer_fc = Road_N100.test_dam__buffer_water__n100_road.value
+    water_fc = r"in_memory\relevant_waters"
+    water_buffer_fc = r"in_memory\water_buffer_55m"
     
-    roads_fc = Road_N100.test_dam__relevant_roads_single__n100_road.value # Road_N100.test_dam__resolve_road_conflicts__n100_road.value
+    roads_fc = Road_N100.test_dam__relevant_roads__n100_road.value
     cleaned_roads_fc = Road_N100.test_dam__cleaned_roads__n100_road.value
 
-    buffer_lines_fc = Road_N100.test_dam__buffer_dam_as_line_single__n100_road.value
-    buffer_water_dam_fc = Road_N100.test_dam__buffer_dam_minus_water__n100_road.value
+    buffer_lines_fc = Road_N100.test_dam__dam_buffer_60m_line__n100_road.value
+    buffer_water_dam_fc = r"in_memory\dam_buffer_without_water"
 
-    if arcpy.Exists(buffer_fc):
-        arcpy.management.Delete(buffer_fc)
     arcpy.analysis.Buffer(
         in_features=dam_fc,
         out_feature_class=buffer_fc,
@@ -369,8 +362,6 @@ def snap_roads_to_buffer():
         method="PLANAR"
     )
 
-    if arcpy.Exists(water_buffer_fc):
-        arcpy.management.Delete(water_buffer_fc)
     arcpy.analysis.Buffer(
         in_features=water_fc,
         out_feature_class=water_buffer_fc,
@@ -433,7 +424,6 @@ def snap_roads_to_buffer():
         for oid, line in buffer_lines:
             dist = line.distanceTo(buffer_poly)
             if dist < 5:
-                #if oid == buf_oid:
                 buffer_line = line
                 break
         if buffer_line is None:

@@ -1231,119 +1231,19 @@ class Road_N100(Enum):
     #                                TEST DAM
     # ========================================
 
-    test_dam__road_input__n100_road = file_manager.generate_file_name_gdb(
-        script_source_name=dam_file,
-        description="veier"
-    )
-
-    test_dam__dam_input__n100_road = file_manager.generate_file_name_gdb(
-        script_source_name=dam_file,
-        description="demninger"
-    )
-
-    test_dam__kommune__n100_road = file_manager.generate_file_name_gdb(
-        script_source_name=dam_file,
-        description="avgrensning_demning"
-    )
-
-    test_dam__water_input__n100_road = file_manager.generate_file_name_gdb(
-        script_source_name=dam_file,
-        description="vann"
-    )
-
     test_dam__relevant_roads__n100_road = file_manager.generate_file_name_gdb(
         script_source_name=dam_file,
-        description="relevante_veier"
-    )
-
-    test_dam__relevant_roads_single__n100_road = file_manager.generate_file_name_gdb(
-        script_source_name=dam_file,
-        description="relevante_veier_single"
+        description="relevant_roads"
     )
 
     test_dam__relevant_dam__n100_road = file_manager.generate_file_name_gdb(
         script_source_name=dam_file,
-        description="relevante_demninger"
+        description="relevant_dam"
     )
 
-    test_dam__relevant_dam_single__n100_road = file_manager.generate_file_name_gdb(
+    test_dam__dam_buffer_60m_line__n100_road = file_manager.generate_file_name_gdb(
         script_source_name=dam_file,
-        description="relevante_demninger_single"
-    )
-
-    test_dam__relevant_water__n100_road = file_manager.generate_file_name_gdb(
-        script_source_name=dam_file,
-        description="relevante_vann"
-    )
-
-    test_dam__relevant_water_single__n100_road = file_manager.generate_file_name_gdb(
-        script_source_name=dam_file,
-        description="relevante_vann_single"
-    )
-
-    test_dam__buffer_dam__n100_road = file_manager.generate_file_name_gdb(
-        script_source_name=dam_file,
-        description="buffer_rundt_demninger"
-    )
-
-    test_dam__buffer_dam_as_line__n100_road = file_manager.generate_file_name_gdb(
-        script_source_name=dam_file,
-        description="buffer_rundt_demning_som_linjer"
-    )
-    
-    test_dam__buffer_dam_as_line_single__n100_road = file_manager.generate_file_name_gdb(
-        script_source_name=dam_file,
-        description="buffer_rundt_demning_som_linjer_single"
-    )
-
-    test_dam__buffer_water__n100_road = file_manager.generate_file_name_gdb(
-        script_source_name=dam_file,
-        description="buffer_rundt_vann"
-    )
-
-    test_dam__roads_intersecting_buffer__n100_road = file_manager.generate_file_name_gdb(
-        script_source_name=dam_file,
-        description="veier_snitt_buffer"
-    )
-
-    test_dam__200m_buffer_h4__n100_road = file_manager.generate_file_name_gdb(
-        script_source_name=dam_file,
-        description="200m_buffer_hierarki_4"
-    )
-
-    test_dam__resolve_road_conflicts__n100_road = file_manager.generate_file_name_gdb(
-        script_source_name=dam_file,
-        description="resolve_road_conflicts"
-    )
-
-    test_dam__resolve_road_conflicts_displacement_feature__n100_road = file_manager.generate_file_name_gdb(
-        script_source_name=dam_file,
-        description="resolve_road_conflicts_displacement_feature"
-    )
-
-    test_dam__resolve_road_root__n100_road = file_manager.generate_file_name_gdb(
-        script_source_name=dam_file,
-        description="resolve_road_root"
-    )
-
-    test_dam__resolve_road_partition_root__n100_road = file_manager.generate_file_name_gdb(
-        script_source_name=dam_file,
-        description="resolve_road_partition_root"
-    )
-
-    test_dam__resolve_road_docu__n100_road = file_manager.generate_file_name_gdb(
-        script_source_name=dam_file,
-        description="resolve_road_docu"
-    )
-
-
-
-
-
-
-    test_dam__buffer_dam_minus_water__n100_road = file_manager.generate_file_name_gdb(
-        script_source_name=dam_file,
-        description="buffer_rundt_demning_minus_vann"
+        description="dam_buffer_60m_line"
     )
 
     test_dam__cleaned_roads__n100_road = file_manager.generate_file_name_gdb(
