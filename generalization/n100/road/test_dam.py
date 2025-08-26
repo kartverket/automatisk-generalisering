@@ -30,8 +30,9 @@ def main():
     # Data preparation
     fetch_data()
     clip_data()
-    buffer_around_dam_as_line()
-
+    create_buffer()
+    create_buffer_line()
+   
     # Hierarchy implementation
     """
     field = "Hierarchy_analysis_dam"
@@ -110,25 +111,37 @@ def clip_data():
     print("Data clipped")
 
 @timing_decorator
-def buffer_around_dam_as_line():
+def create_buffer():
+    print("Creating buffers...")
     dam_fc = Road_N100.test_dam__relevant_dam__n100_road.value
-    buffer_output = r"in_memory\dam_buffer_60m"
-    buffer_line_fc = Road_N100.test_dam__dam_buffer_60m_line__n100_road.value
-    
-    arcpy.analysis.Buffer(
-        in_features=dam_fc,
-        out_feature_class=buffer_output,
-        buffer_distance_or_field="60 Meters",
-        line_end_type="ROUND",
-        dissolve_option="NONE",
-        method="PLANAR"
-    )
-    print("Buffer created")
+    water_fc = r"in_memory\relevant_waters"
+    features = [dam_fc, dam_fc, water_fc]
+    buffers = [
+        [r"in_memory\dam_buffer_60m", "60 Meters"],
+        [r"in_memory\dam_buffer_70m", "70 Meters"],
+        [r"in_memory\water_buffer_55m", "55 Meters"]
+    ]
+    for i in range(len(features)):
+        arcpy.analysis.Buffer(
+            in_features=features[i],
+            out_feature_class=buffers[i][0],
+            buffer_distance_or_field=buffers[i][1],
+            line_end_type="ROUND",
+            dissolve_option="NONE",
+            method="PLANAR"
+        )
+    print("Buffers created")
+
+@timing_decorator
+def create_buffer_line():
+    print("Creates dam buffer as line...")
+    buffer = r"in_memory\dam_buffer_60m"
+    line = Road_N100.test_dam__dam_buffer_60m_line__n100_road.value
     arcpy.management.PolygonToLine(
-        in_features=buffer_output,
-        out_feature_class=buffer_line_fc
+        in_features=buffer,
+        out_feature_class=line
     )
-    print("Buffer converted to line")
+    print("Dam buffer as line created")
 
 @timing_decorator
 def calculating_competing_areas(hierarchy):
@@ -341,35 +354,12 @@ def multiToSingle():
 def snap_roads_to_buffer():
     print("Removing noisy roads...")
 
-    dam_fc = Road_N100.test_dam__relevant_dam__n100_road.value
-    buffer_fc = r"in_memory\dam_buffer_60m"
-
-    water_fc = r"in_memory\relevant_waters"
-    water_buffer_fc = r"in_memory\water_buffer_55m"
-    
     roads_fc = Road_N100.test_dam__relevant_roads__n100_road.value
     cleaned_roads_fc = Road_N100.test_dam__cleaned_roads__n100_road.value
-
+    buffer_fc = r"in_memory\dam_buffer_70m"
     buffer_lines_fc = Road_N100.test_dam__dam_buffer_60m_line__n100_road.value
+    water_buffer_fc = r"in_memory\water_buffer_55m"
     buffer_water_dam_fc = r"in_memory\dam_buffer_without_water"
-
-    arcpy.analysis.Buffer(
-        in_features=dam_fc,
-        out_feature_class=buffer_fc,
-        buffer_distance_or_field="70 Meters",
-        line_end_type="ROUND",
-        dissolve_option="NONE",
-        method="PLANAR"
-    )
-
-    arcpy.analysis.Buffer(
-        in_features=water_fc,
-        out_feature_class=water_buffer_fc,
-        buffer_distance_or_field="55 Meters",
-        line_end_type="ROUND",
-        dissolve_option="NONE",
-        method="PLANAR"
-    )
 
     arcpy.management.CopyFeatures(roads_fc, cleaned_roads_fc)
 
@@ -378,11 +368,14 @@ def snap_roads_to_buffer():
         out_layer="roads_lyr"
     )
     arcpy.management.SelectLayerByLocation(
+        # Finds all roads 70m or closer to a dam
         in_layer="roads_lyr",
         overlap_type="INTERSECT",
         select_features=buffer_fc
     )
     arcpy.analysis.Erase(
+        # The roads should be snapped to buffer lines
+        # at least 55m from water
         in_features=buffer_lines_fc,
         erase_features=water_buffer_fc,
         out_feature_class=buffer_water_dam_fc
@@ -394,24 +387,28 @@ def snap_roads_to_buffer():
     buffer_to_roads = defaultdict(list)
 
     with arcpy.da.UpdateCursor("roads_lyr", ["OID@", "SHAPE@"]) as road_cursor:
+        # Finds all the roads 70m or closer to a dam
+        # and assigns them to the nearest buffer polygon
         for road in road_cursor:
-            road_oid = road[0]
-            line = road[1]
             min_dist = float('inf')
             nearest_oid = None
             for oid, buffer_poly in buffer_polygons:
-                dist = line.distanceTo(buffer_poly)
+                dist = road[1].distanceTo(buffer_poly)
                 if dist < min_dist:
                     min_dist = dist
                     nearest_oid = oid
-            buffer_to_roads[nearest_oid].append((road_oid, line))
+            buffer_to_roads[nearest_oid].append((road[0], road[1]))
     
     def cluster_points(points, threshold=1.0):
+        # Clusters points that are within the threshold
+        # distance of each other
         clusters = []
         for pt, idx in points:
             found = False
             for cluster in clusters:
                 if any(pt.distanceTo(other[0]) < threshold for other in cluster):
+                    # The points are close enough to be in the same cluster
+                    # With other words: snap them to the same coordinate
                     cluster.append((pt, idx))
                     found = True
                     break
@@ -420,50 +417,60 @@ def snap_roads_to_buffer():
         return clusters
     
     for buf_oid, buffer_poly in buffer_polygons:
+        # For all buffer polygons, find the corresponding buffer line
         buffer_line = None
         for oid, line in buffer_lines:
             dist = line.distanceTo(buffer_poly)
             if dist < 5:
+                # It should only be one line per polygon
                 buffer_line = line
                 break
         if buffer_line is None:
             continue
-
+        
+        # Fetch all roads associated with this buffer polygon
         roads = buffer_to_roads.get(buf_oid, [])
         if not roads:
+            # If no roads, skip
             continue
 
+        # Collects points inside the buffer polygon
         points_to_cluster = []
         for road_oid, line in roads:
             for part_idx, part in enumerate(line):
                 for pt_idx, pt in enumerate(part):
                     if pt is None:
+                        # Only valid points accepted
                         continue
                     pt_geom = arcpy.PointGeometry(pt, line.spatialReference)
                     if buffer_poly.contains(pt_geom):
+                        # The point is inside the buffer polygon
                         points_to_cluster.append((pt_geom, (road_oid, part_idx, pt_idx)))
 
+        # Cluster points that are close to each other
         clusters = cluster_points(points_to_cluster, threshold=1.0)
 
+        # Snap points to the buffer line
         snap_points = {}
         for cluster in clusters:
-            ref_pt = cluster[0][0]
+            ref_pt = cluster[0][0] # Fetches the first point
             m = buffer_line.measureOnLine(ref_pt)
             snap_pt = buffer_line.positionAlongLine(m).firstPoint
-            for _, idx in cluster:
+            for _, idx in cluster: # ... and adjust the rest of the points in the cluster to the ref_pt
                 snap_points[idx] = snap_pt
 
         with arcpy.da.UpdateCursor("roads_lyr", ["OID@", "SHAPE@"]) as update_cursor:
+            # Update each road
             for road in update_cursor:
-                road_oid = road[0]
-                line = road[1]
                 changed = False
                 new_parts = []
-                for part_idx, part in enumerate(line):
+                for part_idx, part in enumerate(road[1]):
+                    # For each part of the road
                     new_part = []
                     for pt_idx, pt in enumerate(part):
-                        idx = (road_oid, part_idx, pt_idx)
+                        idx = (road[0], part_idx, pt_idx)
                         if idx in snap_points:
+                            # If the point should be snapped, snap it
                             new_pt = snap_points[idx]
                             new_part.append(arcpy.Point(new_pt.X, new_pt.Y))
                             changed = True
@@ -471,7 +478,8 @@ def snap_roads_to_buffer():
                             new_part.append(pt)
                     new_parts.append(arcpy.Array(new_part))
                 if changed:
-                    new_line = arcpy.Polyline(arcpy.Array(new_parts), line.spatialReference)
+                    # Update the road geometry if any point was changed
+                    new_line = arcpy.Polyline(arcpy.Array(new_parts), road[1].spatialReference)
                     road[1] = new_line
                     update_cursor.updateRow(road)
     
