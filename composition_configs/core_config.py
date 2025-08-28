@@ -1,5 +1,16 @@
 from dataclasses import dataclass, field
-from typing import Dict, List, Literal, Optional, Tuple, Union, Any, Callable
+from typing import (
+    Dict,
+    List,
+    Literal,
+    Optional,
+    Tuple,
+    Union,
+    Any,
+    Callable,
+    Mapping,
+    Sequence,
+)
 from enum import Enum
 
 from composition_configs import type_defs
@@ -151,17 +162,21 @@ class PartitionMethod(Enum):
     VERTICES = "VERTICES"
 
 
+ParamPayload = Optional[Union[Any, Sequence[Any]]]
+
+
 @dataclass
 class FuncMethodEntryConfig:
-    func: Callable
-    params: Any
+    func: Callable[..., Any]
+    params: ParamPayload = None
 
 
 @dataclass
 class ClassMethodEntryConfig:
     class_: type
-    method: str
-    params: Any
+    method: Callable[..., Any]
+    init_params: ParamPayload = None
+    method_params: ParamPayload = None
 
 
 @dataclass

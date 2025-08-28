@@ -4,7 +4,7 @@ import config
 from custom_tools.general_tools import custom_arcpy
 from custom_tools.general_tools.partition_iterator import PartitionIterator
 from custom_tools.general_tools.polygon_processor import PolygonProcessor
-from composition_configs import core_config
+from composition_configs import core_config, logic_config
 
 from custom_tools.generalization_tools.building.resolve_building_conflicts import (
     ResolveBuildingConflictsPolygon,
@@ -394,18 +394,18 @@ def resolve_building_conflicts_polygon():
         },
     ]
 
+    new_config = logic_config.RbcInitKwargs(
+        input_data_structure=polygon_rbc_input_data_structure,
+        output_building_polygons=core_config.InjectIO(object=building, tag="after_rbc"),
+        work_file_manager_config=core_config.WorkFileConfig(
+            root_file=Building_N100.polygon_resolve_building_conflicts___root_file___n100_building.value
+        ),
+    )
+
     polygon_rbc_method = core_config.ClassMethodEntryConfig(
         class_=ResolveBuildingConflictsPolygon,
-        method="run",
-        params={
-            "input_list_of_dicts_data_structure": polygon_rbc_input_data_structure,
-            "output_building_polygons": core_config.InjectIO(
-                object=building, tag="after_rbc"
-            ),
-            "work_file_manager_config": core_config.WorkFileConfig(
-                root_file=Building_N100.polygon_resolve_building_conflicts___root_file___n100_building.value
-            ),
-        },
+        method=ResolveBuildingConflictsPolygon.run,
+        init_params=new_config,
     )
 
     rbc_method_injects_config = core_config.MethodEntriesConfig(
