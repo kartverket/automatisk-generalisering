@@ -14,6 +14,7 @@ from datetime import timedelta
 
 from composition_configs import core_config
 from composition_configs import type_defs
+from custom_tools.general_tools import param_utils
 from env_setup import environment_setup
 from custom_tools.general_tools import custom_arcpy, file_utilities
 from custom_tools.decorators.timing_decorator import timing_decorator
@@ -30,7 +31,7 @@ class PartitionIterator:
     This iterator splits work into *cartographic partitions* and processes only the
     features relevant to each partition. It distinguishes between:
       - **processing inputs**: primary datasets to process, and
-      - **context inputs**: ancillary datasets selected within a configurable distance
+      - **context inputs**: supporting datasets selected within a configurable distance
         of the processing features.
 
     For each partition, the iterator:
@@ -963,23 +964,38 @@ class PartitionIterator:
         resolved_configs = []
 
         for entry in method_entries_config.entries:
-            resolved_params = self.resolve_param_injections(
-                method_config=copy.deepcopy(entry.params),
-                partition_id=partition_id,
-            )
-
             if isinstance(entry, core_config.FuncMethodEntryConfig):
+                resolved_params = self.resolve_param_injections(
+                    method_config=copy.deepcopy(entry.params),
+                    partition_id=partition_id,
+                )
                 resolved_configs.append(
                     core_config.FuncMethodEntryConfig(
                         func=entry.func, params=resolved_params
                     )
                 )
+
             elif isinstance(entry, core_config.ClassMethodEntryConfig):
+                resolved_init = (
+                    self.resolve_param_injections(
+                        copy.deepcopy(entry.init_params), partition_id
+                    )
+                    if entry.init_params is not None
+                    else None
+                )
+                resolved_method = (
+                    self.resolve_param_injections(
+                        copy.deepcopy(entry.method_params), partition_id
+                    )
+                    if entry.method_params is not None
+                    else None
+                )
                 resolved_configs.append(
                     core_config.ClassMethodEntryConfig(
                         class_=entry.class_,
                         method=entry.method,
-                        params=resolved_params,
+                        init_params=resolved_init,
+                        method_params=resolved_method,
                     )
                 )
             else:
@@ -1049,39 +1065,6 @@ class PartitionIterator:
 
         return path
 
-    def _split_init_and_method_params(
-        self, cls, params: Dict[str, Any]
-    ) -> Tuple[Dict[str, Any], Dict[str, Any]]:
-        """
-        Split parameters into constructor vs. method kwargs for a class.
-
-        Why:
-            When executing injected class methods, parameters may apply either to the
-            class constructor (`__init__`) or to the method itself. This function ensures
-            the correct arguments are routed to the right place.
-
-        Returns:
-            Tuple[dict, dict]: (init_params, method_params)
-        """
-        signature = inspect.signature(cls.__init__)
-        init_param_names = {
-            name
-            for name, parameter in signature.parameters.items()
-            if name != "self"
-            and parameter.kind
-            in (
-                inspect.Parameter.POSITIONAL_OR_KEYWORD,
-                inspect.Parameter.KEYWORD_ONLY,
-            )
-        }
-
-        class_params: Dict[str, Any] = {}
-        method_params: Dict[str, Any] = {}
-        for key, value in params.items():
-            (class_params if key in init_param_names else method_params)[key] = value
-
-        return class_params, method_params
-
     def _format_exception(self, exc: BaseException) -> Dict[str, Any]:
         """
         Return a JSON-safe dict with exception type, message, and full formatted traceback.
@@ -1134,54 +1117,68 @@ class PartitionIterator:
 
         for index, entry in enumerate(method_entries_config.entries):
             record: Dict[str, Any] = {"index": index}
-
-            if is_dataclass(entry.params) and not isinstance(entry.params, type):
-                raw_params = asdict(entry.params)
-            else:
-                assert isinstance(entry.params, dict)
-                raw_params = entry.params
-
-            record["raw_params"] = self._jsonify(raw_params)
-
             try:
                 if isinstance(entry, core_config.ClassMethodEntryConfig):
                     cls = entry.class_
-                    method_name = entry.method
-                    method = getattr(cls, method_name)
+
+                    # Resolve method (string or callable)
+                    if isinstance(entry.method, str):
+                        method_callable = getattr(cls, entry.method)
+                        method_name = entry.method
+                    else:
+                        method_callable = entry.method
+                        method_name = getattr(
+                            method_callable, "__name__", str(method_callable)
+                        )
+
+                    # Enforce positional dataclass-only for ctor + method
+                    ctor_args = param_utils.ensure_dataclass_list(entry.init_params)
+                    call_args = param_utils.ensure_dataclass_list(entry.method_params)
+
+                    param_utils.validate_positional_arity(cls.__init__, len(ctor_args))
+                    param_utils.validate_positional_arity(
+                        method_callable, len(call_args)
+                    )
+
                     record.update(
-                        {"type": "class", "class": cls.__name__, "method": method_name}
+                        {
+                            "type": "class",
+                            "class": cls.__name__,
+                            "method": method_name,
+                            "init_params": param_utils.payload_log(
+                                entry.init_params, self._jsonify
+                            ),
+                            "method_params": param_utils.payload_log(
+                                entry.method_params, self._jsonify
+                            ),
+                            "init_positional": len(ctor_args),
+                            "call_positional": len(call_args),
+                        }
                     )
 
-                    class_params, method_params = self._split_init_and_method_params(
-                        cls, raw_params
-                    )
-
-                    if class_params:
-                        print(f"Class parameters for {cls.__name__}:")
-                        pprint.pprint(class_params, indent=4)
-                    if method_params:
-                        print(f"Method parameters for {method_name}:")
-                        pprint.pprint(method_params, indent=4)
-
-                    record["class_params"] = self._jsonify(class_params)
-                    record["method_params"] = self._jsonify(method_params)
-
-                    instance = cls(**class_params)
-                    method(instance, **method_params)
+                    instance = cls(*ctor_args)
+                    method_callable(instance, *call_args)
 
                     record["status"] = "ok"
                     execution_log["entries"].append(record)
 
                 elif isinstance(entry, core_config.FuncMethodEntryConfig):
                     func = entry.func
-                    record.update({"type": "function", "function": func.__name__})
+                    func_args = param_utils.ensure_dataclass_list(entry.params)
+                    param_utils.validate_positional_arity(func, len(func_args))
 
-                    print(f"Function parameters for {func.__name__}:")
-                    pprint.pprint(raw_params, indent=4)
+                    record.update(
+                        {
+                            "type": "function",
+                            "function": func.__name__,
+                            "func_params": param_utils.payload_log(
+                                entry.params, self._jsonify
+                            ),
+                            "func_positional": len(func_args),
+                        }
+                    )
 
-                    record["func_params"] = self._jsonify(raw_params)
-
-                    func(**raw_params)
+                    func(*func_args)
 
                     record["status"] = "ok"
                     execution_log["entries"].append(record)
@@ -1194,7 +1191,6 @@ class PartitionIterator:
                 record["error"] = str(e)
                 record["exception"] = self._format_exception(e)
                 execution_log["entries"].append(record)
-
                 self._last_injected_log = self._jsonify(execution_log)
                 raise
 

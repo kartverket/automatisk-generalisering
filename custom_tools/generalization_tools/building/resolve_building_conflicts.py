@@ -16,6 +16,7 @@ from file_manager.n100.file_manager_buildings import Building_N100
 from file_manager.base_file_manager import BaseFileManager
 
 from file_manager import WorkFileManager
+from composition_configs import logic_config
 from constants.n100_constants import N100_Symbology, N100_Values
 from custom_tools.general_tools.polygon_processor import PolygonProcessor
 from env_setup import environment_setup
@@ -736,14 +737,14 @@ class ResolveBuildingConflictsPoints:
 class ResolveBuildingConflictsPolygon:
     def __init__(
         self,
-        input_list_of_dicts_data_structure: list[dict[str, str]],
-        output_building_polygons: str,
-        work_file_manager_config: core_config.WorkFileConfig,
+        rbc_polygon_config: logic_config.RbcInitKwargs,
     ):
-        self.input_data = input_list_of_dicts_data_structure
-        self.output_building_polygons = output_building_polygons
+        self.input_data = rbc_polygon_config.input_data_structure
+        self.output_building_polygons = rbc_polygon_config.output_building_polygons
 
-        self.work_file_manager = WorkFileManager(config=work_file_manager_config)
+        self.work_file_manager = WorkFileManager(
+            config=rbc_polygon_config.work_file_manager_config
+        )
 
         self.feature_copies = self.work_file_manager.setup_work_file_paths(
             instance=self,
