@@ -1,5 +1,6 @@
 # Importing packages
 from collections import defaultdict
+from unittest import result
 import arcpy
 import math
 
@@ -447,8 +448,8 @@ def snap_roads_to_buffer():
         snap_points = {}
         for cluster in clusters:
             ref_pt = cluster[0][0] # Fetches the first point
-            m = buffer_line.measureOnLine(ref_pt)
-            snap_pt = buffer_line.positionAlongLine(m).firstPoint
+            result = buffer_line.queryPointAndDistance(ref_pt)
+            snap_pt = result[0]  # Closest point on buffer line
             for _, idx in cluster: # ... and adjust the rest of the points in the cluster to the ref_pt
                 snap_points[idx] = snap_pt
 
@@ -467,7 +468,7 @@ def snap_roads_to_buffer():
                         if idx in snap_points:
                             # If the point should be snapped, snap it
                             new_pt = snap_points[idx]
-                            new_part.append(arcpy.Point(new_pt.X, new_pt.Y))
+                            new_part.append(new_pt.firstPoint)
                             changed = True
                         else:
                             new_part.append(pt)
@@ -485,79 +486,39 @@ def snap_roads_to_buffer():
 
 @timing_decorator
 def clip_and_erase_pre():
-    buffer_fc      = "DamBuffer_35m"
+    buffer_fc = "DamBuffer_35m"
     pre_dissolve = "in_memory\\roads_pre_dissolve"
     outside_fc = "in_memory\\roads_outside"
-    inside_fc  = "in_memory\\roads_inside"
+    inside_fc = "in_memory\\roads_inside"
     inside_wdata_fc = "in_memory\\roads_inside_with_data"
 
-    arcpy.Buffer_analysis(Road_N100.test_dam__relevant_dam__n100_road.value, buffer_fc, "35 Meters", dissolve_option="ALL")
-    
-    # 1) Clip roads to buffer: keeps only segments inside
-    arcpy.Clip_analysis(
-        in_features=Road_N100.test_dam__relevant_roads__n100_road.value,
-        clip_features=buffer_fc,
-        out_feature_class=pre_dissolve
-    )
+    try:
+        arcpy.Buffer_analysis(Road_N100.test_dam__relevant_dam__n100_road.value, buffer_fc, "35 Meters", dissolve_option="ALL")
+        arcpy.Clip_analysis(Road_N100.test_dam__relevant_roads__n100_road.value, buffer_fc, pre_dissolve)
+        arcpy.Erase_analysis(Road_N100.test_dam__relevant_roads__n100_road.value, buffer_fc, outside_fc)
+        arcpy.Dissolve_management(pre_dissolve, inside_fc, multi_part="SINGLE_PART", unsplit_lines="UNSPLIT_LINES")
 
-    # 2) Erase buffer footprint from roads: keeps only segments outside
-    arcpy.Erase_analysis(
-        in_features=Road_N100.test_dam__relevant_roads__n100_road.value,
-        erase_features=buffer_fc,
-        out_feature_class=outside_fc
-    )
+        
+        fm = arcpy.FieldMappings()
+        for fld in arcpy.ListFields(pre_dissolve):
+            if not fld.required:
+                fmap = arcpy.FieldMap()
+                fmap.addInputField(pre_dissolve, fld.name)
+                fmap.mergeRule = "First"
+                fm.addFieldMap(fmap)
 
-
-    # Dissolve:  unsplit connected segments
-    arcpy.Dissolve_management(
-        in_features=pre_dissolve,
-        out_feature_class=inside_fc,
-        multi_part="SINGLE_PART",
-        unsplit_lines="UNSPLIT_LINES"
-    )
-
-
-
-    
-    join_fields = [
-        fld.name
-        for fld in arcpy.ListFields(pre_dissolve)
-        if not fld.required 
-    ]
-
-    # 1. Build FieldMappings
-    fm = arcpy.FieldMappings()
-
-    # 1a. First bring in all the target (inside_fc) fields
-    for fld in arcpy.ListFields(inside_fc):
-        if not fld.required:           # skip FID/Shape; include your own attributes
-            fm.addFieldMap(arcpy.FieldMap().addInputField(inside_fc, fld.name))
-
-    # 1b. Now map each join‐in field from pre_dissolve
-    
-    for jf in join_fields:
-        fmap = arcpy.FieldMap()
-        fmap.addInputField(pre_dissolve, jf)
-
-        fmap.mergeRule = "First"
-
-        fm.addFieldMap(fmap)
-
-    # 2. Run the Spatial Join
-    arcpy.SpatialJoin_analysis(
-        target_features=inside_fc,
-        join_features=pre_dissolve,
-        out_feature_class=inside_wdata_fc,
-        join_operation="JOIN_ONE_TO_ONE",
-        join_type="KEEP_COMMON",
-        match_option="INTERSECT",
-        field_mapping=fm
-    )
-
-    arcpy.DeleteField_management(
-        in_table=inside_wdata_fc,
-        drop_field=["Join_Count", "TARGET_FID"]
-    )
+        arcpy.SpatialJoin_analysis(
+            target_features=inside_fc,
+            join_features=pre_dissolve,
+            out_feature_class=inside_wdata_fc,
+            join_operation="JOIN_ONE_TO_ONE",
+            join_type="KEEP_COMMON",
+            match_option="INTERSECT",
+            field_mapping=fm
+        )
+        arcpy.DeleteField_management(inside_wdata_fc, drop_field=["Join_Count", "TARGET_FID"])
+    except Exception as e:
+        arcpy.AddError(f"clip_and_erase_pre failed: {e}")
 
 
 
@@ -624,6 +585,8 @@ def edit_geom_pre():
             near_x, near_y = near_lookup[oid]
             shifted = move_geometry_away(geom, near_x, near_y, distance=35)
             insert.insertRow([shifted] + list(row[2:]))
+    
+    arcpy.CopyFeatures_management(roadlines_moved, "C:\\temp\\Roads.gdb\\roadsafterbeingmoved")
 
 
 
@@ -663,6 +626,8 @@ def snap_and_merge_pre():
 
     # Merge the two sets
     arcpy.Merge_management([roadlines_moved, outside_fc], final_fc)
+
+    arcpy.CopyFeatures_management(final_fc, "C:\\temp\\Roads.gdb\\roadsafterbeingsnapped")
 
 
 
