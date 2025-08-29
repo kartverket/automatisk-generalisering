@@ -1,6 +1,8 @@
 # Importing packages
 from collections import defaultdict
 import arcpy
+import math
+
 
 arcpy.env.overwriteOutput = True
 
@@ -36,6 +38,12 @@ def main():
     # Data preparation
     fetch_data()
     clip_data()
+
+    clip_and_erase_pre()
+    edit_geom_pre()
+    snap_and_merge_pre()
+
+
     buffer_around_dam_as_line()
 
     # Hierarchy implementation
@@ -57,7 +65,7 @@ def fetch_data():
     print("Fetching data")
     # Roads
     custom_arcpy.select_attribute_and_make_permanent_feature( #"C:\\GIS_Files\\ag_outputs\\n100\\Roads.gdb\\Roads_Shifted",
-        input_layer="C:\\GIS_Files\\ag_outputs\\n100\\Roads.gdb\\Roads_Shifted", # Road_N100.data_preparation___calculated_boarder_hierarchy_2___n100_road.value, # input_roads.road_output_1, # input_n100.VegSti,
+        input_layer=Road_N100.data_preparation___calculated_boarder_hierarchy_2___n100_road.value, # input_roads.road_output_1, # input_n100.VegSti,
         expression=None,
         output_name=Road_N100.test_dam__road_input__n100_road.value,
         selection_type=custom_arcpy.SelectionType.NEW_SELECTION
@@ -321,7 +329,7 @@ def resolve_road_conflicts(hierarchy):
 @timing_decorator
 def multiToSingle():
     feature_classes = [
-        Road_N100.test_dam__relevant_roads__n100_road.value,
+        "in_memory\\Roads_Shifted",
         Road_N100.test_dam__relevant_dam__n100_road.value,
         Road_N100.test_dam__buffer_dam_as_line__n100_road.value,
         Road_N100.test_dam__relevant_water__n100_road.value
@@ -486,6 +494,200 @@ def snap_roads_to_buffer():
                     update_cursor.updateRow(road)
     
     print("Roads modified and cleaned!")
+
+
+
+@timing_decorator
+def clip_and_erase_pre():
+    buffer_fc      = "DamBuffer_35m"
+    pre_dissolve = "in_memory\\roads_pre_dissolve"
+    outside_fc = "in_memory\\roads_outside"
+    inside_fc  = "in_memory\\roads_inside"
+    inside_wdata_fc = "in_memory\\roads_inside_with_data"
+
+    arcpy.Buffer_analysis(Road_N100.test_dam__relevant_dam__n100_road.value, buffer_fc, "35 Meters", dissolve_option="ALL")
+    
+    # 1) Clip roads to buffer: keeps only segments inside
+    arcpy.Clip_analysis(
+        in_features=Road_N100.test_dam__relevant_roads__n100_road.value,
+        clip_features=buffer_fc,
+        out_feature_class=pre_dissolve
+    )
+
+    # 2) Erase buffer footprint from roads: keeps only segments outside
+    arcpy.Erase_analysis(
+        in_features=Road_N100.test_dam__relevant_roads__n100_road.value,
+        erase_features=buffer_fc,
+        out_feature_class=outside_fc
+    )
+
+
+    # Dissolve:  unsplit connected segments
+    arcpy.Dissolve_management(
+        in_features=pre_dissolve,
+        out_feature_class=inside_fc,
+        multi_part="SINGLE_PART",
+        unsplit_lines="UNSPLIT_LINES"
+    )
+
+
+
+    
+    join_fields = [
+        fld.name
+        for fld in arcpy.ListFields(pre_dissolve)
+        if not fld.required 
+    ]
+
+    # 1. Build FieldMappings
+    fm = arcpy.FieldMappings()
+
+    # 1a. First bring in all the target (inside_fc) fields
+    for fld in arcpy.ListFields(inside_fc):
+        if not fld.required:           # skip FID/Shape; include your own attributes
+            fm.addFieldMap(arcpy.FieldMap().addInputField(inside_fc, fld.name))
+
+    # 1b. Now map each join‐in field from pre_dissolve
+    
+    for jf in join_fields:
+        fmap = arcpy.FieldMap()
+        fmap.addInputField(pre_dissolve, jf)
+
+        fmap.mergeRule = "First"
+
+        fm.addFieldMap(fmap)
+
+    # 2. Run the Spatial Join
+    arcpy.SpatialJoin_analysis(
+        target_features=inside_fc,
+        join_features=pre_dissolve,
+        out_feature_class=inside_wdata_fc,
+        join_operation="JOIN_ONE_TO_ONE",
+        join_type="KEEP_COMMON",
+        match_option="INTERSECT",
+        field_mapping=fm
+    )
+
+    arcpy.DeleteField_management(
+        in_table=inside_wdata_fc,
+        drop_field=["Join_Count", "TARGET_FID"]
+    )
+
+
+
+@timing_decorator
+def edit_geom_pre():
+    inside_wdata_fc = "in_memory\\roads_inside_with_data"
+    moved_name     = "RoadLines_Moved"
+    roadlines_moved = "in_memory\\RoadLines_Moved"
+
+
+    inside_sr = arcpy.Describe(inside_wdata_fc).spatialReference
+    temp_fc = inside_wdata_fc + "_temp"
+
+    
+
+    # Copy features for editing
+    arcpy.CopyFeatures_management(inside_wdata_fc, temp_fc)
+
+    # Create output feature class
+    arcpy.CreateFeatureclass_management(
+        out_path="in_memory",
+        out_name=moved_name,
+        geometry_type="POLYLINE",
+        template=temp_fc,
+        spatial_reference=inside_sr
+    )
+
+    # Generate Near Table
+    near_table = "in_memory\\near_table"
+    arcpy.analysis.GenerateNearTable(
+        in_features=temp_fc,
+        near_features=Road_N100.test_dam__relevant_water__n100_road.value,
+        out_table=near_table,
+        search_radius="200 Meters",  # Adjust as needed
+        location="LOCATION",
+        angle="ANGLE",
+        closest="TRUE",
+        closest_count=1
+    )
+
+    # Build a lookup of NEAR_X, NEAR_Y for each road feature
+    near_lookup = {}
+    with arcpy.da.SearchCursor(near_table, ["IN_FID", "NEAR_X", "NEAR_Y"]) as cursor:
+        for fid, nx, ny in cursor:
+            near_lookup[fid] = (nx, ny)
+
+   
+    fields = ["OID@", "SHAPE@"] + [
+        f.name for f in arcpy.ListFields(temp_fc)
+        if f.type not in ("OID", "Geometry")
+    ]
+
+    with arcpy.da.SearchCursor(temp_fc, fields) as search, \
+         arcpy.da.InsertCursor(roadlines_moved, fields[1:]) as insert:
+
+        for row in search:
+            oid = row[0]
+            geom = row[1]
+            if not geom or oid not in near_lookup:
+                arcpy.AddWarning(f"Skipping OID {oid}: missing geometry or near info")
+                continue
+          
+
+            near_x, near_y = near_lookup[oid]
+            shifted = move_geometry_away(geom, near_x, near_y, distance=35)
+            insert.insertRow([shifted] + list(row[2:]))
+
+
+
+def move_geometry_away(geom, near_x, near_y, distance):
+    sr = geom.spatialReference
+    new_parts = arcpy.Array()
+
+    for part in geom:
+        part_arr = arcpy.Array()
+        for p in part:
+            dx = p.X - near_x
+            dy = p.Y - near_y
+            length = math.hypot(dx, dy)
+            if length == 0:
+                new_x, new_y = p.X, p.Y
+            else:
+                scale = distance / length
+                new_x = p.X + dx * scale
+                new_y = p.Y + dy * scale
+            part_arr.add(arcpy.Point(new_x, new_y))
+        new_parts.add(part_arr)
+
+    return arcpy.Polyline(new_parts, sr)
+
+
+@timing_decorator
+def snap_and_merge_pre():
+    roadlines_moved = "in_memory\\RoadLines_Moved"
+    outside_fc = "in_memory\\roads_outside"
+    final_fc = "in_memory\\Roads_Shifted"
+
+    # Define snap environment
+    snap_env = [[outside_fc, "END", "40 Meters"]]
+
+    # Snap 
+    arcpy.Snap_edit(roadlines_moved, snap_env)
+
+    # Merge the two sets
+    arcpy.Merge_management([roadlines_moved, outside_fc], final_fc)
+
+
+
+    
+
+
+
+
+
+
+
 
 if __name__=="__main__":
     main()
