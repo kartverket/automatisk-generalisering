@@ -33,7 +33,11 @@ def main():
     fetch_data()
     clip_data()
 
+
     if has_dam():
+        clip_and_erase_pre()
+        edit_geom_pre()
+        snap_and_merge_pre()
         create_buffer()
         create_buffer_line()
     
@@ -60,7 +64,7 @@ def fetch_data():
     ##################################
     # Choose municipality to work on #
     ##################################
-    kommune = "Kongsberg"
+    kommune = "Steinkjer"
 
     input = [
         [Road_N100.data_preparation___calculated_boarder_hierarchy_2___n100_road.value, None, r"in_memory\road_input"], # Roads
@@ -343,7 +347,7 @@ def multiToSingle():
 def snap_roads_to_buffer():
     print("Removing noisy roads...")
 
-    roads_fc = Road_N100.test_dam__relevant_roads__n100_road.value
+    roads_fc = "in_memory\\Roads_Shifted"
     cleaned_roads_fc = Road_N100.test_dam__cleaned_roads__n100_road.value
     buffer_fc = r"in_memory\dam_buffer_70m"
     buffer_lines_fc = Road_N100.test_dam__dam_buffer_60m_line__n100_road.value
@@ -478,6 +482,7 @@ def snap_roads_to_buffer():
 
 
 
+
 @timing_decorator
 def clip_and_erase_pre():
     buffer_fc      = "DamBuffer_35m"
@@ -584,7 +589,7 @@ def edit_geom_pre():
     near_table = "in_memory\\near_table"
     arcpy.analysis.GenerateNearTable(
         in_features=temp_fc,
-        near_features=Road_N100.test_dam__relevant_water__n100_road.value,
+        near_features="in_memory\\relevant_waters",
         out_table=near_table,
         search_radius="200 Meters",  # Adjust as needed
         location="LOCATION",
