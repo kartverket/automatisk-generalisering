@@ -30,102 +30,89 @@ def main():
     # Data preparation
     fetch_data()
     clip_data()
-    create_buffer()
-    create_buffer_line()
-   
-    # Hierarchy implementation
-    """
-    field = "Hierarchy_analysis_dam"
-    
-    calculating_competing_areas(field)
-    calculate_important_roads(field)
 
-    # Editing the roads
-    #resolve_road_conflicts(field)
-    #"""
-    # Editing the roads
-    #multiToSingle()
-    snap_roads_to_buffer()
+    if has_dam():
+        create_buffer()
+        create_buffer_line()
+    
+        # Hierarchy implementation
+        """
+        field = "Hierarchy_analysis_dam"
+        
+        calculating_competing_areas(field)
+        calculate_important_roads(field)
+
+        # Editing the roads
+        #resolve_road_conflicts(field)
+        #"""
+        # Editing the roads
+        #multiToSingle()
+        snap_roads_to_buffer()
+    else:
+        print("No dam found in the selected municipality. Exiting script.")
 
 @timing_decorator
 def fetch_data():
     print("Fetching data...")
-    # Roads
-    custom_arcpy.select_attribute_and_make_permanent_feature(
-        input_layer=Road_N100.data_preparation___calculated_boarder_hierarchy_2___n100_road.value, # input_roads.road_output_1, # input_n100.VegSti,
-        expression=None,
-        output_name=r"in_memory\road_input",
-        selection_type=custom_arcpy.SelectionType.NEW_SELECTION
-    )
-    # Dam
-    custom_arcpy.select_attribute_and_make_permanent_feature(
-        input_layer=input_n100.AnleggsLinje,
-        expression="objtype = 'Dam'",
-        output_name=r"in_memory\dam_input",
-        selection_type=custom_arcpy.SelectionType.NEW_SELECTION
-    )
-    # Area
 
     ##################################
     # Choose municipality to work on #
     ##################################
-    kommune = "Steinkjer"
+    kommune = "Kongsberg"
 
-    custom_arcpy.select_attribute_and_make_permanent_feature(
-        input_layer=input_n100.AdminFlate,
-        expression=f"NAVN = '{kommune}'",
-        output_name=r"in_memory\kommune",
-        selection_type=custom_arcpy.SelectionType.NEW_SELECTION
-    )
-    # Water
-    custom_arcpy.select_attribute_and_make_permanent_feature(
-        input_layer=input_n100.ArealdekkeFlate,
-        expression=f"OBJTYPE = 'Havflate' OR OBJTYPE = 'Innsjø' OR OBJTYPE = 'InnsjøRegulert'",
-        output_name=r"in_memory\water_input",
-        selection_type=custom_arcpy.SelectionType.NEW_SELECTION
-    )
+    input = [
+        [Road_N100.data_preparation___calculated_boarder_hierarchy_2___n100_road.value, None, r"in_memory\road_input"], # Roads
+        [input_n100.AnleggsLinje, "objtype = 'Dam'", r"in_memory\dam_input"], # Dam
+        [input_n100.AdminFlate, f"NAVN = '{kommune}'", r"in_memory\kommune"], # Area
+        [input_n100.ArealdekkeFlate, "OBJTYPE = 'Havflate' OR OBJTYPE = 'Innsjø' OR OBJTYPE = 'InnsjøRegulert'", r"in_memory\water_input"] # Water
+    ]
+    for data in input:
+        custom_arcpy.select_attribute_and_make_permanent_feature(
+            input_layer=data[0],
+            expression=data[1],
+            output_name=data[2],
+            selection_type=custom_arcpy.SelectionType.NEW_SELECTION
+        )
     print("Data fetched")
 
 @timing_decorator
 def clip_data():
     print("Clipping data to municipality...")
     kommune = r"in_memory\kommune"
-    # Roads
-    arcpy.analysis.Clip(
-        in_features=r"in_memory\road_input",
-        clip_features=kommune,
-        out_feature_class=Road_N100.test_dam__relevant_roads__n100_road.value
-    )
-    # Dam
-    arcpy.analysis.Clip(
-        in_features=r"in_memory\dam_input",
-        clip_features=kommune,
-        out_feature_class=Road_N100.test_dam__relevant_dam__n100_road.value
-    )
-    # Water
-    arcpy.analysis.Clip(
-        in_features=r"in_memory\water_input",
-        clip_features=kommune,
-        out_feature_class=r"in_memory\relevant_waters"
-    )
+    files = [
+        [r"in_memory\road_input", Road_N100.test_dam__relevant_roads__n100_road.value], # Roads
+        [r"in_memory\dam_input", Road_N100.test_dam__relevant_dam__n100_road.value], # Dam
+        [r"in_memory\water_input", r"in_memory\relevant_waters"] # Water
+    ]
+    for file in files:
+        arcpy.analysis.Clip(
+            in_features=file[0],
+            clip_features=kommune,
+            out_feature_class=file[1]
+        )
     print("Data clipped")
+
+@timing_decorator
+def has_dam():
+    dam_fc = Road_N100.test_dam__relevant_dam__n100_road.value
+    count = int(arcpy.management.GetCount(dam_fc).getOutput(0))
+    return count > 0
 
 @timing_decorator
 def create_buffer():
     print("Creating buffers...")
     dam_fc = Road_N100.test_dam__relevant_dam__n100_road.value
     water_fc = r"in_memory\relevant_waters"
-    features = [dam_fc, dam_fc, water_fc]
     buffers = [
-        [r"in_memory\dam_buffer_60m", "60 Meters"],
-        [r"in_memory\dam_buffer_70m", "70 Meters"],
-        [r"in_memory\water_buffer_55m", "55 Meters"]
+        [dam_fc, r"in_memory\dam_buffer_60m", "60 Meters"],
+        [dam_fc, r"in_memory\dam_buffer_70m", "70 Meters"],
+        [water_fc, r"in_memory\water_buffer_55m", "55 Meters"]
     ]
-    for i in range(len(features)):
+    for i in range(len(buffers)):
         arcpy.analysis.Buffer(
-            in_features=features[i],
-            out_feature_class=buffers[i][0],
-            buffer_distance_or_field=buffers[i][1],
+            in_features=buffers[i][0],
+            out_feature_class=buffers[i][1],
+            buffer_distance_or_field=buffers[i][2],
             line_end_type="ROUND",
             dissolve_option="NONE",
             method="PLANAR"
@@ -462,6 +449,8 @@ def snap_roads_to_buffer():
         with arcpy.da.UpdateCursor("roads_lyr", ["OID@", "SHAPE@"]) as update_cursor:
             # Update each road
             for road in update_cursor:
+                if road[1] is None:
+                    continue
                 changed = False
                 new_parts = []
                 for part_idx, part in enumerate(road[1]):
