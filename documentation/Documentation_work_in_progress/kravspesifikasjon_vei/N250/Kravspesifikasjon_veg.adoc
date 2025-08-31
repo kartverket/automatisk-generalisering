@@ -88,13 +88,20 @@ Fylkesveger med Funksjonellveiklasse 4 eller 5, skal kun inkluderes dersom vegne
 
 * Lengde er større enn 3000 meter
 * Vegen fører inn til:
+  ** BymessigBebyggelse *Bør dette inkluderes?*
   ** Tettbebyggelse
   ** Industriområde
+  ** SportIdrettsPlass *viktig nok til å inkluderes?* 
 * Endepunkt ligger nærmere enn 500 meter fra:
   ** Grunnriss
-  ** Skole
-  ** Industribygg
-  ** Kirke
+  ** Skole *finn bygningstyper (bygningskoder) for opplæring og administrativt som representeres med punktsymbol uanhengig av størrelse når de ligger utenfor tettbebyggelse eller bymessigbebyggelse* 
+  ** Industribygg *symbolisert i n250?* 
+  ** Overnattingssteder: hotellbygning (511), motellbygning (512), hospits/pensjonat (521), vandrer-/feriehjem (522), annen bygning for overnatting (723), turisthytter (956)
+  ** Kirke, kapell (671) *vurder inkludering synagoge og moske (674), kloster (675) og annen bygning for religiøse aktiviteter (679)? Sjekk om de representeres som punktsymbol uavhengig av størrelse på lik linje med kirker* 
+  ** Sykehus med akuttmottak (970) 
+  ** Sykehus uten akuttmottak: sykehus (719), bo og behandlingssenter/alderhjem (722), rehabiliteringsinstutisjon, kurbad (723), annet sykehjem (729)
+  ** Vurderes inkludert; Parkeringsområde, 
+  
 * Alle Fylkeveger som krysse jernbanenettet skal med i N250 Kartdata.
 ====
 
@@ -287,6 +294,6 @@ a|image::bilder\forenklet_rundkjoring.png[width=150, align=center]
 * Skal avskilte kjørebaner slås sammen, og i så fall ved hvilken avstand?
 * Hvordan identifiseres hovedtraseer i bynære områder med tett nettverk av stier?
 * Hva er en for spiss vinkel inn i ett kryss? Jeg har satt 30, men har vi noe tall på dette?
-* Hvordan sjekke at passasjerferge er åpen store deler av året - kan dette omgås på noe vis?
-* 250 meter på passasjerferge, er ikke det litt kort? 
+* Hvordan sjekke at passasjerferge er åpen store deler av året - kan dette omgås på noe vis? Kan omgås hvis kilden til ferger er N50. 
+* 250 meter på passasjerferge, er ikke det litt kort? Jo - anbefaler at det forlenges.Finnes 159 tilfeller i N50 like eller kortere enn 250 meter. De er hovedsaklig bindeledd hvor flere ferger har samme ankomstted. Hva tenker du om 1000m? 
 * Skal bruer og tunneler under andre veger beholdes uansett hva? Dette gjelder jernbane, men bør dette også gjelde i forhold i hvertfall veger som krysser store veger?
