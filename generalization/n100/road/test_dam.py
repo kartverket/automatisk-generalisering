@@ -492,33 +492,32 @@ def clip_and_erase_pre():
     inside_fc = "in_memory\\roads_inside"
     inside_wdata_fc = "in_memory\\roads_inside_with_data"
 
-    try:
-        arcpy.Buffer_analysis(Road_N100.test_dam__relevant_dam__n100_road.value, buffer_fc, "35 Meters", dissolve_option="ALL")
-        arcpy.Clip_analysis(Road_N100.test_dam__relevant_roads__n100_road.value, buffer_fc, pre_dissolve)
-        arcpy.Erase_analysis(Road_N100.test_dam__relevant_roads__n100_road.value, buffer_fc, outside_fc)
-        arcpy.Dissolve_management(pre_dissolve, inside_fc, multi_part="SINGLE_PART", unsplit_lines="UNSPLIT_LINES")
 
-        
-        fm = arcpy.FieldMappings()
-        for fld in arcpy.ListFields(pre_dissolve):
-            if not fld.required:
-                fmap = arcpy.FieldMap()
-                fmap.addInputField(pre_dissolve, fld.name)
-                fmap.mergeRule = "First"
-                fm.addFieldMap(fmap)
+    arcpy.Buffer_analysis(Road_N100.test_dam__relevant_dam__n100_road.value, buffer_fc, "35 Meters", dissolve_option="ALL")
+    arcpy.Clip_analysis(Road_N100.test_dam__relevant_roads__n100_road.value, buffer_fc, pre_dissolve)
+    arcpy.Erase_analysis(Road_N100.test_dam__relevant_roads__n100_road.value, buffer_fc, outside_fc)
+    arcpy.Dissolve_management(pre_dissolve, inside_fc, unsplit_lines="UNSPLIT_LINES")
 
-        arcpy.SpatialJoin_analysis(
-            target_features=inside_fc,
-            join_features=pre_dissolve,
-            out_feature_class=inside_wdata_fc,
-            join_operation="JOIN_ONE_TO_ONE",
-            join_type="KEEP_COMMON",
-            match_option="INTERSECT",
-            field_mapping=fm
-        )
-        arcpy.DeleteField_management(inside_wdata_fc, drop_field=["Join_Count", "TARGET_FID"])
-    except Exception as e:
-        arcpy.AddError(f"clip_and_erase_pre failed: {e}")
+
+    fm = arcpy.FieldMappings()
+    for fld in arcpy.ListFields(pre_dissolve):
+        if not fld.required:
+            fmap = arcpy.FieldMap()
+            fmap.addInputField(pre_dissolve, fld.name)
+            fmap.mergeRule = "First"
+            fm.addFieldMap(fmap)
+    
+    arcpy.SpatialJoin_analysis(
+        target_features=inside_fc,
+        join_features=pre_dissolve,
+        out_feature_class=inside_wdata_fc,
+        join_operation="JOIN_ONE_TO_ONE",
+        join_type="KEEP_COMMON",
+        match_option="INTERSECT",
+        field_mapping=fm
+    )
+    arcpy.DeleteField_management(inside_wdata_fc, drop_field=["Join_Count", "TARGET_FID"])
+    
 
 
 
@@ -587,6 +586,7 @@ def edit_geom_pre():
             insert.insertRow([shifted] + list(row[2:]))
     
     arcpy.CopyFeatures_management(roadlines_moved, "C:\\temp\\Roads.gdb\\roadsafterbeingmoved")
+    arcpy.CopyFeatures_management(temp_fc, "C:\\temp\\Roads.gdb\\roadsbeforebeingmoved")
 
 
 
@@ -617,7 +617,7 @@ def snap_and_merge_pre():
     roadlines_moved = "in_memory\\RoadLines_Moved"
     outside_fc = "in_memory\\roads_outside"
     final_fc = "in_memory\\Roads_Shifted"
-
+   
     # Define snap environment
     snap_env = [[outside_fc, "END", "40 Meters"]]
 
@@ -628,7 +628,6 @@ def snap_and_merge_pre():
     arcpy.Merge_management([roadlines_moved, outside_fc], final_fc)
 
     arcpy.CopyFeatures_management(final_fc, "C:\\temp\\Roads.gdb\\roadsafterbeingsnapped")
-
 
 
     
