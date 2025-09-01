@@ -111,16 +111,18 @@ def create_buffer():
     dam_fc = Road_N100.test_dam__relevant_dam__n100_road.value
     water_fc = r"in_memory\relevant_waters"
     buffers = [
+        [dam_fc, r"in_memory\dam_buffer_60m_flat", "60 Meters"],
         [dam_fc, r"in_memory\dam_buffer_60m", "60 Meters"],
         [dam_fc, r"in_memory\dam_buffer_70m", "70 Meters"],
         [water_fc, r"in_memory\water_buffer_55m", "55 Meters"]
     ]
     for i in range(len(buffers)):
+        type = "ROUND" if i > 0 else "FLAT"
         arcpy.analysis.Buffer(
             in_features=buffers[i][0],
             out_feature_class=buffers[i][1],
             buffer_distance_or_field=buffers[i][2],
-            line_end_type="ROUND",
+            line_end_type=type,
             dissolve_option="NONE",
             method="PLANAR"
         )
@@ -377,7 +379,97 @@ def snap_roads_to_buffer():
 
     buffer_polygons = [(row[1], row[0]) for row in arcpy.da.SearchCursor(buffer_fc, ["SHAPE@", "OID@"])]
     buffer_lines = [(row[1], row[0]) for row in arcpy.da.SearchCursor(buffer_water_dam_fc, ["SHAPE@", "OID@"])]
+
+    def get_endpoints(polyline):
+        # Returns the start and end points of a polyline
+        return (
+            arcpy.PointGeometry(polyline.firstPoint, polyline.spatialReference),
+            arcpy.PointGeometry(polyline.lastPoint, polyline.spatialReference)
+        )
     
+    def find_merge_candidate(short_geom, all_roads, tolerance=2.0):
+        # Finds a road geometry with a common endpoint
+        short_start, short_end = get_endpoints(short_geom)
+        for oid, geom in all_roads:
+            if geom.equals(short_geom):
+                continue
+            start, end = get_endpoints(geom)
+            if short_start.distanceTo(start) < tolerance or short_start.distanceTo(end) < tolerance or \
+                short_end.distanceTo(start) < tolerance or short_end.distanceTo(end) < tolerance:
+                return oid, geom
+        return None, None
+    
+    def reverse_geometry(polyline):
+        reversed_parts = []
+        for part in polyline:
+            reversed_parts.append(arcpy.Array(list(reversed(part))))
+        return arcpy.Polyline(arcpy.Array(reversed_parts), polyline.spatialReference)
+
+    def merge_lines(line1, line2, tolerance=2.0):
+        l1_start, l1_end = get_endpoints(line1)
+        l2_start, l2_end = get_endpoints(line2)
+
+        # Find the matching endpoints
+        if l1_end.distanceTo(l2_start) < tolerance:
+            # Correct order
+            merged = arcpy.Array()
+            for part in line1:
+                for pt in part:
+                    merged.add(pt)
+            for part in line2:
+                for pt in part:
+                    merged.add(pt)
+            return arcpy.Polyline(merged, line1.spatialReference)
+
+        elif l1_end.distanceTo(l2_end) < tolerance:
+            # Reverse line2
+            line2_rev = reverse_geometry(line2)
+            return merge_lines(line1, line2_rev, tolerance)
+
+        elif l1_start.distanceTo(l2_end) < tolerance:
+            # Reverse line1
+            line1_rev = reverse_geometry(line1)
+            return merge_lines(line1_rev, line2, tolerance)
+
+        elif l1_start.distanceTo(l2_start) < tolerance:
+            # Reverse begge
+            return merge_lines(reverse_geometry(line1), reverse_geometry(line2), tolerance)
+
+        else:
+            # No match
+            return None
+
+    # Collects all the relevant roads
+    all_roads = []
+    with arcpy.da.SearchCursor("roads_lyr", ["OID@", "SHAPE@"]) as cursor:
+        for row in cursor:
+            all_roads.append((row[0], row[1]))
+
+    with arcpy.da.UpdateCursor("roads_lyr", ["OID@", "SHAPE@"]) as update_cursor:
+        to_delete = set()
+        for idx, road in enumerate(update_cursor):
+            oid, geom = road
+            if geom is None:
+                continue
+            
+            # If there are any short roads (<100m)
+            if geom.length < 100:
+                merge_oid, merge_geom = find_merge_candidate(geom, all_roads)
+                if merge_geom:
+                    # Combine the two geometries
+                    new_geom = merge_lines(geom, merge_geom)
+                    if new_geom:
+                        update_cursor.updateRow((oid, new_geom))
+                        to_delete.add(merge_oid)
+                        print(f"Merged short road {oid} with {merge_oid}.")
+    
+    # Deletes the roads that have been merged into others
+    with arcpy.da.UpdateCursor("roads_lyr", ["OID@"]) as delete_cursor:
+        for row in delete_cursor:
+            if row[0] in to_delete:
+                delete_cursor.deleteRow()
+                print(f"Deleted {row[0]} after merge.")
+
     buffer_to_roads = defaultdict(list)
 
     with arcpy.da.UpdateCursor("roads_lyr", ["OID@", "SHAPE@"]) as road_cursor:
@@ -455,7 +547,7 @@ def snap_roads_to_buffer():
 
         with arcpy.da.UpdateCursor("roads_lyr", ["OID@", "SHAPE@"]) as update_cursor:
             # Update each road
-            for road in update_cursor:
+            for idx, road in enumerate(update_cursor):
                 if road[1] is None:
                     continue
                 changed = False
@@ -479,6 +571,11 @@ def snap_roads_to_buffer():
                     road[1] = new_line
                     update_cursor.updateRow(road)
     
+    arcpy.management.Integrate(
+        in_features=cleaned_roads_fc,
+        cluster_tolerance="5 Meters"
+    )
+
     print("Roads modified and cleaned!")
 
 
@@ -586,7 +683,7 @@ def edit_geom_pre():
             shifted = move_geometry_away(geom, near_x, near_y, distance=35)
             insert.insertRow([shifted] + list(row[2:]))
     
-    arcpy.CopyFeatures_management(roadlines_moved, "C:\\temp\\Roads.gdb\\roadsafterbeingmoved")
+    arcpy.CopyFeatures_management(roadlines_moved, "in_memory\\roadsafterbeingmoved")
 
 
 
@@ -627,7 +724,7 @@ def snap_and_merge_pre():
     # Merge the two sets
     arcpy.Merge_management([roadlines_moved, outside_fc], final_fc)
 
-    arcpy.CopyFeatures_management(final_fc, "C:\\temp\\Roads.gdb\\roadsafterbeingsnapped")
+    arcpy.CopyFeatures_management(final_fc, "in_memory\\roadsafterbeingsnapped")
 
 
 
