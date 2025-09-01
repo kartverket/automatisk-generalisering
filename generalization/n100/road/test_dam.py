@@ -65,7 +65,7 @@ def fetch_data():
     ##################################
     # Choose municipality to work on #
     ##################################
-    kommune = "Steinkjer"
+    kommune = "Lærdal"
 
     input = [
         [Road_N100.data_preparation___calculated_boarder_hierarchy_2___n100_road.value, None, r"in_memory\road_input"], # Roads
@@ -682,7 +682,7 @@ def edit_geom_pre():
             shifted = move_geometry_away(geom, near_x, near_y, distance=35)
             insert.insertRow([shifted] + list(row[2:]))
     
-    arcpy.CopyFeatures_management(roadlines_moved, "in_memory\\roadsafterbeingmoved")
+    arcpy.CopyFeatures_management(roadlines_moved, "C:\\temp\\Roads.gdb\\roadsafterbeingmoved")
 
 
 
