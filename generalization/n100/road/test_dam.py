@@ -11,13 +11,8 @@ from input_data import input_n100
 # Importing custom modules
 from file_manager.n100.file_manager_roads import Road_N100
 from env_setup import environment_setup
-import config
 from custom_tools.decorators.timing_decorator import timing_decorator
 from custom_tools.general_tools import custom_arcpy
-from custom_tools.general_tools.partition_iterator import PartitionIterator
-from custom_tools.generalization_tools.road.resolve_road_conflicts import (
-    ResolveRoadConflicts
-)
 
 @timing_decorator
 def main():
@@ -32,24 +27,16 @@ def main():
 
 
     if has_dam():
+        # Move dam away from lakes
         clip_and_erase_pre()
         edit_geom_pre()
         snap_and_merge_pre()
+
+        # Data preparation
         create_buffer()
         create_buffer_line()
-    
-        # Hierarchy implementation
-        """
-        field = "Hierarchy_analysis_dam"
         
-        calculating_competing_areas(field)
-        calculate_important_roads(field)
-
-        # Editing the roads
-        #resolve_road_conflicts(field)
-        #"""
-        # Editing the roads
-        #multiToSingle()
+        # Snap roads to buffer
         snap_roads_to_buffer()
     else:
         print("No dam found in the selected municipality. Exiting script.")
@@ -61,7 +48,7 @@ def fetch_data():
     ##################################
     # Choose municipality to work on #
     ##################################
-    kommune = "Lærdal"
+    kommune = "Bergen"
 
     input = [
         [Road_N100.data_preparation___calculated_boarder_hierarchy_2___n100_road.value, None, r"in_memory\road_input"], # Roads
@@ -390,215 +377,8 @@ def create_buffer_line():
     print("Dam buffer as line created")
 
 @timing_decorator
-def calculating_competing_areas(hierarchy):
-    print("Calculating competing areas")
-    feature_classes = [
-        Road_N100.test_dam__relevant_roads__n100_road.value,
-        Road_N100.test_dam__relevant_dam__n100_road.value,
-        Road_N100.test_dam__buffer_dam_as_line__n100_road.value,
-        Road_N100.test_dam__relevant_water__n100_road.value
-    ]
-    feature_classes_single = [
-        Road_N100.test_dam__relevant_roads_single__n100_road.value,
-        Road_N100.test_dam__relevant_dam_single__n100_road.value,
-        Road_N100.test_dam__buffer_dam_as_line_single__n100_road.value,
-        Road_N100.test_dam__relevant_water_single__n100_road.value
-    ]
-    print("Performing multipart to singlepart...")
-    for i in range(len(feature_classes)):
-        if arcpy.Exists(feature_classes_single[i]):
-            arcpy.management.Delete(feature_classes_single[i])
-        arcpy.management.MultipartToSinglepart(
-            in_features=feature_classes[i],
-            out_feature_class=feature_classes_single[i]
-        )
-        if hierarchy not in [f.name for f in arcpy.ListFields(feature_classes_single[i])]:
-            arcpy.management.AddField(
-                in_table=feature_classes_single[i],
-                field_name=hierarchy,
-                field_type="SHORT"
-            )
-        arcpy.management.CalculateField(
-            in_table=feature_classes_single[i],
-            field=hierarchy,
-            expression=0,
-            expression_type="PYTHON3"
-        )
-    print("Competing areas calculated")
-
-@timing_decorator
-def calculate_important_roads(hierarchy):
-    print("Calculating important roads")
-
-    roads_fc = Road_N100.test_dam__relevant_roads_single__n100_road.value
-    buffer_dam_fc = Road_N100.test_dam__buffer_dam__n100_road.value
-    buffer_h4 = Road_N100.test_dam__200m_buffer_h4__n100_road.value
-    
-    arcpy.management.MakeFeatureLayer(
-        in_features=roads_fc,
-        out_layer="relevant_roads_lyr_flat"
-    )
-    arcpy.management.SelectLayerByLocation(
-        in_layer="relevant_roads_lyr_flat",
-        overlap_type="INTERSECT",
-        select_features=buffer_dam_fc
-    )
-    arcpy.management.CalculateField(
-        in_table="relevant_roads_lyr_flat",
-        field=hierarchy,
-        expression=4,
-        expression_type="PYTHON3"
-    )
-    arcpy.management.SelectLayerByAttribute(
-        in_layer_or_view="relevant_roads_lyr_flat",
-        selection_type="NEW_SELECTION",
-        where_clause=f"{hierarchy} = 4"
-    )
-    arcpy.analysis.Buffer(
-        in_features="relevant_roads_lyr_flat",
-        out_feature_class=buffer_h4,
-        buffer_distance_or_field="200 Meters",
-        dissolve_option="ALL"
-    )
-    arcpy.management.SelectLayerByLocation(
-        in_layer="relevant_roads_lyr_flat",
-        selection_type="NEW_SELECTION",
-        overlap_type="INTERSECT",
-        select_features=buffer_h4
-    )
-    arcpy.management.SelectLayerByAttribute(
-        in_layer_or_view="relevant_roads_lyr_flat",
-        selection_type="REMOVE_FROM_SELECTION",
-        where_clause=f"{hierarchy} = 4"
-    )
-    arcpy.management.CalculateField(
-        in_table="relevant_roads_lyr_flat",
-        field=hierarchy,
-        expression=2,
-        expression_type="PYTHON3"
-    )
-    print("Important roads calculated")
-
-@timing_decorator
-def resolve_road_conflicts(hierarchy): 
-    print("Resolving road conflicts...")
-
-    road = "road"
-    dam = "dam"
-    buffer = "buffer"
-    displacement = "displacement"
-
-    inputs = {
-        road: [
-            "input",
-            Road_N100.test_dam__relevant_roads_single__n100_road.value
-        ],
-        dam: [
-            "context",
-            Road_N100.test_dam__relevant_dam_single__n100_road.value
-        ],
-        buffer: [
-            "context",
-            Road_N100.test_dam__buffer_dam_as_line_single__n100_road.value
-        ]
-    }
-
-    outputs = {
-        road: [
-            "resolved_road_conflicts",
-            Road_N100.test_dam__resolve_road_conflicts__n100_road.value
-        ],
-        displacement: [
-            "displacement_feature",
-            Road_N100.test_dam__resolve_road_conflicts_displacement_feature__n100_road.value
-        ]
-    }
-
-    input_data_structure = [
-        {
-            "unique_alias": road,
-            "input_line_feature": (road, "input"),
-            "input_lyrx_feature": config.relevante_veier,
-            "grouped_lyrx": True,
-            "target_layer_name": "test_dam___relevante_veier___n100_road"
-        },
-        {
-            "unique_alias": dam,
-            "input_line_feature": (dam, "context"),
-            "input_lyrx_feature": config.relevante_demninger,
-            "grouped_lyrx": True,
-            "target_layer_name": "test_dam___relevante_demninger___n100_road"
-        },
-        {
-            "unique_alias": buffer,
-            "input_line_feature": (buffer, "context"),
-            "input_lyrx_feature": config.buffer_rundt_demning_som_linjer,
-            "grouped_lyrx": True,
-            "target_layer_name": "test_dam___buffer_rundt_demning_som_linjer___n100_road"
-        }
-    ]
-
-    resolve_road_conflicts_config = {
-        "class": ResolveRoadConflicts,
-        "method": "run",
-        "params": {
-            "input_list_of_dicts_data_structure": input_data_structure,
-            "root_file": Road_N100.test_dam__resolve_road_root__n100_road.value,
-            "output_road_feature": (road, "resolved_road_conflicts"),
-            "output_displacement_feature": (
-                displacement,
-                "displacement_feature",
-            ),
-            "map_scale": "100000",
-            "hierarchy_field": hierarchy
-        }
-    }
-
-    partition_resolve_road_conflicts = PartitionIterator(
-        alias_path_data=inputs,
-        alias_path_outputs=outputs,
-        custom_functions=[resolve_road_conflicts_config],
-        root_file_partition_iterator=Road_N100.test_dam__resolve_road_partition_root__n100_road.value,
-        dictionary_documentation_path=Road_N100.test_dam__resolve_road_docu__n100_road.value,
-        feature_count=25_000,
-        run_partition_optimization=True,
-        search_distance="500 Meters",
-    )
-
-    try:
-        partition_resolve_road_conflicts.run()
-    except Exception as e:
-        print(f"An error occurred during road conflict resolution: {e}")
-
-    print("Road conflicts resolved! 8)")
-
-@timing_decorator
-def multiToSingle():
-    feature_classes = [
-        "in_memory\\Roads_Shifted",
-        Road_N100.test_dam__relevant_dam__n100_road.value,
-        Road_N100.test_dam__buffer_dam_as_line__n100_road.value,
-        Road_N100.test_dam__relevant_water__n100_road.value
-    ]
-    feature_classes_single = [
-        Road_N100.test_dam__relevant_roads_single__n100_road.value,
-        Road_N100.test_dam__relevant_dam_single__n100_road.value,
-        Road_N100.test_dam__buffer_dam_as_line_single__n100_road.value,
-        Road_N100.test_dam__relevant_water_single__n100_road.value
-    ]
-    print("Performing multipart to singlepart...")
-    for i in range(len(feature_classes)):
-        if arcpy.Exists(feature_classes_single[i]):
-            arcpy.management.Delete(feature_classes_single[i])
-        arcpy.management.MultipartToSinglepart(
-            in_features=feature_classes[i],
-            out_feature_class=feature_classes_single[i]
-        )
-    print("Multipart to singlepart done")
-
-@timing_decorator
 def snap_roads_to_buffer():
-    print("Removing noisy roads...")
+    print("Snap roads to buffer...")
 
     roads_fc = r"in_memory\roads_shifted"
     intermediate_fc = r"in_memory\roads_intermediate"
