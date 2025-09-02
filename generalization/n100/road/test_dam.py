@@ -98,11 +98,21 @@ def clip_and_erase_pre():
     inside_fc = r"in_memory\roads_inside"
     inside_wdata_fc = r"in_memory\roads_inside_with_data"
 
+    water_clipped = r"in_memory\water_clipped"
+    water_center = r"in_memory\water_center"
+    buffer_water = r"in_memory\buffer_water"
+
     try:
-        arcpy.Buffer_analysis(Road_N100.test_dam__relevant_dam__n100_road.value, buffer_fc, "35 Meters", dissolve_option="ALL")
+        arcpy.Buffer_analysis(Road_N100.test_dam__relevant_dam__n100_road.value, buffer_fc, "45 Meters", dissolve_option="ALL")
         arcpy.Clip_analysis(Road_N100.test_dam__relevant_roads__n100_road.value, buffer_fc, pre_dissolve)
         arcpy.Erase_analysis(Road_N100.test_dam__relevant_roads__n100_road.value, buffer_fc, outside_fc)
         arcpy.Dissolve_management(pre_dissolve, inside_fc, multi_part="SINGLE_PART", unsplit_lines="UNSPLIT_LINES")
+
+       
+
+        arcpy.Buffer_analysis(Road_N100.test_dam__relevant_dam__n100_road.value, buffer_water, "75 Meters", dissolve_option="ALL")
+        arcpy.Clip_analysis(r"in_memory\relevant_waters", buffer_water, water_clipped)
+        arcpy.FeatureToPoint_management(water_clipped, water_center, "CENTROID")
 
         fm = arcpy.FieldMappings()
         for fld in arcpy.ListFields(pre_dissolve):
@@ -123,6 +133,82 @@ def clip_and_erase_pre():
         )
 
         arcpy.DeleteField_management(inside_wdata_fc, drop_field=["Join_Count", "TARGET_FID"])
+
+        def get_endpoints(polyline):
+            return (
+                arcpy.PointGeometry(polyline.firstPoint, polyline.spatialReference),
+                arcpy.PointGeometry(polyline.lastPoint, polyline.spatialReference)
+            )
+
+        def reverse_geometry(polyline):
+            reversed_parts = []
+            for part in polyline:
+                reversed_parts.append(arcpy.Array(list(reversed(part))))
+            return arcpy.Polyline(arcpy.Array(reversed_parts), polyline.spatialReference)
+
+        def merge_lines(line1, line2, tolerance=5.0):
+            l1_start, l1_end = get_endpoints(line1)
+            l2_start, l2_end = get_endpoints(line2)
+
+            if l1_end.distanceTo(l2_start) < tolerance:
+                merged = arcpy.Array()
+                for part in line1:
+                    for pt in part:
+                        merged.add(pt)
+                for part in line2:
+                    for pt in part:
+                        merged.add(pt)
+                return arcpy.Polyline(merged, line1.spatialReference)
+            elif l1_end.distanceTo(l2_end) < tolerance:
+                line2_rev = reverse_geometry(line2)
+                return merge_lines(line1, line2_rev, tolerance)
+            elif l1_start.distanceTo(l2_end) < tolerance:
+                line1_rev = reverse_geometry(line1)
+                return merge_lines(line1_rev, line2, tolerance)
+            elif l1_start.distanceTo(l2_start) < tolerance:
+                return merge_lines(reverse_geometry(line1), reverse_geometry(line2), tolerance)
+            else:
+                return None
+
+        def merge_all_lines(fc, tolerance=5.0):
+            # Collect all lines and their attributes
+            lines = []
+            fields = [f.name for f in arcpy.ListFields(fc) if f.type not in ("OID", "Geometry")]
+            with arcpy.da.SearchCursor(fc, ["OID@", "SHAPE@"] + fields) as cursor:
+                for row in cursor:
+                    oid = row[0]
+                    geom = row[1]
+                    attrs = row[2:]
+                    lines.append((oid, geom, attrs))
+
+            merged = []
+            used = set()
+            for i, (oid1, geom1, attrs1) in enumerate(lines):
+                if oid1 in used:
+                    continue
+                merged_geom = geom1
+                merged_attrs = attrs1
+                for j, (oid2, geom2, attrs2) in enumerate(lines):
+                    if i == j or oid2 in used:
+                        continue
+                    new_geom = merge_lines(merged_geom, geom2, tolerance)
+                    if new_geom:
+                        merged_geom = new_geom
+                        # Keep attrs from the first line (merged_attrs)
+                        used.add(oid2)
+                merged.append((merged_geom, merged_attrs))
+                used.add(oid1)
+
+            # Delete all rows and insert merged lines
+            arcpy.DeleteRows_management(fc)
+            with arcpy.da.InsertCursor(fc, ["SHAPE@"] + fields) as cursor:
+                for geom, attrs in merged:
+                    cursor.insertRow([geom] + list(attrs))
+        
+        merge_all_lines(inside_wdata_fc, tolerance=5.0)
+
+   
+        
     except Exception as e:
         arcpy.AddError(f"clip_and_erase_pre failed: {e}")
 
@@ -131,6 +217,11 @@ def edit_geom_pre():
     inside_wdata_fc = r"in_memory\roads_inside_with_data"
     moved_name = "roads_moved"
     roadlines_moved = r"in_memory\roads_moved"
+
+    water_center = r"in_memory\water_center"
+
+
+    arcpy.CopyFeatures_management(inside_wdata_fc, "in_memory\\roadsbeforebeingmoved")
 
     inside_sr = arcpy.Describe(inside_wdata_fc).spatialReference
     temp_fc = inside_wdata_fc + "_temp"
@@ -151,7 +242,7 @@ def edit_geom_pre():
     near_table = "in_memory\\near_table"
     arcpy.analysis.GenerateNearTable(
         in_features=temp_fc,
-        near_features="in_memory\\relevant_waters",
+        near_features=water_center,
         out_table=near_table,
         search_radius="200 Meters",  # Adjust as needed
         location="LOCATION",
@@ -179,11 +270,12 @@ def edit_geom_pre():
             geom = row[1]
             if not geom or oid not in near_lookup:
                 arcpy.AddWarning(f"Skipping OID {oid}: missing geometry or near info")
+                insert.insertRow([geom] + list(row[2:]))
                 continue
           
 
             near_x, near_y = near_lookup[oid]
-            shifted = move_geometry_away(geom, near_x, near_y, distance=35)
+            shifted = move_line_away(geom, near_x, near_y, distance=35)
             insert.insertRow([shifted] + list(row[2:]))
     
     arcpy.CopyFeatures_management(roadlines_moved, "in_memory\\roadsafterbeingmoved")
@@ -208,6 +300,32 @@ def move_geometry_away(geom, near_x, near_y, distance):
         new_parts.add(part_arr)
 
     return arcpy.Polyline(new_parts, sr)
+
+
+def move_line_away(geom, near_x, near_y, distance):
+    sr = geom.spatialReference
+    centroid = geom.centroid
+    dx = centroid.X - near_x
+    dy = centroid.Y - near_y
+    length = math.hypot(dx, dy)
+    if length == 0:
+        # No movement if centroid is at water center
+        shift_x, shift_y = 0, 0
+    else:
+        scale = distance / length
+        shift_x = dx * scale
+        shift_y = dy * scale
+
+    new_parts = arcpy.Array()
+    for part in geom:
+        part_arr = arcpy.Array()
+        for p in part:
+            new_x = p.X + shift_x
+            new_y = p.Y + shift_y
+            part_arr.add(arcpy.Point(new_x, new_y))
+        new_parts.add(part_arr)
+    return arcpy.Polyline(new_parts, sr)
+
 
 @timing_decorator
 def snap_and_merge_pre():
