@@ -23,7 +23,7 @@ def main():
 
     # Data preparation
     fetch_data()
-    clip_data()
+    #clip_data()
 
 
     if has_dam():
@@ -40,7 +40,7 @@ def main():
         roads = connect_roads_with_buffers()
         roads = merge_instances(roads)
         snap_roads(roads)
-        remove_sharp_angles(roads)
+        #remove_sharp_angles(roads)
     else:
         print("No dam found in the selected municipality. Exiting script.")
 
@@ -51,13 +51,13 @@ def fetch_data():
     ##################################
     # Choose municipality to work on #
     ##################################
-    kommune = "Bergen"
+    kommune = "Lærdal"
 
     input = [
-        [Road_N100.data_preparation___calculated_boarder_hierarchy_2___n100_road.value, None, r"in_memory\road_input"], # Roads
-        [input_n100.AnleggsLinje, "objtype = 'Dam'", r"in_memory\dam_input"], # Dam
+        [r"C:\GIS_Files\ag_inputs\dam_fix_input.gdb\data_preparation___calculated_boarder_hierarchy_2___n100_road", None,  Road_N100.test_dam__relevant_roads__n100_road.value], # Roads
+        [input_n100.AnleggsLinje, "objtype = 'Dam'", Road_N100.test_dam__relevant_dam__n100_road.value], # Dam
         [input_n100.AdminFlate, f"NAVN = '{kommune}'", r"in_memory\kommune"], # Area
-        [input_n100.ArealdekkeFlate, "OBJTYPE = 'Havflate' OR OBJTYPE = 'Innsjø' OR OBJTYPE = 'InnsjøRegulert'", r"in_memory\water_input"] # Water
+        [input_n100.ArealdekkeFlate, "OBJTYPE = 'Havflate' OR OBJTYPE = 'Innsjø' OR OBJTYPE = 'InnsjøRegulert'", r"in_memory\relevant_waters"] # Water
     ]
     for data in input:
         custom_arcpy.select_attribute_and_make_permanent_feature(
