@@ -37,7 +37,9 @@ def main():
         create_buffer_line()
         
         # Snap roads to buffer
-        snap_roads_to_buffer()
+        roads = connect_roads_with_buffers()
+        roads = merge_instances(roads)
+        snap_roads(roads)
     else:
         print("No dam found in the selected municipality. Exiting script.")
 
@@ -307,7 +309,6 @@ def move_geometry_away(geom, near_x, near_y, distance):
 
     return arcpy.Polyline(new_parts, sr)
 
-
 def move_line_away(geom, near_x, near_y, distance):
     sr = geom.spatialReference
     centroid = geom.centroid
@@ -332,7 +333,6 @@ def move_line_away(geom, near_x, near_y, distance):
         new_parts.add(part_arr)
     return arcpy.Polyline(new_parts, sr)
 
-
 @timing_decorator
 def snap_and_merge_pre():
     roadlines_moved = r"in_memory\roads_moved"
@@ -356,7 +356,6 @@ def create_buffer():
     dam_fc = Road_N100.test_dam__relevant_dam__n100_road.value
     water_fc = r"in_memory\relevant_waters"
     buffers = [
-        #[dam_fc, r"in_memory\dam_buffer_60m_flat", "60 Meters"],
         [dam_fc, r"in_memory\dam_buffer_70m_flat", "70 Meters"],
         [dam_fc, r"in_memory\dam_buffer_70m", "70 Meters"],
         [water_fc, r"in_memory\water_buffer_55m", "55 Meters"]
@@ -383,6 +382,348 @@ def create_buffer_line():
         out_feature_class=line
     )
     print("Dam buffer as line created")
+
+##################
+# Help functions
+##################
+
+def get_endpoints(polyline):
+        # Returns the start and end points of a polyline
+        return (
+            arcpy.PointGeometry(polyline.firstPoint, polyline.spatialReference),
+            arcpy.PointGeometry(polyline.lastPoint, polyline.spatialReference)
+        )
+
+def add_road(road_lyr, roads):
+    added = False
+    with arcpy.da.SearchCursor(road_lyr, ["OID@", "SHAPE@", "objtype"]) as cursor:
+        for oid, geom, obj in cursor:
+            if oid in roads:
+                continue
+            start, end = get_endpoints(geom)
+            for key in roads:
+                s, e = get_endpoints(roads[key][0])
+                distances = [
+                    start.distanceTo(s), start.distanceTo(e),
+                    end.distanceTo(s), end.distanceTo(e)
+                ]
+                if any(d < 2 for d in distances):
+                    roads[oid] = [geom, obj]
+                    added = True
+                    break
+            if added:
+                break
+    if added:
+        return add_road(road_lyr, roads)
+    return roads
+
+def find_merge_candidate(short_geom, all_roads, buffer, tolerance=2.0):
+    # Finds a road geometry with a common endpoint
+    start, end = get_endpoints(short_geom)
+    for oid, geom in all_roads:
+        if geom.equals(short_geom):
+            continue
+        s, e = get_endpoints(geom)
+        endpoint_pairs = [(start, s), (start, e), (end, s), (end, e)]
+        for p1, p2 in endpoint_pairs:
+            if p1.distanceTo(p2) < tolerance:
+                if buffer.contains(p1) and buffer.contains(p2):
+                    return oid, geom
+    return None, None
+
+def reverse_geometry(polyline):
+    reversed_parts = []
+    for part in polyline:
+        reversed_parts.append(arcpy.Array(list(reversed(part))))
+    return arcpy.Polyline(arcpy.Array(reversed_parts), polyline.spatialReference)
+
+def merge_lines(line1, line2, buffer, tolerance=2.0):
+    l1_start, l1_end = get_endpoints(line1)
+    l2_start, l2_end = get_endpoints(line2)
+
+    def within_buffer(p1, p2):
+        return buffer.contains(p1) and buffer.contains(p2)
+
+    # Find the matching endpoints
+    if l1_end.distanceTo(l2_start) < tolerance and within_buffer(l1_end, l2_start):
+        # Correct order
+        merged = arcpy.Array()
+        for part in line1:
+            for pt in part:
+                merged.add(pt)
+        for part in line2:
+            for pt in part:
+                merged.add(pt)
+        return arcpy.Polyline(merged, line1.spatialReference)
+
+    elif l1_end.distanceTo(l2_end) < tolerance and within_buffer(l1_end, l2_end):
+        # Reverse line2
+        line2_rev = reverse_geometry(line2)
+        return merge_lines(line1, line2_rev, buffer, tolerance)
+
+    elif l1_start.distanceTo(l2_end) < tolerance and within_buffer(l1_start, l2_end):
+        # Reverse line1
+        line1_rev = reverse_geometry(line1)
+        return merge_lines(line1_rev, line2, buffer, tolerance)
+
+    elif l1_start.distanceTo(l2_start) < tolerance and within_buffer(l1_start, l2_start):
+        # Reverse begge
+        return merge_lines(reverse_geometry(line1), reverse_geometry(line2), buffer, tolerance)
+
+    else:
+        # No match
+        return None
+
+def cluster_points(points, threshold=1.0):
+    # Clusters points that are within the threshold
+    # distance of each other
+    clusters = []
+    for pt, idx in points:
+        found = False
+        for cluster in clusters:
+            if any(pt.distanceTo(other[0]) < threshold for other in cluster):
+                # The points are close enough to be in the same cluster
+                # With other words: snap them to the same coordinate
+                cluster.append((pt, idx))
+                found = True
+                break
+        if not found:
+            clusters.append([(pt, idx)])
+    return clusters
+
+##################
+
+@timing_decorator
+def connect_roads_with_buffers():
+    print("Connects roads with buffers...")
+
+    roads_fc = r"in_memory\roads_shifted"
+    intermediate_fc = r"in_memory\roads_intermediate"
+    buffer_flat_fc = r"in_memory\dam_buffer_70m_flat"
+    buffer_round_fc = r"in_memory\dam_buffer_70m"
+
+    arcpy.management.MultipartToSinglepart(roads_fc, intermediate_fc)
+
+    arcpy.management.MakeFeatureLayer(intermediate_fc, "roads_lyr_flat")
+    arcpy.management.MakeFeatureLayer(intermediate_fc, "roads_lyr_round")
+
+    arcpy.management.SelectLayerByLocation(
+        # Finds all roads 70m or closer to a dam
+        in_layer="roads_lyr_flat",
+        overlap_type="WITHIN_A_DISTANCE",
+        search_distance="0 Meters",
+        select_features=buffer_flat_fc
+    )
+    arcpy.management.SelectLayerByLocation(
+        in_layer="roads_lyr_round",
+        overlap_type="WITHIN_A_DISTANCE",
+        search_distance="0 Meters",
+        select_features=buffer_round_fc
+    )
+
+    roads = {}
+
+    with arcpy.da.SearchCursor("roads_lyr_flat", ["OID@", "SHAPE@", "objtype"]) as cursor:
+        for oid, geom, obj in cursor:
+            if oid not in roads:
+                roads[oid] = [geom, obj]
+    
+    roads = add_road("roads_lyr_round", roads)
+
+    buffer_polygons = [(row[0], row[1]) for row in arcpy.da.SearchCursor(buffer_round_fc, ["OID@", "SHAPE@"])]
+    buffer_to_roads = defaultdict(list)
+
+    for key in roads:
+        min_dist = float("inf")
+        nearest_oid = None
+        for oid, buffer_poly in buffer_polygons:
+            dist = roads[key][0].distanceTo(buffer_poly)
+            if dist < min_dist:
+                min_dist = dist
+                nearest_oid = oid
+        buffer_to_roads[nearest_oid].append([key, roads[key][0], roads[key][1]])
+    
+    print("Roads connected to buffers.")
+    
+    return buffer_to_roads
+
+@timing_decorator
+def merge_instances(roads):
+    print("Merge connected instances of same type...")
+
+    intermediate_fc = r"in_memory\roads_intermediate"
+    
+    buffer_fc = r"in_memory\dam_buffer_70m"
+    buffer_polygons = [(row[0], row[1]) for row in arcpy.da.SearchCursor(buffer_fc, ["OID@", "SHAPE@"])]
+
+    to_delete = set()
+
+    new_roads = defaultdict(list)
+
+    for key in roads:
+        buffer = [b[1] for b in buffer_polygons if b[0] == key][0]
+        types = {obj for _, _, obj in roads[key]}
+        
+        arcpy.management.MakeFeatureLayer(
+            in_features=intermediate_fc,
+            out_layer="roads_lyr"
+        )
+
+        for t in types:
+            all_roads = [[oid, geom] for oid, geom, obj in roads[key] if obj == t]
+            oid_list_str = ",".join(str(road[0]) for road in all_roads)
+            sql_query = f"OBJECTID IN ({oid_list_str})"
+
+            arcpy.management.SelectLayerByAttribute(
+                in_layer_or_view="roads_lyr",
+                selection_type="NEW_SELECTION",
+                where_clause=sql_query
+            )
+
+            with arcpy.da.UpdateCursor("roads_lyr", ["OID@", "SHAPE@"]) as update_cursor:
+                for oid, geom in update_cursor:
+                    if geom is None:
+                        update_cursor.deleteRow()
+                    if oid in to_delete:
+                        continue
+                    # Finds candidate to merge
+                    merge_oid, merge_geom = find_merge_candidate(geom, all_roads, buffer)
+                    if merge_geom:
+                        # Combine the two geometries
+                        new_geom = merge_lines(geom, merge_geom, buffer)
+                        if new_geom:
+                            update_cursor.updateRow((oid, new_geom))
+                            all_roads = [
+                                [r_oid, new_geom] if r_oid == oid else (r_oid, r_geom)
+                                for r_oid, r_geom in all_roads
+                                if r_oid != merge_oid
+                            ]
+                            new_roads[key].append([oid, new_geom])
+                            to_delete.add(merge_oid)
+                    else:
+                        new_roads[key].append([oid, geom])
+            
+            # Deletes the roads that have been merged into others
+            with arcpy.da.UpdateCursor("roads_lyr", ["OID@"]) as delete_cursor:
+                for row in delete_cursor:
+                    if row[0] in to_delete:
+                        delete_cursor.deleteRow()
+    
+    print("Instances merged!")
+
+    return new_roads
+
+@timing_decorator
+def snap_roads(roads):
+    print("Snap roads to buffer...")
+    
+    intermediate_fc = r"in_memory\roads_intermediate"
+    cleaned_roads_fc = Road_N100.test_dam__cleaned_roads__n100_road.value
+    buffer_fc = r"in_memory\dam_buffer_70m"
+    buffer_lines_fc = Road_N100.test_dam__dam_buffer_70m_line__n100_road.value
+    water_buffer_fc = r"in_memory\water_buffer_55m"
+    buffer_water_dam_fc = r"in_memory\dam_buffer_without_water"
+
+    arcpy.analysis.Erase(
+        # The roads should be snapped to buffer lines
+        # at least 55m from water
+        in_features=buffer_lines_fc,
+        erase_features=water_buffer_fc,
+        out_feature_class=buffer_water_dam_fc
+    )
+    
+    buffer_polygons = [(row[0], row[1]) for row in arcpy.da.SearchCursor(buffer_fc, ["OID@", "SHAPE@"])]
+    buffer_lines = [(row[0], row[1]) for row in arcpy.da.SearchCursor(buffer_water_dam_fc, ["OID@", "SHAPE@"])]
+
+    oids = ",".join(str(oid) for key in roads.keys() for oid, _ in roads[key])
+    sql = f"OBJECTID IN ({oids})"
+
+    arcpy.management.MakeFeatureLayer(intermediate_fc, "roads_lyr")
+    
+    arcpy.management.SelectLayerByAttribute(
+        in_layer_or_view="roads_lyr",
+        selection_type="NEW_SELECTION",
+        where_clause=sql
+    )
+
+    for buf_oid, buffer_poly in buffer_polygons:
+        # For all buffer polygons, find the corresponding buffer line
+        buffer_line = None
+        for _, line in buffer_lines:
+            dist = line.distanceTo(buffer_poly)
+            if dist < 5:
+                # It should only be one line per polygon
+                buffer_line = line
+                break
+        if buffer_line is None:
+            continue
+        
+        # Fetch all roads associated with this buffer polygon
+        relevant_roads = roads.get(buf_oid, [])
+        if not relevant_roads:
+            # If no roads, skip
+            continue
+
+        # Collects points inside the buffer polygon
+        points_to_cluster = []
+        for road_oid, line in relevant_roads:
+            for part_idx, part in enumerate(line):
+                for pt_idx, pt in enumerate(part):
+                    if pt is None:
+                        # Only valid points accepted
+                        continue
+                    pt_geom = arcpy.PointGeometry(pt, line.spatialReference)
+                    if buffer_poly.contains(pt_geom):
+                        # The point is inside the buffer polygon
+                        points_to_cluster.append((pt_geom, (road_oid, part_idx, pt_idx)))
+
+        # Cluster points that are close to each other
+        clusters = cluster_points(points_to_cluster, threshold=1.0)
+
+        # Snap points to the buffer line
+        snap_points = {}
+        for cluster in clusters:
+            ref_pt = cluster[0][0] # Fetches the first point
+            result = buffer_line.queryPointAndDistance(ref_pt)
+            snap_pt = result[0]  # Closest point on buffer line
+            for _, idx in cluster: # ... and adjust the rest of the points in the cluster to the ref_pt
+                snap_points[idx] = snap_pt
+
+        with arcpy.da.UpdateCursor("roads_lyr", ["OID@", "SHAPE@"]) as update_cursor:
+            # Update each road
+            for row in update_cursor:
+                oid, geom = row
+                if geom is None:
+                    continue
+                changed = False
+                new_parts = []
+                for part_idx, part in enumerate(geom):
+                    # For each part of the road
+                    new_part = []
+                    for pt_idx, pt in enumerate(part):
+                        idx = (oid, part_idx, pt_idx)
+                        if idx in snap_points:
+                            # If the point should be snapped, snap it
+                            new_pt = snap_points[idx]
+                            new_part.append(new_pt.firstPoint)
+                            changed = True
+                        else:
+                            new_part.append(pt)
+                    new_parts.append(arcpy.Array(new_part))
+                if changed:
+                    # Update the road geometry if any point was changed
+                    new_line = arcpy.Polyline(arcpy.Array(new_parts), geom.spatialReference)
+                    geom = new_line
+                    update_cursor.updateRow((oid, geom))
+    
+    arcpy.management.Integrate(
+        in_features="roads_lyr",
+        cluster_tolerance="5 Meters"
+    )
+
+    arcpy.management.CopyFeatures(intermediate_fc, cleaned_roads_fc)
+
+    print("Roads snapped to buffers!")
 
 @timing_decorator
 def snap_roads_to_buffer():
@@ -431,65 +772,6 @@ def snap_roads_to_buffer():
 
     buffer_polygons = [(row[1], row[0]) for row in arcpy.da.SearchCursor(buffer_fc, ["SHAPE@", "OID@"])]
     buffer_lines = [(row[1], row[0]) for row in arcpy.da.SearchCursor(buffer_water_dam_fc, ["SHAPE@", "OID@"])]
-
-    def get_endpoints(polyline):
-        # Returns the start and end points of a polyline
-        return (
-            arcpy.PointGeometry(polyline.firstPoint, polyline.spatialReference),
-            arcpy.PointGeometry(polyline.lastPoint, polyline.spatialReference)
-        )
-    
-    def find_merge_candidate(short_geom, all_roads, tolerance=2.0):
-        # Finds a road geometry with a common endpoint
-        short_start, short_end = get_endpoints(short_geom)
-        for oid, geom in all_roads:
-            if geom.equals(short_geom):
-                continue
-            start, end = get_endpoints(geom)
-            if short_start.distanceTo(start) < tolerance or short_start.distanceTo(end) < tolerance or \
-                short_end.distanceTo(start) < tolerance or short_end.distanceTo(end) < tolerance:
-                return oid, geom
-        return None, None
-    
-    def reverse_geometry(polyline):
-        reversed_parts = []
-        for part in polyline:
-            reversed_parts.append(arcpy.Array(list(reversed(part))))
-        return arcpy.Polyline(arcpy.Array(reversed_parts), polyline.spatialReference)
-
-    def merge_lines(line1, line2, tolerance=5.0):
-        l1_start, l1_end = get_endpoints(line1)
-        l2_start, l2_end = get_endpoints(line2)
-
-        # Find the matching endpoints
-        if l1_end.distanceTo(l2_start) < tolerance:
-            # Correct order
-            merged = arcpy.Array()
-            for part in line1:
-                for pt in part:
-                    merged.add(pt)
-            for part in line2:
-                for pt in part:
-                    merged.add(pt)
-            return arcpy.Polyline(merged, line1.spatialReference)
-
-        elif l1_end.distanceTo(l2_end) < tolerance:
-            # Reverse line2
-            line2_rev = reverse_geometry(line2)
-            return merge_lines(line1, line2_rev, tolerance)
-
-        elif l1_start.distanceTo(l2_end) < tolerance:
-            # Reverse line1
-            line1_rev = reverse_geometry(line1)
-            return merge_lines(line1_rev, line2, tolerance)
-
-        elif l1_start.distanceTo(l2_start) < tolerance:
-            # Reverse begge
-            return merge_lines(reverse_geometry(line1), reverse_geometry(line2), tolerance)
-
-        else:
-            # No match
-            return None
 
     # Collects all the relevant roads
     flat_roads = {}
@@ -580,23 +862,6 @@ def snap_roads_to_buffer():
                     min_dist = dist
                     nearest_oid = oid
             buffer_to_roads[nearest_oid].append((road[0], road[1]))
-
-    def cluster_points(points, threshold=1.0):
-        # Clusters points that are within the threshold
-        # distance of each other
-        clusters = []
-        for pt, idx in points:
-            found = False
-            for cluster in clusters:
-                if any(pt.distanceTo(other[0]) < threshold for other in cluster):
-                    # The points are close enough to be in the same cluster
-                    # With other words: snap them to the same coordinate
-                    cluster.append((pt, idx))
-                    found = True
-                    break
-            if not found:
-                clusters.append([(pt, idx)])
-        return clusters
     
     for buf_oid, buffer_poly in buffer_polygons:
         # For all buffer polygons, find the corresponding buffer line
