@@ -48,7 +48,7 @@ def fetch_data():
     ##################################
     # Choose municipality to work on #
     ##################################
-    kommune = "Bergen"
+    kommune = "Steinkjer"
 
     input = [
         [Road_N100.data_preparation___calculated_boarder_hierarchy_2___n100_road.value, None, r"in_memory\road_input"], # Roads
@@ -266,8 +266,16 @@ def edit_geom_pre():
         for row in search:
             oid = row[0]
             geom = row[1]
+            shape_length = geom.length
+            arcpy.AddWarning(f"Processing OID {oid}: {shape_length}m")
             if not geom or oid not in near_lookup:
                 arcpy.AddWarning(f"Skipping OID {oid}: missing geometry or near info")
+                insert.insertRow([geom] + list(row[2:]))
+                continue
+
+            if shape_length < 30:
+            # Do not move short lines, just copy them
+                arcpy.AddWarning(f"Skipping OID {oid}: line too short ({shape_length}m)")
                 insert.insertRow([geom] + list(row[2:]))
                 continue
           
