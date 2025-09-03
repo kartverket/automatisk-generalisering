@@ -746,6 +746,16 @@ def calculate_angle(p1, p2, p3):
     
     return angle_deg
 
+def not_road_intersection(point, road_oid, roads):
+    point_geom = arcpy.PointGeometry(point)
+    tolerance = 5
+    with arcpy.da.SearchCursor(roads, ["OID@", "SHAPE@"]) as search_cursor:
+        for oid, shape in search_cursor:
+            if oid != road_oid:
+                if shape.distanceTo(point_geom) <= tolerance:
+                    return False
+    return True
+
 ##################
 
 def remove_sharp_angles(roads):
@@ -773,7 +783,7 @@ def remove_sharp_angles(roads):
                     points.append(p)
             
             i = 0
-            tolerance = 10
+            tolerance = 70
             filtered_points = points.copy()
 
             while i + 2 < len(filtered_points):
@@ -782,8 +792,9 @@ def remove_sharp_angles(roads):
                 # Altså vinkelen i det midterste punktet
                 angle = calculate_angle(p1, p2, p3)
                 # Hvis vinkelen er spissere enn en tolleranse - slett punktet
-                if angle < tolerance:
-                    del filtered_points[i+1]
+                if angle < tolerance or angle > (360 - tolerance):
+                    if not_road_intersection(p2, row[0], "roads_lyr"):
+                        del filtered_points[i+1]
                 else:
                     i += 1
             # Oppdater geometrien basert på punktene som er igjen i [points]
