@@ -117,12 +117,7 @@ class WorkFileManager:
             scale_path, origin_file_name = self._modify_path()
 
             if file_type == "lyrx":
-                print("lyrx file path detected:")
                 path = rf"{scale_path}{self.lyrx_directory_name}\{origin_file_name}_{file_name}_{self.unique_id}{suffix}.lyrx"
-                print(f"Path: {path}")
-                print(
-                    f"Scale path: {scale_path}\nOrigin file name: {origin_file_name}\n"
-                )
             else:
                 path = rf"{scale_path}{self.general_files_directory_name}\{origin_file_name}_{file_name}_{self.unique_id}{suffix}.{file_type}"
 

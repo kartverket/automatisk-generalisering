@@ -1,4 +1,5 @@
 from dataclasses import dataclass, field
+import os
 from typing import (
     Dict,
     List,
@@ -33,10 +34,25 @@ class BarrierRule:
     use_turn_orientation: bool = False
 
 
+@dataclass(frozen=True, slots=True)
+class BarrierDefault:
+    gap_meters: int
+    use_turn_orientation: bool = False
+
+
+@dataclass(frozen=True, slots=True)
+class BarrierOverride:
+    gap_meters: Optional[int] = None
+    use_turn_orientation: Optional[bool] = None
+
+
 @dataclass(frozen=True)
 class RbcInitKwargs:
     input_data_structure: list[SymbologyLayerSpec]
-    barrier_rules: list[BarrierRule]
-    building_unique_name: str
     output_building_polygons: Union[type_defs.GdbFilePath, core_config.InjectIO]
+    output_collapsed_polygon_points: Union[type_defs.GdbFilePath, core_config.InjectIO]
     work_file_manager_config: core_config.WorkFileConfig
+
+    building_unique_name: str
+    barrier_default: BarrierDefault
+    barrier_overrides: Optional[List[BarrierRule]] = None

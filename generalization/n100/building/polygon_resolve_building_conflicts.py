@@ -49,13 +49,12 @@ def main():
     """
 
     environment_setup.main()
-    # hospital_church_points_to_squares()
+    hospital_church_points_to_squares()
     resolve_building_conflicts_polygon()
-    # invisible_building_polygons_to_point()
-    # intersecting_building_polygons_to_point()
-    # merging_invisible_intersecting_points()
-    # check_if_building_polygons_are_big_enough()
-    # small_building_polygons_to_points()
+    intersecting_building_polygons_to_point()
+    merging_invisible_intersecting_points()
+    check_if_building_polygons_are_big_enough()
+    small_building_polygons_to_points()
 
 
 @timing_decorator
@@ -117,6 +116,9 @@ def resolve_building_conflicts_polygon():
     hospital_churches = "hospital_churches"
     railroad_station = "railroad_station"
 
+    rbc_polygons = "rbc_polygons"
+    rbc_points = "rbc_points"
+
     rbc_input_config = core_config.PartitionInputConfig(
         entries=[
             core_config.InputEntry.processing_input(
@@ -154,9 +156,14 @@ def resolve_building_conflicts_polygon():
         entries=[
             core_config.OutputEntry.vector_output(
                 object=building,
-                tag="after_rbc",
-                path=Building_N100.polygon_resolve_building_conflicts___after_rbc___n100_building.value,
-            )
+                tag=rbc_polygons,
+                path=Building_N100.polygon_resolve_building_conflicts___not_invisible_polygons_after_rbc___n100_building.value,
+            ),
+            core_config.OutputEntry.vector_output(
+                object=building,
+                tag=rbc_points,
+                path=Building_N100.polygon_resolve_building_conflicts___invisible_polygons_to_points___n100_building.value,
+            ),
         ]
     )
 
@@ -200,7 +207,7 @@ def resolve_building_conflicts_polygon():
         logic_config.SymbologyLayerSpec(
             unique_name=power_grid_lines,
             input_feature=core_config.InjectIO(object=power_grid_lines, tag="input"),
-            input_lyrx=input_symbology.SymbologyN100.road_buffer.value,
+            input_lyrx=config.symbology_samferdsel,
             grouped_lyrx=True,
             target_layer_name="N100_Samferdsel_senterlinje_veg_anlegg_sort_maske",
         ),
@@ -212,22 +219,24 @@ def resolve_building_conflicts_polygon():
         ),
     ]
 
-    polygon_rbc_barrier_rule = [
-        logic_config.BarrierRule(
-            name=road,
-            gap_meters=30,
-            use_turn_orientation=False,
-        )
-    ]
+    rbc_polygon_barrier_default_rule = logic_config.BarrierDefault(
+        gap_meters=30,
+        use_turn_orientation=False,
+    )
 
     new_config = logic_config.RbcInitKwargs(
         input_data_structure=polygon_rbc_input_data_structure,
-        barrier_rules=polygon_rbc_barrier_rule,
-        building_unique_name=building,
-        output_building_polygons=core_config.InjectIO(object=building, tag="after_rbc"),
+        output_building_polygons=core_config.InjectIO(
+            object=building, tag=rbc_polygons
+        ),
+        output_collapsed_polygon_points=core_config.InjectIO(
+            object=building, tag=rbc_points
+        ),
         work_file_manager_config=core_config.WorkFileConfig(
             root_file=Building_N100.polygon_resolve_building_conflicts___root_file___n100_building.value
         ),
+        building_unique_name=building,
+        barrier_default=rbc_polygon_barrier_default_rule,
     )
 
     polygon_rbc_method = core_config.ClassMethodEntryConfig(
@@ -259,36 +268,6 @@ def resolve_building_conflicts_polygon():
     )
 
     partition_polygon_rbc.run()
-
-
-@timing_decorator
-def invisible_building_polygons_to_point():
-    """
-    Converts invisible building polygons to points and separates them from non-invisible polygons.
-    """
-    print("Transforming polygons marked with invisibility 1 to points ...")
-
-    # Making new feature layer of polygons that is invisible
-    custom_arcpy.select_attribute_and_make_permanent_feature(
-        input_layer=Building_N100.polygon_resolve_building_conflicts___after_rbc___n100_building.value,
-        expression="invisibility = 1",
-        output_name=Building_N100.polygon_resolve_building_conflicts___invisible_polygons_after_rbc___n100_building.value,
-    )
-
-    # Making new feature layer of polygons that is NOT invisible
-    custom_arcpy.select_attribute_and_make_permanent_feature(
-        input_layer=Building_N100.polygon_resolve_building_conflicts___after_rbc___n100_building.value,
-        expression="invisibility = 0",
-        output_name=Building_N100.polygon_resolve_building_conflicts___not_invisible_polygons_after_rbc___n100_building.value,
-    )
-
-    # Polygon to point
-    arcpy.management.FeatureToPoint(
-        in_features=Building_N100.polygon_resolve_building_conflicts___invisible_polygons_after_rbc___n100_building.value,
-        out_feature_class=Building_N100.polygon_resolve_building_conflicts___invisible_polygons_to_points___n100_building.value,
-    )
-
-    print("Finished.")
 
 
 @timing_decorator
