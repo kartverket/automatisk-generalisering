@@ -2,6 +2,19 @@
 from dataclasses import dataclass
 import arcpy
 
+from typing import (
+    Dict,
+    List,
+    Literal,
+    Optional,
+    Tuple,
+    Union,
+    Any,
+    Callable,
+    Mapping,
+    Sequence,
+)
+
 # Importing custom files
 import config
 from composition_configs import core_config
@@ -747,9 +760,11 @@ class ResolveBuildingConflictsPolygon:
         self,
         rbc_polygon_config: logic_config.RbcInitKwargs,
     ):
-        self.input_data = rbc_polygon_config.input_data_structure
-        self.barrier_rules = rbc_polygon_config.barrier_rules
+        self.barrier_default = rbc_polygon_config.barrier_default
+        self.barrier_overrides = rbc_polygon_config.barrier_overrides
+
         self.output_building_polygons = rbc_polygon_config.output_building_polygons
+        self.output_building_points = rbc_polygon_config.output_collapsed_polygon_points
 
         self.building_name = rbc_polygon_config.building_unique_name
 
@@ -757,11 +772,16 @@ class ResolveBuildingConflictsPolygon:
             config=rbc_polygon_config.work_file_manager_config
         )
 
-        self.specs: list[logic_config.SymbologyLayerSpec] = (
+        self.specs: List[logic_config.SymbologyLayerSpec] = (
             rbc_polygon_config.input_data_structure
         )
 
-        records: list[_RbcRecord] = []
+        if self.building_name not in {s.unique_name for s in self.specs}:
+            raise ValueError(
+                f"Building layer '{self.building_name}' not found in specs."
+            )
+
+        records: List[_RbcRecord] = []
         for s in self.specs:
             feature_copy = self.work_file_manager._build_file_path(
                 f"{s.unique_name}_feature_copy", "gdb"
@@ -772,8 +792,8 @@ class ResolveBuildingConflictsPolygon:
             records.append(
                 _RbcRecord(spec=s, feature_copy=feature_copy, lyrx_output=lyrx_output)
             )
-
         self.records = records
+        self._index = {r.spec.unique_name: r for r in self.records}
 
         self.building_polygon_rbc_output = "building_polygon_rbc_output"
         self.invisible_polygons = "invisible_polygons"
@@ -789,6 +809,41 @@ class ResolveBuildingConflictsPolygon:
             instance=self,
             file_structure=self.gdb_files_list,
         )
+
+    @staticmethod
+    def build_barrier_rules(
+        specs: List[logic_config.SymbologyLayerSpec],
+        building_name: str,
+        default: logic_config.BarrierDefault,
+        overrides: Optional[List[logic_config.BarrierRule]],
+    ) -> List[logic_config.BarrierRule]:
+        names = {s.unique_name for s in specs}
+
+        override_index: dict[str, logic_config.BarrierRule] = {}
+        if overrides:
+            for r in overrides:
+                if r.name in override_index:
+                    raise ValueError(f"Duplicate barrier override for '{r.name}'.")
+                override_index[r.name] = r
+            bad = [n for n in override_index if n not in names or n == building_name]
+            if bad:
+                raise ValueError(
+                    f"Barrier overrides refer to unknown or non-barrier names: {bad}"
+                )
+
+        out: List[logic_config.BarrierRule] = []
+        for s in specs:
+            if s.unique_name == building_name:
+                continue
+            out.append(
+                override_index.get(s.unique_name)
+                or logic_config.BarrierRule(
+                    name=s.unique_name,
+                    gap_meters=default.gap_meters,
+                    use_turn_orientation=default.use_turn_orientation,
+                )
+            )
+        return out
 
     def copy_input_layers(self):
         for r in self.records:
@@ -824,23 +879,20 @@ class ResolveBuildingConflictsPolygon:
         building = self._by_name(self.building_name)
 
         # If no explicit rules: all non-building specs become barriers with defaults
-        rules = self.barrier_rules or [
-            logic_config.BarrierRule(
-                name=entry.unique_name,
-                gap_meters=30,
-                use_turn_orientation=False,
-            )
-            for entry in self.specs
-            if entry.unique_name != self.building_name
-        ]
+        rules = self.build_barrier_rules(
+            specs=self.specs,
+            building_name=self.building_name,
+            default=self.barrier_default,
+            overrides=self.barrier_overrides,
+        )
 
         resolved_barriers = [
             [
-                self._by_name(rule.name).lyrx_output,
-                str(rule.use_turn_orientation).lower(),
-                f"{rule.gap_meters} Meters",
+                self._by_name(r.name).lyrx_output,
+                str(r.use_turn_orientation).lower(),
+                f"{r.gap_meters} Meters",
             ]
-            for rule in rules
+            for r in rules
         ]
 
         arcpy.cartography.ResolveBuildingConflicts(
@@ -853,32 +905,32 @@ class ResolveBuildingConflictsPolygon:
 
         arcpy.management.Copy(
             in_data=building.feature_copy,
-            out_data=self.output_building_polygons,
+            out_data=self.building_polygon_rbc_output,
         )
 
-    # def invisibility_selections(self):
-    #
-    #     custom_arcpy.select_attribute_and_make_permanent_feature(
-    #         input_layer=self.building_polygon_rbc_output,
-    #         expression="invisibility = 1",
-    #         output_name=self.invisible_polygons,
-    #     )
-    #
-    #     custom_arcpy.select_attribute_and_make_permanent_feature(
-    #         input_layer=self.building_polygon_rbc_output,
-    #         expression="invisibility = 0",
-    #         output_name=self.output_building_polygons,
-    #     )
-    #
-    #     arcpy.management.FeatureToPoint(
-    #         in_features=self.invisible_polygons,
-    #         out_feature_class=self.feature_to_points,
-    #     )
-    #
-    #     arcpy.management.Copy(
-    #         in_data=self.feature_to_points,
-    #         out_data=self.output_building_points,
-    #     )
+    def invisibility_selections(self):
+
+        custom_arcpy.select_attribute_and_make_permanent_feature(
+            input_layer=self.building_polygon_rbc_output,
+            expression="invisibility = 1",
+            output_name=self.invisible_polygons,
+        )
+
+        custom_arcpy.select_attribute_and_make_permanent_feature(
+            input_layer=self.building_polygon_rbc_output,
+            expression="invisibility = 0",
+            output_name=self.output_building_polygons,
+        )
+
+        arcpy.management.FeatureToPoint(
+            in_features=self.invisible_polygons,
+            out_feature_class=self.feature_to_points,
+        )
+
+        arcpy.management.Copy(
+            in_data=self.feature_to_points,
+            out_data=self.output_building_points,
+        )
 
     def run(self):
         arcpy.env.referenceScale = "100000"
@@ -886,7 +938,7 @@ class ResolveBuildingConflictsPolygon:
         self.copy_input_layers()
         self.apply_symbology()
         self.resolve_building_conflicts()
-        # self.invisibility_selections()
+        self.invisibility_selections()
 
 
 if __name__ == "__main__":
