@@ -14,10 +14,11 @@ from typing import (
 from enum import Enum
 
 from composition_configs import core_config, type_defs
+from generalization.n100 import building
 
 
 @dataclass(frozen=True)
-class in_symbology_layer:
+class SymbologyLayerSpec:
     unique_name: str
     input_feature: Union[type_defs.GdbFilePath, core_config.InjectIO]
     input_lyrx: str
@@ -26,7 +27,16 @@ class in_symbology_layer:
 
 
 @dataclass(frozen=True)
+class BarrierRule:
+    name: str
+    gap_meters: int
+    use_turn_orientation: bool = False
+
+
+@dataclass(frozen=True)
 class RbcInitKwargs:
-    input_data_structure: list[dict[str, Any]]
+    input_data_structure: list[SymbologyLayerSpec]
+    barrier_rules: list[BarrierRule]
+    building_unique_name: str
     output_building_polygons: Union[type_defs.GdbFilePath, core_config.InjectIO]
     work_file_manager_config: core_config.WorkFileConfig

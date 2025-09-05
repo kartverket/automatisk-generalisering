@@ -50,7 +50,6 @@ def main():
 
     environment_setup.main()
     # hospital_church_points_to_squares()
-    # apply_symbology_to_layers()
     resolve_building_conflicts_polygon()
     # invisible_building_polygons_to_point()
     # intersecting_building_polygons_to_point()
@@ -106,181 +105,6 @@ def hospital_church_points_to_squares():
         in_symbology_layer=input_symbology.SymbologyN100.building_polygon.value,
         output_name=Building_N100.polygon_resolve_building_conflicts___polygonprocessor_symbology___n100_building_lyrx.value,
     )
-
-
-@timing_decorator
-def apply_symbology_to_layers():
-    """
-    Applies symbology (lyrx files) to building polygons, roads, and water barriers.
-    """
-    print("Applying symbology ...")
-    # Applying symbology to building polygons
-    custom_arcpy.apply_symbology(
-        input_layer=Building_N100.polygon_propogate_displacement___building_polygons_after_displacement___n100_building.value,
-        in_symbology_layer=input_symbology.SymbologyN100.building_polygon.value,
-        output_name=Building_N100.polygon_resolve_building_conflicts___building_polygon___n100_building_lyrx.value,
-    )
-    # Applying symbology to roads
-    custom_arcpy.apply_symbology(
-        input_layer=Building_N100.polygon_resolve_building_conflicts___roads_500m_from_displaced_polygon___n100_building.value,
-        in_symbology_layer=input_symbology.SymbologyN100.road_buffer.value,
-        output_name=Building_N100.polygon_resolve_building_conflicts___roads___n100_building_lyrx.value,
-    )
-
-    # Applying symbology to begrensningskurve (limiting curve)
-    custom_arcpy.apply_symbology(
-        input_layer=Building_N100.polygon_resolve_building_conflicts___begrensningskurve_500m_from_displaced_polygon___n100_building.value,
-        in_symbology_layer=input_symbology.SymbologyN100.begrensningskurve_polygon.value,
-        output_name=Building_N100.polygon_resolve_building_conflicts___begrensningskurve___n100_building_lyrx.value,
-    )
-
-    # Applying symbology to railway
-    custom_arcpy.apply_symbology(
-        input_layer=Building_N100.polygon_resolve_building_conflicts___railroads_500m_from_displaced_polygon___n100_building.value,
-        in_symbology_layer=input_symbology.SymbologyN100.railway.value,
-        output_name=Building_N100.polygon_resolve_building_conflicts___railway___n100_building_lyrx.value,
-    )
-
-    custom_arcpy.apply_symbology(
-        input_layer=Building_N100.data_selection___power_grid_lines_500m_selection___n100_building.value,
-        in_symbology_layer=config.symbology_samferdsel,
-        output_name=Building_N100.polygon_resolve_building_conflicts___power_grid_lines___n100_building_lyrx.value,
-        grouped_lyrx=True,
-        target_layer_name="N100_Samferdsel_senterlinje_veg_anlegg_sort_maske",
-    )
-
-
-def resolve_building_conflicts_polygon_old():
-    building = "building"
-    railroad = "railroad"
-    road = "road"
-    begrensningskurve = "begrensningskurve"
-    power_grid_lines = "power_grid_lines"
-    hospital_churches = "hospital_churches"
-    railroad_station = "railroad_station"
-    # building_points = "building_points"
-
-    inputs = {
-        building: [
-            "input",
-            Building_N100.polygon_propogate_displacement___building_polygons_after_displacement___n100_building.value,
-        ],
-        railroad: [
-            "context",
-            Building_N100.data_selection___railroad_tracks_n100_input_data___n100_building.value,
-        ],
-        road: [
-            "context",
-            Building_N100.data_preparation___road_symbology_buffers___n100_building.value,
-        ],
-        begrensningskurve: [
-            "context",
-            Building_N100.data_preparation___processed_begrensningskurve___n100_building.value,
-        ],
-        power_grid_lines: [
-            "context",
-            Building_N100.data_preparation___power_grid_lines___n100_building.value,
-        ],
-        hospital_churches: [
-            "context",
-            Building_N100.polygon_resolve_building_conflicts___hospital_church_squares___n100_building.value,
-        ],
-        railroad_station: [
-            "context",
-            Building_N100.data_preparation___railway_stations_to_polygons___n100_building.value,
-        ],
-    }
-
-    outputs = {
-        building: [
-            "after_rbc",
-            Building_N100.polygon_resolve_building_conflicts___after_rbc___n100_building.value,
-        ],
-        # building: [
-        #     "not_invisible_polygons_after_rbc",
-        #     Building_N100.polygon_resolve_building_conflicts___not_invisible_polygons_after_rbc___n100_building.value,
-        # ],
-        # building: [
-        #     "invisible_polygons_to_points",
-        #     Building_N100.polygon_resolve_building_conflicts___invisible_polygons_to_points___n100_building.value,
-        # ],
-    }
-
-    input_data_structure = [
-        {
-            "unique_alias": building,
-            "input_layer": (building, "input"),
-            "input_lyrx_feature": input_symbology.SymbologyN100.building_polygon.value,
-            "grouped_lyrx": False,
-            "target_layer_name": None,
-        },
-        {
-            "unique_alias": road,
-            "input_layer": (road, "context"),
-            "input_lyrx_feature": input_symbology.SymbologyN100.road_buffer.value,
-            "grouped_lyrx": False,
-            "target_layer_name": None,
-        },
-        {
-            "unique_alias": railroad,
-            "input_layer": (railroad, "context"),
-            "input_lyrx_feature": input_symbology.SymbologyN100.railway.value,
-            "grouped_lyrx": False,
-            "target_layer_name": None,
-        },
-        {
-            "unique_alias": begrensningskurve,
-            "input_layer": (begrensningskurve, "context"),
-            "input_lyrx_feature": input_symbology.SymbologyN100.begrensningskurve_polygon.value,
-            "grouped_lyrx": False,
-            "target_layer_name": None,
-        },
-        {
-            "unique_alias": power_grid_lines,
-            "input_layer": (power_grid_lines, "context"),
-            "input_lyrx_feature": config.symbology_samferdsel,
-            "grouped_lyrx": True,
-            "target_layer_name": "N100_Samferdsel_senterlinje_veg_anlegg_sort_maske",
-        },
-        {
-            "unique_alias": hospital_churches,
-            "input_layer": (hospital_churches, "context"),
-            "input_lyrx_feature": input_symbology.SymbologyN100.building_polygon.value,
-            "grouped_lyrx": False,
-            "target_layer_name": None,
-        },
-        {
-            "unique_alias": railroad_station,
-            "input_layer": (railroad_station, "context"),
-            "input_lyrx_feature": input_symbology.SymbologyN100.railway_station_squares.value,
-            "grouped_lyrx": False,
-            "target_layer_name": None,
-        },
-    ]
-
-    resolve_building_conflicts_config = {
-        "class": ResolveBuildingConflictsPolygon,
-        "method": "run",
-        "params": {
-            "input_list_of_dicts_data_structure": input_data_structure,
-            "output_building_polygons": (building, "after_rbc"),
-            "work_file_manager_config": core_config.WorkFileConfig(
-                root_file=Building_N100.polygon_resolve_building_conflicts___root_file___n100_building.value
-            ),
-        },
-    }
-
-    partition_rbc_polygon = PartitionIterator(
-        alias_path_data=inputs,
-        alias_path_outputs=outputs,
-        custom_functions=[resolve_building_conflicts_config],
-        root_file_partition_iterator=Building_N100.polygon_resolve_building_conflicts___partition_root_file___n100_building.value,
-        dictionary_documentation_path=Building_N100.polygon_resolve_building_conflicts___begrensingskurve_docu___building_n100.value,
-        feature_count=25_000,
-        run_partition_optimization=True,
-        search_distance="500 Meters",
-    )
-    partition_rbc_polygon.run()
 
 
 def resolve_building_conflicts_polygon():
@@ -343,59 +167,63 @@ def resolve_building_conflicts_polygon():
     )
 
     polygon_rbc_input_data_structure = [
-        {
-            "unique_alias": building,
-            "input_layer": core_config.InjectIO(object=building, tag="input"),
-            "input_lyrx_feature": input_symbology.SymbologyN100.building_polygon.value,
-            "grouped_lyrx": False,
-            "target_layer_name": None,
-        },
-        {
-            "unique_alias": road,
-            "input_layer": core_config.InjectIO(object=road, tag="input"),
-            "input_lyrx_feature": input_symbology.SymbologyN100.road_buffer.value,
-            "grouped_lyrx": False,
-            "target_layer_name": None,
-        },
-        {
-            "unique_alias": railroad,
-            "input_layer": core_config.InjectIO(object=railroad, tag="input"),
-            "input_lyrx_feature": input_symbology.SymbologyN100.railway.value,
-            "grouped_lyrx": False,
-            "target_layer_name": None,
-        },
-        {
-            "unique_alias": railroad_station,
-            "input_layer": core_config.InjectIO(object=railroad_station, tag="input"),
-            "input_lyrx_feature": input_symbology.SymbologyN100.railway_station_squares.value,
-            "grouped_lyrx": False,
-            "target_layer_name": None,
-        },
-        {
-            "unique_alias": begrensningskurve,
-            "input_layer": core_config.InjectIO(object=begrensningskurve, tag="input"),
-            "input_lyrx_feature": input_symbology.SymbologyN100.begrensningskurve_polygon.value,
-            "grouped_lyrx": False,
-            "target_layer_name": None,
-        },
-        {
-            "unique_alias": power_grid_lines,
-            "input_layer": core_config.InjectIO(object=power_grid_lines, tag="input"),
-            "input_lyrx_feature": config.symbology_samferdsel,
-            "grouped_lyrx": True,
-            "target_layer_name": "N100_Samferdsel_senterlinje_veg_anlegg_sort_maske",
-        },
-        {
-            "unique_alias": hospital_churches,
-            "input_layer": core_config.InjectIO(object=hospital_churches, tag="input"),
-            "input_lyrx_feature": input_symbology.SymbologyN100.building_polygon.value,
-            "grouped_lyrx": False,
-            "target_layer_name": None,
-        },
+        logic_config.SymbologyLayerSpec(
+            unique_name=building,
+            input_feature=core_config.InjectIO(object=building, tag="input"),
+            input_lyrx=input_symbology.SymbologyN100.building_polygon.value,
+            grouped_lyrx=False,
+        ),
+        logic_config.SymbologyLayerSpec(
+            unique_name=road,
+            input_feature=core_config.InjectIO(object=road, tag="input"),
+            input_lyrx=input_symbology.SymbologyN100.road_buffer.value,
+            grouped_lyrx=False,
+        ),
+        logic_config.SymbologyLayerSpec(
+            unique_name=railroad,
+            input_feature=core_config.InjectIO(object=railroad, tag="input"),
+            input_lyrx=input_symbology.SymbologyN100.railway.value,
+            grouped_lyrx=False,
+        ),
+        logic_config.SymbologyLayerSpec(
+            unique_name=railroad_station,
+            input_feature=core_config.InjectIO(object=railroad_station, tag="input"),
+            input_lyrx=input_symbology.SymbologyN100.road_buffer.value,
+            grouped_lyrx=False,
+        ),
+        logic_config.SymbologyLayerSpec(
+            unique_name=begrensningskurve,
+            input_feature=core_config.InjectIO(object=begrensningskurve, tag="input"),
+            input_lyrx=input_symbology.SymbologyN100.begrensningskurve_polygon.value,
+            grouped_lyrx=False,
+        ),
+        logic_config.SymbologyLayerSpec(
+            unique_name=power_grid_lines,
+            input_feature=core_config.InjectIO(object=power_grid_lines, tag="input"),
+            input_lyrx=input_symbology.SymbologyN100.road_buffer.value,
+            grouped_lyrx=True,
+            target_layer_name="N100_Samferdsel_senterlinje_veg_anlegg_sort_maske",
+        ),
+        logic_config.SymbologyLayerSpec(
+            unique_name=hospital_churches,
+            input_feature=core_config.InjectIO(object=hospital_churches, tag="input"),
+            input_lyrx=input_symbology.SymbologyN100.building_polygon.value,
+            grouped_lyrx=False,
+        ),
+    ]
+
+    polygon_rbc_barrier_rule = [
+        logic_config.BarrierRule(
+            name=road,
+            gap_meters=30,
+            use_turn_orientation=False,
+        )
     ]
 
     new_config = logic_config.RbcInitKwargs(
         input_data_structure=polygon_rbc_input_data_structure,
+        barrier_rules=polygon_rbc_barrier_rule,
+        building_unique_name=building,
         output_building_polygons=core_config.InjectIO(object=building, tag="after_rbc"),
         work_file_manager_config=core_config.WorkFileConfig(
             root_file=Building_N100.polygon_resolve_building_conflicts___root_file___n100_building.value
