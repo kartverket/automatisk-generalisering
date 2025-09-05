@@ -1,4 +1,5 @@
 # Importing modules
+from dataclasses import dataclass
 import arcpy
 
 # Importing custom files
@@ -734,30 +735,45 @@ class ResolveBuildingConflictsPoints:
         self.work_file_manager.delete_created_files()
 
 
+@dataclass
+class _RbcRecord:
+    spec: logic_config.SymbologyLayerSpec
+    feature_copy: str
+    lyrx_output: str
+
+
 class ResolveBuildingConflictsPolygon:
     def __init__(
         self,
         rbc_polygon_config: logic_config.RbcInitKwargs,
     ):
         self.input_data = rbc_polygon_config.input_data_structure
+        self.barrier_rules = rbc_polygon_config.barrier_rules
         self.output_building_polygons = rbc_polygon_config.output_building_polygons
+
+        self.building_name = rbc_polygon_config.building_unique_name
 
         self.work_file_manager = WorkFileManager(
             config=rbc_polygon_config.work_file_manager_config
         )
 
-        self.feature_copies = self.work_file_manager.setup_work_file_paths(
-            instance=self,
-            file_structure=self.input_data,
-            add_key="feature_copy",
+        self.specs: list[logic_config.SymbologyLayerSpec] = (
+            rbc_polygon_config.input_data_structure
         )
 
-        self.lyrx_outputs = self.work_file_manager.setup_work_file_paths(
-            instance=self,
-            file_structure=self.feature_copies,
-            add_key="lyrx_output",
-            file_type="lyrx",
-        )
+        records: list[_RbcRecord] = []
+        for s in self.specs:
+            feature_copy = self.work_file_manager._build_file_path(
+                f"{s.unique_name}_feature_copy", "gdb"
+            )
+            lyrx_output = self.work_file_manager._build_file_path(
+                f"{s.unique_name}_lyrx_output", "lyrx"
+            )
+            records.append(
+                _RbcRecord(spec=s, feature_copy=feature_copy, lyrx_output=lyrx_output)
+            )
+
+        self.records = records
 
         self.building_polygon_rbc_output = "building_polygon_rbc_output"
         self.invisible_polygons = "invisible_polygons"
@@ -775,87 +791,60 @@ class ResolveBuildingConflictsPolygon:
         )
 
     def copy_input_layers(self):
-        def copy_input(
-            input_feature: str = None,
-            feature_copy: str = None,
-        ):
+        for r in self.records:
             arcpy.management.CopyFeatures(
-                in_features=input_feature,
-                out_feature_class=feature_copy,
+                in_features=r.spec.input_feature,
+                out_feature_class=r.feature_copy,
             )
 
-        self.work_file_manager.apply_to_structure(
-            data=self.feature_copies,
-            func=copy_input,
-            input_feature="input_layer",
-            feature_copy="feature_copy",
-        )
-        print("Copy Done")
-
     def apply_symbology(self):
-        def apply_symbology(
-            feature_copy: str = None,
-            lyrx_file: str = None,
-            output_name: str = None,
-            grouped_lyrx: bool = False,
-            target_layer_name: str = None,
-        ):
-            if grouped_lyrx:
+        for record in self.records:
+            if record.spec.grouped_lyrx:
                 custom_arcpy.apply_symbology(
-                    input_layer=feature_copy,
-                    in_symbology_layer=lyrx_file,
-                    output_name=output_name,
+                    input_layer=record.feature_copy,
+                    in_symbology_layer=record.spec.input_lyrx,
+                    output_name=record.lyrx_output,
                     grouped_lyrx=True,
-                    target_layer_name=target_layer_name,
+                    target_layer_name=record.spec.target_layer_name,
                 )
             else:
                 custom_arcpy.apply_symbology(
-                    input_layer=feature_copy,
-                    in_symbology_layer=lyrx_file,
-                    output_name=output_name,
+                    input_layer=record.feature_copy,
+                    in_symbology_layer=record.spec.input_lyrx,
+                    output_name=record.lyrx_output,
                 )
 
-        self.work_file_manager.apply_to_structure(
-            data=self.lyrx_outputs,
-            func=apply_symbology,
-            feature_copy="feature_copy",
-            lyrx_file="input_lyrx_feature",
-            output_name="lyrx_output",
-            grouped_lyrx="grouped_lyrx",
-            target_layer_name="target_layer_name",
-        )
+    def _by_name(self, name: str) -> _RbcRecord:
+        for r in self.records:
+            if r.spec.unique_name == name:
+                return r
+        raise KeyError(f"Layer '{name}' not found.")
 
     def resolve_building_conflicts(self):
-        building_layer = self.work_file_manager.extract_key_by_alias(
-            data=self.lyrx_outputs,
-            unique_alias="building",
-            key="lyrx_output",
-        )
+        building = self._by_name(self.building_name)
 
-        barriers = [
-            ["begrensningskurve", "false", "30 Meters"],
-            ["railroad", "false", "30 Meters"],
-            ["hospital_churches", "false", "30 Meters"],
-            ["railroad_station", "false", "30 Meters"],
-            ["power_grid_lines", "false", "30 Meters"],
-            ["building", "false", "30 Meters"],
+        # If no explicit rules: all non-building specs become barriers with defaults
+        rules = self.barrier_rules or [
+            logic_config.BarrierRule(
+                name=entry.unique_name,
+                gap_meters=30,
+                use_turn_orientation=False,
+            )
+            for entry in self.specs
+            if entry.unique_name != self.building_name
         ]
 
         resolved_barriers = [
             [
-                self.work_file_manager.extract_key_by_alias(
-                    data=self.lyrx_outputs,
-                    unique_alias=alias,
-                    key="lyrx_output",
-                ),
-                flag,
-                gap,
+                self._by_name(rule.name).lyrx_output,
+                str(rule.use_turn_orientation).lower(),
+                f"{rule.gap_meters} Meters",
             ]
-            for alias, flag, gap in barriers
+            for rule in rules
         ]
 
         arcpy.cartography.ResolveBuildingConflicts(
-            in_buildings=building_layer,
+            in_buildings=building.lyrx_output,
             invisibility_field="invisibility",
             in_barriers=resolved_barriers,
             building_gap=f"{N100_Values.rbc_building_clearance_distance_m.value} Meters",
@@ -863,37 +852,33 @@ class ResolveBuildingConflictsPolygon:
         )
 
         arcpy.management.Copy(
-            in_data=self.work_file_manager.extract_key_by_alias(
-                data=self.lyrx_outputs,
-                unique_alias="building",
-                key="feature_copy",
-            ),
+            in_data=building.feature_copy,
             out_data=self.output_building_polygons,
         )
 
-    def invisibility_selections(self):
-
-        custom_arcpy.select_attribute_and_make_permanent_feature(
-            input_layer=self.building_polygon_rbc_output,
-            expression="invisibility = 1",
-            output_name=self.invisible_polygons,
-        )
-
-        custom_arcpy.select_attribute_and_make_permanent_feature(
-            input_layer=self.building_polygon_rbc_output,
-            expression="invisibility = 0",
-            output_name=self.output_building_polygons,
-        )
-
-        arcpy.management.FeatureToPoint(
-            in_features=self.invisible_polygons,
-            out_feature_class=self.feature_to_points,
-        )
-
-        arcpy.management.Copy(
-            in_data=self.feature_to_points,
-            out_data=self.output_building_points,
-        )
+    # def invisibility_selections(self):
+    #
+    #     custom_arcpy.select_attribute_and_make_permanent_feature(
+    #         input_layer=self.building_polygon_rbc_output,
+    #         expression="invisibility = 1",
+    #         output_name=self.invisible_polygons,
+    #     )
+    #
+    #     custom_arcpy.select_attribute_and_make_permanent_feature(
+    #         input_layer=self.building_polygon_rbc_output,
+    #         expression="invisibility = 0",
+    #         output_name=self.output_building_polygons,
+    #     )
+    #
+    #     arcpy.management.FeatureToPoint(
+    #         in_features=self.invisible_polygons,
+    #         out_feature_class=self.feature_to_points,
+    #     )
+    #
+    #     arcpy.management.Copy(
+    #         in_data=self.feature_to_points,
+    #         out_data=self.output_building_points,
+    #     )
 
     def run(self):
         arcpy.env.referenceScale = "100000"
