@@ -52,10 +52,10 @@ def fetch_data():
     ##################################
     # Choose municipality to work on #
     ##################################
-    kommune = "Vinje"
+    kommune = "Notodden"
 
     input = [
-        [r"C:\GIS_Files\ag_inputs\dam_fix_input.gdb\data_preparation___calculated_boarder_hierarchy_2___n100_road", None,  Road_N100.test_dam__relevant_roads__n100_road.value], # Roads
+        [r"C:\GIS_Files\ag_inputs\dam_fix_input.gdb\data_preparation___calculated_boarder_hierarchy_2___n100_road", None, Road_N100.test_dam__relevant_roads__n100_road.value], # Roads
         [input_n100.AnleggsLinje, "objtype = 'Dam'", Road_N100.test_dam__relevant_dam__n100_road.value], # Dam
         #[input_n100.AdminFlate, f"NAVN = '{kommune}'", r"in_memory\kommune"], # Area
         [input_n100.ArealdekkeFlate, "OBJTYPE = 'Havflate' OR OBJTYPE = 'Innsjø' OR OBJTYPE = 'InnsjøRegulert'", r"in_memory\relevant_waters"] # Water
@@ -109,7 +109,7 @@ def clip_and_erase_pre():
     buffer_water = r"in_memory\buffer_water"
 
     
-    arcpy.Buffer_analysis(Road_N100.test_dam__relevant_dam__n100_road.value, buffer_fc, "45 Meters", dissolve_option="ALL")
+    arcpy.Buffer_analysis(Road_N100.test_dam__relevant_dam__n100_road.value, buffer_fc, "55 Meters", dissolve_option="ALL", line_end_type="FLAT")
     arcpy.Clip_analysis(Road_N100.test_dam__relevant_roads__n100_road.value, buffer_fc, pre_dissolve)
     arcpy.Erase_analysis(Road_N100.test_dam__relevant_roads__n100_road.value, buffer_fc, outside_fc)
     arcpy.Dissolve_management(pre_dissolve, inside_fc, multi_part="SINGLE_PART", unsplit_lines="UNSPLIT_LINES")
@@ -322,10 +322,10 @@ def edit_geom_pre():
                 insert.insertRow([geom] + list(row[2:]))
                 continue
 
-            if shape_length < 30:
+            """if shape_length < 30:
             # Do not move short lines, just copy them
                 insert.insertRow([geom] + list(row[2:]))
-                continue
+                continue"""
           
 
             near_x, near_y = near_lookup[oid]
@@ -358,6 +358,45 @@ def move_line_away(geom, near_x, near_y, distance):
         new_parts.add(part_arr)
     return arcpy.Polyline(new_parts, sr)
 
+def move_line_away_per_vertex(geom, near_x, near_y, distance):
+    """
+    Returns a new polyline where every vertex in `geom` is moved
+    away from (near_x, near_y) by `distance`.
+    """
+    sr = geom.spatialReference
+    new_parts = arcpy.Array()
+
+    for part in geom:
+        part_arr = arcpy.Array()
+        for p in part:
+            # vector from near-point to the vertex
+            dx = p.X - near_x
+            dy = p.Y - near_y
+            length = math.hypot(dx, dy)
+
+            # if the vertex sits exactly on the near-point, leave it
+            if length == 0:
+                shift_x = shift_y = 0
+            else:
+                # scale vector to the desired distance
+                scale = distance / length
+                shift_x = dx * scale
+                shift_y = dy * scale
+
+            # apply shift
+            new_x = p.X + shift_x
+            new_y = p.Y + shift_y
+            part_arr.add(arcpy.Point(new_x, new_y))
+
+        new_parts.add(part_arr)
+
+    return arcpy.Polyline(new_parts, sr)
+
+
+
+
+
+
 @timing_decorator
 def snap_and_merge_pre():
     print("Snapping and merging roads after moving...")
@@ -366,13 +405,19 @@ def snap_and_merge_pre():
     final_fc = r"in_memory\roads_shifted"
 
     # Define snap environment
-    snap_env = [[outside_fc, "END", "40 Meters"]]
+    snap_env = [[outside_fc, "END", "60 Meters"]]
 
     # Snap 
     arcpy.Snap_edit(roadlines_moved, snap_env)
 
+    snap_env2 = [[roadlines_moved, "END", "60 Meters"]]
+    
+    arcpy.Snap_edit(outside_fc, snap_env2)
+
     # Merge the two sets
     arcpy.Merge_management([roadlines_moved, outside_fc], final_fc)
+
+    arcpy.CopyFeatures_management(final_fc, "C:\\temp\\Roads.gdb\\roadsafterbeingmoved")
 
 
 @timing_decorator
