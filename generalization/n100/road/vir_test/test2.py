@@ -179,9 +179,30 @@ def cross():
 # select from CROSS those objects that are most important
 def keep():
     custom_arcpy.select_attribute_and_make_permanent_feature(
-        input_layer=Road_N100.test1___diss0___n100_road.value,
-        expression="medium IN ('U', 'L')",
-        output_name=Road_N100.test1___medium_ul0___n100_road.value,
+        input_layer=Road_N100.test2___bridge_cross_ER___n100_road.value,
+        expression="vegkategori IN ('F', 'K', 'P')",
+        output_name=Road_N100.test2___keep_bru_FKP___n100_road.value,
+        selection_type="NEW_SELECTION",
+    )
+
+    custom_arcpy.select_attribute_and_make_permanent_feature(
+        input_layer=Road_N100.test2___underpass_cross_ER___n100_road.value,
+        expression="vegkategori IN ('F', 'K', 'P')",
+        output_name=Road_N100.test2___keep_underpass_FKP___n100_road.value,
+        selection_type="NEW_SELECTION",
+    )
+
+    custom_arcpy.select_attribute_and_make_permanent_feature(
+        input_layer=Road_N100.test2___underpass_cross_ER___n100_road.value,
+        expression="vegkategori IN ('F', 'K', 'P')",
+        output_name=Road_N100.test2___keep_underpass_FKP___n100_road.value,
+        selection_type="NEW_SELECTION",
+    )
+
+    custom_arcpy.select_attribute_and_make_permanent_feature(
+        input_layer=Road_N100.test2___surface_under_ER___n100_road.value,
+        expression="vegkategori IN ('F', 'K', 'P')",
+        output_name=Road_N100.test2___keep_surface_FKP___n100_road.value,
         selection_type="NEW_SELECTION",
     )
 
