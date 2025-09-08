@@ -1,6 +1,7 @@
 # Importing packages
 from collections import defaultdict
 import arcpy
+import numpy as np
 import math
 
 arcpy.env.overwriteOutput = True
@@ -41,7 +42,7 @@ def main():
         roads = connect_roads_with_buffers()
         roads = merge_instances(roads)
         snap_roads(roads)
-        #remove_sharp_angles(roads)
+        remove_sharp_angles(roads)
     else:
         print("No dam found in the selected municipality. Exiting script.")
 
@@ -55,7 +56,7 @@ def fetch_data():
     kommune = "Vinje"
 
     input = [
-        [r"C:\GIS_Files\ag_inputs\dam_fix_input.gdb\data_preparation___calculated_boarder_hierarchy_2___n100_road", None,  Road_N100.test_dam__relevant_roads__n100_road.value], # Roads
+        [r"C:\Users\hjejak\Documents\ArcGIS\Projects\Automatisk_Generalisering\Automatisk_Generalisering.gdb\Veier_hele_Norge", None,  Road_N100.test_dam__relevant_roads__n100_road.value], # Roads
         [input_n100.AnleggsLinje, "objtype = 'Dam'", Road_N100.test_dam__relevant_dam__n100_road.value], # Dam
         #[input_n100.AdminFlate, f"NAVN = '{kommune}'", r"in_memory\kommune"], # Area
         [input_n100.ArealdekkeFlate, "OBJTYPE = 'Havflate' OR OBJTYPE = 'Innsjø' OR OBJTYPE = 'InnsjøRegulert'", r"in_memory\relevant_waters"] # Water
@@ -91,9 +92,6 @@ def has_dam():
     dam_fc = Road_N100.test_dam__relevant_dam__n100_road.value
     count = int(arcpy.management.GetCount(dam_fc).getOutput(0))
     return count > 0
-
-
-
 
 @timing_decorator
 def clip_and_erase_pre():
@@ -139,8 +137,6 @@ def clip_and_erase_pre():
     )
 
     arcpy.DeleteField_management(inside_wdata_fc, drop_field=["Join_Count", "TARGET_FID"])
-    
-
 
 @timing_decorator
 def snap_merge_before_moving():
@@ -155,8 +151,6 @@ def snap_merge_before_moving():
                 cursor.deleteRow()
 
     merge_all_lines(inside_wdata_fc, tolerance=5.0)
-
-
 
 def merge_all_lines(fc, tolerance=5.0):
     # 1. Read all lines
@@ -214,11 +208,9 @@ def merge_all_lines(fc, tolerance=5.0):
 
     print(f"Merged {len(lines)} input lines into {len(merged)} features.")
 
-
 def within_tol(pt1, pt2, tol):
     """Euclidean distance test."""
     return math.hypot(pt1.X - pt2.X, pt1.Y - pt2.Y) <= tol
-
 
 def get_endpoints_cords(polyline):
     """Return a list of Point objects for the start/end of every part."""
@@ -229,9 +221,6 @@ def get_endpoints_cords(polyline):
             pts.append(coords[0])
             pts.append(coords[-1])
     return pts
-
-
-
 
 def snap_by_objtype(layer):
     # Get all unique objtypes
@@ -258,9 +247,6 @@ def snap_by_objtype(layer):
                 if geom is None:
                     cursor.deleteRow()
         arcpy.Delete_management(layer_name) 
-
-
-
 
 @timing_decorator
 def edit_geom_pre():
@@ -331,8 +317,6 @@ def edit_geom_pre():
             near_x, near_y = near_lookup[oid]
             shifted = move_line_away(geom, near_x, near_y, distance=35)
             insert.insertRow([shifted] + list(row[2:]))
-    
-
 
 def move_line_away(geom, near_x, near_y, distance):
     sr = geom.spatialReference
@@ -374,26 +358,41 @@ def snap_and_merge_pre():
     # Merge the two sets
     arcpy.Merge_management([roadlines_moved, outside_fc], final_fc)
 
-
 @timing_decorator
 def create_buffer():
     print("Creating buffers...")
     dam_fc = Road_N100.test_dam__relevant_dam__n100_road.value
     water_fc = r"in_memory\relevant_waters"
+
+    arcpy.management.MakeFeatureLayer(water_fc, "water_lyr")
+    arcpy.management.SelectLayerByLocation(
+        in_layer="water_lyr",
+        select_features=dam_fc,
+        overlap_type="WITHIN_A_DISTANCE",
+        search_distance="100 Meters",
+        selection_type="NEW_SELECTION"
+    )
+
     buffers = [
         [dam_fc, r"in_memory\dam_buffer_70m_flat", "70 Meters"],
         [dam_fc, r"in_memory\dam_buffer_70m", "70 Meters"],
-        [water_fc, r"in_memory\water_buffer_55m", "55 Meters"]
+        ["water_lyr", r"in_memory\water_buffer_55m", "55 Meters"]
     ]
     for i in range(len(buffers)):
         type = "FLAT" if i == 0 else "ROUND"
         arcpy.analysis.Buffer(
             in_features=buffers[i][0],
-            out_feature_class=buffers[i][1],
+            out_feature_class=buffers[i][1] + "_buffer",
             buffer_distance_or_field=buffers[i][2],
             line_end_type=type,
             dissolve_option="NONE",
             method="PLANAR"
+        )
+        arcpy.management.Dissolve(
+            in_features=buffers[i][1] + "_buffer",
+            out_feature_class=buffers[i][1],
+            dissolve_field=[],
+            multi_part="SINGLE_PART"
         )
     print("Buffers created")
 
@@ -508,7 +507,7 @@ def merge_lines(line1, line2, buffer, tolerance=2.0):
         return merge_lines(line1_rev, line2, buffer, tolerance)
 
     elif l1_start.distanceTo(l2_start) < tolerance and within_buffer(l1_start, l2_start):
-        # Reverse begge
+        # Reverse both
         return merge_lines(reverse_geometry(line1), reverse_geometry(line2), buffer, tolerance)
 
     else:
@@ -560,10 +559,6 @@ def connect_roads_with_buffers():
         target=intermediate_fc,
         schema_type="NO_TEST"
     )
-
-   
-
-
 
     arcpy.management.MakeFeatureLayer(intermediate_fc, "roads_lyr_flat")
     arcpy.management.MakeFeatureLayer(intermediate_fc, "roads_lyr_round_2")
@@ -782,8 +777,8 @@ def snap_roads(roads):
         cluster_tolerance="5 Meters"
     )
 
-    cleaned_roads_fc = Road_N100.test_dam__cleaned_roads__n100_road.value
-    arcpy.management.CopyFeatures(intermediate_fc, cleaned_roads_fc)
+    """cleaned_roads_fc = Road_N100.test_dam__cleaned_roads__n100_road.value
+    arcpy.management.CopyFeatures(intermediate_fc, cleaned_roads_fc)"""
 
     print("Roads snapped to buffers!")
 
@@ -792,31 +787,34 @@ def snap_roads(roads):
 ##################
 
 def calculate_angle(p1, p2, p3):
-    # Vektorer fra p2 til p1 og p2 til p3
-    v1 = (p1.X - p2.X, p1.Y - p2.Y)
-    v2 = (p3.X - p2.X, p3.Y - p2.Y)
+    # Vectors from p2 to p1, and p2 to p3
+    v1 = np.array([p1.X - p2.X, p1.Y - p2.Y])
+    v2 = np.array([p3.X - p2.X, p3.Y - p2.Y])
 
-    # Skalarprodukt og lengder
-    dot = v1[0]*v2[0] + v1[1]*v2[1]
-    len1 = math.hypot(*v1)
-    len2 = math.hypot(*v2)
+    # Lenghts of the vectors
+    len1 = np.linalg.norm(v1)
+    len2 = np.linalg.norm(v2)
 
     if len1 == 0 or len2 == 0:
-        return 180  # Udefinert vinkel, behandler som rett
+        return 180  # Undefined angle, treated as straight line
 
-    # Beregn vinkel i grader
-    angle_rad = math.acos(dot / (len1 * len2))
-    angle_deg = math.degrees(angle_rad)
-    
-    return angle_deg
+    # Calculate scalar product
+    dot = np.dot(v1, v2)
+
+    # Calculates angle in degrees
+    angle_rad = np.arccos(dot / len1 * len2)
+
+    return np.degrees(angle_rad)
 
 def not_road_intersection(point, road_oid, roads):
     point_geom = arcpy.PointGeometry(point)
     tolerance = 5
-    with arcpy.da.SearchCursor(roads, ["OID@", "SHAPE@"]) as search_cursor:
-        for oid, shape in search_cursor:
-            if oid != road_oid:
-                if shape.distanceTo(point_geom) <= tolerance:
+
+    with arcpy.da.SearchCursor(roads, ["OID@", "SHAPE@"]) as cursor:
+        for oid, shape in cursor:
+            if shape == None or oid == road_oid:
+                continue
+            if shape.distanceTo(point_geom) <= tolerance:
                     return False
     return True
 
@@ -841,6 +839,9 @@ def remove_sharp_angles(roads):
 
     with arcpy.da.UpdateCursor("roads_lyr", ["OID@", "SHAPE@"]) as cursor:
         for row in cursor:
+            if row[1] == None:
+                cursor.deleteRow()
+                continue
             points = []
             for part in row[1]:
                 for p in part:
@@ -848,22 +849,22 @@ def remove_sharp_angles(roads):
             
             i = 0
             tolerance = 70
-            filtered_points = points.copy()
+            count = len(points)
 
-            while i + 2 < len(filtered_points):
-                p1, p2, p3 = filtered_points[i:i+3]
-                # Beregne vinkelen mellom de tre punktene
-                # Altså vinkelen i det midterste punktet
+            while i + 2 < len(points):
+                p1, p2, p3 = points[i:i+3]
+                # Calculates the angle between the three points
+                # With other words: the angle in the centre point
                 angle = calculate_angle(p1, p2, p3)
-                # Hvis vinkelen er spissere enn en tolleranse - slett punktet
+                # If the angle is sharper than the tolerance - delete the point
                 if angle < tolerance or angle > (360 - tolerance):
                     if not_road_intersection(p2, row[0], "roads_lyr"):
-                        del filtered_points[i+1]
+                        del points[i+1]
                 else:
                     i += 1
-            # Oppdater geometrien basert på punktene som er igjen i [points]
-            if len(filtered_points) < len(points) and len(filtered_points) >= 2:
-                new_geom = arcpy.Polyline(arcpy.Array(filtered_points))
+            # Update the geometry based on the points that remains [points]
+            if len(points) < count and len(points) >= 2:
+                new_geom = arcpy.Polyline(arcpy.Array(points))
                 row[1] = new_geom
                 print("Fjernet")
                 cursor.updateRow(row)
