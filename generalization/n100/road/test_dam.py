@@ -358,43 +358,6 @@ def move_line_away(geom, near_x, near_y, distance):
         new_parts.add(part_arr)
     return arcpy.Polyline(new_parts, sr)
 
-def move_line_away_per_vertex(geom, near_x, near_y, distance):
-    """
-    Returns a new polyline where every vertex in `geom` is moved
-    away from (near_x, near_y) by `distance`.
-    """
-    sr = geom.spatialReference
-    new_parts = arcpy.Array()
-
-    for part in geom:
-        part_arr = arcpy.Array()
-        for p in part:
-            # vector from near-point to the vertex
-            dx = p.X - near_x
-            dy = p.Y - near_y
-            length = math.hypot(dx, dy)
-
-            # if the vertex sits exactly on the near-point, leave it
-            if length == 0:
-                shift_x = shift_y = 0
-            else:
-                # scale vector to the desired distance
-                scale = distance / length
-                shift_x = dx * scale
-                shift_y = dy * scale
-
-            # apply shift
-            new_x = p.X + shift_x
-            new_y = p.Y + shift_y
-            part_arr.add(arcpy.Point(new_x, new_y))
-
-        new_parts.add(part_arr)
-
-    return arcpy.Polyline(new_parts, sr)
-
-
-
-
 
 
 @timing_decorator
@@ -417,7 +380,7 @@ def snap_and_merge_pre():
     # Merge the two sets
     arcpy.Merge_management([roadlines_moved, outside_fc], final_fc)
 
-    arcpy.CopyFeatures_management(final_fc, "C:\\temp\\Roads.gdb\\roadsafterbeingmoved")
+    arcpy.CopyFeatures_management(final_fc, "in_memory\\roadsafterbeingmoved")
 
 
 @timing_decorator
