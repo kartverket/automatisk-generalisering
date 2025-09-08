@@ -1312,3 +1312,17 @@ class Road_N100(Enum):
         script_source_name=test2,
         description="underpass_cross_ER",
     )
+
+    test2___keep_bru_FKP___n100_road = file_manager.generate_file_name_gdb(
+        script_source_name=test2,
+        description="keep_bru_FKP",
+    )
+
+    test2___keep_underpass_FKP___n100_road = file_manager.generate_file_name_gdb(
+        script_source_name=test2,
+        description="keep_underpass_FKP",
+    )
+    test2___keep_surface_FKP___n100_road = file_manager.generate_file_name_gdb(
+        script_source_name=test2,
+        description="keep_surface_FKP",
+    )
