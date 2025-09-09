@@ -158,10 +158,6 @@ def snap_merge_before_moving():
 
     merge_all_lines(inside_wdata_fc, tolerance=5.0)
 
-
-
-
-
 def merge_all_lines(fc, tolerance=5.0):
     # 1. Read all lines
     lines = []
@@ -259,7 +255,6 @@ def snap_by_objtype(layer):
                     cursor.deleteRow()
         arcpy.Delete_management(layer_name) 
 
-
 @timing_decorator
 def edit_geom_pre():
     print("Moving roads away from water...")
@@ -356,8 +351,6 @@ def move_line_away(geom, near_x, near_y, distance):
             part_arr.add(arcpy.Point(new_x, new_y))
         new_parts.add(part_arr)
     return arcpy.Polyline(new_parts, sr)
-
-
 
 @timing_decorator
 def snap_and_merge_pre():
@@ -471,24 +464,24 @@ def add_road(road_lyr, roads, tolerance=2.0):
             added = False
             for pt in [start, end]:
                 key = (round(pt.centroid.X, 2), round(pt.centroid.Y, 2))
-                # Check all roads with matching endpoint key
-                for other_oid in endpoint_lookup.get(key, []):
-                    other_geom = roads[other_oid][0]
-                    other_start, other_end = get_endpoints(other_geom)
-                    distances = [
-                        pt.distanceTo(other_start),
-                        pt.distanceTo(other_end)
-                    ]
-                    if any(d < tolerance for d in distances):
-                        roads[oid] = [geom, obj]
-                        # Add endpoints of this road to lookup for future checks
-                        for new_pt in [start, end]:
-                            new_key = (round(new_pt.centroid.X, 2), round(new_pt.centroid.Y, 2))
-                            endpoint_lookup[new_key].append(oid)
-                        added = True
+                # Check if the endpoints are close to another geometry
+                for other_key in endpoint_lookup:
+                    for other_oid in endpoint_lookup.get(other_key, []):
+                        other_geom = roads[other_oid][0]
+                        distance = pt.distanceTo(other_geom)
+                        if distance < tolerance:
+                            roads[oid] = [geom, obj]
+                            # Add endpoints of this road to lookup for future checks
+                            for new_pt in [start, end]:
+                                new_key = (round(new_pt.centroid.X, 2), round(new_pt.centroid.Y, 2))
+                                endpoint_lookup[new_key].append(oid)
+                            added = True
+                            break
+                    if added:
                         break
                 if added:
                     break
+
     return roads
 
 def find_merge_candidate(short_geom, all_roads, buffer, tolerance=2.0):
@@ -608,6 +601,7 @@ def connect_roads_with_buffers():
     arcpy.management.SelectLayerByLocation(
         # Finds all roads 70m or closer to a dam
         in_layer="roads_lyr_flat",
+        selection_type="NEW_SELECTION",
         overlap_type="WITHIN_A_DISTANCE",
         search_distance="0 Meters",
         select_features=buffer_flat_fc
@@ -634,11 +628,11 @@ def connect_roads_with_buffers():
     for key in roads:
         for oid, buffer_poly in buffer_polygons:
             dist = roads[key][0].distanceTo(buffer_poly)
-            if dist < 0.1:
+            if dist < 1:
                 buffer_to_roads[oid].append([key, roads[key][0], roads[key][1]])
     
     print("Roads connected to buffers.")
-    
+
     return buffer_to_roads
 
 @timing_decorator
@@ -716,9 +710,6 @@ def merge_instances(roads):
                         delete_cursor.deleteRow()
 
     print("Instances merged!")
-
-    cleaned_roads_fc = Road_N100.test_dam__cleaned_roads__n100_road.value
-    arcpy.management.CopyFeatures(intermediate_fc, cleaned_roads_fc)
 
     return new_roads
 
@@ -819,6 +810,27 @@ def snap_roads(roads):
         in_features="roads_lyr",
         cluster_tolerance="5 Meters"
     )
+
+    line = Road_N100.test_dam__dam_buffer_70m_line__n100_road.value
+    arcpy.management.MakeFeatureLayer(line, "buffer_line")
+    arcpy.management.SelectLayerByAttribute("buffer_line", "NEW_SELECTION", "OBJECTID IN (157)")
+
+    arcpy.management.SelectLayerByLocation(
+        in_layer="roads_lyr",
+        overlap_type="INTERSECT",
+        select_features="buffer_line"
+    )
+
+    oids = [oid for row in arcpy.da.SearchCursor("roads_lyr", ["OID@"]) for oid in row]
+
+    print(oids)
+    for key in roads:
+        for oid, _ in roads[key]:
+            if oid in oids:
+                print(key)
+
+    cleaned_roads_fc = Road_N100.test_dam__cleaned_roads__n100_road.value
+    arcpy.management.CopyFeatures(intermediate_fc, cleaned_roads_fc)
 
     print("Roads snapped to buffers!")
 
