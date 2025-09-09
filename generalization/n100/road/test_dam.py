@@ -96,7 +96,7 @@ def has_dam():
 @timing_decorator
 def clip_and_erase_pre():
     print("Clipping and erasing roads near dam...")
-    buffer_fc = r"in_memory\dam_buffer_35m"
+    buffer_fc = r"in_memory\\dam_buffer_35m"
     pre_dissolve = r"in_memory\roads_pre_dissolve"
     outside_fc = r"in_memory\roads_outside"
     inside_fc = r"in_memory\roads_inside"
@@ -107,7 +107,7 @@ def clip_and_erase_pre():
     buffer_water = r"in_memory\buffer_water"
 
     
-    arcpy.Buffer_analysis(Road_N100.test_dam__relevant_dam__n100_road.value, buffer_fc, "55 Meters", dissolve_option="ALL", line_end_type="FLAT")
+    arcpy.Buffer_analysis(Road_N100.test_dam__relevant_dam__n100_road.value, buffer_fc, "55 Meters", dissolve_option="ALL")
     arcpy.Clip_analysis(Road_N100.test_dam__relevant_roads__n100_road.value, buffer_fc, pre_dissolve)
     arcpy.Erase_analysis(Road_N100.test_dam__relevant_roads__n100_road.value, buffer_fc, outside_fc)
     arcpy.Dissolve_management(pre_dissolve, inside_fc, multi_part="SINGLE_PART", unsplit_lines="UNSPLIT_LINES")
@@ -141,16 +141,26 @@ def clip_and_erase_pre():
 @timing_decorator
 def snap_merge_before_moving():
     inside_wdata_fc = r"in_memory\roads_inside_with_data"
+    
+
 
     snap_by_objtype(inside_wdata_fc)
+
     arcpy.Snap_edit(inside_wdata_fc, [[inside_wdata_fc, "END", "40 Meters"]])
+
+
         # Delete features with None geometry after snapping
     with arcpy.da.UpdateCursor(inside_wdata_fc, ["OID@", "SHAPE@"]) as cursor:
         for oid, geom in cursor:
             if geom is None:
                 cursor.deleteRow()
 
+
     merge_all_lines(inside_wdata_fc, tolerance=5.0)
+
+
+
+
 
 def merge_all_lines(fc, tolerance=5.0):
     # 1. Read all lines
@@ -241,12 +251,14 @@ def snap_by_objtype(layer):
         snap_env = [[layer_name, "END", "40 Meters"]]
         arcpy.Snap_edit(layer_name, snap_env)
         
+        
         # Delete features with None geometry after snapping
         with arcpy.da.UpdateCursor(layer_name, ["OID@", "SHAPE@"]) as cursor:
             for oid, geom in cursor:
                 if geom is None:
                     cursor.deleteRow()
         arcpy.Delete_management(layer_name) 
+
 
 @timing_decorator
 def edit_geom_pre():
@@ -260,6 +272,7 @@ def edit_geom_pre():
 
     inside_sr = arcpy.Describe(inside_wdata_fc).spatialReference
     temp_fc = inside_wdata_fc + "_temp"
+    #arcpy.CopyFeatures_management(inside_wdata_fc, "C:\\temp\\Roads.gdb\\roadsbeforebeingmoved")
 
     # Copy features for editing
     arcpy.CopyFeatures_management(inside_wdata_fc, temp_fc)
@@ -317,6 +330,8 @@ def edit_geom_pre():
             near_x, near_y = near_lookup[oid]
             shifted = move_line_away(geom, near_x, near_y, distance=35)
             insert.insertRow([shifted] + list(row[2:]))
+    
+    #arcpy.CopyFeatures_management(roadlines_moved, "C:\\temp\\Roads.gdb\\roadsafterbeingmoved")
 
 def move_line_away(geom, near_x, near_y, distance):
     sr = geom.spatialReference
@@ -358,13 +373,23 @@ def snap_and_merge_pre():
     arcpy.Snap_edit(roadlines_moved, snap_env)
 
     snap_env2 = [[roadlines_moved, "END", "60 Meters"]]
+
+    arcpy.Buffer_analysis(Road_N100.test_dam__relevant_dam__n100_road.value, r"in_memory\dam_buffer_150m", "150 Meters")
+    arcpy.MakeFeatureLayer_management(outside_fc, "outside_lyr")
+    arcpy.SelectLayerByLocation_management(
+        in_layer="outside_lyr",
+        overlap_type="INTERSECT",
+        select_features=r"in_memory\dam_buffer_150m"
+    )
     
-    arcpy.Snap_edit(outside_fc, snap_env2)
+    arcpy.Snap_edit("outside_lyr", snap_env2)
+
+    
 
     # Merge the two sets
     arcpy.Merge_management([roadlines_moved, outside_fc], final_fc)
 
-    arcpy.CopyFeatures_management(final_fc, "in_memory\\roadsafterbeingmoved")
+    #arcpy.CopyFeatures_management(final_fc, "C:\\temp\\Roads.gdb\\roadsafterbeingsnapped")
 
 
 @timing_decorator
