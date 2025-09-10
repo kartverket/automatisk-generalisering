@@ -58,7 +58,7 @@ def fetch_data():
     input = [
         [r"C:\GIS_Files\ag_inputs\dam_fix_input.gdb\data_preparation___calculated_boarder_hierarchy_2___n100_road", None, Road_N100.test_dam__relevant_roads__n100_road.value], # Roads
         [input_n100.AnleggsLinje, "objtype = 'Dam'", Road_N100.test_dam__relevant_dam__n100_road.value], # Dam
-        #[input_n100.AdminFlate, f"NAVN = '{kommune}'", r"in_memory\kommune"], # Area
+        [input_n100.AdminFlate, f"NAVN = '{kommune}'", r"in_memory\kommune"], # Area
         [input_n100.ArealdekkeFlate, "OBJTYPE = 'Havflate' OR OBJTYPE = 'Innsjø' OR OBJTYPE = 'InnsjøRegulert'", r"in_memory\relevant_waters"] # Water
     ]
     for data in input:
@@ -138,23 +138,66 @@ def clip_and_erase_pre():
 
     arcpy.DeleteField_management(inside_wdata_fc, drop_field=["Join_Count", "TARGET_FID"])
 
+
+
 @timing_decorator
 def snap_merge_before_moving():
     inside_wdata_fc = r"in_memory\roads_inside_with_data"
-    
+    arcpy.CopyFeatures_management(inside_wdata_fc, "C:\\temp\\Roads.gdb\\roadsbeforebeingsnappedbeforemoving")
+
+    # 1. Discover all non-OID, non-Geometry fields in backup
+    all_fields = arcpy.ListFields(inside_wdata_fc)
+    attr_fields = [
+        f.name
+        for f in all_fields
+        if f.type not in ("OID", "Geometry", "Blob", "Raster")
+    ]
+
+    # 2. Build your cursor field lists
+    #    - search_fields: includes OID@ so you can key the dict
+    #    - insert_fields: includes SHAPE@ plus all attribute fields
+    insert_fields = ["SHAPE@"] + attr_fields
+    search_fields = ["OID@"] + insert_fields
+
+   # 3. Read originals into an in-memory dict
+    backup = {}
+    with arcpy.da.SearchCursor(inside_wdata_fc, search_fields) as s_cur:
+        for row in s_cur:
+            oid = row[0]
+            geom_and_attrs = row[1:]
+            backup[oid] = geom_and_attrs
 
 
-    snap_by_objtype(inside_wdata_fc)
+
+
+    deleted_lines = snap_by_objtype(inside_wdata_fc)
 
     arcpy.Snap_edit(inside_wdata_fc, [[inside_wdata_fc, "END", "40 Meters"]])
 
+    arcpy.CopyFeatures_management(inside_wdata_fc, "C:\\temp\\Roads.gdb\\roadsbeforebeingsnappedbeforemoving2")
 
+
+    
         # Delete features with None geometry after snapping
     with arcpy.da.UpdateCursor(inside_wdata_fc, ["OID@", "SHAPE@"]) as cursor:
         for oid, geom in cursor:
             if geom is None:
+                deleted_lines.append(oid)
                 cursor.deleteRow()
+    
+    
 
+
+
+    # 4. Insert missing features back into your target feature class
+    with arcpy.da.InsertCursor(inside_wdata_fc, insert_fields) as i_cur:
+        for oid in deleted_lines:
+            if oid in backup:
+                i_cur.insertRow(backup[oid])
+
+    arcpy.CopyFeatures_management(inside_wdata_fc, "C:\\temp\\Roads.gdb\\roadsbeforebeingsnappedbeforemoving3")
+
+       
 
     merge_all_lines(inside_wdata_fc, tolerance=5.0)
 
@@ -251,13 +294,16 @@ def snap_by_objtype(layer):
         snap_env = [[layer_name, "END", "40 Meters"]]
         arcpy.Snap_edit(layer_name, snap_env)
         
-        
+        deleted_lines = []
         # Delete features with None geometry after snapping
         with arcpy.da.UpdateCursor(layer_name, ["OID@", "SHAPE@"]) as cursor:
             for oid, geom in cursor:
                 if geom is None:
+                    deleted_lines.append(oid)
                     cursor.deleteRow()
         arcpy.Delete_management(layer_name) 
+    return deleted_lines
+
 
 
 @timing_decorator
@@ -321,17 +367,17 @@ def edit_geom_pre():
                 insert.insertRow([geom] + list(row[2:]))
                 continue
 
-            """if shape_length < 30:
+            if shape_length < 35:
             # Do not move short lines, just copy them
                 insert.insertRow([geom] + list(row[2:]))
-                continue"""
+                continue
           
 
             near_x, near_y = near_lookup[oid]
             shifted = move_line_away(geom, near_x, near_y, distance=35)
             insert.insertRow([shifted] + list(row[2:]))
     
-    #arcpy.CopyFeatures_management(roadlines_moved, "C:\\temp\\Roads.gdb\\roadsafterbeingmoved")
+    arcpy.CopyFeatures_management(roadlines_moved, "C:\\temp\\Roads.gdb\\roadsafterbeingmoved")
 
 def move_line_away(geom, near_x, near_y, distance):
     sr = geom.spatialReference
@@ -389,7 +435,7 @@ def snap_and_merge_pre():
     # Merge the two sets
     arcpy.Merge_management([roadlines_moved, outside_fc], final_fc)
 
-    #arcpy.CopyFeatures_management(final_fc, "C:\\temp\\Roads.gdb\\roadsafterbeingsnapped")
+    arcpy.CopyFeatures_management(final_fc, "C:\\temp\\Roads.gdb\\roadsafterbeingsnapped")
 
 
 @timing_decorator
