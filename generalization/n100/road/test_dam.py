@@ -170,14 +170,14 @@ def snap_merge_before_moving():
 
 
 
-    deleted_lines = snap_by_objtype(inside_wdata_fc)
+    snap_by_objtype(inside_wdata_fc)
 
     arcpy.Snap_edit(inside_wdata_fc, [[inside_wdata_fc, "END", "40 Meters"]])
 
     arcpy.CopyFeatures_management(inside_wdata_fc, "C:\\temp\\Roads.gdb\\roadsbeforebeingsnappedbeforemoving2")
 
 
-    
+    deleted_lines = []
         # Delete features with None geometry after snapping
     with arcpy.da.UpdateCursor(inside_wdata_fc, ["OID@", "SHAPE@"]) as cursor:
         for oid, geom in cursor:
@@ -186,7 +186,6 @@ def snap_merge_before_moving():
                 cursor.deleteRow()
     
     
-
 
 
     # 4. Insert missing features back into your target feature class
@@ -290,15 +289,8 @@ def snap_by_objtype(layer):
         snap_env = [[layer_name, "END", "40 Meters"]]
         arcpy.Snap_edit(layer_name, snap_env)
         
-        deleted_lines = []
-        # Delete features with None geometry after snapping
-        with arcpy.da.UpdateCursor(layer_name, ["OID@", "SHAPE@"]) as cursor:
-            for oid, geom in cursor:
-                if geom is None:
-                    deleted_lines.append(oid)
-                    cursor.deleteRow()
+ 
         arcpy.Delete_management(layer_name) 
-    return deleted_lines
 
 
 @timing_decorator
