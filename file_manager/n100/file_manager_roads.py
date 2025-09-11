@@ -1241,12 +1241,17 @@ class Road_N100(Enum):
         description="relevant_dam"
     )
 
-    test_dam__dam_buffer_70m_line__n100_road = file_manager.generate_file_name_gdb(
+    test_dam__dam_buffer_60m_line__n100_road = file_manager.generate_file_name_gdb(
         script_source_name=dam_file,
-        description="dam_buffer_70m_line"
+        description="dam_buffer_60m_line"
     )
 
     test_dam__cleaned_roads__n100_road = file_manager.generate_file_name_gdb(
         script_source_name=dam_file,
         description="cleaned_roads"
+    )
+
+    test_dam__underveis__n100_road = file_manager.generate_file_name_gdb(
+        script_source_name=dam_file,
+        description="underveis"
     )
