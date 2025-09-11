@@ -108,7 +108,30 @@ def clip_and_erase_pre():
     water_single = r"in_memory\water_singleparts"
 
     
-    arcpy.Buffer_analysis(Road_N100.test_dam__relevant_dam__n100_road.value, buffer_fc, "55 Meters", dissolve_option="ALL")
+    arcpy.Buffer_analysis(Road_N100.test_dam__relevant_dam__n100_road.value, buffer_fc, "55 Meters", dissolve_option="NONE")
+    # 1. Build a layer of only the 'L' roads
+    fld = arcpy.AddFieldDelimiters(Road_N100.test_dam__relevant_roads__n100_road.value, "medium")
+    arcpy.MakeFeatureLayer_management(
+        Road_N100.test_dam__relevant_roads__n100_road.value,
+        "roads_L_lyr",
+        where_clause=f"{fld} = 'L'"
+    )
+
+    # 2. Build a layer of buffers
+    arcpy.MakeFeatureLayer_management(buffer_fc, "buffer_lyr")
+
+    # 3. Select buffers intersecting the filtered roads
+    arcpy.SelectLayerByLocation_management(
+        "buffer_lyr",
+        "INTERSECT",
+        "roads_L_lyr"
+    )
+
+    arcpy.DeleteFeatures_management("buffer_lyr")
+
+
+
+
     arcpy.Clip_analysis(Road_N100.test_dam__relevant_roads__n100_road.value, buffer_fc, pre_dissolve)
     arcpy.Erase_analysis(Road_N100.test_dam__relevant_roads__n100_road.value, buffer_fc, outside_fc)
     arcpy.Dissolve_management(pre_dissolve, inside_fc, multi_part="SINGLE_PART", unsplit_lines="UNSPLIT_LINES")
@@ -462,6 +485,7 @@ def snap_and_merge_pre():
 
     # Merge the two sets
     arcpy.Merge_management([roadlines_moved, outside_fc], final_fc)
+    arcpy.CopyFeatures_management(final_fc, "C:\\temp\\Roads.gdb\\roadsafterbeingsnapped")
 
 @timing_decorator
 def create_buffer():
