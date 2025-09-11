@@ -224,7 +224,7 @@ def resolve_building_conflicts_polygon():
         use_turn_orientation=False,
     )
 
-    new_config = logic_config.RbcInitKwargs(
+    rbc_init_config = logic_config.RbcPolygonInitKwargs(
         input_data_structure=polygon_rbc_input_data_structure,
         output_building_polygons=core_config.InjectIO(
             object=building, tag=rbc_polygons
@@ -242,7 +242,7 @@ def resolve_building_conflicts_polygon():
     polygon_rbc_method = core_config.ClassMethodEntryConfig(
         class_=ResolveBuildingConflictsPolygon,
         method=ResolveBuildingConflictsPolygon.run,
-        init_params=new_config,
+        init_params=rbc_init_config,
     )
 
     rbc_method_injects_config = core_config.MethodEntriesConfig(
