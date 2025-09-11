@@ -140,17 +140,10 @@ def clip_and_erase_pre():
 
     arcpy.DeleteField_management(inside_wdata_fc, drop_field=["Join_Count", "TARGET_FID"])
 
-
-    
-
-
-
-
 @timing_decorator
 def snap_merge_before_moving():
     inside_wdata_fc = r"in_memory\roads_inside_with_data"
 
-  
     tolerance = 40.0
     # Precompute squared tolerance for faster distance checks
     tol2 = tolerance * tolerance
@@ -194,9 +187,6 @@ def snap_merge_before_moving():
                     ((p_start.X, p_start.Y), (p_end.X, p_end.Y))
                 )
 
-
-
-
     # 1. Discover all non-OID, non-Geometry fields in backup
     all_fields = arcpy.ListFields(inside_wdata_fc)
     attr_fields = [
@@ -219,15 +209,9 @@ def snap_merge_before_moving():
             geom_and_attrs = row[1:]
             backup[oid] = geom_and_attrs
 
-
-
-
     snap_by_objtype(inside_wdata_fc)
 
     arcpy.Snap_edit(inside_wdata_fc, [[inside_wdata_fc, "END", "40 Meters"]])
-
-
-
 
     deleted_lines = []
         # Delete features with None geometry after snapping
@@ -237,17 +221,11 @@ def snap_merge_before_moving():
                 deleted_lines.append(oid)
                 cursor.deleteRow()
     
-    
-
-
     # 4. Insert missing features back into your target feature class
     with arcpy.da.InsertCursor(inside_wdata_fc, insert_fields) as i_cur:
         for oid in deleted_lines:
             if oid in backup:
                 i_cur.insertRow(backup[oid])
-
-
-       
 
     merge_all_lines(inside_wdata_fc, tolerance=5.0)
 
@@ -340,9 +318,7 @@ def snap_by_objtype(layer):
         snap_env = [[layer_name, "END", "40 Meters"]]
         arcpy.Snap_edit(layer_name, snap_env)
         
- 
         arcpy.Delete_management(layer_name) 
-
 
 @timing_decorator
 def edit_geom_pre():
@@ -352,7 +328,6 @@ def edit_geom_pre():
     roadlines_moved = r"in_memory\roads_moved"
 
     water_center = r"in_memory\water_center"
-
 
     inside_sr = arcpy.Describe(inside_wdata_fc).spatialReference
     temp_fc = inside_wdata_fc + "_temp"
@@ -382,7 +357,6 @@ def edit_geom_pre():
         closest_count=1
     )
 
-
     # Build a lookup of NEAR_X, NEAR_Y for each road feature
     near_lookup = {}
     with arcpy.da.SearchCursor(near_table, ["IN_FID", "NEAR_X", "NEAR_Y"]) as cursor:
@@ -410,12 +384,10 @@ def edit_geom_pre():
             # Do not move short lines, just copy them
                 insert.insertRow([geom] + list(row[2:]))
                 continue
-          
 
             near_x, near_y = near_lookup[oid]
             shifted = move_line_away(geom, near_x, near_y, distance=35)
             insert.insertRow([shifted] + list(row[2:]))
-    
 
 def move_line_away(geom, near_x, near_y, distance):
     sr = geom.spatialReference
@@ -466,12 +438,8 @@ def snap_and_merge_pre():
     
     arcpy.Snap_edit("outside_lyr", snap_env2)
 
-    
-
     # Merge the two sets
     arcpy.Merge_management([roadlines_moved, outside_fc], final_fc)
-
-
 
 @timing_decorator
 def create_buffer():
