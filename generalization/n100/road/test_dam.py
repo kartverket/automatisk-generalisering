@@ -56,7 +56,7 @@ def fetch_data():
     kommune = "Notodden"
 
     input = [
-        [r"C:\GIS_Files\ag_inputs\dam_fix_input.gdb\data_preparation___calculated_boarder_hierarchy_2___n100_road", None, Road_N100.test_dam__relevant_roads__n100_road.value], # Roads
+        [r"C:\GIS_Files\ag_inputs\road.gdb\VegSti", None, Road_N100.test_dam__relevant_roads__n100_road.value], # Roads
         [input_n100.AnleggsLinje, "objtype = 'Dam'", Road_N100.test_dam__relevant_dam__n100_road.value], # Dam
         [input_n100.AdminFlate, f"NAVN = '{kommune}'", r"in_memory\kommune"], # Area
         [input_n100.ArealdekkeFlate, "OBJTYPE = 'Havflate' OR OBJTYPE = 'Innsjø' OR OBJTYPE = 'InnsjøRegulert'", r"in_memory\relevant_waters"] # Water
@@ -195,10 +195,16 @@ def snap_merge_before_moving():
                 )
 
 
+    backup = build_backup(inside_wdata_fc)
+    snap_by_objtype(inside_wdata_fc)
+    arcpy.Snap_edit(inside_wdata_fc, [[inside_wdata_fc, "END", "40 Meters"]])
+    restore_deleted_lines(inside_wdata_fc, backup)
 
+    merge_all_lines(inside_wdata_fc, tolerance=5.0)
 
+def build_backup(layer):
     # 1. Discover all non-OID, non-Geometry fields in backup
-    all_fields = arcpy.ListFields(inside_wdata_fc)
+    all_fields = arcpy.ListFields(layer)
     attr_fields = [
         f.name
         for f in all_fields
@@ -211,45 +217,45 @@ def snap_merge_before_moving():
     insert_fields = ["SHAPE@"] + attr_fields
     search_fields = ["OID@"] + insert_fields
 
-   # 3. Read originals into an in-memory dict
+
+
+# 3. Read originals into an in-memory dict
     backup = {}
-    with arcpy.da.SearchCursor(inside_wdata_fc, search_fields) as s_cur:
+    with arcpy.da.SearchCursor(layer, search_fields) as s_cur:
         for row in s_cur:
             oid = row[0]
             geom_and_attrs = row[1:]
             backup[oid] = geom_and_attrs
+    
+    return backup 
 
+def restore_deleted_lines(layer, backup):
+    deleted_lines = []   
+        # 1. Discover all non-OID, non-Geometry fields in backup
+    all_fields = arcpy.ListFields(layer)
+    attr_fields = [
+        f.name
+        for f in all_fields
+        if f.type not in ("OID", "Geometry", "Blob", "Raster")
+    ]
 
-
-
-    snap_by_objtype(inside_wdata_fc)
-
-    arcpy.Snap_edit(inside_wdata_fc, [[inside_wdata_fc, "END", "40 Meters"]])
-
-
-
-
-    deleted_lines = []
+    # 2. Build your cursor field lists
+    #    - search_fields: includes OID@ so you can key the dict
+    #    - insert_fields: includes SHAPE@ plus all attribute fields
+    insert_fields = ["SHAPE@"] + attr_fields
+    
         # Delete features with None geometry after snapping
-    with arcpy.da.UpdateCursor(inside_wdata_fc, ["OID@", "SHAPE@"]) as cursor:
+    with arcpy.da.UpdateCursor(layer, ["OID@", "SHAPE@"]) as cursor:
         for oid, geom in cursor:
             if geom is None:
                 deleted_lines.append(oid)
                 cursor.deleteRow()
-    
-    
-
 
     # 4. Insert missing features back into your target feature class
-    with arcpy.da.InsertCursor(inside_wdata_fc, insert_fields) as i_cur:
+    with arcpy.da.InsertCursor(layer, insert_fields) as i_cur:
         for oid in deleted_lines:
             if oid in backup:
                 i_cur.insertRow(backup[oid])
-
-
-       
-
-    merge_all_lines(inside_wdata_fc, tolerance=5.0)
 
 def merge_all_lines(fc, tolerance=5.0):
     # 1. Read all lines
@@ -465,7 +471,6 @@ def snap_and_merge_pre():
     )
     
     arcpy.Snap_edit("outside_lyr", snap_env2)
-
     
 
     # Merge the two sets
