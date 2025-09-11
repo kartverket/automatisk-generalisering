@@ -105,6 +105,7 @@ def clip_and_erase_pre():
     water_clipped = r"in_memory\water_clipped"
     water_center = r"in_memory\water_center"
     buffer_water = r"in_memory\buffer_water"
+    water_single = r"in_memory\water_singleparts"
 
     
     arcpy.Buffer_analysis(Road_N100.test_dam__relevant_dam__n100_road.value, buffer_fc, "55 Meters", dissolve_option="ALL")
@@ -116,7 +117,8 @@ def clip_and_erase_pre():
 
     arcpy.Buffer_analysis(Road_N100.test_dam__relevant_dam__n100_road.value, buffer_water, "75 Meters", dissolve_option="NONE")
     arcpy.Clip_analysis(r"in_memory\relevant_waters", buffer_water, water_clipped)
-    arcpy.FeatureToPoint_management(water_clipped, water_center, "CENTROID")
+    arcpy.MultipartToSinglepart_management(water_clipped, water_single)
+    arcpy.FeatureToPoint_management(water_single, water_center, "CENTROID")
 
     fm = arcpy.FieldMappings()
     for fld in arcpy.ListFields(pre_dissolve):
@@ -139,11 +141,61 @@ def clip_and_erase_pre():
     arcpy.DeleteField_management(inside_wdata_fc, drop_field=["Join_Count", "TARGET_FID"])
 
 
+    
+
+
+
 
 @timing_decorator
 def snap_merge_before_moving():
     inside_wdata_fc = r"in_memory\roads_inside_with_data"
-    #arcpy.CopyFeatures_management(inside_wdata_fc, "C:\\temp\\Roads.gdb\\roadsbeforebeingsnappedbeforemoving")
+
+  
+    tolerance = 40.0
+    # Precompute squared tolerance for faster distance checks
+    tol2 = tolerance * tolerance
+
+    # Helper: squared distance between two arcpy.Points
+    def _sq_dist(p1, p2):
+        dx = p1.X - p2.X
+        dy = p1.Y - p2.Y
+        return dx*dx + dy*dy
+
+    # Store seen endpoint‐pairs as a list of tuples: ((x1,y1),(x2,y2))
+    seen = []
+
+    # Open an update cursor to delete rows
+    with arcpy.da.UpdateCursor(inside_wdata_fc, ["OID@", "SHAPE@"]) as cursor:
+        for oid, geom in cursor:
+            # Extract endpoints
+            pts = get_endpoints_cords(geom)
+            if len(pts) < 2:
+                # Skip degenerate geometries
+                continue
+            p_start, p_end = pts[0], pts[1]
+
+            # Check against seen endpoint pairs
+            is_duplicate = False
+            for (sx, sy), (ex, ey) in seen:
+                # Two possible match orders
+                d1 = _sq_dist(p_start, arcpy.Point(sx, sy))
+                d2 = _sq_dist(p_end,   arcpy.Point(ex, ey))
+                d3 = _sq_dist(p_start, arcpy.Point(ex, ey))
+                d4 = _sq_dist(p_end,   arcpy.Point(sx, sy))
+                
+                if (d1 <= tol2 and d2 <= tol2) or (d3 <= tol2 and d4 <= tol2):
+                    cursor.deleteRow()
+                    is_duplicate = True
+                    break
+
+            if not is_duplicate:
+                # Record this endpoint pair
+                seen.append(
+                    ((p_start.X, p_start.Y), (p_end.X, p_end.Y))
+                )
+
+
+
 
     # 1. Discover all non-OID, non-Geometry fields in backup
     all_fields = arcpy.ListFields(inside_wdata_fc)
@@ -174,7 +226,7 @@ def snap_merge_before_moving():
 
     arcpy.Snap_edit(inside_wdata_fc, [[inside_wdata_fc, "END", "40 Meters"]])
 
-    #arcpy.CopyFeatures_management(inside_wdata_fc, "C:\\temp\\Roads.gdb\\roadsbeforebeingsnappedbeforemoving2")
+
 
 
     deleted_lines = []
@@ -194,7 +246,6 @@ def snap_merge_before_moving():
             if oid in backup:
                 i_cur.insertRow(backup[oid])
 
-    #arcpy.CopyFeatures_management(inside_wdata_fc, "C:\\temp\\Roads.gdb\\roadsbeforebeingsnappedbeforemoving3")
 
        
 
@@ -305,7 +356,6 @@ def edit_geom_pre():
 
     inside_sr = arcpy.Describe(inside_wdata_fc).spatialReference
     temp_fc = inside_wdata_fc + "_temp"
-    #arcpy.CopyFeatures_management(inside_wdata_fc, "C:\\temp\\Roads.gdb\\roadsbeforebeingmoved")
 
     # Copy features for editing
     arcpy.CopyFeatures_management(inside_wdata_fc, temp_fc)
@@ -332,6 +382,7 @@ def edit_geom_pre():
         closest_count=1
     )
 
+
     # Build a lookup of NEAR_X, NEAR_Y for each road feature
     near_lookup = {}
     with arcpy.da.SearchCursor(near_table, ["IN_FID", "NEAR_X", "NEAR_Y"]) as cursor:
@@ -352,6 +403,7 @@ def edit_geom_pre():
             shape_length = geom.length
             if not geom or oid not in near_lookup:
                 insert.insertRow([geom] + list(row[2:]))
+                #print(oid, "not moved")
                 continue
 
             if shape_length < 35:
@@ -364,7 +416,6 @@ def edit_geom_pre():
             shifted = move_line_away(geom, near_x, near_y, distance=35)
             insert.insertRow([shifted] + list(row[2:]))
     
-    #arcpy.CopyFeatures_management(roadlines_moved, "C:\\temp\\Roads.gdb\\roadsafterbeingmoved")
 
 def move_line_away(geom, near_x, near_y, distance):
     sr = geom.spatialReference
@@ -420,7 +471,6 @@ def snap_and_merge_pre():
     # Merge the two sets
     arcpy.Merge_management([roadlines_moved, outside_fc], final_fc)
 
-    #arcpy.CopyFeatures_management(final_fc, "C:\\temp\\Roads.gdb\\roadsafterbeingsnapped")
 
 
 @timing_decorator
