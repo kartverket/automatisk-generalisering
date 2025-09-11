@@ -526,7 +526,7 @@ def get_endpoints(polyline):
 def add_road(road_lyr, roads, tolerance=2.0):
     # Build endpoint lookup for existing roads
     endpoint_lookup = defaultdict(list)
-    for oid, (geom, _) in roads.items():
+    for oid, (geom, _, _) in roads.items():
         start, end = get_endpoints(geom)
         # Use rounded coordinates for fast lookup
         for pt in [start, end]:
@@ -534,8 +534,8 @@ def add_road(road_lyr, roads, tolerance=2.0):
             endpoint_lookup[key].append(oid)
 
     # Add new roads if they share endpoints with existing roads
-    with arcpy.da.SearchCursor(road_lyr, ["OID@", "SHAPE@", "objtype"]) as cursor:
-        for oid, geom, obj in cursor:
+    with arcpy.da.SearchCursor(road_lyr, ["OID@", "SHAPE@", "objtype", "vegkategori"]) as cursor:
+        for oid, geom, obj, category in cursor:
             if oid in roads:
                 continue
             start, end = get_endpoints(geom)
@@ -548,7 +548,7 @@ def add_road(road_lyr, roads, tolerance=2.0):
                         other_geom = roads[other_oid][0]
                         distance = pt.distanceTo(other_geom)
                         if distance < tolerance:
-                            roads[oid] = [geom, obj]
+                            roads[oid] = [geom, obj, category]
                             # Add endpoints of this road to lookup for future checks
                             for new_pt in [start, end]:
                                 new_key = (round(new_pt.centroid.X, 2), round(new_pt.centroid.Y, 2))
@@ -690,10 +690,10 @@ def connect_roads_with_buffers():
     )
 
     roads = {}
-    with arcpy.da.SearchCursor("roads_lyr_flat", ["OID@", "SHAPE@", "objtype"]) as cursor:
-        for oid, geom, obj in cursor:
+    with arcpy.da.SearchCursor("roads_lyr_flat", ["OID@", "SHAPE@", "objtype", "vegkategori"]) as cursor:
+        for oid, geom, obj, category in cursor:
             if oid not in roads:
-                roads[oid] = [geom, obj]
+                roads[oid] = [geom, obj, category]
 
     roads = add_road("roads_lyr_round_2", roads)
 
@@ -704,7 +704,7 @@ def connect_roads_with_buffers():
         for oid, buffer_poly in buffer_polygons:
             dist = roads[key][0].distanceTo(buffer_poly)
             if dist < 1:
-                buffer_to_roads[oid].append([key, roads[key][0], roads[key][1]])
+                buffer_to_roads[oid].append([key, roads[key][0], roads[key][1], roads[key][2]])
     
     print("Roads connected to buffers.")
 
@@ -721,13 +721,13 @@ def merge_instances(roads):
 
     # Global geometry-dictionary
     roads_by_oid = {
-        oid: [geom, objt]
+        oid: [geom, objt, category]
         for buffer_id in roads
-        for oid, geom, objt in roads[buffer_id]
+        for oid, geom, objt, category in roads[buffer_id]
     }
     roads_to_buffers = defaultdict(set)
     for buffer_id, road_list in roads.items():
-        for oid, _, _ in road_list:
+        for oid, _, _, _ in road_list:
             roads_to_buffers[oid].add(buffer_id)
 
     to_delete = set()
@@ -738,12 +738,13 @@ def merge_instances(roads):
     for buffer_id in roads:
         buffer_geom = buffer_polygons[buffer_id]
         relevant_roads = [oid for oid, ids in roads_to_buffers.items() if buffer_id in ids]
-        relevant_roads = [[oid, roads_by_oid[oid][0], roads_by_oid[oid][1]] for oid in relevant_roads]
-        types = {objtype for _, _, objtype in relevant_roads}
+        relevant_roads = [[oid, roads_by_oid[oid][0], roads_by_oid[oid][1], roads_by_oid[oid][2]] for oid in relevant_roads]
+        types = {objtype for _, _, objtype, _ in relevant_roads}
+        categories = {category for _, _, _, category in relevant_roads}
 
         # Checks if there are bridges in the buffer
         # If so, skip this one
-        sql = f"OBJECTID IN ({','.join(str(oid) for oid, _, _ in relevant_roads)})"
+        sql = f"OBJECTID IN ({','.join(str(oid) for oid, _, _, _ in relevant_roads)})"
         arcpy.management.SelectLayerByAttribute(
             in_layer_or_view="roads_lyr",
             selection_type="NEW_SELECTION",
@@ -759,47 +760,52 @@ def merge_instances(roads):
             continue
 
         for t in types:
-            roads_to_edit = [[oid, geom] for oid, geom, objt in relevant_roads if objt == t]
-            sql = f"OBJECTID IN ({','.join(str(oid) for oid, _ in roads_to_edit)})"
+            for c in categories:
+                roads_to_edit = [[oid, geom] for oid, geom, objt, category in relevant_roads if objt == t and category == c]
+                
+                if not roads_to_edit:
+                    continue
+                
+                sql = f"OBJECTID IN ({','.join(str(oid) for oid, _ in roads_to_edit)})"
 
-            arcpy.management.SelectLayerByAttribute(
-                in_layer_or_view="roads_lyr",
-                selection_type="NEW_SELECTION",
-                where_clause=sql
-            )
+                arcpy.management.SelectLayerByAttribute(
+                    in_layer_or_view="roads_lyr",
+                    selection_type="NEW_SELECTION",
+                    where_clause=sql
+                )
 
-            with arcpy.da.UpdateCursor("roads_lyr", ["OID@", "SHAPE@"]) as update_cursor:
-                for oid, geom in update_cursor:
-                    if oid in to_delete:
-                        continue
-                    if geom is None:
-                        update_cursor.deleteRow()
-                        del roads_by_oid[oid]
-                        del roads_to_buffers[oid]
-                        continue
-                    # Finds candidate to merge
-                    merge_oid = find_merge_candidate(geom, [r for r in roads_to_edit if r[0] != oid and r[0] not in to_delete], buffer_geom)
-                    if merge_oid is None or merge_oid == oid or merge_oid in to_delete:
-                        continue
-                    merge_geom = roads_by_oid[merge_oid][0]
-                    # Combine the two geometries
-                    new_geom = merge_lines(geom, merge_geom)
-                    if new_geom is None:
-                        continue
-                    if not isinstance(new_geom, arcpy.Geometry):
-                        continue
-                    update_cursor.updateRow((oid, new_geom))
-                    roads_by_oid[oid] = [new_geom, t]
-                    # Moves the connected buffers of merge_oid to oid
-                    # because this road now does contain these buffers as well
-                    if merge_oid in roads_to_buffers:
-                        roads_to_buffers[oid].update(roads_to_buffers[merge_oid])
-                    # Deletes the small duplicate of the road
-                    to_delete.add(merge_oid)
-                    if merge_oid in roads_to_buffers:
-                        roads_to_buffers.pop(merge_oid, None)
-                    if merge_oid in roads_by_oid:
-                        roads_by_oid.pop(merge_oid, None)
+                with arcpy.da.UpdateCursor("roads_lyr", ["OID@", "SHAPE@"]) as update_cursor:
+                    for oid, geom in update_cursor:
+                        if oid in to_delete:
+                            continue
+                        if geom is None:
+                            update_cursor.deleteRow()
+                            del roads_by_oid[oid]
+                            del roads_to_buffers[oid]
+                            continue
+                        # Finds candidate to merge
+                        merge_oid = find_merge_candidate(geom, [r for r in roads_to_edit if r[0] != oid and r[0] not in to_delete], buffer_geom)
+                        if merge_oid is None or merge_oid == oid or merge_oid in to_delete:
+                            continue
+                        merge_geom = roads_by_oid[merge_oid][0]
+                        # Combine the two geometries
+                        new_geom = merge_lines(geom, merge_geom)
+                        if new_geom is None:
+                            continue
+                        if not isinstance(new_geom, arcpy.Geometry):
+                            continue
+                        update_cursor.updateRow((oid, new_geom))
+                        roads_by_oid[oid] = [new_geom, t, c]
+                        # Moves the connected buffers of merge_oid to oid
+                        # because this road now does contain these buffers as well
+                        if merge_oid in roads_to_buffers:
+                            roads_to_buffers[oid].update(roads_to_buffers[merge_oid])
+                        # Deletes the small duplicate of the road
+                        to_delete.add(merge_oid)
+                        if merge_oid in roads_to_buffers:
+                            roads_to_buffers.pop(merge_oid, None)
+                        if merge_oid in roads_by_oid:
+                            roads_by_oid.pop(merge_oid, None)
     
     sql = f"OBJECTID IN ({','.join(str(oid) for oid in to_delete)})"
     arcpy.management.SelectLayerByAttribute("roads_lyr", "NEW_SELECTION", sql)
