@@ -741,6 +741,23 @@ def merge_instances(roads):
         relevant_roads = [[oid, roads_by_oid[oid][0], roads_by_oid[oid][1]] for oid in relevant_roads]
         types = {objtype for _, _, objtype in relevant_roads}
 
+        # Checks if there are bridges in the buffer
+        # If so, skip this one
+        sql = f"OBJECTID IN ({','.join(str(oid) for oid, _, _ in relevant_roads)})"
+        arcpy.management.SelectLayerByAttribute(
+            in_layer_or_view="roads_lyr",
+            selection_type="NEW_SELECTION",
+            where_clause=sql
+        )
+        bridge = False
+        with arcpy.da.UpdateCursor("roads_lyr", ["medium"]) as cursor:
+            for medium in cursor:
+                if medium == "L":
+                    bridge = True
+                    break
+        if bridge:
+            continue
+
         for t in types:
             roads_to_edit = [[oid, geom] for oid, geom, objt in relevant_roads if objt == t]
             sql = f"OBJECTID IN ({','.join(str(oid) for oid, _ in roads_to_edit)})"
@@ -841,11 +858,20 @@ def snap_roads(roads):
             where_clause=sql
         )
         relevant_roads = []
-        with arcpy.da.SearchCursor("roads_lyr", ["OID@", "SHAPE@"]) as cursor:
-            for oid, geom in cursor:
+        bridge = False
+        with arcpy.da.SearchCursor("roads_lyr", ["OID@", "SHAPE@", "medium"]) as cursor:
+            for oid, geom, medium in cursor:
                 if geom == None:
                     continue
+                if medium == "L":
+                    bridge = True
+                    break
                 relevant_roads.append((oid, geom))
+        
+        # If the road(s) inside the buffer is a bridge
+        # e.i. medium = "L", do not snap it
+        if bridge:
+            continue
         
         # Collects points inside the buffer polygon
         points_to_cluster = []
