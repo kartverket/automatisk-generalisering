@@ -1152,10 +1152,17 @@ class Building_N100(Enum):
         )
     )
 
-    point_resolve_building_conflicts___base_path_for_features___n100_building = (
+    point_resolve_building_conflicts___root_path___n100_building = (
         file_manager.generate_file_name_gdb(
             script_source_name=point_resolve_building_conflicts,
-            description="base_path_for_features",
+            description="root_path",
+        )
+    )
+
+    point_resolve_building_conflicts___partition_root_path___n100_building = (
+        file_manager.generate_file_name_gdb(
+            script_source_name=point_resolve_building_conflicts,
+            description="partition_root_path",
         )
     )
 
@@ -1188,6 +1195,10 @@ class Building_N100(Enum):
             script_source_name=point_resolve_building_conflicts,
             description="POLYGON_OUTPUT",
         )
+    )
+
+    rbc_point_documentation_n100_building = file_manager.generate_general_subdirectory(
+        description="rbc_point_documentation"
     )
 
     # ========================================

@@ -47,7 +47,7 @@ class BarrierOverride:
 
 
 @dataclass(frozen=True)
-class RbcInitKwargs:
+class RbcPolygonInitKwargs:
     input_data_structure: list[SymbologyLayerSpec]
     output_building_polygons: Union[type_defs.GdbFilePath, core_config.InjectIO]
     output_collapsed_polygon_points: Union[type_defs.GdbFilePath, core_config.InjectIO]
@@ -56,3 +56,23 @@ class RbcInitKwargs:
     building_unique_name: str
     barrier_default: BarrierDefault
     barrier_overrides: Optional[List[BarrierRule]] = None
+
+
+@dataclass(frozen=True)
+class RbcPointsInitKwargs:
+    input_data_structure: List[SymbologyLayerSpec]
+
+    building_points_unique_name: str
+    building_polygons_unique_name: str
+
+    building_gap_distance_m: int
+
+    output_points_after_rbc: Union[type_defs.GdbFilePath, core_config.InjectIO]
+    output_polygons_after_rbc: Union[type_defs.GdbFilePath, core_config.InjectIO]
+
+    work_file_manager_config: core_config.WorkFileConfig
+
+    building_symbol_dimension: dict[int, tuple]
+    barrier_default: BarrierDefault
+    barrier_overrides: Optional[List[BarrierRule]] = None
+    map_scale: str = "100000"
