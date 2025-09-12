@@ -752,6 +752,13 @@ def cluster_points(points, threshold=1.0):
             clusters.append([(pt, idx)])
     return clusters
 
+def calculate_centroid(cluster):
+    ref = cluster[0][0].spatialReference
+    x_sum = sum(pt.firstPoint.X for pt, _ in cluster)
+    y_sum = sum(pt.firstPoint.Y for pt, _ in cluster)
+    count = len(cluster)
+    return arcpy.PointGeometry(arcpy.Point(x_sum / count, y_sum / count), ref)
+
 ##################
 
 @timing_decorator
@@ -1009,7 +1016,7 @@ def snap_roads(roads):
         # Snap points to the buffer line
         snap_points = {}
         for cluster in clusters:
-            ref_pt = cluster[0][0] # Fetches the first point
+            ref_pt = calculate_centroid(cluster) # cluster[0][0] # Fetches the first point
             result = buffer_line.queryPointAndDistance(ref_pt)
             snap_pt = result[0]  # Closest point on buffer line
             for _, idx in cluster: # ... and adjust the rest of the points in the cluster to the ref_pt
