@@ -76,13 +76,13 @@ Alle fylkesveger med funksjonellvegklasse 3, skal *alltid* med i N250 kartdata.
 a|
 [.formelboks]
 ****
-*Funksjonell vegklasse = 4 og 5* 
+*Funksjonell vegklasse > 3* 
 
-Fylkesveger med Funksjonellveiklasse 4 eller 5, skal kun inkluderes dersom vegnettet i området ikke er for tett.
+Fylkesveger med Funksjonellveiklasse større en 3, skal kun inkluderes dersom vegnettet i området ikke er for tett.
 ****
 |===
 
-===== Kriterier for Fylkeveger med funksjonell vegklasse 4 og 5
+===== Kriterier for Fylkeveger med funksjonell vegklasse større enn 3
 ====
 .Utvalgskriterier:
 
@@ -116,9 +116,9 @@ I områder med grafiske konflikter mellom kommunaleveger med verdier 5 og 6, ska
 a|
 [.formelboks]
 ****
-*Funksjonell vegklasse = 6* 
+*Funksjonell vegklasse > 5* 
 
-Fylkesveger med Funksjonellveiklasse 6, skal kun med hvis den har en viktig funksjon beskrevet nedenfor
+Fylkesveger med Funksjonellveiklasse større enn 6, skal kun med hvis den har en viktig funksjon beskrevet nedenfor
 ****
 |===
 
@@ -252,7 +252,7 @@ a|image::bilder\mangler_avkjøringsrampe.png[Mangler avkjøringsrampe Hønefoss,
 [cols="2,1", frame="none", grid="none"]
 
 |===
-|Veger som krysser demninger skal justeres slik at demningen vises klart i kartet. Veglinjen flyttes til nedsiden av demningen og skal krysse eventuelt elva, ikke innsjøen, for å unngå visuell konflikt. For å  Det skal være minimum 140 meter mellom senterlinjen til demningen og veglinjen for å sikre tydelig separasjon og god lesbarhet.
+|Veger som krysser demninger skal justeres slik at demningen vises klart i kartet. Veglinjen flyttes til nedsiden av demningen og skal krysse eventuelt elva, ikke innsjøen, for å unngå visuell konflikt. Det skal være minimum 140 meter mellom senterlinjen til demningen og veglinjen for å sikre tydelig separasjon og god lesbarhet.Krysser demningen vann og vegen har medium L, så skal vegen ligger over demningen. Sti skal kunne gå over demningen, men ligger stien ved siden av, skal stien flyttes slik at det er 140 meter mellom senterlinje demning og senterlinje sti.
 a|image::bilder\Demning_veg.png[width=150, align=center]
 |===
  
