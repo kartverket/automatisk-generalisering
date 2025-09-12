@@ -67,8 +67,6 @@ def fetch_data():
         )
     print("Data fetched!")
 
-
-
 @timing_decorator
 def clip_and_erase_pre():
     print("Clipping and erasing roads near dam...")
@@ -142,7 +140,7 @@ def clip_and_erase_pre():
 @timing_decorator
 def snap_merge_before_moving():
     inside_wdata_fc = r"in_memory\roads_inside_with_data"
-    arcpy.CopyFeatures_management(inside_wdata_fc, "C:\\temp\\Roads.gdb\\roadsbeforebeingmerged")
+    #arcpy.CopyFeatures_management(inside_wdata_fc, "C:\\temp\\Roads.gdb\\roadsbeforebeingmerged")
 
 
     tolerance = 40.0
@@ -196,8 +194,7 @@ def snap_merge_before_moving():
 
     merge_all_lines2(inside_wdata_fc, tolerance=5.0)
 
-    arcpy.CopyFeatures_management(inside_wdata_fc, "C:\\temp\\Roads.gdb\\roadsafterbeingmerged")
-
+    #arcpy.CopyFeatures_management(inside_wdata_fc, "C:\\temp\\Roads.gdb\\roadsafterbeingmerged")
 
 def build_backup(layer):
     # 1. Discover all non-OID, non-Geometry fields in backup
@@ -493,7 +490,7 @@ def edit_geom_pre():
             shifted = move_line_away(geom, near_x, near_y, distance=35)
             insert.insertRow([shifted] + list(row[2:]))
 
-    arcpy.CopyFeatures_management(inside_wdata_fc, "C:\\temp\\Roads.gdb\\roadsafterbeingmoved")
+    #arcpy.CopyFeatures_management(inside_wdata_fc, "C:\\temp\\Roads.gdb\\roadsafterbeingmoved")
 
 def move_line_away(geom, near_x, near_y, distance):
     sr = geom.spatialReference
@@ -567,11 +564,12 @@ def create_buffer():
 
     buffers = [
         [dam_fc, r"in_memory\dam_buffer_60m_flat", "60 Meters"],
+        [dam_fc, r"in_memory\dam_buffer_5m_flat", "5 Meters"],
         [dam_fc, r"in_memory\dam_buffer_60m", "60 Meters"],
         ["water_lyr", r"in_memory\water_buffer_55m", "55 Meters"]
     ]
     for i in range(len(buffers)):
-        type = "FLAT" if i == 0 else "ROUND"
+        type = "FLAT" if i < 2 else "ROUND"
         arcpy.analysis.Buffer(
             in_features=buffers[i][0],
             out_feature_class=buffers[i][1] + "_buffer",
@@ -930,17 +928,48 @@ def snap_roads(roads):
     intermediate_fc = r"in_memory\roads_intermediate"
     buffer_fc = r"in_memory\dam_buffer_60m"
     water_buffer_fc = r"in_memory\water_buffer_55m"
+    buffer_for_paths = r"in_memory\dam_buffer_5m_flat"
 
     buffer_polygons = [(row[0], row[1]) for row in arcpy.da.SearchCursor(buffer_fc, ["OID@", "SHAPE@"])]
     
+    # Fetches all the paths going over dam
+    paths_in_dam = r"in_memory\paths_in_dam"
+    paths_in_dam_valid = r"in_memory\paths_in_dam_valid"
+    arcpy.management.MakeFeatureLayer(intermediate_fc, "paths_over_dam", where_clause="objtype = 'Sti'")
+    arcpy.analysis.Intersect(in_features=["paths_over_dam", buffer_for_paths], out_feature_class=paths_in_dam)
+
+    paths_to_avoid = set()
+    with arcpy.da.SearchCursor(paths_in_dam, ["OID@", "SHAPE@"]) as cursor:
+        for oid, geom in cursor:
+            if geom.length > 50:
+                paths_to_avoid.add(oid)
+    sql = f"OBJECTID IN ({','.join(str(oid) for oid in paths_to_avoid)})"
+    arcpy.management.MakeFeatureLayer(paths_in_dam, "paths_in_dam_lyr")
+    arcpy.management.SelectLayerByAttribute("paths_in_dam_lyr", "NEW_SELECTION", where_clause=sql)
+    arcpy.management.CopyFeatures("paths_in_dam_lyr",paths_in_dam_valid)
+    arcpy.management.SelectLayerByLocation("paths_over_dam", "INTERSECT", paths_in_dam_valid)
+
     arcpy.management.MakeFeatureLayer(intermediate_fc, "roads_lyr")
 
+    paths_to_avoid = set()
+    path_geometries = [row[0] for row in arcpy.da.SearchCursor("paths_over_dam", ["SHAPE@"])]
+    with arcpy.da.UpdateCursor("roads_lyr", ["OID@", "SHAPE@"]) as cursor:
+        for oid, geom in cursor:
+            if geom is None:
+                cursor.deleteRow()
+                continue
+            for path_geom in path_geometries:
+                if geom.intersect(path_geom, 1):
+                    paths_to_avoid.add(oid)
+                    break
+    
     for buf_oid, buffer_poly in buffer_polygons:
         # For all buffer polygons, find the corresponding buffer line
         line = r"in_memory\dam_line_final"
         create_single_buffer_line(buffer_poly, water_buffer_fc)
         buffer_lines = [row[0] for row in arcpy.da.SearchCursor(line, ["SHAPE@"])]
         if not buffer_lines:
+            # If no line, skip
             continue
         buffer_line = buffer_lines[0]
         
@@ -958,19 +987,20 @@ def snap_roads(roads):
             where_clause=sql
         )
         relevant_roads = []
-        bridge = False
+        skip = False
         with arcpy.da.SearchCursor("roads_lyr", ["OID@", "SHAPE@", "medium"]) as cursor:
             for oid, geom, medium in cursor:
-                if geom == None:
-                    continue
+                if oid in paths_to_avoid:
+                    skip = True
+                    break
                 if medium == "L":
-                    bridge = True
+                    skip = True
                     break
                 relevant_roads.append((oid, geom))
-        
-        # If the road(s) inside the buffer is a bridge
-        # e.i. medium = "L", do not snap it
-        if bridge:
+        # If the road(s) inside the buffer is a bridge, e.i. medium = "L",
+        # or the buffer contains paths on top of the buffer,
+        # do not snap it
+        if skip:
             continue
         
         # Collects points inside the buffer polygon
@@ -1002,9 +1032,6 @@ def snap_roads(roads):
             # Update each road
             for row in update_cursor:
                 oid, geom = row
-                if geom is None:
-                    update_cursor.deleteRow()
-                    continue
                 changed = False
                 new_parts = []
                 for part_idx, part in enumerate(geom):
