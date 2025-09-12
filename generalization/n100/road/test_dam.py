@@ -24,27 +24,24 @@ def main():
 
     # Data preparation
     fetch_data()
-    #clip_data()
 
 
-    if has_dam():
-        # Move dam away from lakes
-        clip_and_erase_pre()
-        snap_merge_before_moving()
-        edit_geom_pre()
-        snap_and_merge_pre()
-      
-        # Data preparation
-        create_buffer()
-        create_buffer_line()
-        
-        # Snap roads to buffer
-        roads = connect_roads_with_buffers()
-        roads = merge_instances(roads)
-        snap_roads(roads)
-        remove_sharp_angles(roads)
-    else:
-        print("No dam found in the selected municipality. Exiting script.")
+    # Move dam away from lakes
+    clip_and_erase_pre()
+    snap_merge_before_moving()
+    edit_geom_pre()
+    snap_and_merge_pre()
+    
+    # Data preparation
+    create_buffer()
+    create_buffer_line()
+    
+    # Snap roads to buffer
+    roads = connect_roads_with_buffers()
+    roads = merge_instances(roads)
+    snap_roads(roads)
+    remove_sharp_angles(roads)
+
 
 @timing_decorator
 def fetch_data():
@@ -70,28 +67,7 @@ def fetch_data():
         )
     print("Data fetched!")
 
-@timing_decorator
-def clip_data():
-    print("Clipping data to municipality...")
-    kommune = r"in_memory\kommune"
-    files = [
-        [r"in_memory\road_input", Road_N100.test_dam__relevant_roads__n100_road.value], # Roads
-        [r"in_memory\dam_input", Road_N100.test_dam__relevant_dam__n100_road.value], # Dam
-        [r"in_memory\water_input", r"in_memory\relevant_waters"] # Water
-    ]
-    for file in files:
-        arcpy.analysis.Clip(
-            in_features=file[0],
-            clip_features=kommune,
-            out_feature_class=file[1]
-        )
-    print("Data clipped!")
 
-@timing_decorator
-def has_dam():
-    dam_fc = Road_N100.test_dam__relevant_dam__n100_road.value
-    count = int(arcpy.management.GetCount(dam_fc).getOutput(0))
-    return count > 0
 
 @timing_decorator
 def clip_and_erase_pre():
