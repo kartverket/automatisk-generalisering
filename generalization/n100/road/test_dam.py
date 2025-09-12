@@ -25,7 +25,6 @@ def main():
     # Data preparation
     fetch_data()
 
-
     # Move dam away from lakes
     clip_and_erase_pre()
     snap_merge_before_moving()
@@ -41,7 +40,6 @@ def main():
     roads = merge_instances(roads)
     snap_roads(roads)
     remove_sharp_angles(roads)
-
 
 @timing_decorator
 def fetch_data():
@@ -73,15 +71,12 @@ def clip_and_erase_pre():
     buffer_fc = r"in_memory\\dam_buffer_35m"
     pre_dissolve = r"in_memory\roads_inside_with_data"
     outside_fc = r"in_memory\roads_outside"
-    inside_fc = r"in_memory\roads_inside"
-    inside_wdata_fc = r"in_memory\roads_inside_with_data"
-
+    
     water_clipped = r"in_memory\water_clipped"
     water_center = r"in_memory\water_center"
     buffer_water = r"in_memory\buffer_water"
     water_single = r"in_memory\water_singleparts"
 
-    
     arcpy.Buffer_analysis(Road_N100.test_dam__relevant_dam__n100_road.value, buffer_fc, "55 Meters", dissolve_option="NONE")
     # 1. Build a layer of only the 'L' roads
     fld = arcpy.AddFieldDelimiters(Road_N100.test_dam__relevant_roads__n100_road.value, "medium")
@@ -134,23 +129,17 @@ def clip_and_erase_pre():
 
     arcpy.DeleteFeatures_management("buffer_lyr_sti")
     
-
-
     arcpy.Clip_analysis(Road_N100.test_dam__relevant_roads__n100_road.value, buffer_fc, pre_dissolve)
     arcpy.Erase_analysis(Road_N100.test_dam__relevant_roads__n100_road.value, buffer_fc, outside_fc)
-
-    
 
     arcpy.Buffer_analysis(Road_N100.test_dam__relevant_dam__n100_road.value, buffer_water, "75 Meters", dissolve_option="NONE")
     arcpy.Clip_analysis(r"in_memory\relevant_waters", buffer_water, water_clipped)
     arcpy.MultipartToSinglepart_management(water_clipped, water_single)
     arcpy.FeatureToPoint_management(water_single, water_center, "CENTROID")
 
-
 @timing_decorator
 def snap_merge_before_moving():
     inside_wdata_fc = r"in_memory\roads_inside_with_data"
-
 
     tolerance = 40.0
     # Precompute squared tolerance for faster distance checks
@@ -195,15 +184,12 @@ def snap_merge_before_moving():
                     ((p_start.X, p_start.Y), (p_end.X, p_end.Y))
                 )
 
-
     backup = build_backup(inside_wdata_fc)
     snap_by_objtype(inside_wdata_fc)
     arcpy.Snap_edit(inside_wdata_fc, [[inside_wdata_fc, "END", "40 Meters"]])
     restore_deleted_lines(inside_wdata_fc, backup)
 
     merge_all_lines2(inside_wdata_fc, tolerance=5.0)
-
-
 
 def build_backup(layer):
     # 1. Discover all non-OID, non-Geometry fields in backup
@@ -220,9 +206,7 @@ def build_backup(layer):
     insert_fields = ["SHAPE@"] + attr_fields
     search_fields = ["OID@"] + insert_fields
 
-
-
-# 3. Read originals into an in-memory dict
+    # 3. Read originals into an in-memory dict
     backup = {}
     with arcpy.da.SearchCursor(layer, search_fields) as s_cur:
         for row in s_cur:
@@ -247,7 +231,7 @@ def restore_deleted_lines(layer, backup):
     #    - insert_fields: includes SHAPE@ plus all attribute fields
     insert_fields = ["SHAPE@"] + attr_fields
     
-        # Delete features with None geometry after snapping
+    # 3. Delete features with None geometry after snapping
     with arcpy.da.UpdateCursor(layer, ["OID@", "SHAPE@"]) as cursor:
         for oid, geom in cursor:
             if geom is None:
@@ -259,8 +243,6 @@ def restore_deleted_lines(layer, backup):
         for oid in deleted_lines:
             if oid in backup:
                 i_cur.insertRow(backup[oid])
-
-
 
 def merge_all_lines2(fc, tolerance=5.0):
     # 1. Determine non‐OID/Geometry fields and their positions
@@ -388,7 +370,7 @@ def edit_geom_pre():
     inside_sr = arcpy.Describe(inside_wdata_fc).spatialReference
     temp_fc = inside_wdata_fc + "_temp"
 
-        # Copy features for editing
+    # Copy features for editing
     arcpy.CopyFeatures_management(inside_wdata_fc, temp_fc)
 
     # Create output feature class
@@ -424,9 +406,8 @@ def edit_geom_pre():
         if f.type not in ("OID", "Geometry")
     ]
 
-
     with arcpy.da.SearchCursor(temp_fc, fields) as search, \
-         arcpy.da.InsertCursor(roadlines_moved, fields[1:]) as insert:
+        arcpy.da.InsertCursor(roadlines_moved, fields[1:]) as insert:
 
         for row in search:
             oid = row[0]
@@ -437,14 +418,13 @@ def edit_geom_pre():
                 continue
 
             if shape_length < 35:
-            # Do not move short lines, just copy them
+                # Do not move short lines, just copy them
                 insert.insertRow([geom] + list(row[2:]))
                 continue
 
             near_x, near_y = near_lookup[oid]
             shifted = move_line_away(geom, near_x, near_y, distance=35)
             insert.insertRow([shifted] + list(row[2:]))
-
 
 def move_line_away(geom, near_x, near_y, distance):
     sr = geom.spatialReference
@@ -483,8 +463,6 @@ def snap_and_merge_pre():
     # Snap 
     arcpy.Snap_edit(roadlines_moved, snap_env)
 
-
-
     snap_env2 = [[roadlines_moved, "END", "50 Meters"]]
 
     arcpy.Buffer_analysis(Road_N100.test_dam__relevant_dam__n100_road.value, r"in_memory\dam_buffer_150m", "150 Meters")
@@ -495,14 +473,11 @@ def snap_and_merge_pre():
         select_features=r"in_memory\dam_buffer_150m"
     )
     
-
     arcpy.Snap_edit("outside_lyr", snap_env2)
-
-
 
     # Merge the two sets
     arcpy.Merge_management([roadlines_moved, outside_fc], final_fc)
-    arcpy.CopyFeatures_management(final_fc, "C:\\temp\\Roads.gdb\\roadsafterbeingsnapped")
+    #arcpy.CopyFeatures_management(final_fc, "C:\\temp\\Roads.gdb\\roadsafterbeingsnapped")
 
 @timing_decorator
 def create_buffer():
@@ -906,6 +881,11 @@ def snap_roads(roads):
     arcpy.management.CopyFeatures("paths_in_dam_lyr",paths_in_dam_valid)
     arcpy.management.SelectLayerByLocation("paths_over_dam", "INTERSECT", paths_in_dam_valid)
 
+    ###########################################################
+    test = Road_N100.test_dam__test__n100_road.value
+    arcpy.management.CopyFeatures(paths_in_dam_valid, test)
+    ###########################################################
+
     arcpy.management.MakeFeatureLayer(intermediate_fc, "roads_lyr")
 
     paths_to_avoid = set()
@@ -920,6 +900,10 @@ def snap_roads(roads):
                     paths_to_avoid.add(oid)
                     break
     
+    ###########################################################
+    print(paths_to_avoid)
+    ###########################################################
+
     for buf_oid, buffer_poly in buffer_polygons:
         # For all buffer polygons, find the corresponding buffer line
         line = r"in_memory\dam_line_final"
@@ -1015,9 +999,6 @@ def snap_roads(roads):
         cluster_tolerance="5 Meters"
     )
     
-    cleaned_roads_fc = Road_N100.test_dam__cleaned_roads__n100_road.value
-    arcpy.management.CopyFeatures(intermediate_fc, cleaned_roads_fc)
-
     print("Roads snapped to buffers!")
 
 ##################
