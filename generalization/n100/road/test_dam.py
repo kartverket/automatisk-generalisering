@@ -485,7 +485,7 @@ def snap_and_merge_pre():
 
     # Merge the two sets
     arcpy.Merge_management([roadlines_moved, outside_fc], final_fc)
-    arcpy.CopyFeatures_management(final_fc, "C:\\temp\\Roads.gdb\\roadsafterbeingsnapped")
+    #arcpy.CopyFeatures_management(final_fc, "C:\\temp\\Roads.gdb\\roadsafterbeingsnapped")
 
 @timing_decorator
 def create_buffer():
@@ -777,7 +777,7 @@ def merge_instances(roads):
         bridge = False
         with arcpy.da.UpdateCursor("roads_lyr", ["medium"]) as cursor:
             for medium in cursor:
-                if medium == "L":
+                if medium[0] == "L":
                     bridge = True
                     break
         if bridge:
