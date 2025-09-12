@@ -97,7 +97,7 @@ def has_dam():
 def clip_and_erase_pre():
     print("Clipping and erasing roads near dam...")
     buffer_fc = r"in_memory\\dam_buffer_35m"
-    pre_dissolve = r"in_memory\roads_pre_dissolve"
+    pre_dissolve = r"in_memory\roads_inside_with_data"
     outside_fc = r"in_memory\roads_outside"
     inside_fc = r"in_memory\roads_inside"
     inside_wdata_fc = r"in_memory\roads_inside_with_data"
@@ -134,7 +134,7 @@ def clip_and_erase_pre():
 
     arcpy.Clip_analysis(Road_N100.test_dam__relevant_roads__n100_road.value, buffer_fc, pre_dissolve)
     arcpy.Erase_analysis(Road_N100.test_dam__relevant_roads__n100_road.value, buffer_fc, outside_fc)
-    arcpy.Dissolve_management(pre_dissolve, inside_fc, multi_part="SINGLE_PART", unsplit_lines="UNSPLIT_LINES")
+    #arcpy.Dissolve_management(pre_dissolve, inside_fc, multi_part="SINGLE_PART", unsplit_lines="UNSPLIT_LINES")
 
     
 
@@ -143,7 +143,7 @@ def clip_and_erase_pre():
     arcpy.MultipartToSinglepart_management(water_clipped, water_single)
     arcpy.FeatureToPoint_management(water_single, water_center, "CENTROID")
 
-    fm = arcpy.FieldMappings()
+    """fm = arcpy.FieldMappings()
     for fld in arcpy.ListFields(pre_dissolve):
         if not fld.required:
             fmap = arcpy.FieldMap()
@@ -161,11 +161,13 @@ def clip_and_erase_pre():
         field_mapping=fm
     )
 
-    arcpy.DeleteField_management(inside_wdata_fc, drop_field=["Join_Count", "TARGET_FID"])
+    arcpy.DeleteField_management(inside_wdata_fc, drop_field=["Join_Count", "TARGET_FID"])"""
 
 @timing_decorator
 def snap_merge_before_moving():
     inside_wdata_fc = r"in_memory\roads_inside_with_data"
+    arcpy.CopyFeatures_management(inside_wdata_fc, "C:\\temp\\Roads.gdb\\roadsbeforebeingmerged")
+
 
     tolerance = 40.0
     # Precompute squared tolerance for faster distance checks
@@ -216,7 +218,10 @@ def snap_merge_before_moving():
     arcpy.Snap_edit(inside_wdata_fc, [[inside_wdata_fc, "END", "40 Meters"]])
     restore_deleted_lines(inside_wdata_fc, backup)
 
-    merge_all_lines(inside_wdata_fc, tolerance=5.0)
+    merge_all_lines2(inside_wdata_fc, tolerance=5.0)
+
+    arcpy.CopyFeatures_management(inside_wdata_fc, "C:\\temp\\Roads.gdb\\roadsafterbeingmerged")
+
 
 def build_backup(layer):
     # 1. Discover all non-OID, non-Geometry fields in backup
@@ -329,6 +334,85 @@ def merge_all_lines(fc, tolerance=5.0):
 
     print(f"Merged {len(lines)} input lines into {len(merged)} features.")
 
+def merge_all_lines2(fc, tolerance=5.0):
+    # 1. Determine non‐OID/Geometry fields and their positions
+    all_fields = [f.name for f in arcpy.ListFields(fc)
+                  if f.type not in ("OID", "Geometry")]
+    
+    # Ensure the required fields exist
+    for req in ("objtype", "vegkategori"):
+        if req not in all_fields:
+            raise ValueError(f"Field '{req}' is missing in {fc}")
+    
+    idx_objtype = all_fields.index("objtype")
+    idx_vegkategori  = all_fields.index("vegkategori")
+
+    # 2. Read all lines into memory
+    lines = []
+    with arcpy.da.SearchCursor(fc, ["OID@", "SHAPE@"] + all_fields) as cur:
+        for oid, geom, *attrs in cur:
+            lines.append({
+                "oid":   oid,
+                "shape": geom,
+                "attrs": attrs
+            })
+
+    # 3. Build adjacency graph—only if objtype & medium match *and* endpoints are within tolerance
+    adj = defaultdict(set)
+    for i, ln1 in enumerate(lines):
+        ot1 = ln1["attrs"][idx_objtype]
+        md1 = ln1["attrs"][idx_vegkategori]
+        eps1 = get_endpoints_cords(ln1["shape"])
+
+        for j, ln2 in enumerate(lines[i+1:], start=i+1):
+            # Skip if attributes don’t match
+            ot2 = ln2["attrs"][idx_objtype]
+            md2 = ln2["attrs"][idx_vegkategori]
+            if (ot1, md1) != (ot2, md2):
+                continue
+
+            # Check endpoint proximity
+            eps2 = get_endpoints_cords(ln2["shape"])
+            if any(within_tol(p1, p2, tolerance) for p1 in eps1 for p2 in eps2):
+                adj[i].add(j)
+                adj[j].add(i)
+
+    # 4. Find connected components (clusters)
+    visited = set()
+    clusters = []
+    for i in range(len(lines)):
+        if i in visited:
+            continue
+        stack, comp = [i], []
+        while stack:
+            curr = stack.pop()
+            if curr in visited:
+                continue
+            visited.add(curr)
+            comp.append(curr)
+            stack.extend(adj[curr] - visited)
+        clusters.append(comp)
+
+    # 5. Union geometries per cluster and carry forward attributes
+    merged = []
+    for comp in clusters:
+        shapes = [lines[k]["shape"] for k in comp]
+        # dissolve shapes
+        cumul = shapes[0]
+        for s in shapes[1:]:
+            cumul = cumul.union(s)
+        # re‐use attrs from the first member of the cluster
+        merged.append((cumul, lines[comp[0]]["attrs"]))
+
+    # 6. Overwrite the feature class with merged results
+    arcpy.DeleteRows_management(fc)
+    out_fields = ["SHAPE@"] + all_fields
+    with arcpy.da.InsertCursor(fc, out_fields) as icur:
+        for geom, attrs in merged:
+            icur.insertRow([geom] + attrs)
+
+    print(f"Merged {len(lines)} lines into {len(merged)} features.")
+
 def within_tol(pt1, pt2, tol):
     """Euclidean distance test."""
     return math.hypot(pt1.X - pt2.X, pt1.Y - pt2.Y) <= tol
@@ -433,6 +517,8 @@ def edit_geom_pre():
             shifted = move_line_away(geom, near_x, near_y, distance=35)
             insert.insertRow([shifted] + list(row[2:]))
 
+    arcpy.CopyFeatures_management(inside_wdata_fc, "C:\\temp\\Roads.gdb\\roadsafterbeingmoved")
+
 def move_line_away(geom, near_x, near_y, distance):
     sr = geom.spatialReference
     centroid = geom.centroid
@@ -465,12 +551,13 @@ def snap_and_merge_pre():
     final_fc = r"in_memory\roads_shifted"
 
     # Define snap environment
-    snap_env = [[outside_fc, "END", "60 Meters"]]
+    snap_env = [[outside_fc, "END", "40 Meters"]]
 
     # Snap 
     arcpy.Snap_edit(roadlines_moved, snap_env)
 
-    snap_env2 = [[roadlines_moved, "END", "60 Meters"]]
+
+    snap_env2 = [[roadlines_moved, "END", "50 Meters"]]
 
     arcpy.Buffer_analysis(Road_N100.test_dam__relevant_dam__n100_road.value, r"in_memory\dam_buffer_150m", "150 Meters")
     arcpy.MakeFeatureLayer_management(outside_fc, "outside_lyr")
@@ -481,7 +568,7 @@ def snap_and_merge_pre():
     )
     
     arcpy.Snap_edit("outside_lyr", snap_env2)
-    
+
 
     # Merge the two sets
     arcpy.Merge_management([roadlines_moved, outside_fc], final_fc)
