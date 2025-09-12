@@ -103,12 +103,41 @@ def clip_and_erase_pre():
 
     arcpy.DeleteFeatures_management("buffer_lyr")
 
+    buffer_sti = r"in_memory\dam_buffer_sti"
+    arcpy.Buffer_analysis(Road_N100.test_dam__relevant_dam__n100_road.value, buffer_sti, "5 Meters", line_end_type="FLAT", dissolve_option="NONE")
+    in_roads = Road_N100.test_dam__relevant_roads__n100_road.value
+    arcpy.Clip_analysis(in_roads, buffer_sti, r"in_memory\roads_clipped_sti")
 
+
+        # Fields to check: objtype and Shape_Length
+    fields = ["objtype", "SHAPE@"]
+
+    with arcpy.da.UpdateCursor(r"in_memory\roads_clipped_sti", fields) as cursor:
+        for objtype, geom in cursor:
+            length = geom.length
+            # Keep only features where objtype == 'sti' and length > 50
+            if objtype != "Sti" or length <= 50:
+                cursor.deleteRow()
+
+
+
+        # 2. Build a layer of buffers
+    arcpy.MakeFeatureLayer_management(buffer_fc, "buffer_lyr_sti")
+    arcpy.MakeFeatureLayer_management(r"in_memory\roads_clipped_sti", "roads_clipped_sti_lyr")
+
+    # 3. Select buffers intersecting the filtered roads
+    arcpy.SelectLayerByLocation_management(
+        "buffer_lyr_sti",
+        "INTERSECT",
+        "roads_clipped_sti_lyr"
+    )
+
+    arcpy.DeleteFeatures_management("buffer_lyr_sti")
+    
 
 
     arcpy.Clip_analysis(Road_N100.test_dam__relevant_roads__n100_road.value, buffer_fc, pre_dissolve)
     arcpy.Erase_analysis(Road_N100.test_dam__relevant_roads__n100_road.value, buffer_fc, outside_fc)
-    #arcpy.Dissolve_management(pre_dissolve, inside_fc, multi_part="SINGLE_PART", unsplit_lines="UNSPLIT_LINES")
 
     
 
@@ -117,30 +146,10 @@ def clip_and_erase_pre():
     arcpy.MultipartToSinglepart_management(water_clipped, water_single)
     arcpy.FeatureToPoint_management(water_single, water_center, "CENTROID")
 
-    """fm = arcpy.FieldMappings()
-    for fld in arcpy.ListFields(pre_dissolve):
-        if not fld.required:
-            fmap = arcpy.FieldMap()
-            fmap.addInputField(pre_dissolve, fld.name)
-            fmap.mergeRule = "First"
-            fm.addFieldMap(fmap)
-
-    arcpy.SpatialJoin_analysis(
-        target_features=inside_fc,
-        join_features=pre_dissolve,
-        out_feature_class=inside_wdata_fc,
-        join_operation="JOIN_ONE_TO_ONE",
-        join_type="KEEP_COMMON",
-        match_option="INTERSECT",
-        field_mapping=fm
-    )
-
-    arcpy.DeleteField_management(inside_wdata_fc, drop_field=["Join_Count", "TARGET_FID"])"""
 
 @timing_decorator
 def snap_merge_before_moving():
     inside_wdata_fc = r"in_memory\roads_inside_with_data"
-    #arcpy.CopyFeatures_management(inside_wdata_fc, "C:\\temp\\Roads.gdb\\roadsbeforebeingmerged")
 
 
     tolerance = 40.0
@@ -194,7 +203,7 @@ def snap_merge_before_moving():
 
     merge_all_lines2(inside_wdata_fc, tolerance=5.0)
 
-    #arcpy.CopyFeatures_management(inside_wdata_fc, "C:\\temp\\Roads.gdb\\roadsafterbeingmerged")
+
 
 def build_backup(layer):
     # 1. Discover all non-OID, non-Geometry fields in backup
@@ -251,61 +260,7 @@ def restore_deleted_lines(layer, backup):
             if oid in backup:
                 i_cur.insertRow(backup[oid])
 
-def merge_all_lines(fc, tolerance=5.0):
-    # 1. Read all lines
-    lines = []
-    fields = [f.name for f in arcpy.ListFields(fc)
-            if f.type not in ("OID", "Geometry")]
-    with arcpy.da.SearchCursor(fc, ["OID@", "SHAPE@"] + fields) as cur:
-        for oid, geom, *attrs in cur:
-            lines.append({"oid": oid, "shape": geom, "attrs": attrs})
 
-    # 2. Build adjacency based on endpoint proximity
-    adj = defaultdict(set)
-    for i, ln1 in enumerate(lines):
-        eps1 = get_endpoints_cords(ln1["shape"])
-        for j, ln2 in enumerate(lines[i+1:], start=i+1):
-            eps2 = get_endpoints_cords(ln2["shape"])
-            if any(within_tol(p1, p2, tolerance) for p1 in eps1 for p2 in eps2):
-                adj[i].add(j)
-                adj[j].add(i)
-
-    # 3. Find connected components
-    visited = set()
-    clusters = []
-    for i in range(len(lines)):
-        if i in visited:
-            continue
-        stack = [i]
-        comp = []
-        while stack:
-            curr = stack.pop()
-            if curr in visited:
-                continue
-            visited.add(curr)
-            comp.append(curr)
-            stack.extend(adj[curr] - visited)
-        clusters.append(comp)
-
-    # 4. Union geometries in each cluster
-    merged = []
-    for comp in clusters:
-        shapes = [lines[i]["shape"] for i in comp]
-        # start with the first shape, then union the rest
-        cumul = shapes[0]
-        for s in shapes[1:]:
-            cumul = cumul.union(s)
-        # pick attributes of the first feature in cluster
-        merged.append((cumul, lines[comp[0]]["attrs"]))
-
-    # 5. Overwrite FC with merged results
-    arcpy.DeleteRows_management(fc)
-    out_fields = ["SHAPE@"] + fields
-    with arcpy.da.InsertCursor(fc, out_fields) as cur:
-        for geom, attrs in merged:
-            cur.insertRow([geom] + attrs)
-
-    print(f"Merged {len(lines)} input lines into {len(merged)} features.")
 
 def merge_all_lines2(fc, tolerance=5.0):
     # 1. Determine non‐OID/Geometry fields and their positions
@@ -433,7 +388,7 @@ def edit_geom_pre():
     inside_sr = arcpy.Describe(inside_wdata_fc).spatialReference
     temp_fc = inside_wdata_fc + "_temp"
 
-    # Copy features for editing
+        # Copy features for editing
     arcpy.CopyFeatures_management(inside_wdata_fc, temp_fc)
 
     # Create output feature class
@@ -469,6 +424,7 @@ def edit_geom_pre():
         if f.type not in ("OID", "Geometry")
     ]
 
+
     with arcpy.da.SearchCursor(temp_fc, fields) as search, \
          arcpy.da.InsertCursor(roadlines_moved, fields[1:]) as insert:
 
@@ -478,7 +434,6 @@ def edit_geom_pre():
             shape_length = geom.length
             if not geom or oid not in near_lookup:
                 insert.insertRow([geom] + list(row[2:]))
-                #print(oid, "not moved")
                 continue
 
             if shape_length < 35:
@@ -490,7 +445,6 @@ def edit_geom_pre():
             shifted = move_line_away(geom, near_x, near_y, distance=35)
             insert.insertRow([shifted] + list(row[2:]))
 
-    #arcpy.CopyFeatures_management(inside_wdata_fc, "C:\\temp\\Roads.gdb\\roadsafterbeingmoved")
 
 def move_line_away(geom, near_x, near_y, distance):
     sr = geom.spatialReference
@@ -530,6 +484,7 @@ def snap_and_merge_pre():
     arcpy.Snap_edit(roadlines_moved, snap_env)
 
 
+
     snap_env2 = [[roadlines_moved, "END", "50 Meters"]]
 
     arcpy.Buffer_analysis(Road_N100.test_dam__relevant_dam__n100_road.value, r"in_memory\dam_buffer_150m", "150 Meters")
@@ -540,12 +495,14 @@ def snap_and_merge_pre():
         select_features=r"in_memory\dam_buffer_150m"
     )
     
+
     arcpy.Snap_edit("outside_lyr", snap_env2)
+
 
 
     # Merge the two sets
     arcpy.Merge_management([roadlines_moved, outside_fc], final_fc)
-    #arcpy.CopyFeatures_management(final_fc, "C:\\temp\\Roads.gdb\\roadsafterbeingsnapped")
+    arcpy.CopyFeatures_management(final_fc, "C:\\temp\\Roads.gdb\\roadsafterbeingsnapped")
 
 @timing_decorator
 def create_buffer():
