@@ -881,29 +881,18 @@ def snap_roads(roads):
     arcpy.management.CopyFeatures("paths_in_dam_lyr",paths_in_dam_valid)
     arcpy.management.SelectLayerByLocation("paths_over_dam", "INTERSECT", paths_in_dam_valid)
 
-    ###########################################################
-    test = Road_N100.test_dam__test__n100_road.value
-    arcpy.management.CopyFeatures(paths_in_dam_valid, test)
-    ###########################################################
-
     arcpy.management.MakeFeatureLayer(intermediate_fc, "roads_lyr")
 
     paths_to_avoid = set()
-    path_geometries = [row[0] for row in arcpy.da.SearchCursor("paths_over_dam", ["SHAPE@"])]
+    path_geometries = {row[0] for row in arcpy.da.SearchCursor("paths_over_dam", ["OID@", "SHAPE@"])}
     with arcpy.da.UpdateCursor("roads_lyr", ["OID@", "SHAPE@"]) as cursor:
         for oid, geom in cursor:
             if geom is None:
                 cursor.deleteRow()
                 continue
-            for path_geom in path_geometries:
-                if geom.intersect(path_geom, 1):
-                    paths_to_avoid.add(oid)
-                    break
+            if oid in path_geometries:
+                paths_to_avoid.add(oid)
     
-    ###########################################################
-    print(paths_to_avoid)
-    ###########################################################
-
     for buf_oid, buffer_poly in buffer_polygons:
         # For all buffer polygons, find the corresponding buffer line
         line = r"in_memory\dam_line_final"
@@ -933,6 +922,7 @@ def snap_roads(roads):
             for oid, geom, medium in cursor:
                 if oid in paths_to_avoid:
                     skip = True
+                    print(f"Sti over dam: {oid}")
                     break
                 if medium == "L":
                     skip = True
