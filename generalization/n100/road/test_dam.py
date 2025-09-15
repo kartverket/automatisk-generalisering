@@ -18,7 +18,7 @@ from custom_tools.general_tools import custom_arcpy
 
 data_files = {
     # Stores all the relevant file paths to the geodata used in this Python file
-    "input": r"C:\GIS_Files\ag_inputs\road.gdb\VegSti", # Road_N100.data_preparation___resolve_road_conflicts___n100_road.value,
+    "input": Road_N100.data_preparation___resolve_road_conflicts___n100_road.value, # Road_N100.data_preparation___resolve_road_conflicts___n100_road.value,
     "output": Road_N100.dam__cleaned_roads__n100_road.value,
     "roads_input": Road_N100.dam__relevant_roads__n100_road.value,
     "dam_input": Road_N100.dam__relevant_dam__n100_road.value,
@@ -85,18 +85,17 @@ def main():
         snap_roads(roads)
         remove_sharp_angles(roads)
 
-    # Deletes all the intermediate files created during the process
-    delete_intermediate_files()
+        # Deletes all the intermediate files created during the process
+        delete_intermediate_files()
 
 @timing_decorator
 def fetch_data():
     print("Fetching data...")
 
     input = [
-        [Road_N100.data_preparation___resolve_road_conflicts___n100_road.value, None, Road_N100.test_dam__relevant_roads__n100_road.value], # Roads
-        [input_n100.AnleggsLinje, "objtype = 'Dam'", Road_N100.test_dam__relevant_dam__n100_road.value], # Dam
-        [input_n100.AdminFlate, f"NAVN = '{kommune}'", r"in_memory\kommune"], # Area
-        [input_n100.ArealdekkeFlate, "OBJTYPE = 'Havflate' OR OBJTYPE = 'Innsjø' OR OBJTYPE = 'InnsjøRegulert'", r"in_memory\relevant_waters"] # Water
+        [data_files["input"], None, data_files["roads_input"]], # Roads
+        [input_n100.AnleggsLinje, "objtype = 'Dam'", data_files["dam_input"]], # Dam
+        [input_n100.ArealdekkeFlate, "OBJTYPE = 'Havflate' OR OBJTYPE = 'Innsjø' OR OBJTYPE = 'InnsjøRegulert'", data_files["water_input"]] # Water
     ]
     for data in input:
         custom_arcpy.select_attribute_and_make_permanent_feature(
@@ -554,6 +553,7 @@ def snap_and_merge_pre():
     
 
     arcpy.Snap_edit("outside_lyr", snap_env2)
+    #arcpy.CopyFeatures_management("outside_lyr", "C:\\temp\\Roads.gdb\\roadsafterbeingsnapped22")
 
 
     # Merge the two sets
