@@ -17,6 +17,13 @@ from custom_tools.general_tools import custom_arcpy
 
 @timing_decorator
 def main():
+    """
+    Hva den gjør:
+       Denne tar veier som går innen 60 meter av demninger og flytter de ut til 60 meter unna demningen.
+    
+    Hvorfor:
+        For at symbologien skal være synlig i N100 kartet.
+    """
     
     # Setup
     environment_setup.main()
@@ -24,22 +31,23 @@ def main():
 
     # Data preparation
     fetch_data()
+    if data_check():
 
-    # Move dam away from lakes
-    clip_and_erase_pre()
-    snap_merge_before_moving()
-    edit_geom_pre()
-    snap_and_merge_pre()
-    
-    # Data preparation
-    create_buffer()
-    create_buffer_line()
-    
-    # Snap roads to buffer
-    roads = connect_roads_with_buffers()
-    roads = merge_instances(roads)
-    snap_roads(roads)
-    remove_sharp_angles(roads)
+        # Move dam away from lakes
+        clip_and_erase_pre()
+        snap_merge_before_moving()
+        edit_geom_pre()
+        snap_and_merge_pre()
+        
+        # Data preparation
+        create_buffer()
+        create_buffer_line()
+        
+        # Snap roads to buffer
+        roads = connect_roads_with_buffers()
+        roads = merge_instances(roads)
+        snap_roads(roads)
+        remove_sharp_angles(roads)
 
 @timing_decorator
 def fetch_data():
@@ -51,7 +59,7 @@ def fetch_data():
     kommune = "Notodden"
 
     input = [
-        [r"C:\GIS_Files\ag_inputs\road.gdb\VegSti", None, Road_N100.test_dam__relevant_roads__n100_road.value], # Roads
+        [Road_N100.data_preparation___resolve_road_conflicts___n100_road.value, None, Road_N100.test_dam__relevant_roads__n100_road.value], # Roads
         [input_n100.AnleggsLinje, "objtype = 'Dam'", Road_N100.test_dam__relevant_dam__n100_road.value], # Dam
         [input_n100.AdminFlate, f"NAVN = '{kommune}'", r"in_memory\kommune"], # Area
         [input_n100.ArealdekkeFlate, "OBJTYPE = 'Havflate' OR OBJTYPE = 'Innsjø' OR OBJTYPE = 'InnsjøRegulert'", r"in_memory\relevant_waters"] # Water
@@ -65,8 +73,39 @@ def fetch_data():
         )
     print("Data fetched!")
 
+def data_check():
+    buffer_fc = r"in_memory\\dam_buffer_for_data_check"
+    arcpy.Buffer_analysis(Road_N100.test_dam__relevant_dam__n100_road.value, buffer_fc, "60 Meters", line_end_type="FLAT", dissolve_option="NONE")
+
+    arcpy.MakeFeatureLayer_management(Road_N100.test_dam__relevant_roads__n100_road.value, "roads_lyr")
+    arcpy.SelectLayerByLocation_management(
+        in_layer="roads_lyr",
+        overlap_type="INTERSECT",
+        select_features=buffer_fc,
+        selection_type="NEW_SELECTION"
+    )
+    count = int(arcpy.GetCount_management("roads_lyr").getOutput(0))
+    if count == 0:
+        print ("Ingen veier nær demninger...")
+        custom_arcpy.select_attribute_and_make_permanent_feature(
+            input_layer=Road_N100.data_preparation___resolve_road_conflicts___n100_road.value,
+            output_name=Road_N100.test_dam__cleaned_roads__n100_road.value,
+            selection_type=custom_arcpy.SelectionType.NEW_SELECTION
+        )
+
+        return False
+    else:
+        return True
+
+
+
 @timing_decorator
 def clip_and_erase_pre():
+    """
+    Hva den gjør:
+        Seperer veier som er innen en mindre buffer rundt demningene og veier som er utenfor, i forbredelse på å flytte veiene.
+        Hvis bru eller sti går over demningen blir det ikke inkludert i veier som skal flyttes        
+    """
     print("Clipping and erasing roads near dam...")
     buffer_fc = r"in_memory\\dam_buffer_35m"
     pre_dissolve = r"in_memory\roads_inside_with_data"
@@ -462,7 +501,6 @@ def snap_and_merge_pre():
 
     # Snap 
     arcpy.Snap_edit(roadlines_moved, snap_env)
-    #arcpy.CopyFeatures_management(roadlines_moved, "C:\\temp\\Roads.gdb\\roadsafterbeingsnapped11")
 
 
     snap_env2 = [[roadlines_moved, "END", "50 Meters"]]
@@ -475,15 +513,12 @@ def snap_and_merge_pre():
         select_features=r"in_memory\dam_buffer_150m"
     )
     
-    #arcpy.CopyFeatures_management("outside_lyr", "C:\\temp\\Roads.gdb\\roadsafterbeingsnapped99")
 
     arcpy.Snap_edit("outside_lyr", snap_env2)
-    #arcpy.CopyFeatures_management("outside_lyr", "C:\\temp\\Roads.gdb\\roadsafterbeingsnapped22")
 
 
     # Merge the two sets
     arcpy.Merge_management([roadlines_moved, outside_fc], final_fc)
-    #arcpy.CopyFeatures_management(final_fc, "C:\\temp\\Roads.gdb\\roadsafterbeingsnapped")
 
 @timing_decorator
 def create_buffer():
