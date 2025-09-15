@@ -77,7 +77,7 @@ def clip_and_erase_pre():
     buffer_water = r"in_memory\buffer_water"
     water_single = r"in_memory\water_singleparts"
 
-    arcpy.Buffer_analysis(Road_N100.test_dam__relevant_dam__n100_road.value, buffer_fc, "55 Meters", dissolve_option="NONE")
+    arcpy.Buffer_analysis(Road_N100.test_dam__relevant_dam__n100_road.value, buffer_fc, "35 Meters", line_end_type="FLAT", dissolve_option="NONE")
     # 1. Build a layer of only the 'L' roads
     fld = arcpy.AddFieldDelimiters(Road_N100.test_dam__relevant_roads__n100_road.value, "medium")
     arcpy.MakeFeatureLayer_management(
@@ -462,6 +462,8 @@ def snap_and_merge_pre():
 
     # Snap 
     arcpy.Snap_edit(roadlines_moved, snap_env)
+    arcpy.CopyFeatures_management(roadlines_moved, "C:\\temp\\Roads.gdb\\roadsafterbeingsnapped11")
+
 
     snap_env2 = [[roadlines_moved, "END", "50 Meters"]]
 
@@ -473,11 +475,15 @@ def snap_and_merge_pre():
         select_features=r"in_memory\dam_buffer_150m"
     )
     
+    arcpy.CopyFeatures_management("outside_lyr", "C:\\temp\\Roads.gdb\\roadsafterbeingsnapped99")
+
     arcpy.Snap_edit("outside_lyr", snap_env2)
+    arcpy.CopyFeatures_management("outside_lyr", "C:\\temp\\Roads.gdb\\roadsafterbeingsnapped22")
+
 
     # Merge the two sets
     arcpy.Merge_management([roadlines_moved, outside_fc], final_fc)
-    #arcpy.CopyFeatures_management(final_fc, "C:\\temp\\Roads.gdb\\roadsafterbeingsnapped")
+    arcpy.CopyFeatures_management(final_fc, "C:\\temp\\Roads.gdb\\roadsafterbeingsnapped")
 
 @timing_decorator
 def create_buffer():
