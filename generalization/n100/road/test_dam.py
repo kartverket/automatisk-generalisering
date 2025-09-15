@@ -3,6 +3,7 @@ from collections import defaultdict
 import arcpy
 import numpy as np
 import math
+import os
 
 arcpy.env.overwriteOutput = True
 
@@ -15,12 +16,47 @@ from env_setup import environment_setup
 from custom_tools.decorators.timing_decorator import timing_decorator
 from custom_tools.general_tools import custom_arcpy
 
+data_files = {
+    # Stores all the relevant file paths to the geodata used in this Python file
+    "input": r"C:\GIS_Files\ag_inputs\road.gdb\VegSti", # Road_N100.data_preparation___resolve_road_conflicts___n100_road.value,
+    "output": Road_N100.dam__cleaned_roads__n100_road.value,
+    "roads_input": Road_N100.dam__relevant_roads__n100_road.value,
+    "dam_input": Road_N100.dam__relevant_dam__n100_road.value,
+    "water_input": Road_N100.dam__relevant_water__n100_road.value, # r"in_memory\relevant_waters"
+    "dam_35m": Road_N100.dam__dam_buffer_35m__n100_road.value, # r"in_memory\\dam_buffer_35m"
+    "roads_inside": Road_N100.dam__roads_inside_with_data__n100_road.value, # r"in_memory\roads_inside_with_data"
+    "roads_outside": Road_N100.dam__roads_outside__n100_road.value, # r"in_memory\roads_outside"
+    "water_clipped": Road_N100.dam__water_clipped__n100_road.value, # r"in_memory\water_clipped"
+    "water_center": Road_N100.dam__water_center__n100_road.value, # r"in_memory\water_center"
+    "buffer_water": Road_N100.dam__buffer_water__n100_road.value, # r"in_memory\buffer_water"
+    "water_singleparts": Road_N100.dam__water_singleparts__n100_road.value, # r"in_memory\water_singleparts"
+    "dam_buffer_sti": Road_N100.dam__dam_buffer_sti__n100_road.value, # r"in_memory\dam_buffer_sti"
+    "roads_clipped_sti": Road_N100.dam__roads_clipped_sti__n100_road.value, # r"in_memory\roads_clipped_sti"
+    "roads_moved": Road_N100.dam__roads_moved__n100_road.value, # r"in_memory\roads_moved"
+    "roads_shifted": Road_N100.dam__roads_shifted__n100_road.value, # r"in_memory\roads_shifted"
+    "dam_150m": Road_N100.dam__dam_buffer_150m__n100_road.value, # r"in_memory\dam_buffer_150m"
+    "dam_60m_flat": Road_N100.dam__dam_buffer_60m_flat__n100_road.value, # r"in_memory\dam_buffer_60m_flat"
+    "dam_5m": Road_N100.dam__dam_buffer_5m_flat__n100_road.value, # r"in_memory\dam_buffer_5m_flat"
+    "dam_60m": Road_N100.dam__dam_buffer_60m__n100_road.value, # r"in_memory\dam_buffer_60m"
+    "water_55m": Road_N100.dam__water_buffer_55m__n100_road.value, # r"in_memory\water_buffer_55m"
+    "buffer_line": Road_N100.dam__dam_buffer_60m_line__n100_road.value,
+    "intermediate": Road_N100.dam__roads_intermediate__n100_road.value, # r"in_memory\roads_intermediate"
+    "paths_in_dam": Road_N100.dam__paths_in_dam__n100_road.value, # r"in_memory\paths_in_dam"
+    "paths_in_dam_valid": Road_N100.dam__paths_in_dam_valid__n100_road.value, # r"in_memory\paths_in_dam_valid"
+}
+
+files_to_delete = [
+    # Stores all the keys from 'data_files' that should be deleted in the end
+    "water_input", "dam_35m", "roads_inside", "roads_outside", "water_clipped", "water_center", "buffer_water",
+    "water_singleparts", "dam_buffer_sti", "roads_clipped_sti", "roads_moved", "roads_shifted", "dam_150m",
+    "dam_60m_flat", "dam_5m", "dam_60m", "water_55m", "intermediate", "paths_in_dam", "paths_in_dam_valid"
+]
+
 @timing_decorator
 def main():
     
     # Setup
     environment_setup.main()
-    arcpy.Delete_management("in_memory")
 
     # Data preparation
     fetch_data()
@@ -41,47 +77,51 @@ def main():
     snap_roads(roads)
     remove_sharp_angles(roads)
 
+    # Deletes all the intermediate files created during the process
+    delete_intermediate_files()
+
 @timing_decorator
 def fetch_data():
     print("Fetching data...")
 
-    ##################################
-    # Choose municipality to work on #
-    ##################################
-    kommune = "Notodden"
-
     input = [
-        [r"C:\GIS_Files\ag_inputs\road.gdb\VegSti", None, Road_N100.test_dam__relevant_roads__n100_road.value], # Roads
-        [input_n100.AnleggsLinje, "objtype = 'Dam'", Road_N100.test_dam__relevant_dam__n100_road.value], # Dam
-        [input_n100.AdminFlate, f"NAVN = '{kommune}'", r"in_memory\kommune"], # Area
-        [input_n100.ArealdekkeFlate, "OBJTYPE = 'Havflate' OR OBJTYPE = 'Innsjø' OR OBJTYPE = 'InnsjøRegulert'", r"in_memory\relevant_waters"] # Water
+        [data_files["input"], None, data_files["roads_input"]], # Roads
+        [input_n100.AnleggsLinje, "objtype = 'Dam'", data_files["dam_input"]], # Dam
+        [input_n100.ArealdekkeFlate, "OBJTYPE = 'Havflate' OR OBJTYPE = 'Innsjø' OR OBJTYPE = 'InnsjøRegulert'", data_files["water_input"]] # Water
     ]
     for data in input:
         custom_arcpy.select_attribute_and_make_permanent_feature(
             input_layer=data[0],
             expression=data[1],
             output_name=data[2],
-            selection_type=custom_arcpy.SelectionType.NEW_SELECTION
+            selection_type="NEW_SELECTION"
         )
     print("Data fetched!")
 
 @timing_decorator
 def clip_and_erase_pre():
     print("Clipping and erasing roads near dam...")
-    buffer_fc = r"in_memory\\dam_buffer_35m"
-    pre_dissolve = r"in_memory\roads_inside_with_data"
-    outside_fc = r"in_memory\roads_outside"
-    
-    water_clipped = r"in_memory\water_clipped"
-    water_center = r"in_memory\water_center"
-    buffer_water = r"in_memory\buffer_water"
-    water_single = r"in_memory\water_singleparts"
+    dam_fc = data_files["dam_input"]
+    roads_fc = data_files["roads_input"]
 
-    arcpy.Buffer_analysis(Road_N100.test_dam__relevant_dam__n100_road.value, buffer_fc, "35 Meters", line_end_type="FLAT", dissolve_option="NONE")
+    buffer_fc = data_files["dam_35m"]
+    pre_dissolve = data_files["roads_inside"]
+    outside_fc = data_files["roads_outside"]
+    
+    water = data_files["water_input"]
+    water_clipped = data_files["water_clipped"]
+    water_center = data_files["water_center"]
+    buffer_water = data_files["buffer_water"]
+    water_single = data_files["water_singleparts"]
+
+    buffer_sti = data_files["dam_buffer_sti"]
+    clipped_sti = data_files["roads_clipped_sti"]
+
+    arcpy.Buffer_analysis(dam_fc, buffer_fc, "35 Meters", line_end_type="FLAT", dissolve_option="NONE")
     # 1. Build a layer of only the 'L' roads
-    fld = arcpy.AddFieldDelimiters(Road_N100.test_dam__relevant_roads__n100_road.value, "medium")
+    fld = arcpy.AddFieldDelimiters(roads_fc, "medium")
     arcpy.MakeFeatureLayer_management(
-        Road_N100.test_dam__relevant_roads__n100_road.value,
+        roads_fc,
         "roads_L_lyr",
         where_clause=f"{fld} = 'L'"
     )
@@ -91,34 +131,29 @@ def clip_and_erase_pre():
 
     # 3. Select buffers intersecting the filtered roads
     arcpy.SelectLayerByLocation_management(
-        "buffer_lyr",
-        "INTERSECT",
-        "roads_L_lyr"
+        in_layer="buffer_lyr",
+        overlap_type="INTERSECT",
+        select_features="roads_L_lyr"
     )
 
     arcpy.DeleteFeatures_management("buffer_lyr")
 
-    buffer_sti = r"in_memory\dam_buffer_sti"
-    arcpy.Buffer_analysis(Road_N100.test_dam__relevant_dam__n100_road.value, buffer_sti, "5 Meters", line_end_type="FLAT", dissolve_option="NONE")
-    in_roads = Road_N100.test_dam__relevant_roads__n100_road.value
-    arcpy.Clip_analysis(in_roads, buffer_sti, r"in_memory\roads_clipped_sti")
+    arcpy.Buffer_analysis(dam_fc, buffer_sti, "5 Meters", line_end_type="FLAT", dissolve_option="NONE")
+    arcpy.Clip_analysis(roads_fc, buffer_sti, clipped_sti)
 
-
-        # Fields to check: objtype and Shape_Length
+    # 1. Fields to check: objtype and Shape_Length
     fields = ["objtype", "SHAPE@"]
 
-    with arcpy.da.UpdateCursor(r"in_memory\roads_clipped_sti", fields) as cursor:
+    with arcpy.da.UpdateCursor(clipped_sti, fields) as cursor:
         for objtype, geom in cursor:
             length = geom.length
             # Keep only features where objtype == 'sti' and length > 50
             if objtype != "Sti" or length <= 50:
                 cursor.deleteRow()
-
-
-
-        # 2. Build a layer of buffers
+    
+    # 2. Build a layer of buffers
     arcpy.MakeFeatureLayer_management(buffer_fc, "buffer_lyr_sti")
-    arcpy.MakeFeatureLayer_management(r"in_memory\roads_clipped_sti", "roads_clipped_sti_lyr")
+    arcpy.MakeFeatureLayer_management(clipped_sti, "roads_clipped_sti_lyr")
 
     # 3. Select buffers intersecting the filtered roads
     arcpy.SelectLayerByLocation_management(
@@ -129,17 +164,17 @@ def clip_and_erase_pre():
 
     arcpy.DeleteFeatures_management("buffer_lyr_sti")
     
-    arcpy.Clip_analysis(Road_N100.test_dam__relevant_roads__n100_road.value, buffer_fc, pre_dissolve)
-    arcpy.Erase_analysis(Road_N100.test_dam__relevant_roads__n100_road.value, buffer_fc, outside_fc)
+    arcpy.Clip_analysis(roads_fc, buffer_fc, pre_dissolve)
+    arcpy.Erase_analysis(roads_fc, buffer_fc, outside_fc)
 
-    arcpy.Buffer_analysis(Road_N100.test_dam__relevant_dam__n100_road.value, buffer_water, "75 Meters", dissolve_option="NONE")
-    arcpy.Clip_analysis(r"in_memory\relevant_waters", buffer_water, water_clipped)
+    arcpy.Buffer_analysis(dam_fc, buffer_water, "75 Meters", dissolve_option="NONE")
+    arcpy.Clip_analysis(water, buffer_water, water_clipped)
     arcpy.MultipartToSinglepart_management(water_clipped, water_single)
     arcpy.FeatureToPoint_management(water_single, water_center, "CENTROID")
 
 @timing_decorator
 def snap_merge_before_moving():
-    inside_wdata_fc = r"in_memory\roads_inside_with_data"
+    inside_wdata_fc = data_files["roads_inside"]
 
     tolerance = 40.0
     # Precompute squared tolerance for faster distance checks
@@ -156,14 +191,13 @@ def snap_merge_before_moving():
 
     # Open an update cursor to delete rows
     with arcpy.da.UpdateCursor(inside_wdata_fc, ["OID@", "SHAPE@"]) as cursor:
-        for oid, geom in cursor:
+        for _, geom in cursor:
             # Extract endpoints
             pts = get_endpoints_cords(geom)
             if len(pts) < 2:
                 # Skip degenerate geometries
                 continue
             p_start, p_end = pts[0], pts[1]
-
             # Check against seen endpoint pairs
             is_duplicate = False
             for (sx, sy), (ex, ey) in seen:
@@ -218,7 +252,7 @@ def build_backup(layer):
 
 def restore_deleted_lines(layer, backup):
     deleted_lines = []   
-        # 1. Discover all non-OID, non-Geometry fields in backup
+    # 1. Discover all non-OID, non-Geometry fields in backup
     all_fields = arcpy.ListFields(layer)
     attr_fields = [
         f.name
@@ -361,22 +395,23 @@ def snap_by_objtype(layer):
 @timing_decorator
 def edit_geom_pre():
     print("Moving roads away from water...")
-    inside_wdata_fc = r"in_memory\roads_inside_with_data"
+    inside_wdata_fc = data_files["roads_inside"]
     moved_name = "roads_moved"
-    roadlines_moved = r"in_memory\roads_moved"
+    roadlines_moved = data_files["roads_moved"]
 
-    water_center = r"in_memory\water_center"
+    water_center = data_files["water_center"]
 
     inside_sr = arcpy.Describe(inside_wdata_fc).spatialReference
     temp_fc = inside_wdata_fc + "_temp"
 
     # Copy features for editing
-    arcpy.CopyFeatures_management(inside_wdata_fc, temp_fc)
+    arcpy.management.CopyFeatures(inside_wdata_fc, temp_fc)
 
     # Create output feature class
+    out_path, out_name = os.path.split(roadlines_moved)
     arcpy.CreateFeatureclass_management(
-        out_path="in_memory",
-        out_name=moved_name,
+        out_path=out_path,
+        out_name=out_name,
         geometry_type="POLYLINE",
         template=temp_fc,
         spatial_reference=inside_sr
@@ -453,43 +488,39 @@ def move_line_away(geom, near_x, near_y, distance):
 @timing_decorator
 def snap_and_merge_pre():
     print("Snapping and merging roads after moving...")
-    roadlines_moved = r"in_memory\roads_moved"
-    outside_fc = r"in_memory\roads_outside"
-    final_fc = r"in_memory\roads_shifted"
+    dam_fc = data_files["dam_input"]
+    roadlines_moved = data_files["roads_moved"]
+    outside_fc = data_files["roads_outside"]
+    final_fc = data_files["roads_shifted"]
+
+    dam_150m = data_files["dam_150m"]
 
     # Define snap environment
     snap_env = [[outside_fc, "END", "40 Meters"]]
 
     # Snap 
     arcpy.Snap_edit(roadlines_moved, snap_env)
-    #arcpy.CopyFeatures_management(roadlines_moved, "C:\\temp\\Roads.gdb\\roadsafterbeingsnapped11")
-
 
     snap_env2 = [[roadlines_moved, "END", "50 Meters"]]
 
-    arcpy.Buffer_analysis(Road_N100.test_dam__relevant_dam__n100_road.value, r"in_memory\dam_buffer_150m", "150 Meters")
+    arcpy.Buffer_analysis(dam_fc, dam_150m, "150 Meters")
     arcpy.MakeFeatureLayer_management(outside_fc, "outside_lyr")
     arcpy.SelectLayerByLocation_management(
         in_layer="outside_lyr",
         overlap_type="INTERSECT",
-        select_features=r"in_memory\dam_buffer_150m"
+        select_features=dam_150m
     )
     
-    #arcpy.CopyFeatures_management("outside_lyr", "C:\\temp\\Roads.gdb\\roadsafterbeingsnapped99")
-
     arcpy.Snap_edit("outside_lyr", snap_env2)
-    #arcpy.CopyFeatures_management("outside_lyr", "C:\\temp\\Roads.gdb\\roadsafterbeingsnapped22")
-
-
+    
     # Merge the two sets
     arcpy.Merge_management([roadlines_moved, outside_fc], final_fc)
-    #arcpy.CopyFeatures_management(final_fc, "C:\\temp\\Roads.gdb\\roadsafterbeingsnapped")
 
 @timing_decorator
 def create_buffer():
     print("Creating buffers...")
-    dam_fc = Road_N100.test_dam__relevant_dam__n100_road.value
-    water_fc = r"in_memory\relevant_waters"
+    dam_fc = data_files["dam_input"]
+    water_fc = data_files["water_input"]
 
     arcpy.management.MakeFeatureLayer(water_fc, "water_lyr")
     arcpy.management.SelectLayerByLocation(
@@ -501,10 +532,10 @@ def create_buffer():
     )
 
     buffers = [
-        [dam_fc, r"in_memory\dam_buffer_60m_flat", "60 Meters"],
-        [dam_fc, r"in_memory\dam_buffer_5m_flat", "5 Meters"],
-        [dam_fc, r"in_memory\dam_buffer_60m", "60 Meters"],
-        ["water_lyr", r"in_memory\water_buffer_55m", "55 Meters"]
+        [dam_fc, data_files["dam_60m_flat"], "60 Meters"],
+        [dam_fc, data_files["dam_5m"], "5 Meters"],
+        [dam_fc, data_files["dam_60m"], "60 Meters"],
+        ["water_lyr", data_files["water_55m"], "55 Meters"]
     ]
     for i in range(len(buffers)):
         type = "FLAT" if i < 2 else "ROUND"
@@ -527,8 +558,8 @@ def create_buffer():
 @timing_decorator
 def create_buffer_line():
     print("Creates dam buffer as line...")
-    buffer = r"in_memory\dam_buffer_60m"
-    line = Road_N100.test_dam__dam_buffer_60m_line__n100_road.value
+    buffer = data_files["dam_60m"]
+    line = data_files["buffer_line"]
     arcpy.management.PolygonToLine(
         in_features=buffer,
         out_feature_class=line
@@ -670,10 +701,10 @@ def cluster_points(points, threshold=1.0):
 def connect_roads_with_buffers():
     print("Connects roads with buffers...")
 
-    roads_fc = r"in_memory\roads_shifted"
-    intermediate_fc = r"in_memory\roads_intermediate"
-    buffer_flat_fc = r"in_memory\dam_buffer_60m_flat"
-    buffer_round_fc = r"in_memory\dam_buffer_60m"
+    roads_fc = data_files["roads_shifted"]
+    intermediate_fc = data_files["intermediate"]
+    buffer_flat_fc = data_files["dam_60m_flat"]
+    buffer_round_fc = data_files["dam_60m"]
 
     arcpy.management.MakeFeatureLayer(roads_fc, "roads_lyr_round")
     arcpy.management.SelectLayerByLocation(
@@ -737,9 +768,9 @@ def connect_roads_with_buffers():
 def merge_instances(roads):
     print("Merge connected instances of same type...")
 
-    intermediate_fc = r"in_memory\roads_intermediate"
+    intermediate_fc = data_files["intermediate"]
 
-    buffer_fc = r"in_memory\dam_buffer_60m"
+    buffer_fc = data_files["dam_60m"]
     buffer_polygons = {row[0]: row[1] for row in arcpy.da.SearchCursor(buffer_fc, ["OID@", "SHAPE@"])}
 
     # Global geometry-dictionary
@@ -856,16 +887,16 @@ def merge_instances(roads):
 def snap_roads(roads):
     print("Snap roads to buffer...")
     
-    intermediate_fc = r"in_memory\roads_intermediate"
-    buffer_fc = r"in_memory\dam_buffer_60m"
-    water_buffer_fc = r"in_memory\water_buffer_55m"
-    buffer_for_paths = r"in_memory\dam_buffer_5m_flat"
+    intermediate_fc = data_files["intermediate"]
+    buffer_fc = data_files["dam_60m"]
+    water_buffer_fc = data_files["water_55m"]
+    buffer_for_paths = data_files["dam_5m"]
 
     buffer_polygons = [(row[0], row[1]) for row in arcpy.da.SearchCursor(buffer_fc, ["OID@", "SHAPE@"])]
     
     # Fetches all the paths going over dam
-    paths_in_dam = r"in_memory\paths_in_dam"
-    paths_in_dam_valid = r"in_memory\paths_in_dam_valid"
+    paths_in_dam = data_files["paths_in_dam"]
+    paths_in_dam_valid = data_files["paths_in_dam_valid"]
     arcpy.management.MakeFeatureLayer(intermediate_fc, "paths_over_dam", where_clause="objtype = 'Sti'")
     arcpy.analysis.Intersect(in_features=["paths_over_dam", buffer_for_paths], out_feature_class=paths_in_dam)
 
@@ -1033,8 +1064,8 @@ def not_road_intersection(point, road_oid, roads):
 def remove_sharp_angles(roads):
     print("Removes sharp angles...")
 
-    intermediate_fc = r"in_memory\roads_intermediate"
-    cleaned_roads_fc = Road_N100.test_dam__cleaned_roads__n100_road.value
+    intermediate_fc = data_files["intermediate"]
+    cleaned_roads_fc = data_files["output"]
     
     oids = ",".join(str(oid) for key in roads.keys() for oid in roads[key])
     sql = f"OBJECTID IN ({oids})"
@@ -1087,6 +1118,11 @@ def remove_sharp_angles(roads):
 
     print(f"Number of roads with deleted points: {num}")
     print("Sharp angles removed!")
+
+@timing_decorator
+def delete_intermediate_files():
+    for file in files_to_delete:
+        arcpy.management.Delete(data_files[file])
 
 if __name__=="__main__":
     main()

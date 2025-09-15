@@ -16,7 +16,7 @@ data_preparation = "data_preparation"
 first_generalization = "first_generalization"
 test1 = "test1"
 testing_file = "testing_file"
-dam_file = "test_dam"
+dam_file = "dam"
 
 
 """"
@@ -1231,22 +1231,122 @@ class Road_N100(Enum):
     #                                 TEST DAM
     # ========================================
 
-    test_dam__relevant_roads__n100_road = file_manager.generate_file_name_gdb(
+    dam__relevant_roads__n100_road = file_manager.generate_file_name_gdb(
         script_source_name=dam_file,
         description="relevant_roads"
     )
 
-    test_dam__relevant_dam__n100_road = file_manager.generate_file_name_gdb(
+    dam__relevant_dam__n100_road = file_manager.generate_file_name_gdb(
         script_source_name=dam_file,
         description="relevant_dam"
     )
 
-    test_dam__dam_buffer_60m_line__n100_road = file_manager.generate_file_name_gdb(
+    dam__relevant_water__n100_road = file_manager.generate_file_name_gdb(
+        script_source_name=dam_file,
+        description="relevant_water"
+    )
+
+    dam__dam_buffer_35m__n100_road = file_manager.generate_file_name_gdb(
+        script_source_name=dam_file,
+        description="dam_buffer_35m"
+    )
+
+    dam__roads_inside_with_data__n100_road = file_manager.generate_file_name_gdb(
+        script_source_name=dam_file,
+        description="roads_inside_with_data"
+    )
+
+    dam__roads_outside__n100_road = file_manager.generate_file_name_gdb(
+        script_source_name=dam_file,
+        description="roads_outside"
+    )
+
+    dam__water_clipped__n100_road = file_manager.generate_file_name_gdb(
+        script_source_name=dam_file,
+        description="water_clipped"
+    )
+
+    dam__water_center__n100_road = file_manager.generate_file_name_gdb(
+        script_source_name=dam_file,
+        description="water_center"
+    )
+
+    dam__buffer_water__n100_road = file_manager.generate_file_name_gdb(
+        script_source_name=dam_file,
+        description="buffer_water"
+    )
+
+    dam__water_singleparts__n100_road = file_manager.generate_file_name_gdb(
+        script_source_name=dam_file,
+        description="water_singleparts"
+    )
+
+    dam__dam_buffer_sti__n100_road = file_manager.generate_file_name_gdb(
+        script_source_name=dam_file,
+        description="dam_buffer_sti"
+    )
+
+    dam__roads_clipped_sti__n100_road = file_manager.generate_file_name_gdb(
+        script_source_name=dam_file,
+        description="roads_clipped_sti"
+    )
+
+    dam__roads_moved__n100_road = file_manager.generate_file_name_gdb(
+        script_source_name=dam_file,
+        description="roads_moved"
+    )
+    
+    dam__roads_shifted__n100_road = file_manager.generate_file_name_gdb(
+        script_source_name=dam_file,
+        description="roads_shifted"
+    )
+
+    dam__dam_buffer_150m__n100_road = file_manager.generate_file_name_gdb(
+        script_source_name=dam_file,
+        description="dam_buffer_150m"
+    )
+
+    dam__dam_buffer_60m_flat__n100_road = file_manager.generate_file_name_gdb(
+        script_source_name=dam_file,
+        description="dam_buffer_60m_flat"
+    )
+    
+    dam__dam_buffer_5m_flat__n100_road = file_manager.generate_file_name_gdb(
+        script_source_name=dam_file,
+        description="dam_buffer_5m_flat"
+    )
+
+    dam__dam_buffer_60m__n100_road = file_manager.generate_file_name_gdb(
+        script_source_name=dam_file,
+        description="dam_buffer_60m"
+    )
+
+    dam__water_buffer_55m__n100_road = file_manager.generate_file_name_gdb(
+        script_source_name=dam_file,
+        description="water_buffer_55m"
+    )
+
+    dam__dam_buffer_60m_line__n100_road = file_manager.generate_file_name_gdb(
         script_source_name=dam_file,
         description="dam_buffer_60m_line"
     )
 
-    test_dam__cleaned_roads__n100_road = file_manager.generate_file_name_gdb(
+    dam__roads_intermediate__n100_road = file_manager.generate_file_name_gdb(
+        script_source_name=dam_file,
+        description="roads_intermediate"
+    )
+
+    dam__paths_in_dam__n100_road = file_manager.generate_file_name_gdb(
+        script_source_name=dam_file,
+        description="paths_in_dam"
+    )
+
+    dam__paths_in_dam_valid__n100_road = file_manager.generate_file_name_gdb(
+        script_source_name=dam_file,
+        description="paths_in_dam_valid"
+    )
+
+    dam__cleaned_roads__n100_road = file_manager.generate_file_name_gdb(
         script_source_name=dam_file,
         description="cleaned_roads"
     )
