@@ -1250,8 +1250,3 @@ class Road_N100(Enum):
         script_source_name=dam_file,
         description="cleaned_roads"
     )
-
-    test_dam__test__n100_road = file_manager.generate_file_name_gdb(
-        script_source_name=dam_file,
-        description="test"
-    )

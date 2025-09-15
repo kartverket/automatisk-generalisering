@@ -462,7 +462,7 @@ def snap_and_merge_pre():
 
     # Snap 
     arcpy.Snap_edit(roadlines_moved, snap_env)
-    arcpy.CopyFeatures_management(roadlines_moved, "C:\\temp\\Roads.gdb\\roadsafterbeingsnapped11")
+    #arcpy.CopyFeatures_management(roadlines_moved, "C:\\temp\\Roads.gdb\\roadsafterbeingsnapped11")
 
 
     snap_env2 = [[roadlines_moved, "END", "50 Meters"]]
@@ -475,15 +475,15 @@ def snap_and_merge_pre():
         select_features=r"in_memory\dam_buffer_150m"
     )
     
-    arcpy.CopyFeatures_management("outside_lyr", "C:\\temp\\Roads.gdb\\roadsafterbeingsnapped99")
+    #arcpy.CopyFeatures_management("outside_lyr", "C:\\temp\\Roads.gdb\\roadsafterbeingsnapped99")
 
     arcpy.Snap_edit("outside_lyr", snap_env2)
-    arcpy.CopyFeatures_management("outside_lyr", "C:\\temp\\Roads.gdb\\roadsafterbeingsnapped22")
+    #arcpy.CopyFeatures_management("outside_lyr", "C:\\temp\\Roads.gdb\\roadsafterbeingsnapped22")
 
 
     # Merge the two sets
     arcpy.Merge_management([roadlines_moved, outside_fc], final_fc)
-    arcpy.CopyFeatures_management(final_fc, "C:\\temp\\Roads.gdb\\roadsafterbeingsnapped")
+    #arcpy.CopyFeatures_management(final_fc, "C:\\temp\\Roads.gdb\\roadsafterbeingsnapped")
 
 @timing_decorator
 def create_buffer():
@@ -663,13 +663,6 @@ def cluster_points(points, threshold=1.0):
         if not found:
             clusters.append([(pt, idx)])
     return clusters
-
-def calculate_centroid(cluster):
-    ref = cluster[0][0].spatialReference
-    x_sum = sum(pt.firstPoint.X for pt, _ in cluster)
-    y_sum = sum(pt.firstPoint.Y for pt, _ in cluster)
-    count = len(cluster)
-    return arcpy.PointGeometry(arcpy.Point(x_sum / count, y_sum / count), ref)
 
 ##################
 
@@ -928,7 +921,6 @@ def snap_roads(roads):
             for oid, geom, medium in cursor:
                 if oid in paths_to_avoid:
                     skip = True
-                    print(f"Sti over dam: {oid}")
                     break
                 if medium == "L":
                     skip = True
@@ -959,7 +951,7 @@ def snap_roads(roads):
         # Snap points to the buffer line
         snap_points = {}
         for cluster in clusters:
-            ref_pt = calculate_centroid(cluster) # cluster[0][0] # Fetches the first point
+            ref_pt = cluster[0][0] # Fetches the first point
             result = buffer_line.queryPointAndDistance(ref_pt)
             snap_pt = result[0]  # Closest point on buffer line
             for _, idx in cluster: # ... and adjust the rest of the points in the cluster to the ref_pt
