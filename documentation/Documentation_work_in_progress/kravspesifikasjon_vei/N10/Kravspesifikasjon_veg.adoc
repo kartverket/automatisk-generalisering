@@ -1,0 +1,29 @@
+= Kravspesifikasjon: N10 - veg
+
+== Innledning
+Denne kravspesifikasjonen har som formål å definere kriteriene for N10-veg på en måte som er tilpasset automatisert generalisering. Siden N10-veg utgjør grunnlaget for videre generalisering til andre målestokker, vil beslutninger og justeringer som gjøres på dette nivået ha stor innvirkning på den samlede kartkvaliteten. Det er derfor avgjørende å foreta en grundig vurdering av hvordan vegene skal kategoriseres og symboliseres. I denne sammenheng bør det også vurderes om det er hensiktsmessig å tilnærme seg internasjonale standarder for vegkategorisering og symbolbruk.
+
+== Modellspesifikt
+Modellspesifikke egenskaper omfatter både de attributtene som kreves for å oppfylle produktspesifikasjonen, og interne krav knyttet til visuell representasjon og symbologi. Disse egenskapene danner grunnlaget for hvilke data som skal inkluderes i den automatiserte generaliseringen av N10-veg, og sikrer at resultatet er både teknisk korrekt og kartografisk lesbart. Oversikt over relevante egenskaper og tillatte verdier fremgår av Tabell 1.
+
+:table-caption: Tabell
+:table-caption!:
+
+
+
+
+[cols="1,3,1", width="100%",options="header",title="Tabell 1: Egenskaper"]
+|====================
+|Navn  |Godkjente verdier  |  Påkrevd 
+|objtype|Vegsenterlinje, Barmarksløype, Sti, Traktorveg|ja 
+|vegkategori |E, F, K, P, R, Udefinert|Ja, (Udefinert)
+|vegstatus | __*A* (anlegg)__, *P* (planlagt), *V* (eksisterendeVeg), Udefinert|Ja, (Udefinert)
+|vegnummer  |nummer, (-9999) Udefinert |Ja, ((-9999) Udefinert)  
+|motorvegtype|Ikke motorveg, motortrafikkveg, motorveg, Udefinert|Ja, (Udefinert)  
+|rutemerkering|Ja, Nei, Udefinert|Ja, (Udefinert)
+|vedlikeh|Andre, DNT eller ukjent|Ja, (Udefinert)
+|medium| *B* (I bygning), *L* (I luft), *T* (På terrenget), *U* (Under terrenget)|Ja, (Udefinert)
+|oppdateringsdato||ja
+|målemetode||ja
+|nøyaktighet||ja
+|====================

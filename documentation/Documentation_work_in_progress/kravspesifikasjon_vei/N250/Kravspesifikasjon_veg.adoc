@@ -3,8 +3,6 @@
 == Innledning
 Denne kravspesifikasjonen har som formål å definere kriteriene for N250-veg på en måte som er tilpasset automatisert generalisering. Eksisterende kriterier, slik de fremkommer i gjeldende arbeidsbeskrivelse og produktspesifikasjon, er i hovedsak utviklet med tanke på manuelle generaliseringsprosesser. Dette medfører at de ofte ikke lar seg direkte anvende i automatiserte arbeidsflyter. For å sikre konsistens, kvalitet og effektivitet i digital kartproduksjon, er det derfor nødvendig med en revidert spesifikasjon som ivaretar kravene til automatisering.
 
-== Formål og Omfang
-
 == Modellspesifikt
 Modellspesifikke egenskaper omfatter både de attributtene som kreves for å oppfylle produktspesifikasjonen, og interne krav knyttet til visuell representasjon og symbologi. Disse egenskapene danner grunnlaget for hvilke data som skal inkluderes i den automatiserte generaliseringen av N250-veg, og sikrer at resultatet er både teknisk korrekt og kartografisk lesbart. Oversikt over relevante egenskaper og tillatte verdier fremgår av Tabell 1.
 
@@ -39,6 +37,8 @@ Disse reglene er strukturert etter vegkategori og type, og inneholder både abso
 == Generalisering per Vegkategori
 
 === Europaveger og Riksveger
+[.text-center]
+image::bilder\Europaveg_riksveg.png[]
 
 [.formelboks]
 ====
@@ -56,6 +56,8 @@ Disse reglene er strukturert etter vegkategori og type, og inneholder både abso
 ****
 
 === Generalisering av fylkesveger
+[.text-center]
+image::bilder\Fylkesveger.png[]
 
 Vegnettet skal i hovedsak inkludere de fleste fylkesveger, men med en viss grad av generalisering for å sikre lesbarhet og hensiktsmessig kartpresentasjon. Fylkesveiene kategoriseres som enten funksjonell vegklasse 3, 4 eller 5. 
 
@@ -74,13 +76,13 @@ Alle fylkesveger med funksjonellvegklasse 3, skal *alltid* med i N250 kartdata.
 a|
 [.formelboks]
 ****
-*Funksjonell vegklasse = 4 og 5* 
+*Funksjonell vegklasse > 3* 
 
-Fylkesveger med Funksjonellveiklasse 4 eller 5, skal kun inkluderes dersom vegnettet i området ikke er for tett.
+Fylkesveger med Funksjonellveiklasse større en 3, skal kun inkluderes dersom vegnettet i området ikke er for tett.
 ****
 |===
 
-===== Kriterier for Fylkeveger med funksjonell vegklasse 4 og 5
+===== Kriterier for Fylkeveger med funksjonell vegklasse større enn 3
 ====
 .Utvalgskriterier:
 
@@ -97,7 +99,8 @@ Fylkesveger med Funksjonellveiklasse 4 eller 5, skal kun inkluderes dersom vegne
 ====
 
 ==== Generalisering av kommunale veger
-
+[.text-center]
+image::bilder\kommunaleveger.png[]
 Kommunale veger er klassifisert i to funksjonelle vegklasser, hvor 5 representerer veger med høyere betydning. Det er imidlertid kjent at kvaliteten på denne klassifiseringen varierer mellom kommuner, og at det ikke alltid er konsekvent skille mellom viktige og mindre viktige kommunale veger.
 
 [cols="1,1", frame="none", grid="none"]
@@ -113,9 +116,9 @@ I områder med grafiske konflikter mellom kommunaleveger med verdier 5 og 6, ska
 a|
 [.formelboks]
 ****
-*Funksjonell vegklasse = 6* 
+*Funksjonell vegklasse > 5* 
 
-Fylkesveger med Funksjonellveiklasse 6, skal kun med hvis den har en viktig funksjon beskrevet nedenfor
+Fylkesveger med Funksjonellveiklasse større enn 6, skal kun med hvis den har en viktig funksjon beskrevet nedenfor
 ****
 |===
 
@@ -138,7 +141,8 @@ I områder med tett vegnett vil kun de viktigste kommunale vegene beholdes, base
 ====
 
 ==== Generalisering av private veger
-
+[.text-center]
+image::bilder\private.png[]
 Private veger skal kun inkluderes i N250-produkter dersom de har en funksjonell rolle i å binde sammen det overordnede vegnettet eller koble til annen relevant infrastruktur. Formålet er å redusere detaljnivået samtidig som viktige forbindelser bevares.
 
 ====
@@ -158,7 +162,8 @@ Private veger skal kun inkluderes i N250-produkter dersom de har en funksjonell 
 * Private veger med registrert bom skal fjernes dersom det finnes alternativ veg til samme endepunkt.
 ====
 === Generalisering av sti og traktorveg
-
+[.text-center]
+image::bilder\traktorveg_sti.png[]
 Ved generalisering av stier og traktorveger for N250-produkter skal kun relevante og funksjonelle forbindelser inkluderes. Formålet er å bevare viktige ferdselsårer mellom naturlige og menneskeskapte endepunkter, samtidig som kartet forenkles og tilpasses målestokken.
 
 ==== Inkludering basert på funksjon og tilknytning
@@ -178,44 +183,110 @@ Ved generalisering av stier og traktorveger for N250-produkter skal kun relevant
   I N50 Kartdata forekommer dette i enkelte tilfeller, men for N250 er det vurdert som overflødig informasjon.
 
 
+=== Fergeforbindelser i N250 Kartdata
+[.text-center]
+image::bilder\ferige_2.png[]
+
+Alle ferger skal være korrekt tilknyttet det kjørbare vegnettet på land for å sikre sammenhengende transportlinjer. Dette gjelder uavhengig av vegtype – enten det er privat veg, kommunal veg, fylkesveg, riksveg eller Europaveg – så lenge vegen er kjørbar. Fergeforbindelser skal kobles til nærmeste tilgjengelige vegpunkt på begge sider av overfarten, slik at det ikke oppstår brudd i nettverket.
+
+==== Ved registrering av ferger gjelder følgende retningslinjer:
+- Dersom bilferge og passasjerferge går parallelt fra samme anløpssted, skal kun bilfergen beholdes.
+- Hvis en bilferge er tilknyttet to ulike vegnummere, skal det laveste nummeret benyttes.
+- Passasjerferger over innsjøer med lengde over 250 meter skal beholdes dersom de inngår i vegnett eller stinett.
+- Alle ferger må være koblet til enten vegnettet eller stinettet for å sikre nettverkets kontinuitet.
+
+
+
 === Tematiske hensyn og spesialtilfeller
 
 Ved generalisering av vegnett for N250-produkter må det tas hensyn til både geometriske forenklinger og samspillet med andre temadatasett. Følgende retningslinjer skal sikre at viktige forbindelser og strukturer bevares, samtidig som kartografisk lesbarhet og tematisk konsistens opprettholdes:
 
-* *Bevaring av veggeometri i vannområder*  
-  Vegsegmenter skal ikke flyttes dersom midtlinjen ikke krysser innsjø, hav eller elv. 
 
-* *Vegobjekter som krysser riksgrensen*  
-  Alle veger som krysser nasjonal grense skal beholdes i datasettet, uavhengig av type eller funksjon. Dette sikrer kontinuitet og sammenheng i det overordnede vegnettet.
+
+* *Vegsegmenter skal flyttes bort fra vannkonturen*  
+  
+[cols="2,1", frame="none", grid="none"]
+
+|===
+|Det er tillatt at vegsegmentet ligger inntil vannkonturen, men den må flyttes dersom den krysser eller ligger i vann. For å unngå visuell overlapp, anbefales en minimumsavstand på 60 meter i N250, tilsvarende 0,25 mm på kartet. Dette er en ønsket avstand, men ikke et absolutt krav.
+a|image::bilder\Bevaring_avveggeometri.png[width=150, align=center]
+|===
+
+* *Vegobjekter som krysser riksgrensen*
+
+
+[cols="2,1", frame="none", grid="none"]
+
+|===
+|Alle veger som krysser den nasjonale grensen skal inkluderes i datasettet, uavhengig av vegtype, funksjon eller klassifisering. Dette gjelder både hovedveger, lokalveger, stier og andre forbindelser. Formålet er å sikre kontinuitet og sammenheng i det overordnede vegnettet, slik at kartdataene gir en helhetlig og korrekt fremstilling av infrastrukturen på tvers av landegrenser. Dette er særlig viktig for navigasjon, analyse og planlegging, der fullstendig nettverksinformasjon er avgjørende.
+a|image::bilder\riksgrense_2.PNG[width=200, align=center]
+|===
+  
 
 * *Bruer og tunneler*  
-  Alle bruer og tunneler skal inkluderes i generaliseringen. Dersom lengden er under 1000 meter, skal de symboliseres som _medium terreng_ for å opprettholde tegnerekkefølge på vegene.
+
+
+[cols="2,1", frame="none", grid="none"]
+
+|===
+|Alle bruer og tunneler skal inkluderes i generaliseringen, uavhengig av lengde. Verdien for medium skal beholdes uendret under hele generaliseringsprossessen. Det er først i symboliseringen at veger med lengde under 1000 meter skal vises som medium terreng, og ikke som medium luft, som normalt representerer bruer. Dette er nødvendig for å opprettholde korrekt tegnerekkefølge og sikre visuell kontinuitet i vegnettet.
+a|image::bilder/bru.png[width=150, align=center]
+|===
+
 
 * *Større kryss og avkjøringer*  
-  Kryss og avkjøringer fra Europaveger og Riksveger skal inkluderes, men i en forenklet form. Ramper, påkjøringsfelt og detaljerte strukturer skal utelates, og erstattes med en generalisert kryssrepresentasjon.
 
-* *Veger over dammer*  
-  Veger som krysser demninger skal justeres slik at demningen vises tydelig i kartet. Veglinjen skal flyttes til nedsiden av demningen og krysse elv i stedet for innsjø. Det skal være minimum 140 meter mellom senterlinjen til demningen og veglinjen for å sikre visuell separasjon.
 
-* *Fergesamband*  
-  Alle ferger skal være korrekt tilknyttet vegnett på land. Manglende koblinger skal identifiseres og korrigeres for å sikre sammenhengende transportlinjer.
+[cols="2,1", frame="none", grid="none"]
+
+|===
+|Kryss og avkjøringer skal inkluderes i datasettet, men vises i forenklet form. Ramper, påkjøringsfelt og komplekse kryssstrukturer utelates og erstattes med en generalisert kryssrepresentasjon som ivaretar vegforbindelsen uten tekniske detaljer.
+
+Innkjøringsvinkel i kryss skal være minimum 30 grader for å sikre lesbarhet. Ved symbolisering skal på- og avkjøringsramper nedklassifiseres dersom kun rampen har motorvegstatus, og tilknyttet veg ikke er motorveg. Nedklassifisering justerer vegtypen, for eksempel fra motorveg til motortrafikkveg.
+a|image::bilder\mangler_avkjøringsrampe.png[Mangler avkjøringsrampe Hønefoss, width=150, align=center]
+|===
+  
+
+* *Veger over dammer* 
+
+[cols="2,1", frame="none", grid="none"]
+
+|===
+|Veger som krysser demninger skal justeres slik at demningen vises klart i kartet. Veglinjen flyttes til nedsiden av demningen og skal krysse eventuelt elva, ikke innsjøen, for å unngå visuell konflikt. Det skal være minimum 140 meter mellom senterlinjen til demningen og veglinjen for å sikre tydelig separasjon og god lesbarhet.Krysser demningen vann og vegen har medium L, så skal vegen ligger over demningen. Sti skal kunne gå over demningen, men ligger stien ved siden av, skal stien flyttes slik at det er 140 meter mellom senterlinje demning og senterlinje sti.
+a|image::bilder\Demning_veg.png[width=150, align=center]
+|===
+ 
 
 * *Bruer og tunneler over hav*  
-  Bruer og tunneler som krysser havområder skal alltid inkluderes, uavhengig av vegens klassifisering. Dette er spesielt viktig for å representere forbindelser til øysamfunn, der vegnettet ellers kan være begrenset.
+
+[cols="2,1", frame="none", grid="none"]
+
+|===
+|Bruer og tunneler som krysser havområder skal alltid inkluderes i datasettet, uavhengig av vegens klassifisering, funksjon eller lengde. Dette gjelder både hovedveger og mindre lokale forbindelser, så lenge de utgjør en fysisk og kjørbar forbindelse over eller under sjø.
+
+Slik inkludering er særlig viktig for å sikre en korrekt og helhetlig representasjon av vegnettet i områder med øysamfunn, der tilgangen til fastlandet ofte er begrenset og avhengig av slike konstruksjoner. Uten disse forbindelsene vil vegnettet fremstå som fragmentert, og viktige transportlinjer kan gå tapt i kartframstillingen.
+a|image::bilder\bru_hav.png[width=150, align=center]
+|===
+  
 
 * *Rundkjøringer*  
-  Rundkjøringer skal ikke inkluderes som egne objekter i N250 Kartdata. I stedet skal de erstattes med vanlige kryss, for å forenkle geometrien og forbedre lesbarheten i målestokken.
+
+
+[cols="2,1", frame="none", grid="none"]
+
+|===
+|Rundkjøringer skal ikke vises som egne objekter i N250 Kartdata, men forenkles til vanlige kryss. Dette gjøres for å redusere geometrisk kompleksitet og forbedre lesbarheten i målestokken 1:250 000.
+Ved forenkling skal tilknyttede vegsegmenter tegnes med en minimumsvinkel på 30 grader mellom hver arm. Dersom den faktiske vinkelen er mindre, skal geometrien justeres for å oppnå tydelig kryssstruktur uten å forvrenge vegretningen.
+a|image::bilder\forenklet_rundkjoring.png[width=150, align=center]
+
+|===
   
 == 7. Spørsmål og avklaringspunkter
 
 * Hva er terskelverdien for "for tett" vegnett?
 * Skal avskilte kjørebaner slås sammen, og i så fall ved hvilken avstand?
 * Hvordan identifiseres hovedtraseer i bynære områder med tett nettverk av stier?
-
-
-=== Generalisering av passasjer og bilferge
-
-- Går bilferge og passasjerferge parallelt fra anløpssted beholdes kun bilferge
-- Dersom en bilferge har to ulike vegnummre beholdes det laveste nummeret. 
-- Passasjerferge lengre enn 250 m på innsjø beholdes dersom den inngår i vegnett eller stinett. *Hvordan sjekke at den er åpen store deler av året - kan dette omgås på noe vis?* 
-- Ferger må kobles til vegnettet eller stinettet 
+* Hva er en for spiss vinkel inn i ett kryss? Jeg har satt 30, men har vi noe tall på dette?
+* Hvordan sjekke at passasjerferge er åpen store deler av året - kan dette omgås på noe vis?
+* 250 meter på passasjerferge, er ikke det litt kort? 
+* Skal bruer og tunneler under andre veger beholdes uansett hva? Dette gjelder jernbane, men bør dette også gjelde i forhold i hvertfall veger som krysser store veger?

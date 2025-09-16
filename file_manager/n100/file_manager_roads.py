@@ -17,6 +17,7 @@ first_generalization = "first_generalization"
 test1 = "test1"
 testing_file = "testing_file"
 dam_file = "dam"
+test2 = "test2"
 
 
 """"
@@ -918,9 +919,9 @@ class Road_N100(Enum):
         description="dissx",
     )
 
-    test1___veg100_Oslo_modell3___n100_road = file_manager.generate_file_name_gdb(
+    test1___veg100_Ås_modell3___n100_road = file_manager.generate_file_name_gdb(
         script_source_name=test1,
-        description="veg100_Oslo_modell3",
+        description="veg100_Ås_modell3",
     )
 
     # ========================================
@@ -1226,7 +1227,7 @@ class Road_N100(Enum):
             description="road_input_functional_roadclass_studyarea_selector",
         )
     )
-
+    
     # ========================================
     #                                 TEST DAM
     # ========================================
@@ -1349,4 +1350,105 @@ class Road_N100(Enum):
     dam__cleaned_roads__n100_road = file_manager.generate_file_name_gdb(
         script_source_name=dam_file,
         description="cleaned_roads"
+    )
+    
+    # ========================================
+    #                                TEST2
+    # ========================================
+
+    test2___vegsenterlinje_medium_u___n100_road = file_manager.generate_file_name_gdb(
+        script_source_name=test2,
+        description="vegsenterlinje_medium_u",
+    )
+
+    test2___vegsenterlinje_u_buff100___n100_road = file_manager.generate_file_name_gdb(
+        script_source_name=test2,
+        description="vegsenterlinje_u_buff100",
+    )
+
+    test2___shrunk_underpass___n100_road = file_manager.generate_file_name_gdb(
+        script_source_name=test2,
+        description="shrunk_underpass",
+    )
+
+    test2___vegsenterlinje_medium_l___n100_road = file_manager.generate_file_name_gdb(
+        script_source_name=test2,
+        description="vegsenterlinje_medium_l",
+    )
+    test2___vegsenterlinje_l_buff100___n100_road = file_manager.generate_file_name_gdb(
+        script_source_name=test2,
+        description="vegsenterlinje_l_buff100",
+    )
+
+    test2___shrunk_bridge___n100_road = file_manager.generate_file_name_gdb(
+        script_source_name=test2,
+        description="shrunk_bridge",
+    )
+
+    test2___vegsenterlinje_medium_t___n100_road = file_manager.generate_file_name_gdb(
+        script_source_name=test2,
+        description="vegsenterlinje_medium_t",
+    )
+    test2___vegsenterlinje_t_buff100___n100_road = file_manager.generate_file_name_gdb(
+        script_source_name=test2,
+        description="vegsenterlinje_t_buff100",
+    )
+
+    test2___shrunk_surface_road___n100_road = file_manager.generate_file_name_gdb(
+        script_source_name=test2,
+        description="shrunk_surface_road",
+    )
+
+    test2___ER___n100_road = file_manager.generate_file_name_gdb(
+        script_source_name=test2,
+        description="ER",
+    )
+
+    test2___ER_bridge___n100_road = file_manager.generate_file_name_gdb(
+        script_source_name=test2,
+        description="ER_bridge",
+    )
+
+    test2___ER_bridge_buffer100___n100_road = file_manager.generate_file_name_gdb(
+        script_source_name=test2,
+        description="ER_bridge_buffer100",
+    )
+
+    test2___ER_bridge_shrunk___n100_road = file_manager.generate_file_name_gdb(
+        script_source_name=test2,
+        description="ER_bridge_shrunk",
+    )
+
+    test2___surface_ER___n100_road = file_manager.generate_file_name_gdb(
+        script_source_name=test2,
+        description="surface_ER",
+    )
+
+    test2___bridge_cross_ER___n100_road = file_manager.generate_file_name_gdb(
+        script_source_name=test2,
+        description="bridge_cross_ER",
+    )
+
+    test2___surface_under_ER___n100_road = file_manager.generate_file_name_gdb(
+        script_source_name=test2,
+        description="surface_under_ER",
+    )
+
+    test2___underpass_cross_ER___n100_road = file_manager.generate_file_name_gdb(
+        script_source_name=test2,
+        description="underpass_cross_ER",
+    )
+
+    test2___keep_bru_FKP___n100_road = file_manager.generate_file_name_gdb(
+        script_source_name=test2,
+        description="keep_bru_FKP",
+    )
+
+    test2___keep_underpass_FKP___n100_road = file_manager.generate_file_name_gdb(
+        script_source_name=test2,
+        description="keep_underpass_FKP",
+    )
+    test2___keep_surface_FKP___n100_road = file_manager.generate_file_name_gdb(
+        script_source_name=test2,
+        description="keep_surface_FKP",
     )
