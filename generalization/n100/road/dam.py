@@ -93,6 +93,9 @@ def main():
 ##################
 
 def data_check():
+    """
+        sjekker om det er noen veier innen 60 meter av demninger
+    """
     buffer_fc = data_files["dam_60m_flat"]
     arcpy.MakeFeatureLayer_management(data_files["roads_input"], "roads_lyr")
     arcpy.SelectLayerByLocation_management(
@@ -114,6 +117,9 @@ def data_check():
         return True
 
 def build_backup(layer):
+    """
+        Bygger en backup dict av en layer
+    """
     # 1. Discover all non-OID, non-Geometry fields in backup
     all_fields = arcpy.ListFields(layer)
     attr_fields = [
@@ -139,6 +145,9 @@ def build_backup(layer):
     return backup 
 
 def restore_deleted_lines(layer, backup):
+    """
+        Gjennopretter features som har blitt slettet under snapping
+    """
     deleted_lines = []   
     # 1. Discover all non-OID, non-Geometry fields in backup
     all_fields = arcpy.ListFields(layer)
@@ -167,6 +176,9 @@ def restore_deleted_lines(layer, backup):
                 i_cur.insertRow(backup[oid])
 
 def merge_all_lines2(fc, tolerance=5.0):
+    """
+        Merges all lines in a feature class that share endpoints and have the same objtype and vegkategori.
+    """
     # 1. Determine non‐OID/Geometry fields and their positions
     all_fields = [f.name for f in arcpy.ListFields(fc)
                   if f.type not in ("OID", "Geometry")]
@@ -260,6 +272,9 @@ def get_endpoints_cords(polyline):
     return pts
 
 def snap_by_objtype(layer):
+    """
+        Snapper veier med samme objtype
+    """
     # Get all unique objtypes
     objtypes = set()
     with arcpy.da.SearchCursor(layer, ["objtype"]) as cursor:
@@ -281,6 +296,9 @@ def snap_by_objtype(layer):
         arcpy.Delete_management(layer_name)
 
 def move_line_away(geom, near_x, near_y, distance):
+    """
+        Move a polyline geometry away from a point (near_x, near_y) by a specified distance.
+    """
     sr = geom.spatialReference
     centroid = geom.centroid
     dx = centroid.X - near_x
@@ -563,7 +581,8 @@ def clip_and_erase_pre():
     clipped_sti = data_files["roads_clipped_sti"]
 
     arcpy.Buffer_analysis(dam_fc, buffer_fc, "35 Meters", line_end_type="FLAT", dissolve_option="NONE")
-    # 1. Build a layer of only the 'L' roads
+    
+    # sletter buffere med bruer slik at de ikke blir flyttet
     fld = arcpy.AddFieldDelimiters(roads_fc, "medium")
     arcpy.MakeFeatureLayer_management(
         roads_fc,
@@ -571,10 +590,8 @@ def clip_and_erase_pre():
         where_clause=f"{fld} = 'L'"
     )
 
-    # 2. Build a layer of buffers
     arcpy.MakeFeatureLayer_management(buffer_fc, "buffer_lyr")
 
-    # 3. Select buffers intersecting the filtered roads
     arcpy.SelectLayerByLocation_management(
         in_layer="buffer_lyr",
         overlap_type="INTERSECT",
@@ -583,10 +600,10 @@ def clip_and_erase_pre():
 
     arcpy.DeleteFeatures_management("buffer_lyr")
 
+    # sletter buffere med stier som går rett over demninger slik at de ikke blir flyttet
     arcpy.Buffer_analysis(dam_fc, buffer_sti, "5 Meters", line_end_type="FLAT", dissolve_option="NONE")
     arcpy.Clip_analysis(roads_fc, buffer_sti, clipped_sti)
 
-    # 1. Fields to check: objtype and Shape_Length
     fields = ["objtype", "SHAPE@"]
 
     with arcpy.da.UpdateCursor(clipped_sti, fields) as cursor:
@@ -596,11 +613,9 @@ def clip_and_erase_pre():
             if objtype != "Sti" or length <= 50:
                 cursor.deleteRow()
     
-    # 2. Build a layer of buffers
     arcpy.MakeFeatureLayer_management(buffer_fc, "buffer_lyr_sti")
     arcpy.MakeFeatureLayer_management(clipped_sti, "roads_clipped_sti_lyr")
 
-    # 3. Select buffers intersecting the filtered roads
     arcpy.SelectLayerByLocation_management(
         "buffer_lyr_sti",
         "INTERSECT",
@@ -609,9 +624,11 @@ def clip_and_erase_pre():
 
     arcpy.DeleteFeatures_management("buffer_lyr_sti")
     
+    # Clip and erase veier 
     arcpy.Clip_analysis(roads_fc, buffer_fc, pre_dissolve)
     arcpy.Erase_analysis(roads_fc, buffer_fc, outside_fc)
 
+    # Lag senterpunkt for vann inni buffer
     arcpy.Buffer_analysis(dam_fc, buffer_water, "75 Meters", dissolve_option="NONE")
     arcpy.Clip_analysis(water, buffer_water, water_clipped)
     arcpy.MultipartToSinglepart_management(water_clipped, water_single)
@@ -619,6 +636,12 @@ def clip_and_erase_pre():
 
 @timing_decorator
 def snap_merge_before_moving():
+    """
+        Hva den gjør:
+            snapper og merger veier som er like før de blir flyttet
+        Hvorfor:
+            gjør det letter å beholde sammenhengen i veiene etter flytting
+    """
     inside_wdata_fc = data_files["roads_inside"]
 
     tolerance = 40.0
@@ -634,7 +657,7 @@ def snap_merge_before_moving():
     # Store seen endpoint‐pairs as a list of tuples: ((x1,y1),(x2,y2))
     seen = []
 
-    # Open an update cursor to delete rows
+    # Sletter linjer som har nærme endepunkter, for å unngå at det blir dobbelt med linjer etter flytting
     with arcpy.da.UpdateCursor(inside_wdata_fc, ["OID@", "SHAPE@"]) as cursor:
         for _, geom in cursor:
             # Extract endpoints
@@ -672,9 +695,11 @@ def snap_merge_before_moving():
 
 @timing_decorator
 def edit_geom_pre():
+    """
+        Flytter veier inni buffer litt unna vannet
+    """
     print("Moving roads away from water...")
     inside_wdata_fc = data_files["roads_inside"]
-    moved_name = "roads_moved"
     roadlines_moved = data_files["roads_moved"]
 
     water_center = data_files["water_center"]
@@ -741,6 +766,9 @@ def edit_geom_pre():
 
 @timing_decorator
 def snap_and_merge_pre():
+    """
+        snapper og kombinerer veier som har blitt flyttet og veier som ikke har blitt flyttet
+    """
     print("Snapping and merging roads after moving...")
     dam_fc = data_files["dam_input"]
     roadlines_moved = data_files["roads_moved"]
@@ -766,11 +794,8 @@ def snap_and_merge_pre():
         select_features=dam_150m
     )
     
-
     arcpy.Snap_edit("outside_lyr", snap_env2)
-    #arcpy.CopyFeatures_management("outside_lyr", "C:\\temp\\Roads.gdb\\roadsafterbeingsnapped22")
-
-
+    
     # Merge the two sets
     arcpy.Merge_management([roadlines_moved, outside_fc], final_fc)
 
