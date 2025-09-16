@@ -37,7 +37,7 @@ from constants.n100_constants import (
     NvdbAlias,
     MediumAlias,
 )
-from generalization.n100.road.test_dam import main as dam
+from generalization.n100.road.dam import main as dam
 
 MERGE_DIVIDED_ROADS_ALTERATIVE = False
 
@@ -70,7 +70,7 @@ OBJECT_LIMIT = 100_000
 @timing_decorator
 def data_selection_and_validation():
     plot_area = "navn IN ('Asker', 'Bærum', 'Drammen', 'Frogn', 'Hole', 'Holmestrand', 'Horten', 'Jevnaker', 'Kongsberg', 'Larvik', 'Lier', 'Lunner', 'Modum', 'Nesodden', 'Oslo', 'Ringerike', 'Tønsberg', 'Øvre Eiker')"
-    ferry_admin_test = "navn IN ('Gausdal', 'Steinkjer')"
+    ferry_admin_test = "navn IN ('Sirdal')"
     small_plot_area = "navn IN ('Oslo', 'Ringerike')"
     presentation_area = "navn IN ('Asker', 'Bærum', 'Oslo', 'Enebakk', 'Nittedal', 'Nordre Follo', 'Hole', 'Nesodden', 'Lørenskog', 'Sandnes', 'Stavanger', 'Gjesdal', 'Sola', 'Klepp', 'Strand', 'Time', 'Randaberg')"
 
@@ -660,7 +660,7 @@ def resolve_road_conflicts():
 def final_output():
 
     custom_arcpy.select_attribute_and_make_permanent_feature(
-        input_layer=Road_N100.test_dam__cleaned_roads__n100_road.value,
+        input_layer=Road_N100.dam__cleaned_roads__n100_road.value,
         expression="typeveg IN ('bilferje', 'passasjerferje')",
         output_name=Road_N100.data_preparation___road_final_output___n100_road.value,
         inverted=True,

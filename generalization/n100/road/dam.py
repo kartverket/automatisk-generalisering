@@ -18,31 +18,31 @@ from custom_tools.general_tools import custom_arcpy
 
 data_files = {
     # Stores all the relevant file paths to the geodata used in this Python file
-    "input": Road_N100.data_preparation___resolve_road_conflicts___n100_road.value, # Road_N100.data_preparation___resolve_road_conflicts___n100_road.value,
+    "input": Road_N100.data_preparation___resolve_road_conflicts___n100_road.value,
     "output": Road_N100.dam__cleaned_roads__n100_road.value,
     "roads_input": Road_N100.dam__relevant_roads__n100_road.value,
     "dam_input": Road_N100.dam__relevant_dam__n100_road.value,
-    "water_input": Road_N100.dam__relevant_water__n100_road.value, # r"in_memory\relevant_waters"
-    "dam_35m": Road_N100.dam__dam_buffer_35m__n100_road.value, # r"in_memory\\dam_buffer_35m"
-    "roads_inside": Road_N100.dam__roads_inside_with_data__n100_road.value, # r"in_memory\roads_inside_with_data"
-    "roads_outside": Road_N100.dam__roads_outside__n100_road.value, # r"in_memory\roads_outside"
-    "water_clipped": Road_N100.dam__water_clipped__n100_road.value, # r"in_memory\water_clipped"
-    "water_center": Road_N100.dam__water_center__n100_road.value, # r"in_memory\water_center"
-    "buffer_water": Road_N100.dam__buffer_water__n100_road.value, # r"in_memory\buffer_water"
-    "water_singleparts": Road_N100.dam__water_singleparts__n100_road.value, # r"in_memory\water_singleparts"
-    "dam_buffer_sti": Road_N100.dam__dam_buffer_sti__n100_road.value, # r"in_memory\dam_buffer_sti"
-    "roads_clipped_sti": Road_N100.dam__roads_clipped_sti__n100_road.value, # r"in_memory\roads_clipped_sti"
-    "roads_moved": Road_N100.dam__roads_moved__n100_road.value, # r"in_memory\roads_moved"
-    "roads_shifted": Road_N100.dam__roads_shifted__n100_road.value, # r"in_memory\roads_shifted"
-    "dam_150m": Road_N100.dam__dam_buffer_150m__n100_road.value, # r"in_memory\dam_buffer_150m"
-    "dam_60m_flat": Road_N100.dam__dam_buffer_60m_flat__n100_road.value, # r"in_memory\dam_buffer_60m_flat"
-    "dam_5m": Road_N100.dam__dam_buffer_5m_flat__n100_road.value, # r"in_memory\dam_buffer_5m_flat"
-    "dam_60m": Road_N100.dam__dam_buffer_60m__n100_road.value, # r"in_memory\dam_buffer_60m"
-    "water_55m": Road_N100.dam__water_buffer_55m__n100_road.value, # r"in_memory\water_buffer_55m"
+    "water_input": Road_N100.dam__relevant_water__n100_road.value,
+    "dam_35m": Road_N100.dam__dam_buffer_35m__n100_road.value,
+    "roads_inside": Road_N100.dam__roads_inside_with_data__n100_road.value,
+    "roads_outside": Road_N100.dam__roads_outside__n100_road.value,
+    "water_clipped": Road_N100.dam__water_clipped__n100_road.value,
+    "water_center": Road_N100.dam__water_center__n100_road.value,
+    "buffer_water": Road_N100.dam__buffer_water__n100_road.value,
+    "water_singleparts": Road_N100.dam__water_singleparts__n100_road.value,
+    "dam_buffer_sti": Road_N100.dam__dam_buffer_sti__n100_road.value,
+    "roads_clipped_sti": Road_N100.dam__roads_clipped_sti__n100_road.value,
+    "roads_moved": Road_N100.dam__roads_moved__n100_road.value,
+    "roads_shifted": Road_N100.dam__roads_shifted__n100_road.value,
+    "dam_150m": Road_N100.dam__dam_buffer_150m__n100_road.value,
+    "dam_60m_flat": Road_N100.dam__dam_buffer_60m_flat__n100_road.value,
+    "dam_5m": Road_N100.dam__dam_buffer_5m_flat__n100_road.value,
+    "dam_60m": Road_N100.dam__dam_buffer_60m__n100_road.value,
+    "water_55m": Road_N100.dam__water_buffer_55m__n100_road.value,
     "buffer_line": Road_N100.dam__dam_buffer_60m_line__n100_road.value,
-    "intermediate": Road_N100.dam__roads_intermediate__n100_road.value, # r"in_memory\roads_intermediate"
-    "paths_in_dam": Road_N100.dam__paths_in_dam__n100_road.value, # r"in_memory\paths_in_dam"
-    "paths_in_dam_valid": Road_N100.dam__paths_in_dam_valid__n100_road.value, # r"in_memory\paths_in_dam_valid"
+    "intermediate": Road_N100.dam__roads_intermediate__n100_road.value,
+    "paths_in_dam": Road_N100.dam__paths_in_dam__n100_road.value,
+    "paths_in_dam_valid": Road_N100.dam__paths_in_dam_valid__n100_road.value,
 }
 
 files_to_delete = [
@@ -67,17 +67,17 @@ def main():
 
     # Data preparation
     fetch_data()
-    if data_check():
 
+    # Data preparation
+    create_buffer()
+    create_buffer_line()
+
+    if data_check():
         # Move dam away from lakes
         clip_and_erase_pre()
         snap_merge_before_moving()
         edit_geom_pre()
         snap_and_merge_pre()
-        
-        # Data preparation
-        create_buffer()
-        create_buffer_line()
         
         # Snap roads to buffer
         roads = connect_roads_with_buffers()
@@ -88,29 +88,13 @@ def main():
         # Deletes all the intermediate files created during the process
         delete_intermediate_files()
 
-@timing_decorator
-def fetch_data():
-    print("Fetching data...")
-
-    input = [
-        [data_files["input"], None, data_files["roads_input"]], # Roads
-        [input_n100.AnleggsLinje, "objtype = 'Dam'", data_files["dam_input"]], # Dam
-        [input_n100.ArealdekkeFlate, "OBJTYPE = 'Havflate' OR OBJTYPE = 'Innsjø' OR OBJTYPE = 'InnsjøRegulert'", data_files["water_input"]] # Water
-    ]
-    for data in input:
-        custom_arcpy.select_attribute_and_make_permanent_feature(
-            input_layer=data[0],
-            expression=data[1],
-            output_name=data[2],
-            selection_type="NEW_SELECTION"
-        )
-    print("Data fetched!")
+##################
+# Help functions
+##################
 
 def data_check():
-    buffer_fc = r"in_memory\\dam_buffer_for_data_check"
-    arcpy.Buffer_analysis(Road_N100.test_dam__relevant_dam__n100_road.value, buffer_fc, "60 Meters", line_end_type="FLAT", dissolve_option="NONE")
-
-    arcpy.MakeFeatureLayer_management(Road_N100.test_dam__relevant_roads__n100_road.value, "roads_lyr")
+    buffer_fc = data_files["dam_60m_flat"]
+    arcpy.MakeFeatureLayer_management(data_files["roads_input"], "roads_lyr")
     arcpy.SelectLayerByLocation_management(
         in_layer="roads_lyr",
         overlap_type="INTERSECT",
@@ -119,150 +103,15 @@ def data_check():
     )
     count = int(arcpy.GetCount_management("roads_lyr").getOutput(0))
     if count == 0:
-        print ("Ingen veier nær demninger...")
+        print ("No roads close to dam...")
         custom_arcpy.select_attribute_and_make_permanent_feature(
-            input_layer=Road_N100.data_preparation___resolve_road_conflicts___n100_road.value,
-            output_name=Road_N100.test_dam__cleaned_roads__n100_road.value,
-            selection_type=custom_arcpy.SelectionType.NEW_SELECTION
+            input_layer=data_files["input"],
+            output_name=data_files["output"],
+            selection_type="NEW_SELECTION"
         )
-
         return False
     else:
         return True
-
-
-
-@timing_decorator
-def clip_and_erase_pre():
-    """
-    Hva den gjør:
-        Seperer veier som er innen en mindre buffer rundt demningene og veier som er utenfor, i forbredelse på å flytte veiene.
-        Hvis bru eller sti går over demningen blir det ikke inkludert i veier som skal flyttes        
-    """
-    print("Clipping and erasing roads near dam...")
-    dam_fc = data_files["dam_input"]
-    roads_fc = data_files["roads_input"]
-
-    buffer_fc = data_files["dam_35m"]
-    pre_dissolve = data_files["roads_inside"]
-    outside_fc = data_files["roads_outside"]
-    
-    water = data_files["water_input"]
-    water_clipped = data_files["water_clipped"]
-    water_center = data_files["water_center"]
-    buffer_water = data_files["buffer_water"]
-    water_single = data_files["water_singleparts"]
-
-    buffer_sti = data_files["dam_buffer_sti"]
-    clipped_sti = data_files["roads_clipped_sti"]
-
-    arcpy.Buffer_analysis(dam_fc, buffer_fc, "35 Meters", line_end_type="FLAT", dissolve_option="NONE")
-    # 1. Build a layer of only the 'L' roads
-    fld = arcpy.AddFieldDelimiters(roads_fc, "medium")
-    arcpy.MakeFeatureLayer_management(
-        roads_fc,
-        "roads_L_lyr",
-        where_clause=f"{fld} = 'L'"
-    )
-
-    # 2. Build a layer of buffers
-    arcpy.MakeFeatureLayer_management(buffer_fc, "buffer_lyr")
-
-    # 3. Select buffers intersecting the filtered roads
-    arcpy.SelectLayerByLocation_management(
-        in_layer="buffer_lyr",
-        overlap_type="INTERSECT",
-        select_features="roads_L_lyr"
-    )
-
-    arcpy.DeleteFeatures_management("buffer_lyr")
-
-    arcpy.Buffer_analysis(dam_fc, buffer_sti, "5 Meters", line_end_type="FLAT", dissolve_option="NONE")
-    arcpy.Clip_analysis(roads_fc, buffer_sti, clipped_sti)
-
-    # 1. Fields to check: objtype and Shape_Length
-    fields = ["objtype", "SHAPE@"]
-
-    with arcpy.da.UpdateCursor(clipped_sti, fields) as cursor:
-        for objtype, geom in cursor:
-            length = geom.length
-            # Keep only features where objtype == 'sti' and length > 50
-            if objtype != "Sti" or length <= 50:
-                cursor.deleteRow()
-    
-    # 2. Build a layer of buffers
-    arcpy.MakeFeatureLayer_management(buffer_fc, "buffer_lyr_sti")
-    arcpy.MakeFeatureLayer_management(clipped_sti, "roads_clipped_sti_lyr")
-
-    # 3. Select buffers intersecting the filtered roads
-    arcpy.SelectLayerByLocation_management(
-        "buffer_lyr_sti",
-        "INTERSECT",
-        "roads_clipped_sti_lyr"
-    )
-
-    arcpy.DeleteFeatures_management("buffer_lyr_sti")
-    
-    arcpy.Clip_analysis(roads_fc, buffer_fc, pre_dissolve)
-    arcpy.Erase_analysis(roads_fc, buffer_fc, outside_fc)
-
-    arcpy.Buffer_analysis(dam_fc, buffer_water, "75 Meters", dissolve_option="NONE")
-    arcpy.Clip_analysis(water, buffer_water, water_clipped)
-    arcpy.MultipartToSinglepart_management(water_clipped, water_single)
-    arcpy.FeatureToPoint_management(water_single, water_center, "CENTROID")
-
-@timing_decorator
-def snap_merge_before_moving():
-    inside_wdata_fc = data_files["roads_inside"]
-
-    tolerance = 40.0
-    # Precompute squared tolerance for faster distance checks
-    tol2 = tolerance * tolerance
-
-    # Helper: squared distance between two arcpy.Points
-    def _sq_dist(p1, p2):
-        dx = p1.X - p2.X
-        dy = p1.Y - p2.Y
-        return dx*dx + dy*dy
-
-    # Store seen endpoint‐pairs as a list of tuples: ((x1,y1),(x2,y2))
-    seen = []
-
-    # Open an update cursor to delete rows
-    with arcpy.da.UpdateCursor(inside_wdata_fc, ["OID@", "SHAPE@"]) as cursor:
-        for _, geom in cursor:
-            # Extract endpoints
-            pts = get_endpoints_cords(geom)
-            if len(pts) < 2:
-                # Skip degenerate geometries
-                continue
-            p_start, p_end = pts[0], pts[1]
-            # Check against seen endpoint pairs
-            is_duplicate = False
-            for (sx, sy), (ex, ey) in seen:
-                # Two possible match orders
-                d1 = _sq_dist(p_start, arcpy.Point(sx, sy))
-                d2 = _sq_dist(p_end,   arcpy.Point(ex, ey))
-                d3 = _sq_dist(p_start, arcpy.Point(ex, ey))
-                d4 = _sq_dist(p_end,   arcpy.Point(sx, sy))
-                
-                if (d1 <= tol2 and d2 <= tol2) or (d3 <= tol2 and d4 <= tol2):
-                    cursor.deleteRow()
-                    is_duplicate = True
-                    break
-
-            if not is_duplicate:
-                # Record this endpoint pair
-                seen.append(
-                    ((p_start.X, p_start.Y), (p_end.X, p_end.Y))
-                )
-
-    backup = build_backup(inside_wdata_fc)
-    snap_by_objtype(inside_wdata_fc)
-    arcpy.Snap_edit(inside_wdata_fc, [[inside_wdata_fc, "END", "40 Meters"]])
-    restore_deleted_lines(inside_wdata_fc, backup)
-
-    merge_all_lines2(inside_wdata_fc, tolerance=5.0)
 
 def build_backup(layer):
     # 1. Discover all non-OID, non-Geometry fields in backup
@@ -429,76 +278,7 @@ def snap_by_objtype(layer):
         snap_env = [[layer_name, "END", "40 Meters"]]
         arcpy.Snap_edit(layer_name, snap_env)
         
-        arcpy.Delete_management(layer_name) 
-
-@timing_decorator
-def edit_geom_pre():
-    print("Moving roads away from water...")
-    inside_wdata_fc = data_files["roads_inside"]
-    moved_name = "roads_moved"
-    roadlines_moved = data_files["roads_moved"]
-
-    water_center = data_files["water_center"]
-
-    inside_sr = arcpy.Describe(inside_wdata_fc).spatialReference
-    temp_fc = inside_wdata_fc + "_temp"
-
-    # Copy features for editing
-    arcpy.management.CopyFeatures(inside_wdata_fc, temp_fc)
-
-    # Create output feature class
-    out_path, out_name = os.path.split(roadlines_moved)
-    arcpy.CreateFeatureclass_management(
-        out_path=out_path,
-        out_name=out_name,
-        geometry_type="POLYLINE",
-        template=temp_fc,
-        spatial_reference=inside_sr
-    )
-
-    # Generate Near Table
-    near_table = "in_memory\\near_table"
-    arcpy.analysis.GenerateNearTable(
-        in_features=temp_fc,
-        near_features=water_center,
-        out_table=near_table,
-        search_radius="200 Meters",  # Adjust as needed
-        location="LOCATION",
-        angle="ANGLE",
-        closest="TRUE",
-        closest_count=1
-    )
-
-    # Build a lookup of NEAR_X, NEAR_Y for each road feature
-    near_lookup = {}
-    with arcpy.da.SearchCursor(near_table, ["IN_FID", "NEAR_X", "NEAR_Y"]) as cursor:
-        for fid, nx, ny in cursor:
-            near_lookup[fid] = (nx, ny)
-
-    fields = ["OID@", "SHAPE@"] + [
-        f.name for f in arcpy.ListFields(temp_fc)
-        if f.type not in ("OID", "Geometry")
-    ]
-
-    with arcpy.da.SearchCursor(temp_fc, fields) as search, \
-        arcpy.da.InsertCursor(roadlines_moved, fields[1:]) as insert:
-
-        for row in search:
-            oid = row[0]
-            geom = row[1]
-            shape_length = geom.length
-            if not geom or oid not in near_lookup:
-                insert.insertRow([geom] + list(row[2:]))
-                continue
-
-            if shape_length < 35:
-                # Do not move short lines, just copy them
-                insert.insertRow([geom] + list(row[2:]))
-                continue
-
-            near_x, near_y = near_lookup[oid]
-            shifted = move_line_away(geom, near_x, near_y, distance=35)
-            insert.insertRow([shifted] + list(row[2:]))
+        arcpy.Delete_management(layer_name)
 
 def move_line_away(geom, near_x, near_y, distance):
     sr = geom.spatialReference
@@ -523,95 +303,6 @@ def move_line_away(geom, near_x, near_y, distance):
             part_arr.add(arcpy.Point(new_x, new_y))
         new_parts.add(part_arr)
     return arcpy.Polyline(new_parts, sr)
-
-@timing_decorator
-def snap_and_merge_pre():
-    print("Snapping and merging roads after moving...")
-    dam_fc = data_files["dam_input"]
-    roadlines_moved = data_files["roads_moved"]
-    outside_fc = data_files["roads_outside"]
-    final_fc = data_files["roads_shifted"]
-
-    dam_150m = data_files["dam_150m"]
-
-    # Define snap environment
-    snap_env = [[outside_fc, "END", "40 Meters"]]
-
-    # Snap 
-    arcpy.Snap_edit(roadlines_moved, snap_env)
-
-
-    snap_env2 = [[roadlines_moved, "END", "50 Meters"]]
-
-    arcpy.Buffer_analysis(dam_fc, dam_150m, "150 Meters")
-    arcpy.MakeFeatureLayer_management(outside_fc, "outside_lyr")
-    arcpy.SelectLayerByLocation_management(
-        in_layer="outside_lyr",
-        overlap_type="INTERSECT",
-        select_features=dam_150m
-    )
-    
-
-    arcpy.Snap_edit("outside_lyr", snap_env2)
-    #arcpy.CopyFeatures_management("outside_lyr", "C:\\temp\\Roads.gdb\\roadsafterbeingsnapped22")
-
-
-    # Merge the two sets
-    arcpy.Merge_management([roadlines_moved, outside_fc], final_fc)
-
-@timing_decorator
-def create_buffer():
-    print("Creating buffers...")
-    dam_fc = data_files["dam_input"]
-    water_fc = data_files["water_input"]
-
-    arcpy.management.MakeFeatureLayer(water_fc, "water_lyr")
-    arcpy.management.SelectLayerByLocation(
-        in_layer="water_lyr",
-        select_features=dam_fc,
-        overlap_type="WITHIN_A_DISTANCE",
-        search_distance="100 Meters",
-        selection_type="NEW_SELECTION"
-    )
-
-    buffers = [
-        [dam_fc, data_files["dam_60m_flat"], "60 Meters"],
-        [dam_fc, data_files["dam_5m"], "5 Meters"],
-        [dam_fc, data_files["dam_60m"], "60 Meters"],
-        ["water_lyr", data_files["water_55m"], "55 Meters"]
-    ]
-    for i in range(len(buffers)):
-        type = "FLAT" if i < 2 else "ROUND"
-        arcpy.analysis.Buffer(
-            in_features=buffers[i][0],
-            out_feature_class=buffers[i][1] + "_buffer",
-            buffer_distance_or_field=buffers[i][2],
-            line_end_type=type,
-            dissolve_option="NONE",
-            method="PLANAR"
-        )
-        arcpy.management.Dissolve(
-            in_features=buffers[i][1] + "_buffer",
-            out_feature_class=buffers[i][1],
-            dissolve_field=[],
-            multi_part="SINGLE_PART"
-        )
-    print("Buffers created")
-
-@timing_decorator
-def create_buffer_line():
-    print("Creates dam buffer as line...")
-    buffer = data_files["dam_60m"]
-    line = data_files["buffer_line"]
-    arcpy.management.PolygonToLine(
-        in_features=buffer,
-        out_feature_class=line
-    )
-    print("Dam buffer as line created")
-
-##################
-# Help functions
-##################
 
 def get_endpoints(polyline):
         # Returns the start and end points of a polyline
@@ -738,7 +429,350 @@ def cluster_points(points, threshold=1.0):
             clusters.append([(pt, idx)])
     return clusters
 
+def calculate_angle(p1, p2, p3):
+    # Vectors from p2 to p1, and p2 to p3
+    v1 = np.array([p1.X - p2.X, p1.Y - p2.Y])
+    v2 = np.array([p3.X - p2.X, p3.Y - p2.Y])
+
+    # Lenghts of the vectors
+    len1 = np.linalg.norm(v1)
+    len2 = np.linalg.norm(v2)
+
+    if len1 == 0 or len2 == 0:
+        return 360  # Undefined angle, treated as straight line
+
+    # Calculate scalar product
+    dot = np.dot(v1, v2)
+
+    # Calculates angle in degrees
+    cos_angle = dot / (len1 * len2)
+    cos_angle = np.clip(cos_angle, -1.0, 1.0)
+    angle_rad = np.arccos(cos_angle)
+    
+    return np.degrees(angle_rad)
+
+def not_road_intersection(point, road_oid, roads):
+    point_geom = arcpy.PointGeometry(point)
+    tolerance = 5
+
+    with arcpy.da.SearchCursor(roads, ["OID@", "SHAPE@"]) as cursor:
+        for oid, shape in cursor:
+            if shape == None or oid == road_oid:
+                continue
+            if shape.distanceTo(point_geom) <= tolerance:
+                    return False
+    return True
+
+def check_for_instances(instances: list) -> bool:
+    return len(instances) > 0
+
 ##################
+# Main functions
+##################
+
+@timing_decorator
+def fetch_data():
+    print("Fetching data...")
+
+    input = [
+        [data_files["input"], None, data_files["roads_input"]], # Roads
+        [input_n100.AnleggsLinje, "objtype = 'Dam'", data_files["dam_input"]], # Dam
+        [input_n100.ArealdekkeFlate, "OBJTYPE = 'Havflate' OR OBJTYPE = 'Innsjø' OR OBJTYPE = 'InnsjøRegulert'", data_files["water_input"]] # Water
+    ]
+    for data in input:
+        custom_arcpy.select_attribute_and_make_permanent_feature(
+            input_layer=data[0],
+            expression=data[1],
+            output_name=data[2],
+            selection_type="NEW_SELECTION"
+        )
+    print("Data fetched!")
+
+@timing_decorator
+def create_buffer():
+    print("Creating buffers...")
+    dam_fc = data_files["dam_input"]
+    water_fc = data_files["water_input"]
+
+    arcpy.management.MakeFeatureLayer(water_fc, "water_lyr")
+    arcpy.management.SelectLayerByLocation(
+        in_layer="water_lyr",
+        select_features=dam_fc,
+        overlap_type="WITHIN_A_DISTANCE",
+        search_distance="100 Meters",
+        selection_type="NEW_SELECTION"
+    )
+
+    buffers = [
+        [dam_fc, data_files["dam_60m_flat"], "60 Meters"],
+        [dam_fc, data_files["dam_5m"], "5 Meters"],
+        [dam_fc, data_files["dam_60m"], "60 Meters"],
+        ["water_lyr", data_files["water_55m"], "55 Meters"]
+    ]
+    for i in range(len(buffers)):
+        type = "FLAT" if i < 2 else "ROUND"
+        arcpy.analysis.Buffer(
+            in_features=buffers[i][0],
+            out_feature_class=buffers[i][1] + "_buffer",
+            buffer_distance_or_field=buffers[i][2],
+            line_end_type=type,
+            dissolve_option="NONE",
+            method="PLANAR"
+        )
+        arcpy.management.Dissolve(
+            in_features=buffers[i][1] + "_buffer",
+            out_feature_class=buffers[i][1],
+            dissolve_field=[],
+            multi_part="SINGLE_PART"
+        )
+    print("Buffers created")
+
+@timing_decorator
+def create_buffer_line():
+    print("Creates dam buffer as line...")
+    buffer = data_files["dam_60m"]
+    line = data_files["buffer_line"]
+    arcpy.management.PolygonToLine(
+        in_features=buffer,
+        out_feature_class=line
+    )
+    print("Dam buffer as line created")
+
+@timing_decorator
+def clip_and_erase_pre():
+    """
+    Hva den gjør:
+        Seperer veier som er innen en mindre buffer rundt demningene og veier som er utenfor, i forbredelse på å flytte veiene.
+        Hvis bru eller sti går over demningen blir det ikke inkludert i veier som skal flyttes        
+    """
+    print("Clipping and erasing roads near dam...")
+    dam_fc = data_files["dam_input"]
+    roads_fc = data_files["roads_input"]
+
+    buffer_fc = data_files["dam_35m"]
+    pre_dissolve = data_files["roads_inside"]
+    outside_fc = data_files["roads_outside"]
+    
+    water = data_files["water_input"]
+    water_clipped = data_files["water_clipped"]
+    water_center = data_files["water_center"]
+    buffer_water = data_files["buffer_water"]
+    water_single = data_files["water_singleparts"]
+
+    buffer_sti = data_files["dam_buffer_sti"]
+    clipped_sti = data_files["roads_clipped_sti"]
+
+    arcpy.Buffer_analysis(dam_fc, buffer_fc, "35 Meters", line_end_type="FLAT", dissolve_option="NONE")
+    # 1. Build a layer of only the 'L' roads
+    fld = arcpy.AddFieldDelimiters(roads_fc, "medium")
+    arcpy.MakeFeatureLayer_management(
+        roads_fc,
+        "roads_L_lyr",
+        where_clause=f"{fld} = 'L'"
+    )
+
+    # 2. Build a layer of buffers
+    arcpy.MakeFeatureLayer_management(buffer_fc, "buffer_lyr")
+
+    # 3. Select buffers intersecting the filtered roads
+    arcpy.SelectLayerByLocation_management(
+        in_layer="buffer_lyr",
+        overlap_type="INTERSECT",
+        select_features="roads_L_lyr"
+    )
+
+    arcpy.DeleteFeatures_management("buffer_lyr")
+
+    arcpy.Buffer_analysis(dam_fc, buffer_sti, "5 Meters", line_end_type="FLAT", dissolve_option="NONE")
+    arcpy.Clip_analysis(roads_fc, buffer_sti, clipped_sti)
+
+    # 1. Fields to check: objtype and Shape_Length
+    fields = ["objtype", "SHAPE@"]
+
+    with arcpy.da.UpdateCursor(clipped_sti, fields) as cursor:
+        for objtype, geom in cursor:
+            length = geom.length
+            # Keep only features where objtype == 'sti' and length > 50
+            if objtype != "Sti" or length <= 50:
+                cursor.deleteRow()
+    
+    # 2. Build a layer of buffers
+    arcpy.MakeFeatureLayer_management(buffer_fc, "buffer_lyr_sti")
+    arcpy.MakeFeatureLayer_management(clipped_sti, "roads_clipped_sti_lyr")
+
+    # 3. Select buffers intersecting the filtered roads
+    arcpy.SelectLayerByLocation_management(
+        "buffer_lyr_sti",
+        "INTERSECT",
+        "roads_clipped_sti_lyr"
+    )
+
+    arcpy.DeleteFeatures_management("buffer_lyr_sti")
+    
+    arcpy.Clip_analysis(roads_fc, buffer_fc, pre_dissolve)
+    arcpy.Erase_analysis(roads_fc, buffer_fc, outside_fc)
+
+    arcpy.Buffer_analysis(dam_fc, buffer_water, "75 Meters", dissolve_option="NONE")
+    arcpy.Clip_analysis(water, buffer_water, water_clipped)
+    arcpy.MultipartToSinglepart_management(water_clipped, water_single)
+    arcpy.FeatureToPoint_management(water_single, water_center, "CENTROID")
+
+@timing_decorator
+def snap_merge_before_moving():
+    inside_wdata_fc = data_files["roads_inside"]
+
+    tolerance = 40.0
+    # Precompute squared tolerance for faster distance checks
+    tol2 = tolerance * tolerance
+
+    # Helper: squared distance between two arcpy.Points
+    def _sq_dist(p1, p2):
+        dx = p1.X - p2.X
+        dy = p1.Y - p2.Y
+        return dx*dx + dy*dy
+
+    # Store seen endpoint‐pairs as a list of tuples: ((x1,y1),(x2,y2))
+    seen = []
+
+    # Open an update cursor to delete rows
+    with arcpy.da.UpdateCursor(inside_wdata_fc, ["OID@", "SHAPE@"]) as cursor:
+        for _, geom in cursor:
+            # Extract endpoints
+            pts = get_endpoints_cords(geom)
+            if len(pts) < 2:
+                # Skip degenerate geometries
+                continue
+            p_start, p_end = pts[0], pts[1]
+            # Check against seen endpoint pairs
+            is_duplicate = False
+            for (sx, sy), (ex, ey) in seen:
+                # Two possible match orders
+                d1 = _sq_dist(p_start, arcpy.Point(sx, sy))
+                d2 = _sq_dist(p_end,   arcpy.Point(ex, ey))
+                d3 = _sq_dist(p_start, arcpy.Point(ex, ey))
+                d4 = _sq_dist(p_end,   arcpy.Point(sx, sy))
+                
+                if (d1 <= tol2 and d2 <= tol2) or (d3 <= tol2 and d4 <= tol2):
+                    cursor.deleteRow()
+                    is_duplicate = True
+                    break
+
+            if not is_duplicate:
+                # Record this endpoint pair
+                seen.append(
+                    ((p_start.X, p_start.Y), (p_end.X, p_end.Y))
+                )
+
+    backup = build_backup(inside_wdata_fc)
+    snap_by_objtype(inside_wdata_fc)
+    arcpy.Snap_edit(inside_wdata_fc, [[inside_wdata_fc, "END", "40 Meters"]])
+    restore_deleted_lines(inside_wdata_fc, backup)
+
+    merge_all_lines2(inside_wdata_fc, tolerance=5.0)
+
+@timing_decorator
+def edit_geom_pre():
+    print("Moving roads away from water...")
+    inside_wdata_fc = data_files["roads_inside"]
+    moved_name = "roads_moved"
+    roadlines_moved = data_files["roads_moved"]
+
+    water_center = data_files["water_center"]
+
+    inside_sr = arcpy.Describe(inside_wdata_fc).spatialReference
+    temp_fc = inside_wdata_fc + "_temp"
+
+    # Copy features for editing
+    arcpy.management.CopyFeatures(inside_wdata_fc, temp_fc)
+
+    # Create output feature class
+    out_path, out_name = os.path.split(roadlines_moved)
+    arcpy.CreateFeatureclass_management(
+        out_path=out_path,
+        out_name=out_name,
+        geometry_type="POLYLINE",
+        template=temp_fc,
+        spatial_reference=inside_sr
+    )
+
+    # Generate Near Table
+    near_table = "in_memory\\near_table"
+    arcpy.analysis.GenerateNearTable(
+        in_features=temp_fc,
+        near_features=water_center,
+        out_table=near_table,
+        search_radius="200 Meters",  # Adjust as needed
+        location="LOCATION",
+        angle="ANGLE",
+        closest="TRUE",
+        closest_count=1
+    )
+
+    # Build a lookup of NEAR_X, NEAR_Y for each road feature
+    near_lookup = {}
+    with arcpy.da.SearchCursor(near_table, ["IN_FID", "NEAR_X", "NEAR_Y"]) as cursor:
+        for fid, nx, ny in cursor:
+            near_lookup[fid] = (nx, ny)
+
+    fields = ["OID@", "SHAPE@"] + [
+        f.name for f in arcpy.ListFields(temp_fc)
+        if f.type not in ("OID", "Geometry")
+    ]
+
+    with arcpy.da.SearchCursor(temp_fc, fields) as search, \
+        arcpy.da.InsertCursor(roadlines_moved, fields[1:]) as insert:
+
+        for row in search:
+            oid = row[0]
+            geom = row[1]
+            shape_length = geom.length
+            if not geom or oid not in near_lookup:
+                insert.insertRow([geom] + list(row[2:]))
+                continue
+
+            if shape_length < 35:
+                # Do not move short lines, just copy them
+                insert.insertRow([geom] + list(row[2:]))
+                continue
+
+            near_x, near_y = near_lookup[oid]
+            shifted = move_line_away(geom, near_x, near_y, distance=35)
+            insert.insertRow([shifted] + list(row[2:]))
+
+@timing_decorator
+def snap_and_merge_pre():
+    print("Snapping and merging roads after moving...")
+    dam_fc = data_files["dam_input"]
+    roadlines_moved = data_files["roads_moved"]
+    outside_fc = data_files["roads_outside"]
+    final_fc = data_files["roads_shifted"]
+
+    dam_150m = data_files["dam_150m"]
+
+    # Define snap environment
+    snap_env = [[outside_fc, "END", "40 Meters"]]
+
+    # Snap 
+    arcpy.Snap_edit(roadlines_moved, snap_env)
+
+
+    snap_env2 = [[roadlines_moved, "END", "50 Meters"]]
+
+    arcpy.Buffer_analysis(dam_fc, dam_150m, "150 Meters")
+    arcpy.MakeFeatureLayer_management(outside_fc, "outside_lyr")
+    arcpy.SelectLayerByLocation_management(
+        in_layer="outside_lyr",
+        overlap_type="INTERSECT",
+        select_features=dam_150m
+    )
+    
+
+    arcpy.Snap_edit("outside_lyr", snap_env2)
+    #arcpy.CopyFeatures_management("outside_lyr", "C:\\temp\\Roads.gdb\\roadsafterbeingsnapped22")
+
+
+    # Merge the two sets
+    arcpy.Merge_management([roadlines_moved, outside_fc], final_fc)
 
 @timing_decorator
 def connect_roads_with_buffers():
@@ -839,6 +873,9 @@ def merge_instances(roads):
         types = {objtype for _, _, objtype, _ in relevant_roads}
         categories = {category for _, _, _, category in relevant_roads}
 
+        if not check_for_instances(relevant_roads):
+            continue
+
         # Checks if there are bridges in the buffer
         # If so, skip this one
         sql = f"OBJECTID IN ({','.join(str(oid) for oid, _, _, _ in relevant_roads)})"
@@ -860,7 +897,7 @@ def merge_instances(roads):
             for c in categories:
                 roads_to_edit = [[oid, geom] for oid, geom, objt, category in relevant_roads if objt == t and category == c]
                 
-                if not roads_to_edit:
+                if not check_for_instances(roads_to_edit):
                     continue
                 
                 sql = f"OBJECTID IN ({','.join(str(oid) for oid, _ in roads_to_edit)})"
@@ -904,15 +941,16 @@ def merge_instances(roads):
                         if merge_oid in roads_by_oid:
                             roads_by_oid.pop(merge_oid, None)
     
-    sql = f"OBJECTID IN ({','.join(str(oid) for oid in to_delete)})"
-    arcpy.management.SelectLayerByAttribute("roads_lyr", "NEW_SELECTION", sql)
+    if check_for_instances(to_delete):
+        sql = f"OBJECTID IN ({','.join(str(oid) for oid in to_delete)})"
+        arcpy.management.SelectLayerByAttribute("roads_lyr", "NEW_SELECTION", sql)
 
-    with arcpy.da.UpdateCursor("roads_lyr", ["OID@"]) as delete_cursor:
-        for row in delete_cursor:
-            oid = row[0]
-            delete_cursor.deleteRow()
-            roads_by_oid.pop(oid, None)
-            roads_to_buffers.pop(oid, None)
+        with arcpy.da.UpdateCursor("roads_lyr", ["OID@"]) as delete_cursor:
+            for row in delete_cursor:
+                oid = row[0]
+                delete_cursor.deleteRow()
+                roads_by_oid.pop(oid, None)
+                roads_to_buffers.pop(oid, None)
 
     new_roads = defaultdict(set)
     for oid, buffer_ids in roads_to_buffers.items():
@@ -948,23 +986,25 @@ def snap_roads(roads):
         for oid, geom in cursor:
             if geom.length > 50:
                 paths_to_avoid.add(oid)
-    sql = f"OBJECTID IN ({','.join(str(oid) for oid in paths_to_avoid)})"
-    arcpy.management.MakeFeatureLayer(paths_in_dam, "paths_in_dam_lyr")
-    arcpy.management.SelectLayerByAttribute("paths_in_dam_lyr", "NEW_SELECTION", where_clause=sql)
-    arcpy.management.CopyFeatures("paths_in_dam_lyr",paths_in_dam_valid)
-    arcpy.management.SelectLayerByLocation("paths_over_dam", "INTERSECT", paths_in_dam_valid)
+    
+    if check_for_instances(paths_to_avoid):
+        sql = f"OBJECTID IN ({','.join(str(oid) for oid in paths_to_avoid)})"
+        arcpy.management.MakeFeatureLayer(paths_in_dam, "paths_in_dam_lyr")
+        arcpy.management.SelectLayerByAttribute("paths_in_dam_lyr", "NEW_SELECTION", where_clause=sql)
+        arcpy.management.CopyFeatures("paths_in_dam_lyr",paths_in_dam_valid)
+        arcpy.management.SelectLayerByLocation("paths_over_dam", "INTERSECT", paths_in_dam_valid)
 
-    arcpy.management.MakeFeatureLayer(intermediate_fc, "roads_lyr")
+        arcpy.management.MakeFeatureLayer(intermediate_fc, "roads_lyr")
 
-    paths_to_avoid = set()
-    path_geometries = {row[0] for row in arcpy.da.SearchCursor("paths_over_dam", ["OID@", "SHAPE@"])}
-    with arcpy.da.UpdateCursor("roads_lyr", ["OID@", "SHAPE@"]) as cursor:
-        for oid, geom in cursor:
-            if geom is None:
-                cursor.deleteRow()
-                continue
-            if oid in path_geometries:
-                paths_to_avoid.add(oid)
+        paths_to_avoid = set()
+        path_geometries = {row[0] for row in arcpy.da.SearchCursor("paths_over_dam", ["OID@", "SHAPE@"])}
+        with arcpy.da.UpdateCursor("roads_lyr", ["OID@", "SHAPE@"]) as cursor:
+            for oid, geom in cursor:
+                if geom is None:
+                    cursor.deleteRow()
+                    continue
+                if oid in path_geometries:
+                    paths_to_avoid.add(oid)
     
     for buf_oid, buffer_poly in buffer_polygons:
         # For all buffer polygons, find the corresponding buffer line
@@ -978,7 +1018,7 @@ def snap_roads(roads):
         
         # Fetch all roads associated with this buffer polygon
         road_list = roads.get(buf_oid, [])
-        if not road_list:
+        if not check_for_instances(road_list):
             # If no roads, skip
             continue
         oids = ",".join(str(oid) for oid in road_list)
@@ -1063,46 +1103,6 @@ def snap_roads(roads):
     
     print("Roads snapped to buffers!")
 
-##################
-# Help functions
-##################
-
-def calculate_angle(p1, p2, p3):
-    # Vectors from p2 to p1, and p2 to p3
-    v1 = np.array([p1.X - p2.X, p1.Y - p2.Y])
-    v2 = np.array([p3.X - p2.X, p3.Y - p2.Y])
-
-    # Lenghts of the vectors
-    len1 = np.linalg.norm(v1)
-    len2 = np.linalg.norm(v2)
-
-    if len1 == 0 or len2 == 0:
-        return 360  # Undefined angle, treated as straight line
-
-    # Calculate scalar product
-    dot = np.dot(v1, v2)
-
-    # Calculates angle in degrees
-    cos_angle = dot / (len1 * len2)
-    cos_angle = np.clip(cos_angle, -1.0, 1.0)
-    angle_rad = np.arccos(cos_angle)
-    
-    return np.degrees(angle_rad)
-
-def not_road_intersection(point, road_oid, roads):
-    point_geom = arcpy.PointGeometry(point)
-    tolerance = 5
-
-    with arcpy.da.SearchCursor(roads, ["OID@", "SHAPE@"]) as cursor:
-        for oid, shape in cursor:
-            if shape == None or oid == road_oid:
-                continue
-            if shape.distanceTo(point_geom) <= tolerance:
-                    return False
-    return True
-
-##################
-
 @timing_decorator
 def remove_sharp_angles(roads):
     print("Removes sharp angles...")
@@ -1111,51 +1111,52 @@ def remove_sharp_angles(roads):
     cleaned_roads_fc = data_files["output"]
     
     oids = ",".join(str(oid) for key in roads.keys() for oid in roads[key])
-    sql = f"OBJECTID IN ({oids})"
+    if check_for_instances(oids.split(',')):
+        sql = f"OBJECTID IN ({oids})"
 
-    arcpy.management.MakeFeatureLayer(intermediate_fc, "roads_lyr")
-    
-    arcpy.management.SelectLayerByAttribute(
-        in_layer_or_view="roads_lyr",
-        selection_type="NEW_SELECTION",
-        where_clause=sql
-    )
+        arcpy.management.MakeFeatureLayer(intermediate_fc, "roads_lyr")
+        
+        arcpy.management.SelectLayerByAttribute(
+            in_layer_or_view="roads_lyr",
+            selection_type="NEW_SELECTION",
+            where_clause=sql
+        )
 
-    num = 0
+        num = 0
 
-    with arcpy.da.UpdateCursor("roads_lyr", ["OID@", "SHAPE@"]) as cursor:
-        for row in cursor:
-            if row[1] == None:
-                cursor.deleteRow()
-                continue
-            points = []
-            for part in row[1]:
-                for p in part:
-                    points.append(p)
-            
-            i = 0
-            tolerance = 70
-            count = len(points)
+        with arcpy.da.UpdateCursor("roads_lyr", ["OID@", "SHAPE@"]) as cursor:
+            for row in cursor:
+                if row[1] == None:
+                    cursor.deleteRow()
+                    continue
+                points = []
+                for part in row[1]:
+                    for p in part:
+                        points.append(p)
+                
+                i = 0
+                tolerance = 70
+                count = len(points)
 
-            while i + 2 < len(points):
-                p1, p2, p3 = points[i:i+3]
-                # Calculates the angle between the three points
-                # With other words: the angle in the centre point
-                angle = calculate_angle(p1, p2, p3)
-                # If the angle is sharper than the tolerance - delete the point
-                if angle < tolerance or angle > (360 - tolerance):
-                    if not_road_intersection(p2, row[0], "roads_lyr"):
-                        del points[i+1]
+                while i + 2 < len(points):
+                    p1, p2, p3 = points[i:i+3]
+                    # Calculates the angle between the three points
+                    # With other words: the angle in the centre point
+                    angle = calculate_angle(p1, p2, p3)
+                    # If the angle is sharper than the tolerance - delete the point
+                    if angle < tolerance or angle > (360 - tolerance):
+                        if not_road_intersection(p2, row[0], "roads_lyr"):
+                            del points[i+1]
+                        else:
+                            i += 1
                     else:
                         i += 1
-                else:
-                    i += 1
-            # Update the geometry based on the points that remains [points]
-            if len(points) < count and len(points) >= 2:
-                new_geom = arcpy.Polyline(arcpy.Array(points))
-                row[1] = new_geom
-                num += 1
-                cursor.updateRow(row)
+                # Update the geometry based on the points that remains [points]
+                if len(points) < count and len(points) >= 2:
+                    new_geom = arcpy.Polyline(arcpy.Array(points))
+                    row[1] = new_geom
+                    num += 1
+                    cursor.updateRow(row)
     
     arcpy.management.CopyFeatures(intermediate_fc, cleaned_roads_fc)
 
