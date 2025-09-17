@@ -154,19 +154,6 @@ class ResolveBuildingConflictsPoints:
     def __init__(
         self,
         rbc_input_config: logic_config.RbcPointsInitKwargs,
-        input_list_of_dicts_data_structure,
-        building_inputs: Dict[str, str],
-        building_gap_distance: int,
-        barrier_inputs: Dict[str, str],
-        barrier_gap_distances: Dict[str, int],
-        building_symbol_dimension: Dict[int, tuple],
-        lyrx_files: Dict[str, str],
-        base_path_for_lyrx: str,
-        root_path: str,
-        map_scale: str,
-        output_files: Dict[str, str],
-        write_work_files_to_memory: bool = False,
-        keep_work_files: bool = False,
     ):
         self.output_points = rbc_input_config.output_points_after_rbc
         self.output_polygons = rbc_input_config.output_polygons_after_rbc
@@ -456,7 +443,7 @@ class ResolveBuildingConflictsPolygon:
         rbc_polygon_config: logic_config.RbcPolygonInitKwargs,
     ):
         self.barrier_default = rbc_polygon_config.barrier_default
-        self.barrier_overrides = rbc_polygon_config.barrier_overrides
+        self.barrier_overbides = rbc_polygon_config.barrier_overrides
 
         self.output_building_polygons = rbc_polygon_config.output_building_polygons
         self.output_building_points = rbc_polygon_config.output_collapsed_polygon_points

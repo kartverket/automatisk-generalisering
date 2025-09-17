@@ -215,6 +215,12 @@ class Building_N100(Enum):
         )
     )
 
+    begrensningskurve_documentation_n100_building = (
+        file_manager.generate_general_subdirectory(
+            description="begrensningskurve_documentation"
+        )
+    )
+
     data_preparation___begrensningskurve_buffer_erase_2___n100_building = (
         file_manager.generate_file_name_gdb(
             script_source_name=data_preparation,

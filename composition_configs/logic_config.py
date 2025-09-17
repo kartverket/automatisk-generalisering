@@ -15,6 +15,7 @@ from typing import (
 from enum import Enum
 
 from composition_configs import core_config, type_defs
+from file_manager import work_file_manager
 from generalization.n100 import building
 
 
@@ -76,3 +77,23 @@ class RbcPointsInitKwargs:
     barrier_default: BarrierDefault
     barrier_overrides: Optional[List[BarrierRule]] = None
     map_scale: str = "100000"
+
+
+@dataclass(frozen=True)
+class BegrensningskurveLandWaterKwargs:
+    input_begrensningskurve: Union[type_defs.GdbFilePath, core_config.InjectIO]
+    input_land_cover_features: Union[type_defs.GdbFilePath, core_config.InjectIO]
+    output_begrensningskurve: Union[type_defs.GdbFilePath, core_config.InjectIO]
+    water_feature_buffer_width: int
+    water_barrier_buffer_width: int
+    work_file_manager_config: core_config.WorkFileConfig
+
+
+@dataclass(frozen=True)
+class LineToBufferSymbologyKwargs:
+    input_line: Union[type_defs.GdbFilePath, core_config.InjectIO]
+    output_line: Union[type_defs.GdbFilePath, core_config.InjectIO]
+    sql_selection_query: dict
+    work_file_manager_config: core_config.WorkFileConfig
+    buffer_distance_factor: Union[int, float] = 1
+    buffer_distance_addition: Union[int, float] = 0
