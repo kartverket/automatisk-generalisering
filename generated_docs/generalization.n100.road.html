@@ -102,6 +102,370 @@
 <section id="submodules">
 <h2>Submodules<a class="headerlink" href="#submodules" title="Link to this heading"></a></h2>
 </section>
+<section id="module-generalization.n100.road.dam">
+<span id="generalization-n100-road-dam-module"></span><h2>generalization.n100.road.dam module<a class="headerlink" href="#module-generalization.n100.road.dam" title="Link to this heading"></a></h2>
+<dl class="py function">
+<dt class="sig sig-object py" id="generalization.n100.road.dam.main">
+<span class="sig-prename descclassname"><span class="pre">generalization.n100.road.dam.</span></span><span class="sig-name descname"><span class="pre">main</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/generalization/n100/road/dam.html#main"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#generalization.n100.road.dam.main" title="Link to this definition"></a></dt>
+<dd><dl class="simple">
+<dt>Hva den gjør:</dt><dd><p>Denne tar veier som går innen 60 meter av demninger og flytter de ut til 60 meter unna demningen.</p>
+</dd>
+<dt>Hvorfor:</dt><dd><p>For at symbologien skal være synlig i N100 kartet.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="generalization.n100.road.dam.data_check">
+<span class="sig-prename descclassname"><span class="pre">generalization.n100.road.dam.</span></span><span class="sig-name descname"><span class="pre">data_check</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/generalization/n100/road/dam.html#data_check"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#generalization.n100.road.dam.data_check" title="Link to this definition"></a></dt>
+<dd><p>sjekker om det er noen veier innen 60 meter av demninger</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="generalization.n100.road.dam.build_backup">
+<span class="sig-prename descclassname"><span class="pre">generalization.n100.road.dam.</span></span><span class="sig-name descname"><span class="pre">build_backup</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">layer</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/generalization/n100/road/dam.html#build_backup"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#generalization.n100.road.dam.build_backup" title="Link to this definition"></a></dt>
+<dd><p>Bygger en backup dict av en layer</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="generalization.n100.road.dam.restore_deleted_lines">
+<span class="sig-prename descclassname"><span class="pre">generalization.n100.road.dam.</span></span><span class="sig-name descname"><span class="pre">restore_deleted_lines</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">layer</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">backup</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/generalization/n100/road/dam.html#restore_deleted_lines"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#generalization.n100.road.dam.restore_deleted_lines" title="Link to this definition"></a></dt>
+<dd><p>Gjennopretter features som har blitt slettet under snapping</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="generalization.n100.road.dam.merge_all_lines2">
+<span class="sig-prename descclassname"><span class="pre">generalization.n100.road.dam.</span></span><span class="sig-name descname"><span class="pre">merge_all_lines2</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">fc</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tolerance</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">5.0</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/generalization/n100/road/dam.html#merge_all_lines2"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#generalization.n100.road.dam.merge_all_lines2" title="Link to this definition"></a></dt>
+<dd><p>Merges all lines in a feature class that share endpoints and have the same objtype and vegkategori.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="generalization.n100.road.dam.within_tol">
+<span class="sig-prename descclassname"><span class="pre">generalization.n100.road.dam.</span></span><span class="sig-name descname"><span class="pre">within_tol</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">pt1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">pt2</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tol</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/generalization/n100/road/dam.html#within_tol"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#generalization.n100.road.dam.within_tol" title="Link to this definition"></a></dt>
+<dd><p>Euclidean distance test.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="generalization.n100.road.dam.get_endpoints_cords">
+<span class="sig-prename descclassname"><span class="pre">generalization.n100.road.dam.</span></span><span class="sig-name descname"><span class="pre">get_endpoints_cords</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">polyline</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/generalization/n100/road/dam.html#get_endpoints_cords"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#generalization.n100.road.dam.get_endpoints_cords" title="Link to this definition"></a></dt>
+<dd><p>Return a list of Point objects for the start/end of every part.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="generalization.n100.road.dam.snap_by_objtype">
+<span class="sig-prename descclassname"><span class="pre">generalization.n100.road.dam.</span></span><span class="sig-name descname"><span class="pre">snap_by_objtype</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">layer</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/generalization/n100/road/dam.html#snap_by_objtype"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#generalization.n100.road.dam.snap_by_objtype" title="Link to this definition"></a></dt>
+<dd><p>Snapper veier med samme objtype</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="generalization.n100.road.dam.move_line_away">
+<span class="sig-prename descclassname"><span class="pre">generalization.n100.road.dam.</span></span><span class="sig-name descname"><span class="pre">move_line_away</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">geom</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">near_x</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">near_y</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">distance</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/generalization/n100/road/dam.html#move_line_away"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#generalization.n100.road.dam.move_line_away" title="Link to this definition"></a></dt>
+<dd><p>Move a polyline geometry away from a point (near_x, near_y) by a specified distance.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="generalization.n100.road.dam.get_endpoints">
+<span class="sig-prename descclassname"><span class="pre">generalization.n100.road.dam.</span></span><span class="sig-name descname"><span class="pre">get_endpoints</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">polyline</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">arcpy.Geometry</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">arcpy.PointGeometry</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">arcpy.PointGeometry</span><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="../_modules/generalization/n100/road/dam.html#get_endpoints"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#generalization.n100.road.dam.get_endpoints" title="Link to this definition"></a></dt>
+<dd><p>Returns the start and end points of a polyline</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>polyline</strong> (<em>arcpy.Geometry</em>) – The geometry (line) to be analysed</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>tuple with start and end points</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>tuple(arcpy.PointGeometry)</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="generalization.n100.road.dam.add_road">
+<span class="sig-prename descclassname"><span class="pre">generalization.n100.road.dam.</span></span><span class="sig-name descname"><span class="pre">add_road</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">road_lyr</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">roads</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dict</span><span class="p"><span class="pre">[</span></span><span class="pre">list</span><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tolerance</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">2.0</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">dict</span><span class="p"><span class="pre">[</span></span><span class="pre">list</span><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="../_modules/generalization/n100/road/dam.html#add_road"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#generalization.n100.road.dam.add_road" title="Link to this definition"></a></dt>
+<dd><p>Adds roads selected in road_lyr to the dictionary roads
+if they are connected (closer than tolerance).
+These are the roads relevant for the movement analysis.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>road_lyr</strong> (<em>str</em>) – String to the feature layer</p></li>
+<li><p><strong>roads</strong> (<em>dict</em><em>[</em><em>list</em><em>]</em>) – Dictionary with relevant road objects</p></li>
+<li><p><strong>tolerance</strong> (<em>float</em>) – Float number showing tolerance of connection to be added, default 2.0</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Updated dictionary with relevant road objects</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>roads (dict[list])</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="generalization.n100.road.dam.find_merge_candidate">
+<span class="sig-prename descclassname"><span class="pre">generalization.n100.road.dam.</span></span><span class="sig-name descname"><span class="pre">find_merge_candidate</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">short_geom</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">arcpy.Geometry</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">all_roads</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">list</span><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">buffer</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">arcpy.Geometry</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tolerance</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">2.0</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span></span><a class="reference internal" href="../_modules/generalization/n100/road/dam.html#find_merge_candidate"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#generalization.n100.road.dam.find_merge_candidate" title="Link to this definition"></a></dt>
+<dd><p>Finds a road geometry that shares a common end point</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>short_geom</strong> (<em>arcpy.Geometry</em>) – The geometry that should be checked</p></li>
+<li><p><strong>all_roads</strong> (<em>list</em><em>[</em><em>list</em><em>]</em>) – oid and geom of relevant roads to connect to</p></li>
+<li><p><strong>buffer</strong> (<em>arcpy.Geometry</em>) – The geometry of the relevant buffer</p></li>
+<li><p><strong>tolerance</strong> (<em>float</em>) – Float number showing tolerance of connection to be added, default 2.0</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>The oid of the matched road oid if one, else None</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>str | None</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="generalization.n100.road.dam.reverse_geometry">
+<span class="sig-prename descclassname"><span class="pre">generalization.n100.road.dam.</span></span><span class="sig-name descname"><span class="pre">reverse_geometry</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">polyline</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">arcpy.Geometry</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">arcpy.Polyline</span></span></span><a class="reference internal" href="../_modules/generalization/n100/road/dam.html#reverse_geometry"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#generalization.n100.road.dam.reverse_geometry" title="Link to this definition"></a></dt>
+<dd><p>Createas a reversed copy of the input geometry (line).
+Only singlepart.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>polyline</strong> (<em>arcpy.Geometry</em>) – The line to be reversed</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>The reversed line</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>arcpy.Polyline</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="generalization.n100.road.dam.merge_lines">
+<span class="sig-prename descclassname"><span class="pre">generalization.n100.road.dam.</span></span><span class="sig-name descname"><span class="pre">merge_lines</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">line1</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">arcpy.Geometry</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">line2</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">arcpy.Geometry</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tolerance</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">2.0</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">arcpy.Polyline</span></span></span><a class="reference internal" href="../_modules/generalization/n100/road/dam.html#merge_lines"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#generalization.n100.road.dam.merge_lines" title="Link to this definition"></a></dt>
+<dd><p>Merges two lines into one common one.
+Calls itself with reversed geometries if incorrect directions of the input geometries.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>line1</strong> (<em>arcpy.Geometry</em>) – The first line to merge</p></li>
+<li><p><strong>line2</strong> (<em>arcpy.Geometry</em>) – The second line to merge</p></li>
+<li><p><strong>tolerance</strong> (<em>float</em>) – Float number showing tolerance of connection to be merged, default 2.0</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>A merged polyline containing both the geometries. None if something fails</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>arcpy.Polyline | None</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="generalization.n100.road.dam.create_single_buffer_line">
+<span class="sig-prename descclassname"><span class="pre">generalization.n100.road.dam.</span></span><span class="sig-name descname"><span class="pre">create_single_buffer_line</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">buffer</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">arcpy.Geometry</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">water</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="reference internal" href="../_modules/generalization/n100/road/dam.html#create_single_buffer_line"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#generalization.n100.road.dam.create_single_buffer_line" title="Link to this definition"></a></dt>
+<dd><p>Creates a polyline showing the edges of a buffer, excluding areas in water,
+and saves it to a temporarly ‘in_memory’-layer.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>buffer</strong> (<em>arcpy.Geometry</em>) – The buffer to create the line from</p></li>
+<li><p><strong>water</strong> – The feature layer containing the water geometries</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="generalization.n100.road.dam.cluster_points">
+<span class="sig-prename descclassname"><span class="pre">generalization.n100.road.dam.</span></span><span class="sig-name descname"><span class="pre">cluster_points</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">points</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">tuple</span><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tolerance</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">1.0</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">list</span><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="../_modules/generalization/n100/road/dam.html#cluster_points"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#generalization.n100.road.dam.cluster_points" title="Link to this definition"></a></dt>
+<dd><p>Clusters points that are within the tolerance
+distance of each other.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>points</strong> (<em>list</em><em>[</em><em>tuple</em><em>]</em>) – A list of tuples containing all the points to be clustered</p></li>
+<li><p><strong>tolerance</strong> (<em>float</em>) – Float number showing tolerance of connection to be clustered, default 2.0</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>A list of list where the internal lists are each cluster with the relevant point information</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>list[list]</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="generalization.n100.road.dam.calculate_angle">
+<span class="sig-prename descclassname"><span class="pre">generalization.n100.road.dam.</span></span><span class="sig-name descname"><span class="pre">calculate_angle</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">p1</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">arcpy.Geometry</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">p2</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">arcpy.Geometry</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">p3</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">arcpy.Geometry</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">float</span></span></span><a class="reference internal" href="../_modules/generalization/n100/road/dam.html#calculate_angle"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#generalization.n100.road.dam.calculate_angle" title="Link to this definition"></a></dt>
+<dd><p>Calculates the angle in point 2 between point 1 and 3.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>p1</strong> (<em>arcpy.Geometry</em>) – Point 1</p></li>
+<li><p><strong>p2</strong> (<em>arcpy.Geometry</em>) – Point 2 (the angle to be calculated is in this point)</p></li>
+<li><p><strong>p3</strong> (<em>arcpy.Geometry</em>) – Point 3</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>The angle in point 2</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>float</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="generalization.n100.road.dam.not_road_intersection">
+<span class="sig-prename descclassname"><span class="pre">generalization.n100.road.dam.</span></span><span class="sig-name descname"><span class="pre">not_road_intersection</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">point</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">arcpy.Geometry</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">road_oid</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">roads</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">bool</span></span></span><a class="reference internal" href="../_modules/generalization/n100/road/dam.html#not_road_intersection"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#generalization.n100.road.dam.not_road_intersection" title="Link to this definition"></a></dt>
+<dd><p>Checks if the point is connected to a road intersection or not.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>point</strong> (<em>arcpy.Geometry</em>) – The point geometry to consider</p></li>
+<li><p><strong>road_oid</strong> (<em>str</em>) – The oid of the road containing this point</p></li>
+<li><p><strong>roads</strong> (<em>str</em>) – Feature layer containing all the relevant roads</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>False if the point is in a road intersection, otherwise True</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>bool</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="generalization.n100.road.dam.fetch_data">
+<span class="sig-prename descclassname"><span class="pre">generalization.n100.road.dam.</span></span><span class="sig-name descname"><span class="pre">fetch_data</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/generalization/n100/road/dam.html#fetch_data"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#generalization.n100.road.dam.fetch_data" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="generalization.n100.road.dam.create_buffer">
+<span class="sig-prename descclassname"><span class="pre">generalization.n100.road.dam.</span></span><span class="sig-name descname"><span class="pre">create_buffer</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/generalization/n100/road/dam.html#create_buffer"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#generalization.n100.road.dam.create_buffer" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="generalization.n100.road.dam.create_buffer_line">
+<span class="sig-prename descclassname"><span class="pre">generalization.n100.road.dam.</span></span><span class="sig-name descname"><span class="pre">create_buffer_line</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/generalization/n100/road/dam.html#create_buffer_line"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#generalization.n100.road.dam.create_buffer_line" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="generalization.n100.road.dam.clip_and_erase_pre">
+<span class="sig-prename descclassname"><span class="pre">generalization.n100.road.dam.</span></span><span class="sig-name descname"><span class="pre">clip_and_erase_pre</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/generalization/n100/road/dam.html#clip_and_erase_pre"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#generalization.n100.road.dam.clip_and_erase_pre" title="Link to this definition"></a></dt>
+<dd><dl class="simple">
+<dt>Hva den gjør:</dt><dd><p>Seperer veier som er innen en mindre buffer rundt demningene og veier som er utenfor, i forbredelse på å flytte veiene.
+Hvis bru eller sti går over demningen blir det ikke inkludert i veier som skal flyttes</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="generalization.n100.road.dam.snap_merge_before_moving">
+<span class="sig-prename descclassname"><span class="pre">generalization.n100.road.dam.</span></span><span class="sig-name descname"><span class="pre">snap_merge_before_moving</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/generalization/n100/road/dam.html#snap_merge_before_moving"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#generalization.n100.road.dam.snap_merge_before_moving" title="Link to this definition"></a></dt>
+<dd><dl class="simple">
+<dt>Hva den gjør:</dt><dd><p>snapper og merger veier som er like før de blir flyttet</p>
+</dd>
+<dt>Hvorfor:</dt><dd><p>gjør det letter å beholde sammenhengen i veiene etter flytting</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="generalization.n100.road.dam.edit_geom_pre">
+<span class="sig-prename descclassname"><span class="pre">generalization.n100.road.dam.</span></span><span class="sig-name descname"><span class="pre">edit_geom_pre</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/generalization/n100/road/dam.html#edit_geom_pre"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#generalization.n100.road.dam.edit_geom_pre" title="Link to this definition"></a></dt>
+<dd><p>Flytter veier inni buffer litt unna vannet</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="generalization.n100.road.dam.snap_and_merge_pre">
+<span class="sig-prename descclassname"><span class="pre">generalization.n100.road.dam.</span></span><span class="sig-name descname"><span class="pre">snap_and_merge_pre</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/generalization/n100/road/dam.html#snap_and_merge_pre"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#generalization.n100.road.dam.snap_and_merge_pre" title="Link to this definition"></a></dt>
+<dd><p>snapper og kombinerer veier som har blitt flyttet og veier som ikke har blitt flyttet</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="generalization.n100.road.dam.connect_roads_with_buffers">
+<span class="sig-prename descclassname"><span class="pre">generalization.n100.road.dam.</span></span><span class="sig-name descname"><span class="pre">connect_roads_with_buffers</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">dict</span><span class="p"><span class="pre">[</span></span><span class="pre">list</span><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="../_modules/generalization/n100/road/dam.html#connect_roads_with_buffers"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#generalization.n100.road.dam.connect_roads_with_buffers" title="Link to this definition"></a></dt>
+<dd><p>Creates a dictionary where the keys are al the buffer oids,
+and the values are lists of lists containing the road geometry and
+information for all the roads connected to this buffer.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p><dl class="simple">
+<dt>A dictionary with key = buffer_oid, and values are</dt><dd><p>lists of the relevant information (oid, shape, …) of the
+related roads</p>
+</dd>
+</dl>
+</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>dict[list]</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="generalization.n100.road.dam.merge_instances">
+<span class="sig-prename descclassname"><span class="pre">generalization.n100.road.dam.</span></span><span class="sig-name descname"><span class="pre">merge_instances</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">roads</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dict</span><span class="p"><span class="pre">[</span></span><span class="pre">list</span><span class="p"><span class="pre">]</span></span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">defaultdict</span><span class="p"><span class="pre">[</span></span><span class="pre">list</span><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="../_modules/generalization/n100/road/dam.html#merge_instances"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#generalization.n100.road.dam.merge_instances" title="Link to this definition"></a></dt>
+<dd><p>Merge the selected roads.
+For each road: select the relevant instances.
+For each type and category: merge the relevant instances.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>roads</strong> (<em>dict</em><em>[</em><em>list</em><em>]</em>) – Dictionary containing all the buffer -&gt; road connections</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p><dl class="simple">
+<dt>An updated dictionary with the merged geometry.</dt><dd><p>The list do contain the oid for every connected road</p>
+</dd>
+</dl>
+</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>defaultdict[list]</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="generalization.n100.road.dam.snap_roads">
+<span class="sig-prename descclassname"><span class="pre">generalization.n100.road.dam.</span></span><span class="sig-name descname"><span class="pre">snap_roads</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">roads</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dict</span><span class="p"><span class="pre">[</span></span><span class="pre">list</span><span class="p"><span class="pre">]</span></span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="reference internal" href="../_modules/generalization/n100/road/dam.html#snap_roads"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#generalization.n100.road.dam.snap_roads" title="Link to this definition"></a></dt>
+<dd><p>Snaps roads to the buffer edges.
+Points that are close to each other are snapped to the same point.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>roads</strong> (<em>dict</em><em>[</em><em>list</em><em>]</em>) – Dictionary containing the relationships between buffers and roads</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="generalization.n100.road.dam.remove_sharp_angles">
+<span class="sig-prename descclassname"><span class="pre">generalization.n100.road.dam.</span></span><span class="sig-name descname"><span class="pre">remove_sharp_angles</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">roads</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dict</span><span class="p"><span class="pre">[</span></span><span class="pre">list</span><span class="p"><span class="pre">]</span></span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="reference internal" href="../_modules/generalization/n100/road/dam.html#remove_sharp_angles"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#generalization.n100.road.dam.remove_sharp_angles" title="Link to this definition"></a></dt>
+<dd><p>Detects sharp edges in the polylines and deletes these points.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>roads</strong> (<em>dict</em><em>[</em><em>list</em><em>]</em>) – Dictionary containing the relationships between buffers and roads</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="generalization.n100.road.dam.delete_intermediate_files">
+<span class="sig-prename descclassname"><span class="pre">generalization.n100.road.dam.</span></span><span class="sig-name descname"><span class="pre">delete_intermediate_files</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="reference internal" href="../_modules/generalization/n100/road/dam.html#delete_intermediate_files"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#generalization.n100.road.dam.delete_intermediate_files" title="Link to this definition"></a></dt>
+<dd><p>Deletes the intermediate files used during the process
+of snapping roads away from the dam buffers.</p>
+</dd></dl>
+
+</section>
 <section id="generalization-n100-road-data-preparation-module">
 <h2>generalization.n100.road.data_preparation module<a class="headerlink" href="#generalization-n100-road-data-preparation-module" title="Link to this heading"></a></h2>
 </section>

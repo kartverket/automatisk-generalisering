@@ -93,6 +93,7 @@
 <span class="n">first_generalization</span> <span class="o">=</span> <span class="s2">&quot;first_generalization&quot;</span>
 <span class="n">test1</span> <span class="o">=</span> <span class="s2">&quot;test1&quot;</span>
 <span class="n">testing_file</span> <span class="o">=</span> <span class="s2">&quot;testing_file&quot;</span>
+<span class="n">dam_file</span> <span class="o">=</span> <span class="s2">&quot;dam&quot;</span>
 <span class="n">test2</span> <span class="o">=</span> <span class="s2">&quot;test2&quot;</span>
 
 
@@ -1305,6 +1306,107 @@
             <span class="n">description</span><span class="o">=</span><span class="s2">&quot;road_input_functional_roadclass_studyarea_selector&quot;</span><span class="p">,</span>
         <span class="p">)</span>
     <span class="p">)</span>
+
+    <span class="c1"># ========================================</span>
+    <span class="c1">#                                      DAM</span>
+    <span class="c1"># ========================================</span>
+
+    <span class="n">dam__relevant_roads__n100_road</span> <span class="o">=</span> <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_gdb</span><span class="p">(</span>
+        <span class="n">script_source_name</span><span class="o">=</span><span class="n">dam_file</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">&quot;relevant_roads&quot;</span>
+    <span class="p">)</span>
+
+    <span class="n">dam__relevant_dam__n100_road</span> <span class="o">=</span> <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_gdb</span><span class="p">(</span>
+        <span class="n">script_source_name</span><span class="o">=</span><span class="n">dam_file</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">&quot;relevant_dam&quot;</span>
+    <span class="p">)</span>
+
+    <span class="n">dam__relevant_water__n100_road</span> <span class="o">=</span> <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_gdb</span><span class="p">(</span>
+        <span class="n">script_source_name</span><span class="o">=</span><span class="n">dam_file</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">&quot;relevant_water&quot;</span>
+    <span class="p">)</span>
+
+    <span class="n">dam__dam_buffer_35m__n100_road</span> <span class="o">=</span> <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_gdb</span><span class="p">(</span>
+        <span class="n">script_source_name</span><span class="o">=</span><span class="n">dam_file</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">&quot;dam_buffer_35m&quot;</span>
+    <span class="p">)</span>
+
+    <span class="n">dam__roads_inside_with_data__n100_road</span> <span class="o">=</span> <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_gdb</span><span class="p">(</span>
+        <span class="n">script_source_name</span><span class="o">=</span><span class="n">dam_file</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">&quot;roads_inside_with_data&quot;</span>
+    <span class="p">)</span>
+
+    <span class="n">dam__roads_outside__n100_road</span> <span class="o">=</span> <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_gdb</span><span class="p">(</span>
+        <span class="n">script_source_name</span><span class="o">=</span><span class="n">dam_file</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">&quot;roads_outside&quot;</span>
+    <span class="p">)</span>
+
+    <span class="n">dam__water_clipped__n100_road</span> <span class="o">=</span> <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_gdb</span><span class="p">(</span>
+        <span class="n">script_source_name</span><span class="o">=</span><span class="n">dam_file</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">&quot;water_clipped&quot;</span>
+    <span class="p">)</span>
+
+    <span class="n">dam__water_center__n100_road</span> <span class="o">=</span> <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_gdb</span><span class="p">(</span>
+        <span class="n">script_source_name</span><span class="o">=</span><span class="n">dam_file</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">&quot;water_center&quot;</span>
+    <span class="p">)</span>
+
+    <span class="n">dam__buffer_water__n100_road</span> <span class="o">=</span> <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_gdb</span><span class="p">(</span>
+        <span class="n">script_source_name</span><span class="o">=</span><span class="n">dam_file</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">&quot;buffer_water&quot;</span>
+    <span class="p">)</span>
+
+    <span class="n">dam__water_singleparts__n100_road</span> <span class="o">=</span> <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_gdb</span><span class="p">(</span>
+        <span class="n">script_source_name</span><span class="o">=</span><span class="n">dam_file</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">&quot;water_singleparts&quot;</span>
+    <span class="p">)</span>
+
+    <span class="n">dam__dam_buffer_sti__n100_road</span> <span class="o">=</span> <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_gdb</span><span class="p">(</span>
+        <span class="n">script_source_name</span><span class="o">=</span><span class="n">dam_file</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">&quot;dam_buffer_sti&quot;</span>
+    <span class="p">)</span>
+
+    <span class="n">dam__roads_clipped_sti__n100_road</span> <span class="o">=</span> <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_gdb</span><span class="p">(</span>
+        <span class="n">script_source_name</span><span class="o">=</span><span class="n">dam_file</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">&quot;roads_clipped_sti&quot;</span>
+    <span class="p">)</span>
+
+    <span class="n">dam__roads_moved__n100_road</span> <span class="o">=</span> <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_gdb</span><span class="p">(</span>
+        <span class="n">script_source_name</span><span class="o">=</span><span class="n">dam_file</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">&quot;roads_moved&quot;</span>
+    <span class="p">)</span>
+
+    <span class="n">dam__roads_shifted__n100_road</span> <span class="o">=</span> <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_gdb</span><span class="p">(</span>
+        <span class="n">script_source_name</span><span class="o">=</span><span class="n">dam_file</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">&quot;roads_shifted&quot;</span>
+    <span class="p">)</span>
+
+    <span class="n">dam__dam_buffer_150m__n100_road</span> <span class="o">=</span> <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_gdb</span><span class="p">(</span>
+        <span class="n">script_source_name</span><span class="o">=</span><span class="n">dam_file</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">&quot;dam_buffer_150m&quot;</span>
+    <span class="p">)</span>
+
+    <span class="n">dam__dam_buffer_60m_flat__n100_road</span> <span class="o">=</span> <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_gdb</span><span class="p">(</span>
+        <span class="n">script_source_name</span><span class="o">=</span><span class="n">dam_file</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">&quot;dam_buffer_60m_flat&quot;</span>
+    <span class="p">)</span>
+
+    <span class="n">dam__dam_buffer_5m_flat__n100_road</span> <span class="o">=</span> <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_gdb</span><span class="p">(</span>
+        <span class="n">script_source_name</span><span class="o">=</span><span class="n">dam_file</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">&quot;dam_buffer_5m_flat&quot;</span>
+    <span class="p">)</span>
+
+    <span class="n">dam__dam_buffer_60m__n100_road</span> <span class="o">=</span> <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_gdb</span><span class="p">(</span>
+        <span class="n">script_source_name</span><span class="o">=</span><span class="n">dam_file</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">&quot;dam_buffer_60m&quot;</span>
+    <span class="p">)</span>
+
+    <span class="n">dam__water_buffer_55m__n100_road</span> <span class="o">=</span> <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_gdb</span><span class="p">(</span>
+        <span class="n">script_source_name</span><span class="o">=</span><span class="n">dam_file</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">&quot;water_buffer_55m&quot;</span>
+    <span class="p">)</span>
+
+    <span class="n">dam__dam_buffer_60m_line__n100_road</span> <span class="o">=</span> <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_gdb</span><span class="p">(</span>
+        <span class="n">script_source_name</span><span class="o">=</span><span class="n">dam_file</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">&quot;dam_buffer_60m_line&quot;</span>
+    <span class="p">)</span>
+
+    <span class="n">dam__roads_intermediate__n100_road</span> <span class="o">=</span> <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_gdb</span><span class="p">(</span>
+        <span class="n">script_source_name</span><span class="o">=</span><span class="n">dam_file</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">&quot;roads_intermediate&quot;</span>
+    <span class="p">)</span>
+
+    <span class="n">dam__paths_in_dam__n100_road</span> <span class="o">=</span> <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_gdb</span><span class="p">(</span>
+        <span class="n">script_source_name</span><span class="o">=</span><span class="n">dam_file</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">&quot;paths_in_dam&quot;</span>
+    <span class="p">)</span>
+
+    <span class="n">dam__paths_in_dam_valid__n100_road</span> <span class="o">=</span> <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_gdb</span><span class="p">(</span>
+        <span class="n">script_source_name</span><span class="o">=</span><span class="n">dam_file</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">&quot;paths_in_dam_valid&quot;</span>
+    <span class="p">)</span>
+
+    <span class="n">dam__cleaned_roads__n100_road</span> <span class="o">=</span> <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_gdb</span><span class="p">(</span>
+        <span class="n">script_source_name</span><span class="o">=</span><span class="n">dam_file</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">&quot;cleaned_roads&quot;</span>
+    <span class="p">)</span>
+
     <span class="c1"># ========================================</span>
     <span class="c1">#                                TEST2</span>
     <span class="c1"># ========================================</span>

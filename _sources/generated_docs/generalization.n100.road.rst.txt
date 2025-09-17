@@ -4,6 +4,14 @@ generalization.n100.road package
 Submodules
 ----------
 
+generalization.n100.road.dam module
+-----------------------------------
+
+.. automodule:: generalization.n100.road.dam
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
 generalization.n100.road.data\_preparation module
 -------------------------------------------------
 
