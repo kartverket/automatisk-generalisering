@@ -111,10 +111,10 @@ class DissolveWithIntersections:
             output=feature_to_line_path,
         )
 
-        deleting_added_field_from_feature_to_x(
+        """deleting_added_field_from_feature_to_x(
             input_file_feature=feature_to_line_path,
             field_name_feature=selection_path,
-        )
+        )"""
 
         self.list_of_output_files.append(feature_to_line_path)
 
@@ -132,10 +132,10 @@ class DissolveWithIntersections:
             self._create_intersections(
                 input_line=self.dissolved_feature, output=self.feature_to_line
             )
-            deleting_added_field_from_feature_to_x(
+            """deleting_added_field_from_feature_to_x(
                 input_file_feature=self.feature_to_line,
                 field_name_feature=self.dissolved_feature,
-            )
+            )"""
             arcpy.management.CopyFeatures(
                 in_features=self.feature_to_line,
                 out_feature_class=self.output_processed_feature,
