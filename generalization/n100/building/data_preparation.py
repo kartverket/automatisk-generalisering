@@ -294,7 +294,7 @@ def begrensningskurve_land_and_water_bodies():
             object=begrensningskurve, tag=processed_begrensningskurve
         ),
         water_feature_buffer_width=N100_Values.building_water_intrusion_distance_m.value,
-        water_barrier_buffer_width=1,
+        water_barrier_buffer_width=30,
         work_file_manager_config=core_config.WorkFileConfig(
             root_file=Building_N100.begrensingskurve_land_water___root_file___n100_building.value,
         ),
@@ -328,68 +328,6 @@ def begrensningskurve_land_and_water_bodies():
         work_file_manager_config=partition_iterator_work_file_config,
     )
     begrensningskurve_partition.run()
-
-
-@timing_decorator
-def old_begrensningskurve_land_and_water_bodies():
-    """
-    What:
-        Creates a modified water boundary feature creating a polygon where an offset is erased of the land boundary
-        depending on the size of the waterbody object, thin objects does not get this offset but wide waterbodies does.
-    How:
-        Selects water features and creates a water feature polygon. Then depending on the ratio of ares to length
-        it either appends the objects to the final feature or creates a modified water feature polygon.
-    Why:
-        This allows for building objects to graphically slightly move into some water features making it easier
-        to keep buildings when placed between water and road features in future processing.
-    """
-
-    begrensningskurve = "begrensningskurve"
-    land_cover = "land_cover"
-
-    inputs = {
-        begrensningskurve: [
-            "input",
-            Building_N100.data_selection___begrensningskurve_n100_input_data___n100_building.value,
-        ],
-        land_cover: [
-            "input",
-            Building_N100.data_selection___land_cover_n100_input_data___n100_building.value,
-        ],
-    }
-
-    outputs = {
-        begrensningskurve: [
-            "processed_begrensningskurve",
-            Building_N100.data_preparation___processed_begrensningskurve___n100_building.value,
-        ],
-    }
-
-    process_begrensningskurve = {
-        "class": BegrensningskurveLandWaterbodies,
-        "method": "run",
-        "params": {
-            "input_begrensningskurve": (begrensningskurve, "input"),
-            "input_land_cover_features": (land_cover, "input"),
-            "water_feature_buffer_width": N100_Values.building_water_intrusion_distance_m.value,
-            "output_begrensningskurve": (
-                f"{begrensningskurve}",
-                "processed_begrensningskurve",
-            ),
-            "write_work_files_to_memory": False,
-            "root_file": Building_N100.begrensingskurve_land_water___root_file___n100_building.value,
-        },
-    }
-
-    partition_begrensningskurve = PartitionIterator(
-        alias_path_data=inputs,
-        alias_path_outputs=outputs,
-        custom_functions=[process_begrensningskurve],
-        root_file_partition_iterator=Building_N100.data_preparation___begrensningskurve_base___n100_building.value,
-        dictionary_documentation_path=Building_N100.data_preparation___begrensingskurve_docu___building_n100.value,
-        feature_count=800000,
-    )
-    partition_begrensningskurve.run()
 
 
 @timing_decorator

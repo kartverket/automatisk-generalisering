@@ -62,16 +62,6 @@ class BufferDisplacement:
     def __init__(
         self,
         buffer_displacement_config: logic_config.BufferDisplacementKwargs,
-        input_road_lines: str,
-        input_building_points: str,
-        output_building_points: str,
-        sql_selection_query: dict,
-        root_file: str,
-        buffer_displacement_meter: int = 30,
-        building_symbol_dimensions: Dict[int, Tuple[int, int]] = None,
-        input_misc_objects: Dict[str, List[Union[str, int]]] = None,
-        write_work_files_to_memory: bool = True,
-        keep_work_files: bool = False,
     ):
         """
         Initialize the BufferDisplacement class with the necessary input data and configuration.
@@ -94,12 +84,7 @@ class BufferDisplacement:
         self.wfm_config = buffer_displacement_config.work_file_manager_config
         self.wfm = WorkFileManager(config=self.wfm_config)
 
-        self.root_file = root_file
-
         self.current_building_points = self.input_building_points
-
-        self.write_work_files_to_memory = write_work_files_to_memory
-        self.keep_work_files = keep_work_files
 
         self.buffer_displacement_meter = (
             buffer_displacement_config.displacement_distance_m
@@ -124,30 +109,6 @@ class BufferDisplacement:
         self.output_building_points_to_polygon = None
         self.erased_building_polygons = None
         self.output_feature_to_points = None
-
-        self.working_files_list = []
-        self.working_files_list_2 = []
-
-    def initialize_work_file_location(self):
-        """
-        Determines the file location for temporary work files, either in memory or on disk, based on class parameters.
-        """
-        temporary_file = "in_memory\\"
-        permanent_file = f"{self.root_file}_"
-        if self.root_file is None:
-            if not self.write_work_files_to_memory:
-                raise ValueError(
-                    "Need to specify root_file path to write to disk for work files."
-                )
-            if self.keep_work_files:
-                raise ValueError(
-                    "Need to specify root_file path and write to disk to keep_work_files."
-                )
-
-        if self.write_work_files_to_memory:
-            self.file_location = temporary_file
-        else:
-            self.file_location = permanent_file
 
     def finding_dimensions(self, buffer_displacement_meter: int):
         """
@@ -254,11 +215,11 @@ class BufferDisplacement:
             factor (Union[int, float]): The buffer factor to be applied.
             fixed_addition (Union[int, float]): The fixed buffer addition value to be applied.
         """
-        factor_name = str(factor).replace(".", "_")
-        fixed_addition_name = str(fixed_addition).replace(".", "_")
+        factor_str = str(factor).replace(".", "_")
+        fixed_addition_str = str(fixed_addition).replace(".", "_")
 
         self.output_road_buffer = self.wfm.build_file_path(
-            file_name=f"road_facter_{factor_name}_add_{fixed_addition_name}",
+            file_name=f"road_facter_{factor_str}_add_{fixed_addition_str}",
         )
 
         line_to_buffer_symbology = LineToBufferSymbology(
@@ -278,8 +239,10 @@ class BufferDisplacement:
         for feature_name, feature_details in self.input_line_barriers.items():
             feature_path, buffer_width = feature_details
             calculated_buffer_width = (buffer_width * factor) + fixed_addition
-            self.misc_buffer_output = f"{self.file_location}_{feature_name}_buffer_factor_{factor_name}_add_{fixed_addition_name}__{self.unique_id}"
-            self.working_files_list.append(self.misc_buffer_output)
+            self.misc_buffer_output = self.wfm.build_file_path(
+                file_name=f"{feature_name}_buffer_factor_{factor_str}_add_{fixed_addition_str}",
+                file_type="gdb",
+            )
 
             if buffer_width == 0:
                 arcpy.analysis.PairwiseBuffer(
@@ -295,16 +258,20 @@ class BufferDisplacement:
                 )
             misc_buffer_outputs.append(self.misc_buffer_output)
 
-        self.merged_barrier_output = f"{self.file_location}_merged_barriers_factor_{factor_name}_add_{fixed_addition_name}__{self.unique_id}"
-        self.working_files_list.append(self.merged_barrier_output)
+        self.merged_barrier_output = self.wfm.build_file_path(
+            file_name=f"merged_barriers_factor_{factor_str}_add_{fixed_addition_str}",
+            file_type="gdb",
+        )
 
         arcpy.management.Merge(
             inputs=[self.output_road_buffer] + misc_buffer_outputs,
             output=self.merged_barrier_output,
         )
 
-        self.output_building_points_to_polygon = f"{self.root_file}_building_factor_{factor_name}_add_{fixed_addition_name}__{self.unique_id}"
-        self.working_files_list.append(self.output_building_points_to_polygon)
+        self.output_building_points_to_polygon = self.wfm.build_file_path(
+            file_name=f"building_factor_{factor_str}_add_{fixed_addition_str}",
+            file_type="gdb",
+        )
 
         building_polygons = PolygonProcessor(
             input_building_points=self.current_building_points,
@@ -315,8 +282,10 @@ class BufferDisplacement:
         )
         building_polygons.run()
 
-        self.erased_building_polygons = f"{self.file_location}_erased_buildings_factor_{factor_name}_add_{fixed_addition_name}__{self.unique_id}"
-        self.working_files_list.append(self.erased_building_polygons)
+        self.erased_building_polygons = self.wfm.build_file_path(
+            file_name=f"erased_buildings_factor_{factor_str}_add_{fixed_addition_str}",
+            file_type="gdb",
+        )
 
         arcpy.analysis.Erase(
             in_features=self.output_building_points_to_polygon,
@@ -324,8 +293,10 @@ class BufferDisplacement:
             out_feature_class=self.erased_building_polygons,
         )
 
-        self.output_feature_to_points = f"{self.root_file}_output_feature_to_points_factor_{factor_name}_add_{fixed_addition_name}__{self.unique_id}"
-        self.working_files_list_2.append(self.output_feature_to_points)
+        self.output_feature_to_points = self.wfm.build_file_path(
+            file_name=f"output_feature_to_points_factor_{factor_str}_add_{fixed_addition_str}",
+            file_type="gdb",
+        )
 
         arcpy.management.FeatureToPoint(
             in_features=self.erased_building_polygons,
@@ -370,60 +341,20 @@ class BufferDisplacement:
         Executes the buffer displacement process, running the calculations for buffer increments, applying buffers,
         displacing building points, and writing the final output.
         """
-        self.initialize_work_file_location()
         self.finding_dimensions(self.buffer_displacement_meter)
         self.calculate_buffer_increments()
 
         for factor, addition in self.increments:
             self.process_buffer_factor(factor, addition)
 
-            if not self.keep_work_files:
-                self.delete_working_files(*self.working_files_list)
+            self.wfm.delete_created_files(exceptions=self.output_feature_to_points)
 
         arcpy.management.Copy(
             in_data=self.current_building_points,
             out_data=self.output_building_points,
         )
-        if not self.keep_work_files:
-            self.delete_working_files(*self.working_files_list_2)
+        self.wfm.delete_created_files()
 
 
 if __name__ == "__main__":
     environment_setup.main()
-
-    misc_objects = {
-        "begrensningskurve": [
-            Building_N100.data_preparation___processed_begrensningskurve___n100_building.value,
-            0,
-        ],
-        "urban_areas": [
-            Building_N100.data_preparation___urban_area_selection_n100___n100_building.value,
-            1,
-        ],
-        "bane_station": [
-            Building_N100.data_selection___railroad_stations_n100_input_data___n100_building.value,
-            1,
-        ],
-        "bane_lines": [
-            Building_N100.data_selection___railroad_tracks_n100_input_data___n100_building.value,
-            1,
-        ],
-    }
-
-    point_displacement = BufferDisplacement(
-        input_road_lines=Building_N100.data_preparation___unsplit_roads___n100_building.value,
-        input_building_points=Building_N100.point_displacement_with_buffer___building_points_selection___n100_building.value,
-        input_misc_objects=misc_objects,
-        output_building_points=Building_N100.line_to_buffer_symbology___buffer_displaced_building_points___n100_building.value,
-        sql_selection_query=N100_SQLResources.new_road_symbology_size_sql_selection.value,
-        root_file=Building_N100.line_to_buffer_symbology___root_buffer_displaced___n100_building.value,
-        building_symbol_dimensions=N100_Symbology.building_symbol_dimensions.value,
-        buffer_displacement_meter=N100_Values.buffer_clearance_distance_m.value,
-        write_work_files_to_memory=True,
-        keep_work_files=False,
-    )
-    point_displacement.run()
-
-    point_displacement.finding_dimensions(point_displacement.buffer_displacement_meter)
-    point_displacement.calculate_buffer_increments()
-    print(type(point_displacement.increments))
