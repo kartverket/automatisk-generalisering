@@ -8,6 +8,8 @@ from file_manager.n100.file_manager_buildings import Building_N100
 from custom_tools.general_tools.line_to_buffer_symbology import LineToBufferSymbology
 from custom_tools.general_tools.polygon_processor import PolygonProcessor
 from custom_tools.decorators.partition_io_decorator import partition_io_decorator
+from composition_configs import logic_config, core_config
+from file_manager.work_file_manager import WorkFileManager
 
 
 class BufferDisplacement:
@@ -59,6 +61,7 @@ class BufferDisplacement:
 
     def __init__(
         self,
+        buffer_displacement_config: logic_config.BufferDisplacementKwargs,
         input_road_lines: str,
         input_building_points: str,
         output_building_points: str,
@@ -77,23 +80,32 @@ class BufferDisplacement:
             See class docstring.
         """
 
-        self.input_road_lines = input_road_lines
-        self.input_building_points = input_building_points
-        self.sql_selection_query = sql_selection_query
+        self.input_road_lines = buffer_displacement_config.input_road_line
+        self.input_building_points = buffer_displacement_config.input_building_points
+        self.input_line_barriers = buffer_displacement_config.input_line_barriers
+
+        self.output_building_points = buffer_displacement_config.output_building_points
+
+        self.sql_selection_query = buffer_displacement_config.sql_selection_query
+        self.building_symbol_dimensions = (
+            buffer_displacement_config.building_symbol_dimension
+        )
+
+        self.wfm_config = buffer_displacement_config.work_file_manager_config
+        self.wfm = WorkFileManager(config=self.wfm_config)
+
         self.root_file = root_file
-        self.input_misc_objects = input_misc_objects
-        self.output_building_points = output_building_points
 
         self.current_building_points = self.input_building_points
 
         self.write_work_files_to_memory = write_work_files_to_memory
         self.keep_work_files = keep_work_files
 
-        self.buffer_displacement_meter = buffer_displacement_meter
-        self.building_symbol_dimensions = building_symbol_dimensions
+        self.buffer_displacement_meter = (
+            buffer_displacement_config.displacement_distance_m
+        )
 
         self.largest_road_dimension = None
-        self.buffer_displacement_meter = buffer_displacement_meter
         self.maximum_buffer_increase_tolerance = None
         self.tolerance = None
         self.target_value = None
@@ -245,24 +257,25 @@ class BufferDisplacement:
         factor_name = str(factor).replace(".", "_")
         fixed_addition_name = str(fixed_addition).replace(".", "_")
 
-        self.output_road_buffer = f"{self.file_location}_road_factor_{factor_name}_add_{fixed_addition_name}__{self.unique_id}"
-        self.working_files_list.append(self.output_road_buffer)
+        self.output_road_buffer = self.wfm.build_file_path(
+            file_name=f"road_facter_{factor_name}_add_{fixed_addition_name}",
+        )
 
         line_to_buffer_symbology = LineToBufferSymbology(
-            input_road_lines=self.input_road_lines,
-            sql_selection_query=self.sql_selection_query,
-            output_road_buffer=self.output_road_buffer,
-            root_file=self.root_file,
-            buffer_factor=factor,
-            fixed_buffer_addition=fixed_addition,
-            keep_work_files=self.keep_work_files,
-            write_work_files_to_memory=self.write_work_files_to_memory,
+            logic_config.LineToBufferSymbologyKwargs(
+                input_line=self.input_road_lines,
+                output_line=self.output_road_buffer,
+                sql_selection_query=self.sql_selection_query,
+                work_file_manager_config=self.wfm_config,
+                buffer_distance_factor=factor,
+                buffer_distance_addition=fixed_addition,
+            )
         )
         line_to_buffer_symbology.run()
 
         misc_buffer_outputs = []
 
-        for feature_name, feature_details in self.input_misc_objects.items():
+        for feature_name, feature_details in self.input_line_barriers.items():
             feature_path, buffer_width = feature_details
             calculated_buffer_width = (buffer_width * factor) + fixed_addition
             self.misc_buffer_output = f"{self.file_location}_{feature_name}_buffer_factor_{factor_name}_add_{fixed_addition_name}__{self.unique_id}"
@@ -272,7 +285,7 @@ class BufferDisplacement:
                 arcpy.analysis.PairwiseBuffer(
                     in_features=feature_path,
                     out_feature_class=self.misc_buffer_output,
-                    buffer_distance_or_field=f"0,1 Meters",
+                    buffer_distance_or_field="0,1 Meters",
                 )
             else:
                 arcpy.analysis.PairwiseBuffer(

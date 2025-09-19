@@ -183,10 +183,10 @@ class ResolveBuildingConflictsPoints:
 
         records: List[_RbcRecord] = []
         for s in self.specs:
-            feature_copy = self.wfm._build_file_path(
+            feature_copy = self.wfm.build_file_path(
                 file_name=f"{s.unique_name}_feature_copy", file_type="gdb"
             )
-            lyrx_output = self.wfm._build_file_path(
+            lyrx_output = self.wfm.build_file_path(
                 f"{s.unique_name}_lyrx_output", "lyrx"
             )
             records.append(
@@ -195,28 +195,28 @@ class ResolveBuildingConflictsPoints:
         self.records = records
         self._index = {r.spec.unique_name: r for r in self.records}
 
-        self.results_rbc1_squares = self.wfm._build_file_path(
+        self.results_rbc1_squares = self.wfm.build_file_path(
             file_name="results_rbc1_squares", file_type="gdb"
         )
-        self.results_rbc1_polygons = self.wfm._build_file_path(
+        self.results_rbc1_polygons = self.wfm.build_file_path(
             file_name="results_rbc1_polygons", file_type="gdb"
         )
-        self.invisible_polygons = self.wfm._build_file_path(
+        self.invisible_polygons = self.wfm.build_file_path(
             file_name="invisible_polygons_after_rbc1", file_type="gdb"
         )
-        self.invisible_to_points = self.wfm._build_file_path(
+        self.invisible_to_points = self.wfm.build_file_path(
             file_name="invisible_polygons_to_points_after_rbc1", file_type="gdb"
         )
-        self.polygons_to_points_to_squares = self.wfm._build_file_path(
+        self.polygons_to_points_to_squares = self.wfm.build_file_path(
             file_name="polygons_to_points_to_squares_rbc1", file_type="gdb"
         )
-        self.merged_squares_rbc1 = self.wfm._build_file_path(
+        self.merged_squares_rbc1 = self.wfm.build_file_path(
             file_name="merged_squares_rbc1", file_type="gdb"
         )
-        self.squares_into_rbc2_lyrx = self.wfm._build_file_path(
+        self.squares_into_rbc2_lyrx = self.wfm.build_file_path(
             file_name="squares_into_rbc2", file_type="lyrx"
         )
-        self.polygons_into_rbc2_lyrx = self.wfm._build_file_path(
+        self.polygons_into_rbc2_lyrx = self.wfm.build_file_path(
             file_name="polygons_into_rbc2", file_type="lyrx"
         )
 
@@ -405,8 +405,8 @@ class ResolveBuildingConflictsPoints:
 
     def export_final_outputs(self):
         # squares -> points
-        squares_back_to_points = self.wfm._build_file_path(
-            "squares_back_to_points_after_rbc2", "gdb"
+        squares_back_to_points = self.wfm.build_file_path(
+            file_name="squares_back_to_points_after_rbc2", file_type="gdb"
         )
         arcpy.management.FeatureToPoint(
             in_features=self.merged_squares_rbc1,
@@ -443,7 +443,7 @@ class ResolveBuildingConflictsPolygon:
         rbc_polygon_config: logic_config.RbcPolygonInitKwargs,
     ):
         self.barrier_default = rbc_polygon_config.barrier_default
-        self.barrier_overbides = rbc_polygon_config.barrier_overrides
+        self.barrier_overrides = rbc_polygon_config.barrier_overrides
 
         self.output_building_polygons = rbc_polygon_config.output_building_polygons
         self.output_building_points = rbc_polygon_config.output_collapsed_polygon_points
@@ -465,11 +465,11 @@ class ResolveBuildingConflictsPolygon:
 
         records: List[_RbcRecord] = []
         for s in self.specs:
-            feature_copy = self.work_file_manager._build_file_path(
-                f"{s.unique_name}_feature_copy", "gdb"
+            feature_copy = self.work_file_manager.build_file_path(
+                file_name=f"{s.unique_name}_feature_copy", file_type="gdb"
             )
-            lyrx_output = self.work_file_manager._build_file_path(
-                f"{s.unique_name}_lyrx_output", "lyrx"
+            lyrx_output = self.work_file_manager.build_file_path(
+                file_name=f"{s.unique_name}_lyrx_output", file_type="lyrx"
             )
             records.append(
                 _RbcRecord(spec=s, feature_copy=feature_copy, lyrx_output=lyrx_output)

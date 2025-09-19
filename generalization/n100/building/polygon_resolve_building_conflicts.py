@@ -239,6 +239,7 @@ def resolve_building_conflicts_polygon():
         ),
         building_unique_name=building,
         barrier_default=rbc_polygon_barrier_default_rule,
+        barrier_overrides=None,
     )
 
     polygon_rbc_method = core_config.ClassMethodEntryConfig(
