@@ -104,7 +104,7 @@ class LineToBufferSymbologyKwargs:
 class BufferDisplacementKwargs:
     input_road_line: io_types.GdbIOArg
     input_building_points: io_types.GdbIOArg
-    input_line_barriers: Dict[str, List[Union[str, int]]]
+    input_line_barriers: Dict[str, Any]
 
     output_building_points: io_types.GdbIOArg
 
