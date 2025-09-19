@@ -209,10 +209,8 @@
     <span class="n">count</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">arcpy</span><span class="o">.</span><span class="n">GetCount_management</span><span class="p">(</span><span class="s2">&quot;roads_lyr&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">getOutput</span><span class="p">(</span><span class="mi">0</span><span class="p">))</span>
     <span class="k">if</span> <span class="n">count</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
         <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;No roads close to dam...&quot;</span><span class="p">)</span>
-        <span class="n">custom_arcpy</span><span class="o">.</span><span class="n">select_attribute_and_make_permanent_feature</span><span class="p">(</span>
-            <span class="n">input_layer</span><span class="o">=</span><span class="n">data_files</span><span class="p">[</span><span class="s2">&quot;input&quot;</span><span class="p">],</span>
-            <span class="n">output_name</span><span class="o">=</span><span class="n">data_files</span><span class="p">[</span><span class="s2">&quot;output&quot;</span><span class="p">],</span>
-            <span class="n">selection_type</span><span class="o">=</span><span class="s2">&quot;NEW_SELECTION&quot;</span><span class="p">,</span>
+        <span class="n">arcpy</span><span class="o">.</span><span class="n">management</span><span class="o">.</span><span class="n">CopyFeatures</span><span class="p">(</span>
+            <span class="n">in_features</span><span class="o">=</span><span class="n">data_files</span><span class="p">[</span><span class="s2">&quot;input&quot;</span><span class="p">],</span> <span class="n">out_feature_class</span><span class="o">=</span><span class="n">data_files</span><span class="p">[</span><span class="s2">&quot;output&quot;</span><span class="p">]</span>
         <span class="p">)</span>
         <span class="k">return</span> <span class="kc">False</span>
     <span class="k">else</span><span class="p">:</span>
@@ -1468,7 +1466,7 @@
                         <span class="p">)</span>
 
         <span class="c1"># Cluster points that are close to each other</span>
-        <span class="n">clusters</span> <span class="o">=</span> <span class="n">cluster_points</span><span class="p">(</span><span class="n">points_to_cluster</span><span class="p">,</span> <span class="n">threshold</span><span class="o">=</span><span class="mf">1.0</span><span class="p">)</span>
+        <span class="n">clusters</span> <span class="o">=</span> <span class="n">cluster_points</span><span class="p">(</span><span class="n">points_to_cluster</span><span class="p">,</span> <span class="n">tolerance</span><span class="o">=</span><span class="mf">1.0</span><span class="p">)</span>
 
         <span class="c1"># Snap points to the buffer line</span>
         <span class="n">snap_points</span> <span class="o">=</span> <span class="p">{}</span>
