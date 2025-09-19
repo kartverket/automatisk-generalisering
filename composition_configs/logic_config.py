@@ -14,15 +14,13 @@ from typing import (
 )
 from enum import Enum
 
-from composition_configs import core_config, type_defs
-from file_manager import work_file_manager
-from generalization.n100 import building
+from composition_configs import core_config, type_defs, io_types
 
 
 @dataclass(frozen=True)
 class SymbologyLayerSpec:
     unique_name: str
-    input_feature: Union[type_defs.GdbFilePath, core_config.InjectIO]
+    input_feature: io_types.GdbIOArg
     input_lyrx: str
     grouped_lyrx: bool
     target_layer_name: Optional[str] = None
@@ -50,8 +48,8 @@ class BarrierOverride:
 @dataclass(frozen=True)
 class RbcPolygonInitKwargs:
     input_data_structure: list[SymbologyLayerSpec]
-    output_building_polygons: Union[type_defs.GdbFilePath, core_config.InjectIO]
-    output_collapsed_polygon_points: Union[type_defs.GdbFilePath, core_config.InjectIO]
+    output_building_polygons: io_types.GdbIOArg
+    output_collapsed_polygon_points: io_types.GdbIOArg
     work_file_manager_config: core_config.WorkFileConfig
 
     building_unique_name: str
@@ -68,8 +66,8 @@ class RbcPointsInitKwargs:
 
     building_gap_distance_m: int
 
-    output_points_after_rbc: Union[type_defs.GdbFilePath, core_config.InjectIO]
-    output_polygons_after_rbc: Union[type_defs.GdbFilePath, core_config.InjectIO]
+    output_points_after_rbc: io_types.GdbIOArg
+    output_polygons_after_rbc: io_types.GdbIOArg
 
     work_file_manager_config: core_config.WorkFileConfig
 
@@ -81,9 +79,9 @@ class RbcPointsInitKwargs:
 
 @dataclass(frozen=True)
 class BegrensningskurveLandWaterKwargs:
-    input_begrensningskurve: Union[type_defs.GdbFilePath, core_config.InjectIO]
-    input_land_cover_features: Union[type_defs.GdbFilePath, core_config.InjectIO]
-    output_begrensningskurve: Union[type_defs.GdbFilePath, core_config.InjectIO]
+    input_begrensningskurve: io_types.GdbIOArg
+    input_land_cover_features: io_types.GdbIOArg
+    output_begrensningskurve: io_types.GdbIOArg
     water_feature_buffer_width: int
     water_barrier_buffer_width: int
     work_file_manager_config: core_config.WorkFileConfig
@@ -91,9 +89,28 @@ class BegrensningskurveLandWaterKwargs:
 
 @dataclass(frozen=True)
 class LineToBufferSymbologyKwargs:
-    input_line: Union[type_defs.GdbFilePath, core_config.InjectIO]
-    output_line: Union[type_defs.GdbFilePath, core_config.InjectIO]
+    input_line: io_types.GdbIOArg
+    output_line: io_types.GdbIOArg
+
     sql_selection_query: dict
+
     work_file_manager_config: core_config.WorkFileConfig
+
     buffer_distance_factor: Union[int, float] = 1
     buffer_distance_addition: Union[int, float] = 0
+
+
+@dataclass(frozen=True)
+class BufferDisplacementKwargs:
+    input_road_line: io_types.GdbIOArg
+    input_building_points: io_types.GdbIOArg
+    input_line_barriers: Dict[str, List[Union[str, int]]]
+
+    output_building_points: io_types.GdbIOArg
+
+    sql_selection_query: dict
+    building_symbol_dimension: Dict[int, Tuple[int, int]]
+
+    displacement_distance_m: int
+
+    work_file_manager_config: core_config.WorkFileConfig
