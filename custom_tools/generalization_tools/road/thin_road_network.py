@@ -4,7 +4,7 @@ import config
 from custom_tools.general_tools import file_utilities
 from custom_tools.general_tools import partition_iterator
 from file_manager import WorkFileManager
-from composition_configs import WorkFileConfig
+from composition_configs import core_config
 from custom_tools.general_tools.partition_iterator import PartitionIterator
 from custom_tools.decorators.partition_io_decorator import partition_io_decorator
 
@@ -22,7 +22,7 @@ class ThinRoadNetwork:
         self,
         road_network_input: str,
         road_network_output: str,
-        work_file_manager_config: WorkFileConfig,
+        work_file_manager_config: core_config.WorkFileConfig,
         minimum_length: str,
         invisibility_field_name: str,
         hierarchy_field_name: str,

@@ -3,7 +3,7 @@ import re
 from datetime import datetime
 
 
-from composition_configs import WorkFileConfig
+from composition_configs import core_config
 import env_setup.global_config
 from typing import Any, Optional
 
@@ -36,7 +36,7 @@ class WorkFileManager:
 
     def __init__(
         self,
-        config: WorkFileConfig,
+        config: core_config.WorkFileConfig,
     ):
         """
         Initializes the WorkFileManager with the provided configuration.
@@ -129,6 +129,35 @@ class WorkFileManager:
 
         self.created_paths.append(path)
         return path
+
+    def generate_work_path(
+        self,
+        base_name: str,
+        index: Optional[int] = None,
+        suffix: Optional[str] = None,
+        extension: str = "gdb",
+    ) -> str:
+        """
+        What:
+            Generates a consistent work file path for a given base name,
+            without partition awareness. Designed for general work files
+            outside partition-based logic.
+
+        Args:
+            base_name (str): The base identifier for the work file (e.g., layer name).
+            index (int, optional): Index to differentiate multiple outputs (e.g., in a loop). Defaults to None.
+            suffix (str, optional): Extra string to differentiate file purpose (e.g., 'buffer', 'copy'). Defaults to None.
+            extension (str, optional): File type or extension. Defaults to "gdb".
+
+        Returns:
+            str: Constructed file path.
+        """
+        extra = f"_{suffix}" if suffix else ""
+        iteration = f"_{index}" if index is not None else ""
+
+        file_name = f"{base_name}{extra}{iteration}"
+
+        return self._build_file_path(file_name=file_name, file_type=extension)
 
     def generate_output(
         self,
