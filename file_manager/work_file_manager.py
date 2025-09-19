@@ -1,11 +1,11 @@
 import arcpy
 import re
 from datetime import datetime
+from typing import overload, Any, Optional, Union, Iterable, Literal
 
 
-from composition_configs import core_config
+from composition_configs import core_config, type_defs
 import env_setup.global_config
-from typing import Any, Optional
 
 
 class WorkFileManager:
@@ -52,7 +52,8 @@ class WorkFileManager:
         self.root_file = config.root_file
         self.write_to_memory = config.write_to_memory
         self.keep_files = config.keep_files
-        self.created_paths = []
+
+        self.created_paths: set[str] = set()
 
         if not self.write_to_memory and not self.root_file:
             raise ValueError(
@@ -93,12 +94,30 @@ class WorkFileManager:
 
         return scale_path, origin_file_name
 
-    def _build_file_path(
+    @overload
+    def build_file_path(
+        self,
+        file_name: str,
+        file_type: Literal["gdb"] = "gdb",
+        index: Optional[int] = ...,
+    ) -> type_defs.GdbFilePath: ...
+    @overload
+    def build_file_path(
+        self, file_name: str, file_type: Literal["lyrx"], index: Optional[int] = ...
+    ) -> type_defs.LyrxFilePath: ...
+    @overload
+    def build_file_path(
+        self, file_name: str, file_type: str, index: Optional[int] = ...
+    ) -> type_defs.GeneralFilePath: ...
+
+    def build_file_path(
         self,
         file_name: str,
         file_type: str = "gdb",
         index: Optional[int] = None,
-    ) -> str:
+    ) -> Union[
+        type_defs.GdbFilePath, type_defs.LyrxFilePath, type_defs.GeneralFilePath
+    ]:
         """
         Generates a file path based on the file name, type, and an optional index.
 
@@ -110,54 +129,31 @@ class WorkFileManager:
         Returns:
             str: A string representing the file path.
         """
-        suffix = f"___{index}" if index is not None else ""
+        suffix = f"_iter{index}" if index is not None else ""
+
         if file_type == "gdb":
-            path = f"{self.file_location}{file_name}_{self.unique_id}{suffix}"
+            s = f"{self.file_location}{file_name}_{self.unique_id}{suffix}"
+            path = type_defs.GdbFilePath(s)
+            key = str(path)
+            if key in self.created_paths:
+                raise ValueError(f"Duplicate path detected: {path}")
+            self.created_paths.add(key)
+            return path
+
+        scale_path, origin_file_name = self._modify_path()
+
+        if file_type == "lyrx":
+            s = rf"{scale_path}{self.lyrx_directory_name}\{origin_file_name}_{file_name}_{self.unique_id}{suffix}.lyrx"
+            path = type_defs.LyrxFilePath(s)
         else:
-            scale_path, origin_file_name = self._modify_path()
+            s = rf"{scale_path}{self.general_files_directory_name}\{origin_file_name}_{file_name}_{self.unique_id}{suffix}.{file_type}"
+            path = type_defs.GeneralFilePath(s)
 
-            if file_type == "lyrx":
-                path = rf"{scale_path}{self.lyrx_directory_name}\{origin_file_name}_{file_name}_{self.unique_id}{suffix}.lyrx"
-            else:
-                path = rf"{scale_path}{self.general_files_directory_name}\{origin_file_name}_{file_name}_{self.unique_id}{suffix}.{file_type}"
-
-        if path in self.created_paths:
-            raise ValueError(
-                f"Duplicate path detected: {path}. "
-                "This may lead to unexpected behavior. Ensure unique file names or indices."
-            )
-
-        self.created_paths.append(path)
+        key = str(path)
+        if key in self.created_paths:
+            raise ValueError(f"Duplicate path detected: {path}")
+        self.created_paths.add(key)
         return path
-
-    def generate_work_path(
-        self,
-        base_name: str,
-        index: Optional[int] = None,
-        suffix: Optional[str] = None,
-        extension: str = "gdb",
-    ) -> str:
-        """
-        What:
-            Generates a consistent work file path for a given base name,
-            without partition awareness. Designed for general work files
-            outside partition-based logic.
-
-        Args:
-            base_name (str): The base identifier for the work file (e.g., layer name).
-            index (int, optional): Index to differentiate multiple outputs (e.g., in a loop). Defaults to None.
-            suffix (str, optional): Extra string to differentiate file purpose (e.g., 'buffer', 'copy'). Defaults to None.
-            extension (str, optional): File type or extension. Defaults to "gdb".
-
-        Returns:
-            str: Constructed file path.
-        """
-        extra = f"_{suffix}" if suffix else ""
-        iteration = f"_{index}" if index is not None else ""
-
-        file_name = f"{base_name}{extra}{iteration}"
-
-        return self._build_file_path(file_name=file_name, file_type=extension)
 
     def generate_output(
         self,
@@ -231,11 +227,11 @@ class WorkFileManager:
             # Update the instance attribute if it exists
             for attr_name, attr_value in instance.__dict__.items():
                 if attr_value == item:
-                    updated_path = self._build_file_path(item, file_type, index=idx)
+                    updated_path = self.build_file_path(item, file_type, index=idx)
                     setattr(instance, attr_name, updated_path)
                     return updated_path
 
-            return self._build_file_path(item, file_type, index=idx)
+            return self.build_file_path(item, file_type, index=idx)
 
         def process_list(items):
             """Processes a list structure."""
@@ -261,7 +257,7 @@ class WorkFileManager:
                     updated_dict[key] = value
 
             if add_key:
-                updated_dict[add_key] = self._build_file_path(
+                updated_dict[add_key] = self.build_file_path(
                     add_key, file_type, index=idx
                 )
 
@@ -292,44 +288,37 @@ class WorkFileManager:
         """
         dynamic_paths = []
         for idx in range(count):
-            path = self._build_file_path(base_name, file_type, index=idx)
+            path = self.build_file_path(base_name, file_type, index=idx)
             dynamic_paths.append(path)
         return dynamic_paths
 
     def delete_created_files(
         self,
-        delete_targets: list[str] = None,
-        exceptions: list[str] = None,
-        delete_files: list[str] = None,
-    ):
+        delete_targets: Optional[Iterable[str]] = None,
+        exceptions: Optional[Iterable[str]] = None,
+        delete_files: Optional[bool] = None,
+    ) -> None:
         """
-        What:
-            Deletes the created paths, defaults to deleting all created paths,
-            but can target or exclude specific paths.
-
-        Args:
-            delete_targets (list[str], optional): List of paths to delete. Defaults to None.
-            exceptions (list[str], optional): List of paths to exclude from deletion. Defaults to None.
-            delete_files (bool, optional): Whether to delete files. Defaults to None, which uses `self.keep_files`.
+        Deletes created paths. If delete_targets is None, deletes all tracked paths.
+        'exceptions' (if any) are excluded. If delete_files is None, uses not self.keep_files.
         """
-        # Default to `self.keep_files` if `delete_files` is not explicitly provided
         if delete_files is None:
             delete_files = not self.keep_files
-
         if not delete_files:
             print("Deletion is disabled. No files deleted.")
             return
 
-        # Use all tracked paths if delete_targets is not provided
-        targets = delete_targets or self.created_paths
-
-        # Apply exceptions, if provided
+        to_delete = (
+            set(delete_targets)
+            if delete_targets is not None
+            else set(self.created_paths)
+        )
         if exceptions:
-            targets = [path for path in targets if path not in exceptions]
+            to_delete -= set(exceptions)
 
-        for path in targets:
+        for path in to_delete:
             self._delete_file(path)
-            self.created_paths.remove(path)
+            self.created_paths.discard(path)
 
     @staticmethod
     def list_contents(data: Any, title: str = "Contents"):
@@ -500,4 +489,4 @@ class PartitionWorkFileManager(WorkFileManager):
         else:
             file_name = f"{object_name}{tag_string}{extra}"
 
-        return self._build_file_path(file_name=file_name, file_type=extension)
+        return self.build_file_path(file_name=file_name, file_type=extension)
