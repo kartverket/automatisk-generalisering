@@ -38,6 +38,7 @@ from constants.n100_constants import (
     MediumAlias,
 )
 from generalization.n100.road.dam import main as dam
+from generalization.n100.road.ramps import add_ramps
 
 MERGE_DIVIDED_ROADS_ALTERATIVE = False
 
@@ -48,6 +49,9 @@ def main():
     arcpy.env.referenceScale = 100000
     data_selection_and_validation()
     trim_road_details()
+    ################################
+    add_ramps()
+    ################################
     admin_boarder()
     adding_fields()
     collapse_road_detail()
@@ -70,7 +74,7 @@ OBJECT_LIMIT = 100_000
 @timing_decorator
 def data_selection_and_validation():
     plot_area = "navn IN ('Asker', 'Bærum', 'Drammen', 'Frogn', 'Hole', 'Holmestrand', 'Horten', 'Jevnaker', 'Kongsberg', 'Larvik', 'Lier', 'Lunner', 'Modum', 'Nesodden', 'Oslo', 'Ringerike', 'Tønsberg', 'Øvre Eiker')"
-    ferry_admin_test = "navn IN ('Bergen')"
+    ferry_admin_test = "navn IN ('Ringerike', 'Tønsberg')"
     small_plot_area = "navn IN ('Oslo', 'Ringerike')"
     presentation_area = "navn IN ('Asker', 'Bærum', 'Oslo', 'Enebakk', 'Nittedal', 'Nordre Follo', 'Hole', 'Nesodden', 'Lørenskog', 'Sandnes', 'Stavanger', 'Gjesdal', 'Sola', 'Klepp', 'Strand', 'Time', 'Randaberg')"
 
@@ -358,8 +362,10 @@ def thin_roads():
     )
     road_data_validation.check_repair_sequence()
 
-    road_hierarchy = """def Reclass(vegklasse, typeveg):
-        if typeveg == 'bilferje':
+    road_hierarchy = """def Reclass(vegklasse, typeveg, motorvegtype):
+        if motorvegtype is not None and motorvegtype != 'Udefinert':
+            return 0
+        elif typeveg in ('bilferje', 'rampe'):
             return 0
         elif vegklasse in (0, 1, 2, 3, 4):
             return 1
@@ -376,7 +382,7 @@ def thin_roads():
     arcpy.management.CalculateField(
         in_table=Road_N100.data_preparation___dissolved_intersections_3___n100_road.value,
         field="hierarchy",
-        expression="Reclass(!vegklasse!, !typeveg!)",
+        expression="Reclass(!vegklasse!, !typeveg!, !motorvegtype!)",
         expression_type="PYTHON3",
         code_block=road_hierarchy,
     )
@@ -545,7 +551,7 @@ def pre_resolve_road_conflicts():
 def resolve_road_conflicts():
 
     road_hierarchy = """def Reclass(vegklasse, typeveg):
-        if typeveg == 'bilferje':
+        if typeveg in ('bilferje', 'ramps'):
             return 0
         elif vegklasse in (0, 1, 2, 3, 4):
             return 1

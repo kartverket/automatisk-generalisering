@@ -18,6 +18,7 @@ test1 = "test1"
 testing_file = "testing_file"
 dam_file = "dam"
 test2 = "test2"
+ramps_file = "ramps"
 
 
 """"
@@ -1326,6 +1327,30 @@ class Road_N100(Enum):
 
     dam__cleaned_roads__n100_road = file_manager.generate_file_name_gdb(
         script_source_name=dam_file, description="cleaned_roads"
+    )
+
+    # ========================================
+    #                                    RAMPS
+    # ========================================
+
+    ramps__ramps__n100_road = file_manager.generate_file_name_gdb(
+        script_source_name=ramps_file, description="ramps"
+    )
+
+    ramps__collapsed_roundabouts__n100_road = file_manager.generate_file_name_gdb(
+        script_source_name=ramps_file, description="collapsed_roundabouts"
+    )
+
+    ramps__small_roundabouts__n100_road = file_manager.generate_file_name_gdb(
+        script_source_name=ramps_file, description="small_roundabouts"
+    )
+
+    ramps__roads_with_cleaned_roundabouts__n100_road = file_manager.generate_file_name_gdb(
+        script_source_name=ramps_file, description="roads_with_cleaned_roundabouts"
+    )
+
+    ramps__test__n100_road = file_manager.generate_file_name_gdb(
+        script_source_name=ramps_file, description="test"
     )
 
     # ========================================
