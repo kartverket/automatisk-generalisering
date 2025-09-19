@@ -1,4 +1,8 @@
-from composition_configs.core_config import WorkFileConfig
-from composition_configs import type_defs
+from importlib import import_module
 
-__all__ = ["WorkFileConfig", "type_defs"]
+core_config = import_module(".core_config", __name__)
+logic_config = import_module(".logic_config", __name__)
+type_defs = import_module(".type_defs", __name__)
+io_types = import_module(".io_types", __name__)
+
+__all__ = ["core_config", "logic_config", "type_defs", "io_types"]

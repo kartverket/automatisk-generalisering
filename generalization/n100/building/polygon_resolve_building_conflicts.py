@@ -107,6 +107,7 @@ def hospital_church_points_to_squares():
 
 
 def resolve_building_conflicts_polygon():
+    """RBC = ResolveBuildingConflicts"""
 
     building = "building"
     railroad = "railroad"
@@ -116,6 +117,7 @@ def resolve_building_conflicts_polygon():
     hospital_churches = "hospital_churches"
     railroad_station = "railroad_station"
 
+    # rbc is ResolveBuildingConflicts
     rbc_polygons = "rbc_polygons"
     rbc_points = "rbc_points"
 
@@ -245,7 +247,7 @@ def resolve_building_conflicts_polygon():
         init_params=rbc_init_config,
     )
 
-    rbc_method_injects_config = core_config.MethodEntriesConfig(
+    rbc_method_inject_config = core_config.MethodEntriesConfig(
         entries=[polygon_rbc_method]
     )
 
@@ -262,7 +264,7 @@ def resolve_building_conflicts_polygon():
 
     partition_polygon_rbc = PartitionIterator(
         partition_io_config=rbc_io_config,
-        partition_method_inject_config=rbc_method_injects_config,
+        partition_method_inject_config=rbc_method_inject_config,
         partition_iterator_run_config=rbc_partition_run_config,
         work_file_manager_config=rbc_parition_work_file_manager_config,
     )
