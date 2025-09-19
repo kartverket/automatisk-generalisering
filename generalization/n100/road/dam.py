@@ -127,10 +127,8 @@ def data_check():
     count = int(arcpy.GetCount_management("roads_lyr").getOutput(0))
     if count == 0:
         print("No roads close to dam...")
-        custom_arcpy.select_attribute_and_make_permanent_feature(
-            input_layer=data_files["input"],
-            output_name=data_files["output"],
-            selection_type="NEW_SELECTION",
+        arcpy.management.CopyFeatures(
+            in_features=data_files["input"], out_feature_class=data_files["output"]
         )
         return False
     else:
@@ -1308,7 +1306,7 @@ def snap_roads(roads: dict[list]) -> None:
                         )
 
         # Cluster points that are close to each other
-        clusters = cluster_points(points_to_cluster, threshold=1.0)
+        clusters = cluster_points(points_to_cluster, tolerance=1.0)
 
         # Snap points to the buffer line
         snap_points = {}
