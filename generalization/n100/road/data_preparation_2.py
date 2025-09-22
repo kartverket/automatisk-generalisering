@@ -13,6 +13,8 @@ from input_data import input_other
 from input_data import input_elveg
 from input_data import input_roads
 
+from composition_configs import core_config, logic_config, io_types, type_defs
+
 # Importing custom modules
 from file_manager.n100.file_manager_roads import Road_N100
 from env_setup import environment_setup
@@ -63,7 +65,7 @@ def main():
     final_output()
 
 
-SEARCH_DISTANCE = "5000 Meters"
+SEARCH_DISTANCE = 5000
 OBJECT_LIMIT = 100_000
 
 
@@ -121,38 +123,83 @@ def run_dissolve_with_intersections(
 
 
 def run_thin_roads(
-    input_feature,
-    partition_root_file,
-    output_feature,
-    docu_path,
-    min_length,
+    input_feature: str,
+    partition_root_file: str,
+    output_feature: str,
+    docu_path: type_defs.SubdirectoryPath,
+    min_length_m: int,
     feature_count,
     special_selection_sql=None,
 ):
-    alias = "road"
-    input_dict = {alias: ["input", input_feature]}
-    output_dict = {alias: ["thin_road", output_feature]}
-    thin_road_network_config = {
-        "class": ThinRoadNetwork,
-        "method": "run",
-        "params": {
-            "road_network_input": (alias, "input"),
-            "road_network_output": (alias, "thin_road"),
-            "root_file": Road_N100.data_preparation___thin_road_root___n100_road.value,
-            "minimum_length": min_length,
-            "invisibility_field_name": "invisibility",
-            "hierarchy_field_name": "hierarchy",
-            "special_selection_sql": special_selection_sql,
-        },
-    }
+    road = "road"
+    processed_road = "processed_road"
+
+    thin_road_input_config = core_config.PartitionInputConfig(
+        entries=[
+            core_config.InputEntry.processing_input(
+                object=road,
+                path=input_feature,
+            )
+        ]
+    )
+
+    thin_road_output_config = core_config.PartitionOutputConfig(
+        entries=[
+            core_config.OutputEntry.vector_output(
+                object=road,
+                tag=processed_road,
+                path=output_feature,
+            )
+        ]
+    )
+
+    thin_road_io_config = core_config.PartitionIOConfig(
+        input_config=thin_road_input_config,
+        output_config=thin_road_output_config,
+        documentation_directory=docu_path,
+    )
+
+    thin_roads_init_config = logic_config.ThinRoadNetworkKwargs(
+        input_road_line=core_config.InjectIO(
+            object=road,
+            tag="input",
+        ),
+        output_road_line=core_config.InjectIO(
+            object=road,
+            tag=processed_road,
+        ),
+        work_file_manager_config=core_config.WorkFileConfig(
+            root_file=partition_root_file
+        ),
+        minimum_length=min_length_m,
+        invisibility_field_name="invisibility",
+        hierarchy_field_name="hierarchy",
+        special_selection_sql=special_selection_sql,
+    )
+
+    thin_road_class_config = core_config.ClassMethodEntryConfig(
+        class_=ThinRoadNetwork,
+        method=ThinRoadNetwork.run,
+        init_params=thin_roads_init_config,
+    )
+
+    thin_road_method_config = core_config.MethodEntriesConfig(
+        entries=[thin_road_class_config]
+    )
+
+    partition_thin_run_config = core_config.PartitionRunConfig(
+        max_elements_per_partition=feature_count,
+        context_radius_meters=SEARCH_DISTANCE,
+        run_partition_optimization=True,
+    )
+
     partition_thin_roads = PartitionIterator(
-        alias_path_data=input_dict,
-        alias_path_outputs=output_dict,
-        custom_functions=[thin_road_network_config],
-        root_file_partition_iterator=partition_root_file,
-        dictionary_documentation_path=docu_path,
-        feature_count=feature_count,
-        search_distance=SEARCH_DISTANCE,
+        partition_io_config=thin_road_io_config,
+        partition_method_inject_config=thin_road_method_config,
+        partition_iterator_run_config=partition_thin_run_config,
+        work_file_manager_config=core_config.WorkFileConfig(
+            root_file=partition_root_file
+        ),
     )
     partition_thin_roads.run()
 
@@ -294,38 +341,60 @@ def adding_fields():
 
 @timing_decorator
 def collapse_road_detail():
-    input_dict = {
-        "roads": (
-            "input",
-            Road_N100.data_preparation___road_single_part_2___n100_road.value,
-        )
-    }
+    road = "road"
+    processed_road = "processed_road"
 
-    output_dict = {
-        "roads": (
-            "road_detail",
-            Road_N100.data_preparation___collapse_road_detail___n100_road.value,
-        )
-    }
+    collapse_road_input_config = core_config.PartitionInputConfig(
+        entries=[
+            core_config.InputEntry.processing_input(
+                object=road,
+                path=Road_N100.data_preparation___road_single_part_2___n100_road.value,
+            )
+        ]
+    )
 
-    collapse_road_detail_config = {
-        "func": collapse_road,
-        "params": {
-            "road_network_input": ("roads", "input"),
-            "road_network_output": ("roads", "road_detail"),
-            "merge_distance": "60 Meters",
-        },
-    }
+    collapse_road_output_config = core_config.PartitionOutputConfig(
+        entries=[
+            core_config.OutputEntry.vector_output(
+                object=road,
+                tag=processed_road,
+                path=Road_N100.data_preparation___collapse_road_detail___n100_road.value,
+            )
+        ]
+    )
+
+    collapse_partition_io_config = core_config.PartitionIOConfig(
+        input_config=collapse_road_input_config,
+        output_config=collapse_road_output_config,
+        documentation_directory=Road_N100.collapse_road_docu___n100_road.value,
+    )
+
+    collapse_road_func_config = core_config.FuncMethodEntryConfig(
+        func=collapse_road,
+        params=logic_config.CollapseRoadDetailsKwargs(
+            input_road_line=core_config.InjectIO(object=road, tag="input"),
+            output_road_line=core_config.InjectIO(object=road, tag=processed_road),
+            merge_distnace_m=60,
+        ),
+    )
+
+    collapse_road_method_config = core_config.MethodEntriesConfig(
+        entries=[collapse_road_func_config]
+    )
+
+    collapse_partition_run_config = core_config.PartitionRunConfig(
+        max_elements_per_partition=OBJECT_LIMIT,
+        context_radius_meters=SEARCH_DISTANCE,
+        run_partition_optimization=True,
+    )
 
     partition_collapse_road_detail = PartitionIterator(
-        alias_path_data=input_dict,
-        alias_path_outputs=output_dict,
-        custom_functions=[collapse_road_detail_config],
-        root_file_partition_iterator=Road_N100.data_preparation___thin_road_partition_root___n100_road.value,
-        dictionary_documentation_path=Road_N100.data_preparation___thin_road_docu___n100_road.value,
-        feature_count=OBJECT_LIMIT,
-        run_partition_optimization=True,
-        search_distance=SEARCH_DISTANCE,
+        partition_io_config=collapse_partition_io_config,
+        partition_method_inject_config=collapse_road_method_config,
+        partition_iterator_run_config=collapse_partition_run_config,
+        work_file_manager_config=core_config.WorkFileConfig(
+            root_file=Road_N100.data_preparation___thin_road_partition_root___n100_road.value
+        ),
     )
     partition_collapse_road_detail.run()
 
@@ -391,8 +460,8 @@ def thin_roads():
         input_feature=Road_N100.data_preparation___calculated_boarder_hierarchy___n100_road.value,
         partition_root_file=Road_N100.data_preparation___thin_road_partition_root___n100_road.value,
         output_feature=Road_N100.data_preparation___thin_road_output___n100_road.value,
-        docu_path=Road_N100.data_preparation___thin_road_docu___n100_road.value,
-        min_length="1400 meters",
+        docu_path=Road_N100.thin_road_docu___n100_road.value,
+        min_length_m=1400,
         feature_count=OBJECT_LIMIT,
     )
 
@@ -441,8 +510,8 @@ def thin_sti_and_forest_roads():
         input_feature=Road_N100.data_preparation___dissolved_intersections_4___n100_road.value,
         partition_root_file=Road_N100.data_preparation___thin_sti_partition_root___n100_road.value,
         output_feature=Road_N100.data_preparation___thin_road_sti_output___n100_road.value,
-        docu_path=Road_N100.data_preparation___thin_sti_docu___n100_road.value,
-        min_length="1800 meters",
+        docu_path=Road_N100.thin_sti_docu___n100_road.value,
+        min_length_m=1800,
         feature_count=OBJECT_LIMIT,
     )
 

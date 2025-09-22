@@ -15,6 +15,7 @@ from typing import (
 from enum import Enum
 
 from composition_configs import core_config, type_defs, io_types
+from file_manager import work_file_manager
 
 
 @dataclass(frozen=True)
@@ -114,3 +115,36 @@ class BufferDisplacementKwargs:
     displacement_distance_m: int
 
     work_file_manager_config: core_config.WorkFileConfig
+
+
+@dataclass(frozen=True)
+class ThinRoadNetworkKwargs:
+    input_road_line: io_types.GdbIOArg
+    output_road_line: io_types.GdbIOArg
+    work_file_manager_config: core_config.WorkFileConfig
+    minimum_length: int
+    invisibility_field_name: str
+    hierarchy_field_name: str
+    special_selection_sql: str | None = None
+
+
+@dataclass(frozen=True)
+class CollapseRoadDetailsKwargs:
+    input_road_line: io_types.GdbIOArg
+    output_road_line: io_types.GdbIOArg
+    merge_distnace_m: int
+    collapse_field_name: Optional[str] = None
+
+
+@dataclass(frozen=True)
+class RrcInitKwargs:
+    input_data_structure: List[SymbologyLayerSpec]
+    work_file_manager_config: core_config.WorkFileConfig
+
+    primary_road_unique_name: str
+
+    output_road_feature: io_types.GdbIOArg
+    output_displacement_feature: io_types.GdbIOArg
+
+    map_scale: str = "100000"
+    hierarchy_field: str = "hierarchy"

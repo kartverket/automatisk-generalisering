@@ -102,6 +102,7 @@ class LineToBufferSymbology:
             file_type="gdb",
             index=counter,
         )
+
         buffer_output_name = self.wfm.build_file_path(
             file_name="line_buffer",
             file_type="gdb",

@@ -10,6 +10,7 @@ from custom_tools.general_tools.polygon_processor import PolygonProcessor
 from custom_tools.decorators.partition_io_decorator import partition_io_decorator
 from composition_configs import logic_config, core_config
 from file_manager.work_file_manager import WorkFileManager
+from custom_tools.general_tools import file_utilities
 
 
 class BufferDisplacement:
@@ -222,17 +223,18 @@ class BufferDisplacement:
             file_name=f"road_facter_{factor_str}_add_{fixed_addition_str}",
         )
 
-        line_to_buffer_symbology = LineToBufferSymbology(
-            logic_config.LineToBufferSymbologyKwargs(
-                input_line=self.input_road_lines,
-                output_line=self.output_road_buffer,
-                sql_selection_query=self.sql_selection_query,
-                work_file_manager_config=self.wfm_config,
-                buffer_distance_factor=factor,
-                buffer_distance_addition=fixed_addition,
+        if file_utilities.feature_has_rows(feature=self.input_road_lines):
+            line_to_buffer_symbology = LineToBufferSymbology(
+                logic_config.LineToBufferSymbologyKwargs(
+                    input_line=self.input_road_lines,
+                    output_line=self.output_road_buffer,
+                    sql_selection_query=self.sql_selection_query,
+                    work_file_manager_config=self.wfm_config,
+                    buffer_distance_factor=factor,
+                    buffer_distance_addition=fixed_addition,
+                )
             )
-        )
-        line_to_buffer_symbology.run()
+            line_to_buffer_symbology.run()
 
         misc_buffer_outputs = []
 
@@ -248,7 +250,7 @@ class BufferDisplacement:
                 arcpy.analysis.PairwiseBuffer(
                     in_features=feature_path,
                     out_feature_class=self.misc_buffer_output,
-                    buffer_distance_or_field="0,1 Meters",
+                    buffer_distance_or_field="0.1 Meters",
                 )
             else:
                 arcpy.analysis.PairwiseBuffer(
@@ -262,11 +264,19 @@ class BufferDisplacement:
             file_name=f"merged_barriers_factor_{factor_str}_add_{fixed_addition_str}",
             file_type="gdb",
         )
+        inputs = [self.output_road_buffer] + misc_buffer_outputs
+        inputs = [p for p in inputs if p and file_utilities.feature_has_rows(p)]
 
-        arcpy.management.Merge(
-            inputs=[self.output_road_buffer] + misc_buffer_outputs,
-            output=self.merged_barrier_output,
-        )
+        if len(inputs) == 1:
+            arcpy.management.CopyFeatures(
+                in_features=inputs[0],
+                out_feature_class=self.merged_barrier_output,
+            )
+        else:
+            arcpy.management.Merge(
+                inputs=inputs,
+                output=self.merged_barrier_output,
+            )
 
         self.output_building_points_to_polygon = self.wfm.build_file_path(
             file_name=f"building_factor_{factor_str}_add_{fixed_addition_str}",
@@ -344,10 +354,19 @@ class BufferDisplacement:
         self.finding_dimensions(self.buffer_displacement_meter)
         self.calculate_buffer_increments()
 
-        for factor, addition in self.increments:
-            self.process_buffer_factor(factor, addition)
+        has_features = False
+        if file_utilities.feature_has_rows(self.input_road_lines):
+            has_features = True
+        for feature_name, feature_details in self.input_line_barriers.items():
+            feature_path, _ = feature_details
+            if file_utilities.feature_has_rows(feature_path):
+                has_features = True
 
-            self.wfm.delete_created_files(exceptions=self.output_feature_to_points)
+        if has_features:
+            for factor, addition in self.increments:
+                self.process_buffer_factor(factor, addition)
+
+                self.wfm.delete_created_files(exceptions=self.output_feature_to_points)
 
         arcpy.management.Copy(
             in_data=self.current_building_points,

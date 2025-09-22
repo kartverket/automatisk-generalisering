@@ -1,12 +1,9 @@
 import arcpy
 
-import config
 from custom_tools.general_tools import file_utilities
-from custom_tools.general_tools import partition_iterator
 from file_manager import WorkFileManager
-from composition_configs import core_config
+from composition_configs import core_config, logic_config
 from custom_tools.general_tools.partition_iterator import PartitionIterator
-from custom_tools.decorators.partition_io_decorator import partition_io_decorator
 
 from custom_tools.generalization_tools.road.dissolve_with_intersections import (
     DissolveWithIntersections,
@@ -20,29 +17,30 @@ from constants.n100_constants import FieldNames, MediumAlias
 class ThinRoadNetwork:
     def __init__(
         self,
-        road_network_input: str,
-        road_network_output: str,
-        work_file_manager_config: core_config.WorkFileConfig,
-        minimum_length: str,
-        invisibility_field_name: str,
-        hierarchy_field_name: str,
-        special_selection_sql: str | None = None,
+        thin_road_network_config: logic_config.ThinRoadNetworkKwargs,
     ):
-        self.road_network_input = road_network_input
-        self.road_network_output = road_network_output
-        self.minimum_length = minimum_length
-        self.invisibility_field_name = invisibility_field_name
-        self.hierarchy_field_name = hierarchy_field_name
-        self.partition_field_name = PartitionIterator.PARTITION_FIELD
-        self.special_selection_sql = special_selection_sql
+        self.road_network_input = thin_road_network_config.input_road_line
+        self.road_network_output = thin_road_network_config.output_road_line
 
-        self.write_work_files_to_memory = work_file_manager_config.write_to_memory
+        self.int_minimum_length = thin_road_network_config.minimum_length
+        self.minimum_length = f"{self.int_minimum_length} Meters"
+
+        self.invisibility_field_name = thin_road_network_config.invisibility_field_name
+        self.hierarchy_field_name = thin_road_network_config.hierarchy_field_name
+        self.partition_field_name = PartitionIterator.PARTITION_FIELD
+        self.special_selection_sql = thin_road_network_config.special_selection_sql
+
+        self.write_work_files_to_memory = (
+            thin_road_network_config.work_file_manager_config.write_to_memory
+        )
 
         if self.write_work_files_to_memory:
             print("Writing to memory Currently not supported. Set to false")
             self.write_work_files_to_memory = False
 
-        self.work_file_manager = WorkFileManager(config=work_file_manager_config)
+        self.work_file_manager = WorkFileManager(
+            config=thin_road_network_config.work_file_manager_config
+        )
 
         self.thin_road_network_output = "thin_road_network_output"
         self.gdb_files_list = [self.thin_road_network_output]
@@ -181,10 +179,6 @@ class ThinRoadNetwork:
         print(f"Copying: {current_output}")
         arcpy.management.Copy(in_data=current_output, out_data=self.road_network_output)
 
-    @partition_io_decorator(
-        input_param_names=["road_network_input"],
-        output_param_names=["road_network_output"],
-    )
     def run(self):
         environment_setup.main()
         self.thin_road_network()
