@@ -1,7 +1,9 @@
 # Import packages
+import os
 import arcpy
 from collections import defaultdict
 from tqdm import tqdm
+import numpy as np
 
 arcpy.env.overwriteOutput = True
 
@@ -21,11 +23,18 @@ data_files = {
     "roundabouts_2": Road_N100.ramps__small_roundabouts__n100_road.value,
     "cleaned_roads": Road_N100.ramps__roads_with_cleaned_roundabouts__n100_road.value,
 
+    "buffered_ramps": Road_N100.ramps__buffered_ramps__n100_road.value,
+    "roads_near_ramps": Road_N100.ramps__roads_near_ramp__n100_road.value,
+    "endpoints": Road_N100.ramps__endpoints__n100_road.value,
+    "dissolved_ramps": Road_N100.ramps__dissolved_ramps__n100_road.value,
+    "merged_ramps": Road_N100.ramps__merged_ramps__n100_road.value,
+
     "test": Road_N100.ramps__test__n100_road.value
 }
 
 files_to_delete = [
     # Stores all the keys from 'data_files' that should be deleted in the end
+    "roundabouts_1", "roundabouts_2", "roads_near_ramps", "endpoints", "dissolved_ramps"
 ]
 
 @timing_decorator
@@ -84,7 +93,7 @@ def get_center_point(geoms: list[arcpy.Geometry]) -> arcpy.PointGeometry:
 
     return arcpy.PointGeometry(arcpy.Point(avg_x, avg_y))
 
-def points_equal(p1, p2, tolerance=1e-6) -> bool:
+def points_equal(p1: arcpy.Point, p2: arcpy.Point, tolerance: float=1e-6) -> bool:
     """
     Checks if two points are spatially equal within a given tolerance.
 
@@ -146,73 +155,94 @@ def change_geom_in_roundabouts(roads: list[tuple]) -> dict:
     
     return new_roads
 
-def reverse_geometry(polyline: arcpy.Geometry) -> arcpy.Polyline:
+def create_buffer(input: arcpy.Geometry | str, buffer_distance: str, buffer_type: str, output: arcpy.Geometry | str) -> None:
     """
-    Createas a reversed copy of the input geometry (line).
-    Only singlepart.
+    Createas a buffer around the features in the input,
+    and dissolves those that overlaps each other.
 
     Args:
-        polyline (arcpy.Geometry): The line to be reversed
-
-    Returns:
-        arcpy.Polyline: The reversed line
+        input (arcpy.Geometry | str): The input layer with features
+        buffer_distance (str): String describing the size of the buffer, format: "X Meters"
+        buffer_type (str): String describing if it should be FLAT or ROUND ends
+        output (arcpy.Geometry | str): The output layer to save the results
     """
-    reversed_parts = []
-    for part in polyline:
-        reversed_parts.append(arcpy.Array(list(reversed(part))))
-    return arcpy.Polyline(arcpy.Array(reversed_parts), polyline.spatialReference)
+    intermediate_fc = r"in_memory\intermediate"
+    arcpy.analysis.Buffer(
+        in_features=input,
+        out_feature_class=intermediate_fc,
+        buffer_distance_or_field=buffer_distance,
+        line_end_type=buffer_type,
+        dissolve_option="NONE",
+        method="PLANAR",
+    )
+    arcpy.management.Dissolve(
+        in_features=intermediate_fc,
+        out_feature_class=output,
+        dissolve_field=[],
+        multi_part="SINGLE_PART",
+    )
 
-def merge_lines(
-    line1: arcpy.Geometry, line2: arcpy.Geometry, tolerance: float = 2.0
-) -> arcpy.Polyline:
+def calculate_angle(
+    p1: arcpy.Geometry, p2: arcpy.Geometry, p3: arcpy.Geometry
+) -> float:
     """
-    Merges two lines into one common one.
-    Calls itself with reversed geometries if incorrect directions of the input geometries.
+    Calculates the angle in point 2 between point 1 and 3.
 
     Args:
-        line1 (arcpy.Geometry): The first line to merge
-        line2 (arcpy.Geometry): The second line to merge
-        tolerance (float): Float number showing tolerance of connection to be merged, default 2.0
+        p1 (arcpy.Geometry): Point 1
+        p2 (arcpy.Geometry): Point 2 (the angle to be calculated is in this point)
+        p3 (arcpy.Geometry): Point 3
 
     Returns:
-        arcpy.Polyline | None: A merged polyline containing both the geometries. None if something fails
+        float: The angle in point 2
     """
-    l1_start, l1_end = get_endpoints(line1)
-    l2_start, l2_end = get_endpoints(line2)
+    # Vectors from p2 to p1, and p2 to p3
+    v1 = np.array([p1.X - p2.X, p1.Y - p2.Y])
+    v2 = np.array([p3.X - p2.X, p3.Y - p2.Y])
 
-    # Find the matching endpoints
-    if l1_end.distanceTo(l2_start) < tolerance:
-        # Correct order
-        merged = arcpy.Array()
-        for part in line1:
-            for pt in part:
-                merged.add(pt)
-        for part in line2:
-            for i, pt in enumerate(part):
-                if i == 0 and pt.equals(line1.lastPoint):
-                    continue
-                merged.add(pt)
-        return arcpy.Polyline(merged, line1.spatialReference)
+    # Lenghts of the vectors
+    len1 = np.linalg.norm(v1)
+    len2 = np.linalg.norm(v2)
 
-    elif l1_end.distanceTo(l2_end) < tolerance:
-        # Reverse line2
-        line2_rev = reverse_geometry(line2)
-        return merge_lines(line1, line2_rev, tolerance)
+    if len1 == 0 or len2 == 0:
+        return 180  # Undefined angle, treated as straight line
 
-    elif l1_start.distanceTo(l2_start) < tolerance:
-        # Reverse line1
-        line1_rev = reverse_geometry(line1)
-        return merge_lines(line1_rev, line2, tolerance)
+    # Calculate scalar product
+    dot = np.dot(v1, v2)
 
-    elif l1_start.distanceTo(l2_end) < tolerance:
-        # Reverse both
-        line1_rev = reverse_geometry(line1)
-        line2_rev = reverse_geometry(line2)
-        return merge_lines(line1_rev, line2_rev, tolerance)
+    # Calculates angle in degrees
+    cos_angle = dot / (len1 * len2)
+    cos_angle = np.clip(cos_angle, -1.0, 1.0)
+    angle_rad = np.arccos(cos_angle)
 
-    else:
-        # No match
-        return None
+    return np.degrees(angle_rad)
+
+def split_polyline_at_index(polyline: arcpy.Polyline, angle_tolerance: int=40) -> arcpy.Polyline | None:
+    """
+    Splits the input polyline into two if there are an angle sharper than 40 degrees.
+
+    Args:
+        polyline (arcpy.Polyline): Polyline object to be analysed
+        angle_tolerance (int, optional): Tolerance of what is categorized as a sharp angle, default 40 degrees
+    
+    Returns:
+        arcpy.Polyline: Two new polylines, one starting in the point with a sharp angle,
+        and one that ends in the same point
+        If no sharp angle: returns None
+    """
+    points = polyline.getPart(0)
+    sharp_index = None
+    for i in tqdm(range(1, len(points) - 1), desc="Analysing points", colour="yellow", leave=False):
+        a, b, c = points[i-1:i+2]
+        angle = calculate_angle(a, b, c)
+        if angle < angle_tolerance or angle > 360 - angle_tolerance:
+            sharp_index = i
+            break
+    if sharp_index:
+        first = arcpy.Polyline(arcpy.Array(points[:sharp_index+1]), polyline.spatialReference)
+        second = arcpy.Polyline(arcpy.Array(points[sharp_index:]), polyline.spatialReference)
+        return first, second
+    return None, None
 
 ##################
 # Main functions
@@ -289,16 +319,16 @@ def clean_ramps_near_roundabouts() -> None:
     
     roundabouts = []
     with arcpy.da.SearchCursor(small_roundabouts, ["OID@", "SHAPE@"]) as cursor:
-        for oid, geom in tqdm(cursor, desc="Laster rundkjøringer", leave=False):
+        for oid, geom in tqdm(cursor, desc="Loads roundabouts", colour="yellow", leave=False):
             roundabouts.append((oid, geom))
 
     road_geoms = []
     with arcpy.da.SearchCursor("roads_lyr", ["OID@", "SHAPE@", "typeveg"]) as cursor:
-        for r_oid, r_geom, r_type in tqdm(cursor, desc="Laster veger", leave=False):
+        for r_oid, r_geom, r_type in tqdm(cursor, desc="Loads roads", colour="yellow", leave=False):
             road_geoms.append((r_oid, r_geom, r_type))
 
     oid_geom_pairs = defaultdict(list)
-    for r_id, r_geom_roundabout in tqdm(roundabouts, desc="Sjekker veger mot rundkjøringer", leave=False):
+    for r_id, r_geom_roundabout in tqdm(roundabouts, desc="Checks roads against roundabouts", colour="yellow", leave=False):
         temp_geom = arcpy.management.CopyFeatures(r_geom_roundabout, "in_memory/temp_roundabout")
         arcpy.management.SelectLayerByLocation(
             in_layer="roads_lyr",
@@ -312,7 +342,7 @@ def clean_ramps_near_roundabouts() -> None:
                 oid_geom_pairs[r_id].append((r_geom_roundabout, oid, geom, r_type))
         arcpy.management.Delete("in_memory/temp_roundabout")
 
-    for key in tqdm(oid_geom_pairs, desc="Endrer geometrien", leave=False):
+    for key in tqdm(oid_geom_pairs, desc="Edits the geometry", colour="yellow", leave=False):
         new_roads = change_geom_in_roundabouts(oid_geom_pairs[key])
         oids = [oid for oid in new_roads.keys()]
         if len(oids) > 0:
@@ -333,13 +363,105 @@ def clean_ramps_near_roundabouts() -> None:
 @timing_decorator
 def merge_ramps() -> None:
     """
+    Merges all the ramps to longer instances, but splits those that contains junctions,
+    or crossing over other roads in the same level using topological relations.
     """
-    roads = data_files["cleaned_roads"]
-    
-    arcpy.management.MakeFeatureLayer(roads, "ramps_lyr", where_clause="typeveg = 'rampe'")
+    print("\nMerge ramps...")
+    roads_fc = data_files["cleaned_roads"]
+    buffer_fc = data_files["buffered_ramps"]
+    relevant_roads_fc = data_files["roads_near_ramps"]
+    point_fc = data_files["endpoints"]
+    dissolved_fc = data_files["dissolved_ramps"]
+    merged_fc = data_files["merged_ramps"]
 
-    test = data_files["test"]
-    arcpy.management.CopyFeatures("ramps_lyr", test)
+    arcpy.management.MakeFeatureLayer(roads_fc, "ramps_lyr", where_clause="typeveg = 'rampe'")
+
+    create_buffer("ramps_lyr", "20 Meters", "ROUND", buffer_fc)
+
+    arcpy.management.MakeFeatureLayer(roads_fc, "roads_lyr")
+    
+    arcpy.management.SelectLayerByLocation(
+        in_layer="roads_lyr",
+        overlap_type="INTERSECT",
+        select_features=buffer_fc
+    )
+
+    arcpy.management.CopyFeatures("roads_lyr", relevant_roads_fc)
+
+    end_points = {}
+    with arcpy.da.SearchCursor("ramps_lyr", ["SHAPE@"]) as cursor:
+        for row in cursor:
+            s, e = get_endpoints(row[0])
+
+            key_s = (s.firstPoint.X, s.firstPoint.Y)
+            key_e = (e.firstPoint.X, e.firstPoint.Y)
+
+            end_points[key_s] = end_points.get(key_s, 0) + 1
+            end_points[key_e] = end_points.get(key_e, 0) + 1
+
+    with arcpy.da.SearchCursor(relevant_roads_fc, ["SHAPE@", "typeveg"]) as cursor:
+        for geom, t in cursor:
+            if t == "rampe":
+                continue
+            s, e = get_endpoints(geom)
+
+            key_s = (s.firstPoint.X, s.firstPoint.Y)
+            key_e = (e.firstPoint.X, e.firstPoint.Y)
+
+            if end_points.get(key_s, 0) > 0:
+                end_points[key_s] += 1
+            if end_points.get(key_e, 0) > 0:
+                end_points[key_e] += 1
+
+    valid_end_points = set()
+    for pnt in tqdm(end_points, desc="Fetching valid endpoints", colour="yellow", leave=False):
+        if end_points[pnt] > 2:
+            valid_end_points.add(pnt)
+
+    spatial_ref = arcpy.Describe(roads_fc).spatialReference
+    path, name = os.path.split(point_fc)
+    arcpy.management.CreateFeatureclass(path, name, geometry_type="POINT", spatial_reference=spatial_ref)
+
+    with arcpy.da.InsertCursor(point_fc, ["SHAPE@"]) as cursor:
+        for x, y in tqdm(valid_end_points, desc="Adding points", colour="yellow", leave=False):
+            point = arcpy.Point(x, y)
+            point_geom = arcpy.PointGeometry(point, spatial_ref)
+            cursor.insertRow([point_geom])
+
+    arcpy.management.Dissolve(
+        in_features="ramps_lyr",
+        out_feature_class=dissolved_fc,
+        dissolve_field=[],
+        multi_part="SINGLE_PART"
+    )
+
+    arcpy.management.SplitLineAtPoint(
+        in_features=dissolved_fc,
+        point_features=point_fc,
+        out_feature_class=merged_fc,
+        search_radius="5 Meters"
+    )
+
+    splitted_geometries = []
+
+    with arcpy.da.UpdateCursor(merged_fc, ["SHAPE@"]) as cursor:
+        for row in cursor:
+            polyline = row[0]
+            first, second = split_polyline_at_index(polyline)
+            if first and second:
+                cursor.deleteRow()
+                splitted_geometries.extend([first, second])
+    
+    with arcpy.da.InsertCursor(merged_fc, ["SHAPE@"]) as insert_cursor:
+        for line in splitted_geometries:
+            insert_cursor.insertRow([line])
+
+    print("Ramps successfully merged!")
+
+"""
+test = data_files["test"]
+arcpy.management.CopyFeatures("ramps_lyr", test)
+#"""
 
 if __name__ == "__main__":
     collapse_roundabouts()
