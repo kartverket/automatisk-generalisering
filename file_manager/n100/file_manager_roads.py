@@ -1345,8 +1345,10 @@ class Road_N100(Enum):
         script_source_name=ramps_file, description="small_roundabouts"
     )
 
-    ramps__roads_with_cleaned_roundabouts__n100_road = file_manager.generate_file_name_gdb(
-        script_source_name=ramps_file, description="roads_with_cleaned_roundabouts"
+    ramps__roads_with_cleaned_roundabouts__n100_road = (
+        file_manager.generate_file_name_gdb(
+            script_source_name=ramps_file, description="roads_with_cleaned_roundabouts"
+        )
     )
 
     ramps__buffered_ramps__n100_road = file_manager.generate_file_name_gdb(
@@ -1364,7 +1366,7 @@ class Road_N100(Enum):
     ramps__dissolved_ramps__n100_road = file_manager.generate_file_name_gdb(
         script_source_name=ramps_file, description="dissolved_ramps"
     )
-    
+
     ramps__merged_ramps__n100_road = file_manager.generate_file_name_gdb(
         script_source_name=ramps_file, description="merged_ramps"
     )
