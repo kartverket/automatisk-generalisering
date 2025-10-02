@@ -25,7 +25,9 @@ data_files = {
     "roads_near_ramps": Road_N100.ramps__roads_near_ramp__n100_road.value,
     "endpoints": Road_N100.ramps__endpoints__n100_road.value,
     "dissolved_ramps": Road_N100.ramps__dissolved_ramps__n100_road.value,
+    "intermediate_ramps": Road_N100.ramps__intermediate_ramps__n100_road.value,
     "merged_ramps": Road_N100.ramps__merged_ramps__n100_road.value,
+    "generalized_ramps": Road_N100.ramps__generalized_ramps__n100_road.value,
     "test": Road_N100.ramps__test__n100_road.value,
 }
 
@@ -36,11 +38,12 @@ files_to_delete = [
     "roads_near_ramps",
     "endpoints",
     "dissolved_ramps",
+    "intermediate_ramps",
 ]
 
 
 @timing_decorator
-def collapse_roundabouts():
+def generalize_ramps():
     """
     Simplification of ramps
     """
@@ -52,6 +55,7 @@ def collapse_roundabouts():
     """
     Generalization of ramps
     """
+    generalize()
 
     # Deletes all the intermediate files created during the process
     delete_intermediate_files()
@@ -274,6 +278,26 @@ def split_polyline_at_index(
     return None, None
 
 
+def categorize_ramp(ramp: arcpy.Polyline, roads: arcpy.Geometry) -> str:
+    return None
+
+
+def fix_simple():
+    return
+
+
+def fix_bridge():
+    return
+
+
+def fix_long():
+    return
+
+
+def fix_complex():
+    pass
+
+
 ##################
 # Main functions
 ##################
@@ -425,6 +449,7 @@ def merge_ramps() -> None:
     relevant_roads_fc = data_files["roads_near_ramps"]
     point_fc = data_files["endpoints"]
     dissolved_fc = data_files["dissolved_ramps"]
+    intermediate_fc = data_files["intermediate_ramps"]
     merged_fc = data_files["merged_ramps"]
 
     arcpy.management.MakeFeatureLayer(
@@ -490,20 +515,20 @@ def merge_ramps() -> None:
     arcpy.management.Dissolve(
         in_features="ramps_lyr",
         out_feature_class=dissolved_fc,
-        dissolve_field=[],
+        dissolve_field=["medium"],
         multi_part="SINGLE_PART",
     )
 
     arcpy.management.SplitLineAtPoint(
         in_features=dissolved_fc,
         point_features=point_fc,
-        out_feature_class=merged_fc,
+        out_feature_class=intermediate_fc,
         search_radius="5 Meters",
     )
 
     splitted_geometries = []
 
-    with arcpy.da.UpdateCursor(merged_fc, ["SHAPE@"]) as cursor:
+    with arcpy.da.UpdateCursor(intermediate_fc, ["SHAPE@"]) as cursor:
         for row in cursor:
             polyline = row[0]
             first, second = split_polyline_at_index(polyline)
@@ -511,11 +536,131 @@ def merge_ramps() -> None:
                 cursor.deleteRow()
                 splitted_geometries.extend([first, second])
 
-    with arcpy.da.InsertCursor(merged_fc, ["SHAPE@"]) as insert_cursor:
+    with arcpy.da.InsertCursor(intermediate_fc, ["SHAPE@"]) as insert_cursor:
         for line in splitted_geometries:
             insert_cursor.insertRow([line])
 
+    arcpy.management.SelectLayerByAttribute("roads_lyr", "CLEAR_SELECTION")
+    arcpy.management.SelectLayerByAttribute(
+        in_layer_or_view="roads_lyr",
+        selection_type="NEW_SELECTION",
+        where_clause="typeveg <> 'rampe'",
+    )
+
+    arcpy.management.CopyFeatures("roads_lyr", merged_fc)
+
+    existing_fields = [f.name for f in arcpy.ListFields(intermediate_fc)]
+    attr_fields = [
+        (f.name, f.type)
+        for f in arcpy.ListFields(merged_fc)
+        if f.type not in ("Geometry", "OID") and f.name not in existing_fields
+    ]
+
+    variants = {
+        "String": "TEXT",
+        "Integer": "LONG",
+        "SmallInteger": "LONG",
+        "Double": "DOUBLE",
+        "Date": "DATE",
+    }
+    for field_name, field_type in tqdm(
+        attr_fields, desc="Updating attributes", colour="yellow", leave=False
+    ):
+        string = variants[field_type]
+        if string == "TEXT":
+            arcpy.management.AddField(
+                intermediate_fc, field_name, string, field_length=255
+            )
+        else:
+            arcpy.management.AddField(intermediate_fc, field_name, string)
+
+    arcpy.management.SelectLayerByAttribute("roads_lyr", "CLEAR_SELECTION")
+
+    with arcpy.da.UpdateCursor(
+        intermediate_fc, ["SHAPE@"] + [f[0] for f in attr_fields]
+    ) as cursor:
+        for row_orig in tqdm(cursor, desc="Updating attributes", leave=False):
+            update = defaultdict(set)
+            arcpy.management.SelectLayerByLocation(
+                in_layer="roads_lyr",
+                overlap_type="INTERSECT",
+                select_features=row_orig[0],
+                search_distance="5 Meters",
+                selection_type="NEW_SELECTION",
+            )
+            arcpy.management.SelectLayerByAttribute(
+                in_layer_or_view="roads_lyr",
+                selection_type="SUBSET_SELECTION",
+                where_clause="typeveg = 'rampe'",
+            )
+            with arcpy.da.SearchCursor(
+                "roads_lyr", ["OID@"] + [f[0] for f in attr_fields]
+            ) as search:
+                for row in search:
+                    for i, el in enumerate(row[1:]):
+                        update[attr_fields[i]].add(el)
+
+            row_orig = list(row_orig)
+
+            final_values = {}
+            for field, values in update.items():
+                final_values[field] = values[0]
+            for i, field in enumerate(attr_fields, start=1):
+                row_orig[i] = final_values.get(field, row[i])
+            cursor.updateRow(row_orig)
+
+    arcpy.management.Append(
+        inputs=intermediate_fc, target=merged_fc, schema_type="NO_TEST"
+    )
+
     print("Ramps successfully merged!")
+
+
+@timing_decorator
+def generalize() -> None:
+    """ """
+    roads_fc = data_files["merged_ramps"]
+    buffer_fc = data_files["buffered_ramps"]
+
+    arcpy.management.MakeFeatureLayer(
+        roads_fc, "roads_lyr", where_clause="typeveg <> 'rampe'"
+    )
+    arcpy.management.MakeFeatureLayer(
+        roads_fc, "ramps_lyr", where_clause="typeveg = 'rampe'"
+    )
+
+    buffers = [row[0] for row in arcpy.da.SearchCursor(buffer_fc, ["SHAPE@"])]
+
+    for buffer in tqdm(
+        buffers, desc="Analysing each buffer", colour="yellow", leave=False
+    ):
+        # Fetches all the roads, and then ramps, inside the buffer
+        arcpy.management.SelectLayerByLocation(
+            in_layer="roads_lyr",
+            overlap_type="INTERSECT",
+            select_features=buffer,
+            selection_type="NEW_SELECTION",
+        )
+        arcpy.management.SelectLayerByLocation(
+            in_layer="ramps_lyr",
+            overlap_type="INTERSECT",
+            select_features=buffer,
+            selection_type="NEW_SELECTION",
+        )
+        with arcpy.da.UpdateCursor("ramps_lyr", ["SHAPE@"]) as cursor:
+            for row in cursor:
+                ramp = row[0]
+                category = categorize_ramp(ramp, "roads_lyr")
+                if category == "simple":
+                    fix_simple()
+                elif category == "bridge":
+                    fix_bridge()
+                elif category == "long":
+                    fix_long()
+                elif category == "complex":
+                    fix_complex()
+
+    return
 
 
 """
@@ -535,4 +680,4 @@ def delete_intermediate_files() -> None:
 
 
 if __name__ == "__main__":
-    collapse_roundabouts()
+    generalize_ramps()
