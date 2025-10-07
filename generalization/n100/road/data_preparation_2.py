@@ -38,7 +38,7 @@ from constants.n100_constants import (
     MediumAlias,
 )
 from generalization.n100.road.dam import main as dam
-from generalization.n100.road.ramps import add_ramps
+from generalization.n100.road.ramps import generalize_ramps
 
 MERGE_DIVIDED_ROADS_ALTERATIVE = False
 
@@ -50,7 +50,7 @@ def main():
     data_selection_and_validation()
     trim_road_details()
     ################################
-    add_ramps()
+    generalize_ramps()
     ################################
     admin_boarder()
     adding_fields()
@@ -58,7 +58,6 @@ def main():
     simplify_road()
     thin_roads()
     thin_sti_and_forest_roads()
-
     merge_divided_roads()
     smooth_line()
     pre_resolve_road_conflicts()
@@ -237,7 +236,7 @@ def admin_boarder():
     )
 
     custom_arcpy.select_attribute_and_make_permanent_feature(
-        input_layer=Road_N100.data_preparation___road_single_part_2___n100_road.value,
+        input_layer=Road_N100.ramps__generalized_ramps__n100_road.value,  # Road_N100.data_preparation___road_single_part_2___n100_road.value,
         expression=f"vegkategori  in ('{NvdbAlias.europaveg}', '{NvdbAlias.riksveg}', '{NvdbAlias.fylkesveg}', '{NvdbAlias.kommunalveg}', '{NvdbAlias.privatveg}', '{NvdbAlias.skogsveg}')",
         output_name=Road_N100.data_preparation___car_raod___n100_road.value,
     )
@@ -284,7 +283,7 @@ def adding_fields():
         )
 
     file_utilities.reclassify_value(
-        input_table=Road_N100.data_preparation___road_single_part_2___n100_road.value,
+        input_table=Road_N100.ramps__generalized_ramps__n100_road.value,
         target_field="VEGNUMMER",
         target_value="None",
         replace_value="-99",
@@ -292,7 +291,7 @@ def adding_fields():
     )
 
     arcpy.management.AddFields(
-        in_table=Road_N100.data_preparation___road_single_part_2___n100_road.value,
+        in_table=Road_N100.ramps__generalized_ramps__n100_road.value,
         field_description=FieldNames.road_added_fields.value,
     )
 
@@ -302,7 +301,7 @@ def collapse_road_detail():
     input_dict = {
         "roads": (
             "input",
-            Road_N100.data_preparation___road_single_part_2___n100_road.value,
+            Road_N100.ramps__generalized_ramps__n100_road.value,
         )
     }
 
@@ -479,7 +478,7 @@ def merge_divided_roads():
         """
 
         arcpy.management.CalculateField(
-            in_table=Road_N100.data_preparation___road_single_part_2___n100_road.value,
+            in_table=Road_N100.ramps__generalized_ramps__n100_road.value,
             field="character",
             expression="Reclass(!TYPEVEG!)",
             expression_type="PYTHON3",

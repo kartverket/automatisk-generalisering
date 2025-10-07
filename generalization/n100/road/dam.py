@@ -1426,12 +1426,7 @@ def remove_sharp_angles(roads: dict[list]) -> None:
 @timing_decorator
 def delete_intermediate_files() -> None:
     """
-    Deletes the intermediate files used during the process
-    of snapping roads away from the dam buffers.
+    Deletes the intermediate files used during the process.
     """
     for file in files_to_delete:
         arcpy.management.Delete(data_files[file])
-
-
-if __name__ == "__main__":
-    main()

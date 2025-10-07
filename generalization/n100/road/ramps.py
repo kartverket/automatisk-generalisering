@@ -14,9 +14,11 @@ from input_data import input_n100
 from file_manager.n100.file_manager_roads import Road_N100
 from custom_tools.decorators.timing_decorator import timing_decorator
 
+from dam import get_endpoints, calculate_angle, reverse_geometry
+
 data_files = {
     # Stores all the relevant file paths to the geodata used in this Python file
-    "input_1": Road_N100.data_preparation___road_single_part_2___n100_road.value,
+    "input": Road_N100.data_preparation___road_single_part_2___n100_road.value,
     "ramps": Road_N100.ramps__ramps__n100_road.value,
     "roundabouts_1": Road_N100.ramps__collapsed_roundabouts__n100_road.value,
     "roundabouts_2": Road_N100.ramps__small_roundabouts__n100_road.value,
@@ -51,13 +53,13 @@ def generalize_ramps():
     fetch_roundabouts()
     clean_ramps_near_roundabouts()
     merge_ramps()
-
     """
     Generalization of ramps
     """
     generalize()
-
-    # Deletes all the intermediate files created during the process
+    """
+    Deletes all the intermediate files created during the process
+    """
     delete_intermediate_files()
 
 
@@ -66,22 +68,32 @@ def generalize_ramps():
 ##################
 
 
-def get_endpoints(
+def get_key_points(
     polyline: arcpy.Geometry,
-) -> tuple[arcpy.PointGeometry, arcpy.PointGeometry]:
+) -> tuple[arcpy.Point, arcpy.Point, arcpy.Point, arcpy.Point]:
     """
-    Returns the start and end points of a polyline
+    Returns the first, second, second-to-last, and last points of a polyline.
 
     Args:
-        polyline (arcpy.Geometry): The geometry (line) to be analysed
+        polyline (arcpy.Geometry): The polyline geometry to be analyzed.
 
     Returns:
-        tuple(arcpy.PointGeometry): tuple with start and end points
+        tuple[arcpy.Point, arcpy.Point, arcpy.Point, arcpy.Point]:
+            A tuple containing the first, second, second-to-last, and last points.
+            Returns None if the polyline has fewer than three points.
     """
-    return (
-        arcpy.PointGeometry(polyline.firstPoint, polyline.spatialReference),
-        arcpy.PointGeometry(polyline.lastPoint, polyline.spatialReference),
-    )
+    points = polyline.getPart(0)
+    num_points = len(points)
+
+    if num_points < 3:
+        return None
+
+    first = points[0]
+    second = points[1]
+    second_last = points[-2]
+    last = points[-1]
+
+    return (first, second, second_last, last)
 
 
 def get_center_point(geoms: list[arcpy.Geometry]) -> arcpy.PointGeometry:
@@ -206,42 +218,6 @@ def create_buffer(
     )
 
 
-def calculate_angle(
-    p1: arcpy.Geometry, p2: arcpy.Geometry, p3: arcpy.Geometry
-) -> float:
-    """
-    Calculates the angle in point 2 between point 1 and 3.
-
-    Args:
-        p1 (arcpy.Geometry): Point 1
-        p2 (arcpy.Geometry): Point 2 (the angle to be calculated is in this point)
-        p3 (arcpy.Geometry): Point 3
-
-    Returns:
-        float: The angle in point 2
-    """
-    # Vectors from p2 to p1, and p2 to p3
-    v1 = np.array([p1.X - p2.X, p1.Y - p2.Y])
-    v2 = np.array([p3.X - p2.X, p3.Y - p2.Y])
-
-    # Lenghts of the vectors
-    len1 = np.linalg.norm(v1)
-    len2 = np.linalg.norm(v2)
-
-    if len1 == 0 or len2 == 0:
-        return 180  # Undefined angle, treated as straight line
-
-    # Calculate scalar product
-    dot = np.dot(v1, v2)
-
-    # Calculates angle in degrees
-    cos_angle = dot / (len1 * len2)
-    cos_angle = np.clip(cos_angle, -1.0, 1.0)
-    angle_rad = np.arccos(cos_angle)
-
-    return np.degrees(angle_rad)
-
-
 def split_polyline_at_index(
     polyline: arcpy.Polyline, angle_tolerance: int = 40
 ) -> arcpy.Polyline | None:
@@ -278,12 +254,221 @@ def split_polyline_at_index(
     return None, None
 
 
-def categorize_ramp(ramp: arcpy.Polyline, roads: arcpy.Geometry) -> str:
-    return None
+def check_ends(ramp: arcpy.Polyline, roads: str) -> arcpy.Polyline:
+    """
+    Fetches the start and end points of the ramp and counts the number of roads
+    connecting to these points. The end having the largest number of roads is
+    considered as the least trafficated end of the ramp. The ramp is returned
+    as it is or reversed depending on this, making further analysis possible.
+
+    Args:
+        ramp (arcpy.Polyline): The polyline representing the ramp to consider
+        roads (str): Path to a feature layer containing relevant, surrounding roads
+    
+    Returns:
+        arcpy.Polyline: The same ramp either as it is or reversed
+    """
+    s, e = get_endpoints(ramp)
+    tolerance = 0.5  # [m]
+    best_count = 0
+    best_index = None
+    for i, pnt in enumerate([s, e]):
+        count = 0
+        with arcpy.da.SearchCursor(roads, ["SHAPE@"]) as search:
+            for row in search:
+                geom = row[0]
+                if (
+                    geom.firstPoint
+                    and arcpy.PointGeometry(geom.firstPoint).distanceTo(pnt) < tolerance
+                    or geom.lastPoint
+                    and arcpy.PointGeometry(geom.lastPoint).distanceTo(pnt) < tolerance
+                ):
+                    count += 1
+        if count > best_count:
+            best_count = count
+            best_index = i
+    if best_index == 1:
+        return reverse_geometry(ramp)
+    return ramp
 
 
-def fix_simple():
-    return
+def categorize_ramp(ramp: arcpy.Polyline, roads: str) -> str | None:
+    """
+    Categorises the incoming ramp into categories deciding further processes.
+
+    Args:
+        ramp (arcpy.Polyline): The ramp to analyse
+        roads (str): Path to feature layer with relevant roads used in the analyse
+    
+    Returns:
+        str: A string saying the category of the ramp, used as key in further analyses
+    """
+    ramp = check_ends(ramp, roads)
+    end_points = get_key_points(ramp)
+    if end_points == None:
+        return "No edit"
+
+    p1, p2, p3, p4 = end_points
+    v1 = np.array([p2.X - p1.X, p2.Y - p1.Y])
+    v2 = np.array([p4.X - p3.X, p4.Y - p3.Y])
+    v1_norm = v1 / np.linalg.norm(v1)
+    v2_norm = v2 / np.linalg.norm(v2)
+    cos_angle = np.dot(v1_norm, v2_norm)
+    same_direction = cos_angle >= np.cos(np.deg2rad(90))
+
+    overlap = False
+    with arcpy.da.SearchCursor(roads, ["SHAPE@"]) as search:
+        for row in search:
+            if ramp.intersect(row[0], 2):
+                overlap = True
+                break
+
+    if not overlap and same_direction:
+        return "simple"
+    return "No edit"
+
+
+def fix_simple(ramp: arcpy.Polyline, roads: str) -> arcpy.Polyline:
+    """
+    """
+    start = ramp.firstPoint
+    end = ramp.lastPoint
+
+    road_geom_start = None
+    road_geom_end = None
+    tolerance = 0.1
+    height_ratio = 0.5
+
+    with arcpy.da.SearchCursor(roads, ["SHAPE@"]) as search:
+        for row in search:
+            geom = row[0]
+            if geom.distanceTo(start) < tolerance and not road_geom_start:
+                road_geom_start = geom
+            elif geom.distanceTo(end) < tolerance and not road_geom_end:
+                road_geom_end = geom
+            if road_geom_start != None and road_geom_end != None:
+                break
+    
+    if road_geom_start == None or road_geom_end == None:
+        return ramp
+
+    def to_vector(p1, p2):
+        return np.array([p2.X - p1.X, p2.Y - p1.Y])
+
+    def normalize(v):
+        mag = np.hypot(v[0], v[1])
+        return v / mag if mag != 0 else v
+    
+    v1 = normalize(to_vector(road_geom_start.firstPoint, road_geom_start.lastPoint))
+    v2 = normalize(to_vector(road_geom_end.firstPoint, road_geom_end.lastPoint))
+
+    x1, y1 = start.X, start.Y
+    x2, y2 = end.X, end.Y
+    dx1, dy1 = v1
+    dx2, dy2 = v2
+    denom = dx1*dy2 - dy1*dx2
+    if abs(denom) < 1e-9:
+        raise RuntimeError("Linjene er parallelle, ingen skjæring funnet")
+    t = ((x2 - x1)*dy2 - (y2 - y1)*dx2) / denom
+    ix = x1 + t*dx1
+    iy = y1 + t*dy1
+    inter_pt = arcpy.Point(ix, iy)
+
+    v_h = to_vector(start, end)
+    mid_h = np.array([(start.X + end.X) / 2.0, (start.Y + end.Y) / 2.0])
+    
+    perp = np.array([-v_h[1], v_h[0]], dtype=float)
+    perp_unit = normalize(perp)
+
+    vec_mid_to_inter = np.array([inter_pt.X - mid_h[0], inter_pt.Y - mid_h[1]])
+    height_signed = np.dot(vec_mid_to_inter, perp_unit)
+    height = abs(height_signed)
+
+    sign = np.sign(height_signed) if height_signed != 0 else 1.0
+
+    shift = sign * height * float(height_ratio)
+    new_pt_xy = (inter_pt.X + perp_unit[0] * shift, inter_pt.Y + perp_unit[1] * shift)
+
+    arr = arcpy.Array([arcpy.Point(start.X, start.Y),
+                       arcpy.Point(new_pt_xy[0], new_pt_xy[1]),
+                       arcpy.Point(end.X, end.Y)])
+    new_line = arcpy.Polyline(arr, ramp.spatialReference)
+    return new_line
+
+def fix_simple_2(ramp: arcpy.Polyline, roads: str) -> arcpy.Polyline:
+    """ """
+    # Identifies the endpoint of the ramp connected to the roads with less traffic
+    points = [ramp.getPart(0).getObject(i) for i in range(ramp.pointCount)]
+    start = ramp.firstPoint
+    end = ramp.lastPoint
+
+    if ramp.pointCount >= 6:
+        angles_start, angles_end = [], []
+        n = ramp.pointCount
+        for i in range(1, 4):
+            angles_start.append(
+                calculate_angle(points[i], points[i + 1], points[i + 2])
+            )
+            angles_end.append(
+                calculate_angle(points[n - 3 - i], points[n - 2 - i], points[n - 1 - i])
+            )
+        angle_start = sum(angles_start) / len(angles_start) if angles_start else 0
+        angle_end = sum(angles_end) / len(angles_end) if angles_end else 0
+        connection_points = [start, end] if angle_start < angle_end else [end, start]
+        fraction = 0.75
+    else:
+        connection_points = [start, end]
+        fraction = 0.5
+
+    # Creates a point 70% from the connection point identified above to the other end point
+    x = connection_points[0].X + fraction * (
+        connection_points[1].X - connection_points[0].X
+    )
+    y = connection_points[0].Y + fraction * (
+        connection_points[1].Y - connection_points[0].Y
+    )
+
+    p_frac = arcpy.Point(x, y)
+
+    # Finds the closest geometry to the end point at the trafficated end
+    nearest_geom = None
+    min_dist = float("inf")
+
+    for row in arcpy.da.SearchCursor(roads, ["SHAPE@"]):
+        geom = row[0]
+        dist = geom.distanceTo(connection_points[1])
+        if dist < min_dist:
+            min_dist = dist
+            nearest_geom = geom
+            if min_dist == 0:
+                break
+
+    if nearest_geom == None:
+        return ramp
+
+    # Calculates the new position of the adjusted ramp point
+    dx = end.X - start.X
+    dy = end.Y - start.Y
+    length = np.hypot(dx, dy)
+    ortho_dx = -dy / length
+    ortho_dy = dx / length
+
+    moved_pos = arcpy.Point(p_frac.X + ortho_dx * 40, p_frac.Y + ortho_dy * 40)
+    moved_neg = arcpy.Point(p_frac.X - ortho_dx * 40, p_frac.Y - ortho_dy * 40)
+
+    dist_pos = nearest_geom.distanceTo(
+        arcpy.PointGeometry(moved_pos, ramp.spatialReference)
+    )
+    dist_neg = nearest_geom.distanceTo(
+        arcpy.PointGeometry(moved_neg, ramp.spatialReference)
+    )
+
+    moved_point = moved_pos if dist_pos > dist_neg else moved_neg
+
+    # Creates the new line
+    new_array = arcpy.Array([start, moved_point, end])
+    new_line = arcpy.Polyline(new_array, ramp.spatialReference)
+    return new_line
 
 
 def fix_bridge():
@@ -310,7 +495,7 @@ def add_ramps() -> None:
     road layer used in further analysis.
     """
     print("\nAdding ramps to the data...")
-    roads = data_files["input_1"]
+    roads = data_files["input"]
     ramps = data_files["ramps"]
 
     temp_ramps = r"in_memory\ramps_temp"
@@ -327,7 +512,7 @@ def fetch_roundabouts() -> None:
     roundabout and creates a FeatureLayer with those shorter than 150m.
     """
     print("\nCollects relevant roundabouts...")
-    roads = data_files["input_1"]
+    roads = data_files["input"]
     roundabouts = data_files["roundabouts_1"]
     small_roundabouts = data_files["roundabouts_2"]
 
@@ -370,7 +555,7 @@ def clean_ramps_near_roundabouts() -> None:
     a single point, and deletes those having both ends in this point.
     """
     print("\nClean ramps near roundabouts...")
-    roads = data_files["input_1"]
+    roads = data_files["input"]
     small_roundabouts = data_files["roundabouts_2"]
 
     cleaned_roads = data_files["cleaned_roads"]
@@ -440,7 +625,7 @@ def clean_ramps_near_roundabouts() -> None:
 @timing_decorator
 def merge_ramps() -> None:
     """
-    Merges all the ramps to longer instances, but splits those that contains junctions,
+    Merges all the ramps into longer instances, but splits those that contains junctions,
     or crossing over other roads in the same level using topological relations.
     """
     print("\nMerge ramps...")
@@ -515,7 +700,7 @@ def merge_ramps() -> None:
     arcpy.management.Dissolve(
         in_features="ramps_lyr",
         out_feature_class=dissolved_fc,
-        dissolve_field=["medium"],
+        dissolve_field=[],
         multi_part="SINGLE_PART",
     )
 
@@ -604,7 +789,18 @@ def merge_ramps() -> None:
 
             final_values = {}
             for field, values in update.items():
-                final_values[field] = values[0]
+                field = field[0]
+                values = list(values)
+                if field.lower() == "medium":
+                    values = [v for v in values if v is not None]
+                    if values:
+                        final_values[field] = values[0]
+                    else:
+                        final_values[field] = "T"
+                else:
+                    final_values[field] = values[0]
+            if "medium" not in final_values:
+                final_values["medium"] = "T"
             for i, field in enumerate(attr_fields, start=1):
                 row_orig[i] = final_values.get(field, row[i])
             cursor.updateRow(row_orig)
@@ -613,20 +809,28 @@ def merge_ramps() -> None:
         inputs=intermediate_fc, target=merged_fc, schema_type="NO_TEST"
     )
 
-    print("Ramps successfully merged!")
+    print("Ramps successfully merged!\n")
 
 
 @timing_decorator
 def generalize() -> None:
-    """ """
+    """
+    Generalyses all the ramps by, for each ramp, first categorise the ramp,
+    and then performe a generalisation depending on the category.
+    """
+    print("\nGeneralize ramps...")
+
     roads_fc = data_files["merged_ramps"]
     buffer_fc = data_files["buffered_ramps"]
+    output_fc = data_files["generalized_ramps"]
+
+    arcpy.management.CopyFeatures(roads_fc, output_fc)
 
     arcpy.management.MakeFeatureLayer(
-        roads_fc, "roads_lyr", where_clause="typeveg <> 'rampe'"
+        output_fc, "roads_lyr", where_clause="typeveg <> 'rampe'"
     )
     arcpy.management.MakeFeatureLayer(
-        roads_fc, "ramps_lyr", where_clause="typeveg = 'rampe'"
+        output_fc, "ramps_lyr", where_clause="typeveg = 'rampe'"
     )
 
     buffers = [row[0] for row in arcpy.da.SearchCursor(buffer_fc, ["SHAPE@"])]
@@ -652,28 +856,23 @@ def generalize() -> None:
                 ramp = row[0]
                 category = categorize_ramp(ramp, "roads_lyr")
                 if category == "simple":
-                    fix_simple()
+                    row[0] = fix_simple(ramp, "roads_lyr")
+                    cursor.updateRow(row)
                 elif category == "bridge":
                     fix_bridge()
                 elif category == "long":
                     fix_long()
                 elif category == "complex":
                     fix_complex()
-
-    return
-
-
-"""
-test = data_files["test"]
-arcpy.management.CopyFeatures("ramps_lyr", test)
-#"""
+                elif category == "No edit":
+                    continue
+    print("Ramps successfully generalized!\n")
 
 
 @timing_decorator
 def delete_intermediate_files() -> None:
     """
-    Deletes the intermediate files used during the process
-    of snapping roads away from the dam buffers.
+    Deletes the intermediate files used during the process.
     """
     for file in files_to_delete:
         arcpy.management.Delete(data_files[file])
