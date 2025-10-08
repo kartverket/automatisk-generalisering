@@ -257,6 +257,51 @@ def split_polyline_at_index(
     return None, None
 
 
+def find_ramp_junctions(ramps: str) -> dict[list]:
+    """
+    Creates a dictionary keeping all the junctions where only ramps are considered.
+
+    Args:
+        ramps (str): Path to a feature layer containing all the ramps
+
+    Returns:
+        dict[list]: A dictionary were each value is a list of tuples
+        storing the oid and shape of the relevant ramps that occure
+        in potential junctions
+    """
+    ramp_geoms = {}
+    end_points = {}
+    junctions = {}
+    with arcpy.da.SearchCursor(ramps, ["OID@", "SHAPE@"]) as search:
+        for oid, geom in search:
+            ramp_geoms[oid] = geom
+            start, end = get_endpoints(geom)
+            start, end = start.firstPoint, end.firstPoint
+
+            if end_points.get((start.X, start.Y), None) != None:
+                end_points[(start.X, start.Y)][0] += 1
+                end_points[(start.X, start.Y)].append(oid)
+            else:
+                end_points[(start.X, start.Y)] = [1, oid]
+
+            if end_points.get((end.X, end.Y), None) != None:
+                end_points[(end.X, end.Y)][0] += 1
+                end_points[(end.X, end.Y)].append(oid)
+            else:
+                end_points[(end.X, end.Y)] = [1, oid]
+
+    count = 1
+
+    for values in end_points.values():
+        if values[0] > 2:
+            key = "Junction " + str(count)
+            junctions[key] = []
+            for i in range(1, len(values)):
+                junctions[key].append((values[i], ramp_geoms[values[i]]))
+            count += 1
+    return junctions
+
+
 def check_ends(ramp: arcpy.Polyline, roads: str) -> arcpy.Polyline:
     """
     Fetches the start and end points of the ramp and counts the number of roads
@@ -267,7 +312,7 @@ def check_ends(ramp: arcpy.Polyline, roads: str) -> arcpy.Polyline:
     Args:
         ramp (arcpy.Polyline): The polyline representing the ramp to consider
         roads (str): Path to a feature layer containing relevant, surrounding roads
-    
+
     Returns:
         arcpy.Polyline: The same ramp either as it is or reversed
     """
@@ -302,7 +347,7 @@ def categorize_ramp(ramp: arcpy.Polyline, roads: str) -> str | None:
     Args:
         ramp (arcpy.Polyline): The ramp to analyse
         roads (str): Path to feature layer with relevant roads used in the analyse
-    
+
     Returns:
         str: A string saying the category of the ramp, used as key in further analyses
     """
@@ -402,27 +447,10 @@ def fix_simple(ramp: arcpy.Polyline, roads: str) -> arcpy.Polyline:
 def fix_simple_2(ramp: arcpy.Polyline, roads: str) -> arcpy.Polyline:
     """ """
     # Identifies the endpoint of the ramp connected to the roads with less traffic
-    points = [ramp.getPart(0).getObject(i) for i in range(ramp.pointCount)]
-    start = ramp.firstPoint
-    end = ramp.lastPoint
-
-    if ramp.pointCount >= 6:
-        angles_start, angles_end = [], []
-        n = ramp.pointCount
-        for i in range(1, 4):
-            angles_start.append(
-                calculate_angle(points[i], points[i + 1], points[i + 2])
-            )
-            angles_end.append(
-                calculate_angle(points[n - 3 - i], points[n - 2 - i], points[n - 1 - i])
-            )
-        angle_start = sum(angles_start) / len(angles_start) if angles_start else 0
-        angle_end = sum(angles_end) / len(angles_end) if angles_end else 0
-        connection_points = [start, end] if angle_start < angle_end else [end, start]
-        fraction = 0.75
-    else:
-        connection_points = [start, end]
-        fraction = 0.5
+    ramp = check_ends(ramp, roads)
+    start, end = ramp.firstPoint, ramp.lastPoint
+    connection_points = [start, end]
+    fraction = 0.75 if ramp.pointCount > 5 else 0.5
 
     # Creates a point 70% from the connection point identified above to the other end point
     x = connection_points[0].X + fraction * (
@@ -683,19 +711,10 @@ def clean_ramps_near_roundabouts() -> None:
 
     arcpy.management.MakeFeatureLayer(cleaned_roads, "roads_lyr")
 
-    roundabouts = []
-    with arcpy.da.SearchCursor(small_roundabouts, ["OID@", "SHAPE@"]) as cursor:
-        for oid, geom in tqdm(
-            cursor, desc="Loads roundabouts", colour="yellow", leave=False
-        ):
-            roundabouts.append((oid, geom))
-
-    road_geoms = []
-    with arcpy.da.SearchCursor("roads_lyr", ["OID@", "SHAPE@", "typeveg"]) as cursor:
-        for r_oid, r_geom, r_type in tqdm(
-            cursor, desc="Loads roads", colour="yellow", leave=False
-        ):
-            road_geoms.append((r_oid, r_geom, r_type))
+    roundabouts = [
+        (oid, geom)
+        for oid, geom in arcpy.da.SearchCursor(small_roundabouts, ["OID@", "SHAPE@"])
+    ]
 
     oid_geom_pairs = defaultdict(list)
     for r_id, r_geom_roundabout in tqdm(
@@ -718,12 +737,18 @@ def clean_ramps_near_roundabouts() -> None:
             "roads_lyr", ["OID@", "SHAPE@", "typeveg"]
         ) as cursor:
             for oid, geom, r_type in cursor:
-                oid_geom_pairs[r_id].append((r_geom_roundabout, oid, geom, r_type))
+                oid_geom_pairs[r_id].append([r_geom_roundabout, oid, geom, r_type])
         arcpy.management.Delete("in_memory/temp_roundabout")
+
+    changed = {}
 
     for key in tqdm(
         oid_geom_pairs, desc="Edits the geometry", colour="yellow", leave=False
     ):
+        to_edit = oid_geom_pairs[key]
+        for i in range(len(to_edit)):
+            if to_edit[i][1] in changed:
+                to_edit[i][2] = changed[to_edit[i][1]]
         new_roads = change_geom_in_roundabouts(oid_geom_pairs[key])
         oids = [oid for oid in new_roads.keys()]
         if len(oids) > 0:
@@ -738,6 +763,7 @@ def clean_ramps_near_roundabouts() -> None:
                         cursor.deleteRow()
                     else:
                         cursor.updateRow([oid, new_roads[oid]])
+                        changed[oid] = new_roads[oid]
 
     print("Ramps near roundabouts successfully cleaned!\n")
 
@@ -934,8 +960,8 @@ def merge_ramps() -> None:
 @timing_decorator
 def generalize() -> None:
     """
-    Generalyses all the ramps by, for each ramp, first categorise the ramp,
-    and then performe a generalisation depending on the category.
+    Generalizes all the ramps by first categorizing each ramp,
+    then performing a generalization based on its category.
     """
     print("\nGeneralize ramps...")
 
@@ -996,11 +1022,22 @@ def generalize() -> None:
             select_features=buffer,
             selection_type="NEW_SELECTION",
         )
-        with arcpy.da.UpdateCursor("ramps_lyr", ["SHAPE@", "OID@"]) as cursor:
-            for row in cursor:
-                ramp = row[0]
-                oid = row[1]
+        # Generalizes junctions of ramps
+        conflicts = find_ramp_junctions("ramps_lyr")
+        oids = set()
+        for key in conflicts:
+            for oid, _ in conflicts[key]:
+                oids.add(oid)
+        ###
+        # TODO: Generalize
+        ###
+        with arcpy.da.UpdateCursor("ramps_lyr", ["OID@", "SHAPE@"]) as cursor:
+            for oid, ramp in cursor:
+                if oid in oids:
+                    continue
+                # For each ramp, categorize it...
                 category = categorize_ramp(ramp, "roads_lyr")
+                # ... and generalize it
                 if category == "simple":
                     row[0] = fix_simple(ramp, near_lookup, oid)
                     cursor.updateRow(row)
