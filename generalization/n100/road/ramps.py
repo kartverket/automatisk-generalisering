@@ -4,6 +4,7 @@ import arcpy
 from collections import defaultdict
 from tqdm import tqdm
 import numpy as np
+import math
 
 arcpy.env.overwriteOutput = True
 
@@ -49,10 +50,12 @@ def generalize_ramps():
     """
     Simplification of ramps
     """
-    # add_ramps()
+    #add_ramps()
     fetch_roundabouts()
     clean_ramps_near_roundabouts()
     merge_ramps()
+
+    make_centerpoint()
     """
     Generalization of ramps
     """
@@ -328,9 +331,10 @@ def categorize_ramp(ramp: arcpy.Polyline, roads: str) -> str | None:
     return "No edit"
 
 
+"""
 def fix_simple(ramp: arcpy.Polyline, roads: str) -> arcpy.Polyline:
-    """
-    """
+    
+
     start = ramp.firstPoint
     end = ramp.lastPoint
 
@@ -469,7 +473,48 @@ def fix_simple_2(ramp: arcpy.Polyline, roads: str) -> arcpy.Polyline:
     new_array = arcpy.Array([start, moved_point, end])
     new_line = arcpy.Polyline(new_array, ramp.spatialReference)
     return new_line
+"""
 
+def fix_simple(line, near_lookup, oid):
+    start = line.firstPoint
+    end = line.lastPoint
+    middle_geom = line.positionAlongLine(0.5, use_percentage=True)
+    middle = middle_geom.firstPoint
+
+    new_array = arcpy.Array([start, middle, end])
+    new_line = arcpy.Polyline(new_array, line.spatialReference)
+    if oid not in near_lookup:
+        arcpy.AddWarning(f"OID {oid} not found in near_lookup, skipping.")
+        return new_line
+
+    near_x, near_y = near_lookup[oid]
+    shifted = move_line_away(new_line, near_x, near_y, distance=75)
+
+    return shifted
+
+def move_line_away(geom, near_x, near_y, distance):
+    sr = geom.spatialReference
+    new_parts = arcpy.Array()
+    for part in geom:
+        part_arr = arcpy.Array()
+        n = len(part)
+        for i, p in enumerate(part):
+            if i == 0 or i == n - 1:
+                # Do not move endpoints
+                part_arr.add(arcpy.Point(p.X, p.Y))
+            else:
+                dx = p.X - near_x
+                dy = p.Y - near_y
+                length = math.hypot(dx, dy)
+                if length == 0:
+                    new_x, new_y = p.X, p.Y
+                else:
+                    scale = distance / length
+                    new_x = p.X + dx * scale
+                    new_y = p.Y + dy * scale
+                part_arr.add(arcpy.Point(new_x, new_y))
+        new_parts.add(part_arr)
+    return arcpy.Polyline(new_parts, sr)
 
 def fix_bridge():
     return
@@ -486,6 +531,81 @@ def fix_complex():
 ##################
 # Main functions
 ##################
+
+@timing_decorator
+def make_centerpoint():
+    roads_fc = data_files["merged_ramps"]
+    buffer_fc = "in_memory\\buffer_100_meter"
+    rampe_centers = "in_memory\\rampe_centers"
+    closest_points = r"C:\temp\roads.gdb\closest_points"
+    
+    arcpy.management.MakeFeatureLayer(
+        roads_fc, "roads_lyr", where_clause="typeveg <> 'rampe'"
+    )
+    arcpy.management.MakeFeatureLayer(
+        roads_fc, "ramps_lyr", where_clause="typeveg = 'rampe'"
+    )
+
+
+    arcpy.management.FeatureToPoint("ramps_lyr", rampe_centers, "CENTROID")
+
+
+
+    arcpy.Buffer_analysis(rampe_centers, buffer_fc, "100 Meters", dissolve_option="ALL")
+
+    arcpy.management.SelectLayerByLocation("roads_lyr", "INTERSECT", buffer_fc, selection_type="NEW_SELECTION")
+
+
+    # Load all lines into memory: list of (oid, geometry)
+    lines = []
+    with arcpy.da.SearchCursor("roads_lyr", ["OID@", "SHAPE@"]) as lcur:
+        for oid, geom in lcur:
+            lines.append((oid, geom))
+
+    
+    sr = arcpy.Describe(rampe_centers).spatialReference
+    arcpy.management.CreateFeatureclass(os.path.dirname(closest_points), os.path.basename(closest_points),
+                                    "POINT", spatial_reference=sr)
+
+    # Add fields
+    arcpy.management.AddField(closest_points, "PointOID", "LONG")
+    arcpy.management.AddField(closest_points, "NearestID", "LONG")
+    arcpy.management.AddField(closest_points, "Distance", "DOUBLE")
+
+    # For each point, find closest point-on-line
+    point_fields = ["OID@", "SHAPE@"]
+    with arcpy.da.SearchCursor(rampe_centers, point_fields) as pcur, \
+        arcpy.da.InsertCursor(closest_points, ["PointOID", "NearestID", "Distance", "SHAPE@"]) as icur:
+
+        for point_oid, point_geom in pcur:
+            best_dist = None
+            best_pt_on_line = None
+            best_line_oid = None
+
+            for line_oid, line_geom in lines:
+                # queryPointAndDistance returns (pointOnLine, leftRight, partIndex, segmentIndex, lineDistance)
+                res = line_geom.queryPointAndDistance(point_geom, use_percentage=False)
+                if res is None:
+                    print("RES IS NONE")
+                    continue
+                pt_on_line = res[0]
+                dist = res[2]
+
+              
+
+                if best_dist is None or dist < best_dist:  
+                    best_dist = dist
+                    best_pt_on_line = pt_on_line
+                    best_line_oid = line_oid
+
+            # Insert result row; if no closest found, skip or insert nulls
+            if best_pt_on_line is not None:
+                icur.insertRow([point_oid, best_line_oid, best_dist, best_pt_on_line])
+            else:
+                icur.insertRow([point_oid, None, None, point_geom])
+                print(f"No closest line found for point OID {point_oid}")
+
+
 
 
 @timing_decorator
@@ -760,30 +880,29 @@ def merge_ramps() -> None:
             arcpy.management.AddField(intermediate_fc, field_name, string)
 
     arcpy.management.SelectLayerByAttribute("roads_lyr", "CLEAR_SELECTION")
-
+    arcpy.management.SelectLayerByAttribute(
+                in_layer_or_view="roads_lyr",
+                selection_type="NEW_SELECTION",
+                where_clause="typeveg = 'rampe'",
+            )
+    road_attrs = []
+    with arcpy.da.SearchCursor("roads_lyr", ["SHAPE@"] + [f[0] for f in attr_fields] + ["typeveg"]) as cursor:
+        for row in cursor:
+            road_attrs.append(row)
+    
     with arcpy.da.UpdateCursor(
         intermediate_fc, ["SHAPE@"] + [f[0] for f in attr_fields]
     ) as cursor:
         for row_orig in tqdm(cursor, desc="Updating attributes", leave=False):
+            ramp_geom = row_orig[0]
             update = defaultdict(set)
-            arcpy.management.SelectLayerByLocation(
-                in_layer="roads_lyr",
-                overlap_type="INTERSECT",
-                select_features=row_orig[0],
-                search_distance="5 Meters",
-                selection_type="NEW_SELECTION",
-            )
-            arcpy.management.SelectLayerByAttribute(
-                in_layer_or_view="roads_lyr",
-                selection_type="SUBSET_SELECTION",
-                where_clause="typeveg = 'rampe'",
-            )
-            with arcpy.da.SearchCursor(
-                "roads_lyr", ["OID@"] + [f[0] for f in attr_fields]
-            ) as search:
-                for row in search:
-                    for i, el in enumerate(row[1:]):
+            for road_row in road_attrs:
+                road_geom = road_row[0]
+                road_type = road_row[-1]
+                if road_type != "rampe" and ramp_geom.intersect(road_geom, 2):
+                    for i, el in enumerate(road_row[1:-1]):  # skip SHAPE@ and typeveg
                         update[attr_fields[i]].add(el)
+
 
             row_orig = list(row_orig)
 
@@ -804,7 +923,7 @@ def merge_ramps() -> None:
             for i, field in enumerate(attr_fields, start=1):
                 row_orig[i] = final_values.get(field, row[i])
             cursor.updateRow(row_orig)
-
+    
     arcpy.management.Append(
         inputs=intermediate_fc, target=merged_fc, schema_type="NO_TEST"
     )
@@ -833,6 +952,32 @@ def generalize() -> None:
         output_fc, "ramps_lyr", where_clause="typeveg = 'rampe'"
     )
 
+
+
+            # Generate Near Table
+    closest_points = r"C:\temp\roads.gdb\closest_points"
+    near_table = "in_memory\\near_table"
+    arcpy.analysis.GenerateNearTable(
+        in_features="ramps_lyr",
+        near_features=closest_points,
+        out_table=near_table,
+        search_radius="200 Meters",  # Adjust as needed
+        location="LOCATION",
+        angle="ANGLE",
+        closest="TRUE",
+        closest_count=1,
+    )
+
+    # Build a lookup of NEAR_X, NEAR_Y for each road feature
+    near_lookup = {}
+    with arcpy.da.SearchCursor(near_table, ["IN_FID", "NEAR_X", "NEAR_Y"]) as cursor:
+        for fid, nx, ny in cursor:
+            near_lookup[fid] = (nx, ny)
+
+
+
+
+
     buffers = [row[0] for row in arcpy.da.SearchCursor(buffer_fc, ["SHAPE@"])]
 
     for buffer in tqdm(
@@ -851,12 +996,13 @@ def generalize() -> None:
             select_features=buffer,
             selection_type="NEW_SELECTION",
         )
-        with arcpy.da.UpdateCursor("ramps_lyr", ["SHAPE@"]) as cursor:
+        with arcpy.da.UpdateCursor("ramps_lyr", ["SHAPE@", "OID@"]) as cursor:
             for row in cursor:
                 ramp = row[0]
+                oid = row[1]
                 category = categorize_ramp(ramp, "roads_lyr")
                 if category == "simple":
-                    row[0] = fix_simple(ramp, "roads_lyr")
+                    row[0] = fix_simple(ramp, near_lookup, oid)
                     cursor.updateRow(row)
                 elif category == "bridge":
                     fix_bridge()
