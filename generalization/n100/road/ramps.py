@@ -1039,8 +1039,8 @@ def generalize() -> None:
                 category = categorize_ramp(ramp, "roads_lyr")
                 # ... and generalize it
                 if category == "simple":
-                    row[0] = fix_simple(ramp, near_lookup, oid)
-                    cursor.updateRow(row)
+                    ramp = fix_simple(ramp, near_lookup, oid)
+                    cursor.updateRow([oid, ramp])
                 elif category == "bridge":
                     fix_bridge()
                 elif category == "long":
