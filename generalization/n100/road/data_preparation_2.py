@@ -38,7 +38,6 @@ from constants.n100_constants import (
     MediumAlias,
 )
 from generalization.n100.road.dam import main as dam
-from generalization.n100.road.ramps import generalize_ramps
 
 MERGE_DIVIDED_ROADS_ALTERATIVE = False
 
@@ -49,9 +48,6 @@ def main():
     arcpy.env.referenceScale = 100000
     data_selection_and_validation()
     trim_road_details()
-    ################################
-    generalize_ramps()
-    ################################
     admin_boarder()
     adding_fields()
     collapse_road_detail()
