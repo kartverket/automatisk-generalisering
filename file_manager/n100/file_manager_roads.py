@@ -1379,6 +1379,18 @@ class Road_N100(Enum):
         script_source_name=ramps_file, description="generalized_ramps"
     )
 
+    ramps__dissolved_group__n100_road = file_manager.generate_file_name_gdb(
+        script_source_name=ramps_file, description="dissolved_group"
+    )
+
+    ramps__splitted_group__n100_road = file_manager.generate_file_name_gdb(
+        script_source_name=ramps_file, description="splitted_group"
+    )
+
+    ramps__ramp_points__n100_road = file_manager.generate_file_name_gdb(
+        script_source_name=ramps_file, description="ramp_points"
+    )
+
     ramps__test__n100_road = file_manager.generate_file_name_gdb(
         script_source_name=ramps_file, description="test"
     )

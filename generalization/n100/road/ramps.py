@@ -29,6 +29,9 @@ data_files = {
     "dissolved_ramps": Road_N100.ramps__dissolved_ramps__n100_road.value,
     "intermediate_ramps": Road_N100.ramps__intermediate_ramps__n100_road.value,
     "merged_ramps": Road_N100.ramps__merged_ramps__n100_road.value,
+    "dissolved_group": Road_N100.ramps__dissolved_group__n100_road.value,
+    "splitted_group": Road_N100.ramps__splitted_group__n100_road.value,
+    "ramp_points": Road_N100.ramps__ramp_points__n100_road.value,
     "generalized_ramps": Road_N100.ramps__generalized_ramps__n100_road.value,
     "test": Road_N100.ramps__test__n100_road.value,
 }
@@ -41,6 +44,9 @@ files_to_delete = [
     "endpoints",
     "dissolved_ramps",
     "intermediate_ramps",
+    "dissolved_group",
+    "splitted_group",
+    "split_points",
 ]
 
 
@@ -49,18 +55,19 @@ def generalize_ramps():
     """
     Simplification of ramps
     """
-    add_ramps()
+    # add_ramps()
     fetch_roundabouts()
     clean_ramps_near_roundabouts()
     merge_ramps()
     """
     Generalization of ramps
     """
-    generalize()
+    # generalize()
+    generalize_2()
     """
     Deletes all the intermediate files created during the process
     """
-    delete_intermediate_files()
+    # delete_intermediate_files()
 
 
 ##################
@@ -442,6 +449,73 @@ def fix_long():
 
 def fix_complex():
     pass
+
+
+def create_in_memory_point_fc(name, spatial_ref):
+    fc = f"in_memory/{name}"
+    if arcpy.Exists(fc):
+        arcpy.management.Delete(fc)
+    arcpy.management.CreateFeatureclass(
+        "in_memory", name, "POINT", spatial_reference=spatial_ref
+    )
+    return fc
+
+
+def insert_points(fc, points, spatial_ref):
+    if not points:
+        return
+    with arcpy.da.InsertCursor(fc, ["SHAPE@"]) as cursor:
+        for p in points:
+            if isinstance(p, tuple) and len(p) == 2:
+                geom = arcpy.PointGeometry(arcpy.Point(p[0], p[1]), spatial_ref)
+            else:
+                geom = p
+            cursor.insertRow([geom])
+
+
+def collect_endpoints(layer_name):
+    end_counts = {}
+    ramp_end_counts = {}
+    with arcpy.da.SearchCursor(layer_name, ["SHAPE@", "typeveg"]) as cursor:
+        for geom, t in cursor:
+            s, e = get_endpoints(geom)
+            ks = (s.firstPoint.X, s.firstPoint.Y)
+            ke = (e.firstPoint.X, e.firstPoint.Y)
+            end_counts[ks] = end_counts.get(ks, 0) + 1
+            end_counts[ke] = end_counts.get(ke, 0) + 1
+            if t == "rampe":
+                ramp_end_counts[ks] = ramp_end_counts.get(ks, 0) + 1
+                ramp_end_counts[ke] = ramp_end_counts.get(ke, 0) + 1
+    return end_counts, ramp_end_counts
+
+
+def split_and_select(dissolved_fc, split_points_fc, splitted_fc, ramp_endpoints):
+    arcpy.management.Dissolve(
+        "roads_lyr", dissolved_fc, dissolve_field=["typeveg"], multi_part="SINGLE_PART"
+    )
+    arcpy.management.SplitLineAtPoint(dissolved_fc, split_points_fc, splitted_fc)
+    arcpy.management.MakeFeatureLayer(splitted_fc, "splitted_lyr")
+    arcpy.management.SelectLayerByLocation(
+        "splitted_lyr", "INTERSECT", ramp_endpoints, "5 Meters"
+    )
+    arcpy.management.SelectLayerByAttribute(
+        "splitted_lyr", "SUBSET_SELECTION", "typeveg <> 'rampe'"
+    )
+
+
+def find_crossing_points(selected_layer, in_memory_layer):
+    if arcpy.Exists(in_memory_layer):
+        arcpy.management.Delete(in_memory_layer)
+    arcpy.analysis.Intersect(
+        [selected_layer, selected_layer], in_memory_layer, output_type="POINT"
+    )
+    coords = []
+    with arcpy.da.SearchCursor(in_memory_layer, ["SHAPE@XY"]) as cur:
+        for (x, y), in cur:
+            if x is None or y is None:
+                continue
+            coords.append((round(x, 6), round(y, 6)))
+    return in_memory_layer, coords
 
 
 ##################
@@ -837,6 +911,94 @@ def generalize() -> None:
                     fix_complex()
                 elif category == "No edit":
                     continue
+    print("Ramps successfully generalized!\n")
+
+
+@timing_decorator
+def generalize_2() -> None:
+    """
+    Generalizes all the ramps by first categorizing each ramp,
+    then performing a generalization based on its category.
+    """
+    print("\nGeneralize ramps...")
+
+    roads_fc = data_files["merged_ramps"]
+    buffer_fc = data_files["buffered_ramps"]
+    dissolved_fc = data_files["dissolved_group"]
+    splitted_fc = data_files["splitted_group"]
+    ramp_points_fc = data_files["ramp_points"]
+    output_fc = data_files["generalized_ramps"]
+
+    arcpy.management.CopyFeatures(roads_fc, output_fc)
+    arcpy.management.MakeFeatureLayer(output_fc, "roads_lyr")
+
+    spatial_ref = arcpy.Describe(roads_fc).spatialReference
+
+    if arcpy.Exists(ramp_points_fc):
+        arcpy.management.Delete(ramp_points_fc)
+    path, name = os.path.split(ramp_points_fc)
+    arcpy.management.CreateFeatureclass(
+        path, name, "POINT", spatial_reference=spatial_ref
+    )
+
+    buffers = [row[0] for row in arcpy.da.SearchCursor(buffer_fc, ["SHAPE@"])]
+
+    in_memory_split_points = create_in_memory_point_fc("split_points_tmp", spatial_ref)
+    in_memory_ramp_points = create_in_memory_point_fc("ramp_endpoints_tmp", spatial_ref)
+
+    seen_coords = set()
+
+    for buffer in tqdm(
+        buffers, desc="Analysing each buffer", colour="yellow", leave=False
+    ):
+        arcpy.management.SelectLayerByLocation(
+            in_layer="roads_lyr",
+            overlap_type="INTERSECT",
+            select_features=buffer,
+            selection_type="NEW_SELECTION",
+        )
+
+        categories = {row[0] for row in arcpy.da.SearchCursor("roads_lyr", ["typeveg"])}
+
+        if len(categories) < 2:
+            continue
+
+        end_counts, ramp_end_counts = collect_endpoints("roads_lyr")
+
+        valid = {p for p, c in end_counts.items() if c > 2}
+
+        insert_points(in_memory_split_points, valid, spatial_ref)
+        insert_points(in_memory_ramp_points, list(ramp_end_counts.keys()), spatial_ref)
+
+        temp_intersect = create_in_memory_point_fc("temp_crossings", spatial_ref)
+
+        split_and_select(
+            dissolved_fc, in_memory_split_points, splitted_fc, in_memory_ramp_points
+        )
+        _, coords = find_crossing_points("splitted_lyr", temp_intersect)
+        new_coords = [c for c in coords if c not in seen_coords]
+        if new_coords:
+            insert_points(ramp_points_fc, new_coords, spatial_ref)
+            seen_coords.update(new_coords)
+
+        if arcpy.Exists(temp_intersect):
+            arcpy.management.Delete(temp_intersect)
+        arcpy.management.Delete(in_memory_split_points)
+        arcpy.management.Delete(in_memory_ramp_points)
+        in_memory_split_points = create_in_memory_point_fc(
+            "split_points_tmp", spatial_ref
+        )
+        in_memory_ramp_points = create_in_memory_point_fc(
+            "ramp_endpoints_tmp", spatial_ref
+        )
+
+    if arcpy.Exists(in_memory_split_points):
+        arcpy.management.Delete(in_memory_split_points)
+    if arcpy.Exists(in_memory_ramp_points):
+        arcpy.management.Delete(in_memory_ramp_points)
+    if arcpy.Exists(temp_intersect):
+        arcpy.management.Delete(temp_intersect)
+    
     print("Ramps successfully generalized!\n")
 
 
