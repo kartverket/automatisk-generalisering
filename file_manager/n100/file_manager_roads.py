@@ -67,6 +67,11 @@ class Road_N100(Enum):
         description="nvdb_roads",
     )
 
+    data_selection___vegsperring___n100_road = file_manager.generate_file_name_gdb(
+        script_source_name=data_selection,
+        description="vegsperring",
+    )
+
     data_selection___railroad___n100_road = file_manager.generate_file_name_gdb(
         script_source_name=data_selection,
         description="railroad",

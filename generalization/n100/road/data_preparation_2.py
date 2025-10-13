@@ -70,13 +70,14 @@ OBJECT_LIMIT = 100_000
 @timing_decorator
 def data_selection_and_validation():
     plot_area = "navn IN ('Asker', 'Bærum', 'Drammen', 'Frogn', 'Hole', 'Holmestrand', 'Horten', 'Jevnaker', 'Kongsberg', 'Larvik', 'Lier', 'Lunner', 'Modum', 'Nesodden', 'Oslo', 'Ringerike', 'Tønsberg', 'Øvre Eiker')"
-    ferry_admin_test = "navn IN ('Bergen')"
+    ferry_admin_test = "navn IN ('Ringerike')"
     small_plot_area = "navn IN ('Oslo', 'Ringerike')"
     presentation_area = "navn IN ('Asker', 'Bærum', 'Oslo', 'Enebakk', 'Nittedal', 'Nordre Follo', 'Hole', 'Nesodden', 'Lørenskog', 'Sandnes', 'Stavanger', 'Gjesdal', 'Sola', 'Klepp', 'Strand', 'Time', 'Randaberg')"
 
     selector = StudyAreaSelector(
         input_output_file_dict={
             input_roads.road_output_1: Road_N100.data_selection___nvdb_roads___n100_road.value,
+            input_roads.vegsperring: Road_N100.data_selection___vegsperring___n100_road.value,
             input_n100.Bane: Road_N100.data_selection___railroad___n100_road.value,
             input_n100.BegrensningsKurve: Road_N100.data_selection___begrensningskurve___n100_road.value,
             input_n100.AdminGrense: Road_N100.data_selection___admin_boundary___n100_road.value,
