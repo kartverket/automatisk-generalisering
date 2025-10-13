@@ -1355,6 +1355,10 @@ class Road_N100(Enum):
         script_source_name=ramps_file, description="buffered_ramps"
     )
 
+    ramps__buffered_ramps_100__n100_road = file_manager.generate_file_name_gdb(
+        script_source_name=ramps_file, description="buffered_ramps_100"
+    )
+
     ramps__roads_near_ramp__n100_road = file_manager.generate_file_name_gdb(
         script_source_name=ramps_file, description="roads_near_ramp"
     )
@@ -1393,6 +1397,10 @@ class Road_N100(Enum):
 
     ramps__ramp_points__n100_road = file_manager.generate_file_name_gdb(
         script_source_name=ramps_file, description="ramp_points"
+    )
+
+    ramps__ramp_points_moved__n100_road = file_manager.generate_file_name_gdb(
+        script_source_name=ramps_file, description="ramp_points_moved"
     )
 
     ramps__test__n100_road = file_manager.generate_file_name_gdb(
