@@ -38,6 +38,7 @@ from constants.n100_constants import (
     MediumAlias,
 )
 from generalization.n100.road.dam import main as dam
+from generalization.n100.road.roundabouts import generalize_roundabouts
 
 MERGE_DIVIDED_ROADS_ALTERATIVE = False
 
@@ -47,6 +48,10 @@ def main():
     environment_setup.main()
     arcpy.env.referenceScale = 100000
     data_selection_and_validation()
+    ############################
+    generalize_roundabouts()
+    ############################
+    """
     trim_road_details()
     admin_boarder()
     adding_fields()
@@ -61,6 +66,7 @@ def main():
     resolve_road_conflicts()
     dam()
     final_output()
+    """
 
 
 SEARCH_DISTANCE = "5000 Meters"
@@ -70,7 +76,7 @@ OBJECT_LIMIT = 100_000
 @timing_decorator
 def data_selection_and_validation():
     plot_area = "navn IN ('Asker', 'Bærum', 'Drammen', 'Frogn', 'Hole', 'Holmestrand', 'Horten', 'Jevnaker', 'Kongsberg', 'Larvik', 'Lier', 'Lunner', 'Modum', 'Nesodden', 'Oslo', 'Ringerike', 'Tønsberg', 'Øvre Eiker')"
-    ferry_admin_test = "navn IN ('Bergen')"
+    ferry_admin_test = "navn IN ('Drammen')"
     small_plot_area = "navn IN ('Oslo', 'Ringerike')"
     presentation_area = "navn IN ('Asker', 'Bærum', 'Oslo', 'Enebakk', 'Nittedal', 'Nordre Follo', 'Hole', 'Nesodden', 'Lørenskog', 'Sandnes', 'Stavanger', 'Gjesdal', 'Sola', 'Klepp', 'Strand', 'Time', 'Randaberg')"
 
