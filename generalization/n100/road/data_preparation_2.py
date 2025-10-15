@@ -38,6 +38,7 @@ from constants.n100_constants import (
     MediumAlias,
 )
 from generalization.n100.road.dam import main as dam
+from generalization.n100.road.vegsperring import remove_roadblock
 
 MERGE_DIVIDED_ROADS_ALTERATIVE = False
 
@@ -47,6 +48,7 @@ def main():
     environment_setup.main()
     arcpy.env.referenceScale = 100000
     data_selection_and_validation()
+    remove_roadblock()
     trim_road_details()
     admin_boarder()
     adding_fields()
@@ -202,7 +204,7 @@ def calculate_boarder_road_hierarchy(
 @timing_decorator
 def trim_road_details():
     arcpy.management.MultipartToSinglepart(
-        in_features=Road_N100.data_selection___nvdb_roads___n100_road.value,
+        in_features=Road_N100.vegsperring__veg_uten_bom__n100_road.value,
         out_feature_class=Road_N100.data_preparation___road_single_part___n100_road.value,
     )
 
@@ -359,16 +361,24 @@ def thin_roads():
     )
     road_data_validation.check_repair_sequence()
 
-    road_hierarchy = """def Reclass(vegklasse, typeveg):
+    road_hierarchy = """def Reclass(vegklasse, typeveg, har_bom):
         if typeveg == 'bilferje':
             return 0
         elif vegklasse in (0, 1, 2, 3, 4):
+            if har_bom == "ja":
+                return 3
             return 1
         elif vegklasse == 5:
+            if har_bom == "ja":
+                return 4
             return 2
         elif vegklasse == 6:
+            if har_bom == "ja":
+                return 5
             return 3
         elif vegklasse == 7:
+            if har_bom == "ja":
+                return 5
             return 4
         else:
             return 5
@@ -377,7 +387,7 @@ def thin_roads():
     arcpy.management.CalculateField(
         in_table=Road_N100.data_preparation___dissolved_intersections_3___n100_road.value,
         field="hierarchy",
-        expression="Reclass(!vegklasse!, !typeveg!)",
+        expression="Reclass(!vegklasse!, !typeveg!, !har_bom!)",
         expression_type="PYTHON3",
         code_block=road_hierarchy,
     )

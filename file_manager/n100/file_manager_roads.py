@@ -17,6 +17,7 @@ first_generalization = "first_generalization"
 test1 = "test1"
 testing_file = "testing_file"
 dam_file = "dam"
+vegsperring_file = "vegsperring"
 test2 = "test2"
 
 
@@ -1331,6 +1332,14 @@ class Road_N100(Enum):
 
     dam__cleaned_roads__n100_road = file_manager.generate_file_name_gdb(
         script_source_name=dam_file, description="cleaned_roads"
+    )
+
+    # ========================================
+    #                              VEGSPERRING
+    # ========================================
+
+    vegsperring__veg_uten_bom__n100_road = file_manager.generate_file_name_gdb(
+        script_source_name=vegsperring_file, description="veg_uten_bom"
     )
 
     # ========================================
