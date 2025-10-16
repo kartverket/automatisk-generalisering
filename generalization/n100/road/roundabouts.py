@@ -45,7 +45,7 @@ def get_center_point(geoms: list[arcpy.Geometry]) -> arcpy.PointGeometry:
         arcpy.PointGeometry: The center point of all points in the input geometries
     """
     all_points = []
-    for _, geom in geoms:
+    for _, geom, _ in geoms:
         for part in geom:
             for pnt in part:
                 if pnt:
@@ -98,19 +98,23 @@ def change_geom_in_roundabouts(roads: list[tuple]) -> dict:
         be deleted
     """
     roundabout_geom = roads[0][0]
-    roundabouts = [[oid, geom] for _, oid, geom, t in roads if t == "rundkjøring"]
-    other = [[oid, geom] for _, oid, geom, t in roads if t != "rundkjøring"]
-    centroid = get_center_point(roundabouts)
+    roundabouts = [[oid, geom, medium] for _, oid, geom, t, medium in roads if t == "rundkjøring"]
+    tunnel = True if all(medium == "U" for _, _, medium in roundabouts) else False
+    if tunnel:
+        other = [[oid, geom] for _, oid, geom, t, medium in roads if t != "rundkjøring" and medium == "U"]
+    else:
+        other = [[oid, geom] for _, oid, geom, t, medium in roads if t != "rundkjøring" and medium != "U"]
 
+    centroid = get_center_point(roundabouts)
+    
     for i in range(len(other)):
         geom = other[i][1]
         points = list(geom.getPart(0))
         start, end = get_endpoints(geom)
-        # TODO: Juster for å få med eventuelle løse ender i rundkjøringer
-        # ... men unngå nærliggende veier utenfor
-        if roundabout_geom.distanceTo(start) <= 0.5:
+        tolerance = 5.0 # [m]
+        if roundabout_geom.distanceTo(start) <= tolerance:
             points[0] = centroid.firstPoint
-        if roundabout_geom.distanceTo(end) <= 0.5:
+        if roundabout_geom.distanceTo(end) <= tolerance:
             points[-1] = centroid.firstPoint
         new_geom = arcpy.Polyline(arcpy.Array(points), geom.spatialReference)
         if points_equal(points[0], points[-1]):
@@ -118,12 +122,10 @@ def change_geom_in_roundabouts(roads: list[tuple]) -> dict:
         else:
             other[i][1] = new_geom
 
-    new_roads = {oid: None for oid, _ in roundabouts}
+    new_roads = {oid: None for oid, _, _ in roundabouts}
     for oid, geom in other:
         new_roads[oid] = geom
-
     return new_roads
-
 
 ##################
 # Main functions
@@ -192,14 +194,17 @@ def create_intersections_of_roundabouts() -> None:
             in_layer="road_lyr",
             overlap_type="WITHIN_A_DISTANCE",
             select_features=temp_geom,
-            # TODO: Juster for å få med eventuelle løse ender i rundkjøringer
-            # ... men unngå nærliggende veier utenfor
-            search_distance="1 Meters",
+            search_distance="5 Meters",
             selection_type="NEW_SELECTION",
         )
-        with arcpy.da.SearchCursor("road_lyr", ["OID@", "SHAPE@", "typeveg"]) as cursor:
-            for oid, geom, r_type in cursor:
-                oid_geom_pairs[r_id].append([r_geom_roundabout, oid, geom, r_type])
+        arcpy.management.SelectLayerByAttribute(
+            in_layer_or_view="road_lyr",
+            selection_type="SUBSET_SELECTION",
+            where_clause="objtype = 'VegSenterlinje'"
+        )
+        with arcpy.da.SearchCursor("road_lyr", ["OID@", "SHAPE@", "typeveg", "medium"]) as cursor:
+            for oid, geom, r_type, medium in cursor:
+                oid_geom_pairs[r_id].append([r_geom_roundabout, oid, geom, r_type, medium])
         if arcpy.Exists(temp_roundabout):
             arcpy.management.Delete(temp_roundabout)
 
