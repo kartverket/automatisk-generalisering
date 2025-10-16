@@ -10,6 +10,7 @@ arcpy.env.overwriteOutput = True
 
 # Importing custom input files modules
 from input_data import input_n100
+from input_data import input_roads
 
 # Importing custom modules
 from file_manager.n100.file_manager_roads import Road_N100
@@ -55,7 +56,7 @@ files_to_delete = [
 
 
 @timing_decorator
-def generalize_ramps():
+def main():
     """
     Simplification of ramps
     """
@@ -66,7 +67,7 @@ def generalize_ramps():
     """
     Generalization of ramps
     """
-    generalize()
+    make_ramp_points()
     """
     Deletes all the intermediate files created during the process
     """
@@ -235,12 +236,34 @@ def split_polyline_at_index(
         return first, second
     return None, None
 
+def get_line_endpoints(line_geom):
+        """
+        Accepts an arcpy Polyline geometry and returns two arcpy PointGeometry objects:
+        (start_point_geom, end_point_geom).
+        """
+        # Get first and last coordinate from first part (works for simple and multipart; 
+        # for multipart this uses the first and last vertex of the entire geometry).
+        first_part = line_geom.getPart(0)
+        start_pt = first_part[0]
+        # find last non-None vertex in geometry
+        last_pt = None
+        for part in line_geom:
+            for v in part:
+                if v is not None:
+                    last_pt = v
+        if last_pt is None:
+            raise ValueError("Line geometry has no vertices")
+        sr = line_geom.spatialReference
+        start_pg = arcpy.PointGeometry(arcpy.Point(start_pt.X, start_pt.Y), sr)
+        end_pg = arcpy.PointGeometry(arcpy.Point(last_pt.X, last_pt.Y), sr)
+        return start_pg, end_pg
 
-def merge_lines_by_endpoint(input_fc, output_fc, tolerance=2.0):
+def merge_lines_by_endpoint_fast(input_fc, output_fc, tolerance=2.0):
     """
-    Merges all lines in input_fc whose endpoints are within 'tolerance' distance.
+    Fast merging of lines whose endpoints are within 'tolerance' distance using a grid spatial index.
     Only geometry is preserved.
     """
+
     # Collect all lines and their endpoints
     lines = []
     with arcpy.da.SearchCursor(input_fc, ["OID@", "SHAPE@"]) as cursor:
@@ -251,29 +274,42 @@ def merge_lines_by_endpoint(input_fc, output_fc, tolerance=2.0):
             end = geom.lastPoint
             lines.append({"oid": oid, "geom": geom, "start": start, "end": end, "used": False})
 
-    # Merge lines by endpoint proximity
+    # Build a grid spatial index for endpoints
+    grid = defaultdict(list)
+    grid_size = tolerance
+    def grid_key(pt):
+        return (int(pt.X // grid_size), int(pt.Y // grid_size))
+
+    for i, line in enumerate(lines):
+        grid[grid_key(line["start"])].append(i)
+        grid[grid_key(line["end"])].append(i)
+
+    # Merge lines by endpoint proximity using the grid
     merged_geoms = []
     for i, line in enumerate(lines):
         if line["used"]:
             continue
         group = [line]
         line["used"] = True
-        changed = True
-        while changed:
-            changed = False
-            for other in lines:
-                if other["used"]:
-                    continue
-                for pt in [other["start"], other["end"]]:
-                    for g in group:
-                        if (math.hypot(pt.X - g["start"].X, pt.Y - g["start"].Y) <= tolerance or
-                            math.hypot(pt.X - g["end"].X, pt.Y - g["end"].Y) <= tolerance):
-                            group.append(other)
-                            other["used"] = True
-                            changed = True
-                            break
-                    if changed:
-                        break
+        queue = [line]
+        while queue:
+            current = queue.pop()
+            for pt in [current["start"], current["end"]]:
+                # Check neighboring grid cells
+                gx, gy = grid_key(pt)
+                for dx in [-1, 0, 1]:
+                    for dy in [-1, 0, 1]:
+                        cell = (gx + dx, gy + dy)
+                        for idx in grid.get(cell, []):
+                            other = lines[idx]
+                            if other["used"]:
+                                continue
+                            for opt in [other["start"], other["end"]]:
+                                if math.hypot(pt.X - opt.X, pt.Y - opt.Y) <= tolerance:
+                                    group.append(other)
+                                    other["used"] = True
+                                    queue.append(other)
+                                    break
         # Merge all geometries in group
         arr = arcpy.Array()
         for g in group:
@@ -293,6 +329,155 @@ def merge_lines_by_endpoint(input_fc, output_fc, tolerance=2.0):
         for geom in merged_geoms:
             cursor.insertRow([geom])
 
+def remove_endpoints_points(endpoints_layer, fc):
+    """
+    Removes points in fc that intersect with endpoints in endpoints_layer
+    """
+    endpoints_fc = "in_memory\\collected_endpoints"
+
+    sr = arcpy.Describe(endpoints_layer).spatialReference
+    arcpy.CreateFeatureclass_management("in_memory", "collected_endpoints", "POINT", spatial_reference=sr)
+
+
+    with arcpy.da.SearchCursor(endpoints_layer, ["OID@",  "SHAPE@"]) as road_cur, \
+        arcpy.da.InsertCursor(endpoints_fc, ["SHAPE@"]) as ins_cur:
+        for oid, geom in road_cur:
+            #if oid in intersecting_oids:
+            start_pg, end_pg = get_line_endpoints(geom)
+            ins_cur.insertRow([start_pg])
+            ins_cur.insertRow([end_pg])
+    
+    points_lyr = arcpy.management.MakeFeatureLayer(fc, "points_lyr").getOutput(0)
+    arcpy.management.SelectLayerByLocation(points_lyr, "INTERSECT", endpoints_fc, selection_type="NEW_SELECTION")
+
+    selected_count = int(arcpy.GetCount_management(points_lyr).getOutput(0))
+    if selected_count > 0:
+        arcpy.DeleteRows_management(points_lyr)
+    
+    arcpy.management.Delete(endpoints_fc)
+
+def combine_intersecting_buffers(buffer_fc, out_fc):
+    """
+    Combine intersecting buffer polygons into single features.
+    buffer_fc     Path to input buffer feature class (must be polygons).
+    out_fc        Path to output feature class to create.
+    temp_sr       Optional spatial reference object or WKID. If None uses buffer_fc's SR.
+    """
+    # determine spatial reference
+    
+    desc = arcpy.Describe(buffer_fc)
+    sr = desc.spatialReference
+
+    # load OID field name and geometries
+    oid_field = arcpy.Describe(buffer_fc).OIDFieldName
+    geoms = []
+    oids = []
+    with arcpy.da.SearchCursor(buffer_fc, [oid_field, "SHAPE@"]) as cursor:
+        for oid, geom in cursor:
+            if geom is None:
+                continue
+            oids.append(oid)
+            geoms.append(geom)
+
+    n = len(oids)
+
+    # build adjacency list by geometry intersection
+    adj = {i: set() for i in range(n)}
+    for i in range(n):
+        gi = geoms[i]
+        for j in range(i + 1, n):
+            gj = geoms[j]
+            if not gi.disjoint(gj):
+                adj[i].add(j)
+                adj[j].add(i)
+
+    # find connected components (DFS)
+    visited = [False] * n
+    components = []
+    for i in range(n):
+        if visited[i]:
+            continue
+        stack = [i]
+        comp = []
+        visited[i] = True
+        while stack:
+            cur = stack.pop()
+            comp.append(cur)
+            for nb in adj[cur]:
+                if not visited[nb]:
+                    visited[nb] = True
+                    stack.append(nb)
+        components.append(comp)
+
+    # create output feature class
+    arcpy.management.CreateFeatureclass(
+        "in_memory",
+        out_fc,
+        "POLYGON",
+        spatial_reference=sr
+    )
+
+    # if CreateFeatureclass returned a full path different from out_fc, use that path for insert
+    out_fc_final = "in_memory\\" + out_fc
+
+    # add component ID field
+    arcpy.management.AddField(out_fc_final, "ClusterID", "LONG")
+
+    # union geometries per component and insert
+    with arcpy.da.InsertCursor(out_fc_final, ["SHAPE@", "ClusterID"]) as icur:
+        for comp_id, comp in enumerate(components, start=1):
+            geom_list = [geoms[idx] for idx in comp]
+            # union progressively to avoid very large single union call
+            merged = geom_list[0]
+            for g in geom_list[1:]:
+                merged = merged.union(g)
+            icur.insertRow([merged, comp_id])
+
+    arcpy.AddMessage("Created {} clusters from {} input buffers.".format(len(components), n))
+
+def create_near_map(distance_str, in_fc, near_fc,):
+    """
+    Creates a near table and returns it in a map with only near rank 1 entries and the key is oid of in fc
+    """
+    near_table = "in_memory\\near_table"
+    arcpy.GenerateNearTable_analysis(in_features=in_fc,
+                                near_features=near_fc,
+                                out_table=near_table,
+                                search_radius=distance_str,
+                                location="LOCATION",
+                                angle="NO_ANGLE",
+                                closest="ALL",   
+                                method="PLANAR")
+
+    near_map = {}
+    with arcpy.da.SearchCursor(near_table, ["IN_FID", "NEAR_X", "NEAR_Y", "NEAR_DIST", "NEAR_RANK"]) as s:
+        for in_fid, nx, ny, nd, nr in s:
+            if nr != 1:
+                continue
+            if nx is None or ny is None:
+                continue
+            near_map[int(in_fid)] = (float(nx), float(ny), float(nd))
+    
+    arcpy.management.Delete(near_table)
+
+    return near_map
+
+def create_near_map_unmatched(distance_str, in_fc, near_fc, unmatched_oids):
+    points_lyr = "points_lyr_unmatched"
+    arcpy.MakeFeatureLayer_management(in_fc, points_lyr)
+
+    oid_field = arcpy.Describe(in_fc).oidFieldName
+
+    in_list = ",".join(map(str, unmatched_oids))
+    where = f"{arcpy.AddFieldDelimiters(in_fc, oid_field)} IN ({in_list})"
+
+    arcpy.SelectLayerByAttribute_management(points_lyr, "NEW_SELECTION", where)
+
+    near_map = create_near_map(distance_str, points_lyr, near_fc)
+
+    arcpy.Delete_management(points_lyr)
+
+    return near_map
 #########################################################
 # Her har jeg startet
 #########################################################
@@ -510,9 +695,6 @@ def merge_ramps() -> None:
     """
     print("\nMerge ramps...")
     roads_fc = data_files["cleaned_roads"]
-    buffer_fc = data_files["buffered_ramps"]
-    relevant_roads_fc = data_files["roads_near_ramps"]
-    point_fc = data_files["endpoints"]
     dissolved_fc = data_files["dissolved_ramps"]
     intermediate_fc = data_files["intermediate_ramps"]
     merged_fc = data_files["merged_ramps"]
@@ -521,62 +703,9 @@ def merge_ramps() -> None:
         roads_fc, "ramps_lyr", where_clause="typeveg = 'rampe'"
     )
 
-    create_buffer("ramps_lyr", "20 Meters", "ROUND", buffer_fc)
-
     arcpy.management.MakeFeatureLayer(roads_fc, "roads_lyr")
-
-    arcpy.management.SelectLayerByLocation(
-        in_layer="roads_lyr", overlap_type="INTERSECT", select_features=buffer_fc
-    )
-
-    arcpy.management.CopyFeatures("roads_lyr", relevant_roads_fc)
-
-    end_points = {}
-    with arcpy.da.SearchCursor("ramps_lyr", ["SHAPE@"]) as cursor:
-        for row in cursor:
-            s, e = get_endpoints(row[0])
-
-            key_s = (s.firstPoint.X, s.firstPoint.Y)
-            key_e = (e.firstPoint.X, e.firstPoint.Y)
-
-            end_points[key_s] = end_points.get(key_s, 0) + 1
-            end_points[key_e] = end_points.get(key_e, 0) + 1
-
-    with arcpy.da.SearchCursor(relevant_roads_fc, ["SHAPE@", "typeveg"]) as cursor:
-        for geom, t in cursor:
-            if t == "rampe":
-                continue
-            s, e = get_endpoints(geom)
-
-            key_s = (s.firstPoint.X, s.firstPoint.Y)
-            key_e = (e.firstPoint.X, e.firstPoint.Y)
-
-            if end_points.get(key_s, 0) > 0:
-                end_points[key_s] += 1
-            if end_points.get(key_e, 0) > 0:
-                end_points[key_e] += 1
-
-    valid_end_points = set()
-    for pnt in tqdm(
-        end_points, desc="Fetching valid endpoints", colour="yellow", leave=False
-    ):
-        if end_points[pnt] > 2:
-            valid_end_points.add(pnt)
-
-    spatial_ref = arcpy.Describe(roads_fc).spatialReference
-    path, name = os.path.split(point_fc)
-    arcpy.management.CreateFeatureclass(
-        path, name, geometry_type="POINT", spatial_reference=spatial_ref
-    )
-
-    with arcpy.da.InsertCursor(point_fc, ["SHAPE@"]) as cursor:
-        for x, y in tqdm(
-            valid_end_points, desc="Adding points", colour="yellow", leave=False
-        ):
-            point = arcpy.Point(x, y)
-            point_geom = arcpy.PointGeometry(point, spatial_ref)
-            cursor.insertRow([point_geom])
-
+    
+    after_merge = r"in_memory\after_merge"
     arcpy.management.Dissolve(
         in_features="ramps_lyr",
         out_feature_class=dissolved_fc,
@@ -584,28 +713,25 @@ def merge_ramps() -> None:
         multi_part="SINGLE_PART",
     )
 
-    merge_lines_by_endpoint(dissolved_fc, intermediate_fc, tolerance=50)
+    merge_lines_by_endpoint_fast(dissolved_fc, after_merge, tolerance=50)
+    
 
-    """arcpy.management.SplitLineAtPoint(
-        in_features=dissolved_fc,
-        point_features=point_fc,
-        out_feature_class=intermediate_fc,
-        search_radius="5 Meters",
-    )"""
+    arcpy.analysis.Buffer(after_merge, "in_memory\\buffer_ramps_50m", "50 Meters")
+    combine_intersecting_buffers("in_memory\\buffer_ramps_50m", "buffer_ramps_50m_dissolved")
 
-    splitted_geometries = []
+    joined_output = "in_memory\\lines_with_group_id"
+    arcpy.analysis.SpatialJoin(
+        target_features=after_merge,
+        join_features="in_memory\\buffer_ramps_50m_dissolved",
+        out_feature_class=joined_output,
+        join_type="KEEP_COMMON",
+        match_option="INTERSECT"
+    )
+    fields = [f.name for f in arcpy.ListFields(joined_output)]
+    print(fields)
+    arcpy.management.Dissolve(joined_output, intermediate_fc, dissolve_field="ClusterID")
 
-    """with arcpy.da.UpdateCursor(intermediate_fc, ["SHAPE@"]) as cursor:
-        for row in cursor:
-            polyline = row[0]
-            first, second = split_polyline_at_index(polyline)
-            if first and second:
-                cursor.deleteRow()
-                splitted_geometries.extend([first, second])
 
-    with arcpy.da.InsertCursor(intermediate_fc, ["SHAPE@"]) as insert_cursor:
-        for line in splitted_geometries:
-            insert_cursor.insertRow([line]) """
 
     arcpy.management.SelectLayerByAttribute("roads_lyr", "CLEAR_SELECTION")
     arcpy.management.SelectLayerByAttribute(
@@ -695,25 +821,19 @@ def merge_ramps() -> None:
 
     print("Ramps successfully merged!\n")
 
-#########################################################
-# Her har jeg startet
-#########################################################
+
 @timing_decorator
-def generalize() -> None:
+def make_ramp_points() -> None:
     """
-    Generalizes all the ramps by first categorizing each ramp,
-    then performing a generalization based on its category.
+    Create center points for the ramps and move them to a fitting spot
     """
     print("\nGeneralize ramps...")
 
     roads_fc = data_files["merged_ramps"]
-    buffer_100_fc = data_files["buffered_ramps_100"]
-    dissolved_fc = data_files["dissolved_group"]
-    splitted_fc = data_files["splitted_group"]
     ramp_points_fc = data_files["ramp_points"]
     output_fc = data_files["generalized_ramps"]
     out_fc = data_files["ramp_points_moved"]
-
+    
     arcpy.management.CopyFeatures(roads_fc, output_fc)
     arcpy.management.MakeFeatureLayer(
         output_fc, "roads_lyr", where_clause="typeveg <> 'rampe'"
@@ -721,136 +841,83 @@ def generalize() -> None:
     arcpy.management.MakeFeatureLayer(
         output_fc, "ramps_lyr", where_clause="typeveg = 'rampe'"
     )
-
+    
+    # Rampe centers
     arcpy.management.FeatureToPoint("ramps_lyr", ramp_points_fc, 'CENTROID')
 
+    # Select roads within 500 meters to iterate over fewer objects
+    arcpy.analysis.Buffer(ramp_points_fc, "in_memory\\buffer_500m", "500 Meters", dissolve_option="ALL")
+    arcpy.management.SelectLayerByLocation("roads_lyr", "INTERSECT", "in_memory\\buffer_500m", selection_type="NEW_SELECTION")
 
-    #Create priority 1 points
+    #Create priority 1 points (motorvei krysser ikke motorvei forskjellig medium)
     arcpy.management.MakeFeatureLayer("roads_lyr", "motorveg_t_lyr", where_clause="(motorvegtype = 'Motortrafikkveg' or motorvegtype = 'Motorveg') and medium = 'T'")
-    arcpy.management.MakeFeatureLayer("roads_lyr", "motorveg_ul_lyr", where_clause="(motorvegtype = 'Motortrafikkveg' or motorvegtype = 'Motorveg') and medium <> 'T'")
+    arcpy.management.MakeFeatureLayer("roads_lyr", "motorveg_l_lyr", where_clause="(motorvegtype = 'Motortrafikkveg' or motorvegtype = 'Motorveg') and medium = 'L'")
+    arcpy.management.MakeFeatureLayer("roads_lyr", "motorveg_u_lyr", where_clause="(motorvegtype = 'Motortrafikkveg' or motorvegtype = 'Motorveg') and medium = 'U'")
 
     arcpy.management.MakeFeatureLayer("roads_lyr", "ikke_motorveg_t_lyr", where_clause="(motorvegtype <> 'Motortrafikkveg' and motorvegtype <> 'Motorveg') and medium = 'T'")
-    arcpy.management.MakeFeatureLayer("roads_lyr", "ikke_motorveg_ul_lyr", where_clause="(motorvegtype <> 'Motortrafikkveg' and motorvegtype <> 'Motorveg') and medium <> 'T'")
+    arcpy.management.MakeFeatureLayer("roads_lyr", "ikke_motorveg_l_lyr", where_clause="(motorvegtype <> 'Motortrafikkveg' and motorvegtype <> 'Motorveg') and medium = 'L'")
+    arcpy.management.MakeFeatureLayer("roads_lyr", "ikke_motorveg_u_lyr", where_clause="(motorvegtype <> 'Motortrafikkveg' and motorvegtype <> 'Motorveg') and medium = 'U'")
 
-    intersect1 = "in_memory\\intersect_motorvei_other"
+
+    intersect1 = "in_memory\\intersect1"
+    intersect2 = "in_memory\\intersect2"
+    intersect3 = "in_memory\\intersect3"
+    intersect4 = "in_memory\\intersect4"
+    intersect5 = "in_memory\\intersect5"
     priority1 = "in_memory\\priority1"
 
-    arcpy.Intersect_analysis(["motorveg_t_lyr", "ikke_motorveg_ul_lyr"], intersect1, join_attributes="ALL", output_type="POINT")
-    arcpy.Intersect_analysis(["motorveg_ul_lyr", "ikke_motorveg_t_lyr"], priority1, join_attributes="ALL", output_type="POINT")
+    arcpy.Intersect_analysis(["motorveg_t_lyr", "ikke_motorveg_l_lyr"], intersect1, join_attributes="ALL", output_type="POINT")
+    arcpy.Intersect_analysis(["motorveg_t_lyr", "ikke_motorveg_u_lyr"], intersect2, join_attributes="ALL", output_type="POINT")
+    arcpy.Intersect_analysis(["motorveg_l_lyr", "ikke_motorveg_u_lyr"], intersect3, join_attributes="ALL", output_type="POINT")
+    arcpy.Intersect_analysis(["motorveg_l_lyr", "ikke_motorveg_t_lyr"], intersect4, join_attributes="ALL", output_type="POINT")
+    arcpy.Intersect_analysis(["motorveg_u_lyr", "ikke_motorveg_t_lyr"], intersect5, join_attributes="ALL", output_type="POINT")
+    arcpy.Intersect_analysis(["motorveg_u_lyr", "ikke_motorveg_l_lyr"], priority1, join_attributes="ALL", output_type="POINT")
 
-    arcpy.management.Append(intersect1, priority1)
+
+    arcpy.management.Append([intersect1, intersect2, intersect3, intersect4, intersect5], priority1)
 
 
-    #Create priority 2 points
+    #Create priority 1.5 points ( motorvei krysser motorvei forskjellig medium)
+    intersect8 = "in_memory\\intersect8"
+    intersect9 = "in_memory\\intersect9"
+    priority1_5 = "in_memory\\priority1_5"
+
+    arcpy.Intersect_analysis(["motorveg_t_lyr", "motorveg_l_lyr"], intersect8, join_attributes="ALL", output_type="POINT")
+    arcpy.Intersect_analysis(["motorveg_t_lyr", "motorveg_u_lyr"], intersect9, join_attributes="ALL", output_type="POINT")
+    arcpy.Intersect_analysis(["motorveg_u_lyr", "motorveg_l_lyr"], priority1_5, join_attributes="ALL", output_type="POINT")
+
+    arcpy.management.Append([intersect8, intersect9], priority1_5)
+    
+
+
+    #Create priority 2 points ( vei krysser vei forskjellig medium)
+    intersect6 = "in_memory\\intersect6"
+    intersect7 = "in_memory\\intersect7"
+
     priority2 = "in_memory\\priority2"
     arcpy.management.MakeFeatureLayer("roads_lyr", "roads_t_lyr", where_clause="medium = 'T'")
+    arcpy.management.MakeFeatureLayer("roads_lyr", "roads_l_lyr", where_clause="medium = 'L'")
+    arcpy.management.MakeFeatureLayer("roads_lyr", "roads_u_lyr", where_clause="medium = 'U'")
     arcpy.management.MakeFeatureLayer("roads_lyr", "roads_ul_lyr", where_clause="medium <> 'T'")
 
-    arcpy.Intersect_analysis(["roads_t_lyr", "roads_ul_lyr"], priority2, join_attributes="ALL", output_type="POINT")
-
-    # Temporary in-memory feature class to hold endpoints (optional)
-    endpoints_fc = "in_memory\\collected_endpoints"
-        # Helper: return tuple of endpoint point geometries for a polyline geometry
-    def get_line_endpoints(line_geom):
-        """
-        Accepts an arcpy Polyline geometry and returns two arcpy PointGeometry objects:
-        (start_point_geom, end_point_geom).
-        """
-        # Get first and last coordinate from first part (works for simple and multipart; 
-        # for multipart this uses the first and last vertex of the entire geometry).
-        first_part = line_geom.getPart(0)
-        start_pt = first_part[0]
-        # find last non-None vertex in geometry
-        last_pt = None
-        for part in line_geom:
-            for v in part:
-                if v is not None:
-                    last_pt = v
-        if last_pt is None:
-            raise ValueError("Line geometry has no vertices")
-        sr = line_geom.spatialReference
-        start_pg = arcpy.PointGeometry(arcpy.Point(start_pt.X, start_pt.Y), sr)
-        end_pg = arcpy.PointGeometry(arcpy.Point(last_pt.X, last_pt.Y), sr)
-        return start_pg, end_pg
-
-    sr = arcpy.Describe("roads_ul_lyr").spatialReference
-    arcpy.CreateFeatureclass_management("in_memory", "collected_endpoints", "POINT", spatial_reference=sr)
-
-        # Add an attribute to reference source road OID (optional)
-    arcpy.AddField_management(endpoints_fc, "src_oid", "LONG")
-
-    # Collect endpoints: loop through roads, check intersection with any point in priority2
-    road_oid_field = arcpy.Describe("roads_ul_lyr").OIDFieldName
 
 
-    # Use a search cursor on roads and a spatial selection to test intersection quickly
-    with arcpy.da.SearchCursor("roads_ul_lyr", [road_oid_field, "SHAPE@"]) as road_cur, \
-        arcpy.da.InsertCursor(endpoints_fc, ["SHAPE@", "src_oid"]) as ins_cur:
-        for road_row in road_cur:
-            oid = road_row[0]
-            geom = road_row[1]
-            # Create a temporary layer selection of points that intersect this line
-            # Using in_memory selection to avoid changing original layer selection
-            # Use a where_clause that selects nothing then select by location
-            temp_points = arcpy.management.MakeFeatureLayer(priority2, "temp_points_lyr_" + str(oid)).getOutput(0)
-            try:
-                arcpy.management.SelectLayerByLocation(temp_points, "INTERSECT", geom, selection_type="NEW_SELECTION")
-                count = int(arcpy.GetCount_management(temp_points).getOutput(0))
-                if count > 0:
-                    start_pg, end_pg = get_line_endpoints(geom)
-                    ins_cur.insertRow([start_pg, oid])
-                    ins_cur.insertRow([end_pg, oid])
-            finally:
-                # clean up temp layer
-                if arcpy.Exists(temp_points):
-                    arcpy.Delete_management(temp_points)
-    
-    points1_lyr = arcpy.management.MakeFeatureLayer(priority1, "priority1_lyr").getOutput(0)
-    points2_lyr = arcpy.management.MakeFeatureLayer(priority2, "priority2_lyr").getOutput(0)
-    endpoints_lyr = arcpy.management.MakeFeatureLayer(endpoints_fc, "endpoints_lyr").getOutput(0)
+    arcpy.Intersect_analysis(["roads_t_lyr", "roads_l_lyr"], intersect6, join_attributes="ALL", output_type="POINT")
+    arcpy.Intersect_analysis(["roads_t_lyr", "roads_u_lyr"], intersect7, join_attributes="ALL", output_type="POINT")
+    arcpy.Intersect_analysis(["roads_u_lyr", "roads_l_lyr"], priority2, join_attributes="ALL", output_type="POINT")
 
-    # Select points that overlap (INTERSECT) endpoints
-    arcpy.management.SelectLayerByLocation(points1_lyr, "INTERSECT", endpoints_lyr, selection_type="NEW_SELECTION")
-    arcpy.management.SelectLayerByLocation(points2_lyr, "INTERSECT", endpoints_lyr, selection_type="NEW_SELECTION")
+    arcpy.management.Append([intersect6, intersect7], priority2)
 
+    # Remove endpoints from priority points
+    remove_endpoints_points("roads_ul_lyr", priority1)
+    remove_endpoints_points("roads_ul_lyr", priority1_5)
+    remove_endpoints_points("roads_ul_lyr", priority2)
 
-    # If any selected, delete them
-    selected_count = int(arcpy.GetCount_management(points1_lyr).getOutput(0))
-    if selected_count > 0:
-        arcpy.DeleteRows_management(points1_lyr)
-
-    selected_count = int(arcpy.GetCount_management(points2_lyr).getOutput(0))
-    if selected_count > 0:
-        arcpy.DeleteRows_management(points2_lyr)
-
-
-
-
-
-    #near table for priority1
+    # Create near maps for each priority
     distance_str = "210 Meters"
-    near1_table = "in_memory\\near1_table"
-    arcpy.GenerateNearTable_analysis(in_features=ramp_points_fc,
-                                 near_features=priority1,
-                                 out_table=near1_table,
-                                 search_radius=distance_str,
-                                 location="LOCATION",
-                                 angle="NO_ANGLE",
-                                 closest="ALL",   
-                                 method="PLANAR")
+    near1_map = create_near_map(distance_str, ramp_points_fc, priority1)
 
-    # Build a dictionary mapping input OID -> (NEAR_X, NEAR_Y, NEAR_DIST) for priority1, only nearest rank 1 if multiple
-    near1_map = {}
-    with arcpy.da.SearchCursor(near1_table, ["IN_FID", "NEAR_X", "NEAR_Y", "NEAR_DIST", "NEAR_RANK"]) as s:
-        for in_fid, nx, ny, nd, nr in s:
-            if nr != 1:
-                continue
-            if nx is None or ny is None:
-                continue
-            near1_map[int(in_fid)] = (float(nx), float(ny), float(nd))
-
-
-    
+    # oids not in priority 1
     all_oids = []
     oid_field = arcpy.Describe(ramp_points_fc).oidFieldName
     with arcpy.da.SearchCursor(ramp_points_fc, [oid_field]) as sc:
@@ -859,148 +926,23 @@ def generalize() -> None:
 
     unmatched_oids = [oid for oid in all_oids if oid not in near1_map]
 
-    
-    #near table for priority2
-    near2_table = "in_memory\\near2_table"
-    # If there are unmatched points, create a layer selecting those, then run GenerateNearTable against P2
-    near2_map = {}
-    if unmatched_oids:
-        # Create a feature layer for points and select unmatched
-        points_lyr = "points_lyr_unmatched"
-        arcpy.MakeFeatureLayer_management(ramp_points_fc, points_lyr)
-        # Build a SQL selection: "OID IN (..)" — watch out for large lists; for very large datasets tile this operation
-        in_list = ",".join(map(str, unmatched_oids))
-        where = f"{arcpy.AddFieldDelimiters(ramp_points_fc, oid_field)} IN ({in_list})"
-        arcpy.SelectLayerByAttribute_management(points_lyr, "NEW_SELECTION", where)
 
-        # Run GenerateNearTable for the selected points only; nearest targets within distance_str
-        arcpy.GenerateNearTable_analysis(in_features=points_lyr,
-                                        near_features=priority2,
-                                        out_table=near2_table,
-                                        search_radius=distance_str,
-                                        location="LOCATION",
-                                        angle="NO_ANGLE",
-                                        closest="ALL",
-                                        method="PLANAR")
+    near1_5_map = create_near_map_unmatched(distance_str, ramp_points_fc, priority1_5, unmatched_oids)     
+    unmatched_oids += [oid for oid in all_oids if oid not in near1_5_map]
 
-        # Populate near2_map with NEAR_RANK == 1
-        with arcpy.da.SearchCursor(near2_table, ["IN_FID", "NEAR_X", "NEAR_Y", "NEAR_DIST", "NEAR_RANK"]) as s2:
-            for in_fid, nx, ny, nd, nr in s2:
-                if nr != 1:
-                    continue
-                if nx is None or ny is None:
-                    continue
-                near2_map[int(in_fid)] = (float(nx), float(ny), float(nd))
+    near2_map = create_near_map_unmatched(distance_str, ramp_points_fc, priority2, unmatched_oids)  
+    unmatched_oids += [oid for oid in all_oids if oid not in near2_map]
 
-        # Clean up layer
-        arcpy.Delete_management(points_lyr)
-    
-
-
-
-    unmatched_oids = [oid for oid in all_oids if oid not in near1_map and oid not in near2_map]
-    oid_values = ",".join(str(int(v)) for v in unmatched_oids)
-    where = "{} IN ({})".format(arcpy.AddFieldDelimiters(ramp_points_fc, oid_field), oid_values)
     arcpy.management.MakeFeatureLayer("roads_lyr", "motorveg_lyr", where_clause="motorvegtype = 'Motortrafikkveg' or motorvegtype = 'Motorveg'")
 
+    near3_map = create_near_map_unmatched(distance_str, ramp_points_fc, "motorveg_lyr", unmatched_oids)
+    unmatched_oids += [oid for oid in unmatched_oids if oid not in near3_map]
 
-        # Prepare a temporary single-point featureclass in-memory for GenerateNearTable input
-    # We'll iterate each selected point separately to call GenerateNearTable (avoids adding fields to original)
-    with arcpy.da.SearchCursor(ramp_points_fc, [oid_field, "SHAPE@"], where_clause=where) as scur:
-        updates = []
-        for oid, geom in scur:
-            # Create an in-memory single-point featureclass
-            temp_pt_fc = arcpy.CreateFeatureclass_management("in_memory", "tmp_pt", "POINT", spatial_reference=geom.spatialReference).getOutput(0)
-            with arcpy.da.InsertCursor(temp_pt_fc, ["SHAPE@"]) as icur:
-                icur.insertRow([geom])
-
-            # 1) Try motorvei within radius
-            near_table = "in_memory\\near_tbl"
-            if arcpy.Exists(near_table):
-                arcpy.Delete_management(near_table)
-
-            # GenerateNearTable with Location = True to get NEAR_X, NEAR_Y representing the point on the line
-            arcpy.analysis.GenerateNearTable(in_features=temp_pt_fc,
-                                             near_features="motorveg_lyr",
-                                             out_table=near_table,
-                                             search_radius="100 Meters",
-                                             location="LOCATION",
-                                             closest="ALL")  # ALL so we can pick the nearest if multiple results
-
-            target_xy = None
-            if int(arcpy.GetCount_management(near_table).getOutput(0)) > 0:
-                # pick row with smallest NEAR_DIST
-                with arcpy.da.SearchCursor(near_table, ["NEAR_DIST", "NEAR_X", "NEAR_Y"]) as ntcur:
-                    min_dist = None
-                    min_xy = None
-                    for nd, nx, ny in ntcur:
-                        if nd is None:
-                            continue
-                        if (min_dist is None) or (nd < min_dist):
-                            min_dist = nd
-                            min_xy = (nx, ny)
-                    if min_xy:
-                        target_xy = min_xy
-
-            # 2) If no motorvei found within radius, find closest on road_fc (no radius)
-            if target_xy is None:
-                # remove prior near table
-                if arcpy.Exists(near_table):
-                    arcpy.Delete_management(near_table)
-                arcpy.analysis.GenerateNearTable(in_features=temp_pt_fc,
-                                                 near_features="roads_lyr",
-                                                 out_table=near_table,
-                                                 search_radius="100 Meters",
-                                                 location="LOCATION",
-                                                 closest="ALL")
-                if int(arcpy.GetCount_management(near_table).getOutput(0)) > 0:
-                    with arcpy.da.SearchCursor(near_table, ["NEAR_DIST", "NEAR_X", "NEAR_Y"]) as ntcur:
-                        min_dist = None
-                        min_xy = None
-                        for nd, nx, ny in ntcur:
-                            if nd is None:
-                                continue
-                            if (min_dist is None) or (nd < min_dist):
-                                min_dist = nd
-                                min_xy = (nx, ny)
-                        if min_xy:
-                            target_xy = min_xy
-
-            # Clean up near_table and temp point
-            if arcpy.Exists(near_table):
-                arcpy.Delete_management(near_table)
-            if arcpy.Exists(temp_pt_fc):
-                arcpy.Delete_management(temp_pt_fc)
-
-            # If target found, store for update
-            if target_xy:
-                updates.append((oid, target_xy))
-
-
-    # Apply updates in a single update cursor pass
-    if updates:
-        # build a dict for fast lookup
-        upd_dict = {oid: xy for oid, xy in updates}
-        with arcpy.da.UpdateCursor(ramp_points_fc, [oid_field, "SHAPE@"], where_clause=where) as ucur:
-            for row in ucur:
-                oid = row[0]
-                if oid in upd_dict:
-                    nx, ny = upd_dict[oid]
-                    new_pt = arcpy.Point(nx, ny)
-                    new_geom = arcpy.PointGeometry(new_pt, row[1].spatialReference)
-                    row[1] = new_geom
-                    ucur.updateRow(row)
+    near4_map = create_near_map_unmatched(distance_str, ramp_points_fc, "roads_lyr", unmatched_oids)
 
 
 
-
-
-
-
-
-
-
-
+    # make output 
     sr = arcpy.Describe(ramp_points_fc).spatialReference
 
     arcpy.management.CreateFeatureclass(
@@ -1011,45 +953,55 @@ def generalize() -> None:
     )
 
     existing_out_fields = [f.name for f in arcpy.ListFields(out_fc) if f.type not in ("OID", "Geometry")]
-    out_fields = ["SHAPE@"] + existing_out_fields
+    out_fields = ["SHAPE@", "priority"] + existing_out_fields
     in_fields = [oid_field, "SHAPE@"] + existing_out_fields
+
+    arcpy.management.AddField(out_fc, "priority", "DOUBLE")
+
 
     with arcpy.da.SearchCursor(ramp_points_fc, in_fields) as scur, arcpy.da.InsertCursor(out_fc, out_fields) as icur:
         for row in scur:
             oid = int(row[0])
             orig_geom = row[1]
-            other_attrs = list(row[2:])  # remaining attributes
             # Determine snapped location
             if oid in near1_map:
                 nx, ny, nd = near1_map[oid]
                 new_geom = arcpy.PointGeometry(arcpy.Point(nx, ny), sr)
+                priority = [1]
+            elif oid in near1_5_map:
+                nx, ny, nd = near1_5_map[oid]
+                new_geom = arcpy.PointGeometry(arcpy.Point(nx, ny), sr)
+                priority = [1.5]
             elif oid in near2_map:
                 nx, ny, nd = near2_map[oid]
                 new_geom = arcpy.PointGeometry(arcpy.Point(nx, ny), sr)
+                priority = [2]
+            elif oid in near3_map:
+                nx, ny, nd = near3_map[oid]
+                new_geom = arcpy.PointGeometry(arcpy.Point(nx, ny), sr)
+                priority = [3]
+            elif oid in near4_map:
+                nx, ny, nd = near4_map[oid]
+                new_geom = arcpy.PointGeometry(arcpy.Point(nx, ny), sr)
+                priority = [4]
             else:
                 new_geom = orig_geom
+                priority = [0]
 
-            insert_row = [new_geom] + other_attrs 
+            insert_row = [new_geom] + priority 
             icur.insertRow(insert_row)
 
 
+    # Remove duplicates (maybe unnecessary, might be necessary if we divide oslo from the rest)
+    arcpy.DeleteIdentical_management(in_dataset=out_fc, fields="Shape", xy_tolerance="100 Meters")
 
-
-
-
-
-
-
-
-
+    # Remove the ramp lines from the roads
     arcpy.management.DeleteFeatures("ramps_lyr")
-
-
-
-
-
     
     print("Ramps successfully generalized!\n")
+
+
+
 
 
 @timing_decorator
@@ -1062,4 +1014,4 @@ def delete_intermediate_files() -> None:
 
 
 if __name__ == "__main__":
-    generalize_ramps()
+    main()
