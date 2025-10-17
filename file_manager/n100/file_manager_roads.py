@@ -1237,6 +1237,10 @@ class Road_N100(Enum):
         script_source_name=roundabout_file, description="roundabout"
     )
 
+    roundabout__centroids__n100_road = file_manager.generate_file_name_gdb(
+        script_source_name=roundabout_file, description="centroids"
+    )
+
     roundabout__cleaned_road__n100_road = file_manager.generate_file_name_gdb(
         script_source_name=roundabout_file, description="cleaned_road"
     )
