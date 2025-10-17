@@ -364,24 +364,22 @@ def thin_roads():
     road_hierarchy = """def Reclass(vegklasse, typeveg, har_bom):
         if typeveg == 'bilferje':
             return 0
-        elif vegklasse in (0, 1, 2, 3, 4):
-            if har_bom == "ja":
-                return 3
-            return 1
+        
+        bom = 2 if har_bom == "ja" else 0
+        
+        if vegklasse in (0, 1, 2, 3, 4):
+            klasse = 1
         elif vegklasse == 5:
-            if har_bom == "ja":
-                return 4
-            return 2
+            klasse = 2
         elif vegklasse == 6:
-            if har_bom == "ja":
-                return 5
-            return 3
+            klasse = 3
         elif vegklasse == 7:
-            if har_bom == "ja":
-                return 5
-            return 4
+            klasse = 4
         else:
-            return 5
+            klasse = 5
+        
+        hierarki = klasse + bom
+        return hierarki if hierarki <= 5 else 5
     """
 
     arcpy.management.CalculateField(
