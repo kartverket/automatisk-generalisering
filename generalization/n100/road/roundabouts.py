@@ -131,7 +131,7 @@ def change_geom_in_roundabouts(roads: list[tuple]) -> tuple[dict, arcpy.PointGeo
         return {oid: geom for _, _, oid, geom, _, _, _ in roads}
 
     centroid = get_center_point(roundabouts)
-    tolerance = 4  # [m]
+    tolerance = 3.5 # [m]
 
     def pt_key(pt):
         x = round(pt.firstPoint.X, 3) if hasattr(pt, "firstPoint") else round(pt.X, 3)
@@ -139,10 +139,11 @@ def change_geom_in_roundabouts(roads: list[tuple]) -> tuple[dict, arcpy.PointGeo
         return (x, y)
 
     roads_by_number = defaultdict(list)
-    end_points = defaultdict(list)
+    oids = set()
     for o, g, v in other:
         roads_by_number[v].append([o, g])
     for key in roads_by_number:
+        end_points = defaultdict(list)
         if len(roads_by_number[key]):
             for id, geom in roads_by_number[key]:
                 start, end = get_endpoints(geom)
@@ -152,11 +153,12 @@ def change_geom_in_roundabouts(roads: list[tuple]) -> tuple[dict, arcpy.PointGeo
                 if roundabout_geom.distanceTo(end) < tolerance:
                     end = pt_key(end)
                     end_points[end].append(id)
-    oids = set()
-    for key in end_points:
-        if len(end_points[key]) > 1:
-            for oid in end_points[key]:
-                oids.add(oid)
+    
+        for key in end_points:
+            if len(end_points[key]) > 1:
+                for oid in end_points[key]:
+                    oids.add(oid)
+    
     other = [[oid, geom] for oid, geom, _ in other if oid not in oids]
 
     for i in range(len(other)):
@@ -303,7 +305,7 @@ def create_intersections_of_roundabouts() -> None:
         for centroid in centroids:
             insert.insertRow([centroid])
 
-    # """ Deletes intermediate files during the process
+    """ Deletes intermediate files during the process
     for layer in [roundabout_fc, centroid_fc]:
         if arcpy.Exists(layer):
             arcpy.management.Delete(layer)

@@ -72,7 +72,7 @@ OBJECT_LIMIT = 100_000
 @timing_decorator
 def data_selection_and_validation():
     plot_area = "navn IN ('Asker', 'Bærum', 'Drammen', 'Frogn', 'Hole', 'Holmestrand', 'Horten', 'Jevnaker', 'Kongsberg', 'Larvik', 'Lier', 'Lunner', 'Modum', 'Nesodden', 'Oslo', 'Ringerike', 'Tønsberg', 'Øvre Eiker')"
-    ferry_admin_test = "navn IN ('Trondheim')"
+    ferry_admin_test = "navn IN ('Oslo')"
     small_plot_area = "navn IN ('Oslo', 'Ringerike')"
     presentation_area = "navn IN ('Asker', 'Bærum', 'Oslo', 'Enebakk', 'Nittedal', 'Nordre Follo', 'Hole', 'Nesodden', 'Lørenskog', 'Sandnes', 'Stavanger', 'Gjesdal', 'Sola', 'Klepp', 'Strand', 'Time', 'Randaberg')"
 
@@ -203,7 +203,7 @@ def calculate_boarder_road_hierarchy(
 @timing_decorator
 def trim_road_details():
     arcpy.management.MultipartToSinglepart(
-        in_features=Road_N100.data_selection___nvdb_roads___n100_road.value,
+        in_features=Road_N100.roundabout__cleaned_road__n100_road.value, #Road_N100.data_selection___nvdb_roads___n100_road.value,
         out_feature_class=Road_N100.data_preparation___road_single_part___n100_road.value,
     )
 
