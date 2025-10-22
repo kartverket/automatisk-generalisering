@@ -203,7 +203,7 @@ def calculate_boarder_road_hierarchy(
 @timing_decorator
 def trim_road_details():
     arcpy.management.MultipartToSinglepart(
-        in_features=Road_N100.roundabout__cleaned_road__n100_road.value, #Road_N100.data_selection___nvdb_roads___n100_road.value,
+        in_features=Road_N100.roundabout__cleaned_road__n100_road.value,
         out_feature_class=Road_N100.data_preparation___road_single_part___n100_road.value,
     )
 

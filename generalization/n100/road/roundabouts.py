@@ -127,11 +127,11 @@ def change_geom_in_roundabouts(roads: list[tuple]) -> tuple[dict, arcpy.PointGeo
             if t != "rundkjøring"
         ]
     else:
-        # Hvis noe feiler
+        # If an error occurs, return the original geometries
         return {oid: geom for _, _, oid, geom, _, _, _ in roads}
 
     centroid = get_center_point(roundabouts)
-    tolerance = 3.5 # [m]
+    tolerance = 0.1  # [m]
 
     def pt_key(pt):
         x = round(pt.firstPoint.X, 3) if hasattr(pt, "firstPoint") else round(pt.X, 3)
@@ -153,12 +153,12 @@ def change_geom_in_roundabouts(roads: list[tuple]) -> tuple[dict, arcpy.PointGeo
                 if roundabout_geom.distanceTo(end) < tolerance:
                     end = pt_key(end)
                     end_points[end].append(id)
-    
+
         for key in end_points:
             if len(end_points[key]) > 1:
                 for oid in end_points[key]:
                     oids.add(oid)
-    
+
     other = [[oid, geom] for oid, geom, _ in other if oid not in oids]
 
     for i in range(len(other)):
@@ -247,9 +247,8 @@ def create_intersections_of_roundabouts() -> None:
         temp_geom = arcpy.management.CopyFeatures(r_geom, temp_roundabout)
         arcpy.management.SelectLayerByLocation(
             in_layer="road_lyr",
-            overlap_type="WITHIN_A_DISTANCE",
+            overlap_type="INTERSECT",
             select_features=temp_geom,
-            search_distance="5 Meters",
             selection_type="NEW_SELECTION",
         )
         arcpy.management.SelectLayerByAttribute(
@@ -295,7 +294,7 @@ def create_intersections_of_roundabouts() -> None:
                         changed[oid] = new_roads[oid]
 
     # Creates a layer with the center points for all the roundabouts
-    # just a visual control of the created junction points
+    # just as a visual control of the created junction points
     centroid_fc = data_files["centroids"]
     path, name = os.path.split(centroid_fc)
     arcpy.management.CreateFeatureclass(
@@ -305,7 +304,7 @@ def create_intersections_of_roundabouts() -> None:
         for centroid in centroids:
             insert.insertRow([centroid])
 
-    """ Deletes intermediate files during the process
+    # """ Deletes intermediate files during the process
     for layer in [roundabout_fc, centroid_fc]:
         if arcpy.Exists(layer):
             arcpy.management.Delete(layer)
