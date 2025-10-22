@@ -95,6 +95,7 @@
 <span class="n">testing_file</span> <span class="o">=</span> <span class="s2">&quot;testing_file&quot;</span>
 <span class="n">dam_file</span> <span class="o">=</span> <span class="s2">&quot;dam&quot;</span>
 <span class="n">test2</span> <span class="o">=</span> <span class="s2">&quot;test2&quot;</span>
+<span class="n">test3</span> <span class="o">=</span> <span class="s2">&quot;test3&quot;</span>
 
 
 <span class="sd">&quot;&quot;&quot;&quot;</span>
@@ -998,9 +999,11 @@
         <span class="n">description</span><span class="o">=</span><span class="s2">&quot;dissx&quot;</span><span class="p">,</span>
     <span class="p">)</span>
 
-    <span class="n">test1___veg100_Ås_modell3___n100_road</span> <span class="o">=</span> <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_gdb</span><span class="p">(</span>
-        <span class="n">script_source_name</span><span class="o">=</span><span class="n">test1</span><span class="p">,</span>
-        <span class="n">description</span><span class="o">=</span><span class="s2">&quot;veg100_Ås_modell3&quot;</span><span class="p">,</span>
+    <span class="n">test1___veg100_Kristiansand_modell3___n100_road</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_gdb</span><span class="p">(</span>
+            <span class="n">script_source_name</span><span class="o">=</span><span class="n">test1</span><span class="p">,</span>
+            <span class="n">description</span><span class="o">=</span><span class="s2">&quot;veg100_Kristiansand_modell3&quot;</span><span class="p">,</span>
+        <span class="p">)</span>
     <span class="p">)</span>
 
     <span class="c1"># ========================================</span>
@@ -1411,38 +1414,38 @@
     <span class="c1">#                                TEST2</span>
     <span class="c1"># ========================================</span>
 
-    <span class="n">test2___vegsenterlinje_medium_u___n100_road</span> <span class="o">=</span> <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_gdb</span><span class="p">(</span>
+    <span class="n">test2___veg_u___n100_road</span> <span class="o">=</span> <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_gdb</span><span class="p">(</span>
         <span class="n">script_source_name</span><span class="o">=</span><span class="n">test2</span><span class="p">,</span>
-        <span class="n">description</span><span class="o">=</span><span class="s2">&quot;vegsenterlinje_medium_u&quot;</span><span class="p">,</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">&quot;veg_u&quot;</span><span class="p">,</span>
     <span class="p">)</span>
 
-    <span class="n">test2___vegsenterlinje_u_buff100___n100_road</span> <span class="o">=</span> <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_gdb</span><span class="p">(</span>
+    <span class="n">test2___veg_u_poly100___n100_road</span> <span class="o">=</span> <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_gdb</span><span class="p">(</span>
         <span class="n">script_source_name</span><span class="o">=</span><span class="n">test2</span><span class="p">,</span>
-        <span class="n">description</span><span class="o">=</span><span class="s2">&quot;vegsenterlinje_u_buff100&quot;</span><span class="p">,</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">&quot;veg_u_poly100&quot;</span><span class="p">,</span>
     <span class="p">)</span>
 
-    <span class="n">test2___shrunk_underpass___n100_road</span> <span class="o">=</span> <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_gdb</span><span class="p">(</span>
+    <span class="n">test2___veg_u_poly100_shrunked___n100_road</span> <span class="o">=</span> <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_gdb</span><span class="p">(</span>
         <span class="n">script_source_name</span><span class="o">=</span><span class="n">test2</span><span class="p">,</span>
-        <span class="n">description</span><span class="o">=</span><span class="s2">&quot;shrunk_underpass&quot;</span><span class="p">,</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">&quot;veg_u_poly100_shrunked&quot;</span><span class="p">,</span>
     <span class="p">)</span>
 
-    <span class="n">test2___vegsenterlinje_medium_l___n100_road</span> <span class="o">=</span> <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_gdb</span><span class="p">(</span>
+    <span class="n">test2___veg_l___n100_road</span> <span class="o">=</span> <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_gdb</span><span class="p">(</span>
         <span class="n">script_source_name</span><span class="o">=</span><span class="n">test2</span><span class="p">,</span>
-        <span class="n">description</span><span class="o">=</span><span class="s2">&quot;vegsenterlinje_medium_l&quot;</span><span class="p">,</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">&quot;veg_l&quot;</span><span class="p">,</span>
     <span class="p">)</span>
-    <span class="n">test2___vegsenterlinje_l_buff100___n100_road</span> <span class="o">=</span> <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_gdb</span><span class="p">(</span>
+    <span class="n">test2___veg_l_poly100___n100_road</span> <span class="o">=</span> <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_gdb</span><span class="p">(</span>
         <span class="n">script_source_name</span><span class="o">=</span><span class="n">test2</span><span class="p">,</span>
-        <span class="n">description</span><span class="o">=</span><span class="s2">&quot;vegsenterlinje_l_buff100&quot;</span><span class="p">,</span>
-    <span class="p">)</span>
-
-    <span class="n">test2___shrunk_bridge___n100_road</span> <span class="o">=</span> <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_gdb</span><span class="p">(</span>
-        <span class="n">script_source_name</span><span class="o">=</span><span class="n">test2</span><span class="p">,</span>
-        <span class="n">description</span><span class="o">=</span><span class="s2">&quot;shrunk_bridge&quot;</span><span class="p">,</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">&quot;veg_l_poly100&quot;</span><span class="p">,</span>
     <span class="p">)</span>
 
-    <span class="n">test2___vegsenterlinje_medium_t___n100_road</span> <span class="o">=</span> <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_gdb</span><span class="p">(</span>
+    <span class="n">test2___veg_l_poly100_shrunked___n100_road</span> <span class="o">=</span> <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_gdb</span><span class="p">(</span>
         <span class="n">script_source_name</span><span class="o">=</span><span class="n">test2</span><span class="p">,</span>
-        <span class="n">description</span><span class="o">=</span><span class="s2">&quot;vegsenterlinje_medium_t&quot;</span><span class="p">,</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">&quot;veg_l_poly100_shrunked&quot;</span><span class="p">,</span>
+    <span class="p">)</span>
+
+    <span class="n">test2___veg_t___n100_road</span> <span class="o">=</span> <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_gdb</span><span class="p">(</span>
+        <span class="n">script_source_name</span><span class="o">=</span><span class="n">test2</span><span class="p">,</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">&quot;veg_t&quot;</span><span class="p">,</span>
     <span class="p">)</span>
     <span class="n">test2___vegsenterlinje_t_buff100___n100_road</span> <span class="o">=</span> <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_gdb</span><span class="p">(</span>
         <span class="n">script_source_name</span><span class="o">=</span><span class="n">test2</span><span class="p">,</span>
@@ -1464,19 +1467,19 @@
         <span class="n">description</span><span class="o">=</span><span class="s2">&quot;ER_bridge&quot;</span><span class="p">,</span>
     <span class="p">)</span>
 
-    <span class="n">test2___ER_bridge_buffer100___n100_road</span> <span class="o">=</span> <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_gdb</span><span class="p">(</span>
+    <span class="n">test2___ER_bridge_poly100___n100_road</span> <span class="o">=</span> <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_gdb</span><span class="p">(</span>
         <span class="n">script_source_name</span><span class="o">=</span><span class="n">test2</span><span class="p">,</span>
-        <span class="n">description</span><span class="o">=</span><span class="s2">&quot;ER_bridge_buffer100&quot;</span><span class="p">,</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">&quot;ER_bridge_poly100&quot;</span><span class="p">,</span>
     <span class="p">)</span>
 
-    <span class="n">test2___ER_bridge_shrunk___n100_road</span> <span class="o">=</span> <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_gdb</span><span class="p">(</span>
+    <span class="n">test2___ER_bridge_shrunked___n100_road</span> <span class="o">=</span> <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_gdb</span><span class="p">(</span>
         <span class="n">script_source_name</span><span class="o">=</span><span class="n">test2</span><span class="p">,</span>
-        <span class="n">description</span><span class="o">=</span><span class="s2">&quot;ER_bridge_shrunk&quot;</span><span class="p">,</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">&quot;ER_bridge_shrunked&quot;</span><span class="p">,</span>
     <span class="p">)</span>
 
-    <span class="n">test2___surface_ER___n100_road</span> <span class="o">=</span> <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_gdb</span><span class="p">(</span>
+    <span class="n">test2___ER_t___n100_road</span> <span class="o">=</span> <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_gdb</span><span class="p">(</span>
         <span class="n">script_source_name</span><span class="o">=</span><span class="n">test2</span><span class="p">,</span>
-        <span class="n">description</span><span class="o">=</span><span class="s2">&quot;surface_ER&quot;</span><span class="p">,</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">&quot;ER_t&quot;</span><span class="p">,</span>
     <span class="p">)</span>
 
     <span class="n">test2___bridge_cross_ER___n100_road</span> <span class="o">=</span> <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_gdb</span><span class="p">(</span>
@@ -1484,28 +1487,90 @@
         <span class="n">description</span><span class="o">=</span><span class="s2">&quot;bridge_cross_ER&quot;</span><span class="p">,</span>
     <span class="p">)</span>
 
+    <span class="n">test2___underpass_cross_ER___n100_road</span> <span class="o">=</span> <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_gdb</span><span class="p">(</span>
+        <span class="n">script_source_name</span><span class="o">=</span><span class="n">test2</span><span class="p">,</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">&quot;underpass_cross_ER&quot;</span><span class="p">,</span>
+    <span class="p">)</span>
     <span class="n">test2___surface_under_ER___n100_road</span> <span class="o">=</span> <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_gdb</span><span class="p">(</span>
         <span class="n">script_source_name</span><span class="o">=</span><span class="n">test2</span><span class="p">,</span>
         <span class="n">description</span><span class="o">=</span><span class="s2">&quot;surface_under_ER&quot;</span><span class="p">,</span>
     <span class="p">)</span>
 
-    <span class="n">test2___underpass_cross_ER___n100_road</span> <span class="o">=</span> <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_gdb</span><span class="p">(</span>
+    <span class="n">test2___keep_bru_ERFKP___n100_road</span> <span class="o">=</span> <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_gdb</span><span class="p">(</span>
         <span class="n">script_source_name</span><span class="o">=</span><span class="n">test2</span><span class="p">,</span>
-        <span class="n">description</span><span class="o">=</span><span class="s2">&quot;underpass_cross_ER&quot;</span><span class="p">,</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">&quot;keep_bru_ERFKP&quot;</span><span class="p">,</span>
     <span class="p">)</span>
 
-    <span class="n">test2___keep_bru_FKP___n100_road</span> <span class="o">=</span> <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_gdb</span><span class="p">(</span>
+    <span class="n">test2___keep_underpass_ERFKP___n100_road</span> <span class="o">=</span> <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_gdb</span><span class="p">(</span>
         <span class="n">script_source_name</span><span class="o">=</span><span class="n">test2</span><span class="p">,</span>
-        <span class="n">description</span><span class="o">=</span><span class="s2">&quot;keep_bru_FKP&quot;</span><span class="p">,</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">&quot;keep_underpass_ERFKP&quot;</span><span class="p">,</span>
     <span class="p">)</span>
 
-    <span class="n">test2___keep_underpass_FKP___n100_road</span> <span class="o">=</span> <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_gdb</span><span class="p">(</span>
-        <span class="n">script_source_name</span><span class="o">=</span><span class="n">test2</span><span class="p">,</span>
-        <span class="n">description</span><span class="o">=</span><span class="s2">&quot;keep_underpass_FKP&quot;</span><span class="p">,</span>
-    <span class="p">)</span>
     <span class="n">test2___keep_surface_FKP___n100_road</span> <span class="o">=</span> <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_gdb</span><span class="p">(</span>
         <span class="n">script_source_name</span><span class="o">=</span><span class="n">test2</span><span class="p">,</span>
         <span class="n">description</span><span class="o">=</span><span class="s2">&quot;keep_surface_FKP&quot;</span><span class="p">,</span>
+    <span class="p">)</span>
+
+    <span class="n">test2___keep_surface_ERFKP___n100_road</span> <span class="o">=</span> <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_gdb</span><span class="p">(</span>
+        <span class="n">script_source_name</span><span class="o">=</span><span class="n">test2</span><span class="p">,</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">&quot;keep_surface_ERFKP&quot;</span><span class="p">,</span>
+    <span class="p">)</span>
+
+    <span class="n">test2___merged_keep___n100_road</span> <span class="o">=</span> <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_gdb</span><span class="p">(</span>
+        <span class="n">script_source_name</span><span class="o">=</span><span class="n">test2</span><span class="p">,</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">&quot;merged_keep&quot;</span><span class="p">,</span>
+    <span class="p">)</span>
+
+    <span class="n">test2___rampe___n100_road</span> <span class="o">=</span> <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_gdb</span><span class="p">(</span>
+        <span class="n">script_source_name</span><span class="o">=</span><span class="n">test2</span><span class="p">,</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">&quot;rampe&quot;</span><span class="p">,</span>
+    <span class="p">)</span>
+
+    <span class="n">test2___rampe_poly___n100_road</span> <span class="o">=</span> <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_gdb</span><span class="p">(</span>
+        <span class="n">script_source_name</span><span class="o">=</span><span class="n">test2</span><span class="p">,</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">&quot;rampe_poly&quot;</span><span class="p">,</span>
+    <span class="p">)</span>
+
+    <span class="n">test2___rampe_poly_diss___n100_road</span> <span class="o">=</span> <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_gdb</span><span class="p">(</span>
+        <span class="n">script_source_name</span><span class="o">=</span><span class="n">test2</span><span class="p">,</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">&quot;rampe_poly_diss&quot;</span><span class="p">,</span>
+    <span class="p">)</span>
+
+    <span class="n">test2___rampe_poly_epp___n100_road</span> <span class="o">=</span> <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_gdb</span><span class="p">(</span>
+        <span class="n">script_source_name</span><span class="o">=</span><span class="n">test2</span><span class="p">,</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">&quot;rampe_poly_diss_epp&quot;</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="c1"># ========================================</span>
+    <span class="c1">#                                test3</span>
+    <span class="c1"># ========================================</span>
+
+    <span class="n">test3___rampe_poly___n100_road</span> <span class="o">=</span> <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_gdb</span><span class="p">(</span>
+        <span class="n">script_source_name</span><span class="o">=</span><span class="n">test3</span><span class="p">,</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">&quot;rampe_poly&quot;</span><span class="p">,</span>
+    <span class="p">)</span>
+
+    <span class="n">test3___rampe_poly_diss___n100_road</span> <span class="o">=</span> <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_gdb</span><span class="p">(</span>
+        <span class="n">script_source_name</span><span class="o">=</span><span class="n">test3</span><span class="p">,</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">&quot;rampe_poly_diss&quot;</span><span class="p">,</span>
+    <span class="p">)</span>
+
+    <span class="n">test3___rampe_epp___n100_road</span> <span class="o">=</span> <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_gdb</span><span class="p">(</span>
+        <span class="n">script_source_name</span><span class="o">=</span><span class="n">test3</span><span class="p">,</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">&quot;rampe_epp&quot;</span><span class="p">,</span>
+    <span class="p">)</span>
+
+    <span class="n">test3___veg_unsplit___n100_road</span> <span class="o">=</span> <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_gdb</span><span class="p">(</span>
+        <span class="n">script_source_name</span><span class="o">=</span><span class="n">test3</span><span class="p">,</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">&quot;veg_unsplit&quot;</span><span class="p">,</span>
+    <span class="p">)</span>
+
+    <span class="n">test3___kryss___n100_road</span> <span class="o">=</span> <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_gdb</span><span class="p">(</span>
+        <span class="n">script_source_name</span><span class="o">=</span><span class="n">test3</span><span class="p">,</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">&quot;kryss&quot;</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="n">test3___kryss_symbol___n100_road</span> <span class="o">=</span> <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_gdb</span><span class="p">(</span>
+        <span class="n">script_source_name</span><span class="o">=</span><span class="n">test3</span><span class="p">,</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">&quot;kryss_symbol&quot;</span><span class="p">,</span>
     <span class="p">)</span></div>
 
 </pre></div>
