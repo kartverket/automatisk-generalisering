@@ -72,6 +72,7 @@ def shrunked_bridge():
         buffer_distance_or_field="-50 centimeters",
     )
 
+
 @timing_decorator
 def shrunked_ER_bridge():
     custom_arcpy.select_attribute_and_make_permanent_feature(
@@ -101,7 +102,6 @@ def shrunked_ER_bridge():
     )
 
 
-
 @timing_decorator
 def shrunked_surface_road():
     custom_arcpy.select_attribute_and_make_permanent_feature(
@@ -123,7 +123,6 @@ def shrunked_surface_road():
     #     out_feature_class=Road_N100.test2___shrunk_surface_road___n100_road.value,
     #     buffer_distance_or_field="-50 centimeters",
     # )
-
 
 
 @timing_decorator
@@ -157,6 +156,7 @@ def surface_ER():
         output_name=Road_N100.test2___ER_t___n100_road.value,
         selection_type="NEW_SELECTION",
     )
+
 
 @timing_decorator
 def select_intersect_and_copy(in_fc, select_fc, out_fc, lyr_name="tmp_lyr"):
@@ -223,10 +223,12 @@ def keep():
         selection_type="NEW_SELECTION",
     )
 
+
 # now, with keep find shares a line segment in elveg and sti and code accordingly
 # for example, use vagstatus and code to A for bridges that cross ER and are kategori F, K or P
 # give status A, so it can be found and given the desired hierarchy
 # vegstatus can the be used so that objects with status A or B change hierarchy
+
 
 @timing_decorator
 def update_vegstatus():
@@ -239,14 +241,13 @@ def update_vegstatus():
         inputs=[
             Road_N100.test2___keep_bru_ERFKP___n100_road.value,
             Road_N100.test2___keep_underpass_ERFKP___n100_road.value,
-            ],
+        ],
         output=Road_N100.test2___merged_keep___n100_road.value,
     )
 
     # Make a feature layer from the input dataset
     arcpy.management.MakeFeatureLayer(
-        in_features=input_roads.elveg_and_sti,
-        out_layer="elveg_sti_lyr"
+        in_features=input_roads.elveg_and_sti, out_layer="elveg_sti_lyr"
     )
     # Select all features that intersect with the merged keep layer
     arcpy.management.SelectLayerByLocation(
@@ -260,7 +261,7 @@ def update_vegstatus():
     count = 0
     with arcpy.da.UpdateCursor("elveg_sti_lyr", ["VEGSTATUS"]) as cursor:
         for row in cursor:
-            row[0] = "A"   # <-- set your desired value here
+            row[0] = "A"  # <-- set your desired value here
             cursor.updateRow(row)
             count += 1
 
