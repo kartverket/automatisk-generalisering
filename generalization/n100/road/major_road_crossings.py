@@ -1,18 +1,10 @@
 # Importing packages
-from collections import defaultdict
 import arcpy
-import numpy as np
-import math
-import os
 
 arcpy.env.overwriteOutput = True
 
-# Importing custom input files modules
-from input_data import input_n100
-
 # Importing custom modules
 from file_manager.n100.file_manager_roads import Road_N100
-from env_setup import environment_setup
 from custom_tools.decorators.timing_decorator import timing_decorator
 from custom_tools.general_tools import custom_arcpy
 
@@ -45,7 +37,10 @@ data_files = {
 @timing_decorator
 def categories_major_road_crossings():
     """
+    Creates major road crossings feature classes and updates the attribute 'er_kryssningspunkt'
+    in the input road feature class for all roads that cross major roads (E and R).
     """
+    print()
     shrunked_underpass()
     shrunked_bridge()
     shrunked_ER_bridge()
@@ -57,6 +52,7 @@ def categories_major_road_crossings():
 
     # Deletes all the intermediate files created during the process
     delete_intermediate_files()
+    print()
 
 
 ##################
@@ -241,7 +237,7 @@ def cross() -> None:
         lyr_name="veg_l_poly100_shrunked_lyr",
     )
 
-    # Tunneler under ER
+    # Tunnels under ER
     select_intersect_and_copy(
         in_fc=shrunked_u_fc,
         select_fc=major_t,
@@ -249,7 +245,7 @@ def cross() -> None:
         lyr_name="veg_u_poly100_shrunked_lyr",
     )
 
-    # Veger på bakken som har ER-bru over seg
+    # Roads on surface having ER bridges over them
     select_intersect_and_copy(
         in_fc=road_t,
         select_fc=major_bridge,
@@ -258,7 +254,7 @@ def cross() -> None:
     )
 
 
-# select from CROSS those objects that are most important
+# Select from CROSS those objects that are most important
 @timing_decorator
 def keep() -> None:
     """
@@ -299,7 +295,7 @@ def update_crossing_point_attribute() -> None:
     for all roads that intersect with the kept major road crossings.
     """
 
-    print("Updating VEGSTATUS for intersecting features...")
+    print("\nUpdating 'er_kryssningspunkt' for intersecting features...")
 
     road_fc = data_files["input"]
     new_road_fc = data_files["output"]
@@ -311,7 +307,13 @@ def update_crossing_point_attribute() -> None:
         in_features=road_fc, out_feature_class=new_road_fc
     )
     arcpy.management.AddField(
-        in_table=new_road_fc, field_name="er_kryssningspunkt", field_type="INT"
+        in_table=new_road_fc, field_name="er_kryssningspunkt", field_type="SHORT"
+    )
+    arcpy.management.CalculateField(
+        in_table=new_road_fc,
+        field="er_kryssningspunkt",
+        expression=0,
+        expression_type="PYTHON3"
     )
 
     arcpy.management.Merge(
@@ -339,7 +341,7 @@ def update_crossing_point_attribute() -> None:
             cursor.updateRow(row)
             count += 1
 
-    print(f"Updated 'er_kryssningspunkt' for {count} features.")
+    print(f"Updated 'er_kryssningspunkt' for {count} features.\n")
 
 @timing_decorator
 def delete_intermediate_files() -> None:
