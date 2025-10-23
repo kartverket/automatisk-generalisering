@@ -17,6 +17,7 @@ first_generalization = "first_generalization"
 test1 = "test1"
 testing_file = "testing_file"
 dam_file = "dam"
+road_triangles = "road_triangles"
 test2 = "test2"
 test3 = "test3"
 
@@ -1329,6 +1330,34 @@ class Road_N100(Enum):
 
     dam__cleaned_roads__n100_road = file_manager.generate_file_name_gdb(
         script_source_name=dam_file, description="cleaned_roads"
+    )
+
+    # ========================================
+    #                           ROAD TRIANGLES
+    # ========================================
+
+    road_triangles__working_file__n100_road = file_manager.generate_file_name_gdb(
+        script_source_name=road_triangles, description="working_file"
+    )
+
+    road_triangles__junction_point__n100_road = file_manager.generate_file_name_gdb(
+        script_source_name=road_triangles, description="junction_point"
+    )
+
+    road_triangles__dissolved__n100_road = file_manager.generate_file_name_gdb(
+        script_source_name=road_triangles, description="dissolved"
+    )
+
+    road_triangles__splitted__n100_road = file_manager.generate_file_name_gdb(
+        script_source_name=road_triangles, description="splitted"
+    )
+
+    road_triangles__road_selection__n100_road = file_manager.generate_file_name_gdb(
+        script_source_name=road_triangles, description="road_selection"
+    )
+
+    road_triangles__triangle_candidates__n100_road = file_manager.generate_file_name_gdb(
+        script_source_name=road_triangles, description="triangle_candidates"
     )
 
     # ========================================
