@@ -119,19 +119,21 @@ class ThinRoadNetwork:
                 output_name=selection_output,
             )
 
-        dissolve_obj = DissolveWithIntersections(
+        cfg = logic_config.DissolveInitKwargs(
             input_line_feature=selection_output,
-            root_file=root_file,
             output_processed_feature=dissolved_output,
-            dissolve_field_list=FieldNames.road_all_fields()
-            + [self.partition_field_name],
-            list_of_sql_expressions=[
+            work_file_manager_config=core_config.WorkFileConfig(
+                root_file=root_file,
+            ),
+            dissolve_fields=FieldNames.road_all_fields() + [self.partition_field_name],
+            sql_expressions=[
                 f" MEDIUM = '{MediumAlias.tunnel}'",
                 f" MEDIUM = '{MediumAlias.bridge}'",
                 f" MEDIUM = '{MediumAlias.on_surface}'",
             ],
         )
-        dissolve_obj.run()
+
+        DissolveWithIntersections(cfg).run()
 
     def thin_road_cycle(self):
         input_count = file_utilities.count_objects(input_layer=self.road_network_input)

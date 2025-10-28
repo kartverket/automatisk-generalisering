@@ -283,6 +283,11 @@ class BufferDisplacement:
             file_type="gdb",
         )
 
+        file_utilities.print_feature_info(
+            file_path=self.current_building_points,
+            description="Building Points in to polygon_processor",
+        )
+
         building_polygons = PolygonProcessor(
             input_building_points=self.current_building_points,
             output_polygon_feature_class=self.output_building_points_to_polygon,
@@ -303,6 +308,16 @@ class BufferDisplacement:
             out_feature_class=self.erased_building_polygons,
         )
 
+        building_count = file_utilities.feature_has_rows(self.erased_building_polygons)
+        if building_count:
+            print(
+                f"\nErased buildings: {file_utilities.count_objects(self.erased_building_polygons)}\n"
+            )
+        else:
+            print(
+                f"\nErased buildings: {file_utilities.feature_has_rows(self.erased_building_polygons)}\n"
+            )
+
         self.output_feature_to_points = self.wfm.build_file_path(
             file_name=f"output_feature_to_points_factor_{factor_str}_add_{fixed_addition_str}",
             file_type="gdb",
@@ -315,6 +330,20 @@ class BufferDisplacement:
         )
 
         self.current_building_points = self.output_feature_to_points
+
+        building_count = file_utilities.feature_has_rows(self.current_building_points)
+        if building_count:
+            print(
+                f"\nBuilding Points end of loop: {file_utilities.count_objects(self.current_building_points)}\n"
+            )
+        else:
+            print(
+                f"\nBuilding Points end of loop: {file_utilities.feature_has_rows(self.current_building_points)}\n"
+            )
+
+        print(
+            f"current_building_points path end of loop:\n{self.current_building_points}"
+        )
 
     def delete_working_files(self, *file_paths):
         """
@@ -366,7 +395,12 @@ class BufferDisplacement:
             for factor, addition in self.increments:
                 self.process_buffer_factor(factor, addition)
 
-                self.wfm.delete_created_files(exceptions=self.output_feature_to_points)
+                self.wfm.delete_created_files(
+                    exceptions=[
+                        self.current_building_points,
+                        self.output_feature_to_points,
+                    ]
+                )
 
         arcpy.management.Copy(
             in_data=self.current_building_points,

@@ -148,3 +148,23 @@ class RrcInitKwargs:
 
     map_scale: str = "100000"
     hierarchy_field: str = "hierarchy"
+
+
+@dataclass(frozen=True)
+class DissolveInitKwargs:
+    """
+    Configuration for DissolveWithIntersections.
+
+    input_line_feature: path or InjectIO to the input line feature
+    output_processed_feature: path or InjectIO for the final merged intersections (or single)
+    work_file_manager_config: WorkFileManager behavior (root_file, in-memory, keep_files)
+    dissolve_fields: optional list of fields to dissolve on; if None -> dissolve all (single-part)
+    sql_expressions: optional list of SQL where-clauses to split/segment, each produces its own FTL result
+    """
+
+    input_line_feature: io_types.GdbIOArg
+    output_processed_feature: io_types.GdbIOArg
+    work_file_manager_config: core_config.WorkFileConfig
+
+    dissolve_fields: Optional[List[str]] = None
+    sql_expressions: Optional[List[str]] = None

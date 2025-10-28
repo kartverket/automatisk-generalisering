@@ -529,12 +529,8 @@ class Road_N100(Enum):
         )
     )
 
-    data_preparation___resolve_road_docu___n100_road = (
-        file_manager.generate_file_name_general_files(
-            script_source_name=data_preparation,
-            description="resolve_road_docu",
-            file_type="json",
-        )
+    resolve_road_docu___n100_road = file_manager.generate_general_subdirectory(
+        description="resolve_road_docu",
     )
 
     data_preparation___resolve_road_root___n100_road = (

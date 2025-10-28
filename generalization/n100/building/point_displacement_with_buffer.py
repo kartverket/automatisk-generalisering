@@ -191,7 +191,7 @@ def run_buffer_displacement():
         partition_method_inject_config=buffer_displacement_output_config,
         partition_iterator_run_config=partition_buffer_run_config,
         work_file_manager_config=core_config.WorkFileConfig(
-            root_file=Building_N100.point_displacement_with_buffer___root_file___n100_building.value
+            root_file=Building_N100.point_displacement_with_buffer___partition_root_file___n100_building.value
         ),
     )
     buffer_displacement_partition.run()

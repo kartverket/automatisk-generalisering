@@ -1077,6 +1077,13 @@ class Building_N100(Enum):
         )
     )
 
+    point_displacement_with_buffer___partition_root_file___n100_building = (
+        file_manager.generate_file_name_gdb(
+            script_source_name=point_displacement_with_buffer,
+            description="partition_root_file",
+        )
+    )
+
     point_displacement_with_buffer___displaced_building_points___n100_building = (
         file_manager.generate_file_name_gdb(
             script_source_name=point_displacement_with_buffer,

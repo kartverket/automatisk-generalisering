@@ -10,101 +10,65 @@ from custom_tools.general_tools.file_utilities import (
 from file_manager import WorkFileManager
 from custom_tools.general_tools import custom_arcpy
 from env_setup import environment_setup
-from constants.n100_constants import MediumAlias
 
-from file_manager.n100.file_manager_roads import Road_N100
+from composition_configs import core_config, logic_config
 
 
 class DissolveWithIntersections:
-    def __init__(
-        self,
-        input_line_feature: str,
-        root_file: str,
-        output_processed_feature: str,
-        dissolve_field_list: list = None,
-        list_of_sql_expressions: list = None,
-        write_work_files_to_memory: bool = False,
-        keep_work_files: bool = False,
-    ):
-        self.input_line_feature = input_line_feature
-        self.root_file = root_file
-        self.output_processed_feature = output_processed_feature
-        self.dissolve_field_list = dissolve_field_list
-        self.list_of_sql_expressions = list_of_sql_expressions
-        self.write_work_files_to_memory = write_work_files_to_memory
-        self.keep_work_files = keep_work_files
-
-        self.list_of_output_files = []
-
-        self.work_file_manager = WorkFileManager(
-            unique_id=id(self),
-            root_file=self.root_file,
-            write_to_memory=self.write_work_files_to_memory,
-            keep_files=self.keep_work_files,
+    def __init__(self, dissolve_intersections_config: logic_config.DissolveInitKwargs):
+        self.cfg = dissolve_intersections_config
+        self.wfm = WorkFileManager(
+            config=dissolve_intersections_config.work_file_manager_config
         )
 
-        self.dissolved_feature = "dissolved_feature"
-        self.gdb_files_list = [self.dissolved_feature]
+        self.dissolved = self.wfm.build_file_path("dissolved_feature", "gdb")
 
-        if self.list_of_sql_expressions:
-            sql_count = len(self.list_of_sql_expressions)
-            self.line_sql_selection = self.work_file_manager.setup_dynamic_file_paths(
-                base_name="selection", count=sql_count
-            )
-            self.feature_to_line = self.work_file_manager.setup_dynamic_file_paths(
-                base_name="feature_to_line", count=sql_count
-            )
-
+        if dissolve_intersections_config.sql_expressions:
+            self.selection_paths = [
+                self.wfm.build_file_path(f"selection_{i}", "gdb")
+                for i, _ in enumerate(dissolve_intersections_config.sql_expressions)
+            ]
+            self.ftl_paths = [
+                self.wfm.build_file_path(f"feature_to_line_{i}", "gdb")
+                for i, _ in enumerate(dissolve_intersections_config.sql_expressions)
+            ]
         else:
-            self.line_sql_selection = "line_sql_selection"
-            self.feature_to_line = "feature_to_line"
+            self.selection_paths = [
+                self.wfm.build_file_path("line_sql_selection", "gdb")
+            ]
+            self.ftl_paths = [self.wfm.build_file_path("feature_to_line", "gdb")]
 
-            self.gdb_files_list.extend([self.line_sql_selection, self.feature_to_line])
+    # --- internals ---------------------------------------------------------
 
-        self.gdb_files_list = self.work_file_manager.setup_work_file_paths(
-            instance=self,
-            file_structure=self.gdb_files_list,
-        )
-
-    def _dissolve_feature(self):
-        if self.dissolve_field_list is None:
+    def _dissolve(self) -> None:
+        if not self.cfg.dissolve_fields:
             arcpy.analysis.PairwiseDissolve(
-                in_features=self.input_line_feature,
-                out_feature_class=self.dissolved_feature,
+                in_features=self.cfg.input_line_feature,
+                out_feature_class=self.dissolved,
                 multi_part="SINGLE_PART",
             )
-
         else:
             arcpy.analysis.PairwiseDissolve(
-                in_features=self.input_line_feature,
-                out_feature_class=self.dissolved_feature,
-                dissolve_field=self.dissolve_field_list,
+                in_features=self.cfg.input_line_feature,
+                out_feature_class=self.dissolved,
+                dissolve_field=self.cfg.dissolve_fields,
                 multi_part="SINGLE_PART",
             )
 
     @staticmethod
-    def _create_intersections(input_line: str, output: str):
+    def _feature_to_line(input_line: str, output_fc: str) -> None:
         arcpy.management.FeatureToLine(
             in_features=input_line,
-            out_feature_class=output,
+            out_feature_class=output_fc,
         )
 
-    def _process_single_feature(
-        self, sql_expression: str, selection_path: str, feature_to_line_path: str
-    ) -> None:
-        """
-        Processes a single SQL expression by creating the selection and converting it to a line feature.
-
-        Args:
-            sql_expression (str): The SQL expression to use for selection.
-            selection_path (str): The file path for the selected feature.
-            feature_to_line_path (str): The file path for the resulting line feature.
-        """
+    def _process_one(self, sql: str, selection_fc: str, ftl_fc: str) -> None:
         custom_arcpy.select_attribute_and_make_permanent_feature(
-            input_layer=self.dissolved_feature,
-            expression=sql_expression,
-            output_name=selection_path,
+            input_layer=self.dissolved,
+            expression=sql,
+            output_name=selection_fc,
         )
+        self._feature_to_line(selection_fc, ftl_fc)
 
         self._create_intersections(
             input_line=selection_path,
@@ -137,31 +101,24 @@ class DissolveWithIntersections:
                 field_name_feature=self.dissolved_feature,
             )"""
             arcpy.management.CopyFeatures(
-                in_features=self.feature_to_line,
-                out_feature_class=self.output_processed_feature,
+                in_features=self.ftl_paths[0],
+                out_feature_class=self.cfg.output_processed_feature,
             )
 
-    def run(self):
-        self._dissolve_feature()
-        self._process_selected_feature()
-        if self.list_of_sql_expressions:
+    # --- public API --------------------------------------------------------
+
+    def run(self) -> None:
+        self._dissolve()
+        self._process()
+
+        if self.cfg.sql_expressions:
             arcpy.management.Merge(
-                inputs=self.list_of_output_files,
-                output=self.output_processed_feature,
+                inputs=self.ftl_paths,
+                output=self.cfg.output_processed_feature,
             )
-        self.work_file_manager.delete_created_files()
+
+        self.wfm.delete_created_files()
 
 
 if __name__ == "__main__":
     environment_setup.main()
-    create_intersections = DissolveWithIntersections(
-        input_line_feature=Road_N100.data_selection___nvdb_roads___n100_road.value,
-        root_file=Road_N100.data_preparation___intersections_root___n100_road.value,
-        output_processed_feature=f"{Road_N100.data_preparation___dissolved_road_feature_2___n100_road.value}_alt",
-        list_of_sql_expressions=[
-            f" MEDIUM = '{MediumAlias.tunnel}'",
-            f" MEDIUM = '{MediumAlias.bridge}'",
-            f" MEDIUM = '{MediumAlias.on_surface}'",
-        ],
-    )
-    create_intersections.run()

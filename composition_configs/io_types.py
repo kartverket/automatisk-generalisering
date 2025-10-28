@@ -9,4 +9,7 @@ FeatureIOArg: TypeAlias = type_defs.GdbFilePath | type_defs.GeneralFilePath | In
 GdbIOArg: TypeAlias = type_defs.GdbFilePath | InjectIO
 LyrxIOArg: TypeAlias = type_defs.LyrxFilePath | InjectIO
 
-__all__ = ["FeatureIOArg", "GdbIOArg", "LyrxIOArg"]
+
+PathArg: TypeAlias = FeatureIOArg | GdbIOArg | LyrxIOArg
+
+__all__ = ["FeatureIOArg", "GdbIOArg", "LyrxIOArg", "PathArg"]

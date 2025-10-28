@@ -1,7 +1,9 @@
-from typing import Dict, Literal, List, Any, Optional
+from typing import Dict, Literal, List, Any, Optional, Union
 import arcpy
 import os
 import json
+
+from composition_configs import io_types
 
 
 class FeatureClassCreator:
@@ -246,9 +248,17 @@ def write_dict_to_json(path: str, dict_data: dict) -> None:
         json.dump(dict_data, f, indent=4)
 
 
-def feature_has_rows(feature: Optional[str]) -> bool:
+def feature_has_rows(feature: Union[str, io_types.GdbIOArg]) -> bool:
     if not feature:
         return False
     if not arcpy.Exists(feature):
         return False
     return count_objects(input_layer=feature) > 0
+
+
+def print_feature_info(file_path: io_types.GdbIOArg, description: str) -> None:
+    """Helper for consistent print formatting of feature diagnostics."""
+    has_rows = feature_has_rows(file_path)
+    count_or_status = count_objects(file_path) if has_rows else has_rows
+    print(f"\n{description}: {count_or_status}")
+    print(f"For file path:\n {file_path}\n")

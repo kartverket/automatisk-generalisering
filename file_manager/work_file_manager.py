@@ -4,7 +4,8 @@ from datetime import datetime
 from typing import overload, Any, Optional, Union, Iterable, Literal
 
 
-from composition_configs import core_config, type_defs
+from composition_configs import core_config, type_defs, io_types
+
 import env_setup.global_config
 
 
@@ -53,7 +54,7 @@ class WorkFileManager:
         self.write_to_memory = config.write_to_memory
         self.keep_files = config.keep_files
 
-        self.created_paths: set[str] = set()
+        self.created_paths: set[io_types.PathArg] = set()
 
         if not self.write_to_memory and not self.root_file:
             raise ValueError(
@@ -132,7 +133,7 @@ class WorkFileManager:
         suffix = f"_iter{index}" if index is not None else ""
 
         if file_type == "gdb":
-            s = f"{self.file_location}{file_name}_{self.unique_id}{suffix}"
+            s = f"{self.file_location}{self.unique_id}_{file_name}{suffix}"
             path = type_defs.GdbFilePath(s)
             key = str(path)
             if key in self.created_paths:
@@ -143,10 +144,10 @@ class WorkFileManager:
         scale_path, origin_file_name = self._modify_path()
 
         if file_type == "lyrx":
-            s = rf"{scale_path}{self.lyrx_directory_name}\{origin_file_name}_{file_name}_{self.unique_id}{suffix}.lyrx"
+            s = rf"{scale_path}{self.lyrx_directory_name}\{origin_file_name}_{self.unique_id}_{file_name}{suffix}.lyrx"
             path = type_defs.LyrxFilePath(s)
         else:
-            s = rf"{scale_path}{self.general_files_directory_name}\{origin_file_name}_{file_name}_{self.unique_id}{suffix}.{file_type}"
+            s = rf"{scale_path}{self.general_files_directory_name}\{origin_file_name}_{self.unique_id}_{file_name}{suffix}.{file_type}"
             path = type_defs.GeneralFilePath(s)
 
         key = str(path)
@@ -294,8 +295,8 @@ class WorkFileManager:
 
     def delete_created_files(
         self,
-        delete_targets: Optional[Iterable[str]] = None,
-        exceptions: Optional[Iterable[str]] = None,
+        delete_targets: Optional[Iterable[Optional[io_types.PathArg]]] = None,
+        exceptions: Optional[Iterable[Optional[io_types.PathArg]]] = None,
         delete_files: Optional[bool] = None,
     ) -> None:
         """
