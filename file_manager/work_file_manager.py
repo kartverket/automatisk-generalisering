@@ -54,7 +54,7 @@ class WorkFileManager:
         self.write_to_memory = config.write_to_memory
         self.keep_files = config.keep_files
 
-        self.created_paths: set[io_types.PathArg] = set()
+        self.created_paths: set[str] = set()
 
         if not self.write_to_memory and not self.root_file:
             raise ValueError(
@@ -270,29 +270,6 @@ class WorkFileManager:
         else:
             return process_item(file_structure)
 
-    def setup_dynamic_file_paths(
-        self,
-        base_name: str,
-        count: int,
-        file_type: str = "gdb",
-    ) -> list[str]:
-        """
-        Generates a list of file paths for a dynamic number of files based on a base name.
-
-        Args:
-            base_name (str): The base name to use for generating file paths.
-            count (int): The number of file paths to generate.
-            file_type (str, optional): The file type for the generated paths. Defaults to "gdb".
-
-        Returns:
-            list[str]: A list of generated file paths.
-        """
-        dynamic_paths = []
-        for idx in range(count):
-            path = self.build_file_path(base_name, file_type, index=idx)
-            dynamic_paths.append(path)
-        return dynamic_paths
-
     def delete_created_files(
         self,
         delete_targets: Optional[Iterable[Optional[io_types.PathArg]]] = None,
@@ -309,17 +286,19 @@ class WorkFileManager:
             print("Deletion is disabled. No files deleted.")
             return
 
-        to_delete = (
-            set(delete_targets)
-            if delete_targets is not None
-            else set(self.created_paths)
-        )
+        if delete_targets is not None:
+            to_delete: set[io_types.PathArg | str] = {
+                p for p in delete_targets if p is not None
+            }
+        else:
+            to_delete = set(self.created_paths)
+
         if exceptions:
-            to_delete -= set(exceptions)
+            to_delete -= {e for e in exceptions if e is not None}
 
         for path in to_delete:
             self._delete_file(path)
-            self.created_paths.discard(path)
+            self.created_paths.discard(str(path))
 
     @staticmethod
     def list_contents(data: Any, title: str = "Contents"):
@@ -340,10 +319,7 @@ class WorkFileManager:
         print(f"{f' End of: {title} ':=^120}\n")
 
     @staticmethod
-    def _delete_file(file_path: str):
-        """
-        Deletes a file from disk.
-        """
+    def _delete_file(file_path: io_types.PathArg | str) -> None:
         try:
             if arcpy.Exists(file_path):
                 arcpy.management.Delete(file_path)

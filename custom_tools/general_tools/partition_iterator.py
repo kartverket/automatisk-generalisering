@@ -246,6 +246,9 @@ class PartitionIterator:
         self.work_file_manager_iteration_files = PartitionWorkFileManager(
             config=iteration_config
         )
+        self.work_file_manager_resolved_files = PartitionWorkFileManager(
+            config=iteration_config
+        )
         self.work_file_manager_persistent_files = PartitionWorkFileManager(
             config=persistent_config
         )
@@ -1056,7 +1059,7 @@ class PartitionIterator:
         if inject.tag == self.INPUT_KEY and inject.object in self.input_catalog:
             return self.iteration_catalog[inject.object][inject.tag]
 
-        path = self.work_file_manager_iteration_files.generate_partition_path(
+        path = self.work_file_manager_resolved_files.generate_partition_path(
             object_name=inject.object,
             tag=inject.tag,
             partition_id=partition_id,
@@ -1223,6 +1226,8 @@ class PartitionIterator:
             self._last_injected_log = None
 
             try:
+                self.work_file_manager_resolved_files.delete_created_files()
+
                 resolved = self.resolve_injected_io_for_methods(
                     method_entries_config=self.list_of_methods,
                     partition_id=partition_id,
@@ -1433,6 +1438,7 @@ class PartitionIterator:
 
             finally:
                 self.work_file_manager_iteration_files.delete_created_files()
+                self.work_file_manager_resolved_files.delete_created_files()
                 self.track_iteration_time(partition_id, inputs_present_in_partition)
 
     @timing_decorator
