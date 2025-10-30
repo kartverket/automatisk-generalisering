@@ -1,13 +1,9 @@
 # Importing packages
 import arcpy
-import os
 
-from input_data import input_n100
 from file_manager.n100.file_manager_buildings import Building_N100
 from constants.n100_constants import N100_Symbology, N100_SQLResources, N100_Values
 
-import env_setup.global_config
-from custom_tools.general_tools.polygon_processor import PolygonProcessor
 from custom_tools.general_tools.partition_iterator import PartitionIterator
 from custom_tools.generalization_tools.building.buffer_displacement import (
     BufferDisplacement,
@@ -15,6 +11,7 @@ from custom_tools.generalization_tools.building.buffer_displacement import (
 from env_setup import environment_setup
 from custom_tools.decorators.timing_decorator import timing_decorator
 from custom_tools.general_tools import custom_arcpy
+from composition_configs import logic_config, core_config
 
 
 @timing_decorator
@@ -37,7 +34,7 @@ def main():
     environment_setup.main()
 
     extracting_churches_hospitals()
-    buffer_displacement()
+    run_buffer_displacement()
     merge_church_hospitals_buffer_displaced_points()
 
 
@@ -66,7 +63,7 @@ def extracting_churches_hospitals():
 
 
 @timing_decorator
-def buffer_displacement():
+def run_buffer_displacement():
     """
     What:
         Displaces building points relative to road buffers based on specified buffer increments.
@@ -84,93 +81,120 @@ def buffer_displacement():
     roads = "roads"
     power_grid_lines = "power_grid_lines"
 
-    inputs = {
-        building_points: [
-            "input",
-            Building_N100.point_displacement_with_buffer___building_points_selection___n100_building.value,
-        ],
-        roads: [
-            "input",
-            Building_N100.data_preparation___unsplit_roads___n100_building.value,
-        ],
-        river: [
-            "context",
-            Building_N100.data_preparation___processed_begrensningskurve___n100_building.value,
-        ],
-        urban_area: [
-            "context",
-            Building_N100.data_preparation___urban_area_selection_n100___n100_building.value,
-        ],
-        train_stations: [
-            "context",
-            Building_N100.data_selection___railroad_stations_n100_input_data___n100_building.value,
-        ],
-        bane: [
-            "context",
-            Building_N100.data_selection___railroad_tracks_n100_input_data___n100_building.value,
-        ],
-        power_grid_lines: [
-            "context",
-            Building_N100.data_preparation___power_grid_lines___n100_building.value,
-        ],
-    }
+    processed_buildings = "processed_buildings"
 
-    outputs = {
-        building_points: [
-            "buffer_displacement",
-            Building_N100.point_displacement_with_buffer___displaced_building_points___n100_building.value,
-        ],
-    }
-    misc_objects = {
+    buffer_displacement_input_config = core_config.PartitionInputConfig(
+        entries=[
+            core_config.InputEntry.processing_input(
+                object=building_points,
+                path=Building_N100.point_displacement_with_buffer___building_points_selection___n100_building.value,
+            ),
+            core_config.InputEntry.processing_input(
+                object=roads,
+                path=Building_N100.data_preparation___unsplit_roads___n100_building.value,
+            ),
+            core_config.InputEntry.context_input(
+                object=river,
+                path=Building_N100.data_preparation___processed_begrensningskurve___n100_building.value,
+            ),
+            core_config.InputEntry.context_input(
+                object=urban_area,
+                path=Building_N100.data_preparation___urban_area_selection_n100___n100_building.value,
+            ),
+            core_config.InputEntry.context_input(
+                object=train_stations,
+                path=Building_N100.data_selection___railroad_stations_n100_input_data___n100_building.value,
+            ),
+            core_config.InputEntry.context_input(
+                object=bane,
+                path=Building_N100.data_selection___railroad_tracks_n100_input_data___n100_building.value,
+            ),
+            core_config.InputEntry.context_input(
+                object=power_grid_lines,
+                path=Building_N100.data_preparation___power_grid_lines___n100_building.value,
+            ),
+        ]
+    )
+
+    buffer_displacement_output_config = core_config.PartitionOutputConfig(
+        entries=[
+            core_config.OutputEntry.vector_output(
+                object=building_points,
+                tag=processed_buildings,
+                path=Building_N100.point_displacement_with_buffer___displaced_building_points___n100_building.value,
+            ),
+        ]
+    )
+
+    buffer_displacement_io_config = core_config.PartitionIOConfig(
+        input_config=buffer_displacement_input_config,
+        output_config=buffer_displacement_output_config,
+        documentation_directory=Building_N100.buffer_displacement_documentation_n100_building.value,
+    )
+
+    input_line_barriers_data = {
         "begrensningskurve": [
-            ("river", "context"),
+            core_config.InjectIO(object=river, tag="input"),
             0,
         ],
         "urban_areas": [
-            ("urban_area", "context"),
+            core_config.InjectIO(object=urban_area, tag="input"),
             1,
         ],
         "bane_station": [
-            ("train_stations", "context"),
+            core_config.InjectIO(object=train_stations, tag="input"),
             1,
         ],
         "bane_lines": [
-            ("bane", "context"),
+            core_config.InjectIO(object=bane, tag="input"),
             1,
         ],
         "power_grid_lines": [
-            ("power_grid_lines", "context"),
+            core_config.InjectIO(object=power_grid_lines, tag="input"),
             1,
         ],
     }
 
-    buffer_displacement_config = {
-        "class": BufferDisplacement,
-        "method": "run",
-        "params": {
-            "input_road_lines": ("roads", "input"),
-            "input_building_points": ("building_points", "input"),
-            "input_misc_objects": misc_objects,
-            "output_building_points": ("building_points", "buffer_displacement"),
-            "sql_selection_query": N100_SQLResources.new_road_symbology_size_sql_selection.value,
-            "root_file": Building_N100.point_displacement_with_buffer___root_file___n100_building.value,
-            "building_symbol_dimensions": N100_Symbology.building_symbol_dimensions.value,
-            "buffer_displacement_meter": N100_Values.buffer_clearance_distance_m.value,
-            "write_work_files_to_memory": False,
-            "keep_work_files": False,
-        },
-    }
-
-    buffer_displacement_partition_iteration = PartitionIterator(
-        alias_path_data=inputs,
-        alias_path_outputs=outputs,
-        custom_functions=[buffer_displacement_config],
-        root_file_partition_iterator=Building_N100.point_displacement_with_buffer___root_file___n100_building.value,
-        dictionary_documentation_path=Building_N100.point_displacement_with_buffer___documentation___building_n100.value,
-        feature_count=1400000,
+    buffer_displacement_init_config = logic_config.BufferDisplacementKwargs(
+        input_road_line=core_config.InjectIO(object=roads, tag="input"),
+        input_building_points=core_config.InjectIO(object=building_points, tag="input"),
+        input_line_barriers=input_line_barriers_data,
+        output_building_points=core_config.InjectIO(
+            object=building_points, tag=processed_buildings
+        ),
+        sql_selection_query=N100_SQLResources.new_road_symbology_size_sql_selection.value,
+        building_symbol_dimension=N100_Symbology.building_symbol_dimensions.value,
+        displacement_distance_m=N100_Values.buffer_clearance_distance_m.value,
+        work_file_manager_config=core_config.WorkFileConfig(
+            root_file=Building_N100.point_displacement_with_buffer___root_file___n100_building.value,
+        ),
     )
 
-    buffer_displacement_partition_iteration.run()
+    buffer_displacement_output_config = core_config.MethodEntriesConfig(
+        entries=[
+            core_config.ClassMethodEntryConfig(
+                class_=BufferDisplacement,
+                method=BufferDisplacement.run,
+                init_params=buffer_displacement_init_config,
+            )
+        ]
+    )
+
+    partition_buffer_run_config = core_config.PartitionRunConfig(
+        max_elements_per_partition=1_400_000,
+        context_radius_meters=500,
+        run_partition_optimization=False,
+    )
+
+    buffer_displacement_partition = PartitionIterator(
+        partition_io_config=buffer_displacement_io_config,
+        partition_method_inject_config=buffer_displacement_output_config,
+        partition_iterator_run_config=partition_buffer_run_config,
+        work_file_manager_config=core_config.WorkFileConfig(
+            root_file=Building_N100.point_displacement_with_buffer___partition_root_file___n100_building.value
+        ),
+    )
+    buffer_displacement_partition.run()
 
 
 @timing_decorator
