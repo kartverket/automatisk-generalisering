@@ -77,7 +77,6 @@
   <h1>Source code for custom_tools.general_tools.custom_arcpy</h1><div class="highlight"><pre>
 <span></span><span class="kn">import</span><span class="w"> </span><span class="nn">arcpy</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">enum</span><span class="w"> </span><span class="kn">import</span> <span class="n">Enum</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">custom_tools.decorators.partition_io_decorator</span><span class="w"> </span><span class="kn">import</span> <span class="n">partition_io_decorator</span>
 
 
 <span class="c1"># Selection Type definition used for select by attribute functions</span>
@@ -158,10 +157,6 @@
 <span class="c1"># Define your function using the above enum</span>
 <div class="viewcode-block" id="select_attribute_and_make_feature_layer">
 <a class="viewcode-back" href="../../../generated_docs/custom_tools.general_tools.html#custom_tools.general_tools.custom_arcpy.select_attribute_and_make_feature_layer">[docs]</a>
-<span class="nd">@partition_io_decorator</span><span class="p">(</span>
-    <span class="n">input_param_names</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;input_layer&quot;</span><span class="p">],</span>
-    <span class="n">output_param_names</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;output_name&quot;</span><span class="p">],</span>
-<span class="p">)</span>
 <span class="k">def</span><span class="w"> </span><span class="nf">select_attribute_and_make_feature_layer</span><span class="p">(</span>
     <span class="n">input_layer</span><span class="p">,</span> <span class="n">expression</span><span class="p">,</span> <span class="n">output_name</span><span class="p">,</span> <span class="n">selection_type</span><span class="o">=</span><span class="s2">&quot;NEW_SELECTION&quot;</span><span class="p">,</span> <span class="n">inverted</span><span class="o">=</span><span class="kc">False</span>
 <span class="p">):</span>
@@ -209,10 +204,6 @@
 
 <div class="viewcode-block" id="select_attribute_and_make_permanent_feature">
 <a class="viewcode-back" href="../../../generated_docs/custom_tools.general_tools.html#custom_tools.general_tools.custom_arcpy.select_attribute_and_make_permanent_feature">[docs]</a>
-<span class="nd">@partition_io_decorator</span><span class="p">(</span>
-    <span class="n">input_param_names</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;input_layer&quot;</span><span class="p">],</span>
-    <span class="n">output_param_names</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;output_name&quot;</span><span class="p">],</span>
-<span class="p">)</span>
 <span class="k">def</span><span class="w"> </span><span class="nf">select_attribute_and_make_permanent_feature</span><span class="p">(</span>
     <span class="n">input_layer</span><span class="p">,</span> <span class="n">expression</span><span class="p">,</span> <span class="n">output_name</span><span class="p">,</span> <span class="n">selection_type</span><span class="o">=</span><span class="s2">&quot;NEW_SELECTION&quot;</span><span class="p">,</span> <span class="n">inverted</span><span class="o">=</span><span class="kc">False</span>
 <span class="p">):</span>
@@ -268,10 +259,6 @@
 <span class="c1"># Temporary Feature Layer with Location-based Selection</span>
 <div class="viewcode-block" id="select_location_and_make_feature_layer">
 <a class="viewcode-back" href="../../../generated_docs/custom_tools.general_tools.html#custom_tools.general_tools.custom_arcpy.select_location_and_make_feature_layer">[docs]</a>
-<span class="nd">@partition_io_decorator</span><span class="p">(</span>
-    <span class="n">input_param_names</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;input_layer&quot;</span><span class="p">],</span>
-    <span class="n">output_param_names</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;output_name&quot;</span><span class="p">],</span>
-<span class="p">)</span>
 <span class="k">def</span><span class="w"> </span><span class="nf">select_location_and_make_feature_layer</span><span class="p">(</span>
     <span class="n">input_layer</span><span class="p">,</span>
     <span class="n">overlap_type</span><span class="p">,</span>
@@ -348,10 +335,6 @@
 
 <div class="viewcode-block" id="select_location_and_make_permanent_feature">
 <a class="viewcode-back" href="../../../generated_docs/custom_tools.general_tools.html#custom_tools.general_tools.custom_arcpy.select_location_and_make_permanent_feature">[docs]</a>
-<span class="nd">@partition_io_decorator</span><span class="p">(</span>
-    <span class="n">input_param_names</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;input_layer&quot;</span><span class="p">],</span>
-    <span class="n">output_param_names</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;output_name&quot;</span><span class="p">],</span>
-<span class="p">)</span>
 <span class="k">def</span><span class="w"> </span><span class="nf">select_location_and_make_permanent_feature</span><span class="p">(</span>
     <span class="n">input_layer</span><span class="p">,</span>
     <span class="n">overlap_type</span><span class="p">,</span>
@@ -435,10 +418,6 @@
 
 <div class="viewcode-block" id="apply_symbology">
 <a class="viewcode-back" href="../../../generated_docs/custom_tools.general_tools.html#custom_tools.general_tools.custom_arcpy.apply_symbology">[docs]</a>
-<span class="nd">@partition_io_decorator</span><span class="p">(</span>
-    <span class="n">input_param_names</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;input_layer&quot;</span><span class="p">,</span> <span class="s2">&quot;in_symbology_layer&quot;</span><span class="p">],</span>
-    <span class="n">output_param_names</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;output_name&quot;</span><span class="p">],</span>
-<span class="p">)</span>
 <span class="k">def</span><span class="w"> </span><span class="nf">apply_symbology</span><span class="p">(</span>
     <span class="n">input_layer</span><span class="p">,</span>
     <span class="n">in_symbology_layer</span><span class="p">,</span>

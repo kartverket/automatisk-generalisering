@@ -76,13 +76,12 @@
              
   <h1>Source code for custom_tools.general_tools.line_to_buffer_symbology</h1><div class="highlight"><pre>
 <span></span><span class="kn">import</span><span class="w"> </span><span class="nn">arcpy</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Union</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">env_setup</span><span class="w"> </span><span class="kn">import</span> <span class="n">environment_setup</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">constants.n100_constants</span><span class="w"> </span><span class="kn">import</span> <span class="n">N100_Symbology</span><span class="p">,</span> <span class="n">N100_SQLResources</span><span class="p">,</span> <span class="n">N100_Values</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">file_manager.n100.file_manager_buildings</span><span class="w"> </span><span class="kn">import</span> <span class="n">Building_N100</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">custom_tools.general_tools</span><span class="w"> </span><span class="kn">import</span> <span class="n">custom_arcpy</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">custom_tools.decorators.partition_io_decorator</span><span class="w"> </span><span class="kn">import</span> <span class="n">partition_io_decorator</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">file_manager.work_file_manager</span><span class="w"> </span><span class="kn">import</span> <span class="n">WorkFileManager</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">custom_tools.general_tools</span><span class="w"> </span><span class="kn">import</span> <span class="n">file_utilities</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">composition_configs</span><span class="w"> </span><span class="kn">import</span> <span class="n">logic_config</span><span class="p">,</span> <span class="n">core_config</span>
 
 
 <div class="viewcode-block" id="LineToBufferSymbology">
@@ -90,39 +89,32 @@
 <span class="k">class</span><span class="w"> </span><span class="nc">LineToBufferSymbology</span><span class="p">:</span>
     <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
-        <span class="n">input_road_lines</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
-        <span class="n">sql_selection_query</span><span class="p">:</span> <span class="nb">dict</span><span class="p">,</span>
-        <span class="n">output_road_buffer</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
-        <span class="n">buffer_factor</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="mi">1</span><span class="p">,</span>
-        <span class="n">fixed_buffer_addition</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="mi">0</span><span class="p">,</span>
-        <span class="n">write_work_files_to_memory</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
-        <span class="n">keep_work_files</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
-        <span class="n">root_file</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">line_to_buffer_config</span><span class="p">:</span> <span class="n">logic_config</span><span class="o">.</span><span class="n">LineToBufferSymbologyKwargs</span><span class="p">,</span>
     <span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        What:</span>
-<span class="sd">            Initializes the LineToBufferSymbology class with the specified parameters.</span>
+<span class="sd">            Creates a polygon representation of the line symbolgy given provided line dimensions.</span>
 
 <span class="sd">        Args:</span>
 <span class="sd">            See class docstring.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">input_road_lines</span> <span class="o">=</span> <span class="n">input_road_lines</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">sql_selection_query</span> <span class="o">=</span> <span class="n">sql_selection_query</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">output_road_buffer</span> <span class="o">=</span> <span class="n">output_road_buffer</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">input_road_lines</span> <span class="o">=</span> <span class="n">line_to_buffer_config</span><span class="o">.</span><span class="n">input_line</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">output_road_buffer</span> <span class="o">=</span> <span class="n">line_to_buffer_config</span><span class="o">.</span><span class="n">output_line</span>
 
-        <span class="bp">self</span><span class="o">.</span><span class="n">buffer_factor</span> <span class="o">=</span> <span class="n">buffer_factor</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">fixed_buffer_addition</span> <span class="o">=</span> <span class="n">fixed_buffer_addition</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">sql_selection_query</span> <span class="o">=</span> <span class="n">line_to_buffer_config</span><span class="o">.</span><span class="n">sql_selection_query</span>
 
-        <span class="bp">self</span><span class="o">.</span><span class="n">write_work_files_to_memory</span> <span class="o">=</span> <span class="n">write_work_files_to_memory</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">keep_work_files</span> <span class="o">=</span> <span class="n">keep_work_files</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">root_file</span> <span class="o">=</span> <span class="n">root_file</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">buffer_factor</span> <span class="o">=</span> <span class="n">line_to_buffer_config</span><span class="o">.</span><span class="n">buffer_distance_factor</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">fixed_buffer_addition</span> <span class="o">=</span> <span class="n">line_to_buffer_config</span><span class="o">.</span><span class="n">buffer_distance_addition</span>
 
-        <span class="bp">self</span><span class="o">.</span><span class="n">selection_output_name</span> <span class="o">=</span> <span class="kc">None</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">buffer_output_name</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">wfm</span> <span class="o">=</span> <span class="n">WorkFileManager</span><span class="p">(</span>
+            <span class="n">config</span><span class="o">=</span><span class="n">line_to_buffer_config</span><span class="o">.</span><span class="n">work_file_manager_config</span>
+        <span class="p">)</span>
 
-        <span class="bp">self</span><span class="o">.</span><span class="n">working_files_list</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">write_work_files_to_memory</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="n">line_to_buffer_config</span><span class="o">.</span><span class="n">work_file_manager_config</span><span class="o">.</span><span class="n">write_to_memory</span>
+        <span class="p">)</span>
 
-        <span class="k">if</span> <span class="n">buffer_factor</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">buffer_factor</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
             <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
                 <span class="s2">&quot;buffer_factor should not be 0 to avoid non-buffer creation.&quot;</span>
             <span class="p">)</span>
@@ -165,14 +157,12 @@
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Creates a buffer around the selected road lines.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="n">count_result</span> <span class="o">=</span> <span class="n">arcpy</span><span class="o">.</span><span class="n">GetCount_management</span><span class="p">(</span><span class="n">selection_output_name</span><span class="p">)</span>
-        <span class="n">feature_count</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">count_result</span><span class="o">.</span><span class="n">getOutput</span><span class="p">(</span><span class="mi">0</span><span class="p">))</span>
 
         <span class="n">adjusted_buffer_width</span> <span class="o">=</span> <span class="p">(</span>
             <span class="n">buffer_width</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">buffer_factor</span>
         <span class="p">)</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">fixed_buffer_addition</span>
 
-        <span class="k">if</span> <span class="n">feature_count</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">file_utilities</span><span class="o">.</span><span class="n">feature_has_rows</span><span class="p">(</span><span class="n">selection_output_name</span><span class="p">):</span>
             <span class="n">arcpy</span><span class="o">.</span><span class="n">analysis</span><span class="o">.</span><span class="n">PairwiseBuffer</span><span class="p">(</span>
                 <span class="n">in_features</span><span class="o">=</span><span class="n">selection_output_name</span><span class="p">,</span>
                 <span class="n">out_feature_class</span><span class="o">=</span><span class="n">buffer_output_name</span><span class="p">,</span>
@@ -187,68 +177,39 @@
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Merges multiple buffer outputs into a single feature class.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="n">arcpy</span><span class="o">.</span><span class="n">management</span><span class="o">.</span><span class="n">Merge</span><span class="p">(</span><span class="n">inputs</span><span class="o">=</span><span class="n">buffer_output_names</span><span class="p">,</span> <span class="n">output</span><span class="o">=</span><span class="n">merged_output_name</span><span class="p">)</span>
-        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Merged buffers into </span><span class="si">{</span><span class="n">merged_output_name</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span></div>
+        <span class="n">arcpy</span><span class="o">.</span><span class="n">management</span><span class="o">.</span><span class="n">Merge</span><span class="p">(</span><span class="n">inputs</span><span class="o">=</span><span class="n">buffer_output_names</span><span class="p">,</span> <span class="n">output</span><span class="o">=</span><span class="n">merged_output_name</span><span class="p">)</span></div>
 
 
-<div class="viewcode-block" id="LineToBufferSymbology.process_each_query">
-<a class="viewcode-back" href="../../../generated_docs/custom_tools.general_tools.html#custom_tools.general_tools.line_to_buffer_symbology.LineToBufferSymbology.process_each_query">[docs]</a>
-    <span class="k">def</span><span class="w"> </span><span class="nf">process_each_query</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">sql_query</span><span class="p">,</span> <span class="n">original_width</span><span class="p">,</span> <span class="n">counter</span><span class="p">):</span>
+<div class="viewcode-block" id="LineToBufferSymbology.process_query_buffer_width_pair">
+<a class="viewcode-back" href="../../../generated_docs/custom_tools.general_tools.html#custom_tools.general_tools.line_to_buffer_symbology.LineToBufferSymbology.process_query_buffer_width_pair">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">process_query_buffer_width_pair</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">sql_query</span><span class="p">,</span> <span class="n">original_width</span><span class="p">,</span> <span class="n">counter</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">        Processes each SQL query to select road lines and create buffers.</span>
+<span class="sd">        Processes a SQL query to select road lines and create buffers based on buffer width.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="n">unique_id</span> <span class="o">=</span> <span class="nb">id</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
-        <span class="n">temporary_file</span> <span class="o">=</span> <span class="s2">&quot;in_memory</span><span class="se">\\</span><span class="s2">&quot;</span>
-        <span class="n">permanent_file</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">root_file</span><span class="si">}</span><span class="s2">_&quot;</span>
 
-        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">root_file</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-            <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">write_work_files_to_memory</span><span class="p">:</span>
-                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
-                    <span class="s2">&quot;Need to specify root_file path to write to disk for work files.&quot;</span>
-                <span class="p">)</span>
-            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">keep_work_files</span><span class="p">:</span>
-                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
-                    <span class="s2">&quot;Need to specify root_file path and write to disk to keep_work_files.&quot;</span>
-                <span class="p">)</span>
-
-        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">write_work_files_to_memory</span><span class="p">:</span>
-            <span class="n">file_location</span> <span class="o">=</span> <span class="n">temporary_file</span>
-        <span class="k">else</span><span class="p">:</span>
-            <span class="n">file_location</span> <span class="o">=</span> <span class="n">permanent_file</span>
-
-        <span class="n">selection_output_name</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">file_location</span><span class="si">}</span><span class="s2">road_selection_</span><span class="si">{</span><span class="n">counter</span><span class="si">}</span><span class="s2">__</span><span class="si">{</span><span class="n">unique_id</span><span class="si">}</span><span class="s2">&quot;</span>
-        <span class="n">buffer_output_name</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">file_location</span><span class="si">}</span><span class="s2">line_buffer_</span><span class="si">{</span><span class="n">counter</span><span class="si">}</span><span class="s2">__</span><span class="si">{</span><span class="n">unique_id</span><span class="si">}</span><span class="s2">&quot;</span>
-
-        <span class="bp">self</span><span class="o">.</span><span class="n">selecting_different_road_lines</span><span class="p">(</span><span class="n">sql_query</span><span class="p">,</span> <span class="n">selection_output_name</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">creating_buffer_from_selected_lines</span><span class="p">(</span>
-            <span class="n">selection_output_name</span><span class="p">,</span> <span class="n">original_width</span><span class="p">,</span> <span class="n">buffer_output_name</span>
+        <span class="n">selection_output_name</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">wfm</span><span class="o">.</span><span class="n">build_file_path</span><span class="p">(</span>
+            <span class="n">file_name</span><span class="o">=</span><span class="s2">&quot;road_selection&quot;</span><span class="p">,</span>
+            <span class="n">file_type</span><span class="o">=</span><span class="s2">&quot;gdb&quot;</span><span class="p">,</span>
+            <span class="n">index</span><span class="o">=</span><span class="n">counter</span><span class="p">,</span>
         <span class="p">)</span>
 
-        <span class="bp">self</span><span class="o">.</span><span class="n">working_files_list</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">selection_output_name</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">working_files_list</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">buffer_output_name</span><span class="p">)</span>
+        <span class="n">buffer_output_name</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">wfm</span><span class="o">.</span><span class="n">build_file_path</span><span class="p">(</span>
+            <span class="n">file_name</span><span class="o">=</span><span class="s2">&quot;line_buffer&quot;</span><span class="p">,</span>
+            <span class="n">file_type</span><span class="o">=</span><span class="s2">&quot;gdb&quot;</span><span class="p">,</span>
+            <span class="n">index</span><span class="o">=</span><span class="n">counter</span><span class="p">,</span>
+        <span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">selecting_different_road_lines</span><span class="p">(</span>
+            <span class="n">sql_query</span><span class="o">=</span><span class="n">sql_query</span><span class="p">,</span>
+            <span class="n">selection_output_name</span><span class="o">=</span><span class="n">selection_output_name</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">creating_buffer_from_selected_lines</span><span class="p">(</span>
+            <span class="n">selection_output_name</span><span class="o">=</span><span class="n">selection_output_name</span><span class="p">,</span>
+            <span class="n">buffer_width</span><span class="o">=</span><span class="n">original_width</span><span class="p">,</span>
+            <span class="n">buffer_output_name</span><span class="o">=</span><span class="n">buffer_output_name</span><span class="p">,</span>
+        <span class="p">)</span>
 
         <span class="k">return</span> <span class="n">buffer_output_name</span></div>
-
-
-<div class="viewcode-block" id="LineToBufferSymbology.delete_working_files">
-<a class="viewcode-back" href="../../../generated_docs/custom_tools.general_tools.html#custom_tools.general_tools.line_to_buffer_symbology.LineToBufferSymbology.delete_working_files">[docs]</a>
-    <span class="k">def</span><span class="w"> </span><span class="nf">delete_working_files</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">file_paths</span><span class="p">):</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">        Deletes multiple feature classes or files.</span>
-<span class="sd">        &quot;&quot;&quot;</span>
-        <span class="k">for</span> <span class="n">file_path</span> <span class="ow">in</span> <span class="n">file_paths</span><span class="p">:</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">delete_feature_class</span><span class="p">(</span><span class="n">file_path</span><span class="p">)</span>
-            <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Deleted file: </span><span class="si">{</span><span class="n">file_path</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span></div>
-
-
-<div class="viewcode-block" id="LineToBufferSymbology.delete_feature_class">
-<a class="viewcode-back" href="../../../generated_docs/custom_tools.general_tools.html#custom_tools.general_tools.line_to_buffer_symbology.LineToBufferSymbology.delete_feature_class">[docs]</a>
-    <span class="k">def</span><span class="w"> </span><span class="nf">delete_feature_class</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">feature_class_path</span><span class="p">):</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">        Deletes a feature class if it exists.</span>
-<span class="sd">        &quot;&quot;&quot;</span>
-        <span class="k">if</span> <span class="n">arcpy</span><span class="o">.</span><span class="n">Exists</span><span class="p">(</span><span class="n">feature_class_path</span><span class="p">):</span>
-            <span class="n">arcpy</span><span class="o">.</span><span class="n">management</span><span class="o">.</span><span class="n">Delete</span><span class="p">(</span><span class="n">feature_class_path</span><span class="p">)</span></div>
 
 
 <div class="viewcode-block" id="LineToBufferSymbology.process_queries">
@@ -261,47 +222,28 @@
         <span class="n">counter</span> <span class="o">=</span> <span class="mi">1</span>
 
         <span class="k">for</span> <span class="n">sql_query</span><span class="p">,</span> <span class="n">original_width</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">sql_selection_query</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
-            <span class="n">buffer_output_name</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">process_each_query</span><span class="p">(</span>
+            <span class="n">buffer_output_name</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">process_query_buffer_width_pair</span><span class="p">(</span>
                 <span class="n">sql_query</span><span class="p">,</span> <span class="n">original_width</span><span class="p">,</span> <span class="n">counter</span>
             <span class="p">)</span>
-            <span class="k">if</span> <span class="n">arcpy</span><span class="o">.</span><span class="n">Exists</span><span class="p">(</span><span class="n">buffer_output_name</span><span class="p">):</span>
-                <span class="n">count_result</span> <span class="o">=</span> <span class="n">arcpy</span><span class="o">.</span><span class="n">GetCount_management</span><span class="p">(</span><span class="n">buffer_output_name</span><span class="p">)</span>
-                <span class="n">feature_count</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">count_result</span><span class="o">.</span><span class="n">getOutput</span><span class="p">(</span><span class="mi">0</span><span class="p">))</span>
 
-                <span class="k">if</span> <span class="n">feature_count</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
-                    <span class="n">buffer_output_names</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">buffer_output_name</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">file_utilities</span><span class="o">.</span><span class="n">feature_has_rows</span><span class="p">(</span><span class="n">buffer_output_name</span><span class="p">):</span>
+                <span class="n">buffer_output_names</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">buffer_output_name</span><span class="p">)</span>
             <span class="n">counter</span> <span class="o">+=</span> <span class="mi">1</span>
 
-        <span class="bp">self</span><span class="o">.</span><span class="n">merge_buffers</span><span class="p">(</span><span class="n">buffer_output_names</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">output_road_buffer</span><span class="p">)</span>
-        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">keep_work_files</span><span class="p">:</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">delete_working_files</span><span class="p">(</span><span class="o">*</span><span class="bp">self</span><span class="o">.</span><span class="n">working_files_list</span><span class="p">)</span></div>
+        <span class="bp">self</span><span class="o">.</span><span class="n">merge_buffers</span><span class="p">(</span><span class="n">buffer_output_names</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">output_road_buffer</span><span class="p">)</span></div>
 
 
 <div class="viewcode-block" id="LineToBufferSymbology.run">
 <a class="viewcode-back" href="../../../generated_docs/custom_tools.general_tools.html#custom_tools.general_tools.line_to_buffer_symbology.LineToBufferSymbology.run">[docs]</a>
-    <span class="nd">@partition_io_decorator</span><span class="p">(</span>
-        <span class="n">input_param_names</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;input_road_lines&quot;</span><span class="p">],</span>
-        <span class="n">output_param_names</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;output_road_buffer&quot;</span><span class="p">],</span>
-    <span class="p">)</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">run</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">process_queries</span><span class="p">()</span></div>
+        <span class="bp">self</span><span class="o">.</span><span class="n">process_queries</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">wfm</span><span class="o">.</span><span class="n">delete_created_files</span><span class="p">()</span></div>
 </div>
 
 
 
 <span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s2">&quot;__main__&quot;</span><span class="p">:</span>
     <span class="n">environment_setup</span><span class="o">.</span><span class="n">main</span><span class="p">()</span>
-    <span class="n">line_to_buffer_symbology</span> <span class="o">=</span> <span class="n">LineToBufferSymbology</span><span class="p">(</span>
-        <span class="n">input_road_lines</span><span class="o">=</span><span class="n">Building_N100</span><span class="o">.</span><span class="n">data_preparation___unsplit_roads___n100_building</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
-        <span class="n">sql_selection_query</span><span class="o">=</span><span class="n">N100_SQLResources</span><span class="o">.</span><span class="n">new_road_symbology_size_sql_selection</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
-        <span class="n">output_road_buffer</span><span class="o">=</span><span class="n">Building_N100</span><span class="o">.</span><span class="n">line_to_buffer_symbology___test___n100_building</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
-        <span class="n">write_work_files_to_memory</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
-        <span class="n">keep_work_files</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
-        <span class="n">root_file</span><span class="o">=</span><span class="n">Building_N100</span><span class="o">.</span><span class="n">line_to_buffer_symbology___root_file___n100_building</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
-        <span class="n">buffer_factor</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span>  <span class="c1"># This is an optional parameter not needed unless you want another value than 1</span>
-        <span class="n">fixed_buffer_addition</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span>  <span class="c1"># This is an optional parameter not needed unless you want another value than 0</span>
-    <span class="p">)</span>
-    <span class="n">line_to_buffer_symbology</span><span class="o">.</span><span class="n">run</span><span class="p">()</span>
 </pre></div>
 
            </div>

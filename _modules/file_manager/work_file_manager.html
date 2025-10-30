@@ -78,9 +78,12 @@
 <span></span><span class="kn">import</span><span class="w"> </span><span class="nn">arcpy</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">re</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">datetime</span><span class="w"> </span><span class="kn">import</span> <span class="n">datetime</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">overload</span><span class="p">,</span> <span class="n">Any</span><span class="p">,</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">Union</span><span class="p">,</span> <span class="n">Iterable</span><span class="p">,</span> <span class="n">Literal</span>
+
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">composition_configs</span><span class="w"> </span><span class="kn">import</span> <span class="n">core_config</span><span class="p">,</span> <span class="n">type_defs</span><span class="p">,</span> <span class="n">io_types</span>
 
 <span class="kn">import</span><span class="w"> </span><span class="nn">env_setup.global_config</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Any</span>
 
 
 <div class="viewcode-block" id="WorkFileManager">
@@ -101,10 +104,7 @@
 <span class="sd">        any parameters.</span>
 
 <span class="sd">    Args:</span>
-<span class="sd">        unique_id (int): Used to generate unique file names, can be self value or an iterated number.</span>
-<span class="sd">        root_file (str): The core file name used to generate unique file names.</span>
-<span class="sd">        write_to_memory (bool): Defaults to True, write to memory if True, write to disk if False.</span>
-<span class="sd">        keep_files (bool): Defaults to False, delete work files if True, keep work files if False.</span>
+<span class="sd">        config (WorkFileConfig): Configuration object containing work file options.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="n">general_files_directory_name</span> <span class="o">=</span> <span class="n">env_setup</span><span class="o">.</span><span class="n">global_config</span><span class="o">.</span><span class="n">general_files_name</span>
@@ -116,24 +116,24 @@
 
     <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
-        <span class="n">unique_id</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
-        <span class="n">root_file</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-        <span class="n">write_to_memory</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
-        <span class="n">keep_files</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+        <span class="n">config</span><span class="p">:</span> <span class="n">core_config</span><span class="o">.</span><span class="n">WorkFileConfig</span><span class="p">,</span>
     <span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">        Initializes the WorkFileManager with the desired parameters.</span>
+<span class="sd">        Initializes the WorkFileManager with the provided configuration.</span>
 
 <span class="sd">        Args:</span>
-<span class="sd">            See class docstring.</span>
+<span class="sd">            config (WorkFileConfig): Configuration object for controlling work file behavior.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
 
         <span class="n">WorkFileManager</span><span class="o">.</span><span class="n">_global_counter</span> <span class="o">+=</span> <span class="mi">1</span>
+
         <span class="bp">self</span><span class="o">.</span><span class="n">unique_id</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;id</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">_session_prefix</span><span class="si">}</span><span class="s2">_</span><span class="si">{</span><span class="n">WorkFileManager</span><span class="o">.</span><span class="n">_global_counter</span><span class="si">}</span><span class="s2">&quot;</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">root_file</span> <span class="o">=</span> <span class="n">root_file</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">write_to_memory</span> <span class="o">=</span> <span class="n">write_to_memory</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">keep_files</span> <span class="o">=</span> <span class="n">keep_files</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">created_paths</span> <span class="o">=</span> <span class="p">[]</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">root_file</span> <span class="o">=</span> <span class="n">config</span><span class="o">.</span><span class="n">root_file</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">write_to_memory</span> <span class="o">=</span> <span class="n">config</span><span class="o">.</span><span class="n">write_to_memory</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">keep_files</span> <span class="o">=</span> <span class="n">config</span><span class="o">.</span><span class="n">keep_files</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">created_paths</span><span class="p">:</span> <span class="nb">set</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="nb">set</span><span class="p">()</span>
 
         <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">write_to_memory</span> <span class="ow">and</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">root_file</span><span class="p">:</span>
             <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
@@ -145,7 +145,9 @@
                 <span class="s2">&quot;Need to specify root_file path and write to disk to keep work files.&quot;</span>
             <span class="p">)</span>
 
-        <span class="bp">self</span><span class="o">.</span><span class="n">file_location</span> <span class="o">=</span> <span class="s2">&quot;memory/&quot;</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">write_to_memory</span> <span class="k">else</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">root_file</span><span class="si">}</span><span class="s2">_&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">file_location</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="s2">&quot;</span><span class="se">\\</span><span class="s2">memory</span><span class="se">\\</span><span class="s2">&quot;</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">write_to_memory</span> <span class="k">else</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">root_file</span><span class="si">}</span><span class="s2">_&quot;</span>
+        <span class="p">)</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">_modify_path</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
@@ -172,12 +174,32 @@
 
         <span class="k">return</span> <span class="n">scale_path</span><span class="p">,</span> <span class="n">origin_file_name</span>
 
-    <span class="k">def</span><span class="w"> </span><span class="nf">_build_file_path</span><span class="p">(</span>
+    <span class="nd">@overload</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">build_file_path</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">file_name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+        <span class="n">file_type</span><span class="p">:</span> <span class="n">Literal</span><span class="p">[</span><span class="s2">&quot;gdb&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;gdb&quot;</span><span class="p">,</span>
+        <span class="n">index</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="o">...</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">type_defs</span><span class="o">.</span><span class="n">GdbFilePath</span><span class="p">:</span> <span class="o">...</span>
+    <span class="nd">@overload</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">build_file_path</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">file_name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">file_type</span><span class="p">:</span> <span class="n">Literal</span><span class="p">[</span><span class="s2">&quot;lyrx&quot;</span><span class="p">],</span> <span class="n">index</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="o">...</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">type_defs</span><span class="o">.</span><span class="n">LyrxFilePath</span><span class="p">:</span> <span class="o">...</span>
+    <span class="nd">@overload</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">build_file_path</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">file_name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">file_type</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">index</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="o">...</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">type_defs</span><span class="o">.</span><span class="n">GeneralFilePath</span><span class="p">:</span> <span class="o">...</span>
+
+<div class="viewcode-block" id="WorkFileManager.build_file_path">
+<a class="viewcode-back" href="../../generated_docs/file_manager.html#file_manager.work_file_manager.WorkFileManager.build_file_path">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">build_file_path</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
         <span class="n">file_name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
         <span class="n">file_type</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;gdb&quot;</span><span class="p">,</span>
-        <span class="n">index</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+        <span class="n">index</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Union</span><span class="p">[</span>
+        <span class="n">type_defs</span><span class="o">.</span><span class="n">GdbFilePath</span><span class="p">,</span> <span class="n">type_defs</span><span class="o">.</span><span class="n">LyrxFilePath</span><span class="p">,</span> <span class="n">type_defs</span><span class="o">.</span><span class="n">GeneralFilePath</span>
+    <span class="p">]:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Generates a file path based on the file name, type, and an optional index.</span>
 
@@ -189,30 +211,32 @@
 <span class="sd">        Returns:</span>
 <span class="sd">            str: A string representing the file path.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="n">suffix</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;___</span><span class="si">{</span><span class="n">index</span><span class="si">}</span><span class="s2">&quot;</span> <span class="k">if</span> <span class="n">index</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="s2">&quot;&quot;</span>
+        <span class="n">suffix</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;_iter</span><span class="si">{</span><span class="n">index</span><span class="si">}</span><span class="s2">&quot;</span> <span class="k">if</span> <span class="n">index</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="s2">&quot;&quot;</span>
+
         <span class="k">if</span> <span class="n">file_type</span> <span class="o">==</span> <span class="s2">&quot;gdb&quot;</span><span class="p">:</span>
-            <span class="n">path</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">file_location</span><span class="si">}{</span><span class="n">file_name</span><span class="si">}</span><span class="s2">_</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">unique_id</span><span class="si">}{</span><span class="n">suffix</span><span class="si">}</span><span class="s2">&quot;</span>
+            <span class="n">s</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">file_location</span><span class="si">}{</span><span class="bp">self</span><span class="o">.</span><span class="n">unique_id</span><span class="si">}</span><span class="s2">_</span><span class="si">{</span><span class="n">file_name</span><span class="si">}{</span><span class="n">suffix</span><span class="si">}</span><span class="s2">&quot;</span>
+            <span class="n">path</span> <span class="o">=</span> <span class="n">type_defs</span><span class="o">.</span><span class="n">GdbFilePath</span><span class="p">(</span><span class="n">s</span><span class="p">)</span>
+            <span class="n">key</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">path</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">key</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">created_paths</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Duplicate path detected: </span><span class="si">{</span><span class="n">path</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">created_paths</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">key</span><span class="p">)</span>
+            <span class="k">return</span> <span class="n">path</span>
+
+        <span class="n">scale_path</span><span class="p">,</span> <span class="n">origin_file_name</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_modify_path</span><span class="p">()</span>
+
+        <span class="k">if</span> <span class="n">file_type</span> <span class="o">==</span> <span class="s2">&quot;lyrx&quot;</span><span class="p">:</span>
+            <span class="n">s</span> <span class="o">=</span> <span class="sa">rf</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">scale_path</span><span class="si">}{</span><span class="bp">self</span><span class="o">.</span><span class="n">lyrx_directory_name</span><span class="si">}</span><span class="s2">\</span><span class="si">{</span><span class="n">origin_file_name</span><span class="si">}</span><span class="s2">_</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">unique_id</span><span class="si">}</span><span class="s2">_</span><span class="si">{</span><span class="n">file_name</span><span class="si">}{</span><span class="n">suffix</span><span class="si">}</span><span class="s2">.lyrx&quot;</span>
+            <span class="n">path</span> <span class="o">=</span> <span class="n">type_defs</span><span class="o">.</span><span class="n">LyrxFilePath</span><span class="p">(</span><span class="n">s</span><span class="p">)</span>
         <span class="k">else</span><span class="p">:</span>
-            <span class="n">scale_path</span><span class="p">,</span> <span class="n">origin_file_name</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_modify_path</span><span class="p">()</span>
+            <span class="n">s</span> <span class="o">=</span> <span class="sa">rf</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">scale_path</span><span class="si">}{</span><span class="bp">self</span><span class="o">.</span><span class="n">general_files_directory_name</span><span class="si">}</span><span class="s2">\</span><span class="si">{</span><span class="n">origin_file_name</span><span class="si">}</span><span class="s2">_</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">unique_id</span><span class="si">}</span><span class="s2">_</span><span class="si">{</span><span class="n">file_name</span><span class="si">}{</span><span class="n">suffix</span><span class="si">}</span><span class="s2">.</span><span class="si">{</span><span class="n">file_type</span><span class="si">}</span><span class="s2">&quot;</span>
+            <span class="n">path</span> <span class="o">=</span> <span class="n">type_defs</span><span class="o">.</span><span class="n">GeneralFilePath</span><span class="p">(</span><span class="n">s</span><span class="p">)</span>
 
-            <span class="k">if</span> <span class="n">file_type</span> <span class="o">==</span> <span class="s2">&quot;lyrx&quot;</span><span class="p">:</span>
-                <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;lyrx file path detected:&quot;</span><span class="p">)</span>
-                <span class="n">path</span> <span class="o">=</span> <span class="sa">rf</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">scale_path</span><span class="si">}{</span><span class="bp">self</span><span class="o">.</span><span class="n">lyrx_directory_name</span><span class="si">}</span><span class="s2">\</span><span class="si">{</span><span class="n">origin_file_name</span><span class="si">}</span><span class="s2">_</span><span class="si">{</span><span class="n">file_name</span><span class="si">}</span><span class="s2">_</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">unique_id</span><span class="si">}{</span><span class="n">suffix</span><span class="si">}</span><span class="s2">.lyrx&quot;</span>
-                <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Path: </span><span class="si">{</span><span class="n">path</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
-                <span class="nb">print</span><span class="p">(</span>
-                    <span class="sa">f</span><span class="s2">&quot;Scale path: </span><span class="si">{</span><span class="n">scale_path</span><span class="si">}</span><span class="se">\n</span><span class="s2">Origin file name: </span><span class="si">{</span><span class="n">origin_file_name</span><span class="si">}</span><span class="se">\n</span><span class="s2">&quot;</span>
-                <span class="p">)</span>
-            <span class="k">else</span><span class="p">:</span>
-                <span class="n">path</span> <span class="o">=</span> <span class="sa">rf</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">scale_path</span><span class="si">}{</span><span class="bp">self</span><span class="o">.</span><span class="n">general_files_directory_name</span><span class="si">}</span><span class="s2">\</span><span class="si">{</span><span class="n">origin_file_name</span><span class="si">}</span><span class="s2">_</span><span class="si">{</span><span class="n">file_name</span><span class="si">}</span><span class="s2">_</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">unique_id</span><span class="si">}{</span><span class="n">suffix</span><span class="si">}</span><span class="s2">.</span><span class="si">{</span><span class="n">file_type</span><span class="si">}</span><span class="s2">&quot;</span>
+        <span class="n">key</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">path</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">key</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">created_paths</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Duplicate path detected: </span><span class="si">{</span><span class="n">path</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">created_paths</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">key</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">path</span></div>
 
-        <span class="k">if</span> <span class="n">path</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">created_paths</span><span class="p">:</span>
-            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
-                <span class="sa">f</span><span class="s2">&quot;Duplicate path detected: </span><span class="si">{</span><span class="n">path</span><span class="si">}</span><span class="s2">. &quot;</span>
-                <span class="s2">&quot;This may lead to unexpected behavior. Ensure unique file names or indices.&quot;</span>
-            <span class="p">)</span>
-
-        <span class="bp">self</span><span class="o">.</span><span class="n">created_paths</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">path</span><span class="p">)</span>
-        <span class="k">return</span> <span class="n">path</span>
 
 <div class="viewcode-block" id="WorkFileManager.generate_output">
 <a class="viewcode-back" href="../../generated_docs/file_manager.html#file_manager.work_file_manager.WorkFileManager.generate_output">[docs]</a>
@@ -291,11 +315,11 @@
             <span class="c1"># Update the instance attribute if it exists</span>
             <span class="k">for</span> <span class="n">attr_name</span><span class="p">,</span> <span class="n">attr_value</span> <span class="ow">in</span> <span class="n">instance</span><span class="o">.</span><span class="vm">__dict__</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
                 <span class="k">if</span> <span class="n">attr_value</span> <span class="o">==</span> <span class="n">item</span><span class="p">:</span>
-                    <span class="n">updated_path</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_build_file_path</span><span class="p">(</span><span class="n">item</span><span class="p">,</span> <span class="n">file_type</span><span class="p">,</span> <span class="n">index</span><span class="o">=</span><span class="n">idx</span><span class="p">)</span>
+                    <span class="n">updated_path</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">build_file_path</span><span class="p">(</span><span class="n">item</span><span class="p">,</span> <span class="n">file_type</span><span class="p">,</span> <span class="n">index</span><span class="o">=</span><span class="n">idx</span><span class="p">)</span>
                     <span class="nb">setattr</span><span class="p">(</span><span class="n">instance</span><span class="p">,</span> <span class="n">attr_name</span><span class="p">,</span> <span class="n">updated_path</span><span class="p">)</span>
                     <span class="k">return</span> <span class="n">updated_path</span>
 
-            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_build_file_path</span><span class="p">(</span><span class="n">item</span><span class="p">,</span> <span class="n">file_type</span><span class="p">,</span> <span class="n">index</span><span class="o">=</span><span class="n">idx</span><span class="p">)</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">build_file_path</span><span class="p">(</span><span class="n">item</span><span class="p">,</span> <span class="n">file_type</span><span class="p">,</span> <span class="n">index</span><span class="o">=</span><span class="n">idx</span><span class="p">)</span>
 
         <span class="k">def</span><span class="w"> </span><span class="nf">process_list</span><span class="p">(</span><span class="n">items</span><span class="p">):</span>
 <span class="w">            </span><span class="sd">&quot;&quot;&quot;Processes a list structure.&quot;&quot;&quot;</span>
@@ -321,7 +345,7 @@
                     <span class="n">updated_dict</span><span class="p">[</span><span class="n">key</span><span class="p">]</span> <span class="o">=</span> <span class="n">value</span>
 
             <span class="k">if</span> <span class="n">add_key</span><span class="p">:</span>
-                <span class="n">updated_dict</span><span class="p">[</span><span class="n">add_key</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_build_file_path</span><span class="p">(</span>
+                <span class="n">updated_dict</span><span class="p">[</span><span class="n">add_key</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">build_file_path</span><span class="p">(</span>
                     <span class="n">add_key</span><span class="p">,</span> <span class="n">file_type</span><span class="p">,</span> <span class="n">index</span><span class="o">=</span><span class="n">idx</span>
                 <span class="p">)</span>
 
@@ -334,67 +358,37 @@
             <span class="k">return</span> <span class="n">process_item</span><span class="p">(</span><span class="n">file_structure</span><span class="p">)</span></div>
 
 
-<div class="viewcode-block" id="WorkFileManager.setup_dynamic_file_paths">
-<a class="viewcode-back" href="../../generated_docs/file_manager.html#file_manager.work_file_manager.WorkFileManager.setup_dynamic_file_paths">[docs]</a>
-    <span class="k">def</span><span class="w"> </span><span class="nf">setup_dynamic_file_paths</span><span class="p">(</span>
-        <span class="bp">self</span><span class="p">,</span>
-        <span class="n">base_name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
-        <span class="n">count</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
-        <span class="n">file_type</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;gdb&quot;</span><span class="p">,</span>
-    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">        Generates a list of file paths for a dynamic number of files based on a base name.</span>
-
-<span class="sd">        Args:</span>
-<span class="sd">            base_name (str): The base name to use for generating file paths.</span>
-<span class="sd">            count (int): The number of file paths to generate.</span>
-<span class="sd">            file_type (str, optional): The file type for the generated paths. Defaults to &quot;gdb&quot;.</span>
-
-<span class="sd">        Returns:</span>
-<span class="sd">            list[str]: A list of generated file paths.</span>
-<span class="sd">        &quot;&quot;&quot;</span>
-        <span class="n">dynamic_paths</span> <span class="o">=</span> <span class="p">[]</span>
-        <span class="k">for</span> <span class="n">idx</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">count</span><span class="p">):</span>
-            <span class="n">path</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_build_file_path</span><span class="p">(</span><span class="n">base_name</span><span class="p">,</span> <span class="n">file_type</span><span class="p">,</span> <span class="n">index</span><span class="o">=</span><span class="n">idx</span><span class="p">)</span>
-            <span class="n">dynamic_paths</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">path</span><span class="p">)</span>
-        <span class="k">return</span> <span class="n">dynamic_paths</span></div>
-
-
 <div class="viewcode-block" id="WorkFileManager.delete_created_files">
 <a class="viewcode-back" href="../../generated_docs/file_manager.html#file_manager.work_file_manager.WorkFileManager.delete_created_files">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">delete_created_files</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
-        <span class="n">delete_targets</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-        <span class="n">exceptions</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-        <span class="n">delete_files</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-    <span class="p">):</span>
+        <span class="n">delete_targets</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Iterable</span><span class="p">[</span><span class="n">Optional</span><span class="p">[</span><span class="n">io_types</span><span class="o">.</span><span class="n">PathArg</span><span class="p">]]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">exceptions</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Iterable</span><span class="p">[</span><span class="n">Optional</span><span class="p">[</span><span class="n">io_types</span><span class="o">.</span><span class="n">PathArg</span><span class="p">]]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">delete_files</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">bool</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">        What:</span>
-<span class="sd">            Deletes the created paths, defaults to deleting all created paths,</span>
-<span class="sd">            but can target or exclude specific paths.</span>
-
-<span class="sd">        Args:</span>
-<span class="sd">            delete_targets (list[str], optional): List of paths to delete. Defaults to None.</span>
-<span class="sd">            exceptions (list[str], optional): List of paths to exclude from deletion. Defaults to None.</span>
-<span class="sd">            delete_files (bool, optional): Whether to delete files. Defaults to None, which uses `self.keep_files`.</span>
+<span class="sd">        Deletes created paths. If delete_targets is None, deletes all tracked paths.</span>
+<span class="sd">        &#39;exceptions&#39; (if any) are excluded. If delete_files is None, uses not self.keep_files.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="c1"># Default to `self.keep_files` if `delete_files` is not explicitly provided</span>
         <span class="k">if</span> <span class="n">delete_files</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
             <span class="n">delete_files</span> <span class="o">=</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">keep_files</span>
-
         <span class="k">if</span> <span class="ow">not</span> <span class="n">delete_files</span><span class="p">:</span>
             <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Deletion is disabled. No files deleted.&quot;</span><span class="p">)</span>
             <span class="k">return</span>
 
-        <span class="c1"># Use all tracked paths if delete_targets is not provided</span>
-        <span class="n">targets</span> <span class="o">=</span> <span class="n">delete_targets</span> <span class="ow">or</span> <span class="bp">self</span><span class="o">.</span><span class="n">created_paths</span>
+        <span class="k">if</span> <span class="n">delete_targets</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">to_delete</span><span class="p">:</span> <span class="nb">set</span><span class="p">[</span><span class="n">io_types</span><span class="o">.</span><span class="n">PathArg</span> <span class="o">|</span> <span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span>
+                <span class="n">p</span> <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">delete_targets</span> <span class="k">if</span> <span class="n">p</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
+            <span class="p">}</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">to_delete</span> <span class="o">=</span> <span class="nb">set</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">created_paths</span><span class="p">)</span>
 
-        <span class="c1"># Apply exceptions, if provided</span>
         <span class="k">if</span> <span class="n">exceptions</span><span class="p">:</span>
-            <span class="n">targets</span> <span class="o">=</span> <span class="p">[</span><span class="n">path</span> <span class="k">for</span> <span class="n">path</span> <span class="ow">in</span> <span class="n">targets</span> <span class="k">if</span> <span class="n">path</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">exceptions</span><span class="p">]</span>
+            <span class="n">to_delete</span> <span class="o">-=</span> <span class="p">{</span><span class="n">e</span> <span class="k">for</span> <span class="n">e</span> <span class="ow">in</span> <span class="n">exceptions</span> <span class="k">if</span> <span class="n">e</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">}</span>
 
-        <span class="k">for</span> <span class="n">path</span> <span class="ow">in</span> <span class="n">targets</span><span class="p">:</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">_delete_file</span><span class="p">(</span><span class="n">path</span><span class="p">)</span></div>
+        <span class="k">for</span> <span class="n">path</span> <span class="ow">in</span> <span class="n">to_delete</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_delete_file</span><span class="p">(</span><span class="n">path</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">created_paths</span><span class="o">.</span><span class="n">discard</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">path</span><span class="p">))</span></div>
 
 
 <div class="viewcode-block" id="WorkFileManager.list_contents">
@@ -419,16 +413,10 @@
 
 
     <span class="nd">@staticmethod</span>
-    <span class="k">def</span><span class="w"> </span><span class="nf">_delete_file</span><span class="p">(</span><span class="n">file_path</span><span class="p">:</span> <span class="nb">str</span><span class="p">):</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">        Deletes a file from disk.</span>
-<span class="sd">        &quot;&quot;&quot;</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_delete_file</span><span class="p">(</span><span class="n">file_path</span><span class="p">:</span> <span class="n">io_types</span><span class="o">.</span><span class="n">PathArg</span> <span class="o">|</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
         <span class="k">try</span><span class="p">:</span>
             <span class="k">if</span> <span class="n">arcpy</span><span class="o">.</span><span class="n">Exists</span><span class="p">(</span><span class="n">file_path</span><span class="p">):</span>
                 <span class="n">arcpy</span><span class="o">.</span><span class="n">management</span><span class="o">.</span><span class="n">Delete</span><span class="p">(</span><span class="n">file_path</span><span class="p">)</span>
-                <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Deleted: </span><span class="si">{</span><span class="n">file_path</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
-            <span class="k">else</span><span class="p">:</span>
-                <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;File did not exist: </span><span class="si">{</span><span class="n">file_path</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
         <span class="k">except</span> <span class="n">arcpy</span><span class="o">.</span><span class="n">ExecuteError</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
             <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Error deleting file </span><span class="si">{</span><span class="n">file_path</span><span class="si">}</span><span class="s2">: </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
 
@@ -545,6 +533,51 @@
                 <span class="n">item</span><span class="p">[</span><span class="n">key</span><span class="p">]</span> <span class="o">=</span> <span class="n">new_value</span>
                 <span class="k">return</span>
         <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;No dictionary with alias &#39;</span><span class="si">{</span><span class="n">unique_alias</span><span class="si">}</span><span class="s2">&#39; found.&quot;</span><span class="p">)</span></div>
+</div>
+
+
+
+<div class="viewcode-block" id="PartitionWorkFileManager">
+<a class="viewcode-back" href="../../generated_docs/file_manager.html#file_manager.work_file_manager.PartitionWorkFileManager">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">PartitionWorkFileManager</span><span class="p">(</span><span class="n">WorkFileManager</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Extension of WorkFileManager to support partition-aware file path generation.</span>
+<span class="sd">    Intended for use inside PartitionIterator or similar partition-based logic.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+<div class="viewcode-block" id="PartitionWorkFileManager.generate_partition_path">
+<a class="viewcode-back" href="../../generated_docs/file_manager.html#file_manager.work_file_manager.PartitionWorkFileManager.generate_partition_path">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">generate_partition_path</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">object_name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+        <span class="n">tag</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">partition_id</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">suffix</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span><span class="p">,</span>
+        <span class="n">extension</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;gdb&quot;</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Constructs a consistent file path for work files. If a partition_id is provided,</span>
+<span class="sd">        it becomes a partition-aware path; otherwise, it generates a general work path.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            object_name (str): Identifier for the object (e.g., layer).</span>
+<span class="sd">            tag (str, optional): Tag (e.g., &#39;input&#39;, &#39;context&#39;, &#39;copy&#39;, etc.).</span>
+<span class="sd">            partition_id (int | None, optional): Partition number. Defaults to None.</span>
+<span class="sd">            suffix (str, optional): Extra string to differentiate logic. Defaults to &quot;&quot;.</span>
+<span class="sd">            extension (str): File type or extension. Defaults to &#39;gdb&#39;.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            str: Constructed file path.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">extra</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;_</span><span class="si">{</span><span class="n">suffix</span><span class="si">}</span><span class="s2">&quot;</span> <span class="k">if</span> <span class="n">suffix</span> <span class="k">else</span> <span class="s2">&quot;&quot;</span>
+        <span class="n">tag_string</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;_</span><span class="si">{</span><span class="n">tag</span><span class="si">}</span><span class="s2">&quot;</span> <span class="k">if</span> <span class="n">tag</span> <span class="k">else</span> <span class="s2">&quot;&quot;</span>
+
+        <span class="k">if</span> <span class="n">partition_id</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">file_name</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">object_name</span><span class="si">}{</span><span class="n">tag_string</span><span class="si">}</span><span class="s2">_iteration_</span><span class="si">{</span><span class="n">partition_id</span><span class="si">}{</span><span class="n">extra</span><span class="si">}</span><span class="s2">&quot;</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">file_name</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">object_name</span><span class="si">}{</span><span class="n">tag_string</span><span class="si">}{</span><span class="n">extra</span><span class="si">}</span><span class="s2">&quot;</span>
+
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">build_file_path</span><span class="p">(</span><span class="n">file_name</span><span class="o">=</span><span class="n">file_name</span><span class="p">,</span> <span class="n">file_type</span><span class="o">=</span><span class="n">extension</span><span class="p">)</span></div>
 </div>
 
 </pre></div>

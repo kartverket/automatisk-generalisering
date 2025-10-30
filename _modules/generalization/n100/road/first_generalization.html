@@ -1,0 +1,523 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../../../">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>generalization.n100.road.first_generalization &mdash; Automatisk Generalisering 0.0.1 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../../../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../../../../_static/css/theme.css?v=e59714d7" />
+      <link rel="stylesheet" type="text/css" href="../../../../_static/custom.css" />
+
+  
+      <script src="../../../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../../../_static/documentation_options.js?v=d45e8c67"></script>
+      <script src="../../../../_static/doctools.js?v=9bcbadda"></script>
+      <script src="../../../../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="../../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../../index.html" class="icon icon-home">
+            Automatisk Generalisering
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../../generated_docs/custom_tools.html">custom_tools package</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../generated_docs/env_setup.html">env_setup package</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../generated_docs/file_manager.html">file_manager package</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../generated_docs/generalization.n100.building.html">generalization.n100.building package</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../generated_docs/input_data.html">input_data package</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../generated_docs/modules.html">automatisk-generalisering</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../../index.html">Automatisk Generalisering</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../../../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">generalization.n100.road.first_generalization</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for generalization.n100.road.first_generalization</h1><div class="highlight"><pre>
+<span></span><span class="c1"># Importing packages</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">arcpy</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">os</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">custom_tools.general_tools.study_area_selector</span><span class="w"> </span><span class="kn">import</span> <span class="n">StudyAreaSelector</span>
+
+<span class="c1"># Importing custom input files modules</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">input_data</span><span class="w"> </span><span class="kn">import</span> <span class="n">input_n50</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">input_data</span><span class="w"> </span><span class="kn">import</span> <span class="n">input_n100</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">input_data</span><span class="w"> </span><span class="kn">import</span> <span class="n">input_other</span>
+
+<span class="c1"># Importing custom modules</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">file_manager.n100.file_manager_roads</span><span class="w"> </span><span class="kn">import</span> <span class="n">Road_N100</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">env_setup</span><span class="w"> </span><span class="kn">import</span> <span class="n">environment_setup</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">config</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">custom_tools.decorators.timing_decorator</span><span class="w"> </span><span class="kn">import</span> <span class="n">timing_decorator</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">custom_tools.general_tools</span><span class="w"> </span><span class="kn">import</span> <span class="n">custom_arcpy</span>
+
+
+<div class="viewcode-block" id="main">
+<a class="viewcode-back" href="../../../../generated_docs/generalization.n100.road.html#generalization.n100.road.first_generalization.main">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">main</span><span class="p">():</span>
+    <span class="n">environment_setup</span><span class="o">.</span><span class="n">main</span><span class="p">()</span>
+    <span class="n">selecting_paths_and_nvdb_roads_in_studyarea</span><span class="p">()</span>
+    <span class="n">merge_n50_and_nvdb</span><span class="p">()</span>
+    <span class="n">multipart_to_singlepart</span><span class="p">()</span>
+    <span class="n">merge_divided_roads</span><span class="p">()</span>
+    <span class="n">thin_road_network_1</span><span class="p">()</span>
+    <span class="n">collapse_road_detail</span><span class="p">()</span>
+    <span class="n">thin_road_network_2</span><span class="p">()</span>
+    <span class="n">thin_road_network_3</span><span class="p">()</span>
+    <span class="n">spatial_join_between_functional_roadclass_and_roads</span><span class="p">()</span>
+    <span class="n">calculate_new_hierarchy_based_on_functional_road_class</span><span class="p">()</span>
+    <span class="n">thin_road_network_4</span><span class="p">()</span>
+    <span class="n">remove_rundkjoring_that_survived_collapse_road_detail</span><span class="p">()</span></div>
+
+
+
+<div class="viewcode-block" id="selecting_paths_and_nvdb_roads_in_studyarea">
+<a class="viewcode-back" href="../../../../generated_docs/generalization.n100.road.html#generalization.n100.road.first_generalization.selecting_paths_and_nvdb_roads_in_studyarea">[docs]</a>
+<span class="nd">@timing_decorator</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">selecting_paths_and_nvdb_roads_in_studyarea</span><span class="p">():</span>
+    <span class="n">selector</span> <span class="o">=</span> <span class="n">StudyAreaSelector</span><span class="p">(</span>
+        <span class="n">input_output_file_dict</span><span class="o">=</span><span class="p">{</span>
+            <span class="n">Road_N100</span><span class="o">.</span><span class="n">data_preperation___paths_n50_with_calculated_fields___n100_road</span><span class="o">.</span><span class="n">value</span><span class="p">:</span> <span class="n">Road_N100</span><span class="o">.</span><span class="n">first_generalization___paths_in_study_area___n100_road</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
+            <span class="n">Road_N100</span><span class="o">.</span><span class="n">data_preperation___selecting_everything_but_rampe_with_calculated_fields_nvdb___n100_road</span><span class="o">.</span><span class="n">value</span><span class="p">:</span> <span class="n">Road_N100</span><span class="o">.</span><span class="n">first_generalization____nvdb_roads_in_study_area___n100_road</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
+            <span class="n">config</span><span class="o">.</span><span class="n">path_to_functional_road_class</span><span class="p">:</span> <span class="n">Road_N100</span><span class="o">.</span><span class="n">data_preperation___functional_road_class_dataset___n100_road</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
+        <span class="p">},</span>
+        <span class="n">selecting_file</span><span class="o">=</span><span class="n">input_n100</span><span class="o">.</span><span class="n">AdminFlate</span><span class="p">,</span>
+        <span class="n">selecting_sql_expression</span><span class="o">=</span><span class="s2">&quot;navn IN (&#39;Oslo&#39;)&quot;</span><span class="p">,</span>
+        <span class="n">select_local</span><span class="o">=</span><span class="n">config</span><span class="o">.</span><span class="n">select_study_area</span><span class="p">,</span>
+    <span class="p">)</span>
+
+    <span class="n">selector</span><span class="o">.</span><span class="n">run</span><span class="p">()</span></div>
+
+
+
+<div class="viewcode-block" id="merge_n50_and_nvdb">
+<a class="viewcode-back" href="../../../../generated_docs/generalization.n100.road.html#generalization.n100.road.first_generalization.merge_n50_and_nvdb">[docs]</a>
+<span class="nd">@timing_decorator</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">merge_n50_and_nvdb</span><span class="p">():</span>
+    <span class="c1"># Merging paths and nvdb roads</span>
+    <span class="n">arcpy</span><span class="o">.</span><span class="n">management</span><span class="o">.</span><span class="n">Merge</span><span class="p">(</span>
+        <span class="n">inputs</span><span class="o">=</span><span class="p">[</span>
+            <span class="n">Road_N100</span><span class="o">.</span><span class="n">first_generalization___paths_in_study_area___n100_road</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
+            <span class="n">Road_N100</span><span class="o">.</span><span class="n">first_generalization____nvdb_roads_in_study_area___n100_road</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
+        <span class="p">],</span>
+        <span class="n">output</span><span class="o">=</span><span class="n">Road_N100</span><span class="o">.</span><span class="n">first_generalization____merged_roads_and_paths___n100_road</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
+    <span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="multipart_to_singlepart">
+<a class="viewcode-back" href="../../../../generated_docs/generalization.n100.road.html#generalization.n100.road.first_generalization.multipart_to_singlepart">[docs]</a>
+<span class="nd">@timing_decorator</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">multipart_to_singlepart</span><span class="p">():</span>
+    <span class="n">arcpy</span><span class="o">.</span><span class="n">management</span><span class="o">.</span><span class="n">MultipartToSinglepart</span><span class="p">(</span>
+        <span class="n">in_features</span><span class="o">=</span><span class="n">Road_N100</span><span class="o">.</span><span class="n">first_generalization____merged_roads_and_paths___n100_road</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
+        <span class="n">out_feature_class</span><span class="o">=</span><span class="n">Road_N100</span><span class="o">.</span><span class="n">first_generalization____multipart_to_singlepart___n100_road</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
+    <span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="merge_divided_roads">
+<a class="viewcode-back" href="../../../../generated_docs/generalization.n100.road.html#generalization.n100.road.first_generalization.merge_divided_roads">[docs]</a>
+<span class="nd">@timing_decorator</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">merge_divided_roads</span><span class="p">():</span>
+    <span class="c1"># Execute Merge Divided Roads</span>
+    <span class="n">arcpy</span><span class="o">.</span><span class="n">cartography</span><span class="o">.</span><span class="n">MergeDividedRoads</span><span class="p">(</span>
+        <span class="n">in_features</span><span class="o">=</span><span class="n">Road_N100</span><span class="o">.</span><span class="n">first_generalization____multipart_to_singlepart___n100_road</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
+        <span class="n">merge_field</span><span class="o">=</span><span class="s2">&quot;VEGNUMMER&quot;</span><span class="p">,</span>
+        <span class="n">merge_distance</span><span class="o">=</span><span class="s2">&quot;50 Meters&quot;</span><span class="p">,</span>
+        <span class="n">out_features</span><span class="o">=</span><span class="n">Road_N100</span><span class="o">.</span><span class="n">first_generalization____merge_divided_roads_features___n100_road</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
+        <span class="n">out_displacement_features</span><span class="o">=</span><span class="n">Road_N100</span><span class="o">.</span><span class="n">first_generalization____merge_divided_roads_displacement_feature___n100_road</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
+        <span class="n">character_field</span><span class="o">=</span><span class="s2">&quot;characters&quot;</span><span class="p">,</span>
+    <span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="thin_road_network_1">
+<a class="viewcode-back" href="../../../../generated_docs/generalization.n100.road.html#generalization.n100.road.first_generalization.thin_road_network_1">[docs]</a>
+<span class="nd">@timing_decorator</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">thin_road_network_1</span><span class="p">():</span>
+    <span class="n">arcpy</span><span class="o">.</span><span class="n">cartography</span><span class="o">.</span><span class="n">ThinRoadNetwork</span><span class="p">(</span>
+        <span class="n">in_features</span><span class="o">=</span><span class="n">Road_N100</span><span class="o">.</span><span class="n">first_generalization____merge_divided_roads_features___n100_road</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
+        <span class="n">minimum_length</span><span class="o">=</span><span class="s2">&quot;500 Meters&quot;</span><span class="p">,</span>
+        <span class="n">invisibility_field</span><span class="o">=</span><span class="s2">&quot;invisibility_1&quot;</span><span class="p">,</span>
+        <span class="n">hierarchy_field</span><span class="o">=</span><span class="s2">&quot;hierarchy&quot;</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="n">custom_arcpy</span><span class="o">.</span><span class="n">select_attribute_and_make_permanent_feature</span><span class="p">(</span>
+        <span class="n">input_layer</span><span class="o">=</span><span class="n">Road_N100</span><span class="o">.</span><span class="n">first_generalization____merge_divided_roads_features___n100_road</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
+        <span class="n">expression</span><span class="o">=</span><span class="s2">&quot;invisibility_1 = 0&quot;</span><span class="p">,</span>
+        <span class="n">output_name</span><span class="o">=</span><span class="n">Road_N100</span><span class="o">.</span><span class="n">first_generalization____visible_features_after_thin_road_network_1___n100_road</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
+        <span class="n">selection_type</span><span class="o">=</span><span class="n">custom_arcpy</span><span class="o">.</span><span class="n">SelectionType</span><span class="o">.</span><span class="n">NEW_SELECTION</span><span class="p">,</span>
+    <span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="collapse_road_detail">
+<a class="viewcode-back" href="../../../../generated_docs/generalization.n100.road.html#generalization.n100.road.first_generalization.collapse_road_detail">[docs]</a>
+<span class="nd">@timing_decorator</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">collapse_road_detail</span><span class="p">():</span>
+    <span class="n">arcpy</span><span class="o">.</span><span class="n">cartography</span><span class="o">.</span><span class="n">CollapseRoadDetail</span><span class="p">(</span>
+        <span class="n">in_features</span><span class="o">=</span><span class="n">Road_N100</span><span class="o">.</span><span class="n">first_generalization____visible_features_after_thin_road_network_1___n100_road</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
+        <span class="n">collapse_distance</span><span class="o">=</span><span class="s2">&quot;90 Meters&quot;</span><span class="p">,</span>
+        <span class="n">output_feature_class</span><span class="o">=</span><span class="n">Road_N100</span><span class="o">.</span><span class="n">first_generalization____collapse_road_detail___n100_road</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
+    <span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="thin_road_network_2">
+<a class="viewcode-back" href="../../../../generated_docs/generalization.n100.road.html#generalization.n100.road.first_generalization.thin_road_network_2">[docs]</a>
+<span class="nd">@timing_decorator</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">thin_road_network_2</span><span class="p">():</span>
+    <span class="n">arcpy</span><span class="o">.</span><span class="n">cartography</span><span class="o">.</span><span class="n">ThinRoadNetwork</span><span class="p">(</span>
+        <span class="n">in_features</span><span class="o">=</span><span class="n">Road_N100</span><span class="o">.</span><span class="n">first_generalization____collapse_road_detail___n100_road</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
+        <span class="n">minimum_length</span><span class="o">=</span><span class="s2">&quot;1000 Meters&quot;</span><span class="p">,</span>
+        <span class="n">invisibility_field</span><span class="o">=</span><span class="s2">&quot;invisibility_2&quot;</span><span class="p">,</span>
+        <span class="n">hierarchy_field</span><span class="o">=</span><span class="s2">&quot;hierarchy&quot;</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="n">custom_arcpy</span><span class="o">.</span><span class="n">select_attribute_and_make_permanent_feature</span><span class="p">(</span>
+        <span class="n">input_layer</span><span class="o">=</span><span class="n">Road_N100</span><span class="o">.</span><span class="n">first_generalization____collapse_road_detail___n100_road</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
+        <span class="n">expression</span><span class="o">=</span><span class="s2">&quot;invisibility_2 = 0&quot;</span><span class="p">,</span>
+        <span class="n">output_name</span><span class="o">=</span><span class="n">Road_N100</span><span class="o">.</span><span class="n">first_generalization____visible_features_after_thin_road_network_2___n100_road</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
+        <span class="n">selection_type</span><span class="o">=</span><span class="n">custom_arcpy</span><span class="o">.</span><span class="n">SelectionType</span><span class="o">.</span><span class="n">NEW_SELECTION</span><span class="p">,</span>
+    <span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="thin_road_network_3">
+<a class="viewcode-back" href="../../../../generated_docs/generalization.n100.road.html#generalization.n100.road.first_generalization.thin_road_network_3">[docs]</a>
+<span class="nd">@timing_decorator</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">thin_road_network_3</span><span class="p">():</span>
+    <span class="n">arcpy</span><span class="o">.</span><span class="n">cartography</span><span class="o">.</span><span class="n">ThinRoadNetwork</span><span class="p">(</span>
+        <span class="n">in_features</span><span class="o">=</span><span class="n">Road_N100</span><span class="o">.</span><span class="n">first_generalization____visible_features_after_thin_road_network_2___n100_road</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
+        <span class="n">minimum_length</span><span class="o">=</span><span class="s2">&quot;2000 Meters&quot;</span><span class="p">,</span>
+        <span class="n">invisibility_field</span><span class="o">=</span><span class="s2">&quot;invisibility_3&quot;</span><span class="p">,</span>
+        <span class="n">hierarchy_field</span><span class="o">=</span><span class="s2">&quot;hierarchy&quot;</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="n">custom_arcpy</span><span class="o">.</span><span class="n">select_attribute_and_make_permanent_feature</span><span class="p">(</span>
+        <span class="n">input_layer</span><span class="o">=</span><span class="n">Road_N100</span><span class="o">.</span><span class="n">first_generalization____visible_features_after_thin_road_network_2___n100_road</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
+        <span class="n">expression</span><span class="o">=</span><span class="s2">&quot;invisibility_3 = 0&quot;</span><span class="p">,</span>
+        <span class="n">output_name</span><span class="o">=</span><span class="n">Road_N100</span><span class="o">.</span><span class="n">first_generalization____visible_features_after_thin_road_network_3___n100_road</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
+        <span class="n">selection_type</span><span class="o">=</span><span class="n">custom_arcpy</span><span class="o">.</span><span class="n">SelectionType</span><span class="o">.</span><span class="n">NEW_SELECTION</span><span class="p">,</span>
+    <span class="p">)</span>
+
+    <span class="n">arcpy</span><span class="o">.</span><span class="n">management</span><span class="o">.</span><span class="n">CopyFeatures</span><span class="p">(</span>
+        <span class="n">in_features</span><span class="o">=</span><span class="n">Road_N100</span><span class="o">.</span><span class="n">first_generalization____visible_features_after_thin_road_network_3___n100_road</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
+        <span class="n">out_feature_class</span><span class="o">=</span><span class="n">Road_N100</span><span class="o">.</span><span class="n">data_preperation___going_into_spatial_join___n100_road</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
+    <span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="spatial_join_between_functional_roadclass_and_roads">
+<a class="viewcode-back" href="../../../../generated_docs/generalization.n100.road.html#generalization.n100.road.first_generalization.spatial_join_between_functional_roadclass_and_roads">[docs]</a>
+<span class="nd">@timing_decorator</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">spatial_join_between_functional_roadclass_and_roads</span><span class="p">():</span>
+    <span class="c1"># Create FieldMappings and FieldMap objects</span>
+    <span class="n">field_mappings</span> <span class="o">=</span> <span class="n">arcpy</span><span class="o">.</span><span class="n">FieldMappings</span><span class="p">()</span>
+
+    <span class="c1"># Add all fields from the target features</span>
+    <span class="n">field_mappings</span><span class="o">.</span><span class="n">addTable</span><span class="p">(</span>
+        <span class="n">Road_N100</span><span class="o">.</span><span class="n">data_preperation___going_into_spatial_join___n100_road</span><span class="o">.</span><span class="n">value</span>
+    <span class="p">)</span>
+
+    <span class="c1"># Create a FieldMap object for the VEGKLASSE field from join features</span>
+    <span class="n">vegklasse_field_map</span> <span class="o">=</span> <span class="n">arcpy</span><span class="o">.</span><span class="n">FieldMap</span><span class="p">()</span>
+    <span class="n">vegklasse_field_map</span><span class="o">.</span><span class="n">addInputField</span><span class="p">(</span>
+        <span class="n">Road_N100</span><span class="o">.</span><span class="n">data_preperation___functional_road_class_dataset___n100_road</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
+        <span class="s2">&quot;VEGKLASSE&quot;</span><span class="p">,</span>
+    <span class="p">)</span>
+
+    <span class="c1"># Rename the field in case of conflicts or to ensure proper naming in output</span>
+    <span class="n">output_field</span> <span class="o">=</span> <span class="n">vegklasse_field_map</span><span class="o">.</span><span class="n">outputField</span>
+    <span class="n">output_field</span><span class="o">.</span><span class="n">name</span> <span class="o">=</span> <span class="s2">&quot;VEGKLASSE&quot;</span>
+    <span class="n">vegklasse_field_map</span><span class="o">.</span><span class="n">outputField</span> <span class="o">=</span> <span class="n">output_field</span>
+
+    <span class="c1"># Add the VEGKLASSE FieldMap to the FieldMappings</span>
+    <span class="n">field_mappings</span><span class="o">.</span><span class="n">addFieldMap</span><span class="p">(</span><span class="n">vegklasse_field_map</span><span class="p">)</span>
+
+    <span class="c1"># Perform the Spatial Join with the custom FieldMappings</span>
+
+    <span class="n">arcpy</span><span class="o">.</span><span class="n">analysis</span><span class="o">.</span><span class="n">SpatialJoin</span><span class="p">(</span>
+        <span class="n">target_features</span><span class="o">=</span><span class="n">Road_N100</span><span class="o">.</span><span class="n">data_preperation___going_into_spatial_join___n100_road</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
+        <span class="n">join_features</span><span class="o">=</span><span class="n">Road_N100</span><span class="o">.</span><span class="n">data_preperation___functional_road_class_dataset___n100_road</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
+        <span class="n">out_feature_class</span><span class="o">=</span><span class="n">Road_N100</span><span class="o">.</span><span class="n">data_preperation___spatial_join_completed___n100_road</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
+        <span class="n">join_operation</span><span class="o">=</span><span class="s2">&quot;JOIN_ONE_TO_MANY&quot;</span><span class="p">,</span>
+        <span class="n">join_type</span><span class="o">=</span><span class="s2">&quot;KEEP_ALL&quot;</span><span class="p">,</span>
+        <span class="n">field_mapping</span><span class="o">=</span><span class="n">field_mappings</span><span class="p">,</span>
+        <span class="n">match_option</span><span class="o">=</span><span class="s2">&quot;SHARE_A_LINE_SEGMENT_WITH&quot;</span><span class="p">,</span>
+    <span class="p">)</span></div>
+
+
+
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        if vegklasse in [&#39;0&#39;, &#39;1&#39;]:</span>
+<span class="sd">            return 0</span>
+<span class="sd">        elif vegklasse in [&#39;2&#39;, &#39;3&#39;]:</span>
+<span class="sd">            return 1</span>
+<span class="sd">        elif vegklasse in [&#39;4&#39;, &#39;5&#39;]:</span>
+<span class="sd">            return 2</span>
+<span class="sd">        elif vegklasse == &#39;6&#39;:</span>
+<span class="sd">            return 3</span>
+<span class="sd">        elif vegklasse == &#39;7&#39;:</span>
+<span class="sd">            return 4</span>
+<span class="sd">        elif vegklasse in [&#39;8&#39;, &#39;9&#39;]:</span>
+<span class="sd">            return 5</span>
+<span class="sd">        elif vegklasse is None: </span>
+<span class="sd">            return 6&quot;&quot;&quot;</span>
+
+
+<div class="viewcode-block" id="calculate_new_hierarchy_based_on_functional_road_class">
+<a class="viewcode-back" href="../../../../generated_docs/generalization.n100.road.html#generalization.n100.road.first_generalization.calculate_new_hierarchy_based_on_functional_road_class">[docs]</a>
+<span class="nd">@timing_decorator</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">calculate_new_hierarchy_based_on_functional_road_class</span><span class="p">():</span>
+    <span class="n">assign_hierarchy_based_on_functional_road_class</span> <span class="o">=</span> <span class="s2">&quot;&quot;&quot;</span>
+<span class="s2">def Reclass(vegklasse):</span>
+<span class="s2">    if vegklasse == &#39;0&#39;:</span>
+<span class="s2">        return 0</span>
+<span class="s2">    elif vegklasse == &#39;1&#39;:</span>
+<span class="s2">        return 1</span>
+<span class="s2">    elif vegklasse == &#39;2&#39;:</span>
+<span class="s2">        return 2</span>
+<span class="s2">    elif vegklasse == &#39;3&#39;:</span>
+<span class="s2">        return 3</span>
+<span class="s2">    elif vegklasse == &#39;4&#39;:</span>
+<span class="s2">        return 4</span>
+<span class="s2">    elif vegklasse == &#39;5&#39;:</span>
+<span class="s2">        return 5</span>
+<span class="s2">    elif vegklasse == &#39;6&#39;:</span>
+<span class="s2">        return 6</span>
+<span class="s2">    elif vegklasse == &#39;7&#39;:</span>
+<span class="s2">        return 7</span>
+<span class="s2">    elif vegklasse == &#39;8&#39;:</span>
+<span class="s2">        return 8</span>
+<span class="s2">    elif vegklasse == &#39;9&#39;:</span>
+<span class="s2">        return 9</span>
+<span class="s2">    elif vegklasse is None: </span>
+<span class="s2">        return 10</span>
+<span class="s2">    &quot;&quot;&quot;</span>
+
+    <span class="n">arcpy</span><span class="o">.</span><span class="n">management</span><span class="o">.</span><span class="n">AddField</span><span class="p">(</span>
+        <span class="n">in_table</span><span class="o">=</span><span class="n">Road_N100</span><span class="o">.</span><span class="n">data_preperation___spatial_join_completed___n100_road</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
+        <span class="n">field_name</span><span class="o">=</span><span class="s2">&quot;functional_hierarchy&quot;</span><span class="p">,</span>
+        <span class="n">field_type</span><span class="o">=</span><span class="s2">&quot;SHORT&quot;</span><span class="p">,</span>
+    <span class="p">)</span>
+
+    <span class="n">arcpy</span><span class="o">.</span><span class="n">management</span><span class="o">.</span><span class="n">CalculateField</span><span class="p">(</span>
+        <span class="n">in_table</span><span class="o">=</span><span class="n">Road_N100</span><span class="o">.</span><span class="n">data_preperation___spatial_join_completed___n100_road</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
+        <span class="n">field</span><span class="o">=</span><span class="s2">&quot;functional_hierarchy&quot;</span><span class="p">,</span>
+        <span class="n">expression</span><span class="o">=</span><span class="s2">&quot;Reclass(!VEGKLASSE!)&quot;</span><span class="p">,</span>
+        <span class="n">expression_type</span><span class="o">=</span><span class="s2">&quot;PYTHON3&quot;</span><span class="p">,</span>
+        <span class="n">code_block</span><span class="o">=</span><span class="n">assign_hierarchy_based_on_functional_road_class</span><span class="p">,</span>
+    <span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="thin_road_network_4">
+<a class="viewcode-back" href="../../../../generated_docs/generalization.n100.road.html#generalization.n100.road.first_generalization.thin_road_network_4">[docs]</a>
+<span class="nd">@timing_decorator</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">thin_road_network_4</span><span class="p">():</span>
+    <span class="n">arcpy</span><span class="o">.</span><span class="n">cartography</span><span class="o">.</span><span class="n">ThinRoadNetwork</span><span class="p">(</span>
+        <span class="n">in_features</span><span class="o">=</span><span class="n">Road_N100</span><span class="o">.</span><span class="n">data_preperation___spatial_join_completed___n100_road</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
+        <span class="n">minimum_length</span><span class="o">=</span><span class="s2">&quot;2000 Meters&quot;</span><span class="p">,</span>
+        <span class="n">invisibility_field</span><span class="o">=</span><span class="s2">&quot;invisibility_4&quot;</span><span class="p">,</span>
+        <span class="n">hierarchy_field</span><span class="o">=</span><span class="s2">&quot;functional_hierarchy&quot;</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="n">custom_arcpy</span><span class="o">.</span><span class="n">select_attribute_and_make_permanent_feature</span><span class="p">(</span>
+        <span class="n">input_layer</span><span class="o">=</span><span class="n">Road_N100</span><span class="o">.</span><span class="n">data_preperation___spatial_join_completed___n100_road</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
+        <span class="n">expression</span><span class="o">=</span><span class="s2">&quot;invisibility_4 = 0&quot;</span><span class="p">,</span>
+        <span class="n">output_name</span><span class="o">=</span><span class="n">Road_N100</span><span class="o">.</span><span class="n">first_generalization____visible_features_after_thin_road_network_4___n100_road</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
+        <span class="n">selection_type</span><span class="o">=</span><span class="n">custom_arcpy</span><span class="o">.</span><span class="n">SelectionType</span><span class="o">.</span><span class="n">NEW_SELECTION</span><span class="p">,</span>
+    <span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="remove_rundkjoring_that_survived_collapse_road_detail">
+<a class="viewcode-back" href="../../../../generated_docs/generalization.n100.road.html#generalization.n100.road.first_generalization.remove_rundkjoring_that_survived_collapse_road_detail">[docs]</a>
+<span class="nd">@timing_decorator</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">remove_rundkjoring_that_survived_collapse_road_detail</span><span class="p">():</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Starting the removal process for rundkjoring that survived collapse...&quot;</span><span class="p">)</span>
+
+    <span class="c1"># Select only rundkjoring parts</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Selecting rundkjoring parts...&quot;</span><span class="p">)</span>
+    <span class="n">custom_arcpy</span><span class="o">.</span><span class="n">select_attribute_and_make_permanent_feature</span><span class="p">(</span>
+        <span class="n">input_layer</span><span class="o">=</span><span class="n">Road_N100</span><span class="o">.</span><span class="n">first_generalization____visible_features_after_thin_road_network_4___n100_road</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
+        <span class="n">expression</span><span class="o">=</span><span class="s2">&quot;TYPEVEG = &#39;rundkjøring&#39;&quot;</span><span class="p">,</span>
+        <span class="n">output_name</span><span class="o">=</span><span class="n">Road_N100</span><span class="o">.</span><span class="n">first_generalization____selecting_rundkjoring___n100_road</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
+        <span class="n">selection_type</span><span class="o">=</span><span class="n">custom_arcpy</span><span class="o">.</span><span class="n">SelectionType</span><span class="o">.</span><span class="n">NEW_SELECTION</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Rundkjoring parts selected.&quot;</span><span class="p">)</span>
+
+    <span class="c1"># Dissolving rundkjoring features</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Dissolving rundkjoring features...&quot;</span><span class="p">)</span>
+    <span class="n">arcpy</span><span class="o">.</span><span class="n">management</span><span class="o">.</span><span class="n">Dissolve</span><span class="p">(</span>
+        <span class="n">in_features</span><span class="o">=</span><span class="n">Road_N100</span><span class="o">.</span><span class="n">first_generalization____selecting_rundkjoring___n100_road</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
+        <span class="n">out_feature_class</span><span class="o">=</span><span class="n">Road_N100</span><span class="o">.</span><span class="n">first_generalization____dissolving_rundkjoring___n100_road</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
+        <span class="n">dissolve_field</span><span class="o">=</span><span class="s2">&quot;TYPEVEG&quot;</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Rundkjoring features dissolved.&quot;</span><span class="p">)</span>
+
+    <span class="c1"># Selecting all road parts except for rundkjoring</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Selecting all road parts except for rundkjoring...&quot;</span><span class="p">)</span>
+    <span class="n">custom_arcpy</span><span class="o">.</span><span class="n">select_attribute_and_make_permanent_feature</span><span class="p">(</span>
+        <span class="n">input_layer</span><span class="o">=</span><span class="n">Road_N100</span><span class="o">.</span><span class="n">data_preperation___spatial_join_completed___n100_road</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
+        <span class="n">expression</span><span class="o">=</span><span class="s2">&quot;TYPEVEG = &#39;rundkjøring&#39;&quot;</span><span class="p">,</span>
+        <span class="n">output_name</span><span class="o">=</span><span class="n">Road_N100</span><span class="o">.</span><span class="n">first_generalization____selecting_all_road_parts_except_rundkjoring___n100_road</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
+        <span class="n">selection_type</span><span class="o">=</span><span class="n">custom_arcpy</span><span class="o">.</span><span class="n">SelectionType</span><span class="o">.</span><span class="n">NEW_SELECTION</span><span class="p">,</span>
+        <span class="n">inverted</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;All road parts except rundkjoring selected.&quot;</span><span class="p">)</span>
+
+    <span class="c1"># Copying the road class so no changes are made to the original</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Copying the road feature class...&quot;</span><span class="p">)</span>
+    <span class="n">arcpy</span><span class="o">.</span><span class="n">management</span><span class="o">.</span><span class="n">CopyFeatures</span><span class="p">(</span>
+        <span class="n">in_features</span><span class="o">=</span><span class="n">Road_N100</span><span class="o">.</span><span class="n">first_generalization____selecting_all_road_parts_except_rundkjoring___n100_road</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
+        <span class="n">out_feature_class</span><span class="o">=</span><span class="n">Road_N100</span><span class="o">.</span><span class="n">first_generalization____roads_going_into_extend_line___n100_road</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Road feature class copied.&quot;</span><span class="p">)</span></div>
+
+
+
+<span class="sd">&quot;&quot;&quot;</span>
+
+<span class="sd">    arcpy.analysis.PairwiseBuffer(</span>
+<span class="sd">        in_features=Road_N100.first_generalization____dissolving_rundkjoring___n100_road.value,</span>
+<span class="sd">        out_feature_class=Road_N100.first_generalization____rundkjoring_buffer___n100_road.value,</span>
+<span class="sd">        buffer_distance_or_field=&quot;25 Meter&quot;,</span>
+<span class="sd">        dissolve_option=&quot;ALL&quot;,</span>
+<span class="sd">    )</span>
+
+<span class="sd">    arcpy.management.MultipartToSinglepart(</span>
+<span class="sd">        in_features=Road_N100.first_generalization____rundkjoring_buffer___n100_road.value,</span>
+<span class="sd">        out_feature_class=Road_N100.first_generalization____rundkjoring_buffer_multipart_to_singlepart___n100_road.value,</span>
+<span class="sd">    )</span>
+
+<span class="sd">    # Using the newly created polygons to create a point in the centroid</span>
+<span class="sd">    print(&quot;Converting polygons to points at centroid...&quot;)</span>
+<span class="sd">    arcpy.management.FeatureToPoint(</span>
+<span class="sd">        in_features=Road_N100.first_generalization____rundkjoring_buffer_multipart_to_singlepart___n100_road.value,</span>
+<span class="sd">        out_feature_class=Road_N100.first_generalization____feature_to_point___n100_road.value,</span>
+<span class="sd">        point_location=&quot;INSIDE&quot;,</span>
+<span class="sd">    )</span>
+
+<span class="sd">    # Copy the snapped road features</span>
+<span class="sd">    print(&quot;Copying snapped road features...&quot;)</span>
+<span class="sd">    arcpy.management.CopyFeatures(</span>
+<span class="sd">        in_features=Road_N100.first_generalization____roads_going_into_extend_line___n100_road.value,</span>
+<span class="sd">        out_feature_class=Road_N100.first_generalization____roads_after_snap___n100_road.value,</span>
+<span class="sd">    )</span>
+<span class="sd">    print(&quot;Snapped road features copied.&quot;)</span>
+
+<span class="sd">    print(&quot;Process completed.&quot;)</span>
+
+<span class="sd">    arcpy.edit.ExtendLine(</span>
+<span class="sd">        in_features=Road_N100.first_generalization____roads_going_into_extend_line___n100_road.value,</span>
+<span class="sd">        length=&quot;30 Meters&quot;,</span>
+<span class="sd">        extend_to=Road_N100.first_generalization____feature_to_point___n100_road.value,</span>
+<span class="sd">    )</span>
+<span class="sd">    # Create a new polygon feature class</span>
+<span class="sd">    print(&quot;Creating a new polygon feature class...&quot;)</span>
+<span class="sd">    out_path, out_name = os.path.split(</span>
+<span class="sd">        Road_N100.first_generalization____polygon_created_from_line___n100_road.value</span>
+<span class="sd">    )</span>
+<span class="sd">    arcpy.CreateFeatureclass_management(</span>
+<span class="sd">        out_path=out_path,</span>
+<span class="sd">        out_name=out_name,</span>
+<span class="sd">        geometry_type=&quot;POLYGON&quot;,</span>
+<span class="sd">        spatial_reference=Road_N100.first_generalization____dissolving_rundkjoring___n100_road.value,</span>
+<span class="sd">    )</span>
+<span class="sd">    print(f&quot;New polygon feature class created: {os.path.join(out_path, out_name)}&quot;)</span>
+
+<span class="sd">    # Creating polygons from rundkjoring lines</span>
+<span class="sd">    print(&quot;Creating polygons from rundkjoring lines...&quot;)</span>
+<span class="sd">    with arcpy.da.InsertCursor(</span>
+<span class="sd">        Road_N100.first_generalization____polygon_created_from_line___n100_road.value,</span>
+<span class="sd">        [&quot;SHAPE@&quot;],</span>
+<span class="sd">    ) as cursor:</span>
+<span class="sd">        with arcpy.da.SearchCursor(</span>
+<span class="sd">            Road_N100.first_generalization____dissolving_rundkjoring___n100_road.value,</span>
+<span class="sd">            [&quot;SHAPE@&quot;],</span>
+<span class="sd">        ) as search_cursor:</span>
+<span class="sd">            for row in search_cursor:</span>
+<span class="sd">                line_geometry = row[0]</span>
+<span class="sd">                # Create a polygon from the line</span>
+<span class="sd">                polygon = arcpy.Polygon(line_geometry.getPart(0))</span>
+<span class="sd">                cursor.insertRow([polygon])</span>
+<span class="sd">    print(&quot;Polygons created from rundkjoring lines.&quot;)</span>
+
+<span class="sd">    print(&quot;Polygons converted to points.&quot;)</span>
+
+<span class="sd">&quot;&quot;&quot;</span>
+
+
+<span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s2">&quot;__main__&quot;</span><span class="p">:</span>
+    <span class="n">main</span><span class="p">()</span>
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2024, Kartverket.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

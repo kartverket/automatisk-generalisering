@@ -1,0 +1,316 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>composition_configs.logic_config &mdash; Automatisk Generalisering 0.0.1 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../../_static/css/theme.css?v=e59714d7" />
+      <link rel="stylesheet" type="text/css" href="../../_static/custom.css" />
+
+  
+      <script src="../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../_static/documentation_options.js?v=d45e8c67"></script>
+      <script src="../../_static/doctools.js?v=9bcbadda"></script>
+      <script src="../../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../index.html" class="icon icon-home">
+            Automatisk Generalisering
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../generated_docs/custom_tools.html">custom_tools package</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../generated_docs/env_setup.html">env_setup package</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../generated_docs/file_manager.html">file_manager package</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../generated_docs/generalization.n100.building.html">generalization.n100.building package</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../generated_docs/input_data.html">input_data package</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../generated_docs/modules.html">automatisk-generalisering</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../index.html">Automatisk Generalisering</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">composition_configs.logic_config</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for composition_configs.logic_config</h1><div class="highlight"><pre>
+<span></span><span class="kn">from</span><span class="w"> </span><span class="nn">dataclasses</span><span class="w"> </span><span class="kn">import</span> <span class="n">dataclass</span><span class="p">,</span> <span class="n">field</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">os</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">Dict</span><span class="p">,</span>
+    <span class="n">List</span><span class="p">,</span>
+    <span class="n">Literal</span><span class="p">,</span>
+    <span class="n">Optional</span><span class="p">,</span>
+    <span class="n">Tuple</span><span class="p">,</span>
+    <span class="n">Union</span><span class="p">,</span>
+    <span class="n">Any</span><span class="p">,</span>
+    <span class="n">Callable</span><span class="p">,</span>
+    <span class="n">Mapping</span><span class="p">,</span>
+    <span class="n">Sequence</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">enum</span><span class="w"> </span><span class="kn">import</span> <span class="n">Enum</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">composition_configs</span><span class="w"> </span><span class="kn">import</span> <span class="n">core_config</span><span class="p">,</span> <span class="n">type_defs</span><span class="p">,</span> <span class="n">io_types</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">file_manager</span><span class="w"> </span><span class="kn">import</span> <span class="n">work_file_manager</span>
+
+
+<div class="viewcode-block" id="SymbologyLayerSpec">
+<a class="viewcode-back" href="../../generated_docs/composition_configs.html#composition_configs.logic_config.SymbologyLayerSpec">[docs]</a>
+<span class="nd">@dataclass</span><span class="p">(</span><span class="n">frozen</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">SymbologyLayerSpec</span><span class="p">:</span>
+    <span class="n">unique_name</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">input_feature</span><span class="p">:</span> <span class="n">io_types</span><span class="o">.</span><span class="n">GdbIOArg</span>
+    <span class="n">input_lyrx</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">grouped_lyrx</span><span class="p">:</span> <span class="nb">bool</span>
+    <span class="n">target_layer_name</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span></div>
+
+
+
+<div class="viewcode-block" id="BarrierRule">
+<a class="viewcode-back" href="../../generated_docs/composition_configs.html#composition_configs.logic_config.BarrierRule">[docs]</a>
+<span class="nd">@dataclass</span><span class="p">(</span><span class="n">frozen</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">BarrierRule</span><span class="p">:</span>
+    <span class="n">name</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">gap_meters</span><span class="p">:</span> <span class="nb">int</span>
+    <span class="n">use_turn_orientation</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span></div>
+
+
+
+<div class="viewcode-block" id="BarrierDefault">
+<a class="viewcode-back" href="../../generated_docs/composition_configs.html#composition_configs.logic_config.BarrierDefault">[docs]</a>
+<span class="nd">@dataclass</span><span class="p">(</span><span class="n">frozen</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">slots</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">BarrierDefault</span><span class="p">:</span>
+    <span class="n">gap_meters</span><span class="p">:</span> <span class="nb">int</span>
+    <span class="n">use_turn_orientation</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span></div>
+
+
+
+<div class="viewcode-block" id="BarrierOverride">
+<a class="viewcode-back" href="../../generated_docs/composition_configs.html#composition_configs.logic_config.BarrierOverride">[docs]</a>
+<span class="nd">@dataclass</span><span class="p">(</span><span class="n">frozen</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">slots</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">BarrierOverride</span><span class="p">:</span>
+    <span class="n">gap_meters</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">use_turn_orientation</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">bool</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span></div>
+
+
+
+<div class="viewcode-block" id="RbcPolygonInitKwargs">
+<a class="viewcode-back" href="../../generated_docs/composition_configs.html#composition_configs.logic_config.RbcPolygonInitKwargs">[docs]</a>
+<span class="nd">@dataclass</span><span class="p">(</span><span class="n">frozen</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">RbcPolygonInitKwargs</span><span class="p">:</span>
+    <span class="n">input_data_structure</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">SymbologyLayerSpec</span><span class="p">]</span>
+    <span class="n">output_building_polygons</span><span class="p">:</span> <span class="n">io_types</span><span class="o">.</span><span class="n">GdbIOArg</span>
+    <span class="n">output_collapsed_polygon_points</span><span class="p">:</span> <span class="n">io_types</span><span class="o">.</span><span class="n">GdbIOArg</span>
+    <span class="n">work_file_manager_config</span><span class="p">:</span> <span class="n">core_config</span><span class="o">.</span><span class="n">WorkFileConfig</span>
+
+    <span class="n">building_unique_name</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">barrier_default</span><span class="p">:</span> <span class="n">BarrierDefault</span>
+    <span class="n">barrier_overrides</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="n">BarrierRule</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span></div>
+
+
+
+<div class="viewcode-block" id="RbcPointsInitKwargs">
+<a class="viewcode-back" href="../../generated_docs/composition_configs.html#composition_configs.logic_config.RbcPointsInitKwargs">[docs]</a>
+<span class="nd">@dataclass</span><span class="p">(</span><span class="n">frozen</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">RbcPointsInitKwargs</span><span class="p">:</span>
+    <span class="n">input_data_structure</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">SymbologyLayerSpec</span><span class="p">]</span>
+
+    <span class="n">building_points_unique_name</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">building_polygons_unique_name</span><span class="p">:</span> <span class="nb">str</span>
+
+    <span class="n">building_gap_distance_m</span><span class="p">:</span> <span class="nb">int</span>
+
+    <span class="n">output_points_after_rbc</span><span class="p">:</span> <span class="n">io_types</span><span class="o">.</span><span class="n">GdbIOArg</span>
+    <span class="n">output_polygons_after_rbc</span><span class="p">:</span> <span class="n">io_types</span><span class="o">.</span><span class="n">GdbIOArg</span>
+
+    <span class="n">work_file_manager_config</span><span class="p">:</span> <span class="n">core_config</span><span class="o">.</span><span class="n">WorkFileConfig</span>
+
+    <span class="n">building_symbol_dimension</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">]</span>
+    <span class="n">barrier_default</span><span class="p">:</span> <span class="n">BarrierDefault</span>
+    <span class="n">barrier_overrides</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="n">BarrierRule</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">map_scale</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;100000&quot;</span></div>
+
+
+
+<div class="viewcode-block" id="BegrensningskurveLandWaterKwargs">
+<a class="viewcode-back" href="../../generated_docs/composition_configs.html#composition_configs.logic_config.BegrensningskurveLandWaterKwargs">[docs]</a>
+<span class="nd">@dataclass</span><span class="p">(</span><span class="n">frozen</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">BegrensningskurveLandWaterKwargs</span><span class="p">:</span>
+    <span class="n">input_begrensningskurve</span><span class="p">:</span> <span class="n">io_types</span><span class="o">.</span><span class="n">GdbIOArg</span>
+    <span class="n">input_land_cover_features</span><span class="p">:</span> <span class="n">io_types</span><span class="o">.</span><span class="n">GdbIOArg</span>
+    <span class="n">output_begrensningskurve</span><span class="p">:</span> <span class="n">io_types</span><span class="o">.</span><span class="n">GdbIOArg</span>
+    <span class="n">water_feature_buffer_width</span><span class="p">:</span> <span class="nb">int</span>
+    <span class="n">water_barrier_buffer_width</span><span class="p">:</span> <span class="nb">int</span>
+    <span class="n">work_file_manager_config</span><span class="p">:</span> <span class="n">core_config</span><span class="o">.</span><span class="n">WorkFileConfig</span></div>
+
+
+
+<div class="viewcode-block" id="LineToBufferSymbologyKwargs">
+<a class="viewcode-back" href="../../generated_docs/composition_configs.html#composition_configs.logic_config.LineToBufferSymbologyKwargs">[docs]</a>
+<span class="nd">@dataclass</span><span class="p">(</span><span class="n">frozen</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">LineToBufferSymbologyKwargs</span><span class="p">:</span>
+    <span class="n">input_line</span><span class="p">:</span> <span class="n">io_types</span><span class="o">.</span><span class="n">GdbIOArg</span>
+    <span class="n">output_line</span><span class="p">:</span> <span class="n">io_types</span><span class="o">.</span><span class="n">GdbIOArg</span>
+
+    <span class="n">sql_selection_query</span><span class="p">:</span> <span class="nb">dict</span>
+
+    <span class="n">work_file_manager_config</span><span class="p">:</span> <span class="n">core_config</span><span class="o">.</span><span class="n">WorkFileConfig</span>
+
+    <span class="n">buffer_distance_factor</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="mi">1</span>
+    <span class="n">buffer_distance_addition</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="mi">0</span></div>
+
+
+
+<div class="viewcode-block" id="BufferDisplacementKwargs">
+<a class="viewcode-back" href="../../generated_docs/composition_configs.html#composition_configs.logic_config.BufferDisplacementKwargs">[docs]</a>
+<span class="nd">@dataclass</span><span class="p">(</span><span class="n">frozen</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">BufferDisplacementKwargs</span><span class="p">:</span>
+    <span class="n">input_road_line</span><span class="p">:</span> <span class="n">io_types</span><span class="o">.</span><span class="n">GdbIOArg</span>
+    <span class="n">input_building_points</span><span class="p">:</span> <span class="n">io_types</span><span class="o">.</span><span class="n">GdbIOArg</span>
+    <span class="n">input_line_barriers</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span>
+
+    <span class="n">output_building_points</span><span class="p">:</span> <span class="n">io_types</span><span class="o">.</span><span class="n">GdbIOArg</span>
+
+    <span class="n">sql_selection_query</span><span class="p">:</span> <span class="nb">dict</span>
+    <span class="n">building_symbol_dimension</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="n">Tuple</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">int</span><span class="p">]]</span>
+
+    <span class="n">displacement_distance_m</span><span class="p">:</span> <span class="nb">int</span>
+
+    <span class="n">work_file_manager_config</span><span class="p">:</span> <span class="n">core_config</span><span class="o">.</span><span class="n">WorkFileConfig</span></div>
+
+
+
+<div class="viewcode-block" id="ThinRoadNetworkKwargs">
+<a class="viewcode-back" href="../../generated_docs/composition_configs.html#composition_configs.logic_config.ThinRoadNetworkKwargs">[docs]</a>
+<span class="nd">@dataclass</span><span class="p">(</span><span class="n">frozen</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">ThinRoadNetworkKwargs</span><span class="p">:</span>
+    <span class="n">input_road_line</span><span class="p">:</span> <span class="n">io_types</span><span class="o">.</span><span class="n">GdbIOArg</span>
+    <span class="n">output_road_line</span><span class="p">:</span> <span class="n">io_types</span><span class="o">.</span><span class="n">GdbIOArg</span>
+    <span class="n">work_file_manager_config</span><span class="p">:</span> <span class="n">core_config</span><span class="o">.</span><span class="n">WorkFileConfig</span>
+    <span class="n">minimum_length</span><span class="p">:</span> <span class="nb">int</span>
+    <span class="n">invisibility_field_name</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">hierarchy_field_name</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">special_selection_sql</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span></div>
+
+
+
+<div class="viewcode-block" id="CollapseRoadDetailsKwargs">
+<a class="viewcode-back" href="../../generated_docs/composition_configs.html#composition_configs.logic_config.CollapseRoadDetailsKwargs">[docs]</a>
+<span class="nd">@dataclass</span><span class="p">(</span><span class="n">frozen</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">CollapseRoadDetailsKwargs</span><span class="p">:</span>
+    <span class="n">input_road_line</span><span class="p">:</span> <span class="n">io_types</span><span class="o">.</span><span class="n">GdbIOArg</span>
+    <span class="n">output_road_line</span><span class="p">:</span> <span class="n">io_types</span><span class="o">.</span><span class="n">GdbIOArg</span>
+    <span class="n">merge_distnace_m</span><span class="p">:</span> <span class="nb">int</span>
+    <span class="n">collapse_field_name</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span></div>
+
+
+
+<div class="viewcode-block" id="RrcInitKwargs">
+<a class="viewcode-back" href="../../generated_docs/composition_configs.html#composition_configs.logic_config.RrcInitKwargs">[docs]</a>
+<span class="nd">@dataclass</span><span class="p">(</span><span class="n">frozen</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">RrcInitKwargs</span><span class="p">:</span>
+    <span class="n">input_data_structure</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">SymbologyLayerSpec</span><span class="p">]</span>
+    <span class="n">work_file_manager_config</span><span class="p">:</span> <span class="n">core_config</span><span class="o">.</span><span class="n">WorkFileConfig</span>
+
+    <span class="n">primary_road_unique_name</span><span class="p">:</span> <span class="nb">str</span>
+
+    <span class="n">output_road_feature</span><span class="p">:</span> <span class="n">io_types</span><span class="o">.</span><span class="n">GdbIOArg</span>
+    <span class="n">output_displacement_feature</span><span class="p">:</span> <span class="n">io_types</span><span class="o">.</span><span class="n">GdbIOArg</span>
+
+    <span class="n">map_scale</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;100000&quot;</span>
+    <span class="n">hierarchy_field</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;hierarchy&quot;</span></div>
+
+
+
+<div class="viewcode-block" id="DissolveInitKwargs">
+<a class="viewcode-back" href="../../generated_docs/composition_configs.html#composition_configs.logic_config.DissolveInitKwargs">[docs]</a>
+<span class="nd">@dataclass</span><span class="p">(</span><span class="n">frozen</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">DissolveInitKwargs</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Configuration for DissolveWithIntersections.</span>
+
+<span class="sd">    input_line_feature: path or InjectIO to the input line feature</span>
+<span class="sd">    output_processed_feature: path or InjectIO for the final merged intersections (or single)</span>
+<span class="sd">    work_file_manager_config: WorkFileManager behavior (root_file, in-memory, keep_files)</span>
+<span class="sd">    dissolve_fields: optional list of fields to dissolve on; if None -&gt; dissolve all (single-part)</span>
+<span class="sd">    sql_expressions: optional list of SQL where-clauses to split/segment, each produces its own FTL result</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">input_line_feature</span><span class="p">:</span> <span class="n">io_types</span><span class="o">.</span><span class="n">GdbIOArg</span>
+    <span class="n">output_processed_feature</span><span class="p">:</span> <span class="n">io_types</span><span class="o">.</span><span class="n">GdbIOArg</span>
+    <span class="n">work_file_manager_config</span><span class="p">:</span> <span class="n">core_config</span><span class="o">.</span><span class="n">WorkFileConfig</span>
+
+    <span class="n">dissolve_fields</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">sql_expressions</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span></div>
+
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2024, Kartverket.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

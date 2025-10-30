@@ -44,6 +44,14 @@ custom\_tools.general\_tools.line\_to\_buffer\_symbology module
    :show-inheritance:
    :undoc-members:
 
+custom\_tools.general\_tools.param\_utils module
+------------------------------------------------
+
+.. automodule:: custom_tools.general_tools.param_utils
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
 custom\_tools.general\_tools.partition\_iterator module
 -------------------------------------------------------
 

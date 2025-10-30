@@ -294,6 +294,18 @@
         <span class="p">)</span>
     <span class="p">)</span>
 
+    <span class="n">begrensningskurve_documentation_n100_building</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_general_subdirectory</span><span class="p">(</span>
+            <span class="n">description</span><span class="o">=</span><span class="s2">&quot;begrensningskurve_documentation&quot;</span>
+        <span class="p">)</span>
+    <span class="p">)</span>
+
+    <span class="n">buffer_displacement_documentation_n100_building</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_general_subdirectory</span><span class="p">(</span>
+            <span class="n">description</span><span class="o">=</span><span class="s2">&quot;buffer_displacement_documentation&quot;</span>
+        <span class="p">)</span>
+    <span class="p">)</span>
+
     <span class="n">data_preparation___begrensningskurve_buffer_erase_2___n100_building</span> <span class="o">=</span> <span class="p">(</span>
         <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_gdb</span><span class="p">(</span>
             <span class="n">script_source_name</span><span class="o">=</span><span class="n">data_preparation</span><span class="p">,</span>
@@ -648,6 +660,12 @@
         <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_gdb</span><span class="p">(</span>
             <span class="n">script_source_name</span><span class="o">=</span><span class="n">polygon_resolve_building_conflicts</span><span class="p">,</span>
             <span class="n">description</span><span class="o">=</span><span class="s2">&quot;after_rbc&quot;</span><span class="p">,</span>
+        <span class="p">)</span>
+    <span class="p">)</span>
+
+    <span class="n">rbc_polygon_documentation_n100_building</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_general_subdirectory</span><span class="p">(</span>
+            <span class="n">description</span><span class="o">=</span><span class="s2">&quot;rbc_polygon_documentation&quot;</span>
         <span class="p">)</span>
     <span class="p">)</span>
 
@@ -1138,6 +1156,13 @@
         <span class="p">)</span>
     <span class="p">)</span>
 
+    <span class="n">point_displacement_with_buffer___partition_root_file___n100_building</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_gdb</span><span class="p">(</span>
+            <span class="n">script_source_name</span><span class="o">=</span><span class="n">point_displacement_with_buffer</span><span class="p">,</span>
+            <span class="n">description</span><span class="o">=</span><span class="s2">&quot;partition_root_file&quot;</span><span class="p">,</span>
+        <span class="p">)</span>
+    <span class="p">)</span>
+
     <span class="n">point_displacement_with_buffer___displaced_building_points___n100_building</span> <span class="o">=</span> <span class="p">(</span>
         <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_gdb</span><span class="p">(</span>
             <span class="n">script_source_name</span><span class="o">=</span><span class="n">point_displacement_with_buffer</span><span class="p">,</span>
@@ -1219,16 +1244,23 @@
     <span class="p">)</span>
 
     <span class="n">point_resolve_building_conflicts___lyrx_root___n100_building</span> <span class="o">=</span> <span class="p">(</span>
-        <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_lyrx_directory</span><span class="p">(</span>
+        <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_lyrx_directory_deprecated</span><span class="p">(</span>
             <span class="n">script_source_name</span><span class="o">=</span><span class="n">point_resolve_building_conflicts</span><span class="p">,</span>
             <span class="n">description</span><span class="o">=</span><span class="s2">&quot;lyrx_root&quot;</span><span class="p">,</span>
         <span class="p">)</span>
     <span class="p">)</span>
 
-    <span class="n">point_resolve_building_conflicts___base_path_for_features___n100_building</span> <span class="o">=</span> <span class="p">(</span>
+    <span class="n">point_resolve_building_conflicts___root_path___n100_building</span> <span class="o">=</span> <span class="p">(</span>
         <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_gdb</span><span class="p">(</span>
             <span class="n">script_source_name</span><span class="o">=</span><span class="n">point_resolve_building_conflicts</span><span class="p">,</span>
-            <span class="n">description</span><span class="o">=</span><span class="s2">&quot;base_path_for_features&quot;</span><span class="p">,</span>
+            <span class="n">description</span><span class="o">=</span><span class="s2">&quot;root_path&quot;</span><span class="p">,</span>
+        <span class="p">)</span>
+    <span class="p">)</span>
+
+    <span class="n">point_resolve_building_conflicts___partition_root_path___n100_building</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_gdb</span><span class="p">(</span>
+            <span class="n">script_source_name</span><span class="o">=</span><span class="n">point_resolve_building_conflicts</span><span class="p">,</span>
+            <span class="n">description</span><span class="o">=</span><span class="s2">&quot;partition_root_path&quot;</span><span class="p">,</span>
         <span class="p">)</span>
     <span class="p">)</span>
 
@@ -1261,6 +1293,10 @@
             <span class="n">script_source_name</span><span class="o">=</span><span class="n">point_resolve_building_conflicts</span><span class="p">,</span>
             <span class="n">description</span><span class="o">=</span><span class="s2">&quot;POLYGON_OUTPUT&quot;</span><span class="p">,</span>
         <span class="p">)</span>
+    <span class="p">)</span>
+
+    <span class="n">rbc_point_documentation_n100_building</span> <span class="o">=</span> <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_general_subdirectory</span><span class="p">(</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">&quot;rbc_point_documentation&quot;</span>
     <span class="p">)</span>
 
     <span class="c1"># ========================================</span>

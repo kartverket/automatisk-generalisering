@@ -77,14 +77,13 @@
   <h1>Source code for custom_tools.generalization_tools.building.begrensningskurve_land_waterbodies</h1><div class="highlight"><pre>
 <span></span><span class="kn">import</span><span class="w"> </span><span class="nn">arcpy</span>
 
-<span class="kn">from</span><span class="w"> </span><span class="nn">input_data</span><span class="w"> </span><span class="kn">import</span> <span class="n">input_n100</span>
 
 <span class="c1"># Importing custom modules</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">file_manager.n100.file_manager_buildings</span><span class="w"> </span><span class="kn">import</span> <span class="n">Building_N100</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">env_setup</span><span class="w"> </span><span class="kn">import</span> <span class="n">environment_setup</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">custom_tools.decorators.partition_io_decorator</span><span class="w"> </span><span class="kn">import</span> <span class="n">partition_io_decorator</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">custom_tools.general_tools</span><span class="w"> </span><span class="kn">import</span> <span class="n">custom_arcpy</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">file_manager</span><span class="w"> </span><span class="kn">import</span> <span class="n">WorkFileManager</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">composition_configs</span><span class="w"> </span><span class="kn">import</span> <span class="n">logic_config</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">constants.n100_constants</span><span class="w"> </span><span class="kn">import</span> <span class="n">N100_Values</span>
 
 
@@ -93,37 +92,27 @@
 <span class="k">class</span><span class="w"> </span><span class="nc">BegrensningskurveLandWaterbodies</span><span class="p">:</span>
     <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
-        <span class="n">input_begrensningskurve</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
-        <span class="n">input_land_cover_features</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
-        <span class="n">water_feature_buffer_width</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
-        <span class="n">output_begrensningskurve</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
-        <span class="n">water_barrier_buffer_width</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">30</span><span class="p">,</span>
-        <span class="n">write_work_files_to_memory</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
-        <span class="n">keep_work_files</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
-        <span class="n">root_file</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">land_water_config</span><span class="p">:</span> <span class="n">logic_config</span><span class="o">.</span><span class="n">BegrensningskurveLandWaterKwargs</span><span class="p">,</span>
     <span class="p">):</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">input_begrensningskurve</span> <span class="o">=</span> <span class="n">input_begrensningskurve</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">input_land_cover_features</span> <span class="o">=</span> <span class="n">input_land_cover_features</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">output_begrensningskurve</span> <span class="o">=</span> <span class="n">output_begrensningskurve</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">input_begrensningskurve</span> <span class="o">=</span> <span class="n">land_water_config</span><span class="o">.</span><span class="n">input_begrensningskurve</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">input_land_cover_features</span> <span class="o">=</span> <span class="n">land_water_config</span><span class="o">.</span><span class="n">input_land_cover_features</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">output_begrensningskurve</span> <span class="o">=</span> <span class="n">land_water_config</span><span class="o">.</span><span class="n">output_begrensningskurve</span>
 
-        <span class="bp">self</span><span class="o">.</span><span class="n">write_work_files_to_memory</span> <span class="o">=</span> <span class="n">write_work_files_to_memory</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">keep_work_files</span> <span class="o">=</span> <span class="n">keep_work_files</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">root_file</span> <span class="o">=</span> <span class="n">root_file</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">write_work_files_to_memory</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="n">land_water_config</span><span class="o">.</span><span class="n">work_file_manager_config</span><span class="o">.</span><span class="n">write_to_memory</span>
+        <span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">keep_work_files</span> <span class="o">=</span> <span class="n">land_water_config</span><span class="o">.</span><span class="n">work_file_manager_config</span><span class="o">.</span><span class="n">keep_files</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">root_file</span> <span class="o">=</span> <span class="n">land_water_config</span><span class="o">.</span><span class="n">work_file_manager_config</span><span class="o">.</span><span class="n">root_file</span>
 
         <span class="c1"># How far out from land water buffer is created</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">water_feature_buffer_width</span> <span class="o">=</span> <span class="n">water_feature_buffer_width</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">water_feature_buffer_width</span> <span class="o">=</span> <span class="n">land_water_config</span><span class="o">.</span><span class="n">water_feature_buffer_width</span>
 
         <span class="c1"># How wide the water feature buffer will be</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">water_barrier_buffer_width</span> <span class="o">=</span> <span class="n">water_barrier_buffer_width</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">water_barrier_buffer_width</span> <span class="o">=</span> <span class="n">land_water_config</span><span class="o">.</span><span class="n">water_barrier_buffer_width</span>
 
         <span class="bp">self</span><span class="o">.</span><span class="n">area_length_ratio_field_name</span> <span class="o">=</span> <span class="s2">&quot;area_length_ratio&quot;</span>
 
-        <span class="bp">self</span><span class="o">.</span><span class="n">work_file_manager</span> <span class="o">=</span> <span class="n">WorkFileManager</span><span class="p">(</span>
-            <span class="n">unique_id</span><span class="o">=</span><span class="nb">id</span><span class="p">(</span><span class="bp">self</span><span class="p">),</span>
-            <span class="n">root_file</span><span class="o">=</span><span class="n">root_file</span><span class="p">,</span>
-            <span class="n">write_to_memory</span><span class="o">=</span><span class="n">write_work_files_to_memory</span><span class="p">,</span>
-            <span class="n">keep_files</span><span class="o">=</span><span class="n">keep_work_files</span><span class="p">,</span>
-        <span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">wfm</span> <span class="o">=</span> <span class="n">WorkFileManager</span><span class="p">(</span><span class="n">config</span><span class="o">=</span><span class="n">land_water_config</span><span class="o">.</span><span class="n">work_file_manager_config</span><span class="p">)</span>
 
         <span class="bp">self</span><span class="o">.</span><span class="n">waterfeatures_from_begrensningskurve</span> <span class="o">=</span> <span class="p">(</span>
             <span class="s2">&quot;waterfeatures_from_begrensningskurve&quot;</span>
@@ -325,14 +314,10 @@
 
 <div class="viewcode-block" id="BegrensningskurveLandWaterbodies.run">
 <a class="viewcode-back" href="../../../../generated_docs/custom_tools.generalization_tools.building.html#custom_tools.generalization_tools.building.begrensningskurve_land_waterbodies.BegrensningskurveLandWaterbodies.run">[docs]</a>
-    <span class="nd">@partition_io_decorator</span><span class="p">(</span>
-        <span class="n">input_param_names</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;input_begrensningskurve&quot;</span><span class="p">,</span> <span class="s2">&quot;input_land_cover_features&quot;</span><span class="p">],</span>
-        <span class="n">output_param_names</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;output_begrensningskurve&quot;</span><span class="p">],</span>
-    <span class="p">)</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">run</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="n">environment_setup</span><span class="o">.</span><span class="n">main</span><span class="p">()</span>
 
-        <span class="bp">self</span><span class="o">.</span><span class="n">work_file_list</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">work_file_manager</span><span class="o">.</span><span class="n">setup_work_file_paths</span><span class="p">(</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">work_file_list</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">wfm</span><span class="o">.</span><span class="n">setup_work_file_paths</span><span class="p">(</span>
             <span class="n">instance</span><span class="o">=</span><span class="bp">self</span><span class="p">,</span>
             <span class="n">file_structure</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">work_file_list</span><span class="p">,</span>
         <span class="p">)</span>
@@ -344,23 +329,13 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">erase_buffers</span><span class="p">()</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">merge_water_features</span><span class="p">()</span>
 
-        <span class="bp">self</span><span class="o">.</span><span class="n">work_file_manager</span><span class="o">.</span><span class="n">delete_created_files</span><span class="p">()</span></div>
+        <span class="bp">self</span><span class="o">.</span><span class="n">wfm</span><span class="o">.</span><span class="n">delete_created_files</span><span class="p">()</span></div>
 </div>
 
 
 
 <span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s2">&quot;__main__&quot;</span><span class="p">:</span>
     <span class="n">environment_setup</span><span class="o">.</span><span class="n">main</span><span class="p">()</span>
-    <span class="n">begrensningskurve_land_waterbodies</span> <span class="o">=</span> <span class="n">BegrensningskurveLandWaterbodies</span><span class="p">(</span>
-        <span class="n">input_begrensningskurve</span><span class="o">=</span><span class="n">Building_N100</span><span class="o">.</span><span class="n">data_selection___begrensningskurve_n100_input_data___n100_building</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
-        <span class="n">input_land_cover_features</span><span class="o">=</span><span class="n">Building_N100</span><span class="o">.</span><span class="n">data_selection___land_cover_n100_input_data___n100_building</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
-        <span class="n">water_feature_buffer_width</span><span class="o">=</span><span class="n">N100_Values</span><span class="o">.</span><span class="n">building_water_intrusion_distance_m</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
-        <span class="n">output_begrensningskurve</span><span class="o">=</span><span class="n">Building_N100</span><span class="o">.</span><span class="n">begrensingskurve_land_water___begrensingskurve_buffer_in_water___n100_building</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
-        <span class="n">write_work_files_to_memory</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
-        <span class="n">keep_work_files</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
-        <span class="n">root_file</span><span class="o">=</span><span class="n">Building_N100</span><span class="o">.</span><span class="n">begrensingskurve_land_water___root_file___n100_building</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
-    <span class="p">)</span>
-    <span class="n">begrensningskurve_land_waterbodies</span><span class="o">.</span><span class="n">run</span><span class="p">()</span>
 </pre></div>
 
            </div>

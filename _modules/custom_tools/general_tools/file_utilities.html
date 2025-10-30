@@ -75,8 +75,12 @@
            <div itemprop="articleBody">
              
   <h1>Source code for custom_tools.general_tools.file_utilities</h1><div class="highlight"><pre>
-<span></span><span class="kn">import</span><span class="w"> </span><span class="nn">arcpy</span>
+<span></span><span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Dict</span><span class="p">,</span> <span class="n">Literal</span><span class="p">,</span> <span class="n">List</span><span class="p">,</span> <span class="n">Any</span><span class="p">,</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">Union</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">arcpy</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">os</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">json</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">composition_configs</span><span class="w"> </span><span class="kn">import</span> <span class="n">io_types</span>
 
 
 <div class="viewcode-block" id="FeatureClassCreator">
@@ -174,6 +178,27 @@
             <span class="k">for</span> <span class="n">row</span> <span class="ow">in</span> <span class="n">s_cursor</span><span class="p">:</span>
                 <span class="n">i_cursor</span><span class="o">.</span><span class="n">insertRow</span><span class="p">(</span><span class="n">row</span><span class="p">)</span>
         <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Appended geometry to the feature class.&quot;</span><span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="create_feature_class">
+<a class="viewcode-back" href="../../../generated_docs/custom_tools.general_tools.html#custom_tools.general_tools.file_utilities.create_feature_class">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">create_feature_class</span><span class="p">(</span><span class="n">template_feature</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">new_feature</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Creates a new feature from a templete feature class&quot;&quot;&quot;</span>
+    <span class="n">out_path</span><span class="p">,</span> <span class="n">out_name</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="n">new_feature</span><span class="p">)</span>
+    <span class="n">delete_feature</span><span class="p">(</span><span class="n">input_feature</span><span class="o">=</span><span class="n">new_feature</span><span class="p">)</span>
+    <span class="n">arcpy</span><span class="o">.</span><span class="n">management</span><span class="o">.</span><span class="n">CreateFeatureclass</span><span class="p">(</span>
+        <span class="n">out_path</span><span class="o">=</span><span class="n">out_path</span><span class="p">,</span> <span class="n">out_name</span><span class="o">=</span><span class="n">out_name</span><span class="p">,</span> <span class="n">template</span><span class="o">=</span><span class="n">template_feature</span>
+    <span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="delete_feature">
+<a class="viewcode-back" href="../../../generated_docs/custom_tools.general_tools.html#custom_tools.general_tools.file_utilities.delete_feature">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">delete_feature</span><span class="p">(</span><span class="n">input_feature</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Deletes a feature class if it exists.&quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="n">arcpy</span><span class="o">.</span><span class="n">Exists</span><span class="p">(</span><span class="n">input_feature</span><span class="p">):</span>
+        <span class="n">arcpy</span><span class="o">.</span><span class="n">management</span><span class="o">.</span><span class="n">Delete</span><span class="p">(</span><span class="n">input_feature</span><span class="p">)</span></div>
 
 
 
@@ -295,6 +320,63 @@
 <span class="k">def</span><span class="w"> </span><span class="nf">count_objects</span><span class="p">(</span><span class="n">input_layer</span><span class="p">):</span>
     <span class="n">count</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">arcpy</span><span class="o">.</span><span class="n">management</span><span class="o">.</span><span class="n">GetCount</span><span class="p">(</span><span class="n">input_layer</span><span class="p">)</span><span class="o">.</span><span class="n">getOutput</span><span class="p">(</span><span class="mi">0</span><span class="p">))</span>
     <span class="k">return</span> <span class="n">count</span></div>
+
+
+
+<div class="viewcode-block" id="delete_fields_if_exist">
+<a class="viewcode-back" href="../../../generated_docs/custom_tools.general_tools.html#custom_tools.general_tools.file_utilities.delete_fields_if_exist">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">delete_fields_if_exist</span><span class="p">(</span>
+    <span class="n">feature_class_path</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">fields_to_delete</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Deletes specified fields from a feature class if they exist.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        feature_class_path (str): Path to the feature class.</span>
+<span class="sd">        fields_to_delete (list[str]): Fields to delete if present.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">arcpy</span><span class="o">.</span><span class="n">Exists</span><span class="p">(</span><span class="n">feature_class_path</span><span class="p">):</span>
+        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Skipped field deletion: file does not exist -&gt; </span><span class="si">{</span><span class="n">feature_class_path</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+        <span class="k">return</span>
+
+    <span class="k">for</span> <span class="n">field_name</span> <span class="ow">in</span> <span class="n">fields_to_delete</span><span class="p">:</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">arcpy</span><span class="o">.</span><span class="n">ListFields</span><span class="p">(</span><span class="n">feature_class_path</span><span class="p">,</span> <span class="n">field_name</span><span class="p">):</span>
+                <span class="n">arcpy</span><span class="o">.</span><span class="n">management</span><span class="o">.</span><span class="n">DeleteField</span><span class="p">(</span><span class="n">feature_class_path</span><span class="p">,</span> <span class="n">field_name</span><span class="p">)</span>
+                <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Deleted field &#39;</span><span class="si">{</span><span class="n">field_name</span><span class="si">}</span><span class="s2">&#39; from </span><span class="si">{</span><span class="n">feature_class_path</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+        <span class="k">except</span> <span class="n">arcpy</span><span class="o">.</span><span class="n">ExecuteError</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+            <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Failed to delete &#39;</span><span class="si">{</span><span class="n">field_name</span><span class="si">}</span><span class="s2">&#39; from </span><span class="si">{</span><span class="n">feature_class_path</span><span class="si">}</span><span class="s2">: </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="write_dict_to_json">
+<a class="viewcode-back" href="../../../generated_docs/custom_tools.general_tools.html#custom_tools.general_tools.file_utilities.write_dict_to_json">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">write_dict_to_json</span><span class="p">(</span><span class="n">path</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">dict_data</span><span class="p">:</span> <span class="nb">dict</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Writes a dictionary to a specified JSON file path.&quot;&quot;&quot;</span>
+    <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="s2">&quot;w&quot;</span><span class="p">,</span> <span class="n">encoding</span><span class="o">=</span><span class="s2">&quot;utf-8&quot;</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
+        <span class="n">json</span><span class="o">.</span><span class="n">dump</span><span class="p">(</span><span class="n">dict_data</span><span class="p">,</span> <span class="n">f</span><span class="p">,</span> <span class="n">indent</span><span class="o">=</span><span class="mi">4</span><span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="feature_has_rows">
+<a class="viewcode-back" href="../../../generated_docs/custom_tools.general_tools.html#custom_tools.general_tools.file_utilities.feature_has_rows">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">feature_has_rows</span><span class="p">(</span><span class="n">feature</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">io_types</span><span class="o">.</span><span class="n">GdbIOArg</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">feature</span><span class="p">:</span>
+        <span class="k">return</span> <span class="kc">False</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">arcpy</span><span class="o">.</span><span class="n">Exists</span><span class="p">(</span><span class="n">feature</span><span class="p">):</span>
+        <span class="k">return</span> <span class="kc">False</span>
+    <span class="k">return</span> <span class="n">count_objects</span><span class="p">(</span><span class="n">input_layer</span><span class="o">=</span><span class="n">feature</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span></div>
+
+
+
+<div class="viewcode-block" id="print_feature_info">
+<a class="viewcode-back" href="../../../generated_docs/custom_tools.general_tools.html#custom_tools.general_tools.file_utilities.print_feature_info">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">print_feature_info</span><span class="p">(</span><span class="n">file_path</span><span class="p">:</span> <span class="n">io_types</span><span class="o">.</span><span class="n">GdbIOArg</span><span class="p">,</span> <span class="n">description</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Helper for consistent print formatting of feature diagnostics.&quot;&quot;&quot;</span>
+    <span class="n">has_rows</span> <span class="o">=</span> <span class="n">feature_has_rows</span><span class="p">(</span><span class="n">file_path</span><span class="p">)</span>
+    <span class="n">count_or_status</span> <span class="o">=</span> <span class="n">count_objects</span><span class="p">(</span><span class="n">file_path</span><span class="p">)</span> <span class="k">if</span> <span class="n">has_rows</span> <span class="k">else</span> <span class="n">has_rows</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="se">\n</span><span class="si">{</span><span class="n">description</span><span class="si">}</span><span class="s2">: </span><span class="si">{</span><span class="n">count_or_status</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;For file path:</span><span class="se">\n</span><span class="s2"> </span><span class="si">{</span><span class="n">file_path</span><span class="si">}</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">)</span></div>
 
 </pre></div>
 

@@ -1,0 +1,357 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>composition_configs.core_config &mdash; Automatisk Generalisering 0.0.1 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../../_static/css/theme.css?v=e59714d7" />
+      <link rel="stylesheet" type="text/css" href="../../_static/custom.css" />
+
+  
+      <script src="../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../_static/documentation_options.js?v=d45e8c67"></script>
+      <script src="../../_static/doctools.js?v=9bcbadda"></script>
+      <script src="../../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../index.html" class="icon icon-home">
+            Automatisk Generalisering
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../generated_docs/custom_tools.html">custom_tools package</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../generated_docs/env_setup.html">env_setup package</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../generated_docs/file_manager.html">file_manager package</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../generated_docs/generalization.n100.building.html">generalization.n100.building package</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../generated_docs/input_data.html">input_data package</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../generated_docs/modules.html">automatisk-generalisering</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../index.html">Automatisk Generalisering</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">composition_configs.core_config</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for composition_configs.core_config</h1><div class="highlight"><pre>
+<span></span><span class="kn">from</span><span class="w"> </span><span class="nn">dataclasses</span><span class="w"> </span><span class="kn">import</span> <span class="n">dataclass</span><span class="p">,</span> <span class="n">field</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">Dict</span><span class="p">,</span>
+    <span class="n">List</span><span class="p">,</span>
+    <span class="n">Literal</span><span class="p">,</span>
+    <span class="n">Optional</span><span class="p">,</span>
+    <span class="n">Tuple</span><span class="p">,</span>
+    <span class="n">Union</span><span class="p">,</span>
+    <span class="n">Any</span><span class="p">,</span>
+    <span class="n">Callable</span><span class="p">,</span>
+    <span class="n">Mapping</span><span class="p">,</span>
+    <span class="n">Sequence</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">enum</span><span class="w"> </span><span class="kn">import</span> <span class="n">Enum</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">composition_configs</span><span class="w"> </span><span class="kn">import</span> <span class="n">type_defs</span>
+
+
+<div class="viewcode-block" id="WorkFileConfig">
+<a class="viewcode-back" href="../../generated_docs/composition_configs.html#composition_configs.core_config.WorkFileConfig">[docs]</a>
+<span class="nd">@dataclass</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">WorkFileConfig</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Configuration object for work file management behavior.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        root_file (str): The core file name used to generate unique file names.</span>
+<span class="sd">        write_to_memory (bool): If True, files are written to memory, if False, written to disk.</span>
+<span class="sd">        keep_files (bool): If True, work files are kept after execution; if False, they are deleted when done.</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">root_file</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">write_to_memory</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span>
+    <span class="n">keep_files</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span></div>
+
+
+
+<div class="viewcode-block" id="InputType">
+<a class="viewcode-back" href="../../generated_docs/composition_configs.html#composition_configs.core_config.InputType">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">InputType</span><span class="p">(</span><span class="n">Enum</span><span class="p">):</span>
+    <span class="n">PROCESSING</span> <span class="o">=</span> <span class="s2">&quot;processing&quot;</span>
+    <span class="n">CONTEXT</span> <span class="o">=</span> <span class="s2">&quot;context&quot;</span></div>
+
+
+
+<div class="viewcode-block" id="DataType">
+<a class="viewcode-back" href="../../generated_docs/composition_configs.html#composition_configs.core_config.DataType">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">DataType</span><span class="p">(</span><span class="n">Enum</span><span class="p">):</span>
+    <span class="n">VECTOR</span> <span class="o">=</span> <span class="s2">&quot;vector&quot;</span></div>
+
+    <span class="c1"># Future: RASTER = &quot;raster&quot;</span>
+
+
+<div class="viewcode-block" id="InputEntry">
+<a class="viewcode-back" href="../../generated_docs/composition_configs.html#composition_configs.core_config.InputEntry">[docs]</a>
+<span class="nd">@dataclass</span><span class="p">(</span><span class="n">frozen</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">InputEntry</span><span class="p">:</span>
+    <span class="nb">object</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">input_type</span><span class="p">:</span> <span class="n">InputType</span>
+    <span class="n">data_type</span><span class="p">:</span> <span class="n">DataType</span>
+    <span class="n">tag</span><span class="p">:</span> <span class="n">Literal</span><span class="p">[</span><span class="s2">&quot;input&quot;</span><span class="p">]</span>
+    <span class="n">path</span><span class="p">:</span> <span class="nb">str</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Represents a single input feature used in partitioned processing.</span>
+
+<span class="sd">    Users should prefer the factory methods `processing_input()` or `context_input()`</span>
+<span class="sd">    over manual initialization to ensure correct and future-proof configuration.</span>
+
+<span class="sd">    Attributes:</span>
+<span class="sd">        object: Unique identifier used across the partitioning logic.</span>
+<span class="sd">        input_type: Indicates whether the input is for processing or context.</span>
+<span class="sd">        data_type: Describes the data format (e.g., vector).</span>
+<span class="sd">        tag: Should always be &#39;input&#39; for now. Set automatically by factory methods.</span>
+<span class="sd">        path: Path to the input dataset.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+<div class="viewcode-block" id="InputEntry.processing_input">
+<a class="viewcode-back" href="../../generated_docs/composition_configs.html#composition_configs.core_config.InputEntry.processing_input">[docs]</a>
+    <span class="nd">@classmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">processing_input</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="nb">object</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">path</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">&quot;InputEntry&quot;</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Create a processing input (vector) entry with default tag.&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">cls</span><span class="p">(</span>
+            <span class="nb">object</span><span class="o">=</span><span class="nb">object</span><span class="p">,</span>
+            <span class="n">input_type</span><span class="o">=</span><span class="n">InputType</span><span class="o">.</span><span class="n">PROCESSING</span><span class="p">,</span>
+            <span class="n">data_type</span><span class="o">=</span><span class="n">DataType</span><span class="o">.</span><span class="n">VECTOR</span><span class="p">,</span>
+            <span class="n">tag</span><span class="o">=</span><span class="s2">&quot;input&quot;</span><span class="p">,</span>
+            <span class="n">path</span><span class="o">=</span><span class="n">path</span><span class="p">,</span>
+        <span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="InputEntry.context_input">
+<a class="viewcode-back" href="../../generated_docs/composition_configs.html#composition_configs.core_config.InputEntry.context_input">[docs]</a>
+    <span class="nd">@classmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">context_input</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="nb">object</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">path</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">&quot;InputEntry&quot;</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Create a context input (vector) entry with default tag.&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">cls</span><span class="p">(</span>
+            <span class="nb">object</span><span class="o">=</span><span class="nb">object</span><span class="p">,</span>
+            <span class="n">input_type</span><span class="o">=</span><span class="n">InputType</span><span class="o">.</span><span class="n">CONTEXT</span><span class="p">,</span>
+            <span class="n">data_type</span><span class="o">=</span><span class="n">DataType</span><span class="o">.</span><span class="n">VECTOR</span><span class="p">,</span>
+            <span class="n">tag</span><span class="o">=</span><span class="s2">&quot;input&quot;</span><span class="p">,</span>
+            <span class="n">path</span><span class="o">=</span><span class="n">path</span><span class="p">,</span>
+        <span class="p">)</span></div>
+</div>
+
+
+
+<div class="viewcode-block" id="OutputEntry">
+<a class="viewcode-back" href="../../generated_docs/composition_configs.html#composition_configs.core_config.OutputEntry">[docs]</a>
+<span class="nd">@dataclass</span><span class="p">(</span><span class="n">frozen</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">OutputEntry</span><span class="p">:</span>
+    <span class="nb">object</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">data_type</span><span class="p">:</span> <span class="n">DataType</span>
+    <span class="n">tag</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">path</span><span class="p">:</span> <span class="nb">str</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Represents a single output feature to be produced in partitioned processing.</span>
+
+<span class="sd">    Users should prefer the factory method `vector_output()` for correct setup,</span>
+<span class="sd">    and to allow future support for other data types (e.g., raster).</span>
+
+<span class="sd">    Attributes:</span>
+<span class="sd">        object: Unique identifier used across the partitioning logic.</span>
+<span class="sd">        data_type: Describes the data format (e.g., vector).</span>
+<span class="sd">        tag: Identifier for the output version (e.g., &#39;after_rbc&#39;).</span>
+<span class="sd">        path: Path where the output dataset will be written.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+<div class="viewcode-block" id="OutputEntry.vector_output">
+<a class="viewcode-back" href="../../generated_docs/composition_configs.html#composition_configs.core_config.OutputEntry.vector_output">[docs]</a>
+    <span class="nd">@classmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">vector_output</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="nb">object</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">tag</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">path</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">&quot;OutputEntry&quot;</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Create a vector output entry.&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">cls</span><span class="p">(</span>
+            <span class="nb">object</span><span class="o">=</span><span class="nb">object</span><span class="p">,</span>
+            <span class="n">data_type</span><span class="o">=</span><span class="n">DataType</span><span class="o">.</span><span class="n">VECTOR</span><span class="p">,</span>
+            <span class="n">tag</span><span class="o">=</span><span class="n">tag</span><span class="p">,</span>
+            <span class="n">path</span><span class="o">=</span><span class="n">path</span><span class="p">,</span>
+        <span class="p">)</span></div>
+</div>
+
+
+
+<div class="viewcode-block" id="InjectIO">
+<a class="viewcode-back" href="../../generated_docs/composition_configs.html#composition_configs.core_config.InjectIO">[docs]</a>
+<span class="nd">@dataclass</span><span class="p">(</span><span class="n">frozen</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">InjectIO</span><span class="p">:</span>
+    <span class="nb">object</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">tag</span><span class="p">:</span> <span class="nb">str</span></div>
+
+
+
+<div class="viewcode-block" id="ResolvedInputEntry">
+<a class="viewcode-back" href="../../generated_docs/composition_configs.html#composition_configs.core_config.ResolvedInputEntry">[docs]</a>
+<span class="nd">@dataclass</span><span class="p">(</span><span class="n">frozen</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">ResolvedInputEntry</span><span class="p">:</span>
+    <span class="nb">object</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">tag</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">path</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">input_type</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">data_type</span><span class="p">:</span> <span class="nb">str</span></div>
+
+
+
+<div class="viewcode-block" id="ResolvedOutputEntry">
+<a class="viewcode-back" href="../../generated_docs/composition_configs.html#composition_configs.core_config.ResolvedOutputEntry">[docs]</a>
+<span class="nd">@dataclass</span><span class="p">(</span><span class="n">frozen</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">ResolvedOutputEntry</span><span class="p">:</span>
+    <span class="nb">object</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">tag</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">path</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">data_type</span><span class="p">:</span> <span class="nb">str</span></div>
+
+
+
+<div class="viewcode-block" id="PartitionInputConfig">
+<a class="viewcode-back" href="../../generated_docs/composition_configs.html#composition_configs.core_config.PartitionInputConfig">[docs]</a>
+<span class="nd">@dataclass</span><span class="p">(</span><span class="n">frozen</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">PartitionInputConfig</span><span class="p">:</span>
+    <span class="n">entries</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">InputEntry</span><span class="p">]</span></div>
+
+
+
+<div class="viewcode-block" id="PartitionOutputConfig">
+<a class="viewcode-back" href="../../generated_docs/composition_configs.html#composition_configs.core_config.PartitionOutputConfig">[docs]</a>
+<span class="nd">@dataclass</span><span class="p">(</span><span class="n">frozen</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">PartitionOutputConfig</span><span class="p">:</span>
+    <span class="n">entries</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">OutputEntry</span><span class="p">]</span></div>
+
+
+
+<div class="viewcode-block" id="PartitionIOConfig">
+<a class="viewcode-back" href="../../generated_docs/composition_configs.html#composition_configs.core_config.PartitionIOConfig">[docs]</a>
+<span class="nd">@dataclass</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">PartitionIOConfig</span><span class="p">:</span>
+    <span class="n">input_config</span><span class="p">:</span> <span class="n">PartitionInputConfig</span>
+    <span class="n">output_config</span><span class="p">:</span> <span class="n">PartitionOutputConfig</span>
+    <span class="n">documentation_directory</span><span class="p">:</span> <span class="n">type_defs</span><span class="o">.</span><span class="n">SubdirectoryPath</span></div>
+
+
+
+<div class="viewcode-block" id="PartitionMethod">
+<a class="viewcode-back" href="../../generated_docs/composition_configs.html#composition_configs.core_config.PartitionMethod">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">PartitionMethod</span><span class="p">(</span><span class="n">Enum</span><span class="p">):</span>
+    <span class="n">FEATURES</span> <span class="o">=</span> <span class="s2">&quot;FEATURES&quot;</span>
+    <span class="n">VERTICES</span> <span class="o">=</span> <span class="s2">&quot;VERTICES&quot;</span></div>
+
+
+
+<span class="n">ParamPayload</span> <span class="o">=</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Union</span><span class="p">[</span><span class="n">Any</span><span class="p">,</span> <span class="n">Sequence</span><span class="p">[</span><span class="n">Any</span><span class="p">]]]</span>
+
+
+<div class="viewcode-block" id="FuncMethodEntryConfig">
+<a class="viewcode-back" href="../../generated_docs/composition_configs.html#composition_configs.core_config.FuncMethodEntryConfig">[docs]</a>
+<span class="nd">@dataclass</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">FuncMethodEntryConfig</span><span class="p">:</span>
+    <span class="n">func</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span>
+    <span class="n">params</span><span class="p">:</span> <span class="n">ParamPayload</span> <span class="o">=</span> <span class="kc">None</span></div>
+
+
+
+<div class="viewcode-block" id="ClassMethodEntryConfig">
+<a class="viewcode-back" href="../../generated_docs/composition_configs.html#composition_configs.core_config.ClassMethodEntryConfig">[docs]</a>
+<span class="nd">@dataclass</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">ClassMethodEntryConfig</span><span class="p">:</span>
+    <span class="n">class_</span><span class="p">:</span> <span class="nb">type</span>
+    <span class="n">method</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span>
+    <span class="n">init_params</span><span class="p">:</span> <span class="n">ParamPayload</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">method_params</span><span class="p">:</span> <span class="n">ParamPayload</span> <span class="o">=</span> <span class="kc">None</span></div>
+
+
+
+<div class="viewcode-block" id="MethodEntriesConfig">
+<a class="viewcode-back" href="../../generated_docs/composition_configs.html#composition_configs.core_config.MethodEntriesConfig">[docs]</a>
+<span class="nd">@dataclass</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">MethodEntriesConfig</span><span class="p">:</span>
+    <span class="n">entries</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">Union</span><span class="p">[</span><span class="n">FuncMethodEntryConfig</span><span class="p">,</span> <span class="n">ClassMethodEntryConfig</span><span class="p">]]</span></div>
+
+
+
+<div class="viewcode-block" id="PartitionRunConfig">
+<a class="viewcode-back" href="../../generated_docs/composition_configs.html#composition_configs.core_config.PartitionRunConfig">[docs]</a>
+<span class="nd">@dataclass</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">PartitionRunConfig</span><span class="p">:</span>
+    <span class="n">max_elements_per_partition</span><span class="p">:</span> <span class="nb">int</span>
+    <span class="n">context_radius_meters</span><span class="p">:</span> <span class="nb">int</span>
+    <span class="n">run_partition_optimization</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span>
+    <span class="n">partition_method</span><span class="p">:</span> <span class="n">PartitionMethod</span> <span class="o">=</span> <span class="n">PartitionMethod</span><span class="o">.</span><span class="n">FEATURES</span>
+    <span class="n">object_id_column</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;OBJECTID&quot;</span></div>
+
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2024, Kartverket.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

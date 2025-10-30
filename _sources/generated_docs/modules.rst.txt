@@ -4,6 +4,7 @@ automatisk-generalisering
 .. toctree::
    :maxdepth: 4
 
+   composition_configs
    conf
    config
    custom_tools

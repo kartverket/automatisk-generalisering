@@ -75,10 +75,12 @@
            <div itemprop="articleBody">
              
   <h1>Source code for file_manager.base_file_manager</h1><div class="highlight"><pre>
-<span></span><span class="kn">import</span><span class="w"> </span><span class="nn">re</span>
+<span></span><span class="kn">from</span><span class="w"> </span><span class="nn">pathlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">Path</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">re</span>
 
 <span class="kn">import</span><span class="w"> </span><span class="nn">config</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">env_setup.global_config</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">composition_configs</span><span class="w"> </span><span class="kn">import</span> <span class="n">type_defs</span>
 
 
 <div class="viewcode-block" id="BaseFileManager">
@@ -122,10 +124,10 @@
 
     <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
-        <span class="n">scale</span><span class="p">,</span>
-        <span class="n">object_name</span><span class="p">,</span>
-        <span class="n">script_source_name</span><span class="o">=</span><span class="s2">&quot;&quot;</span><span class="p">,</span>
-        <span class="n">description</span><span class="o">=</span><span class="s2">&quot;&quot;</span><span class="p">,</span>
+        <span class="n">scale</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+        <span class="n">object_name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+        <span class="n">script_source_name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span><span class="p">,</span>
+        <span class="n">description</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span><span class="p">,</span>
     <span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Initializes the BaseFileManager with specific scale and object name.&quot;&quot;&quot;</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">scale</span> <span class="o">=</span> <span class="n">scale</span>
@@ -135,10 +137,18 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">script_source_name</span> <span class="o">=</span> <span class="n">script_source_name</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">description</span> <span class="o">=</span> <span class="n">description</span>
 
-        <span class="bp">self</span><span class="o">.</span><span class="n">relative_path_gdb</span> <span class="o">=</span> <span class="sa">rf</span><span class="s2">&quot;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">local_root_directory</span><span class="si">}</span><span class="s2">\</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">project_root_directory</span><span class="si">}</span><span class="s2">\</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">scale</span><span class="si">}</span><span class="s2">\</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">object</span><span class="si">}</span><span class="s2">.gdb&quot;</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">relative_path_general_files</span> <span class="o">=</span> <span class="sa">rf</span><span class="s2">&quot;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">local_root_directory</span><span class="si">}</span><span class="s2">\</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">project_root_directory</span><span class="si">}</span><span class="s2">\</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">scale</span><span class="si">}</span><span class="s2">\</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">general_files_directory_name</span><span class="si">}</span><span class="s2">&quot;</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">relative_path_lyrx</span> <span class="o">=</span> <span class="sa">rf</span><span class="s2">&quot;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">local_root_directory</span><span class="si">}</span><span class="s2">\</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">project_root_directory</span><span class="si">}</span><span class="s2">\</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">scale</span><span class="si">}</span><span class="s2">\</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">lyrx_directory_name</span><span class="si">}</span><span class="s2">&quot;</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">relative_path_final_outputs</span> <span class="o">=</span> <span class="sa">rf</span><span class="s2">&quot;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">local_root_directory</span><span class="si">}</span><span class="s2">\</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">project_root_directory</span><span class="si">}</span><span class="s2">\</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">scale</span><span class="si">}</span><span class="s2">\</span><span class="si">{</span><span class="n">env_setup</span><span class="o">.</span><span class="n">global_config</span><span class="o">.</span><span class="n">final_outputs</span><span class="si">}</span><span class="s2">.gdb&quot;</span>
+        <span class="c1"># self.relative_path_gdb = rf&quot;{self.local_root_directory}\{self.project_root_directory}\{self.scale}\{self.object}.gdb&quot;</span>
+        <span class="c1"># self.relative_path_general_files = rf&quot;{self.local_root_directory}\{self.project_root_directory}\{self.scale}\{self.general_files_directory_name}&quot;</span>
+        <span class="c1"># self.relative_path_lyrx = rf&quot;{self.local_root_directory}\{self.project_root_directory}\{self.scale}\{self.lyrx_directory_name}&quot;</span>
+        <span class="c1"># self.relative_path_final_outputs = rf&quot;{self.local_root_directory}\{self.project_root_directory}\{self.scale}\{env_setup.global_config.final_outputs}.gdb&quot;</span>
+
+        <span class="n">base</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="n">Path</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">local_root_directory</span><span class="p">)</span> <span class="o">/</span> <span class="bp">self</span><span class="o">.</span><span class="n">project_root_directory</span> <span class="o">/</span> <span class="bp">self</span><span class="o">.</span><span class="n">scale</span>
+        <span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_gdb_dir</span> <span class="o">=</span> <span class="n">base</span> <span class="o">/</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">object</span><span class="si">}</span><span class="s2">.gdb&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_general_dir</span> <span class="o">=</span> <span class="n">base</span> <span class="o">/</span> <span class="bp">self</span><span class="o">.</span><span class="n">general_files_directory_name</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_lyrx_dir</span> <span class="o">=</span> <span class="n">base</span> <span class="o">/</span> <span class="bp">self</span><span class="o">.</span><span class="n">lyrx_directory_name</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_final_outputs_dir</span> <span class="o">=</span> <span class="n">base</span> <span class="o">/</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">env_setup</span><span class="o">.</span><span class="n">global_config</span><span class="o">.</span><span class="n">final_outputs</span><span class="si">}</span><span class="s2">.gdb&quot;</span>
 
     <span class="nd">@property</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">script_source_name</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
@@ -183,7 +193,7 @@
         <span class="bp">self</span><span class="p">,</span>
         <span class="n">script_source_name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
         <span class="n">description</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
-    <span class="p">):</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">type_defs</span><span class="o">.</span><span class="n">GdbFilePath</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Generates a file path for geodatabase (.gdb) files. After validating the input.</span>
 
@@ -195,7 +205,8 @@
 <span class="sd">            str: The absolute path for the .gdb file.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">validate_inputs</span><span class="p">(</span><span class="n">script_source_name</span><span class="p">,</span> <span class="n">description</span><span class="p">)</span>
-        <span class="k">return</span> <span class="sa">rf</span><span class="s2">&quot;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">relative_path_gdb</span><span class="si">}</span><span class="s2">\</span><span class="si">{</span><span class="n">script_source_name</span><span class="si">}</span><span class="s2">___</span><span class="si">{</span><span class="n">description</span><span class="si">}</span><span class="s2">___</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">scale</span><span class="si">}</span><span class="s2">_</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">object</span><span class="si">}</span><span class="s2">&quot;</span></div>
+        <span class="n">stem</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">script_source_name</span><span class="si">}</span><span class="s2">___</span><span class="si">{</span><span class="n">description</span><span class="si">}</span><span class="s2">___</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">scale</span><span class="si">}</span><span class="s2">_</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">object</span><span class="si">}</span><span class="s2">&quot;</span>
+        <span class="k">return</span> <span class="n">type_defs</span><span class="o">.</span><span class="n">GdbFilePath</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_gdb_dir</span> <span class="o">/</span> <span class="n">stem</span><span class="p">))</span></div>
 
 
 <div class="viewcode-block" id="BaseFileManager.generate_file_name_general_files">
@@ -205,7 +216,7 @@
         <span class="n">script_source_name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
         <span class="n">description</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
         <span class="n">file_type</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
-    <span class="p">):</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">type_defs</span><span class="o">.</span><span class="n">GeneralFilePath</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Generates a file path for general files (e.g., CSV, TXT). After validating the input.</span>
 
@@ -218,30 +229,8 @@
 <span class="sd">            str: The absolute path for the general file, including the file extension.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">validate_inputs</span><span class="p">(</span><span class="n">script_source_name</span><span class="p">,</span> <span class="n">description</span><span class="p">,</span> <span class="n">file_type</span><span class="p">)</span>
-        <span class="k">return</span> <span class="sa">rf</span><span class="s2">&quot;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">relative_path_general_files</span><span class="si">}</span><span class="s2">\</span><span class="si">{</span><span class="n">script_source_name</span><span class="si">}</span><span class="s2">___</span><span class="si">{</span><span class="n">description</span><span class="si">}</span><span class="s2">___</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">scale</span><span class="si">}</span><span class="s2">_</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">object</span><span class="si">}</span><span class="s2">.</span><span class="si">{</span><span class="n">file_type</span><span class="si">}</span><span class="s2">&quot;</span></div>
-
-
-<div class="viewcode-block" id="BaseFileManager.generate_file_name_general_directory">
-<a class="viewcode-back" href="../../generated_docs/file_manager.html#file_manager.base_file_manager.BaseFileManager.generate_file_name_general_directory">[docs]</a>
-    <span class="k">def</span><span class="w"> </span><span class="nf">generate_file_name_general_directory</span><span class="p">(</span>
-        <span class="bp">self</span><span class="p">,</span>
-        <span class="n">script_source_name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
-        <span class="n">description</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
-        <span class="n">file_type</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
-    <span class="p">):</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">        Generates a file path for general files (e.g., CSV, TXT). After validating the input.</span>
-
-<span class="sd">        Args:</span>
-<span class="sd">            script_source_name (str): The name of the script or source generating the file.</span>
-<span class="sd">            description (str): A brief description of the file&#39;s purpose or contents.</span>
-<span class="sd">            file_type (str): The filetype extension (without dot).</span>
-
-<span class="sd">        Returns:</span>
-<span class="sd">            str: The absolute path for the general file, including the file extension.</span>
-<span class="sd">        &quot;&quot;&quot;</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">validate_inputs</span><span class="p">(</span><span class="n">script_source_name</span><span class="p">,</span> <span class="n">description</span><span class="p">,</span> <span class="n">file_type</span><span class="p">)</span>
-        <span class="k">return</span> <span class="sa">rf</span><span class="s2">&quot;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">relative_path_general_files</span><span class="si">}</span><span class="s2">\</span><span class="si">{</span><span class="n">script_source_name</span><span class="si">}</span><span class="s2">___</span><span class="si">{</span><span class="n">description</span><span class="si">}</span><span class="s2">___</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">scale</span><span class="si">}</span><span class="s2">_</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">object</span><span class="si">}</span><span class="s2">&quot;</span></div>
+        <span class="n">stem</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">script_source_name</span><span class="si">}</span><span class="s2">___</span><span class="si">{</span><span class="n">description</span><span class="si">}</span><span class="s2">___</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">scale</span><span class="si">}</span><span class="s2">_</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">object</span><span class="si">}</span><span class="s2">.</span><span class="si">{</span><span class="n">file_type</span><span class="si">}</span><span class="s2">&quot;</span>
+        <span class="k">return</span> <span class="n">type_defs</span><span class="o">.</span><span class="n">GeneralFilePath</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_general_dir</span> <span class="o">/</span> <span class="n">stem</span><span class="p">))</span></div>
 
 
 <div class="viewcode-block" id="BaseFileManager.generate_file_name_lyrx">
@@ -250,7 +239,7 @@
         <span class="bp">self</span><span class="p">,</span>
         <span class="n">script_source_name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
         <span class="n">description</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
-    <span class="p">):</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">type_defs</span><span class="o">.</span><span class="n">LyrxFilePath</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Generates a file path for ArcGIS layer files (.lyrx). After validating the input.</span>
 
@@ -262,12 +251,13 @@
 <span class="sd">            str: The absolute path for the .lyrx file.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">validate_inputs</span><span class="p">(</span><span class="n">script_source_name</span><span class="p">,</span> <span class="n">description</span><span class="p">)</span>
-        <span class="k">return</span> <span class="sa">rf</span><span class="s2">&quot;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">relative_path_lyrx</span><span class="si">}</span><span class="s2">\</span><span class="si">{</span><span class="n">script_source_name</span><span class="si">}</span><span class="s2">___</span><span class="si">{</span><span class="n">description</span><span class="si">}</span><span class="s2">___</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">scale</span><span class="si">}</span><span class="s2">_</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">object</span><span class="si">}</span><span class="s2">.lyrx&quot;</span></div>
+        <span class="n">stem</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">script_source_name</span><span class="si">}</span><span class="s2">___</span><span class="si">{</span><span class="n">description</span><span class="si">}</span><span class="s2">___</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">scale</span><span class="si">}</span><span class="s2">_</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">object</span><span class="si">}</span><span class="s2">.lyrx&quot;</span>
+        <span class="k">return</span> <span class="n">type_defs</span><span class="o">.</span><span class="n">LyrxFilePath</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_lyrx_dir</span> <span class="o">/</span> <span class="n">stem</span><span class="p">))</span></div>
 
 
-<div class="viewcode-block" id="BaseFileManager.generate_file_lyrx_directory">
-<a class="viewcode-back" href="../../generated_docs/file_manager.html#file_manager.base_file_manager.BaseFileManager.generate_file_lyrx_directory">[docs]</a>
-    <span class="k">def</span><span class="w"> </span><span class="nf">generate_file_lyrx_directory</span><span class="p">(</span>
+<div class="viewcode-block" id="BaseFileManager.generate_file_lyrx_directory_deprecated">
+<a class="viewcode-back" href="../../generated_docs/file_manager.html#file_manager.base_file_manager.BaseFileManager.generate_file_lyrx_directory_deprecated">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">generate_file_lyrx_directory_deprecated</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
         <span class="n">script_source_name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
         <span class="n">description</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
@@ -283,7 +273,7 @@
 <span class="sd">            str: The absolute path for the .lyrx file.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">validate_inputs</span><span class="p">(</span><span class="n">script_source_name</span><span class="p">,</span> <span class="n">description</span><span class="p">)</span>
-        <span class="k">return</span> <span class="sa">rf</span><span class="s2">&quot;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">relative_path_lyrx</span><span class="si">}</span><span class="s2">\</span><span class="si">{</span><span class="n">script_source_name</span><span class="si">}</span><span class="s2">___</span><span class="si">{</span><span class="n">description</span><span class="si">}</span><span class="s2">___</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">scale</span><span class="si">}</span><span class="s2">_</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">object</span><span class="si">}</span><span class="s2">&quot;</span></div>
+        <span class="k">return</span> <span class="sa">rf</span><span class="s2">&quot;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">_lyrx_dir</span><span class="si">}</span><span class="s2">\</span><span class="si">{</span><span class="n">script_source_name</span><span class="si">}</span><span class="s2">___</span><span class="si">{</span><span class="n">description</span><span class="si">}</span><span class="s2">___</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">scale</span><span class="si">}</span><span class="s2">_</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">object</span><span class="si">}</span><span class="s2">&quot;</span></div>
 
 
 <div class="viewcode-block" id="BaseFileManager.generate_final_outputs">
@@ -291,7 +281,7 @@
     <span class="k">def</span><span class="w"> </span><span class="nf">generate_final_outputs</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
         <span class="n">file_name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
-    <span class="p">):</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">type_defs</span><span class="o">.</span><span class="n">GdbFilePath</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Generates a file path for geodatabase (.gdb) files for the final output files. After validating the input.</span>
 
@@ -302,7 +292,29 @@
 <span class="sd">            str: The absolute path for the .gdb file.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">validate_inputs</span><span class="p">(</span><span class="n">file_name</span><span class="p">)</span>
-        <span class="k">return</span> <span class="sa">rf</span><span class="s2">&quot;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">relative_path_final_outputs</span><span class="si">}</span><span class="s2">\</span><span class="si">{</span><span class="n">file_name</span><span class="si">}</span><span class="s2">&quot;</span></div>
+        <span class="k">return</span> <span class="n">type_defs</span><span class="o">.</span><span class="n">GdbFilePath</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_final_outputs_dir</span> <span class="o">/</span> <span class="n">file_name</span><span class="p">))</span></div>
+
+
+<div class="viewcode-block" id="BaseFileManager.generate_general_subdirectory">
+<a class="viewcode-back" href="../../generated_docs/file_manager.html#file_manager.base_file_manager.BaseFileManager.generate_general_subdirectory">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">generate_general_subdirectory</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">description</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">type_defs</span><span class="o">.</span><span class="n">SubdirectoryPath</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Generates a subdirectory path under the general files directory.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            description (str): A short descriptor for the subdirectory purpose.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            str: Absolute path of the subdirectory.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">validate_inputs</span><span class="p">(</span><span class="n">description</span><span class="p">)</span>
+
+        <span class="n">dir_name</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">description</span><span class="si">}</span><span class="s2">___</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">scale</span><span class="si">}</span><span class="s2">_</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">object</span><span class="si">}</span><span class="s2">&quot;</span>
+        <span class="n">full_path</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_general_dir</span> <span class="o">/</span> <span class="n">dir_name</span>
+        <span class="n">full_path</span><span class="o">.</span><span class="n">mkdir</span><span class="p">(</span><span class="n">parents</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">exist_ok</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">type_defs</span><span class="o">.</span><span class="n">SubdirectoryPath</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">full_path</span><span class="p">))</span></div>
 </div>
 
 </pre></div>

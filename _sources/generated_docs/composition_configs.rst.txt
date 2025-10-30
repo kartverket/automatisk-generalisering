@@ -1,0 +1,53 @@
+composition\_configs package
+============================
+
+Submodules
+----------
+
+composition\_configs.core\_config module
+----------------------------------------
+
+.. automodule:: composition_configs.core_config
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+composition\_configs.io\_types module
+-------------------------------------
+
+.. automodule:: composition_configs.io_types
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+composition\_configs.logic\_config module
+-----------------------------------------
+
+.. automodule:: composition_configs.logic_config
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+composition\_configs.type\_defs module
+--------------------------------------
+
+.. automodule:: composition_configs.type_defs
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+composition\_configs.wrapper\_config module
+-------------------------------------------
+
+.. automodule:: composition_configs.wrapper_config
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+Module contents
+---------------
+
+.. automodule:: composition_configs
+   :members:
+   :show-inheritance:
+   :undoc-members:

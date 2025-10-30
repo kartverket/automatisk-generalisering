@@ -56,7 +56,8 @@
 <li class="toctree-l4"><a class="reference internal" href="#custom-tools-general-tools-geometry-tools-module">custom_tools.general_tools.geometry_tools module</a></li>
 <li class="toctree-l4"><a class="reference internal" href="#custom-tools-general-tools-graph-module">custom_tools.general_tools.graph module</a></li>
 <li class="toctree-l4"><a class="reference internal" href="#module-custom_tools.general_tools.line_to_buffer_symbology">custom_tools.general_tools.line_to_buffer_symbology module</a></li>
-<li class="toctree-l4"><a class="reference internal" href="#custom-tools-general-tools-partition-iterator-module">custom_tools.general_tools.partition_iterator module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#module-custom_tools.general_tools.param_utils">custom_tools.general_tools.param_utils module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#module-custom_tools.general_tools.partition_iterator">custom_tools.general_tools.partition_iterator module</a></li>
 <li class="toctree-l4"><a class="reference internal" href="#custom-tools-general-tools-polygon-processor-module">custom_tools.general_tools.polygon_processor module</a></li>
 <li class="toctree-l4"><a class="reference internal" href="#module-custom_tools.general_tools.print_logger">custom_tools.general_tools.print_logger module</a></li>
 <li class="toctree-l4"><a class="reference internal" href="#module-custom_tools.general_tools.study_area_selector">custom_tools.general_tools.study_area_selector module</a></li>
@@ -472,6 +473,18 @@ and creates a new, permanent feature class as an output.</p>
 </dd></dl>
 
 <dl class="py function">
+<dt class="sig sig-object py" id="custom_tools.general_tools.file_utilities.create_feature_class">
+<span class="sig-prename descclassname"><span class="pre">custom_tools.general_tools.file_utilities.</span></span><span class="sig-name descname"><span class="pre">create_feature_class</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">template_feature</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">new_feature</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="reference internal" href="../_modules/custom_tools/general_tools/file_utilities.html#create_feature_class"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#custom_tools.general_tools.file_utilities.create_feature_class" title="Link to this definition"></a></dt>
+<dd><p>Creates a new feature from a templete feature class</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="custom_tools.general_tools.file_utilities.delete_feature">
+<span class="sig-prename descclassname"><span class="pre">custom_tools.general_tools.file_utilities.</span></span><span class="sig-name descname"><span class="pre">delete_feature</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">input_feature</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/custom_tools/general_tools/file_utilities.html#delete_feature"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#custom_tools.general_tools.file_utilities.delete_feature" title="Link to this definition"></a></dt>
+<dd><p>Deletes a feature class if it exists.</p>
+</dd></dl>
+
+<dl class="py function">
 <dt class="sig sig-object py" id="custom_tools.general_tools.file_utilities.compare_feature_classes">
 <span class="sig-prename descclassname"><span class="pre">custom_tools.general_tools.file_utilities.</span></span><span class="sig-name descname"><span class="pre">compare_feature_classes</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">feature_class_1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">feature_class_2</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/custom_tools/general_tools/file_utilities.html#compare_feature_classes"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#custom_tools.general_tools.file_utilities.compare_feature_classes" title="Link to this definition"></a></dt>
 <dd></dd></dl>
@@ -498,6 +511,37 @@ Assumes each added field set is a list of [field_name, field_type] pairs.</p>
 <span class="sig-prename descclassname"><span class="pre">custom_tools.general_tools.file_utilities.</span></span><span class="sig-name descname"><span class="pre">count_objects</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">input_layer</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/custom_tools/general_tools/file_utilities.html#count_objects"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#custom_tools.general_tools.file_utilities.count_objects" title="Link to this definition"></a></dt>
 <dd></dd></dl>
 
+<dl class="py function">
+<dt class="sig sig-object py" id="custom_tools.general_tools.file_utilities.delete_fields_if_exist">
+<span class="sig-prename descclassname"><span class="pre">custom_tools.general_tools.file_utilities.</span></span><span class="sig-name descname"><span class="pre">delete_fields_if_exist</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">feature_class_path</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fields_to_delete</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="reference internal" href="../_modules/custom_tools/general_tools/file_utilities.html#delete_fields_if_exist"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#custom_tools.general_tools.file_utilities.delete_fields_if_exist" title="Link to this definition"></a></dt>
+<dd><p>Deletes specified fields from a feature class if they exist.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>feature_class_path</strong> (<em>str</em>) – Path to the feature class.</p></li>
+<li><p><strong>fields_to_delete</strong> (<em>list</em><em>[</em><em>str</em><em>]</em>) – Fields to delete if present.</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="custom_tools.general_tools.file_utilities.write_dict_to_json">
+<span class="sig-prename descclassname"><span class="pre">custom_tools.general_tools.file_utilities.</span></span><span class="sig-name descname"><span class="pre">write_dict_to_json</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">path</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dict_data</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dict</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="reference internal" href="../_modules/custom_tools/general_tools/file_utilities.html#write_dict_to_json"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#custom_tools.general_tools.file_utilities.write_dict_to_json" title="Link to this definition"></a></dt>
+<dd><p>Writes a dictionary to a specified JSON file path.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="custom_tools.general_tools.file_utilities.feature_has_rows">
+<span class="sig-prename descclassname"><span class="pre">custom_tools.general_tools.file_utilities.</span></span><span class="sig-name descname"><span class="pre">feature_has_rows</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">feature</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference internal" href="composition_configs.html#composition_configs.type_defs.GdbFilePath" title="composition_configs.type_defs.GdbFilePath"><span class="pre">GdbFilePath</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference internal" href="composition_configs.html#composition_configs.core_config.InjectIO" title="composition_configs.core_config.InjectIO"><span class="pre">InjectIO</span></a></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">bool</span></span></span><a class="reference internal" href="../_modules/custom_tools/general_tools/file_utilities.html#feature_has_rows"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#custom_tools.general_tools.file_utilities.feature_has_rows" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="custom_tools.general_tools.file_utilities.print_feature_info">
+<span class="sig-prename descclassname"><span class="pre">custom_tools.general_tools.file_utilities.</span></span><span class="sig-name descname"><span class="pre">print_feature_info</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">file_path</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="composition_configs.html#composition_configs.type_defs.GdbFilePath" title="composition_configs.type_defs.GdbFilePath"><span class="pre">GdbFilePath</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference internal" href="composition_configs.html#composition_configs.core_config.InjectIO" title="composition_configs.core_config.InjectIO"><span class="pre">InjectIO</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">description</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="reference internal" href="../_modules/custom_tools/general_tools/file_utilities.html#print_feature_info"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#custom_tools.general_tools.file_utilities.print_feature_info" title="Link to this definition"></a></dt>
+<dd><p>Helper for consistent print formatting of feature diagnostics.</p>
+</dd></dl>
+
 </section>
 <section id="custom-tools-general-tools-geometry-tools-module">
 <h2>custom_tools.general_tools.geometry_tools module<a class="headerlink" href="#custom-tools-general-tools-geometry-tools-module" title="Link to this heading"></a></h2>
@@ -509,7 +553,7 @@ Assumes each added field set is a list of [field_name, field_type] pairs.</p>
 <span id="custom-tools-general-tools-line-to-buffer-symbology-module"></span><h2>custom_tools.general_tools.line_to_buffer_symbology module<a class="headerlink" href="#module-custom_tools.general_tools.line_to_buffer_symbology" title="Link to this heading"></a></h2>
 <dl class="py class">
 <dt class="sig sig-object py" id="custom_tools.general_tools.line_to_buffer_symbology.LineToBufferSymbology">
-<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">custom_tools.general_tools.line_to_buffer_symbology.</span></span><span class="sig-name descname"><span class="pre">LineToBufferSymbology</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">input_road_lines</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sql_selection_query</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dict</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">output_road_buffer</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">buffer_factor</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">float</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fixed_buffer_addition</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">float</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">write_work_files_to_memory</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">keep_work_files</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">root_file</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/custom_tools/general_tools/line_to_buffer_symbology.html#LineToBufferSymbology"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#custom_tools.general_tools.line_to_buffer_symbology.LineToBufferSymbology" title="Link to this definition"></a></dt>
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">custom_tools.general_tools.line_to_buffer_symbology.</span></span><span class="sig-name descname"><span class="pre">LineToBufferSymbology</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">line_to_buffer_config</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="composition_configs.html#composition_configs.logic_config.LineToBufferSymbologyKwargs" title="composition_configs.logic_config.LineToBufferSymbologyKwargs"><span class="pre">LineToBufferSymbologyKwargs</span></a></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/custom_tools/general_tools/line_to_buffer_symbology.html#LineToBufferSymbology"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#custom_tools.general_tools.line_to_buffer_symbology.LineToBufferSymbology" title="Link to this definition"></a></dt>
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
 <dl class="py method">
 <dt class="sig sig-object py" id="custom_tools.general_tools.line_to_buffer_symbology.LineToBufferSymbology.selecting_different_road_lines">
@@ -542,21 +586,9 @@ depending on the <cite>write_work_files_to_memory</cite> flag.</p>
 </dd></dl>
 
 <dl class="py method">
-<dt class="sig sig-object py" id="custom_tools.general_tools.line_to_buffer_symbology.LineToBufferSymbology.process_each_query">
-<span class="sig-name descname"><span class="pre">process_each_query</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">sql_query</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">original_width</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">counter</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/custom_tools/general_tools/line_to_buffer_symbology.html#LineToBufferSymbology.process_each_query"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#custom_tools.general_tools.line_to_buffer_symbology.LineToBufferSymbology.process_each_query" title="Link to this definition"></a></dt>
-<dd><p>Processes each SQL query to select road lines and create buffers.</p>
-</dd></dl>
-
-<dl class="py method">
-<dt class="sig sig-object py" id="custom_tools.general_tools.line_to_buffer_symbology.LineToBufferSymbology.delete_working_files">
-<span class="sig-name descname"><span class="pre">delete_working_files</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">file_paths</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/custom_tools/general_tools/line_to_buffer_symbology.html#LineToBufferSymbology.delete_working_files"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#custom_tools.general_tools.line_to_buffer_symbology.LineToBufferSymbology.delete_working_files" title="Link to this definition"></a></dt>
-<dd><p>Deletes multiple feature classes or files.</p>
-</dd></dl>
-
-<dl class="py method">
-<dt class="sig sig-object py" id="custom_tools.general_tools.line_to_buffer_symbology.LineToBufferSymbology.delete_feature_class">
-<span class="sig-name descname"><span class="pre">delete_feature_class</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">feature_class_path</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/custom_tools/general_tools/line_to_buffer_symbology.html#LineToBufferSymbology.delete_feature_class"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#custom_tools.general_tools.line_to_buffer_symbology.LineToBufferSymbology.delete_feature_class" title="Link to this definition"></a></dt>
-<dd><p>Deletes a feature class if it exists.</p>
+<dt class="sig sig-object py" id="custom_tools.general_tools.line_to_buffer_symbology.LineToBufferSymbology.process_query_buffer_width_pair">
+<span class="sig-name descname"><span class="pre">process_query_buffer_width_pair</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">sql_query</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">original_width</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">counter</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/custom_tools/general_tools/line_to_buffer_symbology.html#LineToBufferSymbology.process_query_buffer_width_pair"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#custom_tools.general_tools.line_to_buffer_symbology.LineToBufferSymbology.process_query_buffer_width_pair" title="Link to this definition"></a></dt>
+<dd><p>Processes a SQL query to select road lines and create buffers based on buffer width.</p>
 </dd></dl>
 
 <dl class="py method">
@@ -573,8 +605,569 @@ depending on the <cite>write_work_files_to_memory</cite> flag.</p>
 </dd></dl>
 
 </section>
-<section id="custom-tools-general-tools-partition-iterator-module">
-<h2>custom_tools.general_tools.partition_iterator module<a class="headerlink" href="#custom-tools-general-tools-partition-iterator-module" title="Link to this heading"></a></h2>
+<section id="module-custom_tools.general_tools.param_utils">
+<span id="custom-tools-general-tools-param-utils-module"></span><h2>custom_tools.general_tools.param_utils module<a class="headerlink" href="#module-custom_tools.general_tools.param_utils" title="Link to this heading"></a></h2>
+<dl class="py function">
+<dt class="sig sig-object py" id="custom_tools.general_tools.param_utils.to_kwargs_or_empty">
+<span class="sig-prename descclassname"><span class="pre">custom_tools.general_tools.param_utils.</span></span><span class="sig-name descname"><span class="pre">to_kwargs_or_empty</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">obj</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Mapping</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">Any</span><span class="p"><span class="pre">]</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">Any</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">Dict</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">Any</span><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="../_modules/custom_tools/general_tools/param_utils.html#to_kwargs_or_empty"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#custom_tools.general_tools.param_utils.to_kwargs_or_empty" title="Link to this definition"></a></dt>
+<dd><p>Coerce params to a <a href="#id1"><span class="problematic" id="id2">**</span></a>kwargs-compatible dict.
+- None -&gt; {}
+- dataclass -&gt; asdict(…)
+- Mapping -&gt; must have str keys</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="custom_tools.general_tools.param_utils.ensure_dataclass_list">
+<span class="sig-prename descclassname"><span class="pre">custom_tools.general_tools.param_utils.</span></span><span class="sig-name descname"><span class="pre">ensure_dataclass_list</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">params</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Any</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">Sequence</span><span class="p"><span class="pre">[</span></span><span class="pre">Any</span><span class="p"><span class="pre">]</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">List</span><span class="p"><span class="pre">[</span></span><span class="pre">Any</span><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="../_modules/custom_tools/general_tools/param_utils.html#ensure_dataclass_list"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#custom_tools.general_tools.param_utils.ensure_dataclass_list" title="Link to this definition"></a></dt>
+<dd><dl class="simple">
+<dt>Accept only:</dt><dd><ul class="simple">
+<li><p>None -&gt; []</p></li>
+<li><p>dataclass instance -&gt; [instance]</p></li>
+<li><p>(list|tuple) of dataclass instances -&gt; list(instances)</p></li>
+</ul>
+</dd>
+</dl>
+<p>Everything else -&gt; TypeError</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="custom_tools.general_tools.param_utils.validate_positional_arity">
+<span class="sig-prename descclassname"><span class="pre">custom_tools.general_tools.param_utils.</span></span><span class="sig-name descname"><span class="pre">validate_positional_arity</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">fn</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Any</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">n</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em>, <em class="sig-param"><span class="keyword-only-separator o"><abbr title="Keyword-only parameters separator (PEP 3102)"><span class="pre">*</span></abbr></span></em>, <em class="sig-param"><span class="n"><span class="pre">allow_varargs</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="reference internal" href="../_modules/custom_tools/general_tools/param_utils.html#validate_positional_arity"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#custom_tools.general_tools.param_utils.validate_positional_arity" title="Link to this definition"></a></dt>
+<dd><p>Ensure <cite>fn</cite> can accept <cite>n</cite> positional args (ignoring ‘self’).</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="custom_tools.general_tools.param_utils.payload_log">
+<span class="sig-prename descclassname"><span class="pre">custom_tools.general_tools.param_utils.</span></span><span class="sig-name descname"><span class="pre">payload_log</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">params</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Any</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">Sequence</span><span class="p"><span class="pre">[</span></span><span class="pre">Any</span><span class="p"><span class="pre">]</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">jsonifier</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">List</span><span class="p"><span class="pre">[</span></span><span class="pre">Dict</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">Any</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span></span><a class="reference internal" href="../_modules/custom_tools/general_tools/param_utils.html#payload_log"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#custom_tools.general_tools.param_utils.payload_log" title="Link to this definition"></a></dt>
+<dd><p>Return a list of dataclass-log dicts (or None).</p>
+</dd></dl>
+
+</section>
+<section id="module-custom_tools.general_tools.partition_iterator">
+<span id="custom-tools-general-tools-partition-iterator-module"></span><h2>custom_tools.general_tools.partition_iterator module<a class="headerlink" href="#module-custom_tools.general_tools.partition_iterator" title="Link to this heading"></a></h2>
+<dl class="py class">
+<dt class="sig sig-object py" id="custom_tools.general_tools.partition_iterator.PartitionIterator">
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">custom_tools.general_tools.partition_iterator.</span></span><span class="sig-name descname"><span class="pre">PartitionIterator</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">partition_io_config</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="composition_configs.html#composition_configs.core_config.PartitionIOConfig" title="composition_configs.core_config.PartitionIOConfig"><span class="pre">PartitionIOConfig</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">partition_method_inject_config</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="composition_configs.html#composition_configs.core_config.MethodEntriesConfig" title="composition_configs.core_config.MethodEntriesConfig"><span class="pre">MethodEntriesConfig</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">partition_iterator_run_config</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="composition_configs.html#composition_configs.core_config.PartitionRunConfig" title="composition_configs.core_config.PartitionRunConfig"><span class="pre">PartitionRunConfig</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">work_file_manager_config</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="composition_configs.html#composition_configs.core_config.WorkFileConfig" title="composition_configs.core_config.WorkFileConfig"><span class="pre">WorkFileConfig</span></a></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/custom_tools/general_tools/partition_iterator.html#PartitionIterator"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#custom_tools.general_tools.partition_iterator.PartitionIterator" title="Link to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<p>Partitioned processing pipeline for large vector datasets with context-aware selection
+and configurable, injected methods.</p>
+<p># Overview
+This iterator splits work into <em>cartographic partitions</em> and processes only the
+features relevant to each partition. It distinguishes between:</p>
+<blockquote>
+<div><ul class="simple">
+<li><p><strong>processing inputs</strong>: primary datasets to process, and</p></li>
+<li><p><strong>context inputs</strong>: supporting datasets selected within a configurable distance
+of the processing features.</p></li>
+</ul>
+</div></blockquote>
+<dl class="simple">
+<dt>For each partition, the iterator:</dt><dd><ol class="arabic simple">
+<li><p>Selects processing features (center-in partition, plus optional near-by radius).</p></li>
+<li><p>Selects context features (within the same radius of the partition).</p></li>
+<li><p>Resolves and executes <em>injected methods</em> (functions or class methods) whose
+parameters may include injected I/O paths.</p></li>
+<li><p>Appends the partition’s outputs to the configured final outputs.</p></li>
+<li><p>Logs iteration catalogs, method parameters, attempts, and errors to a
+documentation directory.</p></li>
+</ol>
+</dd>
+</dl>
+<p># Catalogs
+The iterator maintains three dictionaries:</p>
+<blockquote>
+<div><ul class="simple">
+<li><p><cite>input_catalog</cite>: per <em>object</em> (dataset name) stores metadata and the global input
+paths; populated from <cite>PartitionIOConfig</cite>.</p></li>
+<li><p><cite>output_catalog</cite>: per object stores final output paths; populated from
+<cite>PartitionIOConfig</cite>.</p></li>
+<li><p><cite>iteration_catalog</cite>: per partition, per object, stores iteration-specific paths
+(e.g., the selected subset path, produced outputs) and counts.</p></li>
+</ul>
+</div></blockquote>
+<dl class="simple">
+<dt>The following keys are used inside catalogs:</dt><dd><ul class="simple">
+<li><p><cite>INPUT_TYPE_KEY</cite> / <cite>DATA_TYPE_KEY</cite>: metadata about each object’s role and data type.</p></li>
+<li><p><cite>INPUT_KEY</cite>: the canonical tag for the active input path of an object.</p></li>
+<li><p><cite>COUNT</cite>: number of selected features this iteration.</p></li>
+<li><p><cite>DUMMY</cite>: a dummy feature path used to keep downstream logic stable when a
+particular object has no features in a partition.</p></li>
+</ul>
+</dd>
+</dl>
+<p># Injection &amp; method execution
+Injected method configs (functions or class methods) may include <cite>InjectIO(object, tag)</cite>
+placeholders that refer to a <em>catalog object</em> (dataset key) and a <em>tag</em> (path key).</p>
+<p>Path resolution rules per partition:
+- <cite>InjectIO(obj, “input”)</cite>: always resolves to the <strong>selected features for this partition</strong></p>
+<blockquote>
+<div><p>(never the global dataset), ensuring your method receives only the slice relevant
+to the current partition.</p>
+</div></blockquote>
+<ul class="simple">
+<li><dl class="simple">
+<dt><cite>InjectIO(obj, some_tag)</cite> where <cite>some_tag != “input”</cite> resolves to a <a href="#id3"><span class="problematic" id="id4">**</span></a>new, unique</dt><dd><p>iteration-scoped path** under the iteration work directory. If no such entry exists
+yet for <cite>(obj, some_tag)</cite>, the iterator creates and registers it in the
+<cite>iteration_catalog[obj][some_tag]</cite>. Your injected method is expected to write to it.</p>
+</dd>
+</dl>
+</li>
+<li><dl class="simple">
+<dt>You may introduce <strong>new tags for an existing object</strong> (e.g., <cite>“buffer”</cite>, <cite>“cleaned”</cite>)</dt><dd><p>or even <strong>new objects</strong> via <cite>InjectIO(new_object, new_tag)</cite>. The iterator will allocate
+paths and track them in <cite>iteration_catalog</cite> as those tags/objects appear in params.</p>
+</dd>
+</dl>
+</li>
+</ul>
+<p>Resolution &amp; execution flow:
+1. <cite>resolve_injected_io_for_methods(…)</cite> deep-walks params (dataclasses, dicts, lists,</p>
+<blockquote>
+<div><p>tuples, sets), replacing every <cite>InjectIO</cite> with a concrete, partition-scoped path, and
+returns a <em>resolved</em> config.</p>
+</div></blockquote>
+<ol class="arabic simple" start="2">
+<li><dl class="simple">
+<dt><cite>execute_injected_methods_with_retry(…)</cite> runs the resolved methods with retry</dt><dd><p>semantics. For class methods, constructor vs method kwargs are split automatically
+(only names present on <cite>__init__</cite> are sent to the constructor).</p>
+</dd>
+</dl>
+</li>
+<li><dl class="simple">
+<dt>Each attempt produces JSON logs (params, status, exceptions with tracebacks). On</dt><dd><p>success, a consolidated <cite>method_log_{partition_id}.json</cite> is written. On failure,
+per-attempt logs live under <cite>error_logs/error_{partition_id}/attempt_{n}_error.json</cite>.</p>
+</dd>
+</dl>
+</li>
+</ol>
+<p>Notes:
+- The iterator does <strong>not</strong> implicitly copy data into non-“input” targets; it only</p>
+<blockquote>
+<div><p>allocates file paths. Your injected method is responsible for creating/writing those
+outputs.</p>
+</div></blockquote>
+<ul class="simple">
+<li><dl class="simple">
+<dt>Using <cite>“input”</cite> guarantees you receive the <em>current partition’s selection</em>, not the</dt><dd><p>global source.</p>
+</dd>
+</dl>
+</li>
+</ul>
+<p># Partition creation &amp; selection
+Cartographic partitions are created from all configured processing inputs.
+For each partition:</p>
+<blockquote>
+<div><ul class="simple">
+<li><p>Processing features are selected by “center in partition” and optionally augmented
+with “near partition” features (radius = <cite>context_radius_meters</cite>), with a
+<cite>PARTITION_FIELD</cite> set to 1 (center-in) or 0 (nearby) to preserve provenance.</p></li>
+<li><p>Context features are selected by distance to the same partition (using the
+configured radius).</p></li>
+</ul>
+</div></blockquote>
+<p># Logging (documentation directory)
+At the start of <cite>run()</cite>, the configured <cite>documentation_directory</cite> is cleared and
+recreated (with safety checks). The iterator writes:</p>
+<blockquote>
+<div><ul class="simple">
+<li><p><cite>input_catalog.json</cite>, <cite>output_catalog.json</cite> (initial state),</p></li>
+<li><p><cite>iteration_catalog/catalog_{partition_id}.json</cite> (per-partition selection),</p></li>
+<li><p><cite>method_logs/method_log_{partition_id}.json</cite> (final success per partition),</p></li>
+<li><p><cite>error_logs/error_{partition_id}/attempt_{n}_error.json</cite> (per attempt, on error),</p></li>
+<li><p><cite>error_log.json</cite> (retry summary across partitions).</p></li>
+</ul>
+</div></blockquote>
+<p># Args (configs)
+- <cite>partition_io_config (core_config.PartitionIOConfig)</cite>: Declares input objects</p>
+<blockquote>
+<div><p>(processing/context) and output objects (vector outputs) with their paths and
+data types. Also provides <cite>documentation_directory</cite>.</p>
+</div></blockquote>
+<ul class="simple">
+<li><p><cite>partition_method_inject_config (core_config.MethodEntriesConfig)</cite>: The list of
+injected methods (functions or class methods) with their parameter configs. Any
+<cite>InjectIO</cite> placeholders will be resolved per partition.</p></li>
+<li><p><cite>partition_iterator_run_config (core_config.PartitionRunConfig)</cite>: Runtime knobs:
+context radius (meters), max elements per partition, partition method
+(“FEATURES” or “VERTICES”), object ID field, and whether to auto-optimize the
+partition feature count.</p></li>
+<li><p><cite>work_file_manager_config (core_config.WorkFileConfig)</cite>: Controls where and how
+temporary/iteration/persistent paths are generated.</p></li>
+</ul>
+<p># Side effects
+- Creates and deletes intermediate feature classes and layers.
+- Writes JSON logs under <cite>documentation_directory</cite> (safe-guarded).
+- Appends to final outputs as partitions complete.
+- Adds then removes (via cleanup) the <cite>PARTITION_FIELD</cite> as needed.</p>
+<p># Raises
+- <cite>ValueError</cite> for duplicate input objects.
+- <cite>RuntimeError</cite> when no valid partition size can be found (if optimization is enabled).
+- Any exception thrown inside injected methods is captured, logged, and retried up to</p>
+<blockquote>
+<div><p>the configured maximum. If all retries fail, the exception is re-raised.</p>
+</div></blockquote>
+<dl>
+<dt># Example (high level)</dt><dd><dl class="simple">
+<dt>iterator = PartitionIterator(</dt><dd><p>partition_io_config=io_config,
+partition_method_inject_config=methods_config,
+partition_iterator_run_config=run_config,
+work_file_manager_config=wm_config,</p>
+</dd>
+</dl>
+<p>)
+iterator.run()</p>
+</dd>
+</dl>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="custom_tools.general_tools.partition_iterator.PartitionIterator.INPUT_TYPE_KEY">
+<span class="sig-name descname"><span class="pre">INPUT_TYPE_KEY</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'input_type'</span></em><a class="headerlink" href="#custom_tools.general_tools.partition_iterator.PartitionIterator.INPUT_TYPE_KEY" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="custom_tools.general_tools.partition_iterator.PartitionIterator.DATA_TYPE_KEY">
+<span class="sig-name descname"><span class="pre">DATA_TYPE_KEY</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'data_type'</span></em><a class="headerlink" href="#custom_tools.general_tools.partition_iterator.PartitionIterator.DATA_TYPE_KEY" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="custom_tools.general_tools.partition_iterator.PartitionIterator.INPUT_KEY">
+<span class="sig-name descname"><span class="pre">INPUT_KEY</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'input'</span></em><a class="headerlink" href="#custom_tools.general_tools.partition_iterator.PartitionIterator.INPUT_KEY" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="custom_tools.general_tools.partition_iterator.PartitionIterator.DUMMY">
+<span class="sig-name descname"><span class="pre">DUMMY</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'dummy'</span></em><a class="headerlink" href="#custom_tools.general_tools.partition_iterator.PartitionIterator.DUMMY" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="custom_tools.general_tools.partition_iterator.PartitionIterator.COUNT">
+<span class="sig-name descname"><span class="pre">COUNT</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'count'</span></em><a class="headerlink" href="#custom_tools.general_tools.partition_iterator.PartitionIterator.COUNT" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="custom_tools.general_tools.partition_iterator.PartitionIterator.PARTITION_FIELD">
+<span class="sig-name descname"><span class="pre">PARTITION_FIELD</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'partition_selection_field'</span></em><a class="headerlink" href="#custom_tools.general_tools.partition_iterator.PartitionIterator.PARTITION_FIELD" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="custom_tools.general_tools.partition_iterator.PartitionIterator.resolve_partition_input_config">
+<span class="sig-name descname"><span class="pre">resolve_partition_input_config</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">entries</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">List</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="composition_configs.html#composition_configs.core_config.ResolvedInputEntry" title="composition_configs.core_config.ResolvedInputEntry"><span class="pre">ResolvedInputEntry</span></a><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">target_dict</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Dict</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">Dict</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">str</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="reference internal" href="../_modules/custom_tools/general_tools/partition_iterator.html#PartitionIterator.resolve_partition_input_config"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#custom_tools.general_tools.partition_iterator.PartitionIterator.resolve_partition_input_config" title="Link to this definition"></a></dt>
+<dd><p>Add resolved input entries to <cite>target_dict</cite>.</p>
+<p>Ensures each object appears only once; raises on duplicates.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="custom_tools.general_tools.partition_iterator.PartitionIterator.resolve_partition_output_config">
+<span class="sig-name descname"><span class="pre">resolve_partition_output_config</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">entries</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">List</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="composition_configs.html#composition_configs.core_config.ResolvedOutputEntry" title="composition_configs.core_config.ResolvedOutputEntry"><span class="pre">ResolvedOutputEntry</span></a><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">target_dict</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Dict</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">Dict</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">str</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="reference internal" href="../_modules/custom_tools/general_tools/partition_iterator.html#PartitionIterator.resolve_partition_output_config"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#custom_tools.general_tools.partition_iterator.PartitionIterator.resolve_partition_output_config" title="Link to this definition"></a></dt>
+<dd><p>Add resolved output entries to <cite>target_dict</cite>.</p>
+<p>Ensures each (object, tag) pair is unique; raises on duplicate tags
+within the same object.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="custom_tools.general_tools.partition_iterator.PartitionIterator.delete_final_outputs">
+<span class="sig-name descname"><span class="pre">delete_final_outputs</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/custom_tools/general_tools/partition_iterator.html#PartitionIterator.delete_final_outputs"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#custom_tools.general_tools.partition_iterator.PartitionIterator.delete_final_outputs" title="Link to this definition"></a></dt>
+<dd><p>Deletes all final output feature classes if they exist.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="custom_tools.general_tools.partition_iterator.PartitionIterator.delete_iteration_files">
+<span class="sig-name descname"><span class="pre">delete_iteration_files</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">file_paths</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/custom_tools/general_tools/partition_iterator.html#PartitionIterator.delete_iteration_files"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#custom_tools.general_tools.partition_iterator.PartitionIterator.delete_iteration_files" title="Link to this definition"></a></dt>
+<dd><p>Deletes multiple feature classes or files from a list.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="custom_tools.general_tools.partition_iterator.PartitionIterator.create_dummy_features">
+<span class="sig-name descname"><span class="pre">create_dummy_features</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">tag</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="reference internal" href="../_modules/custom_tools/general_tools/partition_iterator.html#PartitionIterator.create_dummy_features"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#custom_tools.general_tools.partition_iterator.PartitionIterator.create_dummy_features" title="Link to this definition"></a></dt>
+<dd><p>Create dummy feature classes for all objects that have a valid path
+under the given tag. Used to provide stable placeholder inputs when
+a partition produces no features.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="custom_tools.general_tools.partition_iterator.PartitionIterator.update_empty_object_tag_with_dummy_file">
+<span class="sig-name descname"><span class="pre">update_empty_object_tag_with_dummy_file</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">object_key</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tag</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="reference internal" href="../_modules/custom_tools/general_tools/partition_iterator.html#PartitionIterator.update_empty_object_tag_with_dummy_file"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#custom_tools.general_tools.partition_iterator.PartitionIterator.update_empty_object_tag_with_dummy_file" title="Link to this definition"></a></dt>
+<dd><p>Replaces the value for the given tag with the dummy path if available for the object_key.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="custom_tools.general_tools.partition_iterator.PartitionIterator.write_documentation">
+<span class="sig-name descname"><span class="pre">write_documentation</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dict_data</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dict</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sub_dir</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="reference internal" href="../_modules/custom_tools/general_tools/partition_iterator.html#PartitionIterator.write_documentation"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#custom_tools.general_tools.partition_iterator.PartitionIterator.write_documentation" title="Link to this definition"></a></dt>
+<dd><p>Writes a JSON file to documentation_directory or its subdirectory.
+Ensures the destination directory exists.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="custom_tools.general_tools.partition_iterator.PartitionIterator.update_max_partition_count">
+<span class="sig-name descname"><span class="pre">update_max_partition_count</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="reference internal" href="../_modules/custom_tools/general_tools/partition_iterator.html#PartitionIterator.update_max_partition_count"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#custom_tools.general_tools.partition_iterator.PartitionIterator.update_max_partition_count" title="Link to this definition"></a></dt>
+<dd><p>Determine the maximum OBJECTID for partitioning.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="custom_tools.general_tools.partition_iterator.PartitionIterator.prepare_input_data">
+<span class="sig-name descname"><span class="pre">prepare_input_data</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/custom_tools/general_tools/partition_iterator.html#PartitionIterator.prepare_input_data"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#custom_tools.general_tools.partition_iterator.PartitionIterator.prepare_input_data" title="Link to this definition"></a></dt>
+<dd><p>Prepare all inputs for partitioning.</p>
+<ul class="simple">
+<li><p>Processing inputs: counted and tagged with a <cite>PARTITION_FIELD</cite>.</p></li>
+<li><p>Context inputs: either counted directly (if search_distance &lt;= 0)</p></li>
+</ul>
+<p>or filtered to features within the search radius of processing inputs.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="custom_tools.general_tools.partition_iterator.PartitionIterator.select_partition_feature">
+<span class="sig-name descname"><span class="pre">select_partition_feature</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">iteration_partition</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">object_id</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/custom_tools/general_tools/partition_iterator.html#PartitionIterator.select_partition_feature"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#custom_tools.general_tools.partition_iterator.PartitionIterator.select_partition_feature" title="Link to this definition"></a></dt>
+<dd><p>Selects partition feature based on OBJECTID.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="custom_tools.general_tools.partition_iterator.PartitionIterator.process_single_processing_input">
+<span class="sig-name descname"><span class="pre">process_single_processing_input</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">object_key</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">input_path</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">iteration_partition</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">partition_id</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">bool</span></span></span><a class="reference internal" href="../_modules/custom_tools/general_tools/partition_iterator.html#PartitionIterator.process_single_processing_input"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#custom_tools.general_tools.partition_iterator.PartitionIterator.process_single_processing_input" title="Link to this definition"></a></dt>
+<dd><p>Select and prepare a single processing input for one partition.</p>
+<p>How:
+- Selects features whose center lies within the partition.
+- Marks them with <cite>PARTITION_FIELD = 1</cite> and copies to an iteration-scoped dataset.
+- If <cite>search_distance &gt; 0</cite>, also selects nearby features:</p>
+<blockquote>
+<div><ul class="simple">
+<li><p>Includes features within the search radius but not center-in,</p></li>
+<li><p>Marks them with <cite>PARTITION_FIELD = 0</cite>,</p></li>
+<li><p>Appends them to the same iteration dataset.</p></li>
+</ul>
+</div></blockquote>
+<ul class="simple">
+<li><p>Updates <cite>iteration_catalog</cite> with path and feature count.</p></li>
+<li><p>Creates a dummy feature if no features are found.</p></li>
+</ul>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>True if the partition contains any features for this object,
+False otherwise.</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>bool</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="custom_tools.general_tools.partition_iterator.PartitionIterator.process_all_processing_inputs">
+<span class="sig-name descname"><span class="pre">process_all_processing_inputs</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">iteration_partition</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">partition_id</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">bool</span></span></span><a class="reference internal" href="../_modules/custom_tools/general_tools/partition_iterator.html#PartitionIterator.process_all_processing_inputs"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#custom_tools.general_tools.partition_iterator.PartitionIterator.process_all_processing_inputs" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="custom_tools.general_tools.partition_iterator.PartitionIterator.process_single_context_input">
+<span class="sig-name descname"><span class="pre">process_single_context_input</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">object_key</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">input_path</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">iteration_partition</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">partition_id</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="reference internal" href="../_modules/custom_tools/general_tools/partition_iterator.html#PartitionIterator.process_single_context_input"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#custom_tools.general_tools.partition_iterator.PartitionIterator.process_single_context_input" title="Link to this definition"></a></dt>
+<dd><p>Select and prepare a single context input for one partition.</p>
+<p>How:
+- Selects features within <cite>search_distance</cite> of the partition geometry.
+- Writes the selection to an iteration-scoped dataset.
+- Updates <cite>iteration_catalog</cite> with feature count and path.
+- If no features are found, assigns a dummy feature path.</p>
+<dl class="simple">
+<dt>Side effects:</dt><dd><p>Creates/deletes temporary feature classes and updates <cite>iteration_catalog</cite>.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="custom_tools.general_tools.partition_iterator.PartitionIterator.process_all_context_inputs">
+<span class="sig-name descname"><span class="pre">process_all_context_inputs</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">iteration_partition</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">partition_id</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="reference internal" href="../_modules/custom_tools/general_tools/partition_iterator.html#PartitionIterator.process_all_context_inputs"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#custom_tools.general_tools.partition_iterator.PartitionIterator.process_all_context_inputs" title="Link to this definition"></a></dt>
+<dd><p>Process all configured context inputs for one partition.</p>
+<p>Calls <cite>process_single_context_input</cite> for each context object
+and records results in <cite>iteration_catalog</cite>.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="custom_tools.general_tools.partition_iterator.PartitionIterator.track_iteration_time">
+<span class="sig-name descname"><span class="pre">track_iteration_time</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">object_id</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">inputs_present</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="reference internal" href="../_modules/custom_tools/general_tools/partition_iterator.html#PartitionIterator.track_iteration_time"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#custom_tools.general_tools.partition_iterator.PartitionIterator.track_iteration_time" title="Link to this definition"></a></dt>
+<dd><p>Tracks runtime and estimates remaining time based on iterations with inputs.
+Prints current time, elapsed runtime, and estimated remaining runtime.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="custom_tools.general_tools.partition_iterator.PartitionIterator.resolve_injected_io_for_methods">
+<span class="sig-name descname"><span class="pre">resolve_injected_io_for_methods</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">method_entries_config</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="composition_configs.html#composition_configs.core_config.MethodEntriesConfig" title="composition_configs.core_config.MethodEntriesConfig"><span class="pre">MethodEntriesConfig</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">partition_id</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="composition_configs.html#composition_configs.core_config.MethodEntriesConfig" title="composition_configs.core_config.MethodEntriesConfig"><span class="pre">MethodEntriesConfig</span></a></span></span><a class="reference internal" href="../_modules/custom_tools/general_tools/partition_iterator.html#PartitionIterator.resolve_injected_io_for_methods"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#custom_tools.general_tools.partition_iterator.PartitionIterator.resolve_injected_io_for_methods" title="Link to this definition"></a></dt>
+<dd><p>Inject concrete paths into each method entry by resolving InjectIO objects.
+Returns a new MethodEntriesConfig with fully resolved params.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="custom_tools.general_tools.partition_iterator.PartitionIterator.resolve_param_injections">
+<span class="sig-name descname"><span class="pre">resolve_param_injections</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">method_config</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Any</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">partition_id</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">Any</span></span></span><a class="reference internal" href="../_modules/custom_tools/general_tools/partition_iterator.html#PartitionIterator.resolve_param_injections"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#custom_tools.general_tools.partition_iterator.PartitionIterator.resolve_param_injections" title="Link to this definition"></a></dt>
+<dd><p>Recursively resolve InjectIO instances in any nested structure.
+Supports dicts, lists, tuples, and sets.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="custom_tools.general_tools.partition_iterator.PartitionIterator.resolve_inject_entry">
+<span class="sig-name descname"><span class="pre">resolve_inject_entry</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">inject</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="composition_configs.html#composition_configs.core_config.InjectIO" title="composition_configs.core_config.InjectIO"><span class="pre">InjectIO</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">partition_id</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">str</span></span></span><a class="reference internal" href="../_modules/custom_tools/general_tools/partition_iterator.html#PartitionIterator.resolve_inject_entry"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#custom_tools.general_tools.partition_iterator.PartitionIterator.resolve_inject_entry" title="Link to this definition"></a></dt>
+<dd><p>Resolve a single <cite>InjectIO</cite> placeholder to a concrete path for this partition.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="custom_tools.general_tools.partition_iterator.PartitionIterator.execute_injected_methods">
+<span class="sig-name descname"><span class="pre">execute_injected_methods</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">method_entries_config</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="composition_configs.html#composition_configs.core_config.MethodEntriesConfig" title="composition_configs.core_config.MethodEntriesConfig"><span class="pre">MethodEntriesConfig</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">partition_id</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">attempt</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">Dict</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">Any</span><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="../_modules/custom_tools/general_tools/partition_iterator.html#PartitionIterator.execute_injected_methods"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#custom_tools.general_tools.partition_iterator.PartitionIterator.execute_injected_methods" title="Link to this definition"></a></dt>
+<dd><p>Execute a fully <em>resolved</em> set of injected methods for one partition/attempt.</p>
+<p>For each entry:
+- If it’s a class method: split kwargs into constructor vs. method args,</p>
+<blockquote>
+<div><p>instantiate the class, then call the method.</p>
+</div></blockquote>
+<ul class="simple">
+<li><p>If it’s a function: call it with the provided kwargs.</p></li>
+</ul>
+<p>Logging:
+- Builds an in-memory <cite>execution_log</cite> with:</p>
+<blockquote>
+<div><ul class="simple">
+<li><p>per-entry raw params (JSON-safe), split class/method params (for classes),</p></li>
+<li><p>status (“ok” or “error”), and full exception info (type/message/traceback) on error.</p></li>
+</ul>
+</div></blockquote>
+<ul class="simple">
+<li><dl class="simple">
+<dt>On any exception, stores the partial log in <cite>self._last_injected_log</cite> and re-raises;</dt><dd><p>the retry layer is responsible for persisting per-attempt error logs.</p>
+</dd>
+</dl>
+</li>
+</ul>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>method_entries_config</strong> – The <em>resolved</em> (no remaining InjectIO) method entries.</p></li>
+<li><p><strong>partition_id</strong> – Current partition identifier (for log context).</p></li>
+<li><p><strong>attempt</strong> – 1-based attempt number (for log context).</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>The complete per-attempt execution log when all entries succeed.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Dict[str, Any]</p>
+</dd>
+<dt class="field-even">Raises<span class="colon">:</span></dt>
+<dd class="field-even"><p><strong>Exception</strong> – Re-raises the first failure after recording it in <cite>self._last_injected_log</cite>.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="custom_tools.general_tools.partition_iterator.PartitionIterator.execute_injected_methods_with_retry">
+<span class="sig-name descname"><span class="pre">execute_injected_methods_with_retry</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">partition_id</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/custom_tools/general_tools/partition_iterator.html#PartitionIterator.execute_injected_methods_with_retry"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#custom_tools.general_tools.partition_iterator.PartitionIterator.execute_injected_methods_with_retry" title="Link to this definition"></a></dt>
+<dd><p>Execute injected methods for a partition with retries and structured logging.</p>
+<p>Flow per attempt:
+1) Reset <cite>self._last_injected_log</cite> to ensure clean state.
+2) Resolve InjectIO placeholders to concrete, partition-scoped paths.</p>
+<blockquote>
+<div><ul class="simple">
+<li><p>If resolution fails, write an error attempt log with stage=”resolve”.</p></li>
+</ul>
+</div></blockquote>
+<ol class="arabic" start="3">
+<li><dl>
+<dt>Run <cite>execute_injected_methods(…)</cite>.</dt><dd><ul class="simple">
+<li><p>On success: write <cite>method_logs/method_log_{partition_id}.json</cite> and return.</p></li>
+<li><p>On failure: write <cite>error_logs/error_{partition_id}/attempt_{n}_error.json</cite>,</p></li>
+</ul>
+<p>increment <cite>self.error_log[partition_id]</cite>, and retry until max_retries.</p>
+</dd>
+</dl>
+</li>
+</ol>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>partition_id</strong> – Current partition identifier.</p>
+</dd>
+<dt class="field-even">Raises<span class="colon">:</span></dt>
+<dd class="field-even"><ul class="simple">
+<li><p><strong>Exception</strong> – Re-raises the last error after exhausting retries; also writes</p></li>
+<li><p><strong>error_log.json</strong> – </p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="custom_tools.general_tools.partition_iterator.PartitionIterator.append_iteration_outputs_to_final">
+<span class="sig-name descname"><span class="pre">append_iteration_outputs_to_final</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">partition_id</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="reference internal" href="../_modules/custom_tools/general_tools/partition_iterator.html#PartitionIterator.append_iteration_outputs_to_final"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#custom_tools.general_tools.partition_iterator.PartitionIterator.append_iteration_outputs_to_final" title="Link to this definition"></a></dt>
+<dd><p>Appends all valid outputs for the current iteration to their final output paths.</p>
+<p>Skips any objects marked as dummy and ensures only non-empty, valid inputs are appended.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="custom_tools.general_tools.partition_iterator.PartitionIterator.cleanup_helper_fields">
+<span class="sig-name descname"><span class="pre">cleanup_helper_fields</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="reference internal" href="../_modules/custom_tools/general_tools/partition_iterator.html#PartitionIterator.cleanup_helper_fields"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#custom_tools.general_tools.partition_iterator.PartitionIterator.cleanup_helper_fields" title="Link to this definition"></a></dt>
+<dd><p>Delete the helper field <cite>PARTITION_FIELD</cite> from:
+- All final output feature classes.
+- All processing input feature classes (since it was injected for partitioning).</p>
+<p>Ensures that only clean data structures remain after the workflow.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="custom_tools.general_tools.partition_iterator.PartitionIterator.partition_iteration">
+<span class="sig-name descname"><span class="pre">partition_iteration</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/custom_tools/general_tools/partition_iterator.html#PartitionIterator.partition_iteration"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#custom_tools.general_tools.partition_iterator.PartitionIterator.partition_iteration" title="Link to this definition"></a></dt>
+<dd><p>Process every cartographic partition end-to-end.</p>
+<p>Workflow (per partition):
+1) Reset iteration state and select the partition geometry.
+2) Select processing inputs (center-in; optionally add near-by features).</p>
+<blockquote>
+<div><ul class="simple">
+<li><p>If no processing features are present, skip this partition.</p></li>
+</ul>
+</div></blockquote>
+<ol class="arabic simple" start="3">
+<li><p>Select context inputs within the configured search radius.</p></li>
+<li><p>Execute injected methods with retry and structured logging.</p></li>
+<li><p>Persist the iteration catalog and append valid outputs to final outputs.</p></li>
+</ol>
+<p>Raises:
+- Propagates any unhandled exception from injected methods after retries are exhausted.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="custom_tools.general_tools.partition_iterator.PartitionIterator.run">
+<span class="sig-name descname"><span class="pre">run</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/custom_tools/general_tools/partition_iterator.html#PartitionIterator.run"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#custom_tools.general_tools.partition_iterator.PartitionIterator.run" title="Link to this definition"></a></dt>
+<dd><p>Orchestrate the full pipeline: preparation → partitioning → iteration → cleanup.</p>
+<p>Steps:
+1) Reset the documentation directory (with safety checks) and write <cite>output_catalog.json</cite>.
+2) Data preparation:</p>
+<blockquote>
+<div><ul class="simple">
+<li><p>Optionally delete existing final outputs.</p></li>
+<li><p>Prepare processing and context inputs (add PARTITION_FIELD, pre-filter context).</p></li>
+<li><p>Create per-object dummy features.</p></li>
+<li><p>Write <cite>input_catalog.json</cite>.</p></li>
+</ul>
+</div></blockquote>
+<ol class="arabic" start="3">
+<li><dl class="simple">
+<dt>Partitioning:</dt><dd><ul class="simple">
+<li><p>Determine feature count (optimize if enabled) and create cartographic partitions.</p></li>
+</ul>
+</dd>
+</dl>
+</li>
+<li><dl>
+<dt>Iteration:</dt><dd><ul class="simple">
+<li><p>Call <cite>partition_iteration()</cite> to process all partitions, execute injected methods,</p></li>
+</ul>
+<p>and append per-partition results to final outputs.</p>
+</dd>
+</dl>
+</li>
+<li><dl class="simple">
+<dt>Cleanup &amp; logs:</dt><dd><ul class="simple">
+<li><p>Remove helper fields from final outputs (e.g., PARTITION_FIELD).</p></li>
+<li><p>Delete persistent temp files.</p></li>
+<li><p>Write aggregated <cite>error_log.json</cite>.</p></li>
+</ul>
+</dd>
+</dl>
+</li>
+</ol>
+</dd></dl>
+
+</dd></dl>
+
 </section>
 <section id="custom-tools-general-tools-polygon-processor-module">
 <h2>custom_tools.general_tools.polygon_processor module<a class="headerlink" href="#custom-tools-general-tools-polygon-processor-module" title="Link to this heading"></a></h2>
