@@ -1,50 +1,39 @@
 import arcpy
 
-from input_data import input_n100
 
 # Importing custom modules
 from file_manager.n100.file_manager_buildings import Building_N100
 from env_setup import environment_setup
-from custom_tools.decorators.partition_io_decorator import partition_io_decorator
 from custom_tools.general_tools import custom_arcpy
 from file_manager import WorkFileManager
+from composition_configs import logic_config
 from constants.n100_constants import N100_Values
 
 
 class BegrensningskurveLandWaterbodies:
     def __init__(
         self,
-        input_begrensningskurve: str,
-        input_land_cover_features: str,
-        water_feature_buffer_width: int,
-        output_begrensningskurve: str,
-        water_barrier_buffer_width: int = 30,
-        write_work_files_to_memory: bool = True,
-        keep_work_files: bool = False,
-        root_file: str = None,
+        land_water_config: logic_config.BegrensningskurveLandWaterKwargs,
     ):
-        self.input_begrensningskurve = input_begrensningskurve
-        self.input_land_cover_features = input_land_cover_features
-        self.output_begrensningskurve = output_begrensningskurve
+        self.input_begrensningskurve = land_water_config.input_begrensningskurve
+        self.input_land_cover_features = land_water_config.input_land_cover_features
+        self.output_begrensningskurve = land_water_config.output_begrensningskurve
 
-        self.write_work_files_to_memory = write_work_files_to_memory
-        self.keep_work_files = keep_work_files
-        self.root_file = root_file
+        self.write_work_files_to_memory = (
+            land_water_config.work_file_manager_config.write_to_memory
+        )
+        self.keep_work_files = land_water_config.work_file_manager_config.keep_files
+        self.root_file = land_water_config.work_file_manager_config.root_file
 
         # How far out from land water buffer is created
-        self.water_feature_buffer_width = water_feature_buffer_width
+        self.water_feature_buffer_width = land_water_config.water_feature_buffer_width
 
         # How wide the water feature buffer will be
-        self.water_barrier_buffer_width = water_barrier_buffer_width
+        self.water_barrier_buffer_width = land_water_config.water_barrier_buffer_width
 
         self.area_length_ratio_field_name = "area_length_ratio"
 
-        self.work_file_manager = WorkFileManager(
-            unique_id=id(self),
-            root_file=root_file,
-            write_to_memory=write_work_files_to_memory,
-            keep_files=keep_work_files,
-        )
+        self.wfm = WorkFileManager(config=land_water_config.work_file_manager_config)
 
         self.waterfeatures_from_begrensningskurve = (
             "waterfeatures_from_begrensningskurve"
@@ -226,14 +215,10 @@ class BegrensningskurveLandWaterbodies:
             output=self.output_begrensningskurve,
         )
 
-    @partition_io_decorator(
-        input_param_names=["input_begrensningskurve", "input_land_cover_features"],
-        output_param_names=["output_begrensningskurve"],
-    )
     def run(self):
         environment_setup.main()
 
-        self.work_file_list = self.work_file_manager.setup_work_file_paths(
+        self.work_file_list = self.wfm.setup_work_file_paths(
             instance=self,
             file_structure=self.work_file_list,
         )
@@ -245,18 +230,8 @@ class BegrensningskurveLandWaterbodies:
         self.erase_buffers()
         self.merge_water_features()
 
-        self.work_file_manager.delete_created_files()
+        self.wfm.delete_created_files()
 
 
 if __name__ == "__main__":
     environment_setup.main()
-    begrensningskurve_land_waterbodies = BegrensningskurveLandWaterbodies(
-        input_begrensningskurve=Building_N100.data_selection___begrensningskurve_n100_input_data___n100_building.value,
-        input_land_cover_features=Building_N100.data_selection___land_cover_n100_input_data___n100_building.value,
-        water_feature_buffer_width=N100_Values.building_water_intrusion_distance_m.value,
-        output_begrensningskurve=Building_N100.begrensingskurve_land_water___begrensingskurve_buffer_in_water___n100_building.value,
-        write_work_files_to_memory=False,
-        keep_work_files=False,
-        root_file=Building_N100.begrensingskurve_land_water___root_file___n100_building.value,
-    )
-    begrensningskurve_land_waterbodies.run()

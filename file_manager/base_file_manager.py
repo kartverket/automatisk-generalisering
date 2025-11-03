@@ -1,7 +1,9 @@
+from pathlib import Path
 import re
 
 import config
 import env_setup.global_config
+from composition_configs import type_defs
 
 
 class BaseFileManager:
@@ -43,10 +45,10 @@ class BaseFileManager:
 
     def __init__(
         self,
-        scale,
-        object_name,
-        script_source_name="",
-        description="",
+        scale: str,
+        object_name: str,
+        script_source_name: str = "",
+        description: str = "",
     ):
         """Initializes the BaseFileManager with specific scale and object name."""
         self.scale = scale
@@ -56,10 +58,18 @@ class BaseFileManager:
         self.script_source_name = script_source_name
         self.description = description
 
-        self.relative_path_gdb = rf"{self.local_root_directory}\{self.project_root_directory}\{self.scale}\{self.object}.gdb"
-        self.relative_path_general_files = rf"{self.local_root_directory}\{self.project_root_directory}\{self.scale}\{self.general_files_directory_name}"
-        self.relative_path_lyrx = rf"{self.local_root_directory}\{self.project_root_directory}\{self.scale}\{self.lyrx_directory_name}"
-        self.relative_path_final_outputs = rf"{self.local_root_directory}\{self.project_root_directory}\{self.scale}\{env_setup.global_config.final_outputs}.gdb"
+        # self.relative_path_gdb = rf"{self.local_root_directory}\{self.project_root_directory}\{self.scale}\{self.object}.gdb"
+        # self.relative_path_general_files = rf"{self.local_root_directory}\{self.project_root_directory}\{self.scale}\{self.general_files_directory_name}"
+        # self.relative_path_lyrx = rf"{self.local_root_directory}\{self.project_root_directory}\{self.scale}\{self.lyrx_directory_name}"
+        # self.relative_path_final_outputs = rf"{self.local_root_directory}\{self.project_root_directory}\{self.scale}\{env_setup.global_config.final_outputs}.gdb"
+
+        base = (
+            Path(self.local_root_directory) / self.project_root_directory / self.scale
+        )
+        self._gdb_dir = base / f"{self.object}.gdb"
+        self._general_dir = base / self.general_files_directory_name
+        self._lyrx_dir = base / self.lyrx_directory_name
+        self._final_outputs_dir = base / f"{env_setup.global_config.final_outputs}.gdb"
 
     @property
     def script_source_name(self):
@@ -99,7 +109,7 @@ class BaseFileManager:
         self,
         script_source_name: str,
         description: str,
-    ):
+    ) -> type_defs.GdbFilePath:
         """
         Generates a file path for geodatabase (.gdb) files. After validating the input.
 
@@ -111,14 +121,15 @@ class BaseFileManager:
             str: The absolute path for the .gdb file.
         """
         self.validate_inputs(script_source_name, description)
-        return rf"{self.relative_path_gdb}\{script_source_name}___{description}___{self.scale}_{self.object}"
+        stem = f"{script_source_name}___{description}___{self.scale}_{self.object}"
+        return type_defs.GdbFilePath(str(self._gdb_dir / stem))
 
     def generate_file_name_general_files(
         self,
         script_source_name: str,
         description: str,
         file_type: str,
-    ):
+    ) -> type_defs.GeneralFilePath:
         """
         Generates a file path for general files (e.g., CSV, TXT). After validating the input.
 
@@ -131,33 +142,14 @@ class BaseFileManager:
             str: The absolute path for the general file, including the file extension.
         """
         self.validate_inputs(script_source_name, description, file_type)
-        return rf"{self.relative_path_general_files}\{script_source_name}___{description}___{self.scale}_{self.object}.{file_type}"
-
-    def generate_file_name_general_directory(
-        self,
-        script_source_name: str,
-        description: str,
-        file_type: str,
-    ):
-        """
-        Generates a file path for general files (e.g., CSV, TXT). After validating the input.
-
-        Args:
-            script_source_name (str): The name of the script or source generating the file.
-            description (str): A brief description of the file's purpose or contents.
-            file_type (str): The filetype extension (without dot).
-
-        Returns:
-            str: The absolute path for the general file, including the file extension.
-        """
-        self.validate_inputs(script_source_name, description, file_type)
-        return rf"{self.relative_path_general_files}\{script_source_name}___{description}___{self.scale}_{self.object}"
+        stem = f"{script_source_name}___{description}___{self.scale}_{self.object}.{file_type}"
+        return type_defs.GeneralFilePath(str(self._general_dir / stem))
 
     def generate_file_name_lyrx(
         self,
         script_source_name: str,
         description: str,
-    ):
+    ) -> type_defs.LyrxFilePath:
         """
         Generates a file path for ArcGIS layer files (.lyrx). After validating the input.
 
@@ -169,9 +161,10 @@ class BaseFileManager:
             str: The absolute path for the .lyrx file.
         """
         self.validate_inputs(script_source_name, description)
-        return rf"{self.relative_path_lyrx}\{script_source_name}___{description}___{self.scale}_{self.object}.lyrx"
+        stem = f"{script_source_name}___{description}___{self.scale}_{self.object}.lyrx"
+        return type_defs.LyrxFilePath(str(self._lyrx_dir / stem))
 
-    def generate_file_lyrx_directory(
+    def generate_file_lyrx_directory_deprecated(
         self,
         script_source_name: str,
         description: str,
@@ -187,12 +180,12 @@ class BaseFileManager:
             str: The absolute path for the .lyrx file.
         """
         self.validate_inputs(script_source_name, description)
-        return rf"{self.relative_path_lyrx}\{script_source_name}___{description}___{self.scale}_{self.object}"
+        return rf"{self._lyrx_dir}\{script_source_name}___{description}___{self.scale}_{self.object}"
 
     def generate_final_outputs(
         self,
         file_name: str,
-    ):
+    ) -> type_defs.GdbFilePath:
         """
         Generates a file path for geodatabase (.gdb) files for the final output files. After validating the input.
 
@@ -203,4 +196,23 @@ class BaseFileManager:
             str: The absolute path for the .gdb file.
         """
         self.validate_inputs(file_name)
-        return rf"{self.relative_path_final_outputs}\{file_name}"
+        return type_defs.GdbFilePath(str(self._final_outputs_dir / file_name))
+
+    def generate_general_subdirectory(
+        self, description: str
+    ) -> type_defs.SubdirectoryPath:
+        """
+        Generates a subdirectory path under the general files directory.
+
+        Args:
+            description (str): A short descriptor for the subdirectory purpose.
+
+        Returns:
+            str: Absolute path of the subdirectory.
+        """
+        self.validate_inputs(description)
+
+        dir_name = f"{description}___{self.scale}_{self.object}"
+        full_path = self._general_dir / dir_name
+        full_path.mkdir(parents=True, exist_ok=True)
+        return type_defs.SubdirectoryPath(str(full_path))

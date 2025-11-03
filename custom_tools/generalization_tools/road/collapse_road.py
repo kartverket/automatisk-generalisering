@@ -1,36 +1,25 @@
 import arcpy
 from typing import List, Dict
 
-from custom_tools.decorators.partition_io_decorator import partition_io_decorator
-from env_setup import environment_setup
-from custom_tools.general_tools import custom_arcpy
-from file_manager.n100.file_manager_roads import Road_N100
-from file_manager.n100.file_manager_buildings import Building_N100
-import config
-from input_data.input_symbology import SymbologyN100
-from input_data import input_roads
+from composition_configs import logic_config
 
 
-@partition_io_decorator(
-    input_param_names=["road_network_input"], output_param_names=["road_network_output"]
-)
 def collapse_road(
-    road_network_input: str,
-    road_network_output: str,
-    merge_distance: str,
-    collapse_field_name: str = None,
+    collapse_road_config: logic_config.CollapseRoadDetailsKwargs,
 ):
-    if collapse_field_name is not None:
+    merge_distance = f"{collapse_road_config.merge_distnace_m} Meters"
+
+    if collapse_road_config.collapse_field_name is not None:
         arcpy.cartography.CollapseRoadDetail(
-            in_features=road_network_input,
-            out_feature_class=road_network_output,
+            in_features=collapse_road_config.input_road_line,
             collapse_distance=merge_distance,
-            collapse_field=collapse_field_name,
+            output_feature_class=collapse_road_config.output_road_line,
+            locking_field=collapse_road_config.collapse_field_name,
         )
 
     else:
         arcpy.cartography.CollapseRoadDetail(
-            in_features=road_network_input,
+            in_features=collapse_road_config.input_road_line,
             collapse_distance=merge_distance,
-            output_feature_class=road_network_output,
+            output_feature_class=collapse_road_config.output_road_line,
         )
