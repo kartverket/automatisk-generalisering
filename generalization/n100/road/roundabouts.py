@@ -235,7 +235,7 @@ def create_intersections_of_roundabouts() -> None:
         )
     ]
 
-    temp_roundabout = "in_memory/temp_roundabout"
+    temp_roundabout = r"in_memory/temp_roundabout"
     oid_geom_pairs = defaultdict(list)
 
     for r_id, r_geom, r_number in tqdm(
@@ -254,7 +254,7 @@ def create_intersections_of_roundabouts() -> None:
         arcpy.management.SelectLayerByAttribute(
             in_layer_or_view="road_lyr",
             selection_type="SUBSET_SELECTION",
-            where_clause="objtype = 'VegSenterlinje'",
+            where_clause="objtype = 'Veglenke'",
         )
         with arcpy.da.SearchCursor(
             "road_lyr", ["OID@", "SHAPE@", "typeveg", "medium", "vegnummer"]
@@ -304,7 +304,7 @@ def create_intersections_of_roundabouts() -> None:
         for centroid in centroids:
             insert.insertRow([centroid])
 
-    # """ Deletes intermediate files during the process
+    """ Deletes intermediate files during the process
     for layer in [roundabout_fc, centroid_fc]:
         if arcpy.Exists(layer):
             arcpy.management.Delete(layer)
