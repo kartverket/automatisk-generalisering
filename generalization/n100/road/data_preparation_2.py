@@ -501,12 +501,6 @@ def merge_divided_roads():
 
 @timing_decorator
 def smooth_line():
-
-    # custom_arcpy.select_attribute_and_make_permanent_feature(
-    #     input_layer=Road_N100.data_selection___admin_boundary___n100_road.value,
-    #     expression="OBJTYPE = 'Riksgrense'",
-    #     output_name=Road_N100.data_preparation___country_boarder___n100_road.value,
-    # )
     arcpy.cartography.SmoothLine(
         in_features=Road_N100.data_preparation___merge_divided_roads___n100_road.value,
         out_feature_class=Road_N100.data_preparation___smooth_road___n100_road.value,
