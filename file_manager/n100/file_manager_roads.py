@@ -929,7 +929,7 @@ class Road_N100(Enum):
     )
 
     # ========================================
-    #                                TESTING FILE
+    #                             TESTING FILE
     # ========================================
 
     testing_file___roads_copy___n100_road = file_manager.generate_file_name_gdb(
@@ -1331,35 +1331,6 @@ class Road_N100(Enum):
     dam__cleaned_roads__n100_road = file_manager.generate_file_name_gdb(
         script_source_name=dam_file, description="cleaned_roads"
     )
-
-    # ========================================
-    #                           ROAD TRIANGLES
-    # ========================================
-
-    road_triangles__working_file__n100_road = file_manager.generate_file_name_gdb(
-        script_source_name=road_triangles, description="working_file"
-    )
-
-    road_triangles__junction_point__n100_road = file_manager.generate_file_name_gdb(
-        script_source_name=road_triangles, description="junction_point"
-    )
-
-    road_triangles__dissolved__n100_road = file_manager.generate_file_name_gdb(
-        script_source_name=road_triangles, description="dissolved"
-    )
-
-    road_triangles__splitted__n100_road = file_manager.generate_file_name_gdb(
-        script_source_name=road_triangles, description="splitted"
-    )
-
-    road_triangles__road_selection__n100_road = file_manager.generate_file_name_gdb(
-        script_source_name=road_triangles, description="road_selection"
-    )
-
-    road_triangles__triangle_candidates__n100_road = file_manager.generate_file_name_gdb(
-        script_source_name=road_triangles, description="triangle_candidates"
-    )
-
     # ========================================
     #                                TEST2
     # ========================================
