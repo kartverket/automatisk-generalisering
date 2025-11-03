@@ -928,6 +928,10 @@ class Road_N100(Enum):
         )
     )
 
+    road_triangles_output = file_manager.generate_file_name_gdb(
+        script_source_name=road_triangles, description="road_triangles_output"
+    )
+
     # ========================================
     #                             TESTING FILE
     # ========================================

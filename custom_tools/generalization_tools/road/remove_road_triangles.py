@@ -802,6 +802,35 @@ class RemoveRoadTriangles:
         print()
 
     @timing_decorator
+    def fetch_original_data(self):
+        """
+        Capture the original data that should be included in the network
+        and creates a copy of this data in a new featureclass.
+        """
+        output_fc = Road_N100.road_triangles_output.value
+        intermediate_fc = r"in_memory/intermediate_fc"
+        
+        arcpy.management.MakeFeatureLayer(
+            in_features=self.copy_of_input_feature,
+            out_layer="original_roads_lyr"
+        )
+        arcpy.management.MakeFeatureLayer(
+            in_features=self.removed_3_cycle_roads,
+            out_layer="processed_roads_lyr"
+        )
+
+        arcpy.analysis.Erase(
+            in_features="original_roads_lyr",
+            erase_features="processed_roads_lyr",
+            out_feature_class=intermediate_fc
+        )
+        arcpy.analysis.Erase(
+            in_features="original_roads_lyr",
+            erase_features=intermediate_fc,
+            out_feature_class=output_fc
+        )
+
+    @timing_decorator
     def run(self):
         """
         Runs the complete process to remove road triangles.
@@ -817,6 +846,7 @@ class RemoveRoadTriangles:
         self.remove_1_cycle_roads()
         self.remove_2_cycle_roads()
         self.remove_3_cycle_roads()
+        self.fetch_original_data()
 
 
 # Main function to be imported in other .py-files
