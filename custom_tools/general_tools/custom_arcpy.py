@@ -1,6 +1,5 @@
 import arcpy
 from enum import Enum
-from custom_tools.decorators.partition_io_decorator import partition_io_decorator
 
 
 # Selection Type definition used for select by attribute functions
@@ -70,10 +69,6 @@ def resolve_enum(enum_class, value):
 
 
 # Define your function using the above enum
-@partition_io_decorator(
-    input_param_names=["input_layer"],
-    output_param_names=["output_name"],
-)
 def select_attribute_and_make_feature_layer(
     input_layer, expression, output_name, selection_type="NEW_SELECTION", inverted=False
 ):
@@ -118,10 +113,6 @@ def select_attribute_and_make_feature_layer(
     print(f"{output_name} created temporarily.")
 
 
-@partition_io_decorator(
-    input_param_names=["input_layer"],
-    output_param_names=["output_name"],
-)
 def select_attribute_and_make_permanent_feature(
     input_layer, expression, output_name, selection_type="NEW_SELECTION", inverted=False
 ):
@@ -174,10 +165,6 @@ def select_attribute_and_make_permanent_feature(
 
 
 # Temporary Feature Layer with Location-based Selection
-@partition_io_decorator(
-    input_param_names=["input_layer"],
-    output_param_names=["output_name"],
-)
 def select_location_and_make_feature_layer(
     input_layer,
     overlap_type,
@@ -251,10 +238,6 @@ def select_location_and_make_feature_layer(
         print(f"Error occurred: {e}")
 
 
-@partition_io_decorator(
-    input_param_names=["input_layer"],
-    output_param_names=["output_name"],
-)
 def select_location_and_make_permanent_feature(
     input_layer,
     overlap_type,
@@ -335,10 +318,6 @@ def select_location_and_make_permanent_feature(
         print(f"{output_name} created permanently.")
 
 
-@partition_io_decorator(
-    input_param_names=["input_layer", "in_symbology_layer"],
-    output_param_names=["output_name"],
-)
 def apply_symbology(
     input_layer,
     in_symbology_layer,

@@ -71,7 +71,7 @@ files_to_delete = [
 
 
 @timing_decorator
-def main():
+def generalize_dam():
     """
     Hva den gjør:
        Denne tar veier som går innen 60 meter av demninger og flytter de ut til 60 meter unna demningen.
