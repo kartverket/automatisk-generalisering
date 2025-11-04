@@ -44,6 +44,14 @@ generalization.n100.road.road\_main module
    :show-inheritance:
    :undoc-members:
 
+generalization.n100.road.roundabouts module
+-------------------------------------------
+
+.. automodule:: generalization.n100.road.roundabouts
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
 generalization.n100.road.testing\_file module
 ---------------------------------------------
 
