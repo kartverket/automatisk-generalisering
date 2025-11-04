@@ -106,8 +106,8 @@
 <section id="module-generalization.n100.road.dam">
 <span id="generalization-n100-road-dam-module"></span><h2>generalization.n100.road.dam module<a class="headerlink" href="#module-generalization.n100.road.dam" title="Link to this heading"></a></h2>
 <dl class="py function">
-<dt class="sig sig-object py" id="generalization.n100.road.dam.main">
-<span class="sig-prename descclassname"><span class="pre">generalization.n100.road.dam.</span></span><span class="sig-name descname"><span class="pre">main</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/generalization/n100/road/dam.html#main"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#generalization.n100.road.dam.main" title="Link to this definition"></a></dt>
+<dt class="sig sig-object py" id="generalization.n100.road.dam.generalize_dam">
+<span class="sig-prename descclassname"><span class="pre">generalization.n100.road.dam.</span></span><span class="sig-name descname"><span class="pre">generalize_dam</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/generalization/n100/road/dam.html#generalize_dam"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#generalization.n100.road.dam.generalize_dam" title="Link to this definition"></a></dt>
 <dd><dl class="simple">
 <dt>Hva den gjør:</dt><dd><p>Denne tar veier som går innen 60 meter av demninger og flytter de ut til 60 meter unna demningen.</p>
 </dd>
@@ -539,6 +539,89 @@ of snapping roads away from the dam buffers.</p>
 <dt class="sig sig-object py" id="generalization.n100.road.first_generalization.remove_rundkjoring_that_survived_collapse_road_detail">
 <span class="sig-prename descclassname"><span class="pre">generalization.n100.road.first_generalization.</span></span><span class="sig-name descname"><span class="pre">remove_rundkjoring_that_survived_collapse_road_detail</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/generalization/n100/road/first_generalization.html#remove_rundkjoring_that_survived_collapse_road_detail"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#generalization.n100.road.first_generalization.remove_rundkjoring_that_survived_collapse_road_detail" title="Link to this definition"></a></dt>
 <dd></dd></dl>
+
+</section>
+<section id="module-generalization.n100.road.major_road_crossings">
+<span id="generalization-n100-road-major-road-crossings-module"></span><h2>generalization.n100.road.major_road_crossings module<a class="headerlink" href="#module-generalization.n100.road.major_road_crossings" title="Link to this heading"></a></h2>
+<dl class="py function">
+<dt class="sig sig-object py" id="generalization.n100.road.major_road_crossings.categories_major_road_crossings">
+<span class="sig-prename descclassname"><span class="pre">generalization.n100.road.major_road_crossings.</span></span><span class="sig-name descname"><span class="pre">categories_major_road_crossings</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/generalization/n100/road/major_road_crossings.html#categories_major_road_crossings"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#generalization.n100.road.major_road_crossings.categories_major_road_crossings" title="Link to this definition"></a></dt>
+<dd><p>Creates major road crossings feature classes and updates the attribute ‘er_kryssningspunkt’
+in the input road feature class for all roads that cross major roads (E and R).</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="generalization.n100.road.major_road_crossings.select_intersect_and_copy">
+<span class="sig-prename descclassname"><span class="pre">generalization.n100.road.major_road_crossings.</span></span><span class="sig-name descname"><span class="pre">select_intersect_and_copy</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">in_fc</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">select_fc</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">out_fc</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">lyr_name</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'tmp_lyr'</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="reference internal" href="../_modules/generalization/n100/road/major_road_crossings.html#select_intersect_and_copy"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#generalization.n100.road.major_road_crossings.select_intersect_and_copy" title="Link to this definition"></a></dt>
+<dd><p>Creates a feature layer from ‘in_fc’, selects all features that intersect with ‘select_fc’, and
+copies the selected features to ‘out_fc’.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>in_fc</strong> (<em>str</em>) – Input feature class to create a feature layer from</p></li>
+<li><p><strong>select_fc</strong> (<em>str</em>) – Feature class to select intersecting features from ‘in_fc’</p></li>
+<li><p><strong>out_fc</strong> (<em>str</em>) – Output feature class to store the selected features</p></li>
+<li><p><strong>lyr_name</strong> (<em>str</em>) – Name of the temporary feature layer. Default is “tmp_lyr”</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="generalization.n100.road.major_road_crossings.shrunked_underpass">
+<span class="sig-prename descclassname"><span class="pre">generalization.n100.road.major_road_crossings.</span></span><span class="sig-name descname"><span class="pre">shrunked_underpass</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="reference internal" href="../_modules/generalization/n100/road/major_road_crossings.html#shrunked_underpass"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#generalization.n100.road.major_road_crossings.shrunked_underpass" title="Link to this definition"></a></dt>
+<dd><p>Creates shrunked buffers for roads with medium ‘U’ (underpass).</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="generalization.n100.road.major_road_crossings.shrunked_bridge">
+<span class="sig-prename descclassname"><span class="pre">generalization.n100.road.major_road_crossings.</span></span><span class="sig-name descname"><span class="pre">shrunked_bridge</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="reference internal" href="../_modules/generalization/n100/road/major_road_crossings.html#shrunked_bridge"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#generalization.n100.road.major_road_crossings.shrunked_bridge" title="Link to this definition"></a></dt>
+<dd><p>Creates shrunked buffers for roads with medium ‘L’ (bridge).</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="generalization.n100.road.major_road_crossings.shrunked_ER_bridge">
+<span class="sig-prename descclassname"><span class="pre">generalization.n100.road.major_road_crossings.</span></span><span class="sig-name descname"><span class="pre">shrunked_ER_bridge</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="reference internal" href="../_modules/generalization/n100/road/major_road_crossings.html#shrunked_ER_bridge"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#generalization.n100.road.major_road_crossings.shrunked_ER_bridge" title="Link to this definition"></a></dt>
+<dd><p>Creates shrunked buffers for major roads with medium ‘L’ (bridge).</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="generalization.n100.road.major_road_crossings.surface_road">
+<span class="sig-prename descclassname"><span class="pre">generalization.n100.road.major_road_crossings.</span></span><span class="sig-name descname"><span class="pre">surface_road</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="reference internal" href="../_modules/generalization/n100/road/major_road_crossings.html#surface_road"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#generalization.n100.road.major_road_crossings.surface_road" title="Link to this definition"></a></dt>
+<dd><p>Creates feature class for roads with medium ‘T’ (surface road).</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="generalization.n100.road.major_road_crossings.surface_ER">
+<span class="sig-prename descclassname"><span class="pre">generalization.n100.road.major_road_crossings.</span></span><span class="sig-name descname"><span class="pre">surface_ER</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="reference internal" href="../_modules/generalization/n100/road/major_road_crossings.html#surface_ER"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#generalization.n100.road.major_road_crossings.surface_ER" title="Link to this definition"></a></dt>
+<dd><p>Creates feature class for major roads with medium ‘T’ (surface road).</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="generalization.n100.road.major_road_crossings.cross">
+<span class="sig-prename descclassname"><span class="pre">generalization.n100.road.major_road_crossings.</span></span><span class="sig-name descname"><span class="pre">cross</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="reference internal" href="../_modules/generalization/n100/road/major_road_crossings.html#cross"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#generalization.n100.road.major_road_crossings.cross" title="Link to this definition"></a></dt>
+<dd><p>Selects the crossings between shrunked underpass, shrunked bridge and surface roads
+with major roads (ER) and stores them in respective feature classes.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="generalization.n100.road.major_road_crossings.keep">
+<span class="sig-prename descclassname"><span class="pre">generalization.n100.road.major_road_crossings.</span></span><span class="sig-name descname"><span class="pre">keep</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="reference internal" href="../_modules/generalization/n100/road/major_road_crossings.html#keep"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#generalization.n100.road.major_road_crossings.keep" title="Link to this definition"></a></dt>
+<dd><p>Selects and keeps the most important crossings from the previously created crossing feature classes.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="generalization.n100.road.major_road_crossings.update_crossing_point_attribute">
+<span class="sig-prename descclassname"><span class="pre">generalization.n100.road.major_road_crossings.</span></span><span class="sig-name descname"><span class="pre">update_crossing_point_attribute</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="reference internal" href="../_modules/generalization/n100/road/major_road_crossings.html#update_crossing_point_attribute"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#generalization.n100.road.major_road_crossings.update_crossing_point_attribute" title="Link to this definition"></a></dt>
+<dd><p>Creates a new field ‘er_kryssningspunkt’ in the input road feature class and updates it to 1
+for all roads that intersect with the kept major road crossings.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="generalization.n100.road.major_road_crossings.delete_intermediate_files">
+<span class="sig-prename descclassname"><span class="pre">generalization.n100.road.major_road_crossings.</span></span><span class="sig-name descname"><span class="pre">delete_intermediate_files</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="reference internal" href="../_modules/generalization/n100/road/major_road_crossings.html#delete_intermediate_files"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#generalization.n100.road.major_road_crossings.delete_intermediate_files" title="Link to this definition"></a></dt>
+<dd><p>Deletes the intermediate files used during the process.</p>
+</dd></dl>
 
 </section>
 <section id="generalization-n100-road-road-main-module">

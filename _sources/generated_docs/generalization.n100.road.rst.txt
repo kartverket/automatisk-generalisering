@@ -36,6 +36,14 @@ generalization.n100.road.first\_generalization module
    :show-inheritance:
    :undoc-members:
 
+generalization.n100.road.major\_road\_crossings module
+------------------------------------------------------
+
+.. automodule:: generalization.n100.road.major_road_crossings
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
 generalization.n100.road.road\_main module
 ------------------------------------------
 
