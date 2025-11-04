@@ -153,6 +153,7 @@ class FieldNames(Enum):
         "rutemerking",
         "medium",
         "uttegning",
+        "har_bom",
     ]
     road_added_fields = [
         ["invisibility", "SHORT"],

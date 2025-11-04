@@ -40,6 +40,7 @@ from constants.n100_constants import (
     MediumAlias,
 )
 from generalization.n100.road.dam import main as dam
+from generalization.n100.road.vegsperring import remove_roadblock
 
 MERGE_DIVIDED_ROADS_ALTERATIVE = False
 
@@ -49,6 +50,7 @@ def main():
     environment_setup.main()
     arcpy.env.referenceScale = 100000
     data_selection_and_validation()
+    remove_roadblock()
     trim_road_details()
     admin_boarder()
     adding_fields()
@@ -72,7 +74,7 @@ OBJECT_LIMIT = 100_000
 @timing_decorator
 def data_selection_and_validation():
     plot_area = "navn IN ('Asker', 'Bærum', 'Drammen', 'Frogn', 'Hole', 'Holmestrand', 'Horten', 'Jevnaker', 'Kongsberg', 'Larvik', 'Lier', 'Lunner', 'Modum', 'Nesodden', 'Oslo', 'Ringerike', 'Tønsberg', 'Øvre Eiker')"
-    ferry_admin_test = "navn IN ('Bergen')"
+    ferry_admin_test = "navn IN ('Ringerike')"
     small_plot_area = "navn IN ('Oslo', 'Ringerike')"
     smallest_plot_area = "navn IN ('Ringerike')"
     presentation_area = "navn IN ('Asker', 'Bærum', 'Oslo', 'Enebakk', 'Nittedal', 'Nordre Follo', 'Hole', 'Nesodden', 'Lørenskog', 'Sandnes', 'Stavanger', 'Gjesdal', 'Sola', 'Klepp', 'Strand', 'Time', 'Randaberg')"
@@ -80,6 +82,7 @@ def data_selection_and_validation():
     selector = StudyAreaSelector(
         input_output_file_dict={
             input_roads.road_output_1: Road_N100.data_selection___nvdb_roads___n100_road.value,
+            input_roads.vegsperring: Road_N100.data_selection___vegsperring___n100_road.value,
             input_n100.Bane: Road_N100.data_selection___railroad___n100_road.value,
             input_n100.BegrensningsKurve: Road_N100.data_selection___begrensningskurve___n100_road.value,
             input_n100.AdminGrense: Road_N100.data_selection___admin_boundary___n100_road.value,
@@ -249,7 +252,7 @@ def calculate_boarder_road_hierarchy(
 @timing_decorator
 def trim_road_details():
     arcpy.management.MultipartToSinglepart(
-        in_features=Road_N100.data_selection___nvdb_roads___n100_road.value,
+        in_features=Road_N100.vegsperring__veg_uten_bom__n100_road.value,
         out_feature_class=Road_N100.data_preparation___road_single_part___n100_road.value,
     )
 
@@ -428,25 +431,31 @@ def thin_roads():
     )
     road_data_validation.check_repair_sequence()
 
-    road_hierarchy = """def Reclass(vegklasse, typeveg):
+    road_hierarchy = """def Reclass(vegklasse, typeveg, har_bom):
         if typeveg == 'bilferje':
             return 0
-        elif vegklasse in (0, 1, 2, 3, 4):
-            return 1
+        
+        bom = 2 if har_bom == "ja" else 0
+        
+        if vegklasse in (0, 1, 2, 3, 4):
+            klasse = 1
         elif vegklasse == 5:
-            return 2
+            klasse = 2
         elif vegklasse == 6:
-            return 3
+            klasse = 3
         elif vegklasse == 7:
-            return 4
+            klasse = 4
         else:
-            return 5
+            klasse = 5
+        
+        hierarki = klasse + bom
+        return hierarki if hierarki <= 5 else 5
     """
 
     arcpy.management.CalculateField(
         in_table=Road_N100.data_preparation___dissolved_intersections_3___n100_road.value,
         field="hierarchy",
-        expression="Reclass(!vegklasse!, !typeveg!)",
+        expression="Reclass(!vegklasse!, !typeveg!, !har_bom!)",
         expression_type="PYTHON3",
         code_block=road_hierarchy,
     )
@@ -562,12 +571,6 @@ def merge_divided_roads():
 
 @timing_decorator
 def smooth_line():
-
-    # custom_arcpy.select_attribute_and_make_permanent_feature(
-    #     input_layer=Road_N100.data_selection___admin_boundary___n100_road.value,
-    #     expression="OBJTYPE = 'Riksgrense'",
-    #     output_name=Road_N100.data_preparation___country_boarder___n100_road.value,
-    # )
     arcpy.cartography.SmoothLine(
         in_features=Road_N100.data_preparation___merge_divided_roads___n100_road.value,
         out_feature_class=Road_N100.data_preparation___smooth_road___n100_road.value,
