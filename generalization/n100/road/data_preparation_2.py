@@ -71,7 +71,7 @@ OBJECT_LIMIT = 100_000
 @timing_decorator
 def data_selection_and_validation():
     plot_area = "navn IN ('Asker', 'Bærum', 'Drammen', 'Frogn', 'Hole', 'Holmestrand', 'Horten', 'Jevnaker', 'Kongsberg', 'Larvik', 'Lier', 'Lunner', 'Modum', 'Nesodden', 'Oslo', 'Ringerike', 'Tønsberg', 'Øvre Eiker')"
-    ferry_admin_test = "navn IN ('Ringerike')"
+    ferry_admin_test = "navn IN ('Hole')"
     small_plot_area = "navn IN ('Oslo', 'Ringerike')"
     presentation_area = "navn IN ('Asker', 'Bærum', 'Oslo', 'Enebakk', 'Nittedal', 'Nordre Follo', 'Hole', 'Nesodden', 'Lørenskog', 'Sandnes', 'Stavanger', 'Gjesdal', 'Sola', 'Klepp', 'Strand', 'Time', 'Randaberg')"
 
@@ -359,7 +359,7 @@ def thin_roads():
     )
     road_data_validation.check_repair_sequence()
 
-    road_hierarchy = """def Reclass(vegklasse, typeveg, er_kryssningspunkt):
+    road_hierarchy = """def Reclass(typeveg, vegkategori, vegklasse, er_kryssningspunkt):
         if typeveg == 'bilferje':
             return 0
         
@@ -375,7 +375,12 @@ def thin_roads():
             klasse = 5
         
         if er_kryssningspunkt == 1:
-            kryss = -3
+            if vegkategori in ('E', 'R', 'F'):
+                kryss = -3
+            elif vegkategori in ('K'):
+                kryss = -2
+            else:
+                kryss = -1
         else:
             kryss = 0
         
@@ -385,14 +390,13 @@ def thin_roads():
             return 0
         elif hierarki > 5:
             return 5
-        else:
-            return hierarki
+        return hierarki
     """
 
     arcpy.management.CalculateField(
         in_table=Road_N100.data_preparation___dissolved_intersections_3___n100_road.value,
         field="hierarchy",
-        expression="Reclass(!vegklasse!, !typeveg!, !er_kryssningspunkt!)",
+        expression="Reclass(!typeveg!, !vegkategori!, !vegklasse!, !er_kryssningspunkt!)",
         expression_type="PYTHON3",
         code_block=road_hierarchy,
     )
