@@ -52,6 +52,14 @@ generalization.n100.road.testing\_file module
    :show-inheritance:
    :undoc-members:
 
+generalization.n100.road.vegsperring module
+-------------------------------------------
+
+.. automodule:: generalization.n100.road.vegsperring
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
 Module contents
 ---------------
 
