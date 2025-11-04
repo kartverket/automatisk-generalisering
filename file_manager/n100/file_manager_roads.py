@@ -16,8 +16,11 @@ data_preparation = "data_preparation"
 first_generalization = "first_generalization"
 test1 = "test1"
 testing_file = "testing_file"
+roundabout_file = "roundabout"
 dam_file = "dam"
 road_triangles = "road_triangles"
+major_road_crossings = "major_road_crossings"
+vegsperring_file = "vegsperring"
 test2 = "test2"
 test3 = "test3"
 
@@ -67,6 +70,11 @@ class Road_N100(Enum):
     data_selection___nvdb_roads___n100_road = file_manager.generate_file_name_gdb(
         script_source_name=data_selection,
         description="nvdb_roads",
+    )
+
+    data_selection___vegsperring___n100_road = file_manager.generate_file_name_gdb(
+        script_source_name=data_selection,
+        description="vegsperring",
     )
 
     data_selection___railroad___n100_road = file_manager.generate_file_name_gdb(
@@ -366,12 +374,8 @@ class Road_N100(Enum):
         )
     )
 
-    data_preparation___thin_sti_docu___n100_road = (
-        file_manager.generate_file_name_general_files(
-            script_source_name=data_preparation,
-            description="thin_sti_docu",
-            file_type="json",
-        )
+    thin_sti_docu___n100_road = file_manager.generate_general_subdirectory(
+        description="thin_sti_docu",
     )
 
     data_preparation___thin_road_sti_output___n100_road = (
@@ -421,12 +425,12 @@ class Road_N100(Enum):
         )
     )
 
-    data_preparation___thin_road_docu___n100_road = (
-        file_manager.generate_file_name_general_files(
-            script_source_name=data_preparation,
-            description="thin_road_docu",
-            file_type="json",
-        )
+    thin_road_docu___n100_road = file_manager.generate_general_subdirectory(
+        description="thin_road_docu",
+    )
+
+    collapse_road_docu___n100_road = file_manager.generate_general_subdirectory(
+        description="collapse_road_docu",
     )
 
     data_preparation___thin_road_docu_2___n100_road = (
@@ -534,12 +538,8 @@ class Road_N100(Enum):
         )
     )
 
-    data_preparation___resolve_road_docu___n100_road = (
-        file_manager.generate_file_name_general_files(
-            script_source_name=data_preparation,
-            description="resolve_road_docu",
-            file_type="json",
-        )
+    resolve_road_docu___n100_road = file_manager.generate_general_subdirectory(
+        description="resolve_road_docu",
     )
 
     data_preparation___resolve_road_root___n100_road = (
@@ -1237,6 +1237,22 @@ class Road_N100(Enum):
     )
 
     # ========================================
+    #                               ROUNDABOUT
+    # ========================================
+
+    roundabout__roundabout__n100_road = file_manager.generate_file_name_gdb(
+        script_source_name=roundabout_file, description="roundabout"
+    )
+
+    roundabout__centroids__n100_road = file_manager.generate_file_name_gdb(
+        script_source_name=roundabout_file, description="centroids"
+    )
+
+    roundabout__cleaned_road__n100_road = file_manager.generate_file_name_gdb(
+        script_source_name=roundabout_file, description="cleaned_road"
+    )
+
+    # ========================================
     #                                      DAM
     # ========================================
 
@@ -1334,6 +1350,120 @@ class Road_N100(Enum):
 
     dam__cleaned_roads__n100_road = file_manager.generate_file_name_gdb(
         script_source_name=dam_file, description="cleaned_roads"
+    )
+
+    # ========================================
+    #                     MAJOR ROAD CROSSINGS
+    # ========================================
+
+    major_road_crossing__road_u__n100_road = file_manager.generate_file_name_gdb(
+        script_source_name=major_road_crossings, description="road_u"
+    )
+
+    major_road_crossing__road_u_buffer__n100_road = file_manager.generate_file_name_gdb(
+        script_source_name=major_road_crossings, description="road_u_buffer"
+    )
+
+    major_road_crossing__road_u_buffer_shrunked__n100_road = (
+        file_manager.generate_file_name_gdb(
+            script_source_name=major_road_crossings,
+            description="road_u_buffer_shrunked",
+        )
+    )
+
+    major_road_crossing__road_l__n100_road = file_manager.generate_file_name_gdb(
+        script_source_name=major_road_crossings, description="road_l"
+    )
+
+    major_road_crossing__road_l_buffer__n100_road = file_manager.generate_file_name_gdb(
+        script_source_name=major_road_crossings, description="road_l_buffer"
+    )
+
+    major_road_crossing__road_l_buffer_shrunked__n100_road = (
+        file_manager.generate_file_name_gdb(
+            script_source_name=major_road_crossings,
+            description="road_l_buffer_shrunked",
+        )
+    )
+
+    major_road_crossing__ER__n100_road = file_manager.generate_file_name_gdb(
+        script_source_name=major_road_crossings, description="ER"
+    )
+
+    major_road_crossing__ER_bridge__n100_road = file_manager.generate_file_name_gdb(
+        script_source_name=major_road_crossings, description="ER_bridge"
+    )
+
+    major_road_crossing__ER_bridge_buffer__n100_road = (
+        file_manager.generate_file_name_gdb(
+            script_source_name=major_road_crossings, description="ER_bridge_buffer"
+        )
+    )
+
+    major_road_crossing__ER_bridge_shrunked__n100_road = (
+        file_manager.generate_file_name_gdb(
+            script_source_name=major_road_crossings, description="ER_bridge_shrunked"
+        )
+    )
+
+    major_road_crossing__road_t__n100_road = file_manager.generate_file_name_gdb(
+        script_source_name=major_road_crossings, description="road_t"
+    )
+
+    major_road_crossing__ER_t__n100_road = file_manager.generate_file_name_gdb(
+        script_source_name=major_road_crossings, description="ER_t"
+    )
+
+    major_road_crossing__bridge_cross_ER__n100_road = (
+        file_manager.generate_file_name_gdb(
+            script_source_name=major_road_crossings, description="bridge_cross_ER"
+        )
+    )
+
+    major_road_crossing__underpass_cross_ER__n100_road = (
+        file_manager.generate_file_name_gdb(
+            script_source_name=major_road_crossings, description="underpass_cross_ER"
+        )
+    )
+
+    major_road_crossing__surface_under_ER__n100_road = (
+        file_manager.generate_file_name_gdb(
+            script_source_name=major_road_crossings, description="surface_under_ER"
+        )
+    )
+
+    major_road_crossing__keep_bru_ERFKP__n100_road = (
+        file_manager.generate_file_name_gdb(
+            script_source_name=major_road_crossings, description="keep_bru_ERFKP"
+        )
+    )
+
+    major_road_crossing__keep_underpass_ERFKP__n100_road = (
+        file_manager.generate_file_name_gdb(
+            script_source_name=major_road_crossings, description="keep_underpass_ERFKP"
+        )
+    )
+
+    major_road_crossing__keep_surface_ERFKP__n100_road = (
+        file_manager.generate_file_name_gdb(
+            script_source_name=major_road_crossings, description="keep_surface_FKP"
+        )
+    )
+
+    major_road_crossing__merged_keep__n100_road = file_manager.generate_file_name_gdb(
+        script_source_name=major_road_crossings, description="merged_keep"
+    )
+
+    major_road_crossing__output__n100_road = file_manager.generate_file_name_gdb(
+        script_source_name=major_road_crossings, description="output"
+    )
+
+    # ========================================
+    #                              VEGSPERRING
+    # ========================================
+
+    vegsperring__veg_uten_bom__n100_road = file_manager.generate_file_name_gdb(
+        script_source_name=vegsperring_file, description="veg_uten_bom"
     )
     # ========================================
     #                                TEST2

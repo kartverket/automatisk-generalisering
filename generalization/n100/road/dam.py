@@ -71,7 +71,7 @@ files_to_delete = [
 
 
 @timing_decorator
-def main():
+def generalize_dam():
     """
     Hva den gjør:
        Denne tar veier som går innen 60 meter av demninger og flytter de ut til 60 meter unna demningen.
@@ -1431,7 +1431,3 @@ def delete_intermediate_files() -> None:
     """
     for file in files_to_delete:
         arcpy.management.Delete(data_files[file])
-
-
-if __name__ == "__main__":
-    main()

@@ -1,5 +1,9 @@
+from typing import Dict, Literal, List, Any, Optional, Union
 import arcpy
 import os
+import json
+
+from composition_configs import io_types
 
 
 class FeatureClassCreator:
@@ -92,6 +96,21 @@ class FeatureClassCreator:
             for row in s_cursor:
                 i_cursor.insertRow(row)
         print("Appended geometry to the feature class.")
+
+
+def create_feature_class(template_feature: str, new_feature: str) -> None:
+    """Creates a new feature from a templete feature class"""
+    out_path, out_name = os.path.split(new_feature)
+    delete_feature(input_feature=new_feature)
+    arcpy.management.CreateFeatureclass(
+        out_path=out_path, out_name=out_name, template=template_feature
+    )
+
+
+def delete_feature(input_feature):
+    """Deletes a feature class if it exists."""
+    if arcpy.Exists(input_feature):
+        arcpy.management.Delete(input_feature)
 
 
 def compare_feature_classes(feature_class_1, feature_class_2):
@@ -198,3 +217,48 @@ def get_all_fields(input_fields, *added_field_sets):
 def count_objects(input_layer):
     count = int(arcpy.management.GetCount(input_layer).getOutput(0))
     return count
+
+
+def delete_fields_if_exist(
+    feature_class_path: str, fields_to_delete: list[str]
+) -> None:
+    """
+    Deletes specified fields from a feature class if they exist.
+
+    Args:
+        feature_class_path (str): Path to the feature class.
+        fields_to_delete (list[str]): Fields to delete if present.
+    """
+    if not arcpy.Exists(feature_class_path):
+        print(f"Skipped field deletion: file does not exist -> {feature_class_path}")
+        return
+
+    for field_name in fields_to_delete:
+        try:
+            if arcpy.ListFields(feature_class_path, field_name):
+                arcpy.management.DeleteField(feature_class_path, field_name)
+                print(f"Deleted field '{field_name}' from {feature_class_path}")
+        except arcpy.ExecuteError as e:
+            print(f"Failed to delete '{field_name}' from {feature_class_path}: {e}")
+
+
+def write_dict_to_json(path: str, dict_data: dict) -> None:
+    """Writes a dictionary to a specified JSON file path."""
+    with open(path, "w", encoding="utf-8") as f:
+        json.dump(dict_data, f, indent=4)
+
+
+def feature_has_rows(feature: Union[str, io_types.GdbIOArg]) -> bool:
+    if not feature:
+        return False
+    if not arcpy.Exists(feature):
+        return False
+    return count_objects(input_layer=feature) > 0
+
+
+def print_feature_info(file_path: io_types.GdbIOArg, description: str) -> None:
+    """Helper for consistent print formatting of feature diagnostics."""
+    has_rows = feature_has_rows(file_path)
+    count_or_status = count_objects(file_path) if has_rows else has_rows
+    print(f"\n{description}: {count_or_status}")
+    print(f"For file path:\n {file_path}\n")

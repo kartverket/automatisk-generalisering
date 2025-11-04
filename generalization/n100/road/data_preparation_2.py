@@ -13,6 +13,8 @@ from input_data import input_other
 from input_data import input_elveg
 from input_data import input_roads
 
+from composition_configs import core_config, logic_config, io_types, type_defs
+
 # Importing custom modules
 from file_manager.n100.file_manager_roads import Road_N100
 from env_setup import environment_setup
@@ -38,7 +40,12 @@ from constants.n100_constants import (
     NvdbAlias,
     MediumAlias,
 )
-from generalization.n100.road.dam import main as dam
+from generalization.n100.road.dam import generalize_dam
+from generalization.n100.road.major_road_crossings import (
+    categories_major_road_crossings,
+)
+from generalization.n100.road.roundabouts import generalize_roundabouts
+from generalization.n100.road.vegsperring import remove_roadblock
 
 MERGE_DIVIDED_ROADS_ALTERATIVE = False
 
@@ -48,6 +55,9 @@ def main():
     environment_setup.main()
     arcpy.env.referenceScale = 100000
     data_selection_and_validation()
+    categories_major_road_crossings()
+    generalize_roundabouts()
+    remove_roadblock()
     trim_road_details()
     admin_boarder()
     adding_fields()
@@ -60,11 +70,11 @@ def main():
     generalize_road_triangles()
     pre_resolve_road_conflicts()
     resolve_road_conflicts()
-    dam()
+    generalize_dam()
     final_output()
 
 
-SEARCH_DISTANCE = "5000 Meters"
+SEARCH_DISTANCE = 5000
 OBJECT_LIMIT = 100_000
 
 
@@ -73,11 +83,13 @@ def data_selection_and_validation():
     plot_area = "navn IN ('Asker', 'Bærum', 'Drammen', 'Frogn', 'Hole', 'Holmestrand', 'Horten', 'Jevnaker', 'Kongsberg', 'Larvik', 'Lier', 'Lunner', 'Modum', 'Nesodden', 'Oslo', 'Ringerike', 'Tønsberg', 'Øvre Eiker')"
     ferry_admin_test = "navn IN ('Hole')"
     small_plot_area = "navn IN ('Oslo', 'Ringerike')"
+    smallest_plot_area = "navn IN ('Ringerike')"
     presentation_area = "navn IN ('Asker', 'Bærum', 'Oslo', 'Enebakk', 'Nittedal', 'Nordre Follo', 'Hole', 'Nesodden', 'Lørenskog', 'Sandnes', 'Stavanger', 'Gjesdal', 'Sola', 'Klepp', 'Strand', 'Time', 'Randaberg')"
 
     selector = StudyAreaSelector(
         input_output_file_dict={
             input_roads.road_output_1: Road_N100.data_selection___nvdb_roads___n100_road.value,
+            input_roads.vegsperring: Road_N100.data_selection___vegsperring___n100_road.value,
             input_n100.Bane: Road_N100.data_selection___railroad___n100_road.value,
             input_n100.BegrensningsKurve: Road_N100.data_selection___begrensningskurve___n100_road.value,
             input_n100.AdminGrense: Road_N100.data_selection___admin_boundary___n100_road.value,
@@ -101,60 +113,105 @@ def data_selection_and_validation():
     road_data_validation.check_repair_sequence()
 
 
-# Helper Functions
 def run_dissolve_with_intersections(
     input_line_feature,
     output_processed_feature,
     dissolve_field_list,
 ):
-    dissolve_obj = DissolveWithIntersections(
+    cfg = logic_config.DissolveInitKwargs(
         input_line_feature=input_line_feature,
-        root_file=Road_N100.data_preparation___intersections_root___n100_road.value,
         output_processed_feature=output_processed_feature,
-        dissolve_field_list=dissolve_field_list,
-        list_of_sql_expressions=[
+        work_file_manager_config=core_config.WorkFileConfig(
+            root_file=Road_N100.data_preparation___intersections_root___n100_road.value
+        ),
+        dissolve_fields=dissolve_field_list,
+        sql_expressions=[
             f" MEDIUM = '{MediumAlias.tunnel}'",
             f" MEDIUM = '{MediumAlias.bridge}'",
             f" MEDIUM = '{MediumAlias.on_surface}'",
         ],
     )
-    dissolve_obj.run()
+    DissolveWithIntersections(cfg).run()
 
 
 def run_thin_roads(
-    input_feature,
-    partition_root_file,
-    output_feature,
-    docu_path,
-    min_length,
+    input_feature: str,
+    partition_root_file: str,
+    output_feature: str,
+    docu_path: type_defs.SubdirectoryPath,
+    min_length_m: int,
     feature_count,
     special_selection_sql=None,
 ):
-    alias = "road"
-    input_dict = {alias: ["input", input_feature]}
-    output_dict = {alias: ["thin_road", output_feature]}
-    thin_road_network_config = {
-        "class": ThinRoadNetwork,
-        "method": "run",
-        "params": {
-            "road_network_input": (alias, "input"),
-            "road_network_output": (alias, "thin_road"),
-            "root_file": Road_N100.data_preparation___thin_road_root___n100_road.value,
-            "minimum_length": min_length,
-            "invisibility_field_name": "invisibility",
-            "partition_field_name": "",
-            "hierarchy_field_name": "hierarchy",
-            "special_selection_sql": special_selection_sql,
-        },
-    }
+    road = "road"
+    processed_road = "processed_road"
+
+    thin_road_input_config = core_config.PartitionInputConfig(
+        entries=[
+            core_config.InputEntry.processing_input(
+                object=road,
+                path=input_feature,
+            )
+        ]
+    )
+
+    thin_road_output_config = core_config.PartitionOutputConfig(
+        entries=[
+            core_config.OutputEntry.vector_output(
+                object=road,
+                tag=processed_road,
+                path=output_feature,
+            )
+        ]
+    )
+
+    thin_road_io_config = core_config.PartitionIOConfig(
+        input_config=thin_road_input_config,
+        output_config=thin_road_output_config,
+        documentation_directory=docu_path,
+    )
+
+    thin_roads_init_config = logic_config.ThinRoadNetworkKwargs(
+        input_road_line=core_config.InjectIO(
+            object=road,
+            tag="input",
+        ),
+        output_road_line=core_config.InjectIO(
+            object=road,
+            tag=processed_road,
+        ),
+        work_file_manager_config=core_config.WorkFileConfig(
+            root_file=partition_root_file
+        ),
+        minimum_length=min_length_m,
+        invisibility_field_name="invisibility",
+        hierarchy_field_name="hierarchy",
+        special_selection_sql=special_selection_sql,
+    )
+
+    thin_road_class_config = core_config.ClassMethodEntryConfig(
+        class_=ThinRoadNetwork,
+        method=ThinRoadNetwork.run,
+        init_params=thin_roads_init_config,
+    )
+
+    thin_road_method_config = core_config.MethodEntriesConfig(
+        entries=[thin_road_class_config]
+    )
+
+    partition_thin_run_config = core_config.PartitionRunConfig(
+        max_elements_per_partition=feature_count,
+        context_radius_meters=SEARCH_DISTANCE,
+        run_partition_optimization=True,
+    )
+
     partition_thin_roads = PartitionIterator(
-        alias_path_data=input_dict,
-        alias_path_outputs=output_dict,
-        custom_functions=[thin_road_network_config],
-        root_file_partition_iterator=partition_root_file,
-        dictionary_documentation_path=docu_path,
-        feature_count=feature_count,
-        search_distance=SEARCH_DISTANCE,
+        partition_io_config=thin_road_io_config,
+        partition_method_inject_config=thin_road_method_config,
+        partition_iterator_run_config=partition_thin_run_config,
+        work_file_manager_config=core_config.WorkFileConfig(
+            root_file=partition_root_file
+        ),
     )
     partition_thin_roads.run()
 
@@ -202,7 +259,7 @@ def calculate_boarder_road_hierarchy(
 @timing_decorator
 def trim_road_details():
     arcpy.management.MultipartToSinglepart(
-        in_features=Road_N100.data_selection___nvdb_roads___n100_road.value,
+        in_features=Road_N100.vegsperring__veg_uten_bom__n100_road.value,
         out_feature_class=Road_N100.data_preparation___road_single_part___n100_road.value,
     )
 
@@ -296,38 +353,60 @@ def adding_fields():
 
 @timing_decorator
 def collapse_road_detail():
-    input_dict = {
-        "roads": (
-            "input",
-            Road_N100.data_preparation___road_single_part_2___n100_road.value,
-        )
-    }
+    road = "road"
+    processed_road = "processed_road"
 
-    output_dict = {
-        "roads": (
-            "road_detail",
-            Road_N100.data_preparation___collapse_road_detail___n100_road.value,
-        )
-    }
+    collapse_road_input_config = core_config.PartitionInputConfig(
+        entries=[
+            core_config.InputEntry.processing_input(
+                object=road,
+                path=Road_N100.data_preparation___road_single_part_2___n100_road.value,
+            )
+        ]
+    )
 
-    collapse_road_detail_config = {
-        "func": collapse_road,
-        "params": {
-            "road_network_input": ("roads", "input"),
-            "road_network_output": ("roads", "road_detail"),
-            "merge_distance": "60 Meters",
-        },
-    }
+    collapse_road_output_config = core_config.PartitionOutputConfig(
+        entries=[
+            core_config.OutputEntry.vector_output(
+                object=road,
+                tag=processed_road,
+                path=Road_N100.data_preparation___collapse_road_detail___n100_road.value,
+            )
+        ]
+    )
+
+    collapse_partition_io_config = core_config.PartitionIOConfig(
+        input_config=collapse_road_input_config,
+        output_config=collapse_road_output_config,
+        documentation_directory=Road_N100.collapse_road_docu___n100_road.value,
+    )
+
+    collapse_road_func_config = core_config.FuncMethodEntryConfig(
+        func=collapse_road,
+        params=logic_config.CollapseRoadDetailsKwargs(
+            input_road_line=core_config.InjectIO(object=road, tag="input"),
+            output_road_line=core_config.InjectIO(object=road, tag=processed_road),
+            merge_distnace_m=60,
+        ),
+    )
+
+    collapse_road_method_config = core_config.MethodEntriesConfig(
+        entries=[collapse_road_func_config]
+    )
+
+    collapse_partition_run_config = core_config.PartitionRunConfig(
+        max_elements_per_partition=OBJECT_LIMIT,
+        context_radius_meters=SEARCH_DISTANCE,
+        run_partition_optimization=False,
+    )
 
     partition_collapse_road_detail = PartitionIterator(
-        alias_path_data=input_dict,
-        alias_path_outputs=output_dict,
-        custom_functions=[collapse_road_detail_config],
-        root_file_partition_iterator=Road_N100.data_preparation___thin_road_partition_root___n100_road.value,
-        dictionary_documentation_path=Road_N100.data_preparation___thin_road_docu___n100_road.value,
-        feature_count=OBJECT_LIMIT,
-        run_partition_optimization=True,
-        search_distance=SEARCH_DISTANCE,
+        partition_io_config=collapse_partition_io_config,
+        partition_method_inject_config=collapse_road_method_config,
+        partition_iterator_run_config=collapse_partition_run_config,
+        work_file_manager_config=core_config.WorkFileConfig(
+            root_file=Road_N100.data_preparation___thin_road_partition_root___n100_road.value
+        ),
     )
     partition_collapse_road_detail.run()
 
@@ -359,25 +438,46 @@ def thin_roads():
     )
     road_data_validation.check_repair_sequence()
 
-    road_hierarchy = """def Reclass(vegklasse, typeveg):
+    road_hierarchy = """def Reclass(typeveg, vegkategori, vegklasse, er_kryssningspunkt, har_bom):
         if typeveg == 'bilferje':
             return 0
-        elif vegklasse in (0, 1, 2, 3, 4):
-            return 1
+        
+        bom = 2 if har_bom == "ja" else 0
+        
+        if vegklasse in (0, 1, 2, 3, 4):
+            klasse = 1
         elif vegklasse == 5:
-            return 2
+            klasse = 2
         elif vegklasse == 6:
-            return 3
+            klasse = 3
         elif vegklasse == 7:
-            return 4
+            klasse = 4
         else:
+            klasse = 5
+        
+        if er_kryssningspunkt == 1:
+            if vegkategori in ('E', 'R', 'F'):
+                kryss = -3
+            elif vegkategori in ('K'):
+                kryss = -2
+            else:
+                kryss = -1
+        else:
+            kryss = 0
+        
+        hierarki = bom + klasse + kryss
+        
+        if hierarki < 0:
+            return 0
+        elif hierarki > 5:
             return 5
+        return hierarki
     """
 
     arcpy.management.CalculateField(
         in_table=Road_N100.data_preparation___dissolved_intersections_3___n100_road.value,
         field="hierarchy",
-        expression="Reclass(!vegklasse!, !typeveg!)",
+        expression="Reclass(!typeveg!, !vegkategori!, !vegklasse!, !er_kryssningspunkt!, !har_bom!)",
         expression_type="PYTHON3",
         code_block=road_hierarchy,
     )
@@ -393,8 +493,8 @@ def thin_roads():
         input_feature=Road_N100.data_preparation___calculated_boarder_hierarchy___n100_road.value,
         partition_root_file=Road_N100.data_preparation___thin_road_partition_root___n100_road.value,
         output_feature=Road_N100.data_preparation___thin_road_output___n100_road.value,
-        docu_path=Road_N100.data_preparation___thin_road_docu___n100_road.value,
-        min_length="1400 meters",
+        docu_path=Road_N100.thin_road_docu___n100_road.value,
+        min_length_m=1400,
         feature_count=OBJECT_LIMIT,
     )
 
@@ -443,8 +543,8 @@ def thin_sti_and_forest_roads():
         input_feature=Road_N100.data_preparation___dissolved_intersections_4___n100_road.value,
         partition_root_file=Road_N100.data_preparation___thin_sti_partition_root___n100_road.value,
         output_feature=Road_N100.data_preparation___thin_road_sti_output___n100_road.value,
-        docu_path=Road_N100.data_preparation___thin_sti_docu___n100_road.value,
-        min_length="1800 meters",
+        docu_path=Road_N100.thin_sti_docu___n100_road.value,
+        min_length_m=1800,
         feature_count=OBJECT_LIMIT,
     )
 
@@ -493,12 +593,6 @@ def merge_divided_roads():
 
 @timing_decorator
 def smooth_line():
-
-    # custom_arcpy.select_attribute_and_make_permanent_feature(
-    #     input_layer=Road_N100.data_selection___admin_boundary___n100_road.value,
-    #     expression="OBJTYPE = 'Riksgrense'",
-    #     output_name=Road_N100.data_preparation___country_boarder___n100_road.value,
-    # )
     arcpy.cartography.SmoothLine(
         in_features=Road_N100.data_preparation___merge_divided_roads___n100_road.value,
         out_feature_class=Road_N100.data_preparation___smooth_road___n100_road.value,
@@ -575,86 +669,121 @@ def resolve_road_conflicts():
         output_road=Road_N100.data_preparation___calculated_boarder_hierarchy_2___n100_road.value,
     )
 
+    # --- Aliases ---------------------------------------------------------------
     road = "road"
     railroad = "railroad"
     begrensningskurve = "begrensningskurve"
     displacement = "displacement"
 
-    inputs = {
-        road: [
-            "input",
-            Road_N100.data_preparation___calculated_boarder_hierarchy_2___n100_road.value,
-        ],
-        railroad: [
-            "context",
-            Road_N100.data_preparation___railroad_single_part___n100_road.value,
-        ],
-        begrensningskurve: [
-            "context",
-            Road_N100.data_preparation___water_feature_outline_single_part___n100_road.value,
-        ],
-    }
+    # --- Partition IO (inputs/outputs) ----------------------------------------
+    rrc_input_config = core_config.PartitionInputConfig(
+        entries=[
+            core_config.InputEntry.processing_input(
+                object=road,
+                path=Road_N100.data_preparation___calculated_boarder_hierarchy_2___n100_road.value,
+            ),
+            core_config.InputEntry.context_input(
+                object=railroad,
+                path=Road_N100.data_preparation___railroad_single_part___n100_road.value,
+            ),
+            core_config.InputEntry.context_input(
+                object=begrensningskurve,
+                path=Road_N100.data_preparation___water_feature_outline_single_part___n100_road.value,
+            ),
+        ]
+    )
 
-    outputs = {
-        road: [
-            "resolve_road_conflicts",
-            Road_N100.data_preparation___resolve_road_conflicts___n100_road.value,
-        ],
-        displacement: [
-            "displacement_feature",
-            Road_N100.data_preparation___resolve_road_conflicts_displacement_feature___n100_road.value,
-        ],
-    }
+    rrc_output_config = core_config.PartitionOutputConfig(
+        entries=[
+            core_config.OutputEntry.vector_output(
+                object=road,
+                tag="resolve_road_conflicts",
+                path=Road_N100.data_preparation___resolve_road_conflicts___n100_road.value,
+            ),
+            core_config.OutputEntry.vector_output(
+                object=displacement,
+                tag="displacement_feature",
+                path=Road_N100.data_preparation___resolve_road_conflicts_displacement_feature___n100_road.value,
+            ),
+        ]
+    )
 
-    input_data_structure = [
-        {
-            "unique_alias": road,
-            "input_line_feature": (road, "input"),
-            "input_lyrx_feature": config.symbology_samferdsel,
-            "grouped_lyrx": True,
-            "target_layer_name": "N100_Samferdsel_senterlinje_veg_bru_L2",
-        },
-        {
-            "unique_alias": railroad,
-            "input_line_feature": (railroad, "context"),
-            "input_lyrx_feature": config.symbology_samferdsel,
-            "grouped_lyrx": True,
-            "target_layer_name": "N100_Samferdsel_senterlinje_jernbane_terreng_sort_maske",
-        },
-        {
-            "unique_alias": begrensningskurve,
-            "input_line_feature": (begrensningskurve, "context"),
-            "input_lyrx_feature": SymbologyN100.begrensnings_kurve_line.value,
-            "grouped_lyrx": False,
-            "target_layer_name": None,
-        },
+    rrc_io_config = core_config.PartitionIOConfig(
+        input_config=rrc_input_config,
+        output_config=rrc_output_config,
+        documentation_directory=Road_N100.resolve_road_docu___n100_road.value,
+    )
+
+    # --- Symbology specs -------------------------------------------------------
+    rrc_specs = [
+        logic_config.SymbologyLayerSpec(
+            unique_name=road,
+            input_feature=core_config.InjectIO(object=road, tag="input"),
+            input_lyrx=config.symbology_samferdsel,
+            grouped_lyrx=True,
+            target_layer_name="N100_Samferdsel_senterlinje_veg_bru_L2",
+        ),
+        logic_config.SymbologyLayerSpec(
+            unique_name=railroad,
+            input_feature=core_config.InjectIO(object=railroad, tag="input"),
+            input_lyrx=config.symbology_samferdsel,
+            grouped_lyrx=True,
+            target_layer_name="N100_Samferdsel_senterlinje_jernbane_terreng_sort_maske",
+        ),
+        logic_config.SymbologyLayerSpec(
+            unique_name=begrensningskurve,
+            input_feature=core_config.InjectIO(object=begrensningskurve, tag="input"),
+            input_lyrx=SymbologyN100.begrensnings_kurve_line.value,
+            grouped_lyrx=False,
+        ),
     ]
 
-    resolve_road_conflicts_config = {
-        "class": ResolveRoadConflicts,
-        "method": "run",
-        "params": {
-            "input_list_of_dicts_data_structure": input_data_structure,
-            "root_file": Road_N100.data_preparation___resolve_road_root___n100_road.value,
-            "output_road_feature": (road, "resolve_road_conflicts"),
-            "output_displacement_feature": (
-                displacement,
-                "displacement_feature",
-            ),
-            "map_scale": "100000",
-        },
-    }
-
-    partition_resolve_road_conflicts = PartitionIterator(
-        alias_path_data=inputs,
-        alias_path_outputs=outputs,
-        custom_functions=[resolve_road_conflicts_config],
-        root_file_partition_iterator=Road_N100.data_preparation___resolve_road_partition_root___n100_road.value,
-        dictionary_documentation_path=Road_N100.data_preparation___resolve_road_docu___n100_road.value,
-        feature_count=25_000,
-        run_partition_optimization=True,
-        search_distance="500 Meters",
+    # --- Class init config (new RRC init kwargs) -------------------------------
+    rrc_init = logic_config.RrcInitKwargs(
+        input_data_structure=rrc_specs,
+        work_file_manager_config=core_config.WorkFileConfig(
+            root_file=Road_N100.data_preparation___resolve_road_root___n100_road.value
+        ),
+        primary_road_unique_name=road,
+        output_road_feature=core_config.InjectIO(
+            object=road, tag="resolve_road_conflicts"
+        ),
+        output_displacement_feature=core_config.InjectIO(
+            object=displacement, tag="displacement_feature"
+        ),
+        map_scale="100000",
+        hierarchy_field="hierarchy",
     )
+
+    # --- Method wiring ---------------------------------------------------------
+    rrc_method = core_config.ClassMethodEntryConfig(
+        class_=ResolveRoadConflicts,
+        method=ResolveRoadConflicts.run,
+        init_params=rrc_init,
+    )
+
+    rrc_methods = core_config.MethodEntriesConfig(entries=[rrc_method])
+
+    # --- Partition run + WFM for iterator -------------------------------------
+    rrc_run_config = core_config.PartitionRunConfig(
+        max_elements_per_partition=25_000,
+        context_radius_meters=500,
+        run_partition_optimization=False,
+    )
+
+    rrc_partition_wfm = core_config.WorkFileConfig(
+        root_file=Road_N100.data_preparation___resolve_road_partition_root___n100_road.value,
+        keep_files=True,
+    )
+
+    # --- Execute ---------------------------------------------------------------
+    partition_resolve_road_conflicts = PartitionIterator(
+        partition_io_config=rrc_io_config,
+        partition_method_inject_config=rrc_methods,
+        partition_iterator_run_config=rrc_run_config,
+        work_file_manager_config=rrc_partition_wfm,
+    )
+
     partition_resolve_road_conflicts.run()
 
 
