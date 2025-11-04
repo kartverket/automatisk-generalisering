@@ -40,6 +40,7 @@ from constants.n100_constants import (
     MediumAlias,
 )
 from generalization.n100.road.dam import main as dam
+from generalization.n100.road.roundabouts import generalize_roundabouts
 from generalization.n100.road.vegsperring import remove_roadblock
 
 MERGE_DIVIDED_ROADS_ALTERATIVE = False
@@ -50,6 +51,7 @@ def main():
     environment_setup.main()
     arcpy.env.referenceScale = 100000
     data_selection_and_validation()
+    generalize_roundabouts()
     remove_roadblock()
     trim_road_details()
     admin_boarder()

@@ -16,6 +16,7 @@ data_preparation = "data_preparation"
 first_generalization = "first_generalization"
 test1 = "test1"
 testing_file = "testing_file"
+roundabout_file = "roundabout"
 dam_file = "dam"
 vegsperring_file = "vegsperring"
 test2 = "test2"
@@ -1227,6 +1228,22 @@ class Road_N100(Enum):
             script_source_name=testing_file,
             description="road_input_functional_roadclass_studyarea_selector",
         )
+    )
+
+    # ========================================
+    #                               ROUNDABOUT
+    # ========================================
+
+    roundabout__roundabout__n100_road = file_manager.generate_file_name_gdb(
+        script_source_name=roundabout_file, description="roundabout"
+    )
+
+    roundabout__centroids__n100_road = file_manager.generate_file_name_gdb(
+        script_source_name=roundabout_file, description="centroids"
+    )
+
+    roundabout__cleaned_road__n100_road = file_manager.generate_file_name_gdb(
+        script_source_name=roundabout_file, description="cleaned_road"
     )
 
     # ========================================

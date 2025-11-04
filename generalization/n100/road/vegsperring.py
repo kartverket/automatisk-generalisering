@@ -9,7 +9,7 @@ from custom_tools.decorators.timing_decorator import timing_decorator
 
 data_files = {
     # Stores all the relevant file paths to the geodata used in this Python file
-    "input_road": Road_N100.data_selection___nvdb_roads___n100_road.value,
+    "input_road": Road_N100.roundabout__cleaned_road__n100_road.value,
     "input_vegsperring": Road_N100.data_selection___vegsperring___n100_road.value,
     "veg_uten_bom": Road_N100.vegsperring__veg_uten_bom__n100_road.value,
 }
