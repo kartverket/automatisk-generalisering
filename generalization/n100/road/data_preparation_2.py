@@ -46,7 +46,7 @@ from generalization.n100.road.major_road_crossings import (
 from generalization.n100.road.roundabouts import generalize_roundabouts
 from generalization.n100.road.vegsperring import remove_roadblock
 from generalization.n100.road.ramps_point import ramp_points
-from generalization.n100.road.ramps_point import MovePointsToCrossings 
+from generalization.n100.road.ramps_point import MovePointsToCrossings
 
 
 MERGE_DIVIDED_ROADS_ALTERATIVE = False
@@ -284,8 +284,6 @@ def trim_road_details():
     )
 
 
-
-
 @timing_decorator
 def admin_boarder():
 
@@ -296,7 +294,7 @@ def admin_boarder():
     )
 
     custom_arcpy.select_attribute_and_make_permanent_feature(
-        input_layer=Road_N100.ramps__generalized_ramps__n100_road.value, 
+        input_layer=Road_N100.ramps__generalized_ramps__n100_road.value,
         expression=f"vegkategori  in ('{NvdbAlias.europaveg}', '{NvdbAlias.riksveg}', '{NvdbAlias.fylkesveg}', '{NvdbAlias.kommunalveg}', '{NvdbAlias.privatveg}', '{NvdbAlias.skogsveg}')",
         output_name=Road_N100.data_preparation___car_raod___n100_road.value,
     )
@@ -803,7 +801,13 @@ def final_output():
 
 
 def final_ramp_points():
-    f = MovePointsToCrossings(Road_N100.data_preparation___road_final_output___n100_road.value, Road_N100.ramps__ramp_points_moved__n100_road.value, Road_N100.ramps__ramp_points_moved_2__n100_road.value, delete_points_not_on_crossings= True, with_ramps=False)
+    f = MovePointsToCrossings(
+        Road_N100.data_preparation___road_final_output___n100_road.value,
+        Road_N100.ramps__ramp_points_moved__n100_road.value,
+        Road_N100.ramps__ramp_points_moved_2__n100_road.value,
+        delete_points_not_on_crossings=True,
+        with_ramps=False,
+    )
     f.run()
 
 
