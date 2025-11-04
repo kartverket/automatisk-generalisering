@@ -1168,110 +1168,120 @@ class MovePointsToCrossings:
         but only if that near_fc feature intersects the closest buffer polygon to the point.
         Returns a dict: {in_fid: (near_x, near_y, near_dist, near_fid)}
         """
-        points_lyr = "points_lyr_unmatched"
-        arcpy.MakeFeatureLayer_management(in_fc, points_lyr)
+        if unmatched_oids:
 
-        oid_field = arcpy.Describe(in_fc).oidFieldName
+            points_lyr = "points_lyr_unmatched"
+            arcpy.MakeFeatureLayer_management(in_fc, points_lyr)
 
-        in_list = ",".join(map(str, unmatched_oids))
-        where = f"{arcpy.AddFieldDelimiters(in_fc, oid_field)} IN ({in_list})"
+            oid_field = arcpy.Describe(in_fc).oidFieldName
 
-        arcpy.SelectLayerByAttribute_management(points_lyr, "NEW_SELECTION", where)
+            in_list = ",".join(map(str, unmatched_oids))
+            where = f"{arcpy.AddFieldDelimiters(in_fc, oid_field)} IN ({in_list})"
 
-        near_table = "in_memory\\near_table"
-        arcpy.GenerateNearTable_analysis(in_features=points_lyr,
-                                    near_features=buffer_fc,
-                                    out_table=near_table,
-                                    search_radius=distance_str,
-                                    location="LOCATION",
-                                    angle="NO_ANGLE",
-                                    closest="ALL",   
-                                    method="PLANAR")
+            arcpy.SelectLayerByAttribute_management(points_lyr, "NEW_SELECTION", where)
 
-        in_buffer_map = {}
-        with arcpy.da.SearchCursor(near_table, ["IN_FID", "NEAR_FID", "NEAR_RANK"]) as s:
-            for in_fid, nf, nr in s:
-                if nr != 1:
-                    continue
-                if nf is None:
-                    continue
-                in_buffer_map[int(in_fid)] = (float(nf))
-        
-        
-        arcpy.management.Delete(near_table)
+            near_table = "in_memory\\near_table"
+            arcpy.GenerateNearTable_analysis(in_features=points_lyr,
+                                        near_features=buffer_fc,
+                                        out_table=near_table,
+                                        search_radius=distance_str,
+                                        location="LOCATION",
+                                        angle="NO_ANGLE",
+                                        closest="ALL",   
+                                        method="PLANAR")
 
-        near_table = "in_memory\\near_table"
-        arcpy.GenerateNearTable_analysis(in_features=near_fc,
-                                    near_features=buffer_fc,
-                                    out_table=near_table,
-                                    search_radius=distance_str,
-                                    location="LOCATION",
-                                    angle="NO_ANGLE",
-                                    closest="ALL",   
-                                    method="PLANAR")
+            in_buffer_map = {}
+            with arcpy.da.SearchCursor(near_table, ["IN_FID", "NEAR_FID", "NEAR_RANK"]) as s:
+                for in_fid, nf, nr in s:
+                    if nr != 1:
+                        continue
+                    if nf is None:
+                        continue
+                    in_buffer_map[int(in_fid)] = (float(nf))
+            
+            
+            arcpy.management.Delete(near_table)
 
-        near_buffer_map = {}
-        with arcpy.da.SearchCursor(near_table, ["IN_FID", "NEAR_FID", "NEAR_RANK"]) as s:
-            for in_fid, nf, nr in s:
-                if nr != 1:
-                    continue
-                if nf is None:
-                    continue
-                near_buffer_map[int(in_fid)] = (float(nf))
-        
-        
-        arcpy.management.Delete(near_table)
+            near_table = "in_memory\\near_table"
+            arcpy.GenerateNearTable_analysis(in_features=near_fc,
+                                        near_features=buffer_fc,
+                                        out_table=near_table,
+                                        search_radius=distance_str,
+                                        location="LOCATION",
+                                        angle="NO_ANGLE",
+                                        closest="ALL",   
+                                        method="PLANAR")
 
-        near_table = "in_memory\\near_table"
-        arcpy.GenerateNearTable_analysis(in_features=points_lyr,
-                                    near_features=near_fc,
-                                    out_table=near_table,
-                                    search_radius=distance_str,
-                                    location="LOCATION",
-                                    angle="NO_ANGLE",
-                                    closest="ALL",   
-                                    method="PLANAR")
+            near_buffer_map = {}
+            with arcpy.da.SearchCursor(near_table, ["IN_FID", "NEAR_FID", "NEAR_RANK"]) as s:
+                for in_fid, nf, nr in s:
+                    if nr != 1:
+                        continue
+                    if nf is None:
+                        continue
+                    near_buffer_map[int(in_fid)] = (float(nf))
+            
+            
+            arcpy.management.Delete(near_table)
 
-        near_map = {}
-        with arcpy.da.SearchCursor(near_table, ["IN_FID", "NEAR_X", "NEAR_Y", "NEAR_FID", "NEAR_RANK"]) as s:
-            for in_fid, nx, ny, nf, nr in s:
-                if nx is None or ny is None:
-                    continue
-                if in_buffer_map[int(in_fid)] == near_buffer_map[int(nf)]:
-                    if int(in_fid) in near_map:
-                        if near_map[int(in_fid)][2] > nr:
+            near_table = "in_memory\\near_table"
+            arcpy.GenerateNearTable_analysis(in_features=points_lyr,
+                                        near_features=near_fc,
+                                        out_table=near_table,
+                                        search_radius=distance_str,
+                                        location="LOCATION",
+                                        angle="NO_ANGLE",
+                                        closest="ALL",   
+                                        method="PLANAR")
+
+            near_map = {}
+            with arcpy.da.SearchCursor(near_table, ["IN_FID", "NEAR_X", "NEAR_Y", "NEAR_FID", "NEAR_RANK"]) as s:
+                for in_fid, nx, ny, nf, nr in s:
+                    if nx is None or ny is None:
+                        continue
+                    if in_buffer_map[int(in_fid)] == near_buffer_map[int(nf)]:
+                        if int(in_fid) in near_map:
+                            if near_map[int(in_fid)][2] > nr:
+                                near_map[int(in_fid)] = (float(nx), float(ny), float(nr), int(nf))
+                            else: 
+                                continue
+                        else:
                             near_map[int(in_fid)] = (float(nx), float(ny), float(nr), int(nf))
-                        else: 
-                            continue
                     else:
-                        near_map[int(in_fid)] = (float(nx), float(ny), float(nr), int(nf))
-                else:
-                    continue
+                        continue
 
+            
+            arcpy.management.Delete(near_table)
         
-        arcpy.management.Delete(near_table)
+        else:
+            near_map = {}
+            
 
 
         return near_map
     
     @staticmethod
     def create_near_map_unmatched(distance_str, in_fc, near_fc, unmatched_oids):
-        points_lyr = "points_lyr_unmatched"
-        arcpy.MakeFeatureLayer_management(in_fc, points_lyr)
+        if unmatched_oids:
 
-        oid_field = arcpy.Describe(in_fc).oidFieldName
+            points_lyr = "points_lyr_unmatched"
+            arcpy.MakeFeatureLayer_management(in_fc, points_lyr)
 
-        in_list = ",".join(map(str, unmatched_oids))
-        where = f"{arcpy.AddFieldDelimiters(in_fc, oid_field)} IN ({in_list})"
+            oid_field = arcpy.Describe(in_fc).oidFieldName
 
-        arcpy.SelectLayerByAttribute_management(points_lyr, "NEW_SELECTION", where)
+            in_list = ",".join(map(str, unmatched_oids))
+            where = f"{arcpy.AddFieldDelimiters(in_fc, oid_field)} IN ({in_list})"
 
-        near_map = create_near_map(distance_str, points_lyr, near_fc)
+            arcpy.SelectLayerByAttribute_management(points_lyr, "NEW_SELECTION", where)
 
-        arcpy.Delete_management(points_lyr)
+            near_map = create_near_map(distance_str, points_lyr, near_fc)
+
+            arcpy.Delete_management(points_lyr)
+
+        else:
+            near_map = {}
 
         return near_map
-
 
         
 

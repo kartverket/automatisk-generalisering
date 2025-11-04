@@ -365,7 +365,7 @@ def collapse_road_detail():
         entries=[
             core_config.InputEntry.processing_input(
                 object=road,
-                path=Road_N100.data_preparation___road_single_part_2___n100_road.value,
+                path=Road_N100.ramps__generalized_ramps__n100_road.value,
             )
         ]
     )
