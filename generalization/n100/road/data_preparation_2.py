@@ -45,7 +45,7 @@ from generalization.n100.road.major_road_crossings import (
 )
 from generalization.n100.road.roundabouts import generalize_roundabouts
 from generalization.n100.road.vegsperring import remove_roadblock
-from generalization.n100.road.ramps_point import main as ramp_points
+from generalization.n100.road.ramps_point import ramp_points
 from generalization.n100.road.ramps_point import MovePointsToCrossings 
 
 

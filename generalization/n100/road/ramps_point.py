@@ -52,7 +52,7 @@ files_to_delete = [
 
 
 @timing_decorator
-def main():
+def ramp_points():
 
     merge_ramps()
     make_ramp_points()
@@ -1293,4 +1293,4 @@ class MovePointsToCrossings:
 
 
 if __name__ == "__main__":
-    main()
+    ramp_points()
