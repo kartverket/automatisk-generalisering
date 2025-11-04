@@ -38,6 +38,9 @@ from constants.n100_constants import (
     MediumAlias,
 )
 from generalization.n100.road.dam import main as dam
+from generalization.n100.road.ramps_point import main as ramp_points
+from generalization.n100.road.ramps_point import MovePointsToCrossings 
+
 
 MERGE_DIVIDED_ROADS_ALTERATIVE = False
 
@@ -48,6 +51,7 @@ def main():
     arcpy.env.referenceScale = 100000
     data_selection_and_validation()
     trim_road_details()
+    ramp_points()
     admin_boarder()
     adding_fields()
     collapse_road_detail()
@@ -60,6 +64,9 @@ def main():
     resolve_road_conflicts()
     dam()
     final_output()
+    final_ramp_points()
+    
+    
 
 
 SEARCH_DISTANCE = "5000 Meters"
@@ -81,7 +88,7 @@ def data_selection_and_validation():
             input_n100.AdminGrense: Road_N100.data_selection___admin_boundary___n100_road.value,
         },
         selecting_file=input_n100.AdminFlate,
-        selecting_sql_expression=ferry_admin_test,
+        selecting_sql_expression=small_plot_area,
         select_local=config.select_study_area,
     )
 
@@ -222,6 +229,8 @@ def trim_road_details():
     )
 
 
+
+
 @timing_decorator
 def admin_boarder():
 
@@ -232,7 +241,7 @@ def admin_boarder():
     )
 
     custom_arcpy.select_attribute_and_make_permanent_feature(
-        input_layer=Road_N100.ramps__generalized_ramps__n100_road.value,  # Road_N100.data_preparation___road_single_part_2___n100_road.value,
+        input_layer=Road_N100.ramps__generalized_ramps__n100_road.value, 
         expression=f"vegkategori  in ('{NvdbAlias.europaveg}', '{NvdbAlias.riksveg}', '{NvdbAlias.fylkesveg}', '{NvdbAlias.kommunalveg}', '{NvdbAlias.privatveg}', '{NvdbAlias.skogsveg}')",
         output_name=Road_N100.data_preparation___car_raod___n100_road.value,
     )
@@ -666,6 +675,11 @@ def final_output():
         output_name=Road_N100.data_preparation___road_final_output___n100_road.value,
         inverted=True,
     )
+
+
+def final_ramp_points():
+    f = MovePointsToCrossings(Road_N100.data_preparation___road_final_output___n100_road.value, Road_N100.ramps__ramp_points_moved__n100_road.value, Road_N100.ramps__ramp_points_moved_2__n100_road.value, delete_points_not_on_crossings= True, with_ramps=False)
+    f.run()
 
 
 if __name__ == "__main__":

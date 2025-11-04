@@ -1403,6 +1403,10 @@ class Road_N100(Enum):
         script_source_name=ramps_file, description="ramp_points_moved"
     )
 
+    ramps__ramp_points_moved_2__n100_road = file_manager.generate_file_name_gdb(
+        script_source_name=ramps_file, description="ramp_points_moved_2"
+    )
+
     ramps__test__n100_road = file_manager.generate_file_name_gdb(
         script_source_name=ramps_file, description="test"
     )
