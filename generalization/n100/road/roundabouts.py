@@ -16,7 +16,7 @@ from generalization.n100.road.dam import get_endpoints
 
 data_files = {
     # Stores all the relevant file paths to the geodata used in this Python file
-    "input": Road_N100.data_selection___nvdb_roads___n100_road.value,
+    "input": Road_N100.major_road_crossing__output__n100_road.value,
     "roundabout": Road_N100.roundabout__roundabout__n100_road.value,
     "centroids": Road_N100.roundabout__centroids__n100_road.value,
     "cleaned_road": Road_N100.roundabout__cleaned_road__n100_road.value,

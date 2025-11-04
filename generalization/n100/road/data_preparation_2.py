@@ -39,7 +39,10 @@ from constants.n100_constants import (
     NvdbAlias,
     MediumAlias,
 )
-from generalization.n100.road.dam import main as dam
+from generalization.n100.road.dam import generalize_dam
+from generalization.n100.road.major_road_crossings import (
+    categories_major_road_crossings,
+)
 from generalization.n100.road.roundabouts import generalize_roundabouts
 from generalization.n100.road.vegsperring import remove_roadblock
 
@@ -51,6 +54,7 @@ def main():
     environment_setup.main()
     arcpy.env.referenceScale = 100000
     data_selection_and_validation()
+    categories_major_road_crossings()
     generalize_roundabouts()
     remove_roadblock()
     trim_road_details()
@@ -60,12 +64,11 @@ def main():
     simplify_road()
     thin_roads()
     thin_sti_and_forest_roads()
-
     merge_divided_roads()
     smooth_line()
     pre_resolve_road_conflicts()
     resolve_road_conflicts()
-    dam()
+    generalize_dam()
     final_output()
 
 
@@ -76,7 +79,7 @@ OBJECT_LIMIT = 100_000
 @timing_decorator
 def data_selection_and_validation():
     plot_area = "navn IN ('Asker', 'Bærum', 'Drammen', 'Frogn', 'Hole', 'Holmestrand', 'Horten', 'Jevnaker', 'Kongsberg', 'Larvik', 'Lier', 'Lunner', 'Modum', 'Nesodden', 'Oslo', 'Ringerike', 'Tønsberg', 'Øvre Eiker')"
-    ferry_admin_test = "navn IN ('Ringerike')"
+    ferry_admin_test = "navn IN ('Hole')"
     small_plot_area = "navn IN ('Oslo', 'Ringerike')"
     smallest_plot_area = "navn IN ('Ringerike')"
     presentation_area = "navn IN ('Asker', 'Bærum', 'Oslo', 'Enebakk', 'Nittedal', 'Nordre Follo', 'Hole', 'Nesodden', 'Lørenskog', 'Sandnes', 'Stavanger', 'Gjesdal', 'Sola', 'Klepp', 'Strand', 'Time', 'Randaberg')"
@@ -90,7 +93,7 @@ def data_selection_and_validation():
             input_n100.AdminGrense: Road_N100.data_selection___admin_boundary___n100_road.value,
         },
         selecting_file=input_n100.AdminFlate,
-        selecting_sql_expression=smallest_plot_area,
+        selecting_sql_expression=ferry_admin_test,
         select_local=config.select_study_area,
     )
 
@@ -433,7 +436,7 @@ def thin_roads():
     )
     road_data_validation.check_repair_sequence()
 
-    road_hierarchy = """def Reclass(vegklasse, typeveg, har_bom):
+    road_hierarchy = """def Reclass(typeveg, vegkategori, vegklasse, er_kryssningspunkt, har_bom):
         if typeveg == 'bilferje':
             return 0
         
@@ -450,14 +453,29 @@ def thin_roads():
         else:
             klasse = 5
         
-        hierarki = klasse + bom
-        return hierarki if hierarki <= 5 else 5
+        if er_kryssningspunkt == 1:
+            if vegkategori in ('E', 'R', 'F'):
+                kryss = -3
+            elif vegkategori in ('K'):
+                kryss = -2
+            else:
+                kryss = -1
+        else:
+            kryss = 0
+        
+        hierarki = bom + klasse + kryss
+        
+        if hierarki < 0:
+            return 0
+        elif hierarki > 5:
+            return 5
+        return hierarki
     """
 
     arcpy.management.CalculateField(
         in_table=Road_N100.data_preparation___dissolved_intersections_3___n100_road.value,
         field="hierarchy",
-        expression="Reclass(!vegklasse!, !typeveg!, !har_bom!)",
+        expression="Reclass(!typeveg!, !vegkategori!, !vegklasse!, !er_kryssningspunkt!, !har_bom!)",
         expression_type="PYTHON3",
         code_block=road_hierarchy,
     )
