@@ -154,6 +154,7 @@ class FieldNames(Enum):
         "medium",
         "uttegning",
         "er_kryssningspunkt",
+        "har_bom",
     ]
     road_added_fields = [
         ["invisibility", "SHORT"],

@@ -1,9 +1,12 @@
 import arcpy
 import re
 from datetime import datetime
+from typing import overload, Any, Optional, Union, Iterable, Literal
+
+
+from composition_configs import core_config, type_defs, io_types
 
 import env_setup.global_config
-from typing import Any
 
 
 class WorkFileManager:
@@ -22,10 +25,7 @@ class WorkFileManager:
         any parameters.
 
     Args:
-        unique_id (int): Used to generate unique file names, can be self value or an iterated number.
-        root_file (str): The core file name used to generate unique file names.
-        write_to_memory (bool): Defaults to True, write to memory if True, write to disk if False.
-        keep_files (bool): Defaults to False, delete work files if True, keep work files if False.
+        config (WorkFileConfig): Configuration object containing work file options.
     """
 
     general_files_directory_name = env_setup.global_config.general_files_name
@@ -37,24 +37,24 @@ class WorkFileManager:
 
     def __init__(
         self,
-        unique_id: int,
-        root_file: str = None,
-        write_to_memory: bool = True,
-        keep_files: bool = False,
+        config: core_config.WorkFileConfig,
     ):
         """
-        Initializes the WorkFileManager with the desired parameters.
+        Initializes the WorkFileManager with the provided configuration.
 
         Args:
-            See class docstring.
+            config (WorkFileConfig): Configuration object for controlling work file behavior.
         """
 
         WorkFileManager._global_counter += 1
+
         self.unique_id = f"id{self._session_prefix}_{WorkFileManager._global_counter}"
-        self.root_file = root_file
-        self.write_to_memory = write_to_memory
-        self.keep_files = keep_files
-        self.created_paths = []
+
+        self.root_file = config.root_file
+        self.write_to_memory = config.write_to_memory
+        self.keep_files = config.keep_files
+
+        self.created_paths: set[str] = set()
 
         if not self.write_to_memory and not self.root_file:
             raise ValueError(
@@ -66,7 +66,9 @@ class WorkFileManager:
                 "Need to specify root_file path and write to disk to keep work files."
             )
 
-        self.file_location = "memory/" if self.write_to_memory else f"{self.root_file}_"
+        self.file_location = (
+            "\\memory\\" if self.write_to_memory else f"{self.root_file}_"
+        )
 
     def _modify_path(self) -> tuple[str, str]:
         """
@@ -93,12 +95,30 @@ class WorkFileManager:
 
         return scale_path, origin_file_name
 
-    def _build_file_path(
+    @overload
+    def build_file_path(
+        self,
+        file_name: str,
+        file_type: Literal["gdb"] = "gdb",
+        index: Optional[int] = ...,
+    ) -> type_defs.GdbFilePath: ...
+    @overload
+    def build_file_path(
+        self, file_name: str, file_type: Literal["lyrx"], index: Optional[int] = ...
+    ) -> type_defs.LyrxFilePath: ...
+    @overload
+    def build_file_path(
+        self, file_name: str, file_type: str, index: Optional[int] = ...
+    ) -> type_defs.GeneralFilePath: ...
+
+    def build_file_path(
         self,
         file_name: str,
         file_type: str = "gdb",
-        index: int = None,
-    ) -> str:
+        index: Optional[int] = None,
+    ) -> Union[
+        type_defs.GdbFilePath, type_defs.LyrxFilePath, type_defs.GeneralFilePath
+    ]:
         """
         Generates a file path based on the file name, type, and an optional index.
 
@@ -110,29 +130,30 @@ class WorkFileManager:
         Returns:
             str: A string representing the file path.
         """
-        suffix = f"___{index}" if index is not None else ""
+        suffix = f"_iter{index}" if index is not None else ""
+
         if file_type == "gdb":
-            path = f"{self.file_location}{file_name}_{self.unique_id}{suffix}"
+            s = f"{self.file_location}{self.unique_id}_{file_name}{suffix}"
+            path = type_defs.GdbFilePath(s)
+            key = str(path)
+            if key in self.created_paths:
+                raise ValueError(f"Duplicate path detected: {path}")
+            self.created_paths.add(key)
+            return path
+
+        scale_path, origin_file_name = self._modify_path()
+
+        if file_type == "lyrx":
+            s = rf"{scale_path}{self.lyrx_directory_name}\{origin_file_name}_{self.unique_id}_{file_name}{suffix}.lyrx"
+            path = type_defs.LyrxFilePath(s)
         else:
-            scale_path, origin_file_name = self._modify_path()
+            s = rf"{scale_path}{self.general_files_directory_name}\{origin_file_name}_{self.unique_id}_{file_name}{suffix}.{file_type}"
+            path = type_defs.GeneralFilePath(s)
 
-            if file_type == "lyrx":
-                print("lyrx file path detected:")
-                path = rf"{scale_path}{self.lyrx_directory_name}\{origin_file_name}_{file_name}_{self.unique_id}{suffix}.lyrx"
-                print(f"Path: {path}")
-                print(
-                    f"Scale path: {scale_path}\nOrigin file name: {origin_file_name}\n"
-                )
-            else:
-                path = rf"{scale_path}{self.general_files_directory_name}\{origin_file_name}_{file_name}_{self.unique_id}{suffix}.{file_type}"
-
-        if path in self.created_paths:
-            raise ValueError(
-                f"Duplicate path detected: {path}. "
-                "This may lead to unexpected behavior. Ensure unique file names or indices."
-            )
-
-        self.created_paths.append(path)
+        key = str(path)
+        if key in self.created_paths:
+            raise ValueError(f"Duplicate path detected: {path}")
+        self.created_paths.add(key)
         return path
 
     def generate_output(
@@ -207,11 +228,11 @@ class WorkFileManager:
             # Update the instance attribute if it exists
             for attr_name, attr_value in instance.__dict__.items():
                 if attr_value == item:
-                    updated_path = self._build_file_path(item, file_type, index=idx)
+                    updated_path = self.build_file_path(item, file_type, index=idx)
                     setattr(instance, attr_name, updated_path)
                     return updated_path
 
-            return self._build_file_path(item, file_type, index=idx)
+            return self.build_file_path(item, file_type, index=idx)
 
         def process_list(items):
             """Processes a list structure."""
@@ -237,7 +258,7 @@ class WorkFileManager:
                     updated_dict[key] = value
 
             if add_key:
-                updated_dict[add_key] = self._build_file_path(
+                updated_dict[add_key] = self.build_file_path(
                     add_key, file_type, index=idx
                 )
 
@@ -249,62 +270,35 @@ class WorkFileManager:
         else:
             return process_item(file_structure)
 
-    def setup_dynamic_file_paths(
-        self,
-        base_name: str,
-        count: int,
-        file_type: str = "gdb",
-    ) -> list[str]:
-        """
-        Generates a list of file paths for a dynamic number of files based on a base name.
-
-        Args:
-            base_name (str): The base name to use for generating file paths.
-            count (int): The number of file paths to generate.
-            file_type (str, optional): The file type for the generated paths. Defaults to "gdb".
-
-        Returns:
-            list[str]: A list of generated file paths.
-        """
-        dynamic_paths = []
-        for idx in range(count):
-            path = self._build_file_path(base_name, file_type, index=idx)
-            dynamic_paths.append(path)
-        return dynamic_paths
-
     def delete_created_files(
         self,
-        delete_targets: list[str] = None,
-        exceptions: list[str] = None,
-        delete_files: list[str] = None,
-    ):
+        delete_targets: Optional[Iterable[Optional[io_types.PathArg]]] = None,
+        exceptions: Optional[Iterable[Optional[io_types.PathArg]]] = None,
+        delete_files: Optional[bool] = None,
+    ) -> None:
         """
-        What:
-            Deletes the created paths, defaults to deleting all created paths,
-            but can target or exclude specific paths.
-
-        Args:
-            delete_targets (list[str], optional): List of paths to delete. Defaults to None.
-            exceptions (list[str], optional): List of paths to exclude from deletion. Defaults to None.
-            delete_files (bool, optional): Whether to delete files. Defaults to None, which uses `self.keep_files`.
+        Deletes created paths. If delete_targets is None, deletes all tracked paths.
+        'exceptions' (if any) are excluded. If delete_files is None, uses not self.keep_files.
         """
-        # Default to `self.keep_files` if `delete_files` is not explicitly provided
         if delete_files is None:
             delete_files = not self.keep_files
-
         if not delete_files:
             print("Deletion is disabled. No files deleted.")
             return
 
-        # Use all tracked paths if delete_targets is not provided
-        targets = delete_targets or self.created_paths
+        if delete_targets is not None:
+            to_delete: set[io_types.PathArg | str] = {
+                p for p in delete_targets if p is not None
+            }
+        else:
+            to_delete = set(self.created_paths)
 
-        # Apply exceptions, if provided
         if exceptions:
-            targets = [path for path in targets if path not in exceptions]
+            to_delete -= {e for e in exceptions if e is not None}
 
-        for path in targets:
+        for path in to_delete:
             self._delete_file(path)
+            self.created_paths.discard(str(path))
 
     @staticmethod
     def list_contents(data: Any, title: str = "Contents"):
@@ -325,16 +319,10 @@ class WorkFileManager:
         print(f"{f' End of: {title} ':=^120}\n")
 
     @staticmethod
-    def _delete_file(file_path: str):
-        """
-        Deletes a file from disk.
-        """
+    def _delete_file(file_path: io_types.PathArg | str) -> None:
         try:
             if arcpy.Exists(file_path):
                 arcpy.management.Delete(file_path)
-                print(f"Deleted: {file_path}")
-            else:
-                print(f"File did not exist: {file_path}")
         except arcpy.ExecuteError as e:
             print(f"Error deleting file {file_path}: {e}")
 
@@ -440,3 +428,42 @@ class WorkFileManager:
                 item[key] = new_value
                 return
         raise ValueError(f"No dictionary with alias '{unique_alias}' found.")
+
+
+class PartitionWorkFileManager(WorkFileManager):
+    """
+    Extension of WorkFileManager to support partition-aware file path generation.
+    Intended for use inside PartitionIterator or similar partition-based logic.
+    """
+
+    def generate_partition_path(
+        self,
+        object_name: str,
+        tag: Optional[str] = None,
+        partition_id: Optional[int] = None,
+        suffix: str = "",
+        extension: str = "gdb",
+    ) -> str:
+        """
+        Constructs a consistent file path for work files. If a partition_id is provided,
+        it becomes a partition-aware path; otherwise, it generates a general work path.
+
+        Args:
+            object_name (str): Identifier for the object (e.g., layer).
+            tag (str, optional): Tag (e.g., 'input', 'context', 'copy', etc.).
+            partition_id (int | None, optional): Partition number. Defaults to None.
+            suffix (str, optional): Extra string to differentiate logic. Defaults to "".
+            extension (str): File type or extension. Defaults to 'gdb'.
+
+        Returns:
+            str: Constructed file path.
+        """
+        extra = f"_{suffix}" if suffix else ""
+        tag_string = f"_{tag}" if tag else ""
+
+        if partition_id is not None:
+            file_name = f"{object_name}{tag_string}_iteration_{partition_id}{extra}"
+        else:
+            file_name = f"{object_name}{tag_string}{extra}"
+
+        return self.build_file_path(file_name=file_name, file_type=extension)
