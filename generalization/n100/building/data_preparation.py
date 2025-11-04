@@ -2,6 +2,10 @@
 import arcpy
 
 # Importing custom input files modules
+from custom_tools.generalization_tools.building import (
+    begrensningskurve_land_waterbodies,
+)
+from generalization.n100 import building
 from input_data import input_n50
 from input_data import input_n100
 from input_data import input_other
@@ -24,6 +28,7 @@ from custom_tools.generalization_tools.building.begrensningskurve_land_waterbodi
 )
 from custom_tools.general_tools.study_area_selector import StudyAreaSelector
 from custom_tools.general_tools.geometry_tools import GeometryValidator
+from composition_configs import core_config, logic_config
 
 
 @timing_decorator
@@ -219,15 +224,15 @@ def data_selection():
         },
     }
 
-    partiotion_data_validation = PartitionIterator(
-        alias_path_data=inputs,
-        alias_path_outputs=outputs,
-        custom_functions=[process_data_validation],
-        root_file_partition_iterator=Building_N100.data_preparation___begrensningskurve_base___n100_building.value,
-        dictionary_documentation_path=Building_N100.data_preparation___begrensingskurve_docu___building_n100.value,
-        feature_count="5000",
-        delete_final_outputs=False,
-    )
+    # partiotion_data_validation = PartitionIterator(
+    #     alias_path_data=inputs,
+    #     alias_path_outputs=outputs,
+    #     custom_functions=[process_data_validation],
+    #     root_file_partition_iterator=Building_N100.data_preparation___begrensningskurve_base___n100_building.value,
+    #     dictionary_documentation_path=Building_N100.data_preparation___begrensingskurve_docu___building_n100.value,
+    #     feature_count="5000",
+    #     delete_final_outputs=False,
+    # )
 
     # partiotion_data_validation.run()
 
@@ -249,49 +254,80 @@ def begrensningskurve_land_and_water_bodies():
     begrensningskurve = "begrensningskurve"
     land_cover = "land_cover"
 
-    inputs = {
-        begrensningskurve: [
-            "input",
-            Building_N100.data_selection___begrensningskurve_n100_input_data___n100_building.value,
-        ],
-        land_cover: [
-            "input",
-            Building_N100.data_selection___land_cover_n100_input_data___n100_building.value,
-        ],
-    }
+    processed_begrensningskurve = "processed_begrensningskurve"
 
-    outputs = {
-        begrensningskurve: [
-            "processed_begrensningskurve",
-            Building_N100.data_preparation___processed_begrensningskurve___n100_building.value,
-        ],
-    }
-
-    process_begrensningskurve = {
-        "class": BegrensningskurveLandWaterbodies,
-        "method": "run",
-        "params": {
-            "input_begrensningskurve": (begrensningskurve, "input"),
-            "input_land_cover_features": (land_cover, "input"),
-            "water_feature_buffer_width": N100_Values.building_water_intrusion_distance_m.value,
-            "output_begrensningskurve": (
-                f"{begrensningskurve}",
-                "processed_begrensningskurve",
+    begrensningskurve_input_config = core_config.PartitionInputConfig(
+        entries=[
+            core_config.InputEntry.processing_input(
+                object=begrensningskurve,
+                path=Building_N100.data_selection___begrensningskurve_n100_input_data___n100_building.value,
             ),
-            "write_work_files_to_memory": False,
-            "root_file": Building_N100.begrensingskurve_land_water___root_file___n100_building.value,
-        },
-    }
-
-    partition_begrensningskurve = PartitionIterator(
-        alias_path_data=inputs,
-        alias_path_outputs=outputs,
-        custom_functions=[process_begrensningskurve],
-        root_file_partition_iterator=Building_N100.data_preparation___begrensningskurve_base___n100_building.value,
-        dictionary_documentation_path=Building_N100.data_preparation___begrensingskurve_docu___building_n100.value,
-        feature_count=800000,
+            core_config.InputEntry.processing_input(
+                object=land_cover,
+                path=Building_N100.data_selection___land_cover_n100_input_data___n100_building.value,
+            ),
+        ]
     )
-    partition_begrensningskurve.run()
+
+    begrensningskurve_output_config = core_config.PartitionOutputConfig(
+        entries=[
+            core_config.OutputEntry.vector_output(
+                object=begrensningskurve,
+                tag=processed_begrensningskurve,
+                path=Building_N100.data_preparation___processed_begrensningskurve___n100_building.value,
+            )
+        ]
+    )
+
+    begrensningskurve_io_config = core_config.PartitionIOConfig(
+        input_config=begrensningskurve_input_config,
+        output_config=begrensningskurve_output_config,
+        documentation_directory=Building_N100.begrensningskurve_documentation_n100_building.value,
+    )
+
+    begrensningskurve_init_config = logic_config.BegrensningskurveLandWaterKwargs(
+        input_begrensningskurve=core_config.InjectIO(
+            object=begrensningskurve, tag="input"
+        ),
+        input_land_cover_features=core_config.InjectIO(object=land_cover, tag="input"),
+        output_begrensningskurve=core_config.InjectIO(
+            object=begrensningskurve, tag=processed_begrensningskurve
+        ),
+        water_feature_buffer_width=N100_Values.building_water_intrusion_distance_m.value,
+        water_barrier_buffer_width=30,
+        work_file_manager_config=core_config.WorkFileConfig(
+            root_file=Building_N100.begrensingskurve_land_water___root_file___n100_building.value,
+        ),
+    )
+
+    begrensningskurve_method_config = core_config.MethodEntriesConfig(
+        entries=[
+            core_config.ClassMethodEntryConfig(
+                class_=BegrensningskurveLandWaterbodies,
+                method=BegrensningskurveLandWaterbodies.run,
+                init_params=begrensningskurve_init_config,
+            )
+        ]
+    )
+
+    begrensningskurve_partition_run_config = core_config.PartitionRunConfig(
+        max_elements_per_partition=500_000,
+        context_radius_meters=500,
+        run_partition_optimization=True,
+    )
+
+    partition_iterator_work_file_config = core_config.WorkFileConfig(
+        root_file=Building_N100.data_preparation___begrensningskurve_base___n100_building.value,
+        write_to_memory=True,
+    )
+
+    begrensningskurve_partition = PartitionIterator(
+        partition_io_config=begrensningskurve_io_config,
+        partition_method_inject_config=begrensningskurve_method_config,
+        partition_iterator_run_config=begrensningskurve_partition_run_config,
+        work_file_manager_config=partition_iterator_work_file_config,
+    )
+    begrensningskurve_partition.run()
 
 
 @timing_decorator
@@ -304,21 +340,18 @@ def unsplit_roads_and_make_buffer():
         in_features=Building_N100.data_selection___road_n100_input_data___n100_building.value,
         out_feature_class=Building_N100.data_preparation___unsplit_roads___n100_building.value,
     )
-    #
-    # arcpy.UnsplitLine_management(
-    #     in_features=Building_N100.data_selection___road_n100_input_data___n100_building.value,
-    #     out_feature_class=Building_N100.data_preparation___unsplit_roads___n100_building.value,
-    #     dissolve_field=["subtypekode", "motorvegtype", "uttegning"],
-    # )
 
     road_lines_to_buffer_symbology = LineToBufferSymbology(
-        input_road_lines=Building_N100.data_preparation___unsplit_roads___n100_building.value,
-        sql_selection_query=N100_SQLResources.new_road_symbology_size_sql_selection.value,
-        output_road_buffer=Building_N100.data_preparation___road_symbology_buffers___n100_building.value,
-        write_work_files_to_memory=False,
-        keep_work_files=False,
-        root_file=Building_N100.data_preparation___root_file_line_symbology___n100_building.value,
-        fixed_buffer_addition=0,
+        logic_config.LineToBufferSymbologyKwargs(
+            input_line=Building_N100.data_preparation___unsplit_roads___n100_building.value,
+            output_line=Building_N100.data_preparation___road_symbology_buffers___n100_building.value,
+            sql_selection_query=N100_SQLResources.new_road_symbology_size_sql_selection.value,
+            work_file_manager_config=core_config.WorkFileConfig(
+                root_file=Building_N100.data_preparation___root_file_line_symbology___n100_building.value
+            ),
+            buffer_distance_factor=1,
+            buffer_distance_addition=0,
+        )
     )
     road_lines_to_buffer_symbology.run()
 

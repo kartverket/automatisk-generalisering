@@ -18,7 +18,9 @@ test1 = "test1"
 testing_file = "testing_file"
 roundabout_file = "roundabout"
 dam_file = "dam"
+vegsperring_file = "vegsperring"
 test2 = "test2"
+test3 = "test3"
 
 
 """"
@@ -66,6 +68,11 @@ class Road_N100(Enum):
     data_selection___nvdb_roads___n100_road = file_manager.generate_file_name_gdb(
         script_source_name=data_selection,
         description="nvdb_roads",
+    )
+
+    data_selection___vegsperring___n100_road = file_manager.generate_file_name_gdb(
+        script_source_name=data_selection,
+        description="vegsperring",
     )
 
     data_selection___railroad___n100_road = file_manager.generate_file_name_gdb(
@@ -365,12 +372,8 @@ class Road_N100(Enum):
         )
     )
 
-    data_preparation___thin_sti_docu___n100_road = (
-        file_manager.generate_file_name_general_files(
-            script_source_name=data_preparation,
-            description="thin_sti_docu",
-            file_type="json",
-        )
+    thin_sti_docu___n100_road = file_manager.generate_general_subdirectory(
+        description="thin_sti_docu",
     )
 
     data_preparation___thin_road_sti_output___n100_road = (
@@ -420,12 +423,12 @@ class Road_N100(Enum):
         )
     )
 
-    data_preparation___thin_road_docu___n100_road = (
-        file_manager.generate_file_name_general_files(
-            script_source_name=data_preparation,
-            description="thin_road_docu",
-            file_type="json",
-        )
+    thin_road_docu___n100_road = file_manager.generate_general_subdirectory(
+        description="thin_road_docu",
+    )
+
+    collapse_road_docu___n100_road = file_manager.generate_general_subdirectory(
+        description="collapse_road_docu",
     )
 
     data_preparation___thin_road_docu_2___n100_road = (
@@ -533,12 +536,8 @@ class Road_N100(Enum):
         )
     )
 
-    data_preparation___resolve_road_docu___n100_road = (
-        file_manager.generate_file_name_general_files(
-            script_source_name=data_preparation,
-            description="resolve_road_docu",
-            file_type="json",
-        )
+    resolve_road_docu___n100_road = file_manager.generate_general_subdirectory(
+        description="resolve_road_docu",
     )
 
     data_preparation___resolve_road_root___n100_road = (
@@ -920,9 +919,11 @@ class Road_N100(Enum):
         description="dissx",
     )
 
-    test1___veg100_Ås_modell3___n100_road = file_manager.generate_file_name_gdb(
-        script_source_name=test1,
-        description="veg100_Ås_modell3",
+    test1___veg100_Kristiansand_modell3___n100_road = (
+        file_manager.generate_file_name_gdb(
+            script_source_name=test1,
+            description="veg100_Kristiansand_modell3",
+        )
     )
 
     # ========================================
@@ -1346,41 +1347,49 @@ class Road_N100(Enum):
     )
 
     # ========================================
+    #                              VEGSPERRING
+    # ========================================
+
+    vegsperring__veg_uten_bom__n100_road = file_manager.generate_file_name_gdb(
+        script_source_name=vegsperring_file, description="veg_uten_bom"
+    )
+
+    # ========================================
     #                                TEST2
     # ========================================
 
-    test2___vegsenterlinje_medium_u___n100_road = file_manager.generate_file_name_gdb(
+    test2___veg_u___n100_road = file_manager.generate_file_name_gdb(
         script_source_name=test2,
-        description="vegsenterlinje_medium_u",
+        description="veg_u",
     )
 
-    test2___vegsenterlinje_u_buff100___n100_road = file_manager.generate_file_name_gdb(
+    test2___veg_u_poly100___n100_road = file_manager.generate_file_name_gdb(
         script_source_name=test2,
-        description="vegsenterlinje_u_buff100",
+        description="veg_u_poly100",
     )
 
-    test2___shrunk_underpass___n100_road = file_manager.generate_file_name_gdb(
+    test2___veg_u_poly100_shrunked___n100_road = file_manager.generate_file_name_gdb(
         script_source_name=test2,
-        description="shrunk_underpass",
+        description="veg_u_poly100_shrunked",
     )
 
-    test2___vegsenterlinje_medium_l___n100_road = file_manager.generate_file_name_gdb(
+    test2___veg_l___n100_road = file_manager.generate_file_name_gdb(
         script_source_name=test2,
-        description="vegsenterlinje_medium_l",
+        description="veg_l",
     )
-    test2___vegsenterlinje_l_buff100___n100_road = file_manager.generate_file_name_gdb(
+    test2___veg_l_poly100___n100_road = file_manager.generate_file_name_gdb(
         script_source_name=test2,
-        description="vegsenterlinje_l_buff100",
-    )
-
-    test2___shrunk_bridge___n100_road = file_manager.generate_file_name_gdb(
-        script_source_name=test2,
-        description="shrunk_bridge",
+        description="veg_l_poly100",
     )
 
-    test2___vegsenterlinje_medium_t___n100_road = file_manager.generate_file_name_gdb(
+    test2___veg_l_poly100_shrunked___n100_road = file_manager.generate_file_name_gdb(
         script_source_name=test2,
-        description="vegsenterlinje_medium_t",
+        description="veg_l_poly100_shrunked",
+    )
+
+    test2___veg_t___n100_road = file_manager.generate_file_name_gdb(
+        script_source_name=test2,
+        description="veg_t",
     )
     test2___vegsenterlinje_t_buff100___n100_road = file_manager.generate_file_name_gdb(
         script_source_name=test2,
@@ -1402,19 +1411,19 @@ class Road_N100(Enum):
         description="ER_bridge",
     )
 
-    test2___ER_bridge_buffer100___n100_road = file_manager.generate_file_name_gdb(
+    test2___ER_bridge_poly100___n100_road = file_manager.generate_file_name_gdb(
         script_source_name=test2,
-        description="ER_bridge_buffer100",
+        description="ER_bridge_poly100",
     )
 
-    test2___ER_bridge_shrunk___n100_road = file_manager.generate_file_name_gdb(
+    test2___ER_bridge_shrunked___n100_road = file_manager.generate_file_name_gdb(
         script_source_name=test2,
-        description="ER_bridge_shrunk",
+        description="ER_bridge_shrunked",
     )
 
-    test2___surface_ER___n100_road = file_manager.generate_file_name_gdb(
+    test2___ER_t___n100_road = file_manager.generate_file_name_gdb(
         script_source_name=test2,
-        description="surface_ER",
+        description="ER_t",
     )
 
     test2___bridge_cross_ER___n100_road = file_manager.generate_file_name_gdb(
@@ -1422,26 +1431,88 @@ class Road_N100(Enum):
         description="bridge_cross_ER",
     )
 
+    test2___underpass_cross_ER___n100_road = file_manager.generate_file_name_gdb(
+        script_source_name=test2,
+        description="underpass_cross_ER",
+    )
     test2___surface_under_ER___n100_road = file_manager.generate_file_name_gdb(
         script_source_name=test2,
         description="surface_under_ER",
     )
 
-    test2___underpass_cross_ER___n100_road = file_manager.generate_file_name_gdb(
+    test2___keep_bru_ERFKP___n100_road = file_manager.generate_file_name_gdb(
         script_source_name=test2,
-        description="underpass_cross_ER",
+        description="keep_bru_ERFKP",
     )
 
-    test2___keep_bru_FKP___n100_road = file_manager.generate_file_name_gdb(
+    test2___keep_underpass_ERFKP___n100_road = file_manager.generate_file_name_gdb(
         script_source_name=test2,
-        description="keep_bru_FKP",
+        description="keep_underpass_ERFKP",
     )
 
-    test2___keep_underpass_FKP___n100_road = file_manager.generate_file_name_gdb(
-        script_source_name=test2,
-        description="keep_underpass_FKP",
-    )
     test2___keep_surface_FKP___n100_road = file_manager.generate_file_name_gdb(
         script_source_name=test2,
         description="keep_surface_FKP",
+    )
+
+    test2___keep_surface_ERFKP___n100_road = file_manager.generate_file_name_gdb(
+        script_source_name=test2,
+        description="keep_surface_ERFKP",
+    )
+
+    test2___merged_keep___n100_road = file_manager.generate_file_name_gdb(
+        script_source_name=test2,
+        description="merged_keep",
+    )
+
+    test2___rampe___n100_road = file_manager.generate_file_name_gdb(
+        script_source_name=test2,
+        description="rampe",
+    )
+
+    test2___rampe_poly___n100_road = file_manager.generate_file_name_gdb(
+        script_source_name=test2,
+        description="rampe_poly",
+    )
+
+    test2___rampe_poly_diss___n100_road = file_manager.generate_file_name_gdb(
+        script_source_name=test2,
+        description="rampe_poly_diss",
+    )
+
+    test2___rampe_poly_epp___n100_road = file_manager.generate_file_name_gdb(
+        script_source_name=test2,
+        description="rampe_poly_diss_epp",
+    )
+    # ========================================
+    #                                test3
+    # ========================================
+
+    test3___rampe_poly___n100_road = file_manager.generate_file_name_gdb(
+        script_source_name=test3,
+        description="rampe_poly",
+    )
+
+    test3___rampe_poly_diss___n100_road = file_manager.generate_file_name_gdb(
+        script_source_name=test3,
+        description="rampe_poly_diss",
+    )
+
+    test3___rampe_epp___n100_road = file_manager.generate_file_name_gdb(
+        script_source_name=test3,
+        description="rampe_epp",
+    )
+
+    test3___veg_unsplit___n100_road = file_manager.generate_file_name_gdb(
+        script_source_name=test3,
+        description="veg_unsplit",
+    )
+
+    test3___kryss___n100_road = file_manager.generate_file_name_gdb(
+        script_source_name=test3,
+        description="kryss",
+    )
+    test3___kryss_symbol___n100_road = file_manager.generate_file_name_gdb(
+        script_source_name=test3,
+        description="kryss_symbol",
     )

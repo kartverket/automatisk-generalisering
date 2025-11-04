@@ -22,6 +22,7 @@ Vegtrase = rf"{roads_path}\Vegtrase"
 roads = rf"{roads_path}\roads"
 
 road_output_1 = rf"{road_output}\elveg_and_sti"
+vegsperring = rf"{road_output}\vegsperring"
 
 if __name__ == "__main__":
     environment_setup.main()
