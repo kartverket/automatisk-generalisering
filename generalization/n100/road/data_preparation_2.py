@@ -40,7 +40,9 @@ from constants.n100_constants import (
     MediumAlias,
 )
 from generalization.n100.road.dam import generalize_dam
-from generalization.n100.road.major_road_crossings import categories_major_road_crossings
+from generalization.n100.road.major_road_crossings import (
+    categories_major_road_crossings,
+)
 from generalization.n100.road.roundabouts import generalize_roundabouts
 from generalization.n100.road.vegsperring import remove_roadblock
 

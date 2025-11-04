@@ -1359,8 +1359,11 @@ class Road_N100(Enum):
         script_source_name=major_road_crossings, description="road_u_buffer"
     )
 
-    major_road_crossing__road_u_buffer_shrunked__n100_road = file_manager.generate_file_name_gdb(
-        script_source_name=major_road_crossings, description="road_u_buffer_shrunked"
+    major_road_crossing__road_u_buffer_shrunked__n100_road = (
+        file_manager.generate_file_name_gdb(
+            script_source_name=major_road_crossings,
+            description="road_u_buffer_shrunked",
+        )
     )
 
     major_road_crossing__road_l__n100_road = file_manager.generate_file_name_gdb(
@@ -1371,8 +1374,11 @@ class Road_N100(Enum):
         script_source_name=major_road_crossings, description="road_l_buffer"
     )
 
-    major_road_crossing__road_l_buffer_shrunked__n100_road = file_manager.generate_file_name_gdb(
-        script_source_name=major_road_crossings, description="road_l_buffer_shrunked"
+    major_road_crossing__road_l_buffer_shrunked__n100_road = (
+        file_manager.generate_file_name_gdb(
+            script_source_name=major_road_crossings,
+            description="road_l_buffer_shrunked",
+        )
     )
 
     major_road_crossing__ER__n100_road = file_manager.generate_file_name_gdb(
@@ -1383,12 +1389,16 @@ class Road_N100(Enum):
         script_source_name=major_road_crossings, description="ER_bridge"
     )
 
-    major_road_crossing__ER_bridge_buffer__n100_road = file_manager.generate_file_name_gdb(
-        script_source_name=major_road_crossings, description="ER_bridge_buffer"
+    major_road_crossing__ER_bridge_buffer__n100_road = (
+        file_manager.generate_file_name_gdb(
+            script_source_name=major_road_crossings, description="ER_bridge_buffer"
+        )
     )
 
-    major_road_crossing__ER_bridge_shrunked__n100_road = file_manager.generate_file_name_gdb(
-        script_source_name=major_road_crossings, description="ER_bridge_shrunked"
+    major_road_crossing__ER_bridge_shrunked__n100_road = (
+        file_manager.generate_file_name_gdb(
+            script_source_name=major_road_crossings, description="ER_bridge_shrunked"
+        )
     )
 
     major_road_crossing__road_t__n100_road = file_manager.generate_file_name_gdb(
@@ -1399,28 +1409,40 @@ class Road_N100(Enum):
         script_source_name=major_road_crossings, description="ER_t"
     )
 
-    major_road_crossing__bridge_cross_ER__n100_road = file_manager.generate_file_name_gdb(
-        script_source_name=major_road_crossings, description="bridge_cross_ER"
+    major_road_crossing__bridge_cross_ER__n100_road = (
+        file_manager.generate_file_name_gdb(
+            script_source_name=major_road_crossings, description="bridge_cross_ER"
+        )
     )
 
-    major_road_crossing__underpass_cross_ER__n100_road = file_manager.generate_file_name_gdb(
-        script_source_name=major_road_crossings, description="underpass_cross_ER"
+    major_road_crossing__underpass_cross_ER__n100_road = (
+        file_manager.generate_file_name_gdb(
+            script_source_name=major_road_crossings, description="underpass_cross_ER"
+        )
     )
 
-    major_road_crossing__surface_under_ER__n100_road = file_manager.generate_file_name_gdb(
-        script_source_name=major_road_crossings, description="surface_under_ER"
+    major_road_crossing__surface_under_ER__n100_road = (
+        file_manager.generate_file_name_gdb(
+            script_source_name=major_road_crossings, description="surface_under_ER"
+        )
     )
 
-    major_road_crossing__keep_bru_ERFKP__n100_road = file_manager.generate_file_name_gdb(
-        script_source_name=major_road_crossings, description="keep_bru_ERFKP"
+    major_road_crossing__keep_bru_ERFKP__n100_road = (
+        file_manager.generate_file_name_gdb(
+            script_source_name=major_road_crossings, description="keep_bru_ERFKP"
+        )
     )
 
-    major_road_crossing__keep_underpass_ERFKP__n100_road = file_manager.generate_file_name_gdb(
-        script_source_name=major_road_crossings, description="keep_underpass_ERFKP"
+    major_road_crossing__keep_underpass_ERFKP__n100_road = (
+        file_manager.generate_file_name_gdb(
+            script_source_name=major_road_crossings, description="keep_underpass_ERFKP"
+        )
     )
 
-    major_road_crossing__keep_surface_ERFKP__n100_road = file_manager.generate_file_name_gdb(
-        script_source_name=major_road_crossings, description="keep_surface_FKP"
+    major_road_crossing__keep_surface_ERFKP__n100_road = (
+        file_manager.generate_file_name_gdb(
+            script_source_name=major_road_crossings, description="keep_surface_FKP"
+        )
     )
 
     major_road_crossing__merged_keep__n100_road = file_manager.generate_file_name_gdb(

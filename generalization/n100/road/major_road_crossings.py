@@ -59,7 +59,10 @@ def categories_major_road_crossings():
 # Help functions
 ##################
 
-def select_intersect_and_copy(in_fc: str, select_fc: str, out_fc: str, lyr_name: str="tmp_lyr") -> None:
+
+def select_intersect_and_copy(
+    in_fc: str, select_fc: str, out_fc: str, lyr_name: str = "tmp_lyr"
+) -> None:
     """
     Creates a feature layer from 'in_fc', selects all features that intersect with 'select_fc', and
     copies the selected features to 'out_fc'.
@@ -78,11 +81,13 @@ def select_intersect_and_copy(in_fc: str, select_fc: str, out_fc: str, lyr_name:
         selection_type="NEW_SELECTION",
     )
     arcpy.management.CopyFeatures(in_features=lyr_name, out_feature_class=out_fc)
-    arcpy.management.Delete(lyr_name) # Cleans up the temporary layer
+    arcpy.management.Delete(lyr_name)  # Cleans up the temporary layer
+
 
 ##################
 # Main functions
 ##################
+
 
 @timing_decorator
 def shrunked_underpass() -> None:
@@ -113,6 +118,7 @@ def shrunked_underpass() -> None:
         out_feature_class=shrunked_fc,
         buffer_distance_or_field="-50 centimeters",
     )
+
 
 @timing_decorator
 def shrunked_bridge() -> None:
@@ -197,6 +203,7 @@ def surface_road() -> None:
         output_name=road_t_fc,
         selection_type="NEW_SELECTION",
     )
+
 
 @timing_decorator
 def surface_ER() -> None:
@@ -288,6 +295,7 @@ def keep() -> None:
         selection_type="NEW_SELECTION",
     )
 
+
 @timing_decorator
 def update_crossing_point_attribute() -> None:
     """
@@ -303,9 +311,7 @@ def update_crossing_point_attribute() -> None:
     underpass_fc = data_files["keep_underpass"]
     merged_keep_fc = data_files["merged_keep"]
 
-    arcpy.management.CopyFeatures(
-        in_features=road_fc, out_feature_class=new_road_fc
-    )
+    arcpy.management.CopyFeatures(in_features=road_fc, out_feature_class=new_road_fc)
     arcpy.management.AddField(
         in_table=new_road_fc, field_name="er_kryssningspunkt", field_type="SHORT"
     )
@@ -313,7 +319,7 @@ def update_crossing_point_attribute() -> None:
         in_table=new_road_fc,
         field="er_kryssningspunkt",
         expression=0,
-        expression_type="PYTHON3"
+        expression_type="PYTHON3",
     )
 
     arcpy.management.Merge(
@@ -342,6 +348,7 @@ def update_crossing_point_attribute() -> None:
             count += 1
 
     print(f"Updated 'er_kryssningspunkt' for {count} features.\n")
+
 
 @timing_decorator
 def delete_intermediate_files() -> None:
