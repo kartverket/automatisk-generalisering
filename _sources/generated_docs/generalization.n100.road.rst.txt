@@ -44,6 +44,14 @@ generalization.n100.road.major\_road\_crossings module
    :show-inheritance:
    :undoc-members:
 
+generalization.n100.road.ramps\_point module
+--------------------------------------------
+
+.. automodule:: generalization.n100.road.ramps_point
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
 generalization.n100.road.road\_main module
 ------------------------------------------
 

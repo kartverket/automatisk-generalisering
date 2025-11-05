@@ -99,6 +99,7 @@
 <span class="n">vegsperring_file</span> <span class="o">=</span> <span class="s2">&quot;vegsperring&quot;</span>
 <span class="n">test2</span> <span class="o">=</span> <span class="s2">&quot;test2&quot;</span>
 <span class="n">test3</span> <span class="o">=</span> <span class="s2">&quot;test3&quot;</span>
+<span class="n">ramps_file</span> <span class="o">=</span> <span class="s2">&quot;ramps&quot;</span>
 
 
 <span class="sd">&quot;&quot;&quot;&quot;</span>
@@ -1538,6 +1539,88 @@
 
     <span class="n">vegsperring__veg_uten_bom__n100_road</span> <span class="o">=</span> <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_gdb</span><span class="p">(</span>
         <span class="n">script_source_name</span><span class="o">=</span><span class="n">vegsperring_file</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">&quot;veg_uten_bom&quot;</span>
+    <span class="p">)</span>
+
+    <span class="c1"># ========================================</span>
+    <span class="c1">#                                    RAMPS</span>
+    <span class="c1"># ========================================</span>
+
+    <span class="n">ramps__ramps__n100_road</span> <span class="o">=</span> <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_gdb</span><span class="p">(</span>
+        <span class="n">script_source_name</span><span class="o">=</span><span class="n">ramps_file</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">&quot;ramps&quot;</span>
+    <span class="p">)</span>
+
+    <span class="n">ramps__collapsed_roundabouts__n100_road</span> <span class="o">=</span> <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_gdb</span><span class="p">(</span>
+        <span class="n">script_source_name</span><span class="o">=</span><span class="n">ramps_file</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">&quot;collapsed_roundabouts&quot;</span>
+    <span class="p">)</span>
+
+    <span class="n">ramps__small_roundabouts__n100_road</span> <span class="o">=</span> <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_gdb</span><span class="p">(</span>
+        <span class="n">script_source_name</span><span class="o">=</span><span class="n">ramps_file</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">&quot;small_roundabouts&quot;</span>
+    <span class="p">)</span>
+
+    <span class="n">ramps__roads_with_cleaned_roundabouts__n100_road</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_gdb</span><span class="p">(</span>
+            <span class="n">script_source_name</span><span class="o">=</span><span class="n">ramps_file</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">&quot;roads_with_cleaned_roundabouts&quot;</span>
+        <span class="p">)</span>
+    <span class="p">)</span>
+
+    <span class="n">ramps__buffered_ramps__n100_road</span> <span class="o">=</span> <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_gdb</span><span class="p">(</span>
+        <span class="n">script_source_name</span><span class="o">=</span><span class="n">ramps_file</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">&quot;buffered_ramps&quot;</span>
+    <span class="p">)</span>
+
+    <span class="n">ramps__buffered_ramps_100__n100_road</span> <span class="o">=</span> <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_gdb</span><span class="p">(</span>
+        <span class="n">script_source_name</span><span class="o">=</span><span class="n">ramps_file</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">&quot;buffered_ramps_100&quot;</span>
+    <span class="p">)</span>
+
+    <span class="n">ramps__roads_near_ramp__n100_road</span> <span class="o">=</span> <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_gdb</span><span class="p">(</span>
+        <span class="n">script_source_name</span><span class="o">=</span><span class="n">ramps_file</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">&quot;roads_near_ramp&quot;</span>
+    <span class="p">)</span>
+
+    <span class="n">ramps__endpoints__n100_road</span> <span class="o">=</span> <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_gdb</span><span class="p">(</span>
+        <span class="n">script_source_name</span><span class="o">=</span><span class="n">ramps_file</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">&quot;endpoints&quot;</span>
+    <span class="p">)</span>
+
+    <span class="n">ramps__dissolved_ramps__n100_road</span> <span class="o">=</span> <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_gdb</span><span class="p">(</span>
+        <span class="n">script_source_name</span><span class="o">=</span><span class="n">ramps_file</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">&quot;dissolved_ramps&quot;</span>
+    <span class="p">)</span>
+
+    <span class="n">ramps__intermediate_ramps__n100_road</span> <span class="o">=</span> <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_gdb</span><span class="p">(</span>
+        <span class="n">script_source_name</span><span class="o">=</span><span class="n">ramps_file</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">&quot;intermediate_ramps&quot;</span>
+    <span class="p">)</span>
+
+    <span class="n">ramps__merged_ramps__n100_road</span> <span class="o">=</span> <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_gdb</span><span class="p">(</span>
+        <span class="n">script_source_name</span><span class="o">=</span><span class="n">ramps_file</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">&quot;merged_ramps&quot;</span>
+    <span class="p">)</span>
+
+    <span class="n">ramps__closest_points__n100_road</span> <span class="o">=</span> <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_gdb</span><span class="p">(</span>
+        <span class="n">script_source_name</span><span class="o">=</span><span class="n">ramps_file</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">&quot;closest_points&quot;</span>
+    <span class="p">)</span>
+
+    <span class="n">ramps__generalized_ramps__n100_road</span> <span class="o">=</span> <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_gdb</span><span class="p">(</span>
+        <span class="n">script_source_name</span><span class="o">=</span><span class="n">ramps_file</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">&quot;generalized_ramps&quot;</span>
+    <span class="p">)</span>
+
+    <span class="n">ramps__dissolved_group__n100_road</span> <span class="o">=</span> <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_gdb</span><span class="p">(</span>
+        <span class="n">script_source_name</span><span class="o">=</span><span class="n">ramps_file</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">&quot;dissolved_group&quot;</span>
+    <span class="p">)</span>
+
+    <span class="n">ramps__splitted_group__n100_road</span> <span class="o">=</span> <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_gdb</span><span class="p">(</span>
+        <span class="n">script_source_name</span><span class="o">=</span><span class="n">ramps_file</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">&quot;splitted_group&quot;</span>
+    <span class="p">)</span>
+
+    <span class="n">ramps__ramp_points__n100_road</span> <span class="o">=</span> <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_gdb</span><span class="p">(</span>
+        <span class="n">script_source_name</span><span class="o">=</span><span class="n">ramps_file</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">&quot;ramp_points&quot;</span>
+    <span class="p">)</span>
+
+    <span class="n">ramps__ramp_points_moved__n100_road</span> <span class="o">=</span> <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_gdb</span><span class="p">(</span>
+        <span class="n">script_source_name</span><span class="o">=</span><span class="n">ramps_file</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">&quot;ramp_points_moved&quot;</span>
+    <span class="p">)</span>
+
+    <span class="n">ramps__ramp_points_moved_2__n100_road</span> <span class="o">=</span> <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_gdb</span><span class="p">(</span>
+        <span class="n">script_source_name</span><span class="o">=</span><span class="n">ramps_file</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">&quot;ramp_points_moved_2&quot;</span>
+    <span class="p">)</span>
+
+    <span class="n">ramps__test__n100_road</span> <span class="o">=</span> <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_gdb</span><span class="p">(</span>
+        <span class="n">script_source_name</span><span class="o">=</span><span class="n">ramps_file</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">&quot;test&quot;</span>
     <span class="p">)</span>
 
     <span class="c1"># ========================================</span>

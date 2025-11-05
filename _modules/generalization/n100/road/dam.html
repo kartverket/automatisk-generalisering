@@ -1592,8 +1592,7 @@
 <span class="nd">@timing_decorator</span>
 <span class="k">def</span><span class="w"> </span><span class="nf">delete_intermediate_files</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">    Deletes the intermediate files used during the process</span>
-<span class="sd">    of snapping roads away from the dam buffers.</span>
+<span class="sd">    Deletes the intermediate files used during the process.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="k">for</span> <span class="n">file</span> <span class="ow">in</span> <span class="n">files_to_delete</span><span class="p">:</span>
         <span class="n">arcpy</span><span class="o">.</span><span class="n">management</span><span class="o">.</span><span class="n">Delete</span><span class="p">(</span><span class="n">data_files</span><span class="p">[</span><span class="n">file</span><span class="p">])</span></div>
