@@ -129,6 +129,18 @@ class ThinRoadNetworkKwargs:
 
 
 @dataclass(frozen=True)
+class RemoveRoadTrianglesKwargs:
+    input_line_feature: str
+    work_file_manager_config: core_config.WorkFileConfig
+    maximum_length: int
+    root_file: str
+    output_processed_feature: str
+    hierarchy_field: str = None
+    write_to_memory: bool = False
+    keep_work_files: bool = False
+
+
+@dataclass(frozen=True)
 class CollapseRoadDetailsKwargs:
     input_road_line: io_types.GdbIOArg
     output_road_line: io_types.GdbIOArg

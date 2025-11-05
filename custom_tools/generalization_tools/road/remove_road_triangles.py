@@ -5,6 +5,7 @@ from collections import defaultdict
 from itertools import combinations
 from tqdm import tqdm
 
+from composition_configs import core_config, logic_config
 from constants.n100_constants import MediumAlias
 from custom_tools.decorators.timing_decorator import timing_decorator
 from custom_tools.general_tools import custom_arcpy
@@ -30,30 +31,23 @@ class RemoveRoadTriangles:
 
     def __init__(
         self,
-        input_line_feature: str,
-        maximum_length: int,
-        root_file: str,
-        output_processed_feature: str,
-        hierarchy_field: str = None,
-        write_to_memory: bool = False,
-        keep_work_files: bool = False,
+        remove_road_triangles_config: logic_config.RemoveRoadTrianglesKwargs,
     ):
         """
         Creates an instance of RemoveRoadTriangles.
 
         :param ...
         """
-        self.input_line_feature = input_line_feature
-        self.maximum_length = maximum_length
-        self.root_file = root_file
-        self.output_processed_feature = output_processed_feature
-        self.hierarchy_field = hierarchy_field
+        self.input_line_feature = remove_road_triangles_config.input_line_feature
+        self.maximum_length = remove_road_triangles_config.maximum_length
+        self.root_file = remove_road_triangles_config.root_file
+        self.output_processed_feature = (
+            remove_road_triangles_config.output_processed_feature
+        )
+        self.hierarchy_field = remove_road_triangles_config.hierarchy_field
 
         self.work_file_manager = WorkFileManager(
-            unique_id=id(self),
-            root_file=self.root_file,
-            write_to_memory=write_to_memory,
-            keep_files=keep_work_files,
+            config=remove_road_triangles_config.work_file_manager_config
         )
 
         self.copy_of_input_feature = "copy_of_input_feature"
@@ -112,17 +106,22 @@ class RemoveRoadTriangles:
 
         :param ...
         """
-        dissolve_obj = DissolveWithIntersections(
+        config = logic_config.DissolveInitKwargs(
             input_line_feature=input_feature,
-            root_file=self.internal_root,
             output_processed_feature=dissolve_feature,
-            dissolve_field_list=["MEDIUM"],
-            list_of_sql_expressions=[
+            work_file_manager_config=core_config.WorkFileConfig(self.internal_root),
+            dissolve_fields=["MEDIUM"],
+            sql_expressions=[
                 f" MEDIUM = '{MediumAlias.tunnel}'",
                 f" MEDIUM = '{MediumAlias.bridge}'",
                 f" MEDIUM = '{MediumAlias.on_surface}'",
             ],
         )
+        
+        dissolve_obj = DissolveWithIntersections(
+            dissolve_intersections_config=config
+        )
+
         dissolve_obj.run()
 
         arcpy.management.FeatureVerticesToPoints(
@@ -809,25 +808,23 @@ class RemoveRoadTriangles:
         """
         output_fc = Road_N100.road_triangles_output.value
         intermediate_fc = r"in_memory/intermediate_fc"
-        
+
         arcpy.management.MakeFeatureLayer(
-            in_features=self.copy_of_input_feature,
-            out_layer="original_roads_lyr"
+            in_features=self.copy_of_input_feature, out_layer="original_roads_lyr"
         )
         arcpy.management.MakeFeatureLayer(
-            in_features=self.removed_3_cycle_roads,
-            out_layer="processed_roads_lyr"
+            in_features=self.removed_3_cycle_roads, out_layer="processed_roads_lyr"
         )
 
         arcpy.analysis.Erase(
             in_features="original_roads_lyr",
             erase_features="processed_roads_lyr",
-            out_feature_class=intermediate_fc
+            out_feature_class=intermediate_fc,
         )
         arcpy.analysis.Erase(
             in_features="original_roads_lyr",
             erase_features=intermediate_fc,
-            out_feature_class=output_fc
+            out_feature_class=output_fc,
         )
 
     @timing_decorator
@@ -855,12 +852,16 @@ def generalize_road_triangles():
     Runs the RemoveRoadTriangles process with predefined parameters.
     """
     environment_setup.main()
-    remove_road_triangles = RemoveRoadTriangles(
+    config = logic_config.RemoveRoadTrianglesKwargs(
         input_line_feature=Road_N100.data_preparation___smooth_road___n100_road.value,
+        work_file_manager_config=core_config.WorkFileConfig(
+            Road_N100.testing_file___remove_triangles_root___n100_road.value
+        ),
         maximum_length=500,
         root_file=Road_N100.testing_file___remove_triangles_root___n100_road.value,
         output_processed_feature=Road_N100.testing_file___removed_triangles___n100_road.value,
     )
+    remove_road_triangles = RemoveRoadTriangles(config)
     remove_road_triangles.run()
 
 
