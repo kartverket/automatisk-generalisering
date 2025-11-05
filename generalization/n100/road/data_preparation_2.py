@@ -45,6 +45,9 @@ from generalization.n100.road.major_road_crossings import (
 )
 from generalization.n100.road.roundabouts import generalize_roundabouts
 from generalization.n100.road.vegsperring import remove_roadblock
+from generalization.n100.road.ramps_point import ramp_points
+from generalization.n100.road.ramps_point import MovePointsToCrossings
+
 
 MERGE_DIVIDED_ROADS_ALTERATIVE = False
 
@@ -58,6 +61,7 @@ def main():
     generalize_roundabouts()
     remove_roadblock()
     trim_road_details()
+    ramp_points()
     admin_boarder()
     adding_fields()
     collapse_road_detail()
@@ -70,6 +74,7 @@ def main():
     resolve_road_conflicts()
     generalize_dam()
     final_output()
+    final_ramp_points()
 
 
 SEARCH_DISTANCE = 5000
@@ -93,7 +98,7 @@ def data_selection_and_validation():
             input_n100.AdminGrense: Road_N100.data_selection___admin_boundary___n100_road.value,
         },
         selecting_file=input_n100.AdminFlate,
-        selecting_sql_expression=ferry_admin_test,
+        selecting_sql_expression=small_plot_area,
         select_local=config.select_study_area,
     )
 
@@ -289,7 +294,7 @@ def admin_boarder():
     )
 
     custom_arcpy.select_attribute_and_make_permanent_feature(
-        input_layer=Road_N100.data_preparation___road_single_part_2___n100_road.value,
+        input_layer=Road_N100.ramps__generalized_ramps__n100_road.value,
         expression=f"vegkategori  in ('{NvdbAlias.europaveg}', '{NvdbAlias.riksveg}', '{NvdbAlias.fylkesveg}', '{NvdbAlias.kommunalveg}', '{NvdbAlias.privatveg}', '{NvdbAlias.skogsveg}')",
         output_name=Road_N100.data_preparation___car_raod___n100_road.value,
     )
@@ -336,7 +341,7 @@ def adding_fields():
         )
 
     file_utilities.reclassify_value(
-        input_table=Road_N100.data_preparation___road_single_part_2___n100_road.value,
+        input_table=Road_N100.ramps__generalized_ramps__n100_road.value,
         target_field="VEGNUMMER",
         target_value="None",
         replace_value="-99",
@@ -344,7 +349,7 @@ def adding_fields():
     )
 
     arcpy.management.AddFields(
-        in_table=Road_N100.data_preparation___road_single_part_2___n100_road.value,
+        in_table=Road_N100.ramps__generalized_ramps__n100_road.value,
         field_description=FieldNames.road_added_fields.value,
     )
 
@@ -358,7 +363,7 @@ def collapse_road_detail():
         entries=[
             core_config.InputEntry.processing_input(
                 object=road,
-                path=Road_N100.data_preparation___road_single_part_2___n100_road.value,
+                path=Road_N100.ramps__generalized_ramps__n100_road.value,
             )
         ]
     )
@@ -572,7 +577,7 @@ def merge_divided_roads():
         """
 
         arcpy.management.CalculateField(
-            in_table=Road_N100.data_preparation___road_single_part_2___n100_road.value,
+            in_table=Road_N100.ramps__generalized_ramps__n100_road.value,
             field="character",
             expression="Reclass(!TYPEVEG!)",
             expression_type="PYTHON3",
@@ -638,7 +643,7 @@ def pre_resolve_road_conflicts():
 def resolve_road_conflicts():
 
     road_hierarchy = """def Reclass(vegklasse, typeveg):
-        if typeveg == 'bilferje':
+        if typeveg in ('bilferje', 'ramps'):
             return 0
         elif vegklasse in (0, 1, 2, 3, 4):
             return 1
@@ -793,6 +798,17 @@ def final_output():
         output_name=Road_N100.data_preparation___road_final_output___n100_road.value,
         inverted=True,
     )
+
+
+def final_ramp_points():
+    f = MovePointsToCrossings(
+        Road_N100.data_preparation___road_final_output___n100_road.value,
+        Road_N100.ramps__ramp_points_moved__n100_road.value,
+        Road_N100.ramps__ramp_points_moved_2__n100_road.value,
+        delete_points_not_on_crossings=True,
+        with_ramps=False,
+    )
+    f.run()
 
 
 if __name__ == "__main__":
