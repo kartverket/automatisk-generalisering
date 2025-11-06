@@ -50,7 +50,7 @@ If you encounter an error message like `git is not recognized as an internal or 
 
 - Still in the terminal, type the following command to clone the repository:
     ```bash
-    git clone https://github.com/EllingOftedalKV/automatic-generalization-kv.git
+    git clone https://github.com/kartverket/automatisk-generalisering.git
     ```
 
 - You should now see a new folder named `automatic-generalization-kv` inside your chosen directory. This folder is your local clone of the GitHub repository.
