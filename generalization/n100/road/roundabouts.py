@@ -254,7 +254,7 @@ def create_intersections_of_roundabouts() -> None:
         arcpy.management.SelectLayerByAttribute(
             in_layer_or_view="road_lyr",
             selection_type="SUBSET_SELECTION",
-            where_clause="objtype = 'Veglenke'",
+            where_clause="objtype = 'VegSenterlinje'",
         )
         with arcpy.da.SearchCursor(
             "road_lyr", ["OID@", "SHAPE@", "typeveg", "medium", "vegnummer"]
