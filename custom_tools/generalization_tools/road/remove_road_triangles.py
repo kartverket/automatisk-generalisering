@@ -145,6 +145,7 @@ class RemoveRoadTriangles:
         :param output_feature (str): Output feature class with filtered roads
         :param mode (int): Mode for cycle type (1, 2 or 3)
         """
+        # If working with 1-cycle roads: return a simple query
         if mode == 1:
             custom_arcpy.select_attribute_and_make_permanent_feature(
                 input_layer=input_feature,
@@ -152,22 +153,29 @@ class RemoveRoadTriangles:
                 output_name=output_feature,
             )
             return
+        # Otherwise:
+        # Find the geometries
         oid_to_geom = {
             oid: geom
             for oid, geom in arcpy.da.SearchCursor(input_feature, ["OID@", "SHAPE@"])
         }
+        # Match all combinations of two roads...
         oid_geom_connections = set()
         for oid1, oid2 in combinations(oid_to_geom.keys(), 2):
             geom1 = oid_to_geom[oid1]
             geom2 = oid_to_geom[oid2]
+            # ... if they intersect ...
             if geom1.intersect(geom2, 1):
+                # ... and at least one of them is short enough
                 if (
                     geom1.length < self.maximum_length
                     or geom2.length < self.maximum_length
                 ):
                     oid_geom_connections.add((oid1, oid2))
+        # Sort and delete duplicates of matched oids that is a valid cycle
         oids = sorted({oid for pair in oid_geom_connections for oid in pair})
         if not oids:
+            # If no valid cycle detected -> return an empty featureclass
             arcpy.management.CreateFeatureclass(
                 out_path=os.path.dirname(output_feature),
                 out_name=os.path.basename(output_feature),
@@ -175,12 +183,15 @@ class RemoveRoadTriangles:
                 spatial_reference=arcpy.Describe(input_feature).spatialReference,
             )
             return
+        # Otherwise:
+        # Return a query with those that are valid
         custom_arcpy.select_attribute_and_make_permanent_feature(
             input_layer=input_feature,
             expression=f"OBJECTID IN ({','.join(map(str, oids))})",
             output_name=output_feature,
         )
 
+######################################################
     def find_geom_to_insert(
         self, oid_to_geom: dict, road_geom: arcpy.Geometry, tolerance: float = 1e-6
     ) -> arcpy.Polyline:
@@ -630,16 +641,258 @@ class RemoveRoadTriangles:
         # Remove the used intermediate layer
         if arcpy.Exists(dissolved_fc):
             arcpy.management.Delete(dissolved_fc)
+######################################################
+
+    def sort_prioritized_hierarchy(self, roads: list) -> list:
+        """
+        """
+        # Constants used for the prioritizing of the road segments
+        pri_list_vegkategori = [
+            "E",
+            "R",
+            "F",
+            "K",
+            "P",
+            "S",
+            "B",
+            "T",
+            "D",
+            "A",
+            "U",
+            "G",
+        ]
+        vegkategori_pri = {v: i for i, v in enumerate(pri_list_vegkategori)}
+        max_vegkategori_pri = len(pri_list_vegkategori)
+        LARGE = 10**9
+
+        roads.sort(
+            key=lambda x: (
+                vegkategori_pri.get(x[0], max_vegkategori_pri),
+                (x[1] if x[1] is not None else LARGE),
+                (x[2] if x[2] is not None else LARGE),
+            )
+        )
+        return roads
+
+    @timing_decorator
+    def select_segments_to_remove_2(
+        self,
+        road_cycles: str,
+    ):
+        """
+        Selects which segments to remove based on hierarchy rules.
+
+        :param road_cycles (str): Feature class with road cycles
+        """
+        # Fetch the cycle-data
+        oid_to_geom = {oid: geom for oid, geom in arcpy.da.SearchCursor(road_cycles, ["OID@", "SHAPE@"])}
+        # ... and creates a dictionary keeping the
+        # most relevant hierarchy for that section
+        oid_to_data = defaultdict(list)
+
+        arcpy.management.MakeFeatureLayer(in_features=self.input_line_feature, out_layer="original_data_layer")
+
+        for oid, geom in oid_to_geom.items():
+            geom_fc = f"in_memory/tmp_geom_fc_{oid}"
+            arcpy.management.CreateFeatureclass(os.path.dirname(geom_fc), os.path.basename(geom_fc), "POLYLINE", spatial_reference=geom.spatialReference)
+            with arcpy.da.InsertCursor(geom_fc, ["SHAPE@"]) as insert:
+                insert.insertRow([geom])
+
+            arcpy.management.SelectLayerByLocation(
+                in_layer="original_data_layer",
+                overlap_type="SHARE_A_LINE_SEGMENT_WITH",
+                select_features=geom_fc,
+                selection_type="NEW_SELECTION"
+            )
+            with arcpy.da.SearchCursor("original_data_layer", ["vegkategori", "vegklasse", "Shape_Length"]) as search:
+                for row in search:
+                    oid_to_data[oid].append([row[0], row[1], row[2]])
+
+            if arcpy.Exists(geom_fc):
+                arcpy.management.Delete(geom_fc)
+        
+        for oid, data in oid_to_data.items():
+            oid_to_data[oid] = self.sort_prioritized_hierarchy(data)[-1]
+
+        # Dissolves the cycle-instances
+        dissolved_fc = r"in_memory/dissolved_fc"
+        arcpy.management.Dissolve(
+            in_features=road_cycles,
+            out_feature_class=dissolved_fc,
+            dissolve_field=[],
+            multi_part="SINGLE_PART"
+        )
+        
+        remove_geoms = []
+        add_geoms = []
+
+        with arcpy.da.SearchCursor(dissolved_fc, ["SHAPE@"]) as search:
+            for row in search:
+                geom = row[0]
+                overlap = []
+                for o_oid, o_geom in oid_to_geom.items():
+                    if geom.contains(o_geom):
+                        overlap.append([o_oid, o_geom])
+                for i, (oid, geom) in enumerate(overlap):
+                    base = list(oid_to_data.get(oid, []))
+                    base.extend([oid, geom])
+                    overlap[i] = base
+                chosen = self.sort_prioritized_hierarchy(overlap)[0]
+                """
+                Har remove, må sjekke om den har en kobling midtveis
+                som feiler grunnet forskjellige medium.
+
+                Må i så fall legge til i add og i fjerne remove.
+                """
+
 
     ###################
     # Main functions
     ###################
 
     @timing_decorator
+    def remove_islands_and_small_dead_ends(self):
+        """
+        Detects and removes islands and dead ends from the road network.
+        """
+        count = None
+        edit_fc = self.input_line_feature
+        first, first_count = True, None
+        k = 0
+
+        # As long as new dead ends are detected -> search again
+        while count != 0:
+            k += 1
+
+            # Simplifies the road with dissolve, and collect
+            # both endpoints for all road instances
+            self.simplify_road_network(
+                input_feature=edit_fc,
+                dissolve_feature=self.dissolved_feature,
+                output_feature=self.line_nodes
+            )
+
+            # Count the number of connected roads for all endpoints
+            endpoints = {}
+            with arcpy.da.SearchCursor(self.line_nodes, ["SHAPE@"]) as search:
+                for row in search:
+                    pnt = row[0].firstPoint
+                    endpoints[(pnt.X, pnt.Y)] = endpoints.get((pnt.X, pnt.Y), 0) + 1
+            
+            intermediate_count, count = 0, 0
+
+            # For each road instance in the input -> check for islands or dead ends
+            with arcpy.da.UpdateCursor(self.dissolved_feature, ["SHAPE@"]) as update:
+                for row in update:
+                    intermediate_count += 1
+                    geom = row[0]
+                    start, end = get_endpoints(geom)
+                    start, end = start.firstPoint, end.firstPoint
+                    sx, sy, ex, ey = start.X, start.Y, end.X, end.Y
+                    # If both end points are lonely: island
+                    if endpoints.get((sx, sy), 0) == 1 and endpoints.get((ex, ey), 0) == 1:
+                        update.deleteRow()
+                        count += 1
+                    # If one of the ends is lonely...
+                    elif endpoints.get((sx, sy), 0) == 1 or endpoints.get((ex, ey), 0) == 1:
+                        # ... and the instance is short enough: dead end
+                        if geom.length < self.maximum_length:
+                            update.deleteRow()
+                            count += 1
+            
+            # Update the working file, and repeat if changes
+            edit_fc = self.dissolved_feature
+
+            if first:
+                first = False
+                first_count = intermediate_count
+            
+            print(f"Removed {count} islands and dead ends.")
+            
+        print(f"\nNumber of iterations: {k}")
+        print(f"Number of roads in the start: {first_count}")
+        intermediate_count = intermediate_count if intermediate_count else first_count
+        print(f"Number of roads in the end: {intermediate_count}\n")
+
+    @timing_decorator
     def remove_1_cycle_roads(self):
         """
         Detects and removes 1-cycle roads from the road network.
         """
+        count = None
+        edit_fc = self.dissolved_feature
+        first, first_count = True, None
+        k = 0
+
+        # As long as new 1-cycle roads are detected -> search again
+        while count != 0:
+            k += 1
+
+            # Simplifies the road with dissolve, and collect
+            # both endpoints for all road instances
+            self.simplify_road_network(
+                input_feature=edit_fc,
+                dissolve_feature=self.dissolved_feature,
+                output_feature=self.line_nodes,
+            )
+
+            if first:
+                first = False
+                first_count = int(arcpy.management.GetCount(self.dissolved_feature)[0])
+
+            # Create the GISGraph instance
+            detect_1_cycle_roads = GISGraph(
+                input_path=self.line_nodes,
+                object_id="OBJECTID",
+                original_id="ORIG_FID",
+                geometry_field="SHAPE",
+            )
+
+            # Detect the 1-cycle roads
+            road_1_cycle_sql = detect_1_cycle_roads.select_1_cycle()
+
+            # Create a specific layer with these instances
+            custom_arcpy.select_attribute_and_make_permanent_feature(
+                input_layer=self.dissolved_feature,
+                expression=road_1_cycle_sql,
+                output_name=self.line_1_cycle,
+            )
+
+            # Filter the roads so that only the valid once
+            # (those that are short enough) are kept
+            self.filter_short_roads(
+                input_feature=self.line_1_cycle,
+                output_feature=self.filtered_1_cycle_roads,
+                mode=1,
+            )
+
+            count = int(arcpy.management.GetCount(self.filtered_1_cycle_roads)[0])
+
+            # Select the instances to work further with
+            custom_arcpy.select_location_and_make_permanent_feature(
+                input_layer=self.dissolved_feature,
+                overlap_type=custom_arcpy.OverlapType.SHARE_A_LINE_SEGMENT_WITH.value,
+                select_features=self.filtered_1_cycle_roads,
+                output_name=self.removed_1_cycle_roads,
+                inverted=True,
+            )
+
+            # Update the working file, and repeat if changes
+            edit_fc = self.removed_1_cycle_roads
+            
+            print(f"Removed {count} 1-cycle roads.")
+        
+        print(f"\nNumber of iterations: {k}")
+        print(f"Number of roads in the start: {first_count}")
+        end_count = int(arcpy.management.GetCount(self.removed_1_cycle_roads)[0])
+        print(f"Number of roads in the end: {end_count}\n")
+    
+    """
+    @timing_decorator
+    def remove_1_cycle_roads(self):
+        
+        Detects and removes 1-cycle roads from the road network.
+        
         self.simplify_road_network(
             input_feature=self.copy_of_input_feature,
             dissolve_feature=self.dissolved_feature,
@@ -675,6 +928,7 @@ class RemoveRoadTriangles:
             inverted=True,
         )
         print()
+    """
 
     @timing_decorator
     def remove_2_cycle_roads(self):
@@ -682,6 +936,95 @@ class RemoveRoadTriangles:
         Detects and removes 2-cycle roads from the road network
         based on the network with removed 1-cycle roads.
         """
+        count = None
+        edit_fc = self.removed_1_cycle_roads
+        first, first_count = True, None
+        k = 0
+
+        # As long as new 2-cycle roads are detected -> search again
+        while count != 0:
+            k += 1
+            
+            # Simplifies the road with dissolve, and collect
+            # both endpoints for all road instances
+            self.simplify_road_network(
+                input_feature=edit_fc,
+                dissolve_feature=self.dissolved_feature,
+                output_feature=self.line_nodes,
+            )
+
+            if first:
+                first = False
+                first_count = int(arcpy.management.GetCount(self.dissolved_feature)[0])
+
+            # Create the GISGraph instance
+            detect_2_cycle_roads = GISGraph(
+                input_path=self.line_nodes,
+                object_id="OBJECTID",
+                original_id="ORIG_FID",
+                geometry_field="SHAPE",
+            )
+
+            # Detect the 2-cycle roads
+            road_2_cycle_sql = detect_2_cycle_roads.select_2_cycle()
+
+            # Create a specific layer with these instances
+            custom_arcpy.select_attribute_and_make_permanent_feature(
+                input_layer=self.dissolved_feature,
+                expression=road_2_cycle_sql,
+                output_name=self.line_2_cycle,
+            )
+
+            # Filter the roads so that only the valid once
+            # (those that are short enough) are kept
+            self.filter_short_roads(
+                input_feature=self.line_2_cycle,
+                output_feature=self.filtered_2_cycle_roads,
+                mode=2,
+            )
+
+            print()
+            self.select_segments_to_remove_2(self.filtered_2_cycle_roads)
+            print()
+
+            # Select the instances to work further with
+            custom_arcpy.select_location_and_make_permanent_feature(
+                input_layer=self.dissolved_feature,
+                overlap_type=custom_arcpy.OverlapType.SHARE_A_LINE_SEGMENT_WITH.value,
+                select_features=self.remove_layer,
+                output_name=self.removed_2_cycle_roads,
+                inverted=True,
+            )
+
+            if arcpy.Exists(self.add_layer):
+                add_geoms = [
+                    [geom, medium]
+                    for geom, medium in arcpy.da.SearchCursor(
+                        self.add_layer, ["SHAPE@", "medium"]
+                    )
+                ]
+
+                with arcpy.da.InsertCursor(
+                    self.removed_2_cycle_roads, ["SHAPE@", "medium"]
+                ) as insert:
+                    for add_geom in add_geoms:
+                        insert.insertRow(add_geom)
+            
+            # Update the working file, and repeat if changes
+            edit_fc = self.removed_2_cycle_roads
+
+        print(f"\nNumber of iterations: {k}")
+        print(f"Number of roads in the start: {first_count}")
+        end_count = int(arcpy.management.GetCount(self.removed_1_cycle_roads)[0])
+        print(f"Number of roads in the end: {end_count}\n")
+
+    """
+    @timing_decorator
+    def remove_2_cycle_roads(self):
+        
+        Detects and removes 2-cycle roads from the road network
+        based on the network with removed 1-cycle roads.
+        
         print()
         self.simplify_road_network(
             input_feature=self.removed_1_cycle_roads,
@@ -737,6 +1080,7 @@ class RemoveRoadTriangles:
                     insert.insertRow(add_geom)
 
         print()
+    """
 
     @timing_decorator
     def remove_3_cycle_roads(self):
@@ -840,6 +1184,12 @@ class RemoveRoadTriangles:
             out_feature_class=self.copy_of_input_feature,
         )
 
+        print("\nRemoves road cycles\n")
+        self.remove_islands_and_small_dead_ends()
+        self.remove_1_cycle_roads()
+        self.remove_2_cycle_roads()
+        return
+
         self.remove_1_cycle_roads()
         self.remove_2_cycle_roads()
         self.remove_3_cycle_roads()
@@ -853,7 +1203,7 @@ def generalize_road_triangles():
     """
     environment_setup.main()
     config = logic_config.RemoveRoadTrianglesKwargs(
-        input_line_feature=Road_N100.data_preparation___smooth_road___n100_road.value,
+        input_line_feature=Road_N100.data_preparation___simplified_road___n100_road.value, # Road_N100.data_preparation___smooth_road___n100_road.value,
         work_file_manager_config=core_config.WorkFileConfig(
             Road_N100.testing_file___remove_triangles_root___n100_road.value
         ),
