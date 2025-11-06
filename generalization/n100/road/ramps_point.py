@@ -52,7 +52,6 @@ files_to_delete = [
 
 @timing_decorator
 def ramp_points():
-
     merge_ramps()
     make_ramp_points()
     connect_roads_to_points()
@@ -555,7 +554,7 @@ def make_ramp_points() -> None:
     arcpy.management.MakeFeatureLayer(
         output_fc,
         "roads_lyr",
-        where_clause="typeveg <> 'rampe' and objtype = 'Veglenke'",
+        where_clause="typeveg <> 'rampe' and objtype = 'VegSenterlinje'",
     )
     arcpy.management.MakeFeatureLayer(
         output_fc, "ramps_lyr", where_clause="typeveg = 'rampe'"
@@ -612,7 +611,6 @@ def connect_roads_to_points():
         endpoints_fc, ["SHAPE@", "from_road", "start_end"]
     ) as ins_cur:
         for oid, geom in road_cur:
-
             start_pg, end_pg = get_line_endpoints(geom)
             ins_cur.insertRow([start_pg, oid, 1])
             ins_cur.insertRow([end_pg, oid, 2])
@@ -801,7 +799,7 @@ class MovePointsToCrossings:
         arcpy.management.MakeFeatureLayer(
             self.input_road_feature,
             roads_lyr,
-            where_clause="typeveg <> 'rampe' and objtype = 'Veglenke'",
+            where_clause="typeveg <> 'rampe' and objtype = 'VegSenterlinje'",
         )
         # Select roads within 500 meters to iterate over fewer objects
         arcpy.analysis.Buffer(
@@ -1370,7 +1368,6 @@ class MovePointsToCrossings:
         Returns a dict: {in_fid: (near_x, near_y, near_dist, near_fid)}
         """
         if unmatched_oids:
-
             points_lyr = "points_lyr_unmatched"
             arcpy.MakeFeatureLayer_management(in_fc, points_lyr)
 
@@ -1481,7 +1478,6 @@ class MovePointsToCrossings:
     @staticmethod
     def create_near_map_unmatched(distance_str, in_fc, near_fc, unmatched_oids):
         if unmatched_oids:
-
             points_lyr = "points_lyr_unmatched"
             arcpy.MakeFeatureLayer_management(in_fc, points_lyr)
 
