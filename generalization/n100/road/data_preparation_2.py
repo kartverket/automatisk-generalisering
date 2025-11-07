@@ -84,7 +84,7 @@ OBJECT_LIMIT = 100_000
 @timing_decorator
 def data_selection_and_validation():
     plot_area = "navn IN ('Asker', 'Bærum', 'Drammen', 'Frogn', 'Hole', 'Holmestrand', 'Horten', 'Jevnaker', 'Kongsberg', 'Larvik', 'Lier', 'Lunner', 'Modum', 'Nesodden', 'Oslo', 'Ringerike', 'Tønsberg', 'Øvre Eiker')"
-    ferry_admin_test = "navn IN ('Hole')"
+    ferry_admin_test = "navn IN ('Ringerike', 'Hole')"
     small_plot_area = "navn IN ('Oslo', 'Ringerike')"
     smallest_plot_area = "navn IN ('Ringerike')"
     presentation_area = "navn IN ('Asker', 'Bærum', 'Oslo', 'Enebakk', 'Nittedal', 'Nordre Follo', 'Hole', 'Nesodden', 'Lørenskog', 'Sandnes', 'Stavanger', 'Gjesdal', 'Sola', 'Klepp', 'Strand', 'Time', 'Randaberg')"
@@ -98,7 +98,7 @@ def data_selection_and_validation():
             input_n100.AdminGrense: Road_N100.data_selection___admin_boundary___n100_road.value,
         },
         selecting_file=input_n100.AdminFlate,
-        selecting_sql_expression=small_plot_area,
+        selecting_sql_expression=ferry_admin_test,
         select_local=config.select_study_area,
     )
 
@@ -445,8 +445,6 @@ def thin_roads():
         if typeveg == 'bilferje':
             return 0
         
-        bom = 2 if har_bom == "ja" else 0
-        
         if vegklasse in (0, 1, 2, 3, 4):
             klasse = 1
         elif vegklasse == 5:
@@ -468,7 +466,7 @@ def thin_roads():
         else:
             kryss = 0
         
-        hierarki = bom + klasse + kryss
+        hierarki = klasse + kryss
         
         if hierarki < 0:
             return 0
@@ -610,6 +608,7 @@ def smooth_line():
     )
 
 
+@timing_decorator
 def pre_resolve_road_conflicts():
     run_dissolve_with_intersections(
         input_line_feature=Road_N100.data_preparation___smooth_road___n100_road.value,
