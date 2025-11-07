@@ -555,7 +555,7 @@ def make_ramp_points() -> None:
     arcpy.management.MakeFeatureLayer(
         output_fc,
         "roads_lyr",
-        where_clause="typeveg <> 'rampe' and objtype = 'Veglenke'",
+        where_clause="typeveg <> 'rampe' and objtype = 'VegSenterlinje'",
     )
     arcpy.management.MakeFeatureLayer(
         output_fc, "ramps_lyr", where_clause="typeveg = 'rampe'"
@@ -801,7 +801,7 @@ class MovePointsToCrossings:
         arcpy.management.MakeFeatureLayer(
             self.input_road_feature,
             roads_lyr,
-            where_clause="typeveg <> 'rampe' and objtype = 'Veglenke'",
+            where_clause="typeveg <> 'rampe' and objtype = 'VegSenterlinje'",
         )
         # Select roads within 500 meters to iterate over fewer objects
         arcpy.analysis.Buffer(
