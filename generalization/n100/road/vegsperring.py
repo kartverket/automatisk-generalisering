@@ -43,6 +43,7 @@ these roads, but if we look further out from the municipality, they are connecte
 for example, a forest having a small gap in the middle. The road has a roadblock, but the removed segment does not.
 """
 
+
 @timing_decorator
 def remove_roadblock():
     """
