@@ -637,6 +637,32 @@ for all roads that intersect with the kept major road crossings.</p>
 </section>
 <section id="module-generalization.n100.road.vegsperring">
 <span id="generalization-n100-road-vegsperring-module"></span><h2>generalization.n100.road.vegsperring module<a class="headerlink" href="#module-generalization.n100.road.vegsperring" title="Link to this heading"></a></h2>
+<dl class="py data">
+<dt class="sig sig-object py" id="generalization.n100.road.vegsperring.data_files">
+<span class="sig-prename descclassname"><span class="pre">generalization.n100.road.vegsperring.</span></span><span class="sig-name descname"><span class="pre">data_files</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">{'input_road':</span> <span class="pre">'C:\\path\\to\\folder\\you\\want\\your\\outputs\\in/ag_outputs/n100/road.gdb/roundabout___cleaned_road___n100_road',</span> <span class="pre">'input_vegsperring':</span> <span class="pre">'C:\\path\\to\\folder\\you\\want\\your\\outputs\\in/ag_outputs/n100/road.gdb/data_selection___vegsperring___n100_road',</span> <span class="pre">'veg_uten_bom':</span> <span class="pre">'C:\\path\\to\\folder\\you\\want\\your\\outputs\\in/ag_outputs/n100/road.gdb/vegsperring___veg_uten_bom___n100_road'}</span></em><a class="headerlink" href="#generalization.n100.road.vegsperring.data_files" title="Link to this definition"></a></dt>
+<dd><p>Documentation of the development process:</p>
+<p>During the development of this code, some different approaches were tested. The code was tested for the municipalities Ringerike and Hole.</p>
+<p>1) The first attempt created a new attribute “har_bom” (has roadblock) describing the occurrence of roadblock(s) on the road instance. This attribute was
+used to increase the hierarchy level to a less prioritized instance in the thin-road function. The result produced a road network without the roadblocks in
+urban areas, but most of the roadblock roads were kept since they are mostly represented in wilderness areas as the only option.
+Here, all roadblocks were treated as equally important and the hierarchy was changed equally for all instances. In most cases the results were satisfying,
+but some special occurrences made ‘islands’ of roads that are not desirable.</p>
+<p>2) Secondly, we tried to differentiate between the types of roadblocks. The different roadblock types were placed into three categories depending on the degree
+to which it is possible to get through the roadblock. The “har_bom” attribute was modified so that it could hold a number depending on category and increase the
+hierarchy level in thin-roads accordingly.
+On the other hand, some of the roadblock types were highly overrepresented in the dataset and represented in both urban and wilderness areas.
+As we use thin-roads twice - first for both roads and paths, then only for paths - we tried to change the hierarchy levels so that all paths received a worse
+hierarchy level than the roads in the first loops. We use 6 hierarchy levels (0 to 5). The municipalities tested this approach both with divided hierarchy (roads: 0-4,
+paths: 5) and with shared hierarchy (everything: 0-5).
+None of the results were perfect. Some of the missing roads were also roads not affected by “har_bom”, so thin-roads did more…</p>
+<p>3) The final approach, which became the final solution (code below), captured all roadblocks inside urban areas and cities and removed these road instances
+completely from the dataset before thin-roads. The “har_bom” attribute was removed completely and no longer effecting the hierarchy levels in thin-roads.
+The result now does not contain any roads going near roadblocks in these areas, but critical roads in wilderness areas are still present. There are no ‘islands’
+in the road network anymore, but in some places road segments can be removed seemingly at random. The result is that only paths or tractor roads are connected to
+these roads, but if we look further out from the municipality, they are connected to roads from the other side. It is then a longer road segment going through,
+for example, a forest having a small gap in the middle. The road has a roadblock, but the removed segment does not.</p>
+</dd></dl>
+
 <dl class="py function">
 <dt class="sig sig-object py" id="generalization.n100.road.vegsperring.remove_roadblock">
 <span class="sig-prename descclassname"><span class="pre">generalization.n100.road.vegsperring.</span></span><span class="sig-name descname"><span class="pre">remove_roadblock</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/generalization/n100/road/vegsperring.html#remove_roadblock"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#generalization.n100.road.vegsperring.remove_roadblock" title="Link to this definition"></a></dt>

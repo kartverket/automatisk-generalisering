@@ -81,8 +81,9 @@
 <span class="n">arcpy</span><span class="o">.</span><span class="n">env</span><span class="o">.</span><span class="n">overwriteOutput</span> <span class="o">=</span> <span class="kc">True</span>
 
 <span class="c1"># Importing custom modules</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">file_manager.n100.file_manager_roads</span><span class="w"> </span><span class="kn">import</span> <span class="n">Road_N100</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">custom_tools.decorators.timing_decorator</span><span class="w"> </span><span class="kn">import</span> <span class="n">timing_decorator</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">file_manager.n100.file_manager_roads</span><span class="w"> </span><span class="kn">import</span> <span class="n">Road_N100</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">input_data</span><span class="w"> </span><span class="kn">import</span> <span class="n">input_n100</span>
 
 <span class="n">data_files</span> <span class="o">=</span> <span class="p">{</span>
     <span class="c1"># Stores all the relevant file paths to the geodata used in this Python file</span>
@@ -90,6 +91,34 @@
     <span class="s2">&quot;input_vegsperring&quot;</span><span class="p">:</span> <span class="n">Road_N100</span><span class="o">.</span><span class="n">data_selection___vegsperring___n100_road</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
     <span class="s2">&quot;veg_uten_bom&quot;</span><span class="p">:</span> <span class="n">Road_N100</span><span class="o">.</span><span class="n">vegsperring__veg_uten_bom__n100_road</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
 <span class="p">}</span>
+
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">Documentation of the development process:</span>
+
+<span class="sd">During the development of this code, some different approaches were tested. The code was tested for the municipalities Ringerike and Hole.</span>
+
+<span class="sd">1) The first attempt created a new attribute &quot;har_bom&quot; (has roadblock) describing the occurrence of roadblock(s) on the road instance. This attribute was</span>
+<span class="sd">used to increase the hierarchy level to a less prioritized instance in the thin-road function. The result produced a road network without the roadblocks in</span>
+<span class="sd">urban areas, but most of the roadblock roads were kept since they are mostly represented in wilderness areas as the only option.</span>
+<span class="sd">Here, all roadblocks were treated as equally important and the hierarchy was changed equally for all instances. In most cases the results were satisfying,</span>
+<span class="sd">but some special occurrences made &#39;islands&#39; of roads that are not desirable.</span>
+
+<span class="sd">2) Secondly, we tried to differentiate between the types of roadblocks. The different roadblock types were placed into three categories depending on the degree</span>
+<span class="sd">to which it is possible to get through the roadblock. The &quot;har_bom&quot; attribute was modified so that it could hold a number depending on category and increase the</span>
+<span class="sd">hierarchy level in thin-roads accordingly.</span>
+<span class="sd">On the other hand, some of the roadblock types were highly overrepresented in the dataset and represented in both urban and wilderness areas.</span>
+<span class="sd">As we use thin-roads twice - first for both roads and paths, then only for paths - we tried to change the hierarchy levels so that all paths received a worse</span>
+<span class="sd">hierarchy level than the roads in the first loops. We use 6 hierarchy levels (0 to 5). The municipalities tested this approach both with divided hierarchy (roads: 0-4,</span>
+<span class="sd">paths: 5) and with shared hierarchy (everything: 0-5).</span>
+<span class="sd">None of the results were perfect. Some of the missing roads were also roads not affected by &quot;har_bom&quot;, so thin-roads did more...</span>
+
+<span class="sd">3) The final approach, which became the final solution (code below), captured all roadblocks inside urban areas and cities and removed these road instances</span>
+<span class="sd">completely from the dataset before thin-roads. The &quot;har_bom&quot; attribute was removed completely and no longer effecting the hierarchy levels in thin-roads.</span>
+<span class="sd">The result now does not contain any roads going near roadblocks in these areas, but critical roads in wilderness areas are still present. There are no &#39;islands&#39;</span>
+<span class="sd">in the road network anymore, but in some places road segments can be removed seemingly at random. The result is that only paths or tractor roads are connected to</span>
+<span class="sd">these roads, but if we look further out from the municipality, they are connected to roads from the other side. It is then a longer road segment going through,</span>
+<span class="sd">for example, a forest having a small gap in the middle. The road has a roadblock, but the removed segment does not.</span>
+<span class="sd">&quot;&quot;&quot;</span>
 
 
 <div class="viewcode-block" id="remove_roadblock">
@@ -118,22 +147,58 @@
         <span class="n">angle</span><span class="o">=</span><span class="s2">&quot;NO_ANGLE&quot;</span><span class="p">,</span>
     <span class="p">)</span>
 
-    <span class="n">near_ids</span> <span class="o">=</span> <span class="p">{</span>
-        <span class="n">row</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
-        <span class="k">for</span> <span class="n">row</span> <span class="ow">in</span> <span class="n">arcpy</span><span class="o">.</span><span class="n">da</span><span class="o">.</span><span class="n">SearchCursor</span><span class="p">(</span><span class="s2">&quot;roadblock_lyr&quot;</span><span class="p">,</span> <span class="p">[</span><span class="s2">&quot;NEAR_FID&quot;</span><span class="p">])</span>
-        <span class="k">if</span> <span class="n">row</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">!=</span> <span class="o">-</span><span class="mi">1</span>
+    <span class="n">near_data</span> <span class="o">=</span> <span class="p">{</span>
+        <span class="n">near</span><span class="p">:</span> <span class="p">[</span><span class="n">geom</span><span class="p">,</span> <span class="n">bom</span><span class="p">]</span>
+        <span class="k">for</span> <span class="n">geom</span><span class="p">,</span> <span class="n">bom</span><span class="p">,</span> <span class="n">near</span> <span class="ow">in</span> <span class="n">arcpy</span><span class="o">.</span><span class="n">da</span><span class="o">.</span><span class="n">SearchCursor</span><span class="p">(</span>
+            <span class="s2">&quot;roadblock_lyr&quot;</span><span class="p">,</span> <span class="p">[</span><span class="s2">&quot;SHAPE@&quot;</span><span class="p">,</span> <span class="s2">&quot;TYPE&quot;</span><span class="p">,</span> <span class="s2">&quot;NEAR_FID&quot;</span><span class="p">]</span>
+        <span class="p">)</span>
+        <span class="k">if</span> <span class="n">near</span> <span class="o">!=</span> <span class="o">-</span><span class="mi">1</span>
     <span class="p">}</span>
 
-    <span class="n">arcpy</span><span class="o">.</span><span class="n">management</span><span class="o">.</span><span class="n">AddField</span><span class="p">(</span>
-        <span class="n">in_table</span><span class="o">=</span><span class="n">road_fc</span><span class="p">,</span> <span class="n">field_name</span><span class="o">=</span><span class="s2">&quot;har_bom&quot;</span><span class="p">,</span> <span class="n">field_type</span><span class="o">=</span><span class="s2">&quot;TEXT&quot;</span><span class="p">,</span> <span class="n">field_length</span><span class="o">=</span><span class="mi">10</span>
+    <span class="n">arcpy</span><span class="o">.</span><span class="n">management</span><span class="o">.</span><span class="n">MakeFeatureLayer</span><span class="p">(</span>
+        <span class="n">in_features</span><span class="o">=</span><span class="n">input_n100</span><span class="o">.</span><span class="n">ArealdekkeFlate</span><span class="p">,</span>
+        <span class="n">out_layer</span><span class="o">=</span><span class="s2">&quot;Tettbebyggelse_lyr&quot;</span><span class="p">,</span>
+        <span class="n">where_clause</span><span class="o">=</span><span class="s2">&quot;OBJTYPE IN (&#39;Tettbebyggelse&#39;, &#39;BymessigBebyggelse&#39;)&quot;</span><span class="p">,</span>
     <span class="p">)</span>
-    <span class="k">with</span> <span class="n">arcpy</span><span class="o">.</span><span class="n">da</span><span class="o">.</span><span class="n">UpdateCursor</span><span class="p">(</span><span class="n">road_fc</span><span class="p">,</span> <span class="p">[</span><span class="s2">&quot;OID@&quot;</span><span class="p">,</span> <span class="s2">&quot;har_bom&quot;</span><span class="p">])</span> <span class="k">as</span> <span class="n">cursor</span><span class="p">:</span>
-        <span class="k">for</span> <span class="n">oid</span><span class="p">,</span> <span class="n">bom</span> <span class="ow">in</span> <span class="n">cursor</span><span class="p">:</span>
-            <span class="k">if</span> <span class="n">oid</span> <span class="ow">in</span> <span class="n">near_ids</span><span class="p">:</span>
-                <span class="n">bom</span> <span class="o">=</span> <span class="s2">&quot;ja&quot;</span>
-            <span class="k">else</span><span class="p">:</span>
-                <span class="n">bom</span> <span class="o">=</span> <span class="s2">&quot;nei&quot;</span>
-            <span class="n">cursor</span><span class="o">.</span><span class="n">updateRow</span><span class="p">([</span><span class="n">oid</span><span class="p">,</span> <span class="n">bom</span><span class="p">])</span>
+
+    <span class="n">to_delete</span> <span class="o">=</span> <span class="p">[]</span>
+
+    <span class="k">with</span> <span class="n">arcpy</span><span class="o">.</span><span class="n">da</span><span class="o">.</span><span class="n">UpdateCursor</span><span class="p">(</span><span class="n">road_fc</span><span class="p">,</span> <span class="p">[</span><span class="s2">&quot;OID@&quot;</span><span class="p">])</span> <span class="k">as</span> <span class="n">cursor</span><span class="p">:</span>
+        <span class="k">for</span> <span class="n">row</span> <span class="ow">in</span> <span class="n">cursor</span><span class="p">:</span>
+            <span class="n">oid</span> <span class="o">=</span> <span class="n">row</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+            <span class="k">if</span> <span class="n">oid</span> <span class="ow">in</span> <span class="n">near_data</span><span class="p">:</span>
+                <span class="n">important</span> <span class="o">=</span> <span class="kc">False</span>
+                <span class="n">arcpy</span><span class="o">.</span><span class="n">management</span><span class="o">.</span><span class="n">SelectLayerByAttribute</span><span class="p">(</span>
+                    <span class="s2">&quot;road_lyr&quot;</span><span class="p">,</span> <span class="s2">&quot;NEW_SELECTION&quot;</span><span class="p">,</span> <span class="n">where_clause</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;OBJECTID = </span><span class="si">{</span><span class="n">oid</span><span class="si">}</span><span class="s2">&quot;</span>
+                <span class="p">)</span>
+                <span class="n">arcpy</span><span class="o">.</span><span class="n">management</span><span class="o">.</span><span class="n">SelectLayerByLocation</span><span class="p">(</span>
+                    <span class="n">in_layer</span><span class="o">=</span><span class="s2">&quot;Tettbebyggelse_lyr&quot;</span><span class="p">,</span>
+                    <span class="n">overlap_type</span><span class="o">=</span><span class="s2">&quot;CONTAINS&quot;</span><span class="p">,</span>
+                    <span class="n">select_features</span><span class="o">=</span><span class="s2">&quot;road_lyr&quot;</span><span class="p">,</span>
+                    <span class="n">search_distance</span><span class="o">=</span><span class="s2">&quot;0 Meters&quot;</span><span class="p">,</span>
+                    <span class="n">selection_type</span><span class="o">=</span><span class="s2">&quot;NEW_SELECTION&quot;</span><span class="p">,</span>
+                <span class="p">)</span>
+                <span class="n">count</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span>
+                    <span class="n">arcpy</span><span class="o">.</span><span class="n">management</span><span class="o">.</span><span class="n">GetCount</span><span class="p">(</span><span class="s2">&quot;Tettbebyggelse_lyr&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">getOutput</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+                <span class="p">)</span>
+                <span class="k">if</span> <span class="n">count</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+                    <span class="n">important</span> <span class="o">=</span> <span class="kc">True</span>
+
+                <span class="k">if</span> <span class="n">important</span><span class="p">:</span>
+                    <span class="n">to_delete</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">oid</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">to_delete</span><span class="p">:</span>
+        <span class="n">oid_field</span> <span class="o">=</span> <span class="n">arcpy</span><span class="o">.</span><span class="n">Describe</span><span class="p">(</span><span class="n">road_fc</span><span class="p">)</span><span class="o">.</span><span class="n">OIDFieldName</span>
+        <span class="n">oid_list_str</span> <span class="o">=</span> <span class="s2">&quot;,&quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">i</span><span class="p">)</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">to_delete</span><span class="p">)</span>
+        <span class="n">where</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">oid_field</span><span class="si">}</span><span class="s2"> IN (</span><span class="si">{</span><span class="n">oid_list_str</span><span class="si">}</span><span class="s2">)&quot;</span>
+        <span class="n">arcpy</span><span class="o">.</span><span class="n">management</span><span class="o">.</span><span class="n">MakeFeatureLayer</span><span class="p">(</span>
+            <span class="n">in_features</span><span class="o">=</span><span class="n">road_fc</span><span class="p">,</span> <span class="n">out_layer</span><span class="o">=</span><span class="s2">&quot;to_delete_lyr&quot;</span>
+        <span class="p">)</span>
+        <span class="n">arcpy</span><span class="o">.</span><span class="n">management</span><span class="o">.</span><span class="n">SelectLayerByAttribute</span><span class="p">(</span>
+            <span class="s2">&quot;to_delete_lyr&quot;</span><span class="p">,</span> <span class="s2">&quot;NEW_SELECTION&quot;</span><span class="p">,</span> <span class="n">where_clause</span><span class="o">=</span><span class="n">where</span>
+        <span class="p">)</span>
+        <span class="n">arcpy</span><span class="o">.</span><span class="n">management</span><span class="o">.</span><span class="n">DeleteFeatures</span><span class="p">(</span><span class="s2">&quot;to_delete_lyr&quot;</span><span class="p">)</span>
+
     <span class="n">arcpy</span><span class="o">.</span><span class="n">management</span><span class="o">.</span><span class="n">CopyFeatures</span><span class="p">(</span><span class="n">road_fc</span><span class="p">,</span> <span class="n">output</span><span class="p">)</span></div>
 
 </pre></div>
