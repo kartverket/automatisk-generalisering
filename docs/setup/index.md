@@ -9,3 +9,5 @@
 - [Config setup](https://github.com/kartverket/automatisk-generalisering/blob/main/docs/setup/config_setup.md) - Guide to setting up the Config file.
 
 - [Verifying setup](https://github.com/kartverket/automatisk-generalisering/blob/main/docs/setup/verifying.md) - Overview over a small check if setup has been successful.
+
+[Return to README](https://github.com/kartverket/automatisk-generalisering/blob/main/README.md)

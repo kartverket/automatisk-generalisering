@@ -1,7 +1,7 @@
 
 ## Testing  that your environment is set up correctly. 
 
-To test that everything is working as intended we can test a little script. Try running the script called `setup_test.py`, located under `automatic-generalization-kv\setup_guide\ `.
+To test that everything is working as intended we can test a little script. Try running the script called `test_setup.py`, located under `root\docs\setup` [test_setup](https://github.com/kartverket/automatisk-generalisering/blob/main/docs/setup/test_setup.py).
 
 - Run the file to test that everyting is set up correctly.
 ### Interpreting the result
