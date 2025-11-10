@@ -1,6 +1,6 @@
 ## Setting up ArcPy python interpreter
 
-First off, make sure you have ArcGIS Pro installed locally.
+Make sure you have ArcGIS Pro installed locally.
 
 1. Locate the ArcGIS Pro install’s Python environment. By default:
 ```text
@@ -35,3 +35,5 @@ These steps are only needed if VS Code fails to recognize the repository root as
 }
 ```
 
+
+[Navigate back to Setup Guide](https://github.com/kartverket/automatisk-generalisering/tree/main/docs/setup)
