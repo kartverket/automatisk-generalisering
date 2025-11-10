@@ -196,6 +196,20 @@ class RemoveRoadTriangles:
             output_name=output_feature,
         )
 
+    def endpoints_of(self, geom: arcpy.Geometry) -> tuple:
+        """
+        Returns rounded coordinates for the endpoints of the geom.
+
+        Args:
+            geom (arcpy.Geometry): The geometry to fetch endpoints
+
+        Returns:
+            tuple: The X- and Y-coordinate of the endpoints to the geometry
+        """
+        s, e = get_endpoints(geom)
+        s, e = s.firstPoint, e.firstPoint
+        return (round(s.X, 3), round(s.Y, 3)), (round(e.X, 3), round(e.Y, 3))
+
     ######################################################
     def find_geom_to_insert(
         self, oid_to_geom: dict, road_geom: arcpy.Geometry, tolerance: float = 1e-6
@@ -703,12 +717,6 @@ class RemoveRoadTriangles:
             road_cycles (str): Feature class with road cycles
             working_fc (str): Feature class containing the remaining segments in the whole network
         """
-
-        def endpoints_of(geom):
-            s, e = get_endpoints(geom)
-            s, e = s.firstPoint, e.firstPoint
-            return (round(s.X, 3), round(s.Y, 3)), (round(e.X, 3), round(e.Y, 3))
-
         # Fetch the cycle-data
         oid_to_geom = {
             oid: geom
@@ -795,6 +803,9 @@ class RemoveRoadTriangles:
                     if len(base) == 5:
                         overlap[i] = base
                 chosen = self.sort_prioritized_hierarchy(overlap)[-1]
+                ################################
+                # Her må lengdekontroll inn!!! #
+                ################################
                 chosen_geom = chosen[-1]
 
                 geom_fc = r"in_memory/tmp_geom_fc"
@@ -820,7 +831,7 @@ class RemoveRoadTriangles:
                     selection_type="SUBSET_SELECTION",
                 )
 
-                orig_s, orig_e = endpoints_of(chosen_geom)
+                orig_s, orig_e = self.endpoints_of(chosen_geom)
                 start_endpoints = {orig_s, orig_e}
                 inside_geoms = []
                 outside_geoms = set()
@@ -833,7 +844,7 @@ class RemoveRoadTriangles:
                         if chosen_geom.contains(g):
                             inside_geoms.append([kategori, klasse, lengde, medium, g])
                         else:
-                            other_s, other_e = endpoints_of(g)
+                            other_s, other_e = self.endpoints_of(g)
                             s, e = get_endpoints(g)
                             s, e = s.firstPoint, e.firstPoint
                             if chosen_geom.distanceTo(s) == 0:
@@ -849,7 +860,7 @@ class RemoveRoadTriangles:
                     inside_geoms = self.sort_prioritized_hierarchy(inside_geoms)
                     pri_geom = inside_geoms[0][-1]
                     add_geoms.append([pri_geom, inside_geoms[0][-2]])
-                    start_s, start_e = endpoints_of(pri_geom)
+                    start_s, start_e = self.endpoints_of(pri_geom)
                     endpoints = {start_s, start_e}
 
                     changed = True
@@ -862,7 +873,7 @@ class RemoveRoadTriangles:
                         for idx, inside in enumerate(inside_geoms):
                             if idx in used:
                                 continue
-                            s_tuple, e_tuple = endpoints_of(inside[-1])
+                            s_tuple, e_tuple = self.endpoints_of(inside[-1])
                             if s_tuple in endpoints or e_tuple in endpoints:
                                 if s_tuple in endpoints:
                                     shared = s_tuple
@@ -879,6 +890,243 @@ class RemoveRoadTriangles:
 
                 if arcpy.Exists(geom_fc):
                     arcpy.management.Delete(geom_fc)
+
+        with arcpy.da.InsertCursor(self.remove_layer, ["SHAPE@"]) as insert_cursor:
+            for geom in remove_geoms:
+                insert_cursor.insertRow([geom])
+
+        if len(add_geoms) > 0:
+            with arcpy.da.InsertCursor(
+                self.add_layer, ["SHAPE@", "medium"]
+            ) as insert_cursor:
+                for geom, medium in add_geoms:
+                    insert_cursor.insertRow([geom, medium])
+
+        if arcpy.Exists(dissolved_fc):
+            arcpy.management.Delete(dissolved_fc)
+
+    @timing_decorator
+    def select_segments_to_remove_3_cycle_roads(
+        self, road_cycles: str, working_fc: str
+    ) -> None:
+        """
+        Selects which segments to remove based on hierarchy rules.
+
+        Args:
+            road_cycles (str): Feature class with road cycles
+            working_fc (str): Feature class containing the remaining segments in the whole network
+        """
+        # Fetch the cycle-data
+        oid_to_geom = {
+            oid: geom
+            for oid, geom in arcpy.da.SearchCursor(road_cycles, ["OID@", "SHAPE@"])
+        }
+        # ... and creates a dictionary keeping the
+        # most relevant hierarchy for that section
+        oid_to_data = defaultdict(list)
+
+        arcpy.management.MakeFeatureLayer(
+            in_features=self.input_line_feature, out_layer="original_data_layer"
+        )
+
+        for oid, geom in oid_to_geom.items():
+            geom_fc = f"in_memory/tmp_geom_fc_{oid}"
+            arcpy.management.CreateFeatureclass(
+                os.path.dirname(geom_fc),
+                os.path.basename(geom_fc),
+                "POLYLINE",
+                spatial_reference=geom.spatialReference,
+            )
+            with arcpy.da.InsertCursor(geom_fc, ["SHAPE@"]) as insert:
+                insert.insertRow([geom])
+
+            arcpy.management.SelectLayerByLocation(
+                in_layer="original_data_layer",
+                overlap_type="SHARE_A_LINE_SEGMENT_WITH",
+                select_features=geom_fc,
+                selection_type="NEW_SELECTION",
+            )
+            with arcpy.da.SearchCursor(
+                "original_data_layer", ["vegkategori", "vegklasse", "Shape_Length"]
+            ) as search:
+                for row in search:
+                    oid_to_data[oid].append([row[0], row[1], row[2]])
+
+            if arcpy.Exists(geom_fc):
+                arcpy.management.Delete(geom_fc)
+
+        for oid, data in oid_to_data.items():
+            oid_to_data[oid] = self.sort_prioritized_hierarchy(data)[-1]
+
+        # Dissolves the cycle-instances
+        dissolved_fc = r"in_memory/dissolved_fc"
+        arcpy.management.Dissolve(
+            in_features=road_cycles,
+            out_feature_class=dissolved_fc,
+            dissolve_field=[],
+            multi_part="SINGLE_PART",
+        )
+
+        single_cycluses = []
+        systems_of_cycluses = []
+
+        with arcpy.da.SearchCursor(dissolved_fc, ["SHAPE@"]) as search:
+            for row in search:
+                geom = row[0]
+                s, e = self.endpoints_of(geom)
+                if s == e:
+                    single_cycluses.append(geom)
+                else:
+                    if len(systems_of_cycluses) == 0:
+                        systems_of_cycluses.append([[geom], {s, e}])
+                    else:
+                        added = False
+                        for system in systems_of_cycluses:
+                            geoms, endpoints = system
+                            if any(pnt in endpoints for pnt in [s, e]):
+                                geoms.append(geom)
+                                endpoints.add(s)
+                                endpoints.add(e)
+                                added = True
+                        if not added:
+                            systems_of_cycluses.append([[geom], {s, e}])
+        print()
+        print(single_cycluses)
+        print()
+        print(systems_of_cycluses)
+        print()
+        remove_geoms = []
+        add_geoms = []
+
+        if arcpy.Exists(self.remove_layer):
+            arcpy.management.Delete(self.remove_layer)
+        arcpy.management.CreateFeatureclass(
+            out_path=os.path.dirname(self.remove_layer),
+            out_name=os.path.basename(self.remove_layer),
+            geometry_type="POLYLINE",
+            spatial_reference=arcpy.Describe(self.input_line_feature).spatialReference,
+        )
+        if arcpy.Exists(self.add_layer):
+            arcpy.management.Delete(self.add_layer)
+        arcpy.management.CreateFeatureclass(
+            out_path=os.path.dirname(self.add_layer),
+            out_name=os.path.basename(self.add_layer),
+            geometry_type="POLYLINE",
+            spatial_reference=arcpy.Describe(self.input_line_feature).spatialReference,
+        )
+        arcpy.management.AddField(self.add_layer, "medium", "TEXT")
+
+        ###########################
+        # Removes single 3-cycles #
+        ###########################
+
+        for geom in single_cycluses:
+            overlap = []
+
+            for o_oid, o_geom in oid_to_geom.items():
+                if geom.contains(o_geom):
+                    overlap.append([o_oid, o_geom])
+            for i, (oid, o_geom) in enumerate(overlap):
+                base = list(oid_to_data.get(oid, []))
+                base.extend([oid, o_geom])
+                if len(base) == 5:
+                    overlap[i] = base
+            chosen = self.sort_prioritized_hierarchy(overlap)[-1]
+            ################################
+            # Her må lengdekontroll inn!!! #
+            ################################
+            chosen_geom = chosen[-1]
+
+            geom_fc = r"in_memory/tmp_geom_fc"
+            arcpy.management.CreateFeatureclass(
+                os.path.dirname(geom_fc),
+                os.path.basename(geom_fc),
+                "POLYLINE",
+                spatial_reference=chosen_geom.spatialReference,
+            )
+            with arcpy.da.InsertCursor(geom_fc, ["SHAPE@"]) as insert:
+                insert.insertRow([chosen_geom])
+
+            arcpy.management.SelectLayerByLocation(
+                in_layer="original_data_layer",
+                overlap_type="SHARE_A_LINE_SEGMENT_WITH",
+                select_features=working_fc,
+                selection_type="NEW_SELECTION",
+            )
+            arcpy.management.SelectLayerByLocation(
+                in_layer="original_data_layer",
+                overlap_type="INTERSECT",
+                select_features=geom_fc,
+                selection_type="SUBSET_SELECTION",
+            )
+
+            orig_s, orig_e = self.endpoints_of(chosen_geom)
+            start_endpoints = {orig_s, orig_e}
+            inside_geoms = []
+            outside_geoms = set()
+
+            with arcpy.da.SearchCursor(
+                "original_data_layer",
+                ["SHAPE@", "vegkategori", "vegklasse", "Shape_Length", "medium"],
+            ) as sc:
+                for g, kategori, klasse, lengde, medium in sc:
+                    if chosen_geom.contains(g):
+                        inside_geoms.append([kategori, klasse, lengde, medium, g])
+                    else:
+                        other_s, other_e = self.endpoints_of(g)
+                        s, e = get_endpoints(g)
+                        s, e = s.firstPoint, e.firstPoint
+                        if chosen_geom.distanceTo(s) == 0:
+                            if other_s not in start_endpoints:
+                                outside_geoms.add(other_s)
+                        elif chosen_geom.distanceTo(e) == 0:
+                            if other_e not in start_endpoints:
+                                outside_geoms.add(other_e)
+
+            remove_geoms.append(chosen_geom)
+
+            if len(outside_geoms) > 0:
+                inside_geoms = self.sort_prioritized_hierarchy(inside_geoms)
+                pri_geom = inside_geoms[0][-1]
+                add_geoms.append([pri_geom, inside_geoms[0][-2]])
+                start_s, start_e = self.endpoints_of(pri_geom)
+                endpoints = {start_s, start_e}
+
+                changed = True
+                used = set()
+                used.add(0)
+
+                while changed:
+                    changed = False
+
+                    for idx, inside in enumerate(inside_geoms):
+                        if idx in used:
+                            continue
+                        s_tuple, e_tuple = self.endpoints_of(inside[-1])
+                        if s_tuple in endpoints or e_tuple in endpoints:
+                            if s_tuple in endpoints:
+                                shared = s_tuple
+                                other = e_tuple
+                            else:
+                                shared = e_tuple
+                                other = s_tuple
+                            if shared in outside_geoms:
+                                continue
+                            used.add(idx)
+                            add_geoms.append([inside[-1], inside[-2]])
+                            endpoints.add(other)
+                            changed = True
+
+            if arcpy.Exists(geom_fc):
+                arcpy.management.Delete(geom_fc)
+
+        ###############################
+        # Removes systems of 3-cycles #
+        ###############################
+
+        ##################
+        # Final clean up #
+        ##################
 
         with arcpy.da.InsertCursor(self.remove_layer, ["SHAPE@"]) as insert_cursor:
             for geom in remove_geoms:
@@ -1049,49 +1297,6 @@ class RemoveRoadTriangles:
         end_count = int(arcpy.management.GetCount(self.removed_1_cycle_roads)[0])
         print(f"Number of roads in the end: {end_count}\n")
 
-    """
-    @timing_decorator
-    def remove_1_cycle_roads(self):
-        
-        Detects and removes 1-cycle roads from the road network.
-        
-        self.simplify_road_network(
-            input_feature=self.copy_of_input_feature,
-            dissolve_feature=self.dissolved_feature,
-            output_feature=self.line_nodes,
-        )
-
-        detect_1_cycle_roads = GISGraph(
-            input_path=self.line_nodes,
-            object_id="OBJECTID",
-            original_id="ORIG_FID",
-            geometry_field="SHAPE",
-        )
-
-        road_1_cycle_sql = detect_1_cycle_roads.select_1_cycle()
-
-        custom_arcpy.select_attribute_and_make_permanent_feature(
-            input_layer=self.dissolved_feature,
-            expression=road_1_cycle_sql,
-            output_name=self.line_1_cycle,
-        )
-
-        self.filter_short_roads(
-            input_feature=self.line_1_cycle,
-            output_feature=self.filtered_1_cycle_roads,
-            mode=1,
-        )
-
-        custom_arcpy.select_location_and_make_permanent_feature(
-            input_layer=self.dissolved_feature,
-            overlap_type=custom_arcpy.OverlapType.SHARE_A_LINE_SEGMENT_WITH.value,
-            select_features=self.filtered_1_cycle_roads,
-            output_name=self.removed_1_cycle_roads,
-            inverted=True,
-        )
-        print()
-    """
-
     @timing_decorator
     def remove_2_cycle_roads(self) -> None:
         """
@@ -1196,131 +1401,109 @@ class RemoveRoadTriangles:
         end_count = int(arcpy.management.GetCount(self.removed_2_cycle_roads)[0])
         print(f"Number of roads in the end: {end_count}\n")
 
-    """
     @timing_decorator
-    def remove_2_cycle_roads(self):
-        
-        Detects and removes 2-cycle roads from the road network
-        based on the network with removed 1-cycle roads.
-        
-        print()
-        self.simplify_road_network(
-            input_feature=self.removed_1_cycle_roads,
-            dissolve_feature=self.dissolved_feature,
-            output_feature=self.line_nodes,
-        )
-
-        detect_2_cycle_roads = GISGraph(
-            input_path=self.line_nodes,
-            object_id="OBJECTID",
-            original_id="ORIG_FID",
-            geometry_field="SHAPE",
-        )
-
-        road_2_cycle_sql = detect_2_cycle_roads.select_2_cycle()
-
-        custom_arcpy.select_attribute_and_make_permanent_feature(
-            input_layer=self.dissolved_feature,
-            expression=road_2_cycle_sql,
-            output_name=self.line_2_cycle,
-        )
-
-        self.filter_short_roads(
-            input_feature=self.line_2_cycle,
-            output_feature=self.filtered_2_cycle_roads,
-            mode=2,
-        )
-
-        print()
-        self.select_segments_to_remove(self.filtered_2_cycle_roads)
-        print()
-
-        custom_arcpy.select_location_and_make_permanent_feature(
-            input_layer=self.dissolved_feature,
-            overlap_type=custom_arcpy.OverlapType.SHARE_A_LINE_SEGMENT_WITH.value,
-            select_features=self.remove_layer,
-            output_name=self.removed_2_cycle_roads,
-            inverted=True,
-        )
-
-        if arcpy.Exists(self.add_layer):
-            add_geoms = [
-                [geom, medium]
-                for geom, medium in arcpy.da.SearchCursor(
-                    self.add_layer, ["SHAPE@", "medium"]
-                )
-            ]
-
-            with arcpy.da.InsertCursor(
-                self.removed_2_cycle_roads, ["SHAPE@", "medium"]
-            ) as insert:
-                for add_geom in add_geoms:
-                    insert.insertRow(add_geom)
-
-        print()
-    """
-
-    @timing_decorator
-    def remove_3_cycle_roads(self):
+    def remove_3_cycle_roads(self) -> None:
         """
         Detects and removes 3-cycle roads from the road network
         based on the network with removed 1- and 2-cycle roads.
         """
-        print()
-        self.simplify_road_network(
-            input_feature=self.removed_2_cycle_roads,
-            dissolve_feature=self.dissolved_feature,
-            output_feature=self.line_nodes,
-        )
+        count = None
+        edit_fc = self.removed_2_cycle_roads
+        first, first_count = True, None
+        k = 0
 
-        detect_3_cycle_roads = GISGraph(
-            input_path=self.line_nodes,
-            object_id="OBJECTID",
-            original_id="ORIG_FID",
-            geometry_field="SHAPE",
-        )
+        # As long as new 3-cycle roads are detected -> search again
+        while count != 0:
+            k += 1
 
-        road_3_cycle_sql = detect_3_cycle_roads.select_3_cycle()
+            # Simplifies the road with dissolve, and collect
+            # both endpoints for all road instances
+            self.simplify_road_network(
+                input_feature=edit_fc,
+                dissolve_feature=self.dissolved_feature,
+                output_feature=self.line_nodes,
+            )
 
-        custom_arcpy.select_attribute_and_make_permanent_feature(
-            input_layer=self.dissolved_feature,
-            expression=road_3_cycle_sql,
-            output_name=self.line_3_cycle,
-        )
+            if first:
+                first = False
+                first_count = int(arcpy.management.GetCount(self.dissolved_feature)[0])
 
-        self.filter_short_roads(
-            input_feature=self.line_3_cycle,
-            output_feature=self.filtered_3_cycle_roads,
-            mode=3,
-        )
+            # Create the GISGraph instance
+            detect_3_cycle_roads = GISGraph(
+                input_path=self.line_nodes,
+                object_id="OBJECTID",
+                original_id="ORIG_FID",
+                geometry_field="SHAPE",
+            )
 
-        print()
-        self.select_segments_to_remove(self.filtered_3_cycle_roads)
-        print()
+            # Detect the 2-cycle roads
+            road_3_cycle_sql = detect_3_cycle_roads.select_3_cycle()
 
-        custom_arcpy.select_location_and_make_permanent_feature(
-            input_layer=self.dissolved_feature,
-            overlap_type=custom_arcpy.OverlapType.SHARE_A_LINE_SEGMENT_WITH.value,
-            select_features=self.remove_layer,
-            output_name=self.removed_3_cycle_roads,
-            inverted=True,
-        )
-
-        if arcpy.Exists(self.add_layer):
-            add_geoms = [
-                [geom, medium]
-                for geom, medium in arcpy.da.SearchCursor(
-                    self.add_layer, ["SHAPE@", "medium"]
+            if road_3_cycle_sql:
+                # Create a specific layer with these instances
+                custom_arcpy.select_attribute_and_make_permanent_feature(
+                    input_layer=self.dissolved_feature,
+                    expression=road_3_cycle_sql,
+                    output_name=self.line_3_cycle,
                 )
-            ]
 
-            with arcpy.da.InsertCursor(
-                self.removed_3_cycle_roads, ["SHAPE@", "medium"]
-            ) as insert:
-                for add_geom in add_geoms:
-                    insert.insertRow(add_geom)
+                # Filter the roads so that only the valid once
+                # (those that are short enough) are kept
+                self.filter_short_roads(
+                    input_feature=self.line_3_cycle,
+                    output_feature=self.filtered_3_cycle_roads,
+                    mode=3,
+                )
 
-        print()
+                print()
+                self.select_segments_to_remove_3_cycle_roads(
+                    self.filtered_3_cycle_roads, edit_fc
+                )
+                print()
+
+                count = int(arcpy.management.GetCount(self.remove_layer)[0])
+
+                # Select the instances to work further with
+                custom_arcpy.select_location_and_make_permanent_feature(
+                    input_layer=self.dissolved_feature,
+                    overlap_type=custom_arcpy.OverlapType.SHARE_A_LINE_SEGMENT_WITH.value,
+                    select_features=self.remove_layer,
+                    output_name=self.removed_3_cycle_roads,
+                    inverted=True,
+                )
+
+                if arcpy.Exists(self.add_layer):
+                    add_geoms = [
+                        [geom, medium]
+                        for geom, medium in arcpy.da.SearchCursor(
+                            self.add_layer, ["SHAPE@", "medium"]
+                        )
+                    ]
+
+                    with arcpy.da.InsertCursor(
+                        self.removed_3_cycle_roads, ["SHAPE@", "medium"]
+                    ) as insert:
+                        for add_geom in add_geoms:
+                            insert.insertRow(add_geom)
+
+                # Update the working file, and repeat if changes
+                edit_fc = self.removed_3_cycle_roads
+            else:
+                count = 0
+                arcpy.management.CopyFeatures(
+                    in_features=self.dissolved_feature,
+                    out_feature_class=self.removed_3_cycle_roads,
+                )
+
+            if count == 1:
+                print(f"Removed {count} 3-cycle road.")
+            else:
+                print(f"Removed {count} 3-cycle roads.")
+
+        print(f"\nNumber of iterations: {k}")
+        print(f"Number of roads in the start: {first_count}")
+        end_count = int(arcpy.management.GetCount(self.removed_3_cycle_roads)[0])
+        print(f"Number of roads in the end: {end_count}\n")
 
     @timing_decorator
     def fetch_original_data(self):
@@ -1366,12 +1549,6 @@ class RemoveRoadTriangles:
         self.remove_islands_and_small_dead_ends(edit_fc=self.input_line_feature)
         self.remove_1_cycle_roads()
         self.remove_islands_and_small_dead_ends(edit_fc=self.removed_1_cycle_roads)
-        self.remove_2_cycle_roads()
-        self.remove_islands_and_small_dead_ends(edit_fc=self.removed_2_cycle_roads)
-        self.remove_3_cycle_roads()
-        return
-
-        self.remove_1_cycle_roads()
         self.remove_2_cycle_roads()
         self.remove_3_cycle_roads()
         self.fetch_original_data()
