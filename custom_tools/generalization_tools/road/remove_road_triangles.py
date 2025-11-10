@@ -1222,12 +1222,14 @@ class RemoveRoadTriangles:
         print(f"Number of roads in the end: {intermediate_count}\n")
 
     @timing_decorator
-    def remove_1_cycle_roads(self) -> None:
+    def remove_1_cycle_roads(self, edit_fc: str) -> None:
         """
         Detects and removes 1-cycle roads from the road network.
+
+        Args:
+            edit_fc (str): Featureclass with the data that should be edited
         """
         count = None
-        edit_fc = self.dissolved_feature
         first, first_count = True, None
         k = 0
 
@@ -1298,13 +1300,15 @@ class RemoveRoadTriangles:
         print(f"Number of roads in the end: {end_count}\n")
 
     @timing_decorator
-    def remove_2_cycle_roads(self) -> None:
+    def remove_2_cycle_roads(self, edit_fc: str) -> None:
         """
         Detects and removes 2-cycle roads from the road network
         based on the network with removed 1-cycle roads.
+
+        Args:
+            edit_fc (str): Featureclass with the data that should be edited
         """
         count = None
-        edit_fc = self.dissolved_feature
         first, first_count = True, None
         k = 0
 
@@ -1545,13 +1549,21 @@ class RemoveRoadTriangles:
             out_feature_class=self.copy_of_input_feature,
         )
 
+        before = False
+
         print("\nRemoves road cycles\n")
-        self.remove_islands_and_small_dead_ends(edit_fc=self.input_line_feature)
-        self.remove_1_cycle_roads()
-        self.remove_islands_and_small_dead_ends(edit_fc=self.removed_1_cycle_roads)
-        self.remove_2_cycle_roads()
-        self.remove_3_cycle_roads()
-        self.fetch_original_data()
+        if before:
+            self.remove_islands_and_small_dead_ends(edit_fc=self.input_line_feature)
+            self.remove_1_cycle_roads(edit_fc=self.dissolved_feature)
+            self.remove_islands_and_small_dead_ends(edit_fc=self.removed_1_cycle_roads)
+            self.remove_2_cycle_roads(edit_fc=self.dissolved_feature)
+            self.remove_3_cycle_roads()
+            self.fetch_original_data()
+        else:
+            self.remove_1_cycle_roads(edit_fc=self.input_line_feature)
+            self.remove_2_cycle_roads(edit_fc=self.removed_1_cycle_roads)
+            self.remove_3_cycle_roads()
+            self.fetch_original_data()
 
 
 # Main function to be imported in other .py-files
@@ -1561,8 +1573,12 @@ def generalize_road_triangles() -> None:
     Runs the RemoveRoadTriangles process with predefined parameters.
     """
     environment_setup.main()
+
+    before = False
+    file = Road_N100.data_preparation___simplified_road___n100_road.value if before else Road_N100.data_preparation___smooth_road___n100_road.value
+
     config = logic_config.RemoveRoadTrianglesKwargs(
-        input_line_feature=Road_N100.data_preparation___simplified_road___n100_road.value,
+        input_line_feature=file,
         work_file_manager_config=core_config.WorkFileConfig(
             Road_N100.testing_file___remove_triangles_root___n100_road.value
         ),

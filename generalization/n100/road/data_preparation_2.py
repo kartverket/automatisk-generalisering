@@ -61,12 +61,11 @@ def main():
     adding_fields()
     collapse_road_detail()
     simplify_road()
-    generalize_road_triangles()
-    return
     thin_roads()
     thin_sti_and_forest_roads()
     merge_divided_roads()
     smooth_line()
+    generalize_road_triangles()
     pre_resolve_road_conflicts()
     resolve_road_conflicts()
     generalize_dam()
@@ -425,7 +424,7 @@ def simplify_road():
 @timing_decorator
 def thin_roads():
     run_dissolve_with_intersections(
-        input_line_feature=Road_N100.testing_file___removed_triangles___n100_road.value,  # Road_N100.data_preparation___simplified_road___n100_road.value,
+        input_line_feature=Road_N100.data_preparation___simplified_road___n100_road.value,
         output_processed_feature=Road_N100.data_preparation___dissolved_intersections_3___n100_road.value,
         dissolve_field_list=FieldNames.road_all_fields(),
     )
@@ -608,7 +607,7 @@ def smooth_line():
 @timing_decorator
 def pre_resolve_road_conflicts():
     run_dissolve_with_intersections(
-        input_line_feature=Road_N100.data_preparation___smooth_road___n100_road.value,
+        input_line_feature=Road_N100.road_triangles_output.value,
         output_processed_feature=Road_N100.data_preparation___dissolved_intersections_5___n100_road.value,
         dissolve_field_list=FieldNames.road_all_fields(),
     )
