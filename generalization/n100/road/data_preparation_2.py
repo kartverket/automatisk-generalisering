@@ -441,7 +441,7 @@ def thin_roads():
     )
     road_data_validation.check_repair_sequence()
 
-    road_hierarchy = """def Reclass(typeveg, vegkategori, vegklasse, er_kryssningspunkt, har_bom):
+    road_hierarchy = """def Reclass(typeveg, vegkategori, vegklasse, er_kryssningspunkt):
         if typeveg == 'bilferje':
             return 0
         
@@ -478,7 +478,7 @@ def thin_roads():
     arcpy.management.CalculateField(
         in_table=Road_N100.data_preparation___dissolved_intersections_3___n100_road.value,
         field="hierarchy",
-        expression="Reclass(!typeveg!, !vegkategori!, !vegklasse!, !er_kryssningspunkt!, !har_bom!)",
+        expression="Reclass(!typeveg!, !vegkategori!, !vegklasse!, !er_kryssningspunkt!)",
         expression_type="PYTHON3",
         code_block=road_hierarchy,
     )
