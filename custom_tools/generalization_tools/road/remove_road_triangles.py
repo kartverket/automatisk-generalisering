@@ -1,5 +1,6 @@
 import arcpy
 import os
+import time
 
 from collections import defaultdict
 from itertools import combinations
@@ -719,8 +720,8 @@ class RemoveRoadTriangles:
         """
         # Fetch the cycle-data
         oid_to_geom = {
-            oid: geom
-            for oid, geom in arcpy.da.SearchCursor(road_cycles, ["OID@", "SHAPE@"])
+            oid: [geom, length]
+            for oid, geom, length in arcpy.da.SearchCursor(road_cycles, ["OID@", "SHAPE@", "Shape_Length"])
         }
         # ... and creates a dictionary keeping the
         # most relevant hierarchy for that section
@@ -730,7 +731,8 @@ class RemoveRoadTriangles:
             in_features=self.input_line_feature, out_layer="original_data_layer"
         )
 
-        for oid, geom in oid_to_geom.items():
+        for oid, data in oid_to_geom.items():
+            geom, length = data
             geom_fc = f"in_memory/tmp_geom_fc_{oid}"
             arcpy.management.CreateFeatureclass(
                 os.path.dirname(geom_fc),
@@ -748,10 +750,10 @@ class RemoveRoadTriangles:
                 selection_type="NEW_SELECTION",
             )
             with arcpy.da.SearchCursor(
-                "original_data_layer", ["vegkategori", "vegklasse", "Shape_Length"]
+                "original_data_layer", ["vegkategori", "vegklasse"]
             ) as search:
                 for row in search:
-                    oid_to_data[oid].append([row[0], row[1], row[2]])
+                    oid_to_data[oid].append([row[0], row[1], length])
 
             if arcpy.Exists(geom_fc):
                 arcpy.management.Delete(geom_fc)
@@ -789,12 +791,15 @@ class RemoveRoadTriangles:
         )
         arcpy.management.AddField(self.add_layer, "medium", "TEXT")
 
+        length_tolerance = 1000
+
         with arcpy.da.SearchCursor(dissolved_fc, ["SHAPE@"]) as search:
             for row in search:
                 geom = row[0]
                 overlap = []
 
-                for o_oid, o_geom in oid_to_geom.items():
+                for o_oid, o_data in oid_to_geom.items():
+                    o_geom, _ = o_data
                     if geom.contains(o_geom):
                         overlap.append([o_oid, o_geom])
                 for i, (oid, o_geom) in enumerate(overlap):
@@ -803,9 +808,10 @@ class RemoveRoadTriangles:
                     if len(base) == 5:
                         overlap[i] = base
                 chosen = self.sort_prioritized_hierarchy(overlap)[-1]
-                ################################
-                # Her må lengdekontroll inn!!! #
-                ################################
+                
+                if chosen[2] > length_tolerance:
+                    continue
+
                 chosen_geom = chosen[-1]
 
                 geom_fc = r"in_memory/tmp_geom_fc"
@@ -918,8 +924,8 @@ class RemoveRoadTriangles:
         """
         # Fetch the cycle-data
         oid_to_geom = {
-            oid: geom
-            for oid, geom in arcpy.da.SearchCursor(road_cycles, ["OID@", "SHAPE@"])
+            oid: [geom, length]
+            for oid, geom, length in arcpy.da.SearchCursor(road_cycles, ["OID@", "SHAPE@", "Shape_Length"])
         }
         # ... and creates a dictionary keeping the
         # most relevant hierarchy for that section
@@ -929,7 +935,8 @@ class RemoveRoadTriangles:
             in_features=self.input_line_feature, out_layer="original_data_layer"
         )
 
-        for oid, geom in oid_to_geom.items():
+        for oid, data in oid_to_geom.items():
+            geom, length = data
             geom_fc = f"in_memory/tmp_geom_fc_{oid}"
             arcpy.management.CreateFeatureclass(
                 os.path.dirname(geom_fc),
@@ -947,10 +954,10 @@ class RemoveRoadTriangles:
                 selection_type="NEW_SELECTION",
             )
             with arcpy.da.SearchCursor(
-                "original_data_layer", ["vegkategori", "vegklasse", "Shape_Length"]
+                "original_data_layer", ["vegkategori", "vegklasse"]
             ) as search:
                 for row in search:
-                    oid_to_data[oid].append([row[0], row[1], row[2]])
+                    oid_to_data[oid].append([row[0], row[1], length])
 
             if arcpy.Exists(geom_fc):
                 arcpy.management.Delete(geom_fc)
@@ -990,11 +997,7 @@ class RemoveRoadTriangles:
                                 added = True
                         if not added:
                             systems_of_cycluses.append([[geom], {s, e}])
-        print()
-        print(single_cycluses)
-        print()
-        print(systems_of_cycluses)
-        print()
+        
         remove_geoms = []
         add_geoms = []
 
@@ -1016,6 +1019,8 @@ class RemoveRoadTriangles:
         )
         arcpy.management.AddField(self.add_layer, "medium", "TEXT")
 
+        length_tolerance = 1000
+
         ###########################
         # Removes single 3-cycles #
         ###########################
@@ -1023,7 +1028,8 @@ class RemoveRoadTriangles:
         for geom in single_cycluses:
             overlap = []
 
-            for o_oid, o_geom in oid_to_geom.items():
+            for o_oid, o_data in oid_to_geom.items():
+                o_geom, _ = o_data
                 if geom.contains(o_geom):
                     overlap.append([o_oid, o_geom])
             for i, (oid, o_geom) in enumerate(overlap):
@@ -1032,9 +1038,10 @@ class RemoveRoadTriangles:
                 if len(base) == 5:
                     overlap[i] = base
             chosen = self.sort_prioritized_hierarchy(overlap)[-1]
-            ################################
-            # Her må lengdekontroll inn!!! #
-            ################################
+            
+            if chosen[2] > length_tolerance:
+                continue
+
             chosen_geom = chosen[-1]
 
             geom_fc = r"in_memory/tmp_geom_fc"
@@ -1123,6 +1130,112 @@ class RemoveRoadTriangles:
         ###############################
         # Removes systems of 3-cycles #
         ###############################
+
+        for system in systems_of_cycluses:
+            print(system)
+            geoms, endpoints = system
+
+            overlap = []
+
+            for geom in geoms:
+                for o_oid, o_data in oid_to_geom.items():
+                    o_geom, _ = o_data
+                    if geom.contains(o_geom):
+                        overlap.append([o_oid, o_geom])
+            for i, (oid, o_geom) in enumerate(overlap):
+                base = list(oid_to_data.get(oid, []))
+                base.extend([oid, o_geom])
+                if len(base) == 5:
+                    overlap[i] = base
+            chosen = self.sort_prioritized_hierarchy(overlap)[-1]
+            
+            if chosen[2] > length_tolerance:
+                continue
+
+            chosen_geom = chosen[-1]
+
+            geom_fc = r"in_memory/tmp_geom_fc"
+            arcpy.management.CreateFeatureclass(
+                os.path.dirname(geom_fc),
+                os.path.basename(geom_fc),
+                "POLYLINE",
+                spatial_reference=chosen_geom.spatialReference,
+            )
+            with arcpy.da.InsertCursor(geom_fc, ["SHAPE@"]) as insert:
+                insert.insertRow([chosen_geom])
+
+            arcpy.management.SelectLayerByLocation(
+                in_layer="original_data_layer",
+                overlap_type="SHARE_A_LINE_SEGMENT_WITH",
+                select_features=working_fc,
+                selection_type="NEW_SELECTION",
+            )
+            arcpy.management.SelectLayerByLocation(
+                in_layer="original_data_layer",
+                overlap_type="INTERSECT",
+                select_features=geom_fc,
+                selection_type="SUBSET_SELECTION",
+            )
+
+            orig_s, orig_e = self.endpoints_of(chosen_geom)
+            start_endpoints = {orig_s, orig_e}
+            inside_geoms = []
+            outside_geoms = set()
+
+            with arcpy.da.SearchCursor(
+                "original_data_layer",
+                ["SHAPE@", "vegkategori", "vegklasse", "Shape_Length", "medium"],
+            ) as sc:
+                for g, kategori, klasse, lengde, medium in sc:
+                    if chosen_geom.contains(g):
+                        inside_geoms.append([kategori, klasse, lengde, medium, g])
+                    else:
+                        other_s, other_e = self.endpoints_of(g)
+                        s, e = get_endpoints(g)
+                        s, e = s.firstPoint, e.firstPoint
+                        if chosen_geom.distanceTo(s) == 0:
+                            if other_s not in start_endpoints:
+                                outside_geoms.add(other_s)
+                        elif chosen_geom.distanceTo(e) == 0:
+                            if other_e not in start_endpoints:
+                                outside_geoms.add(other_e)
+
+            remove_geoms.append(chosen_geom)
+
+            if len(outside_geoms) > 0:
+                inside_geoms = self.sort_prioritized_hierarchy(inside_geoms)
+                pri_geom = inside_geoms[0][-1]
+                add_geoms.append([pri_geom, inside_geoms[0][-2]])
+                start_s, start_e = self.endpoints_of(pri_geom)
+                endpoints = {start_s, start_e}
+
+                changed = True
+                used = set()
+                used.add(0)
+
+                while changed:
+                    changed = False
+
+                    for idx, inside in enumerate(inside_geoms):
+                        if idx in used:
+                            continue
+                        s_tuple, e_tuple = self.endpoints_of(inside[-1])
+                        if s_tuple in endpoints or e_tuple in endpoints:
+                            if s_tuple in endpoints:
+                                shared = s_tuple
+                                other = e_tuple
+                            else:
+                                shared = e_tuple
+                                other = s_tuple
+                            if shared in outside_geoms:
+                                continue
+                            used.add(idx)
+                            add_geoms.append([inside[-1], inside[-2]])
+                            endpoints.add(other)
+                            changed = True
+
+            if arcpy.Exists(geom_fc):
+                arcpy.management.Delete(geom_fc)
 
         ##################
         # Final clean up #
@@ -1530,6 +1643,7 @@ class RemoveRoadTriangles:
             erase_features="processed_roads_lyr",
             out_feature_class=intermediate_fc,
         )
+        time.sleep(0.5)
         arcpy.analysis.Erase(
             in_features="original_roads_lyr",
             erase_features=intermediate_fc,
