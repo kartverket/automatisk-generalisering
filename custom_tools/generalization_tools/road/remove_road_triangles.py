@@ -287,37 +287,42 @@ class RemoveRoadTriangles:
             in_features=self.input_line_feature, out_layer="original_data_layer"
         )
 
-        for oid, data in oid_to_geom.items():
-            geom, length = data
-            geom_fc = f"in_memory/tmp_geom_fc_{oid}"
-            arcpy.management.CreateFeatureclass(
-                os.path.dirname(geom_fc),
-                os.path.basename(geom_fc),
-                "POLYLINE",
-                spatial_reference=geom.spatialReference,
-            )
-            with arcpy.da.InsertCursor(geom_fc, ["SHAPE@"]) as insert:
-                insert.insertRow([geom])
+        temp_fc = "in_memory/tmp_geom_fc"
+        if arcpy.Exists(temp_fc):
+            arcpy.management.Delete(temp_fc)
+        
+        first_geom = next(iter(oid_to_geom.values()))[0]
+        arcpy.management.CreateFeatureclass(
+            "in_memory", "tmp_geom_fc", "POLYLINE", spatial_reference=first_geom.spatialReference
+        )
 
-            arcpy.management.SelectLayerByLocation(
-                in_layer="original_data_layer",
-                overlap_type="SHARE_A_LINE_SEGMENT_WITH",
-                select_features=geom_fc,
-                selection_type="NEW_SELECTION",
-            )
-            with arcpy.da.SearchCursor(
-                "original_data_layer", ["vegkategori", "vegklasse"]
-            ) as search:
-                for row in search:
-                    oid_to_data[oid].append([row[0], row[1], length])
+        try:
+            for oid, (geom, length) in oid_to_geom.items():
+                with arcpy.da.UpdateCursor(temp_fc, ["SHAPE@"]) as update:
+                    for _ in update:
+                        update.deleteRow()
+                with arcpy.da.InsertCursor(temp_fc, ["SHAPE@"]) as insert:
+                    insert.insertRow([geom])
 
-            if arcpy.Exists(geom_fc):
-                arcpy.management.Delete(geom_fc)
-
-        for oid, data in oid_to_data.items():
-            oid_to_data[oid] = self.sort_prioritized_hierarchy(data)[-1]
-
-        return oid_to_data
+                arcpy.management.SelectLayerByLocation(
+                    in_layer="original_data_layer",
+                    overlap_type="SHARE_A_LINE_SEGMENT_WITH",
+                    select_features=temp_fc,
+                    selection_type="NEW_SELECTION",
+                )
+                with arcpy.da.SearchCursor(
+                    "original_data_layer", ["vegkategori", "vegklasse"]
+                ) as search:
+                    for vegkategori, vegklasse in search:
+                        oid_to_data[oid].append([vegkategori, vegklasse, length])
+            result = {}
+            for oid, entries in oid_to_data.items():
+                if entries:
+                    result[oid] = self.sort_prioritized_hierarchy(entries)[-1]
+            return result
+        finally:
+            if arcpy.Exists(temp_fc):
+                arcpy.management.Delete(temp_fc)
 
     def setup_feature_selection(self, FeatureClass: str) -> str:
         """
@@ -360,13 +365,13 @@ class RemoveRoadTriangles:
         return dissolved_fc
 
     def feature_selection(
-        self,
-        geom: arcpy.Polyline | list[arcpy.Polyline],
-        oid_to_geom: dict,
-        oid_to_data: dict,
-        working_fc: str,
-        remove_geoms: list,
-        add_geoms: list,
+            self,
+            geom: arcpy.Polyline | list[arcpy.Polyline],
+            oid_to_geom: dict,
+            oid_to_data: dict,
+            working_fc: str,
+            remove_geoms: list,
+            add_geoms: list,
     ) -> None:
         """
         Detects the exactly instance of a cycle to be removed.
@@ -384,113 +389,131 @@ class RemoveRoadTriangles:
             add_geoms (list): List of geometries that should be added
         """
         length_tolerance = 1000
+        geoms = geom if isinstance(geom, list) else [geom]
         overlap = []
 
-        if isinstance(geom, list):
-            for g in geom:
-                for o_oid, o_data in oid_to_geom.items():
-                    o_geom, _ = o_data
-                    if g.contains(o_geom):
-                        overlap.append([o_oid, o_geom])
-        else:
-            for o_oid, o_data in oid_to_geom.items():
-                o_geom, _ = o_data
+        for geom in geoms:
+            for o_oid, (o_geom, _) in oid_to_geom.items():
                 if geom.contains(o_geom):
-                    overlap.append([o_oid, o_geom])
-        for i, (oid, o_geom) in enumerate(overlap):
-            base = list(oid_to_data.get(oid, []))
-            base.extend([oid, o_geom])
-            if len(base) == 5:
-                overlap[i] = base
-        chosen = self.sort_prioritized_hierarchy(overlap)[-1]
+                    overlap.append((o_oid, o_geom))
+        
+        enriched = []
+        for oid, geom in overlap:
+            data = oid_to_data.get(oid)
+            if data:
+                enriched.append(tuple(data) + (oid, geom))
+        
+        if not enriched:
+            return
+        
+        chosen = self.sort_prioritized_hierarchy(enriched)[-1]
 
         if chosen[2] > length_tolerance:
             return
-
+        
         chosen_geom = chosen[-1]
 
-        geom_fc = r"in_memory/tmp_geom_fc"
+        temp_fc = r"in_memory/tmp_geom_fc"
+        if arcpy.Exists(temp_fc):
+            arcpy.management.Delete(temp_fc)
+        
         arcpy.management.CreateFeatureclass(
-            os.path.dirname(geom_fc),
-            os.path.basename(geom_fc),
-            "POLYLINE",
+            out_path=os.path.dirname(temp_fc),
+            out_name=os.path.basename(temp_fc),
+            geometry_type="POLYLINE",
             spatial_reference=chosen_geom.spatialReference,
         )
-        with arcpy.da.InsertCursor(geom_fc, ["SHAPE@"]) as insert:
-            insert.insertRow([chosen_geom])
 
-        arcpy.management.SelectLayerByLocation(
-            in_layer="original_data_layer",
-            overlap_type="SHARE_A_LINE_SEGMENT_WITH",
-            select_features=working_fc,
-            selection_type="NEW_SELECTION",
-        )
-        arcpy.management.SelectLayerByLocation(
-            in_layer="original_data_layer",
-            overlap_type="INTERSECT",
-            select_features=geom_fc,
-            selection_type="SUBSET_SELECTION",
-        )
+        try:
+            with arcpy.da.InsertCursor(temp_fc, ["SHAPE@"]) as insert:
+                insert.insertRow([chosen_geom])
+            
+            arcpy.management.SelectLayerByLocation(
+                in_layer="original_data_layer",
+                overlap_type="SHARE_A_LINE_SEGMENT_WITH",
+                select_features=working_fc,
+                selection_type="NEW_SELECTION",
+            )
+            arcpy.management.SelectLayerByLocation(
+                in_layer="original_data_layer",
+                overlap_type="INTERSECT",
+                select_features=temp_fc,
+                selection_type="SUBSET_SELECTION",
+            )
 
-        orig_s, orig_e = self.endpoints_of(chosen_geom)
-        start_endpoints = {orig_s, orig_e}
-        inside_geoms = []
-        outside_geoms = set()
+            orig_s, orig_e = self.endpoints_of(chosen_geom)
+            start_endpoints = {orig_s, orig_e}
 
-        with arcpy.da.SearchCursor(
-            "original_data_layer",
-            ["SHAPE@", "vegkategori", "vegklasse", "Shape_Length", "medium"],
-        ) as sc:
-            for g, kategori, klasse, lengde, medium in sc:
-                if chosen_geom.contains(g):
-                    inside_geoms.append([kategori, klasse, lengde, medium, g])
-                else:
-                    other_s, other_e = self.endpoints_of(g)
-                    s, e = get_endpoints(g)
-                    s, e = s.firstPoint, e.firstPoint
-                    if chosen_geom.distanceTo(s) == 0:
-                        if other_s not in start_endpoints:
-                            outside_geoms.add(other_s)
-                    elif chosen_geom.distanceTo(e) == 0:
-                        if other_e not in start_endpoints:
-                            outside_geoms.add(other_e)
+            inside_geoms = []
+            outside_endpoints = set()
 
-        remove_geoms.append(chosen_geom)
+            with arcpy.da.SearchCursor(
+                "original_data_layer",
+                ["SHAPE@", "vegkategori", "vegklasse", "Shape_Length", "medium"],
+            ) as search:
+                for g, kategori, klasse, lengde, medium in search:
+                    if chosen_geom.contains(g):
+                        inside_geoms.append((kategori, klasse, lengde, medium, g))
+                    else:
+                        other_s, other_e = self.endpoints_of(g)
+                        s, e = get_endpoints(g)
+                        s, e = s.firstPoint, e.firstPoint
+                        if chosen_geom.distanceTo(s) == 0 and other_s not in start_endpoints:
+                            outside_endpoints.add(other_s)
+                        if chosen_geom.distanceTo(e) == 0 and other_e not in start_endpoints:
+                            outside_endpoints.add(other_e)
+            
+            remove_geoms.append(chosen_geom)
 
-        if len(outside_geoms) > 0:
-            inside_geoms = self.sort_prioritized_hierarchy(inside_geoms)
-            pri_geom = inside_geoms[0][-1]
-            add_geoms.append([pri_geom, inside_geoms[0][-2]])
-            start_s, start_e = self.endpoints_of(pri_geom)
-            endpoints = {start_s, start_e}
+            if outside_endpoints:
+                inside_geoms = self.sort_prioritized_hierarchy(inside_geoms)
+                _, _, _, pri_med, pri_geom = inside_geoms[0]
+                add_geoms.append((pri_geom, pri_med))
+                endpoints = set(self.endpoints_of(pri_geom))
+                used = {0}
 
-            changed = True
-            used = set()
-            used.add(0)
-
-            while changed:
-                changed = False
-
-                for idx, inside in enumerate(inside_geoms):
-                    if idx in used:
-                        continue
-                    s_tuple, e_tuple = self.endpoints_of(inside[-1])
-                    if s_tuple in endpoints or e_tuple in endpoints:
-                        if s_tuple in endpoints:
-                            shared = s_tuple
-                            other = e_tuple
-                        else:
-                            shared = e_tuple
-                            other = s_tuple
-                        if shared in outside_geoms:
+                changed = True
+                while changed:
+                    changed = False
+                    for idx, inside in enumerate(inside_geoms):
+                        if idx in used:
                             continue
-                        used.add(idx)
-                        add_geoms.append([inside[-1], inside[-2]])
-                        endpoints.add(other)
-                        changed = True
+                        s_tuple, e_tuple = self.endpoints_of(inside[-1])
+                        if s_tuple in endpoints or e_tuple in endpoints:
+                            shared = s_tuple if s_tuple in endpoints else e_tuple
+                            other = e_tuple if shared is s_tuple else s_tuple
+                            if shared in outside_endpoints:
+                                continue
+                            used.add(idx)
+                            add_geoms.append((inside[-1], inside[-2]))
+                            endpoints.add(other)
+                            changed = True
+        finally:
+            if arcpy.Exists(temp_fc):
+                arcpy.management.Delete(temp_fc)
 
-        if arcpy.Exists(geom_fc):
-            arcpy.management.Delete(geom_fc)
+    def clean_feature_selection(self, remove_geoms: list, add_geoms: list, dissolved_fc: str) -> None:
+        """
+        Finish the selection process.
+
+        Args:
+            remove_geoms (list): List of geometries to remove from the working data
+            add_geoms (list): List of geometries to add to the working data
+            dissolved_fc (str): The intermediate feature layer to be deleted
+        """
+        with arcpy.da.InsertCursor(self.remove_layer, ["SHAPE@"]) as insert_cursor:
+            for geom in remove_geoms:
+                insert_cursor.insertRow([geom])
+
+        if len(add_geoms) > 0:
+            with arcpy.da.InsertCursor(
+                self.add_layer, ["SHAPE@", "medium"]
+            ) as insert_cursor:
+                for geom, medium in add_geoms:
+                    insert_cursor.insertRow([geom, medium])
+
+        if arcpy.Exists(dissolved_fc):
+            arcpy.management.Delete(dissolved_fc)
 
     @timing_decorator
     def select_segments_to_remove_2_cycle_roads(
@@ -520,20 +543,8 @@ class RemoveRoadTriangles:
                 self.feature_selection(
                     geom, oid_to_geom, oid_to_data, working_fc, remove_geoms, add_geoms
                 )
-
-        with arcpy.da.InsertCursor(self.remove_layer, ["SHAPE@"]) as insert_cursor:
-            for geom in remove_geoms:
-                insert_cursor.insertRow([geom])
-
-        if len(add_geoms) > 0:
-            with arcpy.da.InsertCursor(
-                self.add_layer, ["SHAPE@", "medium"]
-            ) as insert_cursor:
-                for geom, medium in add_geoms:
-                    insert_cursor.insertRow([geom, medium])
-
-        if arcpy.Exists(dissolved_fc):
-            arcpy.management.Delete(dissolved_fc)
+        
+        self.clean_feature_selection(remove_geoms,add_geoms, dissolved_fc)
 
     @timing_decorator
     def select_segments_to_remove_3_cycle_roads(
@@ -604,19 +615,7 @@ class RemoveRoadTriangles:
         # Final clean up #
         ##################
 
-        with arcpy.da.InsertCursor(self.remove_layer, ["SHAPE@"]) as insert_cursor:
-            for geom in remove_geoms:
-                insert_cursor.insertRow([geom])
-
-        if len(add_geoms) > 0:
-            with arcpy.da.InsertCursor(
-                self.add_layer, ["SHAPE@", "medium"]
-            ) as insert_cursor:
-                for geom, medium in add_geoms:
-                    insert_cursor.insertRow([geom, medium])
-
-        if arcpy.Exists(dissolved_fc):
-            arcpy.management.Delete(dissolved_fc)
+        self.clean_feature_selection(remove_geoms, add_geoms, dissolved_fc)
 
     ###################
     # Main functions
