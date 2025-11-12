@@ -68,7 +68,7 @@ def remove_roadblock():
         search_radius="2 Meters",
         closest="ALL",
         location="NO_LOCATION",
-        angle="NO_ANGLE"
+        angle="NO_ANGLE",
     )
 
     # Fetch all the road oids with roadblocks
@@ -78,24 +78,28 @@ def remove_roadblock():
             for row in search:
                 if row[0] is not None and row[0] != -1:
                     road_oids_with_roadblock.add(row[0])
-    
+
     # If no roadblocks detected, just return input
     if not road_oids_with_roadblock:
         arcpy.management.CopyFeatures(road_fc, output)
         arcpy.management.Delete(near_table)
         return
-    
+
     # Select roads with bom
     oid_field = arcpy.Describe(road_fc).OIDFieldName
     oid_list_str = ",".join(map(str, road_oids_with_roadblock))
     where_clause = f"{oid_field} IN ({oid_list_str})"
     arcpy.management.MakeFeatureLayer(
-        in_features=road_fc, out_layer="roads_with_roadblock_lyr", where_clause=where_clause
+        in_features=road_fc,
+        out_layer="roads_with_roadblock_lyr",
+        where_clause=where_clause,
     )
 
     # Create layer with urban areas
     arcpy.management.MakeFeatureLayer(
-        in_features=input_n100.ArealdekkeFlate, out_layer="urban_areas_lyr", where_clause="OBJTYPE IN ('Tettbebyggelse', 'BymessigBebyggelse')"
+        in_features=input_n100.ArealdekkeFlate,
+        out_layer="urban_areas_lyr",
+        where_clause="OBJTYPE IN ('Tettbebyggelse', 'BymessigBebyggelse')",
     )
 
     # Spatial join to collect roadblocks in urban areas
@@ -106,7 +110,7 @@ def remove_roadblock():
         out_feature_class=joined,
         join_operation="JOIN_ONE_TO_ONE",
         join_type="KEEP_ALL",
-        match_option="WITHIN"
+        match_option="WITHIN",
     )
 
     # Find oids in urban areas
@@ -116,7 +120,9 @@ def remove_roadblock():
         join_count_field = "Join_Count"
         fields = [f.name for f in arcpy.ListFields(joined)]
         if join_oid_field in fields and join_count_field in fields:
-            with arcpy.da.SearchCursor(joined, [join_oid_field, join_count_field]) as search:
+            with arcpy.da.SearchCursor(
+                joined, [join_oid_field, join_count_field]
+            ) as search:
                 for target_fid, join_count in search:
                     if join_count is not None and int(join_count) > 0:
                         important_oids.add(int(target_fid))
@@ -130,10 +136,10 @@ def remove_roadblock():
         arcpy.management.SelectLayerByAttribute(
             in_layer_or_view="to_delete_lyr",
             selection_type="NEW_SELECTION",
-            where_clause=where_clause
+            where_clause=where_clause,
         )
         arcpy.management.DeleteFeatures("to_delete_lyr")
-    
+
     # Copy the result
     arcpy.management.CopyFeatures(road_fc, output)
 
