@@ -42,7 +42,7 @@ class GISGraph:
         to preserve parallel edges. For other modes, a standard Graph (or DiGraph)
         is created.
 
-        :param cycle_mode: 1 for self-loops; 2 for 2-cycles; (3 can be added similarly).
+        :param cycle_mode: 1 for self-loops; 2 for 2-cycles; (3 and 4 can be added similarly).
         """
         if cycle_mode == 2:
             # Use a MultiGraph to allow parallel edges
@@ -135,7 +135,7 @@ class GISGraph:
         collects the original_line_id values from edges in those cycles, and
         returns a SQL expression to select the corresponding records.
 
-        :param cycle_mode: 1 for self-loops; 2 for 2-cycles; 3 for 3-node cycles.
+        :param cycle_mode: 1 for self-loops; 2 for 2-cycles; 3 for 3-node cycles; 4 for 4-node cycles.
         :return: A SQL expression string (or None if no cycles detected).
         """
         cycle_line_ids = set()
@@ -180,8 +180,20 @@ class GISGraph:
                         edge_data = self.graph.get_edge_data(u, v)
                         if edge_data and "original_line_id" in edge_data:
                             cycle_line_ids.add(edge_data["original_line_id"])
+        elif cycle_mode == 4:
+            # Detect cycles with exactly 4 nodes using cycle_basis
+            cycles = nx.cycle_basis(self.graph)
+            for cycle in cycles:
+                if len(cycle) == 4:
+                    n = len(cycle)
+                    for i in range(n):
+                        u = cycle[i]
+                        v = cycle[(i + 1) % n]
+                        edge_data = self.graph.get_edge_data(u, v)
+                        if edge_data and "original_line_id" in edge_data:
+                            cycle_line_ids.add(edge_data["original_line_id"])
         else:
-            raise ValueError("Unsupported cycle_mode. Choose 1, 2, or 3.")
+            raise ValueError("Unsupported cycle_mode. Choose 1, 2, 3 or 4.")
 
         if cycle_line_ids:
             # Build a SQL expression
@@ -214,6 +226,14 @@ class GISGraph:
         """
         self.load_data(cycle_mode=3)
         return self.get_cycle_line_sql(cycle_mode=3)
+
+    def select_4_cycle(self):
+        """
+        Loads data into a simple graph (sufficient for 4-node cycle detection),
+        then returns a SQL expression for selecting 4-cycles.
+        """
+        self.load_data(cycle_mode=4)
+        return self.get_cycle_line_sql(cycle_mode=4)
 
     def print_graph_info(self):
         if self.graph is not None:

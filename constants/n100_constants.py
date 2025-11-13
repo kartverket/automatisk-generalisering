@@ -188,3 +188,19 @@ class MediumAlias:
     tunnel: str = "U"
     bridge: str = "L"
     on_surface: str = "T"
+
+
+@dataclass(frozen=True)
+class FieldNames_str:
+    objtype: str = "objtype"
+    subtypekode: str = "subtypekode"
+    vegstatus: str = "vegstatus"
+    typeveg: str = "typeveg"
+    vegkategori: str = "vegkategori"
+    vegnummer: str = "vegnummer"
+    motorvegtype: str = "motorvegtype"
+    vegklasse: str = "vegklasse"
+    rutemerking: str = "rutemerking"
+    medium: str = "medium"
+    uttegning: str = "uttegning"
+    er_kryssningspunkt: str = "er_kryssningspunkt"
