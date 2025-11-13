@@ -1,19 +1,83 @@
 # Docstring standard
 
-Code should aim to be self documenting, descriptive naming combined with single responsibility and DRY (Don't Repeat Yourself) should be a focus. Docstring documentation is supplementary. 
+Code should aim to be self-documenting. Descriptive naming, clear structure, and single-responsibility design reduce the need for heavy documentation. Docstrings are supplementary and should focus on intent rather than repeating what the code already expresses.
 
-### Core rule
-- Small, obvious functions: document **What only**.
-- Callable entry points / complex logic: document **What** (always) + **How** and/or 
-**Why** when they add information not obvious from the code.
-- Modules/classes: give brief What; add How/Why only if it explains relationships, invariants, or usage intent.
-- If you are unsure it is better to have more documentation rather than less.
-- Docstring over comment.
+If a method requires many inline comments to explain its flow, that is often a useful design signal. It may indicate that the logic could be split into smaller functions or that naming can be improved. Prioritizing clear structure reduces the need for inline explanations.
 
-### Decision guide 
-- Always document **What**
-- Add **How** when:
-  - Non-trivial algorithmic approach or ordering matters.
-  - The method is complex and does a lot of things, such that reading a summary of what it does would make the code more readable.
-- Add **Why** when:
-  - When the reason is not obvious. Or knowing the intention behind the method helps understand design decisions. 
+### 1. Document "What" it does
+Every function or method should include a brief description of what it does.
+In many cases for even more complex logic, descriptive naming and well structured code one or two sentences explaining “What” it it does can be sufficient.
+
+Use additional detail only when the purpose is not immediately clear or when the function plays a meaningful role in the overall workflow.
+
+
+### 2. Document “How” selectively
+Include a How section only when:
+
+- The logic is non-obvious
+- The function orchestrates several steps
+- Understanding the flow matters for maintainers
+
+Many functions do not require a How section.
+
+### 3. Document “Why” when context matters
+Add a Why section when:
+
+- A design decision is not immediately clear,
+- A tradeoff or assumption should be communicated, or
+- Maintainers need background to understand the reasoning.
+
+If no such context exists, omit this section.
+
+
+### 4. Args/Returns are optional
+
+These sections are helpful when:
+
+- Parameter meaning isn’t obvious from type hints and names,
+- A return value carries contextual meaning,
+- Or the function is part of a public callable interface where clarity is important.
+
+When type hints and descriptive naming already communicate the intent, these sections can be omitted.
+
+### 5. Avoid documenting what the code already expresses
+
+Docstrings should not restate implementation details or obvious behavior.
+If the code is clear, keep the documentation minimal to avoid unnecessary noise.
+
+## Example docstring format
+The two examples below illustrate when different levels of structure are appropriate:
+
+- The first shows a simple case where a short description is enough.  
+- The second shows the formatting to use when additional sections (How, Why, Args, Returns) are helpful.  
+Use the extra sections only when needed; otherwise, keep the docstring brief.
+
+```python
+def example_function(param: int) -> str:
+    """
+    Short description of the function's purpose.
+    """
+```
+
+```python
+def example_function(param: int) -> str:
+    """
+    What:
+        Short description of the function's purpose.
+
+    How:
+        Only include this section if the flow is non-obvious
+        or the function orchestrates several steps.
+
+    Why:
+        Include only when design choices or assumptions
+        need to be communicated.
+
+    Args:
+        param (int): Describe the meaning only if it is not obvious.
+
+    Returns:
+        str: Describe the return value only if it carries context.
+    """
+```
+
