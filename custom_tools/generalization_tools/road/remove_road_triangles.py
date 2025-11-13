@@ -58,6 +58,7 @@ class RemoveRoadTriangles:
         self.dissolved_feature = "dissolved_feature"
         self.internal_root = "internal_root"
         self.line_nodes = "line_nodes"
+        self.intermediate_original = "intermediate_original"
         self.line_1_cycle = "line_1_cycle"
         self.filtered_1_cycle_roads = "filtered_1_cycle_roads"
         self.removed_1_cycle_roads = "removed_1_cycle_roads"
@@ -79,6 +80,7 @@ class RemoveRoadTriangles:
             self.dissolved_feature,
             self.internal_root,
             self.line_nodes,
+            self.intermediate_original,
             self.line_1_cycle,
             self.filtered_1_cycle_roads,
             self.removed_1_cycle_roads,
@@ -104,11 +106,49 @@ class RemoveRoadTriangles:
     # Helper functions
     ###################
 
+    def fetch_original_data(self, input: str, output: str):
+        """
+        Capture the original data that should be included in the network
+        and creates a copy of this data in a new featureclass.
+
+        Args:
+            input (str): The feature class with segments to keep
+            output (str): The feature class where the output should be saved
+        """
+        intermediate_fc = r"in_memory/intermediate_fc"
+
+        # Creates feature layers for the original data and the current data
+        arcpy.management.MakeFeatureLayer(
+            in_features=self.copy_of_input_feature, out_layer="original_roads_lyr"
+        )
+        arcpy.management.MakeFeatureLayer(
+            in_features=input, out_layer="processed_roads_lyr"
+        )
+
+        # Deletes the geometries that we want to keep from the
+        # original data and store these in the intermediate layer
+        arcpy.analysis.Erase(
+            in_features="original_roads_lyr",
+            erase_features="processed_roads_lyr",
+            out_feature_class=intermediate_fc,
+        )
+
+        time.sleep(0.5)  # Short wait to be sure to not crash
+
+        # Erase the created intermediate layer from the original
+        # data so that the result is the wanted data only
+        arcpy.analysis.Erase(
+            in_features="original_roads_lyr",
+            erase_features=intermediate_fc,
+            out_feature_class=output,
+        )
+
     def simplify_road_network(
         self,
         input_feature: str = None,
         dissolve_feature: str = None,
         output_feature: str = None,
+        dead_ends: bool = False,
     ) -> None:
         """
         Dissolves the road network and creates a feature class
@@ -118,7 +158,9 @@ class RemoveRoadTriangles:
             input_feature (str): The polyline layer to simplify
             dissolve_feature (str): Polyline layer to store the dissolved roads
             output_feature (str): Point layer to store the endpoints for all the dissolved features
+            dead_ends (bool): Boolean telling if it works with the dead ends function
         """
+        # Dissolves the input data with medium as the deciding attribute
         config = logic_config.DissolveInitKwargs(
             input_line_feature=input_feature,
             output_processed_feature=dissolve_feature,
@@ -135,11 +177,25 @@ class RemoveRoadTriangles:
 
         dissolve_obj.run()
 
-        arcpy.management.FeatureVerticesToPoints(
-            in_features=dissolve_feature,
-            out_feature_class=output_feature,
-            point_location="BOTH_ENDS",
-        )
+        # If we are working with the dead ends:
+        if dead_ends:
+            # Fetches the original data that matches with the data that are left
+            self.fetch_original_data(
+                input=dissolve_feature, output=self.intermediate_original
+            )
+
+            # ... and fetches the endpoints of this data
+            arcpy.management.FeatureVerticesToPoints(
+                in_features=self.intermediate_original,
+                out_feature_class=output_feature,
+                point_location="BOTH_ENDS",
+            )
+        else:
+            arcpy.management.FeatureVerticesToPoints(
+                in_features=dissolve_feature,
+                out_feature_class=output_feature,
+                point_location="BOTH_ENDS",
+            )
 
     def filter_short_roads(
         self,
@@ -217,7 +273,9 @@ class RemoveRoadTriangles:
         s, e = get_endpoints(geom)
         s, e = s.firstPoint, e.firstPoint
         if num is None:
+            # If num is None we want the original data without the round(...) operation
             return (s.X, s.Y), (e.X, e.Y)
+        # Otherwise round to the desired number of decimals, default = 3
         return (round(s.X, num), round(s.Y, num)), (round(e.X, num), round(e.Y, num))
 
     def get_geoms(self, FeatureClass: str) -> dict:
@@ -267,10 +325,15 @@ class RemoveRoadTriangles:
             NvdbAlias.sti_umerket,
             NvdbAlias.gang_og_sykkelveg,
         ]
-        vegkategori_pri = {v: i for i, v in enumerate(pri_list_vegkategori)}
-        max_vegkategori_pri = len(pri_list_vegkategori)
+        vegkategori_pri = {
+            v: i for i, v in enumerate(pri_list_vegkategori)
+        }  # Mapping dictionary from text to integers
+        max_vegkategori_pri = len(
+            pri_list_vegkategori
+        )  # If no specified, default value to lowest priority
         LARGE = 10**9
 
+        # Sort the incomming list against the hierarchy values
         roads.sort(
             key=lambda x: (
                 vegkategori_pri.get(x[0], max_vegkategori_pri),
@@ -292,11 +355,12 @@ class RemoveRoadTriangles:
         """
         oid_to_data = defaultdict(list)
 
-        arcpy.management.MakeFeatureLayer(
-            in_features=self.input_line_feature, out_layer="original_data_layer"
+        arcpy.management.MakeFeatureLayer(  # Fetch original data
+            in_features=self.copy_of_input_feature, out_layer="original_data_layer"
         )
 
-        temp_fc = "in_memory/tmp_geom_fc"
+        # Create temporarly layer for selection
+        temp_fc = r"in_memory/tmp_geom_fc"
         if arcpy.Exists(temp_fc):
             arcpy.management.Delete(temp_fc)
 
@@ -310,30 +374,36 @@ class RemoveRoadTriangles:
 
         try:
             for oid, (geom, length) in oid_to_geom.items():
+                # Delete existing rows in the layer
                 with arcpy.da.UpdateCursor(temp_fc, ["SHAPE@"]) as update:
                     for _ in update:
                         update.deleteRow()
+                # Insert the geometry (the dissolved pieces in each cycle) in the new layer
                 with arcpy.da.InsertCursor(temp_fc, ["SHAPE@"]) as insert:
                     insert.insertRow([geom])
 
+                # Select the original features that is dissolved into 'geom'
                 arcpy.management.SelectLayerByLocation(
                     in_layer="original_data_layer",
                     overlap_type=OverlapType.SHARE_A_LINE_SEGMENT_WITH.value,
                     select_features=temp_fc,
                     selection_type=SelectionType.NEW_SELECTION.value,
                 )
+                # Add the hierarchy values for these features
                 with arcpy.da.SearchCursor(
                     "original_data_layer",
                     [FieldNames_str.vegkategori, FieldNames_str.vegklasse],
                 ) as search:
                     for vegkategori, vegklasse in search:
                         oid_to_data[oid].append([vegkategori, vegklasse, length])
+            # Sort each list of hierarchy values and keep the values describing the least prioritized segment
             result = {}
             for oid, entries in oid_to_data.items():
                 if entries:
                     result[oid] = self.sort_prioritized_hierarchy(entries)[-1]
             return result
         finally:
+            # Delete the intermediate feature layer
             if arcpy.Exists(temp_fc):
                 arcpy.management.Delete(temp_fc)
 
@@ -349,6 +419,7 @@ class RemoveRoadTriangles:
         Returns:
             str: The path to the intermediate layer
         """
+        # Dissolves the input data
         dissolved_fc = r"in_memory/dissolved_fc"
         arcpy.management.Dissolve(
             in_features=FeatureClass,
@@ -357,22 +428,29 @@ class RemoveRoadTriangles:
             multi_part="SINGLE_PART",
         )
 
+        # Create the new remove
         if arcpy.Exists(self.remove_layer):
             arcpy.management.Delete(self.remove_layer)
         arcpy.management.CreateFeatureclass(
             out_path=os.path.dirname(self.remove_layer),
             out_name=os.path.basename(self.remove_layer),
             geometry_type="POLYLINE",
-            spatial_reference=arcpy.Describe(self.input_line_feature).spatialReference,
+            spatial_reference=arcpy.Describe(
+                self.copy_of_input_feature
+            ).spatialReference,
         )
+        # ... and add layer
         if arcpy.Exists(self.add_layer):
             arcpy.management.Delete(self.add_layer)
         arcpy.management.CreateFeatureclass(
             out_path=os.path.dirname(self.add_layer),
             out_name=os.path.basename(self.add_layer),
             geometry_type="POLYLINE",
-            spatial_reference=arcpy.Describe(self.input_line_feature).spatialReference,
+            spatial_reference=arcpy.Describe(
+                self.copy_of_input_feature
+            ).spatialReference,
         )
+        # The add layer also need the medium field because that is used in the dissolve functions
         arcpy.management.AddField(self.add_layer, FieldNames_str.medium, "TEXT")
 
         return dissolved_fc
@@ -401,15 +479,20 @@ class RemoveRoadTriangles:
             remove_geoms (list): List of geometries that should be removed
             add_geoms (list): List of geometries that should be added
         """
-        length_tolerance = 1000
-        geoms = geom if isinstance(geom, list) else [geom]
+        length_tolerance = (
+            1000  # Length tolerance: segments must be shorter to be removed
+        )
+        geoms = geom if isinstance(geom, list) else [geom]  # Geoms must be an iterable
         overlap = []
 
+        # For each geom, find all the geoms in the working file, kept
+        # in oid_to_geom, that overlap with this / these geometries
         for geom in geoms:
             for o_oid, (o_geom, _) in oid_to_geom.items():
                 if geom.contains(o_geom):
                     overlap.append((o_oid, o_geom))
 
+        # Fetch the hierarchy data for prioritizing
         enriched = []
         for oid, geom in overlap:
             data = oid_to_data.get(oid)
@@ -419,13 +502,17 @@ class RemoveRoadTriangles:
         if not enriched:
             return
 
+        # Fetch the least prioritized segment - the one to be removed
         chosen = self.sort_prioritized_hierarchy(enriched)[-1]
 
         if chosen[2] > length_tolerance:
+            # The segment must be shorter than the tolerance to be removed
             return
 
+        # Fetch the geometry
         chosen_geom = chosen[-1]
 
+        # Create a new temporarly layer for use in spatial search
         temp_fc = r"in_memory/tmp_geom_fc"
         if arcpy.Exists(temp_fc):
             arcpy.management.Delete(temp_fc)
@@ -438,9 +525,12 @@ class RemoveRoadTriangles:
         )
 
         try:
+            # Insert the current geometry
             with arcpy.da.InsertCursor(temp_fc, ["SHAPE@"]) as insert:
                 insert.insertRow([chosen_geom])
 
+            # Performe spatial search to find the original segments that intersects with
+            # this geom, and only looking at the remaining features in the entire process
             arcpy.management.SelectLayerByLocation(
                 in_layer="original_data_layer",
                 overlap_type=OverlapType.SHARE_A_LINE_SEGMENT_WITH.value,
@@ -454,12 +544,26 @@ class RemoveRoadTriangles:
                 selection_type=SelectionType.SUBSET_SELECTION.value,
             )
 
+            """
+            We do now have our geometry to remove, but other segments with
+            another medium can be connected to this segment. This means f.ex.
+            that 3-cycles can be registered as 2-cycles.
+
+            If so, we need to find the segment with highest priority, collect
+            all the segments connected to this segment to preserve topology
+            consistency to the segment with different medium, and add these
+            features back into the working file.
+            """
+            # Create list of endpoints
             orig_s, orig_e = self.endpoints_of(chosen_geom)
             start_endpoints = {orig_s, orig_e}
 
-            inside_geoms = []
-            outside_endpoints = set()
+            inside_geoms = []  # Smaller geometries inside the dissolved one
+            outside_endpoints = (
+                set()
+            )  # Set of endpoints to count if there are any extra junctions
 
+            # Search through the original dataset and fetch the original geometries
             with arcpy.da.SearchCursor(
                 "original_data_layer",
                 [
@@ -471,8 +575,12 @@ class RemoveRoadTriangles:
                 ],
             ) as search:
                 for g, kategori, klasse, lengde, medium in search:
+                    # If the chosen geometry contains this original geometry
+                    # -> Store it as an internal geometry
                     if chosen_geom.contains(g):
                         inside_geoms.append((kategori, klasse, lengde, medium, g))
+                    # Otherwise -> Store the endpoints in the set if they
+                    # are close enough to the chosen geometry
                     else:
                         other_s, other_e = self.endpoints_of(g)
                         s, e = get_endpoints(g)
@@ -488,32 +596,48 @@ class RemoveRoadTriangles:
                         ):
                             outside_endpoints.add(other_e)
 
+            # Add the chosen geometry to the list of geometries to remove
             remove_geoms.append(chosen_geom)
 
+            # If there are any segments with different medium connected to the chosen geometry
             if outside_endpoints:
+                # -> Find the highest prioritized geometry
                 inside_geoms = self.sort_prioritized_hierarchy(inside_geoms)
                 _, _, _, pri_med, pri_geom = inside_geoms[0]
                 add_geoms.append((pri_geom, pri_med))
+
+                # Create a set of endpoints and add the index of this geometry to it
                 endpoints = set(self.endpoints_of(pri_geom))
                 used = {0}
 
                 changed = True
+                # Continue as long as new segments are added
+                # This is because the section we need to fill for consistent topology
+                # can consist of more geometries than the one already added
                 while changed:
                     changed = False
                     for idx, inside in enumerate(inside_geoms):
+                        # Do not add already added segments
                         if idx in used:
                             continue
+                        # Fetch the endpoints
                         s_tuple, e_tuple = self.endpoints_of(inside[-1])
+                        # The geometry most be connected to the added geometries
                         if s_tuple in endpoints or e_tuple in endpoints:
+                            # Find out witch end that is the connecting point
                             shared = s_tuple if s_tuple in endpoints else e_tuple
                             other = e_tuple if shared is s_tuple else s_tuple
                             if shared in outside_endpoints:
+                                # If the connected point is a road junction point it is not valid
+                                # We do not want to cross junctions when adding features
                                 continue
+                            # Add the segment
                             used.add(idx)
                             add_geoms.append((inside[-1], inside[-2]))
                             endpoints.add(other)
                             changed = True
         finally:
+            # Delete the temporary feature layer
             if arcpy.Exists(temp_fc):
                 arcpy.management.Delete(temp_fc)
 
@@ -528,10 +652,12 @@ class RemoveRoadTriangles:
             add_geoms (list): List of geometries to add to the working data
             dissolved_fc (str): The intermediate feature layer to be deleted
         """
+        # Add the geometries to remove to the feature class
         with arcpy.da.InsertCursor(self.remove_layer, ["SHAPE@"]) as insert_cursor:
             for geom in remove_geoms:
                 insert_cursor.insertRow([geom])
 
+        # If there are any segments that need to be added back again -> add these
         if len(add_geoms) > 0:
             with arcpy.da.InsertCursor(
                 self.add_layer, ["SHAPE@", FieldNames_str.medium]
@@ -539,6 +665,7 @@ class RemoveRoadTriangles:
                 for geom, medium in add_geoms:
                     insert_cursor.insertRow([geom, medium])
 
+        # Delete the dissolved layer
         if arcpy.Exists(dissolved_fc):
             arcpy.management.Delete(dissolved_fc)
 
@@ -559,11 +686,12 @@ class RemoveRoadTriangles:
         # most relevant hierarchy for that section
         oid_to_data = self.get_geom_data(oid_to_geom)
 
-        # Dissolves the cycle-instances
+        # Dissolves the cycle-instances into single loops
         dissolved_fc = self.setup_feature_selection(road_cycles)
 
         remove_geoms, add_geoms = [], []
 
+        # For each dissolved cycle, select the segment to be removed, and potential added back again
         with arcpy.da.SearchCursor(dissolved_fc, ["SHAPE@"]) as search:
             for row in search:
                 geom = row[0]
@@ -571,6 +699,7 @@ class RemoveRoadTriangles:
                     geom, oid_to_geom, oid_to_data, working_fc, remove_geoms, add_geoms
                 )
 
+        # Add the data to the remove and add layers, and delete dissolved_fc
         self.clean_feature_selection(remove_geoms, add_geoms, dissolved_fc)
 
     @timing_decorator
@@ -595,20 +724,28 @@ class RemoveRoadTriangles:
 
         remove_geoms, add_geoms = [], []
 
+        # Divide the cycles that are single loops or nested cycles going into each other
         single_cycluses = []
         systems_of_cycluses = []
 
         with arcpy.da.SearchCursor(dissolved_fc, ["SHAPE@"]) as search:
+            # For each geometry
             for row in search:
                 geom = row[0]
+                # -> Get the endpoints
                 s, e = self.endpoints_of(geom)
                 if s == e:
+                    # If the endpoints are the same point -> It is a single loop
                     single_cycluses.append(geom)
                 else:
+                    # Otherwise -> It is a part of a system of cycles
+                    # and we need to find out which
                     if len(systems_of_cycluses) == 0:
                         systems_of_cycluses.append([[geom], {s, e}])
                     else:
                         added = False
+                        # If the endpoints of the dissolved geometry is
+                        # located in a system already, it is added to this
                         for system in systems_of_cycluses:
                             geoms, endpoints = system
                             if any(pnt in endpoints for pnt in [s, e]):
@@ -616,6 +753,7 @@ class RemoveRoadTriangles:
                                 endpoints.add(s)
                                 endpoints.add(e)
                                 added = True
+                        # Otherwise -> A new system is created
                         if not added:
                             systems_of_cycluses.append([[geom], {s, e}])
 
@@ -670,6 +808,7 @@ class RemoveRoadTriangles:
                 input_feature=edit_fc,
                 dissolve_feature=self.dissolved_feature,
                 output_feature=self.line_nodes,
+                dead_ends=True,
             )
 
             # Count the number of connected roads for all endpoints
@@ -784,6 +923,8 @@ class RemoveRoadTriangles:
                 # Update the working file, and repeat if changes
                 edit_fc = self.removed_1_cycle_roads
             else:
+                # If the sql-query return an error or no match (None):
+                # Stop the iteration and copy the features for further processing
                 count = 0
                 arcpy.management.CopyFeatures(
                     in_features=self.dissolved_feature,
@@ -857,6 +998,7 @@ class RemoveRoadTriangles:
                 )
 
                 print()
+                # Select the specific features to remove and to add
                 self.select_segments_to_remove_2_cycle_roads(
                     self.filtered_2_cycle_roads, edit_fc
                 )
@@ -873,6 +1015,8 @@ class RemoveRoadTriangles:
                     inverted=True,
                 )
 
+                # If it was 3-cycles that were detected as 2-cycles because of different
+                # medium, some features must be added back again to preserve topology
                 if arcpy.Exists(self.add_layer):
                     add_geoms = [
                         [geom, medium]
@@ -890,6 +1034,8 @@ class RemoveRoadTriangles:
                 # Update the working file, and repeat if changes
                 edit_fc = self.removed_2_cycle_roads
             else:
+                # If the sql-query return an error or no match (None):
+                # Stop the iteration and copy the features for further processing
                 count = 0
                 arcpy.management.CopyFeatures(
                     in_features=self.dissolved_feature,
@@ -961,6 +1107,7 @@ class RemoveRoadTriangles:
                 )
 
                 print()
+                # Select the specific features to remove and to add
                 self.select_segments_to_remove_3_4_cycle_roads(
                     self.filtered_3_cycle_roads, edit_fc
                 )
@@ -977,6 +1124,8 @@ class RemoveRoadTriangles:
                     inverted=True,
                 )
 
+                # If it was 4-cycles that were detected as 3-cycles because of different
+                # medium, some features must be added back again to preserve topology
                 if arcpy.Exists(self.add_layer):
                     add_geoms = [
                         [geom, medium]
@@ -994,6 +1143,8 @@ class RemoveRoadTriangles:
                 # Update the working file, and repeat if changes
                 edit_fc = self.removed_3_cycle_roads
             else:
+                # If the sql-query return an error or no match (None):
+                # Stop the iteration and copy the features for further processing
                 count = 0
                 arcpy.management.CopyFeatures(
                     in_features=self.dissolved_feature,
@@ -1065,6 +1216,7 @@ class RemoveRoadTriangles:
                 )
 
                 print()
+                # Select the specific features to remove and to add
                 self.select_segments_to_remove_3_4_cycle_roads(
                     self.filtered_4_cycle_roads, edit_fc
                 )
@@ -1081,6 +1233,8 @@ class RemoveRoadTriangles:
                     inverted=True,
                 )
 
+                # If it was 4-cycles that were detected as 3-cycles because of different
+                # medium, some features must be added back again to preserve topology
                 if arcpy.Exists(self.add_layer):
                     add_geoms = [
                         [geom, medium]
@@ -1098,6 +1252,8 @@ class RemoveRoadTriangles:
                 # Update the working file, and repeat if changes
                 edit_fc = self.removed_4_cycle_roads
             else:
+                # If the sql-query return an error or no match (None):
+                # Stop the iteration and copy the features for further processing
                 count = 0
                 arcpy.management.CopyFeatures(
                     in_features=self.dissolved_feature,
@@ -1115,33 +1271,13 @@ class RemoveRoadTriangles:
         print(f"Number of roads in the end: {end_count}\n")
 
     @timing_decorator
-    def fetch_original_data(self):
+    def fetch_original_data_final(self):
         """
-        Capture the original data that should be included in the network
-        and creates a copy of this data in a new featureclass.
+        Fetches the original data that should be kept for further processing.
         """
-        output_fc = Road_N100.road_triangles_output.value
-        intermediate_fc = r"in_memory/intermediate_fc"
-
-        arcpy.management.MakeFeatureLayer(
-            in_features=self.copy_of_input_feature, out_layer="original_roads_lyr"
-        )
-        arcpy.management.MakeFeatureLayer(
-            in_features=self.removed_3_cycle_roads, out_layer="processed_roads_lyr"
-        )
-
-        arcpy.analysis.Erase(
-            in_features="original_roads_lyr",
-            erase_features="processed_roads_lyr",
-            out_feature_class=intermediate_fc,
-        )
-
-        time.sleep(0.5)
-
-        arcpy.analysis.Erase(
-            in_features="original_roads_lyr",
-            erase_features=intermediate_fc,
-            out_feature_class=output_fc,
+        self.fetch_original_data(
+            input=self.removed_3_cycle_roads,
+            output=Road_N100.road_triangles_output.value,
         )
 
     @timing_decorator
@@ -1157,22 +1293,27 @@ class RemoveRoadTriangles:
             out_feature_class=self.copy_of_input_feature,
         )
 
+        """
+        Parameter to decide if the functionality should run as either:
+            - True: ... before thin roads
+            - False: ... after thin roads
+        """
         before = False
 
         print("\nRemoves road cycles\n")
         if before:
-            self.remove_islands_and_small_dead_ends(edit_fc=self.input_line_feature)
+            self.remove_islands_and_small_dead_ends(edit_fc=self.copy_of_input_feature)
             self.remove_1_cycle_roads(edit_fc=self.dissolved_feature)
             self.remove_islands_and_small_dead_ends(edit_fc=self.removed_1_cycle_roads)
             self.remove_2_cycle_roads(edit_fc=self.dissolved_feature)
             self.remove_3_cycle_roads()
             self.remove_4_cycle_roads()
-            self.fetch_original_data()
+            self.fetch_original_data_final()
         else:
-            self.remove_1_cycle_roads(edit_fc=self.input_line_feature)
+            self.remove_1_cycle_roads(edit_fc=self.copy_of_input_feature)
             self.remove_2_cycle_roads(edit_fc=self.removed_1_cycle_roads)
             self.remove_3_cycle_roads()
-            self.fetch_original_data()
+            self.fetch_original_data_final()
 
         self.work_file_manager.delete_created_files()
 
