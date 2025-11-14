@@ -84,6 +84,7 @@
 <li class="toctree-l4"><a class="reference internal" href="#composition_configs.logic_config.LineToBufferSymbologyKwargs"><code class="docutils literal notranslate"><span class="pre">LineToBufferSymbologyKwargs</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="#composition_configs.logic_config.BufferDisplacementKwargs"><code class="docutils literal notranslate"><span class="pre">BufferDisplacementKwargs</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="#composition_configs.logic_config.ThinRoadNetworkKwargs"><code class="docutils literal notranslate"><span class="pre">ThinRoadNetworkKwargs</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#composition_configs.logic_config.RemoveRoadTrianglesKwargs"><code class="docutils literal notranslate"><span class="pre">RemoveRoadTrianglesKwargs</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="#composition_configs.logic_config.CollapseRoadDetailsKwargs"><code class="docutils literal notranslate"><span class="pre">CollapseRoadDetailsKwargs</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="#composition_configs.logic_config.RrcInitKwargs"><code class="docutils literal notranslate"><span class="pre">RrcInitKwargs</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="#composition_configs.logic_config.DissolveInitKwargs"><code class="docutils literal notranslate"><span class="pre">DissolveInitKwargs</span></code></a></li>
@@ -900,6 +901,52 @@ and to allow future support for other data types (e.g., raster).</p>
 <dl class="py attribute">
 <dt class="sig sig-object py" id="composition_configs.logic_config.ThinRoadNetworkKwargs.special_selection_sql">
 <span class="sig-name descname"><span class="pre">special_selection_sql</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">None</span></em><a class="headerlink" href="#composition_configs.logic_config.ThinRoadNetworkKwargs.special_selection_sql" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="composition_configs.logic_config.RemoveRoadTrianglesKwargs">
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">composition_configs.logic_config.</span></span><span class="sig-name descname"><span class="pre">RemoveRoadTrianglesKwargs</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">input_line_feature</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">work_file_manager_config</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#composition_configs.core_config.WorkFileConfig" title="composition_configs.core_config.WorkFileConfig"><span class="pre">composition_configs.core_config.WorkFileConfig</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">maximum_length</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">root_file</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">output_processed_feature</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">hierarchy_field</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">write_to_memory</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">keep_work_files</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/composition_configs/logic_config.html#RemoveRoadTrianglesKwargs"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#composition_configs.logic_config.RemoveRoadTrianglesKwargs" title="Link to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="composition_configs.logic_config.RemoveRoadTrianglesKwargs.input_line_feature">
+<span class="sig-name descname"><span class="pre">input_line_feature</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">str</span></em><a class="headerlink" href="#composition_configs.logic_config.RemoveRoadTrianglesKwargs.input_line_feature" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="composition_configs.logic_config.RemoveRoadTrianglesKwargs.work_file_manager_config">
+<span class="sig-name descname"><span class="pre">work_file_manager_config</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference internal" href="#composition_configs.core_config.WorkFileConfig" title="composition_configs.core_config.WorkFileConfig"><span class="pre">WorkFileConfig</span></a></em><a class="headerlink" href="#composition_configs.logic_config.RemoveRoadTrianglesKwargs.work_file_manager_config" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="composition_configs.logic_config.RemoveRoadTrianglesKwargs.maximum_length">
+<span class="sig-name descname"><span class="pre">maximum_length</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">int</span></em><a class="headerlink" href="#composition_configs.logic_config.RemoveRoadTrianglesKwargs.maximum_length" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="composition_configs.logic_config.RemoveRoadTrianglesKwargs.root_file">
+<span class="sig-name descname"><span class="pre">root_file</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">str</span></em><a class="headerlink" href="#composition_configs.logic_config.RemoveRoadTrianglesKwargs.root_file" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="composition_configs.logic_config.RemoveRoadTrianglesKwargs.output_processed_feature">
+<span class="sig-name descname"><span class="pre">output_processed_feature</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">str</span></em><a class="headerlink" href="#composition_configs.logic_config.RemoveRoadTrianglesKwargs.output_processed_feature" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="composition_configs.logic_config.RemoveRoadTrianglesKwargs.hierarchy_field">
+<span class="sig-name descname"><span class="pre">hierarchy_field</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">str</span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">None</span></em><a class="headerlink" href="#composition_configs.logic_config.RemoveRoadTrianglesKwargs.hierarchy_field" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="composition_configs.logic_config.RemoveRoadTrianglesKwargs.write_to_memory">
+<span class="sig-name descname"><span class="pre">write_to_memory</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">bool</span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">False</span></em><a class="headerlink" href="#composition_configs.logic_config.RemoveRoadTrianglesKwargs.write_to_memory" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="composition_configs.logic_config.RemoveRoadTrianglesKwargs.keep_work_files">
+<span class="sig-name descname"><span class="pre">keep_work_files</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">bool</span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">False</span></em><a class="headerlink" href="#composition_configs.logic_config.RemoveRoadTrianglesKwargs.keep_work_files" title="Link to this definition"></a></dt>
 <dd></dd></dl>
 
 </dd></dl>
