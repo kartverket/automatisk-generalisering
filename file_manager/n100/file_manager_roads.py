@@ -18,6 +18,7 @@ test1 = "test1"
 testing_file = "testing_file"
 roundabout_file = "roundabout"
 dam_file = "dam"
+road_triangles = "road_triangles"
 major_road_crossings = "major_road_crossings"
 vegsperring_file = "vegsperring"
 test2 = "test2"
@@ -928,8 +929,12 @@ class Road_N100(Enum):
         )
     )
 
+    road_triangles_output = file_manager.generate_file_name_gdb(
+        script_source_name=road_triangles, description="road_triangles_output"
+    )
+
     # ========================================
-    #                                TESTING FILE
+    #                             TESTING FILE
     # ========================================
 
     testing_file___roads_copy___n100_road = file_manager.generate_file_name_gdb(
@@ -1461,7 +1466,6 @@ class Road_N100(Enum):
     vegsperring__veg_uten_bom__n100_road = file_manager.generate_file_name_gdb(
         script_source_name=vegsperring_file, description="veg_uten_bom"
     )
-
     # ========================================
     #                                    RAMPS
     # ========================================

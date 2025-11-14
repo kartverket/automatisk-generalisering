@@ -1,19 +1,11 @@
 # Importing packages
-from types import SimpleNamespace
-
 import arcpy
-import os
-import textwrap
-
 
 # Importing custom input files modules
-from input_data import input_n50
 from input_data import input_n100
-from input_data import input_other
-from input_data import input_elveg
 from input_data import input_roads
 
-from composition_configs import core_config, logic_config, io_types, type_defs
+from composition_configs import core_config, logic_config, type_defs
 
 # Importing custom modules
 from file_manager.n100.file_manager_roads import Road_N100
@@ -29,6 +21,9 @@ from custom_tools.generalization_tools.road.thin_road_network import ThinRoadNet
 from custom_tools.generalization_tools.road.collapse_road import collapse_road
 from custom_tools.generalization_tools.road.dissolve_with_intersections import (
     DissolveWithIntersections,
+)
+from custom_tools.generalization_tools.road.remove_road_triangles import (
+    generalize_road_triangles,
 )
 from custom_tools.generalization_tools.road.resolve_road_conflicts import (
     ResolveRoadConflicts,
@@ -66,10 +61,15 @@ def main():
     adding_fields()
     collapse_road_detail()
     simplify_road()
+    """
+    generalize_road_triangles()
+    return
+    # """
     thin_roads()
     thin_sti_and_forest_roads()
     merge_divided_roads()
     smooth_line()
+    generalize_road_triangles()
     pre_resolve_road_conflicts()
     resolve_road_conflicts()
     generalize_dam()
@@ -84,7 +84,7 @@ OBJECT_LIMIT = 100_000
 @timing_decorator
 def data_selection_and_validation():
     plot_area = "navn IN ('Asker', 'Bærum', 'Drammen', 'Frogn', 'Hole', 'Holmestrand', 'Horten', 'Jevnaker', 'Kongsberg', 'Larvik', 'Lier', 'Lunner', 'Modum', 'Nesodden', 'Oslo', 'Ringerike', 'Tønsberg', 'Øvre Eiker')"
-    ferry_admin_test = "navn IN ('Ringerike', 'Hole')"
+    ferry_admin_test = "navn IN ('Hole')"
     small_plot_area = "navn IN ('Oslo', 'Ringerike')"
     smallest_plot_area = "navn IN ('Ringerike')"
     presentation_area = "navn IN ('Asker', 'Bærum', 'Oslo', 'Enebakk', 'Nittedal', 'Nordre Follo', 'Hole', 'Nesodden', 'Lørenskog', 'Sandnes', 'Stavanger', 'Gjesdal', 'Sola', 'Klepp', 'Strand', 'Time', 'Randaberg')"
@@ -611,7 +611,7 @@ def smooth_line():
 @timing_decorator
 def pre_resolve_road_conflicts():
     run_dissolve_with_intersections(
-        input_line_feature=Road_N100.data_preparation___smooth_road___n100_road.value,
+        input_line_feature=Road_N100.road_triangles_output.value,
         output_processed_feature=Road_N100.data_preparation___dissolved_intersections_5___n100_road.value,
         dissolve_field_list=FieldNames.road_all_fields(),
     )

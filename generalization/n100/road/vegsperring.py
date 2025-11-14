@@ -54,70 +54,96 @@ def remove_roadblock():
     roadblock_fc = data_files["input_vegsperring"]
     output = data_files["veg_uten_bom"]
 
+    # Fetch the relevant roads
     arcpy.management.MakeFeatureLayer(
         in_features=road_fc, out_layer="road_lyr", where_clause="medium = 'T'"
     )
-    arcpy.management.MakeFeatureLayer(
-        in_features=roadblock_fc, out_layer="roadblock_lyr"
-    )
-    arcpy.analysis.Near(
-        in_features="roadblock_lyr",
+
+    # Create near table with connections to roadblocks
+    near_table = r"in_memory/near_table"
+    arcpy.analysis.GenerateNearTable(
+        in_features=roadblock_fc,
         near_features="road_lyr",
-        search_radius="5 Meters",
+        out_table=near_table,
+        search_radius="2 Meters",
+        closest="ALL",
         location="NO_LOCATION",
         angle="NO_ANGLE",
     )
 
-    near_data = {
-        near: [geom, bom]
-        for geom, bom, near in arcpy.da.SearchCursor(
-            "roadblock_lyr", ["SHAPE@", "TYPE", "NEAR_FID"]
-        )
-        if near != -1
-    }
+    # Fetch all the road oids with roadblocks
+    road_oids_with_roadblock = set()
+    if arcpy.Exists(near_table):
+        with arcpy.da.SearchCursor(near_table, ["NEAR_FID"]) as search:
+            for row in search:
+                if row[0] is not None and row[0] != -1:
+                    road_oids_with_roadblock.add(row[0])
 
+    # If no roadblocks detected, just return input
+    if not road_oids_with_roadblock:
+        arcpy.management.CopyFeatures(road_fc, output)
+        arcpy.management.Delete(near_table)
+        return
+
+    # Select roads with bom
+    oid_field = arcpy.Describe(road_fc).OIDFieldName
+    oid_list_str = ",".join(map(str, road_oids_with_roadblock))
+    where_clause = f"{oid_field} IN ({oid_list_str})"
+    arcpy.management.MakeFeatureLayer(
+        in_features=road_fc,
+        out_layer="roads_with_roadblock_lyr",
+        where_clause=where_clause,
+    )
+
+    # Create layer with urban areas
     arcpy.management.MakeFeatureLayer(
         in_features=input_n100.ArealdekkeFlate,
-        out_layer="Tettbebyggelse_lyr",
+        out_layer="urban_areas_lyr",
         where_clause="OBJTYPE IN ('Tettbebyggelse', 'BymessigBebyggelse')",
     )
 
-    to_delete = []
+    # Spatial join to collect roadblocks in urban areas
+    joined = r"in_memory/roads_with_bom_joined"
+    arcpy.analysis.SpatialJoin(
+        target_features="roads_with_roadblock_lyr",
+        join_features="urban_areas_lyr",
+        out_feature_class=joined,
+        join_operation="JOIN_ONE_TO_ONE",
+        join_type="KEEP_ALL",
+        match_option="WITHIN",
+    )
 
-    with arcpy.da.UpdateCursor(road_fc, ["OID@"]) as cursor:
-        for row in cursor:
-            oid = row[0]
-            if oid in near_data:
-                important = False
-                arcpy.management.SelectLayerByAttribute(
-                    "road_lyr", "NEW_SELECTION", where_clause=f"OBJECTID = {oid}"
-                )
-                arcpy.management.SelectLayerByLocation(
-                    in_layer="Tettbebyggelse_lyr",
-                    overlap_type="CONTAINS",
-                    select_features="road_lyr",
-                    search_distance="0 Meters",
-                    selection_type="NEW_SELECTION",
-                )
-                count = int(
-                    arcpy.management.GetCount("Tettbebyggelse_lyr").getOutput(0)
-                )
-                if count > 0:
-                    important = True
+    # Find oids in urban areas
+    important_oids = set()
+    if arcpy.Exists(joined):
+        join_oid_field = "TARGET_FID"
+        join_count_field = "Join_Count"
+        fields = [f.name for f in arcpy.ListFields(joined)]
+        if join_oid_field in fields and join_count_field in fields:
+            with arcpy.da.SearchCursor(
+                joined, [join_oid_field, join_count_field]
+            ) as search:
+                for target_fid, join_count in search:
+                    if join_count is not None and int(join_count) > 0:
+                        important_oids.add(int(target_fid))
 
-                if important:
-                    to_delete.append(oid)
+    # Fetch the oids to delete
+    to_delete = road_oids_with_roadblock.intersection(important_oids)
 
     if to_delete:
-        oid_field = arcpy.Describe(road_fc).OIDFieldName
-        oid_list_str = ",".join(str(i) for i in to_delete)
-        where = f"{oid_field} IN ({oid_list_str})"
-        arcpy.management.MakeFeatureLayer(
-            in_features=road_fc, out_layer="to_delete_lyr"
-        )
+        arcpy.management.MakeFeatureLayer(road_fc, "to_delete_lyr")
+        where_clause = f"{oid_field} IN ({','.join(map(str, to_delete))})"
         arcpy.management.SelectLayerByAttribute(
-            "to_delete_lyr", "NEW_SELECTION", where_clause=where
+            in_layer_or_view="to_delete_lyr",
+            selection_type="NEW_SELECTION",
+            where_clause=where_clause,
         )
         arcpy.management.DeleteFeatures("to_delete_lyr")
 
+    # Copy the result
     arcpy.management.CopyFeatures(road_fc, output)
+
+    # Clean up
+    for tmp in (joined, near_table):
+        if arcpy.Exists(tmp):
+            arcpy.management.Delete(tmp)
