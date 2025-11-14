@@ -6,7 +6,7 @@ If a method requires many inline comments to explain its flow, that is often a u
 
 ### 1. Document "What" it does
 Every function or method should include a brief description of what it does.
-In many cases for even more complex logic, descriptive naming and well structured code one or two sentences explaining “What” it it does can be sufficient.
+In many cases with descriptive naming and well structured code, one or two sentences explaining “What” it it does can be sufficient.
 
 Use additional detail only when the purpose is not immediately clear or when the function plays a meaningful role in the overall workflow.
 
@@ -19,6 +19,12 @@ Include a How section only when:
 - Understanding the flow matters for maintainers
 
 Many functions do not require a How section.
+
+Orchestration methods (such as `main`, `run`, or other entry-point functions) often require a
+How section. These functions typically coordinate several steps, call multiple helpers, or
+manage workflow sequencing, and documenting that flow helps future maintainers understand the
+overall structure. Even when each individual step is clear, the orchestration itself usually
+benefits from a brief How explanation.
 
 ### 3. Document “Why” when context matters
 Add a Why section when:
