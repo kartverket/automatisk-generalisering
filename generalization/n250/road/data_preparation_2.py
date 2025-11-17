@@ -84,7 +84,7 @@ OBJECT_LIMIT = 100_000
 @timing_decorator
 def data_selection_and_validation():
     plot_area = "navn IN ('Asker', 'Bærum', 'Drammen', 'Frogn', 'Hole', 'Holmestrand', 'Horten', 'Jevnaker', 'Kongsberg', 'Larvik', 'Lier', 'Lunner', 'Modum', 'Nesodden', 'Oslo', 'Ringerike', 'Tønsberg', 'Øvre Eiker')"
-    ferry_admin_test = "navn IN ('Kvitsøy')"
+    ferry_admin_test = "navn IN ('Ringerike')"
     small_plot_area = "navn IN ('Oslo', 'Ringerike')"
     smallest_plot_area = "navn IN ('Ringerike')"
     presentation_area = "navn IN ('Asker', 'Bærum', 'Oslo', 'Enebakk', 'Nittedal', 'Nordre Follo', 'Hole', 'Nesodden', 'Lørenskog', 'Sandnes', 'Stavanger', 'Gjesdal', 'Sola', 'Klepp', 'Strand', 'Time', 'Randaberg')"
@@ -723,14 +723,14 @@ def resolve_road_conflicts():
             input_feature=core_config.InjectIO(object=road, tag="input"),
             input_lyrx=SymbologyN250.samferdsel.value,
             grouped_lyrx=True,
-            target_layer_name="N250_Samferdsel_senterlinje_veg_bru_L2",
+            target_layer_name="N250K_VegSti_L2_maske_sort",
         ),
         logic_config.SymbologyLayerSpec(
             unique_name=railroad,
             input_feature=core_config.InjectIO(object=railroad, tag="input"),
             input_lyrx=SymbologyN250.samferdsel.value,
             grouped_lyrx=True,
-            target_layer_name="N250_Samferdsel_senterlinje_jernbane_terreng_sort_maske",
+            target_layer_name="N250K_Bane_Terreng_maske_sort",
         ),
         logic_config.SymbologyLayerSpec(
             unique_name=begrensningskurve,
@@ -739,7 +739,7 @@ def resolve_road_conflicts():
             grouped_lyrx=False,
         ),
     ]
-    
+
     # --- Class init config (new RRC init kwargs) -------------------------------
     rrc_init = logic_config.RrcInitKwargs(
         input_data_structure=rrc_specs,

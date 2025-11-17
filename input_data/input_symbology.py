@@ -22,7 +22,7 @@ class SymbologyN100(Enum):
 
 class SymbologyN250(Enum):
     # Roads
-    samferdsel = config.symbology_n250_samferd
+    samferdsel = config.symbology_n250_samferdsel
     begrensnings_kurve_line = config.symbology_n250_begrensningskurve_line
 
     # Other
