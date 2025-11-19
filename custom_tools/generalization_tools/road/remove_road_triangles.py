@@ -1271,12 +1271,15 @@ class RemoveRoadTriangles:
         print(f"Number of roads in the end: {end_count}\n")
 
     @timing_decorator
-    def fetch_original_data_final(self):
+    def fetch_original_data_final(self, edit_fc: str):
         """
         Fetches the original data that should be kept for further processing.
+
+        Args:
+            edit_fc (str): Featureclass with the data that should be kept
         """
         self.fetch_original_data(
-            input=self.removed_3_cycle_roads,
+            input=edit_fc,
             output=Road_N100.road_triangles_output.value,
         )
 
@@ -1308,12 +1311,13 @@ class RemoveRoadTriangles:
             self.remove_2_cycle_roads(edit_fc=self.dissolved_feature)
             self.remove_3_cycle_roads()
             self.remove_4_cycle_roads()
-            self.fetch_original_data_final()
+            self.fetch_original_data_final(edit_fc=self.removed_4_cycle_roads)
         else:
             self.remove_1_cycle_roads(edit_fc=self.copy_of_input_feature)
             self.remove_2_cycle_roads(edit_fc=self.removed_1_cycle_roads)
             self.remove_3_cycle_roads()
-            self.fetch_original_data_final()
+            self.remove_4_cycle_roads()
+            self.fetch_original_data_final(edit_fc=self.removed_4_cycle_roads)
 
         self.work_file_manager.delete_created_files()
 
