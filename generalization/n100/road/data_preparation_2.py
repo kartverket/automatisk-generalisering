@@ -42,6 +42,7 @@ from generalization.n100.road.roundabouts import generalize_roundabouts
 from generalization.n100.road.vegsperring import remove_roadblock
 from generalization.n100.road.ramps_point import ramp_points
 from generalization.n100.road.ramps_point import MovePointsToCrossings
+from generalization.n100.road.split_geometry import split_polyline_featureclass
 
 
 MERGE_DIVIDED_ROADS_ALTERATIVE = False
@@ -84,7 +85,7 @@ OBJECT_LIMIT = 100_000
 @timing_decorator
 def data_selection_and_validation():
     plot_area = "navn IN ('Asker', 'Bærum', 'Drammen', 'Frogn', 'Hole', 'Holmestrand', 'Horten', 'Jevnaker', 'Kongsberg', 'Larvik', 'Lier', 'Lunner', 'Modum', 'Nesodden', 'Oslo', 'Ringerike', 'Tønsberg', 'Øvre Eiker')"
-    ferry_admin_test = "navn IN ('Hole')"
+    ferry_admin_test = "navn IN ('Kvitsøy')"
     small_plot_area = "navn IN ('Oslo', 'Ringerike')"
     smallest_plot_area = "navn IN ('Ringerike')"
     presentation_area = "navn IN ('Asker', 'Bærum', 'Oslo', 'Enebakk', 'Nittedal', 'Nordre Follo', 'Hole', 'Nesodden', 'Lørenskog', 'Sandnes', 'Stavanger', 'Gjesdal', 'Sola', 'Klepp', 'Strand', 'Time', 'Randaberg')"
@@ -623,9 +624,13 @@ def pre_resolve_road_conflicts():
         in_features=Road_N100.data_selection___railroad___n100_road.value,
         out_feature_class=Road_N100.data_preparation___railroad_single_part___n100_road.value,
     )
-    arcpy.management.MultipartToSinglepart(
-        in_features=Road_N100.data_preparation___water_feature_outline___n100_road.value,
-        out_feature_class=Road_N100.data_preparation___water_feature_outline_single_part___n100_road.value,
+
+    # Takes care of long geometries for water features
+    split_polyline_featureclass(
+        input_fc=Road_N100.data_preparation___water_feature_outline___n100_road.value,
+        dissolve_fc=Road_N100.data_preparation__water_feature_outline_dissolved__n100_road.value,
+        split_fc=Road_N100.data_preparation__water_feature_outline_split_xm__n100_road.value,
+        output_fc=Road_N100.data_preparation___water_feature_outline_single_part___n100_road.value,
     )
 
     road_data_validation = GeometryValidator(

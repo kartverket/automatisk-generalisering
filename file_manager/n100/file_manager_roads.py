@@ -511,6 +511,20 @@ class Road_N100(Enum):
         )
     )
 
+    data_preparation__water_feature_outline_dissolved__n100_road = (
+        file_manager.generate_file_name_gdb(
+            script_source_name=data_preparation,
+            description="water_feature_outline_dissolved",
+        )
+    )
+
+    data_preparation__water_feature_outline_split_xm__n100_road = (
+        file_manager.generate_file_name_gdb(
+            script_source_name=data_preparation,
+            description="water_feature_outline_split_xm",
+        )
+    )
+
     data_preparation___water_feature_outline_single_part___n100_road = (
         file_manager.generate_file_name_gdb(
             script_source_name=data_preparation,
