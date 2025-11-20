@@ -28,7 +28,7 @@ from custom_tools.generalization_tools.road.remove_road_triangles import (
 from custom_tools.generalization_tools.road.resolve_road_conflicts import (
     ResolveRoadConflicts,
 )
-from input_data.input_symbology import SymbologyN100, SymbologyN250
+from input_data.input_symbology import SymbologyN250
 from constants.n100_constants import (
     FieldNames,
     NvdbAlias,
@@ -84,7 +84,7 @@ OBJECT_LIMIT = 100_000
 @timing_decorator
 def data_selection_and_validation():
     plot_area = "navn IN ('Asker', 'Bærum', 'Drammen', 'Frogn', 'Hole', 'Holmestrand', 'Horten', 'Jevnaker', 'Kongsberg', 'Larvik', 'Lier', 'Lunner', 'Modum', 'Nesodden', 'Oslo', 'Ringerike', 'Tønsberg', 'Øvre Eiker')"
-    ferry_admin_test = "navn IN ('Ringerike')"
+    ferry_admin_test = "navn IN ('Hole')"
     small_plot_area = "navn IN ('Oslo', 'Ringerike')"
     smallest_plot_area = "navn IN ('Ringerike')"
     presentation_area = "navn IN ('Asker', 'Bærum', 'Oslo', 'Enebakk', 'Nittedal', 'Nordre Follo', 'Hole', 'Nesodden', 'Lørenskog', 'Sandnes', 'Stavanger', 'Gjesdal', 'Sola', 'Klepp', 'Strand', 'Time', 'Randaberg')"
