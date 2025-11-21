@@ -1282,6 +1282,7 @@ def generalize_road_triangles() -> None:
     remove_road_triangles = RemoveRoadTriangles(config)
     remove_road_triangles.run()
 
+
 def sort_prioritized_hierarchy(roads: list) -> list:
     """
     Sort the list of road features according to the wanted hierarchy components.
@@ -1330,6 +1331,7 @@ def sort_prioritized_hierarchy(roads: list) -> list:
     )
     return roads
 
+
 def endpoints_of(geom: arcpy.Geometry, num: int = 3) -> tuple:
     """
     Returns rounded coordinates for the endpoints of the geom.
@@ -1348,6 +1350,7 @@ def endpoints_of(geom: arcpy.Geometry, num: int = 3) -> tuple:
         return (s.X, s.Y), (e.X, e.Y)
     # Otherwise round to the desired number of decimals, default = 3
     return (round(s.X, num), round(s.Y, num)), (round(e.X, num), round(e.Y, num))
+
 
 if __name__ == "__main__":
     generalize_road_triangles()
