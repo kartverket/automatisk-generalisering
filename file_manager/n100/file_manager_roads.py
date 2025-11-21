@@ -21,6 +21,7 @@ dam_file = "dam"
 road_triangles = "road_triangles"
 major_road_crossings = "major_road_crossings"
 vegsperring_file = "vegsperring"
+parallel_roads_file = "parallel_roads"
 test2 = "test2"
 test3 = "test3"
 ramps_file = "ramps"
@@ -1235,6 +1236,14 @@ class Road_N100(Enum):
             script_source_name=testing_file,
             description="road_input_functional_roadclass_studyarea_selector",
         )
+    )
+
+    # ========================================
+    #                           PARALLEL ROADS
+    # ========================================
+
+    parallel_roads__n100_road = file_manager.generate_file_name_gdb(
+        script_source_name=parallel_roads_file, description="parallel_roads"
     )
 
     # ========================================

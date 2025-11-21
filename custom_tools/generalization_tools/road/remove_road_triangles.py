@@ -259,25 +259,6 @@ class RemoveRoadTriangles:
             output_name=output_feature,
         )
 
-    def endpoints_of(self, geom: arcpy.Geometry, num: int = 3) -> tuple:
-        """
-        Returns rounded coordinates for the endpoints of the geom.
-
-        Args:
-            geom (arcpy.Geometry): The geometry to fetch endpoints
-            num (int, optional): Number of wanted decimals, default: 3
-
-        Returns:
-            tuple: The X- and Y-coordinate of the endpoints to the geometry
-        """
-        s, e = get_endpoints(geom)
-        s, e = s.firstPoint, e.firstPoint
-        if num is None:
-            # If num is None we want the original data without the round(...) operation
-            return (s.X, s.Y), (e.X, e.Y)
-        # Otherwise round to the desired number of decimals, default = 3
-        return (round(s.X, num), round(s.Y, num)), (round(e.X, num), round(e.Y, num))
-
     def get_geoms(self, FeatureClass: str) -> dict:
         """
         Returns a dictionary with all the geometries in the featureclass.
@@ -294,54 +275,6 @@ class RemoveRoadTriangles:
                 FeatureClass, ["OID@", "SHAPE@", "Shape_Length"]
             )
         }
-
-    def sort_prioritized_hierarchy(self, roads: list) -> list:
-        """
-        Sort the list of road features according to the wanted hierarchy components.
-
-        IMPORTANT:
-        The list must be ordered in such a way that the first instance of the internal lists
-        is "vegkategori", the second must be "vegklasse" and the third "ShapeLength". The
-        internal lists can be arbitrary long as long as these first three are represented.
-
-        Args:
-            roads (list): List of road elements
-
-        Returns:
-            list: The same list as input, but sorted according to the hierarchy fields
-        """
-        # Constants used for the prioritizing of the road segments
-        pri_list_vegkategori = [
-            NvdbAlias.europaveg,
-            NvdbAlias.riksveg,
-            NvdbAlias.fylkesveg,
-            NvdbAlias.kommunalveg,
-            NvdbAlias.privatveg,
-            NvdbAlias.skogsveg,
-            NvdbAlias.barmarksløype,
-            NvdbAlias.traktorveg,
-            NvdbAlias.sti_dnt,
-            NvdbAlias.sti_andre,
-            NvdbAlias.sti_umerket,
-            NvdbAlias.gang_og_sykkelveg,
-        ]
-        vegkategori_pri = {
-            v: i for i, v in enumerate(pri_list_vegkategori)
-        }  # Mapping dictionary from text to integers
-        max_vegkategori_pri = len(
-            pri_list_vegkategori
-        )  # If no specified, default value to lowest priority
-        LARGE = 10**9
-
-        # Sort the incomming list against the hierarchy values
-        roads.sort(
-            key=lambda x: (
-                vegkategori_pri.get(x[0], max_vegkategori_pri),
-                (x[1] if x[1] is not None else LARGE),
-                (x[2] if x[2] is not None else LARGE),
-            )
-        )
-        return roads
 
     def get_geom_data(self, oid_to_geom: dict) -> defaultdict:
         """
@@ -400,7 +333,7 @@ class RemoveRoadTriangles:
             result = {}
             for oid, entries in oid_to_data.items():
                 if entries:
-                    result[oid] = self.sort_prioritized_hierarchy(entries)[-1]
+                    result[oid] = sort_prioritized_hierarchy(entries)[-1]
             return result
         finally:
             # Delete the intermediate feature layer
@@ -503,7 +436,7 @@ class RemoveRoadTriangles:
             return
 
         # Fetch the least prioritized segment - the one to be removed
-        chosen = self.sort_prioritized_hierarchy(enriched)[-1]
+        chosen = sort_prioritized_hierarchy(enriched)[-1]
 
         if chosen[2] > length_tolerance:
             # The segment must be shorter than the tolerance to be removed
@@ -555,7 +488,7 @@ class RemoveRoadTriangles:
             features back into the working file.
             """
             # Create list of endpoints
-            orig_s, orig_e = self.endpoints_of(chosen_geom)
+            orig_s, orig_e = endpoints_of(chosen_geom)
             start_endpoints = {orig_s, orig_e}
 
             inside_geoms = []  # Smaller geometries inside the dissolved one
@@ -582,7 +515,7 @@ class RemoveRoadTriangles:
                     # Otherwise -> Store the endpoints in the set if they
                     # are close enough to the chosen geometry
                     else:
-                        other_s, other_e = self.endpoints_of(g)
+                        other_s, other_e = endpoints_of(g)
                         s, e = get_endpoints(g)
                         s, e = s.firstPoint, e.firstPoint
                         if (
@@ -602,12 +535,12 @@ class RemoveRoadTriangles:
             # If there are any segments with different medium connected to the chosen geometry
             if outside_endpoints:
                 # -> Find the highest prioritized geometry
-                inside_geoms = self.sort_prioritized_hierarchy(inside_geoms)
+                inside_geoms = sort_prioritized_hierarchy(inside_geoms)
                 _, _, _, pri_med, pri_geom = inside_geoms[0]
                 add_geoms.append((pri_geom, pri_med))
 
                 # Create a set of endpoints and add the index of this geometry to it
-                endpoints = set(self.endpoints_of(pri_geom))
+                endpoints = set(endpoints_of(pri_geom))
                 used = {0}
 
                 changed = True
@@ -621,7 +554,7 @@ class RemoveRoadTriangles:
                         if idx in used:
                             continue
                         # Fetch the endpoints
-                        s_tuple, e_tuple = self.endpoints_of(inside[-1])
+                        s_tuple, e_tuple = endpoints_of(inside[-1])
                         # The geometry most be connected to the added geometries
                         if s_tuple in endpoints or e_tuple in endpoints:
                             # Find out witch end that is the connecting point
@@ -733,7 +666,7 @@ class RemoveRoadTriangles:
             for row in search:
                 geom = row[0]
                 # -> Get the endpoints
-                s, e = self.endpoints_of(geom)
+                s, e = endpoints_of(geom)
                 if s == e:
                     # If the endpoints are the same point -> It is a single loop
                     single_cycluses.append(geom)
@@ -825,7 +758,7 @@ class RemoveRoadTriangles:
                 for row in update:
                     intermediate_count += 1
                     geom = row[0]
-                    start, end = self.endpoints_of(geom, num=None)
+                    start, end = endpoints_of(geom, num=None)
                     # If both end points are lonely: island
                     if endpoints.get(start, 0) == 1 and endpoints.get(end, 0) == 1:
                         update.deleteRow()
@@ -1349,6 +1282,72 @@ def generalize_road_triangles() -> None:
     remove_road_triangles = RemoveRoadTriangles(config)
     remove_road_triangles.run()
 
+def sort_prioritized_hierarchy(roads: list) -> list:
+    """
+    Sort the list of road features according to the wanted hierarchy components.
+
+    IMPORTANT:
+    The list must be ordered in such a way that the first instance of the internal lists
+    is "vegkategori", the second must be "vegklasse" and the third "ShapeLength". The
+    internal lists can be arbitrary long as long as these first three are represented.
+
+    Args:
+        roads (list): List of road elements
+
+    Returns:
+        list: The same list as input, but sorted according to the hierarchy fields
+    """
+    # Constants used for the prioritizing of the road segments
+    pri_list_vegkategori = [
+        NvdbAlias.europaveg,
+        NvdbAlias.riksveg,
+        NvdbAlias.fylkesveg,
+        NvdbAlias.kommunalveg,
+        NvdbAlias.privatveg,
+        NvdbAlias.skogsveg,
+        NvdbAlias.barmarksløype,
+        NvdbAlias.traktorveg,
+        NvdbAlias.sti_dnt,
+        NvdbAlias.sti_andre,
+        NvdbAlias.sti_umerket,
+        NvdbAlias.gang_og_sykkelveg,
+    ]
+    vegkategori_pri = {
+        v: i for i, v in enumerate(pri_list_vegkategori)
+    }  # Mapping dictionary from text to integers
+    max_vegkategori_pri = len(
+        pri_list_vegkategori
+    )  # If no specified, default value to lowest priority
+    LARGE = 10**9
+
+    # Sort the incomming list against the hierarchy values
+    roads.sort(
+        key=lambda x: (
+            vegkategori_pri.get(x[0], max_vegkategori_pri),
+            (x[1] if x[1] is not None else LARGE),
+            (x[2] if x[2] is not None else LARGE),
+        )
+    )
+    return roads
+
+def endpoints_of(geom: arcpy.Geometry, num: int = 3) -> tuple:
+    """
+    Returns rounded coordinates for the endpoints of the geom.
+
+    Args:
+        geom (arcpy.Geometry): The geometry to fetch endpoints
+        num (int, optional): Number of wanted decimals, default: 3
+
+    Returns:
+        tuple: The X- and Y-coordinate of the endpoints to the geometry
+    """
+    s, e = get_endpoints(geom)
+    s, e = s.firstPoint, e.firstPoint
+    if num is None:
+        # If num is None we want the original data without the round(...) operation
+        return (s.X, s.Y), (e.X, e.Y)
+    # Otherwise round to the desired number of decimals, default = 3
+    return (round(s.X, num), round(s.Y, num)), (round(e.X, num), round(e.Y, num))
 
 if __name__ == "__main__":
     generalize_road_triangles()
