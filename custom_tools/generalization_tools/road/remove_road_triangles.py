@@ -1361,9 +1361,7 @@ def generalize_road_triangles(scale: str) -> None:
 
     config = logic_config.RemoveRoadTrianglesKwargs(
         input_line_feature=file,
-        work_file_manager_config=core_config.WorkFileConfig(
-            root
-        ),
+        work_file_manager_config=core_config.WorkFileConfig(root),
         maximum_length=500,
         root_file=root,
         output_processed_feature=removed,

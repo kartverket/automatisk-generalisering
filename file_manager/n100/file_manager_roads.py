@@ -612,9 +612,11 @@ class Road_N100(Enum):
         )
     )
 
-    road_triangles___removed_triangles___n100_road = file_manager.generate_file_name_gdb(
-        script_source_name=road_triangles,
-        description="removed_triangles",
+    road_triangles___removed_triangles___n100_road = (
+        file_manager.generate_file_name_gdb(
+            script_source_name=road_triangles,
+            description="removed_triangles",
+        )
     )
 
     # ========================================

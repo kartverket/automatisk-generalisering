@@ -20,6 +20,7 @@ class SymbologyN100(Enum):
     railway_station_squares = config.symbology_n100_railway_station_squares
     railway = config.symbology_n100_railway
 
+
 class SymbologyN250(Enum):
     # Roads
     samferdsel = config.symbology_n250_samferdsel
