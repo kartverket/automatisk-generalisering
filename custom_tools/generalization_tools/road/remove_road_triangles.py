@@ -17,6 +17,7 @@ from custom_tools.generalization_tools.road.dissolve_with_intersections import (
 from env_setup import environment_setup
 from file_manager import WorkFileManager
 from file_manager.n100.file_manager_roads import Road_N100
+from file_manager.n250.file_manager_roads import Road_N250
 
 from generalization.n100.road.dam import get_endpoints
 
@@ -1271,22 +1272,33 @@ class RemoveRoadTriangles:
         print(f"Number of roads in the end: {end_count}\n")
 
     @timing_decorator
-    def fetch_original_data_final(self):
+    def fetch_original_data_final(self, scale: str):
         """
         Fetches the original data that should be kept for further processing.
+
+        Args:
+            scale (str): String describing which scale to use (N100, N250)
         """
+        if scale.lower() == "n100":
+            output = Road_N100.road_triangles_output.value
+        elif scale.lower() == "n250":
+            output = Road_N250.road_triangles_output.value
+
         self.fetch_original_data(
             input=self.removed_3_cycle_roads,
-            output=Road_N100.road_triangles_output.value,
+            output=output,
         )
 
     @timing_decorator
-    def run(self) -> None:
+    def run(self, scale: str) -> None:
         """
         Runs the complete process to remove road triangles.
         1-cycle, 2-cycle, 3-cycle and 4-cycle road triangles are removed based on a minimum length.
         1-cycle roads are removed completely first, then 2-cycle roads and finally
         3-cycle roads partly to keep a complete road network.
+
+        Args:
+            scale (str): String describing which scale to use (N100, N250)
         """
         arcpy.management.CopyFeatures(
             in_features=self.input_line_feature,
@@ -1308,42 +1320,54 @@ class RemoveRoadTriangles:
             self.remove_2_cycle_roads(edit_fc=self.dissolved_feature)
             self.remove_3_cycle_roads()
             self.remove_4_cycle_roads()
-            self.fetch_original_data_final()
+            self.fetch_original_data_final(scale=scale)
         else:
             self.remove_1_cycle_roads(edit_fc=self.copy_of_input_feature)
             self.remove_2_cycle_roads(edit_fc=self.removed_1_cycle_roads)
             self.remove_3_cycle_roads()
-            self.fetch_original_data_final()
+            self.fetch_original_data_final(scale=scale)
 
         self.work_file_manager.delete_created_files()
 
 
 # Main function to be imported in other .py-files
 @timing_decorator
-def generalize_road_triangles() -> None:
+def generalize_road_triangles(scale: str) -> None:
     """
     Runs the RemoveRoadTriangles process with predefined parameters.
+
+    Args:
+        scale (str): String describing which scale to use (N100, N250)
     """
     environment_setup.main()
 
     before = False
-    file = (
-        Road_N100.data_preparation___simplified_road___n100_road.value
-        if before
-        else Road_N100.data_preparation___smooth_road___n100_road.value
-    )
+    if scale.lower() == "n100":
+        file = (
+            Road_N100.data_preparation___simplified_road___n100_road.value
+            if before
+            else Road_N100.data_preparation___smooth_road___n100_road.value
+        )
+        root = Road_N100.road_triangles___remove_triangles_root___n100_road.value
+        removed = Road_N100.road_triangles___removed_triangles___n100_road.value
+    elif scale.lower() == "n250":
+        file = (
+            Road_N250.data_preparation___simplified_road___n250_road.value
+            if before
+            else Road_N250.data_preparation___smooth_road___n250_road.value
+        )
+        root = Road_N250.road_triangles___remove_triangles_root___n250_road.value
+        removed = Road_N250.road_triangles___removed_triangles___n250_road.value
 
     config = logic_config.RemoveRoadTrianglesKwargs(
         input_line_feature=file,
-        work_file_manager_config=core_config.WorkFileConfig(
-            Road_N100.testing_file___remove_triangles_root___n100_road.value
-        ),
+        work_file_manager_config=core_config.WorkFileConfig(root),
         maximum_length=500,
-        root_file=Road_N100.testing_file___remove_triangles_root___n100_road.value,
-        output_processed_feature=Road_N100.testing_file___removed_triangles___n100_road.value,
+        root_file=root,
+        output_processed_feature=removed,
     )
     remove_road_triangles = RemoveRoadTriangles(config)
-    remove_road_triangles.run()
+    remove_road_triangles.run(scale=scale)
 
 
 if __name__ == "__main__":

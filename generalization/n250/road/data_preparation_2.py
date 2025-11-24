@@ -8,7 +8,7 @@ from input_data import input_roads
 from composition_configs import core_config, logic_config, type_defs
 
 # Importing custom modules
-from file_manager.n100.file_manager_roads import Road_N100
+from file_manager.n250.file_manager_roads import Road_N250
 from env_setup import environment_setup
 import config
 from custom_tools.decorators.timing_decorator import timing_decorator
@@ -28,20 +28,20 @@ from custom_tools.generalization_tools.road.remove_road_triangles import (
 from custom_tools.generalization_tools.road.resolve_road_conflicts import (
     ResolveRoadConflicts,
 )
-from input_data.input_symbology import SymbologyN100
+from input_data.input_symbology import SymbologyN250
 from constants.n100_constants import (
     FieldNames,
     NvdbAlias,
     MediumAlias,
 )
-from generalization.n100.road.dam import generalize_dam
-from generalization.n100.road.major_road_crossings import (
+from generalization.n250.road.dam import generalize_dam
+from generalization.n250.road.major_road_crossings import (
     categories_major_road_crossings,
 )
-from generalization.n100.road.roundabouts import generalize_roundabouts
-from generalization.n100.road.vegsperring import remove_roadblock
-from generalization.n100.road.ramps_point import ramp_points
-from generalization.n100.road.ramps_point import MovePointsToCrossings
+from generalization.n250.road.roundabouts import generalize_roundabouts
+from generalization.n250.road.vegsperring import remove_roadblock
+from generalization.n250.road.ramps_point import ramp_points
+from generalization.n250.road.ramps_point import MovePointsToCrossings
 
 
 MERGE_DIVIDED_ROADS_ALTERATIVE = False
@@ -50,7 +50,7 @@ MERGE_DIVIDED_ROADS_ALTERATIVE = False
 @timing_decorator
 def main():
     environment_setup.main()
-    arcpy.env.referenceScale = 100000
+    arcpy.env.referenceScale = 250000
     data_selection_and_validation()
     categories_major_road_crossings()
     generalize_roundabouts()
@@ -62,14 +62,14 @@ def main():
     collapse_road_detail()
     simplify_road()
     """
-    generalize_road_triangles(scale="n100")
+    generalize_road_triangles(scale="n250")
     return
     # """
     thin_roads()
     thin_sti_and_forest_roads()
     merge_divided_roads()
     smooth_line()
-    generalize_road_triangles(scale="n100")
+    generalize_road_triangles(scale="n250")
     pre_resolve_road_conflicts()
     resolve_road_conflicts()
     generalize_dam()
@@ -91,11 +91,11 @@ def data_selection_and_validation():
 
     selector = StudyAreaSelector(
         input_output_file_dict={
-            input_roads.road_output_1: Road_N100.data_selection___nvdb_roads___n100_road.value,
-            input_roads.vegsperring: Road_N100.data_selection___vegsperring___n100_road.value,
-            input_n100.Bane: Road_N100.data_selection___railroad___n100_road.value,
-            input_n100.BegrensningsKurve: Road_N100.data_selection___begrensningskurve___n100_road.value,
-            input_n100.AdminGrense: Road_N100.data_selection___admin_boundary___n100_road.value,
+            input_roads.road_output_1: Road_N250.data_selection___nvdb_roads___n250_road.value,
+            input_roads.vegsperring: Road_N250.data_selection___vegsperring___n250_road.value,
+            input_n100.Bane: Road_N250.data_selection___railroad___n250_road.value,
+            input_n100.BegrensningsKurve: Road_N250.data_selection___begrensningskurve___n250_road.value,
+            input_n100.AdminGrense: Road_N250.data_selection___admin_boundary___n250_road.value,
         },
         selecting_file=input_n100.AdminFlate,
         selecting_sql_expression=ferry_admin_test,
@@ -105,13 +105,13 @@ def data_selection_and_validation():
     selector.run()
 
     input_features_validation = {
-        "nvdb_roads": Road_N100.data_selection___nvdb_roads___n100_road.value,
-        "railroad": Road_N100.data_selection___railroad___n100_road.value,
-        "begrensningskurve": Road_N100.data_selection___begrensningskurve___n100_road.value,
+        "nvdb_roads": Road_N250.data_selection___nvdb_roads___n250_road.value,
+        "railroad": Road_N250.data_selection___railroad___n250_road.value,
+        "begrensningskurve": Road_N250.data_selection___begrensningskurve___n250_road.value,
     }
     road_data_validation = GeometryValidator(
         input_features=input_features_validation,
-        output_table_path=Road_N100.data_preparation___geometry_validation___n100_road.value,
+        output_table_path=Road_N250.data_preparation___geometry_validation___n250_road.value,
     )
     road_data_validation.check_repair_sequence()
 
@@ -125,7 +125,7 @@ def run_dissolve_with_intersections(
         input_line_feature=input_line_feature,
         output_processed_feature=output_processed_feature,
         work_file_manager_config=core_config.WorkFileConfig(
-            root_file=Road_N100.data_preparation___intersections_root___n100_road.value
+            root_file=Road_N250.data_preparation___intersections_root___n250_road.value
         ),
         dissolve_fields=dissolve_field_list,
         sql_expressions=[
@@ -262,25 +262,25 @@ def calculate_boarder_road_hierarchy(
 @timing_decorator
 def trim_road_details():
     arcpy.management.MultipartToSinglepart(
-        in_features=Road_N100.vegsperring__veg_uten_bom__n100_road.value,
-        out_feature_class=Road_N100.data_preparation___road_single_part___n100_road.value,
+        in_features=Road_N250.vegsperring__veg_uten_bom__n250_road.value,
+        out_feature_class=Road_N250.data_preparation___road_single_part___n250_road.value,
     )
 
     run_dissolve_with_intersections(
-        input_line_feature=Road_N100.data_preparation___road_single_part___n100_road.value,
-        output_processed_feature=Road_N100.data_preparation___dissolved_intersections___n100_road.value,
+        input_line_feature=Road_N250.data_preparation___road_single_part___n250_road.value,
+        output_processed_feature=Road_N250.data_preparation___dissolved_intersections___n250_road.value,
         dissolve_field_list=FieldNames.road_input_fields.value,
     )
 
     run_dissolve_with_intersections(
-        input_line_feature=Road_N100.data_preparation___dissolved_intersections___n100_road.value,
-        output_processed_feature=Road_N100.data_preparation___dissolved_intersections_2___n100_road.value,
+        input_line_feature=Road_N250.data_preparation___dissolved_intersections___n250_road.value,
+        output_processed_feature=Road_N250.data_preparation___dissolved_intersections_2___n250_road.value,
         dissolve_field_list=FieldNames.road_input_fields.value,
     )
 
     arcpy.management.MultipartToSinglepart(
-        in_features=Road_N100.data_preparation___dissolved_intersections_2___n100_road.value,
-        out_feature_class=Road_N100.data_preparation___road_single_part_2___n100_road.value,
+        in_features=Road_N250.data_preparation___dissolved_intersections_2___n250_road.value,
+        out_feature_class=Road_N250.data_preparation___road_single_part_2___n250_road.value,
     )
 
 
@@ -288,43 +288,43 @@ def trim_road_details():
 def admin_boarder():
 
     custom_arcpy.select_attribute_and_make_permanent_feature(
-        input_layer=Road_N100.data_selection___admin_boundary___n100_road.value,
+        input_layer=Road_N250.data_selection___admin_boundary___n250_road.value,
         expression="OBJTYPE = 'Riksgrense'",
-        output_name=Road_N100.data_preparation___country_boarder___n100_road.value,
+        output_name=Road_N250.data_preparation___country_boarder___n250_road.value,
     )
 
     custom_arcpy.select_attribute_and_make_permanent_feature(
-        input_layer=Road_N100.ramps__generalized_ramps__n100_road.value,
+        input_layer=Road_N250.ramps__generalized_ramps__n250_road.value,
         expression=f"vegkategori  in ('{NvdbAlias.europaveg}', '{NvdbAlias.riksveg}', '{NvdbAlias.fylkesveg}', '{NvdbAlias.kommunalveg}', '{NvdbAlias.privatveg}', '{NvdbAlias.skogsveg}')",
-        output_name=Road_N100.data_preparation___car_raod___n100_road.value,
+        output_name=Road_N250.data_preparation___car_raod___n250_road.value,
     )
 
     arcpy.management.FeatureVerticesToPoints(
-        in_features=Road_N100.data_preparation___car_raod___n100_road.value,
-        out_feature_class=Road_N100.data_preparation___road_dangle___n100_road.value,
+        in_features=Road_N250.data_preparation___car_raod___n250_road.value,
+        out_feature_class=Road_N250.data_preparation___road_dangle___n250_road.value,
         point_location="DANGLE",
     )
 
     custom_arcpy.select_location_and_make_permanent_feature(
-        input_layer=Road_N100.data_preparation___road_dangle___n100_road.value,
+        input_layer=Road_N250.data_preparation___road_dangle___n250_road.value,
         overlap_type=custom_arcpy.OverlapType.WITHIN_A_DISTANCE.value,
         search_distance="1 Meters",
-        select_features=Road_N100.data_preparation___country_boarder___n100_road.value,
-        output_name=Road_N100.data_preparation___boarder_road_dangle___n100_road.value,
+        select_features=Road_N250.data_preparation___country_boarder___n250_road.value,
+        output_name=Road_N250.data_preparation___boarder_road_dangle___n250_road.value,
     )
 
 
 @timing_decorator
 def adding_fields():
     custom_arcpy.select_attribute_and_make_permanent_feature(
-        input_layer=Road_N100.data_selection___begrensningskurve___n100_road.value,
+        input_layer=Road_N250.data_selection___begrensningskurve___n250_road.value,
         expression="""objtype IN ('Innsjøkant', 'InnsjøkantRegulert', 'Kystkontur', 'ElvBekkKant')""",
-        output_name=Road_N100.data_preparation___water_feature_outline___n100_road.value,
+        output_name=Road_N250.data_preparation___water_feature_outline___n250_road.value,
     )
 
     tables_to_update = [
-        Road_N100.data_preparation___water_feature_outline___n100_road.value,
-        Road_N100.data_selection___railroad___n100_road.value,
+        Road_N250.data_preparation___water_feature_outline___n250_road.value,
+        Road_N250.data_selection___railroad___n250_road.value,
     ]
 
     for table in tables_to_update:
@@ -341,7 +341,7 @@ def adding_fields():
         )
 
     file_utilities.reclassify_value(
-        input_table=Road_N100.ramps__generalized_ramps__n100_road.value,
+        input_table=Road_N250.ramps__generalized_ramps__n250_road.value,
         target_field="VEGNUMMER",
         target_value="None",
         replace_value="-99",
@@ -349,7 +349,7 @@ def adding_fields():
     )
 
     arcpy.management.AddFields(
-        in_table=Road_N100.ramps__generalized_ramps__n100_road.value,
+        in_table=Road_N250.ramps__generalized_ramps__n250_road.value,
         field_description=FieldNames.road_added_fields.value,
     )
 
@@ -363,7 +363,7 @@ def collapse_road_detail():
         entries=[
             core_config.InputEntry.processing_input(
                 object=road,
-                path=Road_N100.ramps__generalized_ramps__n100_road.value,
+                path=Road_N250.ramps__generalized_ramps__n250_road.value,
             )
         ]
     )
@@ -373,7 +373,7 @@ def collapse_road_detail():
             core_config.OutputEntry.vector_output(
                 object=road,
                 tag=processed_road,
-                path=Road_N100.data_preparation___collapse_road_detail___n100_road.value,
+                path=Road_N250.data_preparation___collapse_road_detail___n250_road.value,
             )
         ]
     )
@@ -381,7 +381,7 @@ def collapse_road_detail():
     collapse_partition_io_config = core_config.PartitionIOConfig(
         input_config=collapse_road_input_config,
         output_config=collapse_road_output_config,
-        documentation_directory=Road_N100.collapse_road_docu___n100_road.value,
+        documentation_directory=Road_N250.collapse_road_docu___n250_road.value,
     )
 
     collapse_road_func_config = core_config.FuncMethodEntryConfig(
@@ -408,7 +408,7 @@ def collapse_road_detail():
         partition_method_inject_config=collapse_road_method_config,
         partition_iterator_run_config=collapse_partition_run_config,
         work_file_manager_config=core_config.WorkFileConfig(
-            root_file=Road_N100.data_preparation___thin_road_partition_root___n100_road.value
+            root_file=Road_N250.data_preparation___thin_road_partition_root___n250_road.value
         ),
     )
     partition_collapse_road_detail.run()
@@ -417,8 +417,8 @@ def collapse_road_detail():
 @timing_decorator
 def simplify_road():
     arcpy.cartography.SimplifyLine(
-        in_features=Road_N100.data_preparation___collapse_road_detail___n100_road.value,
-        out_feature_class=Road_N100.data_preparation___simplified_road___n100_road.value,
+        in_features=Road_N250.data_preparation___collapse_road_detail___n250_road.value,
+        out_feature_class=Road_N250.data_preparation___simplified_road___n250_road.value,
         algorithm="POINT_REMOVE",
         tolerance="2 meters",
         error_option="RESOLVE_ERRORS",
@@ -428,16 +428,16 @@ def simplify_road():
 @timing_decorator
 def thin_roads():
     run_dissolve_with_intersections(
-        input_line_feature=Road_N100.data_preparation___simplified_road___n100_road.value,
-        output_processed_feature=Road_N100.data_preparation___dissolved_intersections_3___n100_road.value,
+        input_line_feature=Road_N250.data_preparation___simplified_road___n250_road.value,
+        output_processed_feature=Road_N250.data_preparation___dissolved_intersections_3___n250_road.value,
         dissolve_field_list=FieldNames.road_all_fields(),
     )
 
     road_data_validation = GeometryValidator(
         input_features={
-            "roads": Road_N100.data_preparation___dissolved_intersections_3___n100_road.value
+            "roads": Road_N250.data_preparation___dissolved_intersections_3___n250_road.value
         },
-        output_table_path=f"{Road_N100.data_preparation___geometry_validation___n100_road.value}_3",
+        output_table_path=f"{Road_N250.data_preparation___geometry_validation___n250_road.value}_3",
     )
     road_data_validation.check_repair_sequence()
 
@@ -476,7 +476,7 @@ def thin_roads():
     """
 
     arcpy.management.CalculateField(
-        in_table=Road_N100.data_preparation___dissolved_intersections_3___n100_road.value,
+        in_table=Road_N250.data_preparation___dissolved_intersections_3___n250_road.value,
         field="hierarchy",
         expression="Reclass(!typeveg!, !vegkategori!, !vegklasse!, !er_kryssningspunkt!)",
         expression_type="PYTHON3",
@@ -484,17 +484,17 @@ def thin_roads():
     )
 
     calculate_boarder_road_hierarchy(
-        input_road=Road_N100.data_preparation___dissolved_intersections_3___n100_road.value,
-        root_file=Road_N100.data_preparation___root_calculate_boarder_hierarchy___n100_road.value,
-        input_boarder_dagnle=Road_N100.data_preparation___boarder_road_dangle___n100_road.value,
-        output_road=Road_N100.data_preparation___calculated_boarder_hierarchy___n100_road.value,
+        input_road=Road_N250.data_preparation___dissolved_intersections_3___n250_road.value,
+        root_file=Road_N250.data_preparation___root_calculate_boarder_hierarchy___n250_road.value,
+        input_boarder_dagnle=Road_N250.data_preparation___boarder_road_dangle___n250_road.value,
+        output_road=Road_N250.data_preparation___calculated_boarder_hierarchy___n250_road.value,
     )
 
     run_thin_roads(
-        input_feature=Road_N100.data_preparation___calculated_boarder_hierarchy___n100_road.value,
-        partition_root_file=Road_N100.data_preparation___thin_road_partition_root___n100_road.value,
-        output_feature=Road_N100.data_preparation___thin_road_output___n100_road.value,
-        docu_path=Road_N100.thin_road_docu___n100_road.value,
+        input_feature=Road_N250.data_preparation___calculated_boarder_hierarchy___n250_road.value,
+        partition_root_file=Road_N250.data_preparation___thin_road_partition_root___n250_road.value,
+        output_feature=Road_N250.data_preparation___thin_road_output___n250_road.value,
+        docu_path=Road_N250.thin_road_docu___n250_road.value,
         min_length_m=1400,
         feature_count=OBJECT_LIMIT,
     )
@@ -503,15 +503,15 @@ def thin_roads():
 @timing_decorator
 def thin_sti_and_forest_roads():
     run_dissolve_with_intersections(
-        input_line_feature=Road_N100.data_preparation___thin_road_output___n100_road.value,
-        output_processed_feature=Road_N100.data_preparation___dissolved_intersections_4___n100_road.value,
+        input_line_feature=Road_N250.data_preparation___thin_road_output___n250_road.value,
+        output_processed_feature=Road_N250.data_preparation___dissolved_intersections_4___n250_road.value,
         dissolve_field_list=FieldNames.road_all_fields(),
     )
     road_data_validation = GeometryValidator(
         input_features={
-            "roads": Road_N100.data_preparation___dissolved_intersections_4___n100_road.value
+            "roads": Road_N250.data_preparation___dissolved_intersections_4___n250_road.value
         },
-        output_table_path=f"{Road_N100.data_preparation___geometry_validation___n100_road.value}_2",
+        output_table_path=f"{Road_N250.data_preparation___geometry_validation___n250_road.value}_2",
     )
     road_data_validation.check_repair_sequence()
 
@@ -533,7 +533,7 @@ def thin_sti_and_forest_roads():
             return 4
         """
     arcpy.management.CalculateField(
-        in_table=Road_N100.data_preparation___dissolved_intersections_4___n100_road.value,
+        in_table=Road_N250.data_preparation___dissolved_intersections_4___n250_road.value,
         field="hierarchy",
         expression="Reclass(!vegkategori!, !typeveg!)",
         expression_type="PYTHON3",
@@ -541,10 +541,10 @@ def thin_sti_and_forest_roads():
     )
 
     run_thin_roads(
-        input_feature=Road_N100.data_preparation___dissolved_intersections_4___n100_road.value,
-        partition_root_file=Road_N100.data_preparation___thin_sti_partition_root___n100_road.value,
-        output_feature=Road_N100.data_preparation___thin_road_sti_output___n100_road.value,
-        docu_path=Road_N100.thin_sti_docu___n100_road.value,
+        input_feature=Road_N250.data_preparation___dissolved_intersections_4___n250_road.value,
+        partition_root_file=Road_N250.data_preparation___thin_sti_partition_root___n250_road.value,
+        output_feature=Road_N250.data_preparation___thin_road_sti_output___n250_road.value,
+        docu_path=Road_N250.thin_sti_docu___n250_road.value,
         min_length_m=1800,
         feature_count=OBJECT_LIMIT,
     )
@@ -553,7 +553,7 @@ def thin_sti_and_forest_roads():
 @timing_decorator
 def merge_divided_roads():
     file_utilities.reclassify_value(
-        input_table=Road_N100.data_preparation___thin_road_sti_output___n100_road.value,
+        input_table=Road_N250.data_preparation___thin_road_sti_output___n250_road.value,
         target_field="merge_divided_id",
         target_value="-99",
         replace_value="0",
@@ -575,7 +575,7 @@ def merge_divided_roads():
         """
 
         arcpy.management.CalculateField(
-            in_table=Road_N100.ramps__generalized_ramps__n100_road.value,
+            in_table=Road_N250.ramps__generalized_ramps__n250_road.value,
             field="character",
             expression="Reclass(!TYPEVEG!)",
             expression_type="PYTHON3",
@@ -583,11 +583,11 @@ def merge_divided_roads():
         )
 
     arcpy.cartography.MergeDividedRoads(
-        in_features=Road_N100.data_preparation___thin_road_sti_output___n100_road.value,
+        in_features=Road_N250.data_preparation___thin_road_sti_output___n250_road.value,
         merge_field="merge_divided_id",
         merge_distance="150 Meters",
-        out_features=Road_N100.data_preparation___merge_divided_roads___n100_road.value,
-        out_displacement_features=Road_N100.data_preparation___merge_divided_roads_displacement_feature___n100_road.value,
+        out_features=Road_N250.data_preparation___merge_divided_roads___n250_road.value,
+        out_displacement_features=Road_N250.data_preparation___merge_divided_roads_displacement_feature___n250_road.value,
         character_field="character",
     )
 
@@ -595,15 +595,15 @@ def merge_divided_roads():
 @timing_decorator
 def smooth_line():
     arcpy.cartography.SmoothLine(
-        in_features=Road_N100.data_preparation___merge_divided_roads___n100_road.value,
-        out_feature_class=Road_N100.data_preparation___smooth_road___n100_road.value,
+        in_features=Road_N250.data_preparation___merge_divided_roads___n250_road.value,
+        out_feature_class=Road_N250.data_preparation___smooth_road___n250_road.value,
         algorithm="PAEK",
         tolerance="300 meters",
         error_option="RESOLVE_ERRORS",
         in_barriers=[
-            Road_N100.data_preparation___water_feature_outline___n100_road.value,
-            Road_N100.data_selection___railroad___n100_road.value,
-            Road_N100.data_preparation___country_boarder___n100_road.value,
+            Road_N250.data_preparation___water_feature_outline___n250_road.value,
+            Road_N250.data_selection___railroad___n250_road.value,
+            Road_N250.data_preparation___country_boarder___n250_road.value,
         ],
     )
 
@@ -611,30 +611,30 @@ def smooth_line():
 @timing_decorator
 def pre_resolve_road_conflicts():
     run_dissolve_with_intersections(
-        input_line_feature=Road_N100.road_triangles_output.value,
-        output_processed_feature=Road_N100.data_preparation___dissolved_intersections_5___n100_road.value,
+        input_line_feature=Road_N250.road_triangles_output.value,
+        output_processed_feature=Road_N250.data_preparation___dissolved_intersections_5___n250_road.value,
         dissolve_field_list=FieldNames.road_all_fields(),
     )
     arcpy.management.MultipartToSinglepart(
-        in_features=Road_N100.data_preparation___dissolved_intersections_5___n100_road.value,
-        out_feature_class=Road_N100.data_preparation___road_single_part_3___n100_road.value,
+        in_features=Road_N250.data_preparation___dissolved_intersections_5___n250_road.value,
+        out_feature_class=Road_N250.data_preparation___road_single_part_3___n250_road.value,
     )
     arcpy.management.MultipartToSinglepart(
-        in_features=Road_N100.data_selection___railroad___n100_road.value,
-        out_feature_class=Road_N100.data_preparation___railroad_single_part___n100_road.value,
+        in_features=Road_N250.data_selection___railroad___n250_road.value,
+        out_feature_class=Road_N250.data_preparation___railroad_single_part___n250_road.value,
     )
     arcpy.management.MultipartToSinglepart(
-        in_features=Road_N100.data_preparation___water_feature_outline___n100_road.value,
-        out_feature_class=Road_N100.data_preparation___water_feature_outline_single_part___n100_road.value,
+        in_features=Road_N250.data_preparation___water_feature_outline___n250_road.value,
+        out_feature_class=Road_N250.data_preparation___water_feature_outline_single_part___n250_road.value,
     )
 
     road_data_validation = GeometryValidator(
         input_features={
-            "roads": Road_N100.data_preparation___road_single_part_3___n100_road.value,
-            "railroad": Road_N100.data_preparation___railroad_single_part___n100_road.value,
-            "begrensningskurve": Road_N100.data_preparation___water_feature_outline_single_part___n100_road.value,
+            "roads": Road_N250.data_preparation___road_single_part_3___n250_road.value,
+            "railroad": Road_N250.data_preparation___railroad_single_part___n250_road.value,
+            "begrensningskurve": Road_N250.data_preparation___water_feature_outline_single_part___n250_road.value,
         },
-        output_table_path=f"{Road_N100.data_preparation___geometry_validation___n100_road.value}_6",
+        output_table_path=f"{Road_N250.data_preparation___geometry_validation___n250_road.value}_6",
     )
     road_data_validation.check_repair_sequence()
 
@@ -657,7 +657,7 @@ def resolve_road_conflicts():
     """
 
     arcpy.management.CalculateField(
-        in_table=Road_N100.data_preparation___road_single_part_3___n100_road.value,
+        in_table=Road_N250.data_preparation___road_single_part_3___n250_road.value,
         field="hierarchy",
         expression="Reclass(!vegklasse!, !typeveg!)",
         expression_type="PYTHON3",
@@ -665,10 +665,10 @@ def resolve_road_conflicts():
     )
 
     calculate_boarder_road_hierarchy(
-        input_road=Road_N100.data_preparation___road_single_part_3___n100_road.value,
-        root_file=Road_N100.data_preparation___root_calculate_boarder_hierarchy_2___n100_road.value,
-        input_boarder_dagnle=Road_N100.data_preparation___boarder_road_dangle___n100_road.value,
-        output_road=Road_N100.data_preparation___calculated_boarder_hierarchy_2___n100_road.value,
+        input_road=Road_N250.data_preparation___road_single_part_3___n250_road.value,
+        root_file=Road_N250.data_preparation___root_calculate_boarder_hierarchy_2___n250_road.value,
+        input_boarder_dagnle=Road_N250.data_preparation___boarder_road_dangle___n250_road.value,
+        output_road=Road_N250.data_preparation___calculated_boarder_hierarchy_2___n250_road.value,
     )
 
     # --- Aliases ---------------------------------------------------------------
@@ -682,15 +682,15 @@ def resolve_road_conflicts():
         entries=[
             core_config.InputEntry.processing_input(
                 object=road,
-                path=Road_N100.data_preparation___calculated_boarder_hierarchy_2___n100_road.value,
+                path=Road_N250.data_preparation___calculated_boarder_hierarchy_2___n250_road.value,
             ),
             core_config.InputEntry.context_input(
                 object=railroad,
-                path=Road_N100.data_preparation___railroad_single_part___n100_road.value,
+                path=Road_N250.data_preparation___railroad_single_part___n250_road.value,
             ),
             core_config.InputEntry.context_input(
                 object=begrensningskurve,
-                path=Road_N100.data_preparation___water_feature_outline_single_part___n100_road.value,
+                path=Road_N250.data_preparation___water_feature_outline_single_part___n250_road.value,
             ),
         ]
     )
@@ -700,12 +700,12 @@ def resolve_road_conflicts():
             core_config.OutputEntry.vector_output(
                 object=road,
                 tag="resolve_road_conflicts",
-                path=Road_N100.data_preparation___resolve_road_conflicts___n100_road.value,
+                path=Road_N250.data_preparation___resolve_road_conflicts___n250_road.value,
             ),
             core_config.OutputEntry.vector_output(
                 object=displacement,
                 tag="displacement_feature",
-                path=Road_N100.data_preparation___resolve_road_conflicts_displacement_feature___n100_road.value,
+                path=Road_N250.data_preparation___resolve_road_conflicts_displacement_feature___n250_road.value,
             ),
         ]
     )
@@ -713,7 +713,7 @@ def resolve_road_conflicts():
     rrc_io_config = core_config.PartitionIOConfig(
         input_config=rrc_input_config,
         output_config=rrc_output_config,
-        documentation_directory=Road_N100.resolve_road_docu___n100_road.value,
+        documentation_directory=Road_N250.resolve_road_docu___n250_road.value,
     )
 
     # --- Symbology specs -------------------------------------------------------
@@ -721,21 +721,21 @@ def resolve_road_conflicts():
         logic_config.SymbologyLayerSpec(
             unique_name=road,
             input_feature=core_config.InjectIO(object=road, tag="input"),
-            input_lyrx=SymbologyN100.samferdsel.value,
+            input_lyrx=SymbologyN250.samferdsel.value,
             grouped_lyrx=True,
-            target_layer_name="N100_Samferdsel_senterlinje_veg_bru_L2",
+            target_layer_name="N250K_VegSti_L2_maske_sort",
         ),
         logic_config.SymbologyLayerSpec(
             unique_name=railroad,
             input_feature=core_config.InjectIO(object=railroad, tag="input"),
-            input_lyrx=SymbologyN100.samferdsel.value,
+            input_lyrx=SymbologyN250.samferdsel.value,
             grouped_lyrx=True,
-            target_layer_name="N100_Samferdsel_senterlinje_jernbane_terreng_sort_maske",
+            target_layer_name="N250K_Bane_Terreng_maske_sort",
         ),
         logic_config.SymbologyLayerSpec(
             unique_name=begrensningskurve,
             input_feature=core_config.InjectIO(object=begrensningskurve, tag="input"),
-            input_lyrx=SymbologyN100.begrensnings_kurve_line.value,
+            input_lyrx=SymbologyN250.begrensnings_kurve_line.value,
             grouped_lyrx=False,
         ),
     ]
@@ -744,7 +744,7 @@ def resolve_road_conflicts():
     rrc_init = logic_config.RrcInitKwargs(
         input_data_structure=rrc_specs,
         work_file_manager_config=core_config.WorkFileConfig(
-            root_file=Road_N100.data_preparation___resolve_road_root___n100_road.value
+            root_file=Road_N250.data_preparation___resolve_road_root___n250_road.value
         ),
         primary_road_unique_name=road,
         output_road_feature=core_config.InjectIO(
@@ -753,7 +753,7 @@ def resolve_road_conflicts():
         output_displacement_feature=core_config.InjectIO(
             object=displacement, tag="displacement_feature"
         ),
-        map_scale="100000",
+        map_scale="250000",
         hierarchy_field="hierarchy",
     )
 
@@ -774,7 +774,7 @@ def resolve_road_conflicts():
     )
 
     rrc_partition_wfm = core_config.WorkFileConfig(
-        root_file=Road_N100.data_preparation___resolve_road_partition_root___n100_road.value,
+        root_file=Road_N250.data_preparation___resolve_road_partition_root___n250_road.value,
         keep_files=True,
     )
 
@@ -792,18 +792,18 @@ def resolve_road_conflicts():
 def final_output():
 
     custom_arcpy.select_attribute_and_make_permanent_feature(
-        input_layer=Road_N100.dam__cleaned_roads__n100_road.value,
+        input_layer=Road_N250.dam__cleaned_roads__n250_road.value,
         expression="typeveg IN ('bilferje', 'passasjerferje')",
-        output_name=Road_N100.data_preparation___road_final_output___n100_road.value,
+        output_name=Road_N250.data_preparation___road_final_output___n250_road.value,
         inverted=True,
     )
 
 
 def final_ramp_points():
     f = MovePointsToCrossings(
-        Road_N100.data_preparation___road_final_output___n100_road.value,
-        Road_N100.ramps__ramp_points_moved__n100_road.value,
-        Road_N100.ramps__ramp_points_moved_2__n100_road.value,
+        Road_N250.data_preparation___road_final_output___n250_road.value,
+        Road_N250.ramps__ramp_points_moved__n250_road.value,
+        Road_N250.ramps__ramp_points_moved_2__n250_road.value,
         delete_points_not_on_crossings=True,
         with_ramps=False,
     )
