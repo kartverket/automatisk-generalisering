@@ -72,9 +72,6 @@ def main():
     generalize_road_triangles()
     pre_resolve_road_conflicts()
     resolve_road_conflicts()
-    # ==============
-    # INN HER
-    # ==============
     generalize_dam()
     final_output()
     final_ramp_points()
