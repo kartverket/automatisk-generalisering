@@ -1,0 +1,505 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../../../">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>generalization.n250.road.major_road_crossings &mdash; Automatisk Generalisering 0.0.1 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../../../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../../../../_static/css/theme.css?v=e59714d7" />
+      <link rel="stylesheet" type="text/css" href="../../../../_static/custom.css" />
+
+  
+      <script src="../../../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../../../_static/documentation_options.js?v=d45e8c67"></script>
+      <script src="../../../../_static/doctools.js?v=9bcbadda"></script>
+      <script src="../../../../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="../../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../../index.html" class="icon icon-home">
+            Automatisk Generalisering
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../../generated_docs/custom_tools.html">custom_tools package</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../generated_docs/env_setup.html">env_setup package</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../generated_docs/file_manager.html">file_manager package</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../generated_docs/generalization.n100.building.html">generalization.n100.building package</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../generated_docs/input_data.html">input_data package</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../generated_docs/modules.html">automatisk-generalisering</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../../index.html">Automatisk Generalisering</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../../../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">generalization.n250.road.major_road_crossings</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for generalization.n250.road.major_road_crossings</h1><div class="highlight"><pre>
+<span></span><span class="c1"># Importing packages</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">arcpy</span>
+
+<span class="n">arcpy</span><span class="o">.</span><span class="n">env</span><span class="o">.</span><span class="n">overwriteOutput</span> <span class="o">=</span> <span class="kc">True</span>
+
+<span class="c1"># Importing custom modules</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">file_manager.n250.file_manager_roads</span><span class="w"> </span><span class="kn">import</span> <span class="n">Road_N250</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">custom_tools.decorators.timing_decorator</span><span class="w"> </span><span class="kn">import</span> <span class="n">timing_decorator</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">custom_tools.general_tools</span><span class="w"> </span><span class="kn">import</span> <span class="n">custom_arcpy</span>
+
+<span class="n">data_files</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="c1"># Stores all the relevant file paths to the geodata used in this Python file</span>
+    <span class="s2">&quot;input&quot;</span><span class="p">:</span> <span class="n">Road_N250</span><span class="o">.</span><span class="n">data_selection___nvdb_roads___n250_road</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
+    <span class="s2">&quot;road_u&quot;</span><span class="p">:</span> <span class="n">Road_N250</span><span class="o">.</span><span class="n">major_road_crossing__road_u__n250_road</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
+    <span class="s2">&quot;buffer_u&quot;</span><span class="p">:</span> <span class="n">Road_N250</span><span class="o">.</span><span class="n">major_road_crossing__road_u_buffer__n250_road</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
+    <span class="s2">&quot;buffer_u_shrunked&quot;</span><span class="p">:</span> <span class="n">Road_N250</span><span class="o">.</span><span class="n">major_road_crossing__road_u_buffer_shrunked__n250_road</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
+    <span class="s2">&quot;road_l&quot;</span><span class="p">:</span> <span class="n">Road_N250</span><span class="o">.</span><span class="n">major_road_crossing__road_l__n250_road</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
+    <span class="s2">&quot;buffer_l&quot;</span><span class="p">:</span> <span class="n">Road_N250</span><span class="o">.</span><span class="n">major_road_crossing__road_l_buffer__n250_road</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
+    <span class="s2">&quot;buffer_l_shrunked&quot;</span><span class="p">:</span> <span class="n">Road_N250</span><span class="o">.</span><span class="n">major_road_crossing__road_l_buffer_shrunked__n250_road</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
+    <span class="s2">&quot;major_road&quot;</span><span class="p">:</span> <span class="n">Road_N250</span><span class="o">.</span><span class="n">major_road_crossing__ER__n250_road</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
+    <span class="s2">&quot;major_road_bridge&quot;</span><span class="p">:</span> <span class="n">Road_N250</span><span class="o">.</span><span class="n">major_road_crossing__ER_bridge__n250_road</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
+    <span class="s2">&quot;major_road_buffer&quot;</span><span class="p">:</span> <span class="n">Road_N250</span><span class="o">.</span><span class="n">major_road_crossing__ER_bridge_buffer__n250_road</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
+    <span class="s2">&quot;major_road_shrunked&quot;</span><span class="p">:</span> <span class="n">Road_N250</span><span class="o">.</span><span class="n">major_road_crossing__ER_bridge_shrunked__n250_road</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
+    <span class="s2">&quot;road_t&quot;</span><span class="p">:</span> <span class="n">Road_N250</span><span class="o">.</span><span class="n">major_road_crossing__road_t__n250_road</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
+    <span class="s2">&quot;major_road_t&quot;</span><span class="p">:</span> <span class="n">Road_N250</span><span class="o">.</span><span class="n">major_road_crossing__ER_t__n250_road</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
+    <span class="s2">&quot;bridge_cross_ER&quot;</span><span class="p">:</span> <span class="n">Road_N250</span><span class="o">.</span><span class="n">major_road_crossing__bridge_cross_ER__n250_road</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
+    <span class="s2">&quot;underpass_cross_ER&quot;</span><span class="p">:</span> <span class="n">Road_N250</span><span class="o">.</span><span class="n">major_road_crossing__underpass_cross_ER__n250_road</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
+    <span class="s2">&quot;surface_under_ER&quot;</span><span class="p">:</span> <span class="n">Road_N250</span><span class="o">.</span><span class="n">major_road_crossing__surface_under_ER__n250_road</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
+    <span class="s2">&quot;keep_bru&quot;</span><span class="p">:</span> <span class="n">Road_N250</span><span class="o">.</span><span class="n">major_road_crossing__keep_bru_ERFKP__n250_road</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
+    <span class="s2">&quot;keep_underpass&quot;</span><span class="p">:</span> <span class="n">Road_N250</span><span class="o">.</span><span class="n">major_road_crossing__keep_underpass_ERFKP__n250_road</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
+    <span class="s2">&quot;keep_surface&quot;</span><span class="p">:</span> <span class="n">Road_N250</span><span class="o">.</span><span class="n">major_road_crossing__keep_surface_ERFKP__n250_road</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
+    <span class="s2">&quot;merged_keep&quot;</span><span class="p">:</span> <span class="n">Road_N250</span><span class="o">.</span><span class="n">major_road_crossing__merged_keep__n250_road</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
+    <span class="s2">&quot;output&quot;</span><span class="p">:</span> <span class="n">Road_N250</span><span class="o">.</span><span class="n">major_road_crossing__output__n250_road</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
+<span class="p">}</span>
+
+
+<div class="viewcode-block" id="categories_major_road_crossings">
+<a class="viewcode-back" href="../../../../generated_docs/generalization.n250.road.html#generalization.n250.road.major_road_crossings.categories_major_road_crossings">[docs]</a>
+<span class="nd">@timing_decorator</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">categories_major_road_crossings</span><span class="p">():</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Creates major road crossings feature classes and updates the attribute &#39;er_kryssningspunkt&#39;</span>
+<span class="sd">    in the input road feature class for all roads that cross major roads (E and R).</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="nb">print</span><span class="p">()</span>
+    <span class="n">shrunked_underpass</span><span class="p">()</span>
+    <span class="n">shrunked_bridge</span><span class="p">()</span>
+    <span class="n">shrunked_ER_bridge</span><span class="p">()</span>
+    <span class="n">surface_road</span><span class="p">()</span>
+    <span class="n">surface_ER</span><span class="p">()</span>
+    <span class="n">cross</span><span class="p">()</span>
+    <span class="n">keep</span><span class="p">()</span>
+    <span class="n">update_crossing_point_attribute</span><span class="p">()</span>
+
+    <span class="c1"># Deletes all the intermediate files created during the process</span>
+    <span class="n">delete_intermediate_files</span><span class="p">()</span>
+    <span class="nb">print</span><span class="p">()</span></div>
+
+
+
+<span class="c1">##################</span>
+<span class="c1"># Help functions</span>
+<span class="c1">##################</span>
+
+
+<div class="viewcode-block" id="select_intersect_and_copy">
+<a class="viewcode-back" href="../../../../generated_docs/generalization.n250.road.html#generalization.n250.road.major_road_crossings.select_intersect_and_copy">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">select_intersect_and_copy</span><span class="p">(</span>
+    <span class="n">in_fc</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">select_fc</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">out_fc</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">lyr_name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;tmp_lyr&quot;</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Creates a feature layer from &#39;in_fc&#39;, selects all features that intersect with &#39;select_fc&#39;, and</span>
+<span class="sd">    copies the selected features to &#39;out_fc&#39;.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        in_fc (str): Input feature class to create a feature layer from</span>
+<span class="sd">        select_fc (str): Feature class to select intersecting features from &#39;in_fc&#39;</span>
+<span class="sd">        out_fc (str): Output feature class to store the selected features</span>
+<span class="sd">        lyr_name (str): Name of the temporary feature layer. Default is &quot;tmp_lyr&quot;</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">arcpy</span><span class="o">.</span><span class="n">management</span><span class="o">.</span><span class="n">MakeFeatureLayer</span><span class="p">(</span><span class="n">in_features</span><span class="o">=</span><span class="n">in_fc</span><span class="p">,</span> <span class="n">out_layer</span><span class="o">=</span><span class="n">lyr_name</span><span class="p">)</span>
+    <span class="n">arcpy</span><span class="o">.</span><span class="n">management</span><span class="o">.</span><span class="n">SelectLayerByLocation</span><span class="p">(</span>
+        <span class="n">in_layer</span><span class="o">=</span><span class="n">lyr_name</span><span class="p">,</span>
+        <span class="n">overlap_type</span><span class="o">=</span><span class="s2">&quot;INTERSECT&quot;</span><span class="p">,</span>
+        <span class="n">select_features</span><span class="o">=</span><span class="n">select_fc</span><span class="p">,</span>
+        <span class="n">selection_type</span><span class="o">=</span><span class="s2">&quot;NEW_SELECTION&quot;</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="n">arcpy</span><span class="o">.</span><span class="n">management</span><span class="o">.</span><span class="n">CopyFeatures</span><span class="p">(</span><span class="n">in_features</span><span class="o">=</span><span class="n">lyr_name</span><span class="p">,</span> <span class="n">out_feature_class</span><span class="o">=</span><span class="n">out_fc</span><span class="p">)</span>
+    <span class="n">arcpy</span><span class="o">.</span><span class="n">management</span><span class="o">.</span><span class="n">Delete</span><span class="p">(</span><span class="n">lyr_name</span><span class="p">)</span>  <span class="c1"># Cleans up the temporary layer</span></div>
+
+
+
+<span class="c1">##################</span>
+<span class="c1"># Main functions</span>
+<span class="c1">##################</span>
+
+
+<div class="viewcode-block" id="shrunked_underpass">
+<a class="viewcode-back" href="../../../../generated_docs/generalization.n250.road.html#generalization.n250.road.major_road_crossings.shrunked_underpass">[docs]</a>
+<span class="nd">@timing_decorator</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">shrunked_underpass</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Creates shrunked buffers for roads with medium &#39;U&#39; (underpass).</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">road_fc</span> <span class="o">=</span> <span class="n">data_files</span><span class="p">[</span><span class="s2">&quot;input&quot;</span><span class="p">]</span>
+    <span class="n">road_u_fc</span> <span class="o">=</span> <span class="n">data_files</span><span class="p">[</span><span class="s2">&quot;road_u&quot;</span><span class="p">]</span>
+    <span class="n">buffer_fc</span> <span class="o">=</span> <span class="n">data_files</span><span class="p">[</span><span class="s2">&quot;buffer_u&quot;</span><span class="p">]</span>
+    <span class="n">shrunked_fc</span> <span class="o">=</span> <span class="n">data_files</span><span class="p">[</span><span class="s2">&quot;buffer_u_shrunked&quot;</span><span class="p">]</span>
+
+    <span class="n">custom_arcpy</span><span class="o">.</span><span class="n">select_attribute_and_make_permanent_feature</span><span class="p">(</span>
+        <span class="n">input_layer</span><span class="o">=</span><span class="n">road_fc</span><span class="p">,</span>
+        <span class="n">expression</span><span class="o">=</span><span class="s2">&quot;medium=&#39;U&#39;&quot;</span><span class="p">,</span>
+        <span class="n">output_name</span><span class="o">=</span><span class="n">road_u_fc</span><span class="p">,</span>
+        <span class="n">selection_type</span><span class="o">=</span><span class="s2">&quot;NEW_SELECTION&quot;</span><span class="p">,</span>
+    <span class="p">)</span>
+
+    <span class="n">arcpy</span><span class="o">.</span><span class="n">analysis</span><span class="o">.</span><span class="n">Buffer</span><span class="p">(</span>
+        <span class="n">in_features</span><span class="o">=</span><span class="n">road_u_fc</span><span class="p">,</span>
+        <span class="n">out_feature_class</span><span class="o">=</span><span class="n">buffer_fc</span><span class="p">,</span>
+        <span class="n">buffer_distance_or_field</span><span class="o">=</span><span class="s2">&quot;1 meters&quot;</span><span class="p">,</span>
+        <span class="n">line_end_type</span><span class="o">=</span><span class="s2">&quot;FLAT&quot;</span><span class="p">,</span>
+    <span class="p">)</span>
+
+    <span class="n">arcpy</span><span class="o">.</span><span class="n">analysis</span><span class="o">.</span><span class="n">Buffer</span><span class="p">(</span>
+        <span class="n">in_features</span><span class="o">=</span><span class="n">buffer_fc</span><span class="p">,</span>
+        <span class="n">out_feature_class</span><span class="o">=</span><span class="n">shrunked_fc</span><span class="p">,</span>
+        <span class="n">buffer_distance_or_field</span><span class="o">=</span><span class="s2">&quot;-50 centimeters&quot;</span><span class="p">,</span>
+    <span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="shrunked_bridge">
+<a class="viewcode-back" href="../../../../generated_docs/generalization.n250.road.html#generalization.n250.road.major_road_crossings.shrunked_bridge">[docs]</a>
+<span class="nd">@timing_decorator</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">shrunked_bridge</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Creates shrunked buffers for roads with medium &#39;L&#39; (bridge).</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">road_fc</span> <span class="o">=</span> <span class="n">data_files</span><span class="p">[</span><span class="s2">&quot;input&quot;</span><span class="p">]</span>
+    <span class="n">road_l_fc</span> <span class="o">=</span> <span class="n">data_files</span><span class="p">[</span><span class="s2">&quot;road_l&quot;</span><span class="p">]</span>
+    <span class="n">buffer_fc</span> <span class="o">=</span> <span class="n">data_files</span><span class="p">[</span><span class="s2">&quot;buffer_l&quot;</span><span class="p">]</span>
+    <span class="n">shrunked_fc</span> <span class="o">=</span> <span class="n">data_files</span><span class="p">[</span><span class="s2">&quot;buffer_l_shrunked&quot;</span><span class="p">]</span>
+
+    <span class="n">custom_arcpy</span><span class="o">.</span><span class="n">select_attribute_and_make_permanent_feature</span><span class="p">(</span>
+        <span class="n">input_layer</span><span class="o">=</span><span class="n">road_fc</span><span class="p">,</span>
+        <span class="n">expression</span><span class="o">=</span><span class="s2">&quot;medium=&#39;L&#39;&quot;</span><span class="p">,</span>
+        <span class="n">output_name</span><span class="o">=</span><span class="n">road_l_fc</span><span class="p">,</span>
+        <span class="n">selection_type</span><span class="o">=</span><span class="s2">&quot;NEW_SELECTION&quot;</span><span class="p">,</span>
+    <span class="p">)</span>
+
+    <span class="n">arcpy</span><span class="o">.</span><span class="n">analysis</span><span class="o">.</span><span class="n">Buffer</span><span class="p">(</span>
+        <span class="n">in_features</span><span class="o">=</span><span class="n">road_l_fc</span><span class="p">,</span>
+        <span class="n">out_feature_class</span><span class="o">=</span><span class="n">buffer_fc</span><span class="p">,</span>
+        <span class="n">buffer_distance_or_field</span><span class="o">=</span><span class="s2">&quot;1 meters&quot;</span><span class="p">,</span>
+        <span class="n">line_end_type</span><span class="o">=</span><span class="s2">&quot;FLAT&quot;</span><span class="p">,</span>
+    <span class="p">)</span>
+
+    <span class="n">arcpy</span><span class="o">.</span><span class="n">analysis</span><span class="o">.</span><span class="n">Buffer</span><span class="p">(</span>
+        <span class="n">in_features</span><span class="o">=</span><span class="n">buffer_fc</span><span class="p">,</span>
+        <span class="n">out_feature_class</span><span class="o">=</span><span class="n">shrunked_fc</span><span class="p">,</span>
+        <span class="n">buffer_distance_or_field</span><span class="o">=</span><span class="s2">&quot;-50 centimeters&quot;</span><span class="p">,</span>
+    <span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="shrunked_ER_bridge">
+<a class="viewcode-back" href="../../../../generated_docs/generalization.n250.road.html#generalization.n250.road.major_road_crossings.shrunked_ER_bridge">[docs]</a>
+<span class="nd">@timing_decorator</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">shrunked_ER_bridge</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Creates shrunked buffers for major roads with medium &#39;L&#39; (bridge).</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">road_fc</span> <span class="o">=</span> <span class="n">data_files</span><span class="p">[</span><span class="s2">&quot;input&quot;</span><span class="p">]</span>
+    <span class="n">main_road_fc</span> <span class="o">=</span> <span class="n">data_files</span><span class="p">[</span><span class="s2">&quot;major_road&quot;</span><span class="p">]</span>
+    <span class="n">main_road_bridge_fc</span> <span class="o">=</span> <span class="n">data_files</span><span class="p">[</span><span class="s2">&quot;major_road_bridge&quot;</span><span class="p">]</span>
+    <span class="n">main_road_buffer_fc</span> <span class="o">=</span> <span class="n">data_files</span><span class="p">[</span><span class="s2">&quot;major_road_buffer&quot;</span><span class="p">]</span>
+    <span class="n">main_road_shrunked_fc</span> <span class="o">=</span> <span class="n">data_files</span><span class="p">[</span><span class="s2">&quot;major_road_shrunked&quot;</span><span class="p">]</span>
+
+    <span class="n">custom_arcpy</span><span class="o">.</span><span class="n">select_attribute_and_make_permanent_feature</span><span class="p">(</span>
+        <span class="n">input_layer</span><span class="o">=</span><span class="n">road_fc</span><span class="p">,</span>
+        <span class="n">expression</span><span class="o">=</span><span class="s2">&quot;vegkategori IN (&#39;E&#39;, &#39;R&#39;)&quot;</span><span class="p">,</span>
+        <span class="n">output_name</span><span class="o">=</span><span class="n">main_road_fc</span><span class="p">,</span>
+        <span class="n">selection_type</span><span class="o">=</span><span class="s2">&quot;NEW_SELECTION&quot;</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="n">custom_arcpy</span><span class="o">.</span><span class="n">select_attribute_and_make_permanent_feature</span><span class="p">(</span>
+        <span class="n">input_layer</span><span class="o">=</span><span class="n">main_road_fc</span><span class="p">,</span>
+        <span class="n">expression</span><span class="o">=</span><span class="s2">&quot;medium=&#39;L&#39;&quot;</span><span class="p">,</span>
+        <span class="n">output_name</span><span class="o">=</span><span class="n">main_road_bridge_fc</span><span class="p">,</span>
+        <span class="n">selection_type</span><span class="o">=</span><span class="s2">&quot;NEW_SELECTION&quot;</span><span class="p">,</span>
+    <span class="p">)</span>
+
+    <span class="n">arcpy</span><span class="o">.</span><span class="n">analysis</span><span class="o">.</span><span class="n">Buffer</span><span class="p">(</span>
+        <span class="n">in_features</span><span class="o">=</span><span class="n">main_road_bridge_fc</span><span class="p">,</span>
+        <span class="n">out_feature_class</span><span class="o">=</span><span class="n">main_road_buffer_fc</span><span class="p">,</span>
+        <span class="n">buffer_distance_or_field</span><span class="o">=</span><span class="s2">&quot;1 meters&quot;</span><span class="p">,</span>
+        <span class="n">line_end_type</span><span class="o">=</span><span class="s2">&quot;FLAT&quot;</span><span class="p">,</span>
+    <span class="p">)</span>
+
+    <span class="n">arcpy</span><span class="o">.</span><span class="n">analysis</span><span class="o">.</span><span class="n">Buffer</span><span class="p">(</span>
+        <span class="n">in_features</span><span class="o">=</span><span class="n">main_road_buffer_fc</span><span class="p">,</span>
+        <span class="n">out_feature_class</span><span class="o">=</span><span class="n">main_road_shrunked_fc</span><span class="p">,</span>
+        <span class="n">buffer_distance_or_field</span><span class="o">=</span><span class="s2">&quot;-50 centimeters&quot;</span><span class="p">,</span>
+    <span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="surface_road">
+<a class="viewcode-back" href="../../../../generated_docs/generalization.n250.road.html#generalization.n250.road.major_road_crossings.surface_road">[docs]</a>
+<span class="nd">@timing_decorator</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">surface_road</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Creates feature class for roads with medium &#39;T&#39; (surface road).</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">road_fc</span> <span class="o">=</span> <span class="n">data_files</span><span class="p">[</span><span class="s2">&quot;input&quot;</span><span class="p">]</span>
+    <span class="n">road_t_fc</span> <span class="o">=</span> <span class="n">data_files</span><span class="p">[</span><span class="s2">&quot;road_t&quot;</span><span class="p">]</span>
+
+    <span class="n">custom_arcpy</span><span class="o">.</span><span class="n">select_attribute_and_make_permanent_feature</span><span class="p">(</span>
+        <span class="n">input_layer</span><span class="o">=</span><span class="n">road_fc</span><span class="p">,</span>
+        <span class="n">expression</span><span class="o">=</span><span class="s2">&quot;medium=&#39;T&#39;&quot;</span><span class="p">,</span>
+        <span class="n">output_name</span><span class="o">=</span><span class="n">road_t_fc</span><span class="p">,</span>
+        <span class="n">selection_type</span><span class="o">=</span><span class="s2">&quot;NEW_SELECTION&quot;</span><span class="p">,</span>
+    <span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="surface_ER">
+<a class="viewcode-back" href="../../../../generated_docs/generalization.n250.road.html#generalization.n250.road.major_road_crossings.surface_ER">[docs]</a>
+<span class="nd">@timing_decorator</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">surface_ER</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Creates feature class for major roads with medium &#39;T&#39; (surface road).</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">main_road_fc</span> <span class="o">=</span> <span class="n">data_files</span><span class="p">[</span><span class="s2">&quot;major_road&quot;</span><span class="p">]</span>
+    <span class="n">main_road_t_fc</span> <span class="o">=</span> <span class="n">data_files</span><span class="p">[</span><span class="s2">&quot;major_road_t&quot;</span><span class="p">]</span>
+
+    <span class="n">custom_arcpy</span><span class="o">.</span><span class="n">select_attribute_and_make_permanent_feature</span><span class="p">(</span>
+        <span class="n">input_layer</span><span class="o">=</span><span class="n">main_road_fc</span><span class="p">,</span>
+        <span class="n">expression</span><span class="o">=</span><span class="s2">&quot;medium=&#39;T&#39;&quot;</span><span class="p">,</span>
+        <span class="n">output_name</span><span class="o">=</span><span class="n">main_road_t_fc</span><span class="p">,</span>
+        <span class="n">selection_type</span><span class="o">=</span><span class="s2">&quot;NEW_SELECTION&quot;</span><span class="p">,</span>
+    <span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="cross">
+<a class="viewcode-back" href="../../../../generated_docs/generalization.n250.road.html#generalization.n250.road.major_road_crossings.cross">[docs]</a>
+<span class="nd">@timing_decorator</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">cross</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Selects the crossings between shrunked underpass, shrunked bridge and surface roads</span>
+<span class="sd">    with major roads (ER) and stores them in respective feature classes.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">shrunked_l_fc</span> <span class="o">=</span> <span class="n">data_files</span><span class="p">[</span><span class="s2">&quot;buffer_l_shrunked&quot;</span><span class="p">]</span>
+    <span class="n">shrunked_u_fc</span> <span class="o">=</span> <span class="n">data_files</span><span class="p">[</span><span class="s2">&quot;buffer_u_shrunked&quot;</span><span class="p">]</span>
+    <span class="n">road_t</span> <span class="o">=</span> <span class="n">data_files</span><span class="p">[</span><span class="s2">&quot;road_t&quot;</span><span class="p">]</span>
+    <span class="n">major_t</span> <span class="o">=</span> <span class="n">data_files</span><span class="p">[</span><span class="s2">&quot;major_road_t&quot;</span><span class="p">]</span>
+    <span class="n">major_bridge</span> <span class="o">=</span> <span class="n">data_files</span><span class="p">[</span><span class="s2">&quot;major_road_shrunked&quot;</span><span class="p">]</span>
+    <span class="n">bridge_x_ER</span> <span class="o">=</span> <span class="n">data_files</span><span class="p">[</span><span class="s2">&quot;bridge_cross_ER&quot;</span><span class="p">]</span>
+    <span class="n">underpass_x_ER</span> <span class="o">=</span> <span class="n">data_files</span><span class="p">[</span><span class="s2">&quot;underpass_cross_ER&quot;</span><span class="p">]</span>
+    <span class="n">surface_u_ER</span> <span class="o">=</span> <span class="n">data_files</span><span class="p">[</span><span class="s2">&quot;surface_under_ER&quot;</span><span class="p">]</span>
+
+    <span class="c1"># Bridges from all categories that cross over ER</span>
+    <span class="n">select_intersect_and_copy</span><span class="p">(</span>
+        <span class="n">in_fc</span><span class="o">=</span><span class="n">shrunked_l_fc</span><span class="p">,</span>
+        <span class="n">select_fc</span><span class="o">=</span><span class="n">major_t</span><span class="p">,</span>
+        <span class="n">out_fc</span><span class="o">=</span><span class="n">bridge_x_ER</span><span class="p">,</span>
+        <span class="n">lyr_name</span><span class="o">=</span><span class="s2">&quot;veg_l_poly100_shrunked_lyr&quot;</span><span class="p">,</span>
+    <span class="p">)</span>
+
+    <span class="c1"># Tunnels under ER</span>
+    <span class="n">select_intersect_and_copy</span><span class="p">(</span>
+        <span class="n">in_fc</span><span class="o">=</span><span class="n">shrunked_u_fc</span><span class="p">,</span>
+        <span class="n">select_fc</span><span class="o">=</span><span class="n">major_t</span><span class="p">,</span>
+        <span class="n">out_fc</span><span class="o">=</span><span class="n">underpass_x_ER</span><span class="p">,</span>
+        <span class="n">lyr_name</span><span class="o">=</span><span class="s2">&quot;veg_u_poly100_shrunked_lyr&quot;</span><span class="p">,</span>
+    <span class="p">)</span>
+
+    <span class="c1"># Roads on surface having ER bridges over them</span>
+    <span class="n">select_intersect_and_copy</span><span class="p">(</span>
+        <span class="n">in_fc</span><span class="o">=</span><span class="n">road_t</span><span class="p">,</span>
+        <span class="n">select_fc</span><span class="o">=</span><span class="n">major_bridge</span><span class="p">,</span>
+        <span class="n">out_fc</span><span class="o">=</span><span class="n">surface_u_ER</span><span class="p">,</span>
+        <span class="n">lyr_name</span><span class="o">=</span><span class="s2">&quot;veg_t_lyr&quot;</span><span class="p">,</span>
+    <span class="p">)</span></div>
+
+
+
+<span class="c1"># Select from CROSS those objects that are most important</span>
+<div class="viewcode-block" id="keep">
+<a class="viewcode-back" href="../../../../generated_docs/generalization.n250.road.html#generalization.n250.road.major_road_crossings.keep">[docs]</a>
+<span class="nd">@timing_decorator</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">keep</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Selects and keeps the most important crossings from the previously created crossing feature classes.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">bridge_x_ER</span> <span class="o">=</span> <span class="n">data_files</span><span class="p">[</span><span class="s2">&quot;bridge_cross_ER&quot;</span><span class="p">]</span>
+    <span class="n">underpass_x_ER</span> <span class="o">=</span> <span class="n">data_files</span><span class="p">[</span><span class="s2">&quot;underpass_cross_ER&quot;</span><span class="p">]</span>
+    <span class="n">surface_u_ER</span> <span class="o">=</span> <span class="n">data_files</span><span class="p">[</span><span class="s2">&quot;surface_under_ER&quot;</span><span class="p">]</span>
+    <span class="n">keep_bru</span> <span class="o">=</span> <span class="n">data_files</span><span class="p">[</span><span class="s2">&quot;keep_bru&quot;</span><span class="p">]</span>
+    <span class="n">keep_underpass</span> <span class="o">=</span> <span class="n">data_files</span><span class="p">[</span><span class="s2">&quot;keep_underpass&quot;</span><span class="p">]</span>
+    <span class="n">keep_surface</span> <span class="o">=</span> <span class="n">data_files</span><span class="p">[</span><span class="s2">&quot;keep_surface&quot;</span><span class="p">]</span>
+
+    <span class="n">custom_arcpy</span><span class="o">.</span><span class="n">select_attribute_and_make_permanent_feature</span><span class="p">(</span>
+        <span class="n">input_layer</span><span class="o">=</span><span class="n">bridge_x_ER</span><span class="p">,</span>
+        <span class="n">expression</span><span class="o">=</span><span class="s2">&quot;vegkategori IN (&#39;E&#39;, &#39;R&#39;, &#39;F&#39;, &#39;K&#39;, &#39;P&#39;)&quot;</span><span class="p">,</span>
+        <span class="n">output_name</span><span class="o">=</span><span class="n">keep_bru</span><span class="p">,</span>
+        <span class="n">selection_type</span><span class="o">=</span><span class="s2">&quot;NEW_SELECTION&quot;</span><span class="p">,</span>
+    <span class="p">)</span>
+
+    <span class="n">custom_arcpy</span><span class="o">.</span><span class="n">select_attribute_and_make_permanent_feature</span><span class="p">(</span>
+        <span class="n">input_layer</span><span class="o">=</span><span class="n">underpass_x_ER</span><span class="p">,</span>
+        <span class="n">expression</span><span class="o">=</span><span class="s2">&quot;vegkategori IN (&#39;E&#39;, &#39;R&#39;, &#39;F&#39;, &#39;K&#39;, &#39;P&#39;)&quot;</span><span class="p">,</span>
+        <span class="n">output_name</span><span class="o">=</span><span class="n">keep_underpass</span><span class="p">,</span>
+        <span class="n">selection_type</span><span class="o">=</span><span class="s2">&quot;NEW_SELECTION&quot;</span><span class="p">,</span>
+    <span class="p">)</span>
+
+    <span class="n">custom_arcpy</span><span class="o">.</span><span class="n">select_attribute_and_make_permanent_feature</span><span class="p">(</span>
+        <span class="n">input_layer</span><span class="o">=</span><span class="n">surface_u_ER</span><span class="p">,</span>
+        <span class="n">expression</span><span class="o">=</span><span class="s2">&quot;vegkategori IN (&#39;E&#39;, &#39;R&#39;, &#39;F&#39;, &#39;K&#39;, &#39;P&#39;)&quot;</span><span class="p">,</span>
+        <span class="n">output_name</span><span class="o">=</span><span class="n">keep_surface</span><span class="p">,</span>
+        <span class="n">selection_type</span><span class="o">=</span><span class="s2">&quot;NEW_SELECTION&quot;</span><span class="p">,</span>
+    <span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="update_crossing_point_attribute">
+<a class="viewcode-back" href="../../../../generated_docs/generalization.n250.road.html#generalization.n250.road.major_road_crossings.update_crossing_point_attribute">[docs]</a>
+<span class="nd">@timing_decorator</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">update_crossing_point_attribute</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Creates a new field &#39;er_kryssningspunkt&#39; in the input road feature class and updates it to 1</span>
+<span class="sd">    for all roads that intersect with the kept major road crossings.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2">Updating &#39;er_kryssningspunkt&#39; for intersecting features...&quot;</span><span class="p">)</span>
+
+    <span class="n">road_fc</span> <span class="o">=</span> <span class="n">data_files</span><span class="p">[</span><span class="s2">&quot;input&quot;</span><span class="p">]</span>
+    <span class="n">new_road_fc</span> <span class="o">=</span> <span class="n">data_files</span><span class="p">[</span><span class="s2">&quot;output&quot;</span><span class="p">]</span>
+    <span class="n">bridge_fc</span> <span class="o">=</span> <span class="n">data_files</span><span class="p">[</span><span class="s2">&quot;keep_bru&quot;</span><span class="p">]</span>
+    <span class="n">underpass_fc</span> <span class="o">=</span> <span class="n">data_files</span><span class="p">[</span><span class="s2">&quot;keep_underpass&quot;</span><span class="p">]</span>
+    <span class="n">merged_keep_fc</span> <span class="o">=</span> <span class="n">data_files</span><span class="p">[</span><span class="s2">&quot;merged_keep&quot;</span><span class="p">]</span>
+
+    <span class="n">arcpy</span><span class="o">.</span><span class="n">management</span><span class="o">.</span><span class="n">CopyFeatures</span><span class="p">(</span><span class="n">in_features</span><span class="o">=</span><span class="n">road_fc</span><span class="p">,</span> <span class="n">out_feature_class</span><span class="o">=</span><span class="n">new_road_fc</span><span class="p">)</span>
+    <span class="n">arcpy</span><span class="o">.</span><span class="n">management</span><span class="o">.</span><span class="n">AddField</span><span class="p">(</span>
+        <span class="n">in_table</span><span class="o">=</span><span class="n">new_road_fc</span><span class="p">,</span> <span class="n">field_name</span><span class="o">=</span><span class="s2">&quot;er_kryssningspunkt&quot;</span><span class="p">,</span> <span class="n">field_type</span><span class="o">=</span><span class="s2">&quot;SHORT&quot;</span>
+    <span class="p">)</span>
+    <span class="n">arcpy</span><span class="o">.</span><span class="n">management</span><span class="o">.</span><span class="n">CalculateField</span><span class="p">(</span>
+        <span class="n">in_table</span><span class="o">=</span><span class="n">new_road_fc</span><span class="p">,</span>
+        <span class="n">field</span><span class="o">=</span><span class="s2">&quot;er_kryssningspunkt&quot;</span><span class="p">,</span>
+        <span class="n">expression</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span>
+        <span class="n">expression_type</span><span class="o">=</span><span class="s2">&quot;PYTHON3&quot;</span><span class="p">,</span>
+    <span class="p">)</span>
+
+    <span class="n">arcpy</span><span class="o">.</span><span class="n">management</span><span class="o">.</span><span class="n">Merge</span><span class="p">(</span>
+        <span class="n">inputs</span><span class="o">=</span><span class="p">[</span>
+            <span class="n">bridge_fc</span><span class="p">,</span>
+            <span class="n">underpass_fc</span><span class="p">,</span>
+        <span class="p">],</span>
+        <span class="n">output</span><span class="o">=</span><span class="n">merged_keep_fc</span><span class="p">,</span>
+    <span class="p">)</span>
+
+    <span class="n">arcpy</span><span class="o">.</span><span class="n">management</span><span class="o">.</span><span class="n">MakeFeatureLayer</span><span class="p">(</span>
+        <span class="n">in_features</span><span class="o">=</span><span class="n">new_road_fc</span><span class="p">,</span> <span class="n">out_layer</span><span class="o">=</span><span class="s2">&quot;elveg_sti_lyr&quot;</span>
+    <span class="p">)</span>
+    <span class="n">arcpy</span><span class="o">.</span><span class="n">management</span><span class="o">.</span><span class="n">SelectLayerByLocation</span><span class="p">(</span>
+        <span class="n">in_layer</span><span class="o">=</span><span class="s2">&quot;elveg_sti_lyr&quot;</span><span class="p">,</span>
+        <span class="n">overlap_type</span><span class="o">=</span><span class="s2">&quot;HAVE_THEIR_CENTER_IN&quot;</span><span class="p">,</span>
+        <span class="n">select_features</span><span class="o">=</span><span class="n">merged_keep_fc</span><span class="p">,</span>
+        <span class="n">selection_type</span><span class="o">=</span><span class="s2">&quot;NEW_SELECTION&quot;</span><span class="p">,</span>
+    <span class="p">)</span>
+
+    <span class="n">count</span> <span class="o">=</span> <span class="mi">0</span>
+    <span class="k">with</span> <span class="n">arcpy</span><span class="o">.</span><span class="n">da</span><span class="o">.</span><span class="n">UpdateCursor</span><span class="p">(</span><span class="s2">&quot;elveg_sti_lyr&quot;</span><span class="p">,</span> <span class="p">[</span><span class="s2">&quot;er_kryssningspunkt&quot;</span><span class="p">])</span> <span class="k">as</span> <span class="n">cursor</span><span class="p">:</span>
+        <span class="k">for</span> <span class="n">row</span> <span class="ow">in</span> <span class="n">cursor</span><span class="p">:</span>
+            <span class="n">row</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">=</span> <span class="mi">1</span>
+            <span class="n">cursor</span><span class="o">.</span><span class="n">updateRow</span><span class="p">(</span><span class="n">row</span><span class="p">)</span>
+            <span class="n">count</span> <span class="o">+=</span> <span class="mi">1</span>
+
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Updated &#39;er_kryssningspunkt&#39; for </span><span class="si">{</span><span class="n">count</span><span class="si">}</span><span class="s2"> features.</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="delete_intermediate_files">
+<a class="viewcode-back" href="../../../../generated_docs/generalization.n250.road.html#generalization.n250.road.major_road_crossings.delete_intermediate_files">[docs]</a>
+<span class="nd">@timing_decorator</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">delete_intermediate_files</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Deletes the intermediate files used during the process.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">keep</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;input&quot;</span><span class="p">,</span> <span class="s2">&quot;output&quot;</span><span class="p">]</span>
+    <span class="k">for</span> <span class="n">key</span> <span class="ow">in</span> <span class="n">data_files</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">key</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">keep</span><span class="p">:</span>
+            <span class="n">arcpy</span><span class="o">.</span><span class="n">management</span><span class="o">.</span><span class="n">Delete</span><span class="p">(</span><span class="n">data_files</span><span class="p">[</span><span class="n">key</span><span class="p">])</span></div>
+
+
+
+<span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s2">&quot;__main__&quot;</span><span class="p">:</span>
+    <span class="n">categories_major_road_crossings</span><span class="p">()</span>
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2024, Kartverket.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

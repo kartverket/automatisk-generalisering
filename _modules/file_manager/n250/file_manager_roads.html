@@ -1,0 +1,1033 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../../">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>file_manager.n250.file_manager_roads &mdash; Automatisk Generalisering 0.0.1 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/css/theme.css?v=e59714d7" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/custom.css" />
+
+  
+      <script src="../../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../../_static/documentation_options.js?v=d45e8c67"></script>
+      <script src="../../../_static/doctools.js?v=9bcbadda"></script>
+      <script src="../../../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../index.html" class="icon icon-home">
+            Automatisk Generalisering
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../generated_docs/custom_tools.html">custom_tools package</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../generated_docs/env_setup.html">env_setup package</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../generated_docs/file_manager.html">file_manager package</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../generated_docs/generalization.n100.building.html">generalization.n100.building package</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../generated_docs/input_data.html">input_data package</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../generated_docs/modules.html">automatisk-generalisering</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../index.html">Automatisk Generalisering</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">file_manager.n250.file_manager_roads</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for file_manager.n250.file_manager_roads</h1><div class="highlight"><pre>
+<span></span><span class="c1"># Imports</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">enum</span><span class="w"> </span><span class="kn">import</span> <span class="n">Enum</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">env_setup</span><span class="w"> </span><span class="kn">import</span> <span class="n">global_config</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">file_manager.base_file_manager</span><span class="w"> </span><span class="kn">import</span> <span class="n">BaseFileManager</span>
+
+
+<span class="c1"># Initialize BaseFileManager</span>
+<span class="n">scale</span> <span class="o">=</span> <span class="n">global_config</span><span class="o">.</span><span class="n">scale_n250</span>
+<span class="n">object_name</span> <span class="o">=</span> <span class="n">global_config</span><span class="o">.</span><span class="n">object_veg_sti</span>
+<span class="n">file_manager</span> <span class="o">=</span> <span class="n">BaseFileManager</span><span class="p">(</span><span class="n">scale</span><span class="o">=</span><span class="n">scale</span><span class="p">,</span> <span class="n">object_name</span><span class="o">=</span><span class="n">object_name</span><span class="p">)</span>
+
+
+<span class="c1"># All scripts</span>
+<span class="n">data_selection</span> <span class="o">=</span> <span class="s2">&quot;data_selection&quot;</span>
+<span class="n">data_preparation</span> <span class="o">=</span> <span class="s2">&quot;data_preparation&quot;</span>
+<span class="n">roundabout_file</span> <span class="o">=</span> <span class="s2">&quot;roundabout&quot;</span>
+<span class="n">dam_file</span> <span class="o">=</span> <span class="s2">&quot;dam&quot;</span>
+<span class="n">road_triangles</span> <span class="o">=</span> <span class="s2">&quot;road_triangles&quot;</span>
+<span class="n">major_road_crossings</span> <span class="o">=</span> <span class="s2">&quot;major_road_crossings&quot;</span>
+<span class="n">vegsperring_file</span> <span class="o">=</span> <span class="s2">&quot;vegsperring&quot;</span>
+<span class="n">ramps_file</span> <span class="o">=</span> <span class="s2">&quot;ramps&quot;</span>
+
+<span class="sd">&quot;&quot;&quot;&quot;</span>
+<span class="sd"># gdb</span>
+<span class="sd">    data_selection___example___n250_road = file_manager.generate_file_name_gdb(</span>
+<span class="sd">        script_source_name=data_selection,</span>
+<span class="sd">        description=&quot;example&quot;,</span>
+<span class="sd">    )</span>
+<span class="sd">    </span>
+<span class="sd"># csv</span>
+<span class="sd">    data_selection___example_csv___n250_road = (</span>
+<span class="sd">        file_manager.generate_file_name_general_files(</span>
+<span class="sd">            script_source_name=&quot;data_selection&quot;,</span>
+<span class="sd">            description=&quot;example_csv&quot;,</span>
+<span class="sd">            file_type=&quot;csv&quot;,</span>
+<span class="sd">        )</span>
+<span class="sd">    )</span>
+<span class="sd"># lyrx</span>
+<span class="sd">    data_selection___example_lyrx___n250_road_lyrx = (</span>
+<span class="sd">        file_manager.generate_file_name_lyrx(</span>
+<span class="sd">            script_source_name=&quot;data_selection&quot;,</span>
+<span class="sd">            description=&quot;example_lyrx___n250_road&quot;,</span>
+<span class="sd">        )</span>
+<span class="sd">    )</span>
+<span class="sd"># final output</span>
+<span class="sd">    Road = file_manager.generate_final_outputs(</span>
+<span class="sd">        file_name=&quot;Road&quot;,</span>
+<span class="sd">    )</span>
+<span class="sd">    </span>
+<span class="sd"># lyrx directory</span>
+<span class="sd">    data_selection___lyrx_root___n250_road= (</span>
+<span class="sd">        file_manager.generate_file_lyrx_directory(</span>
+<span class="sd">            script_source_name=data_selection, description=&quot;lyrx_root&quot;</span>
+<span class="sd">        )</span>
+<span class="sd">    )</span>
+
+<span class="sd">&quot;&quot;&quot;</span>
+
+
+<div class="viewcode-block" id="Road_N250">
+<a class="viewcode-back" href="../../../generated_docs/file_manager.n250.html#file_manager.n250.file_manager_roads.Road_N250">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">Road_N250</span><span class="p">(</span><span class="n">Enum</span><span class="p">):</span>
+    <span class="c1"># ========================================</span>
+    <span class="c1">#                           DATA SELECTION</span>
+    <span class="c1"># ========================================</span>
+
+    <span class="n">data_selection___nvdb_roads___n250_road</span> <span class="o">=</span> <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_gdb</span><span class="p">(</span>
+        <span class="n">script_source_name</span><span class="o">=</span><span class="n">data_selection</span><span class="p">,</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">&quot;nvdb_roads&quot;</span><span class="p">,</span>
+    <span class="p">)</span>
+
+    <span class="n">data_selection___vegsperring___n250_road</span> <span class="o">=</span> <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_gdb</span><span class="p">(</span>
+        <span class="n">script_source_name</span><span class="o">=</span><span class="n">data_selection</span><span class="p">,</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">&quot;vegsperring&quot;</span><span class="p">,</span>
+    <span class="p">)</span>
+
+    <span class="n">data_selection___railroad___n250_road</span> <span class="o">=</span> <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_gdb</span><span class="p">(</span>
+        <span class="n">script_source_name</span><span class="o">=</span><span class="n">data_selection</span><span class="p">,</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">&quot;railroad&quot;</span><span class="p">,</span>
+    <span class="p">)</span>
+
+    <span class="n">data_selection___admin_boundary___n250_road</span> <span class="o">=</span> <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_gdb</span><span class="p">(</span>
+        <span class="n">script_source_name</span><span class="o">=</span><span class="n">data_selection</span><span class="p">,</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">&quot;admin_boundary&quot;</span><span class="p">,</span>
+    <span class="p">)</span>
+
+    <span class="n">data_selection___begrensningskurve___n250_road</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_gdb</span><span class="p">(</span>
+            <span class="n">script_source_name</span><span class="o">=</span><span class="n">data_selection</span><span class="p">,</span>
+            <span class="n">description</span><span class="o">=</span><span class="s2">&quot;begrensningskurve&quot;</span><span class="p">,</span>
+        <span class="p">)</span>
+    <span class="p">)</span>
+
+    <span class="n">data_selection___new_road_symbology___n250_road_lyrx</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_lyrx</span><span class="p">(</span>
+            <span class="n">script_source_name</span><span class="o">=</span><span class="n">data_selection</span><span class="p">,</span>
+            <span class="n">description</span><span class="o">=</span><span class="s2">&quot;new_road_symbology&quot;</span><span class="p">,</span>
+        <span class="p">)</span>
+    <span class="p">)</span>
+
+    <span class="c1"># ========================================</span>
+    <span class="c1">#                         DATA PREPARATION</span>
+    <span class="c1"># ========================================</span>
+
+    <span class="n">data_preparation___geometry_validation___n250_road</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_gdb</span><span class="p">(</span>
+            <span class="n">script_source_name</span><span class="o">=</span><span class="n">data_preparation</span><span class="p">,</span>
+            <span class="n">description</span><span class="o">=</span><span class="s2">&quot;geometry_validation&quot;</span><span class="p">,</span>
+        <span class="p">)</span>
+    <span class="p">)</span>
+
+    <span class="n">data_preparation___water_feature_outline___n250_road</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_gdb</span><span class="p">(</span>
+            <span class="n">script_source_name</span><span class="o">=</span><span class="n">data_preparation</span><span class="p">,</span>
+            <span class="n">description</span><span class="o">=</span><span class="s2">&quot;water_feature_outline&quot;</span><span class="p">,</span>
+        <span class="p">)</span>
+    <span class="p">)</span>
+
+    <span class="n">data_preparation___road_single_part___n250_road</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_gdb</span><span class="p">(</span>
+            <span class="n">script_source_name</span><span class="o">=</span><span class="n">data_preparation</span><span class="p">,</span>
+            <span class="n">description</span><span class="o">=</span><span class="s2">&quot;road_single_part&quot;</span><span class="p">,</span>
+        <span class="p">)</span>
+    <span class="p">)</span>
+
+    <span class="n">data_preparation___road_single_part_2___n250_road</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_gdb</span><span class="p">(</span>
+            <span class="n">script_source_name</span><span class="o">=</span><span class="n">data_preparation</span><span class="p">,</span>
+            <span class="n">description</span><span class="o">=</span><span class="s2">&quot;road_single_part_2&quot;</span><span class="p">,</span>
+        <span class="p">)</span>
+    <span class="p">)</span>
+
+    <span class="n">data_preparation___car_raod___n250_road</span> <span class="o">=</span> <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_gdb</span><span class="p">(</span>
+        <span class="n">script_source_name</span><span class="o">=</span><span class="n">data_preparation</span><span class="p">,</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">&quot;car_raod&quot;</span><span class="p">,</span>
+    <span class="p">)</span>
+
+    <span class="n">data_preparation___road_dangle___n250_road</span> <span class="o">=</span> <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_gdb</span><span class="p">(</span>
+        <span class="n">script_source_name</span><span class="o">=</span><span class="n">data_preparation</span><span class="p">,</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">&quot;road_dangle&quot;</span><span class="p">,</span>
+    <span class="p">)</span>
+
+    <span class="n">data_preparation___boarder_road_dangle___n250_road</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_gdb</span><span class="p">(</span>
+            <span class="n">script_source_name</span><span class="o">=</span><span class="n">data_preparation</span><span class="p">,</span>
+            <span class="n">description</span><span class="o">=</span><span class="s2">&quot;boarder_road_dangle&quot;</span><span class="p">,</span>
+        <span class="p">)</span>
+    <span class="p">)</span>
+
+    <span class="n">data_preparation___boarder_road___n250_road</span> <span class="o">=</span> <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_gdb</span><span class="p">(</span>
+        <span class="n">script_source_name</span><span class="o">=</span><span class="n">data_preparation</span><span class="p">,</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">&quot;boarder_road&quot;</span><span class="p">,</span>
+    <span class="p">)</span>
+
+    <span class="n">data_preparation___on_surface_selection___n250_road</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_gdb</span><span class="p">(</span>
+            <span class="n">script_source_name</span><span class="o">=</span><span class="n">data_preparation</span><span class="p">,</span>
+            <span class="n">description</span><span class="o">=</span><span class="s2">&quot;on_surface_selection&quot;</span><span class="p">,</span>
+        <span class="p">)</span>
+    <span class="p">)</span>
+
+    <span class="n">data_preparation___bridge_selection___n250_road</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_gdb</span><span class="p">(</span>
+            <span class="n">script_source_name</span><span class="o">=</span><span class="n">data_preparation</span><span class="p">,</span>
+            <span class="n">description</span><span class="o">=</span><span class="s2">&quot;bridge_selection&quot;</span><span class="p">,</span>
+        <span class="p">)</span>
+    <span class="p">)</span>
+
+    <span class="n">data_preparation___tunnel_selection___n250_road</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_gdb</span><span class="p">(</span>
+            <span class="n">script_source_name</span><span class="o">=</span><span class="n">data_preparation</span><span class="p">,</span>
+            <span class="n">description</span><span class="o">=</span><span class="s2">&quot;tunnel_selection&quot;</span><span class="p">,</span>
+        <span class="p">)</span>
+    <span class="p">)</span>
+
+    <span class="n">data_preparation___dissolved_road_feature___n250_road</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_gdb</span><span class="p">(</span>
+            <span class="n">script_source_name</span><span class="o">=</span><span class="n">data_preparation</span><span class="p">,</span>
+            <span class="n">description</span><span class="o">=</span><span class="s2">&quot;dissolved_road_feature&quot;</span><span class="p">,</span>
+        <span class="p">)</span>
+    <span class="p">)</span>
+
+    <span class="n">data_preparation___intersections_root___n250_road</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_gdb</span><span class="p">(</span>
+            <span class="n">script_source_name</span><span class="o">=</span><span class="n">data_preparation</span><span class="p">,</span>
+            <span class="n">description</span><span class="o">=</span><span class="s2">&quot;intersections_root&quot;</span><span class="p">,</span>
+        <span class="p">)</span>
+    <span class="p">)</span>
+
+    <span class="n">data_preparation___dissolved_road_feature_2___n250_road</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_gdb</span><span class="p">(</span>
+            <span class="n">script_source_name</span><span class="o">=</span><span class="n">data_preparation</span><span class="p">,</span>
+            <span class="n">description</span><span class="o">=</span><span class="s2">&quot;dissolved_road_feature_2&quot;</span><span class="p">,</span>
+        <span class="p">)</span>
+    <span class="p">)</span>
+
+    <span class="n">data_preparation___dissolved_intersections___n250_road</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_gdb</span><span class="p">(</span>
+            <span class="n">script_source_name</span><span class="o">=</span><span class="n">data_preparation</span><span class="p">,</span>
+            <span class="n">description</span><span class="o">=</span><span class="s2">&quot;dissolved_intersections&quot;</span><span class="p">,</span>
+        <span class="p">)</span>
+    <span class="p">)</span>
+
+    <span class="n">data_preparation___country_boarder___n250_road</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_gdb</span><span class="p">(</span>
+            <span class="n">script_source_name</span><span class="o">=</span><span class="n">data_preparation</span><span class="p">,</span>
+            <span class="n">description</span><span class="o">=</span><span class="s2">&quot;country_boarder&quot;</span><span class="p">,</span>
+        <span class="p">)</span>
+    <span class="p">)</span>
+
+    <span class="n">data_preparation___country_boarder_buffer___n250_road</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_gdb</span><span class="p">(</span>
+            <span class="n">script_source_name</span><span class="o">=</span><span class="n">data_preparation</span><span class="p">,</span>
+            <span class="n">description</span><span class="o">=</span><span class="s2">&quot;country_boarder_buffer&quot;</span><span class="p">,</span>
+        <span class="p">)</span>
+    <span class="p">)</span>
+
+    <span class="n">data_preparation___roads_near_boarder___n250_road</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_gdb</span><span class="p">(</span>
+            <span class="n">script_source_name</span><span class="o">=</span><span class="n">data_preparation</span><span class="p">,</span>
+            <span class="n">description</span><span class="o">=</span><span class="s2">&quot;roads_near_boarder&quot;</span><span class="p">,</span>
+        <span class="p">)</span>
+    <span class="p">)</span>
+
+    <span class="n">data_preparation___removed_roads_near_boarder___n250_road</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_gdb</span><span class="p">(</span>
+            <span class="n">script_source_name</span><span class="o">=</span><span class="n">data_preparation</span><span class="p">,</span>
+            <span class="n">description</span><span class="o">=</span><span class="s2">&quot;removed_roads_near_boarder&quot;</span><span class="p">,</span>
+        <span class="p">)</span>
+    <span class="p">)</span>
+
+    <span class="n">data_preparation___intersections_root_2___n250_road</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_gdb</span><span class="p">(</span>
+            <span class="n">script_source_name</span><span class="o">=</span><span class="n">data_preparation</span><span class="p">,</span>
+            <span class="n">description</span><span class="o">=</span><span class="s2">&quot;intersections_root_2&quot;</span><span class="p">,</span>
+        <span class="p">)</span>
+    <span class="p">)</span>
+
+    <span class="n">data_preparation___intersections_root_3___n250_road</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_gdb</span><span class="p">(</span>
+            <span class="n">script_source_name</span><span class="o">=</span><span class="n">data_preparation</span><span class="p">,</span>
+            <span class="n">description</span><span class="o">=</span><span class="s2">&quot;intersections_root_3&quot;</span><span class="p">,</span>
+        <span class="p">)</span>
+    <span class="p">)</span>
+
+    <span class="n">data_preparation___intersections_root_4___n250_road</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_gdb</span><span class="p">(</span>
+            <span class="n">script_source_name</span><span class="o">=</span><span class="n">data_preparation</span><span class="p">,</span>
+            <span class="n">description</span><span class="o">=</span><span class="s2">&quot;intersections_root_4&quot;</span><span class="p">,</span>
+        <span class="p">)</span>
+    <span class="p">)</span>
+
+    <span class="n">data_preparation___intersections_root_5___n250_road</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_gdb</span><span class="p">(</span>
+            <span class="n">script_source_name</span><span class="o">=</span><span class="n">data_preparation</span><span class="p">,</span>
+            <span class="n">description</span><span class="o">=</span><span class="s2">&quot;intersections_root_5&quot;</span><span class="p">,</span>
+        <span class="p">)</span>
+    <span class="p">)</span>
+
+    <span class="n">data_preparation___dissolved_intersections_2___n250_road</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_gdb</span><span class="p">(</span>
+            <span class="n">script_source_name</span><span class="o">=</span><span class="n">data_preparation</span><span class="p">,</span>
+            <span class="n">description</span><span class="o">=</span><span class="s2">&quot;dissolved_intersections_2&quot;</span><span class="p">,</span>
+        <span class="p">)</span>
+    <span class="p">)</span>
+
+    <span class="n">data_preparation___dissolved_intersections_3___n250_road</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_gdb</span><span class="p">(</span>
+            <span class="n">script_source_name</span><span class="o">=</span><span class="n">data_preparation</span><span class="p">,</span>
+            <span class="n">description</span><span class="o">=</span><span class="s2">&quot;dissolved_intersections_3&quot;</span><span class="p">,</span>
+        <span class="p">)</span>
+    <span class="p">)</span>
+
+    <span class="n">data_preparation___root_calculate_boarder_hierarchy___n250_road</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_gdb</span><span class="p">(</span>
+            <span class="n">script_source_name</span><span class="o">=</span><span class="n">data_preparation</span><span class="p">,</span>
+            <span class="n">description</span><span class="o">=</span><span class="s2">&quot;root_calculate_boarder_hierarchy&quot;</span><span class="p">,</span>
+        <span class="p">)</span>
+    <span class="p">)</span>
+
+    <span class="n">data_preparation___calculated_boarder_hierarchy___n250_road</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_gdb</span><span class="p">(</span>
+            <span class="n">script_source_name</span><span class="o">=</span><span class="n">data_preparation</span><span class="p">,</span>
+            <span class="n">description</span><span class="o">=</span><span class="s2">&quot;calculated_boarder_hierarchy&quot;</span><span class="p">,</span>
+        <span class="p">)</span>
+    <span class="p">)</span>
+
+    <span class="n">data_preparation___dissolved_intersections_4___n250_road</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_gdb</span><span class="p">(</span>
+            <span class="n">script_source_name</span><span class="o">=</span><span class="n">data_preparation</span><span class="p">,</span>
+            <span class="n">description</span><span class="o">=</span><span class="s2">&quot;dissolved_intersections_4&quot;</span><span class="p">,</span>
+        <span class="p">)</span>
+    <span class="p">)</span>
+
+    <span class="n">data_preparation___dissolved_intersections_5___n250_road</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_gdb</span><span class="p">(</span>
+            <span class="n">script_source_name</span><span class="o">=</span><span class="n">data_preparation</span><span class="p">,</span>
+            <span class="n">description</span><span class="o">=</span><span class="s2">&quot;dissolved_intersections_5&quot;</span><span class="p">,</span>
+        <span class="p">)</span>
+    <span class="p">)</span>
+
+    <span class="n">data_preparation___merge_divided_roads___n250_road</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_gdb</span><span class="p">(</span>
+            <span class="n">script_source_name</span><span class="o">=</span><span class="n">data_preparation</span><span class="p">,</span>
+            <span class="n">description</span><span class="o">=</span><span class="s2">&quot;merge_divided_roads&quot;</span><span class="p">,</span>
+        <span class="p">)</span>
+    <span class="p">)</span>
+
+    <span class="n">data_preparation___merge_divided_roads_displacement_feature___n250_road</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_gdb</span><span class="p">(</span>
+            <span class="n">script_source_name</span><span class="o">=</span><span class="n">data_preparation</span><span class="p">,</span>
+            <span class="n">description</span><span class="o">=</span><span class="s2">&quot;merge_divided_roads_displacement_feature&quot;</span><span class="p">,</span>
+        <span class="p">)</span>
+    <span class="p">)</span>
+
+    <span class="n">data_preparation___divided_roads_merged_outputs___n250_road</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_gdb</span><span class="p">(</span>
+            <span class="n">script_source_name</span><span class="o">=</span><span class="n">data_preparation</span><span class="p">,</span>
+            <span class="n">description</span><span class="o">=</span><span class="s2">&quot;divided_roads_merged_outputs&quot;</span><span class="p">,</span>
+        <span class="p">)</span>
+    <span class="p">)</span>
+
+    <span class="n">data_preparation___remove_small_road_lines___n250_road</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_gdb</span><span class="p">(</span>
+            <span class="n">script_source_name</span><span class="o">=</span><span class="n">data_preparation</span><span class="p">,</span>
+            <span class="n">description</span><span class="o">=</span><span class="s2">&quot;remove_small_road_lines&quot;</span><span class="p">,</span>
+        <span class="p">)</span>
+    <span class="p">)</span>
+
+    <span class="n">data_preparation___collapse_road_detail___n250_road</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_gdb</span><span class="p">(</span>
+            <span class="n">script_source_name</span><span class="o">=</span><span class="n">data_preparation</span><span class="p">,</span>
+            <span class="n">description</span><span class="o">=</span><span class="s2">&quot;collapse_road_detail&quot;</span><span class="p">,</span>
+        <span class="p">)</span>
+    <span class="p">)</span>
+
+    <span class="n">data_preparation___road_bridge_and_tunnel_selection___n250_road</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_gdb</span><span class="p">(</span>
+            <span class="n">script_source_name</span><span class="o">=</span><span class="n">data_preparation</span><span class="p">,</span>
+            <span class="n">description</span><span class="o">=</span><span class="s2">&quot;road_bridge_and_tunnel_selection&quot;</span><span class="p">,</span>
+        <span class="p">)</span>
+    <span class="p">)</span>
+
+    <span class="n">data_preparation___road_on_surface_selection___n250_road</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_gdb</span><span class="p">(</span>
+            <span class="n">script_source_name</span><span class="o">=</span><span class="n">data_preparation</span><span class="p">,</span>
+            <span class="n">description</span><span class="o">=</span><span class="s2">&quot;road_on_surface_selection&quot;</span><span class="p">,</span>
+        <span class="p">)</span>
+    <span class="p">)</span>
+    <span class="n">data_preparation___on_surface_feature_to_line___n250_road</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_gdb</span><span class="p">(</span>
+            <span class="n">script_source_name</span><span class="o">=</span><span class="n">data_preparation</span><span class="p">,</span>
+            <span class="n">description</span><span class="o">=</span><span class="s2">&quot;on_surface_feature_to_line&quot;</span><span class="p">,</span>
+        <span class="p">)</span>
+    <span class="p">)</span>
+
+    <span class="n">data_preparation___simplified_road___n250_road</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_gdb</span><span class="p">(</span>
+            <span class="n">script_source_name</span><span class="o">=</span><span class="n">data_preparation</span><span class="p">,</span>
+            <span class="n">description</span><span class="o">=</span><span class="s2">&quot;simplified_road&quot;</span><span class="p">,</span>
+        <span class="p">)</span>
+    <span class="p">)</span>
+
+    <span class="n">data_preparation___thin_road_sti_root___n250_road</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_gdb</span><span class="p">(</span>
+            <span class="n">script_source_name</span><span class="o">=</span><span class="n">data_preparation</span><span class="p">,</span>
+            <span class="n">description</span><span class="o">=</span><span class="s2">&quot;thin_road_sti_root&quot;</span><span class="p">,</span>
+        <span class="p">)</span>
+    <span class="p">)</span>
+
+    <span class="n">data_preparation___thin_sti_partition_root___n250_road</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_gdb</span><span class="p">(</span>
+            <span class="n">script_source_name</span><span class="o">=</span><span class="n">data_preparation</span><span class="p">,</span>
+            <span class="n">description</span><span class="o">=</span><span class="s2">&quot;thin_sti_partition_root&quot;</span><span class="p">,</span>
+        <span class="p">)</span>
+    <span class="p">)</span>
+
+    <span class="n">thin_sti_docu___n250_road</span> <span class="o">=</span> <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_general_subdirectory</span><span class="p">(</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">&quot;thin_sti_docu&quot;</span><span class="p">,</span>
+    <span class="p">)</span>
+
+    <span class="n">data_preparation___thin_road_sti_output___n250_road</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_gdb</span><span class="p">(</span>
+            <span class="n">script_source_name</span><span class="o">=</span><span class="n">data_preparation</span><span class="p">,</span>
+            <span class="n">description</span><span class="o">=</span><span class="s2">&quot;thin_road_sti_output&quot;</span><span class="p">,</span>
+        <span class="p">)</span>
+    <span class="p">)</span>
+
+    <span class="n">data_preparation___thin_road_root___n250_road</span> <span class="o">=</span> <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_gdb</span><span class="p">(</span>
+        <span class="n">script_source_name</span><span class="o">=</span><span class="n">data_preparation</span><span class="p">,</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">&quot;thin_road_root&quot;</span><span class="p">,</span>
+    <span class="p">)</span>
+
+    <span class="n">data_preparation___thin_road_root_2___n250_road</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_gdb</span><span class="p">(</span>
+            <span class="n">script_source_name</span><span class="o">=</span><span class="n">data_preparation</span><span class="p">,</span>
+            <span class="n">description</span><span class="o">=</span><span class="s2">&quot;thin_road_root_2&quot;</span><span class="p">,</span>
+        <span class="p">)</span>
+    <span class="p">)</span>
+
+    <span class="n">data_preparation___thin_road_root_3___n250_road</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_gdb</span><span class="p">(</span>
+            <span class="n">script_source_name</span><span class="o">=</span><span class="n">data_preparation</span><span class="p">,</span>
+            <span class="n">description</span><span class="o">=</span><span class="s2">&quot;thin_road_root_3&quot;</span><span class="p">,</span>
+        <span class="p">)</span>
+    <span class="p">)</span>
+
+    <span class="n">data_preparation___thin_road_partition_root___n250_road</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_gdb</span><span class="p">(</span>
+            <span class="n">script_source_name</span><span class="o">=</span><span class="n">data_preparation</span><span class="p">,</span>
+            <span class="n">description</span><span class="o">=</span><span class="s2">&quot;thin_road_partition_root&quot;</span><span class="p">,</span>
+        <span class="p">)</span>
+    <span class="p">)</span>
+
+    <span class="n">data_preparation___thin_road_partition_root_2___n250_road</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_gdb</span><span class="p">(</span>
+            <span class="n">script_source_name</span><span class="o">=</span><span class="n">data_preparation</span><span class="p">,</span>
+            <span class="n">description</span><span class="o">=</span><span class="s2">&quot;thin_road_partition_root_2&quot;</span><span class="p">,</span>
+        <span class="p">)</span>
+    <span class="p">)</span>
+
+    <span class="n">data_preparation___thin_road_partition_root_3___n250_road</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_gdb</span><span class="p">(</span>
+            <span class="n">script_source_name</span><span class="o">=</span><span class="n">data_preparation</span><span class="p">,</span>
+            <span class="n">description</span><span class="o">=</span><span class="s2">&quot;thin_road_partition_root_3&quot;</span><span class="p">,</span>
+        <span class="p">)</span>
+    <span class="p">)</span>
+
+    <span class="n">thin_road_docu___n250_road</span> <span class="o">=</span> <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_general_subdirectory</span><span class="p">(</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">&quot;thin_road_docu&quot;</span><span class="p">,</span>
+    <span class="p">)</span>
+
+    <span class="n">collapse_road_docu___n250_road</span> <span class="o">=</span> <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_general_subdirectory</span><span class="p">(</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">&quot;collapse_road_docu&quot;</span><span class="p">,</span>
+    <span class="p">)</span>
+
+    <span class="n">data_preparation___thin_road_docu_2___n250_road</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_general_files</span><span class="p">(</span>
+            <span class="n">script_source_name</span><span class="o">=</span><span class="n">data_preparation</span><span class="p">,</span>
+            <span class="n">description</span><span class="o">=</span><span class="s2">&quot;thin_road_docu_2&quot;</span><span class="p">,</span>
+            <span class="n">file_type</span><span class="o">=</span><span class="s2">&quot;json&quot;</span><span class="p">,</span>
+        <span class="p">)</span>
+    <span class="p">)</span>
+
+    <span class="n">data_preparation___thin_road_docu_3___n250_road</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_general_files</span><span class="p">(</span>
+            <span class="n">script_source_name</span><span class="o">=</span><span class="n">data_preparation</span><span class="p">,</span>
+            <span class="n">description</span><span class="o">=</span><span class="s2">&quot;thin_road_docu_3&quot;</span><span class="p">,</span>
+            <span class="n">file_type</span><span class="o">=</span><span class="s2">&quot;json&quot;</span><span class="p">,</span>
+        <span class="p">)</span>
+    <span class="p">)</span>
+
+    <span class="n">data_preparation___thin_road_output___n250_road</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_gdb</span><span class="p">(</span>
+            <span class="n">script_source_name</span><span class="o">=</span><span class="n">data_preparation</span><span class="p">,</span>
+            <span class="n">description</span><span class="o">=</span><span class="s2">&quot;thin_road_output&quot;</span><span class="p">,</span>
+        <span class="p">)</span>
+    <span class="p">)</span>
+
+    <span class="n">data_preparation___thin_road_output_2___n250_road</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_gdb</span><span class="p">(</span>
+            <span class="n">script_source_name</span><span class="o">=</span><span class="n">data_preparation</span><span class="p">,</span>
+            <span class="n">description</span><span class="o">=</span><span class="s2">&quot;thin_road_output_2&quot;</span><span class="p">,</span>
+        <span class="p">)</span>
+    <span class="p">)</span>
+
+    <span class="n">data_preparation___thin_road_output_3___n250_road</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_gdb</span><span class="p">(</span>
+            <span class="n">script_source_name</span><span class="o">=</span><span class="n">data_preparation</span><span class="p">,</span>
+            <span class="n">description</span><span class="o">=</span><span class="s2">&quot;thin_road_output_3&quot;</span><span class="p">,</span>
+        <span class="p">)</span>
+    <span class="p">)</span>
+
+    <span class="n">data_preparation___final_merged_thin_iteration_output___n250_road</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_gdb</span><span class="p">(</span>
+            <span class="n">script_source_name</span><span class="o">=</span><span class="n">data_preparation</span><span class="p">,</span>
+            <span class="n">description</span><span class="o">=</span><span class="s2">&quot;final_merged_thin_iteration_output&quot;</span><span class="p">,</span>
+        <span class="p">)</span>
+    <span class="p">)</span>
+
+    <span class="n">data_preparation___smooth_road___n250_road</span> <span class="o">=</span> <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_gdb</span><span class="p">(</span>
+        <span class="n">script_source_name</span><span class="o">=</span><span class="n">data_preparation</span><span class="p">,</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">&quot;smooth_road&quot;</span><span class="p">,</span>
+    <span class="p">)</span>
+
+    <span class="n">data_preparation___road_single_part_3___n250_road</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_gdb</span><span class="p">(</span>
+            <span class="n">script_source_name</span><span class="o">=</span><span class="n">data_preparation</span><span class="p">,</span>
+            <span class="n">description</span><span class="o">=</span><span class="s2">&quot;road_single_part_3&quot;</span><span class="p">,</span>
+        <span class="p">)</span>
+    <span class="p">)</span>
+
+    <span class="n">data_preparation___calculated_boarder_hierarchy_2___n250_road</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_gdb</span><span class="p">(</span>
+            <span class="n">script_source_name</span><span class="o">=</span><span class="n">data_preparation</span><span class="p">,</span>
+            <span class="n">description</span><span class="o">=</span><span class="s2">&quot;calculated_boarder_hierarchy_2&quot;</span><span class="p">,</span>
+        <span class="p">)</span>
+    <span class="p">)</span>
+
+    <span class="n">data_preparation___root_calculate_boarder_hierarchy_2___n250_road</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_gdb</span><span class="p">(</span>
+            <span class="n">script_source_name</span><span class="o">=</span><span class="n">data_preparation</span><span class="p">,</span>
+            <span class="n">description</span><span class="o">=</span><span class="s2">&quot;root_calculate_boarder_hierarchy_2&quot;</span><span class="p">,</span>
+        <span class="p">)</span>
+    <span class="p">)</span>
+
+    <span class="n">data_preparation___railroad_single_part___n250_road</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_gdb</span><span class="p">(</span>
+            <span class="n">script_source_name</span><span class="o">=</span><span class="n">data_preparation</span><span class="p">,</span>
+            <span class="n">description</span><span class="o">=</span><span class="s2">&quot;railroad_single_part&quot;</span><span class="p">,</span>
+        <span class="p">)</span>
+    <span class="p">)</span>
+
+    <span class="n">data_preparation___water_feature_outline_single_part___n250_road</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_gdb</span><span class="p">(</span>
+            <span class="n">script_source_name</span><span class="o">=</span><span class="n">data_preparation</span><span class="p">,</span>
+            <span class="n">description</span><span class="o">=</span><span class="s2">&quot;water_feature_outline_single_part&quot;</span><span class="p">,</span>
+        <span class="p">)</span>
+    <span class="p">)</span>
+
+    <span class="n">data_preparation___resolve_road_conflicts___n250_road</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_gdb</span><span class="p">(</span>
+            <span class="n">script_source_name</span><span class="o">=</span><span class="n">data_preparation</span><span class="p">,</span>
+            <span class="n">description</span><span class="o">=</span><span class="s2">&quot;resolve_road_conflicts&quot;</span><span class="p">,</span>
+        <span class="p">)</span>
+    <span class="p">)</span>
+
+    <span class="n">data_preparation___road_final_output___n250_road</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_gdb</span><span class="p">(</span>
+            <span class="n">script_source_name</span><span class="o">=</span><span class="n">data_preparation</span><span class="p">,</span>
+            <span class="n">description</span><span class="o">=</span><span class="s2">&quot;road_final_output&quot;</span><span class="p">,</span>
+        <span class="p">)</span>
+    <span class="p">)</span>
+
+    <span class="n">data_preparation___resolve_road_partition_root___n250_road</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_gdb</span><span class="p">(</span>
+            <span class="n">script_source_name</span><span class="o">=</span><span class="n">data_preparation</span><span class="p">,</span>
+            <span class="n">description</span><span class="o">=</span><span class="s2">&quot;resolve_road_partition_root&quot;</span><span class="p">,</span>
+        <span class="p">)</span>
+    <span class="p">)</span>
+
+    <span class="n">resolve_road_docu___n250_road</span> <span class="o">=</span> <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_general_subdirectory</span><span class="p">(</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">&quot;resolve_road_docu&quot;</span><span class="p">,</span>
+    <span class="p">)</span>
+
+    <span class="n">data_preparation___resolve_road_root___n250_road</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_gdb</span><span class="p">(</span>
+            <span class="n">script_source_name</span><span class="o">=</span><span class="n">data_preparation</span><span class="p">,</span>
+            <span class="n">description</span><span class="o">=</span><span class="s2">&quot;resolve_road_root&quot;</span><span class="p">,</span>
+        <span class="p">)</span>
+    <span class="p">)</span>
+
+    <span class="n">data_preparation___resolve_road_conflicts_displacement_feature___n250_road</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_gdb</span><span class="p">(</span>
+            <span class="n">script_source_name</span><span class="o">=</span><span class="n">data_preparation</span><span class="p">,</span>
+            <span class="n">description</span><span class="o">=</span><span class="s2">&quot;resolve_road_conflicts_displacement_feature&quot;</span><span class="p">,</span>
+        <span class="p">)</span>
+    <span class="p">)</span>
+
+    <span class="n">data_preperation___paths_n50___n250_road</span> <span class="o">=</span> <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_gdb</span><span class="p">(</span>
+        <span class="n">script_source_name</span><span class="o">=</span><span class="n">data_preparation</span><span class="p">,</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">&quot;paths_n50&quot;</span><span class="p">,</span>
+    <span class="p">)</span>
+
+    <span class="n">data_preperation___selecting_vegtrase_and_kjorebane_nvdb___n250_road</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_gdb</span><span class="p">(</span>
+            <span class="n">script_source_name</span><span class="o">=</span><span class="n">data_preparation</span><span class="p">,</span>
+            <span class="n">description</span><span class="o">=</span><span class="s2">&quot;selecting_vegtrase_and_kjorebane_nvdb&quot;</span><span class="p">,</span>
+        <span class="p">)</span>
+    <span class="p">)</span>
+
+    <span class="n">data_preperation___selecting_everything_but_rampe_nvdb___n250_road</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_gdb</span><span class="p">(</span>
+            <span class="n">script_source_name</span><span class="o">=</span><span class="n">data_preparation</span><span class="p">,</span>
+            <span class="n">description</span><span class="o">=</span><span class="s2">&quot;selecting_everything_but_rampe_nvdb&quot;</span><span class="p">,</span>
+        <span class="p">)</span>
+    <span class="p">)</span>
+
+    <span class="n">data_preperation___selecting_everything_but_rampe_with_calculated_fields_nvdb___n250_road</span> <span class="o">=</span> <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_gdb</span><span class="p">(</span>
+        <span class="n">script_source_name</span><span class="o">=</span><span class="n">data_preparation</span><span class="p">,</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">&quot;selecting_everything_but_rampe_with_calculated_fields_nvdb&quot;</span><span class="p">,</span>
+    <span class="p">)</span>
+
+    <span class="c1"># ========================================</span>
+    <span class="c1">#                           ROAD TRIANGLES</span>
+    <span class="c1"># ========================================</span>
+
+    <span class="n">road_triangles_output</span> <span class="o">=</span> <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_gdb</span><span class="p">(</span>
+        <span class="n">script_source_name</span><span class="o">=</span><span class="n">road_triangles</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">&quot;road_triangles_output&quot;</span>
+    <span class="p">)</span>
+
+    <span class="n">road_triangles___roads_copy___n250_road</span> <span class="o">=</span> <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_gdb</span><span class="p">(</span>
+        <span class="n">script_source_name</span><span class="o">=</span><span class="n">road_triangles</span><span class="p">,</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">&quot;roads_copy&quot;</span><span class="p">,</span>
+    <span class="p">)</span>
+
+    <span class="n">road_triangles___graph_root___n250_road</span> <span class="o">=</span> <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_gdb</span><span class="p">(</span>
+        <span class="n">script_source_name</span><span class="o">=</span><span class="n">road_triangles</span><span class="p">,</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">&quot;graph_root&quot;</span><span class="p">,</span>
+    <span class="p">)</span>
+
+    <span class="n">road_triangles___remove_triangles_root___n250_road</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_gdb</span><span class="p">(</span>
+            <span class="n">script_source_name</span><span class="o">=</span><span class="n">road_triangles</span><span class="p">,</span>
+            <span class="n">description</span><span class="o">=</span><span class="s2">&quot;remove_triangles_root&quot;</span><span class="p">,</span>
+        <span class="p">)</span>
+    <span class="p">)</span>
+
+    <span class="n">road_triangles___removed_triangles___n250_road</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_gdb</span><span class="p">(</span>
+            <span class="n">script_source_name</span><span class="o">=</span><span class="n">road_triangles</span><span class="p">,</span>
+            <span class="n">description</span><span class="o">=</span><span class="s2">&quot;removed_triangles&quot;</span><span class="p">,</span>
+        <span class="p">)</span>
+    <span class="p">)</span>
+
+    <span class="c1"># ========================================</span>
+    <span class="c1">#                               ROUNDABOUT</span>
+    <span class="c1"># ========================================</span>
+
+    <span class="n">roundabout__roundabout__n250_road</span> <span class="o">=</span> <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_gdb</span><span class="p">(</span>
+        <span class="n">script_source_name</span><span class="o">=</span><span class="n">roundabout_file</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">&quot;roundabout&quot;</span>
+    <span class="p">)</span>
+
+    <span class="n">roundabout__centroids__n250_road</span> <span class="o">=</span> <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_gdb</span><span class="p">(</span>
+        <span class="n">script_source_name</span><span class="o">=</span><span class="n">roundabout_file</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">&quot;centroids&quot;</span>
+    <span class="p">)</span>
+
+    <span class="n">roundabout__cleaned_road__n250_road</span> <span class="o">=</span> <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_gdb</span><span class="p">(</span>
+        <span class="n">script_source_name</span><span class="o">=</span><span class="n">roundabout_file</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">&quot;cleaned_road&quot;</span>
+    <span class="p">)</span>
+
+    <span class="c1"># ========================================</span>
+    <span class="c1">#                                      DAM</span>
+    <span class="c1"># ========================================</span>
+
+    <span class="n">dam__relevant_roads__n250_road</span> <span class="o">=</span> <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_gdb</span><span class="p">(</span>
+        <span class="n">script_source_name</span><span class="o">=</span><span class="n">dam_file</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">&quot;relevant_roads&quot;</span>
+    <span class="p">)</span>
+
+    <span class="n">dam__relevant_dam__n250_road</span> <span class="o">=</span> <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_gdb</span><span class="p">(</span>
+        <span class="n">script_source_name</span><span class="o">=</span><span class="n">dam_file</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">&quot;relevant_dam&quot;</span>
+    <span class="p">)</span>
+
+    <span class="n">dam__relevant_water__n250_road</span> <span class="o">=</span> <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_gdb</span><span class="p">(</span>
+        <span class="n">script_source_name</span><span class="o">=</span><span class="n">dam_file</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">&quot;relevant_water&quot;</span>
+    <span class="p">)</span>
+
+    <span class="n">dam__dam_buffer_35m__n250_road</span> <span class="o">=</span> <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_gdb</span><span class="p">(</span>
+        <span class="n">script_source_name</span><span class="o">=</span><span class="n">dam_file</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">&quot;dam_buffer_35m&quot;</span>
+    <span class="p">)</span>
+
+    <span class="n">dam__roads_inside_with_data__n250_road</span> <span class="o">=</span> <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_gdb</span><span class="p">(</span>
+        <span class="n">script_source_name</span><span class="o">=</span><span class="n">dam_file</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">&quot;roads_inside_with_data&quot;</span>
+    <span class="p">)</span>
+
+    <span class="n">dam__roads_outside__n250_road</span> <span class="o">=</span> <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_gdb</span><span class="p">(</span>
+        <span class="n">script_source_name</span><span class="o">=</span><span class="n">dam_file</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">&quot;roads_outside&quot;</span>
+    <span class="p">)</span>
+
+    <span class="n">dam__water_clipped__n250_road</span> <span class="o">=</span> <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_gdb</span><span class="p">(</span>
+        <span class="n">script_source_name</span><span class="o">=</span><span class="n">dam_file</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">&quot;water_clipped&quot;</span>
+    <span class="p">)</span>
+
+    <span class="n">dam__water_center__n250_road</span> <span class="o">=</span> <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_gdb</span><span class="p">(</span>
+        <span class="n">script_source_name</span><span class="o">=</span><span class="n">dam_file</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">&quot;water_center&quot;</span>
+    <span class="p">)</span>
+
+    <span class="n">dam__buffer_water__n250_road</span> <span class="o">=</span> <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_gdb</span><span class="p">(</span>
+        <span class="n">script_source_name</span><span class="o">=</span><span class="n">dam_file</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">&quot;buffer_water&quot;</span>
+    <span class="p">)</span>
+
+    <span class="n">dam__water_singleparts__n250_road</span> <span class="o">=</span> <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_gdb</span><span class="p">(</span>
+        <span class="n">script_source_name</span><span class="o">=</span><span class="n">dam_file</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">&quot;water_singleparts&quot;</span>
+    <span class="p">)</span>
+
+    <span class="n">dam__dam_buffer_sti__n250_road</span> <span class="o">=</span> <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_gdb</span><span class="p">(</span>
+        <span class="n">script_source_name</span><span class="o">=</span><span class="n">dam_file</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">&quot;dam_buffer_sti&quot;</span>
+    <span class="p">)</span>
+
+    <span class="n">dam__roads_clipped_sti__n250_road</span> <span class="o">=</span> <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_gdb</span><span class="p">(</span>
+        <span class="n">script_source_name</span><span class="o">=</span><span class="n">dam_file</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">&quot;roads_clipped_sti&quot;</span>
+    <span class="p">)</span>
+
+    <span class="n">dam__roads_moved__n250_road</span> <span class="o">=</span> <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_gdb</span><span class="p">(</span>
+        <span class="n">script_source_name</span><span class="o">=</span><span class="n">dam_file</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">&quot;roads_moved&quot;</span>
+    <span class="p">)</span>
+
+    <span class="n">dam__roads_shifted__n250_road</span> <span class="o">=</span> <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_gdb</span><span class="p">(</span>
+        <span class="n">script_source_name</span><span class="o">=</span><span class="n">dam_file</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">&quot;roads_shifted&quot;</span>
+    <span class="p">)</span>
+
+    <span class="n">dam__dam_buffer_150m__n250_road</span> <span class="o">=</span> <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_gdb</span><span class="p">(</span>
+        <span class="n">script_source_name</span><span class="o">=</span><span class="n">dam_file</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">&quot;dam_buffer_150m&quot;</span>
+    <span class="p">)</span>
+
+    <span class="n">dam__dam_buffer_60m_flat__n250_road</span> <span class="o">=</span> <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_gdb</span><span class="p">(</span>
+        <span class="n">script_source_name</span><span class="o">=</span><span class="n">dam_file</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">&quot;dam_buffer_60m_flat&quot;</span>
+    <span class="p">)</span>
+
+    <span class="n">dam__dam_buffer_5m_flat__n250_road</span> <span class="o">=</span> <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_gdb</span><span class="p">(</span>
+        <span class="n">script_source_name</span><span class="o">=</span><span class="n">dam_file</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">&quot;dam_buffer_5m_flat&quot;</span>
+    <span class="p">)</span>
+
+    <span class="n">dam__dam_buffer_60m__n250_road</span> <span class="o">=</span> <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_gdb</span><span class="p">(</span>
+        <span class="n">script_source_name</span><span class="o">=</span><span class="n">dam_file</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">&quot;dam_buffer_60m&quot;</span>
+    <span class="p">)</span>
+
+    <span class="n">dam__water_buffer_55m__n250_road</span> <span class="o">=</span> <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_gdb</span><span class="p">(</span>
+        <span class="n">script_source_name</span><span class="o">=</span><span class="n">dam_file</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">&quot;water_buffer_55m&quot;</span>
+    <span class="p">)</span>
+
+    <span class="n">dam__dam_buffer_60m_line__n250_road</span> <span class="o">=</span> <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_gdb</span><span class="p">(</span>
+        <span class="n">script_source_name</span><span class="o">=</span><span class="n">dam_file</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">&quot;dam_buffer_60m_line&quot;</span>
+    <span class="p">)</span>
+
+    <span class="n">dam__roads_intermediate__n250_road</span> <span class="o">=</span> <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_gdb</span><span class="p">(</span>
+        <span class="n">script_source_name</span><span class="o">=</span><span class="n">dam_file</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">&quot;roads_intermediate&quot;</span>
+    <span class="p">)</span>
+
+    <span class="n">dam__paths_in_dam__n250_road</span> <span class="o">=</span> <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_gdb</span><span class="p">(</span>
+        <span class="n">script_source_name</span><span class="o">=</span><span class="n">dam_file</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">&quot;paths_in_dam&quot;</span>
+    <span class="p">)</span>
+
+    <span class="n">dam__paths_in_dam_valid__n250_road</span> <span class="o">=</span> <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_gdb</span><span class="p">(</span>
+        <span class="n">script_source_name</span><span class="o">=</span><span class="n">dam_file</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">&quot;paths_in_dam_valid&quot;</span>
+    <span class="p">)</span>
+
+    <span class="n">dam__cleaned_roads__n250_road</span> <span class="o">=</span> <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_gdb</span><span class="p">(</span>
+        <span class="n">script_source_name</span><span class="o">=</span><span class="n">dam_file</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">&quot;cleaned_roads&quot;</span>
+    <span class="p">)</span>
+
+    <span class="c1"># ========================================</span>
+    <span class="c1">#                     MAJOR ROAD CROSSINGS</span>
+    <span class="c1"># ========================================</span>
+
+    <span class="n">major_road_crossing__road_u__n250_road</span> <span class="o">=</span> <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_gdb</span><span class="p">(</span>
+        <span class="n">script_source_name</span><span class="o">=</span><span class="n">major_road_crossings</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">&quot;road_u&quot;</span>
+    <span class="p">)</span>
+
+    <span class="n">major_road_crossing__road_u_buffer__n250_road</span> <span class="o">=</span> <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_gdb</span><span class="p">(</span>
+        <span class="n">script_source_name</span><span class="o">=</span><span class="n">major_road_crossings</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">&quot;road_u_buffer&quot;</span>
+    <span class="p">)</span>
+
+    <span class="n">major_road_crossing__road_u_buffer_shrunked__n250_road</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_gdb</span><span class="p">(</span>
+            <span class="n">script_source_name</span><span class="o">=</span><span class="n">major_road_crossings</span><span class="p">,</span>
+            <span class="n">description</span><span class="o">=</span><span class="s2">&quot;road_u_buffer_shrunked&quot;</span><span class="p">,</span>
+        <span class="p">)</span>
+    <span class="p">)</span>
+
+    <span class="n">major_road_crossing__road_l__n250_road</span> <span class="o">=</span> <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_gdb</span><span class="p">(</span>
+        <span class="n">script_source_name</span><span class="o">=</span><span class="n">major_road_crossings</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">&quot;road_l&quot;</span>
+    <span class="p">)</span>
+
+    <span class="n">major_road_crossing__road_l_buffer__n250_road</span> <span class="o">=</span> <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_gdb</span><span class="p">(</span>
+        <span class="n">script_source_name</span><span class="o">=</span><span class="n">major_road_crossings</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">&quot;road_l_buffer&quot;</span>
+    <span class="p">)</span>
+
+    <span class="n">major_road_crossing__road_l_buffer_shrunked__n250_road</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_gdb</span><span class="p">(</span>
+            <span class="n">script_source_name</span><span class="o">=</span><span class="n">major_road_crossings</span><span class="p">,</span>
+            <span class="n">description</span><span class="o">=</span><span class="s2">&quot;road_l_buffer_shrunked&quot;</span><span class="p">,</span>
+        <span class="p">)</span>
+    <span class="p">)</span>
+
+    <span class="n">major_road_crossing__ER__n250_road</span> <span class="o">=</span> <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_gdb</span><span class="p">(</span>
+        <span class="n">script_source_name</span><span class="o">=</span><span class="n">major_road_crossings</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">&quot;ER&quot;</span>
+    <span class="p">)</span>
+
+    <span class="n">major_road_crossing__ER_bridge__n250_road</span> <span class="o">=</span> <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_gdb</span><span class="p">(</span>
+        <span class="n">script_source_name</span><span class="o">=</span><span class="n">major_road_crossings</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">&quot;ER_bridge&quot;</span>
+    <span class="p">)</span>
+
+    <span class="n">major_road_crossing__ER_bridge_buffer__n250_road</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_gdb</span><span class="p">(</span>
+            <span class="n">script_source_name</span><span class="o">=</span><span class="n">major_road_crossings</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">&quot;ER_bridge_buffer&quot;</span>
+        <span class="p">)</span>
+    <span class="p">)</span>
+
+    <span class="n">major_road_crossing__ER_bridge_shrunked__n250_road</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_gdb</span><span class="p">(</span>
+            <span class="n">script_source_name</span><span class="o">=</span><span class="n">major_road_crossings</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">&quot;ER_bridge_shrunked&quot;</span>
+        <span class="p">)</span>
+    <span class="p">)</span>
+
+    <span class="n">major_road_crossing__road_t__n250_road</span> <span class="o">=</span> <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_gdb</span><span class="p">(</span>
+        <span class="n">script_source_name</span><span class="o">=</span><span class="n">major_road_crossings</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">&quot;road_t&quot;</span>
+    <span class="p">)</span>
+
+    <span class="n">major_road_crossing__ER_t__n250_road</span> <span class="o">=</span> <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_gdb</span><span class="p">(</span>
+        <span class="n">script_source_name</span><span class="o">=</span><span class="n">major_road_crossings</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">&quot;ER_t&quot;</span>
+    <span class="p">)</span>
+
+    <span class="n">major_road_crossing__bridge_cross_ER__n250_road</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_gdb</span><span class="p">(</span>
+            <span class="n">script_source_name</span><span class="o">=</span><span class="n">major_road_crossings</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">&quot;bridge_cross_ER&quot;</span>
+        <span class="p">)</span>
+    <span class="p">)</span>
+
+    <span class="n">major_road_crossing__underpass_cross_ER__n250_road</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_gdb</span><span class="p">(</span>
+            <span class="n">script_source_name</span><span class="o">=</span><span class="n">major_road_crossings</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">&quot;underpass_cross_ER&quot;</span>
+        <span class="p">)</span>
+    <span class="p">)</span>
+
+    <span class="n">major_road_crossing__surface_under_ER__n250_road</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_gdb</span><span class="p">(</span>
+            <span class="n">script_source_name</span><span class="o">=</span><span class="n">major_road_crossings</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">&quot;surface_under_ER&quot;</span>
+        <span class="p">)</span>
+    <span class="p">)</span>
+
+    <span class="n">major_road_crossing__keep_bru_ERFKP__n250_road</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_gdb</span><span class="p">(</span>
+            <span class="n">script_source_name</span><span class="o">=</span><span class="n">major_road_crossings</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">&quot;keep_bru_ERFKP&quot;</span>
+        <span class="p">)</span>
+    <span class="p">)</span>
+
+    <span class="n">major_road_crossing__keep_underpass_ERFKP__n250_road</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_gdb</span><span class="p">(</span>
+            <span class="n">script_source_name</span><span class="o">=</span><span class="n">major_road_crossings</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">&quot;keep_underpass_ERFKP&quot;</span>
+        <span class="p">)</span>
+    <span class="p">)</span>
+
+    <span class="n">major_road_crossing__keep_surface_ERFKP__n250_road</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_gdb</span><span class="p">(</span>
+            <span class="n">script_source_name</span><span class="o">=</span><span class="n">major_road_crossings</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">&quot;keep_surface_FKP&quot;</span>
+        <span class="p">)</span>
+    <span class="p">)</span>
+
+    <span class="n">major_road_crossing__merged_keep__n250_road</span> <span class="o">=</span> <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_gdb</span><span class="p">(</span>
+        <span class="n">script_source_name</span><span class="o">=</span><span class="n">major_road_crossings</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">&quot;merged_keep&quot;</span>
+    <span class="p">)</span>
+
+    <span class="n">major_road_crossing__output__n250_road</span> <span class="o">=</span> <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_gdb</span><span class="p">(</span>
+        <span class="n">script_source_name</span><span class="o">=</span><span class="n">major_road_crossings</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">&quot;output&quot;</span>
+    <span class="p">)</span>
+
+    <span class="c1"># ========================================</span>
+    <span class="c1">#                              VEGSPERRING</span>
+    <span class="c1"># ========================================</span>
+
+    <span class="n">vegsperring__veg_uten_bom__n250_road</span> <span class="o">=</span> <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_gdb</span><span class="p">(</span>
+        <span class="n">script_source_name</span><span class="o">=</span><span class="n">vegsperring_file</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">&quot;veg_uten_bom&quot;</span>
+    <span class="p">)</span>
+    <span class="c1"># ========================================</span>
+    <span class="c1">#                                    RAMPS</span>
+    <span class="c1"># ========================================</span>
+
+    <span class="n">ramps__ramps__n250_road</span> <span class="o">=</span> <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_gdb</span><span class="p">(</span>
+        <span class="n">script_source_name</span><span class="o">=</span><span class="n">ramps_file</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">&quot;ramps&quot;</span>
+    <span class="p">)</span>
+
+    <span class="n">ramps__collapsed_roundabouts__n250_road</span> <span class="o">=</span> <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_gdb</span><span class="p">(</span>
+        <span class="n">script_source_name</span><span class="o">=</span><span class="n">ramps_file</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">&quot;collapsed_roundabouts&quot;</span>
+    <span class="p">)</span>
+
+    <span class="n">ramps__small_roundabouts__n250_road</span> <span class="o">=</span> <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_gdb</span><span class="p">(</span>
+        <span class="n">script_source_name</span><span class="o">=</span><span class="n">ramps_file</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">&quot;small_roundabouts&quot;</span>
+    <span class="p">)</span>
+
+    <span class="n">ramps__roads_with_cleaned_roundabouts__n250_road</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_gdb</span><span class="p">(</span>
+            <span class="n">script_source_name</span><span class="o">=</span><span class="n">ramps_file</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">&quot;roads_with_cleaned_roundabouts&quot;</span>
+        <span class="p">)</span>
+    <span class="p">)</span>
+
+    <span class="n">ramps__buffered_ramps__n250_road</span> <span class="o">=</span> <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_gdb</span><span class="p">(</span>
+        <span class="n">script_source_name</span><span class="o">=</span><span class="n">ramps_file</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">&quot;buffered_ramps&quot;</span>
+    <span class="p">)</span>
+
+    <span class="n">ramps__buffered_ramps_100__n250_road</span> <span class="o">=</span> <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_gdb</span><span class="p">(</span>
+        <span class="n">script_source_name</span><span class="o">=</span><span class="n">ramps_file</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">&quot;buffered_ramps_100&quot;</span>
+    <span class="p">)</span>
+
+    <span class="n">ramps__roads_near_ramp__n250_road</span> <span class="o">=</span> <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_gdb</span><span class="p">(</span>
+        <span class="n">script_source_name</span><span class="o">=</span><span class="n">ramps_file</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">&quot;roads_near_ramp&quot;</span>
+    <span class="p">)</span>
+
+    <span class="n">ramps__endpoints__n250_road</span> <span class="o">=</span> <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_gdb</span><span class="p">(</span>
+        <span class="n">script_source_name</span><span class="o">=</span><span class="n">ramps_file</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">&quot;endpoints&quot;</span>
+    <span class="p">)</span>
+
+    <span class="n">ramps__dissolved_ramps__n250_road</span> <span class="o">=</span> <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_gdb</span><span class="p">(</span>
+        <span class="n">script_source_name</span><span class="o">=</span><span class="n">ramps_file</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">&quot;dissolved_ramps&quot;</span>
+    <span class="p">)</span>
+
+    <span class="n">ramps__intermediate_ramps__n250_road</span> <span class="o">=</span> <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_gdb</span><span class="p">(</span>
+        <span class="n">script_source_name</span><span class="o">=</span><span class="n">ramps_file</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">&quot;intermediate_ramps&quot;</span>
+    <span class="p">)</span>
+
+    <span class="n">ramps__merged_ramps__n250_road</span> <span class="o">=</span> <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_gdb</span><span class="p">(</span>
+        <span class="n">script_source_name</span><span class="o">=</span><span class="n">ramps_file</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">&quot;merged_ramps&quot;</span>
+    <span class="p">)</span>
+
+    <span class="n">ramps__closest_points__n250_road</span> <span class="o">=</span> <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_gdb</span><span class="p">(</span>
+        <span class="n">script_source_name</span><span class="o">=</span><span class="n">ramps_file</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">&quot;closest_points&quot;</span>
+    <span class="p">)</span>
+
+    <span class="n">ramps__generalized_ramps__n250_road</span> <span class="o">=</span> <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_gdb</span><span class="p">(</span>
+        <span class="n">script_source_name</span><span class="o">=</span><span class="n">ramps_file</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">&quot;generalized_ramps&quot;</span>
+    <span class="p">)</span>
+
+    <span class="n">ramps__dissolved_group__n250_road</span> <span class="o">=</span> <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_gdb</span><span class="p">(</span>
+        <span class="n">script_source_name</span><span class="o">=</span><span class="n">ramps_file</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">&quot;dissolved_group&quot;</span>
+    <span class="p">)</span>
+
+    <span class="n">ramps__splitted_group__n250_road</span> <span class="o">=</span> <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_gdb</span><span class="p">(</span>
+        <span class="n">script_source_name</span><span class="o">=</span><span class="n">ramps_file</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">&quot;splitted_group&quot;</span>
+    <span class="p">)</span>
+
+    <span class="n">ramps__ramp_points__n250_road</span> <span class="o">=</span> <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_gdb</span><span class="p">(</span>
+        <span class="n">script_source_name</span><span class="o">=</span><span class="n">ramps_file</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">&quot;ramp_points&quot;</span>
+    <span class="p">)</span>
+
+    <span class="n">ramps__ramp_points_moved__n250_road</span> <span class="o">=</span> <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_gdb</span><span class="p">(</span>
+        <span class="n">script_source_name</span><span class="o">=</span><span class="n">ramps_file</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">&quot;ramp_points_moved&quot;</span>
+    <span class="p">)</span>
+
+    <span class="n">ramps__ramp_points_moved_2__n250_road</span> <span class="o">=</span> <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_gdb</span><span class="p">(</span>
+        <span class="n">script_source_name</span><span class="o">=</span><span class="n">ramps_file</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">&quot;ramp_points_moved_2&quot;</span>
+    <span class="p">)</span>
+
+    <span class="n">ramps__test__n250_road</span> <span class="o">=</span> <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_gdb</span><span class="p">(</span>
+        <span class="n">script_source_name</span><span class="o">=</span><span class="n">ramps_file</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">&quot;test&quot;</span>
+    <span class="p">)</span></div>
+
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2024, Kartverket.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

@@ -8,6 +8,7 @@ Subpackages
    :maxdepth: 4
 
    file_manager.n100
+   file_manager.n250
 
 Submodules
 ----------

@@ -1,0 +1,20 @@
+generalization.n250 package
+===========================
+
+Subpackages
+-----------
+
+.. toctree::
+   :maxdepth: 4
+
+   generalization.n250.building
+   generalization.n250.river
+   generalization.n250.road
+
+Module contents
+---------------
+
+.. automodule:: generalization.n250
+   :members:
+   :show-inheritance:
+   :undoc-members:

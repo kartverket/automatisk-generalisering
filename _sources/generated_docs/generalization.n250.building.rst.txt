@@ -1,0 +1,10 @@
+generalization.n250.building package
+====================================
+
+Module contents
+---------------
+
+.. automodule:: generalization.n250.building
+   :members:
+   :show-inheritance:
+   :undoc-members:

@@ -8,6 +8,7 @@ Subpackages
    :maxdepth: 4
 
    generalization.n100
+   generalization.n250
 
 Module contents
 ---------------

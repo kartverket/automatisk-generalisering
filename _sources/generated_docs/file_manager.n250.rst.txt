@@ -1,0 +1,21 @@
+file\_manager.n250 package
+==========================
+
+Submodules
+----------
+
+file\_manager.n250.file\_manager\_roads module
+----------------------------------------------
+
+.. automodule:: file_manager.n250.file_manager_roads
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+Module contents
+---------------
+
+.. automodule:: file_manager.n250
+   :members:
+   :show-inheritance:
+   :undoc-members:

@@ -1,0 +1,231 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../../../">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>generalization.n250.road.vegsperring &mdash; Automatisk Generalisering 0.0.1 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../../../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../../../../_static/css/theme.css?v=e59714d7" />
+      <link rel="stylesheet" type="text/css" href="../../../../_static/custom.css" />
+
+  
+      <script src="../../../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../../../_static/documentation_options.js?v=d45e8c67"></script>
+      <script src="../../../../_static/doctools.js?v=9bcbadda"></script>
+      <script src="../../../../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="../../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../../index.html" class="icon icon-home">
+            Automatisk Generalisering
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../../generated_docs/custom_tools.html">custom_tools package</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../generated_docs/env_setup.html">env_setup package</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../generated_docs/file_manager.html">file_manager package</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../generated_docs/generalization.n100.building.html">generalization.n100.building package</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../generated_docs/input_data.html">input_data package</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../generated_docs/modules.html">automatisk-generalisering</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../../index.html">Automatisk Generalisering</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../../../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">generalization.n250.road.vegsperring</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for generalization.n250.road.vegsperring</h1><div class="highlight"><pre>
+<span></span><span class="c1"># Importing packages</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">arcpy</span>
+
+<span class="n">arcpy</span><span class="o">.</span><span class="n">env</span><span class="o">.</span><span class="n">overwriteOutput</span> <span class="o">=</span> <span class="kc">True</span>
+
+<span class="c1"># Importing custom modules</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">custom_tools.decorators.timing_decorator</span><span class="w"> </span><span class="kn">import</span> <span class="n">timing_decorator</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">file_manager.n250.file_manager_roads</span><span class="w"> </span><span class="kn">import</span> <span class="n">Road_N250</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">input_data</span><span class="w"> </span><span class="kn">import</span> <span class="n">input_n100</span>
+
+<span class="n">data_files</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="c1"># Stores all the relevant file paths to the geodata used in this Python file</span>
+    <span class="s2">&quot;input_road&quot;</span><span class="p">:</span> <span class="n">Road_N250</span><span class="o">.</span><span class="n">roundabout__cleaned_road__n250_road</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
+    <span class="s2">&quot;input_vegsperring&quot;</span><span class="p">:</span> <span class="n">Road_N250</span><span class="o">.</span><span class="n">data_selection___vegsperring___n250_road</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
+    <span class="s2">&quot;veg_uten_bom&quot;</span><span class="p">:</span> <span class="n">Road_N250</span><span class="o">.</span><span class="n">vegsperring__veg_uten_bom__n250_road</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
+<span class="p">}</span>
+
+
+<div class="viewcode-block" id="remove_roadblock">
+<a class="viewcode-back" href="../../../../generated_docs/generalization.n250.road.html#generalization.n250.road.vegsperring.remove_roadblock">[docs]</a>
+<span class="nd">@timing_decorator</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">remove_roadblock</span><span class="p">():</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Identifies every road having some kind of roadblock 2 m from the</span>
+<span class="sd">    centre line and marks them with either &quot;ja&quot; (yes) or &quot;nei&quot; (no).</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">road_fc</span> <span class="o">=</span> <span class="n">data_files</span><span class="p">[</span><span class="s2">&quot;input_road&quot;</span><span class="p">]</span>
+    <span class="n">roadblock_fc</span> <span class="o">=</span> <span class="n">data_files</span><span class="p">[</span><span class="s2">&quot;input_vegsperring&quot;</span><span class="p">]</span>
+    <span class="n">output</span> <span class="o">=</span> <span class="n">data_files</span><span class="p">[</span><span class="s2">&quot;veg_uten_bom&quot;</span><span class="p">]</span>
+
+    <span class="c1"># Fetch the relevant roads</span>
+    <span class="n">arcpy</span><span class="o">.</span><span class="n">management</span><span class="o">.</span><span class="n">MakeFeatureLayer</span><span class="p">(</span>
+        <span class="n">in_features</span><span class="o">=</span><span class="n">road_fc</span><span class="p">,</span> <span class="n">out_layer</span><span class="o">=</span><span class="s2">&quot;road_lyr&quot;</span><span class="p">,</span> <span class="n">where_clause</span><span class="o">=</span><span class="s2">&quot;medium = &#39;T&#39;&quot;</span>
+    <span class="p">)</span>
+
+    <span class="c1"># Create near table with connections to roadblocks</span>
+    <span class="n">near_table</span> <span class="o">=</span> <span class="sa">r</span><span class="s2">&quot;in_memory/near_table&quot;</span>
+    <span class="n">arcpy</span><span class="o">.</span><span class="n">analysis</span><span class="o">.</span><span class="n">GenerateNearTable</span><span class="p">(</span>
+        <span class="n">in_features</span><span class="o">=</span><span class="n">roadblock_fc</span><span class="p">,</span>
+        <span class="n">near_features</span><span class="o">=</span><span class="s2">&quot;road_lyr&quot;</span><span class="p">,</span>
+        <span class="n">out_table</span><span class="o">=</span><span class="n">near_table</span><span class="p">,</span>
+        <span class="n">search_radius</span><span class="o">=</span><span class="s2">&quot;2 Meters&quot;</span><span class="p">,</span>
+        <span class="n">closest</span><span class="o">=</span><span class="s2">&quot;ALL&quot;</span><span class="p">,</span>
+        <span class="n">location</span><span class="o">=</span><span class="s2">&quot;NO_LOCATION&quot;</span><span class="p">,</span>
+        <span class="n">angle</span><span class="o">=</span><span class="s2">&quot;NO_ANGLE&quot;</span><span class="p">,</span>
+    <span class="p">)</span>
+
+    <span class="c1"># Fetch all the road oids with roadblocks</span>
+    <span class="n">road_oids_with_roadblock</span> <span class="o">=</span> <span class="nb">set</span><span class="p">()</span>
+    <span class="k">if</span> <span class="n">arcpy</span><span class="o">.</span><span class="n">Exists</span><span class="p">(</span><span class="n">near_table</span><span class="p">):</span>
+        <span class="k">with</span> <span class="n">arcpy</span><span class="o">.</span><span class="n">da</span><span class="o">.</span><span class="n">SearchCursor</span><span class="p">(</span><span class="n">near_table</span><span class="p">,</span> <span class="p">[</span><span class="s2">&quot;NEAR_FID&quot;</span><span class="p">])</span> <span class="k">as</span> <span class="n">search</span><span class="p">:</span>
+            <span class="k">for</span> <span class="n">row</span> <span class="ow">in</span> <span class="n">search</span><span class="p">:</span>
+                <span class="k">if</span> <span class="n">row</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">row</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">!=</span> <span class="o">-</span><span class="mi">1</span><span class="p">:</span>
+                    <span class="n">road_oids_with_roadblock</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">row</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+
+    <span class="c1"># If no roadblocks detected, just return input</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">road_oids_with_roadblock</span><span class="p">:</span>
+        <span class="n">arcpy</span><span class="o">.</span><span class="n">management</span><span class="o">.</span><span class="n">CopyFeatures</span><span class="p">(</span><span class="n">road_fc</span><span class="p">,</span> <span class="n">output</span><span class="p">)</span>
+        <span class="n">arcpy</span><span class="o">.</span><span class="n">management</span><span class="o">.</span><span class="n">Delete</span><span class="p">(</span><span class="n">near_table</span><span class="p">)</span>
+        <span class="k">return</span>
+
+    <span class="c1"># Select roads with bom</span>
+    <span class="n">oid_field</span> <span class="o">=</span> <span class="n">arcpy</span><span class="o">.</span><span class="n">Describe</span><span class="p">(</span><span class="n">road_fc</span><span class="p">)</span><span class="o">.</span><span class="n">OIDFieldName</span>
+    <span class="n">oid_list_str</span> <span class="o">=</span> <span class="s2">&quot;,&quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="nb">map</span><span class="p">(</span><span class="nb">str</span><span class="p">,</span> <span class="n">road_oids_with_roadblock</span><span class="p">))</span>
+    <span class="n">where_clause</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">oid_field</span><span class="si">}</span><span class="s2"> IN (</span><span class="si">{</span><span class="n">oid_list_str</span><span class="si">}</span><span class="s2">)&quot;</span>
+    <span class="n">arcpy</span><span class="o">.</span><span class="n">management</span><span class="o">.</span><span class="n">MakeFeatureLayer</span><span class="p">(</span>
+        <span class="n">in_features</span><span class="o">=</span><span class="n">road_fc</span><span class="p">,</span>
+        <span class="n">out_layer</span><span class="o">=</span><span class="s2">&quot;roads_with_roadblock_lyr&quot;</span><span class="p">,</span>
+        <span class="n">where_clause</span><span class="o">=</span><span class="n">where_clause</span><span class="p">,</span>
+    <span class="p">)</span>
+
+    <span class="c1"># Create layer with urban areas</span>
+    <span class="n">arcpy</span><span class="o">.</span><span class="n">management</span><span class="o">.</span><span class="n">MakeFeatureLayer</span><span class="p">(</span>
+        <span class="n">in_features</span><span class="o">=</span><span class="n">input_n100</span><span class="o">.</span><span class="n">ArealdekkeFlate</span><span class="p">,</span>
+        <span class="n">out_layer</span><span class="o">=</span><span class="s2">&quot;urban_areas_lyr&quot;</span><span class="p">,</span>
+        <span class="n">where_clause</span><span class="o">=</span><span class="s2">&quot;OBJTYPE IN (&#39;Tettbebyggelse&#39;, &#39;BymessigBebyggelse&#39;)&quot;</span><span class="p">,</span>
+    <span class="p">)</span>
+
+    <span class="c1"># Spatial join to collect roadblocks in urban areas</span>
+    <span class="n">joined</span> <span class="o">=</span> <span class="sa">r</span><span class="s2">&quot;in_memory/roads_with_bom_joined&quot;</span>
+    <span class="n">arcpy</span><span class="o">.</span><span class="n">analysis</span><span class="o">.</span><span class="n">SpatialJoin</span><span class="p">(</span>
+        <span class="n">target_features</span><span class="o">=</span><span class="s2">&quot;roads_with_roadblock_lyr&quot;</span><span class="p">,</span>
+        <span class="n">join_features</span><span class="o">=</span><span class="s2">&quot;urban_areas_lyr&quot;</span><span class="p">,</span>
+        <span class="n">out_feature_class</span><span class="o">=</span><span class="n">joined</span><span class="p">,</span>
+        <span class="n">join_operation</span><span class="o">=</span><span class="s2">&quot;JOIN_ONE_TO_ONE&quot;</span><span class="p">,</span>
+        <span class="n">join_type</span><span class="o">=</span><span class="s2">&quot;KEEP_ALL&quot;</span><span class="p">,</span>
+        <span class="n">match_option</span><span class="o">=</span><span class="s2">&quot;WITHIN&quot;</span><span class="p">,</span>
+    <span class="p">)</span>
+
+    <span class="c1"># Find oids in urban areas</span>
+    <span class="n">important_oids</span> <span class="o">=</span> <span class="nb">set</span><span class="p">()</span>
+    <span class="k">if</span> <span class="n">arcpy</span><span class="o">.</span><span class="n">Exists</span><span class="p">(</span><span class="n">joined</span><span class="p">):</span>
+        <span class="n">join_oid_field</span> <span class="o">=</span> <span class="s2">&quot;TARGET_FID&quot;</span>
+        <span class="n">join_count_field</span> <span class="o">=</span> <span class="s2">&quot;Join_Count&quot;</span>
+        <span class="n">fields</span> <span class="o">=</span> <span class="p">[</span><span class="n">f</span><span class="o">.</span><span class="n">name</span> <span class="k">for</span> <span class="n">f</span> <span class="ow">in</span> <span class="n">arcpy</span><span class="o">.</span><span class="n">ListFields</span><span class="p">(</span><span class="n">joined</span><span class="p">)]</span>
+        <span class="k">if</span> <span class="n">join_oid_field</span> <span class="ow">in</span> <span class="n">fields</span> <span class="ow">and</span> <span class="n">join_count_field</span> <span class="ow">in</span> <span class="n">fields</span><span class="p">:</span>
+            <span class="k">with</span> <span class="n">arcpy</span><span class="o">.</span><span class="n">da</span><span class="o">.</span><span class="n">SearchCursor</span><span class="p">(</span>
+                <span class="n">joined</span><span class="p">,</span> <span class="p">[</span><span class="n">join_oid_field</span><span class="p">,</span> <span class="n">join_count_field</span><span class="p">]</span>
+            <span class="p">)</span> <span class="k">as</span> <span class="n">search</span><span class="p">:</span>
+                <span class="k">for</span> <span class="n">target_fid</span><span class="p">,</span> <span class="n">join_count</span> <span class="ow">in</span> <span class="n">search</span><span class="p">:</span>
+                    <span class="k">if</span> <span class="n">join_count</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="nb">int</span><span class="p">(</span><span class="n">join_count</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+                        <span class="n">important_oids</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="nb">int</span><span class="p">(</span><span class="n">target_fid</span><span class="p">))</span>
+
+    <span class="c1"># Fetch the oids to delete</span>
+    <span class="n">to_delete</span> <span class="o">=</span> <span class="n">road_oids_with_roadblock</span><span class="o">.</span><span class="n">intersection</span><span class="p">(</span><span class="n">important_oids</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">to_delete</span><span class="p">:</span>
+        <span class="n">arcpy</span><span class="o">.</span><span class="n">management</span><span class="o">.</span><span class="n">MakeFeatureLayer</span><span class="p">(</span><span class="n">road_fc</span><span class="p">,</span> <span class="s2">&quot;to_delete_lyr&quot;</span><span class="p">)</span>
+        <span class="n">where_clause</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">oid_field</span><span class="si">}</span><span class="s2"> IN (</span><span class="si">{</span><span class="s1">&#39;,&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="nb">map</span><span class="p">(</span><span class="nb">str</span><span class="p">,</span><span class="w"> </span><span class="n">to_delete</span><span class="p">))</span><span class="si">}</span><span class="s2">)&quot;</span>
+        <span class="n">arcpy</span><span class="o">.</span><span class="n">management</span><span class="o">.</span><span class="n">SelectLayerByAttribute</span><span class="p">(</span>
+            <span class="n">in_layer_or_view</span><span class="o">=</span><span class="s2">&quot;to_delete_lyr&quot;</span><span class="p">,</span>
+            <span class="n">selection_type</span><span class="o">=</span><span class="s2">&quot;NEW_SELECTION&quot;</span><span class="p">,</span>
+            <span class="n">where_clause</span><span class="o">=</span><span class="n">where_clause</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="n">arcpy</span><span class="o">.</span><span class="n">management</span><span class="o">.</span><span class="n">DeleteFeatures</span><span class="p">(</span><span class="s2">&quot;to_delete_lyr&quot;</span><span class="p">)</span>
+
+    <span class="c1"># Copy the result</span>
+    <span class="n">arcpy</span><span class="o">.</span><span class="n">management</span><span class="o">.</span><span class="n">CopyFeatures</span><span class="p">(</span><span class="n">road_fc</span><span class="p">,</span> <span class="n">output</span><span class="p">)</span>
+
+    <span class="c1"># Clean up</span>
+    <span class="k">for</span> <span class="n">tmp</span> <span class="ow">in</span> <span class="p">(</span><span class="n">joined</span><span class="p">,</span> <span class="n">near_table</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">arcpy</span><span class="o">.</span><span class="n">Exists</span><span class="p">(</span><span class="n">tmp</span><span class="p">):</span>
+            <span class="n">arcpy</span><span class="o">.</span><span class="n">management</span><span class="o">.</span><span class="n">Delete</span><span class="p">(</span><span class="n">tmp</span><span class="p">)</span></div>
+
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2024, Kartverket.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

@@ -1,0 +1,10 @@
+generalization.n250.river package
+=================================
+
+Module contents
+---------------
+
+.. automodule:: generalization.n250.river
+   :members:
+   :show-inheritance:
+   :undoc-members:

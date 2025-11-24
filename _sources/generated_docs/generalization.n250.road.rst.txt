@@ -1,0 +1,61 @@
+generalization.n250.road package
+================================
+
+Submodules
+----------
+
+generalization.n250.road.dam module
+-----------------------------------
+
+.. automodule:: generalization.n250.road.dam
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+generalization.n250.road.data\_preparation\_2 module
+----------------------------------------------------
+
+.. automodule:: generalization.n250.road.data_preparation_2
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+generalization.n250.road.major\_road\_crossings module
+------------------------------------------------------
+
+.. automodule:: generalization.n250.road.major_road_crossings
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+generalization.n250.road.ramps\_point module
+--------------------------------------------
+
+.. automodule:: generalization.n250.road.ramps_point
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+generalization.n250.road.roundabouts module
+-------------------------------------------
+
+.. automodule:: generalization.n250.road.roundabouts
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+generalization.n250.road.vegsperring module
+-------------------------------------------
+
+.. automodule:: generalization.n250.road.vegsperring
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+Module contents
+---------------
+
+.. automodule:: generalization.n250.road
+   :members:
+   :show-inheritance:
+   :undoc-members:
