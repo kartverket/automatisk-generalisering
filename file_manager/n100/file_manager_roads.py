@@ -21,6 +21,7 @@ dam_file = "dam"
 road_triangles = "road_triangles"
 major_road_crossings = "major_road_crossings"
 vegsperring_file = "vegsperring"
+road_cleaning = "road_cleaning"
 test2 = "test2"
 test3 = "test3"
 ramps_file = "ramps"
@@ -1265,6 +1266,18 @@ class Road_N100(Enum):
 
     roundabout__cleaned_road__n100_road = file_manager.generate_file_name_gdb(
         script_source_name=roundabout_file, description="cleaned_road"
+    )
+
+    # ========================================
+    #                            ROAD CLEANING
+    # ========================================
+
+    road_cleaning__n100_road = file_manager.generate_file_name_gdb(
+        script_source_name=road_cleaning, description="road_cleaning"
+    )
+
+    road_cleaning_output__n100_road = file_manager.generate_file_name_gdb(
+        script_source_name=road_cleaning, description="road_cleaning_output"
     )
 
     # ========================================
