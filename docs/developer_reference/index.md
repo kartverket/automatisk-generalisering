@@ -5,3 +5,5 @@ principles, IO conventions, runtime patterns, and how to extend the project safe
 
 - [Desing and convetions](https://github.com/kartverket/automatisk-generalisering/tree/main/docs/developer_reference/design_and_conventions.md)
 - [IO and File Management](https://github.com/kartverket/automatisk-generalisering/tree/main/docs/developer_reference/io_and_file_management.md)
+- [Runtime Entrypoints](https://github.com/kartverket/automatisk-generalisering/tree/main/docs/developer_reference/runtime_entrypoints.md)
+- [Project Structure](https://github.com/kartverket/automatisk-generalisering/tree/main/docs/developer_reference/project_structure.md)
