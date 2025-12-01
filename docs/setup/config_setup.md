@@ -7,4 +7,8 @@ The current setup with config file needs rework and is planned to be improved in
 - Update the paths inside your `config.py` file to match your local environment.
 
 
-[Navigate back to Setup Guide](https://github.com/kartverket/automatisk-generalisering/tree/main/docs/setup)
+---
+### Navigation
+
+- [Setup Guide](docs/setup/index.md)
+- [Return to README](README.md)

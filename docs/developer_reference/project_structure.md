@@ -79,3 +79,10 @@ generalization/
 ```
 
 - **n100/ and n250/** These directories contain the complete generalization pipelines for different objects for each scale. Each pipeline includes a main entrypoint (`object_main.py`) and a collection of submodules, where each submodule implements one step of the overall model.
+
+
+---
+### Navigation
+
+- [Developer Reference](docs/developer_reference/index.md)
+- [Return to README](README.md)

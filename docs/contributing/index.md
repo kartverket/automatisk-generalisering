@@ -13,7 +13,7 @@
 - Avoid single-letter variables except for trivial loops.
 
 ### 3. Docstring
-Please read our [docstring documentation](https://github.com/kartverket/automatisk-generalisering/tree/main/docs/contributing/docstring.md)
+Please read our [docstring documentation](docs/contributing/docstring.md)
 ### 4. Branching & Git Workflow
 
 - Create a feature branch for each task or fix.
@@ -28,4 +28,7 @@ Please read our [docstring documentation](https://github.com/kartverket/automati
 - The author is responsible for writing the PR summary.
 - Delete inactive feature branches.
 
-[Return to README](https://github.com/kartverket/automatisk-generalisering/blob/main/README.md)
+---
+### Navigation
+
+- [Return to README](README.md)

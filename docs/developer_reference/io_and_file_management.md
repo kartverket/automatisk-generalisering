@@ -39,3 +39,9 @@ In short:
 - **Pass file objects, not strings**
   Methods receive file objects, not literal paths.
   This ensures consistent path handling and avoids environment-specific issues.
+
+---
+### Navigation
+
+- [Developer Reference](docs/developer_reference/index.md)
+- [Return to README](README.md)

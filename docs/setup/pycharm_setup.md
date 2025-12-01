@@ -16,4 +16,8 @@ This step is only needed if PyCharm does not correctly resolve relative imports.
 1. Right click on the project directory → `Mark Directory as` → `Sources Root`
 
 
-[Navigate back to Setup Guide](https://github.com/kartverket/automatisk-generalisering/tree/main/docs/setup)
+---
+### Navigation
+
+- [Setup Guide](docs/setup/index.md)
+- [Return to README](README.md)

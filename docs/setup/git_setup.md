@@ -1,6 +1,6 @@
 ## Overview
 This guide explains how to install Git in detail (if needed) and clone the repository.  
-If you are familiar with Git: the project uses a **standard Git setup** — simply clone the repository and disregard this guide. However please read the [Contribution guide](https://github.com/kartverket/automatisk-generalisering/blob/main/CONTRIBUTING.md):
+If you are familiar with Git: the project uses a **standard Git setup** — simply clone the repository and disregard the rest of the Git setup guide.
 
 ```bash
 git clone https://github.com/kartverket/automatisk-generalisering.git <local_path>
@@ -53,3 +53,8 @@ If you prefer, you can clone the repository directly from VS Code or PyCharm ins
   * Enter the repository URL and select your target directory
   * Click **Clone**
 
+---
+### Navigation
+
+- [Setup Guide](docs/setup/index.md)
+- [Return to README](README.md)

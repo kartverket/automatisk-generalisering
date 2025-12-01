@@ -36,4 +36,8 @@ These steps are only needed if VS Code fails to recognize the repository root as
 ```
 
 
-[Navigate back to Setup Guide](https://github.com/kartverket/automatisk-generalisering/tree/main/docs/setup)
+---
+### Navigation
+
+- [Setup Guide](docs/setup/index.md)
+- [Return to README](README.md)

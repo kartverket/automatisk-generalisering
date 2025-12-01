@@ -87,3 +87,8 @@ def example_function(param: int) -> str:
     """
 ```
 
+---
+### Navigation
+
+- [Contribution Guide](docs/contributing/index.md)
+- [Return to README](README.md)

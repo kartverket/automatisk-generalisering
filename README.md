@@ -1,19 +1,19 @@
 # Automatisk Generalisering
 
-This is the collection of scripts used to automatically generalize geodata into smaller cartographic scales.
+This repository contains the scripts and tools for automatic cartographic generalization of geodata across multiple map scales.
 
-### Documentation overview:
+## Documentation
 
-- [Setup Guide](https://github.com/kartverket/automatisk-generalisering/tree/main/docs/setup) - A set of guides related to setting up your environment to run the project.
+The project documentation is organized into these main sections:
 
-- [Contribution Guide](https://github.com/kartverket/automatisk-generalisering/tree/main/documentation/contribution_guide) - Guides required to contribute to the codebase, such as formatting and collaboration standards.
+- **[Setup Guide](docs/setup/index.md)**  
+  How to install dependencies, configure ArcPy, prepare your environment, and verify your setup.
 
-### Open the folder `setup_guide` [(link)](https://github.com/kartverket/automatisk-generalisering/tree/main/setup_guide) and read the following documents:
+- **[Contribution Guide](docs/contributing/index.md)**  
+  Formatting standards, docstring guidelines, naming conventions, and collaboration workflow.
 
-- `git_setup.md` [(link)](https://github.com/kartverket/automatisk-generalisering/blob/main/setup_guide/git_setup.md) - This helps you to set up your local GIT environment and should be done first.
-- `template_config` [(link)](https://github.com/kartverket/automatisk-generalisering/blob/main/setup_guide/template_config.py) - This is an example of what paths and files you need access to locally to run the scripts in this project.
-
-
+- **[Developer Reference](docs/developer_reference/index.md)**  
+  Project structure, design conventions, IO system, runtime entrypoints, and internal architecture notes.
 
 ### Codebase documentation
 - Our docstring documentation generated from Sphinx can be viewed here _(it needs more work to make it more traversable, reading the code and docstring documentation in an IDE is recommended for now)_: [(link)](https://kartverket.github.io/automatisk-generalisering/index.html)

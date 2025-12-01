@@ -15,4 +15,8 @@ Strive towards these principles:
 - Use `PartitionIterator` to handle processing heavy logic on large data.
 
 
-[Return to README](https://github.com/kartverket/automatisk-generalisering/blob/main/README.md)
+---
+### Navigation
+
+- [Developer Reference](docs/developer_reference/index.md)
+- [Return to README](README.md)

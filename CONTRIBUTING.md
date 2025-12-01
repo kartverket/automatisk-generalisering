@@ -1,4 +1,4 @@
-Before contributing to `automatic-generalization` please read our contribution standards: [Contribution Guide](https://github.com/kartverket/automatisk-generalisering/tree/main/docs/contributing).
+Before contributing to `automatic-generalization` please read our contribution standards: [Contribution Guide](docs/contributing/index.md).
 
 ### Quick Overview:
 - **Code Style:** Uses [Black](https://black.readthedocs.io/en/stable/) for linting.
@@ -7,5 +7,8 @@ Before contributing to `automatic-generalization` please read our contribution s
 - **Branching:** Work on `feature/` or `refactor/` branches when possible.
 - **Pull Requests:** Each PR should be reviewed by at least one teammate. 
 
-If you’re setting up the environment for the first time, see [Setup Guide](https://github.com/kartverket/automatisk-generalisering/tree/main/docs/setup). Or look at our documentation 
-[Return to README](https://github.com/kartverket/automatisk-generalisering/blob/main/README.md).
+---
+### Navigation
+
+- [Contribution Guide](docs/contributing/index.md)
+- [Return to README](README.md)
