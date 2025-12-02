@@ -39,5 +39,5 @@ These steps are only needed if VS Code fails to recognize the repository root as
 ---
 ### Navigation
 
-- [Setup Guide](docs/setup/index.md)
-- [Return to README](README.md)
+- [Setup Guide](index.md)
+- [Return to README](../../README.md)

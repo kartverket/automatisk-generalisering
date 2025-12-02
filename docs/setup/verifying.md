@@ -19,5 +19,5 @@ Make sure that you have done the [VsCode Arcpy setup](docs/setup/vs_code_setup.m
 ---
 ### Navigation
 
-- [Setup Guide](docs/setup/index.md)
-- [Return to README](README.md)
+- [Setup Guide](index.md)
+- [Return to README](../../README.md)

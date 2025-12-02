@@ -32,5 +32,5 @@ def main():
 ---
 ### Navigation
 
-- [Developer Reference](docs/developer_reference/index.md)
-- [Return to README](README.md)
+- [Developer Reference](index.md)
+- [Return to README](../../README.md)
