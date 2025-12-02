@@ -41,13 +41,14 @@ from generalization.n100.road.ramps_point import MovePointsToCrossings
 from generalization.n100.road.resolve_road_conflict_preparation import (
     split_polyline_featureclass,
     remove_road_points_in_water,
-    run_dissolve_with_intersections
+    run_dissolve_with_intersections,
 )
 
 
 MERGE_DIVIDED_ROADS_ALTERATIVE = False
 
 AREA_SELECTOR = "navn IN ('Hole')"
+
 
 @timing_decorator
 def main():
@@ -579,7 +580,7 @@ def pre_resolve_road_conflicts(area_selection: str):
     remove_road_points_in_water(
         road_fc=Road_N100.road_triangles_output.value,
         output_fc=Road_N100.road_cleaning_output__n100_road.value,
-        area_selection=area_selection
+        area_selection=area_selection,
     )
     arcpy.management.MultipartToSinglepart(
         in_features=Road_N100.data_selection___railroad___n100_road.value,
