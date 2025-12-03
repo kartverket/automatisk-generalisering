@@ -13,7 +13,7 @@
 - Avoid single-letter variables except for trivial loops.
 
 ### 3. Docstring
-Please read our [docstring documentation](docs/contributing/docstring.md)
+Please read our [docstring documentation](docstring.md)
 ### 4. Branching & Git Workflow
 
 - Create a feature branch for each task or fix.
@@ -31,4 +31,4 @@ Please read our [docstring documentation](docs/contributing/docstring.md)
 ---
 ### Navigation
 
-- [Return to README](README.md)
+- [Return to README](../../README.md)

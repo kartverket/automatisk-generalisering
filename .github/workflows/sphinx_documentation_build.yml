@@ -9,40 +9,39 @@ jobs:
   build-and-deploy:
     runs-on: ubuntu-latest
     steps:
-    - name: Checkout Repository
-      uses: actions/checkout@v2
+      - name: Checkout Repository
+        uses: actions/checkout@v2
 
-    - name: Set up Python
-      uses: actions/setup-python@v5
-      with:
-        python-version: 3.x
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: 3.x
 
-    - name: Install Dependencies
-      run: |
-        pip install sphinx
-        pip install numpy
-        pip install sphinx_rtd_theme
+      - name: Install Dependencies
+        run: |
+          pip install sphinx
+          pip install numpy
+          pip install sphinx_rtd_theme
 
-    - name: Prepare Config File
-      run: |
-        cp setup_guide/template_config.py config.py
+      - name: Prepare Config File
+        run: |
+          cp docs/setup/template_config.py config.py
 
-    - name: Generate .rst files
-      run: |
-        sphinx-apidoc -o generated_docs/ .
+      - name: Generate .rst files
+        run: |
+          sphinx-apidoc -o generated_docs/ .
 
-    - name: Build Sphinx Documentation
-      run: |
-        make html
+      - name: Build Sphinx Documentation
+        run: |
+          make html
 
-    - name: Copy Custom CSS
-      run: |
-        cp .github/custom_styles/custom.css _build/html/_static/
+      - name: Copy Custom CSS
+        run: |
+          cp .github/custom_styles/custom.css _build/html/_static/
 
-
-    - name: Deploy to GitHub Pages
-      uses: peaceiris/actions-gh-pages@v3
-      with:
-        github_token: ${{ secrets.GITHUB_TOKEN }}
-        publish_dir: ./_build/html
-        branch: gh-pages
+      - name: Deploy to GitHub Pages
+        uses: peaceiris/actions-gh-pages@v3
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./_build/html
+          branch: gh-pages

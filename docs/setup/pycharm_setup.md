@@ -19,5 +19,5 @@ This step is only needed if PyCharm does not correctly resolve relative imports.
 ---
 ### Navigation
 
-- [Setup Guide](docs/setup/index.md)
-- [Return to README](README.md)
+- [Setup Guide](index.md)
+- [Return to README](../../README.md)

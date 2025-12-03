@@ -56,5 +56,5 @@ If you prefer, you can clone the repository directly from VS Code or PyCharm ins
 ---
 ### Navigation
 
-- [Setup Guide](docs/setup/index.md)
-- [Return to README](README.md)
+- [Setup Guide](index.md)
+- [Return to README](../../README.md)
