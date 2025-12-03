@@ -656,7 +656,6 @@ def create_movement_mapping(
             if nx == None or ny == None:
                 continue
             if nx == -1 or ny == -1:
-                print("Koordinatfeil")
                 continue
             road_oids.add(orig_oid)
 
