@@ -32,6 +32,7 @@ class WorkFileManager:
     lyrx_directory_name = env_setup.global_config.lyrx_directory_name
 
     _global_counter = 0
+    _build_file_counter = 0
     # mmdd_HHMM makes session prefix sortable: newer instances appear lower when sorted
     _session_prefix = datetime.now().strftime("%m%d_%H%M")
 
@@ -130,6 +131,7 @@ class WorkFileManager:
         Returns:
             str: A string representing the file path.
         """
+        WorkFileManager._build_file_counter += 1
         suffix = f"_iter{index}" if index is not None else ""
 
         if file_type == "gdb":

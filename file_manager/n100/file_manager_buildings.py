@@ -86,6 +86,12 @@ class Building_N100(Enum):
         )
     )
 
+    total_workfile_manager_files__n100 = file_manager.generate_file_name_general_files(
+        script_source_name=overview,
+        description="total_workfile_manager_files",
+        file_type="txt",
+    )
+
     # ========================================
     #                                DATA PREPARATION
     # ========================================

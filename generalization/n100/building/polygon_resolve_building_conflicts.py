@@ -9,6 +9,7 @@ from composition_configs import core_config, logic_config
 from custom_tools.generalization_tools.building.resolve_building_conflicts import (
     ResolveBuildingConflictsPolygon,
 )
+from file_manager import work_file_manager
 from input_data import input_symbology
 
 
