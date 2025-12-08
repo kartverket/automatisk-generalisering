@@ -52,6 +52,14 @@ generalization.n100.road.ramps\_point module
    :show-inheritance:
    :undoc-members:
 
+generalization.n100.road.resolve\_road\_conflict\_preparation module
+--------------------------------------------------------------------
+
+.. automodule:: generalization.n100.road.resolve_road_conflict_preparation
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
 generalization.n100.road.road\_main module
 ------------------------------------------
 
