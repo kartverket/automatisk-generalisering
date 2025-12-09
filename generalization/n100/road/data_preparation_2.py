@@ -38,16 +38,13 @@ from generalization.n100.road.roundabouts import generalize_roundabouts
 from generalization.n100.road.vegsperring import remove_roadblock
 from generalization.n100.road.ramps_point import ramp_points
 from generalization.n100.road.ramps_point import MovePointsToCrossings
-<<<<<<< HEAD
 from generalization.n100.road.resolve_road_conflict_preparation import (
     split_polyline_featureclass,
     remove_road_points_in_water,
     run_dissolve_with_intersections,
 )
-=======
 from file_manager import WorkFileManager
 from file_manager.n100.file_manager_buildings import Building_N100
->>>>>>> 5ebe04d (temporary metadata addition)
 
 
 MERGE_DIVIDED_ROADS_ALTERATIVE = False
