@@ -183,7 +183,7 @@ def run_buffer_displacement():
     partition_buffer_run_config = core_config.PartitionRunConfig(
         max_elements_per_partition=1_400_000,
         context_radius_meters=500,
-        run_partition_optimization=False,
+        run_partition_optimization=True,
     )
 
     buffer_displacement_partition = PartitionIterator(

@@ -391,7 +391,7 @@ def collapse_road_detail():
     collapse_partition_run_config = core_config.PartitionRunConfig(
         max_elements_per_partition=OBJECT_LIMIT,
         context_radius_meters=SEARCH_DISTANCE,
-        run_partition_optimization=False,
+        run_partition_optimization=True,
     )
 
     partition_collapse_road_detail = PartitionIterator(
