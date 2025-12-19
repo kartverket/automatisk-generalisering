@@ -34,7 +34,8 @@ def main():
 
     find_runways(files=files)
     create_buffers(files=files)
-    match_runways(files=files)
+    overlaps = match_runways(files=files)
+    create_runway_centerline(files=files, overlaps=overlaps)
 
     print()
 
@@ -61,6 +62,9 @@ def create_wfm_gdbs(wfm: WorkFileManager) -> dict:
     poly_buffer = wfm.build_file_path(file_name="poly_buffer", file_type="gdb")
     line_dissolved = wfm.build_file_path(file_name="line_dissolved", file_type="gdb")
     poly_dissolved = wfm.build_file_path(file_name="poly_dissolved", file_type="gdb")
+    line_join = wfm.build_file_path(file_name="line_join", file_type="gdb")
+    poly_join = wfm.build_file_path(file_name="poly_join", file_type="gdb")
+    new_runway_centerline = wfm.build_file_path(file_name="new_runway_centerline", file_type="gdb")
 
     return {
         "runway_line": runway_line,
@@ -69,7 +73,10 @@ def create_wfm_gdbs(wfm: WorkFileManager) -> dict:
         "line_buffer": line_buffer,
         "poly_buffer": poly_buffer,
         "line_dissolved": line_dissolved,
-        "poly_dissolved": poly_dissolved
+        "poly_dissolved": poly_dissolved,
+        "line_join": line_join,
+        "poly_join": poly_join,
+        "new_runway_centerline": new_runway_centerline
     }
 
 @timing_decorator
@@ -96,7 +103,14 @@ def find_runways(files: dict) -> None:
         where_clause="objtype = 'Rullebane'"
     )
 
-    arcpy.management.CopyFeatures(in_features=airport_line_lyr, out_feature_class=files["runway_line"])
+    arcpy.management.Dissolve(
+        in_features=airport_line_lyr,
+        out_feature_class=files["runway_line"],
+        dissolve_field=[],
+        multi_part="SINGLE_PART",
+        unsplit_lines="UNSPLIT_LINES"
+    )
+
     arcpy.management.CopyFeatures(in_features=airport_poly_lyr, out_feature_class=files["runway_poly"])
 
     airport_n50_lyr = "airport_n50_lyr"
@@ -130,13 +144,16 @@ def create_buffers(files: dict) -> None:
         )
 
 @timing_decorator
-def match_runways(files: dict) -> None:
+def match_runways(files: dict) -> dict:
     """
     Matches runway polygons from N50 with the FKB data and labels it depending on
     overlap with either polygons or lines, where polygons have the highest priority.
 
     Args:
         files (dict): Dictionary with all the working files
+
+    Returns:
+        dict: {runway_id: {"poly": [poly_ids], "line": [line_ids]}}
     """
     runway_fc = files["runway_n50"]
     line_buffer_fc = files["line_dissolved"]
@@ -146,38 +163,49 @@ def match_runways(files: dict) -> None:
     fields = [f.name for f in arcpy.ListFields(runway_fc)]
     if "connection" not in fields:
         arcpy.management.AddField(runway_fc, "connection", "TEXT")
+    arcpy.management.CalculateField(runway_fc, "connection", "'None'", "PYTHON3")
 
-    with arcpy.da.UpdateCursor(runway_fc, ["connection"]) as cursor:
-        for row in cursor:
-            row[0] = "None"
-            cursor.updateRow(row)
-    
-    # Finds overlap with polygons
     runway_lyr = "runway_lyr"
     arcpy.management.MakeFeatureLayer(runway_fc, runway_lyr)
-    arcpy.management.SelectLayerByLocation(
-        in_layer=runway_lyr,
-        overlap_type="INTERSECT",
-        select_features=poly_buffer_fc,
-        selection_type="NEW_SELECTION"
-    )
-    with arcpy.da.UpdateCursor(runway_lyr, ["connection"]) as cursor:
-        for row in cursor:
-            row[0] = "FKB_poly"
-            cursor.updateRow(row)
+    
+    overlaps = {
+        row[0]: {"poly": [], "line": []}
+        for row in arcpy.da.SearchCursor(runway_fc, ["OID@"])
+    }
+    
+    # Finds overlap with polygons
+    arcpy.management.SelectLayerByLocation(in_layer=runway_lyr, overlap_type="INTERSECT", select_features=poly_buffer_fc, selection_type="NEW_SELECTION")
+    arcpy.management.CalculateField(in_table=runway_lyr, field="connection", expression="'FKB_poly'", expression_type="PYTHON3")
+    
+    with arcpy.da.SearchCursor(runway_lyr, ["OID@", "SHAPE@", "connection"]) as cursor:
+        for oid, geom, conn in cursor:
+            if conn == "FKB_poly":
+                with arcpy.da.SearchCursor(poly_buffer_fc, ["OID@", "SHAPE@"]) as polys:
+                    for poly_id, poly_geom in polys:
+                        if not poly_geom.disjoint(geom):
+                            overlaps[oid]["poly"].append(poly_id)
     
     # Finds overlap with lines
-    arcpy.management.SelectLayerByLocation(
-        in_layer=runway_lyr,
-        overlap_type="INTERSECT",
-        select_features=line_buffer_fc,
-        selection_type="NEW_SELECTION"
-    )
-    with arcpy.da.UpdateCursor(runway_lyr, ["connection"]) as cursor:
-        for row in cursor:
-            if row[0] != "FKB_poly":
-                row[0] = "FKB_line"
-                cursor.updateRow(row)
+    arcpy.management.SelectLayerByLocation(in_layer=runway_lyr, overlap_type="INTERSECT", select_features=line_buffer_fc, selection_type="NEW_SELECTION")
+    arcpy.management.SelectLayerByAttribute(in_layer_or_view=runway_lyr, selection_type="SUBSET_SELECTION", where_clause="connection = 'None'")
+    arcpy.management.CalculateField(in_table=runway_lyr, field="connection", expression="'FKB_line'", expression_type="PYTHON3")
+    
+    with arcpy.da.SearchCursor(runway_lyr, ["OID@", "SHAPE@", "connection"]) as cursor:
+        for oid, geom, conn in cursor:
+            if conn == "FKB_line":
+                with arcpy.da.SearchCursor(line_buffer_fc, ["OID@", "SHAPE@"]) as lines:
+                    for line_id, line_geom in lines:
+                        if not line_geom.disjoint(geom):
+                            overlaps[oid]["line"].append(line_id)
+
+    return overlaps
+
+@timing_decorator
+def create_runway_centerline(files: dict, overlaps: dict) -> None:
+    """
+    ...
+    """
+    return
 
 # ========================
 # Helper functions
@@ -208,6 +236,26 @@ def create_dissolved_buffer(in_layer: str, buffer_layer: str, dissolved_layer: s
         dissolve_field=[],
         multi_part="SINGLE_PART"
     )
+
+def create_centerline_layer(file_name: str) -> None:
+    """
+    ...
+    """
+
+def centerline_poly(runway_id: str, poly_ids: list, file_name: str) -> None:
+    """
+    ...
+    """
+
+def centerline_line(runway_id: str, line_ids: list, file_name: str) -> None:
+    """
+    ...
+    """
+
+def centerline_none(runway_id: str, file_name: str) -> None:
+    """
+    ...
+    """
 
 # ========================
 
