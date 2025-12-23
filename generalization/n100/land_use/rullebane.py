@@ -192,7 +192,10 @@ def create_runway_centerline(files: dict, overlaps: dict) -> None:
     create_centerline_layer(new_file, files["runway_n50"])
 
     for key in tqdm(overlaps, desc="Adding runway lines", colour="yellow", leave=False):
-        if overlaps[key]["poly"]:
+        if overlaps[key]["poly"] and overlaps[key]["line"]:
+            centerline_poly(key, overlaps[key]["poly"], new_file, files)
+            centerline_line(key, overlaps[key]["line"], new_file, files)
+        elif overlaps[key]["poly"]:
             centerline_poly(key, overlaps[key]["poly"], new_file, files)
         elif overlaps[key]["line"]:
             centerline_line(key, overlaps[key]["line"], new_file, files)
@@ -279,47 +282,99 @@ def centerline_poly(runway_id: int, poly_ids: list, file_name: str, files: dict)
         multi_part="SINGLE_PART"
     )
 
-    for row in arcpy.da.SearchCursor(dissolved, ["SHAPE@"]):
+    create_centerlines(featureClass=dissolved, runway_id=runway_id, file_name=file_name)
+
+def centerline_line(runway_id: int, line_ids: list, file_name: str, files: dict) -> None:
+    """
+    Creates centerlines for runways based on FKB lines.
+
+    Args:
+        runway_id (int): The runway ID from N50
+        line_ids (list): List of line IDs from FKB that matches the runway
+        file_name (str): The path and name of the new feature class
+        files (dict): Dictionary with all the working files
+    """
+    # Fetch lines
+    oid_field = arcpy.Describe(files["runway_line"]).OIDFieldName
+    sql = f"{oid_field} IN ({', '.join(map(str, line_ids))})"
+    runway_line_layer = "runway_line_layer"
+    arcpy.management.MakeFeatureLayer(files["runway_line"], runway_line_layer, sql)
+
+    # Dissolve the features
+    dissolved = arcpy.management.Dissolve(
+        in_features=runway_line_layer,
+        out_feature_class=files["dissolved_runway"],
+        dissolve_field=[],
+        multi_part="MULTI_PART"
+    )
+
+    create_centerlines(featureClass=dissolved, runway_id=runway_id, file_name=file_name, polygons=False)
+
+def centerline_none(runway_id: int, file_name: str, files: dict) -> None:
+    """
+    Creates centerlines for runways based on N50 polygons.
+
+    Args:
+        runway_id (int): The runway ID from N50
+        file_name (str): The path and name of the new feature class
+        files (dict): Dictionary with all the working files
+    """
+    # Fetch original N50 feature
+    runway_original_layer = "runway_original_layer"
+    oid_field = arcpy.Describe(files["runway_n50"]).OIDFieldName
+    arcpy.management.MakeFeatureLayer(files["runway_n50"], runway_original_layer, f"{oid_field} = {runway_id}")
+    
+    create_centerlines(featureClass=runway_original_layer, runway_id=runway_id, file_name=file_name)
+
+def create_centerlines(featureClass: str, runway_id: int, file_name: str, polygons: bool=True) -> None:
+    """
+    The part that creates the actual centerlines based on either polygons or lines.
+
+    Args:
+        featureClass (str): The feature class to create centerlines from
+        runway_id (int): The runway ID from N50
+        file_name (str): The path and name of the new feature class
+        polygons (bool, optional): Whether the feature class is polygons or lines, defaults to True
+    """
+    for row in arcpy.da.SearchCursor(featureClass, ["SHAPE@"]):
         geom = row[0]
 
+        if geom is None:
+            continue
+
         # Generalize
-        tolerance = max(0.2, geom.extent.width * 0.02)
-        simplified = geom.generalize(tolerance)
-        boundary = simplified.boundary()
+        if polygons:
+            tolerance = max(0.2, geom.extent.width * 0.02)
+            simplified = geom.generalize(tolerance)
+            boundary = simplified.boundary()
+        else:
+            boundary = geom
 
         # Fetch all points
         pts = []
-        for part in boundary:
+        for i in range(boundary.partCount):
+            part = boundary.getPart(i)
             for p in part:
                 if p:
                     pts.append((p.X, p.Y))
         
-        # Cluster
-        eps = min(max(geom.extent.width, geom.extent.height) * 0.2, 200)
-        clusters = cluster_points(pts, eps=eps, min_pts=1)
-        
-        # Calculate center points
-        centers = [cluster_center(c) for c in clusters]
-        
+        if polygons:
+            # Cluster
+            eps = min(max(geom.extent.width, geom.extent.height) * 0.2, 200)
+            clusters = cluster_points(pts, eps=eps, min_pts=1)
+            
+            # Calculate center points
+            centers = [cluster_center(c) for c in clusters]
+        else:
+            centers = pts
+
         # Creates new runway centerlines
         if len(centers) >= 2:
-            pairs = all_furthest_pair(centers)
+            pairs = all_furthest_pairs(centers) if polygons else furthest_pair(centers)
             for p1, p2 in pairs:
                 line = points_to_polyline([p1, p2], geom.spatialReference)
                 with arcpy.da.InsertCursor(file_name, ["SHAPE@", "runway_id"]) as ic:
                     ic.insertRow([line, runway_id])
-
-def centerline_line(runway_id: str, line_ids: list, file_name: str, files: dict) -> None:
-    """
-    ...
-    """
-    return
-
-def centerline_none(runway_id: str, file_name: str, files: dict) -> None:
-    """
-    ...
-    """
-    return
 
 def euclid(p1: list, p2: list) -> float:
     """
@@ -399,7 +454,29 @@ def cluster_center(points) -> tuple:
     cy = sum(p[1] for p in points) / len(points)
     return (cx, cy)
 
-def all_furthest_pair(points: list) -> list:
+def furthest_pair(points: list) -> tuple:
+    """
+    Estimates the pair of points that are the furthest apart.
+
+    Args:
+        points (list): List of points as (x, y)
+
+    Returns:
+        tuple: A pair of points (p1, p2) (p1 = (x, y))
+    """
+    best_pair = None
+    best_distance = -1
+
+    for i in range(len(points)):
+        for j in range(i + 1, len(points)):
+            d = euclid(points[i], points[j])
+            if d > best_distance:
+                best_distance = d
+                best_pair = [(points[i], points[j])]
+
+    return best_pair
+
+def all_furthest_pairs(points: list) -> list:
     """
     Estimates multiple pairs of points that are the furthest apart and
     at the same time following the original structure of the geometry.
@@ -497,6 +574,18 @@ def point_line_distance(p: tuple, a: tuple, b: tuple) -> float:
     ny = ay + t * dy
 
     return euclid(p, (nx, ny))
+
+# ========================
+#
+# Må rydde opp i:
+# - Korte linjer
+# - Flere linjer per rullebane
+#
+# Lag en funksjon som går gjennom hver N50-polygon og beholder kun lengste linje,
+# eller alle linjer over en hvis lengde gitt at de enten er langt nok unna
+# hverandre eller har en annen retning.
+#
+# ========================
 
 # ========================
 
