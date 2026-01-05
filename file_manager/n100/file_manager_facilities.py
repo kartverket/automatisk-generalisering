@@ -24,3 +24,7 @@ class Facility_N100(Enum):
     ledning_output__n100_facility = file_manager.generate_file_name_gdb(
         script_source_name=ledning_file, description="ledning_output"
     )
+
+    mast_output__n100_facility = file_manager.generate_file_name_gdb(
+        script_source_name=ledning_file, description="mast_output"
+    )

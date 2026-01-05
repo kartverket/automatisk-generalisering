@@ -5,14 +5,16 @@ import arcpy
 # Defining universal paths for fkb regardless of local path env_setup
 fkb_lufthavn_grense = rf"{fkb_path}\fkb_lufthavn_grense"
 fkb_lufthavn_omrade = rf"{fkb_path}\fkb_lufthavn_omrade"
-fkb_byggoganlegg_senterlinje = rf"{fkb_path}\byggoganlegg_senterlinje"
+fkb_ledning = rf"{fkb_path}\linje\ledning_linje"
+fkb_mast = rf"{fkb_path}\posisjon\mast_posisjon"
 
 
 # Defining datasets to test paths are set up correctly later
 fkb_datasets = [
     fkb_lufthavn_grense,
     fkb_lufthavn_omrade,
-    fkb_byggoganlegg_senterlinje,
+    fkb_ledning,
+    fkb_mast,
 ]
 
 
