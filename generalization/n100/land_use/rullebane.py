@@ -36,6 +36,13 @@ def main():
     find_runways(files=files)
     overlaps = match_runways(files=files)
     create_runway_centerline(files=files, overlaps=overlaps)
+    remove_noisy_runway_lines(files=files)
+
+    output_fc = Land_Use_N100.rullebane_output__n100_land_use.value
+    arcpy.management.CopyFeatures(
+        in_features=files["new_runway_centerline"],
+        out_feature_class=output_fc
+    )
 
     print()
 
@@ -62,6 +69,7 @@ def create_wfm_gdbs(wfm: WorkFileManager) -> dict:
     poly_join = wfm.build_file_path(file_name="poly_join", file_type="gdb")
     dissolved_runway = wfm.build_file_path(file_name="dissolved_runway", file_type="gdb")
     new_runway_centerline = wfm.build_file_path(file_name="new_runway_centerline", file_type="gdb")
+    temporarily_layer = wfm.build_file_path(file_name="temporarily_layer", file_type="gdb")
 
     return {
         "runway_line": runway_line,
@@ -70,7 +78,8 @@ def create_wfm_gdbs(wfm: WorkFileManager) -> dict:
         "line_join": line_join,
         "poly_join": poly_join,
         "dissolved_runway": dissolved_runway,
-        "new_runway_centerline": new_runway_centerline
+        "new_runway_centerline": new_runway_centerline,
+        "temporarily_layer": temporarily_layer
     }
 
 @timing_decorator
@@ -201,6 +210,84 @@ def create_runway_centerline(files: dict, overlaps: dict) -> None:
             centerline_line(key, overlaps[key]["line"], new_file, files)
         else:
             centerline_none(key, new_file, files)
+
+@timing_decorator
+def remove_noisy_runway_lines(files: dict) -> None:
+    """
+    Removes unnecessary runway lines.
+    
+    Runways are removed based on the following rules:
+    - All runways shorter than 200 m are removed
+    After this, for each group of overlapping runways:
+    - Keep the longest runway
+    runway lines that are shorter than a given length.
+
+    Args:
+        files (dict): Dictionary with all the working files
+    """
+    centerlines_lyr = "centerlines_lyr"
+    arcpy.management.MakeFeatureLayer(files["new_runway_centerline"], centerlines_lyr)
+
+    n50_count = int(arcpy.management.GetCount(files["runway_n50"]).getOutput(0))
+
+    with arcpy.da.SearchCursor(files["runway_n50"], ["SHAPE@"]) as search_cursor:
+        for row in tqdm(search_cursor, total=n50_count, desc="Removing noisy runway lines", colour="yellow", leave=False):
+            runway_geom = row[0]
+
+            if runway_geom is None:
+                continue
+
+            arcpy.management.CopyFeatures(runway_geom, files["temporarily_layer"])
+            arcpy.management.SelectLayerByLocation(
+                in_layer=centerlines_lyr,
+                overlap_type="INTERSECT",
+                select_features=files["temporarily_layer"],
+                selection_type="NEW_SELECTION"
+            )
+
+            lines = []
+            
+            with arcpy.da.SearchCursor(centerlines_lyr, ["OID@", "SHAPE@", "Shape_Length"]) as line_cursor:
+                for oid, geom, length in line_cursor:
+                    if length > 200.0:
+                        lines.append({
+                            "oid": oid,
+                            "geom": geom,
+                            "length": length,
+                            "dir": line_direction(geom)
+                        })
+            
+            keep = set()
+
+            if lines:
+                main_line = max(lines, key=lambda x: x["length"])
+                keep.add(main_line["oid"])
+
+                for l in lines:
+                    if l["oid"] == main_line["oid"]:
+                        continue
+                    dist = l["geom"].distanceTo(main_line["geom"])
+                    ang = angle_difference(l["dir"], main_line["dir"])
+                    
+                    # Rule 1: Keep if far enough away and long enough
+                    if dist > 500 and l["length"] > 500:
+                        keep.add(l["oid"])
+
+                    # Rule 2: Keep if different direction and long enough
+                    elif ang > 60:
+                        if l["length"] >= 1000:
+                            keep.add(l["oid"])
+                    elif ang > 30:
+                        if l["length"] >= 300:
+                            keep.add(l["oid"])
+            
+            with arcpy.da.UpdateCursor(centerlines_lyr, ["OID@"]) as update_cursor:
+                for row in update_cursor:
+                    oid = row[0]
+                    if oid not in keep:
+                        update_cursor.deleteRow()
+            
+            arcpy.management.Delete(files["temporarily_layer"])
 
 # ========================
 # Helper functions
@@ -360,7 +447,7 @@ def create_centerlines(featureClass: str, runway_id: int, file_name: str, polygo
         
         if polygons:
             # Cluster
-            eps = min(max(geom.extent.width, geom.extent.height) * 0.2, 200)
+            eps = min(max(geom.extent.width, geom.extent.height) * 0.1, 200)
             clusters = cluster_points(pts, eps=eps, min_pts=1)
             
             # Calculate center points
@@ -575,17 +662,39 @@ def point_line_distance(p: tuple, a: tuple, b: tuple) -> float:
 
     return euclid(p, (nx, ny))
 
-# ========================
-#
-# Må rydde opp i:
-# - Korte linjer
-# - Flere linjer per rullebane
-#
-# Lag en funksjon som går gjennom hver N50-polygon og beholder kun lengste linje,
-# eller alle linjer over en hvis lengde gitt at de enten er langt nok unna
-# hverandre eller har en annen retning.
-#
-# ========================
+def line_direction(geom: arcpy.Polyline) -> float:
+    """
+    Calculates the direction (angle) of a line in degrees.
+
+    Args:
+        geom (arcpy.Polyline): The polyline geometry
+    
+    Returns:
+        float: The direction of the line in degrees
+    """
+    first = geom.firstPoint
+    last = geom.lastPoint
+
+    dx = last.X - first.X
+    dy = last.Y - first.Y
+
+    angle = np.degrees(np.arctan2(dy, dx))
+
+    return angle % 180
+
+def angle_difference(angle1: float, angle2: float) -> float:
+    """
+    Calculates the smallest difference between two angles in degrees.
+
+    Args:
+        angle1 (float): The first angle in degrees
+        angle2 (float): The second angle in degrees
+
+    Returns:
+        float: The smallest difference between the two angles in degrees
+    """
+    d = abs(angle1 - angle2)
+    return min(d, 180 - d)
 
 # ========================
 
