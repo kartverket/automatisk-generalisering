@@ -19,6 +19,7 @@ from input_data import input_fkb, input_n50
 # Program
 # ========================
 
+
 @timing_decorator
 def main():
     """
@@ -40,15 +41,18 @@ def main():
 
     output_fc = Land_Use_N100.rullebane_output__n100_land_use.value
     arcpy.management.CopyFeatures(
-        in_features=files["new_runway_centerline"],
-        out_feature_class=output_fc
+        in_features=files["new_runway_centerline"], out_feature_class=output_fc
     )
 
+    wfm.delete_created_files()
+
     print()
+
 
 # ========================
 # Main functions
 # ========================
+
 
 @timing_decorator
 def create_wfm_gdbs(wfm: WorkFileManager) -> dict:
@@ -67,9 +71,15 @@ def create_wfm_gdbs(wfm: WorkFileManager) -> dict:
     runway_n50 = wfm.build_file_path(file_name="runway_n50", file_type="gdb")
     line_join = wfm.build_file_path(file_name="line_join", file_type="gdb")
     poly_join = wfm.build_file_path(file_name="poly_join", file_type="gdb")
-    dissolved_runway = wfm.build_file_path(file_name="dissolved_runway", file_type="gdb")
-    new_runway_centerline = wfm.build_file_path(file_name="new_runway_centerline", file_type="gdb")
-    temporarily_layer = wfm.build_file_path(file_name="temporarily_layer", file_type="gdb")
+    dissolved_runway = wfm.build_file_path(
+        file_name="dissolved_runway", file_type="gdb"
+    )
+    new_runway_centerline = wfm.build_file_path(
+        file_name="new_runway_centerline", file_type="gdb"
+    )
+    temporarily_layer = wfm.build_file_path(
+        file_name="temporarily_layer", file_type="gdb"
+    )
 
     return {
         "runway_line": runway_line,
@@ -79,8 +89,9 @@ def create_wfm_gdbs(wfm: WorkFileManager) -> dict:
         "poly_join": poly_join,
         "dissolved_runway": dissolved_runway,
         "new_runway_centerline": new_runway_centerline,
-        "temporarily_layer": temporarily_layer
+        "temporarily_layer": temporarily_layer,
     }
+
 
 @timing_decorator
 def find_runways(files: dict) -> None:
@@ -92,18 +103,22 @@ def find_runways(files: dict) -> None:
     """
     airport_line_lyr = "airport_line_lyr"
     airport_poly_lyr = "airport_poly_lyr"
-    arcpy.management.MakeFeatureLayer(in_features=input_fkb.fkb_lufthavn_grense, out_layer=airport_line_lyr)
-    arcpy.management.MakeFeatureLayer(in_features=input_fkb.fkb_lufthavn_omrade, out_layer=airport_poly_lyr)
+    arcpy.management.MakeFeatureLayer(
+        in_features=input_fkb.fkb_lufthavn_grense, out_layer=airport_line_lyr
+    )
+    arcpy.management.MakeFeatureLayer(
+        in_features=input_fkb.fkb_lufthavn_omrade, out_layer=airport_poly_lyr
+    )
 
     arcpy.management.SelectLayerByAttribute(
         in_layer_or_view=airport_line_lyr,
         selection_type="NEW_SELECTION",
-        where_clause="informasjon = 'FKB50: Kodet om fra Rullebanegrense'"
+        where_clause="informasjon = 'FKB50: Kodet om fra Rullebanegrense'",
     )
     arcpy.management.SelectLayerByAttribute(
         in_layer_or_view=airport_poly_lyr,
         selection_type="NEW_SELECTION",
-        where_clause="objtype = 'Rullebane'"
+        where_clause="objtype = 'Rullebane'",
     )
 
     arcpy.management.Dissolve(
@@ -111,21 +126,28 @@ def find_runways(files: dict) -> None:
         out_feature_class=files["runway_line"],
         dissolve_field=[],
         multi_part="SINGLE_PART",
-        unsplit_lines="UNSPLIT_LINES"
+        unsplit_lines="UNSPLIT_LINES",
     )
 
-    arcpy.management.CopyFeatures(in_features=airport_poly_lyr, out_feature_class=files["runway_poly"])
+    arcpy.management.CopyFeatures(
+        in_features=airport_poly_lyr, out_feature_class=files["runway_poly"]
+    )
 
     airport_n50_lyr = "airport_n50_lyr"
-    arcpy.management.MakeFeatureLayer(in_features=input_n50.ArealdekkeFlate, out_layer=airport_n50_lyr)
+    arcpy.management.MakeFeatureLayer(
+        in_features=input_n50.ArealdekkeFlate, out_layer=airport_n50_lyr
+    )
 
     arcpy.management.SelectLayerByAttribute(
         in_layer_or_view=airport_n50_lyr,
         selection_type="NEW_SELECTION",
-        where_clause="OBJTYPE = 'Rullebane'"
+        where_clause="OBJTYPE = 'Rullebane'",
     )
 
-    arcpy.management.CopyFeatures(in_features=airport_n50_lyr, out_feature_class=files["runway_n50"])
+    arcpy.management.CopyFeatures(
+        in_features=airport_n50_lyr, out_feature_class=files["runway_n50"]
+    )
+
 
 @timing_decorator
 def match_runways(files: dict) -> dict:
@@ -155,7 +177,7 @@ def match_runways(files: dict) -> dict:
         row[0]: {"poly": [], "line": []}
         for row in arcpy.da.SearchCursor(runway_fc, ["OID@"])
     }
-    
+
     # Finds overlap with polygons
     arcpy.analysis.SpatialJoin(
         target_features=runway_fc,
@@ -164,7 +186,7 @@ def match_runways(files: dict) -> dict:
         join_operation="JOIN_ONE_TO_MANY",
         match_option="INTERSECT",
     )
-    
+
     # Finds overlap with lines
     arcpy.analysis.SpatialJoin(
         target_features=runway_fc,
@@ -173,7 +195,7 @@ def match_runways(files: dict) -> dict:
         join_operation="JOIN_ONE_TO_MANY",
         match_option="INTERSECT",
     )
-    
+
     # Fill polygon matches
     with arcpy.da.SearchCursor(poly_join, ["TARGET_FID", "JOIN_FID"]) as cursor:
         for runway_id, poly_id in cursor:
@@ -187,6 +209,7 @@ def match_runways(files: dict) -> dict:
                 overlaps[runway_id]["line"].append(line_id)
 
     return overlaps
+
 
 @timing_decorator
 def create_runway_centerline(files: dict, overlaps: dict) -> None:
@@ -211,11 +234,12 @@ def create_runway_centerline(files: dict, overlaps: dict) -> None:
         else:
             centerline_none(key, new_file, files)
 
+
 @timing_decorator
 def remove_noisy_runway_lines(files: dict) -> None:
     """
     Removes unnecessary runway lines.
-    
+
     Runways are removed based on the following rules:
     - All runways shorter than 200 m are removed
     After this, for each group of overlapping runways:
@@ -231,7 +255,13 @@ def remove_noisy_runway_lines(files: dict) -> None:
     n50_count = int(arcpy.management.GetCount(files["runway_n50"]).getOutput(0))
 
     with arcpy.da.SearchCursor(files["runway_n50"], ["SHAPE@"]) as search_cursor:
-        for row in tqdm(search_cursor, total=n50_count, desc="Removing noisy runway lines", colour="yellow", leave=False):
+        for row in tqdm(
+            search_cursor,
+            total=n50_count,
+            desc="Removing noisy runway lines",
+            colour="yellow",
+            leave=False,
+        ):
             runway_geom = row[0]
 
             if runway_geom is None:
@@ -242,21 +272,25 @@ def remove_noisy_runway_lines(files: dict) -> None:
                 in_layer=centerlines_lyr,
                 overlap_type="INTERSECT",
                 select_features=files["temporarily_layer"],
-                selection_type="NEW_SELECTION"
+                selection_type="NEW_SELECTION",
             )
 
             lines = []
-            
-            with arcpy.da.SearchCursor(centerlines_lyr, ["OID@", "SHAPE@", "Shape_Length"]) as line_cursor:
+
+            with arcpy.da.SearchCursor(
+                centerlines_lyr, ["OID@", "SHAPE@", "Shape_Length"]
+            ) as line_cursor:
                 for oid, geom, length in line_cursor:
                     if length > 200.0:
-                        lines.append({
-                            "oid": oid,
-                            "geom": geom,
-                            "length": length,
-                            "dir": line_direction(geom)
-                        })
-            
+                        lines.append(
+                            {
+                                "oid": oid,
+                                "geom": geom,
+                                "length": length,
+                                "dir": line_direction(geom),
+                            }
+                        )
+
             keep = set()
 
             if lines:
@@ -268,7 +302,7 @@ def remove_noisy_runway_lines(files: dict) -> None:
                         continue
                     dist = l["geom"].distanceTo(main_line["geom"])
                     ang = angle_difference(l["dir"], main_line["dir"])
-                    
+
                     # Rule 1: Keep if far enough away and long enough
                     if dist > 500 and l["length"] > 500:
                         keep.add(l["oid"])
@@ -280,44 +314,20 @@ def remove_noisy_runway_lines(files: dict) -> None:
                     elif ang > 30:
                         if l["length"] >= 300:
                             keep.add(l["oid"])
-            
+
             with arcpy.da.UpdateCursor(centerlines_lyr, ["OID@"]) as update_cursor:
                 for row in update_cursor:
                     oid = row[0]
                     if oid not in keep:
                         update_cursor.deleteRow()
-            
+
             arcpy.management.Delete(files["temporarily_layer"])
+
 
 # ========================
 # Helper functions
 # ========================
 
-def create_dissolved_buffer(in_layer: str, buffer_layer: str, dissolved_layer: str, buffer_dist: int=20) -> None:
-    """
-    Create dissolved buffers.
-
-    Args:
-        in_layer (str): The layer with features to make buffers around
-        buffer_layer (str): The layer to store buffers
-        dissolved_layer (str): The layr to store dissolved buffers
-        buffer_dist (optional, int): Distance for the buffer, default = 20 m
-    """
-    arcpy.analysis.Buffer(
-        in_features=in_layer,
-        out_feature_class=buffer_layer,
-        buffer_distance_or_field=buffer_dist,
-        line_side="FULL",
-        line_end_type="ROUND",
-        dissolve_field=[]
-    )
-    
-    arcpy.management.Dissolve(
-        in_features=buffer_layer,
-        out_feature_class=dissolved_layer,
-        dissolve_field=[],
-        multi_part="SINGLE_PART"
-    )
 
 def create_centerline_layer(file_name: str, ref_file_name: str) -> None:
     """
@@ -334,18 +344,19 @@ def create_centerline_layer(file_name: str, ref_file_name: str) -> None:
             out_path=os.path.dirname(file_name),
             out_name=os.path.basename(file_name),
             geometry_type="POLYLINE",
-            spatial_reference=spatial_ref
+            spatial_reference=spatial_ref,
         )
 
-        fields = [
-            ("runway_id", "LONG")
-        ]
+        fields = [("runway_id", "LONG")]
 
         if fields:
             for field_name, field_type in fields:
                 arcpy.management.AddField(file_name, field_name, field_type)
 
-def centerline_poly(runway_id: int, poly_ids: list, file_name: str, files: dict) -> None:
+
+def centerline_poly(
+    runway_id: int, poly_ids: list, file_name: str, files: dict
+) -> None:
     """
     Creates centerlines for runways based on FKB polygons.
 
@@ -366,12 +377,15 @@ def centerline_poly(runway_id: int, poly_ids: list, file_name: str, files: dict)
         in_features=runway_poly_layer,
         out_feature_class=files["dissolved_runway"],
         dissolve_field=[],
-        multi_part="SINGLE_PART"
+        multi_part="SINGLE_PART",
     )
 
     create_centerlines(featureClass=dissolved, runway_id=runway_id, file_name=file_name)
 
-def centerline_line(runway_id: int, line_ids: list, file_name: str, files: dict) -> None:
+
+def centerline_line(
+    runway_id: int, line_ids: list, file_name: str, files: dict
+) -> None:
     """
     Creates centerlines for runways based on FKB lines.
 
@@ -392,10 +406,13 @@ def centerline_line(runway_id: int, line_ids: list, file_name: str, files: dict)
         in_features=runway_line_layer,
         out_feature_class=files["dissolved_runway"],
         dissolve_field=[],
-        multi_part="MULTI_PART"
+        multi_part="MULTI_PART",
     )
 
-    create_centerlines(featureClass=dissolved, runway_id=runway_id, file_name=file_name, polygons=False)
+    create_centerlines(
+        featureClass=dissolved, runway_id=runway_id, file_name=file_name, polygons=False
+    )
+
 
 def centerline_none(runway_id: int, file_name: str, files: dict) -> None:
     """
@@ -409,11 +426,18 @@ def centerline_none(runway_id: int, file_name: str, files: dict) -> None:
     # Fetch original N50 feature
     runway_original_layer = "runway_original_layer"
     oid_field = arcpy.Describe(files["runway_n50"]).OIDFieldName
-    arcpy.management.MakeFeatureLayer(files["runway_n50"], runway_original_layer, f"{oid_field} = {runway_id}")
-    
-    create_centerlines(featureClass=runway_original_layer, runway_id=runway_id, file_name=file_name)
+    arcpy.management.MakeFeatureLayer(
+        files["runway_n50"], runway_original_layer, f"{oid_field} = {runway_id}"
+    )
 
-def create_centerlines(featureClass: str, runway_id: int, file_name: str, polygons: bool=True) -> None:
+    create_centerlines(
+        featureClass=runway_original_layer, runway_id=runway_id, file_name=file_name
+    )
+
+
+def create_centerlines(
+    featureClass: str, runway_id: int, file_name: str, polygons: bool = True
+) -> None:
     """
     The part that creates the actual centerlines based on either polygons or lines.
 
@@ -444,12 +468,12 @@ def create_centerlines(featureClass: str, runway_id: int, file_name: str, polygo
             for p in part:
                 if p:
                     pts.append((p.X, p.Y))
-        
+
         if polygons:
             # Cluster
             eps = min(max(geom.extent.width, geom.extent.height) * 0.1, 200)
             clusters = cluster_points(pts, eps=eps, min_pts=1)
-            
+
             # Calculate center points
             centers = [cluster_center(c) for c in clusters]
         else:
@@ -463,6 +487,7 @@ def create_centerlines(featureClass: str, runway_id: int, file_name: str, polygo
                 with arcpy.da.InsertCursor(file_name, ["SHAPE@", "runway_id"]) as ic:
                     ic.insertRow([line, runway_id])
 
+
 def euclid(p1: list, p2: list) -> float:
     """
     Calculates the Euclidean distance between two points.
@@ -474,7 +499,8 @@ def euclid(p1: list, p2: list) -> float:
     Returns:
         float: The Euclidean distance between the two points
     """
-    return np.sqrt((p1[0] - p2[0])**2 + (p1[1] - p2[1])**2)
+    return np.sqrt((p1[0] - p2[0]) ** 2 + (p1[1] - p2[1]) ** 2)
+
 
 def cluster_points(points, eps, min_pts) -> list:
     """
@@ -491,10 +517,10 @@ def cluster_points(points, eps, min_pts) -> list:
     clusters = []
     visited = set()
     assigned = set()
-    
+
     def region_query(p):
         return [q for q in points if euclid(p, q) <= eps]
-    
+
     for p in points:
         if p in visited:
             continue
@@ -504,7 +530,7 @@ def cluster_points(points, eps, min_pts) -> list:
         if len(neighbors) < min_pts:
             visited.add(p)
             continue
-        
+
         cluster = []
         clusters.append(cluster)
 
@@ -522,10 +548,11 @@ def cluster_points(points, eps, min_pts) -> list:
             if n not in assigned:
                 cluster.append(n)
                 assigned.add(n)
-    
+
     clusters = [c for c in clusters if len(c) >= min_pts]
 
     return clusters
+
 
 def cluster_center(points) -> tuple:
     """
@@ -540,6 +567,7 @@ def cluster_center(points) -> tuple:
     cx = sum(p[0] for p in points) / len(points)
     cy = sum(p[1] for p in points) / len(points)
     return (cx, cy)
+
 
 def furthest_pair(points: list) -> tuple:
     """
@@ -563,6 +591,7 @@ def furthest_pair(points: list) -> tuple:
 
     return best_pair
 
+
 def all_furthest_pairs(points: list) -> list:
     """
     Estimates multiple pairs of points that are the furthest apart and
@@ -582,7 +611,7 @@ def all_furthest_pairs(points: list) -> list:
     """
     if len(points) < 2:
         return None
-    
+
     pairs = []
 
     while len(points) >= 2:
@@ -614,6 +643,7 @@ def all_furthest_pairs(points: list) -> list:
 
     return pairs
 
+
 def points_to_polyline(points: list, spatial_ref: object) -> arcpy.Polyline:
     """
     Creates a Polyline from a list of points.
@@ -628,10 +658,11 @@ def points_to_polyline(points: list, spatial_ref: object) -> arcpy.Polyline:
     arr = arcpy.Array([arcpy.Point(x, y) for x, y in points])
     return arcpy.Polyline(arr, spatial_ref)
 
+
 def point_line_distance(p: tuple, a: tuple, b: tuple) -> float:
     """
     Calculates the shortest distance from point p to the line defined by points a and b.
-    
+
     Args:
         p (tuple): The point as (x, y)
         a (tuple): The first point of the line as (x, y)
@@ -654,7 +685,7 @@ def point_line_distance(p: tuple, a: tuple, b: tuple) -> float:
         return euclid(p, a)
 
     # Parameter t for projeksjon
-    t = ((px - ax) * dx + (py - ay) * dy) / (dx*dx + dy*dy)
+    t = ((px - ax) * dx + (py - ay) * dy) / (dx * dx + dy * dy)
 
     # Nærmeste punkt på linjen
     nx = ax + t * dx
@@ -662,13 +693,14 @@ def point_line_distance(p: tuple, a: tuple, b: tuple) -> float:
 
     return euclid(p, (nx, ny))
 
+
 def line_direction(geom: arcpy.Polyline) -> float:
     """
     Calculates the direction (angle) of a line in degrees.
 
     Args:
         geom (arcpy.Polyline): The polyline geometry
-    
+
     Returns:
         float: The direction of the line in degrees
     """
@@ -681,6 +713,7 @@ def line_direction(geom: arcpy.Polyline) -> float:
     angle = np.degrees(np.arctan2(dy, dx))
 
     return angle % 180
+
 
 def angle_difference(angle1: float, angle2: float) -> float:
     """
@@ -695,6 +728,7 @@ def angle_difference(angle1: float, angle2: float) -> float:
     """
     d = abs(angle1 - angle2)
     return min(d, 180 - d)
+
 
 # ========================
 
