@@ -158,7 +158,7 @@ class ProjectDirectorySetup:
             object_bygning,
             object_elv_bekk,
             object_veg_sti,
-            object_bygg_og_anlegg
+            object_bygg_og_anlegg,
         ]
 
     def setup(self):

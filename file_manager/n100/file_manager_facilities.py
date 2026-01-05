@@ -12,6 +12,7 @@ file_manager = BaseFileManager(scale=scale, object_name=object_name)
 # All scripts
 ledning_file = "ledning"
 
+
 class Facility_N100(Enum):
     # ========================================
     #                                  LEDNING
