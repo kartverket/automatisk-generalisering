@@ -33,15 +33,13 @@ def azimuth_diff(a, b):
     return diff
 
 
-
-
-
-
 ########################################################################################################################
 
 
 # --- Configuration defaults ---
-DEFAULT_SOURCE = r"C:\temp\Bane\Basisdata_0000_Norge_5973_FKB-Bane_FGDB.gdb\fkb_bane_senterlinje"
+DEFAULT_SOURCE = (
+    r"C:\temp\Bane\Basisdata_0000_Norge_5973_FKB-Bane_FGDB.gdb\fkb_bane_senterlinje"
+)
 OUTPUT_GDB = r"C:\temp\Bane\Output.gdb"
 
 # --- Helper functions ---
@@ -57,7 +55,6 @@ def compute_and_store_azimuth(layer, az_field="azimuth_deg"):
             row[1] = az
             ucur.updateRow(row)
     return az_field
-
 
 
 def analyze_neighbor_pairs(
@@ -101,7 +98,6 @@ def analyze_neighbor_pairs(
     return selected
 
 
-
 def dissolve_original_lines(
     lines_layer,
     out_dissolved="in_memory\\orig_lines_dissolved",
@@ -124,7 +120,6 @@ def dissolve_original_lines(
     arcpy.management.MakeFeatureLayer(out_dissolved_2, orig_layer_name)
 
     return orig_layer_name
-
 
 
 def clip_and_erase(
@@ -573,7 +568,9 @@ def explore_paths(
     return False, longest_path
 
 
-def iterative_side_lines(orig_layer, buffers_fc, output_fc, max_iterations=20, step=10.0, tol=1.0):
+def iterative_side_lines(
+    orig_layer, buffers_fc, output_fc, max_iterations=20, step=10.0, tol=1.0
+):
     """
     Iteratively expand outward from middle line:
       - Find side lines ~step m away
@@ -594,8 +591,10 @@ def iterative_side_lines(orig_layer, buffers_fc, output_fc, max_iterations=20, s
 
             arcpy.management.SelectLayerByLocation("lines_lyr", "INTERSECT", buf_geom)
 
-            with arcpy.da.SearchCursor("lines_lyr", ["OID@", "SHAPE@", "prio"]) as mid_cur:
-                for oid, geom, prio in mid_cur:                    
+            with arcpy.da.SearchCursor(
+                "lines_lyr", ["OID@", "SHAPE@", "prio"]
+            ) as mid_cur:
+                for oid, geom, prio in mid_cur:
                     dist = geom.distanceTo(center)
                     if dist < closest_dist:
                         closest = geom
@@ -608,25 +607,20 @@ def iterative_side_lines(orig_layer, buffers_fc, output_fc, max_iterations=20, s
             if not mid_line:
                 continue
 
-           
-
             # store selected geometries and their OIDs to avoid duplicates
             selected_geoms = []
             selected_oids = set()
 
             # start with mid_line and its OID if available
             # get mid_line OID by searching lines_lyr for geometry equal to mid_line
-           
 
             if mid_oid is not None:
                 selected_geoms.append(mid_line)
                 selected_oids.add(mid_oid)
 
-            
-
             for i in range(max_iterations):
                 with arcpy.da.SearchCursor("lines_lyr", ["OID@", "SHAPE@"]) as line_cur:
-                    #mid_segment = mid_line_side.segmentAlongLine(0.25, 0.75, use_percentage=True)
+                    # mid_segment = mid_line_side.segmentAlongLine(0.25, 0.75, use_percentage=True)
 
                     # collect candidates that are at least one step away
                     candidates = []
@@ -635,37 +629,35 @@ def iterative_side_lines(orig_layer, buffers_fc, output_fc, max_iterations=20, s
                         if oid in selected_oids:
                             continue
 
-
                         _, _, dist, _ = mid_line.queryPointAndDistance(geom.centroid)
 
                         # require at least one step away (allow small tolerance)
                         too_close = False
                         if dist >= (step - tol):
                             for selected_geom in selected_geoms:
-                                #mid_segment_selected_geom = selected_geom.segmentAlongLine(0.25, 0.75, use_percentage=True)
-                                _, _, dist2, _ = selected_geom.queryPointAndDistance(geom.centroid)
+                                # mid_segment_selected_geom = selected_geom.segmentAlongLine(0.25, 0.75, use_percentage=True)
+                                _, _, dist2, _ = selected_geom.queryPointAndDistance(
+                                    geom.centroid
+                                )
                                 if dist2 < (step - tol):
                                     too_close = True
                                     break
-                            
+
                             if not too_close:
                                 if geom.length > 100:
                                     candidates.append((oid, geom, dist))
-                
-
-                    
 
                 if candidates:
                     # choose the candidate with the smallest distance (closest among those >= step)
-                    chosen_oid, chosen_geom, chosen_dist = min(candidates, key=lambda t: t[2])
-                    #if chosen_geom.length > 1.0 and chosen_oid not in selected_oids:
+                    chosen_oid, chosen_geom, chosen_dist = min(
+                        candidates, key=lambda t: t[2]
+                    )
+                    # if chosen_geom.length > 1.0 and chosen_oid not in selected_oids:
                     selected_geoms.append(chosen_geom)
                     selected_oids.add(chosen_oid)
                     mid_line = chosen_geom
                     # reset or keep target as desired; here we reset to step
                     continue
-                
-
 
             arcpy.management.Delete("lines_lyr")
             if not selected_geoms:
@@ -685,28 +677,76 @@ def iterative_side_lines(orig_layer, buffers_fc, output_fc, max_iterations=20, s
         return None
 
 
+def clip_original_lines_to_buffer(original_fc, buffer_fc, out_fc):
+    """Clip original lines so they stop at the buffer boundary."""
+    if arcpy.Exists(out_fc):
+        arcpy.Delete_management(out_fc)
+
+    arcpy.analysis.Clip(
+        in_features=original_fc, clip_features=buffer_fc, out_feature_class=out_fc
+    )
+
+    return out_fc
+
+
+def extract_original_line_segments(
+    original_fc, dissolved_fc, out_fc, buffer_distance="1 Meters"
+):
+    """Clip original lines to buffered dissolved polygons and output the overlapping segments."""
+
+    buffered_fc = "in_memory/dissolved_buffered"
+
+    # Buffer dissolved lines into narrow polygons
+    arcpy.Buffer_analysis(
+        in_features=dissolved_fc,
+        out_feature_class=buffered_fc,
+        buffer_distance_or_field=buffer_distance,
+        line_side="FULL",
+        line_end_type="ROUND",
+        dissolve_option="NONE",
+    )
+
+    if arcpy.Exists(out_fc):
+        arcpy.Delete_management(out_fc)
+
+    # Intersect originals with buffered dissolved polygons
+    arcpy.Intersect_analysis(
+        in_features=[original_fc, buffered_fc],
+        out_feature_class=out_fc,
+        join_attributes="ALL",
+    )
+
+
 @timing_decorator
-def prepare_lines(default_source: str,
-                  lines_layer: str,
-                  max_length: float = 1000.0,
-                  length_field: str = "Length_m") -> str:
+def prepare_lines(
+    default_source: str,
+    lines_layer: str,
+    max_length: float = 1000.0,
+    length_field: str = "Length_m",
+) -> str:
     """
     Copy source to in-memory senterlinje, export non-rail features, create lines_fc,
     calculate geodesic length and return the filtered length layer name.
     Returns the name of the length-layer (in-memory) to be used downstream.
     """
     senterlinje = r"in_memory\senterlinje"
-    arcpy.management.CopyFeatures(in_features=default_source, out_feature_class=senterlinje)
+    arcpy.management.CopyFeatures(
+        in_features=default_source, out_feature_class=senterlinje
+    )
 
     # Export non-jernbane features
     arcpy.management.MakeFeatureLayer(
-        in_features=senterlinje, out_layer="not_jernbane", where_clause="jernbanetype <> 'J'"
+        in_features=senterlinje,
+        out_layer="not_jernbane",
+        where_clause="jernbanetype <> 'J'",
     )
     arcpy.CopyFeatures_management("not_jernbane", OUTPUT_GDB + r"\not_jernbane")
 
     # Make feature layer for jernbane = 'J'
     arcpy.management.MakeFeatureLayer(
-        in_features=senterlinje, out_layer=lines_layer, where_clause="jernbanetype = 'J'"
+        in_features=senterlinje,
+        out_layer=lines_layer,
+        where_clause="jernbanetype = 'J'",
     )
 
     # Copy to in-memory fc and calculate length
@@ -720,10 +760,12 @@ def prepare_lines(default_source: str,
     # Create a layer filtered by max_length
     length_layer = "langth_lyr"
     arcpy.management.MakeFeatureLayer(
-        in_features=lines_fc, out_layer=length_layer, where_clause=f"{length_field} < {max_length}"
+        in_features=lines_fc,
+        out_layer=length_layer,
+        where_clause=f"{length_field} < {max_length}",
     )
 
-    return length_layer
+    return length_layer, lines_fc
 
 
 def add_azimuth(length_layer: str, az_field: str = "azimuth_deg") -> None:
@@ -741,12 +783,15 @@ def add_azimuth(length_layer: str, az_field: str = "azimuth_deg") -> None:
             row[1] = az
             ucur.updateRow(row)
 
+
 @timing_decorator
-def select_and_buffer(length_layer: str,
-                      selection_lyr: str,
-                      buffer_dissolved_mem: str,
-                      buffer_distance: str = "40 Meters",
-                      src_oid_field: str = "src_oid") -> None:
+def select_and_buffer(
+    length_layer: str,
+    selection_lyr: str,
+    buffer_dissolved_mem: str,
+    buffer_distance: str = "40 Meters",
+    src_oid_field: str = "src_oid",
+) -> None:
     """
     Create selection layer, build buffers, spatially join buffers to lines,
     analyze neighbor pairs, select final lines, and produce dissolved buffer.
@@ -807,7 +852,9 @@ def select_and_buffer(length_layer: str,
             out_feature_class=buffer_dissolved_mem,
             multi_part="SINGLE_PART",
         )
-        arcpy.CopyFeatures_management(buffer_dissolved_mem, OUTPUT_GDB + r"\buffer_dissolved_l10_20")
+        arcpy.CopyFeatures_management(
+            buffer_dissolved_mem, OUTPUT_GDB + r"\buffer_dissolved_l10_20"
+        )
         return
 
     sql = "{} IN ({})".format(oid_field_delimited, ",".join(map(str, selected_oids)))
@@ -829,7 +876,10 @@ def select_and_buffer(length_layer: str,
         multi_part="SINGLE_PART",
     )
 
-    arcpy.CopyFeatures_management(buffer_dissolved_mem, OUTPUT_GDB + r"\buffer_dissolved_l10_20")
+    arcpy.CopyFeatures_management(
+        buffer_dissolved_mem, OUTPUT_GDB + r"\buffer_dissolved_l10_20"
+    )
+
 
 @timing_decorator
 def keep_lines(lines_layer, buffer_dissolved_mem):
@@ -842,7 +892,6 @@ def keep_lines(lines_layer, buffer_dissolved_mem):
     create_whole_lines(clipped_sp, erased_sp, buffer_centroids, buffer_dissolved_mem)
     arcpy.management.CopyFeatures(erased_sp, OUTPUT_GDB + "\\final_lines")
 
-
     arcpy.management.DeleteIdentical(
         in_dataset="in_memory\\complete_lines", fields=["SHAPE"]
     )
@@ -853,13 +902,15 @@ def keep_lines(lines_layer, buffer_dissolved_mem):
 
     final_geometry = OUTPUT_GDB + "\\all_side_lines"
     iterative_side_lines(
-        orig_layer = OUTPUT_GDB + "\\complete_lines",
-        buffers_fc = buffer_dissolved_mem,
-        output_fc = final_geometry,
+        orig_layer=OUTPUT_GDB + "\\complete_lines",
+        buffers_fc=buffer_dissolved_mem,
+        output_fc=final_geometry,
         max_iterations=30,
         step=10.0,
         tol=1.0,
     )
+
+    return final_geometry
 
 
 # --- Orchestrator function ---
@@ -868,11 +919,21 @@ def main():
     lines_layer = "lines_lyr"
     buffer_dissolved_mem = "in_memory\\buffer_selected_dissolved"
 
-    length_lyr = prepare_lines(DEFAULT_SOURCE, lines_layer)
+    length_lyr, lines_fc = prepare_lines(DEFAULT_SOURCE, lines_layer)
     add_azimuth(length_lyr)
     select_and_buffer(length_lyr, "selection_lyr", buffer_dissolved_mem)
 
-    keep_lines(lines_layer, buffer_dissolved_mem)
+    final_geometry = keep_lines(lines_layer, buffer_dissolved_mem)
+
+    inside_lines = clip_original_lines_to_buffer(
+        lines_fc, buffer_dissolved_mem, OUTPUT_GDB + "\\inside_lines"
+    )
+    extract_original_line_segments(
+        inside_lines,
+        final_geometry,
+        OUTPUT_GDB + "\\lines_with_attributes",
+        buffer_distance="1 Meters",
+    )
 
 
 if __name__ == "__main__":
