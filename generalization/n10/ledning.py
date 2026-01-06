@@ -6,8 +6,9 @@ arcpy.env.overwriteOutput = True
 
 from composition_configs import core_config
 from custom_tools.decorators.timing_decorator import timing_decorator
+from env_setup import environment_setup
 from file_manager import WorkFileManager
-from file_manager.n100.file_manager_facilities import Facility_N100
+from file_manager.n10.file_manager_facilities import Facility_N10
 from input_data import input_fkb, input_n50
 
 # ========================
@@ -20,10 +21,11 @@ def main():
     """
     The main program for generalizing power lines for N10 from FKB and N50.
     """
+    environment_setup.main()
     print("\nGeneralizes power lines...\n")
 
     # Sets up work file manager and creates temporarily files
-    working_fc = Facility_N100.ledning__n100_facility.value
+    working_fc = Facility_N10.ledning__n10_facility.value
     config = core_config.WorkFileConfig(root_file=working_fc)
     wfm = WorkFileManager(config=config)
 
@@ -178,7 +180,7 @@ def remove_power_lines(files: dict) -> None:
 
         arcpy.management.DeleteFeatures(in_features=power_lines_lyr)
 
-    output = Facility_N100.ledning_output__n100_facility.value
+    output = Facility_N10.ledning_output__n10_facility.value
     arcpy.management.CopyFeatures(
         in_features=files["power_line"], out_feature_class=output
     )
@@ -208,7 +210,7 @@ def remove_masts(files: dict) -> None:
 
     arcpy.management.CopyFeatures(
         in_features=files["mast"],
-        out_feature_class=Facility_N100.mast_output__n100_facility.value,
+        out_feature_class=Facility_N10.mast_output__n10_facility.value,
     )
 
 

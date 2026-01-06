@@ -5,6 +5,7 @@ from datetime import datetime
 import config
 from env_setup.global_config import (
     final_outputs,
+    scale_n10,
     scale_n50,
     scale_n100,
     scale_n250,
@@ -146,6 +147,7 @@ class ProjectDirectorySetup:
     def __init__(self, base_directory=config.output_folder):
         self.base_directory = base_directory
         self.sub_directories = [
+            scale_n10,
             scale_n50,
             scale_n100,
             scale_n250,
