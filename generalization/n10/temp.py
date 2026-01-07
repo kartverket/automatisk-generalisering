@@ -1,5 +1,6 @@
 import arcpy
 import math
+
 from custom_tools.decorators.timing_decorator import timing_decorator
 from custom_tools.general_tools.isolated_line_remover import IsolatedLineRemover
 
@@ -103,20 +104,12 @@ def dissolve_original_lines(
     orig_layer_name="orig_lines",
 ):
     """Dissolve original lines layer and create a feature layer for selection."""
-    out_dissolved_2 = "in_memory\\orig_lines_dissolved_2"
     arcpy.management.Dissolve(
         in_features=lines_layer,
         out_feature_class=out_dissolved,
         multi_part="SINGLE_PART",
     )
-    snap_env = [[out_dissolved, "END", "1 Meters"]]
-    arcpy.Snap_edit(out_dissolved, snap_env)
-    arcpy.management.Dissolve(
-        in_features=out_dissolved,
-        out_feature_class=out_dissolved_2,
-        multi_part="SINGLE_PART",
-    )
-    arcpy.management.MakeFeatureLayer(out_dissolved_2, orig_layer_name)
+    arcpy.management.MakeFeatureLayer(out_dissolved, orig_layer_name)
 
     return orig_layer_name
 
@@ -735,9 +728,6 @@ def iterative_side_lines(
 
 def clip_original_lines_to_buffer(original_fc, buffer_fc, out_fc):
     """Clip original lines so they stop at the buffer boundary."""
-    if arcpy.Exists(out_fc):
-        arcpy.Delete_management(out_fc)
-
     arcpy.analysis.Clip(
         in_features=original_fc, clip_features=buffer_fc, out_feature_class=out_fc
     )
@@ -745,29 +735,11 @@ def clip_original_lines_to_buffer(original_fc, buffer_fc, out_fc):
     return out_fc
 
 
-def extract_original_line_segments(
-    original_fc, dissolved_fc, out_fc, buffer_distance="1 Meters"
-):
-    """Clip original lines to buffered dissolved polygons and output the overlapping segments."""
-
-    buffered_fc = "in_memory/dissolved_buffered"
-
-    # Buffer dissolved lines into narrow polygons
-    arcpy.Buffer_analysis(
-        in_features=dissolved_fc,
-        out_feature_class=buffered_fc,
-        buffer_distance_or_field=buffer_distance,
-        line_side="FULL",
-        line_end_type="ROUND",
-        dissolve_option="NONE",
-    )
-
-    if arcpy.Exists(out_fc):
-        arcpy.Delete_management(out_fc)
-
-    # Intersect originals with buffered dissolved polygons
-    arcpy.Intersect_analysis(
-        in_features=[original_fc, buffered_fc],
+def extract_original_line_segments(original_fc, dissolved_fc, out_fc):
+    """Select original lines completely contained within dissolved geometries."""
+    # Intersect originals with dissolved lines
+    arcpy.analysis.Intersect(
+        in_features=[original_fc, dissolved_fc],
         out_feature_class=out_fc,
         join_attributes="ALL",
     )
@@ -804,6 +776,9 @@ def prepare_lines(files,
         where_clause="jernbanetype = 'J'",
     )
 
+    # Snap endpoints to each other within 1 meter
+    arcpy.edit.Snap(lines_layer, [[lines_layer, "END", "1 Meters"]])
+
     # Copy to in-memory fc and calculate length
     lines_fc = r"in_memory\lines_fc"
     arcpy.management.CopyFeatures(in_features=lines_layer, out_feature_class=lines_fc)
@@ -812,13 +787,13 @@ def prepare_lines(files,
         lines_fc, [[length_field, "LENGTH_GEODESIC"]], length_unit="METERS"
     )
 
-    # Create a layer
-    length_layer = "langth_lyr"
+    # Create a layer filtered by max_length
+    length_layer = "length_lyr"
     arcpy.management.MakeFeatureLayer(
         in_features=lines_fc, out_layer=length_layer
     )
 
-    return length_layer, lines_fc
+    return length_layer, lines_layer
 
 
 def add_azimuth(length_layer: str, az_field: str = "azimuth_deg") -> None:
@@ -1048,6 +1023,7 @@ def main():
 
     lines_layer = "lines_lyr"
     buffer_dissolved_mem = "in_memory\\buffer_selected_dissolved"
+    buffer_lines_mem = "in_memory\\buffer_lines"
 
     length_lyr = prepare_lines(files, source_file, lines_layer)
     add_azimuth(length_lyr)
