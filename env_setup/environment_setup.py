@@ -5,6 +5,7 @@ from datetime import datetime
 import config
 from env_setup.global_config import (
     final_outputs,
+    scale_n10,
     scale_n50,
     scale_n100,
     scale_n250,
@@ -14,6 +15,8 @@ from env_setup.global_config import (
     object_bygning,
     object_elv_bekk,
     object_veg_sti,
+    object_bygg_og_anlegg,
+    object_hoyde,
     main_directory_name,
     lyrx_directory_name,
     general_files_name,
@@ -145,6 +148,7 @@ class ProjectDirectorySetup:
     def __init__(self, base_directory=config.output_folder):
         self.base_directory = base_directory
         self.sub_directories = [
+            scale_n10,
             scale_n50,
             scale_n100,
             scale_n250,
@@ -157,6 +161,8 @@ class ProjectDirectorySetup:
             object_bygning,
             object_elv_bekk,
             object_veg_sti,
+            object_bygg_og_anlegg,
+            object_hoyde,
         ]
 
     def setup(self):
