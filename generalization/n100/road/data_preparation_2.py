@@ -49,7 +49,7 @@ from file_manager.n100.file_manager_buildings import Building_N100
 
 MERGE_DIVIDED_ROADS_ALTERATIVE = False
 
-AREA_SELECTOR = "navn IN ('Kvitsøy')"
+AREA_SELECTOR = "navn IN ('Ringerike')"
 SCALE = "n100"
 
 
@@ -196,7 +196,6 @@ def run_thin_roads(
     partition_thin_run_config = core_config.PartitionRunConfig(
         max_elements_per_partition=feature_count,
         context_radius_meters=SEARCH_DISTANCE,
-        run_partition_optimization=True,
     )
 
     partition_thin_roads = PartitionIterator(
@@ -391,7 +390,6 @@ def collapse_road_detail():
     collapse_partition_run_config = core_config.PartitionRunConfig(
         max_elements_per_partition=OBJECT_LIMIT,
         context_radius_meters=SEARCH_DISTANCE,
-        run_partition_optimization=True,
     )
 
     partition_collapse_road_detail = PartitionIterator(
@@ -399,7 +397,7 @@ def collapse_road_detail():
         partition_method_inject_config=collapse_road_method_config,
         partition_iterator_run_config=collapse_partition_run_config,
         work_file_manager_config=core_config.WorkFileConfig(
-            root_file=Road_N100.data_preparation___thin_road_partition_root___n100_road.value
+            root_file=Road_N100.data_preparation___collapse_root___n100_road.value
         ),
     )
     partition_collapse_road_detail.run()
@@ -745,7 +743,6 @@ def resolve_road_conflicts():
     rrc_run_config = core_config.PartitionRunConfig(
         max_elements_per_partition=100_000,
         context_radius_meters=500,
-        run_partition_optimization=True,
         partition_method=core_config.PartitionMethod.VERTICES,
     )
 

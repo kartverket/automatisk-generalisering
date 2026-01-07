@@ -419,6 +419,11 @@ class Road_N100(Enum):
         )
     )
 
+    data_preparation___collapse_root___n100_road = file_manager.generate_file_name_gdb(
+        script_source_name=data_preparation,
+        description="collapse_root",
+    )
+
     data_preparation___thin_road_partition_root_2___n100_road = (
         file_manager.generate_file_name_gdb(
             script_source_name=data_preparation,
