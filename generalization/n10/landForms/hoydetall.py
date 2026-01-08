@@ -2,6 +2,7 @@
 
 import arcpy
 import config
+import numpy as np
 import os
 import re
 
@@ -20,6 +21,7 @@ from input_data import input_n10, input_n100
 # Program
 # ========================
 
+
 @timing_decorator
 def main():
     """
@@ -28,24 +30,30 @@ def main():
     print("\nCreates contour annotations for landforms at N10 scale...\n")
 
     municipality = "Hole"
+    folder = f"{config.output_folder}/{main_directory_name}/{scale_n10}"
 
     # Sets up work file manager and creates temporary files
     working_fc = Landform_N10.hoyde__n10_landforms.value
-    config = core_config.WorkFileConfig(root_file=working_fc)
-    wfm = WorkFileManager(config=config)
+    work_config = core_config.WorkFileConfig(root_file=working_fc)
+    wfm = WorkFileManager(config=work_config)
 
     files = create_wfm_gdbs(wfm=wfm)
 
     fetch_data(files=files, municipality=municipality)
     get_annotation_contours(files=files)
-    process_tiles(files=files)
-    
+    process_tiles(files=files, folder=f"{folder}/{object_hoyde}")
+    gdbs = merge_landform_annotations(
+        folder_path=folder, out_anno=files["annotations"], out_mask=files["masks"]
+    )
+    delete_gdbs(gdbs=gdbs)
+
     print("\nContour annotations for landforms at N10 scale created successfully!\n")
 
 
 # ========================
 # Main functions
 # ========================
+
 
 @timing_decorator
 def create_wfm_gdbs(wfm: WorkFileManager) -> dict:
@@ -61,16 +69,23 @@ def create_wfm_gdbs(wfm: WorkFileManager) -> dict:
     """
     contours = wfm.build_file_path(file_name="contours", file_type="gdb")
     buildings = wfm.build_file_path(file_name="buildings", file_type="gdb")
-    annotation_contours = wfm.build_file_path(file_name="contour_annotations", file_type="gdb")
+    annotation_contours = wfm.build_file_path(
+        file_name="contour_annotations", file_type="gdb"
+    )
+    annotations = wfm.build_file_path(file_name="annotations", file_type="gdb")
+    masks = wfm.build_file_path(file_name="masks", file_type="gdb")
 
     return {
         "contours": contours,
         "buildings": buildings,
         "annotation_contours": annotation_contours,
+        "annotations": annotations,
+        "masks": masks,
     }
 
+
 @timing_decorator
-def fetch_data(files: dict, municipality: str=None) -> None:
+def fetch_data(files: dict, municipality: str = None) -> None:
     """
     Collects relevant data and clips it to desired area if required.
 
@@ -127,6 +142,7 @@ def fetch_data(files: dict, municipality: str=None) -> None:
                 out_feature_class=out_fc,
             )
 
+
 @timing_decorator
 def get_annotation_contours(files: dict) -> None:
     """
@@ -152,26 +168,43 @@ def get_annotation_contours(files: dict) -> None:
         out_feature_class=files["annotation_contours"],
     )
 
+
 @timing_decorator
-def process_tiles(files: dict, label_field: str="HØYDE"):
+def process_tiles(files: dict, folder: str, label_field: str = "HØYDE") -> None:
     """
     Creates annotations for all contours using a sliding
     window over dynamically generated tiles.
 
     Args:
         files (dict): Dictionary with all the working files
+        folder (str): String with a path to the main folder to store gdbs
         label_field (str, optional): Field used as text in the annotation (default: 'HØYDE')
     """
     xmin, ymin, xmax, ymax = get_bbox(files["annotation_contours"])
 
-    for i, (x1, y1, x2, y2) in tqdm(enumerate(generate_km_tiles(xmin, ymin, xmax, ymax)), desc="Processing tiles", colour="yellow", leave=False):
+    size = 5000
+    nx = np.ceil((xmax - xmin) / size)
+    ny = np.ceil((ymax - ymin) / size)
+    total = int(nx * ny)
+
+    for i, (x1, y1, x2, y2) in tqdm(
+        enumerate(generate_tiles(xmin, ymin, xmax, ymax, size)),
+        total=total,
+        desc="Processing tiles",
+        colour="yellow",
+        leave=False,
+    ):
         # Create a polygon for this tile
-        tile_poly = arcpy.Polygon(arcpy.Array([
-            arcpy.Point(x1, y1),
-            arcpy.Point(x2, y1),
-            arcpy.Point(x2, y2),
-            arcpy.Point(x1, y2)
-        ]))
+        tile_poly = arcpy.Polygon(
+            arcpy.Array(
+                [
+                    arcpy.Point(x1, y1),
+                    arcpy.Point(x2, y1),
+                    arcpy.Point(x2, y2),
+                    arcpy.Point(x1, y2),
+                ]
+            )
+        )
 
         tile_fc = f"in_memory/tile_{i}"
         clipped_fc = f"in_memory/clipped_{i}"
@@ -180,17 +213,24 @@ def process_tiles(files: dict, label_field: str="HØYDE"):
         arcpy.management.CopyFeatures(in_features=tile_poly, out_feature_class=tile_fc)
 
         # Clip contours to the tile
-        arcpy.analysis.Clip(in_features=files["annotation_contours"], clip_features=tile_fc, out_feature_class=clipped_fc)
+        arcpy.analysis.Clip(
+            in_features=files["annotation_contours"],
+            clip_features=tile_fc,
+            out_feature_class=clipped_fc,
+        )
 
         # Check for geometries
         if int(arcpy.management.GetCount(clipped_fc)[0]) == 0:
             continue
 
         # Create annotations
-        out_gdb = f"{config.output_folder}/{main_directory_name}/{scale_n10}/{object_hoyde}_{i}.gdb"
+        out_gdb = f"{folder}_{i}.gdb"
 
         if not arcpy.Exists(out_gdb):
-            arcpy.management.CreateFileGDB(out_folder_path=os.path.dirname(out_gdb), out_name=os.path.basename(out_gdb))
+            arcpy.management.CreateFileGDB(
+                out_folder_path=os.path.dirname(out_gdb),
+                out_name=os.path.basename(out_gdb),
+            )
 
         arcpy.cartography.ContourAnnotation(
             in_features=clipped_fc,
@@ -200,149 +240,153 @@ def process_tiles(files: dict, label_field: str="HØYDE"):
             out_layer=f"contour_ann_{i}",
             contour_color="BLACK",
             contour_alignment="PAGE",
-            enable_laddering="ENABLE_LADDERING"
+            enable_laddering="ENABLE_LADDERING",
         )
 
-def merge_landform_annotations(folder_path, output_gdb, output_fc_name="merged_annotations"):
+        # Delete temporary files
+        for fc in [tile_fc, clipped_fc]:
+            if arcpy.Exists(fc):
+                arcpy.management.Delete(fc)
+
+@timing_decorator
+def merge_landform_annotations(folder_path: str, out_anno: str, out_mask: str) -> list:
     """
-    Finner alle GDB-er i folder_path som matcher 'landforms_{#}.gdb',
-    henter ut annotation-feature-classes og slår dem sammen til én felles FC.
+    Finds all gdb files in the folder_path that matches 'landforms_{#}.gdb',
+    collects the annotation-feature-classes and merges them together into one common fc.
+
+    Args:
+        folder_path (str): The path to the folder containing the gdb files
+        out_anno (str): The feature class that should store the final annotations
+        out_mask (str): The feature class that should store the final masks
+
+    Returns:
+        list: A list of the gdb files that can be deleted from the project
     """
 
-    # Regex for å finne riktige GDB-er
+    # Regex to find correct gdbs
     gdb_pattern = re.compile(r"landforms_(\d+)\.gdb$", re.IGNORECASE)
-
-    # Samle annotation-FCs her
     annotation_sources = []
+    mask_sources = []
+    gdb_paths = []
 
-    # Iterer gjennom filer i mappen
-    for item in os.listdir(folder_path):
+    # Find all the gdb files
+    for item in tqdm(
+        os.listdir(folder_path),
+        desc="Finds landform gdbs",
+        colour="yellow",
+        leave=False,
+    ):
         if gdb_pattern.match(item):
             gdb_path = os.path.join(folder_path, item)
-            print(f"Fant GDB: {gdb_path}")
+            gdb_paths.append(gdb_path)
 
-            # Sett workspace til denne GDB-en
+            # Set workspace to this gdb
             arcpy.env.workspace = gdb_path
 
-            # Finn annotation feature classes
-            fcs = arcpy.ListFeatureClasses(feature_type="Annotation")
-
+            # Find annotation feature classes
+            fcs = arcpy.ListFeatureClasses()
             if not fcs:
-                print("  → Ingen annotation-FCs funnet.")
                 continue
 
             for fc in fcs:
                 full_path = os.path.join(gdb_path, fc)
-                annotation_sources.append(full_path)
-                print(f"  → Lagt til annotation: {full_path}")
+                if fc.lower().endswith("annomask"):
+                    mask_sources.append(full_path)
+                elif fc.lower().endswith("anno"):
+                    annotation_sources.append(full_path)
 
     if not annotation_sources:
-        print("Ingen annotasjonslag funnet i noen GDB-er.")
+        print("Fant ingen Contour_FeaturesAnno.")
+        return
+    if not mask_sources:
+        print("Fant ingen Contour_FeaturesAnnoMask.")
         return
 
-    # Lag output-GDB hvis den ikke finnes
-    if not arcpy.Exists(output_gdb):
-        out_folder, out_name = os.path.split(output_gdb)
-        arcpy.CreateFileGDB_management(out_folder, out_name)
+    # If the outpiut fcs exist, delete them
+    for out in (out_anno, out_mask):
+        if arcpy.Exists(out):
+            arcpy.management.Delete(out)
 
-    # Full sti til output-FC
-    output_fc = os.path.join(output_gdb, output_fc_name)
+    # Merge ANNOTATION
+    arcpy.management.CopyFeatures(
+        in_features=annotation_sources[0], out_feature_class=out_anno
+    )
 
-    # Hvis output-FC finnes fra før, slett den
-    if arcpy.Exists(output_fc):
-        arcpy.Delete_management(output_fc)
+    for src in tqdm(
+        annotation_sources[1:], desc="Merges annotations", colour="yellow", leave=False
+    ):
+        arcpy.management.Append(inputs=src, target=out_anno, schema_type="NO_TEST")
 
-    print("\nSlår sammen annotasjonslag...")
+    # Merge MASKS
+    arcpy.management.CopyFeatures(
+        in_features=mask_sources[0], out_feature_class=out_mask
+    )
 
-    # Første FC kopieres, resten appendes
-    first = annotation_sources[0]
-    arcpy.CopyFeatures_management(first, output_fc)
+    for src in tqdm(
+        mask_sources[1:], desc="Merges masks", colour="yellow", leave=False
+    ):
+        arcpy.management.Append(inputs=src, target=out_mask, schema_type="NO_TEST")
 
-    for src in annotation_sources[1:]:
-        print(f"  → Appender {src}")
-        arcpy.Append_management(src, output_fc, "NO_TEST")
+    print(
+        f"\nFinished! Merged a total of {len(annotation_sources)} annotation-fcs to:\n  {out_anno}\n  {out_mask}"
+    )
 
-    print(f"\nFerdig! Slått sammen {len(annotation_sources)} annotation-FCs til:")
-    print(f"  {output_fc}")
-
-
-
-
-
-
+    return gdb_paths
 
 @timing_decorator
-def generate_points_along_contours(files: dict, dist: int=1000) -> None:
+def delete_gdbs(gdbs: list) -> None:
     """
-    Generate points along contours for labeling.
+    Deletes the input gdbs.
 
     Args:
-        files (dict): Dictionary with all the working files
-        dist (int, optional): Distance interval for point generation (defaults to 25)
+        gdbs (list): List of gdb files that should be deleted
     """
-    # Collect contours at specified height intervals
-    contours_lyr = "contours_lyr"
-    arcpy.management.MakeFeatureLayer(
-        in_features=files["contours"],
-        out_layer=contours_lyr,
-    )
-
-    arcpy.management.SelectLayerByAttribute(
-        in_layer_or_view=contours_lyr,
-        selection_type="NEW_SELECTION",
-        where_clause="MOD(HØYDE, 25) = 0",
-    )
-
-    arcpy.management.CopyFeatures(
-        in_features=contours_lyr,
-        out_feature_class=files["annotation_contours"],
-    )
-
-    # Generate points
-    arcpy.management.GeneratePointsAlongLines(
-        Input_Features=files["annotation_contours"],
-        Output_Feature_Class=files["contour_points"],
-        Point_Placement="DISTANCE",
-        Distance=f"{dist} Meters",
-    )
-
-    # Spatial join between contours and points to transfer height values
-    arcpy.analysis.SpatialJoin(
-        target_features=files["contour_points"],
-        join_features=files["annotation_contours"],
-        out_feature_class=files["joined_contours"],
-        match_option="CLOSEST",
-    )
-
-@timing_decorator
-def generate_contour_annotations(files: dict) -> None:
-    """
-    Generate contour annotations for landforms at N10 scale.
-    """
-    out_gdb = f"{config.output_folder}/{main_directory_name}/{scale_n10}/{object_hoyde}.gdb"
-
-    # Generate contour annotations
-    arcpy.cartography.ContourAnnotation(
-        in_features=files["annotation_contours"],
-        out_geodatabase=out_gdb,
-        contour_label_field="HØYDE",
-        reference_scale_value=10000,
-        out_layer="contour_annotations",
-        contour_color="BLACK",
-        contour_alignment="PAGE",
-        enable_laddering="ENABLE_LADDERING",
-    )
+    arcpy.env.workspace = None
+    for gdb in gdbs:
+        if arcpy.Exists(gdb):
+            arcpy.management.Delete(gdb)
 
 # ========================
 # Helper functions
 # ========================
 
-def get_bbox(fc):
+
+def get_bbox(fc: str) -> tuple[float]:
+    """
+    Creates the bounding box of a FeatureClass.
+
+    Args:
+        fc (str): The feature class to process
+
+    Returns:
+        tuple[float]: float values describing the bbox of the fc
+    """
     desc = arcpy.Describe(fc)
     extent = desc.extent
     return extent.XMin, extent.YMin, extent.XMax, extent.YMax
 
-def generate_km_tiles(xmin, ymin, xmax, ymax, size=1000):
+
+def generate_tiles(xmin: float, ymin: float, xmax: float, ymax: float, size: int):
+    """
+    Generate square tiles covering a bounding box.
+
+    This generator yields axis‑aligned tiles of fixed size that together
+    cover the rectangular area defined by the input coordinates. Tiles are
+    produced in row‑major order, starting at (xmin, ymin) and stepping by
+    `size` in both x‑ and y‑direction until the maximum bounds are reached.
+
+    Args:
+        xmin (float): Minimum x‑coordinate of the bounding box
+        ymin (float): Minimum y‑coordinate of the bounding box
+        xmax (float): Maximum x‑coordinate of the bounding box
+        ymax (float): Maximum y‑coordinate of the bounding box
+        size (int): Width and height of each tile
+
+    Yields:
+        tuple[float, float, float, float]: A tile represented as
+        (x_min, y_min, x_max, y_max)
+    """
+
     x = xmin
     while x < xmax:
         y = ymin
@@ -350,6 +394,7 @@ def generate_km_tiles(xmin, ymin, xmax, ymax, size=1000):
             yield (x, y, x + size, y + size)
             y += size
         x += size
+
 
 # ========================
 
