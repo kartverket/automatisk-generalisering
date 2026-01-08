@@ -1,0 +1,18 @@
+generalization.n10 package
+==========================
+
+Subpackages
+-----------
+
+.. toctree::
+   :maxdepth: 4
+
+   generalization.n10.facilities
+
+Module contents
+---------------
+
+.. automodule:: generalization.n10
+   :members:
+   :show-inheritance:
+   :undoc-members:

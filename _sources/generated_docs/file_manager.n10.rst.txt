@@ -1,0 +1,21 @@
+file\_manager.n10 package
+=========================
+
+Submodules
+----------
+
+file\_manager.n10.file\_manager\_facilities module
+--------------------------------------------------
+
+.. automodule:: file_manager.n10.file_manager_facilities
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+Module contents
+---------------
+
+.. automodule:: file_manager.n10
+   :members:
+   :show-inheritance:
+   :undoc-members:

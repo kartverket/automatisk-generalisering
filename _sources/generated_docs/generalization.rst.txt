@@ -7,6 +7,7 @@ Subpackages
 .. toctree::
    :maxdepth: 4
 
+   generalization.n10
    generalization.n100
    generalization.n250
 

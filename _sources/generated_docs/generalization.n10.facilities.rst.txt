@@ -1,0 +1,21 @@
+generalization.n10.facilities package
+=====================================
+
+Submodules
+----------
+
+generalization.n10.facilities.ledning module
+--------------------------------------------
+
+.. automodule:: generalization.n10.facilities.ledning
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+Module contents
+---------------
+
+.. automodule:: generalization.n10.facilities
+   :members:
+   :show-inheritance:
+   :undoc-members:
