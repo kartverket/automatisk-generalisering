@@ -12,6 +12,14 @@ file\_manager.n100.file\_manager\_buildings module
    :show-inheritance:
    :undoc-members:
 
+file\_manager.n100.file\_manager\_land\_use module
+--------------------------------------------------
+
+.. automodule:: file_manager.n100.file_manager_land_use
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
 file\_manager.n100.file\_manager\_rivers module
 -----------------------------------------------
 

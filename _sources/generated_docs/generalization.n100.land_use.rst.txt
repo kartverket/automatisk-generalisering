@@ -1,0 +1,21 @@
+generalization.n100.land\_use package
+=====================================
+
+Submodules
+----------
+
+generalization.n100.land\_use.rullebane module
+----------------------------------------------
+
+.. automodule:: generalization.n100.land_use.rullebane
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+Module contents
+---------------
+
+.. automodule:: generalization.n100.land_use
+   :members:
+   :show-inheritance:
+   :undoc-members:
