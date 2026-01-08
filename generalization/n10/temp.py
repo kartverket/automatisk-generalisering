@@ -123,12 +123,10 @@ def clip_and_erase(
 ):
     # add uniq id first since it dissapears after dissolve.
     arcpy.AddField_management(lines, "UNIQ_ID", "LONG")
-    i = 1
     with arcpy.da.UpdateCursor(lines, ["UNIQ_ID"]) as cur:
-        for row in cur:
+        for i, row in enumerate(cur, start=1):
             row[0] = i
             cur.updateRow(row)
-            i += 1
 
     arcpy.analysis.Clip(
         in_features=lines, clip_features=buffers, out_feature_class=clipped_fc
@@ -139,49 +137,72 @@ def clip_and_erase(
     return clipped_fc, erased_fc
 
 
-def restore_lines_that_cross_buffer(clipped, erased):
+def collect_ids(fc):
+    """
+    Build composite key (UNIQ_ID + buffer_id)
+    """
+    ids = set()
+    with arcpy.da.SearchCursor(fc, ["UNIQ_ID", "TARGET_FID"]) as cur:
+        for uniq_id, buf_id in cur:
+            ids.add((uniq_id, buf_id))
+    return ids
+
+
+def restore_lines_that_cross_buffer(clipped, erased, buffers):
     """
     If a line crosses the buffer we restore it by inserting the clipped parts of the line into the erased feature class
     """
 
+    # Split multipart features into singlepart
     erased_sp = erased + "_sp"
     clipped_sp = clipped + "_sp"
     arcpy.management.MultipartToSinglepart(clipped, clipped_sp)
     arcpy.management.MultipartToSinglepart(erased, erased_sp)
-    id_count = {}
-    with arcpy.da.SearchCursor(erased_sp, ["UNIQ_ID"]) as cur:
-        for row in cur:
-            uniq_id = row[0]
-            if uniq_id not in id_count:
-                id_count[uniq_id] = 1
-                continue
-            id_count[uniq_id] = id_count.get(uniq_id, 0) + 1
 
-    with arcpy.da.SearchCursor(clipped_sp, ["UNIQ_ID"]) as cur:
-        for row in cur:
-            uniq_id = row[0]
-            if uniq_id not in id_count:
-                id_count[uniq_id] = 1
-                continue
-            id_count[uniq_id] = id_count.get(uniq_id, 0) + 1
+    # Tag fragments with buffer ID
+    erased_tagged = erased_sp + "_tagged"
+    clipped_tagged = clipped_sp + "_tagged"
 
-    id_list = []
-    for v in id_count.items():
-        if v[1] > 2:
-            id_list.append(v[0])
+    # Spatial join to get buffer IDs
+    arcpy.analysis.SpatialJoin(
+        target_features=erased_sp,
+        join_features=buffers,
+        out_feature_class=erased_tagged,
+        join_operation="JOIN_ONE_TO_ONE",
+        join_type="KEEP_ALL",
+    )
+    arcpy.analysis.SpatialJoin(
+        target_features=clipped_sp,
+        join_features=buffers,
+        out_feature_class=clipped_tagged,
+        join_operation="JOIN_ONE_TO_ONE",
+        join_type="KEEP_COMMON",
+    )
 
-    with arcpy.da.UpdateCursor(
-        clipped_sp, ["UNIQ_ID", "SHAPE@"]
-    ) as u_cur, arcpy.da.InsertCursor(erased_sp, ["UNIQ_ID", "SHAPE@"]) as i_cur:
-        for row in u_cur:
-            if row[0] in id_list:
+    erased_ids = collect_ids(erased_tagged)
+    clipped_ids = collect_ids(clipped_tagged)
+
+    # Crossing lines = appear in both clipped and erased for same buffer
+    crossing_ids = erased_ids & clipped_ids
+
+    # Replace erased parts with clipped parts
+    with arcpy.da.InsertCursor(
+        erased_tagged, ["UNIQ_ID", "TARGET_FID", "SHAPE@"]
+    ) as i_cur, arcpy.da.UpdateCursor(
+        clipped_tagged, ["UNIQ_ID", "TARGET_FID", "SHAPE@"]
+    ) as c_cur:
+
+        # Move clipped fragments into erased
+        for row in c_cur:
+            if (row[0], row[1]) in crossing_ids:
                 i_cur.insertRow(row)
-                u_cur.deleteRow()
+                c_cur.deleteRow()
 
-    arcpy.CopyFeatures_management(clipped_sp, OUTPUT_GDB + "\\clipped")
-    arcpy.CopyFeatures_management(erased_sp, OUTPUT_GDB + "\\erased")
+    # Save outputs
+    arcpy.CopyFeatures_management(clipped_tagged, OUTPUT_GDB + "\\clipped")
+    arcpy.CopyFeatures_management(erased_tagged, OUTPUT_GDB + "\\erased")
 
-    return clipped_sp, erased_sp
+    return clipped_tagged, erased_tagged
 
 
 def connect_lines_to_buffer(clipped_fc, buffer_fc):
@@ -562,7 +583,13 @@ def explore_paths(
 
 
 def iterative_side_lines(
-    orig_layer, buffers_fc, output_fc, max_iterations=20, step=10.0, tol=1.0
+    orig_layer,
+    outside_layer,
+    buffers_fc,
+    output_fc,
+    max_iterations=20,
+    step=10.0,
+    tol=1.0,
 ):
     """
     Iteratively expand outward from middle line:
@@ -570,8 +597,33 @@ def iterative_side_lines(
       - Shift them to exactly step m
       - Treat them as new middle lines for next iteration
     """
-    all_side_lines = []
+    endpoints_fc = r"in_memory\line_endpoints"
+    arcpy.management.FeatureVerticesToPoints(outside_layer, endpoints_fc, "BOTH_ENDS")
+    endpoint_buf = "in_memory\\endpoint_buf"
+    # 1. Buffer the endpoints
+    arcpy.analysis.Buffer(
+        endpoints_fc,
+        endpoint_buf,
+        "10 Meters",
+        dissolve_option="NONE",  # IMPORTANT: keep individual buffers separate
+    )
 
+    # 2. Make a layer from the endpoint buffers
+    arcpy.management.MakeFeatureLayer(endpoint_buf, "endpoint_buf_lyr")
+
+    # 3. Select only endpoint buffers that intersect the main buffers
+    arcpy.management.SelectLayerByLocation(
+        "endpoint_buf_lyr",
+        overlap_type="INTERSECT",
+        select_features=buffers_fc,
+        selection_type="NEW_SELECTION",
+    )
+
+    # 4. Export only the selected endpoint buffers
+    filtered_endpoint_buf = r"in_memory\endpoint_buf_filtered"
+    arcpy.management.CopyFeatures("endpoint_buf_lyr", filtered_endpoint_buf)
+
+    all_side_lines = []
     with arcpy.da.SearchCursor(buffers_fc, ["OID@", "SHAPE@"]) as buf_cur:
         for buf_oid, buf_geom in buf_cur:
             center = buf_geom.centroid
@@ -637,8 +689,8 @@ def iterative_side_lines(
                                     break
 
                             if not too_close:
-                                if geom.length > 100:
-                                    candidates.append((oid, geom, dist))
+                                # if geom.length > 100:
+                                candidates.append((oid, geom, dist))
 
                 if candidates:
                     # choose the candidate with the smallest distance (closest among those >= step)
@@ -664,7 +716,82 @@ def iterative_side_lines(
     if all_side_lines:
         if arcpy.Exists(output_fc):
             arcpy.management.Delete(output_fc)
+
+        # Merging all side lines
         arcpy.management.Merge(all_side_lines, output_fc)
+
+        arcpy.management.MakeFeatureLayer(output_fc, "side_lines_lyr")
+        arcpy.management.MakeFeatureLayer(filtered_endpoint_buf, "buf_lyr")
+
+        # Select side lines that do not intersect any endpoint buffer
+        arcpy.management.SelectLayerByLocation("buf_lyr", "INTERSECT", "side_lines_lyr")
+        arcpy.management.SelectLayerByAttribute("buf_lyr", "SWITCH_SELECTION")
+
+        uncovered = "in_memory\\uncovered_buffers"
+        arcpy.management.CopyFeatures("buf_lyr", uncovered)
+
+        # Merge uncovered buffers
+        merged_uncovered = "in_memory\\uncovered_buffers_merged"
+        arcpy.management.Dissolve(
+            in_features=uncovered,
+            out_feature_class=merged_uncovered,
+            dissolve_field=None,
+            multi_part="SINGLE_PART",
+            unsplit_lines="UNSPLIT_LINES"
+        )
+
+        # Assign cluster IDs to merged uncovered buffers for joining
+        arcpy.management.AddField(merged_uncovered, "cluster_id", "LONG")
+        arcpy.management.CalculateField(merged_uncovered, "cluster_id", "!OBJECTID!", "PYTHON3")
+
+        joined = "in_memory\\lines_with_cluster"
+        arcpy.analysis.SpatialJoin(
+            target_features=orig_layer,
+            join_features=merged_uncovered,
+            out_feature_class=joined,
+            join_operation="JOIN_ONE_TO_MANY",
+            match_option="INTERSECT"
+        )
+
+        # For each cluster, find the longest line
+        stats = "in_memory\\cluster_stats"
+        arcpy.analysis.Statistics(
+            in_table=joined,
+            out_table=stats,
+            statistics_fields=[["Shape_Length", "MAX"]],
+            case_field="cluster_id"
+        )
+
+        arcpy.management.MakeFeatureLayer(joined, "joined_lyr")
+        arcpy.management.AddJoin("joined_lyr", "cluster_id", stats, "cluster_id")
+        arcpy.management.SelectLayerByAttribute("joined_lyr", "NEW_SELECTION", '"Shape_Length" = "MAX_Shape_Length"')
+
+        final_lines = "in_memory\\final_side_lines"
+        arcpy.management.CopyFeatures("joined_lyr", final_lines)
+
+        # Clean final lines by removing those that are too close to midpoints of new lines
+        midpoints = "in_memory\\final_midpoints"
+        arcpy.management.FeatureVerticesToPoints(final_lines, midpoints, "MID")
+
+        mid_buf = "in_memory\\final_mid_buf10"
+        arcpy.analysis.Buffer(midpoints, mid_buf, "10 Meters", dissolve_option="NONE")
+
+        arcpy.management.MakeFeatureLayer(output_fc, "all_side_lyr")
+        arcpy.management.MakeFeatureLayer(mid_buf, "mid_buf_lyr")
+
+        arcpy.management.SelectLayerByLocation("all_side_lyr", "INTERSECT", "mid_buf_lyr")
+
+        # remove only long lines intersecting midpoint buffers
+        arcpy.management.SelectLayerByAttribute("all_side_lyr", "SUBSET_SELECTION", "Shape_Length > 200")
+        arcpy.management.SelectLayerByAttribute("all_side_lyr", "SWITCH_SELECTION")
+
+        cleaned = "in_memory\\all_side_lines_cleaned"
+        arcpy.management.CopyFeatures("all_side_lyr", cleaned)
+
+        # Merge the new lines with all side lines
+        merged_output = "in_memory\\merged_side_lines"
+        arcpy.management.Merge([final_lines, cleaned], merged_output)
+        arcpy.management.CopyFeatures(merged_output, output_fc)
         return output_fc
     else:
         return None
@@ -687,6 +814,7 @@ def extract_original_line_segments(original_fc, dissolved_fc, out_fc):
         out_feature_class=out_fc,
         join_attributes="ALL",
     )
+    arcpy.edit.Snap(out_fc, [[out_fc, "END", "1 Meters"]])
 
 
 @timing_decorator
@@ -721,8 +849,8 @@ def prepare_lines(
         where_clause="jernbanetype = 'J'",
     )
 
-    # Snap endpoints to each other within 1 meter
-    arcpy.edit.Snap(lines_layer, [[lines_layer, "END", "1 Meters"]])
+    # Snap endpoints to each other within 3 meters
+    arcpy.edit.Snap(lines_layer, [[lines_layer, "END", "3 Meters"]])
 
     # Copy to in-memory fc and calculate length
     lines_fc = r"in_memory\lines_fc"
@@ -861,23 +989,27 @@ def keep_lines(lines_layer, buffer_dissolved_mem):
     orig_layer = dissolve_original_lines(lines_layer)
 
     clipped_fc, erased_fc = clip_and_erase(orig_layer, buffer_dissolved_mem)
-    clipped_sp, erased_sp = restore_lines_that_cross_buffer(clipped_fc, erased_fc)
+    clipped_sp, erased_sp = restore_lines_that_cross_buffer(
+        clipped_fc, erased_fc, buffer_dissolved_mem
+    )
 
     buffer_centroids = connect_lines_to_buffer(clipped_sp, buffer_dissolved_mem)
     create_whole_lines(clipped_sp, erased_sp, buffer_centroids, buffer_dissolved_mem)
-    arcpy.management.CopyFeatures(erased_sp, OUTPUT_GDB + "\\final_lines")
+
+    final_lines = OUTPUT_GDB + "\\final_lines"
+    arcpy.management.CopyFeatures(erased_sp, final_lines)
 
     arcpy.management.DeleteIdentical(
         in_dataset="in_memory\\complete_lines", fields=["SHAPE"]
     )
 
-    arcpy.management.CopyFeatures(
-        "in_memory\\complete_lines", OUTPUT_GDB + "\\complete_lines"
-    )
+    complete_lines = OUTPUT_GDB + "\\complete_lines"
+    arcpy.management.CopyFeatures("in_memory\\complete_lines", complete_lines)
 
     final_geometry = OUTPUT_GDB + "\\all_side_lines"
     iterative_side_lines(
-        orig_layer=OUTPUT_GDB + "\\complete_lines",
+        orig_layer=complete_lines,
+        outside_layer=final_lines,
         buffers_fc=buffer_dissolved_mem,
         output_fc=final_geometry,
         max_iterations=30,
