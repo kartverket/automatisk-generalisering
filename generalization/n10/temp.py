@@ -824,20 +824,41 @@ def iterative_side_lines(
         final_lines = "in_memory\\final_side_lines"
         arcpy.management.CopyFeatures("joined_lyr", final_lines)
 
-        # Clean final lines by removing those that are too close to midpoints of new lines
-        midpoints = "in_memory\\final_midpoints"
-        arcpy.management.FeatureVerticesToPoints(final_lines, midpoints, "MID")
+        # Clean final lines by removing those that are too close to the new lines
+        side_midpoints = "in_memory\\side_midpoints"
+        arcpy.management.FeatureVerticesToPoints(output_fc, side_midpoints, "MID")
 
-        mid_buf = "in_memory\\final_mid_buf10"
-        arcpy.analysis.Buffer(midpoints, mid_buf, "10 Meters", dissolve_option="NONE")
+        side_mid_buf = "in_memory\\side_mid_buf10"
+        arcpy.analysis.Buffer(
+            in_features=side_midpoints,
+            out_feature_class=side_mid_buf,
+            buffer_distance_or_field="10 Meters",
+            dissolve_option="NONE"
+        )
 
         arcpy.management.MakeFeatureLayer(output_fc, "all_side_lyr")
-        arcpy.management.MakeFeatureLayer(mid_buf, "mid_buf_lyr")
+        arcpy.management.MakeFeatureLayer(final_lines, "final_lines_lyr")
+        arcpy.management.MakeFeatureLayer(side_mid_buf, "side_mid_buf_lyr")
 
-        arcpy.management.SelectLayerByLocation("all_side_lyr", "INTERSECT", "mid_buf_lyr")
+        arcpy.management.SelectLayerByLocation(
+            "side_mid_buf_lyr",
+            overlap_type="INTERSECT",
+            select_features="final_lines_lyr",
+            selection_type="NEW_SELECTION"
+        )
 
         # remove only long lines intersecting midpoint buffers
-        arcpy.management.SelectLayerByAttribute("all_side_lyr", "SUBSET_SELECTION", "Shape_Length > 200")
+        arcpy.management.SelectLayerByLocation(
+            "all_side_lyr",
+            overlap_type="INTERSECT",
+            select_features="side_mid_buf_lyr",
+            selection_type="NEW_SELECTION"
+        )
+        arcpy.management.SelectLayerByAttribute(
+            "all_side_lyr",
+            "SUBSET_SELECTION",
+            "Shape_Length > 200"
+        )
         arcpy.management.SelectLayerByAttribute("all_side_lyr", "SWITCH_SELECTION")
 
         cleaned = "in_memory\\all_side_lines_cleaned"
