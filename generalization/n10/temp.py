@@ -778,31 +778,28 @@ def iterative_side_lines(
         arcpy.management.MakeFeatureLayer(output_fc, "side_lines_lyr")
         arcpy.management.MakeFeatureLayer(filtered_endpoint_buf, "buf_lyr")
 
-        # Select side lines that do not intersect any endpoint buffer
-        arcpy.management.SelectLayerByLocation("buf_lyr", "INTERSECT", "side_lines_lyr")
-        arcpy.management.SelectLayerByAttribute("buf_lyr", "SWITCH_SELECTION")
-
-        uncovered = "in_memory\\uncovered_buffers"
-        arcpy.management.CopyFeatures("buf_lyr", uncovered)
-
         # Merge uncovered buffers
-        merged_uncovered = "in_memory\\uncovered_buffers_merged"
+        merged_endpoint_buf = "in_memory\\uncovered_buffers_merged"
         arcpy.management.Dissolve(
-            in_features=uncovered,
-            out_feature_class=merged_uncovered,
+            in_features=filtered_endpoint_buf,
+            out_feature_class=merged_endpoint_buf,
             dissolve_field=None,
             multi_part="SINGLE_PART",
             unsplit_lines="UNSPLIT_LINES"
         )
 
+        # Select side lines that do not intersect any endpoint buffer
+        arcpy.management.SelectLayerByLocation(merged_endpoint_buf, "INTERSECT", "side_lines_lyr")
+        arcpy.management.SelectLayerByAttribute(merged_endpoint_buf, "SWITCH_SELECTION")
+
         # Assign cluster IDs to merged uncovered buffers for joining
-        arcpy.management.AddField(merged_uncovered, "cluster_id", "LONG")
-        arcpy.management.CalculateField(merged_uncovered, "cluster_id", "!OBJECTID!", "PYTHON3")
+        arcpy.management.AddField(merged_endpoint_buf, "cluster_id", "LONG")
+        arcpy.management.CalculateField(merged_endpoint_buf, "cluster_id", "!OBJECTID!", "PYTHON3")
 
         joined = "in_memory\\lines_with_cluster"
         arcpy.analysis.SpatialJoin(
             target_features=orig_layer,
-            join_features=merged_uncovered,
+            join_features=merged_endpoint_buf,
             out_feature_class=joined,
             join_operation="JOIN_ONE_TO_MANY",
             match_option="INTERSECT"
