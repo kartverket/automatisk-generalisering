@@ -403,6 +403,8 @@ class RemoveRoadTriangles:
                 if entries:
                     result[oid] = self.sort_prioritized_hierarchy(entries)[-1]
             return result
+        except:
+            return {}
         finally:
             # Delete the intermediate feature layer
             if arcpy.Exists(temp_fc):
@@ -561,8 +563,8 @@ class RemoveRoadTriangles:
 
             inside_geoms = []  # Smaller geometries inside the dissolved one
             outside_endpoints = (
-                set()
-            )  # Set of endpoints to count if there are any extra junctions
+                set()  # Set of endpoints to count if there are any extra junctions
+            )
 
             # Search through the original dataset and fetch the original geometries
             with arcpy.da.SearchCursor(
@@ -601,9 +603,11 @@ class RemoveRoadTriangles:
             remove_geoms.append(chosen_geom)
 
             # If there are any segments with different medium connected to the chosen geometry
-            if outside_endpoints:
+            if outside_endpoints and inside_geoms:
                 # -> Find the highest prioritized geometry
                 inside_geoms = self.sort_prioritized_hierarchy(inside_geoms)
+                if not inside_geoms:
+                    return
                 _, _, _, pri_med, pri_geom = inside_geoms[0]
                 add_geoms.append((pri_geom, pri_med))
 
