@@ -12,6 +12,7 @@ from tqdm import tqdm
 
 from composition_configs import core_config
 from custom_tools.decorators.timing_decorator import timing_decorator
+from env_setup import environment_setup
 from env_setup.global_config import main_directory_name, object_hoyde, scale_n10
 from file_manager import WorkFileManager
 from file_manager.n10.file_manager_landforms import Landform_N10
@@ -27,6 +28,8 @@ def main():
     """
     Main function to process landforms in order to generate contour annotations at N10 scale.
     """
+    environment_setup.main()
+
     print("\nCreates contour annotations for landforms at N10 scale...\n")
 
     municipality = "Hole"
@@ -46,6 +49,9 @@ def main():
         folder_path=folder, out_anno=files["annotations"], out_mask=files["masks"]
     )
     delete_gdbs(gdbs=gdbs)
+    remove_annotations_short_contours(files=files)
+    ladders, ids = build_annotation_ladders(files=files)
+    remove_dense_annotations(files=files, locked_ids=ids)
 
     print("\nContour annotations for landforms at N10 scale created successfully!\n")
 
@@ -74,6 +80,7 @@ def create_wfm_gdbs(wfm: WorkFileManager) -> dict:
     )
     annotations = wfm.build_file_path(file_name="annotations", file_type="gdb")
     masks = wfm.build_file_path(file_name="masks", file_type="gdb")
+    join = wfm.build_file_path(file_name="join", file_type="gdb")
 
     return {
         "contours": contours,
@@ -81,6 +88,7 @@ def create_wfm_gdbs(wfm: WorkFileManager) -> dict:
         "annotation_contours": annotation_contours,
         "annotations": annotations,
         "masks": masks,
+        "join": join
     }
 
 
@@ -328,7 +336,7 @@ def merge_landform_annotations(folder_path: str, out_anno: str, out_mask: str) -
         arcpy.management.Append(inputs=src, target=out_mask, schema_type="NO_TEST")
 
     print(
-        f"\nFinished! Merged a total of {len(annotation_sources)} annotation-fcs to:\n  {out_anno}\n  {out_mask}"
+        f"\nFinished! Merged a total of {len(annotation_sources)} annotation-fcs to:\n  {out_anno}\n  {out_mask}\n"
     )
 
     return gdb_paths
@@ -343,8 +351,237 @@ def delete_gdbs(gdbs: list) -> None:
     """
     arcpy.env.workspace = None
     for gdb in gdbs:
-        if arcpy.Exists(gdb):
-            arcpy.management.Delete(gdb)
+        try:
+            if arcpy.Exists(gdb):
+                arcpy.management.Delete(gdb)
+        except:
+            continue
+
+@timing_decorator
+def remove_annotations_short_contours(files: dict) -> None:
+    """
+    Removes annotations for short contours.
+
+    Args:
+        files (dict): Dictionary with all the working files
+    """
+    tolerance_1 = 3_000 # [m]
+    tolerance_2 = 10_000 # [m]
+
+    contours = files["annotation_contours"]
+    annos = files["annotations"]
+    masks = files["masks"]
+    join = files["join"]
+
+    # 1) Spatial join: annotation -> contour
+    arcpy.analysis.SpatialJoin(
+        target_features=annos,
+        join_features=contours,
+        out_feature_class=join,
+        join_operation="JOIN_ONE_TO_MANY",
+        match_option="INTERSECT"
+    )
+
+    # 2) Create mapping: contour_oid -> annotation_oids
+    mapping = {}
+    with arcpy.da.SearchCursor(join, ["TARGET_FID", "JOIN_FID"]) as cur:
+        for anno_id, cont_oid in cur:
+            mapping.setdefault(cont_oid, []).append(anno_id)
+    
+    # 3) Find contours by length
+    short = set()
+    medium = set()
+
+    with arcpy.da.SearchCursor(contours, ["OID@", "SHAPE@LENGTH"]) as cur:
+        for oid, length in cur:
+            if length < tolerance_1:
+                short.add(oid)
+            elif length < tolerance_2:
+                medium.add(oid)
+    
+    # 4) Delete the annotations for short contours
+    anno_delete = []
+    for cont_oid in short:
+        anno_delete.extend(mapping.get(cont_oid, []))
+    
+    # 5) Keep only one for medium contours
+    for cont_oid in medium:
+        annos_for_contour = mapping.get(cont_oid, [])
+        if len(annos_for_contour) > 1:
+            anno_delete.extend(annos_for_contour[1:])
+    
+    # 6) Delete the annotations and masks
+    if anno_delete:
+        where = f"OBJECTID IN ({','.join(map(str, anno_delete))})"
+        arcpy.management.MakeFeatureLayer(annos, "anno_lyr")
+        arcpy.management.SelectLayerByAttribute("anno_lyr", "NEW_SELECTION", where)
+        arcpy.management.DeleteFeatures("anno_lyr")
+
+        arcpy.management.MakeFeatureLayer(masks, "mask_lyr")
+        arcpy.management.SelectLayerByAttribute("mask_lyr", "NEW_SELECTION", where)
+        arcpy.management.DeleteFeatures("mask_lyr")
+    
+    print(f"\nFjernet {len(anno_delete)} annotasjoner totalt.\n")
+
+@timing_decorator
+def build_annotation_ladders(files: dict, max_dist: float=2000.0) -> tuple[list[list], set]:
+    """
+    Groups contour annotations into 'ladders' where each ladder
+    represents a sequence of increasing elevation labels that lie within
+    'max_dist' meters of each other.
+
+    Args:
+        files (dict): Dictionary with all the working files
+        max_dist (float, optional): Maximum distance to be connected to a ladder (default: 2000)
+
+    Returns:
+        ladders (list[list[int]]): Each inner list contains annotation OIDs
+        locked_ids (set[int]): All OIDs that appear in at least one ladder
+    """
+    annos = files["annotations"]
+
+    # 1) Load annotation info
+    anno_info = {}
+    with arcpy.da.SearchCursor(annos, ["OID@", "TextString", "SHAPE@"]) as cur:
+        for oid, text, geom in cur:
+            try:
+                height = int(text.replace(" ", ""))
+            except:
+                continue
+            anno_info[oid] = (height, geom.centroid)
+    
+    # 2) Group by height
+    by_height = {}
+    for oid, (height, pt) in tqdm(anno_info.items(), desc="Group by height", colour="yellow", leave=False):
+        by_height.setdefault(height, []).append((oid, pt))
+
+    # 3) Sort height levels
+    heights = sorted(by_height.keys())
+
+    # 4) Build ladders
+    ladders = []
+    locked_ids = set()
+
+    for i, h in tqdm(enumerate(heights), desc="Building ladders", colour="yellow", leave=False):
+        current_level = by_height[h]
+
+        # For the lowest level, each annotation starts a new ladder
+        if i == 0:
+            for oid, pt in current_level:
+                ladders.append([oid])
+                locked_ids.add(oid)
+            continue
+
+        # For higher levels, try to attach to existing ladders
+        prev_level = by_height[heights[i-1]]
+        prev_points = [(oid, pt) for oid, pt in prev_level]
+        
+        for oid, pt in tqdm(current_level, desc="Finds match", colour="green", leave=False):
+            pt_geom = arcpy.PointGeometry(pt)
+
+            best = None
+            best_dist = None
+            
+            for oid_prev, pt_prev in prev_points:
+                d = pt_geom.distanceTo(arcpy.PointGeometry(pt_prev))
+                if d <= max_dist and (best is None or d < best_dist):
+                    best = oid_prev
+                    best_dist = d
+            
+            if best is None:
+                # New ladder
+                ladders.append([oid])
+                locked_ids.add(oid)
+            else:
+                # Attach to the best ladder
+                for ladder in ladders:
+                    if ladder[-1] == best:
+                        ladder.append(oid)
+                        locked_ids.add(oid)
+                        break
+    
+    # Filter internal list of len == 1
+    singletons = [lst[0] for lst in ladders if len(lst) == 1]
+    ladders = [lst for lst in ladders if len(lst) > 1]
+    locked_ids -= set(singletons)
+
+    return ladders, locked_ids
+
+@timing_decorator
+def remove_dense_annotations(files: dict, locked_ids: set, min_spacing: float=1000.0) -> None:
+    """
+    Removes redundant annotations on long contours.
+
+    Args:
+        files (dict): Dictionary with all the working files
+        locked_ids (set): IDs that are part of a ladder and cannot be deleted
+        min_spacing (float, optional): Minimum spacing between two annotations on the same contour (default: 2000)
+    """
+    contours = files["annotation_contours"]
+    annos = files["annotations"]
+    masks = files["masks"]
+    join = files["join"]
+
+    # 1) Spatial join: annotation -> contour
+    arcpy.analysis.SpatialJoin(
+        target_features=annos,
+        join_features=contours,
+        out_feature_class=join,
+        join_operation="JOIN_ONE_TO_MANY",
+        match_option="INTERSECT"
+    )
+
+    # 2) Build mapping: contour_oid -> list of (anno_id, position_on_line)
+    mapping = {}
+    # Pre-loaded geometries for fast lookup
+    contour_geoms = {}
+    with arcpy.da.SearchCursor(contours, ["OID@", "SHAPE@"]) as cur:
+        for oid, geom in cur:
+            contour_geoms[oid] = geom
+    
+    seen = set()
+
+    with arcpy.da.SearchCursor(join, ["TARGET_FID", "JOIN_FID", "SHAPE@"]) as cur:
+        for anno_oid, cont_oid, anno_geom in cur:
+            if (anno_oid, cont_oid) in seen:
+                continue
+            seen.add((anno_oid, cont_oid))
+            if cont_oid not in contour_geoms:
+                continue
+            pos = contour_geoms[cont_oid].measureOnLine(anno_geom.centroid)
+            mapping.setdefault(cont_oid, []).append((anno_oid, pos))
+    
+    # 3) Determine the annotations to delete
+    anno_delete = []
+    for cont_oid, anno_list in tqdm(mapping.items(), desc="Finds annotations to delete", colour="yellow", leave=False):
+        anno_list.sort(key=lambda x: x[1])
+        last_pos = None
+        for anno_oid, pos in anno_list:
+            if last_pos is None:
+                last_pos = pos
+            elif pos - last_pos < min_spacing:
+                if anno_oid not in locked_ids:
+                    anno_delete.append(anno_oid)
+                else:
+                    last_pos = pos
+            else:
+                last_pos = pos
+    
+    # 4) Delete annotations and masks
+    if anno_delete:
+        where = f"OBJECTID IN ({','.join(map(str, anno_delete))})"
+
+        # Delete annotations
+        arcpy.management.MakeFeatureLayer(annos, "anno_lyr")
+        arcpy.management.SelectLayerByAttribute("anno_lyr", "NEW_SELECTION", where)
+        arcpy.management.DeleteFeatures("anno_lyr")
+
+        # Delete masks
+        arcpy.management.MakeFeatureLayer(masks, "mask_lyr")
+        arcpy.management.SelectLayerByAttribute("mask_lyr", "NEW_SELECTION", where)
+        arcpy.management.DeleteFeatures("mask_lyr")
+
+    print(f"\nFjernet {len(anno_delete)} overflødige annotasjoner.\n")
 
 # ========================
 # Helper functions
