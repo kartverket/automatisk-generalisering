@@ -205,7 +205,6 @@ def run_thin_roads(
     partition_thin_run_config = core_config.PartitionRunConfig(
         max_elements_per_partition=feature_count,
         context_radius_meters=SEARCH_DISTANCE,
-        run_partition_optimization=True,
     )
 
     partition_thin_roads = PartitionIterator(
@@ -400,7 +399,6 @@ def collapse_road_detail():
     collapse_partition_run_config = core_config.PartitionRunConfig(
         max_elements_per_partition=OBJECT_LIMIT,
         context_radius_meters=SEARCH_DISTANCE,
-        run_partition_optimization=False,
     )
 
     partition_collapse_road_detail = PartitionIterator(
@@ -770,7 +768,6 @@ def resolve_road_conflicts():
     rrc_run_config = core_config.PartitionRunConfig(
         max_elements_per_partition=25_000,
         context_radius_meters=500,
-        run_partition_optimization=False,
     )
 
     rrc_partition_wfm = core_config.WorkFileConfig(

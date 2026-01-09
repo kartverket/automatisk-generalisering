@@ -152,6 +152,8 @@ class PartitionIterator:
     INPUT_KEY = "input"
     DUMMY = "dummy"
     COUNT = "count"
+    PRE_OPTIMIZATION_COUNT = "pre_optimization_count"
+    REDUCED_COUNT = "reduced_count"
     PARTITION_FIELD = "partition_selection_field"
 
     def __init__(
@@ -670,6 +672,9 @@ class PartitionIterator:
             * Appends them into the filtered dataset,
             * Registers the filtered dataset and its feature count in `input_catalog`.
         """
+        self.input_catalog[object_key][self.PRE_OPTIMIZATION_COUNT] = (
+            file_utilities.count_objects(input_layer=input_path)
+        )
         if self.search_distance <= 0:
             self.input_catalog[object_key][self.INPUT_KEY] = input_path
             self.input_catalog[object_key][self.COUNT] = file_utilities.count_objects(
@@ -710,6 +715,10 @@ class PartitionIterator:
         self.input_catalog[object_key][self.INPUT_KEY] = filtered_context_path
         self.input_catalog[object_key][self.COUNT] = file_utilities.count_objects(
             input_layer=filtered_context_path
+        )
+        self.input_catalog[object_key][self.REDUCED_COUNT] = (
+            self.input_catalog[object_key][self.PRE_OPTIMIZATION_COUNT]
+            - self.input_catalog[object_key][self.COUNT]
         )
 
     def select_partition_feature(self, iteration_partition, object_id):
