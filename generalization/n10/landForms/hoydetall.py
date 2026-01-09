@@ -16,7 +16,7 @@ from env_setup import environment_setup
 from env_setup.global_config import main_directory_name, object_hoyde, scale_n10
 from file_manager import WorkFileManager
 from file_manager.n10.file_manager_landforms import Landform_N10
-from input_data import input_n10, input_n100
+from input_data import input_n10, input_n50, input_n100, input_roads
 
 # ========================
 # Program
@@ -43,6 +43,7 @@ def main():
     files = create_wfm_gdbs(wfm=wfm)
 
     fetch_data(files=files, municipality=municipality)
+    collect_out_of_bounds_areas(files=files)
     get_annotation_contours(files=files)
     process_tiles(files=files, folder=f"{folder}/{object_hoyde}")
     gdbs = merge_landform_annotations(
@@ -51,6 +52,7 @@ def main():
     delete_gdbs(gdbs=gdbs)
     remove_annotations_short_contours(files=files)
     ladders, ids = build_annotation_ladders(files=files)
+    delete_standalone_annotations_out_of_bounds(files=files, locked_ids=ids)
     remove_dense_annotations(files=files, locked_ids=ids)
 
     print("\nContour annotations for landforms at N10 scale created successfully!\n")
@@ -74,7 +76,15 @@ def create_wfm_gdbs(wfm: WorkFileManager) -> dict:
         dict: A dictionary with all the files as variables
     """
     contours = wfm.build_file_path(file_name="contours", file_type="gdb")
-    buildings = wfm.build_file_path(file_name="buildings", file_type="gdb")
+    out_of_bounds_polygons = wfm.build_file_path(
+        file_name="out_of_bounds_polygons", file_type="gdb"
+    )
+    out_of_bounds_polylines = wfm.build_file_path(
+        file_name="out_of_bounds_polylines", file_type="gdb"
+    )
+    out_of_bounds_buffers = wfm.build_file_path(file_name="out_of_bounds_buffers", file_type="gdb")
+    out_of_bounds_dissolved = wfm.build_file_path(file_name="out_of_bounds_dissolved", file_type="gdb")
+    temporary_file = wfm.build_file_path(file_name="temporary_file", file_type="gdb")
     annotation_contours = wfm.build_file_path(
         file_name="contour_annotations", file_type="gdb"
     )
@@ -84,11 +94,15 @@ def create_wfm_gdbs(wfm: WorkFileManager) -> dict:
 
     return {
         "contours": contours,
-        "buildings": buildings,
+        "out_of_bounds_polygons": out_of_bounds_polygons,
+        "out_of_bounds_polylines": out_of_bounds_polylines,
+        "out_of_bounds_buffers": out_of_bounds_buffers,
+        "out_of_bounds_dissolved": out_of_bounds_dissolved,
+        "temporary_file": temporary_file,
         "annotation_contours": annotation_contours,
         "annotations": annotations,
         "masks": masks,
-        "join": join
+        "join": join,
     }
 
 
@@ -104,12 +118,57 @@ def fetch_data(files: dict, municipality: str = None) -> None:
     # Fetch relevant data
     contour_lyr = "contour_lyr"
     building_lyr = "building_lyr"
+    land_use_lyr = "land_use_lyr"
+    train_lyr = "train_lyr"
+    road_lyr = "road_lyr"
+
     arcpy.management.MakeFeatureLayer(
         in_features=input_n10.Contours, out_layer=contour_lyr
     )
     arcpy.management.MakeFeatureLayer(
         in_features=input_n10.Buildings, out_layer=building_lyr
     )
+    arcpy.management.MakeFeatureLayer(
+        in_features=input_n50.ArealdekkeFlate,
+        out_layer=land_use_lyr,
+        where_clause="OBJTYPE IN ('BymessigBebyggelse', 'ElvBekk', 'FerskvannTørrfall', 'Havflate', 'Industriområde', 'Innsjø', 'InnsjøRegulert', 'Tettbebyggelse')",
+    )
+    arcpy.management.MakeFeatureLayer(in_features=input_n50.Bane, out_layer=train_lyr)
+    arcpy.management.MakeFeatureLayer(
+        in_features=input_roads.road_output_1, out_layer=road_lyr
+    )
+
+    def process_layer(
+        in_lyr: str,
+        out_fc: str,
+        clip_boundary: str = None,
+        temp_fc: str = None,
+        append: bool = False,
+    ) -> None:
+        """
+        Clip and appends, or copies the input layer to the output layer.
+        """
+        if clip_boundary:
+            # Clip til kommune
+            arcpy.analysis.Clip(
+                in_features=in_lyr,
+                clip_features=clip_boundary,
+                out_feature_class=temp_fc if append else out_fc,
+            )
+            if append:
+                arcpy.management.Append(
+                    inputs=temp_fc, target=out_fc, schema_type="NO_TEST"
+                )
+        else:
+            # Ingen kommune: bare kopier eller append
+            if append:
+                arcpy.management.Append(
+                    inputs=in_lyr, target=out_fc, schema_type="NO_TEST"
+                )
+            else:
+                arcpy.management.CopyFeatures(
+                    in_features=in_lyr, out_feature_class=out_fc
+                )
 
     if municipality:
         # Fetch municipality boundary
@@ -123,32 +182,69 @@ def fetch_data(files: dict, municipality: str = None) -> None:
             where_clause=f"NAVN = '{municipality}'",
         )
 
-        # Clip data to municipality boundary
+        # 1) Contours
+        process_layer(
+            in_lyr=contour_lyr, out_fc=files["contours"], clip_boundary=municipality_lyr
+        )
+
+        # 2) Building + Train
         for lyr, out_fc in zip(
-            [contour_lyr, building_lyr],
-            [files["contours"], files["buildings"]],
+            [building_lyr, train_lyr],
+            [files["out_of_bounds_polygons"], files["out_of_bounds_polylines"]],
         ):
-            arcpy.management.SelectLayerByLocation(
-                in_layer=lyr,
-                overlap_type="INTERSECT",
-                select_features=municipality_lyr,
-                selection_type="NEW_SELECTION",
-            )
-            arcpy.analysis.Clip(
-                in_features=lyr,
-                clip_features=municipality_lyr,
-                out_feature_class=out_fc,
+            process_layer(in_lyr=lyr, out_fc=out_fc, clip_boundary=municipality_lyr)
+        for lyr, out_fc in zip(
+            [land_use_lyr, road_lyr],
+            [files["out_of_bounds_polygons"], files["out_of_bounds_polylines"]],
+        ):
+            process_layer(
+                in_lyr=lyr,
+                out_fc=out_fc,
+                clip_boundary=municipality_lyr,
+                temp_fc=files["temporary_file"],
+                append=True,
             )
     else:
         # Save all data to working geodatabases
+        process_layer(in_lyr=contour_lyr, out_fc=files["contours"])
         for lyr, out_fc in zip(
-            [contour_lyr, building_lyr],
-            [files["contours"], files["buildings"]],
+            [building_lyr, train_lyr],
+            [files["out_of_bounds_polygons"], files["out_of_bounds_polylines"]],
         ):
-            arcpy.management.CopyFeatures(
-                in_features=lyr,
-                out_feature_class=out_fc,
-            )
+            process_layer(in_lyr=lyr, out_fc=out_fc)
+        for lyr, out_fc in zip(
+            [land_use_lyr, road_lyr],
+            [files["out_of_bounds_polygons"], files["out_of_bounds_polylines"]],
+        ):
+            process_layer(in_lyr=lyr, out_fc=out_fc, append=True)
+
+
+@timing_decorator
+def collect_out_of_bounds_areas(files: dict) -> None:
+    """
+    Creates buffer around lines and dissolves all polygons without creating multiparts.
+
+    Args:
+        files (dict): Dictionary with all the working files
+    """
+    arcpy.analysis.Buffer(
+        in_features=files["out_of_bounds_polylines"],
+        out_feature_class=files["out_of_bounds_buffers"],
+        buffer_distance_or_field="20 Meters",
+        line_side="FULL",
+        line_end_type="ROUND"
+    )
+    arcpy.management.Append(
+        inputs=files["out_of_bounds_buffers"],
+        target=files["out_of_bounds_polygons"],
+        schema_type="NO_TEST"
+    )
+    arcpy.management.Dissolve(
+        in_features=files["out_of_bounds_polygons"],
+        out_feature_class=files["out_of_bounds_dissolved"],
+        dissolve_field=[],
+        multi_part="SINGLE_PART"
+    )
 
 
 @timing_decorator
@@ -256,6 +352,7 @@ def process_tiles(files: dict, folder: str, label_field: str = "HØYDE") -> None
             if arcpy.Exists(fc):
                 arcpy.management.Delete(fc)
 
+
 @timing_decorator
 def merge_landform_annotations(folder_path: str, out_anno: str, out_mask: str) -> list:
     """
@@ -341,6 +438,7 @@ def merge_landform_annotations(folder_path: str, out_anno: str, out_mask: str) -
 
     return gdb_paths
 
+
 @timing_decorator
 def delete_gdbs(gdbs: list) -> None:
     """
@@ -357,6 +455,7 @@ def delete_gdbs(gdbs: list) -> None:
         except:
             continue
 
+
 @timing_decorator
 def remove_annotations_short_contours(files: dict) -> None:
     """
@@ -365,8 +464,8 @@ def remove_annotations_short_contours(files: dict) -> None:
     Args:
         files (dict): Dictionary with all the working files
     """
-    tolerance_1 = 3_000 # [m]
-    tolerance_2 = 10_000 # [m]
+    tolerance_1 = 3_000  # [m]
+    tolerance_2 = 10_000  # [m]
 
     contours = files["annotation_contours"]
     annos = files["annotations"]
@@ -379,7 +478,7 @@ def remove_annotations_short_contours(files: dict) -> None:
         join_features=contours,
         out_feature_class=join,
         join_operation="JOIN_ONE_TO_MANY",
-        match_option="INTERSECT"
+        match_option="INTERSECT",
     )
 
     # 2) Create mapping: contour_oid -> annotation_oids
@@ -387,7 +486,7 @@ def remove_annotations_short_contours(files: dict) -> None:
     with arcpy.da.SearchCursor(join, ["TARGET_FID", "JOIN_FID"]) as cur:
         for anno_id, cont_oid in cur:
             mapping.setdefault(cont_oid, []).append(anno_id)
-    
+
     # 3) Find contours by length
     short = set()
     medium = set()
@@ -398,18 +497,18 @@ def remove_annotations_short_contours(files: dict) -> None:
                 short.add(oid)
             elif length < tolerance_2:
                 medium.add(oid)
-    
+
     # 4) Delete the annotations for short contours
     anno_delete = []
     for cont_oid in short:
         anno_delete.extend(mapping.get(cont_oid, []))
-    
+
     # 5) Keep only one for medium contours
     for cont_oid in medium:
         annos_for_contour = mapping.get(cont_oid, [])
         if len(annos_for_contour) > 1:
             anno_delete.extend(annos_for_contour[1:])
-    
+
     # 6) Delete the annotations and masks
     if anno_delete:
         where = f"OBJECTID IN ({','.join(map(str, anno_delete))})"
@@ -420,11 +519,14 @@ def remove_annotations_short_contours(files: dict) -> None:
         arcpy.management.MakeFeatureLayer(masks, "mask_lyr")
         arcpy.management.SelectLayerByAttribute("mask_lyr", "NEW_SELECTION", where)
         arcpy.management.DeleteFeatures("mask_lyr")
-    
-    print(f"\nFjernet {len(anno_delete)} annotasjoner totalt.\n")
+
+    print(f"\nDeleted {len(anno_delete)} annotations.\n")
+
 
 @timing_decorator
-def build_annotation_ladders(files: dict, max_dist: float=2000.0) -> tuple[list[list], set]:
+def build_annotation_ladders(
+    files: dict, max_dist: float = 1000.0
+) -> tuple[list[list], set]:
     """
     Groups contour annotations into 'ladders' where each ladder
     represents a sequence of increasing elevation labels that lie within
@@ -449,66 +551,132 @@ def build_annotation_ladders(files: dict, max_dist: float=2000.0) -> tuple[list[
             except:
                 continue
             anno_info[oid] = (height, geom.centroid)
-    
-    # 2) Group by height
-    by_height = {}
-    for oid, (height, pt) in tqdm(anno_info.items(), desc="Group by height", colour="yellow", leave=False):
-        by_height.setdefault(height, []).append((oid, pt))
 
-    # 3) Sort height levels
-    heights = sorted(by_height.keys())
+    # 2) Clustering
+    clusters = cluster_points(points=[(oid, pt) for oid, (_, pt) in anno_info.items()], eps=max_dist)
 
-    # 4) Build ladders
-    ladders = []
-    locked_ids = set()
+    # 3) Build ladders per cluster
+    all_ladders = []
+    all_locked = set()
 
-    for i, h in tqdm(enumerate(heights), desc="Building ladders", colour="yellow", leave=False):
-        current_level = by_height[h]
+    for cluster in tqdm(clusters, desc="Building ladders", colour="yellow", leave=False):
+        sub_info = {oid: anno_info[oid] for oid in cluster}
 
-        # For the lowest level, each annotation starts a new ladder
-        if i == 0:
-            for oid, pt in current_level:
-                ladders.append([oid])
-                locked_ids.add(oid)
-            continue
-
-        # For higher levels, try to attach to existing ladders
-        prev_level = by_height[heights[i-1]]
-        prev_points = [(oid, pt) for oid, pt in prev_level]
+        # Group by height
+        by_height = {}
+        for oid, (height, pt) in sub_info.items():
+            by_height.setdefault(height, []).append((oid, pt))
         
-        for oid, pt in tqdm(current_level, desc="Finds match", colour="green", leave=False):
-            pt_geom = arcpy.PointGeometry(pt)
+        heights = sorted(by_height.keys())
 
-            best = None
-            best_dist = None
-            
-            for oid_prev, pt_prev in prev_points:
-                d = pt_geom.distanceTo(arcpy.PointGeometry(pt_prev))
-                if d <= max_dist and (best is None or d < best_dist):
-                    best = oid_prev
-                    best_dist = d
-            
-            if best is None:
-                # New ladder
-                ladders.append([oid])
-                locked_ids.add(oid)
-            else:
-                # Attach to the best ladder
-                for ladder in ladders:
-                    if ladder[-1] == best:
-                        ladder.append(oid)
-                        locked_ids.add(oid)
-                        break
-    
-    # Filter internal list of len == 1
-    singletons = [lst[0] for lst in ladders if len(lst) == 1]
-    ladders = [lst for lst in ladders if len(lst) > 1]
-    locked_ids -= set(singletons)
+        ladders = []
+        locked_ids = set()
 
-    return ladders, locked_ids
+        for i, h in enumerate(heights):
+            current_level = by_height[h]
+
+            # For the lowest level, each annotation starts a new ladder
+            if i == 0:
+                for oid, pt in current_level:
+                    ladders.append([oid])
+                    locked_ids.add(oid)
+                continue
+
+            # For higher levels, try to attach to existing ladders
+            prev_level = by_height[heights[i - 1]]
+            prev_points = [(oid, pt) for oid, pt in prev_level]
+
+            for oid, pt in tqdm(
+                current_level, desc="Finds match", colour="green", leave=False
+            ):
+                pt_geom = arcpy.PointGeometry(pt)
+
+                best = None
+                best_dist = None
+
+                for oid_prev, pt_prev in prev_points:
+                    d = pt_geom.distanceTo(arcpy.PointGeometry(pt_prev))
+                    if d <= max_dist and (best is None or d < best_dist):
+                        best = oid_prev
+                        best_dist = d
+
+                if best is None:
+                    # New ladder
+                    ladders.append([oid])
+                    locked_ids.add(oid)
+                else:
+                    # Attach to the best ladder
+                    for ladder in ladders:
+                        if ladder[-1] == best:
+                            ladder_heights = {sub_info[x][0] for x in ladder}
+                            if h in ladder_heights:
+                                continue
+                            ladder.append(oid)
+                            locked_ids.add(oid)
+                            break
+
+        # Filter internal list of len == 1
+        singletons = [lst[0] for lst in ladders if len(lst) < 5]
+        ladders = [lst for lst in ladders if len(lst) >= 5]
+        locked_ids -= set(singletons)
+
+        all_ladders.extend(ladders)
+        all_locked |= locked_ids
+
+    return all_ladders, all_locked
+
 
 @timing_decorator
-def remove_dense_annotations(files: dict, locked_ids: set, min_spacing: float=1000.0) -> None:
+def delete_standalone_annotations_out_of_bounds(files: dict, locked_ids: set) -> None:
+    """
+    Deletes annotations in out of bounds areas that
+    are not connected in an annotation ladder.
+
+    Args:
+        files (dict): Dictionary with all the working files
+        locked_ids (set): IDs that are part of a ladder and cannot be deleted
+    """
+    annos = files["annotations"]
+    masks = files["masks"]
+    ob = files["out_of_bounds_dissolved"]
+
+    annos_lyr = "annos_lyr"
+    mask_lyr = "mask_lyr"
+    arcpy.management.MakeFeatureLayer(in_features=annos, out_layer=annos_lyr)
+    arcpy.management.MakeFeatureLayer(in_features=masks, out_layer=mask_lyr)
+
+    arcpy.management.SelectLayerByLocation(
+        in_layer=annos_lyr,
+        overlap_type="INTERSECT",
+        select_features=ob,
+        selection_type="NEW_SELECTION"
+    )
+
+    oids = [
+        row[0]
+        for row in arcpy.da.SearchCursor(annos_lyr, ["OID@"])
+        if row[0] not in locked_ids
+    ]
+
+    if not oids:
+        return
+
+    where = f"OBJECTID IN ({','.join(map(str, oids))})"
+
+    for lyr in [annos_lyr, mask_lyr]:
+        arcpy.management.SelectLayerByAttribute(
+            in_layer_or_view=lyr,
+            selection_type="NEW_SELECTION",
+            where_clause=where
+        )
+        arcpy.management.DeleteRows(in_rows=lyr)
+    
+    print(f"\nDeleted {len(oids)} annotations.\n")
+
+@timing_decorator
+def remove_dense_annotations(
+    files: dict, locked_ids: set, min_spacing: float = 1000.0
+) -> None:
     """
     Removes redundant annotations on long contours.
 
@@ -528,7 +696,7 @@ def remove_dense_annotations(files: dict, locked_ids: set, min_spacing: float=10
         join_features=contours,
         out_feature_class=join,
         join_operation="JOIN_ONE_TO_MANY",
-        match_option="INTERSECT"
+        match_option="INTERSECT",
     )
 
     # 2) Build mapping: contour_oid -> list of (anno_id, position_on_line)
@@ -538,7 +706,7 @@ def remove_dense_annotations(files: dict, locked_ids: set, min_spacing: float=10
     with arcpy.da.SearchCursor(contours, ["OID@", "SHAPE@"]) as cur:
         for oid, geom in cur:
             contour_geoms[oid] = geom
-    
+
     seen = set()
 
     with arcpy.da.SearchCursor(join, ["TARGET_FID", "JOIN_FID", "SHAPE@"]) as cur:
@@ -550,10 +718,15 @@ def remove_dense_annotations(files: dict, locked_ids: set, min_spacing: float=10
                 continue
             pos = contour_geoms[cont_oid].measureOnLine(anno_geom.centroid)
             mapping.setdefault(cont_oid, []).append((anno_oid, pos))
-    
+
     # 3) Determine the annotations to delete
     anno_delete = []
-    for cont_oid, anno_list in tqdm(mapping.items(), desc="Finds annotations to delete", colour="yellow", leave=False):
+    for cont_oid, anno_list in tqdm(
+        mapping.items(),
+        desc="Finds annotations to delete",
+        colour="yellow",
+        leave=False,
+    ):
         anno_list.sort(key=lambda x: x[1])
         last_pos = None
         for anno_oid, pos in anno_list:
@@ -566,7 +739,7 @@ def remove_dense_annotations(files: dict, locked_ids: set, min_spacing: float=10
                     last_pos = pos
             else:
                 last_pos = pos
-    
+
     # 4) Delete annotations and masks
     if anno_delete:
         where = f"OBJECTID IN ({','.join(map(str, anno_delete))})"
@@ -581,7 +754,8 @@ def remove_dense_annotations(files: dict, locked_ids: set, min_spacing: float=10
         arcpy.management.SelectLayerByAttribute("mask_lyr", "NEW_SELECTION", where)
         arcpy.management.DeleteFeatures("mask_lyr")
 
-    print(f"\nFjernet {len(anno_delete)} overflødige annotasjoner.\n")
+    print(f"\nDeleted {len(anno_delete)} annotations.\n")
+
 
 # ========================
 # Helper functions
@@ -631,6 +805,39 @@ def generate_tiles(xmin: float, ymin: float, xmax: float, ymax: float, size: int
             yield (x, y, x + size, y + size)
             y += size
         x += size
+
+
+def cluster_points(points: list, eps: int) -> list:
+    """
+    Simple DBSCAN-like clustering for points on same height level.
+
+    Args:
+        points (list): List of points with format [(oid, pt), ...]
+        eps (int): Length tolerance for being connected to a cluster
+
+    Returns:
+        list: List of OIDs connected in clusters
+    """
+    clusters = []
+    used = set()
+
+    for oid, pt in tqdm(points, desc="Cluster points", colour="yellow", leave=False):
+        if oid in used:
+            continue
+
+        cluster = [oid]
+        used.add(oid)
+
+        for oid2, pt2 in points:
+            if oid2 in used:
+                continue
+            pt_geom = arcpy.PointGeometry(pt)
+            if pt_geom.distanceTo(arcpy.PointGeometry(pt2)) <= eps:
+                cluster.append(oid2)
+                used.add(oid2)
+        clusters.append(cluster)
+    
+    return clusters
 
 
 # ========================
