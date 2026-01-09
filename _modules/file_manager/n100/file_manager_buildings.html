@@ -79,6 +79,7 @@
 <span class="kn">from</span><span class="w"> </span><span class="nn">enum</span><span class="w"> </span><span class="kn">import</span> <span class="n">Enum</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">env_setup</span><span class="w"> </span><span class="kn">import</span> <span class="n">global_config</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">file_manager.base_file_manager</span><span class="w"> </span><span class="kn">import</span> <span class="n">BaseFileManager</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">file_manager</span><span class="w"> </span><span class="kn">import</span> <span class="n">WorkFileManager</span>
 
 
 <span class="c1"># Initialize BaseFileManager</span>
@@ -157,12 +158,16 @@
     <span class="c1">#                                ADDITIONAL FILES</span>
     <span class="c1"># ========================================</span>
 
-    <span class="n">overview__runtime_all_building_functions__n100</span> <span class="o">=</span> <span class="p">(</span>
-        <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_general_files</span><span class="p">(</span>
-            <span class="n">script_source_name</span><span class="o">=</span><span class="n">overview</span><span class="p">,</span>
-            <span class="n">description</span><span class="o">=</span><span class="s2">&quot;runtime_all_building_functions&quot;</span><span class="p">,</span>
-            <span class="n">file_type</span><span class="o">=</span><span class="s2">&quot;txt&quot;</span><span class="p">,</span>
-        <span class="p">)</span>
+    <span class="n">overview__runtime_all_building_functions__n100</span> <span class="o">=</span> <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_general_files</span><span class="p">(</span>
+        <span class="n">script_source_name</span><span class="o">=</span><span class="n">overview</span><span class="p">,</span>
+        <span class="n">description</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;runtime_all_building_functions_</span><span class="si">{</span><span class="n">WorkFileManager</span><span class="o">.</span><span class="n">_session_prefix</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span>
+        <span class="n">file_type</span><span class="o">=</span><span class="s2">&quot;txt&quot;</span><span class="p">,</span>
+    <span class="p">)</span>
+
+    <span class="n">total_workfile_manager_files__n100</span> <span class="o">=</span> <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_general_files</span><span class="p">(</span>
+        <span class="n">script_source_name</span><span class="o">=</span><span class="n">overview</span><span class="p">,</span>
+        <span class="n">description</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;total_workfile_manager_files_</span><span class="si">{</span><span class="n">WorkFileManager</span><span class="o">.</span><span class="n">_session_prefix</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span>
+        <span class="n">file_type</span><span class="o">=</span><span class="s2">&quot;txt&quot;</span><span class="p">,</span>
     <span class="p">)</span>
 
     <span class="c1"># ========================================</span>

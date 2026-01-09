@@ -231,6 +231,8 @@
     <span class="n">INPUT_KEY</span> <span class="o">=</span> <span class="s2">&quot;input&quot;</span>
     <span class="n">DUMMY</span> <span class="o">=</span> <span class="s2">&quot;dummy&quot;</span>
     <span class="n">COUNT</span> <span class="o">=</span> <span class="s2">&quot;count&quot;</span>
+    <span class="n">PRE_OPTIMIZATION_COUNT</span> <span class="o">=</span> <span class="s2">&quot;pre_optimization_count&quot;</span>
+    <span class="n">REDUCED_COUNT</span> <span class="o">=</span> <span class="s2">&quot;reduced_count&quot;</span>
     <span class="n">PARTITION_FIELD</span> <span class="o">=</span> <span class="s2">&quot;partition_selection_field&quot;</span>
 
     <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span>
@@ -776,6 +778,9 @@
 <span class="sd">            * Appends them into the filtered dataset,</span>
 <span class="sd">            * Registers the filtered dataset and its feature count in `input_catalog`.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">input_catalog</span><span class="p">[</span><span class="n">object_key</span><span class="p">][</span><span class="bp">self</span><span class="o">.</span><span class="n">PRE_OPTIMIZATION_COUNT</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="n">file_utilities</span><span class="o">.</span><span class="n">count_objects</span><span class="p">(</span><span class="n">input_layer</span><span class="o">=</span><span class="n">input_path</span><span class="p">)</span>
+        <span class="p">)</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">search_distance</span> <span class="o">&lt;=</span> <span class="mi">0</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">input_catalog</span><span class="p">[</span><span class="n">object_key</span><span class="p">][</span><span class="bp">self</span><span class="o">.</span><span class="n">INPUT_KEY</span><span class="p">]</span> <span class="o">=</span> <span class="n">input_path</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">input_catalog</span><span class="p">[</span><span class="n">object_key</span><span class="p">][</span><span class="bp">self</span><span class="o">.</span><span class="n">COUNT</span><span class="p">]</span> <span class="o">=</span> <span class="n">file_utilities</span><span class="o">.</span><span class="n">count_objects</span><span class="p">(</span>
@@ -816,6 +821,10 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">input_catalog</span><span class="p">[</span><span class="n">object_key</span><span class="p">][</span><span class="bp">self</span><span class="o">.</span><span class="n">INPUT_KEY</span><span class="p">]</span> <span class="o">=</span> <span class="n">filtered_context_path</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">input_catalog</span><span class="p">[</span><span class="n">object_key</span><span class="p">][</span><span class="bp">self</span><span class="o">.</span><span class="n">COUNT</span><span class="p">]</span> <span class="o">=</span> <span class="n">file_utilities</span><span class="o">.</span><span class="n">count_objects</span><span class="p">(</span>
             <span class="n">input_layer</span><span class="o">=</span><span class="n">filtered_context_path</span>
+        <span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">input_catalog</span><span class="p">[</span><span class="n">object_key</span><span class="p">][</span><span class="bp">self</span><span class="o">.</span><span class="n">REDUCED_COUNT</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">input_catalog</span><span class="p">[</span><span class="n">object_key</span><span class="p">][</span><span class="bp">self</span><span class="o">.</span><span class="n">PRE_OPTIMIZATION_COUNT</span><span class="p">]</span>
+            <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">input_catalog</span><span class="p">[</span><span class="n">object_key</span><span class="p">][</span><span class="bp">self</span><span class="o">.</span><span class="n">COUNT</span><span class="p">]</span>
         <span class="p">)</span>
 
 <div class="viewcode-block" id="PartitionIterator.select_partition_feature">

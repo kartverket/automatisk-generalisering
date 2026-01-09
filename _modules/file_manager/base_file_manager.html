@@ -137,11 +137,6 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">script_source_name</span> <span class="o">=</span> <span class="n">script_source_name</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">description</span> <span class="o">=</span> <span class="n">description</span>
 
-        <span class="c1"># self.relative_path_gdb = rf&quot;{self.local_root_directory}\{self.project_root_directory}\{self.scale}\{self.object}.gdb&quot;</span>
-        <span class="c1"># self.relative_path_general_files = rf&quot;{self.local_root_directory}\{self.project_root_directory}\{self.scale}\{self.general_files_directory_name}&quot;</span>
-        <span class="c1"># self.relative_path_lyrx = rf&quot;{self.local_root_directory}\{self.project_root_directory}\{self.scale}\{self.lyrx_directory_name}&quot;</span>
-        <span class="c1"># self.relative_path_final_outputs = rf&quot;{self.local_root_directory}\{self.project_root_directory}\{self.scale}\{env_setup.global_config.final_outputs}.gdb&quot;</span>
-
         <span class="n">base</span> <span class="o">=</span> <span class="p">(</span>
             <span class="n">Path</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">local_root_directory</span><span class="p">)</span> <span class="o">/</span> <span class="bp">self</span><span class="o">.</span><span class="n">project_root_directory</span> <span class="o">/</span> <span class="bp">self</span><span class="o">.</span><span class="n">scale</span>
         <span class="p">)</span>
