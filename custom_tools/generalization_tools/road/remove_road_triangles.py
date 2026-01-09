@@ -1075,7 +1075,7 @@ class RemoveRoadTriangles:
                 # If some data already have been removed in previous iterations,
                 # keep these changes and continue
                 if arcpy.Exists(self.removed_2_cycle_roads):
-                    count == 0
+                    count = 0
                 else:
                     # If the sql-query return an error or no match (None):
                     # Stop the iteration and copy the features for further processing, if first run
