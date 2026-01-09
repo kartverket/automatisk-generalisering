@@ -563,7 +563,7 @@ class RemoveRoadTriangles:
 
             inside_geoms = []  # Smaller geometries inside the dissolved one
             outside_endpoints = (
-                set() # Set of endpoints to count if there are any extra junctions
+                set()  # Set of endpoints to count if there are any extra junctions
             )
 
             # Search through the original dataset and fetch the original geometries
