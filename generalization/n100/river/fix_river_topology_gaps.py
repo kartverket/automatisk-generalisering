@@ -37,6 +37,7 @@ def fill_line_topology_gaps():
         connect_to_features=[
             River_N100.data_preparation___river_polygons___n100_river.value
         ],
+        line_changes_output=River_N100.river_topology___river_gaps_changes___n100_river.value,
     )
     line_topology.FillLineGaps(line_gap_config=line_fix_config).run()
 

@@ -5,7 +5,7 @@ from typing import Optional
 import arcpy
 
 from env_setup import environment_setup
-from custom_tools.general_tools import custom_arcpy
+from custom_tools.general_tools import custom_arcpy, file_utilities
 from file_manager import WorkFileManager
 from composition_configs import logic_config
 
@@ -35,6 +35,7 @@ class FillLineGaps:
     def __init__(self, line_gap_config: logic_config.FillLineGapsConfig):
         self.input_lines = line_gap_config.input_lines
         self.output_lines = line_gap_config.output_lines
+        self.line_changes_output = line_gap_config.line_changes_output
 
         self.gap_tolerance_meters = line_gap_config.gap_tolerance_meters
         self.connect_to_features = line_gap_config.connect_to_features
@@ -291,6 +292,67 @@ class FillLineGaps:
         """
         _ = plan
 
+    def _setup_line_changes_output(self) -> None:
+        """
+        What:
+            Ensures line_changes_output exists (if configured) and has required fields.
+
+        Why:
+            Avoids insert operations while an UpdateCursor transaction is active.
+        """
+        if self.line_changes_output is None:
+            return
+
+        file_utilities.create_feature_class(
+            template_feature=self.lines_copy,
+            new_feature=self.line_changes_output,
+        )
+
+        existing_fields = {
+            field.name for field in arcpy.ListFields(dataset=self.line_changes_output)
+        }
+
+        if self.ORIGINAL_ID not in existing_fields:
+            arcpy.management.AddField(
+                in_table=self.line_changes_output,
+                field_name=self.ORIGINAL_ID,
+                field_type="LONG",
+            )
+
+        if "gap_dist_m" not in existing_fields:
+            arcpy.management.AddField(
+                in_table=self.line_changes_output,
+                field_name="gap_dist_m",
+                field_type="DOUBLE",
+            )
+
+    def _build_change_row(
+        self,
+        original_id: int,
+        dangle_x: float,
+        dangle_y: float,
+        near_x: float,
+        near_y: float,
+        spatial_reference,
+    ):
+        """
+        What:
+            Builds a single insert row tuple for the change output, or returns None if no change.
+        """
+        dist = ((dangle_x - near_x) ** 2 + (dangle_y - near_y) ** 2) ** 0.5
+        if dist == 0.0:
+            return None
+
+        arr = arcpy.Array(
+            [arcpy.Point(X=dangle_x, Y=dangle_y), arcpy.Point(X=near_x, Y=near_y)]
+        )
+        geom = arcpy.Polyline(
+            inputs=arr,
+            spatial_reference=spatial_reference,
+        )
+
+        return (geom, int(original_id), float(dist))
+
     def _move_endpoint(
         self, shape, dangle_x: float, dangle_y: float, near_x: float, near_y: float
     ):
@@ -345,13 +407,19 @@ class FillLineGaps:
             )
             return
 
+        if self.line_changes_output is not None:
+            self._setup_line_changes_output()
+
+        spatial_reference = arcpy.Describe(self.lines_copy).spatialReference
+        change_rows: list[tuple] = []
+
         fields = [self.ORIGINAL_ID, "SHAPE@"]
 
         with arcpy.da.UpdateCursor(
             in_table=self.lines_copy,
             field_names=fields,
-        ) as cursor:
-            for original_id, shape in cursor:
+        ) as update_cursor:
+            for original_id, shape in update_cursor:
                 original_id_int = int(original_id)
                 if original_id_int not in plan:
                     continue
@@ -360,14 +428,39 @@ class FillLineGaps:
                 if info["processed"] is True:
                     continue
 
+                dangle_x = float(info["dangle_x"])
+                dangle_y = float(info["dangle_y"])
+                near_x = float(info["near_x"])
+                near_y = float(info["near_y"])
+
                 new_shape = self._move_endpoint(
                     shape=shape,
-                    dangle_x=info["dangle_x"],
-                    dangle_y=info["dangle_y"],
-                    near_x=info["near_x"],
-                    near_y=info["near_y"],
+                    dangle_x=dangle_x,
+                    dangle_y=dangle_y,
+                    near_x=near_x,
+                    near_y=near_y,
                 )
-                cursor.updateRow((original_id, new_shape))
+                update_cursor.updateRow((original_id, new_shape))
+
+                if self.line_changes_output is not None:
+                    row = self._build_change_row(
+                        original_id=original_id_int,
+                        dangle_x=dangle_x,
+                        dangle_y=dangle_y,
+                        near_x=near_x,
+                        near_y=near_y,
+                        spatial_reference=spatial_reference,
+                    )
+                    if row is not None:
+                        change_rows.append(row)
+
+        if self.line_changes_output is not None and change_rows:
+            with arcpy.da.InsertCursor(
+                in_table=self.line_changes_output,
+                field_names=["SHAPE@", self.ORIGINAL_ID, "gap_dist_m"],
+            ) as insert_cursor:
+                for row in change_rows:
+                    insert_cursor.insertRow(row)
 
         arcpy.management.CopyFeatures(
             in_features=self.lines_copy,
