@@ -52,8 +52,9 @@ def main():
     delete_gdbs(gdbs=gdbs)
     remove_annotations_short_contours(files=files)
     ladders, ids = build_annotation_ladders(files=files)
-    delete_standalone_annotations_out_of_bounds(files=files, locked_ids=ids)
-    remove_dense_annotations(files=files, locked_ids=ids)
+    move_ladders_optimally(files=files, ladders=ladders)
+    #delete_standalone_annotations_out_of_bounds(files=files, locked_ids=ids)
+    #remove_dense_annotations(files=files, locked_ids=ids)
 
     print("\nContour annotations for landforms at N10 scale created successfully!\n")
 
@@ -243,7 +244,7 @@ def collect_out_of_bounds_areas(files: dict) -> None:
         in_features=files["out_of_bounds_polygons"],
         out_feature_class=files["out_of_bounds_dissolved"],
         dissolve_field=[],
-        multi_part="SINGLE_PART"
+        multi_part="MULTI_PART"
     )
 
 
@@ -674,6 +675,142 @@ def delete_standalone_annotations_out_of_bounds(files: dict, locked_ids: set) ->
     print(f"\nDeleted {len(oids)} annotations.\n")
 
 @timing_decorator
+def move_ladders_optimally(files: dict, ladders: list) -> None:
+    """
+    Moves ladders of contour annotations to the
+    optimal position to avoid out of bounds areas.
+
+    Args:
+        files (dict): Dictionary with all the working files
+        ladders (list): A list of lists, where each internal list
+                        contains the OIDs of annotations in the same ladder
+    """
+    contours = files["annotation_contours"]
+    annos = files["annotations"]
+    masks = files["masks"]
+    ob = files["out_of_bounds_dissolved"]
+
+    # Create ONE geometry object of the ob area
+    geoms = []
+    with arcpy.da.SearchCursor(ob, ["SHAPE@"]) as cur:
+        for (g,) in cur:
+            geoms.append(g)
+    ob_geom = geoms[0].union(geoms[1:]) if len(geoms) > 1 else geoms[0]
+
+    # The maximum distance that the ladder can be moved:
+    max_movement = 1000 # [m]
+
+    contours_lyr = "contours_lyr"
+    annos_lyr = "annos_lyr"
+    masks_lyr = "masks_lyr"
+
+    for fc, lyr in zip(
+        [contours, annos, masks],
+        [contours_lyr, annos_lyr, masks_lyr]
+    ):
+        arcpy.management.MakeFeatureLayer(in_features=fc, out_layer=lyr)
+    
+    # Keep IDs to be deleted
+    ids_to_delete = set()
+
+    for ladder in tqdm(ladders, desc="Adjusting ladders", colour="yellow", leave=False):
+        sql = f"OBJECTID IN ({','.join(map(str, ladder))})"
+        arcpy.management.SelectLayerByAttribute(in_layer_or_view=annos_lyr, selection_type="NEW_SELECTION", where_clause=sql)
+
+        # Fetch annotation geometries
+        annos_data = []
+        with arcpy.da.SearchCursor(annos_lyr, ["OID@", "SHAPE@", "TextString"]) as cur:
+            for oid, geom, text in cur:
+                annos_data.append([oid, geom, int(text)])
+        
+        if not annos_data:
+            continue
+        annos_data.sort(key=lambda x: x[2])
+        
+        """
+        Find the anchor annotation:
+        Start in the bottom and the first one having a
+        position in a valid area is considered the anchor
+        """
+        anchor_oid, anchor_geom = None, None
+        idx = 0
+        while not anchor_oid:
+            oid, geom, _ = annos_data[idx]
+            
+            pt = geom.getPart()[0][0]
+            x, y = pt.X, pt.Y
+            geom = arcpy.PointGeometry(arcpy.Point(x, y), geom.spatialReference)
+
+
+            contour = get_contour_for_annotation(geom=geom, contours_lyr=contours_lyr)
+            if not contour:
+                idx += 1
+                continue
+            valid_geom = find_valid_position_along_contour(point_geom=geom, contour_geom=contour, ob_geom=ob_geom, max_dist=max_movement)
+            if valid_geom:
+                anchor_oid, anchor_geom = oid, valid_geom
+            else:
+                idx += 1
+                ids_to_delete.add(oid)
+                if idx == len(annos_data):
+                    break
+        # Adjusts all remaining points according to the anchor
+        # 1) Finds the new positions
+        for i in tqdm(range(len(annos_data)), desc="Adjusting annotations", colour="green", leave=False):
+            oid, geom, _ = annos_data[i]
+            if oid == anchor_oid or oid in ids_to_delete:
+                continue
+
+            pt = geom.getPart()[0][0]
+            x, y = pt.X, pt.Y
+            geom = arcpy.PointGeometry(arcpy.Point(x, y), geom.spatialReference)
+
+            contour = get_contour_for_annotation(geom = geom, contours_lyr=contours_lyr)
+
+            new_pos = move_towards_anchor(
+                point_geom=geom,
+                contour_geom=contour,
+                anchor_geom=anchor_geom,
+                ob_geom=ob_geom,
+                max_dist=max_movement
+            )
+
+            if new_pos is None:
+                ids_to_delete.add(oid)
+            else:
+                # Store for update
+                annos_data[i][1] = new_pos
+        
+        # 2) Update the positions in the featureclass
+        # ANNOTATIONS
+        with arcpy.da.UpdateCursor(annos_lyr, ["OID@", "SHAPE@ANCHORPOINT"]) as a_cur:
+            for oid, _ in a_cur:
+                if oid in ids_to_delete:
+                    a_cur.deleteRow()
+                else:
+                    new_geom = next((g for id, g, _ in annos_data if id == oid), None)
+                    if new_geom:
+                        x = new_geom.centroid.X
+                        y = new_geom.centroid.Y
+                        a_cur.updateRow([oid, (x, y)])
+
+        # MASKS
+        with arcpy.da.UpdateCursor(masks_lyr, ["OID@", "SHAPE@"]) as m_cur:
+            for oid, geom in m_cur:
+                if oid in ids_to_delete:
+                    m_cur.deleteRow()
+                else:
+                    new_geom = next((g for id, g, _ in annos_data if id == oid), None)
+                    if new_geom:
+                        old_x, old_y = geom.centroid.X, geom.centroid.Y
+                        new_x, new_y = new_geom.centroid.X, new_geom.centroid.Y
+                        dx = new_x - old_x
+                        dy = new_y - old_y
+                        moved_geom = geom.move(dx, dy)
+                        m_cur.updateRow([oid, moved_geom])
+
+
+@timing_decorator
 def remove_dense_annotations(
     files: dict, locked_ids: set, min_spacing: float = 1000.0
 ) -> None:
@@ -838,6 +975,136 @@ def cluster_points(points: list, eps: int) -> list:
         clusters.append(cluster)
     
     return clusters
+
+
+def get_contour_for_annotation(geom: arcpy.Geometry, contours_lyr: str) -> arcpy.Geometry | None:
+    """
+    Find nearest contour line to annotation.
+
+    Args:
+        geom (arcpy.Geometry): The arcpy-geometry to analys
+        contours_lyr (str): THe feature layer with contours
+
+    Returns:
+        arcpy.Geometry: The geometry of the closest contour, if some
+    """
+    arcpy.management.SelectLayerByLocation(
+        in_layer=contours_lyr,
+        overlap_type="WITHIN_A_DISTANCE",
+        select_features=geom,
+        search_distance="5 Meters",
+        selection_type="NEW_SELECTION"
+    )
+
+    # If none found, expand search
+    count = int(arcpy.management.GetCount(contours_lyr)[0])
+    if count == 0:
+        arcpy.management.SelectLayerByLocation(
+            in_layer=contours_lyr,
+            overlap_type="WITHIN_A_DISTANCE",
+            select_features=geom,
+            search_distance="50 Meters",
+            selection_type="NEW_SELECTION"
+        )
+
+    with arcpy.da.SearchCursor(contours_lyr, ["SHAPE@"]) as cur:
+        for row in cur:
+            return row[0]
+
+    return None
+
+def is_valid(point_geom: arcpy.Geometry, ob_geom: arcpy.Geometry) -> bool:
+    """
+    Identifies if a point is in the area.
+
+    Args:
+        point_geom (arcpy.Geometry): The geometry to investigate
+        ob_geom (arcpy.Geometry): The area to search for relationship
+
+    Returns:
+        bool: True if geom is inside ob_lyr, else False
+    """
+    return point_geom.disjoint(ob_geom)
+
+def find_valid_position_along_contour(point_geom: arcpy.Point, contour_geom: arcpy.Polyline, ob_geom: arcpy.Geometry, max_dist: int, step: int=5):
+    """
+    Moves a point along a contour polyline until it finds a valid (non-OB) position.
+
+    Args:
+        point_geom (Geometry): The annotation point geometry
+        contour_geom (Geometry): The contour polyline geometry
+        ob_geom (arcpy.Geometry): Out of bounds geometry
+        max_dist (int): Maximum distance to move along the contour
+        step (int, optional): Step size in meters for searching (default: 5)
+
+    Returns:
+        Geometry or None: A valid point geometry, or None if no valid position exists
+    """
+    # 1) Find start position
+    try:
+        m0 = contour_geom.measureOnLine(point_geom)
+    except:
+        return None
+    
+    # 2) Validate starting position
+    if is_valid(point_geom, ob_geom):
+        return point_geom
+    
+    # 3) Search in both directions
+    max_m = contour_geom.length
+    search_range = int(max_dist // step)
+    for i in range(1, search_range + 1):
+        for direction in (+1, -1):
+            m_new = m0 + direction * i * step
+            # Limit to polyline
+            if m_new < 0 or m_new > max_m:
+                continue
+            new_point = contour_geom.positionAlongLine(m_new)
+            if is_valid(new_point, ob_geom):
+                return new_point
+    
+    # 4) No valid position found
+    return None
+
+def move_towards_anchor(point_geom: arcpy.Point, contour_geom: arcpy. Polyline, anchor_geom: arcpy.Point, ob_geom: arcpy.Geometry, max_dist: int, step: int=5) -> arcpy.Point | arcpy.PointGeometry | None:
+    """
+    Moves a point along its contour towards the anchor point,
+    stopping at the closest valid (non-OB) position.
+
+    Args:
+        point_geom (arcpy.Point): The point to move
+        contour_geom (arcpy.Polyline): The contour to move along
+        anchor_geom (arcpy.Point): The anchor point
+        ob_geom (arcpy.Geometry): Out-of-bounds geometry
+        max_dist (int): Maximum distance to move along the contour
+        step (int, optional): Step size in meters for searching (default: 5)
+
+    Returns:
+        Geometry or None: A valid point geometry, or None if no valid position exists
+    """
+    # 1) Find start position
+    try:
+        m_point = contour_geom.measureOnLine(point_geom)
+        m_anchor = contour_geom.measureOnLine(anchor_geom)
+    except:
+        return None
+
+    # 2) Start searching after valid position
+    direction = 1 if m_anchor > m_point else -1
+    max_m = contour_geom.length
+
+    if is_valid(point_geom, ob_geom):
+        return point_geom
+    
+    steps = int(max_dist // step)
+    for i in range(1, steps + 1):
+        m_new = m_point + direction * i * step
+        if m_new < 0 or m_new > max_m:
+            continue
+        new_pos = contour_geom.positionAlongLine(m_new)
+        if is_valid(new_pos, ob_geom):
+            return new_pos
+    return None
 
 
 # ========================
