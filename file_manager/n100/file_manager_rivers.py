@@ -13,6 +13,9 @@ file_manager = BaseFileManager(scale=scale, object_name=object_name)
 
 # All file and function names in correct order
 
+data_selection = "data_selection"
+data_preparation = "data_preparation"
+river_topology = "river_topology"
 selecting_water_polygons = "selecting_water_polygons"
 unconnected_river_geometry = "unconnected_river_geometry"
 extending_river_geometry = "extending_river_geometry"
@@ -61,6 +64,59 @@ class River_N100(Enum):
     ###########################################
     ########### RIVER DATA PREPARATION ##########
     ###########################################
+
+    data_selection___water_lines___n100_river = file_manager.generate_file_name_gdb(
+        script_source_name=data_selection,
+        description="water_lines",
+    )
+
+    data_selection___water_polygons___n100_river = file_manager.generate_file_name_gdb(
+        script_source_name=data_selection,
+        description="water_polygons",
+    )
+
+    data_selection___water_points___n100_river = file_manager.generate_file_name_gdb(
+        script_source_name=data_selection,
+        description="water_points",
+    )
+
+    data_preparation___geometry_validation___n100_river = (
+        file_manager.generate_file_name_gdb(
+            script_source_name=data_preparation,
+            description="geometry_validation",
+        )
+    )
+
+    data_preparation___river_lines___n100_river = file_manager.generate_file_name_gdb(
+        script_source_name=data_preparation,
+        description="river_lines",
+    )
+
+    data_preparation___river_polygons___n100_river = (
+        file_manager.generate_file_name_gdb(
+            script_source_name=data_preparation,
+            description="river_polygons",
+        )
+    )
+
+    data_preparation___river_polygon_outline___n100_river = (
+        file_manager.generate_file_name_gdb(
+            script_source_name=data_preparation,
+            description="river_polygon_outline",
+        )
+    )
+
+    river_topology___fixed_river_gaps___n100_river = (
+        file_manager.generate_file_name_gdb(
+            script_source_name=river_topology,
+            description="fixed_river_gaps",
+        )
+    )
+
+    river_topology___root___n100_river = file_manager.generate_file_name_gdb(
+        script_source_name=river_topology,
+        description="root",
+    )
 
     selecting_water_polygons__centerline__n100 = file_manager.generate_file_name_gdb(
         script_source_name=selecting_water_polygons,

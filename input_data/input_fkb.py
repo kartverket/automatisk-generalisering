@@ -2,6 +2,13 @@
 from config import fkb_path
 import arcpy
 
+
+from config import fkb_river
+
+VannLinje = rf"{fkb_river}\fkb_vann_grense"
+VannFlate = rf"{fkb_river}\fkb_vann_omrade"
+VannPunkt = rf"{fkb_river}\fkb_vann_posisjon"
+
 # Defining universal paths for fkb regardless of local path env_setup
 fkb_lufthavn_grense = rf"{fkb_path}\fkb_lufthavn_grense"
 fkb_lufthavn_omrade = rf"{fkb_path}\fkb_lufthavn_omrade"

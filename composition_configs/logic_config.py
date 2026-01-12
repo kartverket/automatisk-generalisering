@@ -207,3 +207,14 @@ class RiverStrahlerKwargs:
     work_file_manager_config: core_config.WorkFileConfig
     output_processed_feature: io_types.GdbIOArg
     havflate_feature: io_types.GdbIOArg
+
+
+@dataclass(frozen=True)
+class FillLineGapsConfig:
+    input_lines: str
+    output_lines: str
+    work_file_manager_config: core_config.WorkFileConfig
+    gap_tolerance_meters: int
+    fill_gaps_on_self: bool = True
+    connect_to_features: Optional[list[str]] = None
+    line_changes_output: Optional[str] = None
