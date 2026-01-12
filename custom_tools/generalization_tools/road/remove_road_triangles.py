@@ -1399,9 +1399,9 @@ class RemoveRoadTriangles:
             self.remove_islands_and_small_dead_ends(edit_fc=self.removed_1_cycle_roads)
             self.remove_2_cycle_roads(edit_fc=self.dissolved_feature)
             self.remove_3_cycle_roads()
-            self.remove_4_cycle_roads()
+            #self.remove_4_cycle_roads()
             self.fetch_original_data_final(
-                scale=scale, edit_fc=self.removed_4_cycle_roads
+                scale=scale, edit_fc=self.removed_3_cycle_roads
             )
         else:
             self.remove_1_cycle_roads(edit_fc=self.copy_of_input_feature)
@@ -1431,7 +1431,7 @@ def generalize_road_triangles(scale: str) -> None:
         file = (
             Road_N100.data_preparation___simplified_road___n100_road.value
             if before
-            else Road_N100.data_preparation___merge_divided_roads___n100_road.value
+            else Road_N100.data_preparation___smooth_road___n100_road.value
         )
         root = Road_N100.road_triangles___remove_triangles_root___n100_road.value
         removed = Road_N100.road_triangles___removed_triangles___n100_road.value

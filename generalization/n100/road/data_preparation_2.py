@@ -74,6 +74,7 @@ def main():
     thin_roads()
     thin_sti_and_forest_roads()
     merge_divided_roads()
+    smooth_line()
     generalize_road_triangles(SCALE)
     pre_resolve_road_conflicts(AREA_SELECTOR)
     resolve_road_conflicts()
@@ -580,6 +581,20 @@ def merge_divided_roads():
         character_field="character",
     )
 
+@timing_decorator
+def smooth_line():
+    arcpy.cartography.SmoothLine(
+        in_features=Road_N100.data_preparation___merge_divided_roads___n100_road.value,
+        out_feature_class=Road_N100.data_preparation___smooth_road___n100_road.value,
+        algorithm="PAEK",
+        tolerance="300 meters",
+        error_option="RESOLVE_ERRORS",
+        in_barriers=[
+            Road_N100.data_preparation___water_feature_outline___n100_road.value,
+            Road_N100.data_selection___railroad___n100_road.value,
+            Road_N100.data_preparation___country_boarder___n100_road.value,
+        ],
+    )
 
 @timing_decorator
 def pre_resolve_road_conflicts(area_selection: str):
