@@ -22,5 +22,5 @@ class Railway_N10(Enum):
         script_source_name=railway_file, description="fkb"
     )
     output_railway_n10 = file_manager.generate_file_name_gdb(
-        script_source_name=railway_file, description="fkb_generalisert"
+        script_source_name=railway_file, description="fkb_bane_generalisert"
     )

@@ -43,6 +43,7 @@ class IsolatedLineRemover:
         self.copy_fc = r"in_memory\copy_lines"
         self.near_table = r"in_memory\near_pairs"
         self.layer_name = "lyr_to_delete"
+        self.added_l_field = False
 
 
     def copy(self):
@@ -52,6 +53,7 @@ class IsolatedLineRemover:
         fields = [f.name for f in arcpy.ListFields(self.copy_fc)]
         if self.length_field not in fields:
             arcpy.management.AddField(self.copy_fc, self.length_field, "DOUBLE")
+            self.added_l_field = True
             with arcpy.da.UpdateCursor(self.copy_fc, ["SHAPE@LENGTH", self.length_field]) as ucur:
                 for geom_len, _ in ucur:
                     ucur.updateRow([geom_len, geom_len])
@@ -159,6 +161,8 @@ class IsolatedLineRemover:
         totals = self.aggregate_by_components(comp_map)
         to_delete_oids = self.decide_deletes(totals)
         self.delete_oids(to_delete_oids)
+        if self.added_l_field:
+            arcpy.management.DeleteField(self.copy_fc, self.length_field)
 
 
         arcpy.management.CopyFeatures(self.copy_fc, self.output_fc)
