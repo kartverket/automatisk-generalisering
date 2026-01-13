@@ -11,8 +11,8 @@ class IsolatedLineRemover:
     ----------
     input_fc : str
         Path to input line feature class.
-    output_gdb : str
-        Geodatabase path where result will be written.
+    output_fc : str
+        Path where result will be written.
     length_threshold : float
         Base length threshold in meters.
     max_lines_per_group : int
@@ -20,7 +20,7 @@ class IsolatedLineRemover:
     search_radius_m : float
         Distance in meters to consider features connected.
     length_field : str
-        Name of the length field to create/use (default 'seg_length_m').
+        Name of the length field to use, if field doesnt exist will create it and populate using SHAPE@LENGTH (default 'seg_length_m').
     """
 
     def __init__(self,
