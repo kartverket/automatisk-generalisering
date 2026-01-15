@@ -1,19 +1,16 @@
 # Libraries
 
 import arcpy
-import config
 import numpy as np
-import os
-import re
 
 arcpy.env.overwriteOutput = True
 
+from collections import defaultdict
 from tqdm import tqdm
 
 from composition_configs import core_config
 from custom_tools.decorators.timing_decorator import timing_decorator
 from env_setup import environment_setup
-from env_setup.global_config import main_directory_name, object_hoyde, scale_n10
 from file_manager import WorkFileManager
 from file_manager.n10.file_manager_landforms import Landform_N10
 from input_data import input_n10, input_n50, input_n100, input_roads
@@ -22,6 +19,40 @@ from input_data import input_n10, input_n50, input_n100, input_roads
 # Program
 # ========================
 
+"""
+DOCUMENTATION:
+
+==========================================
+How to use this functionality properly
+==========================================
+
+1) Run this code to get the modified point layer (feature class).
+2) Open the point feature class in ArcGIS Pro
+3) Select the layer, go to 'Labelling' and turn it on
+4) In 'Label Class' choose 'Field' to be 'HØYDE'
+5) Select font, size and colour in 'Text Symbol'
+6) Open the side panel for 'Label Placement' and do the following:
+    - In 'Symbol': turn the 'Halo' of
+    - In 'Position':
+        * Set placement to 'Centered on point' and center on symbol
+        * 'Orientation' should be 'Curved'
+        * 'Rotation' should be set to rotate according to the 'ROTATION' field, 0 deg, Arithmetic and Straight
+        * Turn of 'Keep label upright (may flip)' ## IMPORTANT ##
+7) Convert the labels to annotations:
+    - Right click on the layer and choose 'Convert Labels' and '... To Annotation'
+    - Zoom the map to fit the layer area
+    - Set scale to 10.000
+    - Extent must be the same as the map (the leftmost choice)
+    -> Run
+8) Choose the 'Feature Outline Mask (Cartography Tool)' function:
+    - Choose input layer to be the annotation layer
+    - Set 'Margin' to x m (5 m)
+    - 'Mask Kind' must be 'Exact'
+    - 'Preserve small-sized features must be turned on
+    -> Run
+
+Then you have annotations with masks in ladders with correct orientation and spacing.
+"""
 
 @timing_decorator
 def main():
@@ -33,7 +64,6 @@ def main():
     print("\nCreates contour annotations for landforms at N10 scale...\n")
 
     municipality = "Hole"
-    folder = f"{config.output_folder}/{main_directory_name}/{scale_n10}"
 
     # Sets up work file manager and creates temporary files
     working_fc = Landform_N10.hoyde__n10_landforms.value
@@ -45,17 +75,14 @@ def main():
     fetch_data(files=files, municipality=municipality)
     collect_out_of_bounds_areas(files=files)
     get_annotation_contours(files=files)
-    process_tiles(files=files, folder=f"{folder}/{object_hoyde}")
-    gdbs = merge_landform_annotations(
-        folder_path=folder, out_anno=files["annotations"], out_mask=files["masks"]
-    )
-    delete_gdbs(gdbs=gdbs)
-    remove_annotations_short_contours(files=files)
-    ladders, ids = build_annotation_ladders(files=files)
-    move_ladders_optimally(files=files, ladders=ladders)
-    #delete_standalone_annotations_out_of_bounds(files=files, locked_ids=ids)
-    #remove_dense_annotations(files=files, locked_ids=ids)
-
+    create_points_along_line(files=files)
+    ladders = cluster_and_move_points(files=files)
+    ladders = remove_multiple_points_for_medium_contours(files=files, ladders=ladders)
+    ladders = move_ladders_to_valid_area(files=files, ladders=ladders)
+    ladders = remove_dense_points(files=files, ladders=ladders)
+    #calculate_label_rotation(files=files)
+    set_tangential_rotation(files=files)
+    
     print("\nContour annotations for landforms at N10 scale created successfully!\n")
 
 
@@ -89,10 +116,10 @@ def create_wfm_gdbs(wfm: WorkFileManager) -> dict:
     annotation_contours = wfm.build_file_path(
         file_name="contour_annotations", file_type="gdb"
     )
-    annotations = wfm.build_file_path(file_name="annotations", file_type="gdb")
-    masks = wfm.build_file_path(file_name="masks", file_type="gdb")
+    point_2km = wfm.build_file_path(file_name="point_2km", file_type="gdb")
+    dbscan = wfm.build_file_path(file_name="dbscan", file_type="gdb")
     join = wfm.build_file_path(file_name="join", file_type="gdb")
-
+    
     return {
         "contours": contours,
         "out_of_bounds_polygons": out_of_bounds_polygons,
@@ -101,8 +128,8 @@ def create_wfm_gdbs(wfm: WorkFileManager) -> dict:
         "out_of_bounds_dissolved": out_of_bounds_dissolved,
         "temporary_file": temporary_file,
         "annotation_contours": annotation_contours,
-        "annotations": annotations,
-        "masks": masks,
+        "point_2km": point_2km,
+        "dbscan": dbscan,
         "join": join,
     }
 
@@ -268,765 +295,535 @@ def get_annotation_contours(files: dict) -> None:
         where_clause="MOD(HØYDE, 25) = 0",
     )
 
-    arcpy.management.CopyFeatures(
+    arcpy.management.MultipartToSinglepart(
         in_features=contours_lyr,
         out_feature_class=files["annotation_contours"],
     )
 
 
 @timing_decorator
-def process_tiles(files: dict, folder: str, label_field: str = "HØYDE") -> None:
+def create_points_along_line(files: dict, threshold: int=2000) -> None:
     """
-    Creates annotations for all contours using a sliding
-    window over dynamically generated tiles.
+    Creates a point every x m defined by the threshold.
 
     Args:
         files (dict): Dictionary with all the working files
-        folder (str): String with a path to the main folder to store gdbs
-        label_field (str, optional): Field used as text in the annotation (default: 'HØYDE')
+        threshold (int, optionally): Distance (m) between each new point (default: 2000)
     """
-    xmin, ymin, xmax, ymax = get_bbox(files["annotation_contours"])
+    contours_lyr = "contours_lyr"
+    arcpy.management.MakeFeatureLayer(in_features=files["annotation_contours"], out_layer=contours_lyr, where_clause="Shape_Length > 3000")
 
-    size = 5000
-    nx = np.ceil((xmax - xmin) / size)
-    ny = np.ceil((ymax - ymin) / size)
-    total = int(nx * ny)
-
-    for i, (x1, y1, x2, y2) in tqdm(
-        enumerate(generate_tiles(xmin, ymin, xmax, ymax, size)),
-        total=total,
-        desc="Processing tiles",
-        colour="yellow",
-        leave=False,
-    ):
-        # Create a polygon for this tile
-        tile_poly = arcpy.Polygon(
-            arcpy.Array(
-                [
-                    arcpy.Point(x1, y1),
-                    arcpy.Point(x2, y1),
-                    arcpy.Point(x2, y2),
-                    arcpy.Point(x1, y2),
-                ]
-            )
-        )
-
-        tile_fc = f"in_memory/tile_{i}"
-        clipped_fc = f"in_memory/clipped_{i}"
-
-        # Create temporary polygon
-        arcpy.management.CopyFeatures(in_features=tile_poly, out_feature_class=tile_fc)
-
-        # Clip contours to the tile
-        arcpy.analysis.Clip(
-            in_features=files["annotation_contours"],
-            clip_features=tile_fc,
-            out_feature_class=clipped_fc,
-        )
-
-        # Check for geometries
-        if int(arcpy.management.GetCount(clipped_fc)[0]) == 0:
-            continue
-
-        # Create annotations
-        out_gdb = f"{folder}_{i}.gdb"
-
-        if not arcpy.Exists(out_gdb):
-            arcpy.management.CreateFileGDB(
-                out_folder_path=os.path.dirname(out_gdb),
-                out_name=os.path.basename(out_gdb),
-            )
-
-        arcpy.cartography.ContourAnnotation(
-            in_features=clipped_fc,
-            out_geodatabase=out_gdb,
-            contour_label_field=label_field,
-            reference_scale_value=10000,
-            out_layer=f"contour_ann_{i}",
-            contour_color="BLACK",
-            contour_alignment="PAGE",
-            enable_laddering="ENABLE_LADDERING",
-        )
-
-        # Delete temporary files
-        for fc in [tile_fc, clipped_fc]:
-            if arcpy.Exists(fc):
-                arcpy.management.Delete(fc)
+    arcpy.management.GeneratePointsAlongLines(
+        Input_Features=contours_lyr,
+        Output_Feature_Class=files["point_2km"],
+        Point_Placement="DISTANCE",
+        Distance=f"{threshold} Meters",
+        Include_End_Points="NO_END_POINTS",
+        Distance_Method="GEODESIC"
+    )
 
 
 @timing_decorator
-def merge_landform_annotations(folder_path: str, out_anno: str, out_mask: str) -> list:
+def cluster_and_move_points(files: dict) -> dict:
     """
-    Finds all gdb files in the folder_path that matches 'landforms_{#}.gdb',
-    collects the annotation-feature-classes and merges them together into one common fc.
+    Cluster the points using DBSCAN, create ladders of
+    the points and return the ladder information.
 
     Args:
-        folder_path (str): The path to the folder containing the gdb files
-        out_anno (str): The feature class that should store the final annotations
-        out_mask (str): The feature class that should store the final masks
+        files (dict): Dictionary with all the working files
 
     Returns:
-        list: A list of the gdb files that can be deleted from the project
+        dict: A dictionary containing all the ladders, {cluster_id: [oid1, oid2, ...], ...}
     """
+    points_fc = files["point_2km"]
+    contours_fc = files["annotation_contours"]
+    join_fc = files["join"]
 
-    # Regex to find correct gdbs
-    gdb_pattern = re.compile(r"landforms_(\d+)\.gdb$", re.IGNORECASE)
-    annotation_sources = []
-    mask_sources = []
-    gdb_paths = []
+    cluster_field = "CLUSTER_ID"
+    height_field = "HØYDE"
+    eps_distance = 500 # [m]
 
-    # Find all the gdb files
-    for item in tqdm(
-        os.listdir(folder_path),
-        desc="Finds landform gdbs",
-        colour="yellow",
-        leave=False,
-    ):
-        if gdb_pattern.match(item):
-            gdb_path = os.path.join(folder_path, item)
-            gdb_paths.append(gdb_path)
+    # 1) Performe DBSCAN
+    arcpy.management.AddField(in_table=points_fc, field_name=cluster_field, field_type="LONG")
+    points = [(oid, pt) for oid, pt in arcpy.da.SearchCursor(points_fc, ["OID@", "SHAPE@"])]
+    clusters = cluster_points(points=points, eps=eps_distance)
 
-            # Set workspace to this gdb
-            arcpy.env.workspace = gdb_path
+    # 2) Write cluster ID back to point
+    cluster_id_map = {}
+    for cid, cluster in enumerate(clusters):
+        for oid in cluster:
+            cluster_id_map[oid] = cid
 
-            # Find annotation feature classes
-            fcs = arcpy.ListFeatureClasses()
-            if not fcs:
-                continue
-
-            for fc in fcs:
-                full_path = os.path.join(gdb_path, fc)
-                if fc.lower().endswith("annomask"):
-                    mask_sources.append(full_path)
-                elif fc.lower().endswith("anno"):
-                    annotation_sources.append(full_path)
-
-    if not annotation_sources:
-        print("Fant ingen Contour_FeaturesAnno.")
-        return
-    if not mask_sources:
-        print("Fant ingen Contour_FeaturesAnnoMask.")
-        return
-
-    # If the outpiut fcs exist, delete them
-    for out in (out_anno, out_mask):
-        if arcpy.Exists(out):
-            arcpy.management.Delete(out)
-
-    # Merge ANNOTATION
-    arcpy.management.CopyFeatures(
-        in_features=annotation_sources[0], out_feature_class=out_anno
-    )
-
-    for src in tqdm(
-        annotation_sources[1:], desc="Merges annotations", colour="yellow", leave=False
-    ):
-        arcpy.management.Append(inputs=src, target=out_anno, schema_type="NO_TEST")
-
-    # Merge MASKS
-    arcpy.management.CopyFeatures(
-        in_features=mask_sources[0], out_feature_class=out_mask
-    )
-
-    for src in tqdm(
-        mask_sources[1:], desc="Merges masks", colour="yellow", leave=False
-    ):
-        arcpy.management.Append(inputs=src, target=out_mask, schema_type="NO_TEST")
-
-    print(
-        f"\nFinished! Merged a total of {len(annotation_sources)} annotation-fcs to:\n  {out_anno}\n  {out_mask}\n"
-    )
-
-    return gdb_paths
-
-
-@timing_decorator
-def delete_gdbs(gdbs: list) -> None:
-    """
-    Deletes the input gdbs.
-
-    Args:
-        gdbs (list): List of gdb files that should be deleted
-    """
-    arcpy.env.workspace = None
-    for gdb in gdbs:
-        try:
-            if arcpy.Exists(gdb):
-                arcpy.management.Delete(gdb)
-        except:
-            continue
-
-
-@timing_decorator
-def remove_annotations_short_contours(files: dict) -> None:
-    """
-    Removes annotations for short contours.
-
-    Args:
-        files (dict): Dictionary with all the working files
-    """
-    tolerance_1 = 3_000  # [m]
-    tolerance_2 = 10_000  # [m]
-
-    contours = files["annotation_contours"]
-    annos = files["annotations"]
-    masks = files["masks"]
-    join = files["join"]
-
-    # 1) Spatial join: annotation -> contour
-    arcpy.analysis.SpatialJoin(
-        target_features=annos,
-        join_features=contours,
-        out_feature_class=join,
-        join_operation="JOIN_ONE_TO_MANY",
-        match_option="INTERSECT",
-    )
-
-    # 2) Create mapping: contour_oid -> annotation_oids
-    mapping = {}
-    with arcpy.da.SearchCursor(join, ["TARGET_FID", "JOIN_FID"]) as cur:
-        for anno_id, cont_oid in cur:
-            mapping.setdefault(cont_oid, []).append(anno_id)
-
-    # 3) Find contours by length
-    short = set()
-    medium = set()
-
-    with arcpy.da.SearchCursor(contours, ["OID@", "SHAPE@LENGTH"]) as cur:
-        for oid, length in cur:
-            if length < tolerance_1:
-                short.add(oid)
-            elif length < tolerance_2:
-                medium.add(oid)
-
-    # 4) Delete the annotations for short contours
-    anno_delete = []
-    for cont_oid in short:
-        anno_delete.extend(mapping.get(cont_oid, []))
-
-    # 5) Keep only one for medium contours
-    for cont_oid in medium:
-        annos_for_contour = mapping.get(cont_oid, [])
-        if len(annos_for_contour) > 1:
-            anno_delete.extend(annos_for_contour[1:])
-
-    # 6) Delete the annotations and masks
-    if anno_delete:
-        where = f"OBJECTID IN ({','.join(map(str, anno_delete))})"
-        arcpy.management.MakeFeatureLayer(annos, "anno_lyr")
-        arcpy.management.SelectLayerByAttribute("anno_lyr", "NEW_SELECTION", where)
-        arcpy.management.DeleteFeatures("anno_lyr")
-
-        arcpy.management.MakeFeatureLayer(masks, "mask_lyr")
-        arcpy.management.SelectLayerByAttribute("mask_lyr", "NEW_SELECTION", where)
-        arcpy.management.DeleteFeatures("mask_lyr")
-
-    print(f"\nDeleted {len(anno_delete)} annotations.\n")
-
-
-@timing_decorator
-def build_annotation_ladders(
-    files: dict, max_dist: float = 1000.0
-) -> tuple[list[list], set]:
-    """
-    Groups contour annotations into 'ladders' where each ladder
-    represents a sequence of increasing elevation labels that lie within
-    'max_dist' meters of each other.
-
-    Args:
-        files (dict): Dictionary with all the working files
-        max_dist (float, optional): Maximum distance to be connected to a ladder (default: 2000)
-
-    Returns:
-        ladders (list[list[int]]): Each inner list contains annotation OIDs
-        locked_ids (set[int]): All OIDs that appear in at least one ladder
-    """
-    annos = files["annotations"]
-
-    # 1) Load annotation info
-    anno_info = {}
-    with arcpy.da.SearchCursor(annos, ["OID@", "TextString", "SHAPE@"]) as cur:
-        for oid, text, geom in cur:
-            try:
-                height = int(text.replace(" ", ""))
-            except:
-                continue
-            anno_info[oid] = (height, geom.centroid)
-
-    # 2) Clustering
-    clusters = cluster_points(points=[(oid, pt) for oid, (_, pt) in anno_info.items()], eps=max_dist)
-
-    # 3) Build ladders per cluster
-    all_ladders = []
-    all_locked = set()
-
-    for cluster in tqdm(clusters, desc="Building ladders", colour="yellow", leave=False):
-        sub_info = {oid: anno_info[oid] for oid in cluster}
-
-        # Group by height
-        by_height = {}
-        for oid, (height, pt) in sub_info.items():
-            by_height.setdefault(height, []).append((oid, pt))
-        
-        heights = sorted(by_height.keys())
-
-        ladders = []
-        locked_ids = set()
-
-        for i, h in enumerate(heights):
-            current_level = by_height[h]
-
-            # For the lowest level, each annotation starts a new ladder
-            if i == 0:
-                for oid, pt in current_level:
-                    ladders.append([oid])
-                    locked_ids.add(oid)
-                continue
-
-            # For higher levels, try to attach to existing ladders
-            prev_level = by_height[heights[i - 1]]
-            prev_points = [(oid, pt) for oid, pt in prev_level]
-
-            for oid, pt in tqdm(
-                current_level, desc="Finds match", colour="green", leave=False
-            ):
-                pt_geom = arcpy.PointGeometry(pt)
-
-                best = None
-                best_dist = None
-
-                for oid_prev, pt_prev in prev_points:
-                    d = pt_geom.distanceTo(arcpy.PointGeometry(pt_prev))
-                    if d <= max_dist and (best is None or d < best_dist):
-                        best = oid_prev
-                        best_dist = d
-
-                if best is None:
-                    # New ladder
-                    ladders.append([oid])
-                    locked_ids.add(oid)
-                else:
-                    # Attach to the best ladder
-                    for ladder in ladders:
-                        if ladder[-1] == best:
-                            ladder_heights = {sub_info[x][0] for x in ladder}
-                            if h in ladder_heights:
-                                continue
-                            ladder.append(oid)
-                            locked_ids.add(oid)
-                            break
-
-        # Filter internal list of len == 1
-        singletons = [lst[0] for lst in ladders if len(lst) < 5]
-        ladders = [lst for lst in ladders if len(lst) >= 5]
-        locked_ids -= set(singletons)
-
-        all_ladders.extend(ladders)
-        all_locked |= locked_ids
-
-    return all_ladders, all_locked
-
-
-@timing_decorator
-def delete_standalone_annotations_out_of_bounds(files: dict, locked_ids: set) -> None:
-    """
-    Deletes annotations in out of bounds areas that
-    are not connected in an annotation ladder.
-
-    Args:
-        files (dict): Dictionary with all the working files
-        locked_ids (set): IDs that are part of a ladder and cannot be deleted
-    """
-    annos = files["annotations"]
-    masks = files["masks"]
-    ob = files["out_of_bounds_dissolved"]
-
-    annos_lyr = "annos_lyr"
-    mask_lyr = "mask_lyr"
-    arcpy.management.MakeFeatureLayer(in_features=annos, out_layer=annos_lyr)
-    arcpy.management.MakeFeatureLayer(in_features=masks, out_layer=mask_lyr)
-
-    arcpy.management.SelectLayerByLocation(
-        in_layer=annos_lyr,
-        overlap_type="INTERSECT",
-        select_features=ob,
-        selection_type="NEW_SELECTION"
-    )
-
-    oids = [
-        row[0]
-        for row in arcpy.da.SearchCursor(annos_lyr, ["OID@"])
-        if row[0] not in locked_ids
-    ]
-
-    if not oids:
-        return
-
-    where = f"OBJECTID IN ({','.join(map(str, oids))})"
-
-    for lyr in [annos_lyr, mask_lyr]:
-        arcpy.management.SelectLayerByAttribute(
-            in_layer_or_view=lyr,
-            selection_type="NEW_SELECTION",
-            where_clause=where
-        )
-        arcpy.management.DeleteRows(in_rows=lyr)
+    with arcpy.da.UpdateCursor(points_fc, ["OID@", cluster_field]) as cur:
+        for oid, _ in cur:
+            cur.updateRow([oid, cluster_id_map[oid]])
     
-    print(f"\nDeleted {len(oids)} annotations.\n")
+    # 3) Find points of same height in same cluster and delete these
+    cluster_groups = defaultdict(lambda: defaultdict(list))
+    with arcpy.da.SearchCursor(points_fc, ["OID@", cluster_field, height_field]) as cur:
+        for oid, cid, height in cur:
+            cluster_groups[cid][height].append(oid)
+    
+    to_delete = set()
+    for cid, height_dict in cluster_groups.items():
+        for height, pts in height_dict.items():
+            if len(pts) > 1:
+                for p in pts[1:]:
+                    to_delete.add(p)
+    
+    with arcpy.da.UpdateCursor(points_fc, ["OID@"]) as cur:
+        for row in cur:
+            if row[0] in to_delete:
+                cur.deleteRow()
+    
+    for cluster, height in cluster_groups.items():
+        for oids in height.values():
+            k = 0
+            while k < len(oids):
+                if oids[k] in to_delete:
+                    oids.pop(k)
+                else:
+                    k += 1
+    
+    points_dict = {oid: geom for oid, geom in arcpy.da.SearchCursor(points_fc, ["OID@", "SHAPE@"])}
+    
+    # 4) Performe spatial join to connect points with contours
+    arcpy.analysis.SpatialJoin(
+        target_features=contours_fc,
+        join_features=points_fc,
+        out_feature_class=join_fc,
+        join_operation="JOIN_ONE_TO_MANY",
+        match_option="INTERSECT"
+    )
+
+    point_to_line = {}
+    with arcpy.da.SearchCursor(join_fc, ["JOIN_FID", "SHAPE@"]) as cur:
+        for oid, line_geom in cur:
+            point_to_line[oid] = line_geom
+    
+    # 5) Move points into ladders
+    for cid, height_dict in cluster_groups.items():
+            ref_oid = None
+            while not ref_oid:
+                for height, oids in height_dict.items():
+                    for oid in oids:
+                        if oid not in to_delete:
+                            ref_oid = oid
+                            ref_geom = points_dict.get(oid)
+            
+            for height, oids in height_dict.items():
+                for oid in oids:
+                    if oid == ref_oid:
+                        continue
+                    if oid in to_delete:
+                        continue
+                    line = point_to_line.get(oid)
+                    if line is None:
+                        continue
+                    
+                    m = line.measureOnLine(ref_geom)
+                    new_point = line.positionAlongLine(m)
+                    
+                    with arcpy.da.UpdateCursor(points_fc, ["SHAPE@"], where_clause=f"OBJECTID = {oid}") as cur:
+                        for row in cur:
+                            row[0] = new_point
+                            cur.updateRow(row)
+    
+    result = defaultdict(list)
+    for cid, height_dict in cluster_groups.items():
+        for oids in height_dict.values():
+            for oid in oids:
+                result[cid].append(oid)
+    
+    return result
+
 
 @timing_decorator
-def move_ladders_optimally(files: dict, ladders: list) -> None:
+def remove_multiple_points_for_medium_contours(files: dict, ladders: dict) -> dict:
     """
-    Moves ladders of contour annotations to the
-    optimal position to avoid out of bounds areas.
-
+    For contours shorter than 10 km, only the annotation
+    in the longest ladder should be kept.
+    
     Args:
         files (dict): Dictionary with all the working files
-        ladders (list): A list of lists, where each internal list
-                        contains the OIDs of annotations in the same ladder
+        ladders (dict): Dictionary with all the ladders, {ladder_id: [id1, id2, ...], ...}
+
+    Returns:
+        dict: Modified ladder overview
     """
-    contours = files["annotation_contours"]
-    annos = files["annotations"]
-    masks = files["masks"]
-    ob = files["out_of_bounds_dissolved"]
+    points_fc = files["point_2km"]
+    contour_fc = files["join"]
 
-    # Create ONE geometry object of the ob area
-    geoms = []
-    with arcpy.da.SearchCursor(ob, ["SHAPE@"]) as cur:
-        for (g,) in cur:
-            geoms.append(g)
-    ob_geom = geoms[0].union(geoms[1:]) if len(geoms) > 1 else geoms[0]
+    # 1) Find contours shorter than 10 km
+    contour_to_points = defaultdict(list)
 
-    # The maximum distance that the ladder can be moved:
+    with arcpy.da.SearchCursor(contour_fc, ["TARGET_FID", "JOIN_FID", "CLUSTER_ID"], where_clause="Shape_Length < 10000") as cur:
+        for target, join, cluster in cur:
+            contour_to_points[target].append((join, cluster))
+    
+    # 2) Find points to delete
+    oids_to_delete = set()
+
+    for info in contour_to_points.values():
+        if len(info) == 1:
+            continue
+        longest = max(info, key=lambda x: len(ladders[x[1]]))
+        keep_join = longest[0]
+        for join_oid, cluster_id in info:
+            if join_oid != keep_join:
+                oids_to_delete.add(join_oid)
+                ladders[cluster_id] = [oid for oid in ladders[cluster_id] if oid != join_oid]
+    
+    # 3) Delete points in the point layer
+    if oids_to_delete:
+        sql = f"OBJECTID IN ({','.join(map(str, oids_to_delete))})"
+        with arcpy.da.UpdateCursor(points_fc, ["OID@"], sql) as cur:
+            for _ in cur:
+                cur.deleteRow()
+    
+    return ladders
+
+
+@timing_decorator
+def move_ladders_to_valid_area(files: dict, ladders: dict) -> dict:
+    """
+    Move the ladders into valid positions.
+
+    Approach:
+        For each ladder, do the following:
+            1) Start by finding the lowest valid point
+            2) For each remaining point: find a valid position
+                as close to the starting point as possible
+            3) If a point do not have a valid position (either
+                the starting point or other) within 2000 m, it
+                is deleted
+    
+    Args:
+        files (dict): Dictionary with all the working files
+        ladders (dict): Dictionary with all the ladders, {ladder_id: [id1, id2, ...], ...}
+
+    Returns:
+        dict: Modified ladder overview
+    """
     max_movement = 1000 # [m]
 
-    contours_lyr = "contours_lyr"
-    annos_lyr = "annos_lyr"
-    masks_lyr = "masks_lyr"
+    points_fc = files["point_2km"]
+    join_fc = files["join"]
+    ob_fc = files["out_of_bounds_dissolved"]
 
-    for fc, lyr in zip(
-        [contours, annos, masks],
-        [contours_lyr, annos_lyr, masks_lyr]
-    ):
-        arcpy.management.MakeFeatureLayer(in_features=fc, out_layer=lyr)
-    
-    # Keep IDs to be deleted
-    ids_to_delete = set()
+    # 1) Build OB geometry
+    geoms = []
+    with arcpy.da.SearchCursor(ob_fc, ["SHAPE@"]) as cur:
+        for row in cur:
+            geoms.append(row[0])
+    ob_geom = geoms[0].union(geoms[1:]) if len(geoms) > 1 else geoms[0]
 
-    for ladder in tqdm(ladders, desc="Adjusting ladders", colour="yellow", leave=False):
-        sql = f"OBJECTID IN ({','.join(map(str, ladder))})"
-        arcpy.management.SelectLayerByAttribute(in_layer_or_view=annos_lyr, selection_type="NEW_SELECTION", where_clause=sql)
+    # 2) Load all the data once
+    all_points = {oid: (pt, h) for oid, pt, h in arcpy.da.SearchCursor(points_fc, ["OID@", "SHAPE@", "HØYDE"])}
+    all_lines = {oid: line_geom for oid, line_geom in arcpy.da.SearchCursor(join_fc, ["JOIN_FID", "SHAPE@"])}
 
-        # Fetch annotation geometries
-        annos_data = []
-        with arcpy.da.SearchCursor(annos_lyr, ["OID@", "SHAPE@", "TextString"]) as cur:
-            for oid, geom, text in cur:
-                annos_data.append([oid, geom, int(text)])
-        
-        if not annos_data:
+    # 3) Prepare global updates
+    updated_positions = {}
+    oids_to_delete = set()
+
+    # 4) Iterate through all ladders
+    for ladder_id, oids in tqdm(ladders.items(), desc="Move ladders", colour="yellow", leave=False):
+        if len(oids) == 0:
             continue
-        annos_data.sort(key=lambda x: x[2])
         
-        """
-        Find the anchor annotation:
-        Start in the bottom and the first one having a
-        position in a valid area is considered the anchor
-        """
-        anchor_oid, anchor_geom = None, None
-        idx = 0
-        while not anchor_oid:
-            oid, geom, _ = annos_data[idx]
-            
-            pt = geom.getPart()[0][0]
-            x, y = pt.X, pt.Y
-            geom = arcpy.PointGeometry(arcpy.Point(x, y), geom.spatialReference)
+        # Extract points
+        pts = {oid: all_points[oid] for oid in oids}
+        lines = {oid: all_lines[oid] for oid in oids}
 
-
-            contour = get_contour_for_annotation(geom=geom, contours_lyr=contours_lyr)
-            if not contour:
-                idx += 1
-                continue
-            valid_geom = find_valid_position_along_contour(point_geom=geom, contour_geom=contour, ob_geom=ob_geom, max_dist=max_movement)
-            if valid_geom:
-                anchor_oid, anchor_geom = oid, valid_geom
-            else:
-                idx += 1
-                ids_to_delete.add(oid)
-                if idx == len(annos_data):
-                    break
-        # Adjusts all remaining points according to the anchor
-        # 1) Finds the new positions
-        for i in tqdm(range(len(annos_data)), desc="Adjusting annotations", colour="green", leave=False):
-            oid, geom, _ = annos_data[i]
-            if oid == anchor_oid or oid in ids_to_delete:
-                continue
-
-            pt = geom.getPart()[0][0]
-            x, y = pt.X, pt.Y
-            geom = arcpy.PointGeometry(arcpy.Point(x, y), geom.spatialReference)
-
-            contour = get_contour_for_annotation(geom = geom, contours_lyr=contours_lyr)
-
-            new_pos = move_towards_anchor(
-                point_geom=geom,
-                contour_geom=contour,
-                anchor_geom=anchor_geom,
-                ob_geom=ob_geom,
-                max_dist=max_movement
-            )
-
-            if new_pos is None:
-                ids_to_delete.add(oid)
-            else:
-                # Store for update
-                annos_data[i][1] = new_pos
+        # Sort
+        sorted_pts = sorted(pts.items(), key=lambda x: x[1][1])
         
-        # 2) Update the positions in the featureclass
-        # ANNOTATIONS
-        with arcpy.da.UpdateCursor(annos_lyr, ["OID@", "SHAPE@ANCHORPOINT"]) as a_cur:
-            for oid, _ in a_cur:
-                if oid in ids_to_delete:
-                    a_cur.deleteRow()
-                else:
-                    new_geom = next((g for id, g, _ in annos_data if id == oid), None)
-                    if new_geom:
-                        x = new_geom.centroid.X
-                        y = new_geom.centroid.Y
-                        a_cur.updateRow([oid, (x, y)])
+        # Find starting point
+        starting_point = None
+        starting_oid = None
 
-        # MASKS
-        with arcpy.da.UpdateCursor(masks_lyr, ["OID@", "SHAPE@"]) as m_cur:
-            for oid, geom in m_cur:
-                if oid in ids_to_delete:
-                    m_cur.deleteRow()
-                else:
-                    new_geom = next((g for id, g, _ in annos_data if id == oid), None)
-                    if new_geom:
-                        old_x, old_y = geom.centroid.X, geom.centroid.Y
-                        new_x, new_y = new_geom.centroid.X, new_geom.centroid.Y
-                        dx = new_x - old_x
-                        dy = new_y - old_y
-                        moved_geom = geom.move(dx, dy)
-                        m_cur.updateRow([oid, moved_geom])
+        for oid, (pt, _) in tqdm(sorted_pts, desc="Find valid starting point", colour="green", leave=False):
+            new_pos = find_valid_position_along_contour(point_geom=pt, contour_geom=lines[oid], ob_geom=ob_geom, max_dist=max_movement)
+            if new_pos:
+                starting_point = new_pos
+                starting_oid = oid
+                updated_positions[oid] = new_pos
+                break
+            else:
+                oids_to_delete.add(oid)
+        
+        if starting_point is None:
+            # All points invalid
+            oids_to_delete.update(oids)
+            continue
+        
+        # Move remaining points
+        for oid, (pt, _) in tqdm(sorted_pts, desc="Move remaining points to valid area", colour="green", leave=False):
+            if oid in oids_to_delete or oid == starting_oid:
+                continue
+            new_pos = move_towards_starting_point(point_geom=pt, contour_geom=lines[oid], starting_geom=starting_point, ob_geom=ob_geom, max_dist=max_movement)
+            if new_pos:
+                updated_positions[oid] = new_pos
+            else:
+                oids_to_delete.add(oid)
+        
+        # Update ladder list
+        ladders[ladder_id] = [oid for oid in oids if oid not in oids_to_delete]
+
+    # 5) Update all the points with new geometries
+    with arcpy.da.UpdateCursor(points_fc, ["OID@", "SHAPE@"]) as cur:
+        for oid, _ in cur:
+            if oid in oids_to_delete:
+                cur.deleteRow()
+            elif oid in updated_positions:
+                cur.updateRow([oid, updated_positions[oid]])
+    
+    return ladders
 
 
 @timing_decorator
-def remove_dense_annotations(
-    files: dict, locked_ids: set, min_spacing: float = 1000.0
-) -> None:
+def remove_dense_points(files: dict, ladders: dict) -> dict:
     """
-    Removes redundant annotations on long contours.
+    Remove points that are too close to each other along the same contour.
 
     Args:
         files (dict): Dictionary with all the working files
-        locked_ids (set): IDs that are part of a ladder and cannot be deleted
-        min_spacing (float, optional): Minimum spacing between two annotations on the same contour (default: 2000)
+        ladders (dict): Dictionary with all the ladders, {ladder_id: [id1, id2, ...], ...}
+
+    Returns:
+        dict: Updated ladder list
     """
-    contours = files["annotation_contours"]
-    annos = files["annotations"]
-    masks = files["masks"]
-    join = files["join"]
+    points_fc = files["point_2km"]
+    contour_fc = files["join"]
 
-    # 1) Spatial join: annotation -> contour
-    arcpy.analysis.SpatialJoin(
-        target_features=annos,
-        join_features=contours,
-        out_feature_class=join,
-        join_operation="JOIN_ONE_TO_MANY",
-        match_option="INTERSECT",
-    )
+    points = {oid: geom for oid, geom in arcpy.da.SearchCursor(points_fc, ["OID@", "SHAPE@"])}
 
-    # 2) Build mapping: contour_oid -> list of (anno_id, position_on_line)
-    mapping = {}
-    # Pre-loaded geometries for fast lookup
-    contour_geoms = {}
-    with arcpy.da.SearchCursor(contours, ["OID@", "SHAPE@"]) as cur:
-        for oid, geom in cur:
-            contour_geoms[oid] = geom
+    # 1) Build contour mapping
+    contour_to_points = defaultdict(list)
+    contours = {}
+    with arcpy.da.SearchCursor(contour_fc, ["SHAPE@", "TARGET_FID", "JOIN_FID", "CLUSTER_ID"]) as cur:
+        for geom, target, join, cluster in cur:
+            if target not in contours:
+                contours[target] = geom
+                ladder_size = len(ladders[cluster])
+            if join in points:
+                contour_to_points[target].append({
+                    "oid": join,
+                    "geom": points[join],
+                    "ladder_size": ladder_size
+                })
+    
+    # 2) Detect the points that should be deleted
+    tolerance = 2000 # [m]
+    oids_to_delete = set()
 
-    seen = set()
+    for contour_oid, pts in tqdm(contour_to_points.items(), desc="Detecting points to delete", colour="yellow", leave=False):
+        contour_geom = contours[contour_oid]
 
-    with arcpy.da.SearchCursor(join, ["TARGET_FID", "JOIN_FID", "SHAPE@"]) as cur:
-        for anno_oid, cont_oid, anno_geom in cur:
-            if (anno_oid, cont_oid) in seen:
-                continue
-            seen.add((anno_oid, cont_oid))
-            if cont_oid not in contour_geoms:
-                continue
-            pos = contour_geoms[cont_oid].measureOnLine(anno_geom.centroid)
-            mapping.setdefault(cont_oid, []).append((anno_oid, pos))
+        # Estimate distance along contour
+        for p in pts:
+            p["dist"] = contour_geom.measureOnLine(p["geom"])
+        
+        # Sort on distance
+        pts.sort(key=lambda x: x["dist"])
 
-    # 3) Determine the annotations to delete
-    anno_delete = []
-    for cont_oid, anno_list in tqdm(
-        mapping.items(),
-        desc="Finds annotations to delete",
-        colour="yellow",
-        leave=False,
-    ):
-        anno_list.sort(key=lambda x: x[1])
-        last_pos = None
-        for anno_oid, pos in anno_list:
-            if last_pos is None:
-                last_pos = pos
-            elif pos - last_pos < min_spacing:
-                if anno_oid not in locked_ids:
-                    anno_delete.append(anno_oid)
-                else:
-                    last_pos = pos
+        # Iterate through the points along the contour
+        current = pts[0]
+        for p in pts[1:]:
+            dist_diff = p["dist"] - current["dist"]
+            large_current = current["ladder_size"] >= 4
+            large_new = p["ladder_size"] >= 4
+
+            # Rules
+            # 1: Both are large = keep both
+            if large_current and large_new:
+                current = p
+            # 2: New is large, but old is short = delete old, keep new
+            elif large_new and not large_current:
+                oids_to_delete.add(current["oid"])
+                current = p
+            # 3: Both are small or new is small = use 2km rule
+            elif dist_diff < tolerance:
+                oids_to_delete.add(p["oid"])
             else:
-                last_pos = pos
+                current = p
+    
+    # 3) Delete the points
+    if oids_to_delete:
+        sql = f"OBJECTID IN ({','.join(map(str, oids_to_delete))})"
+        with arcpy.da.UpdateCursor(points_fc, ["OID@"], where_clause=sql) as cur:
+            for _ in cur:
+                cur.deleteRow()
+    
+    for ladder_id, oids in ladders.items():
+        ladders[ladder_id] = [oid for oid in oids if oid not in oids_to_delete]
+    
+    return ladders
 
-    # 4) Delete annotations and masks
-    if anno_delete:
-        where = f"OBJECTID IN ({','.join(map(str, anno_delete))})"
 
-        # Delete annotations
-        arcpy.management.MakeFeatureLayer(annos, "anno_lyr")
-        arcpy.management.SelectLayerByAttribute("anno_lyr", "NEW_SELECTION", where)
-        arcpy.management.DeleteFeatures("anno_lyr")
+@timing_decorator
+def calculate_label_rotation(files: dict) -> None:
+    """
+    Creates a new attribute representing the rotation of the label.
 
-        # Delete masks
-        arcpy.management.MakeFeatureLayer(masks, "mask_lyr")
-        arcpy.management.SelectLayerByAttribute("mask_lyr", "NEW_SELECTION", where)
-        arcpy.management.DeleteFeatures("mask_lyr")
+    Args:
+        files (dict): Dictionary with all the working files
+    """
+    points_fc = files["point_2km"]
+    contour_fc = files["join"]
 
-    print(f"\nDeleted {len(anno_delete)} annotations.\n")
+    # 1) Create field
+    field = "ROTATION"
+    if field not in [f.name for f in arcpy.ListFields(points_fc)]:
+        arcpy.management.AddField(in_table=points_fc, field_name=field, field_type="DOUBLE")
+    
+    # 2) Iterate through every point
+    with arcpy.da.UpdateCursor(points_fc, ["OID@", "SHAPE@", "HØYDE", field]) as cur:
+        for oid, pt, h, _ in cur:
+            line = [row[0] for row in arcpy.da.SearchCursor(contour_fc, ["SHAPE@"], where_clause=f"JOIN_FID = {oid} AND HØYDE = {h}")]
+            if not line:
+                continue
+            line = line[0]
+
+            # 3) Find m value along the line
+            m = line.measureOnLine(pt)
+            if m is None:
+                continue
+            
+            # 4) Find short segment
+            m1 = max(0, m-10)
+            m2 = min(line.length, m+10)
+            seg = line.segmentAlongLine(m1, m2)
+
+            # 5) Calculate azimuth
+            start = seg.firstPoint
+            end = seg.lastPoint
+            dx = end.X - start.X
+            dy = end.Y - start.Y
+            angle = np.degrees(np.arctan2(dy, dx))
+
+            cur.updateRow([oid, pt, h, angle])
+
+
+@timing_decorator
+def set_tangential_rotation(files: dict) -> None:
+    """
+    Set ROTATION for each point so the label aligns with
+    the contour line's tangent at that location.
+
+    Approach:
+        For each point:
+            1) Find the contour line it belongs to (JOIN_FID)
+            2) Measure the point's position along the line
+            3) Extract a small segment around that position
+            4) Compute tangent direction using atan2(dy, dx)
+            5) Store the angle in ROTATION (ArcGIS format)
+
+    Args:
+        files (dict): Dictionary with all the working files.
+    """
+
+    points_fc = files["point_2km"]
+    contour_fc = files["join"]
+
+    # 1) Ensure ROTATION field exists
+    if "ROTATION" not in [f.name for f in arcpy.ListFields(points_fc)]:
+        arcpy.management.AddField(points_fc, "ROTATION", "DOUBLE")
+
+    # 2) Build mapping: JOIN_FID -> contour geometry
+    contour_by_join = {}
+    with arcpy.da.SearchCursor(contour_fc, ["JOIN_FID", "SHAPE@"]) as cur:
+        for join, geom in cur:
+            contour_by_join[join] = geom
+
+    # 3) Update tangent rotation for each point
+    with arcpy.da.UpdateCursor(points_fc, ["OID@", "SHAPE@", "ROTATION"]) as cur:
+        for oid, pt, _ in cur:
+
+            if oid not in contour_by_join:
+                continue
+
+            line = contour_by_join[oid]
+
+            # 3.1) Position along line
+            m = line.measureOnLine(pt)
+            if m is None:
+                continue
+
+            # 3.2) Small segment around the point (±10 m)
+            m1 = max(0, m - 10)
+            m2 = min(line.length, m + 10)
+            seg = line.segmentAlongLine(m1, m2)
+
+            # 3.3) Compute tangent direction
+            start = seg.firstPoint
+            end = seg.lastPoint
+            dx = end.X - start.X
+            dy = end.Y - start.Y
+
+            tangent = np.degrees(np.arctan2(dy, dx)) % 360
+
+            # 3.4) Store rotation
+            cur.updateRow([oid, pt, tangent])
 
 
 # ========================
 # Helper functions
 # ========================
 
-
-def get_bbox(fc: str) -> tuple[float]:
-    """
-    Creates the bounding box of a FeatureClass.
-
-    Args:
-        fc (str): The feature class to process
-
-    Returns:
-        tuple[float]: float values describing the bbox of the fc
-    """
-    desc = arcpy.Describe(fc)
-    extent = desc.extent
-    return extent.XMin, extent.YMin, extent.XMax, extent.YMax
-
-
-def generate_tiles(xmin: float, ymin: float, xmax: float, ymax: float, size: int):
-    """
-    Generate square tiles covering a bounding box.
-
-    This generator yields axis‑aligned tiles of fixed size that together
-    cover the rectangular area defined by the input coordinates. Tiles are
-    produced in row‑major order, starting at (xmin, ymin) and stepping by
-    `size` in both x‑ and y‑direction until the maximum bounds are reached.
-
-    Args:
-        xmin (float): Minimum x‑coordinate of the bounding box
-        ymin (float): Minimum y‑coordinate of the bounding box
-        xmax (float): Maximum x‑coordinate of the bounding box
-        ymax (float): Maximum y‑coordinate of the bounding box
-        size (int): Width and height of each tile
-
-    Yields:
-        tuple[float, float, float, float]: A tile represented as
-        (x_min, y_min, x_max, y_max)
-    """
-
-    x = xmin
-    while x < xmax:
-        y = ymin
-        while y < ymax:
-            yield (x, y, x + size, y + size)
-            y += size
-        x += size
-
-
 def cluster_points(points: list, eps: int) -> list:
     """
-    Simple DBSCAN-like clustering for points on same height level.
+    Proper DBSCAN-like clustering.
 
     Args:
-        points (list): List of points with format [(oid, pt), ...]
-        eps (int): Length tolerance for being connected to a cluster
+        points (list): [(oid, arcpy.Point), ...]
+        eps (float): distance threshold
 
     Returns:
-        list: List of OIDs connected in clusters
+        list: list of clusters, each cluster is a list of OIDs
     """
-    clusters = []
-    used = set()
+    # Precompute geometries
+    geoms = {oid: pt for oid, pt in points}
 
-    for oid, pt in tqdm(points, desc="Cluster points", colour="yellow", leave=False):
-        if oid in used:
+    # Build adjacency list
+    neighbors = {oid: [] for oid, _ in points}
+
+    for oid1, g1 in geoms.items():
+        for oid2 in geoms.keys():
+            if oid1 == oid2:
+                continue
+            if g1.distanceTo(geoms[oid2]) <= eps:
+                neighbors[oid1].append(oid2)
+
+    # BFS/DFS to build clusters
+    visited = set()
+    clusters = []
+
+    for oid, _ in points:
+        if oid in visited:
             continue
 
-        cluster = [oid]
-        used.add(oid)
+        cluster = []
+        stack = [oid]
 
-        for oid2, pt2 in points:
-            if oid2 in used:
+        while stack:
+            current = stack.pop()
+            if current in visited:
                 continue
-            pt_geom = arcpy.PointGeometry(pt)
-            if pt_geom.distanceTo(arcpy.PointGeometry(pt2)) <= eps:
-                cluster.append(oid2)
-                used.add(oid2)
+
+            visited.add(current)
+            cluster.append(current)
+
+            for n in neighbors[current]:
+                if n not in visited:
+                    stack.append(n)
+
         clusters.append(cluster)
-    
+
     return clusters
 
 
-def get_contour_for_annotation(geom: arcpy.Geometry, contours_lyr: str) -> arcpy.Geometry | None:
-    """
-    Find nearest contour line to annotation.
-
-    Args:
-        geom (arcpy.Geometry): The arcpy-geometry to analys
-        contours_lyr (str): THe feature layer with contours
-
-    Returns:
-        arcpy.Geometry: The geometry of the closest contour, if some
-    """
-    arcpy.management.SelectLayerByLocation(
-        in_layer=contours_lyr,
-        overlap_type="WITHIN_A_DISTANCE",
-        select_features=geom,
-        search_distance="5 Meters",
-        selection_type="NEW_SELECTION"
-    )
-
-    # If none found, expand search
-    count = int(arcpy.management.GetCount(contours_lyr)[0])
-    if count == 0:
-        arcpy.management.SelectLayerByLocation(
-            in_layer=contours_lyr,
-            overlap_type="WITHIN_A_DISTANCE",
-            select_features=geom,
-            search_distance="50 Meters",
-            selection_type="NEW_SELECTION"
-        )
-
-    with arcpy.da.SearchCursor(contours_lyr, ["SHAPE@"]) as cur:
-        for row in cur:
-            return row[0]
-
-    return None
-
-def is_valid(point_geom: arcpy.Geometry, ob_geom: arcpy.Geometry) -> bool:
-    """
-    Identifies if a point is in the area.
-
-    Args:
-        point_geom (arcpy.Geometry): The geometry to investigate
-        ob_geom (arcpy.Geometry): The area to search for relationship
-
-    Returns:
-        bool: True if geom is inside ob_lyr, else False
-    """
-    return point_geom.disjoint(ob_geom)
-
-def find_valid_position_along_contour(point_geom: arcpy.Point, contour_geom: arcpy.Polyline, ob_geom: arcpy.Geometry, max_dist: int, step: int=5):
+def find_valid_position_along_contour(point_geom: arcpy.Point, contour_geom: arcpy.Polyline, ob_geom: arcpy.Geometry, max_dist: int, step: int=5) -> arcpy.Point | arcpy.PointGeometry | None:
     """
     Moves a point along a contour polyline until it finds a valid (non-OB) position.
 
@@ -1041,32 +838,38 @@ def find_valid_position_along_contour(point_geom: arcpy.Point, contour_geom: arc
         Geometry or None: A valid point geometry, or None if no valid position exists
     """
     # 1) Find start position
-    try:
-        m0 = contour_geom.measureOnLine(point_geom)
-    except:
+    m0 = contour_geom.measureOnLine(point_geom)
+    if m0 is None:
         return None
     
     # 2) Validate starting position
-    if is_valid(point_geom, ob_geom):
+    if point_geom.disjoint(ob_geom):
         return point_geom
     
     # 3) Search in both directions
     max_m = contour_geom.length
-    search_range = int(max_dist // step)
-    for i in range(1, search_range + 1):
-        for direction in (+1, -1):
-            m_new = m0 + direction * i * step
-            # Limit to polyline
-            if m_new < 0 or m_new > max_m:
-                continue
-            new_point = contour_geom.positionAlongLine(m_new)
-            if is_valid(new_point, ob_geom):
-                return new_point
+    steps = int(max_dist // step)
+
+    for i in range(1, steps + 1):
+        offset = i * step
+        m_plus = m0 + offset
+        m_minus = m0 - offset
+
+        if 0 <= m_plus and m_plus <= max_m:
+            p = contour_geom.positionAlongLine(m_plus)
+            if p.disjoint(ob_geom):
+                return p
+        
+        if  0 <= m_minus and m_minus <= max_m:
+            p = contour_geom.positionAlongLine(m_minus)
+            if p.disjoint(ob_geom):
+                return p
     
     # 4) No valid position found
     return None
 
-def move_towards_anchor(point_geom: arcpy.Point, contour_geom: arcpy. Polyline, anchor_geom: arcpy.Point, ob_geom: arcpy.Geometry, max_dist: int, step: int=5) -> arcpy.Point | arcpy.PointGeometry | None:
+
+def move_towards_starting_point(point_geom: arcpy.Point, contour_geom: arcpy. Polyline, starting_geom: arcpy.Point, ob_geom: arcpy.Geometry, max_dist: int, step: int=5) -> arcpy.Point | arcpy.PointGeometry | None:
     """
     Moves a point along its contour towards the anchor point,
     stopping at the closest valid (non-OB) position.
@@ -1074,7 +877,7 @@ def move_towards_anchor(point_geom: arcpy.Point, contour_geom: arcpy. Polyline, 
     Args:
         point_geom (arcpy.Point): The point to move
         contour_geom (arcpy.Polyline): The contour to move along
-        anchor_geom (arcpy.Point): The anchor point
+        starting_geom (arcpy.Point): The starting point of the ladder
         ob_geom (arcpy.Geometry): Out-of-bounds geometry
         max_dist (int): Maximum distance to move along the contour
         step (int, optional): Step size in meters for searching (default: 5)
@@ -1083,29 +886,31 @@ def move_towards_anchor(point_geom: arcpy.Point, contour_geom: arcpy. Polyline, 
         Geometry or None: A valid point geometry, or None if no valid position exists
     """
     # 1) Find start position
-    try:
-        m_point = contour_geom.measureOnLine(point_geom)
-        m_anchor = contour_geom.measureOnLine(anchor_geom)
-    except:
+    m_point = contour_geom.measureOnLine(point_geom)
+    m_start = contour_geom.measureOnLine(starting_geom)
+    
+    if m_point is None or m_start is None:
         return None
-
-    # 2) Start searching after valid position
-    direction = 1 if m_anchor > m_point else -1
+    
+    # 2) Determine direction
+    direction = 1 if m_start > m_point else -1
     max_m = contour_geom.length
 
-    if is_valid(point_geom, ob_geom):
+    # 3) If the point is already valid, keep it
+    if point_geom.disjoint(ob_geom):
         return point_geom
     
+    # 4) Step along the contour toward the starting point
     steps = int(max_dist // step)
     for i in range(1, steps + 1):
         m_new = m_point + direction * i * step
         if m_new < 0 or m_new > max_m:
             continue
         new_pos = contour_geom.positionAlongLine(m_new)
-        if is_valid(new_pos, ob_geom):
+        if new_pos.disjoint(ob_geom):
             return new_pos
+    
     return None
-
 
 # ========================
 
