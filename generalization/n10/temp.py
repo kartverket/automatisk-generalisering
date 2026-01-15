@@ -815,7 +815,6 @@ def prepare_lines(files,
         where_clause="jernbanetype <> 'J'",
     )
     arcpy.CopyFeatures_management("not_jernbane", files["not_jernbane"])
-
     # Make feature layer for jernbane = 'J'
     arcpy.management.MakeFeatureLayer(
         in_features=senterlinje,
@@ -826,6 +825,15 @@ def prepare_lines(files,
     # Snap endpoints to each other within 3 meters
     arcpy.edit.Snap(lines_layer, [[lines_layer, "END", "3 Meters"]])
 
+    #delete rows of lines that collapsed in snap
+    with arcpy.da.UpdateCursor(lines_layer, ['SHAPE@']) as cursor:
+        for row in cursor:
+            geom = row[0]
+            if not geom or getattr(geom, 'isEmpty', False):
+                cursor.deleteRow()
+    
+
+
     # Copy to in-memory fc and calculate length
     lines_fc = r"in_memory\lines_fc"
     arcpy.management.CopyFeatures(in_features=lines_layer, out_feature_class=lines_fc)
@@ -833,12 +841,13 @@ def prepare_lines(files,
     arcpy.management.CalculateGeometryAttributes(
         lines_fc, [[length_field, "LENGTH_GEODESIC"]], length_unit="METERS"
     )
-
     # Create a layer filtered by max_length
     length_layer = "length_lyr"
     arcpy.management.MakeFeatureLayer(
         in_features=lines_fc, out_layer=length_layer
     )
+
+
 
     return length_layer, lines_layer
 
@@ -903,7 +912,10 @@ def select_and_buffer(files,
         match_option="INTERSECT",
     )
 
-    # Analyze neighbor pairs (external function) to get selected OIDs
+
+
+
+    # Analyze neighbor pairs  to get selected OIDs
     selected_oids = analyze_neighbor_pairs(join_fc)
 
     # Build SQL to select those OIDs on the selection layer
@@ -924,7 +936,6 @@ def select_and_buffer(files,
             out_feature_class=buffer_dissolved_mem,
             multi_part="SINGLE_PART",
         )
-        arcpy.CopyFeatures_management(buffer_dissolved_mem, files["selected_lines_buffer"])
         return
 
     sql = "{} IN ({})".format(oid_field_delimited, ",".join(map(str, selected_oids)))
@@ -946,7 +957,6 @@ def select_and_buffer(files,
         multi_part="SINGLE_PART",
     )
 
-    arcpy.CopyFeatures_management(buffer_dissolved_mem, files["selected_lines_buffer"])
 
 def keep_lines(files, lines_layer, buffer_dissolved_mem):
     orig_layer = dissolve_original_lines(lines_layer)
@@ -1102,6 +1112,75 @@ def get_data_of_original_innside(innside_lines, orig_lines, output):
 
 
 
+def restore_medium_b_lines(outside_lines, inside_lines, buffer, whole_lines):
+    """
+    Finds medium b lines that have been cut and adds whole line connected to it, to uncut it
+    """
+    b_outside_layer = "b_outside_layer_123456"
+    whole_intersect_b_outside_layer = "whole_intersect_b_outside_layer"
+    buffer_layer = "buffer_layer_1230928721762"
+    inside_lines_layer = "inside_lines_layer_127463"
+
+    arcpy.management.MakeFeatureLayer(outside_lines, b_outside_layer, "medium = 'B'")
+    arcpy.management.MakeFeatureLayer(buffer, buffer_layer)
+    arcpy.management.MakeFeatureLayer(inside_lines, inside_lines_layer)
+
+    
+    arcpy.management.SelectLayerByLocation(b_outside_layer, "INTERSECT", buffer_layer)
+    
+    arcpy.management.SelectLayerByLocation(b_outside_layer, "INTERSECT", inside_lines_layer, selection_type="SUBSET_SELECTION", invert_spatial_relationship="INVERT")
+
+
+
+    arcpy.management.MakeFeatureLayer(whole_lines, whole_intersect_b_outside_layer)
+    arcpy.management.SelectLayerByLocation(whole_intersect_b_outside_layer, "INTERSECT", b_outside_layer)
+
+
+
+    w_rows = [row for row in arcpy.da.SearchCursor(whole_intersect_b_outside_layer, ["OID@", "SHAPE@", "prio"])]
+
+    with arcpy.da.SearchCursor(b_outside_layer, ["SHAPE@"]) as b_cur, \
+        arcpy.da.InsertCursor(inside_lines, ["SHAPE@"]) as i_cur:
+
+        for b_row in b_cur:
+            possible_lines = {}
+            b_geom = b_row[0]
+
+            for w_row in w_rows:
+                w_oid, w_geom, w_prio = w_row
+
+                if not w_geom.disjoint(b_geom):
+                    # skip if we've already stored a priority-2 line for this OID
+                    if w_oid in possible_lines and possible_lines[w_oid][1] == 2:
+                        continue
+
+                    # if no entry yet, or this geometry is longer, store/replace it
+                    if w_oid not in possible_lines or possible_lines[w_oid][0].length < w_geom.length:
+                        possible_lines[w_oid] = [w_geom, w_prio]
+
+            # insert the selected geometries for this b_geom
+            for geom, prio in possible_lines.values():
+                i_cur.insertRow([geom])
+
+                
+
+
+#def merge_outside_lines(outside_lines, inside_lines, output):
+    
+            
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 def create_wfm_gdbs(wfm: WorkFileManager) -> dict:
@@ -1124,6 +1203,13 @@ def create_wfm_gdbs(wfm: WorkFileManager) -> dict:
     selected_lines = wfm.build_file_path(file_name="selected_lines", file_type="gdb")
     selected_lines_buffer = wfm.build_file_path(file_name="selected_lines_buffer", file_type="gdb")
     final_selection = wfm.build_file_path(file_name="final_selection", file_type="gdb")
+    lines_with_attributes_outside = wfm.build_file_path(file_name="lines_with_attributes_outside", file_type="gdb")
+    lines_with_attributes_innside = wfm.build_file_path(file_name="lines_with_attributes_innside", file_type="gdb")
+    final_all_lines = wfm.build_file_path(file_name="final_all_lines", file_type="gdb")
+    only_restored = wfm.build_file_path(file_name="only_restored", file_type="gdb")
+    final_selection_restored = wfm.build_file_path(file_name="final_selection_restored", file_type="gdb")
+    cluster = wfm.build_file_path(file_name="cluster", file_type="gdb")
+    lines_outside_merged = wfm.build_file_path(file_name="lines_outside_merged", file_type="gdb")
 
     
 
@@ -1137,17 +1223,26 @@ def create_wfm_gdbs(wfm: WorkFileManager) -> dict:
         "selected_lines": selected_lines,
         "selected_lines_buffer": selected_lines_buffer,
         "final_selection": final_selection,
+        "final_selection_restored": final_selection_restored,
+        "lines_with_attributes_outside": lines_with_attributes_outside,
+        "lines_with_attributes_innside": lines_with_attributes_innside,
+        "final_all_lines": final_all_lines,
+        "only_restored": only_restored,
+        "cluster": cluster,
+        "lines_outside_merged": lines_outside_merged,
         
     }
 
 
 @timing_decorator
 def main():
-    source_file, files = setup_workflow()
+    source_file, files, wfm = setup_workflow()
     lines_lyr, buffer_dissolved_mem = prepare_and_select(source_file, files)
     generate_generalized_selection(files, lines_lyr, buffer_dissolved_mem)
     finalize_and_export(files, buffer_dissolved_mem)
 
+    #wfm.delete_created_files()
+    
 
 def setup_workflow():
     source_file = input_n10.Railways
@@ -1155,13 +1250,13 @@ def setup_workflow():
     work_config = core_config.WorkFileConfig(root_file=working_fc)
     wfm = WorkFileManager(config=work_config)
     files = create_wfm_gdbs(wfm=wfm)
-    return source_file, files
+    return source_file, files, wfm
 
 
 @timing_decorator
 def prepare_and_select(source_file, files):
     lines_layer = "lines_layer"
-    buffer_dissolved_mem = r"in_memory\buffer_selected_dissolved"
+    buffer_dissolved_mem = files["selected_lines_buffer"]
 
     length_lyr, lines_lyr = prepare_lines(files, source_file, lines_layer)
     add_azimuth(length_lyr)
@@ -1181,7 +1276,14 @@ def generate_generalized_selection(files, lines_lyr, buffer_dissolved_mem):
 def finalize_and_export(files, buffer_dissolved_mem):
     copy_of_original_jernbane = r"in_memory\jernbane_original"
 
+    #get outside lines with attributes 
     arcpy.analysis.Erase(copy_of_original_jernbane, buffer_dissolved_mem, files["lines_with_attributes_outside"])
+
+    #ensure no medium b lines are cut
+    restore_medium_b_lines(files["lines_with_attributes_outside"], files["final_selection_restored"], buffer_dissolved_mem, files["complete_lines"])
+
+    #merge_outside_lines(files["lines_with_attributes_outside"], files["final_selection_restored"], files["lines_outside_merged"])
+    
     get_data_of_original_innside(files["final_selection_restored"], copy_of_original_jernbane, files["lines_with_attributes_innside"])
 
     arcpy.management.Merge([files["lines_with_attributes_innside"], files["lines_with_attributes_outside"], files["not_jernbane"]], files["final_all_lines"])
