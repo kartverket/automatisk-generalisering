@@ -1399,7 +1399,7 @@ class RemoveRoadTriangles:
             self.remove_islands_and_small_dead_ends(edit_fc=self.removed_1_cycle_roads)
             self.remove_2_cycle_roads(edit_fc=self.dissolved_feature)
             self.remove_3_cycle_roads()
-            #self.remove_4_cycle_roads()
+            # self.remove_4_cycle_roads()
             self.fetch_original_data_final(
                 scale=scale, edit_fc=self.removed_3_cycle_roads
             )

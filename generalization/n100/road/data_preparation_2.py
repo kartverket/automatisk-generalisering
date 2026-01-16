@@ -581,6 +581,7 @@ def merge_divided_roads():
         character_field="character",
     )
 
+
 @timing_decorator
 def smooth_line():
     arcpy.cartography.SmoothLine(
@@ -595,6 +596,7 @@ def smooth_line():
             Road_N100.data_preparation___country_boarder___n100_road.value,
         ],
     )
+
 
 @timing_decorator
 def pre_resolve_road_conflicts(area_selection: str):
