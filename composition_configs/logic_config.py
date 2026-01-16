@@ -130,14 +130,19 @@ class ThinRoadNetworkKwargs:
 
 @dataclass(frozen=True)
 class RemoveRoadTrianglesKwargs:
-    input_line_feature: str
+    input_line_feature: io_types.GdbIOArg
     work_file_manager_config: core_config.WorkFileConfig
     maximum_length: int
-    root_file: str
-    output_processed_feature: str
+    root_file: io_types.GdbIOArg
+    output_processed_feature: io_types.GdbIOArg
     hierarchy_field: str = None
     write_to_memory: bool = False
     keep_work_files: bool = False
+
+
+@dataclass(frozen=True)
+class RemoveRoadTrianglesRunParams:
+    scale: str
 
 
 @dataclass(frozen=True)

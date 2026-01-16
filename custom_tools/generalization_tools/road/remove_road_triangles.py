@@ -6,6 +6,7 @@ from collections import defaultdict
 from itertools import combinations
 
 from composition_configs import core_config, logic_config
+from custom_tools.general_tools.partition_iterator import PartitionIterator
 from constants.n100_constants import FieldNames_str, MediumAlias, NvdbAlias
 from custom_tools.decorators.timing_decorator import timing_decorator
 from custom_tools.general_tools import custom_arcpy
@@ -1399,15 +1400,15 @@ class RemoveRoadTriangles:
             self.remove_islands_and_small_dead_ends(edit_fc=self.removed_1_cycle_roads)
             self.remove_2_cycle_roads(edit_fc=self.dissolved_feature)
             self.remove_3_cycle_roads()
-            self.remove_4_cycle_roads()
+            # self.remove_4_cycle_roads()
             self.fetch_original_data_final(
-                scale=scale, edit_fc=self.removed_4_cycle_roads
+                scale=scale, edit_fc=self.removed_3_cycle_roads
             )
         else:
             self.remove_1_cycle_roads(edit_fc=self.copy_of_input_feature)
             self.remove_2_cycle_roads(edit_fc=self.removed_1_cycle_roads)
             self.remove_3_cycle_roads()
-            self.remove_4_cycle_roads()
+            # self.remove_4_cycle_roads()
             self.fetch_original_data_final(
                 scale=scale, edit_fc=self.removed_4_cycle_roads
             )
@@ -1417,7 +1418,7 @@ class RemoveRoadTriangles:
 
 # Main function to be imported in other .py-files
 @timing_decorator
-def generalize_road_triangles(scale: str) -> None:
+def generalize_road_triangles_no_partition_call(scale: str) -> None:
     """
     Runs the RemoveRoadTriangles process with predefined parameters.
 
@@ -1431,7 +1432,7 @@ def generalize_road_triangles(scale: str) -> None:
         file = (
             Road_N100.data_preparation___simplified_road___n100_road.value
             if before
-            else Road_N100.data_preparation___merge_divided_roads___n100_road.value
+            else Road_N100.data_preparation___smooth_road___n100_road.value
         )
         root = Road_N100.road_triangles___remove_triangles_root___n100_road.value
         removed = Road_N100.road_triangles___removed_triangles___n100_road.value
@@ -1455,5 +1456,109 @@ def generalize_road_triangles(scale: str) -> None:
     remove_road_triangles.run(scale=scale)
 
 
+def generalize_road_triangles(scale: str) -> None:
+    before = False
+
+    if scale.lower() == "n100":
+        file = (
+            Road_N100.data_preparation___simplified_road___n100_road.value
+            if before
+            else Road_N100.data_preparation___smooth_road___n100_road.value
+        )
+        root = Road_N100.road_triangles___remove_triangles_root___n100_road.value
+        partition_root = Road_N100.road_triangles___partition_root___n100_road.value
+        maximum_cycle_length: int = 500
+        documentation_directory = Road_N100.road_cycles_docu___n100_road.value
+        removed = Road_N100.road_triangles___removed_triangles___n100_road.value
+
+    elif scale.lower() == "n250":
+        file = (
+            Road_N250.data_preparation___simplified_road___n250_road.value
+            if before
+            else Road_N250.data_preparation___merge_divided_roads___n250_road.value
+        )
+        root = Road_N250.road_triangles___remove_triangles_root___n250_road.value
+        partition_root = Road_N250.road_triangles___partition_root___n250_road.value
+        maximum_cycle_length: int = 500
+        documentation_directory = Road_N250.road_cycles_docu___n250_road.value
+        removed = Road_N250.road_triangles___removed_triangles___n250_road.value
+
+    else:
+        raise ValueError(f"Unsupported scale: {scale}")
+
+    road_object = "road"
+    removed_tag = "removed_triangles"
+
+    remove_triangles_input_config = core_config.PartitionInputConfig(
+        entries=[
+            core_config.InputEntry.processing_input(
+                object=road_object,
+                path=file,
+            )
+        ]
+    )
+
+    remove_triangles_output_config = core_config.PartitionOutputConfig(
+        entries=[
+            core_config.OutputEntry.vector_output(
+                object=road_object,
+                tag=removed_tag,
+                path=removed,
+            )
+        ]
+    )
+
+    remove_triangles_io_config = core_config.PartitionIOConfig(
+        input_config=remove_triangles_input_config,
+        output_config=remove_triangles_output_config,
+        documentation_directory=documentation_directory,
+    )
+
+    remove_triangles_init_config = logic_config.RemoveRoadTrianglesKwargs(
+        input_line_feature=core_config.InjectIO(
+            object=road_object,
+            tag="input",
+        ),
+        output_processed_feature=core_config.InjectIO(
+            object=road_object,
+            tag=removed_tag,
+        ),
+        work_file_manager_config=core_config.WorkFileConfig(root_file=root),
+        maximum_length=maximum_cycle_length,
+        root_file=root,
+        hierarchy_field=None,
+        write_to_memory=False,
+        keep_work_files=False,
+    )
+
+    remove_triangels_run_config = logic_config.RemoveRoadTrianglesRunParams(scale=scale)
+
+    remove_triangles_class_config = core_config.ClassMethodEntryConfig(
+        class_=RemoveRoadTriangles,
+        method=RemoveRoadTriangles.run,
+        init_params=remove_triangles_init_config,
+        method_params=[remove_triangels_run_config],
+    )
+
+    remove_triangles_method_config = core_config.MethodEntriesConfig(
+        entries=[remove_triangles_class_config]
+    )
+
+    partition_remove_triangles_run_config = core_config.PartitionRunConfig(
+        max_elements_per_partition=50_000,
+        context_radius_meters=maximum_cycle_length + 10,
+        run_partition_optimization=False,
+    )
+
+    partition_remove_triangles = PartitionIterator(
+        partition_io_config=remove_triangles_io_config,
+        partition_method_inject_config=remove_triangles_method_config,
+        partition_iterator_run_config=partition_remove_triangles_run_config,
+        work_file_manager_config=core_config.WorkFileConfig(root_file=partition_root),
+    )
+
+    partition_remove_triangles.run()
+
+
 if __name__ == "__main__":
-    generalize_road_triangles()
+    generalize_road_triangles(scale="n100")
