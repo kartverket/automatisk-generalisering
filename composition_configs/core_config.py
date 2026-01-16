@@ -14,6 +14,7 @@ from typing import (
 from enum import Enum
 
 from composition_configs import type_defs
+import config
 
 
 @dataclass
@@ -188,6 +189,6 @@ class MethodEntriesConfig:
 class PartitionRunConfig:
     max_elements_per_partition: int
     context_radius_meters: int
-    run_partition_optimization: bool = True
+    run_partition_optimization: bool = config.select_study_area
     partition_method: PartitionMethod = PartitionMethod.FEATURES
     object_id_column: str = "OBJECTID"

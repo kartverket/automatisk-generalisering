@@ -9,6 +9,7 @@ from composition_configs import core_config, logic_config
 from custom_tools.generalization_tools.building.resolve_building_conflicts import (
     ResolveBuildingConflictsPolygon,
 )
+from file_manager import work_file_manager
 from input_data import input_symbology
 
 
@@ -255,7 +256,6 @@ def resolve_building_conflicts_polygon():
     rbc_partition_run_config = core_config.PartitionRunConfig(
         max_elements_per_partition=25_000,
         context_radius_meters=500,
-        run_partition_optimization=False,
     )
 
     rbc_parition_work_file_manager_config = core_config.WorkFileConfig(

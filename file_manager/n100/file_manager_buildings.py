@@ -2,6 +2,7 @@
 from enum import Enum
 from env_setup import global_config
 from file_manager.base_file_manager import BaseFileManager
+from file_manager import WorkFileManager
 
 
 # Initialize BaseFileManager
@@ -78,12 +79,16 @@ class Building_N100(Enum):
     #                                ADDITIONAL FILES
     # ========================================
 
-    overview__runtime_all_building_functions__n100 = (
-        file_manager.generate_file_name_general_files(
-            script_source_name=overview,
-            description="runtime_all_building_functions",
-            file_type="txt",
-        )
+    overview__runtime_all_building_functions__n100 = file_manager.generate_file_name_general_files(
+        script_source_name=overview,
+        description=f"runtime_all_building_functions_{WorkFileManager._session_prefix}",
+        file_type="txt",
+    )
+
+    total_workfile_manager_files__n100 = file_manager.generate_file_name_general_files(
+        script_source_name=overview,
+        description=f"total_workfile_manager_files_{WorkFileManager._session_prefix}",
+        file_type="txt",
     )
 
     # ========================================

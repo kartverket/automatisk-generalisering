@@ -313,7 +313,6 @@ def begrensningskurve_land_and_water_bodies():
     begrensningskurve_partition_run_config = core_config.PartitionRunConfig(
         max_elements_per_partition=500_000,
         context_radius_meters=500,
-        run_partition_optimization=True,
     )
 
     partition_iterator_work_file_config = core_config.WorkFileConfig(
