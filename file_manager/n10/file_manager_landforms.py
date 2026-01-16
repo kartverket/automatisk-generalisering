@@ -18,10 +18,10 @@ class Landform_N10(Enum):
     #                              HOYDEKURVER
     # ========================================
 
-    hoyde__n10_landforms = file_manager.generate_file_name_gdb(
+    hoydetall__n10_landforms = file_manager.generate_file_name_gdb(
         script_source_name=hoyde_file, description="hoydetall"
     )
 
-    hoyde_output__n10_landforms = file_manager.generate_file_name_gdb(
-        script_source_name=hoyde_file, description="hoyde_output"
+    hoydetall_output__n10_landforms = file_manager.generate_file_name_gdb(
+        script_source_name=hoyde_file, description="hoydetall_output"
     )

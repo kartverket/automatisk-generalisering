@@ -28,7 +28,7 @@ How to use this functionality properly
 
 1) Run this code to get the modified point layer (feature class).
 2) Open the point feature class in ArcGIS Pro
-3) Select the layer, go to 'Labelling' and turn it on
+3) Select the layer, go to 'Labeling' and turn it on
 4) In 'Label Class' choose 'Field' to be 'HØYDE'
 5) Select font, size and colour in 'Text Symbol'
 6) Open the side panel for 'Label Placement' and do the following:
@@ -63,25 +63,31 @@ def main():
 
     print("\nCreates contour annotations for landforms at N10 scale...\n")
 
-    municipality = "Hole"
+    municipalities = ["Larvik", "Sandefjord", "Færder", "Tønsberg", "Horten", "Holmestrand"] # "Lom" # "Ullensvang" # "Klepp" ["Larvik", "Sandefjord", "Færder", "Tønsberg", "Horten", "Holmestrand"]
 
     # Sets up work file manager and creates temporary files
-    working_fc = Landform_N10.hoyde__n10_landforms.value
+    working_fc = Landform_N10.hoydetall__n10_landforms.value
     work_config = core_config.WorkFileConfig(root_file=working_fc)
     wfm = WorkFileManager(config=work_config)
 
     files = create_wfm_gdbs(wfm=wfm)
 
-    fetch_data(files=files, municipality=municipality)
+    fetch_data(files=files, area=municipalities)
     collect_out_of_bounds_areas(files=files)
     get_annotation_contours(files=files)
     create_points_along_line(files=files)
-    ladders = cluster_and_move_points(files=files)
+    ladders = create_ladders(files=files)
     ladders = remove_multiple_points_for_medium_contours(files=files, ladders=ladders)
     ladders = move_ladders_to_valid_area(files=files, ladders=ladders)
     ladders = remove_dense_points(files=files, ladders=ladders)
-    #calculate_label_rotation(files=files)
     set_tangential_rotation(files=files)
+
+    arcpy.management.CopyFeatures(
+        in_features=files["point_2km"],
+        out_feature_class=Landform_N10.hoydetall_output__n10_landforms.value
+    )
+
+    wfm.delete_created_files()
     
     print("\nContour annotations for landforms at N10 scale created successfully!\n")
 
@@ -135,13 +141,13 @@ def create_wfm_gdbs(wfm: WorkFileManager) -> dict:
 
 
 @timing_decorator
-def fetch_data(files: dict, municipality: str = None) -> None:
+def fetch_data(files: dict, area: list = None) -> None:
     """
     Collects relevant data and clips it to desired area if required.
 
     Args:
         files (dict): Dictionary with all the working files
-        municipality (str, optional): Municipality name to clip data to (defaults to None)
+        area (list, optional): List of municipality name(s) to clip data to (defaults to None)
     """
     # Fetch relevant data
     contour_lyr = "contour_lyr"
@@ -178,7 +184,7 @@ def fetch_data(files: dict, municipality: str = None) -> None:
         """
         if clip_boundary:
             # Clip til kommune
-            arcpy.analysis.Clip(
+            arcpy.analysis.PairwiseClip(
                 in_features=in_lyr,
                 clip_features=clip_boundary,
                 out_feature_class=temp_fc if append else out_fc,
@@ -198,21 +204,22 @@ def fetch_data(files: dict, municipality: str = None) -> None:
                     in_features=in_lyr, out_feature_class=out_fc
                 )
 
-    if municipality:
+    if area:
         # Fetch municipality boundary
-        municipality_lyr = "municipality_lyr"
+        area_lyr = "area_lyr"
         arcpy.management.MakeFeatureLayer(
-            in_features=input_n100.AdminFlate, out_layer=municipality_lyr
+            in_features=input_n100.AdminFlate, out_layer=area_lyr
         )
+        vals = ",".join([f"'{v}'" for v in area])
         arcpy.management.SelectLayerByAttribute(
-            in_layer_or_view=municipality_lyr,
+            in_layer_or_view=area_lyr,
             selection_type="NEW_SELECTION",
-            where_clause=f"NAVN = '{municipality}'",
+            where_clause = f"NAVN IN ({vals})",
         )
 
         # 1) Contours
         process_layer(
-            in_lyr=contour_lyr, out_fc=files["contours"], clip_boundary=municipality_lyr
+            in_lyr=contour_lyr, out_fc=files["contours"], clip_boundary=area_lyr
         )
 
         # 2) Building + Train
@@ -220,7 +227,7 @@ def fetch_data(files: dict, municipality: str = None) -> None:
             [building_lyr, train_lyr],
             [files["out_of_bounds_polygons"], files["out_of_bounds_polylines"]],
         ):
-            process_layer(in_lyr=lyr, out_fc=out_fc, clip_boundary=municipality_lyr)
+            process_layer(in_lyr=lyr, out_fc=out_fc, clip_boundary=area_lyr)
         for lyr, out_fc in zip(
             [land_use_lyr, road_lyr],
             [files["out_of_bounds_polygons"], files["out_of_bounds_polylines"]],
@@ -228,7 +235,7 @@ def fetch_data(files: dict, municipality: str = None) -> None:
             process_layer(
                 in_lyr=lyr,
                 out_fc=out_fc,
-                clip_boundary=municipality_lyr,
+                clip_boundary=area_lyr,
                 temp_fc=files["temporary_file"],
                 append=True,
             )
@@ -267,7 +274,7 @@ def collect_out_of_bounds_areas(files: dict) -> None:
         target=files["out_of_bounds_polygons"],
         schema_type="NO_TEST"
     )
-    arcpy.management.Dissolve(
+    arcpy.analysis.PairwiseDissolve(
         in_features=files["out_of_bounds_polygons"],
         out_feature_class=files["out_of_bounds_dissolved"],
         dissolve_field=[],
@@ -324,10 +331,9 @@ def create_points_along_line(files: dict, threshold: int=2000) -> None:
 
 
 @timing_decorator
-def cluster_and_move_points(files: dict) -> dict:
+def create_ladders(files: dict) -> dict:
     """
-    Cluster the points using DBSCAN, create ladders of
-    the points and return the ladder information.
+    Cluster the points using DBSCAN to sort the points into ladders.
 
     Args:
         files (dict): Dictionary with all the working files
@@ -350,7 +356,7 @@ def cluster_and_move_points(files: dict) -> dict:
 
     # 2) Write cluster ID back to point
     cluster_id_map = {}
-    for cid, cluster in enumerate(clusters):
+    for cid, cluster in tqdm(enumerate(clusters), desc="Create cluster mapping", colour="yellow", leave=False):
         for oid in cluster:
             cluster_id_map[oid] = cid
 
@@ -365,7 +371,7 @@ def cluster_and_move_points(files: dict) -> dict:
             cluster_groups[cid][height].append(oid)
     
     to_delete = set()
-    for cid, height_dict in cluster_groups.items():
+    for cid, height_dict in tqdm(cluster_groups.items(), desc="Detect points to delete", colour="yellow", leave=False):
         for height, pts in height_dict.items():
             if len(pts) > 1:
                 for p in pts[1:]:
@@ -376,7 +382,7 @@ def cluster_and_move_points(files: dict) -> dict:
             if row[0] in to_delete:
                 cur.deleteRow()
     
-    for cluster, height in cluster_groups.items():
+    for cluster, height in tqdm(cluster_groups.items(), desc="Update cluster groups", colour="yellow", leave=False):
         for oids in height.values():
             k = 0
             while k < len(oids):
@@ -384,8 +390,6 @@ def cluster_and_move_points(files: dict) -> dict:
                     oids.pop(k)
                 else:
                     k += 1
-    
-    points_dict = {oid: geom for oid, geom in arcpy.da.SearchCursor(points_fc, ["OID@", "SHAPE@"])}
     
     # 4) Performe spatial join to connect points with contours
     arcpy.analysis.SpatialJoin(
@@ -396,41 +400,9 @@ def cluster_and_move_points(files: dict) -> dict:
         match_option="INTERSECT"
     )
 
-    point_to_line = {}
-    with arcpy.da.SearchCursor(join_fc, ["JOIN_FID", "SHAPE@"]) as cur:
-        for oid, line_geom in cur:
-            point_to_line[oid] = line_geom
-    
-    # 5) Move points into ladders
-    for cid, height_dict in cluster_groups.items():
-            ref_oid = None
-            while not ref_oid:
-                for height, oids in height_dict.items():
-                    for oid in oids:
-                        if oid not in to_delete:
-                            ref_oid = oid
-                            ref_geom = points_dict.get(oid)
-            
-            for height, oids in height_dict.items():
-                for oid in oids:
-                    if oid == ref_oid:
-                        continue
-                    if oid in to_delete:
-                        continue
-                    line = point_to_line.get(oid)
-                    if line is None:
-                        continue
-                    
-                    m = line.measureOnLine(ref_geom)
-                    new_point = line.positionAlongLine(m)
-                    
-                    with arcpy.da.UpdateCursor(points_fc, ["SHAPE@"], where_clause=f"OBJECTID = {oid}") as cur:
-                        for row in cur:
-                            row[0] = new_point
-                            cur.updateRow(row)
-    
+    # 5) Return the ladders
     result = defaultdict(list)
-    for cid, height_dict in cluster_groups.items():
+    for cid, height_dict in tqdm(cluster_groups.items(), desc="Create ladder mapping", colour="yellow", leave=False):
         for oids in height_dict.values():
             for oid in oids:
                 result[cid].append(oid)
@@ -662,50 +634,6 @@ def remove_dense_points(files: dict, ladders: dict) -> dict:
 
 
 @timing_decorator
-def calculate_label_rotation(files: dict) -> None:
-    """
-    Creates a new attribute representing the rotation of the label.
-
-    Args:
-        files (dict): Dictionary with all the working files
-    """
-    points_fc = files["point_2km"]
-    contour_fc = files["join"]
-
-    # 1) Create field
-    field = "ROTATION"
-    if field not in [f.name for f in arcpy.ListFields(points_fc)]:
-        arcpy.management.AddField(in_table=points_fc, field_name=field, field_type="DOUBLE")
-    
-    # 2) Iterate through every point
-    with arcpy.da.UpdateCursor(points_fc, ["OID@", "SHAPE@", "HØYDE", field]) as cur:
-        for oid, pt, h, _ in cur:
-            line = [row[0] for row in arcpy.da.SearchCursor(contour_fc, ["SHAPE@"], where_clause=f"JOIN_FID = {oid} AND HØYDE = {h}")]
-            if not line:
-                continue
-            line = line[0]
-
-            # 3) Find m value along the line
-            m = line.measureOnLine(pt)
-            if m is None:
-                continue
-            
-            # 4) Find short segment
-            m1 = max(0, m-10)
-            m2 = min(line.length, m+10)
-            seg = line.segmentAlongLine(m1, m2)
-
-            # 5) Calculate azimuth
-            start = seg.firstPoint
-            end = seg.lastPoint
-            dx = end.X - start.X
-            dy = end.Y - start.Y
-            angle = np.degrees(np.arctan2(dy, dx))
-
-            cur.updateRow([oid, pt, h, angle])
-
-
-@timing_decorator
 def set_tangential_rotation(files: dict) -> None:
     """
     Set ROTATION for each point so the label aligns with
@@ -782,24 +710,44 @@ def cluster_points(points: list, eps: int) -> list:
     Returns:
         list: list of clusters, each cluster is a list of OIDs
     """
-    # Precompute geometries
-    geoms = {oid: pt for oid, pt in points}
+    # Precompute coordinates
+    coords = {oid: (pt.centroid.X, pt.centroid.Y) for oid, pt in points}
 
-    # Build adjacency list
+    # Build grid index
+    cell_size = eps
+    grid = defaultdict(list)
+    
+    def cell_for(x, y):
+        return (int(x // cell_size), int(y // cell_size))
+    
+    for oid, (x, y) in tqdm(coords.items(), desc="Building grid index", colour="yellow", leave=False):
+        cell = cell_for(x, y)
+        grid[cell].append(oid)
+
+    # Find neighbors using grid lookup
     neighbors = {oid: [] for oid, _ in points}
 
-    for oid1, g1 in geoms.items():
-        for oid2 in geoms.keys():
-            if oid1 == oid2:
-                continue
-            if g1.distanceTo(geoms[oid2]) <= eps:
-                neighbors[oid1].append(oid2)
+    for oid, (x, y) in tqdm(coords.items(), desc="Finding neighbors", colour="yellow", leave=False):
+        cx, cy = cell_for(x, y)
 
-    # BFS/DFS to build clusters
+        # Check this + all 8-neighbors
+        for dx in (-1, 0, 1):
+            for dy in (-1, 0, 1):
+                cell = (cx + dx, cy + dy)
+                if cell not in grid:
+                    continue
+                for other in grid[cell]:
+                    if other == oid:
+                        continue
+                    ox, oy = coords[other]
+                    if (x-ox)**2 + (y-oy)**2 <= eps**2:
+                        neighbors[oid].append(other)
+    
+    # Build clusters (BFS / DFS)
     visited = set()
     clusters = []
 
-    for oid, _ in points:
+    for oid, _ in tqdm(points, desc="Building clusters", colour="yellow", leave=False):
         if oid in visited:
             continue
 
