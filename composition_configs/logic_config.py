@@ -236,6 +236,7 @@ class RiverStrahlerKwargs:
 
 
 @dataclass(frozen=True)
+<<<<<<< HEAD
 class AttributeChangerInitKwargs:
     input_feature: str
     output_feature: str
@@ -249,6 +250,16 @@ class LandUseInitKwargs:
     input_feature: str
     output_feature: str
     map_scale: str
+=======
+class FillLineGapsAdvancedConfig:
+    fill_gaps_on_self: bool = True
+    line_changes_output: Optional[str] = None
+
+    # Extra meters added ONLY when considering dangle→dangle candidates.
+    # Effective dangle→dangle cap = gap_tolerance_meters + extra.
+    # Use 0 to disable expanded dangle pairing.
+    increased_tolerance_edge_case_distance_meters: int = 0
+>>>>>>> 5aa8c33 (WIP line topolgy gap fix)
 
 
 @dataclass(frozen=True)
@@ -257,6 +268,7 @@ class FillLineGapsConfig:
     output_lines: str
     work_file_manager_config: core_config.WorkFileConfig
     gap_tolerance_meters: int
-    fill_gaps_on_self: bool = True
     connect_to_features: Optional[list[str]] = None
-    line_changes_output: Optional[str] = None
+    advanced_config: FillLineGapsAdvancedConfig = field(
+        default_factory=FillLineGapsAdvancedConfig
+    )
