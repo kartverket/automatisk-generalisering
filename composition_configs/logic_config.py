@@ -210,11 +210,23 @@ class RiverStrahlerKwargs:
 
 
 @dataclass(frozen=True)
+class FillLineGapsAdvancedConfig:
+    fill_gaps_on_self: bool = True
+    line_changes_output: Optional[str] = None
+
+    # Extra meters added ONLY when considering dangle→dangle candidates.
+    # Effective dangle→dangle cap = gap_tolerance_meters + extra.
+    # Use 0 to disable expanded dangle pairing.
+    increased_tolerance_edge_case_distance_meters: int = 0
+
+
+@dataclass(frozen=True)
 class FillLineGapsConfig:
     input_lines: str
     output_lines: str
     work_file_manager_config: core_config.WorkFileConfig
     gap_tolerance_meters: int
-    fill_gaps_on_self: bool = True
     connect_to_features: Optional[list[str]] = None
-    line_changes_output: Optional[str] = None
+    advanced_config: FillLineGapsAdvancedConfig = field(
+        default_factory=FillLineGapsAdvancedConfig
+    )

@@ -33,11 +33,14 @@ def fill_line_topology_gaps():
             root_file=River_N100.river_topology___root___n100_river.value
         ),
         gap_tolerance_meters=3,
-        fill_gaps_on_self=True,
         connect_to_features=[
             River_N100.data_preparation___river_polygons___n100_river.value
         ],
-        line_changes_output=River_N100.river_topology___river_gaps_changes___n100_river.value,
+        advanced_config=logic_config.FillLineGapsAdvancedConfig(
+            fill_gaps_on_self=True,
+            line_changes_output=River_N100.river_topology___river_gaps_changes___n100_river.value,
+            increased_tolerance_edge_case_distance_meters=3,
+        ),
     )
     line_topology.FillLineGaps(line_gap_config=line_fix_config).run()
 
