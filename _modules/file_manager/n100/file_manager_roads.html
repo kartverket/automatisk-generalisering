@@ -7,15 +7,15 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>file_manager.n100.file_manager_roads &mdash; Automatisk Generalisering 0.0.1 documentation</title>
       <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=b86133f3" />
-      <link rel="stylesheet" type="text/css" href="../../../_static/css/theme.css?v=e59714d7" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/css/theme.css?v=9edc463e" />
       <link rel="stylesheet" type="text/css" href="../../../_static/custom.css" />
 
   
       <script src="../../../_static/jquery.js?v=5d32c60e"></script>
       <script src="../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
       <script src="../../../_static/documentation_options.js?v=d45e8c67"></script>
-      <script src="../../../_static/doctools.js?v=9bcbadda"></script>
-      <script src="../../../_static/sphinx_highlight.js?v=dc90522c"></script>
+      <script src="../../../_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="../../../_static/sphinx_highlight.js?v=6ffebe34"></script>
     <script src="../../../_static/js/theme.js"></script>
     <link rel="index" title="Index" href="../../../genindex.html" />
     <link rel="search" title="Search" href="../../../search.html" /> 
@@ -716,6 +716,15 @@
             <span class="n">script_source_name</span><span class="o">=</span><span class="n">road_triangles</span><span class="p">,</span>
             <span class="n">description</span><span class="o">=</span><span class="s2">&quot;removed_triangles&quot;</span><span class="p">,</span>
         <span class="p">)</span>
+    <span class="p">)</span>
+
+    <span class="n">road_triangles___partition_root___n100_road</span> <span class="o">=</span> <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_gdb</span><span class="p">(</span>
+        <span class="n">script_source_name</span><span class="o">=</span><span class="n">road_triangles</span><span class="p">,</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">&quot;partition_root&quot;</span><span class="p">,</span>
+    <span class="p">)</span>
+
+    <span class="n">road_cycles_docu___n100_road</span> <span class="o">=</span> <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_general_subdirectory</span><span class="p">(</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">&quot;road_cycles_docu&quot;</span><span class="p">,</span>
     <span class="p">)</span>
 
     <span class="c1"># ========================================</span>

@@ -7,15 +7,15 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>composition_configs.logic_config &mdash; Automatisk Generalisering 0.0.1 documentation</title>
       <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=b86133f3" />
-      <link rel="stylesheet" type="text/css" href="../../_static/css/theme.css?v=e59714d7" />
+      <link rel="stylesheet" type="text/css" href="../../_static/css/theme.css?v=9edc463e" />
       <link rel="stylesheet" type="text/css" href="../../_static/custom.css" />
 
   
       <script src="../../_static/jquery.js?v=5d32c60e"></script>
       <script src="../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
       <script src="../../_static/documentation_options.js?v=d45e8c67"></script>
-      <script src="../../_static/doctools.js?v=9bcbadda"></script>
-      <script src="../../_static/sphinx_highlight.js?v=dc90522c"></script>
+      <script src="../../_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="../../_static/sphinx_highlight.js?v=6ffebe34"></script>
     <script src="../../_static/js/theme.js"></script>
     <link rel="index" title="Index" href="../../genindex.html" />
     <link rel="search" title="Search" href="../../search.html" /> 
@@ -239,14 +239,22 @@
 <a class="viewcode-back" href="../../generated_docs/composition_configs.html#composition_configs.logic_config.RemoveRoadTrianglesKwargs">[docs]</a>
 <span class="nd">@dataclass</span><span class="p">(</span><span class="n">frozen</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 <span class="k">class</span><span class="w"> </span><span class="nc">RemoveRoadTrianglesKwargs</span><span class="p">:</span>
-    <span class="n">input_line_feature</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">input_line_feature</span><span class="p">:</span> <span class="n">io_types</span><span class="o">.</span><span class="n">GdbIOArg</span>
     <span class="n">work_file_manager_config</span><span class="p">:</span> <span class="n">core_config</span><span class="o">.</span><span class="n">WorkFileConfig</span>
     <span class="n">maximum_length</span><span class="p">:</span> <span class="nb">int</span>
-    <span class="n">root_file</span><span class="p">:</span> <span class="nb">str</span>
-    <span class="n">output_processed_feature</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">root_file</span><span class="p">:</span> <span class="n">io_types</span><span class="o">.</span><span class="n">GdbIOArg</span>
+    <span class="n">output_processed_feature</span><span class="p">:</span> <span class="n">io_types</span><span class="o">.</span><span class="n">GdbIOArg</span>
     <span class="n">hierarchy_field</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="kc">None</span>
     <span class="n">write_to_memory</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span>
     <span class="n">keep_work_files</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span></div>
+
+
+
+<div class="viewcode-block" id="RemoveRoadTrianglesRunParams">
+<a class="viewcode-back" href="../../generated_docs/composition_configs.html#composition_configs.logic_config.RemoveRoadTrianglesRunParams">[docs]</a>
+<span class="nd">@dataclass</span><span class="p">(</span><span class="n">frozen</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">RemoveRoadTrianglesRunParams</span><span class="p">:</span>
+    <span class="n">scale</span><span class="p">:</span> <span class="nb">str</span></div>
 
 
 
