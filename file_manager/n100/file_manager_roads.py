@@ -639,6 +639,15 @@ class Road_N100(Enum):
         )
     )
 
+    road_triangles___partition_root___n100_road = file_manager.generate_file_name_gdb(
+        script_source_name=road_triangles,
+        description="partition_root",
+    )
+
+    road_cycles_docu___n100_road = file_manager.generate_general_subdirectory(
+        description="road_cycles_docu",
+    )
+
     # ========================================
     #                               ROUNDABOUT
     # ========================================
