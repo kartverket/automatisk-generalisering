@@ -10,9 +10,9 @@ Railways = rf"{n10_path}\fkb_bane_senterlinje"
 
 # Defining datasets to test paths are set up correctly later
 n10_datasets = [
-    #Buildings,
-    #Airport,
-    #Contours,
+    # Buildings,
+    # Airport,
+    # Contours,
     Railways,
 ]
 

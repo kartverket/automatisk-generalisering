@@ -15,7 +15,7 @@ railway_file = "railway_n10"
 
 class Railway_N10(Enum):
     # ========================================
-    #                              Jernbaner 
+    #                              Jernbaner
     # ========================================
 
     input_railway_n10 = file_manager.generate_file_name_gdb(
