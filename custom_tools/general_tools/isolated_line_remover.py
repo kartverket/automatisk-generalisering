@@ -23,16 +23,17 @@ class IsolatedLineRemover:
         Name of the length field to use, if field doesnt exist will create it and populate using SHAPE@LENGTH (default 'seg_length_m').
     """
 
-    def __init__(self,
-                 input_fc,
-                 output_fc,
-                 length_threshold=150.0,
-                 length_threshold_add_per_segment=50,
-                 max_lines_per_group=5,
-                 search_radius_m=10.0,
-                 length_field="seg_length_m",
-                 ):
-        
+    def __init__(
+        self,
+        input_fc,
+        output_fc,
+        length_threshold=150.0,
+        length_threshold_add_per_segment=50,
+        max_lines_per_group=5,
+        search_radius_m=10.0,
+        length_field="seg_length_m",
+    ):
+
         self.input_fc = input_fc
         self.output_fc = output_fc
         self.length_threshold = length_threshold
@@ -43,7 +44,7 @@ class IsolatedLineRemover:
         self.copy_fc = r"in_memory\copy_lines"
         self.near_table = r"in_memory\near_pairs"
         self.layer_name = "lyr_to_delete"
-
+        self.added_l_field = False
 
     def copy(self):
         arcpy.management.CopyFeatures(self.input_fc, self.copy_fc)
@@ -52,20 +53,25 @@ class IsolatedLineRemover:
         fields = [f.name for f in arcpy.ListFields(self.copy_fc)]
         if self.length_field not in fields:
             arcpy.management.AddField(self.copy_fc, self.length_field, "DOUBLE")
-            with arcpy.da.UpdateCursor(self.copy_fc, ["SHAPE@LENGTH", self.length_field]) as ucur:
+            self.added_l_field = True
+            with arcpy.da.UpdateCursor(
+                self.copy_fc, ["SHAPE@LENGTH", self.length_field]
+            ) as ucur:
                 for geom_len, _ in ucur:
                     ucur.updateRow([geom_len, geom_len])
 
     def generate_near_table(self):
         radius_str = f"{self.search_radius_m} Meters"
-        arcpy.analysis.GenerateNearTable(in_features=self.copy_fc,
-                                         near_features=self.copy_fc,
-                                         out_table=self.near_table,
-                                         search_radius=radius_str,
-                                         location="NO_LOCATION",
-                                         angle="NO_ANGLE",
-                                         closest="ALL",
-                                         method="PLANAR")
+        arcpy.analysis.GenerateNearTable(
+            in_features=self.copy_fc,
+            near_features=self.copy_fc,
+            out_table=self.near_table,
+            search_radius=radius_str,
+            location="NO_LOCATION",
+            angle="NO_ANGLE",
+            closest="ALL",
+            method="PLANAR",
+        )
 
     def build_adjacency_and_components(self):
         adjacency = {}
@@ -77,12 +83,14 @@ class IsolatedLineRemover:
                 adjacency.setdefault(near_fid, set()).add(in_fid)
 
         parent = {}
+
         def find(x):
             parent.setdefault(x, x)
             while parent[x] != x:
                 parent[x] = parent[parent[x]]
                 x = parent[x]
             return x
+
         def union(a, b):
             ra, rb = find(a), find(b)
             if ra != rb:
@@ -112,8 +120,10 @@ class IsolatedLineRemover:
         with arcpy.da.SearchCursor(self.copy_fc, [oid_field, self.length_field]) as cur:
             for oid, seg_len in cur:
                 root = comp_map[oid]
-                rec = totals.setdefault(root, {"length": 0.0, "count": 0, "members": []})
-                rec["length"] += (seg_len or 0.0)
+                rec = totals.setdefault(
+                    root, {"length": 0.0, "count": 0, "members": []}
+                )
+                rec["length"] += seg_len or 0.0
                 rec["count"] += 1
                 rec["members"].append(oid)
         return totals
@@ -126,25 +136,28 @@ class IsolatedLineRemover:
         for root, rec in totals.items():
             if rec["count"] > self.max_lines_per_group:
                 continue
-            threshold = self.length_threshold + (self.length_threshold_add_per_segment) * rec["count"]
+            threshold = (
+                self.length_threshold
+                + (self.length_threshold_add_per_segment) * rec["count"]
+            )
             if rec["length"] < threshold:
                 to_delete_oids.extend(rec["members"])
         return to_delete_oids
 
     def delete_oids(self, to_delete_oids):
         if not to_delete_oids:
-            return 
-        
+            return
+
         oid_field = arcpy.Describe(self.copy_fc).OIDFieldName
         arcpy.management.MakeFeatureLayer(self.copy_fc, self.layer_name)
-       
+
         where = f"{arcpy.AddFieldDelimiters(self.copy_fc, oid_field)} IN ({','.join(map(str, to_delete_oids))})"
         arcpy.management.SelectLayerByAttribute(self.layer_name, "NEW_SELECTION", where)
         arcpy.management.DeleteFeatures(self.layer_name)
 
         arcpy.management.SelectLayerByAttribute(self.layer_name, "CLEAR_SELECTION")
         arcpy.management.Delete(self.layer_name)
-        return 
+        return
 
     def run(self):
         """
@@ -153,16 +166,15 @@ class IsolatedLineRemover:
         self.copy()
         self.ensure_length_field()
 
-       
         self.generate_near_table()
         comp_map = self.build_adjacency_and_components()
         totals = self.aggregate_by_components(comp_map)
         to_delete_oids = self.decide_deletes(totals)
         self.delete_oids(to_delete_oids)
-
+        if self.added_l_field:
+            arcpy.management.DeleteField(self.copy_fc, self.length_field)
 
         arcpy.management.CopyFeatures(self.copy_fc, self.output_fc)
 
         arcpy.management.Delete(self.copy_fc)
         arcpy.management.Delete(self.near_table)
-

@@ -1,3 +1,4 @@
+
 import arcpy
 import math
 
@@ -11,8 +12,7 @@ from input_data import input_n10
 from env_setup import environment_setup
 
 
-
-def compute_line_azimuth(geom):
+def compute_line_azimuth(geom: arcpy.Polyline):
     """Return azimuth in degrees in range [0,180). Uses first and last point of the polyline."""
     if geom is None:
         return None
@@ -32,7 +32,7 @@ def compute_line_azimuth(geom):
     return angle_deg
 
 
-def azimuth_diff(a, b):
+def azimuth_diff(a: int, b: int):
     """Return smallest absolute difference between two azimuths in degrees (0..90)."""
     diff = abs(a - b) % 180.0
     if diff > 90.0:
@@ -40,8 +40,7 @@ def azimuth_diff(a, b):
     return diff
 
 
-
-def compute_and_store_azimuth(layer, az_field="azimuth_deg"):
+def compute_and_store_azimuth(layer: str, az_field: str = "azimuth_deg"):
     """Add azimuth field and compute azimuth for each feature using compute_line_azimuth."""
     arcpy.management.AddField(layer, az_field, "DOUBLE")
     with arcpy.da.UpdateCursor(layer, ["SHAPE@", az_field]) as ucur:
@@ -54,12 +53,12 @@ def compute_and_store_azimuth(layer, az_field="azimuth_deg"):
 
 
 def analyze_neighbor_pairs(
-    join_fc,
-    az_field="azimuth_deg",
-    length_field="Length_m",
-    az_tol=10,
-    min_count=20,
-    min_length_sum=10,
+    join_fc: str,
+    az_field: str = "azimuth_deg",
+    length_field: str = "Length_m",
+    az_tol: int = 10,
+    min_count: int = 20,
+    min_length_sum: int = 10,
 ):
     """
     Analyze spatial join results and return set of selected TARGET_FID OIDs.
@@ -94,12 +93,10 @@ def analyze_neighbor_pairs(
     return selected
 
 
-
-
 def dissolve_original_lines(
-    lines_layer,
-    out_dissolved="in_memory\\orig_lines_dissolved",
-    orig_layer_name="orig_lines",
+    lines_layer: str,
+    out_dissolved: str = "in_memory\\orig_lines_dissolved",
+    orig_layer_name: str = "orig_lines",
 ):
     """Dissolve original lines layer and create a feature layer for selection."""
     arcpy.management.Dissolve(
@@ -112,12 +109,11 @@ def dissolve_original_lines(
     return orig_layer_name
 
 
-
 def clip_and_erase(
-    lines,
-    buffers,
-    clipped_fc="in_memory\\clipped_lines_fc",
-    erased_fc="in_memory\\erased_lines_fc",
+    lines: str,
+    buffers: str,
+    clipped_fc: str = "in_memory\\clipped_lines_fc",
+    erased_fc: str = "in_memory\\erased_lines_fc",
 ):
     """
     clip and erase, but with an additional UNIQ_ID to connect them later, already existing id like lokalid dissapears earlier in a dissolve
@@ -138,142 +134,120 @@ def clip_and_erase(
     return clipped_fc, erased_fc
 
 
-
-
-def collect_ids(fc):
-    """
-    Build composite key (UNIQ_ID + buffer_id)
-    """
-    ids = set()
-    with arcpy.da.SearchCursor(fc, ["UNIQ_ID", "TARGET_FID"]) as cur:
-        for uniq_id, buf_id in cur:
-            ids.add((uniq_id, buf_id))
-    return ids
-
-
-def restore_lines_that_cross_buffer(files, clipped, erased, buffers):
+def restore_lines_that_cross_buffer(files: dict, clipped: str, erased: str):
     """
     If a line crosses the buffer we restore it by inserting the clipped parts of the line into the erased feature class/ its own only_restored
     """
 
-    # Split multipart features into singlepart
     erased_sp = erased + "_sp"
     clipped_sp = clipped + "_sp"
     arcpy.management.MultipartToSinglepart(clipped, clipped_sp)
     arcpy.management.MultipartToSinglepart(erased, erased_sp)
+    id_count = {}
+    with arcpy.da.SearchCursor(erased_sp, ["UNIQ_ID"]) as cur:
+        for row in cur:
+            uniq_id = row[0]
+            if uniq_id not in id_count:
+                id_count[uniq_id] = 1
+                continue
+            id_count[uniq_id] = id_count.get(uniq_id, 0) + 1
 
-    # Tag fragments with buffer ID
-    erased_tagged = erased_sp + "_tagged"
-    clipped_tagged = clipped_sp + "_tagged"
+    with arcpy.da.SearchCursor(clipped_sp, ["UNIQ_ID"]) as cur:
+        for row in cur:
+            uniq_id = row[0]
+            if uniq_id not in id_count:
+                id_count[uniq_id] = 1
+                continue
+            id_count[uniq_id] = id_count.get(uniq_id, 0) + 1
 
-    # Spatial join to get buffer IDs
-    arcpy.analysis.SpatialJoin(
-        target_features=erased_sp,
-        join_features=buffers,
-        out_feature_class=erased_tagged,
-        join_operation="JOIN_ONE_TO_ONE",
-        join_type="KEEP_ALL",
-    )
-    arcpy.analysis.SpatialJoin(
-        target_features=clipped_sp,
-        join_features=buffers,
-        out_feature_class=clipped_tagged,
-        join_operation="JOIN_ONE_TO_ONE",
-        join_type="KEEP_COMMON",
-    )
+    id_list = []
+    for v in id_count.items():
+        if v[1] > 2:
+            id_list.append(v[0])
 
-    erased_ids = collect_ids(erased_tagged)
-    clipped_ids = collect_ids(clipped_tagged)
-
-    # Crossing lines = appear in both clipped and erased for same buffer
-    crossing_ids = erased_ids & clipped_ids
-
-    # Replace erased parts with clipped parts
-    with arcpy.da.InsertCursor(
-        erased_tagged, ["UNIQ_ID", "TARGET_FID", "SHAPE@"]
-    ) as i_cur, arcpy.da.UpdateCursor(
-        clipped_tagged, ["UNIQ_ID", "TARGET_FID", "SHAPE@"]
-    ) as c_cur:
-
-        # Move clipped fragments into erased
-        for row in c_cur:
-            if (row[0], row[1]) in crossing_ids:
+    with arcpy.da.UpdateCursor(
+        clipped_sp, ["UNIQ_ID", "SHAPE@"]
+    ) as u_cur, arcpy.da.InsertCursor(erased_sp, ["UNIQ_ID", "SHAPE@"]) as i_cur:
+        for row in u_cur:
+            if row[0] in id_list:
                 i_cur.insertRow(row)
-                c_cur.deleteRow()
+                u_cur.deleteRow()
 
     arcpy.CopyFeatures_management(clipped_sp, files["clipped"])
     arcpy.CopyFeatures_management(erased_sp, files["erased"])
 
-    return clipped_tagged, erased_tagged
+    only_restored_layer = "only_restored_layer"
+    where = "UNIQ_ID IN ({})".format(",".join(map(str, id_list)))
+    arcpy.management.MakeFeatureLayer(
+        erased_sp, only_restored_layer, where_clause=where
+    )
+    arcpy.management.CopyFeatures(only_restored_layer, files["only_restored"])
+
+    return clipped_sp, erased_sp
 
 
-def connect_lines_to_buffer(lines_fc, buffer_fc):
+def connect_lines_to_buffer(lines_fc: str, buffer_fc: str):
     bid_field = "bufferID"
     buf_bid_field = f"{bid_field}_buf"
     arcpy.management.AddField(lines_fc, bid_field, "LONG")
-    arcpy.management.AddField(buffer_fc, buf_bid_field, "LONG") 
+    arcpy.management.AddField(buffer_fc, buf_bid_field, "LONG")
 
-    with arcpy.da.UpdateCursor(buffer_fc, ["OID@", buf_bid_field]) as ucur: 
+    with arcpy.da.UpdateCursor(buffer_fc, ["OID@", buf_bid_field]) as ucur:
         for row in ucur:
-            row[1] = int(row[0]) 
+            row[1] = int(row[0])
             ucur.updateRow(row)
 
-    out_sj = "in_memory\\lines_buf_sj" 
+    out_sj = "in_memory\\lines_buf_sj"
 
     arcpy.analysis.SpatialJoin(
-        target_features=lines_fc, 
-        join_features=buffer_fc, 
-        out_feature_class=out_sj, 
-        join_operation="JOIN_ONE_TO_ONE", 
-        join_type="KEEP_ALL", 
-        match_option="INTERSECT", )
-    
-    # Build mapping from TARGET_FID (original lines OID) to bufferID from the join 
-    mapping = {} 
-    # SpatialJoin output uses TARGET_FID to reference the target feature OID 
-    with arcpy.da.SearchCursor(out_sj, ["TARGET_FID", buf_bid_field]) as scur: 
-        for row in scur: 
-            tgt_oid = row[0] 
+        target_features=lines_fc,
+        join_features=buffer_fc,
+        out_feature_class=out_sj,
+        join_operation="JOIN_ONE_TO_ONE",
+        join_type="KEEP_ALL",
+        match_option="INTERSECT",
+    )
+
+    # Build mapping from TARGET_FID (original lines OID) to bufferID from the join
+    mapping = {}
+    # SpatialJoin output uses TARGET_FID to reference the target feature OID
+    with arcpy.da.SearchCursor(out_sj, ["TARGET_FID", buf_bid_field]) as scur:
+        for row in scur:
+            tgt_oid = row[0]
             buf_id = row[1]
-             # convert to int or None 
+            # convert to int or None
             mapping[int(tgt_oid)] = int(buf_id) if buf_id is not None else None
 
-    with arcpy.da.UpdateCursor(lines_fc, ["OID@", bid_field]) as ucur: 
-        for row in ucur: 
-            oid = int(row[0]) 
-            row[1] = mapping.get(oid, None) 
+    with arcpy.da.UpdateCursor(lines_fc, ["OID@", bid_field]) as ucur:
+        for row in ucur:
+            oid = int(row[0])
+            row[1] = mapping.get(oid, None)
             ucur.updateRow(row)
 
 
-
-def endpoint_key(pt, tol=1e-6):
+def endpoint_key(pt: arcpy.Point, tol: int = 1e-6):
     return (round(pt.X / tol) * tol, round(pt.Y / tol) * tol)
 
 
-def get_endpoints_for_oid(oid, geom_by_oid):
+def get_endpoints_for_oid(oid: int, geom_by_oid: dict):
     g = geom_by_oid[oid]
     return endpoint_key(g.firstPoint), endpoint_key(g.lastPoint)
 
 
-def intersects_buffer_edge(geom, buffer_outlines_geoms):
+def intersects_buffer_edge(geom: arcpy.Polyline, buffer_outlines_geoms: list):
     for eg in buffer_outlines_geoms:
         if not geom.disjoint(eg):
             return True
     return False
 
 
-def path_length(oids, geom_by_oid):
-    return sum(geom_by_oid[o].length for o in oids)
-
-
-
 def explore_paths(
-    start_oid,
-    start_endpoint,
-    geom_by_oid,
-    adjacency,
-    buffer_outlines_geoms,
-    global_visited,
+    start_oid: int,
+    start_endpoint: tuple,
+    geom_by_oid: dict,
+    adjacency: dict,
+    buffer_outlines_geoms: list,
+    global_visited: set,
 ):
     """
     Explore all paths starting from start_oid at start_endpoint going in one direction, looking for paths that intersect buffer edges.
@@ -308,7 +282,6 @@ def explore_paths(
         # avoid cycles in the current path
         if oid in path:
             continue
-
 
         # new path including this oid
         new_path = path + [oid]
@@ -380,13 +353,13 @@ def explore_paths(
 
 
 def iterative_side_lines(
-    orig_layer,
-    outside_layer,
-    buffers_fc,
-    output_fc,
-    max_iterations=20,
-    step=10.0,
-    tol=1.0,
+    orig_layer: str,
+    outside_layer: str,
+    buffers_fc: str,
+    output_fc: str,
+    max_iterations: int = 20,
+    step: int = 10.0,
+    tol: int = 1.0,
 ):
     """
     Iteratively expand outward from middle line:
@@ -394,6 +367,7 @@ def iterative_side_lines(
       - Shift them to exactly step m
       - Treat them as new middle lines for next iteration
     """
+
     endpoints_fc = r"in_memory\line_endpoints"
     arcpy.management.FeatureVerticesToPoints(outside_layer, endpoints_fc, "BOTH_ENDS")
     endpoint_buf = "in_memory\\endpoint_buf"
@@ -426,16 +400,11 @@ def iterative_side_lines(
         out_feature_class=dissolved_endpoint_buf,
         dissolve_field=None,
         multi_part="SINGLE_PART",
-        unsplit_lines="UNSPLIT_LINES"
+        unsplit_lines="UNSPLIT_LINES",
     )
 
-
-
-
-
-
-
     all_side_lines = []
+
     with arcpy.da.SearchCursor(buffers_fc, ["OID@", "SHAPE@"]) as buf_cur:
         for buf_oid, buf_geom in buf_cur:
             center = buf_geom.centroid
@@ -476,8 +445,10 @@ def iterative_side_lines(
                 selected_oids.add(mid_oid)
 
             for i in range(max_iterations):
-                with arcpy.da.SearchCursor("lines_lyr", ["OID@", "SHAPE@", "prio"]) as line_cur:
-                    #mid_segment = mid_line_side.segmentAlongLine(0.25, 0.75, use_percentage=True)
+                with arcpy.da.SearchCursor(
+                    "lines_lyr", ["OID@", "SHAPE@", "prio"]
+                ) as line_cur:
+                    # mid_segment = mid_line_side.segmentAlongLine(0.25, 0.75, use_percentage=True)
 
                     # collect candidates that are at least one step away
                     candidates_1 = []
@@ -506,14 +477,12 @@ def iterative_side_lines(
                                     if prio == 1:
                                         candidates_1.append((oid, geom, dist))
                                     else:
-                                         candidates_2.append((oid, geom, dist))
-                
+                                        candidates_2.append((oid, geom, dist))
+
                 if candidates_1:
                     candidates = candidates_1
                 else:
                     candidates = candidates_2
-
-                    
 
                 if candidates:
                     # choose the candidate with the smallest distance (closest among those >= step)
@@ -526,9 +495,6 @@ def iterative_side_lines(
                     mid_line = chosen_geom
                     # reset or keep target as desired; here we reset to step
                     continue
-                
-                
-
 
             arcpy.management.Delete("lines_lyr")
             if not selected_geoms:
@@ -542,8 +508,6 @@ def iterative_side_lines(
     if all_side_lines:
         if arcpy.Exists(output_fc):
             arcpy.management.Delete(output_fc)
-
-        # Merging all side lines
         arcpy.management.Merge(all_side_lines, output_fc)
 
         ##########
@@ -551,36 +515,28 @@ def iterative_side_lines(
         ##########
 
         dissolved_endpoint_buf_lyr = "dissolved_endpoint_buf_lyr"
-        arcpy.management.MakeFeatureLayer(dissolved_endpoint_buf, dissolved_endpoint_buf_lyr)
-        arcpy.management.SelectLayerByLocation(dissolved_endpoint_buf_lyr, "INTERSECT", output_fc, selection_type="NEW_SELECTION", invert_spatial_relationship="INVERT")
-        connect_lines_to_buffer(orig_layer,dissolved_endpoint_buf_lyr)
+        arcpy.management.MakeFeatureLayer(
+            dissolved_endpoint_buf, dissolved_endpoint_buf_lyr
+        )
+        arcpy.management.SelectLayerByLocation(
+            dissolved_endpoint_buf_lyr,
+            "INTERSECT",
+            output_fc,
+            selection_type="NEW_SELECTION",
+            invert_spatial_relationship="INVERT",
+        )
+        connect_lines_to_buffer(orig_layer, dissolved_endpoint_buf_lyr)
         buf_id = "bufferID"
 
-        # Merge uncovered buffers
-        merged_endpoint_buf = "in_memory\\uncovered_buffers_merged"
-        arcpy.management.Dissolve(
-            in_features=filtered_endpoint_buf,
-            out_feature_class=merged_endpoint_buf,
-            dissolve_field=None,
-            multi_part="SINGLE_PART",
-            unsplit_lines="UNSPLIT_LINES"
-        )
-
-        # Select side lines that do not intersect any endpoint buffer
-        arcpy.management.SelectLayerByLocation(merged_endpoint_buf, "INTERSECT", "side_lines_lyr")
-        arcpy.management.SelectLayerByAttribute(merged_endpoint_buf, "SWITCH_SELECTION")
-
-        # Assign cluster IDs to merged uncovered buffers for joining
-        arcpy.management.AddField(merged_endpoint_buf, "cluster_id", "LONG")
-        arcpy.management.CalculateField(merged_endpoint_buf, "cluster_id", "!OBJECTID!", "PYTHON3")
-
-        joined = "in_memory\\lines_with_cluster"
+        # Spatial join to get cluster IDs
+        joined = "in_memory\\side_lines_with_cluster"
         arcpy.analysis.SpatialJoin(
             target_features=orig_layer,
-            join_features=merged_endpoint_buf,
+            join_features=dissolved_endpoint_buf_lyr,
             out_feature_class=joined,
-            join_operation="JOIN_ONE_TO_MANY",
-            match_option="INTERSECT"
+            join_operation="JOIN_ONE_TO_ONE",
+            join_type="KEEP_ALL",
+            match_option="INTERSECT",
         )
 
         # For each cluster, find the longest line
@@ -589,79 +545,40 @@ def iterative_side_lines(
             in_table=joined,
             out_table=stats,
             statistics_fields=[["Shape_Length", "MAX"]],
-            case_field="cluster_id"
+            case_field=buf_id,
         )
 
         arcpy.management.MakeFeatureLayer(joined, "joined_lyr")
-        arcpy.management.AddJoin("joined_lyr", "cluster_id", stats, "cluster_id")
-        arcpy.management.SelectLayerByAttribute("joined_lyr", "NEW_SELECTION", '"Shape_Length" = "MAX_Shape_Length"')
-
-        final_lines = "in_memory\\final_side_lines"
-        arcpy.management.CopyFeatures("joined_lyr", final_lines)
-
-        # Clean final lines by removing those that are too close to the new lines
-        side_midpoints = "in_memory\\side_midpoints"
-        arcpy.management.FeatureVerticesToPoints(output_fc, side_midpoints, "MID")
-
-        side_mid_buf = "in_memory\\side_mid_buf10"
-        arcpy.analysis.Buffer(
-            in_features=side_midpoints,
-            out_feature_class=side_mid_buf,
-            buffer_distance_or_field="10 Meters",
-            dissolve_option="NONE"
-        )
-
-        arcpy.management.MakeFeatureLayer(output_fc, "all_side_lyr")
-        arcpy.management.MakeFeatureLayer(final_lines, "final_lines_lyr")
-        arcpy.management.MakeFeatureLayer(side_mid_buf, "side_mid_buf_lyr")
-
-        arcpy.management.SelectLayerByLocation(
-            "side_mid_buf_lyr",
-            overlap_type="INTERSECT",
-            select_features="final_lines_lyr",
-            selection_type="NEW_SELECTION"
-        )
-
-
-
-
-        # remove only long lines intersecting midpoint buffers
-        arcpy.management.SelectLayerByLocation(
-            "all_side_lyr",
-            overlap_type="INTERSECT",
-            select_features="side_mid_buf_lyr",
-            selection_type="NEW_SELECTION"
-        )
+        arcpy.management.AddJoin("joined_lyr", buf_id, stats, buf_id)
         arcpy.management.SelectLayerByAttribute(
-            "all_side_lyr",
-            "SUBSET_SELECTION",
-            "Shape_Length > 200"
+            "joined_lyr", "NEW_SELECTION", '"Shape_Length" = "MAX_Shape_Length"'
         )
-        arcpy.management.SelectLayerByAttribute("all_side_lyr", "SWITCH_SELECTION")
 
-        cleaned = "in_memory\\all_side_lines_cleaned"
-        arcpy.management.CopyFeatures("all_side_lyr", cleaned)
+        extra_lines = "in_memory\\extra_side_lines"
+        arcpy.management.CopyFeatures("joined_lyr", extra_lines)
 
-        # Merge the new lines with all side lines
-        merged_output = "in_memory\\merged_side_lines"
-        arcpy.management.Merge([final_lines, cleaned], merged_output)
-        arcpy.management.CopyFeatures(merged_output, output_fc)
+        with arcpy.da.SearchCursor(
+            extra_lines, ["SHAPE@"]
+        ) as s_cur, arcpy.da.InsertCursor(output_fc, ["SHAPE@"]) as i_cur:
+            for row in s_cur:
+                i_cur.insertRow(row)
+
+        attach_extra_lines_endpoints(orig_layer, output_fc, 15)
+
         return output_fc
     else:
         return None
-    
+
 
 @timing_decorator
-def attach_extra_lines_endpoints(orig_layer, output_fc, meters):
+def attach_extra_lines_endpoints(orig_layer: str, output_fc: str, meters: int):
     """
     attach extra lines when endpoints are uncovered
     """
-        # --- Start: ensure endpoints of orig_layer have at least one side line within 20 m ---
+    # --- Start: ensure endpoints of orig_layer have at least one side line within 20 m ---
     # create endpoints for orig_layer
     orig_endpoints = r"in_memory\orig_line_endpoints"
     arcpy.management.FeatureVerticesToPoints(orig_layer, orig_endpoints, "BOTH_ENDS")
-
-
 
     output_endpoints = r"in_memory\output_line_endpoints"
     arcpy.management.FeatureVerticesToPoints(output_fc, output_endpoints, "BOTH_ENDS")
@@ -671,27 +588,39 @@ def attach_extra_lines_endpoints(orig_layer, output_fc, meters):
 
     out_ep_buffer_geoms = []
     # iterate endpoints and check for nearby side lines
-    with arcpy.da.SearchCursor(orig_endpoints, ["OID@", "SHAPE@"]) as ep_cur, \
-         arcpy.da.InsertCursor(output_fc, ["SHAPE@"]) as out_ins:
+    with arcpy.da.SearchCursor(
+        orig_endpoints, ["OID@", "SHAPE@"]
+    ) as ep_cur, arcpy.da.InsertCursor(output_fc, ["SHAPE@"]) as out_ins:
 
         for ep_oid, ep_geom in ep_cur:
             # buffer the endpoint 20 m
             ep_buf = f"in_memory\\ep_buf_{ep_oid}"
-            arcpy.analysis.Buffer(ep_geom, ep_buf, f"{meters} Meters", dissolve_option="NONE")
+            arcpy.analysis.Buffer(
+                ep_geom, ep_buf, f"{meters} Meters", dissolve_option="NONE"
+            )
 
             # check if any side line intersects this buffer
-            arcpy.management.SelectLayerByLocation("side_lines_lyr", "INTERSECT", ep_buf, selection_type="NEW_SELECTION")
+            arcpy.management.SelectLayerByLocation(
+                "side_lines_lyr", "INTERSECT", ep_buf, selection_type="NEW_SELECTION"
+            )
             count = int(arcpy.management.GetCount("side_lines_lyr").getOutput(0))
 
             if count == 0:
                 # no side line within 20 m -> find candidate lines from orig_layer inside buffer
                 arcpy.management.MakeFeatureLayer(orig_layer, "orig_lines_lyr")
-                arcpy.management.SelectLayerByLocation("orig_lines_lyr", "INTERSECT", ep_buf, selection_type="NEW_SELECTION")
+                arcpy.management.SelectLayerByLocation(
+                    "orig_lines_lyr",
+                    "INTERSECT",
+                    ep_buf,
+                    selection_type="NEW_SELECTION",
+                )
 
                 # choose best candidate: prefer prio==1 and longest length
                 best_geom = None
                 best_score = -1.0
-                with arcpy.da.SearchCursor("orig_lines_lyr", ["OID@", "SHAPE@", "prio", "Shape_Length"]) as cand_cur:
+                with arcpy.da.SearchCursor(
+                    "orig_lines_lyr", ["OID@", "SHAPE@", "prio", "Shape_Length"]
+                ) as cand_cur:
                     for oid, geom, prio, length in cand_cur:
                         # score: prefer prio==1, then longer length
                         score = (1000 if prio == 1 else 0) + (length or 0)
@@ -723,14 +652,13 @@ def attach_extra_lines_endpoints(orig_layer, output_fc, meters):
     # --- End fallback block ---
 
 
-
-
-
-def prepare_lines(files,
-                  default_source: str,
-                  lines_layer: str,
-                  max_length: float = 1000.0,
-                  length_field: str = "Length_m",) -> str:
+def prepare_lines(
+    files: dict,
+    default_source: str,
+    lines_layer: str,
+    max_length: float = 1000.0,
+    length_field: str = "Length_m",
+) -> str:
     """
     Copy source to in-memory senterlinje, export non-rail features, create lines_fc,
     calculate geodesic length and return the filtered length layer name.
@@ -755,17 +683,17 @@ def prepare_lines(files,
         where_clause="jernbanetype = 'J'",
     )
 
+    arcpy.management.CopyFeatures(lines_layer, r"in_memory\jernbane_original")
+
     # Snap endpoints to each other within 3 meters
     arcpy.edit.Snap(lines_layer, [[lines_layer, "END", "3 Meters"]])
 
-    #delete rows of lines that collapsed in snap
-    with arcpy.da.UpdateCursor(lines_layer, ['SHAPE@']) as cursor:
+    # delete rows of lines that collapsed in snap
+    with arcpy.da.UpdateCursor(lines_layer, ["SHAPE@"]) as cursor:
         for row in cursor:
             geom = row[0]
-            if not geom or getattr(geom, 'isEmpty', False):
+            if not geom or getattr(geom, "isEmpty", False):
                 cursor.deleteRow()
-    
-
 
     # Copy to in-memory fc and calculate length
     lines_fc = r"in_memory\lines_fc"
@@ -776,14 +704,9 @@ def prepare_lines(files,
     )
     # Create a layer filtered by max_length
     length_layer = "length_lyr"
-    arcpy.management.MakeFeatureLayer(
-        in_features=lines_fc, out_layer=length_layer
-    )
-
-
+    arcpy.management.MakeFeatureLayer(in_features=lines_fc, out_layer=length_layer)
 
     return length_layer, lines_layer
-
 
 
 def add_azimuth(length_layer: str, az_field: str = "azimuth_deg") -> None:
@@ -802,12 +725,14 @@ def add_azimuth(length_layer: str, az_field: str = "azimuth_deg") -> None:
             ucur.updateRow(row)
 
 
-def select_and_buffer(files,
-                      length_layer: str,
-                      selection_lyr: str,
-                      buffer_dissolved_mem: str,
-                      buffer_distance: str = "40 Meters",
-                      src_oid_field: str = "src_oid") -> None:
+def select_and_buffer(
+    files: dict,
+    length_layer: str,
+    selection_lyr: str,
+    buffer_dissolved_mem: str,
+    buffer_distance: str = "40 Meters",
+    src_oid_field: str = "src_oid",
+) -> None:
     """
     Create selection layer, build buffers, spatially join buffers to lines,
     analyze neighbor pairs, select final lines, and produce dissolved buffer.
@@ -845,9 +770,6 @@ def select_and_buffer(files,
         join_operation="JOIN_ONE_TO_MANY",
         match_option="INTERSECT",
     )
-
-
-
 
     # Analyze neighbor pairs  to get selected OIDs
     selected_oids = analyze_neighbor_pairs(join_fc)
@@ -892,11 +814,7 @@ def select_and_buffer(files,
     )
 
 
-
-
-
-
-def connect_lines_to_buffer_and_buffer_centroids(clipped_fc, buffer_fc):
+def connect_lines_to_buffer_and_buffer_centroids(clipped_fc: str, buffer_fc: str):
     """
     For each line in clipped_fc, find first buffer it intersects and set bufferID.
     Also create buffer centroids with bufferID assigned.
@@ -943,7 +861,9 @@ def connect_lines_to_buffer_and_buffer_centroids(clipped_fc, buffer_fc):
     return buffer_centroids
 
 
-def create_whole_lines(clipped_fc, erased_fc, centroid_fc, buffer_fc):
+def create_whole_lines(
+    clipped_fc: str, erased_fc: str, centroid_fc: str, buffer_fc: str
+):
     """
     For each buffer group, connect lines into continuous paths starting from the line closest to the centroid.
 
@@ -960,8 +880,6 @@ def create_whole_lines(clipped_fc, erased_fc, centroid_fc, buffer_fc):
         for row in scur:
             bid = row[0]
             group_ids.add(bid)
-    
-    
 
     keep_line_set = set()
     clipped_layer = "clipped_layer"
@@ -979,12 +897,9 @@ def create_whole_lines(clipped_fc, erased_fc, centroid_fc, buffer_fc):
 
     for bid in group_ids:
 
-
         sql = f"bufferID = {bid}"
         arcpy.management.SelectLayerByAttribute(clipped_layer, "NEW_SELECTION", sql)
         arcpy.management.SelectLayerByAttribute(centroid_layer, "NEW_SELECTION", sql)
-
-
 
         with arcpy.da.SearchCursor(centroid_layer, ["SHAPE@"]) as cur:
             centroid_geom = next(cur)[0]
@@ -998,7 +913,6 @@ def create_whole_lines(clipped_fc, erased_fc, centroid_fc, buffer_fc):
 
         # sort by distance (closest first)
         dist_list.sort(key=lambda x: x[1])
-
 
         # Read geometries and build endpoint map
         geom_by_oid = {}
@@ -1014,8 +928,6 @@ def create_whole_lines(clipped_fc, erased_fc, centroid_fc, buffer_fc):
                 for pt in (first, last):
                     key = endpoint_key(pt)
                     endpoints_map.setdefault(key, set()).add(oid)
-        
-
 
         # build adjacency: oid -> set(neighbor_oids)
         adjacency = {oid: set() for oid in geom_by_oid}
@@ -1023,7 +935,6 @@ def create_whole_lines(clipped_fc, erased_fc, centroid_fc, buffer_fc):
             if len(oids) > 1:
                 for a in oids:
                     adjacency[a].update(oids - {a})
-        
 
         # traversal: start from the closest line to centroid
         possible_path = []
@@ -1070,27 +981,24 @@ def create_whole_lines(clipped_fc, erased_fc, centroid_fc, buffer_fc):
                 visited,
             )
 
-            # Merge paths and add to keep line lists based on priority 
-            #1: both ends reach buffer edge
-            #2: one end reaches buffer edge
-            #3: neither end reaches buffer edge
+            # Merge paths and add to keep line lists based on priority
+            # 1: both ends reach buffer edge
+            # 2: one end reaches buffer edge
+            # 3: neither end reaches buffer edge
 
             combined_path = []
             combined_path = list(path1)
             combined_path.extend(path2[1:])
             if found1 and found2:
- 
+
                 keep_line_list_list_prio1.append(combined_path)
 
             elif found1 or found2:
 
-
                 keep_line_list_list_prio2.append(combined_path)
-            
+
             else:
                 keep_line_list_list_prio3.append(combined_path)
-
-
 
         arcpy.management.AddField(
             in_table="in_memory\\complete_lines", field_name="prio", field_type="LONG"
@@ -1146,19 +1054,21 @@ def create_whole_lines(clipped_fc, erased_fc, centroid_fc, buffer_fc):
         arcpy.management.SelectLayerByAttribute(centroid_layer, "CLEAR_SELECTION")
 
 
-
-
-def keep_lines(files, lines_layer, buffer_dissolved_mem):
+def keep_lines(files: dict, lines_layer: str, buffer_dissolved_mem: str):
     """
     orchestrates the steps to keep whole lines that are within the buffer and restore lines that cross the buffer edges.
     """
     orig_layer = dissolve_original_lines(lines_layer)
 
     clipped_fc, erased_fc = clip_and_erase(orig_layer, buffer_dissolved_mem)
-    clipped_sp, erased_sp = restore_lines_that_cross_buffer(files, clipped_fc, erased_fc)
-    
-    buffer_centroids = connect_lines_to_buffer_and_buffer_centroids(clipped_sp, buffer_dissolved_mem)
-    
+    clipped_sp, erased_sp = restore_lines_that_cross_buffer(
+        files, clipped_fc, erased_fc
+    )
+
+    buffer_centroids = connect_lines_to_buffer_and_buffer_centroids(
+        clipped_sp, buffer_dissolved_mem
+    )
+
     create_whole_lines(clipped_sp, erased_sp, buffer_centroids, buffer_dissolved_mem)
 
     arcpy.management.CopyFeatures(erased_sp, files["erased_restored"])
@@ -1167,9 +1077,7 @@ def keep_lines(files, lines_layer, buffer_dissolved_mem):
         in_dataset="in_memory\\complete_lines", fields=["SHAPE"]
     )
 
-    arcpy.management.CopyFeatures(
-        "in_memory\\complete_lines", files["complete_lines"]
-    )
+    arcpy.management.CopyFeatures("in_memory\\complete_lines", files["complete_lines"])
 
     iterative_side_lines(
         orig_layer=files["complete_lines"],
@@ -1181,7 +1089,8 @@ def keep_lines(files, lines_layer, buffer_dissolved_mem):
         tol=1.0,
     )
 
-def remove_small_lines(input, output, buffer_dissolved_mem):
+
+def remove_small_lines(input: str, output: str, buffer_dissolved_mem: str):
     """
     Runs IsolatedLineRemover twice to remove small isolated lines.
     1st pass: removes small isolated lines in general
@@ -1192,6 +1101,7 @@ def remove_small_lines(input, output, buffer_dissolved_mem):
     isolated_line_remover = IsolatedLineRemover(
         input_fc=input,
         output_fc=removed_small_lines,
+        max_lines_per_group=6,
     )
     isolated_line_remover.run()
 
@@ -1215,24 +1125,40 @@ def remove_small_lines(input, output, buffer_dissolved_mem):
 
     isolated_line_remover2 = IsolatedLineRemover(
         input_fc=removed_small_lines_lyr,
-        output_fc=output,
+        output_fc=r"in_memory\removed_small_lines_around_buffer",
+        max_lines_per_group=6,
         length_threshold_add_per_segment=150,
         search_radius_m=2,
     )
     isolated_line_remover2.run()
 
-    
-    arcpy.management.CopyFeatures(removed_small_lines_lyr2, r"in_memory\otherlines_not_removed")
+    removed_small_lines_lyr2 = "removed_small_lines_lyr2"
+    arcpy.management.MakeFeatureLayer(
+        in_features=removed_small_lines, out_layer=removed_small_lines_lyr2
+    )
 
-    arcpy.management.Merge([r"in_memory\removed_small_lines_around_buffer", r"in_memory\otherlines_not_removed"], output)
+    arcpy.management.SelectLayerByLocation(
+        removed_small_lines_lyr2,
+        overlap_type="INTERSECT",
+        select_features=buffer_expanded_mem,
+        selection_type="NEW_SELECTION",
+        invert_spatial_relationship="INVERT",
+    )
+
+    arcpy.management.CopyFeatures(
+        removed_small_lines_lyr2, r"in_memory\otherlines_not_removed"
+    )
+
+    arcpy.management.Merge(
+        [
+            r"in_memory\removed_small_lines_around_buffer",
+            r"in_memory\otherlines_not_removed",
+        ],
+        output,
+    )
 
 
-    
-
-
-
-
-def get_data_of_original_innside(innside_lines, orig_lines, output):
+def get_data_of_original_innside(innside_lines: str, orig_lines: str, output: str):
     """
     restores attributes from orig_lines to innside_lines after splitting innside_lines at orig_lines endpoints
     1. Split innside_lines at orig_lines endpoints
@@ -1244,24 +1170,29 @@ def get_data_of_original_innside(innside_lines, orig_lines, output):
     points = r"in_memory\orig_lines_points"
     arcpy.management.FeatureVerticesToPoints(orig_lines, points, "BOTH_ENDS")
 
-    split_lines= r"in_memory\lines_split_at_points"
-    arcpy.management.SplitLineAtPoint(innside_lines, points, split_lines, search_radius="5 Meters")
+    split_lines = r"in_memory\lines_split_at_points"
+    arcpy.management.SplitLineAtPoint(
+        innside_lines, points, split_lines, search_radius="5 Meters"
+    )
 
-    #orig_lines_centerpoints = r"in_memory\orig_lines_centerpoints"
+    # orig_lines_centerpoints = r"in_memory\orig_lines_centerpoints"
     split_lines_centerpoints = r"in_memory\split_lines_centerpoints"
-    #arcpy.management.FeatureToPoint(orig_lines, orig_lines_centerpoints, "CENTROID")
+    # arcpy.management.FeatureToPoint(orig_lines, orig_lines_centerpoints, "CENTROID")
     arcpy.management.FeatureToPoint(split_lines, split_lines_centerpoints, "INSIDE")
 
-
-
     near_table = r"in_memory\near_table_of_lines"
-    arcpy.analysis.GenerateNearTable(split_lines_centerpoints, orig_lines, near_table, closest="CLOSEST", method="PLANAR")
+    arcpy.analysis.GenerateNearTable(
+        split_lines_centerpoints,
+        orig_lines,
+        near_table,
+        closest="CLOSEST",
+        method="PLANAR",
+    )
 
-
-    seg_points_to_orig_lines = {} 
-    with arcpy.da.SearchCursor(near_table, ["IN_FID", "NEAR_FID"]) as cur: 
-        for in_fid, near_fid in cur: 
-            if in_fid not in seg_points_to_orig_lines: 
+    seg_points_to_orig_lines = {}
+    with arcpy.da.SearchCursor(near_table, ["IN_FID", "NEAR_FID"]) as cur:
+        for in_fid, near_fid in cur:
+            if in_fid not in seg_points_to_orig_lines:
                 seg_points_to_orig_lines[in_fid] = near_fid
 
     split_points_to_split = {}
@@ -1274,22 +1205,36 @@ def get_data_of_original_innside(innside_lines, orig_lines, output):
         seg = split_points_to_split[seg_p]
         seg_to_orig[seg] = orig_l
 
-    
-    
-    orig_fields = [f.name for f in arcpy.ListFields(orig_lines) if not f.required and f.type != 'Geometry']
-    orig_alias = [f.aliasName for f in arcpy.ListFields(orig_lines) if not f.required and f.type != 'Geometry']
+    orig_fields = [
+        f.name
+        for f in arcpy.ListFields(orig_lines)
+        if not f.required and f.type != "Geometry"
+    ]
+    orig_alias = [
+        f.aliasName
+        for f in arcpy.ListFields(orig_lines)
+        if not f.required and f.type != "Geometry"
+    ]
 
-    target_fields = [f.name for f in arcpy.ListFields(split_lines) if not f.required and f.type != 'Geometry'] 
-    for fld, alias in zip(orig_fields, orig_alias): 
-        if fld not in target_fields: 
-            arcpy.management.AddField(split_lines, fld, arcpy.ListFields(orig_lines, fld)[0].type, field_alias=alias)
-            
-    
-    orig_oid_field = arcpy.Describe(orig_lines).OIDFieldName 
-    orig_attr = {} 
-    fields = [orig_oid_field] + orig_fields 
-    with arcpy.da.SearchCursor(orig_lines, fields) as cur: 
-        for row in cur: 
+    target_fields = [
+        f.name
+        for f in arcpy.ListFields(split_lines)
+        if not f.required and f.type != "Geometry"
+    ]
+    for fld, alias in zip(orig_fields, orig_alias):
+        if fld not in target_fields:
+            arcpy.management.AddField(
+                split_lines,
+                fld,
+                arcpy.ListFields(orig_lines, fld)[0].type,
+                field_alias=alias,
+            )
+
+    orig_oid_field = arcpy.Describe(orig_lines).OIDFieldName
+    orig_attr = {}
+    fields = [orig_oid_field] + orig_fields
+    with arcpy.da.SearchCursor(orig_lines, fields) as cur:
+        for row in cur:
             orig_attr[row[0]] = row[1:]
 
     split_oid_field = arcpy.Describe(split_lines).OIDFieldName
@@ -1304,19 +1249,28 @@ def get_data_of_original_innside(innside_lines, orig_lines, output):
                 ucur.updateRow(urow)
 
     for field in target_fields:
-            if field not in orig_fields:
-                arcpy.management.DeleteField(split_lines, field)
+        if field not in orig_fields:
+            arcpy.management.DeleteField(split_lines, field)
 
-    
-    orig_fields_dissolve = [f.name for f in arcpy.ListFields(orig_lines) if not f.required and f.type != 'Geometry' and f.name != "SHAPE_Length"]
+    orig_fields_dissolve = [
+        f.name
+        for f in arcpy.ListFields(orig_lines)
+        if not f.required and f.type != "Geometry" and f.name != "SHAPE_Length"
+    ]
     out_fc = r"in_memory\dissolved_split_lines_"
-    arcpy.management.Dissolve(split_lines, out_fc, dissolve_field=orig_fields_dissolve, multi_part="SINGLE_PART")
-    
+    arcpy.management.Dissolve(
+        split_lines,
+        out_fc,
+        dissolve_field=orig_fields_dissolve,
+        multi_part="SINGLE_PART",
+    )
+
     arcpy.management.CopyFeatures(out_fc, output)
 
 
-
-def restore_medium_b_lines(outside_lines, inside_lines, buffer, whole_lines):
+def restore_medium_b_lines(
+    outside_lines: str, inside_lines: str, buffer: str, whole_lines: str
+):
     """
     Finds medium b lines that have been cut and adds whole line connected to it, to uncut it
     """
@@ -1329,22 +1283,31 @@ def restore_medium_b_lines(outside_lines, inside_lines, buffer, whole_lines):
     arcpy.management.MakeFeatureLayer(buffer, buffer_layer)
     arcpy.management.MakeFeatureLayer(inside_lines, inside_lines_layer)
 
-    
     arcpy.management.SelectLayerByLocation(b_outside_layer, "INTERSECT", buffer_layer)
-    
-    arcpy.management.SelectLayerByLocation(b_outside_layer, "INTERSECT", inside_lines_layer, selection_type="SUBSET_SELECTION", invert_spatial_relationship="INVERT")
 
-
+    arcpy.management.SelectLayerByLocation(
+        b_outside_layer,
+        "INTERSECT",
+        inside_lines_layer,
+        selection_type="SUBSET_SELECTION",
+        invert_spatial_relationship="INVERT",
+    )
 
     arcpy.management.MakeFeatureLayer(whole_lines, whole_intersect_b_outside_layer)
-    arcpy.management.SelectLayerByLocation(whole_intersect_b_outside_layer, "INTERSECT", b_outside_layer)
+    arcpy.management.SelectLayerByLocation(
+        whole_intersect_b_outside_layer, "INTERSECT", b_outside_layer
+    )
 
+    w_rows = [
+        row
+        for row in arcpy.da.SearchCursor(
+            whole_intersect_b_outside_layer, ["OID@", "SHAPE@", "prio"]
+        )
+    ]
 
-
-    w_rows = [row for row in arcpy.da.SearchCursor(whole_intersect_b_outside_layer, ["OID@", "SHAPE@", "prio"])]
-
-    with arcpy.da.SearchCursor(b_outside_layer, ["SHAPE@"]) as b_cur, \
-        arcpy.da.InsertCursor(inside_lines, ["SHAPE@"]) as i_cur:
+    with arcpy.da.SearchCursor(
+        b_outside_layer, ["SHAPE@"]
+    ) as b_cur, arcpy.da.InsertCursor(inside_lines, ["SHAPE@"]) as i_cur:
 
         for b_row in b_cur:
             possible_lines = {}
@@ -1359,17 +1322,19 @@ def restore_medium_b_lines(outside_lines, inside_lines, buffer, whole_lines):
                         continue
 
                     # if no entry yet, or this geometry is longer, store/replace it
-                    if w_oid not in possible_lines or possible_lines[w_oid][0].length < w_geom.length:
+                    if (
+                        w_oid not in possible_lines
+                        or possible_lines[w_oid][0].length < w_geom.length
+                    ):
                         possible_lines[w_oid] = [w_geom, w_prio]
 
             # insert the selected geometries for this b_geom
             for geom, prio in possible_lines.values():
                 i_cur.insertRow([geom])
 
-                
 
 @timing_decorator
-def merge_lines(files):
+def merge_lines(files: dict):
     """
     merge the seperated part together first, then remove small lines, then
     merge divided roads on lines outside of stations, seperated by jernbanetype and medium
@@ -1377,28 +1342,42 @@ def merge_lines(files):
     """
 
     merge_field = "merge_field"
-    arcpy.management.AddField(files["lines_with_attributes_innside"], merge_field, "SHORT")
-    arcpy.management.CalculateField(files["lines_with_attributes_innside"], merge_field, "0", "PYTHON3")
+    arcpy.management.AddField(
+        files["lines_with_attributes_innside"], merge_field, "SHORT"
+    )
+    arcpy.management.CalculateField(
+        files["lines_with_attributes_innside"], merge_field, "0", "PYTHON3"
+    )
 
+    arcpy.management.Merge(
+        [
+            files["lines_with_attributes_innside"],
+            files["lines_with_attributes_outside"],
+            files["not_jernbane"],
+        ],
+        files["final_all_lines"],
+    )
 
-    arcpy.management.Merge([files["lines_with_attributes_innside"], files["lines_with_attributes_outside"], files["not_jernbane"]], files["final_all_lines"])
-
-    remove_small_lines(files["final_all_lines"], files["small_lines_removed"], files["selected_lines_buffer"])
-
-
-
-
+    remove_small_lines(
+        files["final_all_lines"],
+        files["small_lines_removed"],
+        files["selected_lines_buffer"],
+    )
 
     lines_singlepart = r"in_memory\lines_singlepart_89535"
-    arcpy.management.MultipartToSinglepart(files["small_lines_removed"], lines_singlepart)
+    arcpy.management.MultipartToSinglepart(
+        files["small_lines_removed"], lines_singlepart
+    )
 
     busy_oids = get_busy_oids(files, lines_singlepart)
 
-    jernbanetype_map = { "F": 10, "J": 20, "K": 30, "S": 40, "T": 50 } 
-    medium_map = { "B": 1, "L": 2, "T": 3, "U": 4 }
+    jernbanetype_map = {"F": 10, "J": 20, "K": 30, "S": 40, "T": 50}
+    medium_map = {"B": 1, "L": 2, "T": 3, "U": 4}
 
-    with arcpy.da.UpdateCursor(lines_singlepart, ["jernbanetype", "medium", merge_field, "OID@"]) as cursor: 
-        for row in cursor: 
+    with arcpy.da.UpdateCursor(
+        lines_singlepart, ["jernbanetype", "medium", merge_field, "OID@"]
+    ) as cursor:
+        for row in cursor:
             if row[2] == 0:
                 continue
             if row[3] in busy_oids:
@@ -1406,27 +1385,27 @@ def merge_lines(files):
                 cursor.updateRow(row)
                 continue
 
-            jtype = row[0] 
+            jtype = row[0]
             med = row[1]
 
-            base = jernbanetype_map.get(jtype, 0) 
-            add = medium_map.get(med, 0) 
-            row[2] = base + add 
+            base = jernbanetype_map.get(jtype, 0)
+            add = medium_map.get(med, 0)
+            row[2] = base + add
             cursor.updateRow(row)
-    
+
     outside_lines_dissolved = r"in_memory\outside_lines_dissolved_1264"
-    #arcpy.management.Dissolve(outside_lines_singlepart, outside_lines_dissolved, merge_field, multi_part="SINGLE_PART")
-    arcpy.cartography.MergeDividedRoads(in_features=lines_singlepart, merge_field=merge_field, merge_distance="7 Meters", out_features=Railway_N10.output_railway_n10.value)
-            
+    # arcpy.management.Dissolve(outside_lines_singlepart, outside_lines_dissolved, merge_field, multi_part="SINGLE_PART")
+    arcpy.cartography.MergeDividedRoads(
+        in_features=lines_singlepart,
+        merge_field=merge_field,
+        merge_distance="7 Meters",
+        out_features=Railway_N10.output_railway_n10.value,
+    )
 
 
-
-
-
-
-def get_busy_oids(files, input):
+def get_busy_oids(files: dict, input: str):
     """
-    use analyze_neighbor_pairs to find busy lines based on azimuth tolerance 
+    use analyze_neighbor_pairs to find busy lines based on azimuth tolerance
     """
     length_field = "Length_m"
     arcpy.management.AddField(input, length_field, "DOUBLE")
@@ -1434,7 +1413,6 @@ def get_busy_oids(files, input):
         input, [[length_field, "LENGTH_GEODESIC"]], length_unit="METERS"
     )
     add_azimuth(input)
-
 
     # Create buffer around the length features (for neighbor detection)
     buffer_fc = files["buffer_busy_lines"]
@@ -1468,19 +1446,12 @@ def get_busy_oids(files, input):
         match_option="INTERSECT",
     )
 
-
-
-
     # Analyze neighbor pairs  to get selected OIDs
-    selected_oids = analyze_neighbor_pairs(join_fc, length_field=length_field, az_tol=15, min_count=6, min_length_sum=5)
+    selected_oids = analyze_neighbor_pairs(
+        join_fc, length_field=length_field, az_tol=15, min_count=6, min_length_sum=5
+    )
 
     return selected_oids
-
-
-
-
-
-
 
 
 def create_wfm_gdbs(wfm: WorkFileManager) -> dict:
@@ -1501,19 +1472,31 @@ def create_wfm_gdbs(wfm: WorkFileManager) -> dict:
     complete_lines = wfm.build_file_path(file_name="complete_lines", file_type="gdb")
     not_jernbane = wfm.build_file_path(file_name="not_jernbane", file_type="gdb")
     selected_lines = wfm.build_file_path(file_name="selected_lines", file_type="gdb")
-    selected_lines_buffer = wfm.build_file_path(file_name="selected_lines_buffer", file_type="gdb")
+    selected_lines_buffer = wfm.build_file_path(
+        file_name="selected_lines_buffer", file_type="gdb"
+    )
     final_selection = wfm.build_file_path(file_name="final_selection", file_type="gdb")
-    lines_with_attributes_outside = wfm.build_file_path(file_name="lines_with_attributes_outside", file_type="gdb")
-    lines_with_attributes_innside = wfm.build_file_path(file_name="lines_with_attributes_innside", file_type="gdb")
+    lines_with_attributes_outside = wfm.build_file_path(
+        file_name="lines_with_attributes_outside", file_type="gdb"
+    )
+    lines_with_attributes_innside = wfm.build_file_path(
+        file_name="lines_with_attributes_innside", file_type="gdb"
+    )
     final_all_lines = wfm.build_file_path(file_name="final_all_lines", file_type="gdb")
     only_restored = wfm.build_file_path(file_name="only_restored", file_type="gdb")
-    final_selection_restored = wfm.build_file_path(file_name="final_selection_restored", file_type="gdb")
+    final_selection_restored = wfm.build_file_path(
+        file_name="final_selection_restored", file_type="gdb"
+    )
     cluster = wfm.build_file_path(file_name="cluster", file_type="gdb")
-    small_lines_removed = wfm.build_file_path(file_name="small_lines_removed", file_type="gdb")
-    lines_outside_merged = wfm.build_file_path(file_name="lines_outside_merged", file_type="gdb")
-    buffer_busy_lines = wfm.build_file_path(file_name="buffer_busy_lines", file_type="gdb")
-
-    
+    small_lines_removed = wfm.build_file_path(
+        file_name="small_lines_removed", file_type="gdb"
+    )
+    lines_outside_merged = wfm.build_file_path(
+        file_name="lines_outside_merged", file_type="gdb"
+    )
+    buffer_busy_lines = wfm.build_file_path(
+        file_name="buffer_busy_lines", file_type="gdb"
+    )
 
     return {
         "railways": railways,
@@ -1534,7 +1517,6 @@ def create_wfm_gdbs(wfm: WorkFileManager) -> dict:
         "lines_outside_merged": lines_outside_merged,
         "small_lines_removed": small_lines_removed,
         "buffer_busy_lines": buffer_busy_lines,
-        
     }
 
 
@@ -1542,7 +1524,7 @@ def create_wfm_gdbs(wfm: WorkFileManager) -> dict:
 def main():
     #
     # For some reason these settings cause the output to worsen so we clear them then restore them
-    #arcpy.env.XYTolerance, arcpy.env.XYResolution, arcpy.env.parallelProcessingFactor
+    # arcpy.env.XYTolerance, arcpy.env.XYResolution, arcpy.env.parallelProcessingFactor
     environment_setup.main()
 
     tol = arcpy.env.XYTolerance
@@ -1552,7 +1534,6 @@ def main():
     arcpy.ClearEnvironment("XYTolerance")
     arcpy.ClearEnvironment("XYResolution")
     arcpy.ClearEnvironment("parallelProcessingFactor")
-
 
     source_file, files, wfm = setup_workflow()
     lines_lyr, buffer_dissolved_mem = prepare_and_select(source_file, files)
@@ -1565,7 +1546,6 @@ def main():
     arcpy.env.parallelProcessingFactor = ppf
 
 
-
 def setup_workflow():
     source_file = input_n10.Railways
     working_fc = Railway_N10.input_railway_n10.value
@@ -1576,7 +1556,7 @@ def setup_workflow():
 
 
 @timing_decorator
-def prepare_and_select(source_file, files):
+def prepare_and_select(source_file: str, files: dict):
     lines_layer = "lines_layer"
     buffer_dissolved_mem = files["selected_lines_buffer"]
 
@@ -1588,40 +1568,52 @@ def prepare_and_select(source_file, files):
 
 
 @timing_decorator
-def generate_generalized_selection(files, lines_lyr, buffer_dissolved_mem):
+def generate_generalized_selection(
+    files: dict, lines_lyr: str, buffer_dissolved_mem: str
+):
     keep_lines(files, lines_lyr, buffer_dissolved_mem)
 
-    arcpy.management.Merge([files["final_selection"], files["only_restored"]], files["final_selection_restored"])
+    arcpy.management.Merge(
+        [files["final_selection"], files["only_restored"]],
+        files["final_selection_restored"],
+    )
 
 
 @timing_decorator
-def finalize_and_export(files, buffer_dissolved_mem):
+def finalize_and_export(files: dict, buffer_dissolved_mem: str):
     copy_of_original_jernbane = r"in_memory\jernbane_original"
 
-    #get outside lines with attributes 
-    arcpy.analysis.Erase(copy_of_original_jernbane, buffer_dissolved_mem, files["lines_with_attributes_outside"])
+    # get outside lines with attributes
+    arcpy.analysis.Erase(
+        copy_of_original_jernbane,
+        buffer_dissolved_mem,
+        files["lines_with_attributes_outside"],
+    )
 
-    #ensure no medium b lines are cut
-    restore_medium_b_lines(files["lines_with_attributes_outside"], files["final_selection_restored"], buffer_dissolved_mem, files["complete_lines"])
+    # ensure no medium b lines are cut
+    restore_medium_b_lines(
+        files["lines_with_attributes_outside"],
+        files["final_selection_restored"],
+        buffer_dissolved_mem,
+        files["complete_lines"],
+    )
 
-
-   
-    
-    get_data_of_original_innside(files["final_selection_restored"], copy_of_original_jernbane, files["lines_with_attributes_innside"])
+    get_data_of_original_innside(
+        files["final_selection_restored"],
+        copy_of_original_jernbane,
+        files["lines_with_attributes_innside"],
+    )
 
     merge_lines(files)
 
-    
-    
-
     oid_field = arcpy.Describe(Railway_N10.output_railway_n10.value).OIDFieldName
-    fields = [f.name for f in arcpy.ListFields(Railway_N10.output_railway_n10.value) if f.name != oid_field]
+    fields = [
+        f.name
+        for f in arcpy.ListFields(Railway_N10.output_railway_n10.value)
+        if f.name != oid_field
+    ]
     arcpy.management.DeleteIdentical(Railway_N10.output_railway_n10.value, fields)
-
-
 
 
 if __name__ == "__main__":
     main()
-
-
