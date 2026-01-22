@@ -7,11 +7,32 @@ Buildings = rf"{n10_path}\fkb_bygning_omrade"
 Airport = rf"{n10_path}\n50k_lufthavn_punkt_p450"
 Contours = rf"{n10_path}\n10_hoydekurver_5m"
 
+# Annotations
+Stedsnavn = rf"{n10_path}\N10_Stedsnavn_2026_Anno10000"
+Stedsnavn_linje = rf"{n10_path}\Stedsnavn_linje_2026Anno10000"
+Veglenke = rf"{n10_path}\N10_Veglenke_2026Anno10000"
+Veglenke_overbygg = rf"{n10_path}\Veglenke_Overbygg_2026Anno10000"
+Veglenke_tunnel = rf"{n10_path}\Veglenke_Tunnel_2026Anno10000"
+
 # Defining datasets to test paths are set up correctly later
 n10_datasets = [
     Buildings,
     Airport,
     Contours,
+    Stedsnavn,
+    Stedsnavn_linje,
+    Veglenke,
+    Veglenke_overbygg,
+    Veglenke_tunnel,
+]
+
+# Annotations
+annotations = [
+    Stedsnavn,
+    Stedsnavn_linje,
+    Veglenke,
+    Veglenke_overbygg,
+    Veglenke_tunnel,
 ]
 
 
