@@ -9,7 +9,6 @@ from file_manager import WorkFileManager
 from file_manager.n10.file_manager_railway import Railway_N10
 from input_data import input_n10
 from env_setup import environment_setup
-import config
 
 
 
