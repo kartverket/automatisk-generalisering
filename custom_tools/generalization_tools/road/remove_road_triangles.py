@@ -1403,7 +1403,7 @@ class RemoveRoadTriangles:
             edit_fc (str): Featureclass with the data that should be kept
         """
         if self.road_or_river == "river":
-            output = River_N100.river_triangles___output___n100_river.value
+            output = River_N100.river_triangles___output___n100.value
         else:
             if scale.lower() == "n100":
                 output = Road_N100.road_triangles_output.value
@@ -1504,11 +1504,9 @@ def generalize_road_triangles_no_partition_call(scale: str, road_or_river: str) 
 
     before = False
     if road_or_river.lower() == "river":
-        file = (
-            River_N100.river_connected___final_connected_river_lines___n100_river.value
-        )
-        root = River_N100.river_triangles___remove_triangles_root___n100_river.value
-        removed = River_N100.river_triangles___removed_triangles___n100_river.value
+        file = River_N100.river_connected___final_connected_river_lines___n100.value
+        root = River_N100.river_triangles___remove_triangles_root___n100.value
+        removed = River_N100.river_triangles___removed_triangles___n100.value
     else:
         if scale.lower() == "n100":
             file = (

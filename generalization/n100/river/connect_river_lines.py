@@ -42,48 +42,48 @@ class ConnectRiverLines:
         custom_arcpy.select_attribute_and_make_permanent_feature(
             input_layer=config.basin_path,
             expression=f"vassOmr = '{self.basin}'",
-            output_name=River_N100.selecting_basin___basin_selection___n100_river.value,
+            output_name=River_N100.selecting_basin___basin_selection___n100.value,
             selection_type="NEW_SELECTION",
         )
 
         custom_arcpy.select_location_and_make_permanent_feature(
             input_layer=config.grense_path,
             overlap_type=custom_arcpy.OverlapType.INTERSECT.value,
-            select_features=River_N100.selecting_basin___basin_selection___n100_river.value,
-            output_name=River_N100.selecting_basin___basin_lines___n100_river.value,
+            select_features=River_N100.selecting_basin___basin_selection___n100.value,
+            output_name=River_N100.selecting_basin___basin_lines___n100.value,
         )
 
         custom_arcpy.select_attribute_and_make_permanent_feature(
-            input_layer=River_N100.selecting_basin___basin_lines___n100_river.value,
+            input_layer=River_N100.selecting_basin___basin_lines___n100.value,
             expression="objtype = 'ElvBekk'",
-            output_name=River_N100.selecting_basin___basin_lines_selection___n100_river.value,
+            output_name=River_N100.selecting_basin___basin_lines_selection___n100.value,
             selection_type="NEW_SELECTION",
         )
 
         custom_arcpy.select_location_and_make_permanent_feature(
             input_layer=config.omrade_path,
             overlap_type=custom_arcpy.OverlapType.INTERSECT.value,
-            select_features=River_N100.selecting_basin___basin_selection___n100_river.value,
-            output_name=River_N100.selecting_basin___basin_polygons___n100_river.value,
+            select_features=River_N100.selecting_basin___basin_selection___n100.value,
+            output_name=River_N100.selecting_basin___basin_polygons___n100.value,
         )
 
         custom_arcpy.select_location_and_make_permanent_feature(
-            input_layer=River_N100.selecting_basin___basin_polygons___n100_river.value,
+            input_layer=River_N100.selecting_basin___basin_polygons___n100.value,
             overlap_type=custom_arcpy.OverlapType.WITHIN_A_DISTANCE.value,
-            select_features=River_N100.selecting_basin___basin_lines_selection___n100_river.value,
-            output_name=River_N100.selecting_basin___polygons_near_lines___n100_river.value,
+            select_features=River_N100.selecting_basin___basin_lines_selection___n100.value,
+            output_name=River_N100.selecting_basin___polygons_near_lines___n100.value,
             search_distance="1 Meters",
         )
 
         arcpy.management.MakeFeatureLayer(
-            River_N100.selecting_basin___basin_polygons___n100_river.value,
-            River_N100.selecting_basin___basin_polygons_copy___n100_river.value,
+            River_N100.selecting_basin___basin_polygons___n100.value,
+            River_N100.selecting_basin___basin_polygons_copy___n100.value,
         )
 
         arcpy.analysis.SpatialJoin(
-            target_features=River_N100.selecting_basin___basin_polygons___n100_river.value,
-            join_features=River_N100.selecting_basin___basin_polygons_copy___n100_river.value,
-            out_feature_class=River_N100.selecting_basin___polygons_near_polygons___n100_river.value,
+            target_features=River_N100.selecting_basin___basin_polygons___n100.value,
+            join_features=River_N100.selecting_basin___basin_polygons_copy___n100.value,
+            out_feature_class=River_N100.selecting_basin___polygons_near_polygons___n100.value,
             join_operation="JOIN_ONE_TO_MANY",
             join_type="KEEP_COMMON",
             match_option="WITHIN_A_DISTANCE",
@@ -92,7 +92,7 @@ class ConnectRiverLines:
 
         # Remove self-matches (TARGET_FID == JOIN_FID)
         with arcpy.da.UpdateCursor(
-            River_N100.selecting_basin___polygons_near_polygons___n100_river.value,
+            River_N100.selecting_basin___polygons_near_polygons___n100.value,
             ["TARGET_FID", "JOIN_FID"],
         ) as cursor:
             for target, join in cursor:
@@ -101,82 +101,78 @@ class ConnectRiverLines:
 
         arcpy.management.Merge(
             [
-                River_N100.selecting_basin___polygons_near_lines___n100_river.value,
-                River_N100.selecting_basin___polygons_near_polygons___n100_river.value,
+                River_N100.selecting_basin___polygons_near_lines___n100.value,
+                River_N100.selecting_basin___polygons_near_polygons___n100.value,
             ],
-            River_N100.selecting_basin___polygons_near_rivers___n100_river.value,
+            River_N100.selecting_basin___polygons_near_rivers___n100.value,
         )
 
         custom_arcpy.select_attribute_and_make_permanent_feature(
-            input_layer=River_N100.selecting_basin___polygons_near_rivers___n100_river.value,
+            input_layer=River_N100.selecting_basin___polygons_near_rivers___n100.value,
             expression="objtype IN ('Elv', 'Innsjø')",
-            output_name=River_N100.selecting_basin___polygons_near_rivers_selection___n100_river.value,
+            output_name=River_N100.selecting_basin___polygons_near_rivers_selection___n100.value,
             selection_type="NEW_SELECTION",
         )
 
         arcpy.cartography.CollapseHydroPolygon(
-            in_features=River_N100.selecting_basin___polygons_near_rivers_selection___n100_river.value,
-            out_line_feature_class=River_N100.river_connected___collapse_hydro_polygon___n100_river.value,
-            connecting_features=River_N100.selecting_basin___basin_lines_selection___n100_river.value,
+            in_features=River_N100.selecting_basin___polygons_near_rivers_selection___n100.value,
+            out_line_feature_class=River_N100.river_connected___collapse_hydro_polygon___n100.value,
+            connecting_features=River_N100.selecting_basin___basin_lines_selection___n100.value,
         )
 
         arcpy.management.FeatureVerticesToPoints(
-            River_N100.selecting_basin___basin_lines_selection___n100_river.value,
-            River_N100.intersection_points___river_endpoints___n100_river.value,
+            River_N100.selecting_basin___basin_lines_selection___n100.value,
+            River_N100.intersection_points___river_endpoints___n100.value,
             "BOTH_ENDS",
         )
 
         arcpy.analysis.Intersect(
-            [
-                River_N100.selecting_basin___polygons_near_rivers_selection___n100_river.value
-            ],
-            River_N100.intersection_points___polygon_intersection_lines___n100_river.value,
+            [River_N100.selecting_basin___polygons_near_rivers_selection___n100.value],
+            River_N100.intersection_points___polygon_intersection_lines___n100.value,
             output_type="LINE",
         )
 
         arcpy.analysis.Intersect(
             [
-                River_N100.intersection_points___polygon_intersection_lines___n100_river.value,
-                River_N100.river_connected___collapse_hydro_polygon___n100_river.value,
+                River_N100.intersection_points___polygon_intersection_lines___n100.value,
+                River_N100.river_connected___collapse_hydro_polygon___n100.value,
             ],
-            River_N100.intersection_points___intersection_midpoints___n100_river.value,
+            River_N100.intersection_points___intersection_midpoints___n100.value,
             output_type="POINT",
         )
 
         arcpy.management.FeatureVerticesToPoints(
-            River_N100.intersection_points___intersection_midpoints___n100_river.value,
-            River_N100.intersection_points___intersection_midpoints_merged___n100_river.value,
+            River_N100.intersection_points___intersection_midpoints___n100.value,
+            River_N100.intersection_points___intersection_midpoints_merged___n100.value,
             "ALL",
         )
 
         arcpy.analysis.Intersect(
-            [
-                River_N100.selecting_basin___polygons_near_rivers_selection___n100_river.value
-            ],
-            River_N100.intersection_points___polygon_intersection_points___n100_river.value,
+            [River_N100.selecting_basin___polygons_near_rivers_selection___n100.value],
+            River_N100.intersection_points___polygon_intersection_points___n100.value,
             output_type="POINT",
         )
 
         arcpy.management.FeatureVerticesToPoints(
-            River_N100.intersection_points___polygon_intersection_points___n100_river.value,
-            River_N100.intersection_points___polygon_intersection_points_merged___n100_river.value,
+            River_N100.intersection_points___polygon_intersection_points___n100.value,
+            River_N100.intersection_points___polygon_intersection_points_merged___n100.value,
             "ALL",
         )
 
         arcpy.management.Merge(
             [
-                River_N100.intersection_points___intersection_midpoints_merged___n100_river.value,
-                River_N100.intersection_points___polygon_intersection_points_merged___n100_river.value,
-                River_N100.intersection_points___river_endpoints___n100_river.value,
+                River_N100.intersection_points___intersection_midpoints_merged___n100.value,
+                River_N100.intersection_points___polygon_intersection_points_merged___n100.value,
+                River_N100.intersection_points___river_endpoints___n100.value,
             ],
-            River_N100.intersection_points___combined_intersection_points___n100_river.value,
+            River_N100.intersection_points___combined_intersection_points___n100.value,
         )
 
         custom_arcpy.select_location_and_make_permanent_feature(
-            input_layer=River_N100.intersection_points___combined_intersection_points___n100_river.value,
+            input_layer=River_N100.intersection_points___combined_intersection_points___n100.value,
             overlap_type=custom_arcpy.OverlapType.WITHIN_A_DISTANCE.value,
-            select_features=River_N100.selecting_basin___polygons_near_rivers_selection___n100_river.value,
-            output_name=River_N100.intersection_points___endpoints_matching___n100_river.value,
+            select_features=River_N100.selecting_basin___polygons_near_rivers_selection___n100.value,
+            output_name=River_N100.intersection_points___endpoints_matching___n100.value,
             search_distance="1 Meters",
         )
 
@@ -187,20 +183,20 @@ class ConnectRiverLines:
         """
         arcpy.management.CreateFeatureclass(
             out_path=os.path.dirname(
-                River_N100.river_connected___connected_river_lines___n100_river.value
+                River_N100.river_connected___connected_river_lines___n100.value
             ),
             out_name=os.path.basename(
-                River_N100.river_connected___connected_river_lines___n100_river.value
+                River_N100.river_connected___connected_river_lines___n100.value
             ),
             geometry_type="POLYLINE",
-            spatial_reference=River_N100.selecting_basin___polygons_near_rivers_selection___n100_river.value,
+            spatial_reference=River_N100.selecting_basin___polygons_near_rivers_selection___n100.value,
         )
 
         # Build graph from collapsed hydro polygons
         G = nx.Graph()
 
         with arcpy.da.SearchCursor(
-            River_N100.river_connected___collapse_hydro_polygon___n100_river.value,
+            River_N100.river_connected___collapse_hydro_polygon___n100.value,
             ["OID@", "SHAPE@"],
         ) as cursor:
             for oid, geom in cursor:
@@ -224,7 +220,7 @@ class ConnectRiverLines:
         # # Build list of terminal nodes
         # terminals = set()
         # with arcpy.da.SearchCursor(
-        #     River_N100.intersection_points___endpoints_matching___n100_river.value,
+        #     River_N100.intersection_points___endpoints_matching___n100.value,
         #     ["SHAPE@XY"],
         # ) as cursor:
         #     for (xy,) in cursor:
@@ -251,29 +247,29 @@ class ConnectRiverLines:
 
         if final_oids:
             custom_arcpy.select_attribute_and_make_permanent_feature(
-                input_layer=River_N100.river_connected___collapse_hydro_polygon___n100_river.value,
+                input_layer=River_N100.river_connected___collapse_hydro_polygon___n100.value,
                 expression=f"OBJECTID IN ({','.join(map(str, final_oids))})",
-                output_name=River_N100.river_connected___minimal_connected_river_lines___n100_river.value,
+                output_name=River_N100.river_connected___minimal_connected_river_lines___n100.value,
             )
 
             arcpy.management.Append(
                 inputs=[
-                    River_N100.river_connected___minimal_connected_river_lines___n100_river.value
+                    River_N100.river_connected___minimal_connected_river_lines___n100.value
                 ],
-                target=River_N100.river_connected___connected_river_lines___n100_river.value,
+                target=River_N100.river_connected___connected_river_lines___n100.value,
                 schema_type="NO_TEST",
             )
         else:
             arcpy.management.Append(
                 inputs=[
-                    River_N100.river_connected___collapse_hydro_polygon___n100_river.value
+                    River_N100.river_connected___collapse_hydro_polygon___n100.value
                 ],
-                target=River_N100.river_connected___connected_river_lines___n100_river.value,
+                target=River_N100.river_connected___connected_river_lines___n100.value,
                 schema_type="NO_TEST",
             )
 
         arcpy.management.CalculateField(
-            River_N100.river_connected___connected_river_lines___n100_river.value,
+            River_N100.river_connected___connected_river_lines___n100.value,
             "objtype",
             "'generated_centerline'",
             "PYTHON3",
@@ -281,10 +277,10 @@ class ConnectRiverLines:
 
         arcpy.management.Merge(
             inputs=[
-                River_N100.selecting_basin___basin_lines_selection___n100_river.value,
-                River_N100.river_connected___connected_river_lines___n100_river.value,
+                River_N100.selecting_basin___basin_lines_selection___n100.value,
+                River_N100.river_connected___connected_river_lines___n100.value,
             ],
-            output=River_N100.river_connected___final_connected_river_lines___n100_river.value,
+            output=River_N100.river_connected___final_connected_river_lines___n100.value,
         )
 
         self.work_file_manager.delete_created_files()
@@ -298,7 +294,7 @@ def run(basin: str):
     Args:
         basin (str): The basin being processed.
     """
-    root = River_N100.river_connected___connected_river_lines_root___n100_river.value
+    root = River_N100.river_connected___connected_river_lines_root___n100.value
     config = logic_config.ConnectRiverLinesKwargs(
         work_file_manager_config=core_config.WorkFileConfig(root),
         maximum_length=500,

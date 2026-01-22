@@ -127,7 +127,7 @@ class RiverElevator:
 
 
 if __name__ == "__main__":
-    input_lines_fc = River_N100.river_strahler___output___n100_river.value
-    output_fc = River_N100.river_elevated___output___n100_river.value
+    input_lines_fc = River_N100.river_strahler___output___n100.value
+    output_fc = River_N100.river_elevated___output___n100.value
 
     RiverElevator(input_lines_fc, output_fc).run()

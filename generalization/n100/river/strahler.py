@@ -85,6 +85,6 @@ class RiverStrahler:
 
 
 if __name__ == "__main__":
-    input_fc = River_N100.river_triangles___output___n100_river.value
-    output_fc = River_N100.river_strahler___output___n100_river.value
+    input_fc = River_N100.river_triangles___output___n100.value
+    output_fc = River_N100.river_strahler___output___n100.value
     RiverStrahler(input_fc, output_fc).run()
