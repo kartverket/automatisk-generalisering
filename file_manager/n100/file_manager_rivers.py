@@ -21,6 +21,12 @@ river_centerline = "river_centerline"
 centerline_pruning = "centerline_pruning"
 thin_hydrology_lines = "thin_hydrology_lines"
 centerline_pruning_loop = "centerline_pruning_loop"
+selecting_basin = "selecting_basin"
+intersection_points = "intersection_points"
+river_connected = "river_connected"
+river_elevated = "river_elevated"
+river_triangles = "river_triangles"
+river_strahler = "river_strahler"
 
 ##############################################################################################################################################
 
@@ -474,4 +480,207 @@ class River_N100(Enum):
             script_source_name=centerline_pruning_loop,
             description="finnished_centerlines",
         )
+    )
+
+    #################################################
+    ################ BASIN ################
+    #################################################
+
+    selecting_basin___basin_selection___n100_river = (
+        file_manager.generate_file_name_gdb(
+            script_source_name=selecting_basin,
+            description="basin_selection",
+        )
+    )
+
+    selecting_basin___basin_lines___n100_river = file_manager.generate_file_name_gdb(
+        script_source_name=selecting_basin,
+        description="basin_lines",
+    )
+
+    selecting_basin___basin_lines_selection___n100_river = (
+        file_manager.generate_file_name_gdb(
+            script_source_name=selecting_basin,
+            description="basin_lines_selection",
+        )
+    )
+
+    selecting_basin___basin_polygons___n100_river = file_manager.generate_file_name_gdb(
+        script_source_name=selecting_basin,
+        description="basin_polygons",
+    )
+
+    selecting_basin___basin_polygons_copy___n100_river = (
+        file_manager.generate_file_name_gdb(
+            script_source_name=selecting_basin,
+            description="basin_polygons_selection_copy",
+        )
+    )
+
+    selecting_basin___polygons_near_lines___n100_river = (
+        file_manager.generate_file_name_gdb(
+            script_source_name=selecting_basin,
+            description="polygons_near_lines",
+        )
+    )
+
+    selecting_basin___polygons_near_polygons___n100_river = (
+        file_manager.generate_file_name_gdb(
+            script_source_name=selecting_basin,
+            description="polygons_near_polygons",
+        )
+    )
+
+    selecting_basin___polygons_near_rivers___n100_river = (
+        file_manager.generate_file_name_gdb(
+            script_source_name=selecting_basin,
+            description="polygons_near_rivers",
+        )
+    )
+
+    selecting_basin___polygons_near_rivers_selection___n100_river = (
+        file_manager.generate_file_name_gdb(
+            script_source_name=selecting_basin,
+            description="polygons_near_rivers_selection",
+        )
+    )
+
+    #################################################
+    ############### INTERSECTION POINTS #############
+    #################################################
+
+    intersection_points___polygon_intersection_lines___n100_river = (
+        file_manager.generate_file_name_gdb(
+            script_source_name=intersection_points,
+            description="polygon_intersection_lines",
+        )
+    )
+
+    intersection_points___polygon_intersection_points___n100_river = (
+        file_manager.generate_file_name_gdb(
+            script_source_name=intersection_points,
+            description="polygon_intersection_points",
+        )
+    )
+
+    intersection_points___polygon_intersection_points_merged___n100_river = (
+        file_manager.generate_file_name_gdb(
+            script_source_name=intersection_points,
+            description="polygon_intersection_points_merged",
+        )
+    )
+
+    intersection_points___intersection_midpoints___n100_river = (
+        file_manager.generate_file_name_gdb(
+            script_source_name=intersection_points,
+            description="intersection_midpoints",
+        )
+    )
+
+    intersection_points___intersection_midpoints_merged___n100_river = (
+        file_manager.generate_file_name_gdb(
+            script_source_name=intersection_points,
+            description="intersection_midpoints_merged",
+        )
+    )
+
+    intersection_points___river_endpoints___n100_river = (
+        file_manager.generate_file_name_gdb(
+            script_source_name=intersection_points,
+            description="river_endpoints",
+        )
+    )
+
+    intersection_points___endpoints_matching___n100_river = (
+        file_manager.generate_file_name_gdb(
+            script_source_name=intersection_points,
+            description="endpoints_matching",
+        )
+    )
+
+    intersection_points___combined_intersection_points___n100_river = (
+        file_manager.generate_file_name_gdb(
+            script_source_name=intersection_points,
+            description="combined_intersection_points",
+        )
+    )
+
+    #################################################
+    ################ RIVER CONNECTED ################
+    #################################################
+
+    river_connected___collapse_hydro_polygon___n100_river = (
+        file_manager.generate_file_name_gdb(
+            script_source_name=river_connected,
+            description="collapse_hydro_polygon",
+        )
+    )
+
+    river_connected___connected_river_lines___n100_river = (
+        file_manager.generate_file_name_gdb(
+            script_source_name=river_connected,
+            description="connected_river_lines",
+        )
+    )
+
+    river_connected___minimal_connected_river_lines___n100_river = (
+        file_manager.generate_file_name_gdb(
+            script_source_name=river_connected,
+            description="minimal_connected_river_lines",
+        )
+    )
+
+    river_connected___connected_river_lines_root___n100_river = (
+        file_manager.generate_file_name_gdb(
+            script_source_name=river_connected,
+            description="connected_river_lines_root",
+        )
+    )
+
+    river_connected___final_connected_river_lines___n100_river = (
+        file_manager.generate_file_name_gdb(
+            script_source_name=river_connected,
+            description="final_connected_river_lines",
+        )
+    )
+
+    #################################################
+    ################ RIVER TRIANGLES ################
+    #################################################
+
+    river_triangles___remove_triangles_root___n100_river = (
+        file_manager.generate_file_name_gdb(
+            script_source_name=river_triangles,
+            description="remove_triangles_root",
+        )
+    )
+
+    river_triangles___removed_triangles___n100_river = (
+        file_manager.generate_file_name_gdb(
+            script_source_name=river_triangles,
+            description="removed_triangles",
+        )
+    )
+
+    river_triangles___output___n100_river = file_manager.generate_file_name_gdb(
+        script_source_name=river_triangles,
+        description="output",
+    )
+
+    #################################################
+    ################ RIVER STRAHLER #################
+    #################################################
+
+    river_strahler___output___n100_river = file_manager.generate_file_name_gdb(
+        script_source_name=river_strahler,
+        description="output",
+    )
+
+    #################################################
+    ################ RIVER ELEVATED #################
+    #################################################
+
+    river_elevated___output___n100_river = file_manager.generate_file_name_gdb(
+        script_source_name=river_elevated,
+        description="output",
     )

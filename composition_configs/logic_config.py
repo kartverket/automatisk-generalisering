@@ -138,6 +138,7 @@ class RemoveRoadTrianglesKwargs:
     hierarchy_field: str = None
     write_to_memory: bool = False
     keep_work_files: bool = False
+    sql_expressions: Optional[List[str]] = None
 
 
 @dataclass(frozen=True)
@@ -184,4 +185,12 @@ class DissolveInitKwargs:
     work_file_manager_config: core_config.WorkFileConfig
 
     dissolve_fields: Optional[List[str]] = None
+    sql_expressions: Optional[List[str]] = None
+
+
+@dataclass(frozen=True)
+class ConnectRiverLinesKwargs:
+    work_file_manager_config: core_config.WorkFileConfig
+    maximum_length: int
+    root_file: str
     sql_expressions: Optional[List[str]] = None
