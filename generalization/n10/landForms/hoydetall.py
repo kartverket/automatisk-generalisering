@@ -64,9 +64,7 @@ def main():
 
     print("\nCreates contour annotations for landforms at N10 scale...\n")
 
-    municipalities = [
-        "Hole"
-    ]
+    municipalities = ["Hole"]
 
     # Sets up work file manager and creates temporary files
     working_fc = Landform_N10.hoydetall__n10_landforms.value
@@ -91,7 +89,7 @@ def main():
         out_feature_class=Landform_N10.hoydetall_output__n10_landforms.value,
     )
 
-    #wfm.delete_created_files()
+    # wfm.delete_created_files()
 
     print("\nContour annotations for landforms at N10 scale created successfully!\n")
 
@@ -225,7 +223,7 @@ def fetch_annotations_to_avoid(files: dict, area: list = None) -> None:
         area (list, optional): List of municipality name(s) to clip data to (defaults to None)
     """
     # 1) Defining layers to use
-    annotation_layers = input_n10.annotations # list of all annotation paths
+    annotation_layers = input_n10.annotations  # list of all annotation paths
 
     layers = []
 
@@ -257,12 +255,14 @@ def fetch_annotations_to_avoid(files: dict, area: list = None) -> None:
         layers, desc="Fetching annotations to avoid", colour="yellow", leave=False
     ):
         tmp = files["temporary_file"]
-        arcpy.analysis.Clip(in_features=lyr_name, clip_features=clip_lyr, out_feature_class=tmp)
+        arcpy.analysis.Clip(
+            in_features=lyr_name, clip_features=clip_lyr, out_feature_class=tmp
+        )
         if arcpy.Exists(out_fc):
             arcpy.management.Append(inputs=tmp, target=out_fc, schema_type="NO_TEST")
         else:
             arcpy.management.CopyFeatures(in_features=tmp, out_feature_class=out_fc)
-    
+
     # 5) Fetch the bounding polygons of the annotations and store them in a separate feature class as polygons
     arcpy.management.FeatureToPolygon(
         in_features=files["out_of_bounds_annotations"],
@@ -537,7 +537,12 @@ def move_ladders_to_valid_area(files: dict, ladders: dict) -> dict:
     )
 
     # 2) Collect point information
-    point_info = {oid: {"near_geom": None, "geom": geom, "height": h} for oid, geom, h in arcpy.da.SearchCursor(points_fc, ["OID@", "SHAPE@", "HØYDE"])}
+    point_info = {
+        oid: {"near_geom": None, "geom": geom, "height": h}
+        for oid, geom, h in arcpy.da.SearchCursor(
+            points_fc, ["OID@", "SHAPE@", "HØYDE"]
+        )
+    }
 
     contours = {
         join_fid: geom
@@ -556,7 +561,7 @@ def move_ladders_to_valid_area(files: dict, ladders: dict) -> dict:
                 continue
 
             pt_geom = point_info[oid]["geom"]
-            
+
             """prev_pt = oid if i == 0 else oids[i-1]
             while prev_pt in points_to_delete and i > 0:
                 i -= 1
@@ -564,7 +569,11 @@ def move_ladders_to_valid_area(files: dict, ladders: dict) -> dict:
             
             prev_geom = point_info[prev_pt]["near_geom"] if point_info[prev_pt]["near_geom"] is not None else point_info[prev_pt]["geom"]"""
 
-            prev_geom = get_accumulated_movement(accumulated) if len(accumulated) > 0 else pt_geom
+            prev_geom = (
+                get_accumulated_movement(accumulated)
+                if len(accumulated) > 0
+                else pt_geom
+            )
 
             nearest_point, *_ = contour.queryPointAndDistance(prev_geom)
             dist_to_orig = pt_geom.distanceTo(nearest_point)
@@ -748,7 +757,9 @@ def set_tangential_rotation(files: dict) -> None:
 # ========================
 
 
-def process(files: dict, in_lyr: str, out_fc: str, clip: str=None, append: bool=False) -> None:
+def process(
+    files: dict, in_lyr: str, out_fc: str, clip: str = None, append: bool = False
+) -> None:
     """
     Pre-processing function to clip or append data to a feature class.
 
