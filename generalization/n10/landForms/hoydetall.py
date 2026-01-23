@@ -76,6 +76,7 @@ def main():
     files = create_wfm_gdbs(wfm=wfm)
 
     fetch_data(files=files, area=municipalities)
+    fetch_annotations_to_avoid(files=files, area=municipalities)
     collect_out_of_bounds_areas(files=files)
     get_annotation_contours(files=files)
     create_points_along_line(files=files)
@@ -122,8 +123,14 @@ def create_wfm_gdbs(wfm: WorkFileManager) -> dict:
     out_of_bounds_buffers = wfm.build_file_path(
         file_name="out_of_bounds_buffers", file_type="gdb"
     )
-    out_of_bound_areas = wfm.build_file_path(
-        file_name="out_of_bound_areas", file_type="gdb"
+    out_of_bounds_annotations = wfm.build_file_path(
+        file_name="out_of_bounds_annotations", file_type="gdb"
+    )
+    out_of_bounds_annotation_polygons = wfm.build_file_path(
+        file_name="out_of_bounds_annotation_polygons", file_type="gdb"
+    )
+    out_of_bounds_areas = wfm.build_file_path(
+        file_name="out_of_bounds_areas", file_type="gdb"
     )
     temporary_file = wfm.build_file_path(file_name="temporary_file", file_type="gdb")
     annotation_contours = wfm.build_file_path(
@@ -139,7 +146,9 @@ def create_wfm_gdbs(wfm: WorkFileManager) -> dict:
         "out_of_bounds_polygons": out_of_bounds_polygons,
         "out_of_bounds_polylines": out_of_bounds_polylines,
         "out_of_bounds_buffers": out_of_bounds_buffers,
-        "out_of_bound_areas": out_of_bound_areas,
+        "out_of_bounds_annotations": out_of_bounds_annotations,
+        "out_of_bounds_annotation_polygons": out_of_bounds_annotation_polygons,
+        "out_of_bounds_areas": out_of_bounds_areas,
         "temporary_file": temporary_file,
         "annotation_contours": annotation_contours,
         "point_2km": point_2km,
@@ -205,6 +214,62 @@ def fetch_data(files: dict, area: list = None) -> None:
     ):
         process(files, lyr_name, out_fc, clip=clip_lyr, append=append)
 
+
+@timing_decorator
+def fetch_annotations_to_avoid(files: dict, area: list = None) -> None:
+    """
+    Fetches annotations that should be avoided when placing new contour annotations.
+
+    Args:
+        files (dict): Dictionary with all the working files
+        area (list, optional): List of municipality name(s) to clip data to (defaults to None)
+    """
+    # 1) Defining layers to use
+    annotation_layers = input_n10.annotations # list of all annotation paths
+
+    layers = []
+
+    for i, anno in enumerate(annotation_layers):
+        layers.append(
+            (
+                f"annotation_lyr_{i}",
+                anno,
+                files["out_of_bounds_annotations"],
+            )
+        )
+
+    # 2) Creating feature layers
+    for name, src, _ in layers:
+        arcpy.management.MakeFeatureLayer(src, name)
+
+    # 3) Defining clip area, if a chosen area exists
+    clip_lyr = None
+    if area:
+        clip_lyr = "area_lyr"
+        arcpy.management.MakeFeatureLayer(input_n100.AdminFlate, clip_lyr)
+        vals = ",".join(f"'{v}'" for v in area)
+        arcpy.management.SelectLayerByAttribute(
+            clip_lyr, "NEW_SELECTION", f"NAVN IN ({vals})"
+        )
+
+    # 4) Process each layer and add the data in one feature class
+    for lyr_name, _, out_fc in tqdm(
+        layers, desc="Fetching annotations to avoid", colour="yellow", leave=False
+    ):
+        tmp = files["temporary_file"]
+        arcpy.analysis.Clip(in_features=lyr_name, clip_features=clip_lyr, out_feature_class=tmp)
+        if arcpy.Exists(out_fc):
+            arcpy.management.Append(inputs=tmp, target=out_fc, schema_type="NO_TEST")
+        else:
+            arcpy.management.CopyFeatures(in_features=tmp, out_feature_class=out_fc)
+    
+    # 5) Fetch the bounding polygons of the annotations and store them in a separate feature class as polygons
+    arcpy.management.FeatureToPolygon(
+        in_features=files["out_of_bounds_annotations"],
+        out_feature_class=files["out_of_bounds_annotation_polygons"],
+    )
+
+
 @timing_decorator
 def collect_out_of_bounds_areas(files: dict) -> None:
     """
@@ -225,6 +290,11 @@ def collect_out_of_bounds_areas(files: dict) -> None:
         target=files["out_of_bounds_polygons"],
         schema_type="NO_TEST",
     )
+    arcpy.management.Append(
+        inputs=files["out_of_bounds_annotation_polygons"],
+        target=files["out_of_bounds_polygons"],
+        schema_type="NO_TEST",
+    )
     arcpy.analysis.Buffer(
         in_features=files["out_of_bounds_polygons"],
         out_feature_class=files["out_of_bounds_buffers"],
@@ -235,7 +305,7 @@ def collect_out_of_bounds_areas(files: dict) -> None:
     )
     arcpy.management.MultipartToSinglepart(
         in_features=files["out_of_bounds_buffers"],
-        out_feature_class=files["out_of_bound_areas"],
+        out_feature_class=files["out_of_bounds_areas"],
     )
 
 
@@ -458,7 +528,7 @@ def move_ladders_to_valid_area(files: dict, ladders: dict) -> dict:
 
     points_fc = files["point_2km"]
     contour_fc = files["joined_contours"]
-    ob_fc = files["out_of_bound_areas"]
+    ob_fc = files["out_of_bounds_areas"]
     valid_fc = files["valid_contours"]
 
     # 1) Erase OB areas from the contours
