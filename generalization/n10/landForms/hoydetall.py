@@ -2,6 +2,7 @@
 
 import arcpy
 import numpy as np
+import os
 
 arcpy.env.overwriteOutput = True
 
@@ -64,7 +65,7 @@ def main():
 
     print("\nCreates contour annotations for landforms at N10 scale...\n")
 
-    municipalities = ["Hole"]
+    municipalities = ["Ullensvang"]
 
     # Sets up work file manager and creates temporary files
     working_fc = Landform_N10.hoydetall__n10_landforms.value
@@ -89,7 +90,7 @@ def main():
         out_feature_class=Landform_N10.hoydetall_output__n10_landforms.value,
     )
 
-    # wfm.delete_created_files()
+    wfm.delete_created_files()
 
     print("\nContour annotations for landforms at N10 scale created successfully!\n")
 
@@ -127,6 +128,9 @@ def create_wfm_gdbs(wfm: WorkFileManager) -> dict:
     out_of_bounds_annotation_polygons = wfm.build_file_path(
         file_name="out_of_bounds_annotation_polygons", file_type="gdb"
     )
+    out_of_bounds_points = wfm.build_file_path(
+        file_name="out_of_bounds_points", file_type="gdb"
+    )
     out_of_bounds_areas = wfm.build_file_path(
         file_name="out_of_bounds_areas", file_type="gdb"
     )
@@ -146,6 +150,7 @@ def create_wfm_gdbs(wfm: WorkFileManager) -> dict:
         "out_of_bounds_buffers": out_of_bounds_buffers,
         "out_of_bounds_annotations": out_of_bounds_annotations,
         "out_of_bounds_annotation_polygons": out_of_bounds_annotation_polygons,
+        "out_of_bounds_points": out_of_bounds_points,
         "out_of_bounds_areas": out_of_bounds_areas,
         "temporary_file": temporary_file,
         "annotation_contours": annotation_contours,
@@ -212,6 +217,18 @@ def fetch_data(files: dict, area: list = None) -> None:
     ):
         process(files, lyr_name, out_fc, clip=clip_lyr, append=append)
 
+    # 5) Prepare out-of-bounds points
+    arcpy.analysis.Clip(
+        in_features=input_n50.HoydePunkt,
+        clip_features=clip_lyr,
+        out_feature_class=files["temporary_file"],
+    )
+    arcpy.analysis.Buffer(
+        in_features=files["temporary_file"],
+        out_feature_class=files["out_of_bounds_points"],
+        buffer_distance_or_field="30 Meters",
+    )
+
 
 @timing_decorator
 def fetch_annotations_to_avoid(files: dict, area: list = None) -> None:
@@ -264,10 +281,27 @@ def fetch_annotations_to_avoid(files: dict, area: list = None) -> None:
             arcpy.management.CopyFeatures(in_features=tmp, out_feature_class=out_fc)
 
     # 5) Fetch the bounding polygons of the annotations and store them in a separate feature class as polygons
-    arcpy.management.FeatureToPolygon(
+    insert_fc = files["out_of_bounds_annotation_polygons"]
+    arcpy.management.CreateFeatureclass(
+        out_path=os.path.dirname(insert_fc),
+        out_name=os.path.basename(insert_fc),
+        geometry_type="POLYGON",
+    )
+    with arcpy.da.InsertCursor(insert_fc, ["SHAPE@"]) as insert_cur:
+        with arcpy.da.SearchCursor(
+            files["out_of_bounds_annotations"], ["SHAPE@"]
+        ) as search_cur:
+            for row in search_cur:
+                geom = row[0]
+                if geom is None:
+                    continue
+                # bounding_poly = geom.extent.polygon
+                insert_cur.insertRow([geom])
+                # insert_cur.insertRow([bounding_poly])
+    """arcpy.management.FeatureToPolygon(
         in_features=files["out_of_bounds_annotations"],
         out_feature_class=files["out_of_bounds_annotation_polygons"],
-    )
+    )"""
 
 
 @timing_decorator
@@ -291,6 +325,11 @@ def collect_out_of_bounds_areas(files: dict) -> None:
         schema_type="NO_TEST",
     )
     arcpy.management.Append(
+        inputs=files["out_of_bounds_points"],
+        target=files["out_of_bounds_polygons"],
+        schema_type="NO_TEST",
+    )
+    arcpy.management.Append(
         inputs=files["out_of_bounds_annotation_polygons"],
         target=files["out_of_bounds_polygons"],
         schema_type="NO_TEST",
@@ -299,8 +338,6 @@ def collect_out_of_bounds_areas(files: dict) -> None:
         in_features=files["out_of_bounds_polygons"],
         out_feature_class=files["out_of_bounds_buffers"],
         buffer_distance_or_field="20 Meters",
-        line_side="FULL",
-        line_end_type="ROUND",
         dissolve_option="ALL",
     )
     arcpy.management.MultipartToSinglepart(
@@ -536,7 +573,7 @@ def move_ladders_to_valid_area(files: dict, ladders: dict) -> dict:
         in_features=contour_fc, erase_features=ob_fc, out_feature_class=valid_fc
     )
 
-    # 2) Collect point information
+    # 2) Collect point and contour information
     point_info = {
         oid: {"near_geom": None, "geom": geom, "height": h}
         for oid, geom, h in arcpy.da.SearchCursor(
@@ -549,9 +586,12 @@ def move_ladders_to_valid_area(files: dict, ladders: dict) -> dict:
         for join_fid, geom in arcpy.da.SearchCursor(valid_fc, ["JOIN_FID", "SHAPE@"])
     }
 
+    # 3) Iterate through each ladder and fetch new geometries
     points_to_delete = set()
 
-    for oids in ladders.values():
+    for oids in tqdm(
+        ladders.values(), desc="Moving ladders", colour="yellow", leave=False
+    ):
         oids.sort(key=lambda oid: point_info[oid]["height"])
         accumulated = []
         for _, oid in enumerate(oids):
@@ -561,13 +601,6 @@ def move_ladders_to_valid_area(files: dict, ladders: dict) -> dict:
                 continue
 
             pt_geom = point_info[oid]["geom"]
-
-            """prev_pt = oid if i == 0 else oids[i-1]
-            while prev_pt in points_to_delete and i > 0:
-                i -= 1
-                prev_pt = oids[i-1] if i > 0 else oid
-            
-            prev_geom = point_info[prev_pt]["near_geom"] if point_info[prev_pt]["near_geom"] is not None else point_info[prev_pt]["geom"]"""
 
             prev_geom = (
                 get_accumulated_movement(accumulated)
@@ -585,7 +618,7 @@ def move_ladders_to_valid_area(files: dict, ladders: dict) -> dict:
             point_info[oid]["near_geom"] = nearest_point
             accumulated.append(nearest_point.centroid)
 
-    # 6) Update point geometries
+    # 4) Update point geometry or delete the point
     with arcpy.da.UpdateCursor(points_fc, ["OID@", "SHAPE@"]) as cur:
         for oid, _ in cur:
             if oid in points_to_delete:
@@ -596,6 +629,7 @@ def move_ladders_to_valid_area(files: dict, ladders: dict) -> dict:
 
                 cur.updateRow([oid, point_info[oid]["near_geom"]])
 
+    # 5) Update ladder list
     for ladder_id, oids in ladders.items():
         ladders[ladder_id] = [oid for oid in oids if oid not in points_to_delete]
 
@@ -772,7 +806,7 @@ def process(
     """
     if clip:
         tmp = files["temporary_file"] if append else out_fc
-        arcpy.analysis.Clip(in_lyr, clip, tmp)
+        arcpy.analysis.PairwiseClip(in_lyr, clip, tmp)
         if append:
             arcpy.management.Append(tmp, out_fc, "NO_TEST")
     else:

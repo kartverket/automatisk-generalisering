@@ -14,7 +14,6 @@ Veglenke = rf"{n10_path}\N10_Veglenke_2026Anno10000"
 Veglenke_overbygg = rf"{n10_path}\Veglenke_Overbygg_2026Anno10000"
 Veglenke_tunnel = rf"{n10_path}\Veglenke_Tunnel_2026Anno10000"
 Hoydetall = rf"{n10_path}\N20_Hoydetall_10000"
-Visning = rf"{n10_path}\ssrkopi_visningstjenesteAnno10000"
 
 # Defining datasets to test paths are set up correctly later
 n10_datasets = [
@@ -27,7 +26,6 @@ n10_datasets = [
     Veglenke_overbygg,
     Veglenke_tunnel,
     Hoydetall,
-    Visning,
 ]
 
 # Annotations
@@ -38,7 +36,6 @@ annotations = [
     Veglenke_overbygg,
     Veglenke_tunnel,
     Hoydetall,
-    Visning,
 ]
 
 
