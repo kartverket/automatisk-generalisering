@@ -280,7 +280,7 @@ def admin_boarder():
 
     custom_arcpy.select_attribute_and_make_permanent_feature(
         input_layer=Road_N100.data_selection___admin_boundary___n100_road.value,
-        expression="OBJTYPE = 'Riksgrense'",
+        expression="OBJTYPE IN ('Riksgrense', 'AvtaltAvgrensningslinje')",
         output_name=Road_N100.data_preparation___country_boarder___n100_road.value,
     )
 
