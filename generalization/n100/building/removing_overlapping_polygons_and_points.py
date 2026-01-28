@@ -12,7 +12,6 @@ from constants.n100_constants import N100_Symbology
 from input_data.input_symbology import SymbologyN100
 from composition_configs import logic_config, core_config
 
-
 # Importing custom files
 from file_manager.n100.file_manager_buildings import Building_N100
 from constants.n100_constants import N100_SQLResources

@@ -5,7 +5,6 @@ from functools import wraps
 
 from file_manager.n100.file_manager_buildings import Building_N100
 
-
 TIMING_DECORATOR_LOG_FILE_USED = False
 
 
