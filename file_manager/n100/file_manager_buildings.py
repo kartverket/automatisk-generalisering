@@ -4,7 +4,6 @@ from env_setup import global_config
 from file_manager.base_file_manager import BaseFileManager
 from file_manager import WorkFileManager
 
-
 # Initialize BaseFileManager
 scale = global_config.scale_n100
 object_name = global_config.object_bygning

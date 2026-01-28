@@ -46,7 +46,6 @@ from generalization.n100.road.resolve_road_conflict_preparation import (
 from file_manager import WorkFileManager
 from file_manager.n100.file_manager_buildings import Building_N100
 
-
 MERGE_DIVIDED_ROADS_ALTERATIVE = False
 
 AREA_SELECTOR = "navn IN ('Ringerike')"
