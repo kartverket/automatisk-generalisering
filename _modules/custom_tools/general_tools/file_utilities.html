@@ -280,15 +280,13 @@
     <span class="k">elif</span> <span class="n">generated_field_name_with_underscore</span> <span class="ow">in</span> <span class="n">list_of_fields</span><span class="p">:</span>
         <span class="n">field_to_delete</span> <span class="o">=</span> <span class="n">generated_field_name_with_underscore</span>
     <span class="k">else</span><span class="p">:</span>
-        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
-            <span class="sa">f</span><span class="s2">&quot;&quot;&quot;</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;&quot;&quot;</span>
 <span class="s2">                The generated field name by Esri Geoprocessing tool did not match the predicted naming convention for the file:</span><span class="se">\n</span>
 <span class="s2">                </span><span class="si">{</span><span class="n">input_file_feature</span><span class="si">}</span><span class="se">\n</span>
 <span class="s2">                Expected name (without underscore): </span><span class="si">{</span><span class="n">generated_field_name</span><span class="si">}</span><span class="se">\n</span>
 <span class="s2">                Expected name (with underscore): </span><span class="si">{</span><span class="n">generated_field_name_with_underscore</span><span class="si">}</span><span class="se">\n</span>
 <span class="s2">                Available fields:</span><span class="se">\n</span><span class="si">{</span><span class="n">list_of_fields</span><span class="si">}</span>
-<span class="s2">            &quot;&quot;&quot;</span>
-        <span class="p">)</span>
+<span class="s2">            &quot;&quot;&quot;</span><span class="p">)</span>
 
     <span class="k">try</span><span class="p">:</span>
         <span class="n">arcpy</span><span class="o">.</span><span class="n">management</span><span class="o">.</span><span class="n">DeleteField</span><span class="p">(</span>
