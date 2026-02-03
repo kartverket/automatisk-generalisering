@@ -12,7 +12,6 @@ from custom_tools.generalization_tools.building.resolve_building_conflicts impor
 from file_manager import work_file_manager
 from input_data import input_symbology
 
-
 # Importing environment settings
 from env_setup import environment_setup
 from constants.n100_constants import N100_SQLResources, N100_Symbology
