@@ -44,6 +44,7 @@ def main():
     fetch_remaining_railroads(files=files)
     classify_within_n50_buffer(files=files)
     fetch_edge_case_ends(files=files)
+    is_museumsbane(files=files)
     add_railroad_under_construction(files=files)
 
     # Clean up of files
@@ -795,6 +796,93 @@ def fetch_edge_case_ends(files: dict) -> None:
     with arcpy.da.UpdateCursor(fkb_lyr, ["jernbanestatus"]) as cur:
         for _ in cur:
             cur.updateRow(["N"])
+
+
+@timing_decorator
+def is_museumsbane(files: dict) -> None:
+    """
+    For all railroads that are marked with jernbanestatus = 'N', if the railroad
+    is part of a chain where at least one element is categorised as museumsbane,
+    all elements should have jernbanetype = 'M'.
+
+    Args:
+        files (dict): Dictionary with all the working files
+    """
+    # Data set
+    railroad_fc = files["new_FKB"]
+
+    # OID -> [start, end, jernbanetype] (jernbanestatus = 'N')
+    oid_to_railroad = {
+        oid: [geom.firstPoint, geom.lastPoint, jernbanetype]
+        for oid, geom, jernbanestatus, jernbanetype in arcpy.da.SearchCursor(
+            railroad_fc, ["OID@", "SHAPE@", "jernbanestatus", "jernbanetype"]
+        )
+        if jernbanestatus == "N"
+    }
+
+    museumsbane = {
+        oid
+        for oid, (_, _, jernbanetype) in oid_to_railroad.items()
+        if jernbanetype == "M"
+    }
+
+    # 1) Find all connections between railroad elements
+    connections = {oid: [] for oid in oid_to_railroad}
+
+    def pt(p):
+        tol = 6
+        x = round(p.X, tol)
+        y = round(p.Y, tol)
+        return (x, y)
+
+    for oid1, (s1, e1, _) in oid_to_railroad.items():
+        s1, e1 = pt(s1), pt(e1)
+        for oid2, (s2, e2, _) in oid_to_railroad.items():
+            if oid1 == oid2:
+                continue
+
+            s2, e2 = pt(s2), pt(e2)
+
+            if s1 in (s2, e2) or e1 in (s2, e2):
+                connections[oid1].append(oid2)
+
+    # 2) Build complete sets of connected chains of museumsbane
+    visited = set()
+    to_change = set()
+
+    for oid in oid_to_railroad:
+        if oid in visited:
+            continue
+
+        stack = [oid]
+        component = set()
+
+        while stack:
+            current = stack.pop()
+            if current in visited:
+                continue
+            visited.add(current)
+            component.add(current)
+            stack.extend(connections[current])
+
+        if component & museumsbane:
+            to_change |= component
+
+    # 3) Update the jernbanetype attribute if any
+    if len(to_change) > 0:
+        railroad_lyr = "railroad_lyr"
+        arcpy.management.MakeFeatureLayer(railroad_fc, railroad_lyr)
+
+        sql = f"OBJECTID IN ({','.join(map(str, to_change))})"
+        arcpy.management.SelectLayerByAttribute(
+            in_layer_or_view=railroad_lyr,
+            selection_type="NEW_SELECTION",
+            where_clause=sql,
+        )
+
+        with arcpy.da.UpdateCursor(railroad_lyr, ["jernbanetype"]) as cur:
+            for _ in cur:
+                cur.updateRow(["M"])
 
 
 @timing_decorator
