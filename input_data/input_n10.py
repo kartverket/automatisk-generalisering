@@ -3,8 +3,7 @@ from config import n10_path
 import arcpy
 
 # Defining universal paths for n10 regardless of local path env_setup
-Buildings = rf"{n10_path}\fkb_bygning_omrade"
-Airport = rf"{n10_path}\n50k_lufthavn_punkt_p450"
+Buildings = rf"{n10_path}\bygning_omrade"
 Contours = rf"{n10_path}\n10_hoydekurver_5m"
 
 # Annotations
@@ -18,7 +17,6 @@ Hoydetall = rf"{n10_path}\N20_Hoydetall_10000"
 # Defining datasets to test paths are set up correctly later
 n10_datasets = [
     Buildings,
-    Airport,
     Contours,
     Stedsnavn,
     Stedsnavn_linje,
