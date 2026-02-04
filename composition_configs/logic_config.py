@@ -187,6 +187,17 @@ class DissolveInitKwargs:
     sql_expressions: Optional[List[str]] = None
 
 
+class EditMethod(str, Enum):
+    AUTO = "auto"
+    FORCED_SNAP = "forced_snap"
+    FORCED_EXTEND = "forced_extend"
+
+
+class EditOp(str, Enum):
+    SNAP = "snap"
+    EXTEND = "extend"
+
+
 @dataclass(frozen=True)
 class ArealDekkeDissolverInitKwargs:
     input_feature: str
@@ -259,7 +270,12 @@ class FillLineGapsAdvancedConfig:
     # Effective dangle→dangle cap = gap_tolerance_meters + extra.
     # Use 0 to disable expanded dangle pairing.
     increased_tolerance_edge_case_distance_meters: int = 0
+<<<<<<< HEAD
 >>>>>>> 5aa8c33 (WIP line topolgy gap fix)
+=======
+    # Auto uses snap on dangle pairs and extend for all others
+    edit_method: EditMethod = EditMethod.AUTO
+>>>>>>> c2a0cf4 (Added edit method as param)
 
 
 @dataclass(frozen=True)
