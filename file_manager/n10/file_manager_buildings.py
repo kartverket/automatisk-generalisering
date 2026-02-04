@@ -46,6 +46,10 @@ class Building_N10(Enum):
     ############# SQUASH BUILDINGS ############
     ###########################################
 
+    squash_buildings___other_buildings___n10 = file_manager.generate_file_name_gdb(
+        script_source_name=squash_buildings, description="other_buildings"
+    )
+
     squash_buildings___adjacent_buildings___n10 = file_manager.generate_file_name_gdb(
         script_source_name=squash_buildings, description="adjacent_buildings"
     )
@@ -64,6 +68,10 @@ class Building_N10(Enum):
 
     squash_buildings___non_clustered___n10 = file_manager.generate_file_name_gdb(
         script_source_name=squash_buildings, description="non_clustered"
+    )
+
+    squash_buildings___harmonize_attributes___n10 = file_manager.generate_file_name_gdb(
+        script_source_name=squash_buildings, description="harmonize_attributes"
     )
 
     squash_buildings___final___n10 = file_manager.generate_file_name_gdb(
