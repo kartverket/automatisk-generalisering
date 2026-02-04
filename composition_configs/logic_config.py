@@ -231,6 +231,8 @@ class FillLineGapsAdvancedConfig:
     increased_tolerance_edge_case_distance_meters: int = 0
     # Auto uses snap on dangle pairs and extend for all others
     edit_method: EditMethod = EditMethod.AUTO
+    # decide if lines inherit illegal targets of connected lines
+    propagating_illigal_targets = (True,)
 
 
 @dataclass(frozen=True)
