@@ -373,13 +373,13 @@ def get_annotation_contours(files: dict) -> None:
 
 
 @timing_decorator
-def create_points_along_line(files: dict, threshold: int = 2000) -> None:
+def create_points_along_line(files: dict, threshold: int = 1000) -> None:
     """
     Creates a point every x m defined by the threshold.
 
     Args:
         files (dict): Dictionary with all the working files
-        threshold (int, optionally): Distance (m) between each new point (default: 2000)
+        threshold (int, optionally): Distance (m) between each new point (default: 1000)
     """
     contours_lyr = "contours_lyr"
     arcpy.management.MakeFeatureLayer(
@@ -418,14 +418,14 @@ def create_ladders(files: dict) -> dict:
 
     cluster_field = "CLUSTER_ID"
     height_field = "HØYDE"
-    eps_distance = 500  # [m]
+    eps_distance = 250 # [m]
 
     # 1) Performe DBSCAN
     arcpy.management.AddField(
         in_table=points_fc, field_name=cluster_field, field_type="LONG"
     )
     points = [
-        (oid, pt) for oid, pt in arcpy.da.SearchCursor(points_fc, ["OID@", "SHAPE@"])
+        (oid, pt, h) for oid, pt, h in arcpy.da.SearchCursor(points_fc, ["OID@", "SHAPE@", "HØYDE"])
     ]
     clusters = cluster_points(points=points, eps=eps_distance)
 
@@ -821,14 +821,16 @@ def cluster_points(points: list, eps: int) -> list:
     Proper DBSCAN-like clustering.
 
     Args:
-        points (list): [(oid, arcpy.Point), ...]
+        points (list): [(oid, arcpy.Point, height), ...]
         eps (float): distance threshold
 
     Returns:
         list: list of clusters, each cluster is a list of OIDs
     """
     # Precompute coordinates
-    coords = {oid: (pt.centroid.X, pt.centroid.Y) for oid, pt in points}
+    coords = {oid: (pt.centroid.X, pt.centroid.Y) for oid, pt, _ in points}
+    # oid -> height
+    heights = {oid: h for oid, _, h in points}
 
     # Build grid index
     cell_size = eps
@@ -842,7 +844,7 @@ def cluster_points(points: list, eps: int) -> list:
         grid[cell].append(oid)
 
     # Find neighbors using grid lookup
-    neighbors = {oid: [] for oid, _ in points}
+    neighbors = {oid: [] for oid, _, _ in points}
 
     for oid, (x, y) in coords.items():
         cx, cy = cell_for(x, y)
@@ -856,6 +858,8 @@ def cluster_points(points: list, eps: int) -> list:
                 for other in grid[cell]:
                     if other == oid:
                         continue
+                    if heights[other] == heights[oid]:
+                        continue
                     ox, oy = coords[other]
                     if (x - ox) ** 2 + (y - oy) ** 2 <= eps**2:
                         neighbors[oid].append(other)
@@ -864,7 +868,7 @@ def cluster_points(points: list, eps: int) -> list:
     visited = set()
     clusters = []
 
-    for oid, _ in points:
+    for oid, _, _ in points:
         if oid in visited:
             continue
 
