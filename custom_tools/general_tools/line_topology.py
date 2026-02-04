@@ -43,6 +43,7 @@ class FillLineGaps:
             adv.increased_tolerance_edge_case_distance_meters
         )
         self.edit_method = logic_config.EditMethod(adv.edit_method)
+        self.propagate_illigal_targets = adv.propagating_illigal_targets
 
         if self.connect_to_features is None and self.fill_gaps_on_self is False:
             raise ValueError(
@@ -340,7 +341,7 @@ class FillLineGaps:
         *,
         dangle_parent: dict[int, int],
         target_layers: list[str],
-    ) -> dict[int, dict[str, set[int]]]:
+    ) -> tuple[dict[int, dict[str, set[int]]], dict[int, set[int]]]:
         """
         illegal[parent_id][dataset_key] -> set(objectid)
 
@@ -354,12 +355,16 @@ class FillLineGaps:
             illegal=illegal,
             parent_ids=set(dangle_parent.values()),
         )
-        self._illegal_connected_features(
+        adjacency = self._illegal_connected_features(
             illegal=illegal,
             target_layers=target_layers,
         )
-
-        return illegal
+        if self.propagate_illigal_targets:
+            self._propagate_external_illegal_within_components(
+                illegal=illegal,
+                adjacency=adjacency,
+            )
+        return illegal, adjacency
 
     def _illegal_self_line(
         self,
@@ -376,13 +381,9 @@ class FillLineGaps:
         *,
         illegal: dict[int, dict[str, set[int]]],
         target_layers: list[str],
-    ) -> None:
-        """
-        Endpoint connectivity:
-          - create BOTH_ENDS points for lines_copy (each carries ORIGINAL_ID)
-          - near-table with radius 0 against the target layers
-          - anything at distance 0 is connected -> illegal
-        """
+    ) -> dict[int, set[int]]:
+        adjacency: dict[int, set[int]] = {}
+
         arcpy.management.FeatureVerticesToPoints(
             self.lines_copy, self.conn_endpoints, "BOTH_ENDS"
         )
@@ -395,11 +396,19 @@ class FillLineGaps:
             for eo, pid in cur:
                 endpoint_parent[int(eo)] = int(pid)
 
+        # IMPORTANT: include full lines_copy for building adjacency/components
+        near_features = list(target_layers)
+        if self.lines_copy not in near_features:
+            near_features.append(self.lines_copy)
+
+        connect_tol_m = 0.02
+        connect_tol = f"{connect_tol_m} Meters"
+
         arcpy.analysis.GenerateNearTable(
             in_features=self.conn_endpoints,
-            near_features=target_layers,
+            near_features=near_features,
             out_table=self.conn_table,
-            search_radius="0 Meters",
+            search_radius=connect_tol,
             location="NO_LOCATION",
             angle="NO_ANGLE",
             closest="ALL",
@@ -407,22 +416,114 @@ class FillLineGaps:
             method="PLANAR",
         )
 
+        lines_key = self._dataset_key(self.lines_copy)
+        line_keys = self._line_dataset_keys()
+
+        lines_copy_key = self._dataset_key(self.lines_copy)
+        target_self_key = self._dataset_key(self.target_self)
+
+        lines_copy_oid_to_orig = self._oid_to_original_id_lookup(self.lines_copy)
+        target_self_oid_to_orig = (
+            self._oid_to_original_id_lookup(self.target_self)
+            if self.fill_gaps_on_self
+            else {}
+        )
+
         fields = [self.F_IN_FID, self.F_NEAR_FID, self.F_NEAR_FC, self.F_NEAR_DIST]
         with arcpy.da.SearchCursor(self.conn_table, fields) as cur:
             for in_fid, near_fid, near_fc, near_dist in cur:
                 if near_fid is None or near_dist is None:
                     continue
-                if float(near_dist) != 0.0:
+
+                if float(near_dist) >= float(connect_tol_m):
                     continue
 
-                pid = endpoint_parent.get(int(in_fid))
-                if pid is None:
+                a_parent = endpoint_parent.get(int(in_fid))
+                if a_parent is None:
                     continue
+                a_parent = int(a_parent)
 
-                ds_key = self._dataset_key(near_fc)
-                illegal.setdefault(int(pid), {}).setdefault(ds_key, set()).add(
-                    int(near_fid)
+                raw_key = self._dataset_key(near_fc)
+                nf_id = int(near_fid)
+
+                # Convert line-like near_fid into ORIGINAL_ID space
+                if raw_key == lines_copy_key:
+                    nf_id = int(lines_copy_oid_to_orig.get(nf_id, nf_id))
+                elif raw_key == target_self_key:
+                    nf_id = int(target_self_oid_to_orig.get(nf_id, nf_id))
+
+                ds_key = self._normalize_target_key(
+                    near_fc_key=raw_key,
+                    lines_key=lines_key,
+                    line_keys=line_keys,
                 )
+
+                illegal.setdefault(a_parent, {}).setdefault(ds_key, set()).add(
+                    int(nf_id)
+                )
+
+                # Build adjacency only for line network connections
+                if ds_key == lines_key:
+                    b_parent = int(nf_id)
+                    if b_parent != a_parent:
+                        adjacency.setdefault(a_parent, set()).add(b_parent)
+                        adjacency.setdefault(b_parent, set()).add(a_parent)
+
+        return adjacency
+
+    def _propagate_external_illegal_within_components(
+        self,
+        *,
+        illegal: dict[int, dict[str, set[int]]],
+        adjacency: dict[int, set[int]],
+    ) -> None:
+        """
+        For each connected component of the line network, union external illegal targets
+        and apply to every member.
+
+        External illegal targets = everything except the canonical lines_key (self-line rule).
+        """
+        lines_key = self._dataset_key(self.lines_copy)
+
+        visited: set[int] = set()
+
+        # Ensure we include isolated nodes too
+        all_nodes = set(illegal.keys()) | set(adjacency.keys())
+        for pid in list(all_nodes):
+            pid = int(pid)
+            if pid in visited:
+                continue
+
+            # BFS to get component
+            stack = [pid]
+            component: set[int] = set()
+
+            while stack:
+                cur = int(stack.pop())
+                if cur in visited:
+                    continue
+                visited.add(cur)
+                component.add(cur)
+
+                for nb in adjacency.get(cur, set()):
+                    nb = int(nb)
+                    if nb not in visited:
+                        stack.append(nb)
+
+            # Union external illegal across component
+            union_external: dict[str, set[int]] = {}
+            for member in component:
+                ds_map = illegal.get(int(member), {})
+                for ds_key, ids in ds_map.items():
+                    if ds_key == lines_key:
+                        continue  # keep self-line constraint per member
+                    union_external.setdefault(ds_key, set()).update(ids)
+
+            # Apply union to each member
+            for member in component:
+                illegal.setdefault(int(member), {})
+                for ds_key, ids in union_external.items():
+                    illegal[int(member)].setdefault(ds_key, set()).update(ids)
 
     def _is_illegal(
         self,
@@ -590,21 +691,28 @@ class FillLineGaps:
         cand: dict,
         base_tol: float,
         dangle_tol: float,
+        component_id: dict[int, int] | None = None,
     ) -> bool:
         ds_key = cand["near_fc_key"]
         oid = int(cand["near_fid"])
         dist = float(cand["near_dist"])
 
+        a_comp = component_id.get(int(parent_id)) if component_id is not None else None
+
         if ds_key == dangles_fc_key:
             if dist > dangle_tol:
                 return False
 
-            # legality of snapping to a dangle is assessed via its parent line
-            other_parent = dangle_parent.get(oid)
+            other_parent = dangle_parent.get(int(oid))
             if other_parent is None:
                 return False
 
-            # treat as snapping to that parent line for illegal checks
+            # NEW: disallow snapping to a dangle whose parent is in the same connected component
+            if a_comp is not None and component_id is not None:
+                if component_id.get(int(other_parent)) == a_comp:
+                    return False
+
+            # existing illegal check (treat as snapping to that parent line)
             if self._is_illegal(
                 illegal=illegal,
                 parent_id=parent_id,
@@ -619,9 +727,13 @@ class FillLineGaps:
         if dist > base_tol:
             return False
 
-        # hard guard: never snap to own parent line (canonical lines key)
         if ds_key == lines_fc_key and int(oid) == int(parent_id):
             return False
+
+        # NEW: disallow snapping to a line in the same connected component
+        if ds_key == lines_fc_key and a_comp is not None and component_id is not None:
+            if component_id.get(int(oid)) == a_comp:
+                return False
 
         if self._is_illegal(
             illegal=illegal,
@@ -668,6 +780,7 @@ class FillLineGaps:
         parent_id: int,
         base_tol: float,
         dangle_tol: float,
+        component_id: dict[int, int] | None = None,
     ) -> Optional[dict]:
         for cand in candidates_sorted:
             if self._candidate_is_legal(
@@ -679,6 +792,7 @@ class FillLineGaps:
                 cand=cand,
                 base_tol=base_tol,
                 dangle_tol=dangle_tol,
+                component_id=component_id,
             ):
                 return cand
         return None
@@ -704,6 +818,30 @@ class FillLineGaps:
                 return cand
         return None
 
+    def _build_component_ids(
+        self, *, adjacency: dict[int, set[int]], nodes: set[int]
+    ) -> dict[int, int]:
+        comp_id: dict[int, int] = {}
+        visited: set[int] = set()
+        cid = 0
+
+        for start in nodes | set(adjacency.keys()):
+            start = int(start)
+            if start in visited:
+                continue
+            cid += 1
+            stack = [start]
+            while stack:
+                cur = int(stack.pop())
+                if cur in visited:
+                    continue
+                visited.add(cur)
+                comp_id[cur] = cid
+                for nb in adjacency.get(cur, set()):
+                    if nb not in visited:
+                        stack.append(int(nb))
+        return comp_id
+
     # ----------------------------
     # Build plan (two-phase: detect pairs first, then decide moves)
     # ----------------------------
@@ -714,11 +852,16 @@ class FillLineGaps:
         dangle_parent = self._build_dangle_parent_lookup(dangles_fc=dangles_fc)
         dangle_xy = self._build_dangle_xy_lookup(dangles_fc=dangles_fc)
 
-        illegal = self.detect_illegal_targets(
+        illegal, adjacency = self.detect_illegal_targets(
             dangle_parent=dangle_parent,
             target_layers=target_layers,
         )
-
+        nodes = set(dangle_parent.values())
+        component_id = (
+            self._build_component_ids(adjacency=adjacency, nodes=nodes)
+            if self.propagate_illigal_targets
+            else None
+        )
         dangles_key = self._dataset_key(dangles_fc)
 
         lines_key = self._dataset_key(self.lines_copy)
@@ -798,6 +941,7 @@ class FillLineGaps:
                 parent_id=int(parent_id),
                 base_tol=base_tol,
                 dangle_tol=dangle_tol,
+                component_id=component_id,
             )
             if first_legal is None:
                 no_legal += 1
@@ -977,6 +1121,7 @@ class FillLineGaps:
                 cand=a_to_b_line,
                 base_tol=float(base_tol),
                 dangle_tol=float(dangle_tol),
+                component_id=component_id,
             ):
                 a_to_b_line = None
 
@@ -989,6 +1134,7 @@ class FillLineGaps:
                 cand=b_to_a_line,
                 base_tol=float(base_tol),
                 dangle_tol=float(dangle_tol),
+                component_id=component_id,
             ):
                 b_to_a_line = None
 

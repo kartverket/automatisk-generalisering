@@ -247,7 +247,6 @@ class RiverStrahlerKwargs:
 
 
 @dataclass(frozen=True)
-<<<<<<< HEAD
 class AttributeChangerInitKwargs:
     input_feature: str
     output_feature: str
@@ -261,7 +260,9 @@ class LandUseInitKwargs:
     input_feature: str
     output_feature: str
     map_scale: str
-=======
+
+
+@dataclass(frozen=True)
 class FillLineGapsAdvancedConfig:
     fill_gaps_on_self: bool = True
     line_changes_output: Optional[str] = None
@@ -270,12 +271,10 @@ class FillLineGapsAdvancedConfig:
     # Effective dangle→dangle cap = gap_tolerance_meters + extra.
     # Use 0 to disable expanded dangle pairing.
     increased_tolerance_edge_case_distance_meters: int = 0
-<<<<<<< HEAD
->>>>>>> 5aa8c33 (WIP line topolgy gap fix)
-=======
     # Auto uses snap on dangle pairs and extend for all others
     edit_method: EditMethod = EditMethod.AUTO
->>>>>>> c2a0cf4 (Added edit method as param)
+    # decide if lines inherit illegal targets of connected lines
+    propagating_illigal_targets = (True,)
 
 
 @dataclass(frozen=True)

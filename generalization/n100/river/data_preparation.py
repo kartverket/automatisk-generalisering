@@ -69,7 +69,7 @@ def filter_river_water_features():
     # Can consider adding 'VeggrøftÅpen' to river line sellection. Byt really questionable.
     custom_arcpy.select_attribute_and_make_permanent_feature(
         input_layer=River_N100.data_selection___water_lines___n100_river.value,
-        expression="objtype IN ('ElvBekk', 'KanalGrøft', 'Kanalkant')",
+        expression="objtype IN ('ElvBekk', 'KanalGrøft', 'Kanalkant', 'KonnekteringVann')",
         output_name=River_N100.data_preparation___river_lines___n100_river.value,
     )
 
