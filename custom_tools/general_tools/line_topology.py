@@ -42,6 +42,7 @@ class FillLineGaps:
         self.increased_tolerance_edge_case_distance_meters = int(
             adv.increased_tolerance_edge_case_distance_meters
         )
+        self.edit_method = logic_config.EditMethod(adv.edit_method)
 
         if self.connect_to_features is None and self.fill_gaps_on_self is False:
             raise ValueError(
@@ -117,6 +118,80 @@ class FillLineGaps:
             for oid, original_id in cur:
                 out[int(oid)] = int(original_id)
         return out
+
+    def _resolve_edit_op(self, *, gap_source: str) -> logic_config.EditOp:
+        method = self.edit_method
+
+        if method == logic_config.EditMethod.FORCED_SNAP:
+            return logic_config.EditOp.SNAP
+        if method == logic_config.EditMethod.FORCED_EXTEND:
+            return logic_config.EditOp.EXTEND
+
+        # AUTO
+        if str(gap_source) == self.GAP_SOURCE_PAIR_DANGLE:
+            return logic_config.EditOp.SNAP
+        return logic_config.EditOp.EXTEND
+
+    def _choose_endpoint_index(
+        self, *, points: list, dangle_x: float, dangle_y: float, tol: float = 0.001
+    ) -> int:
+        first = points[0]
+        last = points[-1]
+
+        def matches(point, x: float, y: float) -> bool:
+            return abs(point.X - x) <= tol and abs(point.Y - y) <= tol
+
+        if matches(first, dangle_x, dangle_y):
+            return 0
+        if matches(last, dangle_x, dangle_y):
+            return -1
+
+        # Fallback: closest end
+        d_first = (first.X - dangle_x) ** 2 + (first.Y - dangle_y) ** 2
+        d_last = (last.X - dangle_x) ** 2 + (last.Y - dangle_y) ** 2
+        return 0 if d_first <= d_last else -1
+
+    def _snap_endpoint(
+        self, *, shape, dangle_x: float, dangle_y: float, near_x: float, near_y: float
+    ):
+        if shape is None:
+            return shape
+
+        part = shape.getPart(0)
+        points = [pt for pt in part]
+        if len(points) < 2:
+            return shape
+
+        idx = self._choose_endpoint_index(
+            points=points, dangle_x=dangle_x, dangle_y=dangle_y
+        )
+
+        points[idx] = arcpy.Point(near_x, near_y)
+        return arcpy.Polyline(arcpy.Array(points), shape.spatialReference)
+
+    def _extend_endpoint(
+        self, *, shape, dangle_x: float, dangle_y: float, near_x: float, near_y: float
+    ):
+        if shape is None:
+            return shape
+
+        part = shape.getPart(0)
+        points = [pt for pt in part]
+        if len(points) < 2:
+            return shape
+
+        idx = self._choose_endpoint_index(
+            points=points, dangle_x=dangle_x, dangle_y=dangle_y
+        )
+
+        # If extending at the start, insert new point before first.
+        # If extending at the end, append new point after last.
+        if idx == 0:
+            points.insert(0, arcpy.Point(near_x, near_y))
+        else:
+            points.append(arcpy.Point(near_x, near_y))
+
+        return arcpy.Polyline(arcpy.Array(points), shape.spatialReference)
 
     # ----------------------------
     # Preprocessing
@@ -529,10 +604,6 @@ class FillLineGaps:
             if other_parent is None:
                 return False
 
-            # making sure self parent line never is legal
-            if ds_key == lines_fc_key and int(oid) == int(parent_id):
-                return False
-
             # treat as snapping to that parent line for illegal checks
             if self._is_illegal(
                 illegal=illegal,
@@ -546,6 +617,10 @@ class FillLineGaps:
 
         # non-dangle
         if dist > base_tol:
+            return False
+
+        # hard guard: never snap to own parent line (canonical lines key)
+        if ds_key == lines_fc_key and int(oid) == int(parent_id):
             return False
 
         if self._is_illegal(
@@ -983,10 +1058,12 @@ class FillLineGaps:
         chosen: dict,
         gap_source: str,
     ) -> dict:
+        edit_op = self._resolve_edit_op(gap_source=str(gap_source))
         return {
             "processed": False,
             "skip": False,
             "gap_source": str(gap_source),
+            "edit_op": str(edit_op.value),
             "dangle_oid": int(dangle_oid),
             "dangle_x": float(dangle_x),
             "dangle_y": float(dangle_y),
@@ -1120,6 +1197,9 @@ class FillLineGaps:
                 "processed": False,
                 "skip": False,
                 "gap_source": self.GAP_SOURCE_DEFERRED,
+                "edit_op": str(
+                    self._resolve_edit_op(gap_source=self.GAP_SOURCE_DEFERRED).value
+                ),
                 "dangle_oid": dangle_oid_val,
                 "dangle_x": float(dangle_x),
                 "dangle_y": float(dangle_y),
@@ -1177,35 +1257,6 @@ class FillLineGaps:
         geom = arcpy.Polyline(arr, spatial_reference)
         return (geom, int(original_id), float(dist), str(gap_source))
 
-    def _move_endpoint(
-        self, shape, dangle_x: float, dangle_y: float, near_x: float, near_y: float
-    ):
-        if shape is None:
-            return shape
-        part = shape.getPart(0)
-        points = [pt for pt in part]
-        if len(points) < 2:
-            return shape
-
-        first = points[0]
-        last = points[-1]
-
-        tol = 0.001
-
-        def matches(point, x: float, y: float) -> bool:
-            return abs(point.X - x) <= tol and abs(point.Y - y) <= tol
-
-        if matches(first, dangle_x, dangle_y):
-            points[0] = arcpy.Point(near_x, near_y)
-        elif matches(last, dangle_x, dangle_y):
-            points[-1] = arcpy.Point(near_x, near_y)
-        else:
-            d_first = (first.X - dangle_x) ** 2 + (first.Y - dangle_y) ** 2
-            d_last = (last.X - dangle_x) ** 2 + (last.Y - dangle_y) ** 2
-            points[0 if d_first <= d_last else -1] = arcpy.Point(near_x, near_y)
-
-        return arcpy.Polyline(arcpy.Array(points), shape.spatialReference)
-
     def _apply_edits(self, plan: dict[int, dict]) -> None:
         if not plan:
             arcpy.management.CopyFeatures(self.lines_copy, self.output_lines)
@@ -1231,13 +1282,24 @@ class FillLineGaps:
                 ):
                     continue
 
-                new_shape = self._move_endpoint(
-                    shape=shape,
-                    dangle_x=float(info["dangle_x"]),
-                    dangle_y=float(info["dangle_y"]),
-                    near_x=float(info["near_x"]),
-                    near_y=float(info["near_y"]),
-                )
+                edit_op = str(info.get("edit_op", logic_config.EditOp.EXTEND.value))
+
+                if edit_op == logic_config.EditOp.SNAP.value:
+                    new_shape = self._snap_endpoint(
+                        shape=shape,
+                        dangle_x=float(info["dangle_x"]),
+                        dangle_y=float(info["dangle_y"]),
+                        near_x=float(info["near_x"]),
+                        near_y=float(info["near_y"]),
+                    )
+                else:
+                    new_shape = self._extend_endpoint(
+                        shape=shape,
+                        dangle_x=float(info["dangle_x"]),
+                        dangle_y=float(info["dangle_y"]),
+                        near_x=float(info["near_x"]),
+                        near_y=float(info["near_y"]),
+                    )
                 cur.updateRow((original_id, new_shape))
 
                 if self.line_changes_output is not None:

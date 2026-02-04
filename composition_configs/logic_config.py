@@ -187,6 +187,17 @@ class DissolveInitKwargs:
     sql_expressions: Optional[List[str]] = None
 
 
+class EditMethod(str, Enum):
+    AUTO = "auto"
+    FORCED_SNAP = "forced_snap"
+    FORCED_EXTEND = "forced_extend"
+
+
+class EditOp(str, Enum):
+    SNAP = "snap"
+    EXTEND = "extend"
+
+
 @dataclass(frozen=True)
 class ConnectRiverLinesKwargs:
     work_file_manager_config: core_config.WorkFileConfig
@@ -218,6 +229,8 @@ class FillLineGapsAdvancedConfig:
     # Effective dangle→dangle cap = gap_tolerance_meters + extra.
     # Use 0 to disable expanded dangle pairing.
     increased_tolerance_edge_case_distance_meters: int = 0
+    # Auto uses snap on dangle pairs and extend for all others
+    edit_method: EditMethod = EditMethod.AUTO
 
 
 @dataclass(frozen=True)
