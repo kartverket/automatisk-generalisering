@@ -97,6 +97,27 @@ class FillLineGaps:
         text = str(value).replace("\\", "/")
         return text.split("/")[-1]
 
+    def _line_dataset_keys(self) -> set[str]:
+        return {
+            self._dataset_key(self.lines_copy),
+            self._dataset_key(self.target_self),
+        }
+
+    def _normalize_target_key(
+        self, *, near_fc_key: str, lines_key: str, line_keys: set[str]
+    ) -> str:
+        if near_fc_key in line_keys:
+            return lines_key
+        return near_fc_key
+
+    def _oid_to_original_id_lookup(self, fc: str) -> dict[int, int]:
+        oid_field = arcpy.Describe(fc).OIDFieldName
+        out: dict[int, int] = {}
+        with arcpy.da.SearchCursor(fc, [oid_field, self.ORIGINAL_ID]) as cur:
+            for oid, original_id in cur:
+                out[int(oid)] = int(original_id)
+        return out
+
     # ----------------------------
     # Preprocessing
     # ----------------------------
@@ -371,7 +392,7 @@ class FillLineGaps:
         self,
         *,
         candidates_sorted: list[dict],
-        lines_fc_key: str,
+        lines_fc_keys: set[str],
         other_parent_id: int,
         base_tol: float,
     ) -> Optional[dict]:
@@ -380,7 +401,7 @@ class FillLineGaps:
         within base_tol.
         """
         for cand in candidates_sorted:
-            if cand["near_fc_key"] != lines_fc_key:
+            if cand["near_fc_key"] not in lines_fc_keys:
                 continue
             if int(cand["near_fid"]) != int(other_parent_id):
                 continue
@@ -417,11 +438,17 @@ class FillLineGaps:
         *,
         near_table: str,
         dangles_fc_key: str,
+        lines_copy_key: str,
+        target_self_key: str,
+        lines_copy_oid_to_orig: dict[int, int],
+        target_self_oid_to_orig: dict[int, int],
     ) -> dict[int, list[dict]]:
-        """
-        grouped[in_dangle_oid] = list of candidates sorted later by dist.
-        """
+
         grouped: dict[int, list[dict]] = {}
+
+        # Canonical key for “input lines”
+        lines_key = self._dataset_key(self.lines_copy)
+        line_keys = self._line_dataset_keys()
 
         fields = [
             self.F_IN_FID,
@@ -441,7 +468,20 @@ class FillLineGaps:
                 nf_id = int(near_fid)
                 dist = float(near_dist)
 
-                near_fc_key = self._dataset_key(near_fc)
+                raw_key = self._dataset_key(near_fc)
+                nf_id = int(near_fid)
+
+                # Convert line-like near_fid into ORIGINAL_ID space
+                if raw_key == lines_copy_key:
+                    nf_id = lines_copy_oid_to_orig.get(nf_id, nf_id)
+                elif raw_key == target_self_key:
+                    nf_id = target_self_oid_to_orig.get(nf_id, nf_id)
+
+                near_fc_key = self._normalize_target_key(
+                    near_fc_key=raw_key,
+                    lines_key=lines_key,
+                    line_keys=line_keys,
+                )
 
                 # Defensive guard against self-dangle returning as candidate
                 if near_fc_key == dangles_fc_key and nf_id == in_id:
@@ -449,7 +489,8 @@ class FillLineGaps:
 
                 grouped.setdefault(in_id, []).append(
                     {
-                        "near_fc_key": near_fc_key,
+                        "near_fc_key_raw": raw_key,  # optional: keep for debugging
+                        "near_fc_key": near_fc_key,  # normalized key
                         "near_fid": nf_id,
                         "near_dist": dist,
                         "near_x": float(near_x),
@@ -488,6 +529,10 @@ class FillLineGaps:
             if other_parent is None:
                 return False
 
+            # making sure self parent line never is legal
+            if ds_key == lines_fc_key and int(oid) == int(parent_id):
+                return False
+
             # treat as snapping to that parent line for illegal checks
             if self._is_illegal(
                 illegal=illegal,
@@ -518,7 +563,7 @@ class FillLineGaps:
         *,
         dangle_parent: dict[int, int],
         dangles_fc_key: str,
-        lines_fc_key: str,
+        lines_fc_keys: set[str],
         cand: dict,
     ) -> Optional[int]:
         """
@@ -532,7 +577,7 @@ class FillLineGaps:
             other_parent = dangle_parent.get(oid)
             return int(other_parent) if other_parent is not None else None
 
-        if ds_key == lines_fc_key:
+        if ds_key in lines_fc_keys:
             return int(oid)
 
         return None
@@ -599,35 +644,73 @@ class FillLineGaps:
             target_layers=target_layers,
         )
 
-        dangles_key = self._dataset_key(self.dangles)
+        dangles_key = self._dataset_key(dangles_fc)
+
         lines_key = self._dataset_key(self.lines_copy)
+        lines_fc_keys = self._line_dataset_keys()
+        near_features = list(target_layers) + [dangles_fc]
 
         base_tol = float(self.gap_tolerance_meters)
         dangle_tol = float(self._expanded_dangle_tolerance_meters())
 
+        lines_copy_key = self._dataset_key(self.lines_copy)
+        target_self_key = self._dataset_key(self.target_self)
+
+        lines_copy_oid_to_orig = self._oid_to_original_id_lookup(self.lines_copy)
+        target_self_oid_to_orig = (
+            self._oid_to_original_id_lookup(self.target_self)
+            if self.fill_gaps_on_self
+            else {}
+        )
         # One near-table for everything (expanded radius so we can see dangle pairs)
-        near_features = list(target_layers) + [self.dangles]
         self._generate_near_table(
             in_dangles=dangles_fc,
             near_features=near_features,
             search_radius=self._expanded_dangle_tolerance_linear_unit(),
             out_table=self.near_table,
         )
-
         grouped = self._read_near_table_grouped(
             near_table=self.near_table,
             dangles_fc_key=dangles_key,
+            lines_copy_key=lines_copy_key,
+            target_self_key=target_self_key,
+            lines_copy_oid_to_orig=lines_copy_oid_to_orig,
+            target_self_oid_to_orig=target_self_oid_to_orig,
         )
+
+        # DEBUG: inspect first candidates
+        lines_key = self._dataset_key(self.lines_copy)
+        zero = 0
+        line = 0
+        total = 0
+
+        for in_id, rows in list(grouped.items())[:2000]:  # sample
+            if not rows:
+                continue
+            r0 = min(rows, key=lambda r: r["near_dist"])
+            total += 1
+            if float(r0["near_dist"]) == 0.0:
+                zero += 1
+            if r0["near_fc_key"] == lines_key:
+                line += 1
+
+        arcpy.AddMessage(f"DEBUG sample={total} zero_dist={zero} line_key={line}")
+
         if not grouped:
             return {}
 
         # ----------------------------
         # Phase 1: per dangle -> first legal + pair token
         # ----------------------------
+        total_dangles = 0
+        no_parent = 0
+        no_legal = 0
         per_dangle: dict[int, dict] = {}
         for dangle_oid, candidates in grouped.items():
+            total_dangles += 1
             parent_id = dangle_parent.get(int(dangle_oid))
             if parent_id is None:
+                no_parent += 1
                 continue
 
             rows = sorted(candidates, key=lambda r: r["near_dist"])
@@ -642,12 +725,12 @@ class FillLineGaps:
                 dangle_tol=dangle_tol,
             )
             if first_legal is None:
+                no_legal += 1
                 continue
-
             token = self._pair_token_from_candidate(
                 dangle_parent=dangle_parent,
                 dangles_fc_key=dangles_key,
-                lines_fc_key=lines_key,
+                lines_fc_keys=lines_fc_keys,
                 cand=first_legal,
             )
 
@@ -657,7 +740,17 @@ class FillLineGaps:
                 "first_legal": first_legal,
                 "pair_token_parent": token,  # other parent id if pair-like
             }
+            if len(per_dangle) < 20:
+                arcpy.AddMessage(
+                    f"DEBUG example: dangle_oid={dangle_oid} parent={parent_id} "
+                    f"first_legal key={first_legal['near_fc_key']} raw={first_legal.get('near_fc_key_raw')} "
+                    f"near_fid={first_legal['near_fid']} dist={first_legal['near_dist']}"
+                )
 
+        arcpy.AddMessage(
+            f"DEBUG grouped={len(grouped)} total={total_dangles} "
+            f"no_parent={no_parent} no_legal={no_legal}"
+        )
         if not per_dangle:
             return {}
 
@@ -788,13 +881,13 @@ class FillLineGaps:
             # (2) Explicit parent-line proximity rows (must be within base tolerance)
             a_to_b_line = self._find_specific_line_candidate(
                 candidates_sorted=info["rows"],
-                lines_fc_key=lines_key,
+                lines_fc_keys=lines_fc_keys,
                 other_parent_id=int(b_parent),
                 base_tol=float(base_tol),
             )
             b_to_a_line = self._find_specific_line_candidate(
                 candidates_sorted=b_info["rows"],
-                lines_fc_key=lines_key,
+                lines_fc_keys=lines_fc_keys,
                 other_parent_id=int(a_parent),
                 base_tol=float(base_tol),
             )
