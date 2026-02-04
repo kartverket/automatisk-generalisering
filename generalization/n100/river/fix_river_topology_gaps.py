@@ -30,7 +30,9 @@ def fill_line_topology_gaps():
         input_lines=River_N100.data_preparation___river_lines___n100_river.value,
         output_lines=River_N100.river_topology___fixed_river_gaps___n100_river.value,
         work_file_manager_config=core_config.WorkFileConfig(
-            root_file=River_N100.river_topology___root___n100_river.value
+            root_file=River_N100.river_topology___root___n100_river.value,
+            write_to_memory=False,
+            keep_files=True,
         ),
         gap_tolerance_meters=3,
         connect_to_features=[
