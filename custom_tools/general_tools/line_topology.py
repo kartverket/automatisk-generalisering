@@ -794,6 +794,81 @@ class FillLineGaps:
                 return cand
         return None
 
+    def _find_best_dangle_candidate_to_parent(
+        self,
+        *,
+        candidates_sorted: list[dict],
+        dangles_fc_key: str,
+        dangle_parent: dict[int, int],
+        target_parent_id: int,
+        dangle_tol: float,
+    ) -> Optional[dict]:
+        """
+        From A's candidate rows, find the closest dangle feature that belongs to target_parent_id.
+        This handles "target parent has 2 dangles" correctly by selecting the closest.
+        """
+        best = None
+        best_dist = float("inf")
+
+        for cand in candidates_sorted:
+            if cand["near_fc_key"] != dangles_fc_key:
+                continue
+
+            other_dangle_oid = int(cand["near_fid"])
+            other_parent = dangle_parent.get(other_dangle_oid)
+            if other_parent is None:
+                continue
+            if int(other_parent) != int(target_parent_id):
+                continue
+
+            dist = float(cand["near_dist"])
+            if dist <= float(dangle_tol) and dist < best_dist:
+                best = cand
+                best_dist = dist
+
+        return best
+
+    def _best_dangle_for_parent_towards_target_parent(
+        self,
+        *,
+        parent_id: int,
+        target_parent_id: int,
+        parent_to_dangles: dict[int, list[int]],
+        per_dangle: dict[int, dict],
+    ) -> int | None:
+        """
+        Choose the dangle on `parent_id` that is most suitable for pairing with `target_parent_id`.
+
+        Rule:
+        - Only consider dangles whose pair_token_parent == target_parent_id
+        - Pick the one with the smallest first_legal near_dist
+        """
+        dangles = parent_to_dangles.get(int(parent_id), [])
+        if not dangles:
+            return None
+
+        best_dangle = None
+        best_dist = float("inf")
+
+        for d_oid in dangles:
+            info = per_dangle.get(int(d_oid))
+            if not info:
+                continue
+
+            if int(info.get("pair_token_parent") or -1) != int(target_parent_id):
+                continue
+
+            first_legal = info.get("first_legal")
+            if not first_legal:
+                continue
+
+            dist = float(first_legal.get("near_dist", float("inf")))
+            if dist < best_dist:
+                best_dist = dist
+                best_dangle = int(d_oid)
+
+        return best_dangle
+
     def _find_specific_dangle_candidate(
         self,
         *,
@@ -803,17 +878,51 @@ class FillLineGaps:
         dangle_tol: float,
     ) -> Optional[dict]:
         """
-        Find the row that explicitly targets the other *dangle* (not its line),
-        within dangle_tol (custom dangle tolerance).
+        Find candidate row that targets a specific dangle OID (within dangle_tol).
         """
         for cand in candidates_sorted:
             if cand["near_fc_key"] != dangles_fc_key:
                 continue
             if int(cand["near_fid"]) != int(other_dangle_oid):
                 continue
-            if float(cand["near_dist"]) <= float(dangle_tol):
+
+            dist = float(cand["near_dist"])
+            if dist <= float(dangle_tol):
                 return cand
         return None
+
+    def _best_dangle_for_parent(
+        self,
+        *,
+        parent_id: int,
+        parent_to_dangles: dict[int, list[int]],
+        per_dangle: dict[int, dict],
+    ) -> int | None:
+        """
+        Choose which dangle (of possibly many on the same parent line) should represent
+        this parent for default / non-pair behavior.
+
+        Rule: choose the dangle whose first_legal candidate is closest (smallest near_dist).
+        """
+        dangles = parent_to_dangles.get(int(parent_id), [])
+        if not dangles:
+            return None
+
+        best = None
+        best_dist = float("inf")
+        for d_oid in dangles:
+            info = per_dangle.get(int(d_oid))
+            if not info:
+                continue
+            cand = info.get("first_legal")
+            if not cand:
+                continue
+            dist = float(cand.get("near_dist", float("inf")))
+            if dist < best_dist:
+                best_dist = dist
+                best = int(d_oid)
+
+        return best
 
     def _build_component_ids(
         self, *, adjacency: dict[int, set[int]], nodes: set[int]
@@ -969,10 +1078,9 @@ class FillLineGaps:
         if not per_dangle:
             return {}
 
-        # Helper: parent -> dangle oid (assumes one dangle per line; if not, last wins)
-        parent_to_dangle: dict[int, int] = {}
+        parent_to_dangles: dict[int, list[int]] = {}
         for d_oid, info in per_dangle.items():
-            parent_to_dangle[int(info["parent_id"])] = int(d_oid)
+            parent_to_dangles.setdefault(int(info["parent_id"]), []).append(int(d_oid))
 
         # ----------------------------
         # Phase 2: decide moves with pair logic + defer logic
@@ -981,18 +1089,33 @@ class FillLineGaps:
         deferred_by_parent: dict[int, dict] = {}
         visited_pairs: set[tuple[int, int]] = set()
 
-        for d_oid, info in per_dangle.items():
-            a_parent = int(info["parent_id"])
+        all_parents = sorted(parent_to_dangles.keys())
+
+        for a_parent in all_parents:
+            a_parent = int(a_parent)
             if a_parent in decided_by_parent or a_parent in deferred_by_parent:
                 continue
 
-            token_parent = info["pair_token_parent"]
+            a_dangle = self._best_dangle_for_parent(
+                parent_id=a_parent,
+                parent_to_dangles=parent_to_dangles,
+                per_dangle=per_dangle,
+            )
+            if a_dangle is None:
+                continue
+
+            info = per_dangle.get(int(a_dangle))
+            if not info:
+                continue
+
+            token_parent = info.get("pair_token_parent")
+
             if token_parent is None:
                 chosen = info["first_legal"]
-                dx, dy = dangle_xy[int(d_oid)]
+                dx, dy = dangle_xy[int(a_dangle)]
                 decided_by_parent[a_parent] = self._make_plan_entry(
                     parent_id=a_parent,
-                    dangle_oid=int(d_oid),
+                    dangle_oid=int(a_dangle),
                     dangle_x=dx,
                     dangle_y=dy,
                     chosen=chosen,
@@ -1001,12 +1124,14 @@ class FillLineGaps:
                 continue
 
             b_parent = int(token_parent)
-            if b_parent == a_parent:
+            # If the other parent doesn't have any dangles in this run, treat as normal
+            # (this is equivalent to your old "b_dangle is None => normal" behavior)
+            if int(b_parent) not in parent_to_dangles:
                 chosen = info["first_legal"]
-                dx, dy = dangle_xy[int(d_oid)]
+                dx, dy = dangle_xy[int(a_dangle)]
                 decided_by_parent[a_parent] = self._make_plan_entry(
                     parent_id=a_parent,
-                    dangle_oid=int(d_oid),
+                    dangle_oid=int(a_dangle),
                     dangle_x=dx,
                     dangle_y=dy,
                     chosen=chosen,
@@ -1014,32 +1139,25 @@ class FillLineGaps:
                 )
                 continue
 
-            # If the other parent doesn't have a dangle in this run, treat as normal
-            b_dangle = parent_to_dangle.get(b_parent)
+            # A already points to B (via A's representative dangle).
+            # Now find which of B's dangles (if any) points back to A.
+            b_dangle = self._best_dangle_for_parent_towards_target_parent(
+                parent_id=int(b_parent),
+                target_parent_id=int(a_parent),
+                parent_to_dangles=parent_to_dangles,
+                per_dangle=per_dangle,
+            )
+
+            # If B has dangles, but none of them "want A", A must be deferred
             if b_dangle is None:
-                chosen = info["first_legal"]
-                dx, dy = dangle_xy[int(d_oid)]
-                decided_by_parent[a_parent] = self._make_plan_entry(
-                    parent_id=a_parent,
-                    dangle_oid=int(d_oid),
-                    dangle_x=dx,
-                    dangle_y=dy,
-                    chosen=chosen,
-                    gap_source=self.GAP_SOURCE_DEFAULT,
-                )
-                continue
-
-            # Determine if mutual pair: B's closest legal token points back to A
-            b_info = per_dangle.get(int(b_dangle))
-            if not b_info or int(b_info.get("pair_token_parent") or -1) != int(
-                a_parent
-            ):
                 deferred_by_parent[a_parent] = {
                     "parent_id": a_parent,
-                    "dangle_oid": int(d_oid),
+                    "dangle_oid": int(a_dangle),
                     "forced_target_parent": int(b_parent),
                 }
                 continue
+
+            b_info = per_dangle[int(b_dangle)]
 
             # Mutual pair
             pair_key = tuple(sorted((a_parent, b_parent)))
@@ -1055,10 +1173,10 @@ class FillLineGaps:
             ):
                 # Fall back to normal for each (still mark as pair for symmetric skip)
                 for parent, dangle in [
-                    (a_parent, int(d_oid)),
+                    (a_parent, int(a_dangle)),
                     (b_parent, int(b_dangle)),
                 ]:
-                    ii = per_dangle[dangle]
+                    ii = per_dangle[int(dangle)]
                     chosen = ii["first_legal"]
                     dx, dy = dangle_xy[int(dangle)]
                     decided_by_parent[parent] = self._make_plan_entry(
@@ -1079,19 +1197,40 @@ class FillLineGaps:
             # - BUT the parent lines must be within base_tol (and legal)
             # ----------------------------
 
-            # (1) Explicit dangle->dangle rows (within custom dangle tolerance)
+            # (1) Prefer snapping specifically to the chosen pairing endpoints
             a_to_b_dangle = self._find_specific_dangle_candidate(
                 candidates_sorted=info["rows"],
                 dangles_fc_key=dangles_key,
-                other_dangle_oid=int(b_dangle),
+                other_dangle_oid=int(b_dangle),  # chosen B endpoint that points to A
                 dangle_tol=float(dangle_tol),
             )
+
             b_to_a_dangle = self._find_specific_dangle_candidate(
                 candidates_sorted=b_info["rows"],
                 dangles_fc_key=dangles_key,
-                other_dangle_oid=int(d_oid),
+                other_dangle_oid=int(a_dangle),  # chosen A endpoint
                 dangle_tol=float(dangle_tol),
             )
+
+            # Optional fallback: allow snapping to the closest endpoint on the parent if the
+            # exact endpoint row isn't present in the near table output
+            if a_to_b_dangle is None:
+                a_to_b_dangle = self._find_best_dangle_candidate_to_parent(
+                    candidates_sorted=info["rows"],
+                    dangles_fc_key=dangles_key,
+                    dangle_parent=dangle_parent,
+                    target_parent_id=int(b_parent),
+                    dangle_tol=float(dangle_tol),
+                )
+
+            if b_to_a_dangle is None:
+                b_to_a_dangle = self._find_best_dangle_candidate_to_parent(
+                    candidates_sorted=b_info["rows"],
+                    dangles_fc_key=dangles_key,
+                    dangle_parent=dangle_parent,
+                    target_parent_id=int(a_parent),
+                    dangle_tol=float(dangle_tol),
+                )
 
             # (2) Explicit parent-line proximity rows (must be within base tolerance)
             a_to_b_line = self._find_specific_line_candidate(
@@ -1156,7 +1295,7 @@ class FillLineGaps:
 
             # Write entries (still need symmetric skip: only one moves)
             for parent, dangle, chosen, source in [
-                (a_parent, int(d_oid), a_chosen, a_source),
+                (a_parent, int(a_dangle), a_chosen, a_source),
                 (b_parent, int(b_dangle), b_chosen, b_source),
             ]:
                 dx, dy = dangle_xy[int(dangle)]
