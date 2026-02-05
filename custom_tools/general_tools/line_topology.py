@@ -690,7 +690,7 @@ class FillLineGaps:
         parent_id: int,
         cand: dict,
         base_tol: float,
-        dangle_tol: float,
+        dangle_candidate_tol: float,  # NEW
         component_id: dict[int, int] | None = None,
     ) -> bool:
         ds_key = cand["near_fc_key"]
@@ -700,19 +700,18 @@ class FillLineGaps:
         a_comp = component_id.get(int(parent_id)) if component_id is not None else None
 
         if ds_key == dangles_fc_key:
-            if dist > dangle_tol:
+            # IMPORTANT: use dangle_candidate_tol, not expanded tolerance by default
+            if dist > float(dangle_candidate_tol):
                 return False
 
             other_parent = dangle_parent.get(int(oid))
             if other_parent is None:
                 return False
 
-            # NEW: disallow snapping to a dangle whose parent is in the same connected component
             if a_comp is not None and component_id is not None:
                 if component_id.get(int(other_parent)) == a_comp:
                     return False
 
-            # existing illegal check (treat as snapping to that parent line)
             if self._is_illegal(
                 illegal=illegal,
                 parent_id=parent_id,
@@ -723,14 +722,13 @@ class FillLineGaps:
 
             return True
 
-        # non-dangle
-        if dist > base_tol:
+        # non-dangle always uses base_tol
+        if dist > float(base_tol):
             return False
 
         if ds_key == lines_fc_key and int(oid) == int(parent_id):
             return False
 
-        # NEW: disallow snapping to a line in the same connected component
         if ds_key == lines_fc_key and a_comp is not None and component_id is not None:
             if component_id.get(int(oid)) == a_comp:
                 return False
@@ -779,7 +777,6 @@ class FillLineGaps:
         lines_fc_key: str,
         parent_id: int,
         base_tol: float,
-        dangle_tol: float,
         component_id: dict[int, int] | None = None,
     ) -> Optional[dict]:
         for cand in candidates_sorted:
@@ -791,7 +788,7 @@ class FillLineGaps:
                 parent_id=parent_id,
                 cand=cand,
                 base_tol=base_tol,
-                dangle_tol=dangle_tol,
+                dangle_candidate_tol=base_tol,
                 component_id=component_id,
             ):
                 return cand
@@ -940,7 +937,6 @@ class FillLineGaps:
                 lines_fc_key=lines_key,
                 parent_id=int(parent_id),
                 base_tol=base_tol,
-                dangle_tol=dangle_tol,
                 component_id=component_id,
             )
             if first_legal is None:
@@ -1120,7 +1116,7 @@ class FillLineGaps:
                 parent_id=int(a_parent),
                 cand=a_to_b_line,
                 base_tol=float(base_tol),
-                dangle_tol=float(dangle_tol),
+                dangle_candidate_tol=base_tol,
                 component_id=component_id,
             ):
                 a_to_b_line = None
@@ -1133,7 +1129,7 @@ class FillLineGaps:
                 parent_id=int(b_parent),
                 cand=b_to_a_line,
                 base_tol=float(base_tol),
-                dangle_tol=float(dangle_tol),
+                dangle_candidate_tol=base_tol,
                 component_id=component_id,
             ):
                 b_to_a_line = None
