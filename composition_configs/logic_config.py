@@ -185,3 +185,11 @@ class DissolveInitKwargs:
 
     dissolve_fields: Optional[List[str]] = None
     sql_expressions: Optional[List[str]] = None
+
+
+@dataclass(frozen=True)
+class CleanTrailsKwargs:
+    work_file_manager_config: core_config.WorkFileConfig
+    maximum_length: int
+    root_file: io_types.GdbIOArg
+    sql_expressions: Optional[List[str]] = None
