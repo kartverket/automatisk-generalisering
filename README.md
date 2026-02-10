@@ -1,11 +1,19 @@
 # Automatisk Generalisering
 
-This is the collection of scripts used to automatically generalize geodata into smaller cartographic scales.
+This repository contains the scripts and tools for automatic cartographic generalization of geodata across multiple map scales.
 
-### Automatisk Generalisering documentation
-- Our documentation can be viewed here: [(link)](https://kartverket.github.io/automatisk-generalisering/index.html)
+## Documentation
 
-### Open the folder `setup_guide` [(link)](https://github.com/kartverket/automatisk-generalisering/tree/main/setup_guide) and read the following documents:
+The project documentation is organized into these main sections:
 
-- `git_setup.md` [(link)](https://github.com/kartverket/automatisk-generalisering/blob/main/setup_guide/git_setup.md) - This helps you to set up your local GIT environment and should be done first.
-- `template_config` [(link)](https://github.com/kartverket/automatisk-generalisering/blob/main/setup_guide/template_config.py) - This is an example of what paths and files you need access to locally to run the scripts in this project.
+- **[Setup Guide](docs/setup/index.md)**  
+  How to install dependencies, configure ArcPy, prepare your environment, and verify your setup.
+
+- **[Contribution Guide](docs/contributing/index.md)**  
+  Formatting standards, docstring guidelines, naming conventions, and collaboration workflow.
+
+- **[Developer Reference](docs/developer_reference/index.md)**  
+  Project structure, design conventions, IO system, runtime entrypoints, and internal architecture notes.
+
+### Codebase documentation
+- Our docstring documentation generated from Sphinx can be viewed here _(it needs more work to make it more traversable, reading the code and docstring documentation in an IDE is recommended for now)_: [(link)](https://kartverket.github.io/automatisk-generalisering/index.html)

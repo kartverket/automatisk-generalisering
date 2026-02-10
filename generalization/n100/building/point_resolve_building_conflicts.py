@@ -26,7 +26,6 @@ import env_setup.global_config
 # Importing timing decorator
 from custom_tools.decorators.timing_decorator import timing_decorator
 
-
 iteration_fc = config.resolve_building_conflicts_iteration_feature
 
 
@@ -223,7 +222,6 @@ def resolve_building_conflicts():
     rbc_partition_run_config = core_config.PartitionRunConfig(
         max_elements_per_partition=500_000,
         context_radius_meters=500,
-        run_partition_optimization=False,
     )
 
     rbc_parition_work_file_manager_config = core_config.WorkFileConfig(

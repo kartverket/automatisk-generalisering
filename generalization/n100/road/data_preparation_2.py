@@ -19,9 +19,6 @@ from custom_tools.general_tools import custom_arcpy
 from custom_tools.general_tools import file_utilities
 from custom_tools.generalization_tools.road.thin_road_network import ThinRoadNetwork
 from custom_tools.generalization_tools.road.collapse_road import collapse_road
-from custom_tools.generalization_tools.road.dissolve_with_intersections import (
-    DissolveWithIntersections,
-)
 from custom_tools.generalization_tools.road.remove_road_triangles import (
     generalize_road_triangles,
 )
@@ -32,7 +29,6 @@ from input_data.input_symbology import SymbologyN100
 from constants.n100_constants import (
     FieldNames,
     NvdbAlias,
-    MediumAlias,
 )
 from generalization.n100.road.dam import generalize_dam
 from generalization.n100.road.major_road_crossings import (
@@ -42,16 +38,25 @@ from generalization.n100.road.roundabouts import generalize_roundabouts
 from generalization.n100.road.vegsperring import remove_roadblock
 from generalization.n100.road.ramps_point import ramp_points
 from generalization.n100.road.ramps_point import MovePointsToCrossings
-
+from generalization.n100.road.resolve_road_conflict_preparation import (
+    split_polyline_featureclass,
+    remove_road_points_in_water,
+    run_dissolve_with_intersections,
+)
+from file_manager import WorkFileManager
+from file_manager.n100.file_manager_buildings import Building_N100
 
 MERGE_DIVIDED_ROADS_ALTERATIVE = False
+
+AREA_SELECTOR = "navn IN ('Ringerike')"
+SCALE = "n100"
 
 
 @timing_decorator
 def main():
     environment_setup.main()
     arcpy.env.referenceScale = 100000
-    data_selection_and_validation()
+    data_selection_and_validation(AREA_SELECTOR)
     categories_major_road_crossings()
     generalize_roundabouts()
     remove_roadblock()
@@ -69,12 +74,17 @@ def main():
     thin_sti_and_forest_roads()
     merge_divided_roads()
     smooth_line()
-    generalize_road_triangles(scale="n100")
-    pre_resolve_road_conflicts()
+    generalize_road_triangles(SCALE)
+    pre_resolve_road_conflicts(AREA_SELECTOR)
     resolve_road_conflicts()
     generalize_dam()
     final_output()
     final_ramp_points()
+    with open(Building_N100.total_workfile_manager_files__n100.value, "w") as f:
+        f.write(
+            f"Total amount of work files created: "
+            f"{WorkFileManager._build_file_counter}"
+        )
 
 
 SEARCH_DISTANCE = 5000
@@ -82,12 +92,14 @@ OBJECT_LIMIT = 100_000
 
 
 @timing_decorator
-def data_selection_and_validation():
+def data_selection_and_validation(area_selection: str):
+    """
     plot_area = "navn IN ('Asker', 'Bærum', 'Drammen', 'Frogn', 'Hole', 'Holmestrand', 'Horten', 'Jevnaker', 'Kongsberg', 'Larvik', 'Lier', 'Lunner', 'Modum', 'Nesodden', 'Oslo', 'Ringerike', 'Tønsberg', 'Øvre Eiker')"
     ferry_admin_test = "navn IN ('Hole')"
     small_plot_area = "navn IN ('Oslo', 'Ringerike')"
     smallest_plot_area = "navn IN ('Ringerike')"
     presentation_area = "navn IN ('Asker', 'Bærum', 'Oslo', 'Enebakk', 'Nittedal', 'Nordre Follo', 'Hole', 'Nesodden', 'Lørenskog', 'Sandnes', 'Stavanger', 'Gjesdal', 'Sola', 'Klepp', 'Strand', 'Time', 'Randaberg')"
+    """
 
     selector = StudyAreaSelector(
         input_output_file_dict={
@@ -98,7 +110,7 @@ def data_selection_and_validation():
             input_n100.AdminGrense: Road_N100.data_selection___admin_boundary___n100_road.value,
         },
         selecting_file=input_n100.AdminFlate,
-        selecting_sql_expression=ferry_admin_test,
+        selecting_sql_expression=area_selection,
         select_local=config.select_study_area,
     )
 
@@ -114,27 +126,6 @@ def data_selection_and_validation():
         output_table_path=Road_N100.data_preparation___geometry_validation___n100_road.value,
     )
     road_data_validation.check_repair_sequence()
-
-
-def run_dissolve_with_intersections(
-    input_line_feature,
-    output_processed_feature,
-    dissolve_field_list,
-):
-    cfg = logic_config.DissolveInitKwargs(
-        input_line_feature=input_line_feature,
-        output_processed_feature=output_processed_feature,
-        work_file_manager_config=core_config.WorkFileConfig(
-            root_file=Road_N100.data_preparation___intersections_root___n100_road.value
-        ),
-        dissolve_fields=dissolve_field_list,
-        sql_expressions=[
-            f" MEDIUM = '{MediumAlias.tunnel}'",
-            f" MEDIUM = '{MediumAlias.bridge}'",
-            f" MEDIUM = '{MediumAlias.on_surface}'",
-        ],
-    )
-    DissolveWithIntersections(cfg).run()
 
 
 def run_thin_roads(
@@ -205,7 +196,6 @@ def run_thin_roads(
     partition_thin_run_config = core_config.PartitionRunConfig(
         max_elements_per_partition=feature_count,
         context_radius_meters=SEARCH_DISTANCE,
-        run_partition_optimization=True,
     )
 
     partition_thin_roads = PartitionIterator(
@@ -289,7 +279,7 @@ def admin_boarder():
 
     custom_arcpy.select_attribute_and_make_permanent_feature(
         input_layer=Road_N100.data_selection___admin_boundary___n100_road.value,
-        expression="OBJTYPE = 'Riksgrense'",
+        expression="OBJTYPE IN ('Riksgrense', 'AvtaltAvgrensningslinje')",
         output_name=Road_N100.data_preparation___country_boarder___n100_road.value,
     )
 
@@ -400,7 +390,6 @@ def collapse_road_detail():
     collapse_partition_run_config = core_config.PartitionRunConfig(
         max_elements_per_partition=OBJECT_LIMIT,
         context_radius_meters=SEARCH_DISTANCE,
-        run_partition_optimization=False,
     )
 
     partition_collapse_road_detail = PartitionIterator(
@@ -408,7 +397,7 @@ def collapse_road_detail():
         partition_method_inject_config=collapse_road_method_config,
         partition_iterator_run_config=collapse_partition_run_config,
         work_file_manager_config=core_config.WorkFileConfig(
-            root_file=Road_N100.data_preparation___thin_road_partition_root___n100_road.value
+            root_file=Road_N100.data_preparation___collapse_root___n100_road.value
         ),
     )
     partition_collapse_road_detail.run()
@@ -609,28 +598,28 @@ def smooth_line():
 
 
 @timing_decorator
-def pre_resolve_road_conflicts():
-    run_dissolve_with_intersections(
-        input_line_feature=Road_N100.road_triangles_output.value,
-        output_processed_feature=Road_N100.data_preparation___dissolved_intersections_5___n100_road.value,
-        dissolve_field_list=FieldNames.road_all_fields(),
-    )
-    arcpy.management.MultipartToSinglepart(
-        in_features=Road_N100.data_preparation___dissolved_intersections_5___n100_road.value,
-        out_feature_class=Road_N100.data_preparation___road_single_part_3___n100_road.value,
+def pre_resolve_road_conflicts(area_selection: str):
+    remove_road_points_in_water(
+        road_fc=Road_N100.road_triangles_output.value,
+        output_fc=Road_N100.road_cleaning_output__n100_road.value,
+        area_selection=area_selection,
     )
     arcpy.management.MultipartToSinglepart(
         in_features=Road_N100.data_selection___railroad___n100_road.value,
         out_feature_class=Road_N100.data_preparation___railroad_single_part___n100_road.value,
     )
-    arcpy.management.MultipartToSinglepart(
-        in_features=Road_N100.data_preparation___water_feature_outline___n100_road.value,
-        out_feature_class=Road_N100.data_preparation___water_feature_outline_single_part___n100_road.value,
+
+    # Takes care of long geometries for water features
+    split_polyline_featureclass(
+        input_fc=Road_N100.data_preparation___water_feature_outline___n100_road.value,
+        dissolve_fc=Road_N100.data_preparation__water_feature_outline_dissolved__n100_road.value,
+        split_fc=Road_N100.data_preparation__water_feature_outline_split_xm__n100_road.value,
+        output_fc=Road_N100.data_preparation___water_feature_outline_single_part___n100_road.value,
     )
 
     road_data_validation = GeometryValidator(
         input_features={
-            "roads": Road_N100.data_preparation___road_single_part_3___n100_road.value,
+            "roads": Road_N100.road_cleaning_output__n100_road.value,
             "railroad": Road_N100.data_preparation___railroad_single_part___n100_road.value,
             "begrensningskurve": Road_N100.data_preparation___water_feature_outline_single_part___n100_road.value,
         },
@@ -657,7 +646,7 @@ def resolve_road_conflicts():
     """
 
     arcpy.management.CalculateField(
-        in_table=Road_N100.data_preparation___road_single_part_3___n100_road.value,
+        in_table=Road_N100.road_cleaning_output__n100_road.value,
         field="hierarchy",
         expression="Reclass(!vegklasse!, !typeveg!)",
         expression_type="PYTHON3",
@@ -665,7 +654,7 @@ def resolve_road_conflicts():
     )
 
     calculate_boarder_road_hierarchy(
-        input_road=Road_N100.data_preparation___road_single_part_3___n100_road.value,
+        input_road=Road_N100.road_cleaning_output__n100_road.value,
         root_file=Road_N100.data_preparation___root_calculate_boarder_hierarchy_2___n100_road.value,
         input_boarder_dagnle=Road_N100.data_preparation___boarder_road_dangle___n100_road.value,
         output_road=Road_N100.data_preparation___calculated_boarder_hierarchy_2___n100_road.value,
@@ -768,9 +757,9 @@ def resolve_road_conflicts():
 
     # --- Partition run + WFM for iterator -------------------------------------
     rrc_run_config = core_config.PartitionRunConfig(
-        max_elements_per_partition=25_000,
+        max_elements_per_partition=100_000,
         context_radius_meters=500,
-        run_partition_optimization=False,
+        partition_method=core_config.PartitionMethod.VERTICES,
     )
 
     rrc_partition_wfm = core_config.WorkFileConfig(

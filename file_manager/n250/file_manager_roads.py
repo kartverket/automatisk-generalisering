@@ -3,7 +3,6 @@ from enum import Enum
 from env_setup import global_config
 from file_manager.base_file_manager import BaseFileManager
 
-
 # Initialize BaseFileManager
 scale = global_config.scale_n250
 object_name = global_config.object_veg_sti
@@ -602,6 +601,15 @@ class Road_N250(Enum):
             script_source_name=road_triangles,
             description="remove_triangles_root",
         )
+    )
+
+    road_triangles___partition_root___n250_road = file_manager.generate_file_name_gdb(
+        script_source_name=road_triangles,
+        description="partition_root",
+    )
+
+    road_cycles_docu___n250_road = file_manager.generate_general_subdirectory(
+        description="road_cycles_docu"
     )
 
     road_triangles___removed_triangles___n250_road = (

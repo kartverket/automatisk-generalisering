@@ -2,7 +2,6 @@
 from env_setup import environment_setup
 from custom_tools.decorators.timing_decorator import timing_decorator
 
-
 # Importing building scripts
 from generalization.n100.building import data_preparation
 from generalization.n100.building import calculate_polygon_values
@@ -21,6 +20,8 @@ from generalization.n100.building import data_clean_up
 from generalization.n100.building import polygon_resolve_building_conflicts
 from generalization.n100.building import removing_overlapping_polygons_and_points
 from generalization.n100.building import finalizing_buildings
+from file_manager import WorkFileManager
+from file_manager.n100.file_manager_buildings import Building_N100
 
 
 # Main function that runs all the building scripts
@@ -102,6 +103,11 @@ def main():
     removing_overlapping_polygons_and_points.main()
     finalizing_buildings.main()
     data_clean_up.main()
+    with open(Building_N100.total_workfile_manager_files__n100.value, "w") as f:
+        f.write(
+            f"Total amount of work files created: "
+            f"{WorkFileManager._build_file_counter}"
+        )
 
 
 if __name__ == "__main__":

@@ -6,6 +6,7 @@ from collections import defaultdict
 from itertools import combinations
 
 from composition_configs import core_config, logic_config
+from custom_tools.general_tools.partition_iterator import PartitionIterator
 from constants.n100_constants import FieldNames_str, MediumAlias, NvdbAlias
 from custom_tools.decorators.timing_decorator import timing_decorator
 from custom_tools.general_tools import custom_arcpy
@@ -403,6 +404,8 @@ class RemoveRoadTriangles:
                 if entries:
                     result[oid] = self.sort_prioritized_hierarchy(entries)[-1]
             return result
+        except:
+            return {}
         finally:
             # Delete the intermediate feature layer
             if arcpy.Exists(temp_fc):
@@ -561,8 +564,8 @@ class RemoveRoadTriangles:
 
             inside_geoms = []  # Smaller geometries inside the dissolved one
             outside_endpoints = (
-                set()
-            )  # Set of endpoints to count if there are any extra junctions
+                set()  # Set of endpoints to count if there are any extra junctions
+            )
 
             # Search through the original dataset and fetch the original geometries
             with arcpy.da.SearchCursor(
@@ -601,9 +604,11 @@ class RemoveRoadTriangles:
             remove_geoms.append(chosen_geom)
 
             # If there are any segments with different medium connected to the chosen geometry
-            if outside_endpoints:
+            if outside_endpoints and inside_geoms:
                 # -> Find the highest prioritized geometry
                 inside_geoms = self.sort_prioritized_hierarchy(inside_geoms)
+                if not inside_geoms:
+                    return
                 _, _, _, pri_med, pri_geom = inside_geoms[0]
                 add_geoms.append((pri_geom, pri_med))
 
@@ -910,6 +915,20 @@ class RemoveRoadTriangles:
                     mode=1,
                 )
 
+                if (
+                    arcpy.management.GetCount(self.filtered_1_cycle_roads)[0] == "0"
+                    or type(arcpy.management.GetCount(self.filtered_1_cycle_roads)[0])
+                    is None
+                ):
+                    # If no valid 1-cycles are found, break the loop
+                    if not arcpy.Exists(self.removed_1_cycle_roads):
+                        arcpy.management.CopyFeatures(
+                            in_features=self.dissolved_feature,
+                            out_feature_class=self.removed_1_cycle_roads,
+                        )
+                    count = 0
+                    break
+
                 count = int(arcpy.management.GetCount(self.filtered_1_cycle_roads)[0])
 
                 # Select the instances to work further with
@@ -924,13 +943,18 @@ class RemoveRoadTriangles:
                 # Update the working file, and repeat if changes
                 edit_fc = self.removed_1_cycle_roads
             else:
-                # If the sql-query return an error or no match (None):
-                # Stop the iteration and copy the features for further processing
-                count = 0
-                arcpy.management.CopyFeatures(
-                    in_features=self.dissolved_feature,
-                    out_feature_class=self.removed_1_cycle_roads,
-                )
+                # If some data already have been removed in previous iterations,
+                # keep these changes and continue
+                if arcpy.Exists(self.removed_1_cycle_roads):
+                    count = 0
+                else:
+                    # If the sql-query return an error or no match (None):
+                    # Stop the iteration and copy the features for further processing, if first run
+                    count = 0
+                    arcpy.management.CopyFeatures(
+                        in_features=self.dissolved_feature,
+                        out_feature_class=self.removed_1_cycle_roads,
+                    )
 
             if count == 1:
                 print(f"Removed {count} 1-cycle road.")
@@ -998,6 +1022,20 @@ class RemoveRoadTriangles:
                     mode=2,
                 )
 
+                if (
+                    arcpy.management.GetCount(self.filtered_2_cycle_roads)[0] == "0"
+                    or type(arcpy.management.GetCount(self.filtered_2_cycle_roads)[0])
+                    is None
+                ):
+                    # If no valid 2-cycles are found, break the loop
+                    if not arcpy.Exists(self.removed_2_cycle_roads):
+                        arcpy.management.CopyFeatures(
+                            in_features=self.dissolved_feature,
+                            out_feature_class=self.removed_2_cycle_roads,
+                        )
+                    count = 0
+                    break
+
                 print()
                 # Select the specific features to remove and to add
                 self.select_segments_to_remove_2_cycle_roads(
@@ -1035,13 +1073,18 @@ class RemoveRoadTriangles:
                 # Update the working file, and repeat if changes
                 edit_fc = self.removed_2_cycle_roads
             else:
-                # If the sql-query return an error or no match (None):
-                # Stop the iteration and copy the features for further processing
-                count = 0
-                arcpy.management.CopyFeatures(
-                    in_features=self.dissolved_feature,
-                    out_feature_class=self.removed_2_cycle_roads,
-                )
+                # If some data already have been removed in previous iterations,
+                # keep these changes and continue
+                if arcpy.Exists(self.removed_2_cycle_roads):
+                    count = 0
+                else:
+                    # If the sql-query return an error or no match (None):
+                    # Stop the iteration and copy the features for further processing, if first run
+                    count = 0
+                    arcpy.management.CopyFeatures(
+                        in_features=self.dissolved_feature,
+                        out_feature_class=self.removed_2_cycle_roads,
+                    )
 
             if count == 1:
                 print(f"Removed {count} 2-cycle road.")
@@ -1107,6 +1150,20 @@ class RemoveRoadTriangles:
                     mode=3,
                 )
 
+                if (
+                    arcpy.management.GetCount(self.filtered_3_cycle_roads)[0] == "0"
+                    or type(arcpy.management.GetCount(self.filtered_3_cycle_roads)[0])
+                    is None
+                ):
+                    # If no valid 3-cycles are found, break the loop
+                    if not arcpy.Exists(self.removed_3_cycle_roads):
+                        arcpy.management.CopyFeatures(
+                            in_features=self.dissolved_feature,
+                            out_feature_class=self.removed_3_cycle_roads,
+                        )
+                    count = 0
+                    break
+
                 print()
                 # Select the specific features to remove and to add
                 self.select_segments_to_remove_3_4_cycle_roads(
@@ -1144,13 +1201,18 @@ class RemoveRoadTriangles:
                 # Update the working file, and repeat if changes
                 edit_fc = self.removed_3_cycle_roads
             else:
-                # If the sql-query return an error or no match (None):
-                # Stop the iteration and copy the features for further processing
-                count = 0
-                arcpy.management.CopyFeatures(
-                    in_features=self.dissolved_feature,
-                    out_feature_class=self.removed_3_cycle_roads,
-                )
+                # If some data already have been removed in previous iterations,
+                # keep these changes and continue
+                if arcpy.Exists(self.removed_3_cycle_roads):
+                    count = 0
+                else:
+                    # If the sql-query return an error or no match (None):
+                    # Stop the iteration and copy the features for further processing, if first run
+                    count = 0
+                    arcpy.management.CopyFeatures(
+                        in_features=self.dissolved_feature,
+                        out_feature_class=self.removed_3_cycle_roads,
+                    )
 
             if count == 1:
                 print(f"Removed {count} 3-cycle road.")
@@ -1216,6 +1278,20 @@ class RemoveRoadTriangles:
                     mode=3,
                 )
 
+                if (
+                    arcpy.management.GetCount(self.filtered_4_cycle_roads)[0] == "0"
+                    or type(arcpy.management.GetCount(self.filtered_4_cycle_roads)[0])
+                    is None
+                ):
+                    # If no valid 4-cycles are found, break the loop
+                    if not arcpy.Exists(self.removed_4_cycle_roads):
+                        arcpy.management.CopyFeatures(
+                            in_features=self.dissolved_feature,
+                            out_feature_class=self.removed_4_cycle_roads,
+                        )
+                    count = 0
+                    break
+
                 print()
                 # Select the specific features to remove and to add
                 self.select_segments_to_remove_3_4_cycle_roads(
@@ -1253,13 +1329,18 @@ class RemoveRoadTriangles:
                 # Update the working file, and repeat if changes
                 edit_fc = self.removed_4_cycle_roads
             else:
-                # If the sql-query return an error or no match (None):
-                # Stop the iteration and copy the features for further processing
-                count = 0
-                arcpy.management.CopyFeatures(
-                    in_features=self.dissolved_feature,
-                    out_feature_class=self.removed_4_cycle_roads,
-                )
+                # If some data already have been removed in previous iterations,
+                # keep these changes and continue
+                if arcpy.Exists(self.removed_4_cycle_roads):
+                    count == 0
+                else:
+                    # If the sql-query return an error or no match (None):
+                    # Stop the iteration and copy the features for further processing, if first run
+                    count = 0
+                    arcpy.management.CopyFeatures(
+                        in_features=self.dissolved_feature,
+                        out_feature_class=self.removed_4_cycle_roads,
+                    )
 
             if count == 1:
                 print(f"Removed {count} 4-cycle road.")
@@ -1272,20 +1353,22 @@ class RemoveRoadTriangles:
         print(f"Number of roads in the end: {end_count}\n")
 
     @timing_decorator
-    def fetch_original_data_final(self, scale: str):
+    def fetch_original_data_final(
+        self, scale: logic_config.RemoveRoadTrianglesRunParams, edit_fc: str
+    ):
         """
         Fetches the original data that should be kept for further processing.
 
         Args:
-            scale (str): String describing which scale to use (N100, N250)
+            edit_fc (str): Featureclass with the data that should be kept
         """
-        if scale.lower() == "n100":
+        if scale.scale.lower() == "n100":
             output = Road_N100.road_triangles_output.value
-        elif scale.lower() == "n250":
+        elif scale.scale.lower() == "n250":
             output = Road_N250.road_triangles_output.value
 
         self.fetch_original_data(
-            input=self.removed_3_cycle_roads,
+            input=edit_fc,
             output=output,
         )
 
@@ -1319,20 +1402,25 @@ class RemoveRoadTriangles:
             self.remove_islands_and_small_dead_ends(edit_fc=self.removed_1_cycle_roads)
             self.remove_2_cycle_roads(edit_fc=self.dissolved_feature)
             self.remove_3_cycle_roads()
-            self.remove_4_cycle_roads()
-            self.fetch_original_data_final(scale=scale)
+            # self.remove_4_cycle_roads()
+            self.fetch_original_data_final(
+                scale=scale, edit_fc=self.removed_3_cycle_roads
+            )
         else:
             self.remove_1_cycle_roads(edit_fc=self.copy_of_input_feature)
             self.remove_2_cycle_roads(edit_fc=self.removed_1_cycle_roads)
             self.remove_3_cycle_roads()
-            self.fetch_original_data_final(scale=scale)
+            # self.remove_4_cycle_roads()
+            self.fetch_original_data_final(
+                scale=scale, edit_fc=self.removed_3_cycle_roads
+            )
 
         self.work_file_manager.delete_created_files()
 
 
 # Main function to be imported in other .py-files
 @timing_decorator
-def generalize_road_triangles(scale: str) -> None:
+def generalize_road_triangles_no_partition_call(scale: str) -> None:
     """
     Runs the RemoveRoadTriangles process with predefined parameters.
 
@@ -1354,7 +1442,7 @@ def generalize_road_triangles(scale: str) -> None:
         file = (
             Road_N250.data_preparation___simplified_road___n250_road.value
             if before
-            else Road_N250.data_preparation___smooth_road___n250_road.value
+            else Road_N250.data_preparation___merge_divided_roads___n250_road.value
         )
         root = Road_N250.road_triangles___remove_triangles_root___n250_road.value
         removed = Road_N250.road_triangles___removed_triangles___n250_road.value
@@ -1370,5 +1458,109 @@ def generalize_road_triangles(scale: str) -> None:
     remove_road_triangles.run(scale=scale)
 
 
+def generalize_road_triangles(scale: str) -> None:
+    before = False
+
+    if scale.lower() == "n100":
+        file = (
+            Road_N100.data_preparation___simplified_road___n100_road.value
+            if before
+            else Road_N100.data_preparation___smooth_road___n100_road.value
+        )
+        root = Road_N100.road_triangles___remove_triangles_root___n100_road.value
+        partition_root = Road_N100.road_triangles___partition_root___n100_road.value
+        maximum_cycle_length: int = 500
+        documentation_directory = Road_N100.road_cycles_docu___n100_road.value
+        removed = Road_N100.road_triangles___removed_triangles___n100_road.value
+
+    elif scale.lower() == "n250":
+        file = (
+            Road_N250.data_preparation___simplified_road___n250_road.value
+            if before
+            else Road_N250.data_preparation___merge_divided_roads___n250_road.value
+        )
+        root = Road_N250.road_triangles___remove_triangles_root___n250_road.value
+        partition_root = Road_N250.road_triangles___partition_root___n250_road.value
+        maximum_cycle_length: int = 500
+        documentation_directory = Road_N250.road_cycles_docu___n250_road.value
+        removed = Road_N250.road_triangles___removed_triangles___n250_road.value
+
+    else:
+        raise ValueError(f"Unsupported scale: {scale}")
+
+    road_object = "road"
+    removed_tag = "removed_triangles"
+
+    remove_triangles_input_config = core_config.PartitionInputConfig(
+        entries=[
+            core_config.InputEntry.processing_input(
+                object=road_object,
+                path=file,
+            )
+        ]
+    )
+
+    remove_triangles_output_config = core_config.PartitionOutputConfig(
+        entries=[
+            core_config.OutputEntry.vector_output(
+                object=road_object,
+                tag=removed_tag,
+                path=removed,
+            )
+        ]
+    )
+
+    remove_triangles_io_config = core_config.PartitionIOConfig(
+        input_config=remove_triangles_input_config,
+        output_config=remove_triangles_output_config,
+        documentation_directory=documentation_directory,
+    )
+
+    remove_triangles_init_config = logic_config.RemoveRoadTrianglesKwargs(
+        input_line_feature=core_config.InjectIO(
+            object=road_object,
+            tag="input",
+        ),
+        output_processed_feature=core_config.InjectIO(
+            object=road_object,
+            tag=removed_tag,
+        ),
+        work_file_manager_config=core_config.WorkFileConfig(root_file=root),
+        maximum_length=maximum_cycle_length,
+        root_file=root,
+        hierarchy_field=None,
+        write_to_memory=False,
+        keep_work_files=False,
+    )
+
+    remove_triangels_run_config = logic_config.RemoveRoadTrianglesRunParams(scale=scale)
+
+    remove_triangles_class_config = core_config.ClassMethodEntryConfig(
+        class_=RemoveRoadTriangles,
+        method=RemoveRoadTriangles.run,
+        init_params=remove_triangles_init_config,
+        method_params=[remove_triangels_run_config],
+    )
+
+    remove_triangles_method_config = core_config.MethodEntriesConfig(
+        entries=[remove_triangles_class_config]
+    )
+
+    partition_remove_triangles_run_config = core_config.PartitionRunConfig(
+        max_elements_per_partition=50_000,
+        context_radius_meters=maximum_cycle_length + 10,
+        run_partition_optimization=False,
+    )
+
+    partition_remove_triangles = PartitionIterator(
+        partition_io_config=remove_triangles_io_config,
+        partition_method_inject_config=remove_triangles_method_config,
+        partition_iterator_run_config=partition_remove_triangles_run_config,
+        work_file_manager_config=core_config.WorkFileConfig(root_file=partition_root),
+    )
+
+    partition_remove_triangles.run()
+
+
 if __name__ == "__main__":
-    generalize_road_triangles()
+    generalize_road_triangles(scale="n100")
