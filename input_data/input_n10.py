@@ -3,9 +3,6 @@ from config import n10_path
 import arcpy
 
 # Defining universal paths for n10 regardless of local path env_setup
-Buildings = rf"{n10_path}\fkb_bygning_omrade"
-Airport = rf"{n10_path}\n50k_lufthavn_punkt_p450"
-Contours = rf"{n10_path}\n10_hoydekurver_5m"
 Railways = rf"{n10_path}\fkb_bane_senterlinje"
 N50HoydePunkt = rf"{n10_path}\N50HoydePunkt"
 FKBforsenkningspunkt = rf"{n10_path}\FKBforsenkningspunkt"
@@ -16,9 +13,6 @@ AdminFlate = rf"{n10_path}\AdminFlate"
 
 # Defining datasets to test paths are set up correctly later
 n10_datasets = [
-    # Buildings,
-    # Airport,
-    # Contours,
     Railways,
     N50HoydePunkt,
     FKBforsenkningspunkt,
