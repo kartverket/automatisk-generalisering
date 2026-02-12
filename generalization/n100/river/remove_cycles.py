@@ -12,7 +12,7 @@ from custom_tools.general_tools.partition_iterator import PartitionIterator
 from env_setup import environment_setup
 from file_manager import WorkFileManager
 from file_manager.n100.file_manager_rivers import River_N100
-from generalization.n100.river.elevated_river_lines import RiverElevator
+from generalization.n100.river.elevate_river_lines import RiverElevator
 
 
 class RemoveCycles:
