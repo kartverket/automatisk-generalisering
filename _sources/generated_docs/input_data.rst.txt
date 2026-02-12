@@ -20,6 +20,14 @@ input\_data.input\_fkb module
    :show-inheritance:
    :undoc-members:
 
+input\_data.input\_n10 module
+-----------------------------
+
+.. automodule:: input_data.input_n10
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
 input\_data.input\_n100 module
 ------------------------------
 

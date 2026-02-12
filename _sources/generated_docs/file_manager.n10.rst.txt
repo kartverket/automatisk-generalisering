@@ -12,6 +12,14 @@ file\_manager.n10.file\_manager\_facilities module
    :show-inheritance:
    :undoc-members:
 
+file\_manager.n10.file\_manager\_hoydepunkt module
+--------------------------------------------------
+
+.. automodule:: file_manager.n10.file_manager_hoydepunkt
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
 Module contents
 ---------------
 
