@@ -18,10 +18,6 @@ class Hoydepunkt_N10(Enum):
     #                               Hoydepunkt
     # ========================================
 
-
-
-    hoydepunkt_n10=file_manager.generate_file_name_gdb(
+    hoydepunkt_n10 = file_manager.generate_file_name_gdb(
         script_source_name=hoydepunkt, description="hoydepunkt"
     )
-
-
