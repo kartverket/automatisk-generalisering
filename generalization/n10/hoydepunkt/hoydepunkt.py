@@ -65,9 +65,9 @@ def objtype(files: dict) -> None:
     moves objtype to new column and writes "høydepunkt" in the objtype column
     """
     arcpy.management.AddField(
-        in_table=files["hoydepunkt_n10"], field_name="hoydepunkttype", field_type="TEXT",)
+        in_table=files["hoydepunkt_n10"], field_name="hoydepunkt_type", field_type="TEXT",)
     
-    with arcpy.da.UpdateCursor(files["hoydepunkt_n10"], ["objtype", "hoydepunkttype"]) as u_cur:
+    with arcpy.da.UpdateCursor(files["hoydepunkt_n10"], ["objtype", "hoydepunkt_type"]) as u_cur:
         for row in u_cur:
             row[1] = row[0]
             row[0] = "høydepunkt"
