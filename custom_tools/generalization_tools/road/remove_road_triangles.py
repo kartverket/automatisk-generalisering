@@ -6,18 +6,17 @@ from collections import defaultdict
 from itertools import combinations
 
 from composition_configs import core_config, logic_config
-from constants.n100_constants import FieldNames_str, NvdbAlias, RiverObjecttypes_str
+from custom_tools.general_tools.partition_iterator import PartitionIterator
+from constants.n100_constants import FieldNames_str, MediumAlias, NvdbAlias
 from custom_tools.decorators.timing_decorator import timing_decorator
 from custom_tools.general_tools import custom_arcpy
 from custom_tools.general_tools.custom_arcpy import OverlapType, SelectionType
 from custom_tools.general_tools.graph import GISGraph
-from custom_tools.general_tools.partition_iterator import PartitionIterator
 from custom_tools.generalization_tools.road.dissolve_with_intersections import (
     DissolveWithIntersections,
 )
 from env_setup import environment_setup
 from file_manager import WorkFileManager
-from file_manager.n100.file_manager_rivers import River_N100
 from file_manager.n100.file_manager_roads import Road_N100
 from file_manager.n250.file_manager_roads import Road_N250
 
@@ -36,7 +35,6 @@ class RemoveRoadTriangles:
     def __init__(
         self,
         remove_road_triangles_config: logic_config.RemoveRoadTrianglesKwargs,
-        road_or_river: str = "road",
     ):
         """
         Creates an instance of RemoveRoadTriangles.
@@ -57,8 +55,6 @@ class RemoveRoadTriangles:
         self.work_file_manager = WorkFileManager(
             config=remove_road_triangles_config.work_file_manager_config
         )
-        self.sql_expressions = remove_road_triangles_config.sql_expressions
-        self.road_or_river = road_or_river.lower()
 
         self.copy_of_input_feature = "copy_of_input_feature"
         self.dissolved_feature = "dissolved_feature"
@@ -170,9 +166,13 @@ class RemoveRoadTriangles:
         config = logic_config.DissolveInitKwargs(
             input_line_feature=input_feature,
             output_processed_feature=dissolve_feature,
-            work_file_manager_config=self.work_file_manager,
+            work_file_manager_config=core_config.WorkFileConfig(self.internal_root),
             dissolve_fields=[FieldNames_str.medium.upper()],
-            sql_expressions=self.sql_expressions,
+            sql_expressions=[
+                f" {FieldNames_str.medium.upper()} = '{MediumAlias.tunnel}'",
+                f" {FieldNames_str.medium.upper()} = '{MediumAlias.bridge}'",
+                f" {FieldNames_str.medium.upper()} = '{MediumAlias.on_surface}'",
+            ],
         )
 
         dissolve_obj = DissolveWithIntersections(dissolve_intersections_config=config)
@@ -312,62 +312,38 @@ class RemoveRoadTriangles:
         Returns:
             list: The same list as input, but sorted according to the hierarchy fields
         """
+        # Constants used for the prioritizing of the road segments
+        pri_list_vegkategori = [
+            NvdbAlias.europaveg,
+            NvdbAlias.riksveg,
+            NvdbAlias.fylkesveg,
+            NvdbAlias.kommunalveg,
+            NvdbAlias.privatveg,
+            NvdbAlias.skogsveg,
+            NvdbAlias.barmarksløype,
+            NvdbAlias.traktorveg,
+            NvdbAlias.sti_dnt,
+            NvdbAlias.sti_andre,
+            NvdbAlias.sti_umerket,
+            NvdbAlias.gang_og_sykkelveg,
+        ]
+        vegkategori_pri = {
+            v: i for i, v in enumerate(pri_list_vegkategori)
+        }  # Mapping dictionary from text to integers
+        max_vegkategori_pri = len(
+            pri_list_vegkategori
+        )  # If no specified, default value to lowest priority
         LARGE = 10**9
 
-        if self.road_or_river == "river":
-            pri_list_river_objtype = [
-                RiverObjecttypes_str.generated_centerline,
-                RiverObjecttypes_str.elv_bekk,
-            ]
-
-            river_objects_pri = {
-                v: i for i, v in enumerate(pri_list_river_objtype)
-            }  # Mapping dictionary from text to integers
-            max_river_objtype_pri = len(
-                pri_list_river_objtype
-            )  # If no specified, default value to lowest priority
-
-            # Sort the incoming list against the hierarchy values
-            roads.sort(
-                key=lambda x: (
-                    river_objects_pri.get(x[0], max_river_objtype_pri),  # objtype
-                    (x[2] if x[2] is not None else LARGE),  # length
-                    (x[1] if x[1] is not None else LARGE),
-                )
+        # Sort the incomming list against the hierarchy values
+        roads.sort(
+            key=lambda x: (
+                vegkategori_pri.get(x[0], max_vegkategori_pri),
+                (x[1] if x[1] is not None else LARGE),
+                (x[2] if x[2] is not None else LARGE),
             )
-            return roads
-        else:
-            # Constants used for the prioritizing of the road segments
-            pri_list_vegkategori = [
-                NvdbAlias.europaveg,
-                NvdbAlias.riksveg,
-                NvdbAlias.fylkesveg,
-                NvdbAlias.kommunalveg,
-                NvdbAlias.privatveg,
-                NvdbAlias.skogsveg,
-                NvdbAlias.barmarksløype,
-                NvdbAlias.traktorveg,
-                NvdbAlias.sti_dnt,
-                NvdbAlias.sti_andre,
-                NvdbAlias.sti_umerket,
-                NvdbAlias.gang_og_sykkelveg,
-            ]
-            vegkategori_pri = {
-                v: i for i, v in enumerate(pri_list_vegkategori)
-            }  # Mapping dictionary from text to integers
-            max_vegkategori_pri = len(
-                pri_list_vegkategori
-            )  # If no specified, default value to lowest priority
-
-            # Sort the incoming list against the hierarchy values
-            roads.sort(
-                key=lambda x: (
-                    vegkategori_pri.get(x[0], max_vegkategori_pri),
-                    (x[1] if x[1] is not None else LARGE),
-                    (x[2] if x[2] is not None else LARGE),
-                )
-            )
-            return roads
+        )
+        return roads
 
     def get_geom_data(self, oid_to_geom: dict) -> defaultdict:
         """
@@ -415,23 +391,14 @@ class RemoveRoadTriangles:
                     select_features=temp_fc,
                     selection_type=SelectionType.NEW_SELECTION.value,
                 )
-                if self.road_or_river == "river":
-                    with arcpy.da.SearchCursor(
-                        "original_data_layer",
-                        [FieldNames_str.objtype],
-                    ) as search:
-                        for objtype in search:
-                            oid_to_data[oid].append([objtype, None, length])
-
-                else:
-                    # Add the hierarchy values for these features
-                    with arcpy.da.SearchCursor(
-                        "original_data_layer",
-                        [FieldNames_str.vegkategori, FieldNames_str.vegklasse],
-                    ) as search:
-                        for vegkategori, vegklasse in search:
-                            oid_to_data[oid].append([vegkategori, vegklasse, length])
-                    # Sort each list of hierarchy values and keep the values describing the least prioritized segment
+                # Add the hierarchy values for these features
+                with arcpy.da.SearchCursor(
+                    "original_data_layer",
+                    [FieldNames_str.vegkategori, FieldNames_str.vegklasse],
+                ) as search:
+                    for vegkategori, vegklasse in search:
+                        oid_to_data[oid].append([vegkategori, vegklasse, length])
+            # Sort each list of hierarchy values and keep the values describing the least prioritized segment
             result = {}
             for oid, entries in oid_to_data.items():
                 if entries:
@@ -601,66 +568,37 @@ class RemoveRoadTriangles:
             )
 
             # Search through the original dataset and fetch the original geometries
-            if self.road_or_river == "river":
-                with arcpy.da.SearchCursor(
-                    "original_data_layer",
-                    [
-                        "SHAPE@",
-                        FieldNames_str.objtype,
-                        "Shape_Length",
-                        FieldNames_str.medium,
-                    ],
-                ) as search:
-                    for g, objtype, lengde, medium in search:
-                        if chosen_geom.contains(g):
-                            inside_geoms.append((objtype, None, lengde, medium, g))
-                        else:
-                            # same endpoint logic, but ignore kategori/klasse
-                            other_s, other_e = self.endpoints_of(g)
-                            s, e = get_endpoints(g)
-                            s, e = s.firstPoint, e.firstPoint
-                            if (
-                                chosen_geom.distanceTo(s) == 0
-                                and other_s not in start_endpoints
-                            ):
-                                outside_endpoints.add(other_s)
-                            if (
-                                chosen_geom.distanceTo(e) == 0
-                                and other_e not in start_endpoints
-                            ):
-                                outside_endpoints.add(other_e)
-            else:
-                with arcpy.da.SearchCursor(
-                    "original_data_layer",
-                    [
-                        "SHAPE@",
-                        FieldNames_str.vegkategori,
-                        FieldNames_str.vegklasse,
-                        "Shape_Length",
-                        FieldNames_str.medium,
-                    ],
-                ) as search:
-                    for g, kategori, klasse, lengde, medium in search:
-                        # If the chosen geometry contains this original geometry
-                        # -> Store it as an internal geometry
-                        if chosen_geom.contains(g):
-                            inside_geoms.append((kategori, klasse, lengde, medium, g))
-                        # Otherwise -> Store the endpoints in the set if they
-                        # are close enough to the chosen geometry
-                        else:
-                            other_s, other_e = self.endpoints_of(g)
-                            s, e = get_endpoints(g)
-                            s, e = s.firstPoint, e.firstPoint
-                            if (
-                                chosen_geom.distanceTo(s) == 0
-                                and other_s not in start_endpoints
-                            ):
-                                outside_endpoints.add(other_s)
-                            if (
-                                chosen_geom.distanceTo(e) == 0
-                                and other_e not in start_endpoints
-                            ):
-                                outside_endpoints.add(other_e)
+            with arcpy.da.SearchCursor(
+                "original_data_layer",
+                [
+                    "SHAPE@",
+                    FieldNames_str.vegkategori,
+                    FieldNames_str.vegklasse,
+                    "Shape_Length",
+                    FieldNames_str.medium,
+                ],
+            ) as search:
+                for g, kategori, klasse, lengde, medium in search:
+                    # If the chosen geometry contains this original geometry
+                    # -> Store it as an internal geometry
+                    if chosen_geom.contains(g):
+                        inside_geoms.append((kategori, klasse, lengde, medium, g))
+                    # Otherwise -> Store the endpoints in the set if they
+                    # are close enough to the chosen geometry
+                    else:
+                        other_s, other_e = self.endpoints_of(g)
+                        s, e = get_endpoints(g)
+                        s, e = s.firstPoint, e.firstPoint
+                        if (
+                            chosen_geom.distanceTo(s) == 0
+                            and other_s not in start_endpoints
+                        ):
+                            outside_endpoints.add(other_s)
+                        if (
+                            chosen_geom.distanceTo(e) == 0
+                            and other_e not in start_endpoints
+                        ):
+                            outside_endpoints.add(other_e)
 
             # Add the chosen geometry to the list of geometries to remove
             remove_geoms.append(chosen_geom)
@@ -1005,13 +943,18 @@ class RemoveRoadTriangles:
                 # Update the working file, and repeat if changes
                 edit_fc = self.removed_1_cycle_roads
             else:
-                # If the sql-query return an error or no match (None):
-                # Stop the iteration and copy the features for further processing, if first run
-                count = 0
-                arcpy.management.CopyFeatures(
-                    in_features=self.dissolved_feature,
-                    out_feature_class=self.removed_1_cycle_roads,
-                )
+                # If some data already have been removed in previous iterations,
+                # keep these changes and continue
+                if arcpy.Exists(self.removed_1_cycle_roads):
+                    count = 0
+                else:
+                    # If the sql-query return an error or no match (None):
+                    # Stop the iteration and copy the features for further processing, if first run
+                    count = 0
+                    arcpy.management.CopyFeatures(
+                        in_features=self.dissolved_feature,
+                        out_feature_class=self.removed_1_cycle_roads,
+                    )
 
             if count == 1:
                 print(f"Removed {count} 1-cycle road.")
@@ -1130,13 +1073,18 @@ class RemoveRoadTriangles:
                 # Update the working file, and repeat if changes
                 edit_fc = self.removed_2_cycle_roads
             else:
-                # If the sql-query return an error or no match (None):
-                # Stop the iteration and copy the features for further processing, if first run
-                count = 0
-                arcpy.management.CopyFeatures(
-                    in_features=self.dissolved_feature,
-                    out_feature_class=self.removed_2_cycle_roads,
-                )
+                # If some data already have been removed in previous iterations,
+                # keep these changes and continue
+                if arcpy.Exists(self.removed_2_cycle_roads):
+                    count = 0
+                else:
+                    # If the sql-query return an error or no match (None):
+                    # Stop the iteration and copy the features for further processing, if first run
+                    count = 0
+                    arcpy.management.CopyFeatures(
+                        in_features=self.dissolved_feature,
+                        out_feature_class=self.removed_2_cycle_roads,
+                    )
 
             if count == 1:
                 print(f"Removed {count} 2-cycle road.")
@@ -1253,13 +1201,18 @@ class RemoveRoadTriangles:
                 # Update the working file, and repeat if changes
                 edit_fc = self.removed_3_cycle_roads
             else:
-                # If the sql-query return an error or no match (None):
-                # Stop the iteration and copy the features for further processing, if first run
-                count = 0
-                arcpy.management.CopyFeatures(
-                    in_features=self.dissolved_feature,
-                    out_feature_class=self.removed_3_cycle_roads,
-                )
+                # If some data already have been removed in previous iterations,
+                # keep these changes and continue
+                if arcpy.Exists(self.removed_3_cycle_roads):
+                    count = 0
+                else:
+                    # If the sql-query return an error or no match (None):
+                    # Stop the iteration and copy the features for further processing, if first run
+                    count = 0
+                    arcpy.management.CopyFeatures(
+                        in_features=self.dissolved_feature,
+                        out_feature_class=self.removed_3_cycle_roads,
+                    )
 
             if count == 1:
                 print(f"Removed {count} 3-cycle road.")
@@ -1376,13 +1329,18 @@ class RemoveRoadTriangles:
                 # Update the working file, and repeat if changes
                 edit_fc = self.removed_4_cycle_roads
             else:
-                # If the sql-query return an error or no match (None):
-                # Stop the iteration and copy the features for further processing, if first run
-                count = 0
-                arcpy.management.CopyFeatures(
-                    in_features=self.dissolved_feature,
-                    out_feature_class=self.removed_4_cycle_roads,
-                )
+                # If some data already have been removed in previous iterations,
+                # keep these changes and continue
+                if arcpy.Exists(self.removed_4_cycle_roads):
+                    count = 0
+                else:
+                    # If the sql-query return an error or no match (None):
+                    # Stop the iteration and copy the features for further processing, if first run
+                    count = 0
+                    arcpy.management.CopyFeatures(
+                        in_features=self.dissolved_feature,
+                        out_feature_class=self.removed_4_cycle_roads,
+                    )
 
             if count == 1:
                 print(f"Removed {count} 4-cycle road.")
@@ -1395,20 +1353,17 @@ class RemoveRoadTriangles:
         print(f"Number of roads in the end: {end_count}\n")
 
     @timing_decorator
-    def fetch_original_data_final(self, scale: str, edit_fc: str) -> None:
+    def fetch_original_data_final(self, scale: str, edit_fc: str):
         """
         Fetches the original data that should be kept for further processing.
 
         Args:
             edit_fc (str): Featureclass with the data that should be kept
         """
-        if self.road_or_river == "river":
-            output = River_N100.river_triangles___output___n100.value
-        else:
-            if scale.lower() == "n100":
-                output = Road_N100.road_triangles_output.value
-            elif scale.lower() == "n250":
-                output = Road_N250.road_triangles_output.value
+        if scale.lower() == "n100":
+            output = Road_N100.road_triangles_output.value
+        elif scale.lower() == "n250":
+            output = Road_N250.road_triangles_output.value
 
         self.fetch_original_data(
             input=edit_fc,
@@ -1450,50 +1405,20 @@ class RemoveRoadTriangles:
                 scale=scale, edit_fc=self.removed_3_cycle_roads
             )
         else:
-            cycles_present = True
-            count = 0
-            while cycles_present:
-                count += 1
-                self.remove_1_cycle_roads(edit_fc=self.copy_of_input_feature)
-                self.remove_2_cycle_roads(edit_fc=self.removed_1_cycle_roads)
-                self.remove_3_cycle_roads()
-                # self.remove_4_cycle_roads()
-
-                count_before = int(
-                    arcpy.management.GetCount(self.copy_of_input_feature)[0]
-                )
-
-                temp_fc = r"in_memory/temp_fc"
-
-                arcpy.analysis.Erase(
-                    in_features=self.input_line_feature,
-                    erase_features=self.removed_3_cycle_roads,
-                    out_feature_class=temp_fc,
-                )
-
-                arcpy.analysis.Erase(
-                    in_features=self.input_line_feature,
-                    erase_features=temp_fc,
-                    out_feature_class=self.copy_of_input_feature,
-                )
-
-                count_after = int(
-                    arcpy.management.GetCount(self.copy_of_input_feature)[0]
-                )
-
-                print(f"Count before: {count_before}, count after: {count_after}\n")
-                cycles_present = count_before != count_after
-
+            self.remove_1_cycle_roads(edit_fc=self.copy_of_input_feature)
+            self.remove_2_cycle_roads(edit_fc=self.removed_1_cycle_roads)
+            self.remove_3_cycle_roads()
+            # self.remove_4_cycle_roads()
             self.fetch_original_data_final(
-                scale=scale, edit_fc=self.removed_3_cycle_roads
+                scale=scale, edit_fc=self.removed_4_cycle_roads
             )
-        for _ in range(count):
-            self.work_file_manager.delete_created_files()
+
+        self.work_file_manager.delete_created_files()
 
 
 # Main function to be imported in other .py-files
 @timing_decorator
-def generalize_road_triangles_no_partition_call(scale: str, road_or_river: str) -> None:
+def generalize_road_triangles_no_partition_call(scale: str) -> None:
     """
     Runs the RemoveRoadTriangles process with predefined parameters.
 
@@ -1503,27 +1428,22 @@ def generalize_road_triangles_no_partition_call(scale: str, road_or_river: str) 
     environment_setup.main()
 
     before = False
-    if road_or_river.lower() == "river":
-        file = River_N100.river_connected___final_connected_river_lines___n100.value
-        root = River_N100.river_triangles___remove_triangles_root___n100.value
-        removed = River_N100.river_triangles___removed_triangles___n100.value
-    else:
-        if scale.lower() == "n100":
-            file = (
-                Road_N100.data_preparation___simplified_road___n100_road.value
-                if before
-                else Road_N100.data_preparation___merge_divided_roads___n100_road.value
-            )
-            root = Road_N100.road_triangles___remove_triangles_root___n100_road.value
-            removed = Road_N100.road_triangles___removed_triangles___n100_road.value
-        elif scale.lower() == "n250":
-            file = (
-                Road_N250.data_preparation___simplified_road___n250_road.value
-                if before
-                else Road_N250.data_preparation___merge_divided_roads___n250_road.value
-            )
-            root = Road_N250.road_triangles___remove_triangles_root___n250_road.value
-            removed = Road_N250.road_triangles___removed_triangles___n250_road.value
+    if scale.lower() == "n100":
+        file = (
+            Road_N100.data_preparation___simplified_road___n100_road.value
+            if before
+            else Road_N100.data_preparation___smooth_road___n100_road.value
+        )
+        root = Road_N100.road_triangles___remove_triangles_root___n100_road.value
+        removed = Road_N100.road_triangles___removed_triangles___n100_road.value
+    elif scale.lower() == "n250":
+        file = (
+            Road_N250.data_preparation___simplified_road___n250_road.value
+            if before
+            else Road_N250.data_preparation___merge_divided_roads___n250_road.value
+        )
+        root = Road_N250.road_triangles___remove_triangles_root___n250_road.value
+        removed = Road_N250.road_triangles___removed_triangles___n250_road.value
 
     config = logic_config.RemoveRoadTrianglesKwargs(
         input_line_feature=file,
@@ -1531,9 +1451,8 @@ def generalize_road_triangles_no_partition_call(scale: str, road_or_river: str) 
         maximum_length=500,
         root_file=root,
         output_processed_feature=removed,
-        sql_expressions=None,
     )
-    remove_road_triangles = RemoveRoadTriangles(config, road_or_river=road_or_river)
+    remove_road_triangles = RemoveRoadTriangles(config)
     remove_road_triangles.run(scale=scale)
 
 
@@ -1642,4 +1561,4 @@ def generalize_road_triangles(scale: str) -> None:
 
 
 if __name__ == "__main__":
-    generalize_road_triangles("n100", "river")
+    generalize_road_triangles(scale="n100")
