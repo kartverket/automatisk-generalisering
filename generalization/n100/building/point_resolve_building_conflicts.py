@@ -26,7 +26,6 @@ import env_setup.global_config
 # Importing timing decorator
 from custom_tools.decorators.timing_decorator import timing_decorator
 
-
 iteration_fc = config.resolve_building_conflicts_iteration_feature
 
 

@@ -68,9 +68,9 @@ Vegnettet skal i hovedsak inkludere de fleste fylkesveger, men med en viss grad 
 a|
 [.formelboks]
 ****
-*Funksjonell vegklasse = 3*
+*Funksjonell vegklasse < 3*
 
-Alle fylkesveger med funksjonellvegklasse 3, skal *alltid* med i N250 kartdata.
+Alle fylkesveger med funksjonellvegklasse mindre eller 3, skal *alltid* med i N250 kartdata.
 ****
 
 a|
@@ -108,9 +108,9 @@ Kommunale veger er klassifisert i to funksjonelle vegklasser, hvor 5 representer
 a|
 [.formelboks]
 ****
-*Funksjonell vegklasse = 5*
+*Funksjonell vegklasse < 5*
 
-I områder med grafiske konflikter mellom kommunaleveger med verdier 5 og 6, skal 6 vike.
+I områder med grafiske konflikter mellom kommunaleveger med verdier (<=) 5 og 6, skal 6 vike.
 ****
 
 a|
