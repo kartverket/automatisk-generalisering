@@ -138,7 +138,6 @@ class RemoveRoadTrianglesKwargs:
     hierarchy_field: str = None
     write_to_memory: bool = False
     keep_work_files: bool = False
-    sql_expressions: Optional[List[str]] = None
 
 
 @dataclass(frozen=True)
