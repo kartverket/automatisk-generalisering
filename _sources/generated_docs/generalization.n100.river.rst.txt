@@ -4,6 +4,30 @@ generalization.n100.river package
 Submodules
 ----------
 
+generalization.n100.river.calculate\_strahler module
+----------------------------------------------------
+
+.. automodule:: generalization.n100.river.calculate_strahler
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+generalization.n100.river.connect\_river\_lines module
+------------------------------------------------------
+
+.. automodule:: generalization.n100.river.connect_river_lines
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+generalization.n100.river.elevate\_river\_lines module
+------------------------------------------------------
+
+.. automodule:: generalization.n100.river.elevate_river_lines
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
 generalization.n100.river.extend\_river\_line module
 ----------------------------------------------------
 
@@ -32,6 +56,14 @@ generalization.n100.river.preparing\_river\_network module
 ----------------------------------------------------------
 
 .. automodule:: generalization.n100.river.preparing_river_network
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+generalization.n100.river.remove\_cycles module
+-----------------------------------------------
+
+.. automodule:: generalization.n100.river.remove_cycles
    :members:
    :show-inheritance:
    :undoc-members:

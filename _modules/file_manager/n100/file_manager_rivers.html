@@ -97,6 +97,9 @@
 <span class="n">centerline_pruning</span> <span class="o">=</span> <span class="s2">&quot;centerline_pruning&quot;</span>
 <span class="n">thin_hydrology_lines</span> <span class="o">=</span> <span class="s2">&quot;thin_hydrology_lines&quot;</span>
 <span class="n">centerline_pruning_loop</span> <span class="o">=</span> <span class="s2">&quot;centerline_pruning_loop&quot;</span>
+<span class="n">river_connected</span> <span class="o">=</span> <span class="s2">&quot;river_connected&quot;</span>
+<span class="n">river_cycles</span> <span class="o">=</span> <span class="s2">&quot;river_cycles&quot;</span>
+<span class="n">river_strahler</span> <span class="o">=</span> <span class="s2">&quot;river_strahler&quot;</span>
 
 <span class="c1">##############################################################################################################################################</span>
 
@@ -552,6 +555,66 @@
             <span class="n">script_source_name</span><span class="o">=</span><span class="n">centerline_pruning_loop</span><span class="p">,</span>
             <span class="n">description</span><span class="o">=</span><span class="s2">&quot;finnished_centerlines&quot;</span><span class="p">,</span>
         <span class="p">)</span>
+    <span class="p">)</span>
+
+    <span class="c1">#################################################</span>
+    <span class="c1">################ RIVER CONNECTED ################</span>
+    <span class="c1">#################################################</span>
+
+    <span class="n">river_connected___connected_river_lines_root___n100</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_gdb</span><span class="p">(</span>
+            <span class="n">script_source_name</span><span class="o">=</span><span class="n">river_connected</span><span class="p">,</span>
+            <span class="n">description</span><span class="o">=</span><span class="s2">&quot;connected_river_lines_root&quot;</span><span class="p">,</span>
+        <span class="p">)</span>
+    <span class="p">)</span>
+
+    <span class="n">river_connected___connected_river_lines___n100</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_gdb</span><span class="p">(</span>
+            <span class="n">script_source_name</span><span class="o">=</span><span class="n">river_connected</span><span class="p">,</span>
+            <span class="n">description</span><span class="o">=</span><span class="s2">&quot;connected_river_lines&quot;</span><span class="p">,</span>
+        <span class="p">)</span>
+    <span class="p">)</span>
+
+    <span class="n">river_connected___havflate___n100</span> <span class="o">=</span> <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_gdb</span><span class="p">(</span>
+        <span class="n">script_source_name</span><span class="o">=</span><span class="n">river_connected</span><span class="p">,</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">&quot;havflate&quot;</span><span class="p">,</span>
+    <span class="p">)</span>
+
+    <span class="c1">#################################################</span>
+    <span class="c1">################# RIVER CYCLES ##################</span>
+    <span class="c1">#################################################</span>
+
+    <span class="n">river_cycles___remove_cycles_root___n100</span> <span class="o">=</span> <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_gdb</span><span class="p">(</span>
+        <span class="n">script_source_name</span><span class="o">=</span><span class="n">river_cycles</span><span class="p">,</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">&quot;remove_cycles_root&quot;</span><span class="p">,</span>
+    <span class="p">)</span>
+
+    <span class="n">river_cycles___partition_root___n100</span> <span class="o">=</span> <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_gdb</span><span class="p">(</span>
+        <span class="n">script_source_name</span><span class="o">=</span><span class="n">river_cycles</span><span class="p">,</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">&quot;partition_root&quot;</span><span class="p">,</span>
+    <span class="p">)</span>
+
+    <span class="n">river_cycles___removed_cycles___n100</span> <span class="o">=</span> <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_gdb</span><span class="p">(</span>
+        <span class="n">script_source_name</span><span class="o">=</span><span class="n">river_cycles</span><span class="p">,</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">&quot;removed_cycles&quot;</span><span class="p">,</span>
+    <span class="p">)</span>
+
+    <span class="n">river_cycles_docu___n100</span> <span class="o">=</span> <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_general_subdirectory</span><span class="p">(</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">&quot;river_cycles_docu&quot;</span><span class="p">,</span>
+    <span class="p">)</span>
+
+    <span class="c1">#################################################</span>
+    <span class="c1">################ RIVER STRAHLER #################</span>
+    <span class="c1">#################################################</span>
+
+    <span class="n">river_strahler___root___n100</span> <span class="o">=</span> <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_gdb</span><span class="p">(</span>
+        <span class="n">script_source_name</span><span class="o">=</span><span class="n">river_strahler</span><span class="p">,</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">&quot;root&quot;</span><span class="p">,</span>
+    <span class="p">)</span>
+
+    <span class="n">river_strahler___calculated_strahler___n100</span> <span class="o">=</span> <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_gdb</span><span class="p">(</span>
+        <span class="n">script_source_name</span><span class="o">=</span><span class="n">river_strahler</span><span class="p">,</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">&quot;calculated_strahler&quot;</span><span class="p">,</span>
     <span class="p">)</span></div>
 
 </pre></div>
