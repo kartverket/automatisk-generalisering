@@ -20,6 +20,9 @@ river_centerline = "river_centerline"
 centerline_pruning = "centerline_pruning"
 thin_hydrology_lines = "thin_hydrology_lines"
 centerline_pruning_loop = "centerline_pruning_loop"
+river_connected = "river_connected"
+river_cycles = "river_cycles"
+river_strahler = "river_strahler"
 
 ##############################################################################################################################################
 
@@ -473,4 +476,64 @@ class River_N100(Enum):
             script_source_name=centerline_pruning_loop,
             description="finnished_centerlines",
         )
+    )
+
+    #################################################
+    ################ RIVER CONNECTED ################
+    #################################################
+
+    river_connected___connected_river_lines_root___n100 = (
+        file_manager.generate_file_name_gdb(
+            script_source_name=river_connected,
+            description="connected_river_lines_root",
+        )
+    )
+
+    river_connected___connected_river_lines___n100 = (
+        file_manager.generate_file_name_gdb(
+            script_source_name=river_connected,
+            description="connected_river_lines",
+        )
+    )
+
+    river_connected___havflate___n100 = file_manager.generate_file_name_gdb(
+        script_source_name=river_connected,
+        description="havflate",
+    )
+
+    #################################################
+    ################# RIVER CYCLES ##################
+    #################################################
+
+    river_cycles___remove_cycles_root___n100 = file_manager.generate_file_name_gdb(
+        script_source_name=river_cycles,
+        description="remove_cycles_root",
+    )
+
+    river_cycles___partition_root___n100 = file_manager.generate_file_name_gdb(
+        script_source_name=river_cycles,
+        description="partition_root",
+    )
+
+    river_cycles___removed_cycles___n100 = file_manager.generate_file_name_gdb(
+        script_source_name=river_cycles,
+        description="removed_cycles",
+    )
+
+    river_cycles_docu___n100 = file_manager.generate_general_subdirectory(
+        description="river_cycles_docu",
+    )
+
+    #################################################
+    ################ RIVER STRAHLER #################
+    #################################################
+
+    river_strahler___root___n100 = file_manager.generate_file_name_gdb(
+        script_source_name=river_strahler,
+        description="root",
+    )
+
+    river_strahler___calculated_strahler___n100 = file_manager.generate_file_name_gdb(
+        script_source_name=river_strahler,
+        description="calculated_strahler",
     )
