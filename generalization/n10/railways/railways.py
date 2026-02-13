@@ -1,4 +1,3 @@
-
 import arcpy
 import math
 

@@ -183,13 +183,15 @@ def deleting_added_field_from_feature_to_x(
     elif generated_field_name_with_underscore in list_of_fields:
         field_to_delete = generated_field_name_with_underscore
     else:
-        raise ValueError(f"""
+        raise ValueError(
+            f"""
                 The generated field name by Esri Geoprocessing tool did not match the predicted naming convention for the file:\n
                 {input_file_feature}\n
                 Expected name (without underscore): {generated_field_name}\n
                 Expected name (with underscore): {generated_field_name_with_underscore}\n
                 Available fields:\n{list_of_fields}
-            """)
+            """
+        )
 
     try:
         arcpy.management.DeleteField(
