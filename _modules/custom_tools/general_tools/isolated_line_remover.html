@@ -1,0 +1,314 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../../">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>custom_tools.general_tools.isolated_line_remover &mdash; Automatisk Generalisering 0.0.1 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/css/theme.css?v=9edc463e" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/custom.css" />
+
+  
+      <script src="../../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../../_static/documentation_options.js?v=d45e8c67"></script>
+      <script src="../../../_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="../../../_static/sphinx_highlight.js?v=6ffebe34"></script>
+    <script src="../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../index.html" class="icon icon-home">
+            Automatisk Generalisering
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../generated_docs/custom_tools.html">custom_tools package</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../generated_docs/env_setup.html">env_setup package</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../generated_docs/file_manager.html">file_manager package</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../generated_docs/generalization.n100.building.html">generalization.n100.building package</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../generated_docs/input_data.html">input_data package</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../generated_docs/modules.html">automatisk-generalisering</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../index.html">Automatisk Generalisering</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">custom_tools.general_tools.isolated_line_remover</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for custom_tools.general_tools.isolated_line_remover</h1><div class="highlight"><pre>
+<span></span><span class="kn">import</span><span class="w"> </span><span class="nn">arcpy</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">file_manager.work_file_manager</span><span class="w"> </span><span class="kn">import</span> <span class="n">WorkFileManager</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">composition_configs</span><span class="w"> </span><span class="kn">import</span> <span class="n">core_config</span>
+
+
+<div class="viewcode-block" id="IsolatedLineRemover">
+<a class="viewcode-back" href="../../../generated_docs/custom_tools.general_tools.html#custom_tools.general_tools.isolated_line_remover.IsolatedLineRemover">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">IsolatedLineRemover</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Remove short isolated line clusters.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    input_fc : str</span>
+<span class="sd">        Path to input line feature class.</span>
+<span class="sd">    output_fc : str</span>
+<span class="sd">        Path where result will be written.</span>
+<span class="sd">    length_threshold : float</span>
+<span class="sd">        Base length threshold in meters.</span>
+<span class="sd">    max_lines_per_group : int</span>
+<span class="sd">        If a cluster has more segments than this, it is kept.</span>
+<span class="sd">    search_radius_m : float</span>
+<span class="sd">        Distance in meters to consider features connected.</span>
+<span class="sd">    length_field : str</span>
+<span class="sd">        Name of the length field to use, if field doesnt exist will create it and populate using SHAPE@LENGTH (default &#39;seg_length_m&#39;).</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">input_fc</span><span class="p">,</span>
+        <span class="n">output_fc</span><span class="p">,</span>
+        <span class="n">length_threshold</span><span class="o">=</span><span class="mf">150.0</span><span class="p">,</span>
+        <span class="n">length_threshold_add_per_segment</span><span class="o">=</span><span class="mi">50</span><span class="p">,</span>
+        <span class="n">max_lines_per_group</span><span class="o">=</span><span class="mi">5</span><span class="p">,</span>
+        <span class="n">search_radius_m</span><span class="o">=</span><span class="mf">10.0</span><span class="p">,</span>
+        <span class="n">length_field</span><span class="o">=</span><span class="s2">&quot;seg_length_m&quot;</span><span class="p">,</span>
+    <span class="p">):</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">input_fc</span> <span class="o">=</span> <span class="n">input_fc</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">output_fc</span> <span class="o">=</span> <span class="n">output_fc</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">length_threshold</span> <span class="o">=</span> <span class="n">length_threshold</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">length_threshold_add_per_segment</span> <span class="o">=</span> <span class="n">length_threshold_add_per_segment</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">max_lines_per_group</span> <span class="o">=</span> <span class="n">max_lines_per_group</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">search_radius_m</span> <span class="o">=</span> <span class="n">search_radius_m</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">length_field</span> <span class="o">=</span> <span class="n">length_field</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">copy_fc</span> <span class="o">=</span> <span class="sa">r</span><span class="s2">&quot;in_memory\copy_lines&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">near_table</span> <span class="o">=</span> <span class="sa">r</span><span class="s2">&quot;in_memory\near_pairs&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">layer_name</span> <span class="o">=</span> <span class="s2">&quot;lyr_to_delete&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">added_l_field</span> <span class="o">=</span> <span class="kc">False</span>
+
+<div class="viewcode-block" id="IsolatedLineRemover.copy">
+<a class="viewcode-back" href="../../../generated_docs/custom_tools.general_tools.html#custom_tools.general_tools.isolated_line_remover.IsolatedLineRemover.copy">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">copy</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">arcpy</span><span class="o">.</span><span class="n">management</span><span class="o">.</span><span class="n">CopyFeatures</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">input_fc</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">copy_fc</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="IsolatedLineRemover.ensure_length_field">
+<a class="viewcode-back" href="../../../generated_docs/custom_tools.general_tools.html#custom_tools.general_tools.isolated_line_remover.IsolatedLineRemover.ensure_length_field">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">ensure_length_field</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">fields</span> <span class="o">=</span> <span class="p">[</span><span class="n">f</span><span class="o">.</span><span class="n">name</span> <span class="k">for</span> <span class="n">f</span> <span class="ow">in</span> <span class="n">arcpy</span><span class="o">.</span><span class="n">ListFields</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">copy_fc</span><span class="p">)]</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">length_field</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">fields</span><span class="p">:</span>
+            <span class="n">arcpy</span><span class="o">.</span><span class="n">management</span><span class="o">.</span><span class="n">AddField</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">copy_fc</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">length_field</span><span class="p">,</span> <span class="s2">&quot;DOUBLE&quot;</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">added_l_field</span> <span class="o">=</span> <span class="kc">True</span>
+            <span class="k">with</span> <span class="n">arcpy</span><span class="o">.</span><span class="n">da</span><span class="o">.</span><span class="n">UpdateCursor</span><span class="p">(</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">copy_fc</span><span class="p">,</span> <span class="p">[</span><span class="s2">&quot;SHAPE@LENGTH&quot;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">length_field</span><span class="p">]</span>
+            <span class="p">)</span> <span class="k">as</span> <span class="n">ucur</span><span class="p">:</span>
+                <span class="k">for</span> <span class="n">geom_len</span><span class="p">,</span> <span class="n">_</span> <span class="ow">in</span> <span class="n">ucur</span><span class="p">:</span>
+                    <span class="n">ucur</span><span class="o">.</span><span class="n">updateRow</span><span class="p">([</span><span class="n">geom_len</span><span class="p">,</span> <span class="n">geom_len</span><span class="p">])</span></div>
+
+
+<div class="viewcode-block" id="IsolatedLineRemover.generate_near_table">
+<a class="viewcode-back" href="../../../generated_docs/custom_tools.general_tools.html#custom_tools.general_tools.isolated_line_remover.IsolatedLineRemover.generate_near_table">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">generate_near_table</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">radius_str</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">search_radius_m</span><span class="si">}</span><span class="s2"> Meters&quot;</span>
+        <span class="n">arcpy</span><span class="o">.</span><span class="n">analysis</span><span class="o">.</span><span class="n">GenerateNearTable</span><span class="p">(</span>
+            <span class="n">in_features</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">copy_fc</span><span class="p">,</span>
+            <span class="n">near_features</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">copy_fc</span><span class="p">,</span>
+            <span class="n">out_table</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">near_table</span><span class="p">,</span>
+            <span class="n">search_radius</span><span class="o">=</span><span class="n">radius_str</span><span class="p">,</span>
+            <span class="n">location</span><span class="o">=</span><span class="s2">&quot;NO_LOCATION&quot;</span><span class="p">,</span>
+            <span class="n">angle</span><span class="o">=</span><span class="s2">&quot;NO_ANGLE&quot;</span><span class="p">,</span>
+            <span class="n">closest</span><span class="o">=</span><span class="s2">&quot;ALL&quot;</span><span class="p">,</span>
+            <span class="n">method</span><span class="o">=</span><span class="s2">&quot;PLANAR&quot;</span><span class="p">,</span>
+        <span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="IsolatedLineRemover.build_adjacency_and_components">
+<a class="viewcode-back" href="../../../generated_docs/custom_tools.general_tools.html#custom_tools.general_tools.isolated_line_remover.IsolatedLineRemover.build_adjacency_and_components">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">build_adjacency_and_components</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">adjacency</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="k">with</span> <span class="n">arcpy</span><span class="o">.</span><span class="n">da</span><span class="o">.</span><span class="n">SearchCursor</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">near_table</span><span class="p">,</span> <span class="p">[</span><span class="s2">&quot;IN_FID&quot;</span><span class="p">,</span> <span class="s2">&quot;NEAR_FID&quot;</span><span class="p">])</span> <span class="k">as</span> <span class="n">cur</span><span class="p">:</span>
+            <span class="k">for</span> <span class="n">in_fid</span><span class="p">,</span> <span class="n">near_fid</span> <span class="ow">in</span> <span class="n">cur</span><span class="p">:</span>
+                <span class="k">if</span> <span class="n">in_fid</span> <span class="o">==</span> <span class="n">near_fid</span><span class="p">:</span>
+                    <span class="k">continue</span>
+                <span class="n">adjacency</span><span class="o">.</span><span class="n">setdefault</span><span class="p">(</span><span class="n">in_fid</span><span class="p">,</span> <span class="nb">set</span><span class="p">())</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">near_fid</span><span class="p">)</span>
+                <span class="n">adjacency</span><span class="o">.</span><span class="n">setdefault</span><span class="p">(</span><span class="n">near_fid</span><span class="p">,</span> <span class="nb">set</span><span class="p">())</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">in_fid</span><span class="p">)</span>
+
+        <span class="n">parent</span> <span class="o">=</span> <span class="p">{}</span>
+
+        <span class="k">def</span><span class="w"> </span><span class="nf">find</span><span class="p">(</span><span class="n">x</span><span class="p">):</span>
+            <span class="n">parent</span><span class="o">.</span><span class="n">setdefault</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">x</span><span class="p">)</span>
+            <span class="k">while</span> <span class="n">parent</span><span class="p">[</span><span class="n">x</span><span class="p">]</span> <span class="o">!=</span> <span class="n">x</span><span class="p">:</span>
+                <span class="n">parent</span><span class="p">[</span><span class="n">x</span><span class="p">]</span> <span class="o">=</span> <span class="n">parent</span><span class="p">[</span><span class="n">parent</span><span class="p">[</span><span class="n">x</span><span class="p">]]</span>
+                <span class="n">x</span> <span class="o">=</span> <span class="n">parent</span><span class="p">[</span><span class="n">x</span><span class="p">]</span>
+            <span class="k">return</span> <span class="n">x</span>
+
+        <span class="k">def</span><span class="w"> </span><span class="nf">union</span><span class="p">(</span><span class="n">a</span><span class="p">,</span> <span class="n">b</span><span class="p">):</span>
+            <span class="n">ra</span><span class="p">,</span> <span class="n">rb</span> <span class="o">=</span> <span class="n">find</span><span class="p">(</span><span class="n">a</span><span class="p">),</span> <span class="n">find</span><span class="p">(</span><span class="n">b</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">ra</span> <span class="o">!=</span> <span class="n">rb</span><span class="p">:</span>
+                <span class="n">parent</span><span class="p">[</span><span class="n">rb</span><span class="p">]</span> <span class="o">=</span> <span class="n">ra</span>
+
+        <span class="n">oid_field</span> <span class="o">=</span> <span class="n">arcpy</span><span class="o">.</span><span class="n">Describe</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">copy_fc</span><span class="p">)</span><span class="o">.</span><span class="n">OIDFieldName</span>
+        <span class="n">all_oids</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">with</span> <span class="n">arcpy</span><span class="o">.</span><span class="n">da</span><span class="o">.</span><span class="n">SearchCursor</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">copy_fc</span><span class="p">,</span> <span class="p">[</span><span class="n">oid_field</span><span class="p">])</span> <span class="k">as</span> <span class="n">cur</span><span class="p">:</span>
+            <span class="k">for</span> <span class="p">(</span><span class="n">oid</span><span class="p">,)</span> <span class="ow">in</span> <span class="n">cur</span><span class="p">:</span>
+                <span class="n">all_oids</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">oid</span><span class="p">)</span>
+                <span class="n">parent</span><span class="o">.</span><span class="n">setdefault</span><span class="p">(</span><span class="n">oid</span><span class="p">,</span> <span class="n">oid</span><span class="p">)</span>
+
+        <span class="k">for</span> <span class="n">a</span><span class="p">,</span> <span class="n">neighbors</span> <span class="ow">in</span> <span class="n">adjacency</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+            <span class="k">for</span> <span class="n">b</span> <span class="ow">in</span> <span class="n">neighbors</span><span class="p">:</span>
+                <span class="n">union</span><span class="p">(</span><span class="n">a</span><span class="p">,</span> <span class="n">b</span><span class="p">)</span>
+
+        <span class="n">comp_map</span> <span class="o">=</span> <span class="p">{</span><span class="n">oid</span><span class="p">:</span> <span class="n">find</span><span class="p">(</span><span class="n">oid</span><span class="p">)</span> <span class="k">for</span> <span class="n">oid</span> <span class="ow">in</span> <span class="n">all_oids</span><span class="p">}</span>
+        <span class="k">return</span> <span class="n">comp_map</span></div>
+
+
+<div class="viewcode-block" id="IsolatedLineRemover.aggregate_by_components">
+<a class="viewcode-back" href="../../../generated_docs/custom_tools.general_tools.html#custom_tools.general_tools.isolated_line_remover.IsolatedLineRemover.aggregate_by_components">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">aggregate_by_components</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">comp_map</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Aggregate lengths and counts by connected component.</span>
+<span class="sd">        Returns a dict mapping root OID to dict with &#39;length&#39;, &#39;count&#39;, &#39;members</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">totals</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="n">oid_field</span> <span class="o">=</span> <span class="n">arcpy</span><span class="o">.</span><span class="n">Describe</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">copy_fc</span><span class="p">)</span><span class="o">.</span><span class="n">OIDFieldName</span>
+        <span class="k">with</span> <span class="n">arcpy</span><span class="o">.</span><span class="n">da</span><span class="o">.</span><span class="n">SearchCursor</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">copy_fc</span><span class="p">,</span> <span class="p">[</span><span class="n">oid_field</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">length_field</span><span class="p">])</span> <span class="k">as</span> <span class="n">cur</span><span class="p">:</span>
+            <span class="k">for</span> <span class="n">oid</span><span class="p">,</span> <span class="n">seg_len</span> <span class="ow">in</span> <span class="n">cur</span><span class="p">:</span>
+                <span class="n">root</span> <span class="o">=</span> <span class="n">comp_map</span><span class="p">[</span><span class="n">oid</span><span class="p">]</span>
+                <span class="n">rec</span> <span class="o">=</span> <span class="n">totals</span><span class="o">.</span><span class="n">setdefault</span><span class="p">(</span>
+                    <span class="n">root</span><span class="p">,</span> <span class="p">{</span><span class="s2">&quot;length&quot;</span><span class="p">:</span> <span class="mf">0.0</span><span class="p">,</span> <span class="s2">&quot;count&quot;</span><span class="p">:</span> <span class="mi">0</span><span class="p">,</span> <span class="s2">&quot;members&quot;</span><span class="p">:</span> <span class="p">[]}</span>
+                <span class="p">)</span>
+                <span class="n">rec</span><span class="p">[</span><span class="s2">&quot;length&quot;</span><span class="p">]</span> <span class="o">+=</span> <span class="n">seg_len</span> <span class="ow">or</span> <span class="mf">0.0</span>
+                <span class="n">rec</span><span class="p">[</span><span class="s2">&quot;count&quot;</span><span class="p">]</span> <span class="o">+=</span> <span class="mi">1</span>
+                <span class="n">rec</span><span class="p">[</span><span class="s2">&quot;members&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">oid</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">totals</span></div>
+
+
+<div class="viewcode-block" id="IsolatedLineRemover.decide_deletes">
+<a class="viewcode-back" href="../../../generated_docs/custom_tools.general_tools.html#custom_tools.general_tools.isolated_line_remover.IsolatedLineRemover.decide_deletes">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">decide_deletes</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">totals</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        This function adds group to delete list if its below length threshold and below max component count.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">to_delete_oids</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">root</span><span class="p">,</span> <span class="n">rec</span> <span class="ow">in</span> <span class="n">totals</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+            <span class="k">if</span> <span class="n">rec</span><span class="p">[</span><span class="s2">&quot;count&quot;</span><span class="p">]</span> <span class="o">&gt;</span> <span class="bp">self</span><span class="o">.</span><span class="n">max_lines_per_group</span><span class="p">:</span>
+                <span class="k">continue</span>
+            <span class="n">threshold</span> <span class="o">=</span> <span class="p">(</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">length_threshold</span>
+                <span class="o">+</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">length_threshold_add_per_segment</span><span class="p">)</span> <span class="o">*</span> <span class="n">rec</span><span class="p">[</span><span class="s2">&quot;count&quot;</span><span class="p">]</span>
+            <span class="p">)</span>
+            <span class="k">if</span> <span class="n">rec</span><span class="p">[</span><span class="s2">&quot;length&quot;</span><span class="p">]</span> <span class="o">&lt;</span> <span class="n">threshold</span><span class="p">:</span>
+                <span class="n">to_delete_oids</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="n">rec</span><span class="p">[</span><span class="s2">&quot;members&quot;</span><span class="p">])</span>
+        <span class="k">return</span> <span class="n">to_delete_oids</span></div>
+
+
+<div class="viewcode-block" id="IsolatedLineRemover.delete_oids">
+<a class="viewcode-back" href="../../../generated_docs/custom_tools.general_tools.html#custom_tools.general_tools.isolated_line_remover.IsolatedLineRemover.delete_oids">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">delete_oids</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">to_delete_oids</span><span class="p">):</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">to_delete_oids</span><span class="p">:</span>
+            <span class="k">return</span>
+
+        <span class="n">oid_field</span> <span class="o">=</span> <span class="n">arcpy</span><span class="o">.</span><span class="n">Describe</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">copy_fc</span><span class="p">)</span><span class="o">.</span><span class="n">OIDFieldName</span>
+        <span class="n">arcpy</span><span class="o">.</span><span class="n">management</span><span class="o">.</span><span class="n">MakeFeatureLayer</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">copy_fc</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">layer_name</span><span class="p">)</span>
+
+        <span class="n">where</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">arcpy</span><span class="o">.</span><span class="n">AddFieldDelimiters</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">copy_fc</span><span class="p">,</span><span class="w"> </span><span class="n">oid_field</span><span class="p">)</span><span class="si">}</span><span class="s2"> IN (</span><span class="si">{</span><span class="s1">&#39;,&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="nb">map</span><span class="p">(</span><span class="nb">str</span><span class="p">,</span><span class="w"> </span><span class="n">to_delete_oids</span><span class="p">))</span><span class="si">}</span><span class="s2">)&quot;</span>
+        <span class="n">arcpy</span><span class="o">.</span><span class="n">management</span><span class="o">.</span><span class="n">SelectLayerByAttribute</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">layer_name</span><span class="p">,</span> <span class="s2">&quot;NEW_SELECTION&quot;</span><span class="p">,</span> <span class="n">where</span><span class="p">)</span>
+        <span class="n">arcpy</span><span class="o">.</span><span class="n">management</span><span class="o">.</span><span class="n">DeleteFeatures</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">layer_name</span><span class="p">)</span>
+
+        <span class="n">arcpy</span><span class="o">.</span><span class="n">management</span><span class="o">.</span><span class="n">SelectLayerByAttribute</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">layer_name</span><span class="p">,</span> <span class="s2">&quot;CLEAR_SELECTION&quot;</span><span class="p">)</span>
+        <span class="n">arcpy</span><span class="o">.</span><span class="n">management</span><span class="o">.</span><span class="n">Delete</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">layer_name</span><span class="p">)</span>
+        <span class="k">return</span></div>
+
+
+<div class="viewcode-block" id="IsolatedLineRemover.run">
+<a class="viewcode-back" href="../../../generated_docs/custom_tools.general_tools.html#custom_tools.general_tools.isolated_line_remover.IsolatedLineRemover.run">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">run</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Execute the removal process and write output.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">ensure_length_field</span><span class="p">()</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">generate_near_table</span><span class="p">()</span>
+        <span class="n">comp_map</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">build_adjacency_and_components</span><span class="p">()</span>
+        <span class="n">totals</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">aggregate_by_components</span><span class="p">(</span><span class="n">comp_map</span><span class="p">)</span>
+        <span class="n">to_delete_oids</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">decide_deletes</span><span class="p">(</span><span class="n">totals</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">delete_oids</span><span class="p">(</span><span class="n">to_delete_oids</span><span class="p">)</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">added_l_field</span><span class="p">:</span>
+            <span class="n">arcpy</span><span class="o">.</span><span class="n">management</span><span class="o">.</span><span class="n">DeleteField</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">copy_fc</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">length_field</span><span class="p">)</span>
+
+        <span class="n">arcpy</span><span class="o">.</span><span class="n">management</span><span class="o">.</span><span class="n">CopyFeatures</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">copy_fc</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">output_fc</span><span class="p">)</span>
+
+        <span class="n">arcpy</span><span class="o">.</span><span class="n">management</span><span class="o">.</span><span class="n">Delete</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">copy_fc</span><span class="p">)</span>
+        <span class="n">arcpy</span><span class="o">.</span><span class="n">management</span><span class="o">.</span><span class="n">Delete</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">near_table</span><span class="p">)</span></div>
+</div>
+
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2024, Kartverket.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

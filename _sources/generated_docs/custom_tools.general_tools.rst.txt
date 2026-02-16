@@ -36,6 +36,14 @@ custom\_tools.general\_tools.graph module
    :show-inheritance:
    :undoc-members:
 
+custom\_tools.general\_tools.isolated\_line\_remover module
+-----------------------------------------------------------
+
+.. automodule:: custom_tools.general_tools.isolated_line_remover
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
 custom\_tools.general\_tools.line\_to\_buffer\_symbology module
 ---------------------------------------------------------------
 
