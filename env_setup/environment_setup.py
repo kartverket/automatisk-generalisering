@@ -16,6 +16,7 @@ from env_setup.global_config import (
     object_elv_bekk,
     object_veg_sti,
     object_bygg_og_anlegg,
+    object_bane,
     main_directory_name,
     lyrx_directory_name,
     general_files_name,
@@ -161,6 +162,7 @@ class ProjectDirectorySetup:
             object_elv_bekk,
             object_veg_sti,
             object_bygg_og_anlegg,
+            object_bane,
         ]
 
     def setup(self):
