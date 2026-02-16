@@ -1,0 +1,17 @@
+county_numbers = {
+    "Østfold": "31",
+    "Akershus": "32",
+    "Oslo": "30",
+    "Buskerud": "33",
+    "Innlandet": "34",
+    "Vestfold": "39",
+    "Telemark": "40",
+    "Agder": "42",
+    "Rogaland": "11",
+    "Vestland": "46",
+    "Møre og Romsdal": "15",
+    "Trøndelag": "50",
+    "Nordland": "18",
+    "Troms": "55",
+    "Finnmark": "56",
+}

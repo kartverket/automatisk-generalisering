@@ -22,6 +22,26 @@ class Landform_N10(Enum):
         script_source_name=hoyde_file, description="hoydetall"
     )
 
+    hoydetall_global__n10_landforms = file_manager.generate_file_name_gdb(
+        script_source_name=hoyde_file, description="hoydetall_global"
+    )
+
+    hoydetall_out_of_bounds_areas__n10_landforms = file_manager.generate_file_name_gdb(
+        script_source_name=hoyde_file, description="hoydetall_out_of_bounds_areas"
+    )
+
+    hoydetall_annotation_contours__n10_landforms = file_manager.generate_file_name_gdb(
+        script_source_name=hoyde_file, description="hoydetall_annotation_contours"
+    )
+
+    hoydetall_valid_contours__n10_landforms = file_manager.generate_file_name_gdb(
+        script_source_name=hoyde_file, description="hoydetall_valid_contours"
+    )
+
+    hoydetall_point_1km__n10_landforms = file_manager.generate_file_name_gdb(
+        script_source_name=hoyde_file, description="hoydetall_point_1km"
+    )
+
     hoydetall_output__n10_landforms = file_manager.generate_file_name_gdb(
         script_source_name=hoyde_file, description="hoydetall_output"
     )
