@@ -198,6 +198,19 @@ class EditOp(str, Enum):
     EXTEND = "extend"
 
 
+class ConnectivityScope(str, Enum):
+    NONE = "none"
+    DIRECT_CONNECTION = "direct"
+    INPUT_LINES = "input_lines"
+    ONE_DEGREE = "one_degree"
+    TRANSITIVE = "transitive"
+
+
+class LineConnectivityMode(str, Enum):
+    ENDPOINTS = "endpoints"
+    INTERSECT = "intersect"
+
+
 @dataclass(frozen=True)
 class ConnectRiverLinesKwargs:
     work_file_manager_config: core_config.WorkFileConfig
@@ -232,7 +245,9 @@ class FillLineGapsAdvancedConfig:
     # Auto uses snap on dangle pairs and extend for all others
     edit_method: EditMethod = EditMethod.AUTO
     # decide if lines inherit illegal targets of connected lines
-    propagating_illigal_targets = (True,)
+    connectivity_scope: ConnectivityScope = ConnectivityScope.DIRECT_CONNECTION
+    connectivity_tolerance_meters: float = 0.02
+    line_connectivity_mode: LineConnectivityMode = LineConnectivityMode.ENDPOINTS
 
 
 @dataclass(frozen=True)

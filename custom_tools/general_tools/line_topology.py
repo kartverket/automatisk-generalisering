@@ -1,6 +1,7 @@
 from __future__ import annotations
+from dataclasses import dataclass
 
-from typing import Optional
+from typing import Optional, Callable, Iterable
 
 import arcpy
 
@@ -8,6 +9,692 @@ from env_setup import environment_setup
 from custom_tools.general_tools import custom_arcpy, file_utilities
 from file_manager import WorkFileManager
 from composition_configs import logic_config
+from composition_configs.logic_config import ConnectivityScope, LineConnectivityMode
+
+
+OptionalKey = tuple[str, int]  # (dataset_key, oid)  -- oid is SOURCE oid
+ParentEntityKey = tuple[str, int]  # ("parent", parent_id)
+OptionalEntityKey = tuple[str, str, int]  # ("optional", dataset_key, oid)
+EntityKey = tuple  # union-ish (kept simple)
+
+
+@dataclass(frozen=True)
+class TopologyModel:
+    scope: "ConnectivityScope"
+
+    # Component modes only (INPUT_LINES / ONE_DEGREE / TRANSITIVE)
+    connectivity_id_by_parent: Optional[dict[int, int]]
+    connectivity_id_by_optional: Optional[dict[OptionalKey, int]]
+    entities_by_connectivity_id: Optional[dict[int, set[EntityKey]]]
+
+    # DIRECT_CONNECTION only (required); allowed to be None otherwise
+    direct_neighbors_by_parent: Optional[dict[int, set[int]]]
+    direct_optionals_by_parent: Optional[dict[int, set[OptionalKey]]]
+
+
+class _UnionFind:
+    def __init__(self) -> None:
+        self._parent: dict[EntityKey, EntityKey] = {}
+        self._rank: dict[EntityKey, int] = {}
+
+    def add(self, x: EntityKey) -> None:
+        if x in self._parent:
+            return
+        self._parent[x] = x
+        self._rank[x] = 0
+
+    def find(self, x: EntityKey) -> EntityKey:
+        # Path compression
+        p = self._parent.get(x)
+        if p is None:
+            self.add(x)
+            return x
+        if p != x:
+            self._parent[x] = self.find(p)
+        return self._parent[x]
+
+    def union(self, a: EntityKey, b: EntityKey) -> None:
+        ra = self.find(a)
+        rb = self.find(b)
+        if ra == rb:
+            return
+        rka = self._rank.get(ra, 0)
+        rkb = self._rank.get(rb, 0)
+        if rka < rkb:
+            self._parent[ra] = rb
+        elif rka > rkb:
+            self._parent[rb] = ra
+        else:
+            self._parent[rb] = ra
+            self._rank[ra] = rka + 1
+
+    def components(self) -> dict[EntityKey, set[EntityKey]]:
+        out: dict[EntityKey, set[EntityKey]] = {}
+        for x in list(self._parent.keys()):
+            r = self.find(x)
+            out.setdefault(r, set()).add(x)
+        return out
+
+
+class TopologyBuilder:
+    """
+    Value-neutral connectivity inference.
+
+    IMPORTANT:
+    - Does NOT use dangle candidate layers.
+    - Uses explicit connectivity_tolerance_meters (not arcpy.env.XYTolerance).
+    - Optional objects are keyed by (dataset_key, SOURCE_OID).
+    """
+
+    def __init__(
+        self,
+        *,
+        lines_fc: str,
+        original_id_field: str,
+        connect_to_features: Optional[list[str]],
+        dataset_key_fn: Callable[[str], str],
+        wfm,
+        write_work_files_to_memory: bool,
+        connectivity_tolerance_meters: float,
+        line_connectivity_mode: "LineConnectivityMode",
+    ) -> None:
+        self.lines_fc = lines_fc
+        self.original_id_field = original_id_field
+        self.connect_to_features = connect_to_features or []
+        self.dataset_key_fn = dataset_key_fn
+        self.wfm = wfm
+        self.write_work_files_to_memory = bool(write_work_files_to_memory)
+        self.tol_m = float(connectivity_tolerance_meters)
+        self.line_mode = line_connectivity_mode
+
+    def build(
+        self,
+        *,
+        scope: "ConnectivityScope",
+        relevant_parent_ids: set[int],
+    ) -> TopologyModel:
+        scope = ConnectivityScope(scope)
+
+        if scope == ConnectivityScope.NONE:
+            return TopologyModel(
+                scope=scope,
+                connectivity_id_by_parent=None,
+                connectivity_id_by_optional=None,
+                entities_by_connectivity_id=None,
+                direct_neighbors_by_parent=None,
+                direct_optionals_by_parent=None,
+            )
+
+        if scope == ConnectivityScope.DIRECT_CONNECTION:
+            direct_neighbors = self._build_parent_adjacency(
+                restrict_to_parent_ids=set(relevant_parent_ids)
+            )
+            direct_optionals = self._build_parent_optionals(
+                parent_ids=set(relevant_parent_ids),
+                optional_paths=self.connect_to_features,
+                use_connectivity_layers=False,
+                transitive_expand=False,
+            )
+            # Ensure required keys exist for all relevant parents
+            for pid in relevant_parent_ids:
+                direct_neighbors.setdefault(int(pid), set())
+                direct_optionals.setdefault(int(pid), set())
+
+            return TopologyModel(
+                scope=scope,
+                connectivity_id_by_parent=None,
+                connectivity_id_by_optional=None,
+                entities_by_connectivity_id=None,
+                direct_neighbors_by_parent=direct_neighbors,
+                direct_optionals_by_parent=direct_optionals,
+            )
+
+        # Component modes:
+        # - INPUT_LINES: line-only components
+        # - ONE_DEGREE: merge via shared optionals (no optional↔optional traversal)
+        # - TRANSITIVE: full closure incl optional↔optional edges
+        parent_adjacency = self._build_parent_adjacency(restrict_to_parent_ids=None)
+
+        if scope == ConnectivityScope.INPUT_LINES:
+            cid_by_parent, entities_by_cid = self._components_from_line_only(
+                parent_adjacency=parent_adjacency
+            )
+
+            # Attachments are allowed (optional); compute only for relevant parents
+            direct_optionals = self._build_parent_optionals(
+                parent_ids=set(relevant_parent_ids),
+                optional_paths=self.connect_to_features,
+                use_connectivity_layers=False,
+                transitive_expand=False,
+            )
+
+            return TopologyModel(
+                scope=scope,
+                connectivity_id_by_parent=cid_by_parent,
+                connectivity_id_by_optional=None,
+                entities_by_connectivity_id=entities_by_cid,
+                direct_neighbors_by_parent=None,
+                direct_optionals_by_parent=direct_optionals,
+            )
+
+        # ONE_DEGREE / TRANSITIVE
+        if not self.connect_to_features:
+            # No optionals to participate; degrade to line-only components
+            cid_by_parent, entities_by_cid = self._components_from_line_only(
+                parent_adjacency=parent_adjacency
+            )
+            return TopologyModel(
+                scope=scope,
+                connectivity_id_by_parent=cid_by_parent,
+                connectivity_id_by_optional=None,
+                entities_by_connectivity_id=entities_by_cid,
+                direct_neighbors_by_parent=None,
+                direct_optionals_by_parent=None,
+            )
+
+        transitive_expand = scope == ConnectivityScope.TRANSITIVE
+
+        # Build reduced connectivity layers for optionals (feature layers with selection),
+        # seeded by lines_fc (NOT dangles), optionally expanded within dataset for TRANSITIVE.
+        optional_layers = self._build_optional_connectivity_layers(
+            optional_paths=self.connect_to_features,
+            transitive_expand=transitive_expand,
+        )
+
+        parent_to_optional = self._build_parent_optionals(
+            parent_ids=None,  # compute for all parents that touch selected optionals
+            optional_paths=self.connect_to_features,
+            use_connectivity_layers=True,
+            transitive_expand=transitive_expand,
+            optional_layers=optional_layers,
+        )
+
+        uf = _UnionFind()
+
+        # Ensure all parent nodes exist (so isolated parents get deterministic ids too)
+        for pid in self._iter_all_parent_ids():
+            uf.add(("parent", int(pid)))
+
+        # Add selected optional nodes
+        for ds_key, opt_layer in optional_layers:
+            oid_field = arcpy.Describe(opt_layer).OIDFieldName
+            with arcpy.da.SearchCursor(opt_layer, [oid_field]) as cur:
+                for (oid,) in cur:
+                    uf.add(("optional", str(ds_key), int(oid)))
+
+        # parent↔parent unions
+        for a, nbs in parent_adjacency.items():
+            a_ent: ParentEntityKey = ("parent", int(a))
+            for b in nbs:
+                uf.union(a_ent, ("parent", int(b)))
+
+        # parent↔optional unions (ONE_DEGREE + TRANSITIVE)
+        for pid, opt_keys in parent_to_optional.items():
+            p_ent: ParentEntityKey = ("parent", int(pid))
+            for ds_key, oid in opt_keys:
+                uf.union(p_ent, ("optional", str(ds_key), int(oid)))
+
+        # optional↔optional unions (TRANSITIVE only)
+        if scope == ConnectivityScope.TRANSITIVE:
+            for ds_a, layer_a in optional_layers:
+                # within-dataset
+                self._union_optional_optional_edges(
+                    uf=uf,
+                    in_layer=layer_a,
+                    near_layer=layer_a,
+                    ds_in=str(ds_a),
+                    ds_near=str(ds_a),
+                )
+            # cross-dataset
+            for i in range(len(optional_layers)):
+                ds_i, lyr_i = optional_layers[i]
+                for j in range(i + 1, len(optional_layers)):
+                    ds_j, lyr_j = optional_layers[j]
+                    self._union_optional_optional_edges(
+                        uf=uf,
+                        in_layer=lyr_i,
+                        near_layer=lyr_j,
+                        ds_in=str(ds_i),
+                        ds_near=str(ds_j),
+                    )
+
+        cid_by_parent, cid_by_optional, entities_by_cid = self._assign_component_ids(uf)
+
+        return TopologyModel(
+            scope=scope,
+            connectivity_id_by_parent=cid_by_parent,
+            connectivity_id_by_optional=cid_by_optional,
+            entities_by_connectivity_id=entities_by_cid,
+            direct_neighbors_by_parent=None,
+            direct_optionals_by_parent=parent_to_optional,  # useful primitive
+        )
+
+    # ----------------------------
+    # Parent ids
+    # ----------------------------
+
+    def _iter_all_parent_ids(self) -> Iterable[int]:
+        with arcpy.da.SearchCursor(self.lines_fc, [self.original_id_field]) as cur:
+            for (pid,) in cur:
+                yield int(pid)
+
+    # ----------------------------
+    # Parent↔parent adjacency
+    # ----------------------------
+
+    def _build_parent_adjacency(
+        self, *, restrict_to_parent_ids: Optional[set[int]]
+    ) -> dict[int, set[int]]:
+        if self.line_mode == LineConnectivityMode.INTERSECT:
+            return self._build_parent_adjacency_intersect(restrict_to_parent_ids)
+        return self._build_parent_adjacency_endpoints(restrict_to_parent_ids)
+
+    def _build_parent_adjacency_endpoints(
+        self, restrict_to_parent_ids: Optional[set[int]]
+    ) -> dict[int, set[int]]:
+        endpoints_fc = self.wfm.build_file_path(file_name="topo_line_endpoints")
+        arcpy.management.FeatureVerticesToPoints(
+            self.lines_fc, endpoints_fc, "BOTH_ENDS"
+        )
+
+        endpoints_lyr = "topo_endpoints_lyr"
+        arcpy.management.MakeFeatureLayer(endpoints_fc, endpoints_lyr)
+
+        if restrict_to_parent_ids:
+            where = self._where_in_ints(
+                endpoints_fc, self.original_id_field, restrict_to_parent_ids
+            )
+            arcpy.management.SelectLayerByAttribute(
+                endpoints_lyr, "NEW_SELECTION", where
+            )
+
+        near_table = self.wfm.build_file_path(file_name="topo_endpoints_near_lines")
+        arcpy.analysis.GenerateNearTable(
+            in_features=endpoints_lyr,
+            near_features=[self.lines_fc],
+            out_table=near_table,
+            search_radius=self._meters(self.tol_m),
+            location="NO_LOCATION",
+            angle="NO_ANGLE",
+            closest="ALL",
+            closest_count=100,
+            method="PLANAR",
+        )
+
+        # endpoint OID -> parent_id
+        endpoint_oid = arcpy.Describe(endpoints_lyr).OIDFieldName
+        endpoint_parent: dict[int, int] = {}
+        with arcpy.da.SearchCursor(
+            endpoints_lyr, [endpoint_oid, self.original_id_field]
+        ) as cur:
+            for eo, pid in cur:
+                endpoint_parent[int(eo)] = int(pid)
+
+        # line OID -> parent_id (ORIGINAL_ID space)
+        lines_oid = arcpy.Describe(self.lines_fc).OIDFieldName
+        line_oid_to_parent: dict[int, int] = {}
+        with arcpy.da.SearchCursor(
+            self.lines_fc, [lines_oid, self.original_id_field]
+        ) as cur:
+            for oid, pid in cur:
+                line_oid_to_parent[int(oid)] = int(pid)
+
+        out: dict[int, set[int]] = {}
+        fields = ["IN_FID", "NEAR_FID", "NEAR_DIST"]
+        with arcpy.da.SearchCursor(near_table, fields) as cur:
+            for in_fid, near_fid, near_dist in cur:
+                if near_fid is None or near_dist is None:
+                    continue
+                if float(near_dist) >= float(self.tol_m):
+                    continue
+                a_parent = endpoint_parent.get(int(in_fid))
+                if a_parent is None:
+                    continue
+                b_parent = line_oid_to_parent.get(int(near_fid))
+                if b_parent is None:
+                    continue
+                if int(a_parent) == int(b_parent):
+                    continue
+                out.setdefault(int(a_parent), set()).add(int(b_parent))
+                out.setdefault(int(b_parent), set()).add(int(a_parent))
+        return out
+
+    def _build_parent_adjacency_intersect(
+        self, restrict_to_parent_ids: Optional[set[int]]
+    ) -> dict[int, set[int]]:
+        lines_lyr = "topo_lines_lyr"
+        arcpy.management.MakeFeatureLayer(self.lines_fc, lines_lyr)
+
+        if restrict_to_parent_ids:
+            where = self._where_in_ints(
+                self.lines_fc, self.original_id_field, restrict_to_parent_ids
+            )
+            arcpy.management.SelectLayerByAttribute(lines_lyr, "NEW_SELECTION", where)
+
+        near_table = self.wfm.build_file_path(file_name="topo_lines_near_lines")
+        arcpy.analysis.GenerateNearTable(
+            in_features=lines_lyr,
+            near_features=[self.lines_fc],
+            out_table=near_table,
+            search_radius=self._meters(self.tol_m),
+            location="NO_LOCATION",
+            angle="NO_ANGLE",
+            closest="ALL",
+            closest_count=100,
+            method="PLANAR",
+        )
+
+        lines_oid = arcpy.Describe(self.lines_fc).OIDFieldName
+        line_oid_to_parent: dict[int, int] = {}
+        with arcpy.da.SearchCursor(
+            self.lines_fc, [lines_oid, self.original_id_field]
+        ) as cur:
+            for oid, pid in cur:
+                line_oid_to_parent[int(oid)] = int(pid)
+
+        out: dict[int, set[int]] = {}
+        fields = ["IN_FID", "NEAR_FID", "NEAR_DIST"]
+        with arcpy.da.SearchCursor(near_table, fields) as cur:
+            for in_fid, near_fid, near_dist in cur:
+                if near_fid is None or near_dist is None:
+                    continue
+                if float(near_dist) > float(self.tol_m):
+                    continue
+                a_parent = line_oid_to_parent.get(int(in_fid))
+                b_parent = line_oid_to_parent.get(int(near_fid))
+                if a_parent is None or b_parent is None:
+                    continue
+                if int(a_parent) == int(b_parent):
+                    continue
+                out.setdefault(int(a_parent), set()).add(int(b_parent))
+                out.setdefault(int(b_parent), set()).add(int(a_parent))
+        return out
+
+    # ----------------------------
+    # Parent↔optional links (whole-geometry; value-neutral)
+    # ----------------------------
+
+    def _build_optional_connectivity_layers(
+        self, *, optional_paths: list[str], transitive_expand: bool
+    ) -> list[tuple[str, str]]:
+        """
+        Returns [(dataset_key, selected_feature_layer_name), ...]
+        Selection is seeded by lines_fc (NOT dangles). For TRANSITIVE, expands optional↔optional
+        within the same dataset until stable.
+        """
+        out: list[tuple[str, str]] = []
+        overlap_type, search_distance = self._overlap_for_tol()
+
+        for index, path in enumerate(optional_paths):
+            ds_key = self.dataset_key_fn(path)
+            lyr = f"topo_opt_{index}_lyr"
+            arcpy.management.MakeFeatureLayer(path, lyr)
+
+            arcpy.management.SelectLayerByLocation(
+                in_layer=lyr,
+                overlap_type=overlap_type,
+                select_features=self.lines_fc,
+                search_distance=search_distance,
+                selection_type="NEW_SELECTION",
+            )
+
+            if transitive_expand:
+                # Expansion within dataset:
+                # Repeatedly add optionals that intersect/touch the current selection until stable.
+                # NOTE: passing a layer with a selection uses the selection set as the geometry source.
+                prev = -1
+                while True:
+                    cur = int(arcpy.management.GetCount(lyr)[0])
+                    if cur == prev:
+                        break
+                    prev = cur
+                    arcpy.management.SelectLayerByLocation(
+                        in_layer=lyr,
+                        overlap_type=overlap_type,
+                        select_features=lyr,
+                        search_distance=search_distance,
+                        selection_type="ADD_TO_SELECTION",
+                    )
+
+            out.append((str(ds_key), lyr))
+
+        return out
+
+    def _build_parent_optionals(
+        self,
+        *,
+        parent_ids: Optional[set[int]],
+        optional_paths: list[str],
+        use_connectivity_layers: bool,
+        transitive_expand: bool,
+        optional_layers: Optional[list[tuple[str, str]]] = None,
+    ) -> dict[int, set[OptionalKey]]:
+        """
+        Returns parent_id -> set[(dataset_key, source_oid)].
+
+        - DIRECT_CONNECTION / INPUT_LINES attachments:
+            use_connectivity_layers=False; builds links against original datasets.
+            If parent_ids is provided, only computes for those parents.
+
+        - ONE_DEGREE / TRANSITIVE component modes:
+            use_connectivity_layers=True; links against selected optional layers.
+            parent_ids is ignored (we compute for all parents that touch selected optionals).
+        """
+        out: dict[int, set[OptionalKey]] = {}
+
+        if not optional_paths:
+            return out
+
+        # Lines layer, optionally restricted to specific parents
+        lines_lyr = "topo_lines_for_opt_lyr"
+        arcpy.management.MakeFeatureLayer(self.lines_fc, lines_lyr)
+        if parent_ids is not None:
+            where = self._where_in_ints(
+                self.lines_fc, self.original_id_field, parent_ids
+            )
+            arcpy.management.SelectLayerByAttribute(lines_lyr, "NEW_SELECTION", where)
+
+        overlap_type, search_distance = self._overlap_for_tol()
+
+        if use_connectivity_layers:
+            if optional_layers is None:
+                optional_layers = self._build_optional_connectivity_layers(
+                    optional_paths=optional_paths,
+                    transitive_expand=transitive_expand,
+                )
+
+            # Restrict lines to those near selected optionals (correct + faster than scanning all lines)
+            # Union all optionals by selecting against each optional layer
+            arcpy.management.SelectLayerByAttribute(lines_lyr, "CLEAR_SELECTION")
+            for _, opt_lyr in optional_layers:
+                arcpy.management.SelectLayerByLocation(
+                    in_layer=lines_lyr,
+                    overlap_type=overlap_type,
+                    select_features=opt_lyr,
+                    search_distance=search_distance,
+                    selection_type="ADD_TO_SELECTION",
+                )
+
+            # Now link per dataset-layer (so dataset_key is explicit and stable)
+            for ds_key, opt_lyr in optional_layers:
+                table = self.wfm.build_file_path(
+                    file_name=f"topo_lines_to_opt_{ds_key}"
+                )
+                arcpy.analysis.GenerateNearTable(
+                    in_features=lines_lyr,
+                    near_features=[opt_lyr],
+                    out_table=table,
+                    search_radius=self._meters(self.tol_m),
+                    location="NO_LOCATION",
+                    angle="NO_ANGLE",
+                    closest="ALL",
+                    closest_count=200,
+                    method="PLANAR",
+                )
+
+                # IN_FID is line OID, but we want parent_id from ORIGINAL_ID
+                lines_oid = arcpy.Describe(self.lines_fc).OIDFieldName
+                line_oid_to_parent: dict[int, int] = {}
+                with arcpy.da.SearchCursor(
+                    self.lines_fc, [lines_oid, self.original_id_field]
+                ) as cur:
+                    for oid, pid in cur:
+                        line_oid_to_parent[int(oid)] = int(pid)
+
+                fields = ["IN_FID", "NEAR_FID", "NEAR_DIST"]
+                with arcpy.da.SearchCursor(table, fields) as cur:
+                    for in_fid, near_fid, near_dist in cur:
+                        if near_fid is None or near_dist is None:
+                            continue
+                        if float(near_dist) > float(self.tol_m):
+                            continue
+                        pid = line_oid_to_parent.get(int(in_fid))
+                        if pid is None:
+                            continue
+                        out.setdefault(int(pid), set()).add(
+                            (str(ds_key), int(near_fid))
+                        )
+            return out
+
+        # Non-connectivity-layer mode: link per original dataset path (stable ds_key)
+        for path in optional_paths:
+            ds_key = self.dataset_key_fn(path)
+            table = self.wfm.build_file_path(
+                file_name=f"topo_lines_to_opt_attach_{ds_key}"
+            )
+
+            arcpy.analysis.GenerateNearTable(
+                in_features=lines_lyr,
+                near_features=[path],
+                out_table=table,
+                search_radius=self._meters(self.tol_m),
+                location="NO_LOCATION",
+                angle="NO_ANGLE",
+                closest="ALL",
+                closest_count=200,
+                method="PLANAR",
+            )
+
+            lines_oid = arcpy.Describe(self.lines_fc).OIDFieldName
+            line_oid_to_parent: dict[int, int] = {}
+            with arcpy.da.SearchCursor(
+                self.lines_fc, [lines_oid, self.original_id_field]
+            ) as cur:
+                for oid, pid in cur:
+                    line_oid_to_parent[int(oid)] = int(pid)
+
+            fields = ["IN_FID", "NEAR_FID", "NEAR_DIST"]
+            with arcpy.da.SearchCursor(table, fields) as cur:
+                for in_fid, near_fid, near_dist in cur:
+                    if near_fid is None or near_dist is None:
+                        continue
+                    if float(near_dist) > float(self.tol_m):
+                        continue
+                    pid = line_oid_to_parent.get(int(in_fid))
+                    if pid is None:
+                        continue
+                    out.setdefault(int(pid), set()).add((str(ds_key), int(near_fid)))
+
+        return out
+
+    def _union_optional_optional_edges(
+        self,
+        *,
+        uf: _UnionFind,
+        in_layer: str,
+        near_layer: str,
+        ds_in: str,
+        ds_near: str,
+    ) -> None:
+        """
+        Adds undirected optional↔optional edges to union-find for TRANSITIVE.
+        """
+        table = self.wfm.build_file_path(file_name=f"topo_optopt_{ds_in}_to_{ds_near}")
+        arcpy.analysis.GenerateNearTable(
+            in_features=in_layer,
+            near_features=[near_layer],
+            out_table=table,
+            search_radius=self._meters(self.tol_m),
+            location="NO_LOCATION",
+            angle="NO_ANGLE",
+            closest="ALL",
+            closest_count=500,
+            method="PLANAR",
+        )
+
+        fields = ["IN_FID", "NEAR_FID", "NEAR_DIST"]
+        with arcpy.da.SearchCursor(table, fields) as cur:
+            for in_fid, near_fid, near_dist in cur:
+                if near_fid is None or near_dist is None:
+                    continue
+                if float(near_dist) > float(self.tol_m):
+                    continue
+                if int(in_fid) == int(near_fid) and ds_in == ds_near:
+                    continue
+                uf.union(
+                    ("optional", str(ds_in), int(in_fid)),
+                    ("optional", str(ds_near), int(near_fid)),
+                )
+
+    # ----------------------------
+    # Components + determinism
+    # ----------------------------
+
+    def _components_from_line_only(
+        self, *, parent_adjacency: dict[int, set[int]]
+    ) -> tuple[dict[int, int], dict[int, set[EntityKey]]]:
+        uf = _UnionFind()
+        for pid in self._iter_all_parent_ids():
+            uf.add(("parent", int(pid)))
+        for a, nbs in parent_adjacency.items():
+            for b in nbs:
+                uf.union(("parent", int(a)), ("parent", int(b)))
+        cid_by_parent, _, entities_by_cid = self._assign_component_ids(uf)
+        return cid_by_parent, entities_by_cid
+
+    def _assign_component_ids(
+        self, uf: _UnionFind
+    ) -> tuple[dict[int, int], dict[OptionalKey, int], dict[int, set[EntityKey]]]:
+        comps = uf.components()  # root -> set[entity]
+        # Deterministic ordering by smallest entity key (tuple ordering is deterministic)
+        ordered = sorted((min(members), root) for root, members in comps.items())
+
+        cid_by_parent: dict[int, int] = {}
+        cid_by_optional: dict[OptionalKey, int] = {}
+        entities_by_cid: dict[int, set[EntityKey]] = {}
+
+        for idx, (_, root) in enumerate(ordered, start=1):
+            members = comps[root]
+            entities_by_cid[idx] = set(members)
+            for ent in members:
+                if not ent:
+                    continue
+                if ent[0] == "parent":
+                    cid_by_parent[int(ent[1])] = int(idx)
+                elif ent[0] == "optional":
+                    cid_by_optional[(str(ent[1]), int(ent[2]))] = int(idx)
+
+        return cid_by_parent, cid_by_optional, entities_by_cid
+
+    # ----------------------------
+    # Small helpers
+    # ----------------------------
+
+    def _meters(self, value_m: float) -> str:
+        return f"{float(value_m)} Meters"
+
+    def _overlap_for_tol(self) -> tuple[str, Optional[str]]:
+        if float(self.tol_m) <= 0.0:
+            return "INTERSECT", None
+        return "WITHIN_A_DISTANCE", self._meters(self.tol_m)
+
+    def _where_in_ints(self, fc: str, field_name: str, ids: set[int]) -> str:
+        # Defensive for empty sets
+        safe = sorted({int(v) for v in ids})
+        if not safe:
+            return "1=0"
+        fld = arcpy.AddFieldDelimiters(fc, field_name)
+        return f"{fld} IN ({','.join(str(v) for v in safe)})"
 
 
 class FillLineGaps:
@@ -43,7 +730,12 @@ class FillLineGaps:
             adv.increased_tolerance_edge_case_distance_meters
         )
         self.edit_method = logic_config.EditMethod(adv.edit_method)
-        self.propagate_illigal_targets = adv.propagating_illigal_targets
+
+        self.connectivity_scope = logic_config.ConnectivityScope(adv.connectivity_scope)
+        self.connectivity_tolerance_meters = float(adv.connectivity_tolerance_meters)
+        self.line_connectivity_mode = logic_config.LineConnectivityMode(
+            adv.line_connectivity_mode
+        )
 
         if self.connect_to_features is None and self.fill_gaps_on_self is False:
             raise ValueError(
@@ -95,6 +787,10 @@ class FillLineGaps:
     def _expanded_dangle_tolerance_linear_unit(self) -> str:
         return f"{int(self._expanded_dangle_tolerance_meters())} Meters"
 
+    def _connectivity_tolerance_linear_unit(self) -> str:
+        meters = max(0.0, float(self.connectivity_tolerance_meters))
+        return f"{meters} Meters"
+
     def _dataset_key(self, value: str) -> str:
         text = str(value).replace("\\", "/")
         return text.split("/")[-1]
@@ -132,6 +828,30 @@ class FillLineGaps:
         if str(gap_source) == self.GAP_SOURCE_PAIR_DANGLE:
             return logic_config.EditOp.SNAP
         return logic_config.EditOp.EXTEND
+
+    def _same_network(
+        self,
+        *,
+        a_parent: int,
+        b_parent: int,
+        topology: TopologyModel,
+    ) -> bool:
+        scope = topology.scope
+
+        if scope == logic_config.ConnectivityScope.NONE:
+            return False
+
+        if scope == logic_config.ConnectivityScope.DIRECT_CONNECTION:
+            direct = topology.direct_neighbors_by_parent or {}
+            return int(b_parent) in direct.get(int(a_parent), set())
+
+        # Component modes:
+        cid = topology.connectivity_id_by_parent
+        if not cid:
+            return False
+        a = cid.get(int(a_parent))
+        b = cid.get(int(b_parent))
+        return a is not None and b is not None and int(a) == int(b)
 
     def _choose_endpoint_index(
         self, *, points: list, dangle_x: float, dangle_y: float, tol: float = 0.001
@@ -341,13 +1061,17 @@ class FillLineGaps:
         *,
         dangle_parent: dict[int, int],
         target_layers: list[str],
-    ) -> tuple[dict[int, dict[str, set[int]]], dict[int, set[int]]]:
+        topology: TopologyModel,
+    ) -> dict[int, dict[str, set[int]]]:
         """
         illegal[parent_id][dataset_key] -> set(objectid)
 
         Clauses:
-          - self line
-          - objects connected to parent line endpoints
+        - self line
+        - objects connected to parent line endpoints
+
+        Propagation:
+        - Scope-dependent, using topology connectivity ids (not local BFS adjacency).
         """
         illegal: dict[int, dict[str, set[int]]] = {}
 
@@ -355,16 +1079,83 @@ class FillLineGaps:
             illegal=illegal,
             parent_ids=set(dangle_parent.values()),
         )
-        adjacency = self._illegal_connected_features(
+
+        # Keep existing illegal detection semantics (connected endpoints rule).
+        # We don't return adjacency anymore.
+        _ = self._illegal_connected_features(
             illegal=illegal,
             target_layers=target_layers,
         )
-        if self.propagate_illigal_targets:
-            self._propagate_external_illegal_within_components(
-                illegal=illegal,
-                adjacency=adjacency,
-            )
-        return illegal, adjacency
+
+        # Scope-driven propagation using topology output (no propagation for NONE/DIRECT).
+        self._propagate_external_illegal_by_scope(
+            illegal=illegal,
+            topology=topology,
+        )
+
+        return illegal
+
+    def _propagate_external_illegal_by_scope(
+        self,
+        *,
+        illegal: dict[int, dict[str, set[int]]],
+        topology: TopologyModel,
+    ) -> None:
+        scope = topology.scope
+
+        if scope in (
+            logic_config.ConnectivityScope.NONE,
+            logic_config.ConnectivityScope.DIRECT_CONNECTION,
+        ):
+            return
+
+        cid = topology.connectivity_id_by_parent
+        if not cid:
+            return
+
+        self._propagate_external_illegal_within_connectivity_ids(
+            illegal=illegal,
+            connectivity_id_by_parent=cid,
+        )
+
+    def _propagate_external_illegal_within_connectivity_ids(
+        self,
+        *,
+        illegal: dict[int, dict[str, set[int]]],
+        connectivity_id_by_parent: dict[int, int],
+    ) -> None:
+        """
+        For each connectivity_id group (scope-defined component), union external illegal targets
+        and apply to every parent in that group.
+
+        External illegal targets = everything except the canonical lines_key (self-line rule).
+        Self-line rule remains local and never propagates.
+        """
+        lines_key = self._dataset_key(self.lines_copy)
+
+        groups: dict[int, list[int]] = {}
+        for pid in illegal.keys():
+            cid = connectivity_id_by_parent.get(int(pid))
+            if cid is None:
+                continue
+            groups.setdefault(int(cid), []).append(int(pid))
+
+        for _, members in groups.items():
+            union_external: dict[str, set[int]] = {}
+
+            for member in members:
+                ds_map = illegal.get(int(member), {})
+                for ds_key, ids in ds_map.items():
+                    if ds_key == lines_key:
+                        continue
+                    union_external.setdefault(str(ds_key), set()).update(
+                        {int(v) for v in ids}
+                    )
+
+            for member in members:
+                illegal.setdefault(int(member), {})
+                for ds_key, ids in union_external.items():
+                    illegal[int(member)].setdefault(str(ds_key), set()).update(ids)
 
     def _illegal_self_line(
         self,
@@ -401,7 +1192,7 @@ class FillLineGaps:
         if self.lines_copy not in near_features:
             near_features.append(self.lines_copy)
 
-        connect_tol_m = 0.02
+        connect_tol_m = float(self.connectivity_tolerance_meters)
         connect_tol = f"{connect_tol_m} Meters"
 
         arcpy.analysis.GenerateNearTable(
@@ -690,14 +1481,12 @@ class FillLineGaps:
         parent_id: int,
         cand: dict,
         base_tol: float,
-        dangle_candidate_tol: float,  # NEW
-        component_id: dict[int, int] | None = None,
+        dangle_candidate_tol: float,
+        topology: TopologyModel | None = None,
     ) -> bool:
         ds_key = cand["near_fc_key"]
         oid = int(cand["near_fid"])
         dist = float(cand["near_dist"])
-
-        a_comp = component_id.get(int(parent_id)) if component_id is not None else None
 
         if ds_key == dangles_fc_key:
             # IMPORTANT: use dangle_candidate_tol, not expanded tolerance by default
@@ -708,10 +1497,15 @@ class FillLineGaps:
             if other_parent is None:
                 return False
 
-            if a_comp is not None and component_id is not None:
-                if component_id.get(int(other_parent)) == a_comp:
-                    return False
+            # Same-network restriction (value-neutral topology)
+            if topology is not None and self._same_network(
+                a_parent=int(parent_id),
+                b_parent=int(other_parent),
+                topology=topology,
+            ):
+                return False
 
+            # Dangle->dangle still illegal-checks against the other parent line id
             if self._is_illegal(
                 illegal=illegal,
                 parent_id=parent_id,
@@ -729,9 +1523,17 @@ class FillLineGaps:
         if ds_key == lines_fc_key and int(oid) == int(parent_id):
             return False
 
-        if ds_key == lines_fc_key and a_comp is not None and component_id is not None:
-            if component_id.get(int(oid)) == a_comp:
-                return False
+        # Same-network restriction for line targets (oid is in ORIGINAL_ID space in your grouped rows)
+        if (
+            ds_key == lines_fc_key
+            and topology is not None
+            and self._same_network(
+                a_parent=int(parent_id),
+                b_parent=int(oid),
+                topology=topology,
+            )
+        ):
+            return False
 
         if self._is_illegal(
             illegal=illegal,
@@ -777,7 +1579,7 @@ class FillLineGaps:
         lines_fc_key: str,
         parent_id: int,
         base_tol: float,
-        component_id: dict[int, int] | None = None,
+        topology: TopologyModel | None = None,
     ) -> Optional[dict]:
         for cand in candidates_sorted:
             if self._candidate_is_legal(
@@ -789,7 +1591,7 @@ class FillLineGaps:
                 cand=cand,
                 base_tol=base_tol,
                 dangle_candidate_tol=base_tol,
-                component_id=component_id,
+                topology=topology,
             ):
                 return cand
         return None
@@ -958,16 +1760,28 @@ class FillLineGaps:
         dangle_parent = self._build_dangle_parent_lookup(dangles_fc=dangles_fc)
         dangle_xy = self._build_dangle_xy_lookup(dangles_fc=dangles_fc)
 
-        illegal, adjacency = self.detect_illegal_targets(
+        # Value-neutral topology (computed independently of dangle candidate layers)
+        relevant_parent_ids = set(dangle_parent.values())
+        topology = TopologyBuilder(
+            lines_fc=self.lines_copy,
+            original_id_field=self.ORIGINAL_ID,
+            connect_to_features=self.connect_to_features,
+            dataset_key_fn=self._dataset_key,
+            wfm=self.wfm,
+            write_work_files_to_memory=self.write_work_files_to_memory,
+            connectivity_tolerance_meters=self.connectivity_tolerance_meters,
+            line_connectivity_mode=self.line_connectivity_mode,
+        ).build(
+            scope=self.connectivity_scope,
+            relevant_parent_ids=relevant_parent_ids,
+        )
+
+        illegal = self.detect_illegal_targets(
             dangle_parent=dangle_parent,
             target_layers=target_layers,
+            topology=topology,
         )
-        nodes = set(dangle_parent.values())
-        component_id = (
-            self._build_component_ids(adjacency=adjacency, nodes=nodes)
-            if self.propagate_illigal_targets
-            else None
-        )
+
         dangles_key = self._dataset_key(dangles_fc)
 
         lines_key = self._dataset_key(self.lines_copy)
@@ -986,6 +1800,7 @@ class FillLineGaps:
             if self.fill_gaps_on_self
             else {}
         )
+
         # One near-table for everything (expanded radius so we can see dangle pairs)
         self._generate_near_table(
             in_dangles=dangles_fc,
@@ -1001,6 +1816,8 @@ class FillLineGaps:
             lines_copy_oid_to_orig=lines_copy_oid_to_orig,
             target_self_oid_to_orig=target_self_oid_to_orig,
         )
+
+        # ... rest unchanged (except passing topology further down)
 
         # DEBUG: inspect first candidates
         lines_key = self._dataset_key(self.lines_copy)
@@ -1038,6 +1855,7 @@ class FillLineGaps:
                 continue
 
             rows = sorted(candidates, key=lambda r: r["near_dist"])
+
             first_legal = self._select_first_legal_candidate(
                 candidates_sorted=rows,
                 illegal=illegal,
@@ -1046,8 +1864,9 @@ class FillLineGaps:
                 lines_fc_key=lines_key,
                 parent_id=int(parent_id),
                 base_tol=base_tol,
-                component_id=component_id,
+                topology=topology,
             )
+
             if first_legal is None:
                 no_legal += 1
                 continue
@@ -1256,7 +2075,7 @@ class FillLineGaps:
                 cand=a_to_b_line,
                 base_tol=float(base_tol),
                 dangle_candidate_tol=base_tol,
-                component_id=component_id,
+                topology=topology,
             ):
                 a_to_b_line = None
 
@@ -1269,7 +2088,7 @@ class FillLineGaps:
                 cand=b_to_a_line,
                 base_tol=float(base_tol),
                 dangle_candidate_tol=base_tol,
-                component_id=component_id,
+                topology=topology,
             ):
                 b_to_a_line = None
 
