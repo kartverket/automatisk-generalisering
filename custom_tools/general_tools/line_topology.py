@@ -1,5 +1,6 @@
 from __future__ import annotations
 from dataclasses import dataclass
+from enum import Enum
 
 from typing import Optional, Callable, Iterable
 
@@ -30,6 +31,11 @@ class TopologyModel:
     # DIRECT_CONNECTION only (required); allowed to be None otherwise
     direct_neighbors_by_parent: Optional[dict[int, set[int]]]
     direct_optionals_by_parent: Optional[dict[int, set[OptionalKey]]]
+
+
+class EditOp(str, Enum):
+    SNAP = "snap"
+    EXTEND = "extend"
 
 
 class _UnionFind:
@@ -816,18 +822,18 @@ class FillLineGaps:
                 out[int(oid)] = int(original_id)
         return out
 
-    def _resolve_edit_op(self, *, gap_source: str) -> logic_config.EditOp:
+    def _resolve_edit_op(self, *, gap_source: str) -> EditOp:
         method = self.edit_method
 
         if method == logic_config.EditMethod.FORCED_SNAP:
-            return logic_config.EditOp.SNAP
+            return EditOp.SNAP
         if method == logic_config.EditMethod.FORCED_EXTEND:
-            return logic_config.EditOp.EXTEND
+            return EditOp.EXTEND
 
         # AUTO
         if str(gap_source) == self.GAP_SOURCE_PAIR_DANGLE:
-            return logic_config.EditOp.SNAP
-        return logic_config.EditOp.EXTEND
+            return EditOp.SNAP
+        return EditOp.EXTEND
 
     def _same_network(
         self,
@@ -1817,26 +1823,6 @@ class FillLineGaps:
             target_self_oid_to_orig=target_self_oid_to_orig,
         )
 
-        # ... rest unchanged (except passing topology further down)
-
-        # DEBUG: inspect first candidates
-        lines_key = self._dataset_key(self.lines_copy)
-        zero = 0
-        line = 0
-        total = 0
-
-        for in_id, rows in list(grouped.items())[:2000]:  # sample
-            if not rows:
-                continue
-            r0 = min(rows, key=lambda r: r["near_dist"])
-            total += 1
-            if float(r0["near_dist"]) == 0.0:
-                zero += 1
-            if r0["near_fc_key"] == lines_key:
-                line += 1
-
-        arcpy.AddMessage(f"DEBUG sample={total} zero_dist={zero} line_key={line}")
-
         if not grouped:
             return {}
 
@@ -2382,9 +2368,9 @@ class FillLineGaps:
                 ):
                     continue
 
-                edit_op = str(info.get("edit_op", logic_config.EditOp.EXTEND.value))
+                edit_op = str(info.get("edit_op", EditOp.EXTEND.value))
 
-                if edit_op == logic_config.EditOp.SNAP.value:
+                if edit_op == EditOp.SNAP.value:
                     new_shape = self._snap_endpoint(
                         shape=shape,
                         dangle_x=float(info["dangle_x"]),
