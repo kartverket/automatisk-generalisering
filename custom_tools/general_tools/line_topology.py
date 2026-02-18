@@ -2125,14 +2125,7 @@ class FillLineGaps:
             if not entry.get("skip", False)
         }
 
-        # Defer phase (one-sided “closest to a dangle-pair object”)
-        if deferred_by_parent:
-            self._resolve_deferred_moves(
-                plan=plan,
-                deferred=deferred_by_parent,
-            )
-
-        return plan
+        return plan, deferred_by_parent
 
     def _make_plan_entry(
         self,
@@ -2186,43 +2179,47 @@ class FillLineGaps:
     # Deferred handling
     # ----------------------------
 
-    def _resolve_deferred_moves(
+    def _build_deferred_plan(
         self,
         *,
-        plan: dict[int, dict],
         deferred: dict[int, dict],
-    ) -> None:
-        """
-        Your requirement (simplified, but aligned):
-          - If A “wanted” B as closest but B didn’t want A, A waits.
-          - After other edits, run another near table that finds snap point on B’s line,
-            accepting a much larger tolerance.
-          - Then add A to the plan pointing to the forced target line geometry.
+        dangles_fc: str,
+    ) -> dict[int, dict]:
+        # Deferred dangles layer
+        dangles_oid = arcpy.Describe(dangles_fc).OIDFieldName
+        dangle_oids = sorted({int(v["dangle_oid"]) for v in deferred.values()})
+        if not dangle_oids:
+            return {}
 
-        Implementation:
-          - We force near_features = [lines_copy]
-          - We run GenerateNearTable from the deferred dangles to lines_copy with large radius
-          - For each deferred parent A, we select the row with NEAR_FID == forced_target_parent (B)
-        """
-        # Build a feature layer of deferred dangles (by OBJECTID)
-        dangles_oid = arcpy.Describe(self.filtered_dangles).OIDFieldName
-        ids = [str(int(v["dangle_oid"])) for v in deferred.values()]
-        if not ids:
-            return
-
-        where = f"{arcpy.AddFieldDelimiters(self.filtered_dangles, dangles_oid)} IN ({','.join(ids)})"
+        where_d = f"{arcpy.AddFieldDelimiters(dangles_fc, dangles_oid)} IN ({','.join(map(str, dangle_oids))})"
         deferred_lyr = "deferred_dangles_lyr"
-        arcpy.management.MakeFeatureLayer(self.filtered_dangles, deferred_lyr, where)
+        arcpy.management.MakeFeatureLayer(dangles_fc, deferred_lyr, where_d)
 
-        # Large tolerance: choose something intentionally generous but bounded.
-        # If you want this configurable later, put it in AdvancedConfig.
+        # Locked forced-target lines layer (UPDATED geometry because pass 1 already ran)
+        forced_parents = sorted(
+            {int(v["forced_target_parent"]) for v in deferred.values()}
+        )
+        where_l = f"{arcpy.AddFieldDelimiters(self.lines_copy, self.ORIGINAL_ID)} IN ({','.join(map(str, forced_parents))})"
+        forced_lines_lyr = "forced_lines_lyr"
+        arcpy.management.MakeFeatureLayer(self.lines_copy, forced_lines_lyr, where_l)
+
+        # Map near OID -> parent id (do NOT assume OID == ORIGINAL_ID)
+        lines_oid = arcpy.Describe(forced_lines_lyr).OIDFieldName
+        near_oid_to_parent: dict[int, int] = {}
+        with arcpy.da.SearchCursor(
+            forced_lines_lyr, [lines_oid, self.ORIGINAL_ID]
+        ) as cur:
+            for oid, pid in cur:
+                near_oid_to_parent[int(oid)] = int(pid)
+
+        # Large tolerance (keep your current heuristic)
         large_m = max(50, int(self.gap_tolerance_meters) * 10)
         large_tol = f"{int(large_m)} Meters"
 
         forced_table = self.wfm.build_file_path(file_name="deferred_forced_table")
         arcpy.analysis.GenerateNearTable(
             in_features=deferred_lyr,
-            near_features=[self.lines_copy],
+            near_features=[forced_lines_lyr],
             out_table=forced_table,
             search_radius=large_tol,
             location="LOCATION",
@@ -2232,10 +2229,8 @@ class FillLineGaps:
             method="PLANAR",
         )
 
-        lines_key = self._dataset_key(self.lines_copy)
-
-        # Map in_dangle_oid -> list of (near_fid, near_x, near_y, dist)
-        grouped: dict[int, list[tuple[int, float, float, float]]] = {}
+        # Best near point per (dangle_oid, forced_parent)
+        best_xy: dict[tuple[int, int], tuple[float, float, float]] = {}  # -> (x,y,dist)
         fields = [
             self.F_IN_FID,
             self.F_NEAR_FID,
@@ -2247,53 +2242,59 @@ class FillLineGaps:
             for in_fid, near_fid, near_dist, near_x, near_y in cur:
                 if near_fid is None or near_dist is None:
                     continue
-                grouped.setdefault(int(in_fid), []).append(
-                    (int(near_fid), float(near_x), float(near_y), float(near_dist))
-                )
+                d_oid = int(in_fid)
+                near_parent = near_oid_to_parent.get(int(near_fid))
+                if near_parent is None:
+                    continue
 
-        if not grouped:
-            return
+                dist = float(near_dist)
+                key = (d_oid, int(near_parent))
+                prev = best_xy.get(key)
+                if prev is None or dist < prev[2]:
+                    best_xy[key] = (float(near_x), float(near_y), dist)
 
-        # For each deferred parent, locate the row for its forced target parent line id
+        if not best_xy:
+            return {}
+
+        # Dangle XY (only build once)
+        dangle_xy = self._build_dangle_xy_lookup(dangles_fc)
+
+        lines_key = self._dataset_key(self.lines_copy)
+        out: dict[int, dict] = {}
+
         for a_parent, info in deferred.items():
             a_parent = int(a_parent)
-            if a_parent in plan:
-                continue  # already moved via other logic
-
-            dangle_oid_val = int(info["dangle_oid"])
+            d_oid = int(info["dangle_oid"])
             forced_parent = int(info["forced_target_parent"])
 
-            rows = grouped.get(dangle_oid_val, [])
-            chosen_row = None
-            for near_fid, near_x, near_y, dist in rows:
-                if int(near_fid) == int(forced_parent):
-                    chosen_row = (near_x, near_y)
-                    break
-
-            if chosen_row is None:
+            hit = best_xy.get((d_oid, forced_parent))
+            if hit is None:
                 continue
 
-            # Need dangle XY from current dangle feature (it might be unchanged, but safer)
-            xy_lookup = self._build_dangle_xy_lookup(self.filtered_dangles)
-            dangle_x, dangle_y = xy_lookup.get(dangle_oid_val, (None, None))
-            if dangle_x is None:
+            dxy = dangle_xy.get(d_oid)
+            if dxy is None:
                 continue
+            dangle_x, dangle_y = dxy
 
-            plan[a_parent] = {
+            near_x, near_y, _ = hit
+
+            out[a_parent] = {
                 "processed": False,
                 "skip": False,
                 "gap_source": self.GAP_SOURCE_DEFERRED,
                 "edit_op": str(
                     self._resolve_edit_op(gap_source=self.GAP_SOURCE_DEFERRED).value
                 ),
-                "dangle_oid": dangle_oid_val,
+                "dangle_oid": d_oid,
                 "dangle_x": float(dangle_x),
                 "dangle_y": float(dangle_y),
-                "near_x": float(chosen_row[0]),
-                "near_y": float(chosen_row[1]),
+                "near_x": float(near_x),
+                "near_y": float(near_y),
                 "chosen_near_fc_key": lines_key,
-                "chosen_near_fid": forced_parent,
+                "chosen_near_fid": forced_parent,  # parent-id space, consistent with your plan
             }
+
+        return out
 
     # ----------------------------
     # Change output + edits (unchanged from your current version except gap_source field)
@@ -2343,13 +2344,9 @@ class FillLineGaps:
         geom = arcpy.Polyline(arr, spatial_reference)
         return (geom, int(original_id), float(dist), str(gap_source))
 
-    def _apply_edits(self, plan: dict[int, dict]) -> None:
+    def _apply_plan(self, plan: dict[int, dict]) -> None:
         if not plan:
-            arcpy.management.CopyFeatures(self.lines_copy, self.output_lines)
             return
-
-        if self.line_changes_output is not None:
-            self._setup_line_changes_output()
 
         spatial_reference = arcpy.Describe(self.lines_copy).spatialReference
         change_rows: list[tuple] = []
@@ -2362,10 +2359,7 @@ class FillLineGaps:
                 info = plan.get(pid)
                 if not info:
                     continue
-                if (
-                    info.get("skip", False) is True
-                    or info.get("processed", False) is True
-                ):
+                if info.get("skip", False) or info.get("processed", False):
                     continue
 
                 edit_op = str(info.get("edit_op", EditOp.EXTEND.value))
@@ -2386,7 +2380,9 @@ class FillLineGaps:
                         near_x=float(info["near_x"]),
                         near_y=float(info["near_y"]),
                     )
+
                 cur.updateRow((original_id, new_shape))
+                info["processed"] = True  # optional
 
                 if self.line_changes_output is not None:
                     row = self._build_change_row(
@@ -2414,6 +2410,7 @@ class FillLineGaps:
                 for row in change_rows:
                     icur.insertRow(row)
 
+    def _write_output(self) -> None:
         arcpy.management.CopyFeatures(self.lines_copy, self.output_lines)
 
     # ----------------------------
@@ -2439,7 +2436,23 @@ class FillLineGaps:
         self._filter_true_dangles()
         dangles_for_plan = self.filtered_dangles
 
-        plan = self._build_plan(dangles_fc=dangles_for_plan, target_layers=targets)
-        self._apply_edits(plan)
+        if self.line_changes_output is not None:
+            if arcpy.Exists(self.line_changes_output):
+                arcpy.management.Delete(self.line_changes_output)
+            self._setup_line_changes_output()
+
+        plan, deferred = self._build_plan(
+            dangles_fc=dangles_for_plan, target_layers=targets
+        )
+
+        self._apply_plan(plan)
+
+        if deferred:
+            deferred_plan = self._build_deferred_plan(
+                deferred=deferred, dangles_fc=dangles_for_plan
+            )
+            self._apply_plan(deferred_plan)
+
+        self._write_output()
 
         self.wfm.delete_created_files()
