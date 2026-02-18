@@ -13,6 +13,7 @@ from tqdm import tqdm
 from composition_configs import core_config
 from constants.county_numbers import county_numbers
 from custom_tools.decorators.timing_decorator import timing_decorator
+from custom_tools.general_tools.append_features import Append_Features
 from env_setup import environment_setup
 from file_manager import WorkFileManager
 from file_manager.n10.file_manager_landforms import Landform_N10
@@ -149,7 +150,7 @@ def main():
 
     # 8) Iterate through each municipality and store points for each
     for i, municipality in enumerate(municipalities):
-        space = "   " if i < 10 else ("  " if i < 100 else " ")
+        space = "   " if i+1 < 10 else ("  " if i+1 < 100 else " ")
         if municipality in seen_municipalities:
             print(f"{i+1}{space}- {municipality} - SKIPS")
             continue
@@ -175,8 +176,9 @@ def main():
         set_tangential_rotation(files=work_files)
 
         # 8.3) Store the final ladder points in unique feature class
+        filename = municipality.replace(" ", "_").replace("-", "_")
         output = output_wfm.build_file_path(
-            file_name=f"Kurvetall_{municipality.replace(' ', '_')}", file_type="gdb"
+            file_name=f"Kurvetall_{filename}", file_type="gdb"
         )
 
         arcpy.management.CopyFeatures(
@@ -187,8 +189,17 @@ def main():
         work_wfm.delete_created_files()
 
         write_to_file(path=path, name=municipality)
+        seen_municipalities.add(municipality)
     
     delete_file(path=path)
+
+    # 9) Combine all the created feature classes into one
+    try:
+        combine_feature_classes()
+        #output_wfm.delete_created_files()
+        print("Feature classes merged and output files representing each individual county are deleted.")
+    except:
+        print("Was not able to merge feature classes into one single.")
 
     print("\nContour annotations for landforms at N10 scale created successfully!\n")
 
@@ -1034,6 +1045,29 @@ def set_tangential_rotation(files: dict) -> None:
             cur.updateRow([oid, pt, tangent])
 
 
+@timing_decorator
+def combine_feature_classes() -> None:
+    """
+    Combines all the created feature classes into one.
+    """
+    file = Landform_N10.hoydetall_output__n10_landforms.value
+    file = file.split("___")
+    folder, name = file[0], file[1]
+
+    folder_path = ""
+    for part in folder.split("\\"):
+        folder_path += f"{part}/"
+        if ".gdb" in part:
+            folder_path = folder_path[:-1]
+            break
+
+    file_structure = f"*{name}*"
+
+    af = Append_Features(workspace=folder_path, output_fc=Landform_N10.hoydetall_landsdekkende__n10_landforms.value)
+
+    af.append_features(file_name_structure=file_structure)
+
+
 # ========================
 # Helper functions
 # ========================
@@ -1242,4 +1276,5 @@ def get_accumulated_movement(accumulated: list) -> arcpy.PointGeometry:
 # ========================
 
 if __name__ == "__main__":
-    main()
+    #main()
+    combine_feature_classes()

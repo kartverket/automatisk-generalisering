@@ -45,3 +45,7 @@ class Landform_N10(Enum):
     hoydetall_output__n10_landforms = file_manager.generate_file_name_gdb(
         script_source_name=hoyde_file, description="hoydetall_output"
     )
+
+    hoydetall_landsdekkende__n10_landforms = file_manager.generate_file_name_gdb(
+        script_source_name=hoyde_file, description="hoydetall_landsdekkende"
+    )
