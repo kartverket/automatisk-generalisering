@@ -32,7 +32,7 @@ How to use this functionality properly
 ==========================================
 
 1) Run this code to get the modified point layer (feature class)
-2) Open the point feature class in ArcGIS Pro
+2) Open the point feature class in ArcGIS Pro in a map with reference scale 1:10.000
 3) Select the layer, go to 'Labeling' and turn it on
 4) In 'Label Class' choose 'Field' to be 'HØYDE'
 5) Select font, size and colour in 'Text Symbol'
@@ -51,9 +51,9 @@ How to use this functionality properly
     -> Run
 8) Choose the 'Feature Outline Mask (Cartography Tool)' function:
     - Choose input layer to be the annotation layer
-    - Set 'Margin' to x m (5 m)
-    - 'Mask Kind' must be 'Exact'
-    - 'Preserve small-sized features' must be turned on
+    - Set 'Margin' to 0.25 mm
+    - 'Mask Kind' must be 'Convex hull'
+    - 'Preserve small-sized features' must be turned on to fetch every annotation
     -> Run
 
 Then you have annotations with masks in ladders with correct orientation and spacing.
