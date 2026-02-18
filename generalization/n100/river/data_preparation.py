@@ -21,7 +21,7 @@ from custom_tools.general_tools import file_utilities
 
 MERGE_DIVIDED_ROADS_ALTERATIVE = False
 
-AREA_SELECTOR = "vassOmrNr IN ('016')"
+AREA_SELECTOR = "vassOmrNr IN ('198')"
 SCALE = "n100"
 
 
