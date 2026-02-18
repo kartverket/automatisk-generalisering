@@ -187,25 +187,6 @@ class DissolveInitKwargs:
     sql_expressions: Optional[List[str]] = None
 
 
-class EditMethod(str, Enum):
-    AUTO = "auto"
-    FORCED_SNAP = "forced_snap"
-    FORCED_EXTEND = "forced_extend"
-
-
-class ConnectivityScope(str, Enum):
-    NONE = "none"
-    DIRECT_CONNECTION = "direct"
-    INPUT_LINES = "input_lines"
-    ONE_DEGREE = "one_degree"
-    TRANSITIVE = "transitive"
-
-
-class LineConnectivityMode(str, Enum):
-    ENDPOINTS = "endpoints"
-    INTERSECT = "intersect"
-
-
 @dataclass(frozen=True)
 class ConnectRiverLinesKwargs:
     work_file_manager_config: core_config.WorkFileConfig
@@ -226,6 +207,25 @@ class RiverStrahlerKwargs:
     work_file_manager_config: core_config.WorkFileConfig
     output_processed_feature: io_types.GdbIOArg
     havflate_feature: io_types.GdbIOArg
+
+
+class EditMethod(str, Enum):
+    AUTO = "auto"
+    FORCED_SNAP = "forced_snap"
+    FORCED_EXTEND = "forced_extend"
+
+
+class ConnectivityScope(str, Enum):
+    NONE = "none"
+    DIRECT_CONNECTION = "direct"
+    INPUT_LINES = "input_lines"
+    ONE_DEGREE = "one_degree"
+    TRANSITIVE = "transitive"
+
+
+class LineConnectivityMode(str, Enum):
+    ENDPOINTS = "endpoints"
+    INTERSECT = "intersect"
 
 
 @dataclass(frozen=True)
