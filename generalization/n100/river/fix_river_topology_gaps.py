@@ -12,10 +12,6 @@ from custom_tools.general_tools.partition_iterator import PartitionIterator
 
 from composition_configs import core_config, logic_config
 
-# Importing environment settings
-import env_setup.global_config
-
-# Importing timing decorator
 from custom_tools.decorators.timing_decorator import timing_decorator
 
 

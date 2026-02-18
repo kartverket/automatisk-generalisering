@@ -193,11 +193,6 @@ class EditMethod(str, Enum):
     FORCED_EXTEND = "forced_extend"
 
 
-class EditOp(str, Enum):
-    SNAP = "snap"
-    EXTEND = "extend"
-
-
 class ConnectivityScope(str, Enum):
     NONE = "none"
     DIRECT_CONNECTION = "direct"
