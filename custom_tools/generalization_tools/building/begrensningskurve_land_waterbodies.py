@@ -1,6 +1,5 @@
 import arcpy
 
-
 # Importing custom modules
 from file_manager.n100.file_manager_buildings import Building_N100
 from env_setup import environment_setup

@@ -204,3 +204,9 @@ class FieldNames_str:
     medium: str = "medium"
     uttegning: str = "uttegning"
     er_kryssningspunkt: str = "er_kryssningspunkt"
+
+
+@dataclass
+class RiverObjecttypes_str:
+    generated_centerline: str = "generated_centerline"
+    elv_bekk: str = "ElvBekk"
