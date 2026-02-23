@@ -40,12 +40,7 @@ class ArealdekkeDissolver:
         fishnet = wfm.build_file_path(file_name="fishnet", file_type="gdb")
         arealdekke_identity = wfm.build_file_path(file_name="arealdekke_identity", file_type="gdb")
         arealdekke_gangogsykkel = wfm.build_file_path(file_name="arealdekke_gangogsykkel", file_type="gdb")
-        arealdekke_gangogsykkel_clipped = wfm.build_file_path(file_name="arealdekke_gangogsykkel_clipped", file_type="gdb")
-        arealdekke_gangogsykkel_erased = wfm.build_file_path(file_name="arealdekke_gangogsykkel_erased", file_type="gdb")
-        arealdekke_samferdsel_dissolved_buffer = wfm.build_file_path(file_name="arealdekke_samferdsel_dissolved_buffer", file_type="gdb")
-        arealdekke_samferdsel_dissolved_gangogsykkel = wfm.build_file_path(file_name="arealdekke_samferdsel_dissolved_gangogsykkel", file_type="gdb")
-        arealdekke_gangogsykkel_erased_dissolved = wfm.build_file_path(file_name="arealdekke_gangogsykkel_erased_dissolved", file_type="gdb")
-        arealdekke_gangogsykkel_clipped_dissolved = wfm.build_file_path(file_name="arealdekke_gangogsykkel_clipped_dissolved", file_type="gdb")
+
 
 
         return {
@@ -61,12 +56,6 @@ class ArealdekkeDissolver:
             "fishnet": fishnet,
             "arealdekke_identity": arealdekke_identity,
             "arealdekke_gangogsykkel": arealdekke_gangogsykkel,
-            "arealdekke_samferdsel_dissolved_buffer": arealdekke_samferdsel_dissolved_buffer,
-            "arealdekke_gangogsykkel_clipped": arealdekke_gangogsykkel_clipped,
-            "arealdekke_gangogsykkel_erased": arealdekke_gangogsykkel_erased,
-            "arealdekke_samferdsel_dissolved_gangogsykkel": arealdekke_samferdsel_dissolved_gangogsykkel,
-            "arealdekke_gangogsykkel_erased_dissolved": arealdekke_gangogsykkel_erased_dissolved,
-            "arealdekke_gangogsykkel_clipped_dissolved": arealdekke_gangogsykkel_clipped_dissolved,
         }
 
     @timing_decorator
@@ -162,39 +151,7 @@ class ArealdekkeDissolver:
             multi_part="SINGLE_PART"
         )
 
-    @timing_decorator
-    def gang_sykkel(self) -> None:
-        arcpy.analysis.Buffer(
-            in_features=self.files["arealdekke_samferdsel_dissolved"],
-            out_feature_class=self.files["arealdekke_samferdsel_dissolved_buffer"],
-            buffer_distance_or_field="5 Meters",
-        )
-        arcpy.analysis.Clip(
-            in_features=self.files["arealdekke_gangogsykkel"],
-            clip_features=self.files["arealdekke_samferdsel_dissolved_buffer"],
-            out_feature_class=self.files["arealdekke_gangogsykkel_clipped"]
-        )
-        arcpy.analysis.Erase(
-            in_features=self.files["arealdekke_gangogsykkel"],
-            erase_features=self.files["arealdekke_samferdsel_dissolved_buffer"],
-            out_feature_class=self.files["arealdekke_gangogsykkel_erased"]
-        )
-        arcpy.management.Dissolve(
-            in_features=self.files["arealdekke_gangogsykkel_clipped"],
-            out_feature_class=self.files["arealdekke_gangogsykkel_clipped_dissolved"],
-            dissolve_field=["arealdekke", self.index_col],
-            multi_part="SINGLE_PART"
-        )
-        arcpy.management.Append(
-            inputs=[self.files["arealdekke_gangogsykkel_clipped_dissolved"]],
-            target=self.files["arealdekke_samferdsel_dissolved"],
-        )
-        arcpy.management.Dissolve(
-            in_features=self.files["arealdekke_samferdsel_dissolved"],
-            out_feature_class=self.files["arealdekke_samferdsel_dissolved_gangogsykkel"],
-            dissolve_field=["arealdekke", self.index_col],
-            multi_part="SINGLE_PART"
-        )
+
  
         
 
@@ -236,15 +193,10 @@ class ArealdekkeDissolver:
 
     @timing_decorator
     def restore_data(self) -> None:
-        #DEtte er litt rart se om det er en bedre måte å gjøre det på (altså gang og sykkel som blir appendet) Du må også dissolve de små bitene i clipped som ikke blir kombinert med vei, sammen med gang og sykkelveg fra erased
-        arcpy.management.Append(
-            inputs=[self.files["arealdekke_gangogsykkel"]],
-            target=self.files["arealdekke_samferdsel"]
-        )
         dissolved_input_list = [
             [self.files["arealdekke_snaumark_dissolved"], self.files["arealdekke_snaumark"], "dgfcd_feature_alpha"],
             [self.files["arealdekke_ikke_snau_dissolved"], self.files["arealdekke_ikke_snau"], "arealdekke"],
-            [self.files["arealdekke_samferdsel_dissolved_gangogsykkel"], self.files["arealdekke_samferdsel"], "arealdekke"],
+            [self.files["arealdekke_samferdsel_dissolved"], self.files["arealdekke_samferdsel"], "arealdekke"],
         ]
 
         for dissolved_input_col in dissolved_input_list:
@@ -259,7 +211,6 @@ class ArealdekkeDissolver:
                 near_features=orig,
                 out_table=near_table,
                 closest="ALL",
-                closest_count=10,
                 search_radius="0 Meters",
             )
             print("near table done")
@@ -350,7 +301,7 @@ class ArealdekkeDissolver:
                     arcpy.management.DeleteField(dissolved, field)
 
         arcpy.management.Merge(
-            inputs=[self.files["arealdekke_snaumark_dissolved"], self.files["arealdekke_ikke_snau_dissolved"], self.files["arealdekke_samferdsel_dissolved_gangogsykkel"], self.files["arealdekke_gangogsykkel_erased"]],
+            inputs=[self.files["arealdekke_snaumark_dissolved"], self.files["arealdekke_ikke_snau_dissolved"], self.files["arealdekke_samferdsel_dissolved"], self.files["arealdekke_gangogsykkel"]],
             output=self.files["arealdekke_dissolved"]
         )
 
@@ -360,8 +311,115 @@ class ArealdekkeDissolver:
         environment_setup.main()
         self.fetch_divide_data()
         self.dissolve()
-        self.gang_sykkel()
         self.restore_data()
+
+class GangSykkelDissolver:
+    def __init__(self):
+        working_fc = Arealdekke_N10.dissolve_arealdekke.value
+        config = core_config.WorkFileConfig(root_file=working_fc)
+        self.wfm = WorkFileManager(config=config)
+        self.files = self.create_wfm_gdbs(self.wfm)
+        self.index_col = "FID_Fishnet_500m"
+        self.input_gangsykkel = ""
+
+
+    def create_wfm_gdbs(self, wfm: WorkFileManager) -> dict:
+        gangsykkel_input = wfm.build_file_path(file_name="gangsykkel_input", file_type="gdb")
+
+        return {
+            "gangsykkel_input": gangsykkel_input,
+        }
+    
+    def fetch_data(self):
+        arcpy.management.CopyFeatures(
+            in_features=self.input_gangsykkel,
+            out_feature_class=self.files["gangsykkel_input"]
+        )
+
+        samferdsel = "layer_samferdsel"
+        arcpy.management.MakeFeatureLayer(
+            in_features=self.files["gangsykkel_input"],
+            out_layer=samferdsel,
+            where_clause="arealdekke = 'Samferdsel' AND arealbruk_underklasse <> 'GangSykkelVeg'"
+        )
+
+    
+    @timing_decorator
+    def dissolve(self) -> None:
+        arcpy.analysis.Buffer(
+            in_features=self.files["arealdekke_samferdsel_dissolved"],
+            out_feature_class=self.files["arealdekke_samferdsel_dissolved_buffer"],
+            buffer_distance_or_field="5 Meters",
+        )
+        arcpy.analysis.Clip(
+            in_features=self.files["arealdekke_gangogsykkel"],
+            clip_features=self.files["arealdekke_samferdsel_dissolved_buffer"],
+            out_feature_class=self.files["arealdekke_gangogsykkel_clipped"]
+        )
+        arcpy.analysis.Erase(
+            in_features=self.files["arealdekke_gangogsykkel"],
+            erase_features=self.files["arealdekke_samferdsel_dissolved_buffer"],
+            out_feature_class=self.files["arealdekke_gangogsykkel_erased"]
+        )
+        arcpy.management.Dissolve(
+            in_features=self.files["arealdekke_gangogsykkel_clipped"],
+            out_feature_class=self.files["arealdekke_gangogsykkel_clipped_dissolved"],
+            dissolve_field=["arealdekke", self.index_col],
+            multi_part="SINGLE_PART"
+        )
+        arcpy.management.Append(
+            inputs=[self.files["arealdekke_gangogsykkel_clipped_dissolved"]],
+            target=self.files["arealdekke_samferdsel_dissolved"],
+        )
+        arcpy.management.Dissolve(
+            in_features=self.files["arealdekke_samferdsel_dissolved"],
+            out_feature_class=self.files["arealdekke_samferdsel_dissolved_gangogsykkel"],
+            dissolve_field=["arealdekke", self.index_col],
+            multi_part="SINGLE_PART"
+        )
+    
+
+class EliminateSmallPolygons:
+    def __init__(self):
+        working_fc = Arealdekke_N10.dissolve_arealdekke.value
+        config = core_config.WorkFileConfig(root_file=working_fc)
+        self.wfm = WorkFileManager(config=config)
+        self.files = self.create_wfm_gdbs(self.wfm)
+        self.layer = "arealdekke_layer"
+
+    def create_wfm_gdbs(self, wfm: WorkFileManager) -> dict:
+        arealdekke_input = wfm.build_file_path(file_name="arealdekke_input", file_type="gdb")
+        arealdekke_eliminated = wfm.build_file_path(file_name="arealdekke_eliminated", file_type="gdb")
+
+        return {
+            "arealdekke_input": arealdekke_input,
+            "arealdekke_eliminated": arealdekke_eliminated,
+        }
+    
+    def add_area_field(self):
+        arcpy.management.AddField(
+            in_table=self.files["arealdekke_input"],
+            field_name="area",
+            field_type="DOUBLE"
+        )
+        arcpy.management.CalculateField(
+            in_table=self.files["arealdekke_input"],
+            field="AREA",
+            expression="!shape.area!",
+            expression_type="PYTHON3"
+        )
+    
+    def eliminate(self):
+        arcpy.management.MakeFeatureLayer(
+            in_features=self.files["arealdekke_input"], 
+            out_layer=self.layer,
+            where_clause="area <"
+            )
+        arcpy.management.Eliminate(
+            in_features=self.layer,
+            out_feature_class=self.files["arealdekke_eliminated"],
+            selection = "AREA",
+        )
 
 
 if __name__ == "__main__":
