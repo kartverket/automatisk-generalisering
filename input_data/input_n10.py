@@ -50,6 +50,7 @@ annotations = [
     Hoydetall,
 ]
 
+
 # Looping through all paths to check if they are formatted correctly
 def check_paths():
     for dataset in n10_datasets:

@@ -150,7 +150,7 @@ def main():
 
     # 8) Iterate through each municipality and store points for each
     for i, municipality in enumerate(municipalities):
-        space = "   " if i+1 < 10 else ("  " if i+1 < 100 else " ")
+        space = "   " if i + 1 < 10 else ("  " if i + 1 < 100 else " ")
         if municipality in seen_municipalities:
             print(f"{i+1}{space}- {municipality} - SKIPS")
             continue
@@ -190,14 +190,16 @@ def main():
 
         write_to_file(path=path, name=municipality)
         seen_municipalities.add(municipality)
-    
+
     delete_file(path=path)
 
     # 9) Combine all the created feature classes into one
     try:
         combine_feature_classes()
-        #output_wfm.delete_created_files()
-        print("Feature classes merged and output files representing each individual county are deleted.")
+        # output_wfm.delete_created_files()
+        print(
+            "Feature classes merged and output files representing each individual county are deleted."
+        )
     except:
         print("Was not able to merge feature classes into one single.")
 
@@ -1063,7 +1065,10 @@ def combine_feature_classes() -> None:
 
     file_structure = f"*{name}*"
 
-    af = Append_Features(workspace=folder_path, output_fc=Landform_N10.hoydetall_landsdekkende__n10_landforms.value)
+    af = Append_Features(
+        workspace=folder_path,
+        output_fc=Landform_N10.hoydetall_landsdekkende__n10_landforms.value,
+    )
 
     af.append_features(file_name_structure=file_structure)
 
@@ -1276,5 +1281,5 @@ def get_accumulated_movement(accumulated: list) -> arcpy.PointGeometry:
 # ========================
 
 if __name__ == "__main__":
-    #main()
+    # main()
     combine_feature_classes()
