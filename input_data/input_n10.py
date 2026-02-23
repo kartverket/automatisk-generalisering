@@ -2,7 +2,6 @@
 from config import n10_path
 import arcpy
 
-
 # Defining universal paths for n10 regardless of local path env_setup
 Railways = rf"{n10_path}\fkb_bane_senterlinje"
 N50HoydePunkt = rf"{n10_path}\N50HoydePunkt"
