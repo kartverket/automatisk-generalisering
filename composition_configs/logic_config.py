@@ -185,3 +185,25 @@ class DissolveInitKwargs:
 
     dissolve_fields: Optional[List[str]] = None
     sql_expressions: Optional[List[str]] = None
+
+
+@dataclass(frozen=True)
+class ConnectRiverLinesKwargs:
+    work_file_manager_config: core_config.WorkFileConfig
+    output_processed_feature: io_types.GdbIOArg
+    basin: str
+
+
+@dataclass(frozen=True)
+class RemoveCyclesKwargs:
+    input_line_feature: io_types.GdbIOArg
+    work_file_manager_config: core_config.WorkFileConfig
+    output_processed_feature: io_types.GdbIOArg
+
+
+@dataclass(frozen=True)
+class RiverStrahlerKwargs:
+    input_line_feature: io_types.GdbIOArg
+    work_file_manager_config: core_config.WorkFileConfig
+    output_processed_feature: io_types.GdbIOArg
+    havflate_feature: io_types.GdbIOArg

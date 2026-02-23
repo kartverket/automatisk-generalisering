@@ -1,7 +1,6 @@
 import pyperclip
 import re
 
-
 DRIVE_PATTERN = r"[a-zA-Z]:\\"
 FILENAME_PATTERN = r'[^\\]+?\.\w+"?'
 PATH_MIDDLE_PLACEHOLDER = r"path\\"

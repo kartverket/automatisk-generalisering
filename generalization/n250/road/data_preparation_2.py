@@ -43,7 +43,6 @@ from generalization.n250.road.vegsperring import remove_roadblock
 from generalization.n250.road.ramps_point import ramp_points
 from generalization.n250.road.ramps_point import MovePointsToCrossings
 
-
 MERGE_DIVIDED_ROADS_ALTERATIVE = False
 
 
