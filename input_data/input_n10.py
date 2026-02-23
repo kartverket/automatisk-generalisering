@@ -9,7 +9,10 @@ FKBforsenkningspunkt = rf"{n10_path}\FKBforsenkningspunkt"
 FKBterrengpunkt = rf"{n10_path}\FKBterrengpunkt"
 ArealdekkeFlate = rf"{n10_path}\ArealdekkeFlate"
 ArealdekkeFlate_bebygd = rf"{n10_path}\ArealdekkeFlate_bebygd"
+Arealdekke_Oslo = rf"{n10_path}\Arealdekke_Oslo"
+Arealdekke_Norge = rf"{n10_path}\Arealdekke_Norge"
 AdminFlate = rf"{n10_path}\AdminFlate"
+Fishnet_500m = rf"{n10_path}\Fishnet_500m"
 
 # Defining datasets to test paths are set up correctly later
 n10_datasets = [
@@ -19,7 +22,10 @@ n10_datasets = [
     FKBterrengpunkt,
     ArealdekkeFlate,
     ArealdekkeFlate_bebygd,
+    Arealdekke_Oslo,
+    Arealdekke_Norge,
     AdminFlate,
+    Fishnet_500m,
 ]
 
 
