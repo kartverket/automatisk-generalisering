@@ -264,7 +264,7 @@ class ArealdekkeDissolver:
                 "arealdekke",
             ],
             [
-                self.files["arealdekke_samferdsel_dissolved_gangogsykkel"],
+                self.files["arealdekke_samferdsel_dissolved"],
                 self.files["arealdekke_samferdsel"],
                 "arealdekke",
             ],
@@ -585,6 +585,6 @@ class EliminateSmallPolygons:
 
 
 if __name__ == "__main__":
-    normal_call()
+    #normal_call()
     partition_call()
 
