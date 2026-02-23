@@ -2,6 +2,7 @@
 from config import n10_path
 import arcpy
 
+
 # Defining universal paths for n10 regardless of local path env_setup
 Railways = rf"{n10_path}\fkb_bane_senterlinje"
 N50HoydePunkt = rf"{n10_path}\N50HoydePunkt"
@@ -20,6 +21,7 @@ Veglenke = rf"{n10_path}\N10_Veglenke_2026Anno10000"
 Veglenke_overbygg = rf"{n10_path}\Veglenke_Overbygg_2026Anno10000"
 Veglenke_tunnel = rf"{n10_path}\Veglenke_Tunnel_2026Anno10000"
 Hoydetall = rf"{n10_path}\N20_Hoydetall_10000"
+
 
 # Defining datasets to test paths are set up correctly later
 n10_datasets = [
