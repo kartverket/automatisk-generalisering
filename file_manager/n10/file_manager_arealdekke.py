@@ -18,10 +18,21 @@ class Arealdekke_N10(Enum):
     #                              dissolve
     # ========================================
 
+    dissolve_arealdekke_root = file_manager.generate_file_name_gdb(
+        script_source_name=dissolve_file, description="dissolve_arealdekke_root"
+    )
+    dissolve_arealdekke_partition_root = file_manager.generate_file_name_gdb(
+        script_source_name=dissolve_file,
+        description="dissolve_arealdekke_partition_root",
+    )
+
+    areal_dissolve_documentation = file_manager.generate_general_subdirectory(
+        description="areal_dissolve_documentation",
+    )
+
     dissolve_arealdekke = file_manager.generate_file_name_gdb(
         script_source_name=dissolve_file, description="arealdekke"
     )
     dissolve_arealdekke_docu = file_manager.generate_file_name_gdb(
         script_source_name=dissolve_file, description="arealdekke_docu"
     )
-
