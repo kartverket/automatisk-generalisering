@@ -4,6 +4,14 @@ custom\_tools.general\_tools package
 Submodules
 ----------
 
+custom\_tools.general\_tools.append\_features module
+----------------------------------------------------
+
+.. automodule:: custom_tools.general_tools.append_features
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
 custom\_tools.general\_tools.custom\_arcpy module
 -------------------------------------------------
 
