@@ -10,6 +10,17 @@ FKBterrengpunkt = rf"{n10_path}\FKBterrengpunkt"
 ArealdekkeFlate = rf"{n10_path}\ArealdekkeFlate"
 ArealdekkeFlate_bebygd = rf"{n10_path}\ArealdekkeFlate_bebygd"
 AdminFlate = rf"{n10_path}\AdminFlate"
+Buildings = rf"{n10_path}\bygning_omrade"
+Contours = rf"{n10_path}\n10_hoydekurver_5m"
+
+# Annotations
+Stedsnavn = rf"{n10_path}\N10_Stedsnavn_2026_Anno10000"
+Stedsnavn_linje = rf"{n10_path}\Stedsnavn_linje_2026Anno10000"
+Veglenke = rf"{n10_path}\N10_Veglenke_2026Anno10000"
+Veglenke_overbygg = rf"{n10_path}\Veglenke_Overbygg_2026Anno10000"
+Veglenke_tunnel = rf"{n10_path}\Veglenke_Tunnel_2026Anno10000"
+Hoydetall = rf"{n10_path}\N20_Hoydetall_10000"
+
 
 # Defining datasets to test paths are set up correctly later
 n10_datasets = [
@@ -20,6 +31,24 @@ n10_datasets = [
     ArealdekkeFlate,
     ArealdekkeFlate_bebygd,
     AdminFlate,
+    Buildings,
+    Contours,
+    Stedsnavn,
+    Stedsnavn_linje,
+    Veglenke,
+    Veglenke_overbygg,
+    Veglenke_tunnel,
+    Hoydetall,
+]
+
+# Annotations
+annotations = [
+    Stedsnavn,
+    Stedsnavn_linje,
+    Veglenke,
+    Veglenke_overbygg,
+    Veglenke_tunnel,
+    Hoydetall,
 ]
 
 
