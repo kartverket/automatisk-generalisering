@@ -12,7 +12,7 @@ from custom_tools.decorators.timing_decorator import timing_decorator
 from env_setup import environment_setup
 from file_manager import WorkFileManager
 from file_manager.n10.file_manager_facilities import Facility_N10
-from input_data import input_n10
+from input_data import input_n10, input_n50
 
 # ========================
 # Program
@@ -28,7 +28,7 @@ def main():
     print("\nUpdates railroad attributes in FKB...\n")
 
     # Sets up work file manager and creates temporarily files
-    working_fc = Facility_N10.railroad__n10_facility.value
+    working_fc = Facility_N10.railway__n10_facility.value
     config = core_config.WorkFileConfig(root_file=working_fc)
     wfm = WorkFileManager(config=config)
 
@@ -48,7 +48,7 @@ def main():
     add_railroad_under_construction(files=files)
 
     # Clean up of files
-    output = Facility_N10.railroad_output__n10_facility.value
+    output = Facility_N10.railway_output__n10_facility.value
     arcpy.management.CopyFeatures(
         in_features=files["new_FKB"], out_feature_class=output
     )
@@ -136,7 +136,7 @@ def fetch_data(files: dict) -> None:
     """
     railroad_lyr = "railroad_lyr"
     arcpy.management.MakeFeatureLayer(
-        in_features=input_n10.Railroad, out_layer=railroad_lyr
+        in_features=input_n50.Bane, out_layer=railroad_lyr
     )
 
     # Fetch N50 railroad
@@ -158,6 +158,10 @@ def fetch_data(files: dict) -> None:
     )
 
     # Fetch FKB railroad
+    arcpy.management.MakeFeatureLayer(
+        in_features=Facility_N10.output_railway_n10.value, out_layer=railroad_lyr
+    )
+
     arcpy.management.SelectLayerByAttribute(
         in_layer_or_view=railroad_lyr,
         selection_type="NEW_SELECTION",
@@ -475,7 +479,15 @@ def update_railroad_attributes(files: dict) -> None:
     # 1) Copy the FKB data to the output
     arcpy.management.CopyFeatures(fkb, out_fc)
 
-    # 2) Choose only the FKB lines that should be updated
+    # 2) Add the "jernbanestatus" field to the output and set default value to "I"
+    arcpy.management.AddField(
+        in_table=out_fc,
+        field_name="jernbanestatus",
+        field_type="TEXT",
+        field_length=10,
+    )
+
+    # 3) Choose only the FKB lines that should be updated
     out_lyr = "out_lyr"
     arcpy.management.MakeFeatureLayer(out_fc, out_lyr)
 
@@ -486,7 +498,7 @@ def update_railroad_attributes(files: dict) -> None:
         selection_type="NEW_SELECTION",
     )
 
-    # 3) Run Near to fetch closest N50 line
+    # 4) Run Near to fetch closest N50 line
     arcpy.analysis.Near(
         in_features=out_lyr,
         near_features=n50,
@@ -496,13 +508,13 @@ def update_railroad_attributes(files: dict) -> None:
         method="PLANAR",
     )
 
-    # 4) Create a look-up dict: N50_OID -> (status, type)
+    # 5) Create a look-up dict: N50_OID -> (status, type)
     n50_lookup = {}
     with arcpy.da.SearchCursor(n50, ["OID@", "jernbanestatus", "jernbanetype"]) as cur:
         for oid, status, jtype in cur:
             n50_lookup[oid] = (status, jtype)
 
-    # 5) Update FKB based on NEAR_FID
+    # 6) Update FKB based on NEAR_FID
     with arcpy.da.UpdateCursor(
         out_fc, ["OID@", "NEAR_FID", "jernbanestatus", "jernbanetype"]
     ) as cur:
@@ -517,6 +529,10 @@ def update_railroad_attributes(files: dict) -> None:
                 # Rule 2: Disused railroad
                 elif n50_status == "N":
                     cur.updateRow([oid, near_oid, "N", fkb_type])
+                else:
+                    cur.updateRow([oid, near_oid, "I", fkb_type])
+            else:
+                cur.updateRow([oid, near_oid, "I", fkb_type])
 
 
 @timing_decorator
