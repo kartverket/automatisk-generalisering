@@ -483,9 +483,7 @@ def iterative_side_lines(
 
                 if candidates:
                     # choose the candidate with the smallest distance (closest among those >= step)
-                    chosen_oid, chosen_geom, _ = min(
-                        candidates, key=lambda t: t[2]
-                    )
+                    chosen_oid, chosen_geom, _ = min(candidates, key=lambda t: t[2])
                     # if chosen_geom.length > 1.0 and chosen_oid not in selected_oids:
                     selected_geoms.append(chosen_geom)
                     selected_oids.add(chosen_oid)
@@ -857,9 +855,7 @@ def connect_lines_to_buffer_and_buffer_centroids(clipped_fc: str, buffer_fc: str
     return buffer_centroids
 
 
-def create_whole_lines(
-    clipped_fc: str, centroid_fc: str, buffer_fc: str
-):
+def create_whole_lines(clipped_fc: str, centroid_fc: str, buffer_fc: str):
     """
     For each buffer group, connect lines into continuous paths starting from the line closest to the centroid.
 
@@ -1539,7 +1535,7 @@ def main():
 
 @timing_decorator
 def setup_workflow():
-    source_file = input_fkb.fkb_bane_senterlinje # input_n10.Railways
+    source_file = input_fkb.fkb_bane_senterlinje  # input_n10.Railways
     working_fc = Facility_N10.input_railway_n10.value
     work_config = core_config.WorkFileConfig(root_file=working_fc)
     wfm = WorkFileManager(config=work_config)
