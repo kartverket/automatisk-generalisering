@@ -12,6 +12,22 @@ generalization.n10.facilities.ledning module
    :show-inheritance:
    :undoc-members:
 
+generalization.n10.facilities.railways\_attributes module
+---------------------------------------------------------
+
+.. automodule:: generalization.n10.facilities.railways_attributes
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+generalization.n10.facilities.railways\_generalization module
+-------------------------------------------------------------
+
+.. automodule:: generalization.n10.facilities.railways_generalization
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
 Module contents
 ---------------
 
