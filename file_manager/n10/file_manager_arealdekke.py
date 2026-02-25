@@ -36,3 +36,14 @@ class Arealdekke_N10(Enum):
     dissolve_arealdekke_docu = file_manager.generate_file_name_gdb(
         script_source_name=dissolve_file, description="arealdekke_docu"
     )
+
+    dissolve_gangsykkel = file_manager.generate_file_name_gdb(
+        script_source_name=dissolve_file, description="gangsykkel"
+    )
+    dissolve_gangsykkel2 = file_manager.generate_file_name_gdb(
+        script_source_name=dissolve_file, description="gangsykkel2"
+    )
+    dissolve_gangsykkel3 = file_manager.generate_file_name_gdb(
+            script_source_name=dissolve_file, description="gangsykkel3"
+    )
+
