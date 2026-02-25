@@ -194,6 +194,12 @@ class ArealDekkeDissolverInitKwargs:
     index_column_name: str
     work_file_manager_config: core_config.WorkFileConfig
 
+@dataclass(frozen=True)
+class GangSykkelDissolverInitKwargs:
+    input_feature: str
+    output_feature: str
+    index_column_name: str
+    work_file_manager_config: core_config.WorkFileConfig
 
 @dataclass(frozen=True)
 class ConnectRiverLinesKwargs:
