@@ -3,13 +3,15 @@ from config import n10_innsjoer_path
 import arcpy
 
 # Defining universal paths for n10 regardless of local path env_setup
-hoyde_bearbeidet = r"{n10_path}\fkb_bane_senterlinje"
+hoyde_bearbeidet = r"{n10_innsjoer_path}\innsjoer_N10_bearbeidet"
+annotasjoner_bearbeidet=r"{n10_innsjoer_path}\FeatureOutlin"
 
 
 
 # Defining datasets to test paths are set up correctly later
 n10_datasets = [
-    hoyde_bearbeidet
+    hoyde_bearbeidet,
+    annotasjoner_bearbeidet
 ]
 
 # Looping through all paths to check if they are formatted correctly
