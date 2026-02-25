@@ -11,6 +11,7 @@ file_manager = BaseFileManager(scale=scale, object_name=object_name)
 
 # All scripts
 ledning_file = "ledning"
+railway_file = "railway"
 
 
 class Facility_N10(Enum):
@@ -28,4 +29,23 @@ class Facility_N10(Enum):
 
     mast_output__n10_facility = file_manager.generate_file_name_gdb(
         script_source_name=ledning_file, description="mast_output"
+    )
+
+    # ========================================
+    #                                     BANE
+    # ========================================
+
+    input_railway_n10 = file_manager.generate_file_name_gdb(
+        script_source_name=railway_file, description="fkb"
+    )
+    output_railway_n10 = file_manager.generate_file_name_gdb(
+        script_source_name=railway_file, description="fkb_generalisert"
+    )
+
+    railway__n10_facility = file_manager.generate_file_name_gdb(
+        script_source_name=railway_file, description="railway"
+    )
+
+    railway_output__n10_facility = file_manager.generate_file_name_gdb(
+        script_source_name=railway_file, description="railway_output"
     )
