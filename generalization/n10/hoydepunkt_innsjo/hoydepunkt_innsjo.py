@@ -4,7 +4,7 @@ from composition_configs import core_config
 from custom_tools.decorators.timing_decorator import timing_decorator
 from env_setup import environment_setup
 from file_manager import WorkFileManager
-from file_manager.n10.file_manager_facilities import Facility_N10
+from file_manager.n10.file_manager_landuse import Landuse_N10
 from input_data import input_innsjohoyde, input_n100
 
 arcpy.env.overwriteOutput = True
@@ -21,7 +21,7 @@ class prog_config(Enum):
     #Buffer to mark invalid distance to edges of regulated lakes and lakes larger than 5000m^2
     innsjo_above_5000_line_buffer_distance='40 Meters'
 
-    innsjo_above_5000_full_buffer=int(innsjo_above_5000_line_buffer_distance.split()[0])+1
+    innsjo_above_5000_full_buffer='{int(innsjo_above_5000_line_buffer_distance.split()[0])+1} Meters'
 
     snapping_distance='40 Meters'
 
@@ -38,7 +38,7 @@ def main():
     environment_setup.main()
 
     # Sets up work file manager and creates temporarily files
-    working_fc = Facility_N10.ledning__n10_facility.value
+    working_fc = Landuse_N10.hoydeintervall__n10_landuse.value
     config = core_config.WorkFileConfig(root_file=working_fc)
     wfm = WorkFileManager(config=config)
 
@@ -117,7 +117,7 @@ def create_wfm_gdbs(wfm: WorkFileManager) -> dict:
     annotations_pre_buffed=wfm.build_file_path(file_name="annotations_pre_buffed", file_type="gdb")
 
     #Invalid areas
-    innsjo_below_5000_buffed=annotations_pre_buffed=wfm.build_file_path(file_name="innsjo_below_5000_buffed", file_type="gdb")
+    innsjo_below_5000_buffed=wfm.build_file_path(file_name="innsjo_below_5000_buffed", file_type="gdb")
     
     #Valid areas large
     areas_above_5000_line=wfm.build_file_path(file_name="areas_above_5000_line", file_type="gdb")
@@ -194,7 +194,6 @@ def fetch_data(files: dict, area: list=None) -> None:
     Args:
         files (dict): Dictionary with all the working files
     """
-    print(1)
     clip_lyr=None
     
     if area:
@@ -202,39 +201,28 @@ def fetch_data(files: dict, area: list=None) -> None:
         arcpy.management.MakeFeatureLayer(in_features=input_n100.AdminFlate, out_layer=clip_lyr)
         vals=",".join(f"{v}" for v in area)
         arcpy.management.SelectLayerByAttribute(clip_lyr, "NEW_SELECTION", f"KOMMUNENUMMER IN ({vals})")
-    print(2)
     #Lakes
     innsjo_bearbeidet_lyr="innsjo_bearbeidet_lyr"
     arcpy.management.MakeFeatureLayer(in_features=input_innsjohoyde.hoyde_bearbeidet, out_layer=innsjo_bearbeidet_lyr)
-    print(3)
     if area:arcpy.management.SelectLayerByLocation(in_layer=innsjo_bearbeidet_lyr, overlap_type='HAVE_THEIR_CENTER_IN', select_features=clip_lyr, search_distance=None, selection_type='NEW_SELECTION')
     
     selection='ADD_TO_SELECTION' if area else 'NEW_SELECTION'
     above_5000_sql="SHAPE_AREA>=5000 OR arealdekke='Ferskvann_innsjo_tjern_regulert'"
 
     #Lakes above 5000m^2 (needs labels)
-    print(5)
     arcpy.management.SelectLayerByAttribute(in_layer_or_view=innsjo_bearbeidet_lyr, selection_type=selection, where_clause=above_5000_sql, invert_where_clause='NON_INVERT')
-    print(6)
     arcpy.management.CopyFeatures(in_features=innsjo_bearbeidet_lyr, out_feature_class=files[fc.innsjo_above_5000])
-    print(7)
     arcpy.management.SelectLayerByAttribute(in_layer_or_view=innsjo_bearbeidet_lyr, selection_type='CLEAR_SELECTION')
-    print(8)
     #arcpy.management.RepairGeometry(in_features=files[fc.innsjo_above_5000], delete_null='DELETE_NULL')
 
     #Lakes below 5000m^2 (no labels)
-    print(9)
     arcpy.management.SelectLayerByAttribute(in_layer_or_view=innsjo_bearbeidet_lyr, selection_type=selection, where_clause=above_5000_sql, invert_where_clause='INVERT')
-    print(10)
     arcpy.management.CopyFeatures(in_features=innsjo_bearbeidet_lyr, out_feature_class=files[fc.innsjo_below_5000])
 
     #Annotations
     annotasjoner_bearbeidet_lyr="annotasjoner_bearbeidet_lyr"
-    print(12)
     arcpy.management.MakeFeatureLayer(in_features=input_innsjohoyde.annotasjoner_bearbeidet, out_layer=annotasjoner_bearbeidet_lyr)
-    print(13)
     if area: arcpy.management.SelectLayerByLocation(in_layer=annotasjoner_bearbeidet_lyr, overlap_type='HAVE_THEIR_CENTER_IN', select_features=clip_lyr, search_distance=None, selection_type='NEW_SELECTION')
-    print(14)
     arcpy.management.CopyFeatures(in_features=annotasjoner_bearbeidet_lyr, out_feature_class=files[fc.annotations_pre_buffed])
 
 # ========================
@@ -253,10 +241,10 @@ def label_text_creation(files:dict)->None:
     field_type='TEXT'
 
     arcpy.management.AddField(in_table=files[fc.innsjo_above_5000], field_name=field_name, field_type=field_type)
-    with arcpy.da.UpdateCursor(in_table=files[fc.innsjo_above_5000], field_names=["hoyde", "LRV", field_type]) as update_cursor:
+    with arcpy.da.UpdateCursor(in_table=files[fc.innsjo_above_5000], field_names=["hoyde", "LRV", field_name]) as update_cursor:
         for hoyde, lrv, label in update_cursor:
             if hoyde is not None and float(hoyde) > 0:
-                if float(lrv)!=None and float(lrv)>0:
+                if lrv is not None and float(lrv) > 0:
                     label=f"{hoyde}-{lrv}"
                 else:
                     label=f"{hoyde}"    
@@ -274,12 +262,20 @@ def invalid_areas(files:dict)->None:
     innsjo_below_5000_layer="innsjo_below_5000_layer"
     arcpy.management.MakeFeatureLayer(in_features=files[fc.innsjo_below_5000], out_layer=innsjo_below_5000_layer)
 
+    arcpy.analysis.PairwiseBuffer(
+        in_features=innsjo_below_5000_layer, 
+        out_feature_class=files[fc.innsjo_below_5000_buffed], 
+        buffer_distance_or_field=prog_config.buffer_innsjo_below_5000_distance.value,
+        #line_side='FULL'
+    )
+    '''
     arcpy.analysis.Buffer(
         in_features=innsjo_below_5000_layer, 
         out_feature_class=files[fc.innsjo_below_5000_buffed], 
-        buffer_distance_or_field=prog_config.buffer_innsjo_below_5000_distance,
+        buffer_distance_or_field=prog_config.buffer_innsjo_below_5000_distance.value,
         line_side='FULL'
         )
+        '''
 
 @timing_decorator
 def valid_areas_large_lakes(files:dict)->None:
@@ -298,7 +294,7 @@ def valid_areas_large_lakes(files:dict)->None:
     arcpy.analysis.Buffer(
         in_features=areas_above_5000_line_lyr, 
         out_feature_class=files[fc.areas_above_5000_line_buffer],
-        buffer_distance_or_field=prog_config.innsjo_above_5000_line_buffer_distance,
+        buffer_distance_or_field=prog_config.innsjo_above_5000_line_buffer_distance.value,
         line_side='FULL'
         )
     
@@ -308,7 +304,7 @@ def valid_areas_large_lakes(files:dict)->None:
     arcpy.analysis.Buffer(
         in_features=innsjo_above_5000,
         out_feature_class=files[fc.areas_above_5000_full_buffer],
-        buffer_distance_or_field=prog_config.innsjo_above_5000_line_buffer_distance,
+        buffer_distance_or_field=prog_config.innsjo_above_5000_line_buffer_distance.value,
         line_side='FULL'
         )
 
@@ -325,7 +321,7 @@ def valid_areas_large_lakes(files:dict)->None:
     )
 
     arcpy.analysis.Erase(
-        in_features=files[fc.just_areas_within_below_5000],
+        in_features=files[fc.just_areas_within_above_5000],
         erase_features=files[fc.annotations_pre_buffed],
         out_feature_class=files[fc.valid_label_positions_large]
     )
@@ -458,7 +454,7 @@ def snap_points(files:dict)->None:
     arcpy.edit.Snap(
         in_features=large_lakes_lyr,
         snap_environment=[
-            [valid_area_large_lakes_lyr, "EDGE", prog_config.snapping_distance]
+            [valid_area_large_lakes_lyr, "EDGE", prog_config.snapping_distance.value]
         ]
     )
     arcpy.management.SelectLayerByAttribute(in_layer_or_view=large_lakes_lyr,selection_type="CLEAR_SELECTION")
@@ -472,7 +468,7 @@ def snap_points(files:dict)->None:
     arcpy.edit.Snap(
         in_features=small_lakes_lyr,
         snap_environment=[
-            [valid_area_small_lakes_lyr, "EDGE", prog_config.snapping_distance]
+            [valid_area_small_lakes_lyr, "EDGE", prog_config.snapping_distance.value]
         ]
     )
 

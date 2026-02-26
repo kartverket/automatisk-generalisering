@@ -5,7 +5,7 @@ from file_manager.base_file_manager import BaseFileManager
 
 # Initialize BaseFileManager
 scale = global_config.scale_n10
-object_name = global_config.object_hoyde
+object_name = global_config.object_arealdekke_flate
 file_manager = BaseFileManager(scale=scale, object_name=object_name)
 
 
