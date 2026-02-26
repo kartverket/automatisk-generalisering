@@ -3,8 +3,8 @@ from config import n10_innsjoer_path
 import arcpy
 
 # Defining universal paths for n10 regardless of local path env_setup
-hoyde_bearbeidet = r"{n10_innsjoer_path}\innsjoer_N10_bearbeidet"
-annotasjoner_bearbeidet=r"{n10_innsjoer_path}\FeatureOutlin"
+hoyde_bearbeidet = rf"{n10_innsjoer_path}\innsjoer_N10_bearbeidet"
+annotasjoner_bearbeidet=rf"{n10_innsjoer_path}\N10_Stedsnavn__FeatureOutlin"
 
 
 

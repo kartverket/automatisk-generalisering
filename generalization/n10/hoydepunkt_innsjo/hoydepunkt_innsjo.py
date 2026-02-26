@@ -13,9 +13,7 @@ arcpy.env.overwriteOutput = True
 # Configurations
 # ========================
 
-class prog_config(Enum):
-    #County ids
-    area=[] 
+class prog_config(Enum): 
 
     #Buffer for lakes below 5000 m^2. 'Number Unit'. 40 Meters is the minimum distance for label with 4 units to not intersect lake edge
     buffer_innsjo_below_5000_distance='40 Meters'
@@ -23,7 +21,7 @@ class prog_config(Enum):
     #Buffer to mark invalid distance to edges of regulated lakes and lakes larger than 5000m^2
     innsjo_above_5000_line_buffer_distance='40 Meters'
 
-    innsjo_above_5000_full_buffer=innsjo_above_5000_line_buffer_distance+1
+    innsjo_above_5000_full_buffer=int(innsjo_above_5000_line_buffer_distance.split()[0])+1
 
     snapping_distance='40 Meters'
 
@@ -34,6 +32,9 @@ class prog_config(Enum):
 
 def main():
 
+    #County ids
+    area=[1806]
+
     environment_setup.main()
 
     # Sets up work file manager and creates temporarily files
@@ -42,7 +43,16 @@ def main():
     wfm = WorkFileManager(config=config)
 
     files = create_wfm_gdbs(wfm=wfm)
-    fetch_data(files=files, area=prog_config.area)
+    fetch_data(files=files, area=area)
+
+    label_text_creation(files=files)
+    invalid_areas(files=files)
+    valid_areas_large_lakes(files=files)
+    valid_areas_small_lakes(files=files)
+    find_points(files=files)
+    check_if_point_inside_lake(files=files)
+    split_points(files=files)
+    snap_points(files=files)
 
 # ========================
 # Dictionary creation and
@@ -123,7 +133,7 @@ def create_wfm_gdbs(wfm: WorkFileManager) -> dict:
     #Find points
     innsjo_above_5000_simplified=wfm.build_file_path(file_name="innsjo_above_5000_simplified", file_type="gdb")
     above_5000_simplified_inner=wfm.build_file_path(file_name="above_5000_simplified_inner", file_type="gdb")
-    above_5000_simplified_centroid=wfm.build_file_path(file_name="innsjo_above_5000_simplified", file_type="gdb")
+    above_5000_simplified_centroid=wfm.build_file_path(file_name="above_5000_simplified_centroid", file_type="gdb")
 
     #Check if point inside lake and split points
     small_lakes=wfm.build_file_path(file_name="small_lakes", file_type="gdb")
@@ -184,6 +194,7 @@ def fetch_data(files: dict, area: list=None) -> None:
     Args:
         files (dict): Dictionary with all the working files
     """
+    print(1)
     clip_lyr=None
     
     if area:
@@ -191,35 +202,45 @@ def fetch_data(files: dict, area: list=None) -> None:
         arcpy.management.MakeFeatureLayer(in_features=input_n100.AdminFlate, out_layer=clip_lyr)
         vals=",".join(f"{v}" for v in area)
         arcpy.management.SelectLayerByAttribute(clip_lyr, "NEW_SELECTION", f"KOMMUNENUMMER IN ({vals})")
-
+    print(2)
     #Lakes
     innsjo_bearbeidet_lyr="innsjo_bearbeidet_lyr"
     arcpy.management.MakeFeatureLayer(in_features=input_innsjohoyde.hoyde_bearbeidet, out_layer=innsjo_bearbeidet_lyr)
+    print(3)
     if area:arcpy.management.SelectLayerByLocation(in_layer=innsjo_bearbeidet_lyr, overlap_type='HAVE_THEIR_CENTER_IN', select_features=clip_lyr, search_distance=None, selection_type='NEW_SELECTION')
     
     selection='ADD_TO_SELECTION' if area else 'NEW_SELECTION'
     above_5000_sql="SHAPE_AREA>=5000 OR arealdekke='Ferskvann_innsjo_tjern_regulert'"
 
     #Lakes above 5000m^2 (needs labels)
-    arcpy.management.SelectLayerByAttribute(in_layer_or_view=innsjo_bearbeidet_lyr, selection_type=selection, where_clause=above_5000_sql, invert_where_clause='NOT_INVERT')
+    print(5)
+    arcpy.management.SelectLayerByAttribute(in_layer_or_view=innsjo_bearbeidet_lyr, selection_type=selection, where_clause=above_5000_sql, invert_where_clause='NON_INVERT')
+    print(6)
     arcpy.management.CopyFeatures(in_features=innsjo_bearbeidet_lyr, out_feature_class=files[fc.innsjo_above_5000])
+    print(7)
     arcpy.management.SelectLayerByAttribute(in_layer_or_view=innsjo_bearbeidet_lyr, selection_type='CLEAR_SELECTION')
-    arcpy.management.RepairGeometry(in_features=files[fc.innsjo_above_5000], delete_null='DELETE_NULL')
+    print(8)
+    #arcpy.management.RepairGeometry(in_features=files[fc.innsjo_above_5000], delete_null='DELETE_NULL')
 
     #Lakes below 5000m^2 (no labels)
+    print(9)
     arcpy.management.SelectLayerByAttribute(in_layer_or_view=innsjo_bearbeidet_lyr, selection_type=selection, where_clause=above_5000_sql, invert_where_clause='INVERT')
+    print(10)
     arcpy.management.CopyFeatures(in_features=innsjo_bearbeidet_lyr, out_feature_class=files[fc.innsjo_below_5000])
 
     #Annotations
     annotasjoner_bearbeidet_lyr="annotasjoner_bearbeidet_lyr"
+    print(12)
     arcpy.management.MakeFeatureLayer(in_features=input_innsjohoyde.annotasjoner_bearbeidet, out_layer=annotasjoner_bearbeidet_lyr)
+    print(13)
     if area: arcpy.management.SelectLayerByLocation(in_layer=annotasjoner_bearbeidet_lyr, overlap_type='HAVE_THEIR_CENTER_IN', select_features=clip_lyr, search_distance=None, selection_type='NEW_SELECTION')
+    print(14)
     arcpy.management.CopyFeatures(in_features=annotasjoner_bearbeidet_lyr, out_feature_class=files[fc.annotations_pre_buffed])
 
 # ========================
 # Data manipulation?
 # ======================== 
-
+@timing_decorator
 def label_text_creation(files:dict)->None:
     """
     Creates an additional field with the height and lrv combined for all lakes that are regulated and has an area equal to or larger than 5000.
@@ -241,6 +262,7 @@ def label_text_creation(files:dict)->None:
                     label=f"{hoyde}"    
                 update_cursor.updateRow([hoyde, lrv, label])
 
+@timing_decorator
 def invalid_areas(files:dict)->None:
     """
     Creates a buffer for all non regulated lakes with area smaller than 5000m^2. 
@@ -259,6 +281,7 @@ def invalid_areas(files:dict)->None:
         line_side='FULL'
         )
 
+@timing_decorator
 def valid_areas_large_lakes(files:dict)->None:
     """
     Area with valid positions for all large lakes regulated or larger than 5000m^2.
@@ -307,6 +330,7 @@ def valid_areas_large_lakes(files:dict)->None:
         out_feature_class=files[fc.valid_label_positions_large]
     )
 
+@timing_decorator
 def valid_areas_small_lakes(files:dict)->None:
     """
     Area with valid positions for all small lakes regulated or larger than 5000m^2.
@@ -321,6 +345,7 @@ def valid_areas_small_lakes(files:dict)->None:
         out_feature_class=files[fc.valid_label_positions_small]
     )
 
+@timing_decorator
 def find_points(files:dict)->None:
     """
     Finding centroids and inner points for all lakes above 5000m^2 or regulated.
@@ -342,7 +367,8 @@ def find_points(files:dict)->None:
         arcpy.management.FeatureToPoint(in_features=files[fc.innsjo_above_5000_simplified], out_feature_class=files[fc.above_5000_simplified_centroid], point_location='CENTROID')
     except Exception as e:
         raise
-    
+
+@timing_decorator   
 def check_if_point_inside_lake(files:dict)->None:
     """
     Checks if lake centroids found are inside their lake polygon. If not, it fixes it.
@@ -395,7 +421,8 @@ def check_if_point_inside_lake(files:dict)->None:
 
     arcpy.management.CopyFeatures(in_features=centroids, out_feature_class=files[fc.above_5000_centroids])
 
-def split_punkter(files:dict)->None:
+@timing_decorator
+def split_points(files:dict)->None:
     """
     Seperates lakes into those that have valid areas (large lakes) and those who do not (small lakes).
 
@@ -418,6 +445,7 @@ def split_punkter(files:dict)->None:
     arcpy.management.SelectLayerByAttribute(in_layer_or_view=centroids_lyr,selection_type="CLEAR_SELECTION")
     arcpy.management.CopyFeatures(in_features=centroids_lyr, out_feature_class=files[fc.large_lakes])
 
+@timing_decorator
 def snap_points(files:dict)->None:
 
     large_lakes_lyr="large_lakes_lyr"
@@ -449,7 +477,6 @@ def snap_points(files:dict)->None:
     )
 
     arcpy.management.Merge(inputs=[small_lakes_lyr, large_lakes_lyr], output=files[fc.hoydeintervaller])
-
 
 if __name__ == "__main__":
     main()
