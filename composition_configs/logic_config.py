@@ -255,3 +255,22 @@ class FillLineGapsConfig:
     advanced_config: FillLineGapsAdvancedConfig = field(
         default_factory=FillLineGapsAdvancedConfig
     )
+
+
+class LineAngleMode(str, Enum):
+    WHOLE_LINE = "whole_line"
+    START_SEGMENT = "start_segment"
+    END_SEGMENT = "end_segment"
+    BOTH_ENDPOINT_SEGMENTS = "both_endpoint_segments"
+    START_TO_MIDPOINT = "start_to_midpoint"
+    END_TO_MIDPOINT = "end_to_midpoint"
+
+
+@dataclass(frozen=True)
+class AngleToolConfig:
+    input_lines: str
+    angle_modes: tuple[LineAngleMode, ...]
+    output_lines: Optional[str] = None
+    field_name_by_mode: Optional[dict[LineAngleMode, str]] = None
+    return_results: bool = True
+    write_fields: bool = False
