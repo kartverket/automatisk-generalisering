@@ -703,6 +703,25 @@ class TopologyBuilder:
         return f"{fld} IN ({','.join(str(v) for v in safe)})"
 
 
+@dataclass(frozen=True)
+class Proposal:
+    """
+    One best-fit legal candidate per dangle (no fallback).
+    """
+
+    dangle_oid: int
+    src_parent_id: int
+    src_node: EntityKey
+    tgt_node: EntityKey
+    chosen: dict  # the chosen candidate row dict
+    score: tuple[
+        float, int, int, str, int
+    ]  # (dist, src_parent, dangle_oid, near_fc_key, near_fid)
+    pair_key: tuple[EntityKey, EntityKey]  # unordered network pair
+    target_parent_id: Optional[int]  # only for line/dangle targets (ORIGINAL_ID space)
+    target_dangle_oid: Optional[int]  # only if chosen is a dangle target
+
+
 class FillLineGaps:
     ORIGINAL_ID = "line_gap_original_id"
 
@@ -919,6 +938,48 @@ class FillLineGaps:
             points.append(arcpy.Point(near_x, near_y))
 
         return arcpy.Polyline(arcpy.Array(points), shape.spatialReference)
+
+    def _candidate_sort_key(self, cand: dict) -> tuple:
+        # Deterministic ordering for candidate rows within a dangle
+        return (
+            float(cand.get("near_dist", float("inf"))),
+            str(cand.get("near_fc_key", "")),
+            int(cand.get("near_fid", -1)),
+            float(cand.get("near_x", 0.0)),
+            float(cand.get("near_y", 0.0)),
+        )
+
+    def _unordered_pair_key(
+        self, a: EntityKey, b: EntityKey
+    ) -> tuple[EntityKey, EntityKey]:
+        # Deterministic unordered key using tuple ordering
+        return (a, b) if a <= b else (b, a)
+
+    def _node_for_parent(self, *, parent_id: int, topology: TopologyModel) -> EntityKey:
+        """
+        Network identity for a parent line.
+        - Component scopes: prefer ("component", connectivity_id)
+        - Otherwise: ("parent", parent_id)
+        """
+        scope = topology.scope
+        if scope in (
+            logic_config.ConnectivityScope.INPUT_LINES,
+            logic_config.ConnectivityScope.ONE_DEGREE,
+            logic_config.ConnectivityScope.TRANSITIVE,
+        ):
+            cid = (topology.connectivity_id_by_parent or {}).get(int(parent_id))
+            if cid is not None:
+                return ("component", int(cid))
+        return ("parent", int(parent_id))
+
+    def _node_for_optional_candidate(
+        self, *, dataset_key: str, near_fid: int
+    ) -> EntityKey:
+        """
+        Optional identity in candidate space.
+        Isolated behind a function so it can be upgraded later if SOURCE_OID becomes available.
+        """
+        return ("optional_candidate", str(dataset_key), int(near_fid))
 
     # ----------------------------
     # Preprocessing
@@ -1762,12 +1823,12 @@ class FillLineGaps:
 
     def _build_plan(
         self, *, dangles_fc: str, target_layers: list[str]
-    ) -> dict[int, dict]:
+    ) -> tuple[dict[int, list[dict]], dict[int, dict]]:
         dangle_parent = self._build_dangle_parent_lookup(dangles_fc=dangles_fc)
         dangle_xy = self._build_dangle_xy_lookup(dangles_fc=dangles_fc)
 
-        # Value-neutral topology (computed independently of dangle candidate layers)
         relevant_parent_ids = set(dangle_parent.values())
+
         topology = TopologyBuilder(
             lines_fc=self.lines_copy,
             original_id_field=self.ORIGINAL_ID,
@@ -1789,9 +1850,8 @@ class FillLineGaps:
         )
 
         dangles_key = self._dataset_key(dangles_fc)
-
         lines_key = self._dataset_key(self.lines_copy)
-        lines_fc_keys = self._line_dataset_keys()
+
         near_features = list(target_layers) + [dangles_fc]
 
         base_tol = float(self.gap_tolerance_meters)
@@ -1807,13 +1867,14 @@ class FillLineGaps:
             else {}
         )
 
-        # One near-table for everything (expanded radius so we can see dangle pairs)
+        # Expanded radius so we can see dangle→dangle candidates, but legality will enforce tol rules.
         self._generate_near_table(
             in_dangles=dangles_fc,
             near_features=near_features,
             search_radius=self._expanded_dangle_tolerance_linear_unit(),
             out_table=self.near_table,
         )
+
         grouped = self._read_near_table_grouped(
             near_table=self.near_table,
             dangles_fc_key=dangles_key,
@@ -1824,308 +1885,261 @@ class FillLineGaps:
         )
 
         if not grouped:
-            return {}
+            return {}, {}
 
         # ----------------------------
-        # Phase 1: per dangle -> first legal + pair token
+        # Step 1: build exactly ONE proposal per dangle (best-fit legal)
         # ----------------------------
-        total_dangles = 0
-        no_parent = 0
-        no_legal = 0
-        per_dangle: dict[int, dict] = {}
+        proposals_by_dangle: dict[int, Proposal] = {}
+
         for dangle_oid, candidates in grouped.items():
-            total_dangles += 1
-            parent_id = dangle_parent.get(int(dangle_oid))
+            dangle_oid = int(dangle_oid)
+            parent_id = dangle_parent.get(dangle_oid)
             if parent_id is None:
-                no_parent += 1
+                continue
+            parent_id = int(parent_id)
+
+            rows = sorted(candidates, key=self._candidate_sort_key)
+
+            chosen = None
+            for cand in rows:
+                if self._candidate_is_legal(
+                    illegal=illegal,
+                    dangle_parent=dangle_parent,
+                    dangles_fc_key=dangles_key,
+                    lines_fc_key=lines_key,
+                    parent_id=parent_id,
+                    cand=cand,
+                    base_tol=base_tol,
+                    dangle_candidate_tol=dangle_tol,  # expanded tolerance applies ONLY for dangle targets
+                    topology=topology,
+                ):
+                    chosen = cand
+                    break
+
+            if chosen is None:
                 continue
 
-            rows = sorted(candidates, key=lambda r: r["near_dist"])
+            src_node = self._node_for_parent(parent_id=parent_id, topology=topology)
 
-            first_legal = self._select_first_legal_candidate(
-                candidates_sorted=rows,
-                illegal=illegal,
-                dangle_parent=dangle_parent,
-                dangles_fc_key=dangles_key,
-                lines_fc_key=lines_key,
-                parent_id=int(parent_id),
-                base_tol=base_tol,
-                topology=topology,
-            )
+            target_parent_id: Optional[int] = None
+            target_dangle_oid: Optional[int] = None
 
-            if first_legal is None:
-                no_legal += 1
-                continue
-            token = self._pair_token_from_candidate(
-                dangle_parent=dangle_parent,
-                dangles_fc_key=dangles_key,
-                lines_fc_keys=lines_fc_keys,
-                cand=first_legal,
-            )
+            ds_key = str(chosen["near_fc_key"])
+            near_fid = int(chosen["near_fid"])
 
-            per_dangle[int(dangle_oid)] = {
-                "parent_id": int(parent_id),
-                "rows": rows,
-                "first_legal": first_legal,
-                "pair_token_parent": token,  # other parent id if pair-like
-            }
-            if len(per_dangle) < 20:
-                arcpy.AddMessage(
-                    f"DEBUG example: dangle_oid={dangle_oid} parent={parent_id} "
-                    f"first_legal key={first_legal['near_fc_key']} raw={first_legal.get('near_fc_key_raw')} "
-                    f"near_fid={first_legal['near_fid']} dist={first_legal['near_dist']}"
+            if ds_key == dangles_key:
+                target_dangle_oid = near_fid
+                other_parent = dangle_parent.get(int(target_dangle_oid))
+                if other_parent is None:
+                    # Defensive; should be blocked by _candidate_is_legal already
+                    continue
+                target_parent_id = int(other_parent)
+                tgt_node = self._node_for_parent(
+                    parent_id=target_parent_id, topology=topology
                 )
 
-        arcpy.AddMessage(
-            f"DEBUG grouped={len(grouped)} total={total_dangles} "
-            f"no_parent={no_parent} no_legal={no_legal}"
-        )
-        if not per_dangle:
-            return {}
+            elif ds_key == lines_key:
+                target_parent_id = near_fid  # already in ORIGINAL_ID space
+                tgt_node = self._node_for_parent(
+                    parent_id=target_parent_id, topology=topology
+                )
 
-        parent_to_dangles: dict[int, list[int]] = {}
-        for d_oid, info in per_dangle.items():
-            parent_to_dangles.setdefault(int(info["parent_id"]), []).append(int(d_oid))
+            else:
+                # Optional/other target: keep as standalone candidate node for now
+                tgt_node = self._node_for_optional_candidate(
+                    dataset_key=ds_key, near_fid=near_fid
+                )
+
+            # Deterministic proposal score and pair key
+            score = (
+                float(chosen["near_dist"]),
+                int(parent_id),
+                int(dangle_oid),
+                str(chosen["near_fc_key"]),
+                int(chosen["near_fid"]),
+            )
+            pair_key = self._unordered_pair_key(src_node, tgt_node)
+
+            proposals_by_dangle[dangle_oid] = Proposal(
+                dangle_oid=dangle_oid,
+                src_parent_id=parent_id,
+                src_node=src_node,
+                tgt_node=tgt_node,
+                chosen=chosen,
+                score=score,
+                pair_key=pair_key,
+                target_parent_id=target_parent_id,
+                target_dangle_oid=target_dangle_oid,
+            )
+
+        if not proposals_by_dangle:
+            return {}, {}
 
         # ----------------------------
-        # Phase 2: decide moves with pair logic + defer logic
+        # Deferred detection (preserved behavior)
+        # - If A proposes to parent B (via line/dangle target),
+        #   and B has dangles in this run but does NOT propose back to parent A,
+        #   then A is deferred (computed later against updated geometry).
+        # - Keep deferred container shape as dict[parent_id -> dict].
         # ----------------------------
-        decided_by_parent: dict[int, dict] = {}
+        parents_with_dangles = sorted(set(dangle_parent.values()))
+        parents_with_dangles_set = {int(v) for v in parents_with_dangles}
+
+        outgoing_parent_targets: dict[int, set[int]] = {}
+        for p in proposals_by_dangle.values():
+            if p.target_parent_id is None:
+                continue
+            outgoing_parent_targets.setdefault(int(p.src_parent_id), set()).add(
+                int(p.target_parent_id)
+            )
+
         deferred_by_parent: dict[int, dict] = {}
-        visited_pairs: set[tuple[int, int]] = set()
+        deferred_score_by_parent: dict[int, tuple] = {}
+        deferred_dangles: set[int] = set()
 
-        all_parents = sorted(parent_to_dangles.keys())
+        for p in proposals_by_dangle.values():
+            b_parent = p.target_parent_id
+            if b_parent is None:
+                continue
+            b_parent = int(b_parent)
 
-        for a_parent in all_parents:
-            a_parent = int(a_parent)
-            if a_parent in decided_by_parent or a_parent in deferred_by_parent:
+            # Only defer when the target parent has dangles in this run
+            if b_parent not in parents_with_dangles_set:
                 continue
 
-            a_dangle = self._best_dangle_for_parent(
-                parent_id=a_parent,
-                parent_to_dangles=parent_to_dangles,
-                per_dangle=per_dangle,
-            )
-            if a_dangle is None:
+            # No reciprocal proposal from B -> A (parent-id space)
+            b_out = outgoing_parent_targets.get(b_parent, set())
+            if int(p.src_parent_id) in b_out:
                 continue
 
-            info = per_dangle.get(int(a_dangle))
-            if not info:
-                continue
-
-            token_parent = info.get("pair_token_parent")
-
-            if token_parent is None:
-                chosen = info["first_legal"]
-                dx, dy = dangle_xy[int(a_dangle)]
-                decided_by_parent[a_parent] = self._make_plan_entry(
-                    parent_id=a_parent,
-                    dangle_oid=int(a_dangle),
-                    dangle_x=dx,
-                    dangle_y=dy,
-                    chosen=chosen,
-                    gap_source=self.GAP_SOURCE_DEFAULT,
-                )
-                continue
-
-            b_parent = int(token_parent)
-            # If the other parent doesn't have any dangles in this run, treat as normal
-            # (this is equivalent to your old "b_dangle is None => normal" behavior)
-            if int(b_parent) not in parent_to_dangles:
-                chosen = info["first_legal"]
-                dx, dy = dangle_xy[int(a_dangle)]
-                decided_by_parent[a_parent] = self._make_plan_entry(
-                    parent_id=a_parent,
-                    dangle_oid=int(a_dangle),
-                    dangle_x=dx,
-                    dangle_y=dy,
-                    chosen=chosen,
-                    gap_source=self.GAP_SOURCE_DEFAULT,
-                )
-                continue
-
-            # A already points to B (via A's representative dangle).
-            # Now find which of B's dangles (if any) points back to A.
-            b_dangle = self._best_dangle_for_parent_towards_target_parent(
-                parent_id=int(b_parent),
-                target_parent_id=int(a_parent),
-                parent_to_dangles=parent_to_dangles,
-                per_dangle=per_dangle,
-            )
-
-            # If B has dangles, but none of them "want A", A must be deferred
-            if b_dangle is None:
-                deferred_by_parent[a_parent] = {
-                    "parent_id": a_parent,
-                    "dangle_oid": int(a_dangle),
+            # Keep only one deferred per parent (deterministic: best score)
+            cur_best = deferred_score_by_parent.get(int(p.src_parent_id))
+            if cur_best is None or p.score < cur_best:
+                deferred_by_parent[int(p.src_parent_id)] = {
+                    "parent_id": int(p.src_parent_id),
+                    "dangle_oid": int(p.dangle_oid),
                     "forced_target_parent": int(b_parent),
                 }
+                deferred_score_by_parent[int(p.src_parent_id)] = p.score
+                deferred_dangles.add(int(p.dangle_oid))
+
+        # Active proposals exclude deferred dangles (no fallback)
+        active: list[Proposal] = [
+            p
+            for d_oid, p in proposals_by_dangle.items()
+            if int(d_oid) not in deferred_dangles
+        ]
+        if not active:
+            return {}, deferred_by_parent
+
+        # ----------------------------
+        # Mutual detection (for labeling)
+        # - dangle mutual pairs: D1 targets D2 AND D2 targets D1 (both dangle targets)
+        # - network mutual: any proposal exists in both directions between the two network nodes
+        # ----------------------------
+        active_by_dangle = {int(p.dangle_oid): p for p in active}
+
+        dangle_mutual_oids: set[int] = set()
+        for p in active:
+            if p.target_dangle_oid is None:
                 continue
-
-            b_info = per_dangle[int(b_dangle)]
-
-            # Mutual pair
-            pair_key = tuple(sorted((a_parent, b_parent)))
-            if pair_key in visited_pairs:
+            q = active_by_dangle.get(int(p.target_dangle_oid))
+            if q is None or q.target_dangle_oid is None:
                 continue
-            visited_pairs.add(pair_key)
+            if int(q.target_dangle_oid) == int(p.dangle_oid):
+                dangle_mutual_oids.add(int(p.dangle_oid))
+                dangle_mutual_oids.add(int(q.dangle_oid))
 
-            # Pair constraint: they must not share an illegal target object
-            if self._parents_share_illegal_target(
-                illegal=illegal,
-                a_parent=a_parent,
-                b_parent=b_parent,
-            ):
-                # Fall back to normal for each (still mark as pair for symmetric skip)
-                for parent, dangle in [
-                    (a_parent, int(a_dangle)),
-                    (b_parent, int(b_dangle)),
-                ]:
-                    ii = per_dangle[int(dangle)]
-                    chosen = ii["first_legal"]
-                    dx, dy = dangle_xy[int(dangle)]
-                    decided_by_parent[parent] = self._make_plan_entry(
-                        parent_id=parent,
-                        dangle_oid=int(dangle),
-                        dangle_x=dx,
-                        dangle_y=dy,
-                        chosen=chosen,
-                        gap_source=self.GAP_SOURCE_DEFAULT,
-                    )
-                decided_by_parent[a_parent]["pair_parent"] = b_parent
-                decided_by_parent[b_parent]["pair_parent"] = a_parent
-                continue
-
-            # ----------------------------
-            # Pair preference:
-            # - We can snap to each other's DANGLE within dangle_tol
-            # - BUT the parent lines must be within base_tol (and legal)
-            # ----------------------------
-
-            # (1) Prefer snapping specifically to the chosen pairing endpoints
-            a_to_b_dangle = self._find_specific_dangle_candidate(
-                candidates_sorted=info["rows"],
-                dangles_fc_key=dangles_key,
-                other_dangle_oid=int(b_dangle),  # chosen B endpoint that points to A
-                dangle_tol=float(dangle_tol),
-            )
-
-            b_to_a_dangle = self._find_specific_dangle_candidate(
-                candidates_sorted=b_info["rows"],
-                dangles_fc_key=dangles_key,
-                other_dangle_oid=int(a_dangle),  # chosen A endpoint
-                dangle_tol=float(dangle_tol),
-            )
-
-            # Optional fallback: allow snapping to the closest endpoint on the parent if the
-            # exact endpoint row isn't present in the near table output
-            if a_to_b_dangle is None:
-                a_to_b_dangle = self._find_best_dangle_candidate_to_parent(
-                    candidates_sorted=info["rows"],
-                    dangles_fc_key=dangles_key,
-                    dangle_parent=dangle_parent,
-                    target_parent_id=int(b_parent),
-                    dangle_tol=float(dangle_tol),
-                )
-
-            if b_to_a_dangle is None:
-                b_to_a_dangle = self._find_best_dangle_candidate_to_parent(
-                    candidates_sorted=b_info["rows"],
-                    dangles_fc_key=dangles_key,
-                    dangle_parent=dangle_parent,
-                    target_parent_id=int(a_parent),
-                    dangle_tol=float(dangle_tol),
-                )
-
-            # (2) Explicit parent-line proximity rows (must be within base tolerance)
-            a_to_b_line = self._find_specific_line_candidate(
-                candidates_sorted=info["rows"],
-                lines_fc_keys=lines_fc_keys,
-                other_parent_id=int(b_parent),
-                base_tol=float(base_tol),
-            )
-            b_to_a_line = self._find_specific_line_candidate(
-                candidates_sorted=b_info["rows"],
-                lines_fc_keys=lines_fc_keys,
-                other_parent_id=int(a_parent),
-                base_tol=float(base_tol),
-            )
-
-            # (3) Enforce legality for those line candidates too (connected/illegal rules)
-            if a_to_b_line is not None and not self._candidate_is_legal(
-                illegal=illegal,
-                dangle_parent=dangle_parent,
-                dangles_fc_key=dangles_key,
-                lines_fc_key=lines_key,
-                parent_id=int(a_parent),
-                cand=a_to_b_line,
-                base_tol=float(base_tol),
-                dangle_candidate_tol=base_tol,
-                topology=topology,
-            ):
-                a_to_b_line = None
-
-            if b_to_a_line is not None and not self._candidate_is_legal(
-                illegal=illegal,
-                dangle_parent=dangle_parent,
-                dangles_fc_key=dangles_key,
-                lines_fc_key=lines_key,
-                parent_id=int(b_parent),
-                cand=b_to_a_line,
-                base_tol=float(base_tol),
-                dangle_candidate_tol=base_tol,
-                topology=topology,
-            ):
-                b_to_a_line = None
-
-            # Decide chosen targets for each parent
-            if (
-                a_to_b_dangle is not None
-                and b_to_a_dangle is not None
-                and a_to_b_line is not None
-                and b_to_a_line is not None
-            ):
-                # Both can snap to each other’s dangle within custom tolerance,
-                # AND their parent lines are within base tolerance (and legal)
-                a_chosen = a_to_b_dangle
-                b_chosen = b_to_a_dangle
-                a_source = self.GAP_SOURCE_PAIR_DANGLE
-                b_source = self.GAP_SOURCE_PAIR_DANGLE
-            else:
-                # Pair exists but dangle snap not allowed by constraints
-                a_chosen = info["first_legal"]
-                b_chosen = b_info["first_legal"]
-                a_source = self.GAP_SOURCE_PAIR_LINE
-                b_source = self.GAP_SOURCE_PAIR_LINE
-
-            # Write entries (still need symmetric skip: only one moves)
-            for parent, dangle, chosen, source in [
-                (a_parent, int(a_dangle), a_chosen, a_source),
-                (b_parent, int(b_dangle), b_chosen, b_source),
-            ]:
-                dx, dy = dangle_xy[int(dangle)]
-                decided_by_parent[int(parent)] = self._make_plan_entry(
-                    parent_id=int(parent),
-                    dangle_oid=int(dangle),
-                    dangle_x=dx,
-                    dangle_y=dy,
-                    chosen=chosen,
-                    gap_source=str(source),
-                )
-
-            decided_by_parent[a_parent]["pair_parent"] = b_parent
-            decided_by_parent[b_parent]["pair_parent"] = a_parent
-
-        # Apply symmetric skip on mutual pairs (only one moves)
-        self._apply_pair_symmetric_skip(decided_by_parent)
-
-        plan = {
-            pid: entry
-            for pid, entry in decided_by_parent.items()
-            if not entry.get("skip", False)
+        directed_network_edges: set[tuple[EntityKey, EntityKey]] = {
+            (p.src_node, p.tgt_node) for p in active
         }
 
-        return plan, deferred_by_parent
+        # ----------------------------
+        # Stage A: one winner per unordered network pair
+        # ----------------------------
+        by_pair: dict[tuple[EntityKey, EntityKey], list[Proposal]] = {}
+        for p in active:
+            by_pair.setdefault(p.pair_key, []).append(p)
+
+        stage_a_winners: list[tuple[Proposal, str]] = []
+        for pair_key in sorted(by_pair.keys()):
+            group = by_pair[pair_key]
+            winner = min(group, key=lambda pr: pr.score)
+
+            a_node, b_node = pair_key
+            mutual_network = (a_node, b_node) in directed_network_edges and (
+                b_node,
+                a_node,
+            ) in directed_network_edges
+
+            if (
+                winner.target_dangle_oid is not None
+                and int(winner.dangle_oid) in dangle_mutual_oids
+            ):
+                gap_source = self.GAP_SOURCE_PAIR_DANGLE
+            elif mutual_network:
+                gap_source = self.GAP_SOURCE_PAIR_LINE
+            else:
+                gap_source = self.GAP_SOURCE_DEFAULT
+
+            stage_a_winners.append((winner, str(gap_source)))
+
+        # ----------------------------
+        # Stage B: Kruskal-style cycle prevention (component scopes only)
+        # ----------------------------
+        scope = topology.scope
+        accepted: list[tuple[Proposal, str]] = []
+
+        if scope in (
+            logic_config.ConnectivityScope.INPUT_LINES,
+            logic_config.ConnectivityScope.ONE_DEGREE,
+            logic_config.ConnectivityScope.TRANSITIVE,
+        ):
+            uf = _UnionFind()
+            for prop, gap_source in sorted(stage_a_winners, key=lambda t: t[0].score):
+                if uf.find(prop.src_node) == uf.find(prop.tgt_node):
+                    continue
+                uf.union(prop.src_node, prop.tgt_node)
+                accepted.append((prop, gap_source))
+        else:
+            # NONE / DIRECT_CONNECTION: only Stage A
+            accepted = list(stage_a_winners)
+
+        if not accepted:
+            return {}, deferred_by_parent
+
+        # ----------------------------
+        # Build plan_by_parent: parent_id -> list[plan_entry]
+        # ----------------------------
+        tmp: dict[int, list[tuple[tuple, dict]]] = {}
+
+        for prop, gap_source in sorted(accepted, key=lambda t: t[0].score):
+            xy = dangle_xy.get(int(prop.dangle_oid))
+            if xy is None:
+                continue
+            d_x, d_y = xy
+
+            entry = self._make_plan_entry(
+                parent_id=int(prop.src_parent_id),
+                dangle_oid=int(prop.dangle_oid),
+                dangle_x=float(d_x),
+                dangle_y=float(d_y),
+                chosen=prop.chosen,
+                gap_source=str(gap_source),
+            )
+
+            tmp.setdefault(int(prop.src_parent_id), []).append((prop.score, entry))
+
+        plan_by_parent: dict[int, list[dict]] = {}
+        for pid, items in tmp.items():
+            # Deterministic per-parent order
+            ordered = sorted(
+                items, key=lambda t: (t[0], int(t[1].get("dangle_oid", 0)))
+            )
+            plan_by_parent[int(pid)] = [entry for _, entry in ordered]
+
+        return plan_by_parent, deferred_by_parent
 
     def _make_plan_entry(
         self,
@@ -2344,58 +2358,80 @@ class FillLineGaps:
         geom = arcpy.Polyline(arr, spatial_reference)
         return (geom, int(original_id), float(dist), str(gap_source))
 
-    def _apply_plan(self, plan: dict[int, dict]) -> None:
+    def _apply_plan(self, plan) -> None:
         if not plan:
             return
 
         spatial_reference = arcpy.Describe(self.lines_copy).spatialReference
         change_rows: list[tuple] = []
 
+        def _as_entries(value) -> list[dict]:
+            # Backwards compatible: allow dict (single) or list[dict] (multi)
+            if value is None:
+                return []
+            if isinstance(value, list):
+                return [v for v in value if isinstance(v, dict)]
+            if isinstance(value, dict):
+                return [value]
+            return []
+
         with arcpy.da.UpdateCursor(
             self.lines_copy, [self.ORIGINAL_ID, "SHAPE@"]
         ) as cur:
             for original_id, shape in cur:
                 pid = int(original_id)
-                info = plan.get(pid)
-                if not info:
-                    continue
-                if info.get("skip", False) or info.get("processed", False):
+                entries = _as_entries(plan.get(pid))
+                if not entries:
                     continue
 
-                edit_op = str(info.get("edit_op", EditOp.EXTEND.value))
+                pending = [
+                    e
+                    for e in entries
+                    if not e.get("skip", False) and not e.get("processed", False)
+                ]
+                if not pending:
+                    continue
 
-                if edit_op == EditOp.SNAP.value:
-                    new_shape = self._snap_endpoint(
-                        shape=shape,
-                        dangle_x=float(info["dangle_x"]),
-                        dangle_y=float(info["dangle_y"]),
-                        near_x=float(info["near_x"]),
-                        near_y=float(info["near_y"]),
-                    )
-                else:
-                    new_shape = self._extend_endpoint(
-                        shape=shape,
-                        dangle_x=float(info["dangle_x"]),
-                        dangle_y=float(info["dangle_y"]),
-                        near_x=float(info["near_x"]),
-                        near_y=float(info["near_y"]),
-                    )
+                current_shape = shape
 
-                cur.updateRow((original_id, new_shape))
-                info["processed"] = True  # optional
+                for info in pending:
+                    edit_op = str(info.get("edit_op", EditOp.EXTEND.value))
 
-                if self.line_changes_output is not None:
-                    row = self._build_change_row(
-                        original_id=pid,
-                        dangle_x=float(info["dangle_x"]),
-                        dangle_y=float(info["dangle_y"]),
-                        near_x=float(info["near_x"]),
-                        near_y=float(info["near_y"]),
-                        spatial_reference=spatial_reference,
-                        gap_source=str(info.get("gap_source", self.GAP_SOURCE_DEFAULT)),
-                    )
-                    if row is not None:
-                        change_rows.append(row)
+                    if edit_op == EditOp.SNAP.value:
+                        current_shape = self._snap_endpoint(
+                            shape=current_shape,
+                            dangle_x=float(info["dangle_x"]),
+                            dangle_y=float(info["dangle_y"]),
+                            near_x=float(info["near_x"]),
+                            near_y=float(info["near_y"]),
+                        )
+                    else:
+                        current_shape = self._extend_endpoint(
+                            shape=current_shape,
+                            dangle_x=float(info["dangle_x"]),
+                            dangle_y=float(info["dangle_y"]),
+                            near_x=float(info["near_x"]),
+                            near_y=float(info["near_y"]),
+                        )
+
+                    info["processed"] = True
+
+                    if self.line_changes_output is not None:
+                        row = self._build_change_row(
+                            original_id=pid,
+                            dangle_x=float(info["dangle_x"]),
+                            dangle_y=float(info["dangle_y"]),
+                            near_x=float(info["near_x"]),
+                            near_y=float(info["near_y"]),
+                            spatial_reference=spatial_reference,
+                            gap_source=str(
+                                info.get("gap_source", self.GAP_SOURCE_DEFAULT)
+                            ),
+                        )
+                        if row is not None:
+                            change_rows.append(row)
+
+                cur.updateRow((original_id, current_shape))
 
         if self.line_changes_output is not None and change_rows:
             with arcpy.da.InsertCursor(
