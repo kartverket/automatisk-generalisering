@@ -315,6 +315,7 @@ def valid_areas_large_lakes(files:dict)->None:
         )
     areas_above_5000_full_buffer_lyr="areas_above_5000_full_buffer_lyr"
     arcpy.management.MakeFeatureLayer(files[fc.areas_above_5000_full_buffer], out_layer=areas_above_5000_full_buffer_lyr)
+    arcpy.management.RepairGeometry(in_features=areas_above_5000_full_buffer_lyr, delete_null='DELETE_NULL')
     arcpy.management.Dissolve(
         in_features=areas_above_5000_full_buffer_lyr, out_feature_class=files[fc.areas_above_5000_full_buffer_dissolved])
     print(6)
