@@ -33,7 +33,7 @@ class prog_config(Enum):
 def main():
 
     #County ids
-    area=[1806]
+    area=[3310]
 
     environment_setup.main()
 
@@ -74,6 +74,7 @@ class fc(Enum):
     areas_above_5000_line="areas_above_5000_line"
     areas_above_5000_line_buffer="areas_above_5000_line_buffer"
     areas_above_5000_full_buffer="areas_above_5000_full_buffer"
+    areas_above_5000_full_buffer_dissolved="areas_above_5000_full_buffer_dissolved"
     areas_within_above_5000="areas_within_above_5000"
     just_areas_within_above_5000="just_areas_within_above_5000"
     valid_label_positions_large="valid_label_positions_large"
@@ -123,6 +124,7 @@ def create_wfm_gdbs(wfm: WorkFileManager) -> dict:
     areas_above_5000_line=wfm.build_file_path(file_name="areas_above_5000_line", file_type="gdb")
     areas_above_5000_line_buffer=wfm.build_file_path(file_name="areas_above_5000_line_buffer", file_type="gdb")
     areas_above_5000_full_buffer=wfm.build_file_path(file_name="areas_above_5000_full_buffer", file_type="gdb")
+    areas_above_5000_full_buffer_dissolved=wfm.build_file_path(file_name="areas_above_5000_full_buffer_dissolved", file_type="gdb")
     areas_within_above_5000=wfm.build_file_path(file_name="areas_within_above_5000", file_type="gdb")
     just_areas_within_above_5000=wfm.build_file_path(file_name="just_areas_within_above_5000", file_type="gdb")
     valid_label_positions_large=wfm.build_file_path(file_name="valid_label_positions_large", file_type="gdb")
@@ -160,6 +162,7 @@ def create_wfm_gdbs(wfm: WorkFileManager) -> dict:
         fc.areas_above_5000_line:areas_above_5000_line,
         fc.areas_above_5000_line_buffer:areas_above_5000_line_buffer,
         fc.areas_above_5000_full_buffer:areas_above_5000_full_buffer,
+        fc.areas_above_5000_full_buffer_dissolved:areas_above_5000_full_buffer_dissolved,
         fc.areas_within_above_5000:areas_within_above_5000,
         fc.just_areas_within_above_5000:just_areas_within_above_5000,
         fc.valid_label_positions_large:valid_label_positions_large,
@@ -250,6 +253,9 @@ def label_text_creation(files:dict)->None:
                     label=f"{hoyde}"    
                 update_cursor.updateRow([hoyde, lrv, label])
 
+# ========================
+# Finding possible areas
+# ========================
 @timing_decorator
 def invalid_areas(files:dict)->None:
     """
@@ -285,41 +291,45 @@ def valid_areas_large_lakes(files:dict)->None:
     Args:
         files (dict): Dictionary with all the working files
     """
-
+    print(1)
     arcpy.management.PolygonToLine(in_features=files[fc.innsjo_above_5000], out_feature_class=files[fc.areas_above_5000_line])
-    
+    print(2)
     areas_above_5000_line_lyr="areas_above_5000_line_lyr"    
     arcpy.management.MakeFeatureLayer(in_features=files[fc.areas_above_5000_line], out_layer=areas_above_5000_line_lyr)
-
+    print(3)
     arcpy.analysis.Buffer(
         in_features=areas_above_5000_line_lyr, 
         out_feature_class=files[fc.areas_above_5000_line_buffer],
         buffer_distance_or_field=prog_config.innsjo_above_5000_line_buffer_distance.value,
         line_side='FULL'
         )
-    
+    print(4)
     innsjo_above_5000="innsjo_above_5000"
     arcpy.management.MakeFeatureLayer(in_features=files[fc.innsjo_above_5000], out_layer=innsjo_above_5000)
-
+    print(5)
     arcpy.analysis.Buffer(
         in_features=innsjo_above_5000,
         out_feature_class=files[fc.areas_above_5000_full_buffer],
         buffer_distance_or_field=prog_config.innsjo_above_5000_line_buffer_distance.value,
         line_side='FULL'
         )
-
+    areas_above_5000_full_buffer_lyr="areas_above_5000_full_buffer_lyr"
+    arcpy.management.MakeFeatureLayer(files[fc.areas_above_5000_full_buffer], out_layer=areas_above_5000_full_buffer_lyr)
+    arcpy.management.Dissolve(
+        in_features=areas_above_5000_full_buffer_lyr, out_feature_class=files[fc.areas_above_5000_full_buffer_dissolved])
+    print(6)
     arcpy.analysis.Erase(
-        in_features=files[fc.areas_above_5000_full_buffer],
+        in_features=files[fc.areas_above_5000_full_buffer_dissolved],
         erase_features=files[fc.areas_above_5000_line_buffer],
         out_feature_class=files[fc.areas_within_above_5000]
         )
-    
+    print(7)
     arcpy.analysis.Erase(
         in_features=files[fc.areas_within_above_5000],
         erase_features=files[fc.innsjo_below_5000_buffed],
         out_feature_class=files[fc.just_areas_within_above_5000]
     )
-
+    print(8)
     arcpy.analysis.Erase(
         in_features=files[fc.just_areas_within_above_5000],
         erase_features=files[fc.annotations_pre_buffed],
@@ -372,49 +382,52 @@ def check_if_point_inside_lake(files:dict)->None:
     Args:
         files (dict): Dictionary with all the working files
     """
-    
+    print(1)
     above_5000_lyr="simplified_above_5000_lyr"
     arcpy.management.MakeFeatureLayer(in_features=files[fc.innsjo_above_5000], out_layer=above_5000_lyr)
-
+    print(2)
     centroids="centroids"
     arcpy.management.MakeFeatureLayer(in_features=files[fc.above_5000_simplified_centroid], out_layer=centroids)
-
-    inside="innside"
+    print(3)
+    inside="inside"
     arcpy.management.MakeFeatureLayer(in_features=files[fc.above_5000_simplified_inner], out_layer=inside)
     arcpy.management.AddField(in_table=inside, field_name="outside", field_type='SHORT')
     arcpy.management.SelectLayerByLocation(in_layer=inside, overlap_type='INTERSECT', select_features=above_5000_lyr, search_distance=None, selection_type='NEW_SELECTION', invert_spatial_relationship='INVERT')
-    
+    print(4)
     with arcpy.da.UpdateCursor(in_table=inside, field_names=["outside"]) as update_inside_cursor:
         for inner_point in update_inside_cursor:
-            inner_point=1
+            inner_point[0]=1
             update_inside_cursor.updateRow(inner_point)
-
-    arcpy.management.SelectLayerByLocation(in_layer=centroids, overlap_type='WITHIN', select_features=above_5000_lyr, search_distance=None, selection_type='NEW_SELECTION', invert_spatial_relationship='INVERT')
+    print(5)
+    arcpy.management.SelectLayerByLocation(in_layer=centroids, overlap_type='INTERSECT', select_features=above_5000_lyr, search_distance=None, selection_type='NEW_SELECTION', invert_spatial_relationship='INVERT')
 
     innerpoints_outside_lakes=[]
-
-    with arcpy.da.UpdateCursor(in_table=centroids, field_names=["OBJECTID","SHAPE@X", "SHAPE@Y"]) as update_cursor:
-        for centroid_id, centroid_x, centroid_y in update_cursor:
+    print(6)
+    with arcpy.da.UpdateCursor(in_table=centroids, field_names=["OBJECTID","SHAPE@"]) as update_cursor:
+        for centroid_id, shape_centroid in update_cursor:
             
-            with arcpy.da.SearchCursor(in_table=inside, field_names=["OBJECTID", "outside","SHAPE@X", "SHAPE@Y"]) as search_cursor:
-                for inner_id, outside, inner_x, inner_y in search_cursor:
+            with arcpy.da.SearchCursor(in_table=inside, field_names=["OBJECTID", "outside","SHAPE@"]) as search_cursor:
+                for inner_id, outside, shape_inner in search_cursor:
 
                     if centroid_id==inner_id:
                         if outside==1:
                             innerpoints_outside_lakes.append(inner_id)
 
                         else:
-                            centroid_x=inner_x
-                            centroid_y=inner_y
+                            shape_centroid=shape_inner
 
-                            update_cursor.updateRow([centroid_id, centroid_x, centroid_y])
-    
+                            update_cursor.updateRow([centroid_id, shape_centroid])
+    print(7)
     if innerpoints_outside_lakes:
         arcpy.management.SelectLayerByAttribute(in_layer_or_view=centroids, selection_type='NEW_SELECTION', where_clause=f"OBJECTID IN {tuple(innerpoints_outside_lakes)}")
+        print(8)
         arcpy.management.Append(inputs=centroids, target=files[fc.small_lakes], schema_type='NO_TEST')
+        print(9)
         arcpy.management.DeleteRows(in_rows=centroids)
+        print(10)
         arcpy.management.SelectLayerByAttribute(in_layer_or_view=centroids,selection_type="CLEAR_SELECTION")
 
+    print(11)
     arcpy.management.CopyFeatures(in_features=centroids, out_feature_class=files[fc.above_5000_centroids])
 
 @timing_decorator
