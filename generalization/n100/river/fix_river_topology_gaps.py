@@ -13,12 +13,44 @@ from custom_tools.general_tools.partition_iterator import PartitionIterator
 from composition_configs import core_config, logic_config
 
 from custom_tools.decorators.timing_decorator import timing_decorator
+from custom_tools.general_tools.geometry_tools import LineAngleTool
 
 
 @timing_decorator
 def main():
     environment_setup.main()
-    fill_line_topology_gaps()
+    # fill_line_topology_gaps()
+    find_angles()
+
+
+def find_angles():
+    line_angle_config = logic_config.AngleToolConfig(
+        input_lines=River_N100.data_preparation___river_lines___n100_river.value,
+        angle_modes=(
+            logic_config.LineAngleMode.WHOLE_LINE,
+            logic_config.LineAngleMode.BOTH_ENDPOINT_SEGMENTS,
+            logic_config.LineAngleMode.START_TO_MIDPOINT,
+            logic_config.LineAngleMode.END_TO_MIDPOINT,
+        ),
+        output_lines=River_N100.river_topology___river_angles___n100_river.value,
+        return_results=True,
+        write_fields=True,
+    )
+    returned_angles = LineAngleTool(config=line_angle_config).run()
+
+    line_angle_config2 = logic_config.AngleToolConfig(
+        input_lines=River_N100.river_topology___river_gaps_changes___n100_river.value,
+        angle_modes=(
+            logic_config.LineAngleMode.WHOLE_LINE,
+            logic_config.LineAngleMode.BOTH_ENDPOINT_SEGMENTS,
+            logic_config.LineAngleMode.START_TO_MIDPOINT,
+            logic_config.LineAngleMode.END_TO_MIDPOINT,
+        ),
+        output_lines=River_N100.river_topology___river_angles_2___n100_river.value,
+        return_results=True,
+        write_fields=True,
+    )
+    returned_angles2 = LineAngleTool(config=line_angle_config2).run()
 
 
 @timing_decorator
