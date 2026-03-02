@@ -21,9 +21,9 @@ class prog_config(Enum):
     #Buffer to mark invalid distance to edges of regulated lakes and lakes larger than 5000m^2
     innsjo_above_5000_line_buffer_distance='40 Meters'
 
-    innsjo_above_5000_full_buffer='{int(innsjo_above_5000_line_buffer_distance.split()[0])+1} Meters'
+    innsjo_above_5000_full_buffer="41 Meters"
 
-    snapping_distance='40 Meters'
+    snapping_distance='200 Meters'
 
 
 # ========================
@@ -33,7 +33,7 @@ class prog_config(Enum):
 def main():
 
     #County ids
-    area=[3310]
+    area=[1806]
 
     environment_setup.main()
 
@@ -44,7 +44,6 @@ def main():
 
     files = create_wfm_gdbs(wfm=wfm)
     fetch_data(files=files, area=area)
-
     label_text_creation(files=files)
     invalid_areas(files=files)
     valid_areas_large_lakes(files=files)
@@ -197,35 +196,44 @@ def fetch_data(files: dict, area: list=None) -> None:
     Args:
         files (dict): Dictionary with all the working files
     """
-    clip_lyr=None
     
-    if area:
-        clip_lyr="area_lyr"
-        arcpy.management.MakeFeatureLayer(in_features=input_n100.AdminFlate, out_layer=clip_lyr)
-        vals=",".join(f"{v}" for v in area)
-        arcpy.management.SelectLayerByAttribute(clip_lyr, "NEW_SELECTION", f"KOMMUNENUMMER IN ({vals})")
-    #Lakes
     innsjo_bearbeidet_lyr="innsjo_bearbeidet_lyr"
     arcpy.management.MakeFeatureLayer(in_features=input_innsjohoyde.hoyde_bearbeidet, out_layer=innsjo_bearbeidet_lyr)
-    if area:arcpy.management.SelectLayerByLocation(in_layer=innsjo_bearbeidet_lyr, overlap_type='HAVE_THEIR_CENTER_IN', select_features=clip_lyr, search_distance=None, selection_type='NEW_SELECTION')
+
+    annotasjoner_bearbeidet_lyr="annotasjoner_bearbeidet_lyr"
+    arcpy.management.MakeFeatureLayer(in_features=input_innsjohoyde.annotasjoner_bearbeidet, out_layer=annotasjoner_bearbeidet_lyr)
     
-    selection='ADD_TO_SELECTION' if area else 'NEW_SELECTION'
-    above_5000_sql="SHAPE_AREA>=5000 OR arealdekke='Ferskvann_innsjo_tjern_regulert'"
+    if area:
+        vals=",".join(str(int(v)) for v in area)
+        clip_lyr="area_lyr"
+
+        print(f"KOMMUNENUMMER IN ({vals})")
+        
+        arcpy.management.MakeFeatureLayer(
+            in_features=input_n100.AdminFlate, 
+            out_layer=clip_lyr, 
+            where_clause=f"KOMMUNENUMMER IN ({vals})"
+            )
+        
+        arcpy.management.SelectLayerByLocation(in_layer=innsjo_bearbeidet_lyr, overlap_type='HAVE_THEIR_CENTER_IN', select_features=clip_lyr, selection_type='NEW_SELECTION')
+
+        arcpy.management.SelectLayerByLocation(in_layer=annotasjoner_bearbeidet_lyr, overlap_type='HAVE_THEIR_CENTER_IN', select_features=clip_lyr, selection_type='NEW_SELECTION')
+
+    above_5000_sql = "SHAPE_AREA >= 5000 OR (arealdekke='Ferskvann_innsjo_tjern_regulert' AND SHAPE_AREA > 1000)"
+    below_5000_sql = "SHAPE_AREA < 5000 OR (arealdekke='Ferskvann_innsjo_tjern' AND SHAPE_AREA <= 1000)"
 
     #Lakes above 5000m^2 (needs labels)
-    arcpy.management.SelectLayerByAttribute(in_layer_or_view=innsjo_bearbeidet_lyr, selection_type=selection, where_clause=above_5000_sql, invert_where_clause='NON_INVERT')
-    arcpy.management.CopyFeatures(in_features=innsjo_bearbeidet_lyr, out_feature_class=files[fc.innsjo_above_5000])
-    arcpy.management.SelectLayerByAttribute(in_layer_or_view=innsjo_bearbeidet_lyr, selection_type='CLEAR_SELECTION')
+    more_than_5000_lyr="more_than_5000_lyr"
+    arcpy.management.MakeFeatureLayer(in_features=innsjo_bearbeidet_lyr, out_layer=more_than_5000_lyr, where_clause=above_5000_sql)
+    arcpy.management.CopyFeatures(in_features=more_than_5000_lyr, out_feature_class=files[fc.innsjo_above_5000])
     #arcpy.management.RepairGeometry(in_features=files[fc.innsjo_above_5000], delete_null='DELETE_NULL')
 
     #Lakes below 5000m^2 (no labels)
-    arcpy.management.SelectLayerByAttribute(in_layer_or_view=innsjo_bearbeidet_lyr, selection_type=selection, where_clause=above_5000_sql, invert_where_clause='INVERT')
-    arcpy.management.CopyFeatures(in_features=innsjo_bearbeidet_lyr, out_feature_class=files[fc.innsjo_below_5000])
+    less_than_5000_lyr="less_than_5000_lyr"
+    arcpy.management.MakeFeatureLayer(in_features=innsjo_bearbeidet_lyr, out_layer=less_than_5000_lyr, where_clause=below_5000_sql)
+    arcpy.management.CopyFeatures(in_features=less_than_5000_lyr, out_feature_class=files[fc.innsjo_below_5000])
 
     #Annotations
-    annotasjoner_bearbeidet_lyr="annotasjoner_bearbeidet_lyr"
-    arcpy.management.MakeFeatureLayer(in_features=input_innsjohoyde.annotasjoner_bearbeidet, out_layer=annotasjoner_bearbeidet_lyr)
-    if area: arcpy.management.SelectLayerByLocation(in_layer=annotasjoner_bearbeidet_lyr, overlap_type='HAVE_THEIR_CENTER_IN', select_features=clip_lyr, search_distance=None, selection_type='NEW_SELECTION')
     arcpy.management.CopyFeatures(in_features=annotasjoner_bearbeidet_lyr, out_feature_class=files[fc.annotations_pre_buffed])
 
 # ========================
@@ -310,7 +318,7 @@ def valid_areas_large_lakes(files:dict)->None:
     arcpy.analysis.Buffer(
         in_features=innsjo_above_5000,
         out_feature_class=files[fc.areas_above_5000_full_buffer],
-        buffer_distance_or_field=prog_config.innsjo_above_5000_line_buffer_distance.value,
+        buffer_distance_or_field=prog_config.innsjo_above_5000_full_buffer.value,
         line_side='FULL'
         )
     areas_above_5000_full_buffer_lyr="areas_above_5000_full_buffer_lyr"
@@ -403,9 +411,11 @@ def check_if_point_inside_lake(files:dict)->None:
             update_inside_cursor.updateRow(inner_point)
     print(5)
     arcpy.management.SelectLayerByLocation(in_layer=centroids, overlap_type='INTERSECT', select_features=above_5000_lyr, search_distance=None, selection_type='NEW_SELECTION', invert_spatial_relationship='INVERT')
-
     innerpoints_outside_lakes=[]
     print(6)
+    test=r"C:\GIS_Files\ag_outputs\n10\land_use.gdb\test"
+    arcpy.management.CopyFeatures(in_features=centroids, out_feature_class=test)
+
     with arcpy.da.UpdateCursor(in_table=centroids, field_names=["OBJECTID","SHAPE@"]) as update_cursor:
         for centroid_id, shape_centroid in update_cursor:
             
@@ -421,15 +431,18 @@ def check_if_point_inside_lake(files:dict)->None:
 
                             update_cursor.updateRow([centroid_id, shape_centroid])
     print(7)
+
     if innerpoints_outside_lakes:
+        print(len(innerpoints_outside_lakes))
+        print(innerpoints_outside_lakes)
         arcpy.management.SelectLayerByAttribute(in_layer_or_view=centroids, selection_type='NEW_SELECTION', where_clause=f"OBJECTID IN {tuple(innerpoints_outside_lakes)}")
         print(8)
-        arcpy.management.Append(inputs=centroids, target=files[fc.small_lakes], schema_type='NO_TEST')
+        arcpy.management.CopyFeatures(in_features=centroids, out_feature_class=files[fc.small_lakes])
         print(9)
         arcpy.management.DeleteRows(in_rows=centroids)
         print(10)
-        arcpy.management.SelectLayerByAttribute(in_layer_or_view=centroids,selection_type="CLEAR_SELECTION")
-
+    
+    arcpy.management.SelectLayerByAttribute(in_layer_or_view=centroids,selection_type="CLEAR_SELECTION")
     print(11)
     arcpy.management.CopyFeatures(in_features=centroids, out_feature_class=files[fc.above_5000_centroids])
 
@@ -452,7 +465,12 @@ def split_points(files:dict)->None:
 
     arcpy.management.SelectLayerByLocation(in_layer=innsjo_above_5000_lyr, overlap_type='INTERSECT', select_features=valid_areas_large_lakes_lyr, search_distance=None, selection_type='NEW_SELECTION', invert_spatial_relationship='INVERT')
     arcpy.management.SelectLayerByLocation(in_layer=centroids_lyr, overlap_type='INTERSECT', select_features=innsjo_above_5000_lyr, search_distance=None, selection_type='NEW_SELECTION')
-    arcpy.management.Append(inputs=centroids_lyr, target=files[fc.small_lakes])
+    
+    if arcpy.Exists(files[fc.small_lakes]):
+        arcpy.management.Append(inputs=centroids_lyr, target=files[fc.small_lakes])
+    else:
+        arcpy.management.CopyFeatures(in_features=centroids_lyr, out_feature_class=files[fc.small_lakes])
+    
     arcpy.management.DeleteRows(in_rows=centroids_lyr)
     arcpy.management.SelectLayerByAttribute(in_layer_or_view=centroids_lyr,selection_type="CLEAR_SELECTION")
     arcpy.management.CopyFeatures(in_features=centroids_lyr, out_feature_class=files[fc.large_lakes])
