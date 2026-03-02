@@ -33,7 +33,7 @@ class prog_config(Enum):
 def main():
 
     #County ids
-    area=[1806]
+    area=[]
 
     environment_setup.main()
 

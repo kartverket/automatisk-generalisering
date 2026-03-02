@@ -4,7 +4,7 @@ import arcpy
 
 # Defining universal paths for n10 regardless of local path env_setup
 hoyde_bearbeidet = rf"{n10_innsjoer_path}\innsjoer_N10_bearbeidet"
-annotasjoner_bearbeidet=rf"{n10_innsjoer_path}\N10_Stedsnavn__FeatureOutlin"
+annotasjoner_bearbeidet=rf"{n10_innsjoer_path}\annotations_pre_buffed"
 
 
 
