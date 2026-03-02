@@ -11,11 +11,12 @@ file_manager = BaseFileManager(scale=scale, object_name=object_name)
 
 # All scripts
 dissolve_file = "dissolve"
+elim_file = "eliminate"
 
 
 class Arealdekke_N10(Enum):
     # ========================================
-    #                              dissolve
+    #                     arealdekke dissolver
     # ========================================
 
     dissolve_arealdekke_root = file_manager.generate_file_name_gdb(
@@ -47,3 +48,20 @@ class Arealdekke_N10(Enum):
             script_source_name=dissolve_file, description="gangsykkel3"
     )
 
+
+
+    # ========================================
+    #                 eliminate small polygons
+    # ========================================
+
+    elim_documentation = file_manager.generate_general_subdirectory(
+        description="elim_documentation",
+    )
+
+    elim_root = file_manager.generate_file_name_gdb(
+        script_source_name=elim_file, description="elim_root"
+    )
+
+    elim_output = file_manager.generate_file_name_gdb(
+        script_source_name=elim_file, description="output"
+    )

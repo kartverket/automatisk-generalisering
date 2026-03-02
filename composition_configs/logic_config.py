@@ -202,6 +202,12 @@ class GangSykkelDissolverInitKwargs:
     work_file_manager_config: core_config.WorkFileConfig
 
 @dataclass(frozen=True)
+class EliminateSmallPolygonsInitKwargs:
+    input_feature: str
+    output_feature: str
+    work_file_manager_config: core_config.WorkFileConfig
+
+@dataclass(frozen=True)
 class ConnectRiverLinesKwargs:
     work_file_manager_config: core_config.WorkFileConfig
     output_processed_feature: io_types.GdbIOArg
