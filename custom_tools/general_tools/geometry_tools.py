@@ -7,7 +7,12 @@ from typing import Optional, Union, Dict
 
 import arcpy
 
-from composition_configs.logic_config import AngleToolConfig, LineAngleMode
+from composition_configs.logic_config import (
+    AngleToolConfig,
+    LineAngleMode,
+    LineEndpointMode,
+    LineEndpointToolConfig,
+)
 
 from xarray.backends.common import NONE_VAR_NAME
 
@@ -566,6 +571,284 @@ class LineAngleTool:
             "angles_by_mode": {
                 public_mode_by_private_mode[mode]: value
                 for mode, value in row_result.angles_by_mode.items()
+            },
+            "issues": row_result.issues,
+            "is_supported": row_result.is_supported,
+        }
+
+    def _track_issues(self, issues: tuple[str, ...]) -> None:
+        for issue in issues:
+            self.issue_counts[issue] = self.issue_counts.get(issue, 0) + 1
+
+    def _emit_summary_warnings(self) -> None:
+        for issue, count in sorted(self.issue_counts.items()):
+            arcpy.AddWarning(f"{count} feature(s) returned issue: {issue}")
+
+
+class _ConcreteLineEndpointMode(str, Enum):
+    START_POINT = "start_point"
+    END_POINT = "end_point"
+
+
+@dataclass(frozen=True)
+class _RowEndpointResult:
+    coordinates_by_mode: dict[_ConcreteLineEndpointMode, Optional[tuple[float, float]]]
+    issues: tuple[str, ...]
+    is_supported: bool
+
+
+class LineEndpointTool:
+    """
+    Materialize line endpoint coordinates for requested endpoint modes and
+    optionally write them to fields on an output feature class.
+
+    Definitions:
+        - START_POINT = first vertex of the line
+        - END_POINT = last vertex of the line
+
+    Important:
+        - BOTH_ENDPOINTS is a selector-only request mode.
+        - It expands internally to START_POINT and END_POINT.
+        - It is never stored as its own output value.
+    """
+
+    def __init__(self, config: LineEndpointToolConfig):
+        self.config = config
+        self._validate_config()
+
+        self.resolved_modes = self._resolve_requested_modes()
+        self.issue_counts: dict[str, int] = {}
+
+    def run(self) -> Optional[dict[int, dict]]:
+        lines_fc = self._prepare_processing_feature_class()
+
+        if self.config.write_fields:
+            self._ensure_output_fields(lines_fc=lines_fc)
+
+        results_by_oid: dict[int, dict] = {}
+
+        field_names = ["OID@", "SHAPE@"]
+
+        if self.config.write_fields:
+            field_names.extend(self._ordered_output_field_names())
+
+            with arcpy.da.UpdateCursor(lines_fc, field_names) as cursor:
+                for row in cursor:
+                    oid = row[0]
+                    polyline = row[1]
+
+                    row_result = self._calculate_row_endpoints(polyline=polyline)
+                    self._track_issues(row_result.issues)
+
+                    self._write_row_values_to_cursor_row(
+                        row=row,
+                        row_result=row_result,
+                    )
+                    cursor.updateRow(row)
+
+                    if self.config.return_results:
+                        results_by_oid[oid] = self._serialize_row_result(row_result)
+
+        else:
+            with arcpy.da.SearchCursor(lines_fc, field_names) as cursor:
+                for oid, polyline in cursor:
+                    row_result = self._calculate_row_endpoints(polyline=polyline)
+                    self._track_issues(row_result.issues)
+
+                    if self.config.return_results:
+                        results_by_oid[oid] = self._serialize_row_result(row_result)
+
+        self._emit_summary_warnings()
+
+        if self.config.return_results:
+            return results_by_oid
+
+        return None
+
+    def _validate_config(self) -> None:
+        if not self.config.endpoint_modes:
+            raise ValueError(
+                "LineEndpointToolConfig.endpoint_modes must contain at least one mode."
+            )
+
+        if not self.config.return_results and not self.config.write_fields:
+            raise ValueError(
+                "At least one output behavior must be enabled: "
+                "return_results or write_fields."
+            )
+
+        if self.config.write_fields and not self.config.output_lines:
+            raise ValueError("output_lines is required when write_fields=True.")
+
+    def _resolve_requested_modes(self) -> tuple[_ConcreteLineEndpointMode, ...]:
+        requested = set()
+
+        for mode in self.config.endpoint_modes:
+            if mode == LineEndpointMode.START_POINT:
+                requested.add(_ConcreteLineEndpointMode.START_POINT)
+
+            elif mode == LineEndpointMode.END_POINT:
+                requested.add(_ConcreteLineEndpointMode.END_POINT)
+
+            elif mode == LineEndpointMode.BOTH_ENDPOINTS:
+                requested.add(_ConcreteLineEndpointMode.START_POINT)
+                requested.add(_ConcreteLineEndpointMode.END_POINT)
+
+            else:
+                raise ValueError(f"Unsupported endpoint mode: {mode}")
+
+        ordered_modes = (
+            _ConcreteLineEndpointMode.START_POINT,
+            _ConcreteLineEndpointMode.END_POINT,
+        )
+
+        return tuple(mode for mode in ordered_modes if mode in requested)
+
+    def _prepare_processing_feature_class(self) -> str:
+        if not self.config.write_fields:
+            return self.config.input_lines
+
+        arcpy.management.CopyFeatures(
+            self.config.input_lines,
+            self.config.output_lines,
+        )
+        return self.config.output_lines
+
+    def _ensure_output_fields(self, lines_fc: str) -> None:
+        existing_fields = {field.name for field in arcpy.ListFields(lines_fc)}
+
+        for field_name in self._required_field_names():
+            if field_name in existing_fields:
+                continue
+
+            arcpy.management.AddField(
+                in_table=lines_fc,
+                field_name=field_name,
+                field_type="DOUBLE",
+            )
+
+    def _required_field_names(self) -> list[str]:
+        field_names = []
+
+        if _ConcreteLineEndpointMode.START_POINT in self.resolved_modes:
+            field_names.extend(
+                [
+                    self.config.field_names.start_x,
+                    self.config.field_names.start_y,
+                ]
+            )
+
+        if _ConcreteLineEndpointMode.END_POINT in self.resolved_modes:
+            field_names.extend(
+                [
+                    self.config.field_names.end_x,
+                    self.config.field_names.end_y,
+                ]
+            )
+
+        return field_names
+
+    def _ordered_output_field_names(self) -> list[str]:
+        field_names = []
+
+        for mode in self.resolved_modes:
+            if mode == _ConcreteLineEndpointMode.START_POINT:
+                field_names.extend(
+                    [
+                        self.config.field_names.start_x,
+                        self.config.field_names.start_y,
+                    ]
+                )
+            elif mode == _ConcreteLineEndpointMode.END_POINT:
+                field_names.extend(
+                    [
+                        self.config.field_names.end_x,
+                        self.config.field_names.end_y,
+                    ]
+                )
+
+        return field_names
+
+    def _calculate_row_endpoints(self, polyline) -> _RowEndpointResult:
+        if polyline is None:
+            return self._unsupported_result(issue="null_geometry")
+
+        if polyline.isMultipart:
+            return self._unsupported_result(issue="multipart_not_supported")
+
+        vertices = self._extract_vertices(polyline=polyline)
+
+        if len(vertices) < 2:
+            return self._unsupported_result(issue="too_few_vertices")
+
+        start_point = vertices[0]
+        end_point = vertices[-1]
+
+        coordinates_by_mode: dict[
+            _ConcreteLineEndpointMode,
+            Optional[tuple[float, float]],
+        ] = {}
+
+        for mode in self.resolved_modes:
+            if mode == _ConcreteLineEndpointMode.START_POINT:
+                coordinates_by_mode[mode] = (start_point.X, start_point.Y)
+
+            elif mode == _ConcreteLineEndpointMode.END_POINT:
+                coordinates_by_mode[mode] = (end_point.X, end_point.Y)
+
+        return _RowEndpointResult(
+            coordinates_by_mode=coordinates_by_mode,
+            issues=(),
+            is_supported=True,
+        )
+
+    def _extract_vertices(self, polyline) -> list:
+        vertices = []
+
+        for part in polyline:
+            for point in part:
+                if point is None:
+                    continue
+                vertices.append(point)
+
+        return vertices
+
+    def _unsupported_result(self, issue: str) -> _RowEndpointResult:
+        return _RowEndpointResult(
+            coordinates_by_mode={mode: None for mode in self.resolved_modes},
+            issues=(issue,),
+            is_supported=False,
+        )
+
+    def _write_row_values_to_cursor_row(
+        self,
+        row: list,
+        row_result: _RowEndpointResult,
+    ) -> None:
+        write_values = []
+
+        for mode in self.resolved_modes:
+            xy = row_result.coordinates_by_mode.get(mode)
+
+            if xy is None:
+                write_values.extend([None, None])
+            else:
+                write_values.extend([xy[0], xy[1]])
+
+        row[2:] = write_values
+
+    def _serialize_row_result(self, row_result: _RowEndpointResult) -> dict:
+        public_mode_by_private_mode = {
+            _ConcreteLineEndpointMode.START_POINT: LineEndpointMode.START_POINT,
+            _ConcreteLineEndpointMode.END_POINT: LineEndpointMode.END_POINT,
+        }
+
+        return {
+            "coordinates_by_mode": {
+                public_mode_by_private_mode[mode]: (
+                    None if xy is None else {"x": xy[0], "y": xy[1]}
+                )
+                for mode, xy in row_result.coordinates_by_mode.items()
             },
             "issues": row_result.issues,
             "is_supported": row_result.is_supported,

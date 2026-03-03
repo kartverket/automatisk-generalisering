@@ -3,24 +3,21 @@ import arcpy
 # Importing custom files
 import config
 from custom_tools.general_tools import custom_arcpy, line_topology
-from file_manager import work_file_manager
 from file_manager.n100.file_manager_rivers import River_N100
-
 from env_setup import environment_setup
-from input_data import input_symbology
-from custom_tools.general_tools.partition_iterator import PartitionIterator
 
 from composition_configs import core_config, logic_config
 
 from custom_tools.decorators.timing_decorator import timing_decorator
-from custom_tools.general_tools.geometry_tools import LineAngleTool
+from custom_tools.general_tools.geometry_tools import LineAngleTool, LineEndpointTool
 
 
 @timing_decorator
 def main():
     environment_setup.main()
-    fill_line_topology_gaps()
-    # find_angles()
+    # fill_line_topology_gaps()
+    find_angles()
+    find_xy_endpoints()
 
 
 def find_angles():
@@ -32,6 +29,7 @@ def find_angles():
         write_fields=True,
     )
     returned_angles = LineAngleTool(config=line_angle_config).run()
+    print(f"{returned_angles}")
 
     line_angle_config2 = logic_config.AngleToolConfig(
         input_lines=River_N100.river_topology___river_gaps_changes___n100_river.value,
@@ -72,6 +70,20 @@ def fill_line_topology_gaps():
     )
 
     line_topology.FillLineGaps(line_gap_config=line_fix_config).run()
+
+
+@timing_decorator
+def find_xy_endpoints():
+    xy_endpoint_config = logic_config.LineEndpointToolConfig(
+        input_lines=River_N100.river_topology___river_angles___n100_river.value,
+        output_lines=River_N100.river_topology___river_xy_endpoints___n100_river.value,
+        endpoint_modes=(logic_config.LineEndpointMode.BOTH_ENDPOINTS,),
+        write_fields=True,
+        return_results=True,
+    )
+
+    results = LineEndpointTool(config=xy_endpoint_config).run()
+    # print(f"{results}")
 
 
 if __name__ == "__main__":

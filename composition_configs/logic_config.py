@@ -276,3 +276,29 @@ class AngleToolConfig:
     field_name_by_mode: Optional[dict[LineAngleMode, str]] = None
     return_results: bool = True
     write_fields: bool = False
+
+
+class LineEndpointMode(str, Enum):
+    START_POINT = "start_point"
+    END_POINT = "end_point"
+    BOTH_ENDPOINTS = "both_endpoints"
+
+
+@dataclass(frozen=True)
+class LineEndpointFieldNameConfig:
+    start_x: str = "start_x"
+    start_y: str = "start_y"
+    end_x: str = "end_x"
+    end_y: str = "end_y"
+
+
+@dataclass(frozen=True)
+class LineEndpointToolConfig:
+    input_lines: str
+    endpoint_modes: tuple[LineEndpointMode, ...]
+    output_lines: Optional[str] = None
+    field_names: LineEndpointFieldNameConfig = field(
+        default_factory=LineEndpointFieldNameConfig
+    )
+    return_results: bool = True
+    write_fields: bool = False
