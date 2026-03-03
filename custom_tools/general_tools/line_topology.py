@@ -714,9 +714,15 @@ class Proposal:
     src_node: EntityKey
     tgt_node: EntityKey
     chosen: dict  # the chosen candidate row dict
-    score: tuple[
-        float, int, int, str, int
-    ]  # (dist, src_parent, dangle_oid, near_fc_key, near_fid)
+
+    raw_distance: float
+    effective_distance: float
+    bonus_applied: bool
+
+    # (effective_dist, bonus_rank, raw_dist, src_parent, dangle_oid, near_fc_key, near_fid)
+    # bonus_rank: 0 when edge-case bonus applied, else 1
+    score: tuple[float, int, float, int, int, str, int]
+
     pair_key: tuple[EntityKey, EntityKey]  # unordered network pair
     target_parent_id: Optional[int]  # only for line/dangle targets (ORIGINAL_ID space)
     target_dangle_oid: Optional[int]  # only if chosen is a dangle target
@@ -980,6 +986,117 @@ class FillLineGaps:
         Isolated behind a function so it can be upgraded later if SOURCE_OID becomes available.
         """
         return ("optional_candidate", str(dataset_key), int(near_fid))
+
+    def _best_legal_line_target_parent(
+        self,
+        *,
+        legal_rows: list[dict],
+        lines_fc_key: str,
+    ) -> Optional[int]:
+        """
+        Return the parent line id of the closest legal line target for this dangle.
+
+        `legal_rows` must already be sorted by raw candidate order.
+        """
+        for cand in legal_rows:
+            if str(cand["near_fc_key"]) == str(lines_fc_key):
+                return int(cand["near_fid"])
+        return None
+
+    def _edge_case_bonus_applies(
+        self,
+        *,
+        dangle_oid: int,
+        cand: dict,
+        dangles_fc_key: str,
+        dangle_parent: dict[int, int],
+        best_line_parent_by_dangle: dict[int, int],
+    ) -> bool:
+        """
+        Edge-case bonus applies only for dangle targets when:
+
+        - source dangle's best legal line target is the target dangle's parent line
+        - target dangle's best legal line target is the source dangle's parent line
+
+        This is the explicit implementation of:
+        "if both dangles want each other's parent line, prioritize the dangle".
+        """
+        extra = max(0, int(self.increased_tolerance_edge_case_distance_meters))
+        if extra <= 0:
+            return False
+
+        if str(cand["near_fc_key"]) != str(dangles_fc_key):
+            return False
+
+        src_parent = dangle_parent.get(int(dangle_oid))
+        if src_parent is None:
+            return False
+
+        other_dangle_oid = int(cand["near_fid"])
+        other_parent = dangle_parent.get(int(other_dangle_oid))
+        if other_parent is None:
+            return False
+
+        src_best_line_parent = best_line_parent_by_dangle.get(int(dangle_oid))
+        other_best_line_parent = best_line_parent_by_dangle.get(int(other_dangle_oid))
+
+        if src_best_line_parent is None or other_best_line_parent is None:
+            return False
+
+        return int(src_best_line_parent) == int(other_parent) and int(
+            other_best_line_parent
+        ) == int(src_parent)
+
+    def _candidate_score_details(
+        self,
+        *,
+        dangle_oid: int,
+        parent_id: int,
+        cand: dict,
+        dangles_fc_key: str,
+        dangle_parent: dict[int, int],
+        best_line_parent_by_dangle: dict[int, int],
+    ) -> tuple[float, float, bool, tuple[float, int, float, int, int, str, int]]:
+        """
+        Returns:
+        - raw_distance
+        - effective_distance
+        - bonus_applied
+        - deterministic score tuple
+
+        Negative effective distances are allowed intentionally.
+        """
+        raw_distance = float(cand["near_dist"])
+        bonus_applied = self._edge_case_bonus_applies(
+            dangle_oid=int(dangle_oid),
+            cand=cand,
+            dangles_fc_key=dangles_fc_key,
+            dangle_parent=dangle_parent,
+            best_line_parent_by_dangle=best_line_parent_by_dangle,
+        )
+
+        if bonus_applied:
+            effective_distance = raw_distance - float(
+                max(0, int(self.increased_tolerance_edge_case_distance_meters))
+            )
+        else:
+            effective_distance = raw_distance
+
+        # If effective distances tie, prefer the bonus-applied candidate.
+        # That preserves the intended "prioritize the dangle" behavior at the boundary.
+        bonus_rank = 0 if bonus_applied else 1
+
+        score = (
+            float(effective_distance),
+            int(bonus_rank),
+            float(raw_distance),
+            int(parent_id),
+            int(dangle_oid),
+            str(cand["near_fc_key"]),
+            int(cand["near_fid"]),
+        )
+
+        return raw_distance, effective_distance, bool(bonus_applied), score
 
     # ----------------------------
     # Preprocessing
@@ -1888,12 +2005,16 @@ class FillLineGaps:
             return {}, {}
 
         # ----------------------------
-        # Step 1: build exactly ONE proposal per dangle (best-fit legal)
+        # Step 1A: collect legal candidates per dangle
         # ----------------------------
-        proposals_by_dangle: dict[int, Proposal] = {}
+        legal_rows_by_dangle: dict[int, list[dict]] = {}
+        parent_id_by_dangle: dict[int, int] = {}
+        best_line_parent_by_dangle: dict[int, int] = {}
 
-        for dangle_oid, candidates in grouped.items():
+        for dangle_oid in sorted(grouped.keys()):
+            candidates = grouped[dangle_oid]
             dangle_oid = int(dangle_oid)
+
             parent_id = dangle_parent.get(dangle_oid)
             if parent_id is None:
                 continue
@@ -1901,7 +2022,7 @@ class FillLineGaps:
 
             rows = sorted(candidates, key=self._candidate_sort_key)
 
-            chosen = None
+            legal_rows: list[dict] = []
             for cand in rows:
                 if self._candidate_is_legal(
                     illegal=illegal,
@@ -1911,14 +2032,66 @@ class FillLineGaps:
                     parent_id=parent_id,
                     cand=cand,
                     base_tol=base_tol,
-                    dangle_candidate_tol=dangle_tol,  # expanded tolerance applies ONLY for dangle targets
+                    dangle_candidate_tol=dangle_tol,  # expanded tolerance still applies here
                     topology=topology,
                 ):
-                    chosen = cand
-                    break
+                    legal_rows.append(cand)
 
-            if chosen is None:
+            if not legal_rows:
                 continue
+
+            legal_rows_by_dangle[dangle_oid] = legal_rows
+            parent_id_by_dangle[dangle_oid] = parent_id
+
+            best_line_parent = self._best_legal_line_target_parent(
+                legal_rows=legal_rows,
+                lines_fc_key=lines_key,
+            )
+            if best_line_parent is not None:
+                best_line_parent_by_dangle[dangle_oid] = int(best_line_parent)
+
+        if not legal_rows_by_dangle:
+            return {}, {}
+
+        # ----------------------------
+        # Step 1B: choose exactly ONE proposal per dangle using edge-case adjusted scoring
+        # ----------------------------
+        proposals_by_dangle: dict[int, Proposal] = {}
+
+        for dangle_oid in sorted(legal_rows_by_dangle.keys()):
+            dangle_oid = int(dangle_oid)
+            parent_id = int(parent_id_by_dangle[dangle_oid])
+            legal_rows = legal_rows_by_dangle[dangle_oid]
+
+            scored_candidates: list[
+                tuple[
+                    tuple[float, int, float, int, int, str, int],
+                    dict,
+                    float,
+                    float,
+                    bool,
+                ]
+            ] = []
+
+            for cand in legal_rows:
+                raw_distance, effective_distance, bonus_applied, score = (
+                    self._candidate_score_details(
+                        dangle_oid=dangle_oid,
+                        parent_id=parent_id,
+                        cand=cand,
+                        dangles_fc_key=dangles_key,
+                        dangle_parent=dangle_parent,
+                        best_line_parent_by_dangle=best_line_parent_by_dangle,
+                    )
+                )
+                scored_candidates.append(
+                    (score, cand, raw_distance, effective_distance, bonus_applied)
+                )
+
+            score, chosen, raw_distance, effective_distance, bonus_applied = min(
+                scored_candidates,
+                key=lambda item: item[0],
+            )
 
             src_node = self._node_for_parent(parent_id=parent_id, topology=topology)
 
@@ -1932,33 +2105,26 @@ class FillLineGaps:
                 target_dangle_oid = near_fid
                 other_parent = dangle_parent.get(int(target_dangle_oid))
                 if other_parent is None:
-                    # Defensive; should be blocked by _candidate_is_legal already
                     continue
                 target_parent_id = int(other_parent)
                 tgt_node = self._node_for_parent(
-                    parent_id=target_parent_id, topology=topology
+                    parent_id=target_parent_id,
+                    topology=topology,
                 )
 
             elif ds_key == lines_key:
                 target_parent_id = near_fid  # already in ORIGINAL_ID space
                 tgt_node = self._node_for_parent(
-                    parent_id=target_parent_id, topology=topology
+                    parent_id=target_parent_id,
+                    topology=topology,
                 )
 
             else:
-                # Optional/other target: keep as standalone candidate node for now
                 tgt_node = self._node_for_optional_candidate(
-                    dataset_key=ds_key, near_fid=near_fid
+                    dataset_key=ds_key,
+                    near_fid=near_fid,
                 )
 
-            # Deterministic proposal score and pair key
-            score = (
-                float(chosen["near_dist"]),
-                int(parent_id),
-                int(dangle_oid),
-                str(chosen["near_fc_key"]),
-                int(chosen["near_fid"]),
-            )
             pair_key = self._unordered_pair_key(src_node, tgt_node)
 
             proposals_by_dangle[dangle_oid] = Proposal(
@@ -1967,6 +2133,9 @@ class FillLineGaps:
                 src_node=src_node,
                 tgt_node=tgt_node,
                 chosen=chosen,
+                raw_distance=float(raw_distance),
+                effective_distance=float(effective_distance),
+                bonus_applied=bool(bonus_applied),
                 score=score,
                 pair_key=pair_key,
                 target_parent_id=target_parent_id,

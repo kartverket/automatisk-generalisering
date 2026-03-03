@@ -19,8 +19,8 @@ from custom_tools.general_tools.geometry_tools import LineAngleTool
 @timing_decorator
 def main():
     environment_setup.main()
-    # fill_line_topology_gaps()
-    find_angles()
+    fill_line_topology_gaps()
+    # find_angles()
 
 
 def find_angles():
@@ -48,7 +48,7 @@ def fill_line_topology_gaps():
     line_fix_advanced_config = logic_config.FillLineGapsAdvancedConfig(
         fill_gaps_on_self=True,
         line_changes_output=River_N100.river_topology___river_gaps_changes___n100_river.value,
-        increased_tolerance_edge_case_distance_meters=3,
+        increased_tolerance_edge_case_distance_meters=5,
         edit_method=logic_config.EditMethod.AUTO,
         connectivity_scope=logic_config.ConnectivityScope.TRANSITIVE,
         connectivity_tolerance_meters=environment_setup.ArcGisEnvironmentSetup.XY_TOLERANCE,
