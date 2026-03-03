@@ -26,12 +26,7 @@ def main():
 def find_angles():
     line_angle_config = logic_config.AngleToolConfig(
         input_lines=River_N100.data_preparation___river_lines___n100_river.value,
-        angle_modes=(
-            logic_config.LineAngleMode.WHOLE_LINE,
-            logic_config.LineAngleMode.BOTH_ENDPOINT_SEGMENTS,
-            logic_config.LineAngleMode.START_TO_MIDPOINT,
-            logic_config.LineAngleMode.END_TO_MIDPOINT,
-        ),
+        angle_modes=(logic_config.LineAngleMode.ALL_ANGLES,),
         output_lines=River_N100.river_topology___river_angles___n100_river.value,
         return_results=True,
         write_fields=True,
@@ -40,12 +35,7 @@ def find_angles():
 
     line_angle_config2 = logic_config.AngleToolConfig(
         input_lines=River_N100.river_topology___river_gaps_changes___n100_river.value,
-        angle_modes=(
-            logic_config.LineAngleMode.WHOLE_LINE,
-            logic_config.LineAngleMode.BOTH_ENDPOINT_SEGMENTS,
-            logic_config.LineAngleMode.START_TO_MIDPOINT,
-            logic_config.LineAngleMode.END_TO_MIDPOINT,
-        ),
+        angle_modes=(logic_config.LineAngleMode.ALL_ANGLES,),
         output_lines=River_N100.river_topology___river_angles_2___n100_river.value,
         return_results=True,
         write_fields=True,

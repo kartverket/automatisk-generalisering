@@ -264,6 +264,8 @@ class LineAngleMode(str, Enum):
     BOTH_ENDPOINT_SEGMENTS = "both_endpoint_segments"
     START_TO_MIDPOINT = "start_to_midpoint"
     END_TO_MIDPOINT = "end_to_midpoint"
+    BOTH_ENDPOINT_TO_MIDPOINT = "both_endpoint_to_midpoint"
+    ALL_ANGLES = "all_angles"
 
 
 @dataclass(frozen=True)
