@@ -74,6 +74,7 @@ class fc(Enum):
     areas_above_5000_line_buffer="areas_above_5000_line_buffer"
     areas_above_5000_full_buffer="areas_above_5000_full_buffer"
     areas_above_5000_full_buffer_dissolved="areas_above_5000_full_buffer_dissolved"
+    areas_above_5000_full_buffer_dissolved_single="areas_above_5000_full_buffer_dissolved_single"
     areas_within_above_5000="areas_within_above_5000"
     just_areas_within_above_5000="just_areas_within_above_5000"
     valid_label_positions_large="valid_label_positions_large"
@@ -124,6 +125,7 @@ def create_wfm_gdbs(wfm: WorkFileManager) -> dict:
     areas_above_5000_line_buffer=wfm.build_file_path(file_name="areas_above_5000_line_buffer", file_type="gdb")
     areas_above_5000_full_buffer=wfm.build_file_path(file_name="areas_above_5000_full_buffer", file_type="gdb")
     areas_above_5000_full_buffer_dissolved=wfm.build_file_path(file_name="areas_above_5000_full_buffer_dissolved", file_type="gdb")
+    areas_above_5000_full_buffer_dissolved_single=wfm.build_file_path(file_name="areas_above_5000_full_buffer_dissolved_single", file_type="gdb")
     areas_within_above_5000=wfm.build_file_path(file_name="areas_within_above_5000", file_type="gdb")
     just_areas_within_above_5000=wfm.build_file_path(file_name="just_areas_within_above_5000", file_type="gdb")
     valid_label_positions_large=wfm.build_file_path(file_name="valid_label_positions_large", file_type="gdb")
@@ -162,6 +164,7 @@ def create_wfm_gdbs(wfm: WorkFileManager) -> dict:
         fc.areas_above_5000_line_buffer:areas_above_5000_line_buffer,
         fc.areas_above_5000_full_buffer:areas_above_5000_full_buffer,
         fc.areas_above_5000_full_buffer_dissolved:areas_above_5000_full_buffer_dissolved,
+        fc.areas_above_5000_full_buffer_dissolved_single:areas_above_5000_full_buffer_dissolved_single,
         fc.areas_within_above_5000:areas_within_above_5000,
         fc.just_areas_within_above_5000:just_areas_within_above_5000,
         fc.valid_label_positions_large:valid_label_positions_large,
@@ -325,27 +328,52 @@ def valid_areas_large_lakes(files:dict)->None:
     arcpy.management.MakeFeatureLayer(files[fc.areas_above_5000_full_buffer], out_layer=areas_above_5000_full_buffer_lyr)
     arcpy.management.RepairGeometry(in_features=areas_above_5000_full_buffer_lyr, delete_null='DELETE_NULL')
     arcpy.analysis.PairwiseDissolve(in_features=areas_above_5000_full_buffer_lyr, out_feature_class=files[fc.areas_above_5000_full_buffer_dissolved]) #Could work
+    
+    areas_above_5000_full_buffer_dissolved_lyr="areas_above_5000_full_buffer_dissolved_lyr"
+    arcpy.management.MakeFeatureLayer(in_features=files[fc.areas_above_5000_full_buffer_dissolved], out_layer=areas_above_5000_full_buffer_dissolved_lyr)
+    arcpy.management.MultipartToSinglepart(in_features=areas_above_5000_full_buffer_dissolved_lyr, out_feature_class=files[fc.areas_above_5000_full_buffer_dissolved_single])
+    
     '''
     arcpy.management.Dissolve(in_features=areas_above_5000_full_buffer_lyr, out_feature_class=files[fc.areas_above_5000_full_buffer_dissolved], multi_part="MULTI_PART", unsplit_lines="DISSOLVE_LINES")
     '''
     print(6)
+    arcpy.analysis.PairwiseErase(
+        in_features=files[fc.areas_above_5000_full_buffer_dissolved_single],
+        erase_features=files[fc.areas_above_5000_line_buffer],
+        out_feature_class=files[fc.areas_within_above_5000]
+    )
+
+    '''
     arcpy.analysis.Erase(
         in_features=files[fc.areas_above_5000_full_buffer_dissolved],
         erase_features=files[fc.areas_above_5000_line_buffer],
         out_feature_class=files[fc.areas_within_above_5000]
         )
+        '''
     print(7)
-    arcpy.analysis.Erase(
+
+    arcpy.analysis.PairwiseErase(
         in_features=files[fc.areas_within_above_5000],
         erase_features=files[fc.innsjo_below_5000_buffed],
         out_feature_class=files[fc.just_areas_within_above_5000]
     )
+
+    '''arcpy.analysis.Erase(
+        in_features=files[fc.areas_within_above_5000],
+        erase_features=files[fc.innsjo_below_5000_buffed],
+        out_feature_class=files[fc.just_areas_within_above_5000]
+    )'''
     print(8)
-    arcpy.analysis.Erase(
+    arcpy.analysis.PairwiseErase(
         in_features=files[fc.just_areas_within_above_5000],
         erase_features=files[fc.annotations_pre_buffed],
         out_feature_class=files[fc.valid_label_positions_large]
     )
+    '''arcpy.analysis.Erase(
+        in_features=files[fc.just_areas_within_above_5000],
+        erase_features=files[fc.annotations_pre_buffed],
+        out_feature_class=files[fc.valid_label_positions_large]
+    )'''
 
 @timing_decorator
 def valid_areas_small_lakes(files:dict)->None:
