@@ -183,13 +183,15 @@ class LineAngleTool:
 
     Important:
         - WHOLE_LINE always means canonical start -> end direction.
-        - BOTH_ENDPOINT_SEGMENTS is a request convenience selector only.
-          It expands to START_SEGMENT and END_SEGMENT and is never stored
-          as its own output value.
+        - Selector modes are request conveniences only.
+        - Selector modes expand internally and are never stored as their
+          own output values.
     """
 
     def __init__(self, config: AngleToolConfig):
         self.config = config
+        self._validate_config()
+
         self.resolved_modes = self._resolve_requested_modes()
         self.field_name_by_mode = self._build_field_name_by_mode()
         self.issue_counts: dict[str, int] = {}
@@ -205,8 +207,6 @@ class LineAngleTool:
 
             Or None when return_results=False.
         """
-        self._validate_config()
-
         lines_fc = self._prepare_processing_feature_class()
 
         if self.config.write_fields:
@@ -215,6 +215,7 @@ class LineAngleTool:
         results_by_oid: dict[int, dict] = {}
 
         field_names = ["OID@", "SHAPE@"]
+
         if self.config.write_fields:
             ordered_angle_fields = [
                 self.field_name_by_mode[mode] for mode in self.resolved_modes
@@ -272,11 +273,17 @@ class LineAngleTool:
         if self.config.field_name_by_mode is None:
             return
 
+        selector_only_modes = {
+            LineAngleMode.BOTH_ENDPOINT_SEGMENTS,
+            LineAngleMode.BOTH_ENDPOINT_TO_MIDPOINT,
+            LineAngleMode.ALL_ANGLES,
+        }
+
         for mode in self.config.field_name_by_mode:
-            if mode == LineAngleMode.BOTH_ENDPOINT_SEGMENTS:
+            if mode in selector_only_modes:
                 raise ValueError(
-                    "BOTH_ENDPOINT_SEGMENTS cannot be used in field_name_by_mode. "
-                    "It is a convenience selector only."
+                    f"{mode.value} cannot be used in field_name_by_mode. "
+                    "It is a selector-only mode."
                 )
 
     def _resolve_requested_modes(self) -> tuple[_ConcreteLineAngleMode, ...]:
@@ -285,17 +292,34 @@ class LineAngleTool:
         for mode in self.config.angle_modes:
             if mode == LineAngleMode.WHOLE_LINE:
                 requested.add(_ConcreteLineAngleMode.WHOLE_LINE)
+
             elif mode == LineAngleMode.START_SEGMENT:
                 requested.add(_ConcreteLineAngleMode.START_SEGMENT)
+
             elif mode == LineAngleMode.END_SEGMENT:
                 requested.add(_ConcreteLineAngleMode.END_SEGMENT)
+
             elif mode == LineAngleMode.BOTH_ENDPOINT_SEGMENTS:
                 requested.add(_ConcreteLineAngleMode.START_SEGMENT)
                 requested.add(_ConcreteLineAngleMode.END_SEGMENT)
+
             elif mode == LineAngleMode.START_TO_MIDPOINT:
                 requested.add(_ConcreteLineAngleMode.START_TO_MIDPOINT)
+
             elif mode == LineAngleMode.END_TO_MIDPOINT:
                 requested.add(_ConcreteLineAngleMode.END_TO_MIDPOINT)
+
+            elif mode == LineAngleMode.BOTH_ENDPOINT_TO_MIDPOINT:
+                requested.add(_ConcreteLineAngleMode.START_TO_MIDPOINT)
+                requested.add(_ConcreteLineAngleMode.END_TO_MIDPOINT)
+
+            elif mode == LineAngleMode.ALL_ANGLES:
+                requested.add(_ConcreteLineAngleMode.WHOLE_LINE)
+                requested.add(_ConcreteLineAngleMode.START_SEGMENT)
+                requested.add(_ConcreteLineAngleMode.END_SEGMENT)
+                requested.add(_ConcreteLineAngleMode.START_TO_MIDPOINT)
+                requested.add(_ConcreteLineAngleMode.END_TO_MIDPOINT)
+
             else:
                 raise ValueError(f"Unsupported angle mode: {mode}")
 
@@ -372,6 +396,7 @@ class LineAngleTool:
             return self._unsupported_result(issue="multipart_not_supported")
 
         vertices = self._extract_vertices(polyline=polyline)
+
         if len(vertices) < 2:
             return self._unsupported_result(issue="too_few_vertices")
 
@@ -408,6 +433,7 @@ class LineAngleTool:
             reversed_angle = self._reverse_angle(base_angle)
 
         angles_by_mode = {}
+
         for mode in self.resolved_modes:
             if mode == _ConcreteLineAngleMode.WHOLE_LINE:
                 angles_by_mode[mode] = base_angle
@@ -434,7 +460,9 @@ class LineAngleTool:
         )
 
     def _calculate_multivertex_result(
-        self, polyline, vertices: list
+        self,
+        polyline,
+        vertices: list,
     ) -> _RowAngleResult:
         start_point = vertices[0]
         second_point = vertices[1]
@@ -450,21 +478,25 @@ class LineAngleTool:
                     from_point=start_point,
                     to_point=end_point,
                 )
+
             elif mode == _ConcreteLineAngleMode.START_SEGMENT:
                 angles_by_mode[mode] = self._calculate_direction_angle(
                     from_point=start_point,
                     to_point=second_point,
                 )
+
             elif mode == _ConcreteLineAngleMode.END_SEGMENT:
                 angles_by_mode[mode] = self._calculate_direction_angle(
                     from_point=end_point,
                     to_point=previous_to_end_point,
                 )
+
             elif mode == _ConcreteLineAngleMode.START_TO_MIDPOINT:
                 angles_by_mode[mode] = self._calculate_direction_angle(
                     from_point=start_point,
                     to_point=midpoint,
                 )
+
             elif mode == _ConcreteLineAngleMode.END_TO_MIDPOINT:
                 angles_by_mode[mode] = self._calculate_direction_angle(
                     from_point=end_point,
@@ -472,6 +504,7 @@ class LineAngleTool:
                 )
 
         issues = []
+
         if all(value is None for value in angles_by_mode.values()):
             issues.append("no_requested_angles_available")
 
@@ -483,8 +516,10 @@ class LineAngleTool:
 
     def _get_line_midpoint(self, polyline):
         midpoint_geometry = polyline.positionAlongLine(0.5, use_percentage=True)
+
         if midpoint_geometry is None:
             return None
+
         return midpoint_geometry.firstPoint
 
     @staticmethod
