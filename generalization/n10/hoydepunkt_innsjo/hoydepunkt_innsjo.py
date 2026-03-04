@@ -10,7 +10,7 @@ from input_data import input_innsjohoyde, input_n100
 arcpy.env.overwriteOutput = True
 
 # ========================
-# Configurations
+# Configurations🤠🦐
 # ========================
 
 class prog_config(Enum): 
@@ -294,8 +294,15 @@ def invalid_areas(files:dict)->None:
         )
         '''
 
+
 @timing_decorator
 def valid_areas_large_lakes(files:dict)->None:
+    
+    def delete_layers(layers:list)->None:
+        for lyr in layers:
+            if arcpy.Exists(lyr):
+                arcpy.management.Delete(lyr)
+    
     """
     Area with valid positions for all large lakes regulated or larger than 5000m^2.
 
@@ -333,47 +340,48 @@ def valid_areas_large_lakes(files:dict)->None:
     arcpy.management.MakeFeatureLayer(in_features=files[fc.areas_above_5000_full_buffer_dissolved], out_layer=areas_above_5000_full_buffer_dissolved_lyr)
     arcpy.management.MultipartToSinglepart(in_features=areas_above_5000_full_buffer_dissolved_lyr, out_feature_class=files[fc.areas_above_5000_full_buffer_dissolved_single])
     
-    '''
-    arcpy.management.Dissolve(in_features=areas_above_5000_full_buffer_lyr, out_feature_class=files[fc.areas_above_5000_full_buffer_dissolved], multi_part="MULTI_PART", unsplit_lines="DISSOLVE_LINES")
-    '''
+    areas_above_5000_full_buffer_dissolved_single_lyr="areas_above_5000_full_buffer_dissolved_single_lyr"
+    areas_above_5000_line_buffer_lyr="areas_above_5000_line_buffer_lyr"
+    arcpy.management.MakeFeatureLayer(files[fc.areas_above_5000_full_buffer_dissolved_single], areas_above_5000_full_buffer_dissolved_single_lyr)
+    arcpy.management.MakeFeatureLayer(files[fc.areas_above_5000_line_buffer], areas_above_5000_line_buffer_lyr)
+
     print(6)
     arcpy.analysis.PairwiseErase(
-        in_features=files[fc.areas_above_5000_full_buffer_dissolved_single],
-        erase_features=files[fc.areas_above_5000_line_buffer],
+        in_features=areas_above_5000_full_buffer_dissolved_single_lyr,
+        erase_features=areas_above_5000_line_buffer_lyr,
         out_feature_class=files[fc.areas_within_above_5000]
     )
 
-    '''
-    arcpy.analysis.Erase(
-        in_features=files[fc.areas_above_5000_full_buffer_dissolved],
-        erase_features=files[fc.areas_above_5000_line_buffer],
-        out_feature_class=files[fc.areas_within_above_5000]
-        )
-        '''
+    # Delete layers to release locks 
+    delete_layers(["innsjo_above_5000", "areas_above_5000_full_buffer_dissolved_lyr", "areas_above_5000_full_buffer_dissolved_single_lyr", "areas_above_5000_line_buffer_lyr" ])
+
     print(7)
 
+    areas_within_above_5000_lyr="areas_within_above_5000_lyr"
+    innsjo_below_5000_buffed_lyr="innsjo_below_5000_buffed_lyr"
+    arcpy.management.MakeFeatureLayer(files[fc.areas_within_above_5000], areas_within_above_5000_lyr)
+    arcpy.management.MakeFeatureLayer(files[fc.innsjo_below_5000_buffed], innsjo_below_5000_buffed_lyr)
+
     arcpy.analysis.PairwiseErase(
-        in_features=files[fc.areas_within_above_5000],
-        erase_features=files[fc.innsjo_below_5000_buffed],
+        in_features=areas_within_above_5000_lyr,
+        erase_features=innsjo_below_5000_buffed_lyr,
         out_feature_class=files[fc.just_areas_within_above_5000]
     )
 
-    '''arcpy.analysis.Erase(
-        in_features=files[fc.areas_within_above_5000],
-        erase_features=files[fc.innsjo_below_5000_buffed],
-        out_feature_class=files[fc.just_areas_within_above_5000]
-    )'''
+    delete_layers([ "areas_within_above_5000_lyr", "innsjo_below_5000_buffed_lyr"])
+
     print(8)
+    just_areas_within_above_5000_lyr="just_areas_within_above_5000_lyr"
+    annotations_pre_buffed_lyr="annotations_pre_buffed_lyr"
+    arcpy.management.MakeFeatureLayer(files[fc.just_areas_within_above_5000], just_areas_within_above_5000_lyr)
+    arcpy.management.MakeFeatureLayer(files[fc.annotations_pre_buffed], annotations_pre_buffed_lyr)
+
     arcpy.analysis.PairwiseErase(
-        in_features=files[fc.just_areas_within_above_5000],
-        erase_features=files[fc.annotations_pre_buffed],
+        in_features=just_areas_within_above_5000_lyr,
+        erase_features=annotations_pre_buffed_lyr,
         out_feature_class=files[fc.valid_label_positions_large]
     )
-    '''arcpy.analysis.Erase(
-        in_features=files[fc.just_areas_within_above_5000],
-        erase_features=files[fc.annotations_pre_buffed],
-        out_feature_class=files[fc.valid_label_positions_large]
-    )'''
+
 
 @timing_decorator
 def valid_areas_small_lakes(files:dict)->None:
@@ -383,10 +391,14 @@ def valid_areas_small_lakes(files:dict)->None:
     Args:
         files (dict): Dictionary with all the working files
     """
+    just_areas_within_above_5000_lyr="just_areas_within_above_5000_lyr"
+    innsjo_above_5000_lyr="innsjo_above_5000_lyr"
+    arcpy.management.MakeFeatureLayer(files[fc.just_areas_within_above_5000], just_areas_within_above_5000_lyr)
+    arcpy.management.MakeFeatureLayer(files[fc.innsjo_above_5000], innsjo_above_5000_lyr)
 
     arcpy.analysis.Erase(
-        in_features=files[fc.just_areas_within_above_5000],
-        erase_features=files[fc.innsjo_above_5000],
+        in_features=just_areas_within_above_5000_lyr,
+        erase_features=innsjo_above_5000_lyr,
         out_feature_class=files[fc.valid_label_positions_small]
     )
 
