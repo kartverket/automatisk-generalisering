@@ -228,21 +228,39 @@ class LineConnectivityMode(str, Enum):
     INTERSECT = "intersect"
 
 
+class AngleTargetMode(str, Enum):
+    AUTO = "auto"
+    FORCE_NON_LINE = "force_non_line"
+
+
 @dataclass(frozen=True)
 class FillLineGapsAdvancedConfig:
     fill_gaps_on_self: bool = True
     line_changes_output: Optional[str] = None
 
-    # Extra meters added ONLY when considering dangle→dangle candidates.
-    # Effective dangle→dangle cap = gap_tolerance_meters + extra.
-    # Use 0 to disable expanded dangle pairing.
     increased_tolerance_edge_case_distance_meters: int = 0
-    # Auto uses snap on dangle pairs and extend for all others
     edit_method: EditMethod = EditMethod.AUTO
-    # decide if lines inherit illegal targets of connected lines
     connectivity_scope: ConnectivityScope = ConnectivityScope.DIRECT_CONNECTION
     connectivity_tolerance_meters: float = 0.02
     line_connectivity_mode: LineConnectivityMode = LineConnectivityMode.ENDPOINTS
+
+    # ----------------------------
+    # Angle layer
+    # ----------------------------
+    angle_block_threshold_degrees: Optional[float] = None
+    angle_extra_dangle_threshold_degrees: Optional[float] = None
+    angle_penalty_max_meters: Optional[float] = None
+
+    # 0..1, prefer line alignment a bit more than connector transition
+    line_alignment_weight: float = 0.6
+
+    # Passed to local_line_angle_at_xy(desired_half_window_m=...)
+    angle_local_half_window_m: float = 2.0
+
+    # Optional overrides per external target (connect_to_features)
+    # Keying recommendation:
+    # - support keys by original connect_to_features path OR by dataset_key(path)
+    connect_to_features_angle_mode: Optional[dict[str, AngleTargetMode]] = None
 
 
 @dataclass(frozen=True)

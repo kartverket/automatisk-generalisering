@@ -15,9 +15,9 @@ from custom_tools.general_tools.geometry_tools import LineAngleTool, LineEndpoin
 @timing_decorator
 def main():
     environment_setup.main()
-    # fill_line_topology_gaps()
-    find_angles()
-    find_xy_endpoints()
+    fill_line_topology_gaps()
+    # find_angles()
+    # find_xy_endpoints()
 
 
 def find_angles():
@@ -51,6 +51,10 @@ def fill_line_topology_gaps():
         connectivity_scope=logic_config.ConnectivityScope.TRANSITIVE,
         connectivity_tolerance_meters=environment_setup.ArcGisEnvironmentSetup.XY_TOLERANCE,
         line_connectivity_mode=logic_config.LineConnectivityMode.ENDPOINTS,
+        angle_block_threshold_degrees=None,
+        angle_extra_dangle_threshold_degrees=45,
+        line_alignment_weight=0.6,
+        angle_local_half_window_m=15,
     )
     work_file_manager_config = core_config.WorkFileConfig(
         root_file=River_N100.river_topology___root___n100_river.value,

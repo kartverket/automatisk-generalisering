@@ -861,3 +861,135 @@ class LineEndpointTool:
     def _emit_summary_warnings(self) -> None:
         for issue, count in sorted(self.issue_counts.items()):
             arcpy.AddWarning(f"{count} feature(s) returned issue: {issue}")
+
+
+def local_line_angle_at_xy(
+    *,
+    polyline,
+    x: float,
+    y: float,
+    desired_half_window_m: float,
+    min_half_window_percent: float = 0.01,
+    max_half_window_percent: float = 0.25,
+) -> Optional[float]:
+    """
+    Returns a local direction angle [0, 360) for the polyline near the nearest point
+    to (x, y), using a small window around that measure.
+
+    Pure geometry helper (no IO). Returns None if unsupported.
+    """
+
+    def _direction_angle(p0, p1) -> Optional[float]:
+        if p0 is None or p1 is None:
+            return None
+        dx = p1.X - p0.X
+        dy = p1.Y - p0.Y
+        if dx == 0 and dy == 0:
+            return None
+        return degrees(atan2(dy, dx)) % 360.0
+
+    def _query_measure_percent(polyline, pt_geom) -> Optional[float]:
+        def _extract(q) -> Optional[float]:
+            if not q or len(q) < 2 or q[1] is None:
+                return None
+            try:
+                return float(q[1])
+            except (TypeError, ValueError):
+                return None
+
+        # Prefer percentage along line (0..1)
+        try:
+            q = polyline.queryPointAndDistance(pt_geom, use_percentage=True)
+            m = _extract(q)
+            if m is not None:
+                return m
+        except TypeError:
+            pass
+
+        # Some versions accept positional boolean
+        try:
+            q = polyline.queryPointAndDistance(pt_geom, True)
+            m = _extract(q)
+            if m is not None:
+                return m
+        except TypeError:
+            pass
+
+        # Fallback: distance along line in map units -> convert to percent
+        try:
+            q = polyline.queryPointAndDistance(pt_geom)
+            if not q or len(q) < 2 or q[1] is None:
+                return None
+            dist_along = float(q[1])
+
+            length = float(getattr(polyline, "length", 0.0) or 0.0)
+            if length <= 0.0:
+                return None
+
+            m = dist_along / length
+            # clamp to [0,1]
+            return max(0.0, min(1.0, float(m)))
+        except Exception:
+            return None
+
+    def _position_along_percent(polyline, p: float):
+        # Prefer keyword
+        try:
+            return polyline.positionAlongLine(float(p), use_percentage=True)
+        except TypeError:
+            # Some versions accept positional boolean
+            return polyline.positionAlongLine(float(p), True)
+
+    # 1) Validate geometry
+    if polyline is None:
+        return None
+    if getattr(polyline, "isMultipart", False):
+        return None
+    length = float(getattr(polyline, "length", 0.0) or 0.0)
+    if length <= 0.0:
+        return None
+
+    # 2) Convert length to meters if possible (fallback to dataset units)
+    sr = getattr(polyline, "spatialReference", None)
+    meters_per_unit = getattr(sr, "metersPerUnit", None) if sr is not None else None
+    meters_per_unit = float(meters_per_unit) if meters_per_unit else 1.0
+    length_m = length * meters_per_unit
+    if length_m <= 0.0:
+        return None
+
+    # 3) Find measure (percentage) of nearest point along line
+    pt_geom = arcpy.PointGeometry(arcpy.Point(float(x), float(y)), sr)
+    m = _query_measure_percent(polyline, pt_geom)
+    if m is None:
+        return None
+
+    # 4) Compute window as percent, clamp
+    half_p = float(desired_half_window_m) / float(length_m)
+    half_p = max(
+        float(min_half_window_percent), min(float(max_half_window_percent), half_p)
+    )
+
+    start = max(0.0, m - half_p)
+    end = min(1.0, m + half_p)
+
+    # 5) Sample points and compute local direction; fallback to whole line
+    def _whole_line_angle() -> Optional[float]:
+        a0 = _position_along_percent(polyline, 0.0)
+        a1 = _position_along_percent(polyline, 1.0)
+        if a0 is None or a1 is None:
+            return None
+        return _direction_angle(a0.firstPoint, a1.firstPoint)
+
+    if (end - start) < 1e-9:
+        return _whole_line_angle()
+
+    s0 = _position_along_percent(polyline, start)
+    s1 = _position_along_percent(polyline, end)
+    if s0 is None or s1 is None:
+        return _whole_line_angle()
+
+    angle = _direction_angle(s0.firstPoint, s1.firstPoint)
+    if angle is None:
+        angle = _whole_line_angle()
+
+    return angle
