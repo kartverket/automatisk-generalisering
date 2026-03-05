@@ -50,6 +50,9 @@ class fc(Enum):
     river_segments_under_minimum_fc="river_segments_under_minimum_fc"
     river_segments_above_minimum_fc="river_segments_above_minimum_fc"
     river_above_minimum_buffed_fc="river_above_minimum_buffed_fc"
+    river_below_min_edge_segments_fc="river_below_min_edge_segments_fc"
+    river_below_min_edge_segments_single_fc="river_below_min_edge_segments_single_fc"
+    centre_buffed_edge_intersections_fc="centre_buffed_edge_intersections_fc"
 
 @timing_decorator
 def create_wfm_gdbs(wfm: WorkFileManager) -> dict:
@@ -74,6 +77,9 @@ def create_wfm_gdbs(wfm: WorkFileManager) -> dict:
     river_segments_under_minimum_fc=wfm.build_file_path(file_name="river_segments_under_minimum_fc", file_type="gdb")
     river_segments_above_minimum_fc=wfm.build_file_path(file_name="river_segments_above_minimum_fc", file_type="gdb")
     river_above_minimum_buffed_fc=wfm.build_file_path(file_name="river_above_minimum_buffed_fc", file_type="gdb")
+    river_below_min_edge_segments_fc=wfm.build_file_path(file_name="river_below_min_edge_segments_fc", file_type="gdb")
+    river_below_min_edge_segments_single_fc=wfm.build_file_path(file_name="river_below_min_edge_segments_single_fc", file_type="gdb")
+    centre_buffed_edge_intersections_fc=wfm.build_file_path(file_name="centre_buffed_edge_intersections_fc", file_type="gdb")
 
     return {
         #Fetch data
@@ -85,7 +91,10 @@ def create_wfm_gdbs(wfm: WorkFileManager) -> dict:
         fc.small_river_centre_lines_fc:small_river_centre_lines_fc,
         fc.river_segments_under_minimum_fc:river_segments_under_minimum_fc,
         fc.river_segments_above_minimum_fc:river_segments_above_minimum_fc,
-        fc.river_above_minimum_buffed_fc:river_above_minimum_buffed_fc
+        fc.river_above_minimum_buffed_fc:river_above_minimum_buffed_fc,
+        fc.river_below_min_edge_segments_fc:river_below_min_edge_segments_fc,
+        fc.river_below_min_edge_segments_single_fc:river_below_min_edge_segments_single_fc,
+        fc.centre_buffed_edge_intersections_fc:centre_buffed_edge_intersections_fc
 
     }
 
@@ -104,7 +113,7 @@ def fetch_data(files: dict)->None:
     
     #Repair data to remove self intersections
     arcpy.management.RepairGeometry(in_features=arealdekke_lyr, delete_null='DELETE_NULL')
-    arcpy.management.CopyFeatures(in_features=arealdekke_lyr, out_feature_class=files[fc.rivers_fc])
+    arcpy.management.EliminatePolygonPart(in_features=arealdekke_lyr, out_feature_class=files[fc.rivers_fc])
 
 # ========================
 # Main functionality
@@ -168,8 +177,33 @@ def enlarge_rivers_below_min(files:dict)->None:
         out_feature_class=files[fc.centre_buffed_fc],
         buffer_distance_or_field=f'{prog_config.min_width_rivers.value/2} Meters',
         line_side='FULL',
-        dissolve_option='NONE'
+        line_end_type='FLAT',
+        dissolve_option='ALL'
     )
+
+    centre_buffed_lyr="centre_buffed_lyr"
+    arcpy.management.MakeFeatureLayer(in_features=files[fc.centre_buffed_fc], out_layer=centre_buffed_lyr)
+    polyline_rivers_edge_lyr="polyline_rivers_edge_lyr"
+    arcpy.management.MakeFeatureLayer(in_features=files[fc.rivers_polygon_line_fc], out_layer=polyline_rivers_edge_lyr)
+
+    arcpy.analysis.PairwiseClip(in_features=polyline_rivers_edge_lyr, clip_features=centre_buffed_lyr, out_feature_class=files[fc.river_below_min_edge_segments_fc])
+    #arcpy.analysis.Clip(in_features=polyline_rivers_edge_lyr, clip_features=centre_buffed_lyr, out_feature_class=files[fc.river_below_min_edge_segments_fc])
+    
+    river_below_min_edge_segments_lyr="river_below_min_edge_segments_lyr"
+    arcpy.management.MakeFeatureLayer(in_features=files[fc.river_below_min_edge_segments_fc], out_layer=river_below_min_edge_segments_lyr)
+    arcpy.management.MultipartToSinglepart(in_features=river_below_min_edge_segments_lyr, out_feature_class=files[fc.river_below_min_edge_segments_single_fc])
+    
+    river_below_min_edge_segments_single_lyr="river_below_min_edge_segments_single_lyr"
+    arcpy.management.MakeFeatureLayer(in_features=files[fc.river_below_min_edge_segments_single_fc], out_layer=river_below_min_edge_segments_single_lyr)
+
+    centre_buffed_edge_intersections_lyr="centre_buffed_edge_intersections_lyr"
+    arcpy.sfa.OverlayLayers(
+        inputLayer=centre_buffed_lyr, 
+        overlayLayer=river_below_min_edge_segments_single_lyr, 
+        outputName=centre_buffed_edge_intersections_lyr,
+        overlayType='INTERSECT'
+        )
+    arcpy.management.CopyFeatures(in_features=centre_buffed_edge_intersections_lyr, out_feature_class=files[fc.centre_buffed_edge_intersections_fc])
 
 if __name__ == "__main__":
     main()
