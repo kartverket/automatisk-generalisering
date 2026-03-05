@@ -1,8 +1,9 @@
 from __future__ import annotations
 from dataclasses import dataclass
 from enum import Enum
+import math
 
-from typing import Optional, Callable, Iterable
+from typing import Optional, Callable, Iterable, Any
 
 import arcpy
 
@@ -11,6 +12,7 @@ from custom_tools.general_tools import custom_arcpy, file_utilities
 from file_manager import WorkFileManager
 from composition_configs import logic_config
 from composition_configs.logic_config import ConnectivityScope, LineConnectivityMode
+from custom_tools.general_tools import geometry_tools
 
 
 OptionalKey = tuple[str, int]  # (dataset_key, oid)  -- oid is SOURCE oid
@@ -728,6 +730,23 @@ class Proposal:
     target_dangle_oid: Optional[int]  # only if chosen is a dangle target
 
 
+@dataclass(frozen=True)
+class AngleAssessment:
+    # Primary decisions
+    available: bool
+    blocks: bool
+    allow_extra_dangle: bool  # expanded dangle tol + edge-case bonus
+    angle_metric_deg: Optional[float]
+    angle_penalty_m: float
+
+    # Diagnostics (optional)
+    src_connector_diff: Optional[float] = None
+    connector_target_diff: Optional[float] = None
+    src_target_diff: Optional[float] = None
+    connector_transition_diff: Optional[float] = None
+    line_match_diff: Optional[float] = None
+
+
 class FillLineGaps:
     ORIGINAL_ID = "line_gap_original_id"
 
@@ -773,6 +792,45 @@ class FillLineGaps:
                 "Invalid config: fill_gaps_on_self cannot be False when connect_to_features is None."
             )
 
+        # ----------------------------
+        # Angle config
+        # ----------------------------
+        self.angle_block_threshold_degrees = (
+            None
+            if adv.angle_block_threshold_degrees is None
+            else float(adv.angle_block_threshold_degrees)
+        )
+        self.angle_extra_dangle_threshold_degrees = (
+            None
+            if adv.angle_extra_dangle_threshold_degrees is None
+            else float(adv.angle_extra_dangle_threshold_degrees)
+        )
+        self.angle_penalty_max_meters = (
+            None
+            if adv.angle_penalty_max_meters is None
+            else float(adv.angle_penalty_max_meters)
+        )
+
+        w = float(getattr(adv, "line_alignment_weight", 0.6))
+        self.line_alignment_weight = max(0.0, min(1.0, w))
+
+        self.angle_local_half_window_m = float(
+            getattr(adv, "angle_local_half_window_m", 2.0)
+        )
+
+        # Raw config map (may be keyed by path or dataset_key(path))
+        self._connect_to_features_angle_mode_raw = (
+            adv.connect_to_features_angle_mode or {}
+        )
+
+        # Filled during _build_external_target_layers_once:
+        # dataset_key(output_layer) -> AngleTargetMode
+        self._angle_mode_by_external_ds_key: dict[str, logic_config.AngleTargetMode] = (
+            {}
+        )
+
+        # Local angle cache (dataset_key, oid, rx, ry) -> Optional[float]
+        self._local_angle_cache: dict[tuple[str, int, int, int], Optional[float]] = {}
         self.write_work_files_to_memory = (
             line_gap_config.work_file_manager_config.write_to_memory
         )
@@ -1056,24 +1114,19 @@ class FillLineGaps:
         dangles_fc_key: str,
         dangle_parent: dict[int, int],
         best_line_parent_by_dangle: dict[int, int],
+        bonus_allowed: bool = True,
     ) -> tuple[float, float, bool, tuple[float, int, float, int, int, str, int]]:
-        """
-        Returns:
-        - raw_distance
-        - effective_distance
-        - bonus_applied
-        - deterministic score tuple
-
-        Negative effective distances are allowed intentionally.
-        """
         raw_distance = float(cand["near_dist"])
-        bonus_applied = self._edge_case_bonus_applies(
-            dangle_oid=int(dangle_oid),
-            cand=cand,
-            dangles_fc_key=dangles_fc_key,
-            dangle_parent=dangle_parent,
-            best_line_parent_by_dangle=best_line_parent_by_dangle,
-        )
+
+        bonus_applied = False
+        if bonus_allowed:
+            bonus_applied = self._edge_case_bonus_applies(
+                dangle_oid=int(dangle_oid),
+                cand=cand,
+                dangles_fc_key=dangles_fc_key,
+                dangle_parent=dangle_parent,
+                best_line_parent_by_dangle=best_line_parent_by_dangle,
+            )
 
         if bonus_applied:
             effective_distance = raw_distance - float(
@@ -1082,8 +1135,6 @@ class FillLineGaps:
         else:
             effective_distance = raw_distance
 
-        # If effective distances tie, prefer the bonus-applied candidate.
-        # That preserves the intended "prioritize the dangle" behavior at the boundary.
         bonus_rank = 0 if bonus_applied else 1
 
         score = (
@@ -1123,6 +1174,90 @@ class FillLineGaps:
             self.lines_copy, self.dangles, "DANGLE"
         )
 
+    def _build_polyline_by_parent_id(self) -> dict[int, Any]:
+        out: dict[int, Any] = {}
+        with arcpy.da.SearchCursor(
+            self.lines_copy, [self.ORIGINAL_ID, "SHAPE@"]
+        ) as cur:
+            for pid, shape in cur:
+                if shape is None:
+                    continue
+                out[int(pid)] = shape
+        return out
+
+    def _build_polyline_by_oid(self, fc: str) -> dict[int, Any]:
+        oid_field = arcpy.Describe(fc).OIDFieldName
+        out: dict[int, Any] = {}
+        with arcpy.da.SearchCursor(fc, [oid_field, "SHAPE@"]) as cur:
+            for oid, shape in cur:
+                if shape is None:
+                    continue
+                out[int(oid)] = shape
+        return out
+
+    def _is_polyline_fc(self, fc: str) -> bool:
+        try:
+            desc = arcpy.Describe(fc)
+            # ArcGIS commonly uses "Polyline" here
+            return str(getattr(desc, "shapeType", "")).lower() == "polyline"
+        except Exception:
+            return False
+
+    def _orientation(self, angle_deg: float) -> float:
+        return float(angle_deg) % 180.0
+
+    def _orientation_diff(self, a_deg: float, b_deg: float) -> float:
+        a = self._orientation(float(a_deg))
+        b = self._orientation(float(b_deg))
+        raw = abs(a - b)
+        return min(raw, 180.0 - raw)  # 0..90
+
+    def _connector_angle_deg(
+        self, *, from_x: float, from_y: float, to_x: float, to_y: float
+    ) -> Optional[float]:
+        dx = float(to_x) - float(from_x)
+        dy = float(to_y) - float(from_y)
+        if abs(dx) < 1e-12 and abs(dy) < 1e-12:
+            return None
+        ang = math.degrees(math.atan2(dy, dx))
+        if ang < 0.0:
+            ang += 360.0
+        return float(ang)
+
+    def _local_angle_cache_key(
+        self, *, dataset_key: str, oid: int, x: float, y: float
+    ) -> tuple[str, int, int, int]:
+        # integer mill-units in dataset units (deterministic hashing)
+        scale = 1000.0
+        return (
+            str(dataset_key),
+            int(oid),
+            int(round(float(x) * scale)),
+            int(round(float(y) * scale)),
+        )
+
+    def _local_line_angle_cached(
+        self,
+        *,
+        dataset_key: str,
+        oid: int,
+        polyline,
+        x: float,
+        y: float,
+    ) -> Optional[float]:
+        key = self._local_angle_cache_key(dataset_key=dataset_key, oid=oid, x=x, y=y)
+        if key in self._local_angle_cache:
+            return self._local_angle_cache[key]
+
+        angle = geometry_tools.local_line_angle_at_xy(
+            polyline=polyline,
+            x=float(x),
+            y=float(y),
+            desired_half_window_m=float(self.angle_local_half_window_m),
+        )
+        self._local_angle_cache[key] = angle
+        return angle
+
     # ----------------------------
     # Target staging
     # ----------------------------
@@ -1154,6 +1289,21 @@ class FillLineGaps:
                 )
 
             self.external_target_layers.append(output_name)
+            out_key = self._dataset_key(output_name)
+
+            raw_map = self._connect_to_features_angle_mode_raw
+            raw_mode = (
+                raw_map.get(feature_path)
+                or raw_map.get(self._dataset_key(feature_path))
+                or raw_map.get(out_key)
+            )
+
+            if raw_mode is None:
+                mode = logic_config.AngleTargetMode.AUTO
+            else:
+                mode = logic_config.AngleTargetMode(raw_mode)
+
+            self._angle_mode_by_external_ds_key[str(out_key)] = mode
 
     def _select_targets_within_tolerance_of_dangles(self) -> list[str]:
         targets: list[str] = []
@@ -1446,60 +1596,6 @@ class FillLineGaps:
 
         return adjacency
 
-    def _propagate_external_illegal_within_components(
-        self,
-        *,
-        illegal: dict[int, dict[str, set[int]]],
-        adjacency: dict[int, set[int]],
-    ) -> None:
-        """
-        For each connected component of the line network, union external illegal targets
-        and apply to every member.
-
-        External illegal targets = everything except the canonical lines_key (self-line rule).
-        """
-        lines_key = self._dataset_key(self.lines_copy)
-
-        visited: set[int] = set()
-
-        # Ensure we include isolated nodes too
-        all_nodes = set(illegal.keys()) | set(adjacency.keys())
-        for pid in list(all_nodes):
-            pid = int(pid)
-            if pid in visited:
-                continue
-
-            # BFS to get component
-            stack = [pid]
-            component: set[int] = set()
-
-            while stack:
-                cur = int(stack.pop())
-                if cur in visited:
-                    continue
-                visited.add(cur)
-                component.add(cur)
-
-                for nb in adjacency.get(cur, set()):
-                    nb = int(nb)
-                    if nb not in visited:
-                        stack.append(nb)
-
-            # Union external illegal across component
-            union_external: dict[str, set[int]] = {}
-            for member in component:
-                ds_map = illegal.get(int(member), {})
-                for ds_key, ids in ds_map.items():
-                    if ds_key == lines_key:
-                        continue  # keep self-line constraint per member
-                    union_external.setdefault(ds_key, set()).update(ids)
-
-            # Apply union to each member
-            for member in component:
-                illegal.setdefault(int(member), {})
-                for ds_key, ids in union_external.items():
-                    illegal[int(member)].setdefault(ds_key, set()).update(ids)
-
     def _is_illegal(
         self,
         *,
@@ -1728,6 +1824,196 @@ class FillLineGaps:
             return False
 
         return True
+
+    def _assess_angle(
+        self,
+        *,
+        src_parent_id: int,
+        dangle_x: float,
+        dangle_y: float,
+        src_angle_deg: Optional[float],
+        cand: dict,
+        dangles_fc_key: str,
+        lines_fc_key: str,
+        dangle_parent: dict[int, int],
+        dangle_xy: dict[int, tuple[float, float]],
+        polyline_by_parent: dict[int, Any],
+        polyline_by_external: dict[str, dict[int, Any]],
+        is_external_line_like: dict[str, bool],
+    ) -> AngleAssessment:
+        ds_key = str(cand["near_fc_key"])
+        near_fid = int(cand["near_fid"])
+        near_x = float(cand["near_x"])
+        near_y = float(cand["near_y"])
+
+        connector_angle = self._connector_angle_deg(
+            from_x=dangle_x, from_y=dangle_y, to_x=near_x, to_y=near_y
+        )
+
+        # Determine line-like vs non-line
+        if ds_key == lines_fc_key or ds_key == dangles_fc_key:
+            treat_as_line_like = True
+        else:
+            mode = self._angle_mode_by_external_ds_key.get(
+                ds_key, logic_config.AngleTargetMode.AUTO
+            )
+            if mode == logic_config.AngleTargetMode.FORCE_NON_LINE:
+                treat_as_line_like = False
+            else:
+                treat_as_line_like = bool(is_external_line_like.get(ds_key, False))
+
+        # Base requirements
+        if src_angle_deg is None or connector_angle is None:
+            # Angle unavailable => no block, no penalty; conservative extra-dangle policy handled below
+            allow_extra = ds_key != dangles_fc_key  # only relevant for dangle targets
+            return AngleAssessment(
+                available=False,
+                blocks=False,
+                allow_extra_dangle=bool(allow_extra),
+                angle_metric_deg=None,
+                angle_penalty_m=0.0,
+            )
+
+        src_connector_diff = self._orientation_diff(
+            float(src_angle_deg), float(connector_angle)
+        )
+
+        # Non-line targets use src_connector_diff directly
+        if not treat_as_line_like:
+            metric = float(src_connector_diff)
+
+            blocks = self.angle_block_threshold_degrees is not None and metric > float(
+                self.angle_block_threshold_degrees
+            )
+
+            # extra-dangle threshold only affects dangle targets
+            allow_extra = True
+            if ds_key == dangles_fc_key:
+                if self.angle_extra_dangle_threshold_degrees is None:
+                    allow_extra = True
+                else:
+                    allow_extra = metric <= float(
+                        self.angle_extra_dangle_threshold_degrees
+                    )
+
+            penalty = 0.0
+            if self.angle_penalty_max_meters is not None:
+                penalty = (metric / 90.0) * float(self.angle_penalty_max_meters)
+
+            return AngleAssessment(
+                available=True,
+                blocks=bool(blocks),
+                allow_extra_dangle=bool(allow_extra),
+                angle_metric_deg=float(metric),
+                angle_penalty_m=float(penalty),
+                src_connector_diff=float(src_connector_diff),
+            )
+
+        # Line-like targets: need target angle too
+        target_angle: Optional[float] = None
+        connector_target_diff: Optional[float] = None
+        src_target_diff: Optional[float] = None
+        connector_transition_diff: Optional[float] = None
+        line_match_diff: Optional[float] = None
+
+        if ds_key == lines_fc_key:
+            tgt_parent = int(near_fid)
+            tgt_poly = polyline_by_parent.get(tgt_parent)
+            if tgt_poly is not None:
+                target_angle = self._local_line_angle_cached(
+                    dataset_key=lines_fc_key,
+                    oid=tgt_parent,
+                    polyline=tgt_poly,
+                    x=near_x,
+                    y=near_y,
+                )
+
+        elif ds_key == dangles_fc_key:
+            other_dangle_oid = int(near_fid)
+            other_parent = dangle_parent.get(other_dangle_oid)
+            if other_parent is not None:
+                tgt_poly = polyline_by_parent.get(int(other_parent))
+                if tgt_poly is not None:
+                    # Prefer true dangle XY lookup; fall back to near_x/near_y
+                    xy = dangle_xy.get(other_dangle_oid)
+                    tx, ty = xy if xy is not None else (near_x, near_y)
+                    target_angle = self._local_line_angle_cached(
+                        dataset_key=lines_fc_key,
+                        oid=int(other_parent),
+                        polyline=tgt_poly,
+                        x=float(tx),
+                        y=float(ty),
+                    )
+
+        else:
+            ext = polyline_by_external.get(ds_key, {})
+            tgt_poly = ext.get(int(near_fid))
+            if tgt_poly is not None:
+                target_angle = self._local_line_angle_cached(
+                    dataset_key=ds_key,
+                    oid=int(near_fid),
+                    polyline=tgt_poly,
+                    x=near_x,
+                    y=near_y,
+                )
+
+        if target_angle is None:
+            # Unavailable => no block/penalty; conservative extra-dangle policy for dangle targets
+            allow_extra = ds_key != dangles_fc_key
+            return AngleAssessment(
+                available=False,
+                blocks=False,
+                allow_extra_dangle=bool(allow_extra),
+                angle_metric_deg=None,
+                angle_penalty_m=0.0,
+                src_connector_diff=float(src_connector_diff),
+            )
+
+        connector_target_diff = self._orientation_diff(
+            float(connector_angle), float(target_angle)
+        )
+        src_target_diff = self._orientation_diff(
+            float(src_angle_deg), float(target_angle)
+        )
+        connector_transition_diff = 0.5 * (
+            float(src_connector_diff) + float(connector_target_diff)
+        )
+
+        w = float(self.line_alignment_weight)
+        connector_w = 1.0 - w
+        line_match_diff = connector_w * float(connector_transition_diff) + w * float(
+            src_target_diff
+        )
+
+        metric = float(line_match_diff)
+
+        blocks = self.angle_block_threshold_degrees is not None and metric > float(
+            self.angle_block_threshold_degrees
+        )
+
+        allow_extra = True
+        if ds_key == dangles_fc_key:
+            if self.angle_extra_dangle_threshold_degrees is None:
+                allow_extra = True
+            else:
+                allow_extra = metric <= float(self.angle_extra_dangle_threshold_degrees)
+
+        penalty = 0.0
+        if self.angle_penalty_max_meters is not None:
+            penalty = (metric / 90.0) * float(self.angle_penalty_max_meters)
+
+        return AngleAssessment(
+            available=True,
+            blocks=bool(blocks),
+            allow_extra_dangle=bool(allow_extra),
+            angle_metric_deg=float(metric),
+            angle_penalty_m=float(penalty),
+            src_connector_diff=float(src_connector_diff),
+            connector_target_diff=float(connector_target_diff),
+            src_target_diff=float(src_target_diff),
+            connector_transition_diff=float(connector_transition_diff),
+            line_match_diff=float(line_match_diff),
+        )
 
     def _pair_token_from_candidate(
         self,
@@ -2009,7 +2295,6 @@ class FillLineGaps:
         # ----------------------------
         legal_rows_by_dangle: dict[int, list[dict]] = {}
         parent_id_by_dangle: dict[int, int] = {}
-        best_line_parent_by_dangle: dict[int, int] = {}
 
         for dangle_oid in sorted(grouped.keys()):
             candidates = grouped[dangle_oid]
@@ -2032,7 +2317,7 @@ class FillLineGaps:
                     parent_id=parent_id,
                     cand=cand,
                     base_tol=base_tol,
-                    dangle_candidate_tol=dangle_tol,  # expanded tolerance still applies here
+                    dangle_candidate_tol=dangle_tol,
                     topology=topology,
                 ):
                     legal_rows.append(cand)
@@ -2043,18 +2328,104 @@ class FillLineGaps:
             legal_rows_by_dangle[dangle_oid] = legal_rows
             parent_id_by_dangle[dangle_oid] = parent_id
 
-            best_line_parent = self._best_legal_line_target_parent(
-                legal_rows=legal_rows,
-                lines_fc_key=lines_key,
-            )
-            if best_line_parent is not None:
-                best_line_parent_by_dangle[dangle_oid] = int(best_line_parent)
-
         if not legal_rows_by_dangle:
             return {}, {}
+        # ----------------------------
+        # Angle caches (new)
+        # ----------------------------
+        polyline_by_parent = self._build_polyline_by_parent_id()
+
+        # External polyline caches keyed by dataset_key(layer)
+        polyline_by_external: dict[str, dict[int, Any]] = {}
+        is_external_line_like: dict[str, bool] = {}
+
+        line_keys = (
+            self._line_dataset_keys()
+        )  # {dataset_key(lines_copy), dataset_key(target_self)}
+
+        for lyr in target_layers:
+            ds_key = self._dataset_key(lyr)
+
+            # Skip any internal line datasets
+            if ds_key in line_keys:
+                continue
+
+            mode = self._angle_mode_by_external_ds_key.get(
+                ds_key, logic_config.AngleTargetMode.AUTO
+            )
+            if mode == logic_config.AngleTargetMode.FORCE_NON_LINE:
+                is_external_line_like[ds_key] = False
+                continue
+
+            if self._is_polyline_fc(lyr):
+                is_external_line_like[ds_key] = True
+                polyline_by_external[ds_key] = self._build_polyline_by_oid(lyr)
+            else:
+                is_external_line_like[ds_key] = False
 
         # ----------------------------
-        # Step 1B: choose exactly ONE proposal per dangle using edge-case adjusted scoring
+        # Best line parent per dangle (angle-aware)
+        # Used by edge-case bonus detection.
+        # ----------------------------
+        best_line_parent_by_dangle = {}
+
+        for dangle_oid in sorted(legal_rows_by_dangle.keys()):
+            parent_id = int(parent_id_by_dangle[dangle_oid])
+
+            xy = dangle_xy.get(int(dangle_oid))
+            if xy is None:
+                continue
+            d_x, d_y = xy
+
+            src_poly = polyline_by_parent.get(int(parent_id))
+            src_angle = None
+            if src_poly is not None:
+                src_angle = self._local_line_angle_cached(
+                    dataset_key=lines_key,
+                    oid=int(parent_id),
+                    polyline=src_poly,
+                    x=float(d_x),
+                    y=float(d_y),
+                )
+
+            best = None
+            best_score = None
+
+            for cand in legal_rows_by_dangle[dangle_oid]:
+                if str(cand["near_fc_key"]) != str(lines_key):
+                    continue
+
+                assess = self._assess_angle(
+                    src_parent_id=int(parent_id),
+                    dangle_x=float(d_x),
+                    dangle_y=float(d_y),
+                    src_angle_deg=src_angle,
+                    cand=cand,
+                    dangles_fc_key=dangles_key,
+                    lines_fc_key=lines_key,
+                    dangle_parent=dangle_parent,
+                    dangle_xy=dangle_xy,
+                    polyline_by_parent=polyline_by_parent,
+                    polyline_by_external=polyline_by_external,
+                    is_external_line_like=is_external_line_like,
+                )
+                if assess.blocks:
+                    continue
+
+                # Line targets do not use edge-case bonus. Score is raw + angle penalty.
+                raw_dist = float(cand["near_dist"])
+                eff = raw_dist + float(assess.angle_penalty_m)
+
+                # Deterministic tie-break:
+                score = (float(eff), float(raw_dist), self._candidate_sort_key(cand))
+                if best_score is None or score < best_score:
+                    best_score = score
+                    best = int(cand["near_fid"])
+
+            if best is not None:
+                best_line_parent_by_dangle[int(dangle_oid)] = int(best)
+        # ----------------------------
+        # Step 1B: choose exactly ONE proposal per dangle using angle-aware scoring
         # ----------------------------
         proposals_by_dangle: dict[int, Proposal] = {}
 
@@ -2063,17 +2434,73 @@ class FillLineGaps:
             parent_id = int(parent_id_by_dangle[dangle_oid])
             legal_rows = legal_rows_by_dangle[dangle_oid]
 
+            xy = dangle_xy.get(dangle_oid)
+            if xy is None:
+                continue
+            d_x, d_y = xy
+
+            # Source line angle (local at the dangle XY)
+            src_poly = polyline_by_parent.get(int(parent_id))
+            src_angle = None
+            if src_poly is not None:
+                src_angle = self._local_line_angle_cached(
+                    dataset_key=lines_key,  # canonical lines key
+                    oid=int(parent_id),  # ORIGINAL_ID space for parent lines
+                    polyline=src_poly,
+                    x=float(d_x),
+                    y=float(d_y),
+                )
+
             scored_candidates: list[
                 tuple[
-                    tuple[float, int, float, int, int, str, int],
-                    dict,
-                    float,
-                    float,
-                    bool,
+                    tuple[float, int, float, int, int, str, int],  # score tuple
+                    dict,  # candidate
+                    float,  # raw_distance
+                    float,  # effective_distance_for_scoring
+                    bool,  # bonus_applied
                 ]
             ] = []
 
             for cand in legal_rows:
+                assess = self._assess_angle(
+                    src_parent_id=int(parent_id),
+                    dangle_x=float(d_x),
+                    dangle_y=float(d_y),
+                    src_angle_deg=src_angle,
+                    cand=cand,
+                    dangles_fc_key=dangles_key,
+                    lines_fc_key=lines_key,
+                    dangle_parent=dangle_parent,
+                    dangle_xy=dangle_xy,
+                    polyline_by_parent=polyline_by_parent,
+                    polyline_by_external=polyline_by_external,
+                    is_external_line_like=is_external_line_like,
+                )
+
+                # 1) Candidate blocking (angle_block_threshold_degrees)
+                if assess.blocks:
+                    continue
+
+                # 2) Expanded dangle tolerance gating (angle_extra_dangle_threshold_degrees)
+                is_dangle_target = str(cand["near_fc_key"]) == str(dangles_key)
+                dist = float(cand["near_dist"])
+
+                if (
+                    is_dangle_target
+                    and dist > float(base_tol)
+                    and not bool(assess.allow_extra_dangle)
+                ):
+                    # Candidate is only legal due to expanded tolerance; angle disallows it
+                    continue
+
+                # 3) Edge-case bonus eligibility is angle-controlled (and conservative when angle missing)
+                bonus_allowed = True
+                if is_dangle_target:
+                    # conservative policy: if angle is unavailable => no expanded behavior, no bonus
+                    bonus_allowed = bool(assess.available) and bool(
+                        assess.allow_extra_dangle
+                    )
+
                 raw_distance, effective_distance, bonus_applied, score = (
                     self._candidate_score_details(
                         dangle_oid=dangle_oid,
@@ -2082,17 +2509,53 @@ class FillLineGaps:
                         dangles_fc_key=dangles_key,
                         dangle_parent=dangle_parent,
                         best_line_parent_by_dangle=best_line_parent_by_dangle,
+                        bonus_allowed=bool(bonus_allowed),
                     )
                 )
-                scored_candidates.append(
-                    (score, cand, raw_distance, effective_distance, bonus_applied)
+
+                # 4) Distance-equivalent angle penalty integrates into scoring
+                effective_for_scoring = float(effective_distance) + float(
+                    assess.angle_penalty_m
                 )
 
-            score, chosen, raw_distance, effective_distance, bonus_applied = min(
+                # Keep score tuple shape stable; only replace the first element
+                score_with_angle = (
+                    float(effective_for_scoring),
+                    int(score[1]),
+                    float(score[2]),
+                    int(score[3]),
+                    int(score[4]),
+                    str(score[5]),
+                    int(score[6]),
+                )
+
+                scored_candidates.append(
+                    (
+                        score_with_angle,
+                        cand,
+                        float(raw_distance),
+                        float(effective_for_scoring),
+                        bool(bonus_applied),
+                    )
+                )
+
+            if not scored_candidates:
+                continue
+
+            (
+                score,
+                chosen,
+                raw_distance,
+                effective_distance_for_scoring,
+                bonus_applied,
+            ) = min(
                 scored_candidates,
                 key=lambda item: item[0],
             )
 
+            # ----------------------------
+            # Proposal construction (unchanged semantics)
+            # ----------------------------
             src_node = self._node_for_parent(parent_id=parent_id, topology=topology)
 
             target_parent_id: Optional[int] = None
@@ -2134,7 +2597,7 @@ class FillLineGaps:
                 tgt_node=tgt_node,
                 chosen=chosen,
                 raw_distance=float(raw_distance),
-                effective_distance=float(effective_distance),
+                effective_distance=float(effective_distance_for_scoring),
                 bonus_applied=bool(bonus_applied),
                 score=score,
                 pair_key=pair_key,
@@ -2146,11 +2609,9 @@ class FillLineGaps:
             return {}, {}
 
         # ----------------------------
-        # Deferred detection (preserved behavior)
-        # - If A proposes to parent B (via line/dangle target),
-        #   and B has dangles in this run but does NOT propose back to parent A,
-        #   then A is deferred (computed later against updated geometry).
-        # - Keep deferred container shape as dict[parent_id -> dict].
+        # Mutual detection (for labeling)
+        # - dangle mutual pairs: D1 targets D2 AND D2 targets D1 (both dangle targets)
+        # - network mutual: any proposal exists in both directions between the two network nodes
         # ----------------------------
         parents_with_dangles = sorted(set(dangle_parent.values()))
         parents_with_dangles_set = {int(v) for v in parents_with_dangles}
@@ -2201,12 +2662,6 @@ class FillLineGaps:
         ]
         if not active:
             return {}, deferred_by_parent
-
-        # ----------------------------
-        # Mutual detection (for labeling)
-        # - dangle mutual pairs: D1 targets D2 AND D2 targets D1 (both dangle targets)
-        # - network mutual: any proposal exists in both directions between the two network nodes
-        # ----------------------------
         active_by_dangle = {int(p.dangle_oid): p for p in active}
 
         dangle_mutual_oids: set[int] = set()

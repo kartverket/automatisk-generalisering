@@ -81,7 +81,7 @@ def filter_river_water_features():
 
     custom_arcpy.select_attribute_and_make_permanent_feature(
         input_layer=River_N100.data_selection___water_polygons___n100_river.value,
-        expression="objtype IN ('Elv', 'Innsjø', 'Kanal')",
+        expression="objtype IN ('Elv', 'Innsjø', 'Kanal', 'Havflate')",
         output_name=River_N100.data_preparation___river_polygons___n100_river.value,
     )
 
