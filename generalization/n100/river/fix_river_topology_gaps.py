@@ -46,6 +46,7 @@ def fill_line_topology_gaps():
     line_fix_advanced_config = logic_config.FillLineGapsAdvancedConfig(
         fill_gaps_on_self=True,
         line_changes_output=River_N100.river_topology___river_gaps_changes___n100_river.value,
+        write_output_metadata=True,
         increased_tolerance_edge_case_distance_meters=5,
         edit_method=logic_config.EditMethod.AUTO,
         connectivity_scope=logic_config.ConnectivityScope.TRANSITIVE,
