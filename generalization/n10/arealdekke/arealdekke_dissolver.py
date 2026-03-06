@@ -420,7 +420,7 @@ def normal_call(input_fc: str, output_fc: str):
 
 def partition_call(input_fc: str, output_fc: str):
     identity = "in_memory\\arealdekke_identity"
-    arcpy.analysis.Identity(                                ################################ Resultatet ble bedre når identity ble kjørt utenfor partition iterator. ################################
+    arcpy.analysis.Identity(                                ################################ Resultatet ble bedre når identity ble kjørt utenfor partition iterator. ################################ ????Identity brukes bare for samferdsel tror jeg. sikkert noe forbedringspotensialet her, kan kanskje ikke kjøre identity på hele norge utenfor partition
         in_features=input_fc,
         identity_features=input_n10.Fishnet_500m,
         out_feature_class=identity,
