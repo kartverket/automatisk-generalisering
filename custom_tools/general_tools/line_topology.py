@@ -776,6 +776,7 @@ class FillLineGaps:
         adv = line_gap_config.advanced_config
         self.fill_gaps_on_self = bool(adv.fill_gaps_on_self)
         self.line_changes_output = adv.line_changes_output
+        self.write_output_metadata = bool(adv.write_output_metadata)
         self.increased_tolerance_edge_case_distance_meters = int(
             adv.increased_tolerance_edge_case_distance_meters
         )
@@ -2428,6 +2429,7 @@ class FillLineGaps:
         # Step 1B: choose exactly ONE proposal per dangle using angle-aware scoring
         # ----------------------------
         proposals_by_dangle: dict[int, Proposal] = {}
+        assess_by_dangle: dict[int, AngleAssessment] = {}
 
         for dangle_oid in sorted(legal_rows_by_dangle.keys()):
             dangle_oid = int(dangle_oid)
@@ -2458,6 +2460,7 @@ class FillLineGaps:
                     float,  # raw_distance
                     float,  # effective_distance_for_scoring
                     bool,  # bonus_applied
+                    "AngleAssessment",  # assess for winning candidate metadata
                 ]
             ] = []
 
@@ -2536,6 +2539,7 @@ class FillLineGaps:
                         float(raw_distance),
                         float(effective_for_scoring),
                         bool(bonus_applied),
+                        assess,
                     )
                 )
 
@@ -2548,6 +2552,7 @@ class FillLineGaps:
                 raw_distance,
                 effective_distance_for_scoring,
                 bonus_applied,
+                chosen_assess,
             ) = min(
                 scored_candidates,
                 key=lambda item: item[0],
@@ -2604,6 +2609,7 @@ class FillLineGaps:
                 target_parent_id=target_parent_id,
                 target_dangle_oid=target_dangle_oid,
             )
+            assess_by_dangle[dangle_oid] = chosen_assess
 
         if not proposals_by_dangle:
             return {}, {}
@@ -2751,6 +2757,8 @@ class FillLineGaps:
                 dangle_y=float(d_y),
                 chosen=prop.chosen,
                 gap_source=str(gap_source),
+                bonus_applied=prop.bonus_applied,
+                assess=assess_by_dangle.get(int(prop.dangle_oid)),
             )
 
             tmp.setdefault(int(prop.src_parent_id), []).append((prop.score, entry))
@@ -2774,9 +2782,11 @@ class FillLineGaps:
         dangle_y: float,
         chosen: dict,
         gap_source: str,
+        bonus_applied: bool = False,
+        assess: "Optional[AngleAssessment]" = None,
     ) -> dict:
         edit_op = self._resolve_edit_op(gap_source=str(gap_source))
-        return {
+        entry: dict = {
             "processed": False,
             "skip": False,
             "gap_source": str(gap_source),
@@ -2789,6 +2799,17 @@ class FillLineGaps:
             "chosen_near_fc_key": str(chosen["near_fc_key"]),
             "chosen_near_fid": int(chosen["near_fid"]),
         }
+        if self.write_output_metadata:
+            entry["meta_bonus_applied"] = int(bonus_applied)
+            if assess is not None:
+                entry["meta_src_connector_diff"] = assess.src_connector_diff
+                entry["meta_connector_target_diff"] = assess.connector_target_diff
+                entry["meta_src_target_diff"] = assess.src_target_diff
+                entry["meta_connector_transition_diff"] = assess.connector_transition_diff
+                entry["meta_line_match_diff"] = assess.line_match_diff
+                entry["meta_angle_metric_deg"] = assess.angle_metric_deg
+                entry["meta_angle_penalty_m"] = assess.angle_penalty_m
+        return entry
 
     def _apply_pair_symmetric_skip(self, decided_by_parent: dict[int, dict]) -> None:
         """
@@ -2939,7 +2960,7 @@ class FillLineGaps:
     # ----------------------------
 
     def _setup_line_changes_output(self) -> None:
-        if self.line_changes_output is None:
+        if self.line_changes_output is None or not self.write_output_metadata:
             return
 
         file_utilities.create_feature_class(
@@ -2962,6 +2983,22 @@ class FillLineGaps:
                 self.line_changes_output, self.FIELD_GAP_SOURCE, "TEXT", field_length=20
             )
 
+        meta_double_fields = [
+            "src_connector_diff",
+            "connector_target_diff",
+            "src_target_diff",
+            "connector_transition_diff",
+            "line_match_diff",
+            "angle_metric_deg",
+            "angle_penalty_m",
+        ]
+        for fname in meta_double_fields:
+            if fname not in existing:
+                arcpy.management.AddField(self.line_changes_output, fname, "DOUBLE")
+
+        if "bonus_applied" not in existing:
+            arcpy.management.AddField(self.line_changes_output, "bonus_applied", "SHORT")
+
     def _build_change_row(
         self,
         original_id: int,
@@ -2971,6 +3008,7 @@ class FillLineGaps:
         near_y: float,
         spatial_reference,
         gap_source: str,
+        meta: Optional[dict] = None,
     ):
         dist = ((dangle_x - near_x) ** 2 + (dangle_y - near_y) ** 2) ** 0.5
         if dist == 0.0:
@@ -2980,7 +3018,19 @@ class FillLineGaps:
             [arcpy.Point(dangle_x, dangle_y), arcpy.Point(near_x, near_y)]
         )
         geom = arcpy.Polyline(arr, spatial_reference)
-        return (geom, int(original_id), float(dist), str(gap_source))
+        row = [geom, int(original_id), float(dist), str(gap_source)]
+        if meta is not None:
+            row.extend([
+                meta.get("meta_src_connector_diff"),
+                meta.get("meta_connector_target_diff"),
+                meta.get("meta_src_target_diff"),
+                meta.get("meta_connector_transition_diff"),
+                meta.get("meta_line_match_diff"),
+                meta.get("meta_angle_metric_deg"),
+                meta.get("meta_angle_penalty_m"),
+                meta.get("meta_bonus_applied"),
+            ])
+        return tuple(row)
 
     def _apply_plan(self, plan) -> None:
         if not plan:
@@ -3040,7 +3090,21 @@ class FillLineGaps:
 
                     info["processed"] = True
 
-                    if self.line_changes_output is not None:
+                    if self.line_changes_output is not None and self.write_output_metadata:
+                        meta = {k: info.get(k) for k in (
+                            "meta_src_connector_diff",
+                            "meta_connector_target_diff",
+                            "meta_src_target_diff",
+                            "meta_connector_transition_diff",
+                            "meta_line_match_diff",
+                            "meta_angle_metric_deg",
+                            "meta_angle_penalty_m",
+                            "meta_bonus_applied",
+                        )} if any(k in info for k in (
+                            "meta_src_connector_diff",
+                            "meta_angle_metric_deg",
+                            "meta_bonus_applied",
+                        )) else None
                         row = self._build_change_row(
                             original_id=pid,
                             dangle_x=float(info["dangle_x"]),
@@ -3051,13 +3115,24 @@ class FillLineGaps:
                             gap_source=str(
                                 info.get("gap_source", self.GAP_SOURCE_DEFAULT)
                             ),
+                            meta=meta,
                         )
                         if row is not None:
                             change_rows.append(row)
 
                 cur.updateRow((original_id, current_shape))
 
-        if self.line_changes_output is not None and change_rows:
+        if self.line_changes_output is not None and self.write_output_metadata and change_rows:
+            meta_fields = [
+                "src_connector_diff",
+                "connector_target_diff",
+                "src_target_diff",
+                "connector_transition_diff",
+                "line_match_diff",
+                "angle_metric_deg",
+                "angle_penalty_m",
+                "bonus_applied",
+            ]
             with arcpy.da.InsertCursor(
                 self.line_changes_output,
                 [
@@ -3065,9 +3140,12 @@ class FillLineGaps:
                     self.ORIGINAL_ID,
                     self.FIELD_GAP_DIST_M,
                     self.FIELD_GAP_SOURCE,
-                ],
+                ] + meta_fields,
             ) as icur:
                 for row in change_rows:
+                    if len(row) == 4:
+                        # Deferred / polygon rows — no metadata; pad with None
+                        row = row + (None,) * len(meta_fields)
                     icur.insertRow(row)
 
     def _write_output(self) -> None:
@@ -3096,7 +3174,7 @@ class FillLineGaps:
         self._filter_true_dangles()
         dangles_for_plan = self.filtered_dangles
 
-        if self.line_changes_output is not None:
+        if self.line_changes_output is not None and self.write_output_metadata:
             if arcpy.Exists(self.line_changes_output):
                 arcpy.management.Delete(self.line_changes_output)
             self._setup_line_changes_output()
