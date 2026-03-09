@@ -2,6 +2,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 from enum import Enum
 import math
+import os
 
 from typing import Optional, Callable, Iterable, Any
 
@@ -779,6 +780,36 @@ class AngleAssessment:
     line_match_diff: Optional[float] = None
 
 
+@dataclass(frozen=True)
+class CandidateDiagnostic:
+    """
+    Diagnostic record for one candidate connection evaluated during the main planning phase.
+
+    One record exists per (dangle, target) pair, excluding the self parent line target.
+    Covers all three outcomes: chosen, legal-but-not-chosen, and illegal.
+
+    Step-1A illegals (failed topological/distance legality) have assess=None because
+    angle was never computed for them.  Step-1B illegals (angle-blocked or
+    expanded-dangle-gated) carry the computed assess.
+    """
+
+    parent_id: int
+    dangle_oid: int
+    dangle_x: float
+    dangle_y: float
+    near_fc_key: str
+    near_fid: int
+    near_x: float
+    near_y: float
+    raw_distance: float
+    candidate_status: str            # "chosen" | "legal_not_chosen" | "illegal"
+    candidate_reason: Optional[str]  # None unless status == "illegal"
+    best_fit_score: Optional[float]
+    bonus_applied: Optional[bool]
+    assess: Optional[AngleAssessment]
+    target_parent_id: Optional[int]
+
+
 class FillLineGaps:
     ORIGINAL_ID = "line_gap_original_id"
 
@@ -809,6 +840,7 @@ class FillLineGaps:
         self.fill_gaps_on_self = bool(adv.fill_gaps_on_self)
         self.line_changes_output = adv.line_changes_output
         self.write_output_metadata = bool(adv.write_output_metadata)
+        self.candidate_connections_output = adv.candidate_connections_output
         self.increased_tolerance_edge_case_distance_meters = int(
             adv.increased_tolerance_edge_case_distance_meters
         )
@@ -1883,6 +1915,71 @@ class FillLineGaps:
 
         return True
 
+    def _candidate_rejection_reason(
+        self,
+        *,
+        illegal: dict[int, dict[str, set[int]]],
+        dangle_parent: dict[int, int],
+        dangles_fc_key: str,
+        lines_fc_key: str,
+        parent_id: int,
+        cand: dict,
+        base_tol: float,
+        dangle_candidate_tol: float,
+        topology: "TopologyModel | None",
+    ) -> str:
+        """Return the legality-failure reason for a candidate, mirroring _candidate_is_legal."""
+        ds_key = cand["near_fc_key"]
+        oid = int(cand["near_fid"])
+        dist = float(cand["near_dist"])
+
+        if ds_key == dangles_fc_key:
+            if dist > float(dangle_candidate_tol):
+                return "beyond_distance_tolerance"
+            other_parent = dangle_parent.get(int(oid))
+            if other_parent is None:
+                return "illegal_target"
+            if topology is not None and self._same_network(
+                a_parent=int(parent_id), b_parent=int(other_parent), topology=topology
+            ):
+                return "same_network"
+            if self._is_illegal(
+                illegal=illegal,
+                parent_id=parent_id,
+                target_fc_key=lines_fc_key,
+                target_oid=int(other_parent),
+            ):
+                return "illegal_target"
+            return "illegal_target"
+
+        if dist > float(base_tol):
+            return "beyond_distance_tolerance"
+        if topology is not None and ds_key == lines_fc_key and self._same_network(
+            a_parent=int(parent_id), b_parent=int(oid), topology=topology
+        ):
+            return "same_network"
+        if self._is_illegal(
+            illegal=illegal, parent_id=parent_id, target_fc_key=ds_key, target_oid=oid
+        ):
+            return "illegal_target"
+        return "illegal_target"
+
+    def _resolve_target_parent_id(
+        self,
+        cand: dict,
+        dangle_parent: dict[int, int],
+        dangles_fc_key: str,
+        lines_fc_key: str,
+    ) -> Optional[int]:
+        """Return the target parent original ID for a candidate, or None for external targets."""
+        ds_key = str(cand["near_fc_key"])
+        near_fid = int(cand["near_fid"])
+        if ds_key == dangles_fc_key:
+            return dangle_parent.get(near_fid)
+        if ds_key == lines_fc_key:
+            return near_fid  # already in ORIGINAL_ID space
+        return None
+
     def _assess_angle(
         self,
         *,
@@ -2286,7 +2383,7 @@ class FillLineGaps:
 
     def _build_plan(
         self, *, dangles_fc: str, target_layers: list[str]
-    ) -> tuple[dict[int, list[dict]], dict[int, dict]]:
+    ) -> tuple[dict[int, list[dict]], dict[int, dict], list[CandidateDiagnostic]]:
         dangle_parent = self._build_dangle_parent_lookup(dangles_fc=dangles_fc)
         dangle_xy = self._build_dangle_xy_lookup(dangles_fc=dangles_fc)
 
@@ -2348,7 +2445,96 @@ class FillLineGaps:
         )
 
         if not grouped:
-            return {}, {}
+            return {}, {}, []
+
+        # ----------------------------
+        # Diagnostic collection (populated only when candidate_connections_output is set)
+        # ----------------------------
+        collect_diags = self.candidate_connections_output is not None
+
+        # (dangle_oid, parent_id, cand, reason) — failed step-1A legality
+        _step1a_illegal: list[tuple[int, int, dict, str]] = []
+        # (dangle_oid, parent_id, cand, assess, reason) — passed step-1A but blocked in step-1B
+        _step1b_illegal: list[tuple[int, int, dict, AngleAssessment, str]] = []
+        # (dangle_oid, parent_id, cand, assess, raw_dist, best_fit, bonus, is_chosen)
+        _step1b_scored: list[tuple[int, int, dict, AngleAssessment, float, float, bool, bool]] = []
+
+        def _assemble_diagnostics() -> list[CandidateDiagnostic]:
+            if not collect_diags:
+                return []
+            result: list[CandidateDiagnostic] = []
+            for d_oid, p_id, cand, reason in _step1a_illegal:
+                xy = dangle_xy.get(int(d_oid))
+                if xy is None:
+                    continue
+                result.append(CandidateDiagnostic(
+                    parent_id=p_id,
+                    dangle_oid=d_oid,
+                    dangle_x=float(xy[0]),
+                    dangle_y=float(xy[1]),
+                    near_fc_key=str(cand["near_fc_key"]),
+                    near_fid=int(cand["near_fid"]),
+                    near_x=float(cand["near_x"]),
+                    near_y=float(cand["near_y"]),
+                    raw_distance=float(cand["near_dist"]),
+                    candidate_status="illegal",
+                    candidate_reason=reason,
+                    best_fit_score=None,
+                    bonus_applied=None,
+                    assess=None,
+                    target_parent_id=self._resolve_target_parent_id(
+                        cand, dangle_parent, dangles_key, lines_key
+                    ),
+                ))
+            for d_oid, p_id, cand, assess, reason in _step1b_illegal:
+                xy = dangle_xy.get(int(d_oid))
+                if xy is None:
+                    continue
+                result.append(CandidateDiagnostic(
+                    parent_id=p_id,
+                    dangle_oid=d_oid,
+                    dangle_x=float(xy[0]),
+                    dangle_y=float(xy[1]),
+                    near_fc_key=str(cand["near_fc_key"]),
+                    near_fid=int(cand["near_fid"]),
+                    near_x=float(cand["near_x"]),
+                    near_y=float(cand["near_y"]),
+                    raw_distance=float(cand["near_dist"]),
+                    candidate_status="illegal",
+                    candidate_reason=reason,
+                    best_fit_score=None,
+                    bonus_applied=None,
+                    assess=assess,
+                    target_parent_id=self._resolve_target_parent_id(
+                        cand, dangle_parent, dangles_key, lines_key
+                    ),
+                ))
+            for (
+                d_oid, p_id, cand, assess, raw_dist, best_fit, bonus, is_chosen
+            ) in _step1b_scored:
+                xy = dangle_xy.get(int(d_oid))
+                if xy is None:
+                    continue
+                result.append(CandidateDiagnostic(
+                    parent_id=p_id,
+                    dangle_oid=d_oid,
+                    dangle_x=float(xy[0]),
+                    dangle_y=float(xy[1]),
+                    near_fc_key=str(cand["near_fc_key"]),
+                    near_fid=int(cand["near_fid"]),
+                    near_x=float(cand["near_x"]),
+                    near_y=float(cand["near_y"]),
+                    raw_distance=float(raw_dist),
+                    candidate_status="chosen" if is_chosen else "legal_not_chosen",
+                    candidate_reason=None,
+                    best_fit_score=float(best_fit),
+                    bonus_applied=bool(bonus),
+                    assess=assess,
+                    target_parent_id=self._resolve_target_parent_id(
+                        cand, dangle_parent, dangles_key, lines_key
+                    ),
+                ))
+            return result
 
         # ----------------------------
         # Step 1A: collect legal candidates per dangle
@@ -2369,7 +2555,14 @@ class FillLineGaps:
 
             legal_rows: list[dict] = []
             for cand in rows:
-                if self._candidate_is_legal(
+                # Self-parent candidates are excluded from the plan and from diagnostics.
+                if (
+                    str(cand["near_fc_key"]) == str(lines_key)
+                    and int(cand["near_fid"]) == int(parent_id)
+                ):
+                    continue
+
+                is_legal = self._candidate_is_legal(
                     illegal=illegal,
                     dangle_parent=dangle_parent,
                     dangles_fc_key=dangles_key,
@@ -2379,8 +2572,22 @@ class FillLineGaps:
                     base_tol=base_tol,
                     dangle_candidate_tol=dangle_tol,
                     topology=topology,
-                ):
+                )
+                if is_legal:
                     legal_rows.append(cand)
+                elif collect_diags:
+                    reason = self._candidate_rejection_reason(
+                        illegal=illegal,
+                        dangle_parent=dangle_parent,
+                        dangles_fc_key=dangles_key,
+                        lines_fc_key=lines_key,
+                        parent_id=parent_id,
+                        cand=cand,
+                        base_tol=base_tol,
+                        dangle_candidate_tol=dangle_tol,
+                        topology=topology,
+                    )
+                    _step1a_illegal.append((dangle_oid, parent_id, cand, reason))
 
             if not legal_rows:
                 continue
@@ -2389,7 +2596,7 @@ class FillLineGaps:
             parent_id_by_dangle[dangle_oid] = parent_id
 
         if not legal_rows_by_dangle:
-            return {}, {}
+            return {}, {}, _assemble_diagnostics()
         # ----------------------------
         # Angle caches (new)
         # ----------------------------
@@ -2544,6 +2751,10 @@ class FillLineGaps:
 
                 # 1) Candidate blocking (angle_block_threshold_degrees)
                 if assess.blocks:
+                    if collect_diags:
+                        _step1b_illegal.append(
+                            (dangle_oid, parent_id, cand, assess, "blocked_by_angle")
+                        )
                     continue
 
                 # 2) Expanded dangle tolerance gating (angle_extra_dangle_threshold_degrees)
@@ -2556,6 +2767,16 @@ class FillLineGaps:
                     and not bool(assess.allow_extra_dangle)
                 ):
                     # Candidate is only legal due to expanded tolerance; angle disallows it
+                    if collect_diags:
+                        _step1b_illegal.append(
+                            (
+                                dangle_oid,
+                                parent_id,
+                                cand,
+                                assess,
+                                "expanded_dangle_angle_disallowed",
+                            )
+                        )
                     continue
 
                 # 3) Edge-case bonus eligibility is angle-controlled (and conservative when angle missing)
@@ -2609,6 +2830,7 @@ class FillLineGaps:
             if not scored_candidates:
                 continue
 
+            winner_item = min(scored_candidates, key=lambda item: item[0])
             (
                 score,
                 chosen,
@@ -2616,10 +2838,21 @@ class FillLineGaps:
                 effective_distance_for_scoring,
                 bonus_applied,
                 chosen_assess,
-            ) = min(
-                scored_candidates,
-                key=lambda item: item[0],
-            )
+            ) = winner_item
+
+            if collect_diags:
+                for sc_tuple in scored_candidates:
+                    sc_score, sc_cand, sc_raw, sc_best_fit, sc_bonus, sc_assess = sc_tuple
+                    _step1b_scored.append((
+                        dangle_oid,
+                        parent_id,
+                        sc_cand,
+                        sc_assess,
+                        float(sc_raw),
+                        float(sc_best_fit),
+                        bool(sc_bonus),
+                        sc_tuple is winner_item,
+                    ))
 
             # ----------------------------
             # Proposal construction (unchanged semantics)
@@ -2675,7 +2908,7 @@ class FillLineGaps:
             assess_by_dangle[dangle_oid] = chosen_assess
 
         if not proposals_by_dangle:
-            return {}, {}
+            return {}, {}, _assemble_diagnostics()
 
         # ----------------------------
         # Mutual detection (for labeling)
@@ -2732,7 +2965,7 @@ class FillLineGaps:
             if int(d_oid) not in deferred_dangles
         ]
         if not active:
-            return {}, deferred_by_parent
+            return {}, deferred_by_parent, _assemble_diagnostics()
         active_by_dangle = {int(p.dangle_oid): p for p in active}
 
         dangle_mutual_oids: set[int] = set()
@@ -2802,7 +3035,7 @@ class FillLineGaps:
             accepted = list(stage_a_winners)
 
         if not accepted:
-            return {}, deferred_by_parent
+            return {}, deferred_by_parent, _assemble_diagnostics()
 
         # ----------------------------
         # Build plan_by_parent: parent_id -> list[plan_entry]
@@ -2837,7 +3070,7 @@ class FillLineGaps:
             )
             plan_by_parent[int(pid)] = [entry for _, entry in ordered]
 
-        return plan_by_parent, deferred_by_parent
+        return plan_by_parent, deferred_by_parent, _assemble_diagnostics()
 
     def _make_plan_entry(
         self,
@@ -3199,6 +3432,93 @@ class FillLineGaps:
             )
         return tuple(row)
 
+    def _setup_candidate_connections_output(self, fc_path: str) -> None:
+        """Create and schema the candidate-connections diagnostic feature class."""
+        sr = arcpy.Describe(self.lines_copy).spatialReference
+        out_path, out_name = os.path.split(fc_path)
+        if arcpy.Exists(fc_path):
+            arcpy.management.Delete(fc_path)
+        arcpy.management.CreateFeatureclass(
+            out_path=out_path,
+            out_name=out_name,
+            geometry_type="POLYLINE",
+            spatial_reference=sr,
+        )
+        arcpy.management.AddField(fc_path, "src_line_id", "LONG")
+        arcpy.management.AddField(fc_path, "src_dangle_oid", "LONG")
+        arcpy.management.AddField(fc_path, "target_ds_key", "TEXT", field_length=100)
+        arcpy.management.AddField(fc_path, "target_fid", "LONG")
+        arcpy.management.AddField(fc_path, "target_parent_id", "LONG")
+        arcpy.management.AddField(fc_path, "raw_distance", "DOUBLE")
+        arcpy.management.AddField(fc_path, "best_fit_score", "DOUBLE")
+        arcpy.management.AddField(fc_path, "bonus_applied", "SHORT")
+        for fname in (
+            "angle_metric_deg",
+            "src_connector_diff",
+            "connector_target_diff",
+            "src_target_diff",
+            "connector_transition_diff",
+            "line_match_diff",
+        ):
+            arcpy.management.AddField(fc_path, fname, "DOUBLE")
+        arcpy.management.AddField(fc_path, "candidate_status", "TEXT", field_length=20)
+        arcpy.management.AddField(fc_path, "candidate_reason", "TEXT", field_length=50)
+
+    def _write_candidate_connections_output(
+        self,
+        fc_path: str,
+        diagnostics: list[CandidateDiagnostic],
+        spatial_reference,
+    ) -> None:
+        """Write one row per CandidateDiagnostic to the candidate-connections feature class."""
+        if not diagnostics:
+            return
+        fields = [
+            "SHAPE@",
+            "src_line_id",
+            "src_dangle_oid",
+            "target_ds_key",
+            "target_fid",
+            "target_parent_id",
+            "raw_distance",
+            "best_fit_score",
+            "bonus_applied",
+            "angle_metric_deg",
+            "src_connector_diff",
+            "connector_target_diff",
+            "src_target_diff",
+            "connector_transition_diff",
+            "line_match_diff",
+            "candidate_status",
+            "candidate_reason",
+        ]
+        with arcpy.da.InsertCursor(fc_path, fields) as cur:
+            for d in diagnostics:
+                arr = arcpy.Array(
+                    [arcpy.Point(d.dangle_x, d.dangle_y), arcpy.Point(d.near_x, d.near_y)]
+                )
+                geom = arcpy.Polyline(arr, spatial_reference)
+                a = d.assess
+                cur.insertRow((
+                    geom,
+                    d.parent_id,
+                    d.dangle_oid,
+                    d.near_fc_key,
+                    d.near_fid,
+                    d.target_parent_id,
+                    d.raw_distance,
+                    d.best_fit_score,
+                    int(d.bonus_applied) if d.bonus_applied is not None else None,
+                    a.angle_metric_deg if a is not None else None,
+                    a.src_connector_diff if a is not None else None,
+                    a.connector_target_diff if a is not None else None,
+                    a.src_target_diff if a is not None else None,
+                    a.connector_transition_diff if a is not None else None,
+                    a.line_match_diff if a is not None else None,
+                    d.candidate_status,
+                    d.candidate_reason,
+                ))
+
     def _apply_plan(self, plan) -> None:
         if not plan:
             return
@@ -3364,7 +3684,10 @@ class FillLineGaps:
                 arcpy.management.Delete(self.line_changes_output)
             self._setup_line_changes_output()
 
-        plan, deferred = self._build_plan(
+        if self.candidate_connections_output is not None:
+            self._setup_candidate_connections_output(self.candidate_connections_output)
+
+        plan, deferred, diagnostics = self._build_plan(
             dangles_fc=dangles_for_plan, target_layers=targets
         )
 
@@ -3375,6 +3698,14 @@ class FillLineGaps:
                 deferred=deferred, dangles_fc=dangles_for_plan
             )
             self._apply_plan(deferred_plan)
+
+        if self.candidate_connections_output is not None and diagnostics:
+            spatial_reference = arcpy.Describe(self.lines_copy).spatialReference
+            self._write_candidate_connections_output(
+                fc_path=self.candidate_connections_output,
+                diagnostics=diagnostics,
+                spatial_reference=spatial_reference,
+            )
 
         self._write_output()
 
