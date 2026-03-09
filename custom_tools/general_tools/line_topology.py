@@ -780,17 +780,30 @@ class AngleAssessment:
     line_match_diff: Optional[float] = None
 
 
-@dataclass(frozen=True)
+@dataclass
 class CandidateDiagnostic:
     """
     Diagnostic record for one candidate connection evaluated during the main planning phase.
 
     One record exists per (dangle, target) pair, excluding the self parent line target.
-    Covers all three outcomes: chosen, legal-but-not-chosen, and illegal.
+    The dataclass is mutable so that deferred-acceptance outcomes can be patched by
+    run() after _build_deferred_plan resolves.
 
-    Step-1A illegals (failed topological/distance legality) have assess=None because
-    angle was never computed for them.  Step-1B illegals (angle-blocked or
-    expanded-dangle-gated) carry the computed assess.
+    candidate_status values:
+        "illegal"             — failed legality or angle blocking; could not be selected
+        "legal_not_selected"  — passed legality but lost to a better scored candidate
+                               within the same dangle
+        "selected_for_dangle" — was the local best candidate for its dangle but did not
+                               survive later pipeline stages to become applied output
+        "applied_to_output"   — truly survived the full pipeline and was applied to geometry
+
+    status_reason values per status:
+        illegal:              beyond_distance_tolerance | same_network | illegal_target |
+                              blocked_by_angle | expanded_dangle_angle_disallowed
+        legal_not_selected:   outscored_within_dangle
+        selected_for_dangle:  deferred | lost_pair_competition | lost_cycle_prevention |
+                              deferred_rejected_connectivity
+        applied_to_output:    applied_main | applied_deferred
     """
 
     parent_id: int
@@ -802,12 +815,14 @@ class CandidateDiagnostic:
     near_x: float
     near_y: float
     raw_distance: float
-    candidate_status: str            # "chosen" | "legal_not_chosen" | "illegal"
-    candidate_reason: Optional[str]  # None unless status == "illegal"
+    candidate_status: str           # see class docstring
+    status_reason: Optional[str]    # see class docstring; None only for rare edge cases
     best_fit_score: Optional[float]
+    best_fit_rank: Optional[int]    # 1 = local dangle winner; higher = lower-ranked legal
     bonus_applied: Optional[bool]
     assess: Optional[AngleAssessment]
     target_parent_id: Optional[int]
+    final_gap_source: Optional[str] # gap_source value for applied_to_output rows; None otherwise
 
 
 class FillLineGaps:
@@ -2456,13 +2471,24 @@ class FillLineGaps:
         _step1a_illegal: list[tuple[int, int, dict, str]] = []
         # (dangle_oid, parent_id, cand, assess, reason) — passed step-1A but blocked in step-1B
         _step1b_illegal: list[tuple[int, int, dict, AngleAssessment, str]] = []
-        # (dangle_oid, parent_id, cand, assess, raw_dist, best_fit, bonus, is_chosen)
-        _step1b_scored: list[tuple[int, int, dict, AngleAssessment, float, float, bool, bool]] = []
+        # (dangle_oid, parent_id, cand, assess, raw_dist, best_fit, bonus, is_local_winner, score_tuple)
+        _step1b_scored: list[tuple[int, int, dict, AngleAssessment, float, float, bool, bool, tuple]] = []
+
+        # Pipeline stage fate sets — populated as _build_plan progresses;
+        # _assemble_diagnostics captures them by reference so early-return calls
+        # always see whatever has been filled in at that point.
+        deferred_dangles: set[int] = set()         # dangle_oids routed to deferred pass
+        stage_a_loser_oids: set[int] = set()       # local winners that lost Stage-A pair competition
+        stage_b_rejected_oids: set[int] = set()    # Stage-A winners dropped by Kruskal
+        accepted_dangle_oids: set[int] = set()     # proposals that made it into the main plan
+        gap_source_by_dangle: dict[int, str] = {}  # gap_source for accepted main-plan candidates
 
         def _assemble_diagnostics() -> list[CandidateDiagnostic]:
             if not collect_diags:
                 return []
             result: list[CandidateDiagnostic] = []
+
+            # Step-1A illegals: angle never computed for these
             for d_oid, p_id, cand, reason in _step1a_illegal:
                 xy = dangle_xy.get(int(d_oid))
                 if xy is None:
@@ -2478,14 +2504,18 @@ class FillLineGaps:
                     near_y=float(cand["near_y"]),
                     raw_distance=float(cand["near_dist"]),
                     candidate_status="illegal",
-                    candidate_reason=reason,
+                    status_reason=reason,
                     best_fit_score=None,
+                    best_fit_rank=None,
                     bonus_applied=None,
                     assess=None,
                     target_parent_id=self._resolve_target_parent_id(
                         cand, dangle_parent, dangles_key, lines_key
                     ),
+                    final_gap_source=None,
                 ))
+
+            # Step-1B angle-blocked illegals: angle computed
             for d_oid, p_id, cand, assess, reason in _step1b_illegal:
                 xy = dangle_xy.get(int(d_oid))
                 if xy is None:
@@ -2501,20 +2531,65 @@ class FillLineGaps:
                     near_y=float(cand["near_y"]),
                     raw_distance=float(cand["near_dist"]),
                     candidate_status="illegal",
-                    candidate_reason=reason,
+                    status_reason=reason,
                     best_fit_score=None,
+                    best_fit_rank=None,
                     bonus_applied=None,
                     assess=assess,
                     target_parent_id=self._resolve_target_parent_id(
                         cand, dangle_parent, dangles_key, lines_key
                     ),
+                    final_gap_source=None,
                 ))
+
+            # Compute per-dangle rank for scored candidates (1 = local winner)
+            scored_by_dangle: dict[int, list] = {}
+            for entry in _step1b_scored:
+                scored_by_dangle.setdefault(int(entry[0]), []).append(entry)
+            rank_map: dict[tuple[int, str, int], int] = {}
+            for d_oid, entries in scored_by_dangle.items():
+                for rank, entry in enumerate(
+                    sorted(entries, key=lambda e: e[8]), start=1
+                ):
+                    cand = entry[2]
+                    rank_map[(d_oid, str(cand["near_fc_key"]), int(cand["near_fid"]))] = rank
+
+            # Step-1B scored candidates
             for (
-                d_oid, p_id, cand, assess, raw_dist, best_fit, bonus, is_chosen
+                d_oid, p_id, cand, assess, raw_dist, best_fit, bonus, is_local_winner, _score
             ) in _step1b_scored:
                 xy = dangle_xy.get(int(d_oid))
                 if xy is None:
                     continue
+                rank = rank_map.get((d_oid, str(cand["near_fc_key"]), int(cand["near_fid"])))
+
+                if not is_local_winner:
+                    status = "legal_not_selected"
+                    reason = "outscored_within_dangle"
+                    final_gs: Optional[str] = None
+                elif int(d_oid) in deferred_dangles:
+                    status = "selected_for_dangle"
+                    reason = "deferred"
+                    final_gs = None
+                elif int(d_oid) in stage_a_loser_oids:
+                    status = "selected_for_dangle"
+                    reason = "lost_pair_competition"
+                    final_gs = None
+                elif int(d_oid) in stage_b_rejected_oids:
+                    status = "selected_for_dangle"
+                    reason = "lost_cycle_prevention"
+                    final_gs = None
+                elif int(d_oid) in accepted_dangle_oids:
+                    status = "applied_to_output"
+                    reason = "applied_main"
+                    final_gs = gap_source_by_dangle.get(int(d_oid))
+                else:
+                    # Local winner that didn't reach proposal construction
+                    # (e.g. target dangle had no resolvable parent)
+                    status = "selected_for_dangle"
+                    reason = None
+                    final_gs = None
+
                 result.append(CandidateDiagnostic(
                     parent_id=p_id,
                     dangle_oid=d_oid,
@@ -2525,14 +2600,16 @@ class FillLineGaps:
                     near_x=float(cand["near_x"]),
                     near_y=float(cand["near_y"]),
                     raw_distance=float(raw_dist),
-                    candidate_status="chosen" if is_chosen else "legal_not_chosen",
-                    candidate_reason=None,
+                    candidate_status=status,
+                    status_reason=reason,
                     best_fit_score=float(best_fit),
+                    best_fit_rank=rank,
                     bonus_applied=bool(bonus),
                     assess=assess,
                     target_parent_id=self._resolve_target_parent_id(
                         cand, dangle_parent, dangles_key, lines_key
                     ),
+                    final_gap_source=final_gs,
                 ))
             return result
 
@@ -2852,6 +2929,7 @@ class FillLineGaps:
                         float(sc_best_fit),
                         bool(sc_bonus),
                         sc_tuple is winner_item,
+                        sc_score,  # score tuple for per-dangle rank computation
                     ))
 
             # ----------------------------
@@ -2928,7 +3006,6 @@ class FillLineGaps:
 
         deferred_by_parent: dict[int, DeferredCapture] = {}
         deferred_score_by_parent: dict[int, tuple] = {}
-        deferred_dangles: set[int] = set()
 
         for p in proposals_by_dangle.values():
             b_parent = p.target_parent_id
@@ -3013,6 +3090,14 @@ class FillLineGaps:
 
             stage_a_winners.append((winner, str(gap_source)))
 
+        if collect_diags:
+            _stage_a_winner_oids = {int(prop.dangle_oid) for prop, _ in stage_a_winners}
+            stage_a_loser_oids.update(
+                int(prop.dangle_oid)
+                for prop in active
+                if int(prop.dangle_oid) not in _stage_a_winner_oids
+            )
+
         # ----------------------------
         # Stage B: Kruskal-style cycle prevention (component scopes only)
         # ----------------------------
@@ -3033,6 +3118,18 @@ class FillLineGaps:
         else:
             # NONE / DIRECT_CONNECTION: only Stage A
             accepted = list(stage_a_winners)
+
+        if collect_diags and accepted:
+            _accepted_oids = {int(prop.dangle_oid) for prop, _ in accepted}
+            accepted_dangle_oids.update(_accepted_oids)
+            stage_b_rejected_oids.update(
+                int(prop.dangle_oid)
+                for prop, _ in stage_a_winners
+                if int(prop.dangle_oid) not in _accepted_oids
+            )
+            gap_source_by_dangle.update(
+                {int(prop.dangle_oid): str(gs) for prop, gs in accepted}
+            )
 
         if not accepted:
             return {}, deferred_by_parent, _assemble_diagnostics()
@@ -3451,6 +3548,7 @@ class FillLineGaps:
         arcpy.management.AddField(fc_path, "target_parent_id", "LONG")
         arcpy.management.AddField(fc_path, "raw_distance", "DOUBLE")
         arcpy.management.AddField(fc_path, "best_fit_score", "DOUBLE")
+        arcpy.management.AddField(fc_path, "best_fit_rank", "SHORT")
         arcpy.management.AddField(fc_path, "bonus_applied", "SHORT")
         for fname in (
             "angle_metric_deg",
@@ -3461,8 +3559,9 @@ class FillLineGaps:
             "line_match_diff",
         ):
             arcpy.management.AddField(fc_path, fname, "DOUBLE")
-        arcpy.management.AddField(fc_path, "candidate_status", "TEXT", field_length=20)
-        arcpy.management.AddField(fc_path, "candidate_reason", "TEXT", field_length=50)
+        arcpy.management.AddField(fc_path, "final_gap_source", "TEXT", field_length=20)
+        arcpy.management.AddField(fc_path, "candidate_status", "TEXT", field_length=25)
+        arcpy.management.AddField(fc_path, "status_reason", "TEXT", field_length=50)
 
     def _write_candidate_connections_output(
         self,
@@ -3482,6 +3581,7 @@ class FillLineGaps:
             "target_parent_id",
             "raw_distance",
             "best_fit_score",
+            "best_fit_rank",
             "bonus_applied",
             "angle_metric_deg",
             "src_connector_diff",
@@ -3489,8 +3589,9 @@ class FillLineGaps:
             "src_target_diff",
             "connector_transition_diff",
             "line_match_diff",
+            "final_gap_source",
             "candidate_status",
-            "candidate_reason",
+            "status_reason",
         ]
         with arcpy.da.InsertCursor(fc_path, fields) as cur:
             for d in diagnostics:
@@ -3508,6 +3609,7 @@ class FillLineGaps:
                     d.target_parent_id,
                     d.raw_distance,
                     d.best_fit_score,
+                    d.best_fit_rank,
                     int(d.bonus_applied) if d.bonus_applied is not None else None,
                     a.angle_metric_deg if a is not None else None,
                     a.src_connector_diff if a is not None else None,
@@ -3515,8 +3617,9 @@ class FillLineGaps:
                     a.src_target_diff if a is not None else None,
                     a.connector_transition_diff if a is not None else None,
                     a.line_match_diff if a is not None else None,
+                    d.final_gap_source,
                     d.candidate_status,
-                    d.candidate_reason,
+                    d.status_reason,
                 ))
 
     def _apply_plan(self, plan) -> None:
@@ -3698,6 +3801,26 @@ class FillLineGaps:
                 deferred=deferred, dangles_fc=dangles_for_plan
             )
             self._apply_plan(deferred_plan)
+
+            # Patch diagnostic status for deferred candidates now that we know
+            # which ones were accepted vs rejected by _build_deferred_plan.
+            if self.candidate_connections_output is not None and diagnostics:
+                applied_deferred_dangle_oids = {
+                    int(v["dangle_oid"])
+                    for v in deferred_plan.values()
+                    if isinstance(v, dict) and "dangle_oid" in v
+                }
+                for diag in diagnostics:
+                    if (
+                        diag.candidate_status == "selected_for_dangle"
+                        and diag.status_reason == "deferred"
+                    ):
+                        if int(diag.dangle_oid) in applied_deferred_dangle_oids:
+                            diag.candidate_status = "applied_to_output"
+                            diag.status_reason = "applied_deferred"
+                            diag.final_gap_source = self.GAP_SOURCE_DEFERRED
+                        else:
+                            diag.status_reason = "deferred_rejected_connectivity"
 
         if self.candidate_connections_output is not None and diagnostics:
             spatial_reference = arcpy.Describe(self.lines_copy).spatialReference
