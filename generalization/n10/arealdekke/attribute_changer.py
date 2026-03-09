@@ -19,7 +19,7 @@ from generalization.n10.arealdekke.attribute_analyzer import (
     write_to_file,
     load_rules,
 )
-from input_data import input_n10, input_n100, input_test_data
+from input_data import input_n10, input_n100
 
 # ========================
 # Program
@@ -37,7 +37,7 @@ def attribute_changer():
 
     print("📦 Fetches and prepares data...\n")
 
-    working_fc = input_test_data.arealdekke  # input_n10.arealdekkeflate
+    working_fc = input_n10.arealdekkeflate
     clip_fc = Land_use_N10.attribute_changer__n10_land_use.value
     MUNICIPALITY = None
     new_field = "gammel_arealdekke"
@@ -147,7 +147,6 @@ def prepare_partition_iterator(
     arealdekke_init_config = logic_config.AttributeChangerInitKwargs(
         input_feature=partition_input,
         output_feature=partition_ouput,
-        existing_fields=[f.name for f in arcpy.Describe(input_fc).fields],
         new_field=new_field,
         new_type=new_type,
         work_file_manager_config=core_config.WorkFileConfig(
@@ -204,7 +203,6 @@ def change_attributes(init: logic_config.AttributeChangerInitKwargs) -> None:
             with attribute changer. The element contains:
                 - input_feature
                 - output_feature
-                - existing_fields
                 - new_field
                 - new_type
                 - work_file_manager_config
@@ -213,9 +211,11 @@ def change_attributes(init: logic_config.AttributeChangerInitKwargs) -> None:
 
     input_fc = init.input_feature
     output_fc = init.output_feature
-    existing_fields = init.existing_fields
     new_field = init.new_field
     new_type = init.new_type
+
+    existing_fields = [field.name for field in arcpy.Describe(input_fc).fields]
+
     create_new_fc(
         input_fc=input_fc,
         output_fc=output_fc,
