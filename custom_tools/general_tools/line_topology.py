@@ -105,6 +105,7 @@ class TopologyBuilder:
         write_work_files_to_memory: bool,
         connectivity_tolerance_meters: float,
         line_connectivity_mode: "LineConnectivityMode",
+        file_name_prefix: str = "",
     ) -> None:
         self.lines_fc = lines_fc
         self.original_id_field = original_id_field
@@ -114,6 +115,17 @@ class TopologyBuilder:
         self.write_work_files_to_memory = bool(write_work_files_to_memory)
         self.tol_m = float(connectivity_tolerance_meters)
         self.line_mode = line_connectivity_mode
+        self.file_name_prefix = str(file_name_prefix)
+
+    @staticmethod
+    def _short_key(key: str, max_len: int = 24) -> str:
+        """Truncate a dataset key to at most max_len chars for use in file paths.
+        When truncation is needed, keeps the first 16 chars and appends 8 hex
+        chars from an MD5 digest of the full key so the result stays unique."""
+        if len(key) <= max_len:
+            return key
+        import hashlib
+        return key[:16] + hashlib.md5(key.encode()).hexdigest()[:8]
 
     def build(
         self,
@@ -300,7 +312,7 @@ class TopologyBuilder:
     def _build_parent_adjacency_endpoints(
         self, restrict_to_parent_ids: Optional[set[int]]
     ) -> dict[int, set[int]]:
-        endpoints_fc = self.wfm.build_file_path(file_name="topo_line_endpoints")
+        endpoints_fc = self.wfm.build_file_path(file_name=f"{self.file_name_prefix}topo_line_endpoints")
         arcpy.management.FeatureVerticesToPoints(
             self.lines_fc, endpoints_fc, "BOTH_ENDS"
         )
@@ -316,7 +328,7 @@ class TopologyBuilder:
                 endpoints_lyr, "NEW_SELECTION", where
             )
 
-        near_table = self.wfm.build_file_path(file_name="topo_endpoints_near_lines")
+        near_table = self.wfm.build_file_path(file_name=f"{self.file_name_prefix}topo_endpoints_near_lines")
         arcpy.analysis.GenerateNearTable(
             in_features=endpoints_lyr,
             near_features=[self.lines_fc],
@@ -379,7 +391,7 @@ class TopologyBuilder:
             )
             arcpy.management.SelectLayerByAttribute(lines_lyr, "NEW_SELECTION", where)
 
-        near_table = self.wfm.build_file_path(file_name="topo_lines_near_lines")
+        near_table = self.wfm.build_file_path(file_name=f"{self.file_name_prefix}topo_lines_near_lines")
         arcpy.analysis.GenerateNearTable(
             in_features=lines_lyr,
             near_features=[self.lines_fc],
@@ -526,7 +538,7 @@ class TopologyBuilder:
             # Now link per dataset-layer (so dataset_key is explicit and stable)
             for ds_key, opt_lyr in optional_layers:
                 table = self.wfm.build_file_path(
-                    file_name=f"topo_lines_to_opt_{ds_key}"
+                    file_name=f"{self.file_name_prefix}topo_lines_to_opt_{self._short_key(ds_key)}"
                 )
                 arcpy.analysis.GenerateNearTable(
                     in_features=lines_lyr,
@@ -568,7 +580,7 @@ class TopologyBuilder:
         for path in optional_paths:
             ds_key = self.dataset_key_fn(path)
             table = self.wfm.build_file_path(
-                file_name=f"topo_lines_to_opt_attach_{ds_key}"
+                file_name=f"{self.file_name_prefix}topo_lines_to_opt_attach_{self._short_key(ds_key)}"
             )
 
             arcpy.analysis.GenerateNearTable(
@@ -617,7 +629,7 @@ class TopologyBuilder:
         """
         Adds undirected optional↔optional edges to union-find for TRANSITIVE.
         """
-        table = self.wfm.build_file_path(file_name=f"topo_optopt_{ds_in}_to_{ds_near}")
+        table = self.wfm.build_file_path(file_name=f"{self.file_name_prefix}topo_optopt_{self._short_key(ds_in)}_to_{self._short_key(ds_near)}")
         arcpy.analysis.GenerateNearTable(
             in_features=in_layer,
             near_features=[near_layer],
@@ -728,6 +740,24 @@ class Proposal:
     pair_key: tuple[EntityKey, EntityKey]  # unordered network pair
     target_parent_id: Optional[int]  # only for line/dangle targets (ORIGINAL_ID space)
     target_dangle_oid: Optional[int]  # only if chosen is a dangle target
+
+
+@dataclass(frozen=True)
+class DeferredCapture:
+    """
+    Original proposal metadata captured when a proposal is marked deferred.
+
+    Carries both the routing information (which dangle, which forced target) and
+    the original selection metadata (Proposal + AngleAssessment) from the main
+    plan phase.  The geometry is resolved later from post-pass-1 line positions,
+    but the metadata here answers *why* the connection was chosen.
+    """
+
+    parent_id: int
+    dangle_oid: int
+    forced_target_parent: int
+    proposal: "Proposal"
+    assess: "AngleAssessment"
 
 
 @dataclass(frozen=True)
@@ -1147,6 +1177,30 @@ class FillLineGaps:
         )
 
         return raw_distance, effective_distance, bool(bonus_applied), score
+
+    def _compute_best_fit_score(
+        self, *, norm_dist: float, assess: "AngleAssessment"
+    ) -> float:
+        """
+        Normalized weighted composite best-fit score. Lower is better.
+
+        Unavailable dimensions are excluded from the composite and the score
+        is normalized by the sum of available weights only.  This ensures a
+        missing angle is neutral rather than treated as a perfect fit.
+        """
+        w_d = float(self.best_fit_weights.distance)
+        w_a = float(self.best_fit_weights.angle)
+
+        total_w = w_d
+        score = w_d * float(norm_dist)
+
+        if assess.angle_metric_deg is not None:
+            norm_a = float(assess.angle_metric_deg) / float(assess.angle_max_deg)
+            score += w_a * norm_a
+            total_w += w_a
+        # angle unavailable: exclude w_a from total so the score is not biased
+
+        return float(score) / float(total_w) if total_w > 0.0 else 0.0
 
     # ----------------------------
     # Preprocessing
@@ -1976,12 +2030,8 @@ class FillLineGaps:
             _diff = self._orientation_diff
             angle_max_deg = 90.0
 
-        connector_target_diff = _diff(
-            float(connector_angle), float(target_angle)
-        )
-        src_target_diff = _diff(
-            float(src_angle_deg), float(target_angle)
-        )
+        connector_target_diff = _diff(float(connector_angle), float(target_angle))
+        src_target_diff = _diff(float(src_angle_deg), float(target_angle))
         # connector_transition_diff mixes src→connector and connector→target.
         # For dangle pairs, use directional src→connector to stay consistent.
         _src_conn_for_transition = (
@@ -2425,11 +2475,9 @@ class FillLineGaps:
                 # Line targets do not use edge-case bonus.
                 raw_dist = float(cand["near_dist"])
                 _tol = float(self.gap_tolerance_meters) or 1.0
-                _norm_d = raw_dist / _tol
-                _norm_a = (float(assess.angle_metric_deg) / float(assess.angle_max_deg)
-                           if assess.angle_metric_deg is not None else 0.0)
-                eff = (float(self.best_fit_weights.distance) * _norm_d
-                       + float(self.best_fit_weights.angle) * _norm_a)
+                eff = self._compute_best_fit_score(
+                    norm_dist=raw_dist / _tol, assess=assess
+                )
 
                 # Deterministic tie-break:
                 score = (float(eff), float(raw_dist), self._candidate_sort_key(cand))
@@ -2532,12 +2580,8 @@ class FillLineGaps:
 
                 # 4) Normalized weighted composite score
                 _tol = float(self.gap_tolerance_meters) or 1.0
-                _norm_d = float(effective_distance) / _tol
-                _norm_a = (float(assess.angle_metric_deg) / float(assess.angle_max_deg)
-                           if assess.angle_metric_deg is not None else 0.0)
-                effective_for_scoring = (
-                    float(self.best_fit_weights.distance) * _norm_d
-                    + float(self.best_fit_weights.angle) * _norm_a
+                effective_for_scoring = self._compute_best_fit_score(
+                    norm_dist=float(effective_distance) / _tol, assess=assess
                 )
 
                 # Keep score tuple shape stable; only replace the first element
@@ -2649,7 +2693,7 @@ class FillLineGaps:
                 int(p.target_parent_id)
             )
 
-        deferred_by_parent: dict[int, dict] = {}
+        deferred_by_parent: dict[int, DeferredCapture] = {}
         deferred_score_by_parent: dict[int, tuple] = {}
         deferred_dangles: set[int] = set()
 
@@ -2671,11 +2715,13 @@ class FillLineGaps:
             # Keep only one deferred per parent (deterministic: best score)
             cur_best = deferred_score_by_parent.get(int(p.src_parent_id))
             if cur_best is None or p.score < cur_best:
-                deferred_by_parent[int(p.src_parent_id)] = {
-                    "parent_id": int(p.src_parent_id),
-                    "dangle_oid": int(p.dangle_oid),
-                    "forced_target_parent": int(b_parent),
-                }
+                deferred_by_parent[int(p.src_parent_id)] = DeferredCapture(
+                    parent_id=int(p.src_parent_id),
+                    dangle_oid=int(p.dangle_oid),
+                    forced_target_parent=int(b_parent),
+                    proposal=p,
+                    assess=assess_by_dangle[int(p.dangle_oid)],
+                )
                 deferred_score_by_parent[int(p.src_parent_id)] = p.score
                 deferred_dangles.add(int(p.dangle_oid))
 
@@ -2826,7 +2872,9 @@ class FillLineGaps:
                 entry["meta_src_connector_diff"] = assess.src_connector_diff
                 entry["meta_connector_target_diff"] = assess.connector_target_diff
                 entry["meta_src_target_diff"] = assess.src_target_diff
-                entry["meta_connector_transition_diff"] = assess.connector_transition_diff
+                entry["meta_connector_transition_diff"] = (
+                    assess.connector_transition_diff
+                )
                 entry["meta_line_match_diff"] = assess.line_match_diff
                 entry["meta_angle_metric_deg"] = assess.angle_metric_deg
                 entry["meta_best_fit_score"] = best_fit_score
@@ -2859,31 +2907,121 @@ class FillLineGaps:
     # Deferred handling
     # ----------------------------
 
+    def _rebuild_topology_for_deferred(
+        self, *, captures: "dict[int, DeferredCapture]"
+    ) -> "TopologyModel":
+        """
+        Rebuild topology from the post-pass-1 lines_copy so that deferred
+        connectivity checks reflect the updated network state.
+        """
+        relevant: set[int] = set()
+        for cap in captures.values():
+            relevant.add(int(cap.parent_id))
+            relevant.add(int(cap.forced_target_parent))
+
+        return TopologyBuilder(
+            lines_fc=self.lines_copy,
+            original_id_field=self.ORIGINAL_ID,
+            connect_to_features=self.connect_to_features,
+            dataset_key_fn=self._dataset_key,
+            wfm=self.wfm,
+            write_work_files_to_memory=self.write_work_files_to_memory,
+            connectivity_tolerance_meters=self.connectivity_tolerance_meters,
+            line_connectivity_mode=self.line_connectivity_mode,
+            file_name_prefix="deferred_",
+        ).build(
+            scope=self.connectivity_scope,
+            relevant_parent_ids=relevant,
+        )
+
+    def _accept_deferred_candidates(
+        self,
+        *,
+        candidates: "list[tuple[DeferredCapture, float, float]]",
+        updated_topology: "TopologyModel",
+    ) -> "list[tuple[DeferredCapture, float, float]]":
+        """
+        Validate and accept deferred candidates against the post-pass-1 topology.
+
+        Per-candidate: reject if src and forced-target are now in the same network.
+        For component scopes: greedy Kruskal acceptance ordered by original
+        proposal.score so the result is deterministic and cycle-free.
+
+        Each entry is (capture, near_x, near_y).
+        """
+        valid = [
+            (cap, nx, ny)
+            for cap, nx, ny in candidates
+            if not self._same_network(
+                a_parent=cap.parent_id,
+                b_parent=cap.forced_target_parent,
+                topology=updated_topology,
+            )
+        ]
+
+        if not valid:
+            return []
+
+        scope = updated_topology.scope
+        if scope not in (
+            logic_config.ConnectivityScope.INPUT_LINES,
+            logic_config.ConnectivityScope.ONE_DEGREE,
+            logic_config.ConnectivityScope.TRANSITIVE,
+        ):
+            # NONE / DIRECT_CONNECTION: per-candidate check is sufficient
+            return valid
+
+        # Component scopes: greedy acceptance to prevent deferred candidates
+        # from creating cycles among themselves, ordered by original score.
+        sorted_valid = sorted(valid, key=lambda t: t[0].proposal.score)
+        uf = _UnionFind()
+        accepted: list[tuple[DeferredCapture, float, float]] = []
+        for cap, nx, ny in sorted_valid:
+            src_node = self._node_for_parent(
+                parent_id=cap.parent_id, topology=updated_topology
+            )
+            tgt_node = self._node_for_parent(
+                parent_id=cap.forced_target_parent, topology=updated_topology
+            )
+            if uf.find(src_node) == uf.find(tgt_node):
+                continue
+            uf.union(src_node, tgt_node)
+            accepted.append((cap, nx, ny))
+
+        return accepted
+
     def _build_deferred_plan(
         self,
         *,
-        deferred: dict[int, dict],
+        deferred: "dict[int, DeferredCapture]",
         dangles_fc: str,
     ) -> dict[int, dict]:
-        # Deferred dangles layer
-        dangles_oid = arcpy.Describe(dangles_fc).OIDFieldName
-        dangle_oids = sorted({int(v["dangle_oid"]) for v in deferred.values()})
+        """
+        Resolve deferred connections in three stages:
+        1. Geometry lookup — find the best near-point on each forced target line,
+           using updated post-pass-1 geometry.
+        2. Connectivity validation — rebuild topology from updated lines_copy and
+           reject any candidate that would now create a forbidden connection.
+        3. Plan entry construction — reuse original proposal/assess metadata so
+           the output correctly reflects why the connection was chosen.
+        """
+        dangle_oids = sorted({int(cap.dangle_oid) for cap in deferred.values()})
         if not dangle_oids:
             return {}
 
+        # --- 1a. Feature layers for near-table lookup ---
+        dangles_oid = arcpy.Describe(dangles_fc).OIDFieldName
         where_d = f"{arcpy.AddFieldDelimiters(dangles_fc, dangles_oid)} IN ({','.join(map(str, dangle_oids))})"
         deferred_lyr = "deferred_dangles_lyr"
         arcpy.management.MakeFeatureLayer(dangles_fc, deferred_lyr, where_d)
 
-        # Locked forced-target lines layer (UPDATED geometry because pass 1 already ran)
         forced_parents = sorted(
-            {int(v["forced_target_parent"]) for v in deferred.values()}
+            {int(cap.forced_target_parent) for cap in deferred.values()}
         )
         where_l = f"{arcpy.AddFieldDelimiters(self.lines_copy, self.ORIGINAL_ID)} IN ({','.join(map(str, forced_parents))})"
         forced_lines_lyr = "forced_lines_lyr"
         arcpy.management.MakeFeatureLayer(self.lines_copy, forced_lines_lyr, where_l)
 
-        # Map near OID -> parent id (do NOT assume OID == ORIGINAL_ID)
         lines_oid = arcpy.Describe(forced_lines_lyr).OIDFieldName
         near_oid_to_parent: dict[int, int] = {}
         with arcpy.da.SearchCursor(
@@ -2892,16 +3030,14 @@ class FillLineGaps:
             for oid, pid in cur:
                 near_oid_to_parent[int(oid)] = int(pid)
 
-        # Large tolerance (keep your current heuristic)
+        # --- 1b. GenerateNearTable against updated forced-target geometry ---
         large_m = max(50, int(self.gap_tolerance_meters) * 10)
-        large_tol = f"{int(large_m)} Meters"
-
         forced_table = self.wfm.build_file_path(file_name="deferred_forced_table")
         arcpy.analysis.GenerateNearTable(
             in_features=deferred_lyr,
             near_features=[forced_lines_lyr],
             out_table=forced_table,
-            search_radius=large_tol,
+            search_radius=f"{int(large_m)} Meters",
             location="LOCATION",
             angle="NO_ANGLE",
             closest="ALL",
@@ -2909,8 +3045,7 @@ class FillLineGaps:
             method="PLANAR",
         )
 
-        # Best near point per (dangle_oid, forced_parent)
-        best_xy: dict[tuple[int, int], tuple[float, float, float]] = {}  # -> (x,y,dist)
+        best_xy: dict[tuple[int, int], tuple[float, float]] = {}
         fields = [
             self.F_IN_FID,
             self.F_NEAR_FID,
@@ -2922,57 +3057,64 @@ class FillLineGaps:
             for in_fid, near_fid, near_dist, near_x, near_y in cur:
                 if near_fid is None or near_dist is None:
                     continue
-                d_oid = int(in_fid)
                 near_parent = near_oid_to_parent.get(int(near_fid))
                 if near_parent is None:
                     continue
-
-                dist = float(near_dist)
-                key = (d_oid, int(near_parent))
-                prev = best_xy.get(key)
-                if prev is None or dist < prev[2]:
-                    best_xy[key] = (float(near_x), float(near_y), dist)
+                key = (int(in_fid), int(near_parent))
+                prev_dist = best_xy.get(key, (0.0, 0.0, float("inf")))[2]  # type: ignore[misc]
+                if float(near_dist) < prev_dist:
+                    best_xy[key] = (float(near_x), float(near_y), float(near_dist))  # type: ignore[assignment]
 
         if not best_xy:
             return {}
 
-        # Dangle XY (only build once)
         dangle_xy = self._build_dangle_xy_lookup(dangles_fc)
 
+        # --- 1c. Pair each capture with its resolved near-point ---
+        candidates: list[tuple[DeferredCapture, float, float]] = []
+        for cap in deferred.values():
+            hit = best_xy.get((cap.dangle_oid, cap.forced_target_parent))
+            if hit is None:
+                continue
+            if dangle_xy.get(cap.dangle_oid) is None:
+                continue
+            candidates.append((cap, float(hit[0]), float(hit[1])))
+
+        if not candidates:
+            return {}
+
+        # --- 2. Validate against post-pass-1 connectivity ---
+        updated_topology = self._rebuild_topology_for_deferred(captures=deferred)
+        accepted = self._accept_deferred_candidates(
+            candidates=candidates,
+            updated_topology=updated_topology,
+        )
+
+        if not accepted:
+            return {}
+
+        # --- 3. Build plan entries with preserved original metadata ---
         lines_key = self._dataset_key(self.lines_copy)
         out: dict[int, dict] = {}
 
-        for a_parent, info in deferred.items():
-            a_parent = int(a_parent)
-            d_oid = int(info["dangle_oid"])
-            forced_parent = int(info["forced_target_parent"])
-
-            hit = best_xy.get((d_oid, forced_parent))
-            if hit is None:
-                continue
-
-            dxy = dangle_xy.get(d_oid)
-            if dxy is None:
-                continue
-            dangle_x, dangle_y = dxy
-
-            near_x, near_y, _ = hit
-
-            out[a_parent] = {
-                "processed": False,
-                "skip": False,
-                "gap_source": self.GAP_SOURCE_DEFERRED,
-                "edit_op": str(
-                    self._resolve_edit_op(gap_source=self.GAP_SOURCE_DEFERRED).value
-                ),
-                "dangle_oid": d_oid,
-                "dangle_x": float(dangle_x),
-                "dangle_y": float(dangle_y),
-                "near_x": float(near_x),
-                "near_y": float(near_y),
-                "chosen_near_fc_key": lines_key,
-                "chosen_near_fid": forced_parent,  # parent-id space, consistent with your plan
-            }
+        for cap, near_x, near_y in accepted:
+            dangle_x, dangle_y = dangle_xy[cap.dangle_oid]
+            out[cap.parent_id] = self._make_plan_entry(
+                parent_id=cap.parent_id,
+                dangle_oid=cap.dangle_oid,
+                dangle_x=float(dangle_x),
+                dangle_y=float(dangle_y),
+                chosen={
+                    "near_x": float(near_x),
+                    "near_y": float(near_y),
+                    "near_fc_key": lines_key,
+                    "near_fid": cap.forced_target_parent,
+                },
+                gap_source=self.GAP_SOURCE_DEFERRED,
+                bonus_applied=cap.proposal.bonus_applied,
+                assess=cap.assess,
+                best_fit_score=cap.proposal.best_fit_score,
+            )
 
         return out
 
@@ -3018,7 +3160,9 @@ class FillLineGaps:
                 arcpy.management.AddField(self.line_changes_output, fname, "DOUBLE")
 
         if "bonus_applied" not in existing:
-            arcpy.management.AddField(self.line_changes_output, "bonus_applied", "SHORT")
+            arcpy.management.AddField(
+                self.line_changes_output, "bonus_applied", "SHORT"
+            )
 
     def _build_change_row(
         self,
@@ -3041,16 +3185,18 @@ class FillLineGaps:
         geom = arcpy.Polyline(arr, spatial_reference)
         row = [geom, int(original_id), float(dist), str(gap_source)]
         if meta is not None:
-            row.extend([
-                meta.get("meta_src_connector_diff"),
-                meta.get("meta_connector_target_diff"),
-                meta.get("meta_src_target_diff"),
-                meta.get("meta_connector_transition_diff"),
-                meta.get("meta_line_match_diff"),
-                meta.get("meta_angle_metric_deg"),
-                meta.get("meta_best_fit_score"),
-                meta.get("meta_bonus_applied"),
-            ])
+            row.extend(
+                [
+                    meta.get("meta_src_connector_diff"),
+                    meta.get("meta_connector_target_diff"),
+                    meta.get("meta_src_target_diff"),
+                    meta.get("meta_connector_transition_diff"),
+                    meta.get("meta_line_match_diff"),
+                    meta.get("meta_angle_metric_deg"),
+                    meta.get("meta_best_fit_score"),
+                    meta.get("meta_bonus_applied"),
+                ]
+            )
         return tuple(row)
 
     def _apply_plan(self, plan) -> None:
@@ -3111,21 +3257,34 @@ class FillLineGaps:
 
                     info["processed"] = True
 
-                    if self.line_changes_output is not None and self.write_output_metadata:
-                        meta = {k: info.get(k) for k in (
-                            "meta_src_connector_diff",
-                            "meta_connector_target_diff",
-                            "meta_src_target_diff",
-                            "meta_connector_transition_diff",
-                            "meta_line_match_diff",
-                            "meta_angle_metric_deg",
-                            "meta_best_fit_score",
-                            "meta_bonus_applied",
-                        )} if any(k in info for k in (
-                            "meta_src_connector_diff",
-                            "meta_angle_metric_deg",
-                            "meta_bonus_applied",
-                        )) else None
+                    if (
+                        self.line_changes_output is not None
+                        and self.write_output_metadata
+                    ):
+                        meta = (
+                            {
+                                k: info.get(k)
+                                for k in (
+                                    "meta_src_connector_diff",
+                                    "meta_connector_target_diff",
+                                    "meta_src_target_diff",
+                                    "meta_connector_transition_diff",
+                                    "meta_line_match_diff",
+                                    "meta_angle_metric_deg",
+                                    "meta_best_fit_score",
+                                    "meta_bonus_applied",
+                                )
+                            }
+                            if any(
+                                k in info
+                                for k in (
+                                    "meta_src_connector_diff",
+                                    "meta_angle_metric_deg",
+                                    "meta_bonus_applied",
+                                )
+                            )
+                            else None
+                        )
                         row = self._build_change_row(
                             original_id=pid,
                             dangle_x=float(info["dangle_x"]),
@@ -3143,7 +3302,11 @@ class FillLineGaps:
 
                 cur.updateRow((original_id, current_shape))
 
-        if self.line_changes_output is not None and self.write_output_metadata and change_rows:
+        if (
+            self.line_changes_output is not None
+            and self.write_output_metadata
+            and change_rows
+        ):
             meta_fields = [
                 "src_connector_diff",
                 "connector_target_diff",
@@ -3161,11 +3324,12 @@ class FillLineGaps:
                     self.ORIGINAL_ID,
                     self.FIELD_GAP_DIST_M,
                     self.FIELD_GAP_SOURCE,
-                ] + meta_fields,
+                ]
+                + meta_fields,
             ) as icur:
                 for row in change_rows:
                     if len(row) == 4:
-                        # Deferred / polygon rows — no metadata; pad with None
+                        # Polygon (non-line) rows have no angle metadata; pad with None.
                         row = row + (None,) * len(meta_fields)
                     icur.insertRow(row)
 
