@@ -737,6 +737,9 @@ class AngleAssessment:
     blocks: bool
     allow_extra_dangle: bool  # expanded dangle tol + edge-case bonus
     angle_metric_deg: Optional[float]
+    # Normalisation range for angle_metric_deg used in best-fit scoring.
+    # 90.0 for undirected targets; 180.0 for directional dangle-pair targets.
+    angle_max_deg: float = 90.0
 
     # Diagnostics (optional)
     src_connector_diff: Optional[float] = None
@@ -1207,6 +1210,11 @@ class FillLineGaps:
         b = self._orientation(float(b_deg))
         raw = abs(a - b)
         return min(raw, 180.0 - raw)  # 0..90
+
+    def _directional_diff(self, a_deg: float, b_deg: float) -> float:
+        """Signed-aware circular difference between two direction angles. Result in [0, 180]."""
+        diff = abs(float(a_deg) - float(b_deg)) % 360.0
+        return min(diff, 360.0 - diff)  # 0..180
 
     def _connector_angle_deg(
         self, *, from_x: float, from_y: float, to_x: float, to_y: float
@@ -1958,14 +1966,31 @@ class FillLineGaps:
                 src_connector_diff=float(src_connector_diff),
             )
 
-        connector_target_diff = self._orientation_diff(
+        # Dangle-pair targets: use directional comparison so anti-parallel lines
+        # are not collapsed to zero diff. All other line-like targets keep the
+        # undirected orientation-based comparison.
+        if ds_key == dangles_fc_key:
+            _diff = self._directional_diff
+            angle_max_deg = 180.0
+        else:
+            _diff = self._orientation_diff
+            angle_max_deg = 90.0
+
+        connector_target_diff = _diff(
             float(connector_angle), float(target_angle)
         )
-        src_target_diff = self._orientation_diff(
+        src_target_diff = _diff(
             float(src_angle_deg), float(target_angle)
         )
+        # connector_transition_diff mixes src→connector and connector→target.
+        # For dangle pairs, use directional src→connector to stay consistent.
+        _src_conn_for_transition = (
+            self._directional_diff(float(src_angle_deg), float(connector_angle))
+            if ds_key == dangles_fc_key
+            else float(src_connector_diff)
+        )
         connector_transition_diff = 0.5 * (
-            float(src_connector_diff) + float(connector_target_diff)
+            _src_conn_for_transition + float(connector_target_diff)
         )
 
         w = float(self.line_alignment_weight)
@@ -1992,6 +2017,7 @@ class FillLineGaps:
             blocks=bool(blocks),
             allow_extra_dangle=bool(allow_extra),
             angle_metric_deg=float(metric),
+            angle_max_deg=float(angle_max_deg),
             src_connector_diff=float(src_connector_diff),
             connector_target_diff=float(connector_target_diff),
             src_target_diff=float(src_target_diff),
@@ -2400,7 +2426,7 @@ class FillLineGaps:
                 raw_dist = float(cand["near_dist"])
                 _tol = float(self.gap_tolerance_meters) or 1.0
                 _norm_d = raw_dist / _tol
-                _norm_a = (float(assess.angle_metric_deg) / 90.0
+                _norm_a = (float(assess.angle_metric_deg) / float(assess.angle_max_deg)
                            if assess.angle_metric_deg is not None else 0.0)
                 eff = (float(self.best_fit_weights.distance) * _norm_d
                        + float(self.best_fit_weights.angle) * _norm_a)
@@ -2507,7 +2533,7 @@ class FillLineGaps:
                 # 4) Normalized weighted composite score
                 _tol = float(self.gap_tolerance_meters) or 1.0
                 _norm_d = float(effective_distance) / _tol
-                _norm_a = (float(assess.angle_metric_deg) / 90.0
+                _norm_a = (float(assess.angle_metric_deg) / float(assess.angle_max_deg)
                            if assess.angle_metric_deg is not None else 0.0)
                 effective_for_scoring = (
                     float(self.best_fit_weights.distance) * _norm_d
