@@ -260,10 +260,7 @@ def change_attributes(init: logic_config.AttributeChangerInitKwargs) -> None:
                 break
 
     control = 0
-    attribute_replace = {
-        "objectid": "OID@",
-        "shape": "SHAPE@"
-    }
+    attribute_replace = {"objectid": "OID@", "shape": "SHAPE@"}
     keys = attribute_replace.keys()
     for i in range(len(existing_fields)):
         field = existing_fields[i].lower()
@@ -274,9 +271,7 @@ def change_attributes(init: logic_config.AttributeChangerInitKwargs) -> None:
             break
 
     with arcpy.da.SearchCursor(input_fc, existing_fields) as src:
-        with arcpy.da.InsertCursor(
-            output_fc, existing_fields + [new_field]
-        ) as ins:
+        with arcpy.da.InsertCursor(output_fc, existing_fields + [new_field]) as ins:
             for row in tqdm(
                 src,
                 desc="Rewrites attributes",
@@ -354,9 +349,7 @@ def create_new_fc(
     print("✅ Feature class structure ready.\n")
 
 
-def write_unique_combinations_and_counts_to_file(
-    fc: str, attribute_list: list
-) -> None:
+def write_unique_combinations_and_counts_to_file(fc: str, attribute_list: list) -> None:
     """
     Prints the unique combinations of specific attributes along
     with the number of features with these combination.

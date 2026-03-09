@@ -21,7 +21,7 @@ class Land_use_N10(Enum):
     attribute_changer__n10_land_use = file_manager.generate_file_name_gdb(
         script_source_name=attribute_file, description="attribute_changer"
     )
-    
+
     attribute_changer_documentation__n10_land_use = (
         file_manager.generate_general_subdirectory(
             description="attribute_changer_documentation"
