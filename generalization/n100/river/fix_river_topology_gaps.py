@@ -55,7 +55,14 @@ def fill_line_topology_gaps():
         angle_block_threshold_degrees=None,
         angle_extra_dangle_threshold_degrees=45,
         line_alignment_weight=0.6,
-        angle_local_half_window_m=15,
+        best_fit_weights=(
+            logic_config.BestFitWeightsConfig(
+                distance=0.35,
+                angle=0.65,
+                z=0.0,
+            )
+        ),
+        angle_local_half_window_m=10,
     )
     work_file_manager_config = core_config.WorkFileConfig(
         root_file=River_N100.river_topology___root___n100_river.value,

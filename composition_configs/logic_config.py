@@ -234,6 +234,27 @@ class AngleTargetMode(str, Enum):
 
 
 @dataclass(frozen=True)
+class BestFitWeightsConfig:
+    """
+    Normalized weights for composite best-fit candidate scoring.
+
+    Each weight is a non-negative scalar. The composite score for a candidate is:
+
+        score = distance * norm_dist + angle * norm_angle + z * norm_z
+
+    where norm_* are each normalized to [0, 1] relative to their natural range
+    (distance: gap_tolerance_meters; angle: 90 degrees; z: reserved).
+
+    Default (distance=1.0, angle=0.0, z=0.0) produces pure nearest-distance ranking,
+    identical to the behavior before angle weighting was introduced.
+    """
+
+    distance: float = 1.0
+    angle: float = 0.0
+    z: float = 0.0
+
+
+@dataclass(frozen=True)
 class FillLineGapsAdvancedConfig:
     fill_gaps_on_self: bool = True
     line_changes_output: Optional[str] = None
@@ -250,10 +271,13 @@ class FillLineGapsAdvancedConfig:
     # ----------------------------
     angle_block_threshold_degrees: Optional[float] = None
     angle_extra_dangle_threshold_degrees: Optional[float] = None
-    angle_penalty_max_meters: Optional[float] = None
 
     # 0..1, prefer line alignment a bit more than connector transition
     line_alignment_weight: float = 0.6
+
+    best_fit_weights: BestFitWeightsConfig = field(
+        default_factory=BestFitWeightsConfig
+    )
 
     # Passed to local_line_angle_at_xy(desired_half_window_m=...)
     angle_local_half_window_m: float = 2.0
