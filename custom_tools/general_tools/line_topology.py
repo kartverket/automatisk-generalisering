@@ -718,7 +718,7 @@ class Proposal:
     chosen: dict  # the chosen candidate row dict
 
     raw_distance: float
-    effective_distance: float
+    best_fit_score: float
     bonus_applied: bool
 
     # (effective_dist, bonus_rank, raw_dist, src_parent, dangle_oid, near_fc_key, near_fid)
@@ -737,7 +737,6 @@ class AngleAssessment:
     blocks: bool
     allow_extra_dangle: bool  # expanded dangle tol + edge-case bonus
     angle_metric_deg: Optional[float]
-    angle_penalty_m: float
 
     # Diagnostics (optional)
     src_connector_diff: Optional[float] = None
@@ -806,11 +805,7 @@ class FillLineGaps:
             if adv.angle_extra_dangle_threshold_degrees is None
             else float(adv.angle_extra_dangle_threshold_degrees)
         )
-        self.angle_penalty_max_meters = (
-            None
-            if adv.angle_penalty_max_meters is None
-            else float(adv.angle_penalty_max_meters)
-        )
+        self.best_fit_weights = adv.best_fit_weights
 
         w = float(getattr(adv, "line_alignment_weight", 0.6))
         self.line_alignment_weight = max(0.0, min(1.0, w))
@@ -1872,7 +1867,6 @@ class FillLineGaps:
                 blocks=False,
                 allow_extra_dangle=bool(allow_extra),
                 angle_metric_deg=None,
-                angle_penalty_m=0.0,
             )
 
         src_connector_diff = self._orientation_diff(
@@ -1897,16 +1891,11 @@ class FillLineGaps:
                         self.angle_extra_dangle_threshold_degrees
                     )
 
-            penalty = 0.0
-            if self.angle_penalty_max_meters is not None:
-                penalty = (metric / 90.0) * float(self.angle_penalty_max_meters)
-
             return AngleAssessment(
                 available=True,
                 blocks=bool(blocks),
                 allow_extra_dangle=bool(allow_extra),
                 angle_metric_deg=float(metric),
-                angle_penalty_m=float(penalty),
                 src_connector_diff=float(src_connector_diff),
             )
 
@@ -1966,7 +1955,6 @@ class FillLineGaps:
                 blocks=False,
                 allow_extra_dangle=bool(allow_extra),
                 angle_metric_deg=None,
-                angle_penalty_m=0.0,
                 src_connector_diff=float(src_connector_diff),
             )
 
@@ -1999,16 +1987,11 @@ class FillLineGaps:
             else:
                 allow_extra = metric <= float(self.angle_extra_dangle_threshold_degrees)
 
-        penalty = 0.0
-        if self.angle_penalty_max_meters is not None:
-            penalty = (metric / 90.0) * float(self.angle_penalty_max_meters)
-
         return AngleAssessment(
             available=True,
             blocks=bool(blocks),
             allow_extra_dangle=bool(allow_extra),
             angle_metric_deg=float(metric),
-            angle_penalty_m=float(penalty),
             src_connector_diff=float(src_connector_diff),
             connector_target_diff=float(connector_target_diff),
             src_target_diff=float(src_target_diff),
@@ -2413,9 +2396,14 @@ class FillLineGaps:
                 if assess.blocks:
                     continue
 
-                # Line targets do not use edge-case bonus. Score is raw + angle penalty.
+                # Line targets do not use edge-case bonus.
                 raw_dist = float(cand["near_dist"])
-                eff = raw_dist + float(assess.angle_penalty_m)
+                _tol = float(self.gap_tolerance_meters) or 1.0
+                _norm_d = raw_dist / _tol
+                _norm_a = (float(assess.angle_metric_deg) / 90.0
+                           if assess.angle_metric_deg is not None else 0.0)
+                eff = (float(self.best_fit_weights.distance) * _norm_d
+                       + float(self.best_fit_weights.angle) * _norm_a)
 
                 # Deterministic tie-break:
                 score = (float(eff), float(raw_dist), self._candidate_sort_key(cand))
@@ -2516,9 +2504,14 @@ class FillLineGaps:
                     )
                 )
 
-                # 4) Distance-equivalent angle penalty integrates into scoring
-                effective_for_scoring = float(effective_distance) + float(
-                    assess.angle_penalty_m
+                # 4) Normalized weighted composite score
+                _tol = float(self.gap_tolerance_meters) or 1.0
+                _norm_d = float(effective_distance) / _tol
+                _norm_a = (float(assess.angle_metric_deg) / 90.0
+                           if assess.angle_metric_deg is not None else 0.0)
+                effective_for_scoring = (
+                    float(self.best_fit_weights.distance) * _norm_d
+                    + float(self.best_fit_weights.angle) * _norm_a
                 )
 
                 # Keep score tuple shape stable; only replace the first element
@@ -2602,7 +2595,7 @@ class FillLineGaps:
                 tgt_node=tgt_node,
                 chosen=chosen,
                 raw_distance=float(raw_distance),
-                effective_distance=float(effective_distance_for_scoring),
+                best_fit_score=float(effective_distance_for_scoring),
                 bonus_applied=bool(bonus_applied),
                 score=score,
                 pair_key=pair_key,
@@ -2759,6 +2752,7 @@ class FillLineGaps:
                 gap_source=str(gap_source),
                 bonus_applied=prop.bonus_applied,
                 assess=assess_by_dangle.get(int(prop.dangle_oid)),
+                best_fit_score=prop.best_fit_score,
             )
 
             tmp.setdefault(int(prop.src_parent_id), []).append((prop.score, entry))
@@ -2784,6 +2778,7 @@ class FillLineGaps:
         gap_source: str,
         bonus_applied: bool = False,
         assess: "Optional[AngleAssessment]" = None,
+        best_fit_score: Optional[float] = None,
     ) -> dict:
         edit_op = self._resolve_edit_op(gap_source=str(gap_source))
         entry: dict = {
@@ -2808,7 +2803,7 @@ class FillLineGaps:
                 entry["meta_connector_transition_diff"] = assess.connector_transition_diff
                 entry["meta_line_match_diff"] = assess.line_match_diff
                 entry["meta_angle_metric_deg"] = assess.angle_metric_deg
-                entry["meta_angle_penalty_m"] = assess.angle_penalty_m
+                entry["meta_best_fit_score"] = best_fit_score
         return entry
 
     def _apply_pair_symmetric_skip(self, decided_by_parent: dict[int, dict]) -> None:
@@ -2990,7 +2985,7 @@ class FillLineGaps:
             "connector_transition_diff",
             "line_match_diff",
             "angle_metric_deg",
-            "angle_penalty_m",
+            "best_fit_score",
         ]
         for fname in meta_double_fields:
             if fname not in existing:
@@ -3027,7 +3022,7 @@ class FillLineGaps:
                 meta.get("meta_connector_transition_diff"),
                 meta.get("meta_line_match_diff"),
                 meta.get("meta_angle_metric_deg"),
-                meta.get("meta_angle_penalty_m"),
+                meta.get("meta_best_fit_score"),
                 meta.get("meta_bonus_applied"),
             ])
         return tuple(row)
@@ -3098,7 +3093,7 @@ class FillLineGaps:
                             "meta_connector_transition_diff",
                             "meta_line_match_diff",
                             "meta_angle_metric_deg",
-                            "meta_angle_penalty_m",
+                            "meta_best_fit_score",
                             "meta_bonus_applied",
                         )} if any(k in info for k in (
                             "meta_src_connector_diff",
@@ -3130,7 +3125,7 @@ class FillLineGaps:
                 "connector_transition_diff",
                 "line_match_diff",
                 "angle_metric_deg",
-                "angle_penalty_m",
+                "best_fit_score",
                 "bonus_applied",
             ]
             with arcpy.da.InsertCursor(
