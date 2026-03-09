@@ -47,18 +47,18 @@ def fill_line_topology_gaps():
         fill_gaps_on_self=True,
         line_changes_output=River_N100.river_topology___river_gaps_changes___n100_river.value,
         write_output_metadata=True,
-        increased_tolerance_edge_case_distance_meters=5,
+        increased_tolerance_edge_case_distance_meters=15,
         edit_method=logic_config.EditMethod.AUTO,
         connectivity_scope=logic_config.ConnectivityScope.TRANSITIVE,
         connectivity_tolerance_meters=environment_setup.ArcGisEnvironmentSetup.XY_TOLERANCE,
         line_connectivity_mode=logic_config.LineConnectivityMode.ENDPOINTS,
         angle_block_threshold_degrees=None,
-        angle_extra_dangle_threshold_degrees=45,
-        line_alignment_weight=0.6,
+        angle_extra_dangle_threshold_degrees=75,
+        line_alignment_weight=0.75,
         best_fit_weights=(
             logic_config.BestFitWeightsConfig(
-                distance=0.35,
-                angle=0.65,
+                distance=0.15,
+                angle=0.85,
                 z=0.0,
             )
         ),
