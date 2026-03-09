@@ -47,22 +47,23 @@ def fill_line_topology_gaps():
         fill_gaps_on_self=True,
         line_changes_output=River_N100.river_topology___river_gaps_changes___n100_river.value,
         write_output_metadata=True,
-        increased_tolerance_edge_case_distance_meters=15,
+        candidate_connections_output=River_N100.river_topology___river_gaps_diagnostic___n100_river.value,
+        increased_tolerance_edge_case_distance_meters=10,
         edit_method=logic_config.EditMethod.AUTO,
         connectivity_scope=logic_config.ConnectivityScope.TRANSITIVE,
         connectivity_tolerance_meters=environment_setup.ArcGisEnvironmentSetup.XY_TOLERANCE,
         line_connectivity_mode=logic_config.LineConnectivityMode.ENDPOINTS,
-        angle_block_threshold_degrees=None,
-        angle_extra_dangle_threshold_degrees=75,
+        angle_block_threshold_degrees=90,
+        angle_extra_dangle_threshold_degrees=70,
         line_alignment_weight=0.75,
         best_fit_weights=(
             logic_config.BestFitWeightsConfig(
-                distance=0.15,
-                angle=0.85,
+                distance=0.5,
+                angle=0.5,
                 z=0.0,
             )
         ),
-        angle_local_half_window_m=10,
+        angle_local_half_window_m=20,
     )
     work_file_manager_config = core_config.WorkFileConfig(
         root_file=River_N100.river_topology___root___n100_river.value,
@@ -74,7 +75,7 @@ def fill_line_topology_gaps():
         input_lines=River_N100.data_preparation___river_lines___n100_river.value,
         output_lines=River_N100.river_topology___fixed_river_gaps___n100_river.value,
         work_file_manager_config=work_file_manager_config,
-        gap_tolerance_meters=3,
+        gap_tolerance_meters=25,
         connect_to_features=[
             River_N100.data_preparation___river_polygons___n100_river.value
         ],

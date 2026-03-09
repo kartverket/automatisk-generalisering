@@ -259,6 +259,7 @@ class FillLineGapsAdvancedConfig:
     fill_gaps_on_self: bool = True
     line_changes_output: Optional[str] = None
     write_output_metadata: bool = False
+    candidate_connections_output: Optional[str] = None
 
     increased_tolerance_edge_case_distance_meters: int = 0
     edit_method: EditMethod = EditMethod.AUTO
