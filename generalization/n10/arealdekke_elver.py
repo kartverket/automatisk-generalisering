@@ -1,7 +1,6 @@
 import arcpy
 from enum import Enum
 from custom_tools.decorators.timing_decorator import timing_decorator
-from custom_tools.general_tools import custom_arcpy
 
 from composition_configs import core_config
 from env_setup import environment_setup
@@ -73,6 +72,7 @@ class fc(Enum):
     rivers_merged="rivers_merged"
     river_segments_under_minimum_buffed_fc="river_segments_under_minimum_buffed_fc"
     river_segments_under_minimum_single_fc="river_segments_under_minimum_single_fc"
+    centre_lines_fixed="centre_lines_fixed"
 
 @timing_decorator
 def create_wfm_gdbs(wfm: WorkFileManager) -> dict:
@@ -106,6 +106,7 @@ def create_wfm_gdbs(wfm: WorkFileManager) -> dict:
     rivers_fixed=wfm.build_file_path(file_name="rivers_fixed", file_type="gdb")
     river_segments_under_minimum_buffed_fc=wfm.build_file_path(file_name="river_segments_under_minimum_buffed_fc", file_type="gdb")
     river_segments_under_minimum_single_fc=wfm.build_file_path(file_name="river_segments_under_minimum_single_fc", file_type="gdb")
+    centre_lines_fixed=wfm.build_file_path(file_name="centre_lines_fixed", file_type="gdb")
 
     return {
         #Fetch data
@@ -125,7 +126,8 @@ def create_wfm_gdbs(wfm: WorkFileManager) -> dict:
         fc.rivers_merged:rivers_merged,
         fc.rivers_fixed:rivers_fixed,
         fc.river_segments_under_minimum_buffed_fc:river_segments_under_minimum_buffed_fc,
-        fc.river_segments_under_minimum_single_fc:river_segments_under_minimum_single_fc
+        fc.river_segments_under_minimum_single_fc:river_segments_under_minimum_single_fc,
+        fc.centre_lines_fixed:centre_lines_fixed
 
     }
 
@@ -141,6 +143,7 @@ def fetch_data(files: dict)->None:
     #Get data from gdb
     arealdekke_lyr="arealdekke_lyr"
     arcpy.management.MakeFeatureLayer(in_features=input_arealdekke.arealdekke, out_layer=arealdekke_lyr, where_clause="arealdekke='Ferskvann_elv_bekk'")
+    #arcpy.management.MakeFeatureLayer(in_features=r"C:\Users\haumal\Documents\ArcGIS\Projects\MyProject\MyProject.gdb\Arealdekke_Buskerud_CopyFeatures_CopyFeatures", out_layer=arealdekke_lyr)
     
     #Repair data to remove self intersections
     arcpy.management.RepairGeometry(in_features=arealdekke_lyr, delete_null='DELETE_NULL')
@@ -196,12 +199,12 @@ def cookie_cutting(files:dict)->None:
     river_segments_under_minimum_single_lyr="river_segments_under_minimum_single_lyr"
     arcpy.management.MakeFeatureLayer(in_features=files[fc.river_segments_under_minimum_single_fc], out_layer=river_segments_under_minimum_single_lyr)
 
-    arcpy.management.SelectLayerByAttribute(in_layer_or_view=river_segments_under_minimum_single_lyr, selection_type='NEW_SELECTION', where_clause='SHAPE_AREA>1000')
+    arcpy.management.SelectLayerByAttribute(in_layer_or_view=river_segments_under_minimum_single_lyr, selection_type='NEW_SELECTION', where_clause="SHAPE_AREA>=10")
 
     arcpy.analysis.Buffer(
         in_features=river_segments_under_minimum_single_lyr,
         out_feature_class=files[fc.overkill_buffer],
-        buffer_distance_or_field='10 Meters',
+        buffer_distance_or_field='15 Meters',
         line_side='FULL',
         dissolve_option='NONE'
     )
@@ -230,10 +233,20 @@ def enlarge_small_rivers(files:dict)->None:
     centre_lines_lyr="centre_lines_lyr"
     arcpy.management.MakeFeatureLayer(in_features=files[fc.river_centre_fc], out_layer=centre_lines_lyr)
 
-    arcpy.analysis.PairwiseBuffer(
-        in_features=centre_lines_lyr,
+    ok_rivers_buffer_lyr="ok_rivers_buffer_lyr"
+    arcpy.management.MakeFeatureLayer(in_features=files[fc.river_above_minimum_buffed_fc], out_layer=ok_rivers_buffer_lyr)
+
+    arcpy.analysis.Erase(in_features=centre_lines_lyr, erase_features=ok_rivers_buffer_lyr, out_feature_class=files[fc.centre_lines_fixed])
+
+    centre_lines_fixed_lyr="centre_lines_fixed_lyr"
+    arcpy.management.MakeFeatureLayer(in_features=files[fc.centre_lines_fixed], out_layer=centre_lines_fixed_lyr)
+
+    arcpy.analysis.Buffer(
+        in_features=centre_lines_fixed_lyr,
         out_feature_class=files[fc.centre_buffed_fc],
         buffer_distance_or_field='2 Meters',
+        line_side='FULL',
+        line_end_type='ROUND',
         dissolve_option='NONE'
     )
 

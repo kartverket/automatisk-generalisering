@@ -362,7 +362,7 @@ def valid_areas_large_lakes(files:dict)->None:
     arcpy.management.MakeFeatureLayer(files[fc.areas_within_above_5000], areas_within_above_5000_lyr)
     arcpy.management.MakeFeatureLayer(files[fc.innsjo_below_5000_buffed], innsjo_below_5000_buffed_lyr)
 
-    arcpy.analysis.PairwiseErase(
+    arcpy.analysis.Erase(
         in_features=areas_within_above_5000_lyr,
         erase_features=innsjo_below_5000_buffed_lyr,
         out_feature_class=files[fc.just_areas_within_above_5000]
