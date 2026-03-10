@@ -75,24 +75,17 @@
            <div itemprop="articleBody">
              
   <h1>Source code for composition_configs.logic_config</h1><div class="highlight"><pre>
-<span></span><span class="kn">from</span><span class="w"> </span><span class="nn">dataclasses</span><span class="w"> </span><span class="kn">import</span> <span class="n">dataclass</span><span class="p">,</span> <span class="n">field</span>
-<span class="kn">import</span><span class="w"> </span><span class="nn">os</span>
+<span></span><span class="kn">from</span><span class="w"> </span><span class="nn">dataclasses</span><span class="w"> </span><span class="kn">import</span> <span class="n">dataclass</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
     <span class="n">Dict</span><span class="p">,</span>
     <span class="n">List</span><span class="p">,</span>
-    <span class="n">Literal</span><span class="p">,</span>
     <span class="n">Optional</span><span class="p">,</span>
     <span class="n">Tuple</span><span class="p">,</span>
     <span class="n">Union</span><span class="p">,</span>
     <span class="n">Any</span><span class="p">,</span>
-    <span class="n">Callable</span><span class="p">,</span>
-    <span class="n">Mapping</span><span class="p">,</span>
-    <span class="n">Sequence</span><span class="p">,</span>
 <span class="p">)</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">enum</span><span class="w"> </span><span class="kn">import</span> <span class="n">Enum</span>
 
-<span class="kn">from</span><span class="w"> </span><span class="nn">composition_configs</span><span class="w"> </span><span class="kn">import</span> <span class="n">core_config</span><span class="p">,</span> <span class="n">type_defs</span><span class="p">,</span> <span class="n">io_types</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">file_manager</span><span class="w"> </span><span class="kn">import</span> <span class="n">work_file_manager</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">composition_configs</span><span class="w"> </span><span class="kn">import</span> <span class="n">core_config</span><span class="p">,</span> <span class="n">io_types</span>
 
 
 <div class="viewcode-block" id="SymbologyLayerSpec">
@@ -347,6 +340,18 @@
     <span class="n">work_file_manager_config</span><span class="p">:</span> <span class="n">core_config</span><span class="o">.</span><span class="n">WorkFileConfig</span>
     <span class="n">output_processed_feature</span><span class="p">:</span> <span class="n">io_types</span><span class="o">.</span><span class="n">GdbIOArg</span>
     <span class="n">havflate_feature</span><span class="p">:</span> <span class="n">io_types</span><span class="o">.</span><span class="n">GdbIOArg</span></div>
+
+
+
+<div class="viewcode-block" id="AttributeChangerInitKwargs">
+<a class="viewcode-back" href="../../generated_docs/composition_configs.html#composition_configs.logic_config.AttributeChangerInitKwargs">[docs]</a>
+<span class="nd">@dataclass</span><span class="p">(</span><span class="n">frozen</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">AttributeChangerInitKwargs</span><span class="p">:</span>
+    <span class="n">input_feature</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">output_feature</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">new_field</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">new_type</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">work_file_manager_config</span><span class="p">:</span> <span class="n">core_config</span><span class="o">.</span><span class="n">WorkFileConfig</span></div>
 
 </pre></div>
 

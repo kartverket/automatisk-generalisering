@@ -20,6 +20,14 @@ file\_manager.n10.file\_manager\_hoydepunkt module
    :show-inheritance:
    :undoc-members:
 
+file\_manager.n10.file\_manager\_land\_use module
+-------------------------------------------------
+
+.. automodule:: file_manager.n10.file_manager_land_use
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
 file\_manager.n10.file\_manager\_landforms module
 -------------------------------------------------
 

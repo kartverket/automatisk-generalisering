@@ -1,0 +1,29 @@
+generalization.n10.arealdekke package
+=====================================
+
+Submodules
+----------
+
+generalization.n10.arealdekke.attribute\_analyzer module
+--------------------------------------------------------
+
+.. automodule:: generalization.n10.arealdekke.attribute_analyzer
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+generalization.n10.arealdekke.attribute\_changer module
+-------------------------------------------------------
+
+.. automodule:: generalization.n10.arealdekke.attribute_changer
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+Module contents
+---------------
+
+.. automodule:: generalization.n10.arealdekke
+   :members:
+   :show-inheritance:
+   :undoc-members:
