@@ -1,21 +1,14 @@
-from dataclasses import dataclass, field
-import os
+from dataclasses import dataclass
 from typing import (
     Dict,
     List,
-    Literal,
     Optional,
     Tuple,
     Union,
     Any,
-    Callable,
-    Mapping,
-    Sequence,
 )
-from enum import Enum
 
-from composition_configs import core_config, type_defs, io_types
-from file_manager import work_file_manager
+from composition_configs import core_config, io_types
 
 
 @dataclass(frozen=True)
@@ -214,3 +207,12 @@ class RiverStrahlerKwargs:
     work_file_manager_config: core_config.WorkFileConfig
     output_processed_feature: io_types.GdbIOArg
     havflate_feature: io_types.GdbIOArg
+
+
+@dataclass(frozen=True)
+class AttributeChangerInitKwargs:
+    input_feature: str
+    output_feature: str
+    new_field: str
+    new_type: str
+    work_file_manager_config: core_config.WorkFileConfig

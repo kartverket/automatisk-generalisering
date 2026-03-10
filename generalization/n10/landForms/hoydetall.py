@@ -196,7 +196,6 @@ def main():
     # 9) Combine all the created feature classes into one
     try:
         combine_feature_classes()
-        # output_wfm.delete_created_files()
         print(
             "Feature classes merged and output files representing each individual county are deleted."
         )
@@ -1281,5 +1280,4 @@ def get_accumulated_movement(accumulated: list) -> arcpy.PointGeometry:
 # ========================
 
 if __name__ == "__main__":
-    # main()
-    combine_feature_classes()
+    main()
