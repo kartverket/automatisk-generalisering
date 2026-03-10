@@ -1362,14 +1362,9 @@ class RemoveRoadTriangles:
         Args:
             edit_fc (str): Featureclass with the data that should be kept
         """
-        if scale.scale.lower() == "n100":
-            output = Road_N100.road_triangles_output.value
-        elif scale.scale.lower() == "n250":
-            output = Road_N250.road_triangles_output.value
-
         self.fetch_original_data(
             input=edit_fc,
-            output=output,
+            output=self.output_processed_feature,
         )
 
     @timing_decorator
