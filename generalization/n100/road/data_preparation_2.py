@@ -48,7 +48,7 @@ from file_manager.n100.file_manager_buildings import Building_N100
 
 MERGE_DIVIDED_ROADS_ALTERATIVE = False
 
-AREA_SELECTOR = "navn IN ('Ringerike')"
+AREA_SELECTOR = "navn IN ('Hole')"
 SCALE = "n100"
 
 
@@ -600,7 +600,7 @@ def smooth_line():
 @timing_decorator
 def pre_resolve_road_conflicts(area_selection: str):
     remove_road_points_in_water(
-        road_fc=Road_N100.road_triangles_output.value,
+        road_fc=Road_N100.road_triangles___removed_triangles___n100_road.value,
         output_fc=Road_N100.road_cleaning_output__n100_road.value,
         area_selection=area_selection,
     )
