@@ -1363,6 +1363,26 @@ class FillLineGaps:
         self._local_angle_cache[key] = angle
         return angle
 
+    def _line_measure_at_xy(self, polyline, x: float, y: float) -> Optional[float]:
+        """
+        Returns the percentage measure [0, 1] of the nearest point to (x, y) on polyline.
+        Returns None if the query fails or the result is unavailable.
+        """
+        if polyline is None:
+            return None
+        try:
+            sr = getattr(polyline, "spatialReference", None)
+            pt = arcpy.PointGeometry(arcpy.Point(float(x), float(y)), sr)
+            try:
+                q = polyline.queryPointAndDistance(pt, use_percentage=True)
+            except TypeError:
+                q = polyline.queryPointAndDistance(pt, True)
+            if q and len(q) >= 2 and q[1] is not None:
+                return float(q[1])
+        except Exception:
+            pass
+        return None
+
     # ----------------------------
     # Target staging
     # ----------------------------
@@ -2138,6 +2158,27 @@ class FillLineGaps:
         if ds_key == dangles_fc_key:
             _diff = self._directional_diff
             angle_max_deg = 180.0
+
+            # Normalize both angles to a digitization-independent convention so
+            # that directional diffs are 0 for a perfect collinear gap fill
+            # regardless of which end of each line the dangle sits on.
+            #
+            # src_angle_deg -> "exit direction from source dangle toward the gap"
+            #   Forward tangent points away from the line when the dangle is at
+            #   the end (m >= 0.5); it points INTO the line when at the start
+            #   (m < 0.5), so we reverse it.
+            src_poly_for_norm = polyline_by_parent.get(int(src_parent_id))
+            if src_poly_for_norm is not None and src_angle_deg is not None:
+                src_m = self._line_measure_at_xy(src_poly_for_norm, dangle_x, dangle_y)
+                if src_m is not None and src_m < 0.5:
+                    src_angle_deg = (float(src_angle_deg) + 180.0) % 360.0
+
+            # target_angle -> "entry direction into target interior from its dangle"
+            #   Forward tangent equals the entry direction when the dangle is at
+            #   the start (m < 0.5); it must be reversed when at the end (m >= 0.5).
+            tgt_m = self._line_measure_at_xy(tgt_poly, float(tx), float(ty))
+            if tgt_m is not None and tgt_m >= 0.5:
+                target_angle = (float(target_angle) + 180.0) % 360.0
         else:
             _diff = self._orientation_diff
             angle_max_deg = 90.0
