@@ -610,20 +610,6 @@ class Road_N100(Enum):
     #                           ROAD TRIANGLES
     # ========================================
 
-    road_triangles_output = file_manager.generate_file_name_gdb(
-        script_source_name=road_triangles, description="road_triangles_output"
-    )
-
-    road_triangles___roads_copy___n100_road = file_manager.generate_file_name_gdb(
-        script_source_name=road_triangles,
-        description="roads_copy",
-    )
-
-    road_triangles___graph_root___n100_road = file_manager.generate_file_name_gdb(
-        script_source_name=road_triangles,
-        description="graph_root",
-    )
-
     road_triangles___remove_triangles_root___n100_road = (
         file_manager.generate_file_name_gdb(
             script_source_name=road_triangles,

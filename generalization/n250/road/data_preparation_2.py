@@ -608,7 +608,7 @@ def smooth_line():
 @timing_decorator
 def pre_resolve_road_conflicts():
     run_dissolve_with_intersections(
-        input_line_feature=Road_N250.road_triangles_output.value,
+        input_line_feature=Road_N250.road_triangles___removed_triangles___n250_road.value,
         output_processed_feature=Road_N250.data_preparation___dissolved_intersections_5___n250_road.value,
         dissolve_field_list=FieldNames.road_all_fields(),
     )
