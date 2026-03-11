@@ -2030,6 +2030,7 @@ class FillLineGaps:
         polyline_by_parent: dict[int, Any],
         polyline_by_external: dict[str, dict[int, Any]],
         is_external_line_like: dict[str, bool],
+        dangle_target_parents: Optional[set] = None,
     ) -> AngleAssessment:
         ds_key = str(cand["near_fc_key"])
         near_fid = int(cand["near_fid"])
@@ -2152,10 +2153,20 @@ class FillLineGaps:
                 src_connector_diff=float(src_connector_diff),
             )
 
-        # Dangle-pair targets: use directional comparison so anti-parallel lines
-        # are not collapsed to zero diff. All other line-like targets keep the
-        # undirected orientation-based comparison.
-        if ds_key == dangles_fc_key:
+        # Dangle-pair targets use directional comparison so anti-parallel lines
+        # are not collapsed to zero diff. A line candidate to the parent of a
+        # known target-dangle candidate represents the same connection opportunity
+        # and must be scored with identical directional semantics to prevent it
+        # from getting an unfair undirected scoring advantage.
+        _is_dangle_pair = ds_key == dangles_fc_key
+        _is_dangle_parent_line = (
+            ds_key == lines_fc_key
+            and dangle_target_parents is not None
+            and int(near_fid) in dangle_target_parents
+        )
+        _use_directional = _is_dangle_pair or _is_dangle_parent_line
+
+        if _use_directional:
             _diff = self._directional_diff
             angle_max_deg = 180.0
 
@@ -2176,7 +2187,12 @@ class FillLineGaps:
             # target_angle -> "entry direction into target interior from its dangle"
             #   Forward tangent equals the entry direction when the dangle is at
             #   the start (m < 0.5); it must be reversed when at the end (m >= 0.5).
-            tgt_m = self._line_measure_at_xy(tgt_poly, float(tx), float(ty))
+            # For a true dangle candidate the snap point is the target dangle XY;
+            # for a line candidate that shares the same parent, the snap point is
+            # the GenerateNearTable hit on the line (near_x, near_y).
+            _tgt_snap_x = float(tx) if _is_dangle_pair else float(near_x)
+            _tgt_snap_y = float(ty) if _is_dangle_pair else float(near_y)
+            tgt_m = self._line_measure_at_xy(tgt_poly, _tgt_snap_x, _tgt_snap_y)
             if tgt_m is not None and tgt_m >= 0.5:
                 target_angle = (float(target_angle) + 180.0) % 360.0
         else:
@@ -2186,10 +2202,10 @@ class FillLineGaps:
         connector_target_diff = _diff(float(connector_angle), float(target_angle))
         src_target_diff = _diff(float(src_angle_deg), float(target_angle))
         # connector_transition_diff mixes src→connector and connector→target.
-        # For dangle pairs, use directional src→connector to stay consistent.
+        # For directional cases, use directional src→connector to stay consistent.
         _src_conn_for_transition = (
             self._directional_diff(float(src_angle_deg), float(connector_angle))
-            if ds_key == dangles_fc_key
+            if _use_directional
             else float(src_connector_diff)
         )
         connector_transition_diff = 0.5 * (
@@ -2840,6 +2856,17 @@ class FillLineGaps:
                     y=float(d_y),
                 )
 
+            # Parent IDs of target-dangle candidates for this source dangle.
+            # A line candidate to one of these parents represents the same
+            # connection opportunity as the dangle candidate and must be scored
+            # with identical directional semantics (no undirected bypass).
+            _dangle_target_parents: set[int] = set()
+            for _c in legal_rows:
+                if str(_c["near_fc_key"]) == str(dangles_key):
+                    _p = dangle_parent.get(int(_c["near_fid"]))
+                    if _p is not None:
+                        _dangle_target_parents.add(int(_p))
+
             scored_candidates: list[
                 tuple[
                     tuple[float, int, float, int, int, str, int],  # score tuple
@@ -2865,6 +2892,7 @@ class FillLineGaps:
                     polyline_by_parent=polyline_by_parent,
                     polyline_by_external=polyline_by_external,
                     is_external_line_like=is_external_line_like,
+                    dangle_target_parents=_dangle_target_parents,
                 )
 
                 # 1) Candidate blocking (angle_block_threshold_degrees)
