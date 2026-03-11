@@ -10,6 +10,10 @@ from composition_configs import core_config, logic_config
 
 
 class EliminateSmallPolygons:
+    """
+    Eliminates small polygons based on area times isoperimetric quotient, while excluding rivers and samferdsel. 
+    Also removes narrow polygon parts using buffer.
+    """
     def __init__(self, eliminate_small_polygons_config: logic_config.EliminateSmallPolygonsInitKwargs):
         self.input_eliminate = eliminate_small_polygons_config.input_feature
         self.output_feature = eliminate_small_polygons_config.output_feature
@@ -58,6 +62,7 @@ class EliminateSmallPolygons:
     
     @timing_decorator
     def add_fields(self, input_fc):
+        """Add area, length, isoperimetric quotient and iq_adjusted_area fields to the input feature class, and populate them with values."""
         fields = [f.name for f in arcpy.ListFields(input_fc)]
         if "area" in fields:
             arcpy.management.DeleteField(input_fc, "area")
@@ -119,6 +124,7 @@ class EliminateSmallPolygons:
 
     @timing_decorator
     def eliminate(self, input_fc, output_fc):
+        """Eliminate small polygons based on area times isoperimetric quotient, while excluding rivers and samferdsel."""
         layer = "eliminate_layer"
         arcpy.management.MakeFeatureLayer(
             in_features=input_fc, 
@@ -136,11 +142,12 @@ class EliminateSmallPolygons:
 
     @timing_decorator
     def buffer_potential_spikes(self):
+        """Buffer all polygons except water and samferdsel to remove spikes"""
         layer = "eliminate_after_elim_layer" 
         arcpy.management.MakeFeatureLayer(
             in_features=self.files["eliminate_after_elim"], 
             out_layer=layer,
-            where_clause="arealdekke <> 'Samferdsel' AND arealdekke <> 'Ferskvann_elv_bekk' AND arealdekke <> 'Ferskvann_kanal' AND arealdekke <> 'Ferskvann_innsjo_tjern_regulert' AND arealdekke <> 'Ferskvann_innsjo_tjern' AND isoperimetric_quotient < 0.3"
+            where_clause="arealdekke <> 'Samferdsel' AND arealdekke <> 'Ferskvann_elv_bekk' AND arealdekke <> 'Ferskvann_kanal' AND arealdekke <> 'Ferskvann_innsjo_tjern_regulert' AND arealdekke <> 'Ferskvann_innsjo_tjern'"  #AND isoperimetric_quotient < 0.3 takes longer without this but if we add this there will definetively be spikes that are missed
         )
         arcpy.analysis.Buffer(
             in_features=layer,
@@ -155,6 +162,7 @@ class EliminateSmallPolygons:
 
     @timing_decorator
     def clip_and_erase(self):
+        """Clip and erase the buffered features, to remove narrow parts of polygons, and then merge the clipped and erased features back together. And run a final eliminate on anything smaller than 100 sqm that is not water or samferdsel."""
         arcpy.analysis.Clip(
             in_features=self.files["eliminate_after_elim"],
             clip_features=self.files["eliminate_selected_positive_buffers"],
@@ -176,13 +184,11 @@ class EliminateSmallPolygons:
             delete_null="DELETE_NULL",
             validation_method="ESRI"
         )
-        print("Geometry repaired.")
-        print("1")
+
         arcpy.management.MultipartToSinglepart(
             in_features=self.files["eliminate_erased"],
             out_feature_class=self.files["eliminate_erased_singlepart"]
         )
-        print("2")
         arcpy.management.MultipartToSinglepart(
             in_features=self.files["eliminate_clipped"],
             out_feature_class=self.files["eliminate_clipped_singlepart"]
@@ -215,11 +221,16 @@ class EliminateSmallPolygons:
         )
 
     @timing_decorator
-    def integrate(self):
+    def _integrate(self, input_fc):
         arcpy.management.Integrate(
-            in_features=self.files["eliminate_final_elim"],
+            in_features=input_fc,
             cluster_tolerance="0.09 Meters",
         )
+    
+    def _remove_fields(self, input_fc):
+        """Remove area, length, isoperimetric quotient and iq_adjusted_area fields"""
+        arcpy.management.DeleteField(input_fc, ["area", "length", "isoperimetric_quotient", "iq_adjusted_area"])
+
 
     @timing_decorator
     def run(self):
@@ -231,7 +242,8 @@ class EliminateSmallPolygons:
         self.clip_and_erase()
         self.eliminate(self.files["eliminate_clip_erase_eliminated"], self.files["eliminate_final_elim"])
 
-        self.integrate()
+        self._integrate(self.files["eliminate_final_elim"])
+        self._remove_fields(self.files["eliminate_final_elim"])
         
 
         arcpy.management.CopyFeatures(
@@ -323,3 +335,7 @@ def partition_call(input_fc: str, output_fc: str):
     )
 
     partition_elim.run()   
+
+
+if __name__ == "__main__":
+    partition_call(input_fc=Arealdekke_N10.dissolve_arealdekke.value, output_fc=Arealdekke_N10.elim_output.value)

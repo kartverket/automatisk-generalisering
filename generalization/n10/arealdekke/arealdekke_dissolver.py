@@ -17,7 +17,13 @@ from composition_configs import core_config, logic_config
 
 class ArealdekkeDissolver:
     """
-    ArealdekkeDissolver.
+    General dissolver for arealdekke.
+    Currently dissolves samferdsel, snaumark and not_snau seperately and merges them back together at the end.
+    Rules:
+        -   Snaumark is dissolved based on dgfcd_feature_alpha 
+        -   not_snau is dissolved based on arealdekke, 
+        -   samferdsel is dissolved based on arealdekke and index(fishnet) to avoid large polygons 
+        -   gang og sykkelvei is to be preserved for a more complicated dissolve in another class.
     """
 
     def __init__(
@@ -43,11 +49,11 @@ class ArealdekkeDissolver:
         arealdekke_snaumark_dissolved = wfm.build_file_path(
             file_name="arealdekke_snaumark_dissolved", file_type="gdb"
         )
-        arealdekke_ikke_snau = wfm.build_file_path(
-            file_name="arealdekke_ikke_snau", file_type="gdb"
+        arealdekke_not_snau = wfm.build_file_path(
+            file_name="arealdekke_not_snau", file_type="gdb"
         )
-        arealdekke_ikke_snau_dissolved = wfm.build_file_path(
-            file_name="arealdekke_ikke_snau_dissolved", file_type="gdb"
+        arealdekke_not_snau_dissolved = wfm.build_file_path(
+            file_name="arealdekke_not_snau_dissolved", file_type="gdb"
         )
         arealdekke_samferdsel = wfm.build_file_path(
             file_name="arealdekke_samferdsel", file_type="gdb"
@@ -88,8 +94,8 @@ class ArealdekkeDissolver:
             "arealdekke_input": arealdekke_input,
             "arealdekke_snaumark": arealdekke_snaumark,
             "arealdekke_snaumark_dissolved": arealdekke_snaumark_dissolved,
-            "arealdekke_ikke_snau": arealdekke_ikke_snau,
-            "arealdekke_ikke_snau_dissolved": arealdekke_ikke_snau_dissolved,
+            "arealdekke_not_snau": arealdekke_not_snau,
+            "arealdekke_not_snau_dissolved": arealdekke_not_snau_dissolved,
             "arealdekke_dissolved_Norge": arealdekke_dissolved_Norge,
             "arealdekke_samferdsel": arealdekke_samferdsel,
             "arealdekke_samferdsel_dissolved": arealdekke_samferdsel_dissolved,
@@ -100,6 +106,10 @@ class ArealdekkeDissolver:
 
     @timing_decorator
     def fetch_divide_data(self) -> None:
+        """
+        This function fetches the data and divides it based on the rules described in the class docstring.
+        It also preserves gang og sykkelvei for a more complicated dissolve in another class.
+        """
         arcpy.management.CopyFeatures(
             in_features=self.input_arealdekke,
             out_feature_class=self.files["arealdekke_input"],
@@ -108,7 +118,7 @@ class ArealdekkeDissolver:
         
 
         snaumark = "snaumark"
-        ikke_snau = "ikke_snau"
+        not_snau = "not_snau"
         samferdsel = "samferdsel"
         arcpy.management.MakeFeatureLayer(
             in_features=self.files["arealdekke_input"],
@@ -117,7 +127,7 @@ class ArealdekkeDissolver:
         )
         arcpy.management.MakeFeatureLayer(
             in_features=self.files["arealdekke_input"],
-            out_layer=ikke_snau,
+            out_layer=not_snau,
             where_clause="arealdekke NOT IN ('Snaumark_frisk', 'Snaumark_impediment', 'Snaumark_konstruert', 'Snaumark_middels_frisk', 'Snaumark_skrinn', 'Snaumark_uspesifisert', 'Samferdsel')",
         )
         arcpy.management.MakeFeatureLayer(
@@ -141,7 +151,7 @@ class ArealdekkeDissolver:
             in_features=snaumark, out_feature_class=self.files["arealdekke_snaumark"]
         )
         arcpy.management.CopyFeatures(
-            in_features=ikke_snau, out_feature_class=self.files["arealdekke_ikke_snau"]
+            in_features=not_snau, out_feature_class=self.files["arealdekke_not_snau"]
         )
         arcpy.management.CopyFeatures(
             in_features=samferdsel,
@@ -150,17 +160,19 @@ class ArealdekkeDissolver:
 
     @timing_decorator
     def dissolve(self) -> None:
-
-        ikke_snau_dis_mem = "in_memory\\ikke_snau_dis_mem"
+        """
+        Dissolves the data based on the rules described in the class docstring.
+        """
+        not_snau_dis_mem = "in_memory\\not_snau_dis_mem"
         arcpy.management.Dissolve(
-            in_features=self.files["arealdekke_ikke_snau"],
-            out_feature_class=ikke_snau_dis_mem,
+            in_features=self.files["arealdekke_not_snau"],
+            out_feature_class=not_snau_dis_mem,
             dissolve_field=["arealdekke", self.index_col],
             multi_part="SINGLE_PART",
         )
         arcpy.management.Dissolve(
-            in_features=ikke_snau_dis_mem,
-            out_feature_class=self.files["arealdekke_ikke_snau_dissolved"],
+            in_features=not_snau_dis_mem,
+            out_feature_class=self.files["arealdekke_not_snau_dissolved"],
             dissolve_field=["arealdekke"],
             multi_part="SINGLE_PART",
         )
@@ -185,100 +197,23 @@ class ArealdekkeDissolver:
             multi_part="SINGLE_PART",
         )
 
-    @timing_decorator
-    def gang_sykkel(self) -> None:
-        arcpy.analysis.Buffer(
-            in_features=self.files["arealdekke_samferdsel_dissolved"],
-            out_feature_class=self.files["arealdekke_samferdsel_dissolved_buffer"],
-            buffer_distance_or_field="5 Meters",
-        )
-        arcpy.analysis.Clip(
-            in_features=self.files["arealdekke_gangogsykkel"],
-            clip_features=self.files["arealdekke_samferdsel_dissolved_buffer"],
-            out_feature_class=self.files["arealdekke_gangogsykkel_clipped"],
-        )
-        arcpy.analysis.Erase(
-            in_features=self.files["arealdekke_gangogsykkel"],
-            erase_features=self.files["arealdekke_samferdsel_dissolved_buffer"],
-            out_feature_class=self.files["arealdekke_gangogsykkel_erased"],
-        )
-        arcpy.management.Dissolve(
-            in_features=self.files["arealdekke_gangogsykkel_clipped"],
-            out_feature_class=self.files["arealdekke_gangogsykkel_clipped_dissolved"],
-            dissolve_field=["arealdekke", self.index_col],
-            multi_part="SINGLE_PART",
-        )
-        arcpy.management.Append(
-            inputs=[self.files["arealdekke_gangogsykkel_clipped_dissolved"]],
-            target=self.files["arealdekke_samferdsel_dissolved"],
-        )
-        arcpy.management.Dissolve(
-            in_features=self.files["arealdekke_samferdsel_dissolved"],
-            out_feature_class=self.files[
-                "arealdekke_samferdsel_dissolved_gangogsykkel"
-            ],
-            dissolve_field=["arealdekke", self.index_col],
-            multi_part="SINGLE_PART",
-        )
-
-    def create_fishnet(self):
-        layer = "norway"
-        arcpy.management.MakeFeatureLayer(
-            in_features=input_n10.AdminFlate, out_layer=layer
-        )
-
-        out_sr = arcpy.Describe(input_n10.AdminFlate).spatialReference
-
-        proj_norway = arcpy.management.Project(
-            "norway", "in_memory/norway_proj", out_sr
-        )
-        desc = arcpy.Describe(proj_norway)
-        ext = desc.extent
-        xmin, ymin, xmax, ymax = ext.XMin, ext.YMin, ext.XMax, ext.YMax
-
-        origin_coord = f"{xmin} {ymin}"
-        y_axis_coord = f"{xmin} {ymin + 10}"
-
-        arcpy.management.CreateFishnet(
-            out_feature_class=r"C:\GIS_Files\ag_inputs\n10.gdb\Fishnet_500m",
-            origin_coord=origin_coord,
-            y_axis_coord=y_axis_coord,
-            cell_width="500",
-            cell_height="500",
-            corner_coord=f"{xmax} {ymax}",
-            labels="NO_LABELS",
-            template=proj_norway,
-            geometry_type="POLYGON",
-        )
-
-        arcpy.management.MakeFeatureLayer(
-            in_features=r"C:\GIS_Files\ag_inputs\n10.gdb\Fishnet_500m",
-            out_layer="fish_layer",
-        )
-        arcpy.management.SelectLayerByLocation(
-            in_layer="fish_layer",
-            overlap_type="INTERSECT",
-            select_features=input_n10.AdminFlate,
-            selection_type="NEW_SELECTION",
-            invert_spatial_relationship="INVERT",
-        )
-        arcpy.management.DeleteFeatures(in_features="fish_layer")
 
     @timing_decorator
     def restore_data(self) -> None:
-
+        """
+        Restores data to the dissolved features.
+        """
         self.restore_data_polygon_without_feature_to_point(self.files["arealdekke_snaumark_dissolved"], self.files["arealdekke_snaumark"], "dgfcd_feature_alpha", self.index_col)
-        self.restore_data_polygon_without_feature_to_point(self.files["arealdekke_ikke_snau_dissolved"], self.files["arealdekke_ikke_snau"], "arealdekke", self.index_col)
+        self.restore_data_polygon_without_feature_to_point(self.files["arealdekke_not_snau_dissolved"], self.files["arealdekke_not_snau"], "arealdekke", self.index_col)
         self.restore_data_polygon_without_feature_to_point(self.files["arealdekke_samferdsel_dissolved"], self.files["arealdekke_samferdsel"], "arealdekke", self.index_col, index_bool=True)
             
-           
 
         arcpy.management.Merge(
             inputs=[
                 self.files["arealdekke_snaumark_dissolved"],
-                self.files["arealdekke_ikke_snau_dissolved"],
-                self.files["arealdekke_samferdsel_dissolved_gangogsykkel"],
-                self.files["arealdekke_gangogsykkel_erased"],
+                self.files["arealdekke_not_snau_dissolved"],
+                self.files["arealdekke_samferdsel_dissolved"],
+                self.files["arealdekke_gangogsykkel"],
             ],
             output=self.output_feature,
         )
@@ -286,9 +221,9 @@ class ArealdekkeDissolver:
     @staticmethod
     def restore_data_polygon_without_feature_to_point(without_data: str, original: str, column: str, index: str, index_bool: bool = False) -> None:
         """
-        For when featureToPoint doesnt work.
+        Restore function for polygons when featureToPoint doesnt work.
         Restore data in without_data from original. 
-        Chooses biggest of  intersecting polygons from original with matching values in column.
+        Chooses biggest of intersecting polygons from original with matching values in column.
         """
          
         near_table = "in_memory\\near_table"
@@ -300,6 +235,7 @@ class ArealdekkeDissolver:
             search_radius="0 Meters",
         )
 
+        #build maps for faster access later:
         in_fid_near_fid = defaultdict(list)
 
         with arcpy.da.SearchCursor(near_table, ["IN_FID", "NEAR_FID"]) as cursor:
@@ -315,6 +251,7 @@ class ArealdekkeDissolver:
                 area_map[a_row[0]] = a_row[2]
                 index_map[a_row[0]] = a_row[3]
 
+        """
         if index_bool:
             with arcpy.da.SearchCursor(without_data, ["OID@", column, index]) as d_cur:
                 for d_row in d_cur:
@@ -361,8 +298,40 @@ class ArealdekkeDissolver:
 
                         biggest = area
                         in_fid_near_fid[oid] = [fid]
+        """
+        # find biggest intersecting polygon with matching column value and index value if index_bool is true, and save the fid of that polygon for each dissolved polygon:
+        fields = ["OID@", column] + ([index] if index_bool else [])
+
+        with arcpy.da.SearchCursor(without_data, fields) as d_cur:
+            for d_row in d_cur:
+                oid = d_row[0]
+                col_d = d_row[1]
+                index_d = d_row[2] if index_bool else None
+
+                near_fids = in_fid_near_fid.get(oid, [])
+                best_fid = None
+                biggest = 0
+
+                for fid in near_fids:
+                    col_a = column_map.get(fid)
+                    area = area_map.get(fid, 0)
+                    index_a = index_map.get(fid)
+
+                    if col_d != col_a:
+                        continue
+
+                    if index_bool and index_a != index_d:
+                        continue
+
+                    if area > biggest:
+                        biggest = area
+                        best_fid = fid
+
+                if best_fid is not None:
+                    in_fid_near_fid[oid] = [best_fid]
 
 
+        #Add fields from original to without_data and populate them based on the best_fid for each dissolved polygon:
         orig_fields = [
             f.name
             for f in arcpy.ListFields(original)
@@ -392,6 +361,7 @@ class ArealdekkeDissolver:
                 field_alias=alias,
             )
 
+        # build a map of original attributes for faster access later:
         orig_oid_field = arcpy.Describe(original).OIDFieldName
         orig_attr = {}
         fields = [orig_oid_field] + orig_fields
@@ -399,6 +369,7 @@ class ArealdekkeDissolver:
             for row in cur:
                 orig_attr[row[0]] = row[1:]
 
+        # populate fields in without_data with orig attributes:
         dissolved_oid_field = arcpy.Describe(without_data).OIDFieldName
         update_fields = [dissolved_oid_field] + orig_fields
         with arcpy.da.UpdateCursor(without_data, update_fields) as ucur:
@@ -452,7 +423,7 @@ def normal_call(input_fc: str, output_fc: str):
 
 def partition_call(input_fc: str, output_fc: str):
     identity = "in_memory\\arealdekke_identity"
-    arcpy.analysis.Identity(                                ################################ Resultatet ble bedre når identity ble kjørt utenfor partition iterator. ################################ ????Identity brukes bare for samferdsel tror jeg. sikkert noe forbedringspotensialet her, kan kanskje ikke kjøre identity på hele norge utenfor partition
+    arcpy.analysis.Identity(                                ################################ Resultatet ble bedre når identity ble kjørt utenfor partition iterator. ################################ ????Identity brukes bare for samferdsel tror jeg. sikkert noe forbedringspotensialet her, kan kanskje ikke kjøre identity på hele norge utenfor partition eller kanskje vi kjører det bare en gang på hele norge utenfor denne modellen
         in_features=input_fc,
         identity_features=input_n10.Fishnet_500m,
         out_feature_class=identity,
@@ -532,5 +503,6 @@ def partition_call(input_fc: str, output_fc: str):
  
 
 
-
+if __name__ == "__main__":
+    partition_call(input_fc=input_n10.Arealdekke_Oslo, output_fc=Arealdekke_N10.dissolve_arealdekke.value)
     
