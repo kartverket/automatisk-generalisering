@@ -58,8 +58,8 @@ def fill_line_topology_gaps():
         line_alignment_weight=0.75,
         best_fit_weights=(
             logic_config.BestFitWeightsConfig(
-                distance=0.5,
-                angle=0.5,
+                distance=0.6,
+                angle=0.4,
                 z=0.0,
             )
         ),
