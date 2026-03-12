@@ -9,15 +9,20 @@ from env_setup import environment_setup
 from composition_configs import core_config, logic_config
 
 from custom_tools.decorators.timing_decorator import timing_decorator
-from custom_tools.general_tools.geometry_tools import LineAngleTool, LineEndpointTool
+from custom_tools.general_tools.geometry_tools import (
+    LineAngleTool,
+    LineEndpointTool,
+    find_rasters_for_vector_extent,
+)
 
 
 @timing_decorator
 def main():
     environment_setup.main()
-    fill_line_topology_gaps()
+    # fill_line_topology_gaps()
     # find_angles()
     # find_xy_endpoints()
+    find_relevant_rasters()
 
 
 def find_angles():
@@ -97,6 +102,15 @@ def find_xy_endpoints():
 
     results = LineEndpointTool(config=xy_endpoint_config).run()
     # print(f"{results}")
+
+
+@timing_decorator
+def find_relevant_rasters():
+    rasters = find_rasters_for_vector_extent(
+        raster_dir=config.raster_directory,
+        input_features=River_N100.data_preparation___river_lines___n100_river.value,
+    )
+    print(rasters)
 
 
 if __name__ == "__main__":
