@@ -3179,6 +3179,17 @@ class FillLineGaps:
             logic_config.ConnectivityScope.TRANSITIVE,
         ):
             uf = _UnionFind()
+            # Map topology ds_keys (from original connect_to_features paths) to the
+            # candidate ds_keys (from work layer paths) so seeded nodes match tgt_node.
+            topo_to_cand_ds_key: dict[str, str] = {
+                self._dataset_key(orig): self._dataset_key(work)
+                for orig, work in zip(
+                    self.connect_to_features or [], self.external_target_layers
+                )
+            }
+            for (ds_key, oid), cid in (topology.connectivity_id_by_optional or {}).items():
+                cand_ds_key = topo_to_cand_ds_key.get(ds_key, ds_key)
+                uf.union(("component", int(cid)), ("optional_candidate", str(cand_ds_key), int(oid)))
             for prop, gap_source in sorted(stage_a_winners, key=lambda t: t[0].score):
                 if uf.find(prop.src_node) == uf.find(prop.tgt_node):
                     continue
