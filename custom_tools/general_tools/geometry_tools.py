@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import os
 from dataclasses import dataclass
 from enum import Enum
 from math import atan2, degrees
@@ -12,6 +13,9 @@ from composition_configs.logic_config import (
     LineAngleMode,
     LineEndpointMode,
     LineEndpointToolConfig,
+    LineZValueFieldNameConfig,
+    LineZValueMode,
+    LineZValueToolConfig,
 )
 
 from xarray.backends.common import NONE_VAR_NAME
@@ -863,6 +867,336 @@ class LineEndpointTool:
             arcpy.AddWarning(f"{count} feature(s) returned issue: {issue}")
 
 
+class _ConcreteLineZValueMode(str, Enum):
+    START_POINT = "start_point"
+    END_POINT = "end_point"
+
+
+@dataclass(frozen=True)
+class _RowZValueResult:
+    z_by_slot: dict[tuple[int, _ConcreteLineZValueMode], Optional[float]]
+    issues: tuple[str, ...]
+    is_supported: bool
+
+
+class LineZValueTool:
+    """
+    Sample raster Z values at line endpoints and optionally write them to
+    fields on an output feature class.
+
+    Definitions:
+        - START_POINT = first vertex of the line
+        - END_POINT   = last vertex of the line
+
+    Important:
+        - BOTH_ENDPOINTS is a selector-only request mode.
+        - It expands internally to START_POINT and END_POINT.
+        - Multiple rasters are supported; each raster produces its own pair
+          of output fields.
+        - Coordinates are passed to GetCellValue in the line feature's own
+          spatial reference. A warning is emitted when that SR differs from
+          a raster's SR, but no reprojection is performed.
+    """
+
+    def __init__(self, config: LineZValueToolConfig):
+        self.config = config
+        self._validate_config()
+
+        self.resolved_modes = self._resolve_requested_modes()
+        self.resolved_field_names = self._resolve_field_names()
+        self.ordered_slots = self._build_ordered_slots()
+        self.issue_counts: dict[str, int] = {}
+
+    def run(self) -> Optional[dict[int, dict]]:
+        """
+        Main entrypoint.
+
+        Returns:
+            A dict keyed by OID with z_by_raster_by_mode, issues, and
+            is_supported entries, or None when return_results=False.
+        """
+        self._check_spatial_reference()
+        lines_fc = self._prepare_processing_feature_class()
+
+        if self.config.write_fields:
+            self._ensure_output_fields(lines_fc=lines_fc)
+
+        results_by_oid: dict[int, dict] = {}
+        field_names = ["OID@", "SHAPE@"]
+
+        if self.config.write_fields:
+            field_names.extend(self._build_output_field_names_ordered())
+
+            with arcpy.da.UpdateCursor(lines_fc, field_names) as cursor:
+                for row in cursor:
+                    oid = row[0]
+                    polyline = row[1]
+
+                    row_result = self._calculate_row_z(polyline=polyline)
+                    self._track_issues(row_result.issues)
+
+                    self._write_row_values_to_cursor_row(row=row, row_result=row_result)
+                    cursor.updateRow(row)
+
+                    if self.config.return_results:
+                        results_by_oid[oid] = self._serialize_row_result(row_result)
+
+        else:
+            with arcpy.da.SearchCursor(lines_fc, field_names) as cursor:
+                for oid, polyline in cursor:
+                    row_result = self._calculate_row_z(polyline=polyline)
+                    self._track_issues(row_result.issues)
+
+                    if self.config.return_results:
+                        results_by_oid[oid] = self._serialize_row_result(row_result)
+
+        self._emit_summary_warnings()
+
+        if self.config.return_results:
+            return results_by_oid
+
+        return None
+
+    def _validate_config(self) -> None:
+        if not self.config.endpoint_modes:
+            raise ValueError(
+                "LineZValueToolConfig.endpoint_modes must contain at least one mode."
+            )
+
+        if not self.config.input_rasters:
+            raise ValueError(
+                "LineZValueToolConfig.input_rasters must contain at least one raster."
+            )
+
+        if not self.config.return_results and not self.config.write_fields:
+            raise ValueError(
+                "At least one output behavior must be enabled: "
+                "return_results or write_fields."
+            )
+
+        if self.config.write_fields and not self.config.output_lines:
+            raise ValueError("output_lines is required when write_fields=True.")
+
+        if self.config.field_names_per_raster is not None:
+            if len(self.config.field_names_per_raster) != len(self.config.input_rasters):
+                raise ValueError(
+                    "field_names_per_raster must have the same length as input_rasters."
+                )
+
+    def _resolve_requested_modes(self) -> tuple[_ConcreteLineZValueMode, ...]:
+        requested = set()
+
+        for mode in self.config.endpoint_modes:
+            if mode == LineZValueMode.START_POINT:
+                requested.add(_ConcreteLineZValueMode.START_POINT)
+
+            elif mode == LineZValueMode.END_POINT:
+                requested.add(_ConcreteLineZValueMode.END_POINT)
+
+            elif mode == LineZValueMode.BOTH_ENDPOINTS:
+                requested.add(_ConcreteLineZValueMode.START_POINT)
+                requested.add(_ConcreteLineZValueMode.END_POINT)
+
+            else:
+                raise ValueError(f"Unsupported endpoint mode: {mode}")
+
+        ordered_modes = (
+            _ConcreteLineZValueMode.START_POINT,
+            _ConcreteLineZValueMode.END_POINT,
+        )
+
+        return tuple(mode for mode in ordered_modes if mode in requested)
+
+    def _resolve_field_names(self) -> tuple[LineZValueFieldNameConfig, ...]:
+        if self.config.field_names_per_raster is not None:
+            return self.config.field_names_per_raster
+
+        n = len(self.config.input_rasters)
+
+        if n == 1:
+            return (LineZValueFieldNameConfig(),)
+
+        return tuple(
+            LineZValueFieldNameConfig(
+                start_z=f"start_z_{i + 1}",
+                end_z=f"end_z_{i + 1}",
+            )
+            for i in range(n)
+        )
+
+    def _build_ordered_slots(self) -> list[tuple[int, _ConcreteLineZValueMode]]:
+        slots = []
+
+        for raster_idx in range(len(self.config.input_rasters)):
+            for mode in self.resolved_modes:
+                slots.append((raster_idx, mode))
+
+        return slots
+
+    def _build_output_field_names_ordered(self) -> list[str]:
+        field_names = []
+
+        for raster_idx, mode in self.ordered_slots:
+            fn_config = self.resolved_field_names[raster_idx]
+
+            if mode == _ConcreteLineZValueMode.START_POINT:
+                field_names.append(fn_config.start_z)
+            else:
+                field_names.append(fn_config.end_z)
+
+        return field_names
+
+    def _prepare_processing_feature_class(self) -> str:
+        if not self.config.write_fields:
+            return self.config.input_lines
+
+        arcpy.management.CopyFeatures(
+            self.config.input_lines,
+            self.config.output_lines,
+        )
+        return self.config.output_lines
+
+    def _ensure_output_fields(self, lines_fc: str) -> None:
+        existing_fields = {field.name for field in arcpy.ListFields(lines_fc)}
+
+        for field_name in self._build_output_field_names_ordered():
+            if field_name in existing_fields:
+                continue
+
+            arcpy.management.AddField(
+                in_table=lines_fc,
+                field_name=field_name,
+                field_type="DOUBLE",
+            )
+
+    def _check_spatial_reference(self) -> None:
+        try:
+            lines_sr = arcpy.Describe(self.config.input_lines).spatialReference
+        except Exception:
+            return
+
+        for raster_path in self.config.input_rasters:
+            try:
+                raster_sr = arcpy.Describe(raster_path).spatialReference
+            except Exception:
+                continue
+
+            if lines_sr.factoryCode == 0 or raster_sr.factoryCode == 0:
+                continue
+
+            if lines_sr.factoryCode != raster_sr.factoryCode:
+                arcpy.AddWarning(
+                    f"Spatial reference mismatch: input lines ({lines_sr.name}) vs "
+                    f"raster ({raster_sr.name}): {raster_path}. "
+                    "Z values are sampled using line coordinates without reprojection."
+                )
+
+    def _calculate_row_z(self, polyline) -> _RowZValueResult:
+        if polyline is None:
+            return self._unsupported_result("null_geometry")
+
+        if polyline.isMultipart:
+            return self._unsupported_result("multipart_not_supported")
+
+        start_point, end_point = self._extract_endpoints(polyline)
+
+        if start_point is None:
+            return self._unsupported_result("too_few_vertices")
+
+        z_by_slot: dict[tuple[int, _ConcreteLineZValueMode], Optional[float]] = {}
+
+        for raster_idx, mode in self.ordered_slots:
+            raster = self.config.input_rasters[raster_idx]
+
+            if mode == _ConcreteLineZValueMode.START_POINT:
+                z = self._sample_raster_at_point(raster, start_point.X, start_point.Y)
+            else:
+                z = self._sample_raster_at_point(raster, end_point.X, end_point.Y)
+
+            z_by_slot[(raster_idx, mode)] = z
+
+        return _RowZValueResult(
+            z_by_slot=z_by_slot,
+            issues=(),
+            is_supported=True,
+        )
+
+    def _extract_endpoints(self, polyline) -> tuple[Optional[object], Optional[object]]:
+        vertices = []
+
+        for part in polyline:
+            for point in part:
+                if point is not None:
+                    vertices.append(point)
+
+        if len(vertices) < 2:
+            return None, None
+
+        return vertices[0], vertices[-1]
+
+    @staticmethod
+    def _sample_raster_at_point(raster: str, x: float, y: float) -> Optional[float]:
+        result = arcpy.management.GetCellValue(
+            in_raster=raster,
+            location_point=f"{x} {y}",
+        )
+        value_str = result.getOutput(0)
+
+        if value_str == "NoData":
+            return None
+
+        try:
+            return float(value_str)
+        except (ValueError, TypeError):
+            return None
+
+    def _unsupported_result(self, issue: str) -> _RowZValueResult:
+        return _RowZValueResult(
+            z_by_slot={slot: None for slot in self.ordered_slots},
+            issues=(issue,),
+            is_supported=False,
+        )
+
+    def _write_row_values_to_cursor_row(
+        self,
+        row: list,
+        row_result: _RowZValueResult,
+    ) -> None:
+        for index, slot in enumerate(self.ordered_slots, start=2):
+            row[index] = row_result.z_by_slot.get(slot)
+
+    def _serialize_row_result(self, row_result: _RowZValueResult) -> dict:
+        public_mode_by_private = {
+            _ConcreteLineZValueMode.START_POINT: LineZValueMode.START_POINT,
+            _ConcreteLineZValueMode.END_POINT: LineZValueMode.END_POINT,
+        }
+
+        z_by_raster_by_mode: dict[str, dict[LineZValueMode, Optional[float]]] = {}
+
+        for (raster_idx, mode), z_value in row_result.z_by_slot.items():
+            raster_path = self.config.input_rasters[raster_idx]
+            public_mode = public_mode_by_private[mode]
+
+            if raster_path not in z_by_raster_by_mode:
+                z_by_raster_by_mode[raster_path] = {}
+
+            z_by_raster_by_mode[raster_path][public_mode] = z_value
+
+        return {
+            "z_by_raster_by_mode": z_by_raster_by_mode,
+            "issues": row_result.issues,
+            "is_supported": row_result.is_supported,
+        }
+
+    def _track_issues(self, issues: tuple[str, ...]) -> None:
+        for issue in issues:
+            self.issue_counts[issue] = self.issue_counts.get(issue, 0) + 1
+
+    def _emit_summary_warnings(self) -> None:
+        for issue, count in sorted(self.issue_counts.items()):
+            arcpy.AddWarning(f"{count} feature(s) returned issue: {issue}")
+
+
 def local_line_angle_at_xy(
     *,
     polyline,
@@ -993,3 +1327,102 @@ def local_line_angle_at_xy(
         angle = _whole_line_angle()
 
     return angle
+
+
+def find_rasters_for_vector_extent(
+    raster_dir: str,
+    input_features: Union[str, list[str]],
+) -> list[str]:
+    """
+    Return paths of all .tif files in raster_dir whose extents intersect
+    the combined extent of the given input feature classes.
+
+    The directory is treated as flat — subdirectories are not searched.
+    Auxiliary sidecar files (.aux.xml, .ovr, etc.) are ignored.
+
+    Extent comparison is done in each dataset's own coordinate system.
+    A warning is emitted if the vector SR differs from the raster SR, but
+    no reprojection is performed.
+
+    Args:
+        raster_dir: Path to a flat directory containing .tif raster files.
+        input_features: One or more feature class paths whose combined extent
+            defines the area of interest.
+
+    Returns:
+        Sorted list of .tif file paths that intersect the vector extent.
+    """
+    if isinstance(input_features, str):
+        input_features = [input_features]
+
+    tif_paths = sorted(
+        os.path.join(raster_dir, f)
+        for f in os.listdir(raster_dir)
+        if f.lower().endswith(".tif")
+    )
+
+    if not tif_paths:
+        return []
+
+    union_xmin = float("inf")
+    union_ymin = float("inf")
+    union_xmax = float("-inf")
+    union_ymax = float("-inf")
+    vector_sr = None
+
+    for fc in input_features:
+        try:
+            desc = arcpy.Describe(fc)
+            ext = desc.extent
+            union_xmin = min(union_xmin, ext.XMin)
+            union_ymin = min(union_ymin, ext.YMin)
+            union_xmax = max(union_xmax, ext.XMax)
+            union_ymax = max(union_ymax, ext.YMax)
+            if vector_sr is None:
+                vector_sr = desc.spatialReference
+        except Exception:
+            arcpy.AddWarning(
+                f"Could not read extent of feature class: {fc}. Skipping."
+            )
+
+    if union_xmin == float("inf"):
+        return []
+
+    sr_warning_emitted = False
+    matched = []
+
+    for tif_path in tif_paths:
+        try:
+            raster_desc = arcpy.Describe(tif_path)
+            raster_ext = raster_desc.extent
+            raster_sr = raster_desc.spatialReference
+
+            if (
+                not sr_warning_emitted
+                and vector_sr is not None
+                and raster_sr is not None
+                and vector_sr.factoryCode != 0
+                and raster_sr.factoryCode != 0
+                and vector_sr.factoryCode != raster_sr.factoryCode
+            ):
+                arcpy.AddWarning(
+                    f"Spatial reference mismatch: input features ({vector_sr.name}) vs "
+                    f"raster ({raster_sr.name}). "
+                    "Extent intersection is compared without reprojection."
+                )
+                sr_warning_emitted = True
+
+            if (
+                raster_ext.XMax > union_xmin
+                and raster_ext.XMin < union_xmax
+                and raster_ext.YMax > union_ymin
+                and raster_ext.YMin < union_ymax
+            ):
+                matched.append(tif_path)
+
+        except Exception:
+            arcpy.AddWarning(
+                f"Could not read extent of raster: {tif_path}. Skipping."
+            )
+
+    return matched

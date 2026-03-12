@@ -346,3 +346,28 @@ class LineEndpointToolConfig:
     )
     return_results: bool = True
     write_fields: bool = False
+
+
+class LineZValueMode(str, Enum):
+    START_POINT = "start_point"
+    END_POINT = "end_point"
+    BOTH_ENDPOINTS = "both_endpoints"
+
+
+@dataclass(frozen=True)
+class LineZValueFieldNameConfig:
+    start_z: str = "start_z"
+    end_z: str = "end_z"
+
+
+@dataclass(frozen=True)
+class LineZValueToolConfig:
+    input_lines: str
+    input_rasters: tuple[str, ...]
+    endpoint_modes: tuple[LineZValueMode, ...]
+    output_lines: Optional[str] = None
+    field_names_per_raster: Optional[tuple[LineZValueFieldNameConfig, ...]] = None
+    # If None and one raster: defaults ("start_z", "end_z").
+    # If None and multiple rasters: auto "start_z_1", "end_z_1", "start_z_2", "end_z_2" …
+    return_results: bool = True
+    write_fields: bool = False
