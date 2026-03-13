@@ -754,7 +754,7 @@ def resolve_road_conflicts():
         output_displacement_feature=core_config.InjectIO(
             object=displacement, tag="displacement_feature"
         ),
-        map_scale="125000",
+        map_scale="100000",
         hierarchy_field="hierarchy",
     )
 
