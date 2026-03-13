@@ -43,12 +43,9 @@ class GangSykkelDissolver:
         gangsykkel_final_merge = wfm.build_file_path(file_name="gangsykkel_final_merge", file_type="gdb")
         gangsykkel_final_merge_singlepart = wfm.build_file_path(file_name="gangsykkel_final_merge_singlepart", file_type="gdb")
         gangsykkel_final_gangsykkel_dissolved = wfm.build_file_path(file_name="gangsykkel_final_gangsykkel_dissolved", file_type="gdb")
-        gangsykkel_final_merge_singlepart_length_lt_35 = wfm.build_file_path(file_name="gangsykkel_final_merge_singlepart_length_lt_35", file_type="gdb")
-        output_copy = wfm.build_file_path(file_name="output_copy", file_type="gdb")
-        gangsykkel_final_merge_singlepart_dissolved = wfm.build_file_path(file_name="gangsykkel_final_merge_singlepart_dissolved", file_type="gdb")
         not_grown = wfm.build_file_path(file_name="not_grown", file_type="gdb")
         not_grown_dissolved = wfm.build_file_path(file_name="not_grown_dissolved", file_type="gdb")
-
+      
         return {
             "gangsykkel_input": gangsykkel_input,
             "gangsykkel_samferdsel": gangsykkel_samferdsel,
@@ -122,13 +119,11 @@ class GangSykkelDissolver:
     @timing_decorator
     def _dissolve_looping(self, buffer_distance: str = "5 Meters"): 
         """
-        Iteratively buffer 5m, clip, split by length 25m and dissolve until no more dissolving is done.
+        Iteratively buffer roads 5m, clip gangvei, split by length 45m and dissolve until no more dissolving is done.
         We split by length to avoid dissolving gang og sykkel polygons that connect to samferdsel but arent adjecent.
         """
         current_samferdsel = self.files["gangsykkel_samferdsel"]
         current_gangsykkel = self.files["gangsykkel_gangsykkel_dissolved"]
-        final_samferdsel = current_samferdsel
-        final_erased = self.files["gangsykkel_gangsykkel_erased"]
         final_ikke_samferdsel = self.files["gangsykkel_ikke_samferdsel"]
 
         prev_areas = {} 
@@ -138,24 +133,16 @@ class GangSykkelDissolver:
             i += 1
            
             paths = self._build_iteration_paths(i)
-
-            ##########
             current_areas = self._compute_area_by_index(current_samferdsel, self.index_col)
-
-            # determine which features grew since prev_areas
             grown_ids = self._get_grown_ids(prev_areas, current_areas)
 
             if not grown_ids:
-                print(f"No samferdsel features grew in iteration {i}; stopping dissolving loop.")
                 break
 
             grown_layer = f"layer_grown_{i}"
             not_grown_layer = f"layer_not_grown_{i}"
             self._create_grown_layers(current_samferdsel, grown_ids, grown_layer, not_grown_layer)
 
-
-
-            ###########
 
             self._create_buffer_and_clip(
                 buffer_source=grown_layer,
@@ -172,9 +159,6 @@ class GangSykkelDissolver:
             )
 
 
-            
-            
-
             if not arcpy.Exists(self.files["not_grown"]):
                 arcpy.management.CopyFeatures(not_grown_layer, self.files["not_grown"])
             else:
@@ -183,31 +167,18 @@ class GangSykkelDissolver:
                     target=self.files["not_grown"],
                 )
 
-            # update prev_areas for next iteration using the newly dissolved result
+
             prev_areas = current_areas
 
             current_samferdsel = grown_layer
             current_gangsykkel = paths["singlepart_erased_path"]
 
-            
 
-            self.files[f"buffer_{i}"] = paths["buf_path"]
-            self.files[f"clip_{i}"] = paths["clip_path"]
-            self.files[f"singlepart_{i}"] = paths["singlepart_clipped_path"]
-            self.files[f"erased_{i}"] = paths["singlepart_erased_path"]
-            self.files[f"dissolved_{i}"] = paths["dissolved_path"]
-
-
-        #after loop append not grown
-
-        print("not grown før: ", arcpy.management.GetCount(self.files["not_grown"])[0])
-        print("current_samferdsel før: ", arcpy.management.GetCount(current_samferdsel)[0])
-        
+        #after loop  
         arcpy.management.Append(
                 inputs=current_samferdsel,
                 target=self.files["not_grown"],
             )
-        print("not gornw etter: ", arcpy.management.GetCount(self.files["not_grown"])[0])
         
         self._dissolve_and_restore( 
                 in_feature=self.files["not_grown"],
@@ -217,9 +188,8 @@ class GangSykkelDissolver:
                 restore_field="arealdekke",
                 index_col=self.index_col,
             )
-
-        # After loop we clean up by dissolving and eliminating  
-        print("Round: ", i)
+   
+        
         self._dissolve_and_restore(
             in_feature=current_gangsykkel,
             out_feature=self.files["gangsykkel_final_gangsykkel_dissolved"],
@@ -243,12 +213,14 @@ class GangSykkelDissolver:
             out_feature_class=self.files["gangsykkel_final_merge_singlepart"],
         )
 
+        arcpy.management.RepairGeometry(self.files["gangsykkel_final_merge_singlepart"])
+
 
         gangsykkel_final_merge_singlepart_lyr = "layer_gangsykkel_final_merge_singlepart_lyr"
         arcpy.management.MakeFeatureLayer(
             in_features=self.files["gangsykkel_final_merge_singlepart"],
             out_layer=gangsykkel_final_merge_singlepart_lyr,
-            where_clause="Shape_Length < 35"
+            where_clause=f"arealbruk_underklasse = 'GangSykkelVeg' AND Shape_Length < 45"
         )
 
         arcpy.management.Eliminate(
@@ -353,12 +325,12 @@ class GangSykkelDissolver:
         arcpy.management.MakeFeatureLayer(
             in_features=clipped_path,
             out_layer=long_layer,
-            where_clause='"Shape_Length" > 35'
+            where_clause='"Shape_Length" > 45'
         )
         arcpy.management.MakeFeatureLayer(
             in_features=clipped_path,
             out_layer=short_layer,
-            where_clause='"Shape_Length" <= 35'
+            where_clause='"Shape_Length" <= 45'
         )
 
         arcpy.management.Append(
@@ -370,11 +342,7 @@ class GangSykkelDissolver:
             target=erased_path,
         )
 
-        print("Long pieces count: ", arcpy.management.GetCount(long_layer)[0])
-        if int(arcpy.management.GetCount(long_layer)[0]) < 3:
-            with arcpy.da.SearchCursor(long_layer, ["id"]) as cursor:
-                for row in cursor:
-                    print("Long piece id: ", row[0])
+        
         if int(arcpy.management.GetCount(long_layer)[0]) == 0:
             return False
         else:

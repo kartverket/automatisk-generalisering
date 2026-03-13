@@ -251,54 +251,7 @@ class ArealdekkeDissolver:
                 area_map[a_row[0]] = a_row[2]
                 index_map[a_row[0]] = a_row[3]
 
-        """
-        if index_bool:
-            with arcpy.da.SearchCursor(without_data, ["OID@", column, index]) as d_cur:
-                for d_row in d_cur:
-                    oid = d_row[0]
-                    col_d = d_row[1]
-                    index_d = d_row[2]
-
-                    near_fids = in_fid_near_fid.get(oid, [])
-                    biggest = 0
-                    for fid in near_fids:
-                        col_a = column_map.get(fid)
-                        area = area_map.get(fid)
-                        index_a = index_map.get(fid)
-
-                        if col_d != col_a:
-                            continue
-
-                        if area < biggest:
-                            continue
-
-                        if index_a != index_d:
-                            continue
-
-                        biggest = area
-                        in_fid_near_fid[oid] = [fid]
-        else:
-            with arcpy.da.SearchCursor(without_data, ["OID@", column]) as d_cur:
-                for d_row in d_cur:
-                    oid = d_row[0]
-                    col_d = d_row[1]
-
-                    near_fids = in_fid_near_fid.get(oid, [])
-                    biggest = 0
-                    for fid in near_fids:
-                        col_a = column_map.get(fid)
-                        area = area_map.get(fid)
-                        index_a = index_map.get(fid)
-
-                        if col_d != col_a:
-                            continue
-
-                        if area < biggest:
-                            continue
-
-                        biggest = area
-                        in_fid_near_fid[oid] = [fid]
-        """
+       
         # find biggest intersecting polygon with matching column value and index value if index_bool is true, and save the fid of that polygon for each dissolved polygon:
         fields = ["OID@", column] + ([index] if index_bool else [])
 

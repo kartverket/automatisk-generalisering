@@ -12,6 +12,7 @@
 
     arealdekke_dissolver.py: 
         Main dissolve class that dissolves based on the categories set up in attribute_changer.py
+        Contains function restore_data_polygon_without_feature_to_point, this function will follow the rules for restoring data after dissolving and can be used by other functions/classes  
     
     eliminate_small_polygons.py:
         Eliminates too small polygons based on area times isoperimetric quotient and removes narrow polygon parts using minus buffer, excluding rivers and samferdsel
