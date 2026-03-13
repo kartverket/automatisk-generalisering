@@ -12,6 +12,7 @@ file_manager = BaseFileManager(scale=scale, object_name=object_name)
 # All scripts
 dissolve_file = "dissolve"
 elim_file = "eliminate"
+attribute_file = "attribute_changer"
 
 
 class Arealdekke_N10(Enum):
@@ -65,3 +66,33 @@ class Arealdekke_N10(Enum):
     elim_output = file_manager.generate_file_name_gdb(
         script_source_name=elim_file, description="output"
     )
+
+    # ========================================
+    #                               Attribute changer
+    # ========================================
+
+    attribute_changer__n10_land_use = file_manager.generate_file_name_gdb(
+        script_source_name=attribute_file, description="attribute_changer"
+    )
+
+    attribute_changer_documentation__n10_land_use = (
+        file_manager.generate_general_subdirectory(
+            description="attribute_changer_documentation"
+        )
+    )
+
+    attribute_changer_root__n10_land_use = file_manager.generate_file_name_gdb(
+        script_source_name=attribute_file, description="attribute_changer_root"
+    )
+
+    attribute_changer_partition_root__n10_land_use = (
+        file_manager.generate_file_name_gdb(
+            script_source_name=attribute_file,
+            description="attribute_changer_partition_root",
+        )
+    )
+
+    attribute_changer_output__n10_land_use = file_manager.generate_file_name_gdb(
+        script_source_name=attribute_file, description="attribute_changer_output"
+    )
+

@@ -9,11 +9,11 @@ from collections import Counter
 from tqdm import tqdm
 
 from composition_configs import core_config, logic_config
-from config import attribute_text_file, attribute_csv_file
+from config import attribute_csv_file
 from custom_tools.decorators.timing_decorator import timing_decorator
 from custom_tools.general_tools.partition_iterator import PartitionIterator
 from env_setup import environment_setup
-from file_manager.n10.file_manager_land_use import Land_use_N10
+from file_manager.n10.file_manager_arealdekke import Arealdekke_N10
 from generalization.n10.arealdekke.attribute_analyzer import (
     sort_results,
     write_to_file,
@@ -27,7 +27,7 @@ from input_data import input_n10, input_n100
 
 
 @timing_decorator
-def attribute_changer():
+def attribute_changer(input_fc: str, output_fc: str):
     """
     Main program changing attributes for N10 land use using partition iterator.
     """
@@ -37,8 +37,8 @@ def attribute_changer():
 
     print("📦 Fetches and prepares data...\n")
 
-    working_fc = input_n10.arealdekkeflate
-    clip_fc = Land_use_N10.attribute_changer__n10_land_use.value
+    working_fc = input_fc
+    clip_fc = Arealdekke_N10.attribute_changer__n10_land_use.value
     MUNICIPALITY = None
     new_field = "gammel_arealdekke"
     new_type = "TEXT"
@@ -51,7 +51,7 @@ def attribute_changer():
         print("✅ Data is ready.\n")
 
     partition_area_attribute_changer = prepare_partition_iterator(
-        input_fc=working_fc, new_field=new_field, new_type=new_type
+        input_fc=working_fc, new_field=new_field, new_type=new_type, output_fc=output_fc
     )
 
     partition_area_attribute_changer.run()
@@ -91,7 +91,7 @@ def clip_data(input_fc: str, output_fc: str, area: str) -> None:
 
 @timing_decorator
 def prepare_partition_iterator(
-    input_fc: str, new_field: str, new_type: str
+    input_fc: str, new_field: str, new_type: str, output_fc: str,
 ) -> PartitionIterator:
     """
     Initializes the partition iterator with correct configurations.
@@ -126,7 +126,7 @@ def prepare_partition_iterator(
             core_config.OutputEntry.vector_output(
                 object=arealdekke,
                 tag=arealdekke_attributt,
-                path=Land_use_N10.attribute_changer_output__n10_land_use.value,
+                path=output_fc,
             )
         ]
     )
@@ -136,7 +136,7 @@ def prepare_partition_iterator(
     partition_area_io_config = core_config.PartitionIOConfig(
         input_config=partition_area_input_config,
         output_config=partition_area_output_config,
-        documentation_directory=Land_use_N10.attribute_changer_documentation__n10_land_use.value,
+        documentation_directory=Arealdekke_N10.attribute_changer_documentation__n10_land_use.value,
     )
 
     # Method Config
@@ -150,7 +150,7 @@ def prepare_partition_iterator(
         new_field=new_field,
         new_type=new_type,
         work_file_manager_config=core_config.WorkFileConfig(
-            root_file=Land_use_N10.attribute_changer_root__n10_land_use.value
+            root_file=Arealdekke_N10.attribute_changer_root__n10_land_use.value
         ),
     )
 
@@ -174,7 +174,7 @@ def prepare_partition_iterator(
     # WorkFileConfig:
     print("📁 Setting up workfile configuration...")
     partition_area_workfile_config = core_config.WorkFileConfig(
-        root_file=Land_use_N10.attribute_changer_partition_root__n10_land_use.value,
+        root_file=Arealdekke_N10.attribute_changer_partition_root__n10_land_use.value,
     )
 
     # PartitionIterator Config:
@@ -376,7 +376,7 @@ def write_unique_combinations_and_counts_to_file(fc: str, attribute_list: list) 
 
     result = sort_results(result)
 
-    write_to_file(result, attribute_text_file)
+    #write_to_file(result, attribute_text_file)
 
     print("\n📘 Finished writing combinations.\n")
 
@@ -385,19 +385,4 @@ def write_unique_combinations_and_counts_to_file(fc: str, attribute_list: list) 
 
 
 if __name__ == "__main__":
-    #####################################################
-    # Print all unique combinations of 'arealdekke' and
-    # 'arealbruk_hovedklasse' along with their counts
-    if False:
-        write_unique_combinations_and_counts_to_file(
-            fc=input_n10.arealdekkeflate,
-            attribute_list=[
-                "arealdekke",
-                "arealbruk_hovedklasse",
-                "arealbruk_underklasse",
-                "grunnforhold",
-            ],
-        )
-    #####################################################
-
     attribute_changer()
