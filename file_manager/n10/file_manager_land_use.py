@@ -49,7 +49,7 @@ class Land_use_N10(Enum):
     # ========================================
 
     area_line_merger_start__n10_land_use = file_manager.generate_file_name_gdb(
-        script_source_name=area_line_merger, description="area_line_merger"
+        script_source_name=area_line_merger, description="area_line_merger_start"
     )
 
     area_line_merger__n10_land_use = file_manager.generate_file_name_gdb(
