@@ -769,7 +769,7 @@ def resolve_road_conflicts():
 
     # --- Partition run + WFM for iterator -------------------------------------
     rrc_run_config = core_config.PartitionRunConfig(
-        max_elements_per_partition=100_000,
+        max_elements_per_partition=50_000,
         context_radius_meters=500,
         partition_method=core_config.PartitionMethod.VERTICES,
     )
