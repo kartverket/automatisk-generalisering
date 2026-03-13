@@ -8,6 +8,8 @@ from file_manager import WorkFileManager
 from file_manager.n10.file_manager_river import Elv_Bekk_N10
 from input_data import input_arealdekke
 
+from buff_small_polygon_segments import buff_small_polygon_segments
+
 arcpy.env.overwriteOutput = True
 
 class prog_config(Enum):
@@ -44,8 +46,13 @@ def main():
     files = create_wfm_gdbs(wfm=wfm)
     fetch_data(files=files)
 
-    cookie_cutting(files=files)
-    enlarge_small_rivers(files=files)
+    buff_small_polygon_segments(
+        in_feature_class=files[fc.rivers_fc], 
+        out_feature_class=files[fc.rivers_fixed],
+        min_width=3)
+
+    #cookie_cutting(files=files)
+    #enlarge_small_rivers(files=files)
 
 # ========================
 # Dictionary creation and

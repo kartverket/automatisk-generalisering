@@ -33,7 +33,7 @@ class prog_config(Enum):
 def main():
 
     #County ids
-    area=[]
+    area=[301, 3435, 1160, 1525, 1848, 1851]
 
     environment_setup.main()
 
@@ -46,7 +46,7 @@ def main():
     fetch_data(files=files, area=area)
     label_text_creation(files=files)
     invalid_areas(files=files)
-    valid_areas_large_lakes(files=files)
+    valid_areas_large_lakes(files=files, area=area)
     valid_areas_small_lakes(files=files)
     find_points(files=files)
     check_if_point_inside_lake(files=files)
@@ -65,6 +65,7 @@ class fc(Enum):
     innsjo_below_5000="innsjo_below_5000"
     innsjo_above_5000="innsjo_above_5000"
     annotations_pre_buffed="annotations_pre_buffed"
+    admin_buffer="admin_buffer"
 
     #Invalid areas
     innsjo_below_5000_buffed="innsjo_below_5000_buffed"
@@ -78,6 +79,7 @@ class fc(Enum):
     areas_within_above_5000="areas_within_above_5000"
     just_areas_within_above_5000="just_areas_within_above_5000"
     valid_label_positions_large="valid_label_positions_large"
+    just_areas_within_above_5000_adminbuffer="just_areas_within_above_5000_adminbuffer"
     
     #Valid areas small
     valid_label_positions_small="valid_label_positions_small"
@@ -116,6 +118,7 @@ def create_wfm_gdbs(wfm: WorkFileManager) -> dict:
     innsjo_below_5000=wfm.build_file_path(file_name="innsjo_below_5000", file_type="gdb")
     innsjo_above_5000=wfm.build_file_path(file_name="innsjo_above_5000", file_type="gdb")
     annotations_pre_buffed=wfm.build_file_path(file_name="annotations_pre_buffed", file_type="gdb")
+    admin_buffer=wfm.build_file_path(file_name="admin_buffer", file_type="gdb")
 
     #Invalid areas
     innsjo_below_5000_buffed=wfm.build_file_path(file_name="innsjo_below_5000_buffed", file_type="gdb")
@@ -129,6 +132,7 @@ def create_wfm_gdbs(wfm: WorkFileManager) -> dict:
     areas_within_above_5000=wfm.build_file_path(file_name="areas_within_above_5000", file_type="gdb")
     just_areas_within_above_5000=wfm.build_file_path(file_name="just_areas_within_above_5000", file_type="gdb")
     valid_label_positions_large=wfm.build_file_path(file_name="valid_label_positions_large", file_type="gdb")
+    just_areas_within_above_5000_adminbuffer=wfm.build_file_path(file_name="just_areas_within_above_5000_adminbuffer", file_type="gdb")
     
     #Valid areas small
     valid_label_positions_small=wfm.build_file_path(file_name="valid_label_positions_small", file_type="gdb")
@@ -155,6 +159,7 @@ def create_wfm_gdbs(wfm: WorkFileManager) -> dict:
         fc.innsjo_below_5000: innsjo_below_5000,
         fc.innsjo_above_5000:innsjo_above_5000,
         fc.annotations_pre_buffed:annotations_pre_buffed,
+        fc.admin_buffer:admin_buffer,
 
         #Invalid areas
         fc.innsjo_below_5000_buffed:innsjo_below_5000_buffed,
@@ -168,6 +173,7 @@ def create_wfm_gdbs(wfm: WorkFileManager) -> dict:
         fc.areas_within_above_5000:areas_within_above_5000,
         fc.just_areas_within_above_5000:just_areas_within_above_5000,
         fc.valid_label_positions_large:valid_label_positions_large,
+        fc.just_areas_within_above_5000_adminbuffer:just_areas_within_above_5000_adminbuffer,
 
         #Valid areas small
         fc.valid_label_positions_small:valid_label_positions_small,
@@ -217,6 +223,14 @@ def fetch_data(files: dict, area: list=None) -> None:
             out_layer=clip_lyr, 
             where_clause=f"KOMMUNENUMMER IN ({vals})"
             )
+        
+        arcpy.analysis.Buffer(
+            in_features=clip_lyr,
+            out_feature_class=files[fc.admin_buffer],
+            buffer_distance_or_field='200 Meters',
+            line_side='OUTSIDE_ONLY',
+            dissolve_option='ALL'
+        )
         
         arcpy.management.SelectLayerByLocation(in_layer=innsjo_bearbeidet_lyr, overlap_type='HAVE_THEIR_CENTER_IN', select_features=clip_lyr, selection_type='NEW_SELECTION')
 
@@ -285,18 +299,10 @@ def invalid_areas(files:dict)->None:
         buffer_distance_or_field=prog_config.buffer_innsjo_below_5000_distance.value,
         #line_side='FULL'
     )
-    '''
-    arcpy.analysis.Buffer(
-        in_features=innsjo_below_5000_layer, 
-        out_feature_class=files[fc.innsjo_below_5000_buffed], 
-        buffer_distance_or_field=prog_config.buffer_innsjo_below_5000_distance.value,
-        line_side='FULL'
-        )
-        '''
 
 
 @timing_decorator
-def valid_areas_large_lakes(files:dict)->None:
+def valid_areas_large_lakes(files:dict, area:list)->None:
     
     def delete_layers(layers:list)->None:
         for lyr in layers:
@@ -376,11 +382,27 @@ def valid_areas_large_lakes(files:dict)->None:
     arcpy.management.MakeFeatureLayer(files[fc.just_areas_within_above_5000], just_areas_within_above_5000_lyr)
     arcpy.management.MakeFeatureLayer(files[fc.annotations_pre_buffed], annotations_pre_buffed_lyr)
 
-    arcpy.analysis.PairwiseErase(
-        in_features=just_areas_within_above_5000_lyr,
+    if area:
+        admin_buffer_lyr="admin_buffer_lyr"
+        arcpy.management.MakeFeatureLayer(in_features=files[fc.admin_buffer], out_layer=admin_buffer_lyr)
+        arcpy.analysis.Erase(
+            in_features=just_areas_within_above_5000_lyr,
+            erase_features=admin_buffer_lyr,
+            out_feature_class=files[fc.just_areas_within_above_5000_adminbuffer]
+        )
+        just_areas_within_above_5000_adminbuffer_lyr="just_areas_within_above_5000_adminbuffer_lyr"
+        arcpy.management.MakeFeatureLayer(in_features=files[fc.just_areas_within_above_5000_adminbuffer], out_layer=just_areas_within_above_5000_adminbuffer_lyr)
+        input_lyr=just_areas_within_above_5000_adminbuffer_lyr
+    else:
+        input_lyr=just_areas_within_above_5000_lyr
+
+    arcpy.analysis.Erase(
+        in_features=input_lyr,
         erase_features=annotations_pre_buffed_lyr,
         out_feature_class=files[fc.valid_label_positions_large]
-    )
+    )      
+
+
 
 
 @timing_decorator
@@ -391,13 +413,13 @@ def valid_areas_small_lakes(files:dict)->None:
     Args:
         files (dict): Dictionary with all the working files
     """
-    just_areas_within_above_5000_lyr="just_areas_within_above_5000_lyr"
+    valid_label_positions_large_lyr="valid_label_positions_large_lyr"
     innsjo_above_5000_lyr="innsjo_above_5000_lyr"
-    arcpy.management.MakeFeatureLayer(files[fc.just_areas_within_above_5000], just_areas_within_above_5000_lyr)
+    arcpy.management.MakeFeatureLayer(files[fc.valid_label_positions_large], valid_label_positions_large_lyr)
     arcpy.management.MakeFeatureLayer(files[fc.innsjo_above_5000], innsjo_above_5000_lyr)
 
     arcpy.analysis.Erase(
-        in_features=just_areas_within_above_5000_lyr,
+        in_features=valid_label_positions_large_lyr,
         erase_features=innsjo_above_5000_lyr,
         out_feature_class=files[fc.valid_label_positions_small]
     )
@@ -410,18 +432,24 @@ def find_points(files:dict)->None:
     Args:
         files (dict): Dictionary with all the working files
     """
+    innsjo_above_5000_lyr="innsjo_above_5000"
+    arcpy.management.MakeFeatureLayer(in_features=files[fc.innsjo_above_5000], out_layer=innsjo_above_5000_lyr)
+    arcpy.management.RepairGeometry(in_features=innsjo_above_5000_lyr, delete_null='DELETE_NULL')
 
     arcpy.cartography.SimplifyPolygon(
-        in_features=files[fc.innsjo_above_5000],
+        in_features=innsjo_above_5000_lyr,
         out_feature_class=files[fc.innsjo_above_5000_simplified],
         algorithm='EFFECTIVE_AREA',
         tolerance='20 Meters',
         error_option='RESOLVE_ERRORS'
     )
 
+    innsjo_above_5000_simplified_lyr="innsjo_above_5000_simplified_lyr"
+    arcpy.management.MakeFeatureLayer(in_features=files[fc.innsjo_above_5000_simplified], out_layer=innsjo_above_5000_simplified_lyr)
+
     try:
-        arcpy.management.FeatureToPoint(in_features=files[fc.innsjo_above_5000_simplified], out_feature_class=files[fc.above_5000_simplified_inner], point_location='INSIDE')
-        arcpy.management.FeatureToPoint(in_features=files[fc.innsjo_above_5000_simplified], out_feature_class=files[fc.above_5000_simplified_centroid], point_location='CENTROID')
+        arcpy.management.FeatureToPoint(in_features=innsjo_above_5000_simplified_lyr, out_feature_class=files[fc.above_5000_simplified_inner], point_location='INSIDE')
+        arcpy.management.FeatureToPoint(in_features=innsjo_above_5000_simplified_lyr, out_feature_class=files[fc.above_5000_simplified_centroid], point_location='CENTROID')
     except Exception as e:
         raise
 
@@ -475,7 +503,12 @@ def check_if_point_inside_lake(files:dict)->None:
     if innerpoints_outside_lakes:
         print(len(innerpoints_outside_lakes))
         print(innerpoints_outside_lakes)
-        arcpy.management.SelectLayerByAttribute(in_layer_or_view=centroids, selection_type='NEW_SELECTION', where_clause=f"OBJECTID IN {tuple(innerpoints_outside_lakes)}")
+
+    
+        if len(innerpoints_outside_lakes)<2:
+            arcpy.management.SelectLayerByAttribute(in_layer_or_view=centroids, selection_type='NEW_SELECTION', where_clause=f"OBJECTID = {innerpoints_outside_lakes[0]}")
+        else:
+            arcpy.management.SelectLayerByAttribute(in_layer_or_view=centroids, selection_type='NEW_SELECTION', where_clause=f"OBJECTID IN {tuple(innerpoints_outside_lakes)}")
         print(8)
         arcpy.management.CopyFeatures(in_features=centroids, out_feature_class=files[fc.small_lakes])
         print(9)
