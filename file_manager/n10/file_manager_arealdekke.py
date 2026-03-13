@@ -46,10 +46,8 @@ class Arealdekke_N10(Enum):
         script_source_name=dissolve_file, description="gangsykkel2"
     )
     dissolve_gangsykkel3 = file_manager.generate_file_name_gdb(
-            script_source_name=dissolve_file, description="gangsykkel3"
+        script_source_name=dissolve_file, description="gangsykkel3"
     )
-
-
 
     # ========================================
     #                 eliminate small polygons
@@ -95,4 +93,3 @@ class Arealdekke_N10(Enum):
     attribute_changer_output__n10_land_use = file_manager.generate_file_name_gdb(
         script_source_name=attribute_file, description="attribute_changer_output"
     )
-

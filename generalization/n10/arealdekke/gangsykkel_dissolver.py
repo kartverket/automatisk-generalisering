@@ -9,13 +9,17 @@ from composition_configs import core_config, logic_config
 from generalization.n10.arealdekke.arealdekke_dissolver import ArealdekkeDissolver
 from collections import defaultdict
 
+
 class GangSykkelDissolver:
     """
     Dissolved gang og sykkel vei polygons that are adjecent to other samferdsel polygons into samferdsel.
     Iteratively buffer 5m, clip, split by length and dissolve until no more dissolving is done.
     dissolve gang og sykkel over 25 length into samferdsel, and keep the rest as gang og sykkel.
     """
-    def __init__(self, gang_sykkel_dissolver_config: logic_config.GangSykkelDissolverInitKwargs):
+
+    def __init__(
+        self, gang_sykkel_dissolver_config: logic_config.GangSykkelDissolverInitKwargs
+    ):
         self.input_gangsykkel = gang_sykkel_dissolver_config.input_feature
         self.output_feature = gang_sykkel_dissolver_config.output_feature
 
@@ -25,27 +29,55 @@ class GangSykkelDissolver:
             config=gang_sykkel_dissolver_config.work_file_manager_config
         )
         self.files = self._create_wfm_gdbs(self.wfm)
-        
-
 
     def _create_wfm_gdbs(self, wfm: WorkFileManager) -> dict:
-        gangsykkel_input = wfm.build_file_path(file_name="gangsykkel_input", file_type="gdb")
-        gangsykkel_samferdsel = wfm.build_file_path(file_name="gangsykkel_samferdsel", file_type="gdb")
-        gangsykkel_samferdsel_buffer = wfm.build_file_path(file_name="gangsykkel_samferdsel_buffer", file_type="gdb")
-        gangsykkel_gangsykkel = wfm.build_file_path(file_name="gangsykkel_gangsykkel", file_type="gdb")
-        gangsykkel_gangsykkel_dissolved = wfm.build_file_path(file_name="gangsykkel_gangsykkel_dissolved", file_type="gdb")
-        gangsykkel_gangsykkel_clipped = wfm.build_file_path(file_name="gangsykkel_gangsykkel_clipped", file_type="gdb")
-        gangsykkel_gangsykkel_erased = wfm.build_file_path(file_name="gangsykkel_gangsykkel_erased", file_type="gdb")
-        gangsykkel_gangsykkel_clipped_dissolved = wfm.build_file_path(file_name="gangsykkel_gangsykkel_clipped_dissolved", file_type="gdb")
-        gangsykkel_samferdsel_gangsykkel_dissolved = wfm.build_file_path(file_name="gangsykkel_samferdsel_gangsykkel_dissolved", file_type="gdb")
-        gangsykkel_ikke_samferdsel = wfm.build_file_path(file_name="gangsykkel_ikke_samferdsel", file_type="gdb")
-        gangsykkel_gangsykkel_clipped_singlepart = wfm.build_file_path(file_name="gangsykkel_gangsykkel_clipped_singlepart", file_type="gdb")
-        gangsykkel_final_merge = wfm.build_file_path(file_name="gangsykkel_final_merge", file_type="gdb")
-        gangsykkel_final_merge_singlepart = wfm.build_file_path(file_name="gangsykkel_final_merge_singlepart", file_type="gdb")
-        gangsykkel_final_gangsykkel_dissolved = wfm.build_file_path(file_name="gangsykkel_final_gangsykkel_dissolved", file_type="gdb")
+        gangsykkel_input = wfm.build_file_path(
+            file_name="gangsykkel_input", file_type="gdb"
+        )
+        gangsykkel_samferdsel = wfm.build_file_path(
+            file_name="gangsykkel_samferdsel", file_type="gdb"
+        )
+        gangsykkel_samferdsel_buffer = wfm.build_file_path(
+            file_name="gangsykkel_samferdsel_buffer", file_type="gdb"
+        )
+        gangsykkel_gangsykkel = wfm.build_file_path(
+            file_name="gangsykkel_gangsykkel", file_type="gdb"
+        )
+        gangsykkel_gangsykkel_dissolved = wfm.build_file_path(
+            file_name="gangsykkel_gangsykkel_dissolved", file_type="gdb"
+        )
+        gangsykkel_gangsykkel_clipped = wfm.build_file_path(
+            file_name="gangsykkel_gangsykkel_clipped", file_type="gdb"
+        )
+        gangsykkel_gangsykkel_erased = wfm.build_file_path(
+            file_name="gangsykkel_gangsykkel_erased", file_type="gdb"
+        )
+        gangsykkel_gangsykkel_clipped_dissolved = wfm.build_file_path(
+            file_name="gangsykkel_gangsykkel_clipped_dissolved", file_type="gdb"
+        )
+        gangsykkel_samferdsel_gangsykkel_dissolved = wfm.build_file_path(
+            file_name="gangsykkel_samferdsel_gangsykkel_dissolved", file_type="gdb"
+        )
+        gangsykkel_ikke_samferdsel = wfm.build_file_path(
+            file_name="gangsykkel_ikke_samferdsel", file_type="gdb"
+        )
+        gangsykkel_gangsykkel_clipped_singlepart = wfm.build_file_path(
+            file_name="gangsykkel_gangsykkel_clipped_singlepart", file_type="gdb"
+        )
+        gangsykkel_final_merge = wfm.build_file_path(
+            file_name="gangsykkel_final_merge", file_type="gdb"
+        )
+        gangsykkel_final_merge_singlepart = wfm.build_file_path(
+            file_name="gangsykkel_final_merge_singlepart", file_type="gdb"
+        )
+        gangsykkel_final_gangsykkel_dissolved = wfm.build_file_path(
+            file_name="gangsykkel_final_gangsykkel_dissolved", file_type="gdb"
+        )
         not_grown = wfm.build_file_path(file_name="not_grown", file_type="gdb")
-        not_grown_dissolved = wfm.build_file_path(file_name="not_grown_dissolved", file_type="gdb")
-      
+        not_grown_dissolved = wfm.build_file_path(
+            file_name="not_grown_dissolved", file_type="gdb"
+        )
+
         return {
             "gangsykkel_input": gangsykkel_input,
             "gangsykkel_samferdsel": gangsykkel_samferdsel,
@@ -61,7 +93,7 @@ class GangSykkelDissolver:
             "gangsykkel_final_merge": gangsykkel_final_merge,
             "gangsykkel_final_merge_singlepart": gangsykkel_final_merge_singlepart,
             "gangsykkel_final_gangsykkel_dissolved": gangsykkel_final_gangsykkel_dissolved,
-            "not_grown": not_grown, 
+            "not_grown": not_grown,
             "not_grown_dissolved": not_grown_dissolved,
         }
 
@@ -69,31 +101,31 @@ class GangSykkelDissolver:
         """Fetch data and create initial layers for samferdsel, gangsykkel and not samferdsel."""
         arcpy.management.CopyFeatures(
             in_features=self.input_gangsykkel,
-            out_feature_class=self.files["gangsykkel_input"]
+            out_feature_class=self.files["gangsykkel_input"],
         )
 
         samferdsel = "layer_samferdsel"
         arcpy.management.MakeFeatureLayer(
             in_features=self.files["gangsykkel_input"],
             out_layer=samferdsel,
-            where_clause="arealdekke = 'Samferdsel' AND arealbruk_underklasse <> 'GangSykkelVeg'"
+            where_clause="arealdekke = 'Samferdsel' AND arealbruk_underklasse <> 'GangSykkelVeg'",
         )
         arcpy.management.CopyFeatures(
             in_features=samferdsel,
-            out_feature_class=self.files["gangsykkel_samferdsel"]
+            out_feature_class=self.files["gangsykkel_samferdsel"],
         )
 
         gangsykkel = "layer_gangsykkel"
         arcpy.management.MakeFeatureLayer(
             in_features=self.files["gangsykkel_input"],
             out_layer=gangsykkel,
-            where_clause="arealdekke = 'Samferdsel' AND arealbruk_underklasse = 'GangSykkelVeg'"
+            where_clause="arealdekke = 'Samferdsel' AND arealbruk_underklasse = 'GangSykkelVeg'",
         )
         arcpy.management.CopyFeatures(
             in_features=gangsykkel,
-            out_feature_class=self.files["gangsykkel_gangsykkel"]
+            out_feature_class=self.files["gangsykkel_gangsykkel"],
         )
-        
+
         self._dissolve_and_restore(
             in_feature=self.files["gangsykkel_gangsykkel"],
             out_feature=self.files["gangsykkel_gangsykkel_dissolved"],
@@ -107,17 +139,15 @@ class GangSykkelDissolver:
         arcpy.management.MakeFeatureLayer(
             in_features=self.files["gangsykkel_input"],
             out_layer=ikke_samferdsel,
-            where_clause="arealdekke <> 'Samferdsel'"
+            where_clause="arealdekke <> 'Samferdsel'",
         )
         arcpy.management.CopyFeatures(
             in_features=ikke_samferdsel,
-            out_feature_class=self.files["gangsykkel_ikke_samferdsel"]
+            out_feature_class=self.files["gangsykkel_ikke_samferdsel"],
         )
 
-
-    
     @timing_decorator
-    def _dissolve_looping(self, buffer_distance: str = "5 Meters"): 
+    def _dissolve_looping(self, buffer_distance: str = "5 Meters"):
         """
         Iteratively buffer roads 5m, clip gangvei, split by length 45m and dissolve until no more dissolving is done.
         We split by length to avoid dissolving gang og sykkel polygons that connect to samferdsel but arent adjecent.
@@ -126,14 +156,16 @@ class GangSykkelDissolver:
         current_gangsykkel = self.files["gangsykkel_gangsykkel_dissolved"]
         final_ikke_samferdsel = self.files["gangsykkel_ikke_samferdsel"]
 
-        prev_areas = {} 
+        prev_areas = {}
         i = 0
         dissolving = True
-        while dissolving: 
+        while dissolving:
             i += 1
-           
+
             paths = self._build_iteration_paths(i)
-            current_areas = self._compute_area_by_index(current_samferdsel, self.index_col)
+            current_areas = self._compute_area_by_index(
+                current_samferdsel, self.index_col
+            )
             grown_ids = self._get_grown_ids(prev_areas, current_areas)
 
             if not grown_ids:
@@ -141,8 +173,9 @@ class GangSykkelDissolver:
 
             grown_layer = f"layer_grown_{i}"
             not_grown_layer = f"layer_not_grown_{i}"
-            self._create_grown_layers(current_samferdsel, grown_ids, grown_layer, not_grown_layer)
-
+            self._create_grown_layers(
+                current_samferdsel, grown_ids, grown_layer, not_grown_layer
+            )
 
             self._create_buffer_and_clip(
                 buffer_source=grown_layer,
@@ -158,7 +191,6 @@ class GangSykkelDissolver:
                 iteration=i,
             )
 
-
             if not arcpy.Exists(self.files["not_grown"]):
                 arcpy.management.CopyFeatures(not_grown_layer, self.files["not_grown"])
             else:
@@ -167,29 +199,26 @@ class GangSykkelDissolver:
                     target=self.files["not_grown"],
                 )
 
-
             prev_areas = current_areas
 
             current_samferdsel = grown_layer
             current_gangsykkel = paths["singlepart_erased_path"]
 
-
-        #after loop  
+        # after loop
         arcpy.management.Append(
-                inputs=current_samferdsel,
-                target=self.files["not_grown"],
-            )
-        
-        self._dissolve_and_restore( 
-                in_feature=self.files["not_grown"],
-                out_feature=self.files["not_grown_dissolved"],
-                dissolve_fields=["arealdekke", self.index_col],
-                restore_source=self.files["not_grown"],
-                restore_field="arealdekke",
-                index_col=self.index_col,
-            )
-   
-        
+            inputs=current_samferdsel,
+            target=self.files["not_grown"],
+        )
+
+        self._dissolve_and_restore(
+            in_feature=self.files["not_grown"],
+            out_feature=self.files["not_grown_dissolved"],
+            dissolve_fields=["arealdekke", self.index_col],
+            restore_source=self.files["not_grown"],
+            restore_field="arealdekke",
+            index_col=self.index_col,
+        )
+
         self._dissolve_and_restore(
             in_feature=current_gangsykkel,
             out_feature=self.files["gangsykkel_final_gangsykkel_dissolved"],
@@ -201,8 +230,8 @@ class GangSykkelDissolver:
 
         arcpy.management.Merge(
             inputs=[
-                self.files["not_grown_dissolved"],   
-                self.files["gangsykkel_final_gangsykkel_dissolved"],   
+                self.files["not_grown_dissolved"],
+                self.files["gangsykkel_final_gangsykkel_dissolved"],
                 final_ikke_samferdsel,
             ],
             output=self.files["gangsykkel_final_merge"],
@@ -215,21 +244,21 @@ class GangSykkelDissolver:
 
         arcpy.management.RepairGeometry(self.files["gangsykkel_final_merge_singlepart"])
 
-
-        gangsykkel_final_merge_singlepart_lyr = "layer_gangsykkel_final_merge_singlepart_lyr"
+        gangsykkel_final_merge_singlepart_lyr = (
+            "layer_gangsykkel_final_merge_singlepart_lyr"
+        )
         arcpy.management.MakeFeatureLayer(
             in_features=self.files["gangsykkel_final_merge_singlepart"],
             out_layer=gangsykkel_final_merge_singlepart_lyr,
-            where_clause=f"arealbruk_underklasse = 'GangSykkelVeg' AND Shape_Length < 45"
+            where_clause=f"arealbruk_underklasse = 'GangSykkelVeg' AND Shape_Length < 45",
         )
 
         arcpy.management.Eliminate(
             in_features=gangsykkel_final_merge_singlepart_lyr,
-            out_feature_class=self.output_feature, 
+            out_feature_class=self.output_feature,
             selection="LENGTH",
         )
 
-    
     def _build_iteration_paths(self, i: int) -> dict:
         """Create and return iteration-specific file paths"""
         buf_name = f"gangsykkel_samferdsel_buffer_{i}"
@@ -242,26 +271,42 @@ class GangSykkelDissolver:
         return {
             "buf_path": self.wfm.build_file_path(file_name=buf_name, file_type="gdb"),
             "clip_path": self.wfm.build_file_path(file_name=clip_name, file_type="gdb"),
-            "singlepart_clipped_path": self.wfm.build_file_path(file_name=singlepart_clipped_name, file_type="gdb"),
-            "erased_path": self.wfm.build_file_path(file_name=erased_name, file_type="gdb"),
-            "singlepart_erased_path": self.wfm.build_file_path(file_name=singlepart_erased_name, file_type="gdb"),
-            "dissolved_path": self.wfm.build_file_path(file_name=dissolved_name, file_type="gdb"),
+            "singlepart_clipped_path": self.wfm.build_file_path(
+                file_name=singlepart_clipped_name, file_type="gdb"
+            ),
+            "erased_path": self.wfm.build_file_path(
+                file_name=erased_name, file_type="gdb"
+            ),
+            "singlepart_erased_path": self.wfm.build_file_path(
+                file_name=singlepart_erased_name, file_type="gdb"
+            ),
+            "dissolved_path": self.wfm.build_file_path(
+                file_name=dissolved_name, file_type="gdb"
+            ),
         }
 
-    def _create_grown_layers(self, current_samferdsel: str, grown_ids: list, grown_layer: str, not_grown_layer: str) -> str:
+    def _create_grown_layers(
+        self,
+        current_samferdsel: str,
+        grown_ids: list,
+        grown_layer: str,
+        not_grown_layer: str,
+    ) -> str:
         """Create layers splitting the features from current_samferdsel that have grown (based on grown_ids)"""
         where_clause_in = f"{self.index_col} IN ({','.join(map(str, grown_ids))})"
         arcpy.management.MakeFeatureLayer(
             in_features=current_samferdsel,
             out_layer=grown_layer,
-            where_clause=where_clause_in
+            where_clause=where_clause_in,
         )
 
-        where_clause_not_in = f"{self.index_col} NOT IN ({','.join(map(str, grown_ids))})"
+        where_clause_not_in = (
+            f"{self.index_col} NOT IN ({','.join(map(str, grown_ids))})"
+        )
         arcpy.management.MakeFeatureLayer(
             in_features=current_samferdsel,
             out_layer=not_grown_layer,
-            where_clause=where_clause_not_in
+            where_clause=where_clause_not_in,
         )
 
     def _create_buffer_and_clip(
@@ -283,14 +328,14 @@ class GangSykkelDissolver:
         arcpy.analysis.Clip(
             in_features=current_gangsykkel,
             clip_features=paths["buf_path"],
-            out_feature_class=paths["clip_path"]
+            out_feature_class=paths["clip_path"],
         )
 
         arcpy.management.RepairGeometry(in_features=paths["clip_path"])
 
         arcpy.management.MultipartToSinglepart(
             in_features=paths["clip_path"],
-            out_feature_class=paths["singlepart_clipped_path"]
+            out_feature_class=paths["singlepart_clipped_path"],
         )
 
         arcpy.management.RepairGeometry(in_features=paths["singlepart_clipped_path"])
@@ -298,19 +343,25 @@ class GangSykkelDissolver:
         arcpy.analysis.Erase(
             in_features=current_gangsykkel,
             erase_features=paths["buf_path"],
-            out_feature_class=paths["erased_path"]
+            out_feature_class=paths["erased_path"],
         )
 
         arcpy.management.RepairGeometry(in_features=paths["erased_path"])
 
         arcpy.management.MultipartToSinglepart(
             in_features=paths["erased_path"],
-            out_feature_class=paths["singlepart_erased_path"]
+            out_feature_class=paths["singlepart_erased_path"],
         )
 
         arcpy.management.RepairGeometry(in_features=paths["singlepart_erased_path"])
 
-        return (paths["buf_path"], paths["clip_path"], paths["singlepart_clipped_path"], paths["singlepart_erased_path"], paths["erased_path"])
+        return (
+            paths["buf_path"],
+            paths["clip_path"],
+            paths["singlepart_clipped_path"],
+            paths["singlepart_erased_path"],
+            paths["erased_path"],
+        )
 
     def _split_by_length_and_append(
         self,
@@ -325,12 +376,12 @@ class GangSykkelDissolver:
         arcpy.management.MakeFeatureLayer(
             in_features=clipped_path,
             out_layer=long_layer,
-            where_clause='"Shape_Length" > 45'
+            where_clause='"Shape_Length" > 45',
         )
         arcpy.management.MakeFeatureLayer(
             in_features=clipped_path,
             out_layer=short_layer,
-            where_clause='"Shape_Length" <= 45'
+            where_clause='"Shape_Length" <= 45',
         )
 
         arcpy.management.Append(
@@ -342,12 +393,10 @@ class GangSykkelDissolver:
             target=erased_path,
         )
 
-        
         if int(arcpy.management.GetCount(long_layer)[0]) == 0:
             return False
         else:
             return True
-
 
     def _dissolve_and_restore(
         self,
@@ -363,20 +412,14 @@ class GangSykkelDissolver:
             in_features=in_feature,
             out_feature_class=out_feature,
             dissolve_field=dissolve_fields,
-            multi_part="SINGLE_PART"
+            multi_part="SINGLE_PART",
         )
 
         ArealdekkeDissolver.restore_data_polygon_without_feature_to_point(
-            out_feature,
-            restore_source,
-            restore_field,
-            index_col,
-            index_bool=True
+            out_feature, restore_source, restore_field, index_col, index_bool=True
         )
 
         return out_feature
-    
-
 
     def _compute_area_by_index(self, feature_class: str, index_col: str) -> dict:
         """Return dict {index_value: area} for feature_class. Uses geometry area attribute."""
@@ -385,7 +428,7 @@ class GangSykkelDissolver:
         areas = defaultdict(float)
         with arcpy.da.SearchCursor(feature_class, [index_col, "SHAPE@AREA"]) as cursor:
             for idx, geom_area in cursor:
-               areas[idx] += geom_area
+                areas[idx] += geom_area
         return areas
 
     def _get_grown_ids(self, prev_areas: dict, current_areas: dict) -> list:
@@ -396,8 +439,6 @@ class GangSykkelDissolver:
             if cur_area > prev_area:
                 grown.append(idx)
         return grown
-
-
 
     @timing_decorator
     def run(self) -> None:
@@ -459,7 +500,7 @@ def partition_call(input_fc: str, output_fc: str):
 
     # Run Config:
     partiton_run_config = core_config.PartitionRunConfig(
-        max_elements_per_partition=50_000, 
+        max_elements_per_partition=50_000,
         context_radius_meters=0,
         run_partition_optimization=False,
     )
@@ -477,9 +518,11 @@ def partition_call(input_fc: str, output_fc: str):
         work_file_manager_config=partiton_workfile_config,
     )
 
-    partition_gangsykkel_dissolve.run()    
-
+    partition_gangsykkel_dissolve.run()
 
 
 if __name__ == "__main__":
-    partition_call(input_fc=Arealdekke_N10.elim_output.value, output_fc=Arealdekke_N10.dissolve_gangsykkel.value)
+    partition_call(
+        input_fc=Arealdekke_N10.elim_output.value,
+        output_fc=Arealdekke_N10.dissolve_gangsykkel.value,
+    )

@@ -91,7 +91,10 @@ def clip_data(input_fc: str, output_fc: str, area: str) -> None:
 
 @timing_decorator
 def prepare_partition_iterator(
-    input_fc: str, new_field: str, new_type: str, output_fc: str,
+    input_fc: str,
+    new_field: str,
+    new_type: str,
+    output_fc: str,
 ) -> PartitionIterator:
     """
     Initializes the partition iterator with correct configurations.
@@ -376,7 +379,7 @@ def write_unique_combinations_and_counts_to_file(fc: str, attribute_list: list) 
 
     result = sort_results(result)
 
-    #write_to_file(result, attribute_text_file)
+    # write_to_file(result, attribute_text_file)
 
     print("\n📘 Finished writing combinations.\n")
 

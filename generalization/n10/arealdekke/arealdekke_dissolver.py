@@ -20,9 +20,9 @@ class ArealdekkeDissolver:
     General dissolver for arealdekke.
     Currently dissolves samferdsel, snaumark and not_snau seperately and merges them back together at the end.
     Rules:
-        -   Snaumark is dissolved based on dgfcd_feature_alpha 
-        -   not_snau is dissolved based on arealdekke, 
-        -   samferdsel is dissolved based on arealdekke and index(fishnet) to avoid large polygons 
+        -   Snaumark is dissolved based on dgfcd_feature_alpha
+        -   not_snau is dissolved based on arealdekke,
+        -   samferdsel is dissolved based on arealdekke and index(fishnet) to avoid large polygons
         -   gang og sykkelvei is to be preserved for a more complicated dissolve in another class.
     """
 
@@ -71,24 +71,6 @@ class ArealdekkeDissolver:
         arealdekke_gangogsykkel = wfm.build_file_path(
             file_name="arealdekke_gangogsykkel", file_type="gdb"
         )
-        arealdekke_gangogsykkel_clipped = wfm.build_file_path(
-            file_name="arealdekke_gangogsykkel_clipped", file_type="gdb"
-        )
-        arealdekke_gangogsykkel_erased = wfm.build_file_path(
-            file_name="arealdekke_gangogsykkel_erased", file_type="gdb"
-        )
-        arealdekke_samferdsel_dissolved_buffer = wfm.build_file_path(
-            file_name="arealdekke_samferdsel_dissolved_buffer", file_type="gdb"
-        )
-        arealdekke_samferdsel_dissolved_gangogsykkel = wfm.build_file_path(
-            file_name="arealdekke_samferdsel_dissolved_gangogsykkel", file_type="gdb"
-        )
-        arealdekke_gangogsykkel_erased_dissolved = wfm.build_file_path(
-            file_name="arealdekke_gangogsykkel_erased_dissolved", file_type="gdb"
-        )
-        arealdekke_gangogsykkel_clipped_dissolved = wfm.build_file_path(
-            file_name="arealdekke_gangogsykkel_clipped_dissolved", file_type="gdb"
-        )
 
         return {
             "arealdekke_input": arealdekke_input,
@@ -114,8 +96,6 @@ class ArealdekkeDissolver:
             in_features=self.input_arealdekke,
             out_feature_class=self.files["arealdekke_input"],
         )
-        
-        
 
         snaumark = "snaumark"
         not_snau = "not_snau"
@@ -197,16 +177,30 @@ class ArealdekkeDissolver:
             multi_part="SINGLE_PART",
         )
 
-
     @timing_decorator
     def restore_data(self) -> None:
         """
         Restores data to the dissolved features.
         """
-        self.restore_data_polygon_without_feature_to_point(self.files["arealdekke_snaumark_dissolved"], self.files["arealdekke_snaumark"], "dgfcd_feature_alpha", self.index_col)
-        self.restore_data_polygon_without_feature_to_point(self.files["arealdekke_not_snau_dissolved"], self.files["arealdekke_not_snau"], "arealdekke", self.index_col)
-        self.restore_data_polygon_without_feature_to_point(self.files["arealdekke_samferdsel_dissolved"], self.files["arealdekke_samferdsel"], "arealdekke", self.index_col, index_bool=True)
-            
+        self.restore_data_polygon_without_feature_to_point(
+            self.files["arealdekke_snaumark_dissolved"],
+            self.files["arealdekke_snaumark"],
+            "dgfcd_feature_alpha",
+            self.index_col,
+        )
+        self.restore_data_polygon_without_feature_to_point(
+            self.files["arealdekke_not_snau_dissolved"],
+            self.files["arealdekke_not_snau"],
+            "arealdekke",
+            self.index_col,
+        )
+        self.restore_data_polygon_without_feature_to_point(
+            self.files["arealdekke_samferdsel_dissolved"],
+            self.files["arealdekke_samferdsel"],
+            "arealdekke",
+            self.index_col,
+            index_bool=True,
+        )
 
         arcpy.management.Merge(
             inputs=[
@@ -217,15 +211,21 @@ class ArealdekkeDissolver:
             ],
             output=self.output_feature,
         )
-    
+
     @staticmethod
-    def restore_data_polygon_without_feature_to_point(without_data: str, original: str, column: str, index: str, index_bool: bool = False) -> None:
+    def restore_data_polygon_without_feature_to_point(
+        without_data: str,
+        original: str,
+        column: str,
+        index: str,
+        index_bool: bool = False,
+    ) -> None:
         """
         Restore function for polygons when featureToPoint doesnt work.
-        Restore data in without_data from original. 
+        Restore data in without_data from original.
         Chooses biggest of intersecting polygons from original with matching values in column.
         """
-         
+
         near_table = "in_memory\\near_table"
         arcpy.analysis.GenerateNearTable(
             in_features=without_data,
@@ -235,7 +235,7 @@ class ArealdekkeDissolver:
             search_radius="0 Meters",
         )
 
-        #build maps for faster access later:
+        # build maps for faster access later:
         in_fid_near_fid = defaultdict(list)
 
         with arcpy.da.SearchCursor(near_table, ["IN_FID", "NEAR_FID"]) as cursor:
@@ -245,13 +245,14 @@ class ArealdekkeDissolver:
         column_map = {}
         area_map = {}
         index_map = {}
-        with arcpy.da.SearchCursor(original, ["OID@", column, "SHAPE@AREA", index]) as a_cur:
+        with arcpy.da.SearchCursor(
+            original, ["OID@", column, "SHAPE@AREA", index]
+        ) as a_cur:
             for a_row in a_cur:
                 column_map[a_row[0]] = a_row[1]
                 area_map[a_row[0]] = a_row[2]
                 index_map[a_row[0]] = a_row[3]
 
-       
         # find biggest intersecting polygon with matching column value and index value if index_bool is true, and save the fid of that polygon for each dissolved polygon:
         fields = ["OID@", column] + ([index] if index_bool else [])
 
@@ -283,8 +284,7 @@ class ArealdekkeDissolver:
                 if best_fid is not None:
                     in_fid_near_fid[oid] = [best_fid]
 
-
-        #Add fields from original to without_data and populate them based on the best_fid for each dissolved polygon:
+        # Add fields from original to without_data and populate them based on the best_fid for each dissolved polygon:
         orig_fields = [
             f.name
             for f in arcpy.ListFields(original)
@@ -338,11 +338,14 @@ class ArealdekkeDissolver:
         for field in target_fields:
             if field not in orig_fields:
                 arcpy.management.DeleteField(without_data, field)
-    
-    
+
     @timing_decorator
     def repair_geom(self):
-        arcpy.management.RepairGeometry(in_features=self.output_feature, delete_null="DELETE_NULL", validation_method="ESRI")
+        arcpy.management.RepairGeometry(
+            in_features=self.output_feature,
+            delete_null="DELETE_NULL",
+            validation_method="ESRI",
+        )
 
     @timing_decorator
     def run(self) -> None:
@@ -356,7 +359,7 @@ class ArealdekkeDissolver:
 
 def normal_call(input_fc: str, output_fc: str):
     identity = "in_memory\\arealdekke_identity"
-    arcpy.analysis.Identity(                                
+    arcpy.analysis.Identity(
         in_features=input_fc,
         identity_features=input_n10.Fishnet_500m,
         out_feature_class=identity,
@@ -376,7 +379,7 @@ def normal_call(input_fc: str, output_fc: str):
 
 def partition_call(input_fc: str, output_fc: str):
     identity = "in_memory\\arealdekke_identity"
-    arcpy.analysis.Identity(                                ################################ Resultatet ble bedre når identity ble kjørt utenfor partition iterator. ################################ ????Identity brukes bare for samferdsel tror jeg. sikkert noe forbedringspotensialet her, kan kanskje ikke kjøre identity på hele norge utenfor partition eller kanskje vi kjører det bare en gang på hele norge utenfor denne modellen
+    arcpy.analysis.Identity(  ################################ Resultatet ble bedre når identity ble kjørt utenfor partition iterator. ################################ ????Identity brukes bare for samferdsel tror jeg. sikkert noe forbedringspotensialet her, kan kanskje ikke kjøre identity på hele norge utenfor partition eller kanskje vi kjører det bare en gang på hele norge utenfor denne modellen
         in_features=input_fc,
         identity_features=input_n10.Fishnet_500m,
         out_feature_class=identity,
@@ -451,11 +454,11 @@ def partition_call(input_fc: str, output_fc: str):
         work_file_manager_config=partiton_area_workfile_config,
     )
 
-    partition_areal_dissolve.run()  
-
- 
+    partition_areal_dissolve.run()
 
 
 if __name__ == "__main__":
-    partition_call(input_fc=input_n10.Arealdekke_Oslo, output_fc=Arealdekke_N10.dissolve_arealdekke.value)
-    
+    partition_call(
+        input_fc=input_n10.Arealdekke_Oslo,
+        output_fc=Arealdekke_N10.dissolve_arealdekke.value,
+    )
