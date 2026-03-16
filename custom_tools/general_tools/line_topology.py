@@ -799,7 +799,8 @@ class CandidateDiagnostic:
 
     status_reason values per status:
         illegal:              beyond_distance_tolerance | same_network | illegal_target |
-                              blocked_by_angle | expanded_dangle_angle_disallowed
+                              blocked_by_angle | expanded_dangle_angle_disallowed |
+                              blocked_by_z_drop
         legal_not_selected:   outscored_within_dangle
         selected_for_dangle:  deferred | lost_pair_competition | lost_cycle_prevention |
                               deferred_rejected_connectivity
@@ -823,6 +824,9 @@ class CandidateDiagnostic:
     assess: Optional[AngleAssessment]
     target_parent_id: Optional[int]
     final_gap_source: Optional[str] # gap_source value for applied_to_output rows; None otherwise
+    start_z: Optional[float] = None # Z at the dangle point (candidate start); None when no rasters
+    end_z: Optional[float] = None   # Z at the near point (candidate end);   None when no rasters
+    norm_z: Optional[float] = None  # Per-dangle-normalised Z score [0,1]; None for illegals/no rasters
 
 
 class FillLineGaps:
@@ -904,6 +908,17 @@ class FillLineGaps:
         self._angle_mode_by_external_ds_key: dict[str, logic_config.AngleTargetMode] = (
             {}
         )
+
+        # ----------------------------
+        # Z / elevation layer
+        # ----------------------------
+        self.raster_paths: tuple[str, ...] = (
+            tuple(adv.raster_paths) if adv.raster_paths else ()
+        )
+        self.z_drop_threshold: Optional[float] = (
+            None if adv.z_drop_threshold is None else float(adv.z_drop_threshold)
+        )
+        self._raster_handles: list[geometry_tools.RasterHandle] = []
 
         # Local angle cache (dataset_key, oid, rx, ry) -> Optional[float]
         self._local_angle_cache: dict[tuple[str, int, int, int], Optional[float]] = {}
@@ -1226,17 +1241,26 @@ class FillLineGaps:
         return raw_distance, effective_distance, bool(bonus_applied), score
 
     def _compute_best_fit_score(
-        self, *, norm_dist: float, assess: "AngleAssessment"
+        self,
+        *,
+        norm_dist: float,
+        assess: "AngleAssessment",
+        norm_z: Optional[float] = None,
     ) -> float:
         """
         Normalized weighted composite best-fit score. Lower is better.
 
         Unavailable dimensions are excluded from the composite and the score
         is normalized by the sum of available weights only.  This ensures a
-        missing angle is neutral rather than treated as a perfect fit.
+        missing dimension is neutral rather than treated as a perfect fit.
+
+        norm_z: Z contribution normalized to [0, 1] within the current dangle's
+            candidate set, where 0 = lowest end elevation (most downstream, best)
+            and 1 = highest (most upstream, worst).  None excludes the Z weight.
         """
         w_d = float(self.best_fit_weights.distance)
         w_a = float(self.best_fit_weights.angle)
+        w_z = float(self.best_fit_weights.z)
 
         total_w = w_d
         score = w_d * float(norm_dist)
@@ -1246,6 +1270,11 @@ class FillLineGaps:
             score += w_a * norm_a
             total_w += w_a
         # angle unavailable: exclude w_a from total so the score is not biased
+
+        if norm_z is not None and w_z > 0.0:
+            score += w_z * float(norm_z)
+            total_w += w_z
+        # z unavailable: exclude w_z from total so the score is not biased
 
         return float(score) / float(total_w) if total_w > 0.0 else 0.0
 
@@ -1328,6 +1357,40 @@ class FillLineGaps:
         if ang < 0.0:
             ang += 360.0
         return float(ang)
+
+    def _build_raster_handles(self) -> None:
+        """
+        Load each raster in self.raster_paths into a RasterHandle windowed to
+        the extent of the input lines.  Called once at the start of run().
+        Populates self._raster_handles; no-ops when raster_paths is empty.
+        """
+        if not self.raster_paths:
+            return
+
+        try:
+            ext = arcpy.Describe(self.input_lines).extent
+            clip_kwargs = dict(
+                clip_xmin=ext.XMin,
+                clip_ymin=ext.YMin,
+                clip_xmax=ext.XMax,
+                clip_ymax=ext.YMax,
+            )
+        except Exception:
+            clip_kwargs = {}
+
+        handles = []
+        for path in self.raster_paths:
+            try:
+                handles.append(
+                    geometry_tools.build_raster_handle(raster_path=path, **clip_kwargs)
+                )
+            except Exception as exc:
+                arcpy.AddWarning(
+                    f"Could not load raster {path}: {exc}. "
+                    "Z values from this raster will be None."
+                )
+
+        self._raster_handles = handles
 
     def _local_angle_cache_key(
         self, *, dataset_key: str, oid: int, x: float, y: float
@@ -2545,11 +2608,25 @@ class FillLineGaps:
                 return []
             result: list[CandidateDiagnostic] = []
 
+            def _z_pair(
+                d_xy: tuple[float, float], near_x: float, near_y: float
+            ) -> tuple[Optional[float], Optional[float]]:
+                if not self._raster_handles:
+                    return None, None
+                sz = geometry_tools.local_z_at_xy(
+                    self._raster_handles, float(d_xy[0]), float(d_xy[1])
+                )
+                ez = geometry_tools.local_z_at_xy(
+                    self._raster_handles, float(near_x), float(near_y)
+                )
+                return sz, ez
+
             # Step-1A illegals: angle never computed for these
             for d_oid, p_id, cand, reason in _step1a_illegal:
                 xy = dangle_xy.get(int(d_oid))
                 if xy is None:
                     continue
+                _sz, _ez = _z_pair(xy, cand["near_x"], cand["near_y"])
                 result.append(CandidateDiagnostic(
                     parent_id=p_id,
                     dangle_oid=d_oid,
@@ -2570,6 +2647,9 @@ class FillLineGaps:
                         cand, dangle_parent, dangles_key, lines_key
                     ),
                     final_gap_source=None,
+                    start_z=_sz,
+                    end_z=_ez,
+                    norm_z=None,
                 ))
 
             # Step-1B angle-blocked illegals: angle computed
@@ -2577,6 +2657,7 @@ class FillLineGaps:
                 xy = dangle_xy.get(int(d_oid))
                 if xy is None:
                     continue
+                _sz, _ez = _z_pair(xy, cand["near_x"], cand["near_y"])
                 result.append(CandidateDiagnostic(
                     parent_id=p_id,
                     dangle_oid=d_oid,
@@ -2597,6 +2678,9 @@ class FillLineGaps:
                         cand, dangle_parent, dangles_key, lines_key
                     ),
                     final_gap_source=None,
+                    start_z=_sz,
+                    end_z=_ez,
+                    norm_z=None,
                 ))
 
             # Compute per-dangle rank for scored candidates (1 = local winner)
@@ -2613,7 +2697,7 @@ class FillLineGaps:
 
             # Step-1B scored candidates
             for (
-                d_oid, p_id, cand, assess, raw_dist, best_fit, bonus, is_local_winner, _score
+                d_oid, p_id, cand, assess, raw_dist, best_fit, bonus, is_local_winner, _score, sc_norm_z
             ) in _step1b_scored:
                 xy = dangle_xy.get(int(d_oid))
                 if xy is None:
@@ -2647,6 +2731,7 @@ class FillLineGaps:
                     reason = None
                     final_gs = None
 
+                _sz, _ez = _z_pair(xy, cand["near_x"], cand["near_y"])
                 result.append(CandidateDiagnostic(
                     parent_id=p_id,
                     dangle_oid=d_oid,
@@ -2667,6 +2752,9 @@ class FillLineGaps:
                         cand, dangle_parent, dangles_key, lines_key
                     ),
                     final_gap_source=final_gs,
+                    start_z=_sz,
+                    end_z=_ez,
+                    norm_z=sc_norm_z,
                 ))
             return result
 
@@ -2856,6 +2944,36 @@ class FillLineGaps:
                     y=float(d_y),
                 )
 
+            # ----------------------------
+            # Z setup for this dangle
+            # ----------------------------
+            # start_z is fixed for all candidates of this dangle.
+            start_z: Optional[float] = None
+            if self._raster_handles:
+                start_z = geometry_tools.local_z_at_xy(
+                    self._raster_handles, float(d_x), float(d_y)
+                )
+
+            # Pre-scan end_z for per-dangle normalization (needed for Z weight in
+            # best-fit score). Only done when Z weight is active.
+            end_z_by_cand_index: dict[int, Optional[float]] = {}
+            z_score_min: Optional[float] = None
+            z_score_max: Optional[float] = None
+
+            if self._raster_handles and float(self.best_fit_weights.z) > 0.0:
+                for _i, _c in enumerate(legal_rows):
+                    _ez = geometry_tools.local_z_at_xy(
+                        self._raster_handles,
+                        float(_c["near_x"]),
+                        float(_c["near_y"]),
+                    )
+                    end_z_by_cand_index[_i] = _ez
+
+                _valid_z = [z for z in end_z_by_cand_index.values() if z is not None]
+                if _valid_z:
+                    z_score_min = min(_valid_z)
+                    z_score_max = max(_valid_z)
+
             # Parent IDs of target-dangle candidates for this source dangle.
             # A line candidate to one of these parents represents the same
             # connection opportunity as the dangle candidate and must be scored
@@ -2875,10 +2993,11 @@ class FillLineGaps:
                     float,  # effective_distance_for_scoring
                     bool,  # bonus_applied
                     "AngleAssessment",  # assess for winning candidate metadata
+                    Optional[float],  # norm_z
                 ]
             ] = []
 
-            for cand in legal_rows:
+            for _cand_idx, cand in enumerate(legal_rows):
                 assess = self._assess_angle(
                     src_parent_id=int(parent_id),
                     dangle_x=float(d_x),
@@ -2925,7 +3044,30 @@ class FillLineGaps:
                         )
                     continue
 
-                # 3) Edge-case bonus eligibility is angle-controlled (and conservative when angle missing)
+                # 3) Z drop gate (z_drop_threshold)
+                if self.z_drop_threshold is not None and start_z is not None:
+                    _end_z = end_z_by_cand_index.get(
+                        _cand_idx,
+                        geometry_tools.local_z_at_xy(
+                            self._raster_handles,
+                            float(cand["near_x"]),
+                            float(cand["near_y"]),
+                        ),
+                    )
+                    if _end_z is not None and (_end_z - start_z) > self.z_drop_threshold:
+                        if collect_diags:
+                            _step1b_illegal.append(
+                                (
+                                    dangle_oid,
+                                    parent_id,
+                                    cand,
+                                    assess,
+                                    "blocked_by_z_drop",
+                                )
+                            )
+                        continue
+
+                # 4) Edge-case bonus eligibility is angle-controlled (and conservative when angle missing)
                 bonus_allowed = True
                 if is_dangle_target:
                     # conservative policy: if angle is unavailable => no expanded behavior, no bonus
@@ -2945,10 +3087,22 @@ class FillLineGaps:
                     )
                 )
 
-                # 4) Normalized weighted composite score
+                # 5) Normalized weighted composite score
                 _tol = float(self.gap_tolerance_meters) or 1.0
+
+                _norm_z: Optional[float] = None
+                if z_score_min is not None and z_score_max is not None:
+                    _ez = end_z_by_cand_index.get(_cand_idx)
+                    if _ez is not None:
+                        if z_score_max > z_score_min:
+                            _norm_z = (_ez - z_score_min) / (z_score_max - z_score_min)
+                        else:
+                            _norm_z = 0.0
+
                 effective_for_scoring = self._compute_best_fit_score(
-                    norm_dist=float(effective_distance) / _tol, assess=assess
+                    norm_dist=float(effective_distance) / _tol,
+                    assess=assess,
+                    norm_z=_norm_z,
                 )
 
                 # Keep score tuple shape stable; only replace the first element
@@ -2970,6 +3124,7 @@ class FillLineGaps:
                         float(effective_for_scoring),
                         bool(bonus_applied),
                         assess,
+                        _norm_z,
                     )
                 )
 
@@ -2984,11 +3139,12 @@ class FillLineGaps:
                 effective_distance_for_scoring,
                 bonus_applied,
                 chosen_assess,
+                _,
             ) = winner_item
 
             if collect_diags:
                 for sc_tuple in scored_candidates:
-                    sc_score, sc_cand, sc_raw, sc_best_fit, sc_bonus, sc_assess = sc_tuple
+                    sc_score, sc_cand, sc_raw, sc_best_fit, sc_bonus, sc_assess, sc_norm_z = sc_tuple
                     _step1b_scored.append((
                         dangle_oid,
                         parent_id,
@@ -2999,6 +3155,7 @@ class FillLineGaps:
                         bool(sc_bonus),
                         sc_tuple is winner_item,
                         sc_score,  # score tuple for per-dangle rank computation
+                        sc_norm_z,
                     ))
 
             # ----------------------------
@@ -3642,6 +3799,9 @@ class FillLineGaps:
         arcpy.management.AddField(fc_path, "final_gap_source", "TEXT", field_length=20)
         arcpy.management.AddField(fc_path, "candidate_status", "TEXT", field_length=25)
         arcpy.management.AddField(fc_path, "status_reason", "TEXT", field_length=50)
+        arcpy.management.AddField(fc_path, "start_z", "DOUBLE")
+        arcpy.management.AddField(fc_path, "end_z", "DOUBLE")
+        arcpy.management.AddField(fc_path, "norm_z", "DOUBLE")
 
     def _write_candidate_connections_output(
         self,
@@ -3672,6 +3832,9 @@ class FillLineGaps:
             "final_gap_source",
             "candidate_status",
             "status_reason",
+            "start_z",
+            "end_z",
+            "norm_z",
         ]
         with arcpy.da.InsertCursor(fc_path, fields) as cur:
             for d in diagnostics:
@@ -3700,6 +3863,9 @@ class FillLineGaps:
                     d.final_gap_source,
                     d.candidate_status,
                     d.status_reason,
+                    d.start_z,
+                    d.end_z,
+                    d.norm_z,
                 ))
 
     def _apply_plan(self, plan) -> None:
@@ -3852,6 +4018,7 @@ class FillLineGaps:
         )
 
         self._copy_input_lines()
+        self._build_raster_handles()
         self._add_original_id_field()
         self._create_dangles()
 

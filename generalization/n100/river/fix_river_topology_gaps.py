@@ -13,16 +13,17 @@ from custom_tools.general_tools.geometry_tools import (
     LineAngleTool,
     LineEndpointTool,
     find_rasters_for_vector_extent,
+    LineZValueTool,
 )
 
 
 @timing_decorator
 def main():
     environment_setup.main()
-    # fill_line_topology_gaps()
+    fill_line_topology_gaps()
     # find_angles()
     # find_xy_endpoints()
-    find_relevant_rasters()
+    # find_relevant_rasters()
 
 
 def find_angles():
@@ -48,6 +49,11 @@ def find_angles():
 
 @timing_decorator
 def fill_line_topology_gaps():
+
+    rasters = find_rasters_for_vector_extent(
+        raster_dir=config.raster_directory,
+        input_features=River_N100.data_preparation___river_lines___n100_river.value,
+    )
     line_fix_advanced_config = logic_config.FillLineGapsAdvancedConfig(
         fill_gaps_on_self=True,
         line_changes_output=River_N100.river_topology___river_gaps_changes___n100_river.value,
@@ -63,12 +69,13 @@ def fill_line_topology_gaps():
         line_alignment_weight=0.75,
         best_fit_weights=(
             logic_config.BestFitWeightsConfig(
-                distance=0.6,
-                angle=0.4,
-                z=0.0,
+                distance=0.5,
+                angle=0.25,
+                z=0.25,
             )
         ),
         angle_local_half_window_m=20,
+        raster_paths=rasters,
     )
     work_file_manager_config = core_config.WorkFileConfig(
         root_file=River_N100.river_topology___root___n100_river.value,
@@ -111,6 +118,15 @@ def find_relevant_rasters():
         input_features=River_N100.data_preparation___river_lines___n100_river.value,
     )
     print(rasters)
+
+    line_z_config = logic_config.LineZValueToolConfig(
+        input_lines=River_N100.data_preparation___river_lines___n100_river.value,
+        input_rasters=rasters,
+        endpoint_modes=(logic_config.LineZValueMode.BOTH_ENDPOINTS,),
+        output_lines=River_N100.river_topology___river_angles___n100_river.value,
+        write_fields=True,
+    )
+    LineZValueTool(config=line_z_config).run()
 
 
 if __name__ == "__main__":

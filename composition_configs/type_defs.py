@@ -20,3 +20,9 @@ class SubdirectoryPath(str):
     """Absolute path to a directory we control (safe to delete/reset)."""
 
     pass
+
+
+class RasterFilePath(str):
+    """Absolute or relative path to a raster file (e.g. a .tif tile)."""
+
+    pass

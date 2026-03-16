@@ -3,10 +3,11 @@ from __future__ import annotations
 import os
 from dataclasses import dataclass
 from enum import Enum
-from math import atan2, degrees
+from math import atan2, ceil, degrees, floor
 from typing import Optional, Union, Dict
 
 import arcpy
+import numpy as np
 
 from composition_configs.logic_config import (
     AngleToolConfig,
@@ -17,10 +18,11 @@ from composition_configs.logic_config import (
     LineZValueMode,
     LineZValueToolConfig,
 )
+from composition_configs.type_defs import RasterFilePath
 
 from xarray.backends.common import NONE_VAR_NAME
 
-from custom_tools.general_tools import custom_arcpy
+from custom_tools.general_tools import custom_arcpy, file_utilities
 from custom_tools.decorators.partition_io_decorator import partition_io_decorator
 from file_manager.n100.file_manager_rivers import River_N100
 
@@ -867,6 +869,33 @@ class LineEndpointTool:
             arcpy.AddWarning(f"{count} feature(s) returned issue: {issue}")
 
 
+@dataclass
+class RasterHandle:
+    """
+    An in-memory window of a raster tile with the coordinate metadata needed
+    for O(1) point lookups.
+
+    Built by build_raster_handle; queried by local_z_at_xy.
+
+    Attributes:
+        array: 2-D float array (rows top-to-bottom). NoData cells are nan.
+        xmin:  west edge of the loaded window in map coordinates.
+        ymax:  north edge of the loaded window in map coordinates.
+        xmax:  east edge of the loaded window in map coordinates.
+        ymin:  south edge of the loaded window in map coordinates.
+        cell_w: cell width in map units.
+        cell_h: cell height in map units.
+    """
+
+    array: np.ndarray
+    xmin: float
+    ymax: float
+    xmax: float
+    ymin: float
+    cell_w: float
+    cell_h: float
+
+
 class _ConcreteLineZValueMode(str, Enum):
     START_POINT = "start_point"
     END_POINT = "end_point"
@@ -911,6 +940,14 @@ class LineZValueTool:
         """
         Main entrypoint.
 
+        Two-pass design:
+            Pass 1 (SearchCursor): collect all endpoint coordinates and
+                record any geometry issues.
+            Build: load each raster into a RasterHandle windowed to the
+                bounding box of all collected points (one IO call per raster).
+            Compute: look up Z values via in-memory array indexing.
+            Pass 2 (UpdateCursor, when write_fields=True): write results.
+
         Returns:
             A dict keyed by OID with z_by_raster_by_mode, issues, and
             is_supported entries, or None when return_results=False.
@@ -921,34 +958,34 @@ class LineZValueTool:
         if self.config.write_fields:
             self._ensure_output_fields(lines_fc=lines_fc)
 
+        valid_endpoints, issues_by_oid = self._collect_endpoints(lines_fc)
+
+        for issue in issues_by_oid.values():
+            self._track_issues((issue,))
+
+        raster_handles = self._build_raster_handles_for_endpoints(valid_endpoints)
+        z_by_oid = self._compute_z_values(valid_endpoints, raster_handles)
+
         results_by_oid: dict[int, dict] = {}
-        field_names = ["OID@", "SHAPE@"]
 
         if self.config.write_fields:
-            field_names.extend(self._build_output_field_names_ordered())
+            field_names = ["OID@"] + self._build_output_field_names_ordered()
 
             with arcpy.da.UpdateCursor(lines_fc, field_names) as cursor:
                 for row in cursor:
                     oid = row[0]
-                    polyline = row[1]
-
-                    row_result = self._calculate_row_z(polyline=polyline)
-                    self._track_issues(row_result.issues)
-
+                    row_result = self._make_row_result(oid, z_by_oid, issues_by_oid)
                     self._write_row_values_to_cursor_row(row=row, row_result=row_result)
                     cursor.updateRow(row)
 
                     if self.config.return_results:
                         results_by_oid[oid] = self._serialize_row_result(row_result)
 
-        else:
-            with arcpy.da.SearchCursor(lines_fc, field_names) as cursor:
-                for oid, polyline in cursor:
-                    row_result = self._calculate_row_z(polyline=polyline)
-                    self._track_issues(row_result.issues)
-
-                    if self.config.return_results:
-                        results_by_oid[oid] = self._serialize_row_result(row_result)
+        elif self.config.return_results:
+            all_oids = set(valid_endpoints.keys()) | set(issues_by_oid.keys())
+            for oid in all_oids:
+                row_result = self._make_row_result(oid, z_by_oid, issues_by_oid)
+                results_by_oid[oid] = self._serialize_row_result(row_result)
 
         self._emit_summary_warnings()
 
@@ -978,7 +1015,9 @@ class LineZValueTool:
             raise ValueError("output_lines is required when write_fields=True.")
 
         if self.config.field_names_per_raster is not None:
-            if len(self.config.field_names_per_raster) != len(self.config.input_rasters):
+            if len(self.config.field_names_per_raster) != len(
+                self.config.input_rasters
+            ):
                 raise ValueError(
                     "field_names_per_raster must have the same length as input_rasters."
                 )
@@ -1050,6 +1089,7 @@ class LineZValueTool:
         if not self.config.write_fields:
             return self.config.input_lines
 
+        file_utilities.delete_feature(input_feature=self.config.output_lines)
         arcpy.management.CopyFeatures(
             self.config.input_lines,
             self.config.output_lines,
@@ -1091,32 +1131,119 @@ class LineZValueTool:
                     "Z values are sampled using line coordinates without reprojection."
                 )
 
-    def _calculate_row_z(self, polyline) -> _RowZValueResult:
-        if polyline is None:
-            return self._unsupported_result("null_geometry")
+    def _collect_endpoints(
+        self,
+        lines_fc: str,
+    ) -> tuple[
+        dict[int, dict[_ConcreteLineZValueMode, tuple[float, float]]],
+        dict[int, str],
+    ]:
+        valid_endpoints: dict[int, dict[_ConcreteLineZValueMode, tuple[float, float]]] = {}
+        issues_by_oid: dict[int, str] = {}
 
-        if polyline.isMultipart:
-            return self._unsupported_result("multipart_not_supported")
+        with arcpy.da.SearchCursor(lines_fc, ["OID@", "SHAPE@"]) as cursor:
+            for oid, polyline in cursor:
+                if polyline is None:
+                    issues_by_oid[oid] = "null_geometry"
+                    continue
 
-        start_point, end_point = self._extract_endpoints(polyline)
+                if polyline.isMultipart:
+                    issues_by_oid[oid] = "multipart_not_supported"
+                    continue
 
-        if start_point is None:
-            return self._unsupported_result("too_few_vertices")
+                start_point, end_point = self._extract_endpoints(polyline)
 
-        z_by_slot: dict[tuple[int, _ConcreteLineZValueMode], Optional[float]] = {}
+                if start_point is None:
+                    issues_by_oid[oid] = "too_few_vertices"
+                    continue
 
-        for raster_idx, mode in self.ordered_slots:
-            raster = self.config.input_rasters[raster_idx]
+                endpoints_for_oid: dict[_ConcreteLineZValueMode, tuple[float, float]] = {}
 
-            if mode == _ConcreteLineZValueMode.START_POINT:
-                z = self._sample_raster_at_point(raster, start_point.X, start_point.Y)
-            else:
-                z = self._sample_raster_at_point(raster, end_point.X, end_point.Y)
+                for mode in self.resolved_modes:
+                    if mode == _ConcreteLineZValueMode.START_POINT:
+                        endpoints_for_oid[mode] = (start_point.X, start_point.Y)
+                    else:
+                        endpoints_for_oid[mode] = (end_point.X, end_point.Y)
 
-            z_by_slot[(raster_idx, mode)] = z
+                valid_endpoints[oid] = endpoints_for_oid
+
+        return valid_endpoints, issues_by_oid
+
+    def _build_raster_handles_for_endpoints(
+        self,
+        valid_endpoints: dict[int, dict[_ConcreteLineZValueMode, tuple[float, float]]],
+    ) -> list[Optional[RasterHandle]]:
+        all_xy = [
+            xy
+            for ep in valid_endpoints.values()
+            for xy in ep.values()
+        ]
+
+        if not all_xy:
+            return [None] * len(self.config.input_rasters)
+
+        clip_xmin = min(xy[0] for xy in all_xy)
+        clip_ymin = min(xy[1] for xy in all_xy)
+        clip_xmax = max(xy[0] for xy in all_xy)
+        clip_ymax = max(xy[1] for xy in all_xy)
+
+        handles: list[Optional[RasterHandle]] = []
+
+        for raster_path in self.config.input_rasters:
+            try:
+                handle = build_raster_handle(
+                    raster_path=raster_path,
+                    clip_xmin=clip_xmin,
+                    clip_ymin=clip_ymin,
+                    clip_xmax=clip_xmax,
+                    clip_ymax=clip_ymax,
+                )
+                handles.append(handle)
+            except Exception as exc:
+                arcpy.AddWarning(
+                    f"Could not load raster {raster_path}: {exc}. "
+                    "Z values for this raster will be None."
+                )
+                handles.append(None)
+
+        return handles
+
+    def _compute_z_values(
+        self,
+        valid_endpoints: dict[int, dict[_ConcreteLineZValueMode, tuple[float, float]]],
+        raster_handles: list[Optional[RasterHandle]],
+    ) -> dict[int, dict[tuple[int, _ConcreteLineZValueMode], Optional[float]]]:
+        z_by_oid: dict[int, dict[tuple[int, _ConcreteLineZValueMode], Optional[float]]] = {}
+
+        for oid, endpoints_for_oid in valid_endpoints.items():
+            z_by_slot: dict[tuple[int, _ConcreteLineZValueMode], Optional[float]] = {}
+
+            for raster_idx, handle in enumerate(raster_handles):
+                for mode in self.resolved_modes:
+                    xy = endpoints_for_oid[mode]
+
+                    if handle is None:
+                        z_by_slot[(raster_idx, mode)] = None
+                    else:
+                        z_by_slot[(raster_idx, mode)] = local_z_at_xy(
+                            [handle], xy[0], xy[1]
+                        )
+
+            z_by_oid[oid] = z_by_slot
+
+        return z_by_oid
+
+    def _make_row_result(
+        self,
+        oid: int,
+        z_by_oid: dict[int, dict[tuple[int, _ConcreteLineZValueMode], Optional[float]]],
+        issues_by_oid: dict[int, str],
+    ) -> _RowZValueResult:
+        if oid in issues_by_oid:
+            return self._unsupported_result(issues_by_oid[oid])
 
         return _RowZValueResult(
-            z_by_slot=z_by_slot,
+            z_by_slot=z_by_oid.get(oid, {}),
             issues=(),
             is_supported=True,
         )
@@ -1133,22 +1260,6 @@ class LineZValueTool:
             return None, None
 
         return vertices[0], vertices[-1]
-
-    @staticmethod
-    def _sample_raster_at_point(raster: str, x: float, y: float) -> Optional[float]:
-        result = arcpy.management.GetCellValue(
-            in_raster=raster,
-            location_point=f"{x} {y}",
-        )
-        value_str = result.getOutput(0)
-
-        if value_str == "NoData":
-            return None
-
-        try:
-            return float(value_str)
-        except (ValueError, TypeError):
-            return None
 
     def _unsupported_result(self, issue: str) -> _RowZValueResult:
         return _RowZValueResult(
@@ -1329,10 +1440,138 @@ def local_line_angle_at_xy(
     return angle
 
 
+def build_raster_handle(
+    raster_path: str,
+    clip_xmin: Optional[float] = None,
+    clip_ymin: Optional[float] = None,
+    clip_xmax: Optional[float] = None,
+    clip_ymax: Optional[float] = None,
+) -> RasterHandle:
+    """
+    Load a raster tile (or a clipped window of it) into a RasterHandle for
+    fast in-memory point lookups via local_z_at_xy.
+
+    When clip bounds are provided the loaded window is the intersection of
+    those bounds with the tile extent, snapped outward to cell boundaries so
+    that every point within the clip is covered.  When no clip bounds are
+    given the full tile is loaded (use only for small rasters).
+
+    NoData cells are stored as nan; callers receive None from local_z_at_xy
+    for those cells.
+
+    Args:
+        raster_path: Path to the raster file.
+        clip_xmin: West edge of the region of interest in map coordinates.
+        clip_ymin: South edge of the region of interest in map coordinates.
+        clip_xmax: East edge of the region of interest in map coordinates.
+        clip_ymax: North edge of the region of interest in map coordinates.
+
+    Returns:
+        RasterHandle ready for local_z_at_xy queries.
+    """
+    desc = arcpy.Describe(raster_path)
+    tile_xmin = desc.extent.XMin
+    tile_ymin = desc.extent.YMin
+    tile_xmax = desc.extent.XMax
+    tile_ymax = desc.extent.YMax
+    cell_w = desc.meanCellWidth
+    cell_h = desc.meanCellHeight
+    tile_ncols = int(round((tile_xmax - tile_xmin) / cell_w))
+    tile_nrows = int(round((tile_ymax - tile_ymin) / cell_h))
+
+    if all(v is not None for v in [clip_xmin, clip_ymin, clip_xmax, clip_ymax]):
+        # Intersect clip with tile extent then snap outward to cell boundaries.
+        effective_xmin = max(tile_xmin, clip_xmin)
+        effective_ymin = max(tile_ymin, clip_ymin)
+        effective_xmax = min(tile_xmax, clip_xmax)
+        effective_ymax = min(tile_ymax, clip_ymax)
+
+        col_start = max(0, floor((effective_xmin - tile_xmin) / cell_w))
+        row_start = max(0, floor((tile_ymax - effective_ymax) / cell_h))
+        col_end = min(tile_ncols, ceil((effective_xmax - tile_xmin) / cell_w))
+        row_end = min(tile_nrows, ceil((tile_ymax - effective_ymin) / cell_h))
+
+        ncols = max(1, col_end - col_start)
+        nrows = max(1, row_end - row_start)
+
+        window_xmin = tile_xmin + col_start * cell_w
+        window_ymax = tile_ymax - row_start * cell_h
+    else:
+        ncols = tile_ncols
+        nrows = tile_nrows
+        window_xmin = tile_xmin
+        window_ymax = tile_ymax
+
+    window_xmax = window_xmin + ncols * cell_w
+    window_ymin = window_ymax - nrows * cell_h
+
+    array = arcpy.RasterToNumPyArray(
+        in_raster=raster_path,
+        lower_left_corner=arcpy.Point(window_xmin, window_ymin),
+        ncols=ncols,
+        nrows=nrows,
+        nodata_to_value=np.nan,
+    ).astype(float)
+
+    return RasterHandle(
+        array=array,
+        xmin=window_xmin,
+        ymax=window_ymax,
+        xmax=window_xmax,
+        ymin=window_ymin,
+        cell_w=cell_w,
+        cell_h=cell_h,
+    )
+
+
+def local_z_at_xy(
+    raster_handles: list[RasterHandle],
+    x: float,
+    y: float,
+) -> Optional[float]:
+    """
+    Return the raster Z value at (x, y) from the first handle whose window
+    covers the point.
+
+    Pure function — no IO.  Mirrors local_line_angle_at_xy in intent: it is
+    designed to be called on demand inside a processing loop after handles
+    have been built once with build_raster_handle.
+
+    Returns None when the point falls outside all handles, lands on a NoData
+    cell, or the index computation produces an out-of-bounds result.
+
+    Args:
+        raster_handles: Ordered list of RasterHandle objects to search.
+        x: X coordinate in the same spatial reference as the handles.
+        y: Y coordinate in the same spatial reference as the handles.
+
+    Returns:
+        Z value as float, or None.
+    """
+    for handle in raster_handles:
+        if not (handle.xmin <= x < handle.xmax and handle.ymin < y <= handle.ymax):
+            continue
+
+        col = int((x - handle.xmin) / handle.cell_w)
+        row = int((handle.ymax - y) / handle.cell_h)
+
+        nrows, ncols = handle.array.shape
+        if not (0 <= row < nrows and 0 <= col < ncols):
+            continue
+
+        z = handle.array[row, col]
+        if np.isnan(z):
+            return None
+
+        return float(z)
+
+    return None
+
+
 def find_rasters_for_vector_extent(
     raster_dir: str,
     input_features: Union[str, list[str]],
-) -> list[str]:
+) -> list[RasterFilePath]:
     """
     Return paths of all .tif files in raster_dir whose extents intersect
     the combined extent of the given input feature classes.
@@ -1381,9 +1620,7 @@ def find_rasters_for_vector_extent(
             if vector_sr is None:
                 vector_sr = desc.spatialReference
         except Exception:
-            arcpy.AddWarning(
-                f"Could not read extent of feature class: {fc}. Skipping."
-            )
+            arcpy.AddWarning(f"Could not read extent of feature class: {fc}. Skipping.")
 
     if union_xmin == float("inf"):
         return []
@@ -1418,11 +1655,9 @@ def find_rasters_for_vector_extent(
                 and raster_ext.YMax > union_ymin
                 and raster_ext.YMin < union_ymax
             ):
-                matched.append(tif_path)
+                matched.append(RasterFilePath(tif_path))
 
         except Exception:
-            arcpy.AddWarning(
-                f"Could not read extent of raster: {tif_path}. Skipping."
-            )
+            arcpy.AddWarning(f"Could not read extent of raster: {tif_path}. Skipping.")
 
     return matched
