@@ -8,7 +8,7 @@ from composition_configs import core_config
 from custom_tools.decorators.timing_decorator import timing_decorator
 from env_setup import environment_setup
 from file_manager import WorkFileManager
-from file_manager.n10.file_manager_land_use import Land_use_N10
+from file_manager.n10.file_manager_arealdekke import Arealdekke_N10
 from input_data import input_test_data
 
 # ========================
@@ -43,10 +43,10 @@ def adjusting_surrounding_geometries(input: str, changed_area: str) -> None:
     print(f"\n🚀 Adjusts edges to fit overlapping areas to {changed_area}...\n")
 
     # Setting up constants
-    output_fc = Land_use_N10.area_line_merger_output__n10_land_use.value
+    output_fc = Arealdekke_N10.area_line_merger_output__n10_land_use.value
 
     # 1) Sets up work file manager to take care of temporary files
-    work_fc = Land_use_N10.area_line_merger__n10_land_use.value
+    work_fc = Arealdekke_N10.area_line_merger__n10_land_use.value
     work_config = core_config.WorkFileConfig(root_file=work_fc)
     work_wfm = WorkFileManager(config=work_config)
 
@@ -290,7 +290,7 @@ def create_non_overlapping_land_use(files: dict) -> None:
 if __name__ == "__main__":
     environment_setup.main()
 
-    working_fc = Land_use_N10.area_line_merger_start__n10_land_use.value
+    working_fc = Arealdekke_N10.area_line_merger_start__n10_land_use.value
     input_fc = input_test_data.arealdekke
     elv_fc = input_test_data.elv
     attribute = "Ferskvann_elv_bekk"

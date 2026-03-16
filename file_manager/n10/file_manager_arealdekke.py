@@ -10,11 +10,62 @@ file_manager = BaseFileManager(scale=scale, object_name=object_name)
 
 
 # All scripts
+dissolve_file = "dissolve"
+elim_file = "eliminate"
 attribute_file = "attribute_changer"
 area_line_merger = "area_line_merger"
 
 
-class Land_use_N10(Enum):
+class Arealdekke_N10(Enum):
+    # ========================================
+    #                     arealdekke dissolver
+    # ========================================
+
+    dissolve_arealdekke_root = file_manager.generate_file_name_gdb(
+        script_source_name=dissolve_file, description="dissolve_arealdekke_root"
+    )
+    dissolve_arealdekke_partition_root = file_manager.generate_file_name_gdb(
+        script_source_name=dissolve_file,
+        description="dissolve_arealdekke_partition_root",
+    )
+
+    areal_dissolve_documentation = file_manager.generate_general_subdirectory(
+        description="areal_dissolve_documentation",
+    )
+
+    dissolve_arealdekke = file_manager.generate_file_name_gdb(
+        script_source_name=dissolve_file, description="arealdekke"
+    )
+    dissolve_arealdekke_docu = file_manager.generate_file_name_gdb(
+        script_source_name=dissolve_file, description="arealdekke_docu"
+    )
+
+    dissolve_gangsykkel = file_manager.generate_file_name_gdb(
+        script_source_name=dissolve_file, description="gangsykkel"
+    )
+    dissolve_gangsykkel2 = file_manager.generate_file_name_gdb(
+        script_source_name=dissolve_file, description="gangsykkel2"
+    )
+    dissolve_gangsykkel3 = file_manager.generate_file_name_gdb(
+        script_source_name=dissolve_file, description="gangsykkel3"
+    )
+
+    # ========================================
+    #                 eliminate small polygons
+    # ========================================
+
+    elim_documentation = file_manager.generate_general_subdirectory(
+        description="elim_documentation",
+    )
+
+    elim_root = file_manager.generate_file_name_gdb(
+        script_source_name=elim_file, description="elim_root"
+    )
+
+    elim_output = file_manager.generate_file_name_gdb(
+        script_source_name=elim_file, description="output"
+    )
+
     # ========================================
     #                        ATTRIBUTE CHANGER
     # ========================================
