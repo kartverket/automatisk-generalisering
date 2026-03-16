@@ -5,10 +5,16 @@ from typing import (
     List,
     Optional,
     Tuple,
+    TypeAlias,
     Union,
 )
 
 from composition_configs import core_config, io_types
+
+# Ordered collection of pre-scoped raster tile paths.
+# Produced by find_rasters_for_vector_extent; consumed by FillLineGapsAdvancedConfig
+# and LineZValueToolConfig.
+RasterPathList: TypeAlias = tuple[type_defs.RasterFilePath, ...]
 
 
 @dataclass(frozen=True)
@@ -327,6 +333,22 @@ class FillLineGapsAdvancedConfig:
     # Keying recommendation:
     # - support keys by original connect_to_features path OR by dataset_key(path)
     connect_to_features_angle_mode: Optional[dict[str, AngleTargetMode]] = None
+
+    # ----------------------------
+    # Z / elevation layer
+    # ----------------------------
+
+    # Pre-scoped raster tile paths (e.g. from find_rasters_for_vector_extent).
+    # FillLineGaps builds RasterHandle objects from these at run() start.
+    # None disables all Z-based logic.
+    raster_paths: Optional[RasterPathList] = None
+
+    # Legality gate on Z drop along a candidate connector.
+    # A candidate is illegal when (end_z - start_z) > z_drop_threshold.
+    # None disables the gate.
+    #   0   → candidate must run downhill or flat
+    #  -10  → candidate must drop more than 10 m
+    z_drop_threshold: Optional[float] = None
 
 
 @dataclass(frozen=True)
