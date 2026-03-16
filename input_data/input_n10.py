@@ -55,9 +55,13 @@ N50HoydePunkt = rf"{n10_path}\N50HoydePunkt"
 FKBforsenkningspunkt = rf"{n10_path}\FKBforsenkningspunkt"
 FKBterrengpunkt = rf"{n10_path}\FKBterrengpunkt"
 ArealdekkeFlate_bebygd = rf"{n10_path}\ArealdekkeFlate_bebygd"
+Arealdekke_Oslo = rf"{n10_path}\Arealdekke_Oslo"
+Arealdekke_Norge = rf"{n10_path}\Arealdekke_Norge"
 AdminFlate = rf"{n10_path}\AdminFlate"
 Buildings = rf"{n10_path}\bygning_omrade"
 Contours = rf"{n10_path}\n10_hoydekurver_5m"
+
+Fishnet_500m = rf"{n10_path}\Fishnet_500m"
 
 # Annotations
 Stedsnavn = rf"{n10_path}\N10_Stedsnavn_2026_Anno10000"
@@ -121,6 +125,8 @@ n10_datasets = [
     FKBforsenkningspunkt,
     FKBterrengpunkt,
     ArealdekkeFlate_bebygd,
+    Arealdekke_Oslo,
+    Arealdekke_Norge,
     AdminFlate,
     Buildings,
     Contours,
@@ -130,6 +136,7 @@ n10_datasets = [
     Veglenke_overbygg,
     Veglenke_tunnel,
     Hoydetall,
+    Fishnet_500m,
 ]
 
 # Annotations
