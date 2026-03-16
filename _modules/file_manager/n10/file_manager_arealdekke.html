@@ -5,7 +5,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>file_manager.n10.file_manager_land_use &mdash; Automatisk Generalisering 0.0.1 documentation</title>
+  <title>file_manager.n10.file_manager_arealdekke &mdash; Automatisk Generalisering 0.0.1 documentation</title>
       <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=b86133f3" />
       <link rel="stylesheet" type="text/css" href="../../../_static/css/theme.css?v=9edc463e" />
       <link rel="stylesheet" type="text/css" href="../../../_static/custom.css" />
@@ -65,7 +65,7 @@
   <ul class="wy-breadcrumbs">
       <li><a href="../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
           <li class="breadcrumb-item"><a href="../../index.html">Module code</a></li>
-      <li class="breadcrumb-item active">file_manager.n10.file_manager_land_use</li>
+      <li class="breadcrumb-item active">file_manager.n10.file_manager_arealdekke</li>
       <li class="wy-breadcrumbs-aside">
       </li>
   </ul>
@@ -74,7 +74,7 @@
           <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
            <div itemprop="articleBody">
              
-  <h1>Source code for file_manager.n10.file_manager_land_use</h1><div class="highlight"><pre>
+  <h1>Source code for file_manager.n10.file_manager_arealdekke</h1><div class="highlight"><pre>
 <span></span><span class="c1"># Imports</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">enum</span><span class="w"> </span><span class="kn">import</span> <span class="n">Enum</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">env_setup</span><span class="w"> </span><span class="kn">import</span> <span class="n">global_config</span>
@@ -87,14 +87,65 @@
 
 
 <span class="c1"># All scripts</span>
+<span class="n">dissolve_file</span> <span class="o">=</span> <span class="s2">&quot;dissolve&quot;</span>
+<span class="n">elim_file</span> <span class="o">=</span> <span class="s2">&quot;eliminate&quot;</span>
 <span class="n">attribute_file</span> <span class="o">=</span> <span class="s2">&quot;attribute_changer&quot;</span>
 
 
-<div class="viewcode-block" id="Land_use_N10">
-<a class="viewcode-back" href="../../../generated_docs/file_manager.n10.html#file_manager.n10.file_manager_land_use.Land_use_N10">[docs]</a>
-<span class="k">class</span><span class="w"> </span><span class="nc">Land_use_N10</span><span class="p">(</span><span class="n">Enum</span><span class="p">):</span>
+<div class="viewcode-block" id="Arealdekke_N10">
+<a class="viewcode-back" href="../../../generated_docs/file_manager.n10.html#file_manager.n10.file_manager_arealdekke.Arealdekke_N10">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">Arealdekke_N10</span><span class="p">(</span><span class="n">Enum</span><span class="p">):</span>
     <span class="c1"># ========================================</span>
-    <span class="c1">#                                 FARMLAND</span>
+    <span class="c1">#                     arealdekke dissolver</span>
+    <span class="c1"># ========================================</span>
+
+    <span class="n">dissolve_arealdekke_root</span> <span class="o">=</span> <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_gdb</span><span class="p">(</span>
+        <span class="n">script_source_name</span><span class="o">=</span><span class="n">dissolve_file</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">&quot;dissolve_arealdekke_root&quot;</span>
+    <span class="p">)</span>
+    <span class="n">dissolve_arealdekke_partition_root</span> <span class="o">=</span> <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_gdb</span><span class="p">(</span>
+        <span class="n">script_source_name</span><span class="o">=</span><span class="n">dissolve_file</span><span class="p">,</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">&quot;dissolve_arealdekke_partition_root&quot;</span><span class="p">,</span>
+    <span class="p">)</span>
+
+    <span class="n">areal_dissolve_documentation</span> <span class="o">=</span> <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_general_subdirectory</span><span class="p">(</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">&quot;areal_dissolve_documentation&quot;</span><span class="p">,</span>
+    <span class="p">)</span>
+
+    <span class="n">dissolve_arealdekke</span> <span class="o">=</span> <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_gdb</span><span class="p">(</span>
+        <span class="n">script_source_name</span><span class="o">=</span><span class="n">dissolve_file</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">&quot;arealdekke&quot;</span>
+    <span class="p">)</span>
+    <span class="n">dissolve_arealdekke_docu</span> <span class="o">=</span> <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_gdb</span><span class="p">(</span>
+        <span class="n">script_source_name</span><span class="o">=</span><span class="n">dissolve_file</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">&quot;arealdekke_docu&quot;</span>
+    <span class="p">)</span>
+
+    <span class="n">dissolve_gangsykkel</span> <span class="o">=</span> <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_gdb</span><span class="p">(</span>
+        <span class="n">script_source_name</span><span class="o">=</span><span class="n">dissolve_file</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">&quot;gangsykkel&quot;</span>
+    <span class="p">)</span>
+    <span class="n">dissolve_gangsykkel2</span> <span class="o">=</span> <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_gdb</span><span class="p">(</span>
+        <span class="n">script_source_name</span><span class="o">=</span><span class="n">dissolve_file</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">&quot;gangsykkel2&quot;</span>
+    <span class="p">)</span>
+    <span class="n">dissolve_gangsykkel3</span> <span class="o">=</span> <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_gdb</span><span class="p">(</span>
+        <span class="n">script_source_name</span><span class="o">=</span><span class="n">dissolve_file</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">&quot;gangsykkel3&quot;</span>
+    <span class="p">)</span>
+
+    <span class="c1"># ========================================</span>
+    <span class="c1">#                 eliminate small polygons</span>
+    <span class="c1"># ========================================</span>
+
+    <span class="n">elim_documentation</span> <span class="o">=</span> <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_general_subdirectory</span><span class="p">(</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">&quot;elim_documentation&quot;</span><span class="p">,</span>
+    <span class="p">)</span>
+
+    <span class="n">elim_root</span> <span class="o">=</span> <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_gdb</span><span class="p">(</span>
+        <span class="n">script_source_name</span><span class="o">=</span><span class="n">elim_file</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">&quot;elim_root&quot;</span>
+    <span class="p">)</span>
+
+    <span class="n">elim_output</span> <span class="o">=</span> <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_gdb</span><span class="p">(</span>
+        <span class="n">script_source_name</span><span class="o">=</span><span class="n">elim_file</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">&quot;output&quot;</span>
+    <span class="p">)</span>
+
+    <span class="c1"># ========================================</span>
+    <span class="c1">#                               Attribute changer</span>
     <span class="c1"># ========================================</span>
 
     <span class="n">attribute_changer__n10_land_use</span> <span class="o">=</span> <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_gdb</span><span class="p">(</span>

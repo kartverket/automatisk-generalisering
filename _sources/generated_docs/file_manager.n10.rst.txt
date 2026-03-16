@@ -4,6 +4,14 @@ file\_manager.n10 package
 Submodules
 ----------
 
+file\_manager.n10.file\_manager\_arealdekke module
+--------------------------------------------------
+
+.. automodule:: file_manager.n10.file_manager_arealdekke
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
 file\_manager.n10.file\_manager\_facilities module
 --------------------------------------------------
 
@@ -16,14 +24,6 @@ file\_manager.n10.file\_manager\_hoydepunkt module
 --------------------------------------------------
 
 .. automodule:: file_manager.n10.file_manager_hoydepunkt
-   :members:
-   :show-inheritance:
-   :undoc-members:
-
-file\_manager.n10.file\_manager\_land\_use module
--------------------------------------------------
-
-.. automodule:: file_manager.n10.file_manager_land_use
    :members:
    :show-inheritance:
    :undoc-members:
