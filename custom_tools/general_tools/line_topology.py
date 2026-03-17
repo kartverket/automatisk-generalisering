@@ -719,28 +719,92 @@ class TopologyBuilder:
 
 
 @dataclass(frozen=True)
-class Proposal:
-    """
-    One best-fit legal candidate per dangle (no fallback).
-    """
+class _CandidateContext:
+    """Fixed metadata for a dangle winner; carried unchanged across scope promotions."""
+    # Topology routing
+    dangle_oid:        int
+    src_parent_id:     int
+    src_node:          "EntityKey"
+    tgt_node:          "EntityKey"
+    pair_key:          "tuple[EntityKey, EntityKey]"
+    target_parent_id:  Optional[int]
+    target_dangle_oid: Optional[int]
+    near_fc_key:       str
+    near_fid:          int
+    # Geometry
+    dangle_x:          float
+    dangle_y:          float
+    near_x:            float
+    near_y:            float
+    raw_distance:      float
+    bonus_applied:     bool
+    # Scoring inputs (fixed; needed for diagnostics and score recomputation)
+    start_z:           Optional[float]   # Z at source dangle endpoint
+    end_z:             Optional[float]   # Z at target near-point
+    norm_dist:         float             # raw_distance / gap_tolerance_meters
+    assess:            Optional["AngleAssessment"]
 
-    dangle_oid: int
-    src_parent_id: int
-    src_node: EntityKey
-    tgt_node: EntityKey
-    chosen: dict  # the chosen candidate row dict
 
-    raw_distance: float
-    best_fit_score: float
-    bonus_applied: bool
+@dataclass(frozen=True)
+class _ProposalScore:
+    """Readable replacement for the opaque score tuple."""
+    composite:  float            # weighted best-fit score (primary sort key)
+    bonus_rank: int              # 0 = bonus applied, 1 = no bonus
+    norm_dist:  float            # effective distance component [0, 1]
+    norm_angle: Optional[float]  # angle component [0, 1]; None if unavailable
+    norm_z:     Optional[float]  # Z component at current scope; None if unavailable
 
-    # (effective_dist, bonus_rank, raw_dist, src_parent, dangle_oid, near_fc_key, near_fid)
-    # bonus_rank: 0 when edge-case bonus applied, else 1
-    score: tuple[float, int, float, int, int, str, int]
 
-    pair_key: tuple[EntityKey, EntityKey]  # unordered network pair
-    target_parent_id: Optional[int]  # only for line/dangle targets (ORIGINAL_ID space)
-    target_dangle_oid: Optional[int]  # only if chosen is a dangle target
+@dataclass(frozen=True)
+class _DangleProposal:
+    """Step-1B winner; Z normalized within its dangle's candidate set."""
+    ctx:   "_CandidateContext"
+    score: "_ProposalScore"      # score.norm_z = dangle_norm_z
+
+    def sort_key(self) -> tuple:
+        c = self.ctx
+        return (self.score.composite, self.score.bonus_rank,
+                c.raw_distance, c.src_parent_id, c.dangle_oid, c.near_fc_key, c.near_fid)
+
+
+@dataclass(frozen=True)
+class _NetworkProposal:
+    """Stage-A candidate; Z normalized within its pair_key group."""
+    ctx:           "_CandidateContext"
+    dangle_norm_z: Optional[float]   # carried from _DangleProposal.score.norm_z
+    score:         "_ProposalScore"  # score.norm_z = network_norm_z
+
+    @classmethod
+    def from_dangle(
+        cls, d: "_DangleProposal", score: "_ProposalScore"
+    ) -> "_NetworkProposal":
+        return cls(ctx=d.ctx, dangle_norm_z=d.score.norm_z, score=score)
+
+    def sort_key(self) -> tuple:
+        c = self.ctx
+        return (self.score.composite, self.score.bonus_rank,
+                c.raw_distance, c.src_parent_id, c.dangle_oid, c.near_fc_key, c.near_fid)
+
+
+@dataclass(frozen=True)
+class _GlobalProposal:
+    """Stage-B candidate; Z normalized across all Stage-A winners."""
+    ctx:            "_CandidateContext"
+    dangle_norm_z:  Optional[float]
+    network_norm_z: Optional[float]
+    score:          "_ProposalScore"  # score.norm_z = global_norm_z
+
+    @classmethod
+    def from_network(
+        cls, n: "_NetworkProposal", score: "_ProposalScore"
+    ) -> "_GlobalProposal":
+        return cls(ctx=n.ctx, dangle_norm_z=n.dangle_norm_z,
+                   network_norm_z=n.score.norm_z, score=score)
+
+    def sort_key(self) -> tuple:
+        c = self.ctx
+        return (self.score.composite, self.score.bonus_rank,
+                c.raw_distance, c.src_parent_id, c.dangle_oid, c.near_fc_key, c.near_fid)
 
 
 @dataclass(frozen=True)
@@ -749,16 +813,15 @@ class DeferredCapture:
     Original proposal metadata captured when a proposal is marked deferred.
 
     Carries both the routing information (which dangle, which forced target) and
-    the original selection metadata (Proposal + AngleAssessment) from the main
-    plan phase.  The geometry is resolved later from post-pass-1 line positions,
-    but the metadata here answers *why* the connection was chosen.
+    the original _DangleProposal from the main plan phase.  The geometry is
+    resolved later from post-pass-1 line positions, but the metadata here
+    answers *why* the connection was chosen.
     """
 
     parent_id: int
     dangle_oid: int
     forced_target_parent: int
-    proposal: "Proposal"
-    assess: "AngleAssessment"
+    proposal: "_DangleProposal"
 
 
 @dataclass(frozen=True)
@@ -824,9 +887,11 @@ class CandidateDiagnostic:
     assess: Optional[AngleAssessment]
     target_parent_id: Optional[int]
     final_gap_source: Optional[str] # gap_source value for applied_to_output rows; None otherwise
-    start_z: Optional[float] = None # Z at the dangle point (candidate start); None when no rasters
-    end_z: Optional[float] = None   # Z at the near point (candidate end);   None when no rasters
-    norm_z: Optional[float] = None  # Per-dangle-normalised Z score [0,1]; None for illegals/no rasters
+    start_z:         Optional[float] = None  # Z at the dangle point (candidate start); None when no rasters
+    end_z:           Optional[float] = None  # Z at the near point (candidate end); None when no rasters
+    dangle_norm_z:   Optional[float] = None  # Z normalized within dangle candidate set; None for illegals
+    network_norm_z:  Optional[float] = None  # Z normalized within pair_key group; None for illegals/deferred
+    global_norm_z:   Optional[float] = None  # Z normalized across all Stage-A winners; None unless Stage-B reached
 
 
 class FillLineGaps:
@@ -1239,6 +1304,26 @@ class FillLineGaps:
         )
 
         return raw_distance, effective_distance, bool(bonus_applied), score
+
+    @staticmethod
+    def _normalize_z_within(
+        end_z_values: "list[Optional[float]]",
+        target_end_z: Optional[float],
+    ) -> Optional[float]:
+        """
+        Normalize target_end_z within the range of end_z_values.
+        Returns None when fewer than 2 valid values exist, range is flat, or target is None.
+        """
+        if target_end_z is None:
+            return None
+        valid = [z for z in end_z_values if z is not None]
+        if len(valid) < 2:
+            return None
+        lo = min(valid)
+        hi = max(valid)
+        if hi == lo:
+            return None
+        return (target_end_z - lo) / (hi - lo)
 
     def _compute_best_fit_score(
         self,
@@ -2589,10 +2674,11 @@ class FillLineGaps:
 
         # (dangle_oid, parent_id, cand, reason) — failed step-1A legality
         _step1a_illegal: list[tuple[int, int, dict, str]] = []
-        # (dangle_oid, parent_id, cand, assess, reason) — passed step-1A but blocked in step-1B
-        _step1b_illegal: list[tuple[int, int, dict, AngleAssessment, str]] = []
-        # (dangle_oid, parent_id, cand, assess, raw_dist, best_fit, bonus, is_local_winner, score_tuple)
-        _step1b_scored: list[tuple[int, int, dict, AngleAssessment, float, float, bool, bool, tuple]] = []
+        # (dangle_oid, parent_id, cand, assess, reason, start_z, end_z) — blocked in step-1B
+        _step1b_illegal: list[tuple[int, int, dict, AngleAssessment, str, Optional[float], Optional[float]]] = []
+        # (dangle_oid, parent_id, cand, assess, raw_dist, best_fit, bonus, is_local_winner,
+        #  score_tuple, norm_z, start_z, end_z)
+        _step1b_scored: list[tuple] = []
 
         # Pipeline stage fate sets — populated as _build_plan progresses;
         # _assemble_diagnostics captures them by reference so early-return calls
@@ -2602,6 +2688,14 @@ class FillLineGaps:
         stage_b_rejected_oids: set[int] = set()    # Stage-A winners dropped by Kruskal
         accepted_dangle_oids: set[int] = set()     # proposals that made it into the main plan
         gap_source_by_dangle: dict[int, str] = {}  # gap_source for accepted main-plan candidates
+
+        # Z normalization dicts — keyed by dangle_oid; captured by reference in _assemble_diagnostics.
+        # dangle_norm_z_by_dangle: winner's per-dangle norm_z (same as sc_norm_z for winner rows)
+        # network_norm_z_by_dangle: populated during Pass-2 for all active proposals
+        # global_norm_z_by_dangle: populated during Pass-3 for Stage-A winners
+        dangle_norm_z_by_dangle:  dict[int, Optional[float]] = {}
+        network_norm_z_by_dangle: dict[int, Optional[float]] = {}
+        global_norm_z_by_dangle:  dict[int, Optional[float]] = {}
 
         def _assemble_diagnostics() -> list[CandidateDiagnostic]:
             if not collect_diags:
@@ -2621,7 +2715,7 @@ class FillLineGaps:
                 )
                 return sz, ez
 
-            # Step-1A illegals: angle never computed for these
+            # Step-1A illegals: angle never computed; z values looked up here
             for d_oid, p_id, cand, reason in _step1a_illegal:
                 xy = dangle_xy.get(int(d_oid))
                 if xy is None:
@@ -2649,15 +2743,16 @@ class FillLineGaps:
                     final_gap_source=None,
                     start_z=_sz,
                     end_z=_ez,
-                    norm_z=None,
+                    dangle_norm_z=None,
+                    network_norm_z=None,
+                    global_norm_z=None,
                 ))
 
-            # Step-1B angle-blocked illegals: angle computed
-            for d_oid, p_id, cand, assess, reason in _step1b_illegal:
+            # Step-1B angle-blocked illegals: z values carried in tuple
+            for d_oid, p_id, cand, assess, reason, _sz, _ez in _step1b_illegal:
                 xy = dangle_xy.get(int(d_oid))
                 if xy is None:
                     continue
-                _sz, _ez = _z_pair(xy, cand["near_x"], cand["near_y"])
                 result.append(CandidateDiagnostic(
                     parent_id=p_id,
                     dangle_oid=d_oid,
@@ -2680,7 +2775,9 @@ class FillLineGaps:
                     final_gap_source=None,
                     start_z=_sz,
                     end_z=_ez,
-                    norm_z=None,
+                    dangle_norm_z=None,
+                    network_norm_z=None,
+                    global_norm_z=None,
                 ))
 
             # Compute per-dangle rank for scored candidates (1 = local winner)
@@ -2695,9 +2792,10 @@ class FillLineGaps:
                     cand = entry[2]
                     rank_map[(d_oid, str(cand["near_fc_key"]), int(cand["near_fid"]))] = rank
 
-            # Step-1B scored candidates
+            # Step-1B scored candidates; z values carried in tuple
             for (
-                d_oid, p_id, cand, assess, raw_dist, best_fit, bonus, is_local_winner, _score, sc_norm_z
+                d_oid, p_id, cand, assess, raw_dist, best_fit, bonus,
+                is_local_winner, _score, sc_norm_z, sc_start_z, sc_end_z,
             ) in _step1b_scored:
                 xy = dangle_xy.get(int(d_oid))
                 if xy is None:
@@ -2708,30 +2806,41 @@ class FillLineGaps:
                     status = "legal_not_selected"
                     reason = "outscored_within_dangle"
                     final_gs: Optional[str] = None
+                    net_nz: Optional[float] = None
+                    glob_nz: Optional[float] = None
                 elif int(d_oid) in deferred_dangles:
                     status = "selected_for_dangle"
                     reason = "deferred"
                     final_gs = None
+                    net_nz = None
+                    glob_nz = None
                 elif int(d_oid) in stage_a_loser_oids:
                     status = "selected_for_dangle"
                     reason = "lost_pair_competition"
                     final_gs = None
+                    net_nz = network_norm_z_by_dangle.get(int(d_oid))
+                    glob_nz = None
                 elif int(d_oid) in stage_b_rejected_oids:
                     status = "selected_for_dangle"
                     reason = "lost_cycle_prevention"
                     final_gs = None
+                    net_nz = network_norm_z_by_dangle.get(int(d_oid))
+                    glob_nz = global_norm_z_by_dangle.get(int(d_oid))
                 elif int(d_oid) in accepted_dangle_oids:
                     status = "applied_to_output"
                     reason = "applied_main"
                     final_gs = gap_source_by_dangle.get(int(d_oid))
+                    net_nz = network_norm_z_by_dangle.get(int(d_oid))
+                    glob_nz = global_norm_z_by_dangle.get(int(d_oid))
                 else:
                     # Local winner that didn't reach proposal construction
                     # (e.g. target dangle had no resolvable parent)
                     status = "selected_for_dangle"
                     reason = None
                     final_gs = None
+                    net_nz = None
+                    glob_nz = None
 
-                _sz, _ez = _z_pair(xy, cand["near_x"], cand["near_y"])
                 result.append(CandidateDiagnostic(
                     parent_id=p_id,
                     dangle_oid=d_oid,
@@ -2752,9 +2861,11 @@ class FillLineGaps:
                         cand, dangle_parent, dangles_key, lines_key
                     ),
                     final_gap_source=final_gs,
-                    start_z=_sz,
-                    end_z=_ez,
-                    norm_z=sc_norm_z,
+                    start_z=sc_start_z,
+                    end_z=sc_end_z,
+                    dangle_norm_z=sc_norm_z,
+                    network_norm_z=net_nz,
+                    global_norm_z=glob_nz,
                 ))
             return result
 
@@ -2919,8 +3030,7 @@ class FillLineGaps:
         # ----------------------------
         # Step 1B: choose exactly ONE proposal per dangle using angle-aware scoring
         # ----------------------------
-        proposals_by_dangle: dict[int, Proposal] = {}
-        assess_by_dangle: dict[int, AngleAssessment] = {}
+        _dangle_proposals: dict[int, _DangleProposal] = {}
 
         for dangle_oid in sorted(legal_rows_by_dangle.keys()):
             dangle_oid = int(dangle_oid)
@@ -2954,13 +3064,15 @@ class FillLineGaps:
                     self._raster_handles, float(d_x), float(d_y)
                 )
 
-            # Pre-scan end_z for per-dangle normalization (needed for Z weight in
-            # best-fit score). Only done when Z weight is active.
+            # Pre-scan end_z.  Run when Z scoring is active OR when diagnostic
+            # output is requested so z values are available for all candidate rows.
             end_z_by_cand_index: dict[int, Optional[float]] = {}
             z_score_min: Optional[float] = None
             z_score_max: Optional[float] = None
 
-            if self._raster_handles and float(self.best_fit_weights.z) > 0.0:
+            if self._raster_handles and (
+                float(self.best_fit_weights.z) > 0.0 or collect_diags
+            ):
                 for _i, _c in enumerate(legal_rows):
                     _ez = geometry_tools.local_z_at_xy(
                         self._raster_handles,
@@ -2969,10 +3081,11 @@ class FillLineGaps:
                     )
                     end_z_by_cand_index[_i] = _ez
 
-                _valid_z = [z for z in end_z_by_cand_index.values() if z is not None]
-                if _valid_z:
-                    z_score_min = min(_valid_z)
-                    z_score_max = max(_valid_z)
+                if float(self.best_fit_weights.z) > 0.0:
+                    _valid_z = [z for z in end_z_by_cand_index.values() if z is not None]
+                    if _valid_z:
+                        z_score_min = min(_valid_z)
+                        z_score_max = max(_valid_z)
 
             # Parent IDs of target-dangle candidates for this source dangle.
             # A line candidate to one of these parents represents the same
@@ -2985,17 +3098,8 @@ class FillLineGaps:
                     if _p is not None:
                         _dangle_target_parents.add(int(_p))
 
-            scored_candidates: list[
-                tuple[
-                    tuple[float, int, float, int, int, str, int],  # score tuple
-                    dict,  # candidate
-                    float,  # raw_distance
-                    float,  # effective_distance_for_scoring
-                    bool,  # bonus_applied
-                    "AngleAssessment",  # assess for winning candidate metadata
-                    Optional[float],  # norm_z
-                ]
-            ] = []
+            # (_ProposalScore, cand, raw_dist, best_fit, bonus, assess, norm_z, end_z)
+            scored_candidates: list[tuple] = []
 
             for _cand_idx, cand in enumerate(legal_rows):
                 assess = self._assess_angle(
@@ -3014,11 +3118,14 @@ class FillLineGaps:
                     dangle_target_parents=_dangle_target_parents,
                 )
 
+                _cand_end_z: Optional[float] = end_z_by_cand_index.get(_cand_idx)
+
                 # 1) Candidate blocking (angle_block_threshold_degrees)
                 if assess.blocks:
                     if collect_diags:
                         _step1b_illegal.append(
-                            (dangle_oid, parent_id, cand, assess, "blocked_by_angle")
+                            (dangle_oid, parent_id, cand, assess, "blocked_by_angle",
+                             start_z, _cand_end_z)
                         )
                     continue
 
@@ -3034,36 +3141,29 @@ class FillLineGaps:
                     # Candidate is only legal due to expanded tolerance; angle disallows it
                     if collect_diags:
                         _step1b_illegal.append(
-                            (
-                                dangle_oid,
-                                parent_id,
-                                cand,
-                                assess,
-                                "expanded_dangle_angle_disallowed",
-                            )
+                            (dangle_oid, parent_id, cand, assess,
+                             "expanded_dangle_angle_disallowed",
+                             start_z, _cand_end_z)
                         )
                     continue
 
                 # 3) Z drop gate (z_drop_threshold)
                 if self.z_drop_threshold is not None and start_z is not None:
-                    _end_z = end_z_by_cand_index.get(
-                        _cand_idx,
-                        geometry_tools.local_z_at_xy(
+                    _end_z_gate = (
+                        _cand_end_z
+                        if _cand_end_z is not None
+                        else geometry_tools.local_z_at_xy(
                             self._raster_handles,
                             float(cand["near_x"]),
                             float(cand["near_y"]),
-                        ),
+                        )
                     )
-                    if _end_z is not None and (_end_z - start_z) > self.z_drop_threshold:
+                    if _end_z_gate is not None and (_end_z_gate - start_z) > self.z_drop_threshold:
                         if collect_diags:
                             _step1b_illegal.append(
-                                (
-                                    dangle_oid,
-                                    parent_id,
-                                    cand,
-                                    assess,
-                                    "blocked_by_z_drop",
-                                )
+                                (dangle_oid, parent_id, cand, assess,
+                                 "blocked_by_z_drop",
+                                 start_z, _cand_end_z)
                             )
                         continue
 
@@ -3075,7 +3175,7 @@ class FillLineGaps:
                         assess.allow_extra_dangle
                     )
 
-                raw_distance, effective_distance, bonus_applied, score = (
+                raw_distance, effective_distance, bonus_applied, _score_unused = (
                     self._candidate_score_details(
                         dangle_oid=dangle_oid,
                         parent_id=parent_id,
@@ -3086,9 +3186,11 @@ class FillLineGaps:
                         bonus_allowed=bool(bonus_allowed),
                     )
                 )
+                bonus_rank = 0 if bonus_applied else 1
 
-                # 5) Normalized weighted composite score
+                # 5) Normalized weighted composite score (dangle scope)
                 _tol = float(self.gap_tolerance_meters) or 1.0
+                _eff_norm_dist = float(effective_distance) / _tol
 
                 _norm_z: Optional[float] = None
                 if z_score_min is not None and z_score_max is not None:
@@ -3097,54 +3199,62 @@ class FillLineGaps:
                         if z_score_max > z_score_min:
                             _norm_z = (_ez - z_score_min) / (z_score_max - z_score_min)
                         else:
-                            _norm_z = 0.0
+                            _norm_z = None   # flat range: Z cannot discriminate
 
                 effective_for_scoring = self._compute_best_fit_score(
-                    norm_dist=float(effective_distance) / _tol,
+                    norm_dist=_eff_norm_dist,
                     assess=assess,
                     norm_z=_norm_z,
                 )
 
-                # Keep score tuple shape stable; only replace the first element
-                score_with_angle = (
-                    float(effective_for_scoring),
-                    int(score[1]),
-                    float(score[2]),
-                    int(score[3]),
-                    int(score[4]),
-                    str(score[5]),
-                    int(score[6]),
+                _norm_angle: Optional[float] = (
+                    float(assess.angle_metric_deg) / float(assess.angle_max_deg)
+                    if assess.angle_metric_deg is not None
+                    else None
+                )
+
+                dangle_score = _ProposalScore(
+                    composite=float(effective_for_scoring),
+                    bonus_rank=int(bonus_rank),
+                    norm_dist=_eff_norm_dist,
+                    norm_angle=_norm_angle,
+                    norm_z=_norm_z,
                 )
 
                 scored_candidates.append(
                     (
-                        score_with_angle,
+                        dangle_score,
                         cand,
                         float(raw_distance),
                         float(effective_for_scoring),
                         bool(bonus_applied),
                         assess,
                         _norm_z,
+                        end_z_by_cand_index.get(_cand_idx),   # per-candidate end_z
                     )
                 )
 
             if not scored_candidates:
                 continue
 
-            winner_item = min(scored_candidates, key=lambda item: item[0])
+            winner_item = min(
+                scored_candidates,
+                key=lambda item: (item[0].composite, item[0].bonus_rank, item[2]),
+            )
             (
-                score,
+                winner_dangle_score,
                 chosen,
                 raw_distance,
                 effective_distance_for_scoring,
                 bonus_applied,
                 chosen_assess,
-                _,
+                winner_norm_z,
+                winner_end_z,
             ) = winner_item
 
             if collect_diags:
                 for sc_tuple in scored_candidates:
-                    sc_score, sc_cand, sc_raw, sc_best_fit, sc_bonus, sc_assess, sc_norm_z = sc_tuple
+                    sc_score, sc_cand, sc_raw, sc_best_fit, sc_bonus, sc_assess, sc_norm_z, sc_end_z = sc_tuple
                     _step1b_scored.append((
                         dangle_oid,
                         parent_id,
@@ -3154,12 +3264,14 @@ class FillLineGaps:
                         float(sc_best_fit),
                         bool(sc_bonus),
                         sc_tuple is winner_item,
-                        sc_score,  # score tuple for per-dangle rank computation
-                        sc_norm_z,
+                        (sc_score.composite, sc_score.bonus_rank, sc_raw),  # for per-dangle rank
+                        sc_norm_z,               # dangle_norm_z for this candidate
+                        start_z,                 # fixed per dangle
+                        sc_end_z,                # per-candidate end_z
                     ))
 
             # ----------------------------
-            # Proposal construction (unchanged semantics)
+            # _DangleProposal construction
             # ----------------------------
             src_node = self._node_for_parent(parent_id=parent_id, topology=topology)
 
@@ -3194,24 +3306,34 @@ class FillLineGaps:
                 )
 
             pair_key = self._unordered_pair_key(src_node, tgt_node)
+            _tol_for_ctx = float(self.gap_tolerance_meters) or 1.0
 
-            proposals_by_dangle[dangle_oid] = Proposal(
+            ctx = _CandidateContext(
                 dangle_oid=dangle_oid,
                 src_parent_id=parent_id,
                 src_node=src_node,
                 tgt_node=tgt_node,
-                chosen=chosen,
-                raw_distance=float(raw_distance),
-                best_fit_score=float(effective_distance_for_scoring),
-                bonus_applied=bool(bonus_applied),
-                score=score,
                 pair_key=pair_key,
                 target_parent_id=target_parent_id,
                 target_dangle_oid=target_dangle_oid,
+                near_fc_key=ds_key,
+                near_fid=near_fid,
+                dangle_x=float(d_x),
+                dangle_y=float(d_y),
+                near_x=float(chosen["near_x"]),
+                near_y=float(chosen["near_y"]),
+                raw_distance=float(raw_distance),
+                bonus_applied=bool(bonus_applied),
+                start_z=start_z,
+                end_z=winner_end_z,
+                norm_dist=float(raw_distance) / _tol_for_ctx,
+                assess=chosen_assess,
             )
-            assess_by_dangle[dangle_oid] = chosen_assess
 
-        if not proposals_by_dangle:
+            _dangle_proposals[dangle_oid] = _DangleProposal(ctx=ctx, score=winner_dangle_score)
+            dangle_norm_z_by_dangle[dangle_oid] = winner_norm_z
+
+        if not _dangle_proposals:
             return {}, {}, _assemble_diagnostics()
 
         # ----------------------------
@@ -3223,18 +3345,18 @@ class FillLineGaps:
         parents_with_dangles_set = {int(v) for v in parents_with_dangles}
 
         outgoing_parent_targets: dict[int, set[int]] = {}
-        for p in proposals_by_dangle.values():
-            if p.target_parent_id is None:
+        for p in _dangle_proposals.values():
+            if p.ctx.target_parent_id is None:
                 continue
-            outgoing_parent_targets.setdefault(int(p.src_parent_id), set()).add(
-                int(p.target_parent_id)
+            outgoing_parent_targets.setdefault(int(p.ctx.src_parent_id), set()).add(
+                int(p.ctx.target_parent_id)
             )
 
         deferred_by_parent: dict[int, DeferredCapture] = {}
-        deferred_score_by_parent: dict[int, tuple] = {}
+        deferred_sort_key_by_parent: dict[int, tuple] = {}
 
-        for p in proposals_by_dangle.values():
-            b_parent = p.target_parent_id
+        for p in _dangle_proposals.values():
+            b_parent = p.ctx.target_parent_id
             if b_parent is None:
                 continue
             b_parent = int(b_parent)
@@ -3245,58 +3367,86 @@ class FillLineGaps:
 
             # No reciprocal proposal from B -> A (parent-id space)
             b_out = outgoing_parent_targets.get(b_parent, set())
-            if int(p.src_parent_id) in b_out:
+            if int(p.ctx.src_parent_id) in b_out:
                 continue
 
-            # Keep only one deferred per parent (deterministic: best score)
-            cur_best = deferred_score_by_parent.get(int(p.src_parent_id))
-            if cur_best is None or p.score < cur_best:
-                deferred_by_parent[int(p.src_parent_id)] = DeferredCapture(
-                    parent_id=int(p.src_parent_id),
-                    dangle_oid=int(p.dangle_oid),
+            # Keep only one deferred per parent (deterministic: best sort key)
+            cur_best = deferred_sort_key_by_parent.get(int(p.ctx.src_parent_id))
+            if cur_best is None or p.sort_key() < cur_best:
+                deferred_by_parent[int(p.ctx.src_parent_id)] = DeferredCapture(
+                    parent_id=int(p.ctx.src_parent_id),
+                    dangle_oid=int(p.ctx.dangle_oid),
                     forced_target_parent=int(b_parent),
                     proposal=p,
-                    assess=assess_by_dangle[int(p.dangle_oid)],
                 )
-                deferred_score_by_parent[int(p.src_parent_id)] = p.score
-                deferred_dangles.add(int(p.dangle_oid))
+                deferred_sort_key_by_parent[int(p.ctx.src_parent_id)] = p.sort_key()
+                deferred_dangles.add(int(p.ctx.dangle_oid))
 
         # Active proposals exclude deferred dangles (no fallback)
-        active: list[Proposal] = [
+        active: list[_DangleProposal] = [
             p
-            for d_oid, p in proposals_by_dangle.items()
+            for d_oid, p in _dangle_proposals.items()
             if int(d_oid) not in deferred_dangles
         ]
         if not active:
             return {}, deferred_by_parent, _assemble_diagnostics()
-        active_by_dangle = {int(p.dangle_oid): p for p in active}
+        active_by_dangle = {int(p.ctx.dangle_oid): p for p in active}
 
         dangle_mutual_oids: set[int] = set()
         for p in active:
-            if p.target_dangle_oid is None:
+            if p.ctx.target_dangle_oid is None:
                 continue
-            q = active_by_dangle.get(int(p.target_dangle_oid))
-            if q is None or q.target_dangle_oid is None:
+            q = active_by_dangle.get(int(p.ctx.target_dangle_oid))
+            if q is None or q.ctx.target_dangle_oid is None:
                 continue
-            if int(q.target_dangle_oid) == int(p.dangle_oid):
-                dangle_mutual_oids.add(int(p.dangle_oid))
-                dangle_mutual_oids.add(int(q.dangle_oid))
+            if int(q.ctx.target_dangle_oid) == int(p.ctx.dangle_oid):
+                dangle_mutual_oids.add(int(p.ctx.dangle_oid))
+                dangle_mutual_oids.add(int(q.ctx.dangle_oid))
 
         directed_network_edges: set[tuple[EntityKey, EntityKey]] = {
-            (p.src_node, p.tgt_node) for p in active
+            (p.ctx.src_node, p.ctx.tgt_node) for p in active
         }
 
         # ----------------------------
-        # Stage A: one winner per unordered network pair
+        # Pass 2: Network-scope Z normalization (before Stage A)
+        # Group active proposals by pair_key; normalize Z within each group.
         # ----------------------------
-        by_pair: dict[tuple[EntityKey, EntityKey], list[Proposal]] = {}
+        _by_pair_for_network: dict[tuple, list[_DangleProposal]] = {}
         for p in active:
-            by_pair.setdefault(p.pair_key, []).append(p)
+            _by_pair_for_network.setdefault(p.ctx.pair_key, []).append(p)
 
-        stage_a_winners: list[tuple[Proposal, str]] = []
+        network_proposals_by_dangle: dict[int, _NetworkProposal] = {}
+        for _pair_group in _by_pair_for_network.values():
+            _group_end_z = [p.ctx.end_z for p in _pair_group]
+            for p in _pair_group:
+                net_norm_z = self._normalize_z_within(_group_end_z, p.ctx.end_z)
+                net_score = _ProposalScore(
+                    composite=self._compute_best_fit_score(
+                        norm_dist=p.score.norm_dist,
+                        assess=p.ctx.assess,
+                        norm_z=net_norm_z,
+                    ),
+                    bonus_rank=p.score.bonus_rank,
+                    norm_dist=p.score.norm_dist,
+                    norm_angle=p.score.norm_angle,
+                    norm_z=net_norm_z,
+                )
+                network_proposals_by_dangle[int(p.ctx.dangle_oid)] = (
+                    _NetworkProposal.from_dangle(p, score=net_score)
+                )
+                network_norm_z_by_dangle[int(p.ctx.dangle_oid)] = net_norm_z
+
+        # ----------------------------
+        # Stage A: one winner per unordered network pair (using network-scoped scores)
+        # ----------------------------
+        by_pair: dict[tuple, list[_NetworkProposal]] = {}
+        for p in network_proposals_by_dangle.values():
+            by_pair.setdefault(p.ctx.pair_key, []).append(p)
+
+        _network_proposals: list[tuple[_NetworkProposal, str]] = []
         for pair_key in sorted(by_pair.keys()):
             group = by_pair[pair_key]
-            winner = min(group, key=lambda pr: pr.score)
+            winner = min(group, key=lambda pr: pr.sort_key())
 
             a_node, b_node = pair_key
             mutual_network = (a_node, b_node) in directed_network_edges and (
@@ -3305,8 +3455,8 @@ class FillLineGaps:
             ) in directed_network_edges
 
             if (
-                winner.target_dangle_oid is not None
-                and int(winner.dangle_oid) in dangle_mutual_oids
+                winner.ctx.target_dangle_oid is not None
+                and int(winner.ctx.dangle_oid) in dangle_mutual_oids
             ):
                 gap_source = self.GAP_SOURCE_PAIR_DANGLE
             elif mutual_network:
@@ -3314,21 +3464,44 @@ class FillLineGaps:
             else:
                 gap_source = self.GAP_SOURCE_DEFAULT
 
-            stage_a_winners.append((winner, str(gap_source)))
+            _network_proposals.append((winner, str(gap_source)))
 
         if collect_diags:
-            _stage_a_winner_oids = {int(prop.dangle_oid) for prop, _ in stage_a_winners}
+            _stage_a_winner_oids = {int(prop.ctx.dangle_oid) for prop, _ in _network_proposals}
             stage_a_loser_oids.update(
-                int(prop.dangle_oid)
-                for prop in active
-                if int(prop.dangle_oid) not in _stage_a_winner_oids
+                int(p.ctx.dangle_oid)
+                for p in network_proposals_by_dangle.values()
+                if int(p.ctx.dangle_oid) not in _stage_a_winner_oids
             )
+
+        # ----------------------------
+        # Pass 3: Global-scope Z normalization (before Stage B)
+        # Normalize Z across all Stage-A winners.
+        # ----------------------------
+        _all_end_z_global = [p.ctx.end_z for p, _ in _network_proposals]
+        _global_winners: list[tuple[_GlobalProposal, str]] = []
+        for n_prop, gap_source in _network_proposals:
+            glob_norm_z = self._normalize_z_within(_all_end_z_global, n_prop.ctx.end_z)
+            glob_score = _ProposalScore(
+                composite=self._compute_best_fit_score(
+                    norm_dist=n_prop.score.norm_dist,
+                    assess=n_prop.ctx.assess,
+                    norm_z=glob_norm_z,
+                ),
+                bonus_rank=n_prop.score.bonus_rank,
+                norm_dist=n_prop.score.norm_dist,
+                norm_angle=n_prop.score.norm_angle,
+                norm_z=glob_norm_z,
+            )
+            g_prop = _GlobalProposal.from_network(n_prop, score=glob_score)
+            _global_winners.append((g_prop, gap_source))
+            global_norm_z_by_dangle[int(n_prop.ctx.dangle_oid)] = glob_norm_z
 
         # ----------------------------
         # Stage B: Kruskal-style cycle prevention (component scopes only)
         # ----------------------------
         scope = topology.scope
-        accepted: list[tuple[Proposal, str]] = []
+        _global_proposals: list[tuple[_GlobalProposal, str]] = []
 
         if scope in (
             logic_config.ConnectivityScope.INPUT_LINES,
@@ -3347,28 +3520,28 @@ class FillLineGaps:
             for (ds_key, oid), cid in (topology.connectivity_id_by_optional or {}).items():
                 cand_ds_key = topo_to_cand_ds_key.get(ds_key, ds_key)
                 uf.union(("component", int(cid)), ("optional_candidate", str(cand_ds_key), int(oid)))
-            for prop, gap_source in sorted(stage_a_winners, key=lambda t: t[0].score):
-                if uf.find(prop.src_node) == uf.find(prop.tgt_node):
+            for prop, gap_source in sorted(_global_winners, key=lambda t: t[0].sort_key()):
+                if uf.find(prop.ctx.src_node) == uf.find(prop.ctx.tgt_node):
                     continue
-                uf.union(prop.src_node, prop.tgt_node)
-                accepted.append((prop, gap_source))
+                uf.union(prop.ctx.src_node, prop.ctx.tgt_node)
+                _global_proposals.append((prop, gap_source))
         else:
-            # NONE / DIRECT_CONNECTION: only Stage A
-            accepted = list(stage_a_winners)
+            # NONE / DIRECT_CONNECTION: only Stage A (already globally normalized)
+            _global_proposals = list(_global_winners)
 
-        if collect_diags and accepted:
-            _accepted_oids = {int(prop.dangle_oid) for prop, _ in accepted}
+        if collect_diags and _global_proposals:
+            _accepted_oids = {int(prop.ctx.dangle_oid) for prop, _ in _global_proposals}
             accepted_dangle_oids.update(_accepted_oids)
             stage_b_rejected_oids.update(
-                int(prop.dangle_oid)
-                for prop, _ in stage_a_winners
-                if int(prop.dangle_oid) not in _accepted_oids
+                int(prop.ctx.dangle_oid)
+                for prop, _ in _global_winners
+                if int(prop.ctx.dangle_oid) not in _accepted_oids
             )
             gap_source_by_dangle.update(
-                {int(prop.dangle_oid): str(gs) for prop, gs in accepted}
+                {int(prop.ctx.dangle_oid): str(gs) for prop, gs in _global_proposals}
             )
 
-        if not accepted:
+        if not _global_proposals:
             return {}, deferred_by_parent, _assemble_diagnostics()
 
         # ----------------------------
@@ -3376,25 +3549,25 @@ class FillLineGaps:
         # ----------------------------
         tmp: dict[int, list[tuple[tuple, dict]]] = {}
 
-        for prop, gap_source in sorted(accepted, key=lambda t: t[0].score):
-            xy = dangle_xy.get(int(prop.dangle_oid))
-            if xy is None:
-                continue
-            d_x, d_y = xy
-
+        for prop, gap_source in sorted(_global_proposals, key=lambda t: t[0].sort_key()):
             entry = self._make_plan_entry(
-                parent_id=int(prop.src_parent_id),
-                dangle_oid=int(prop.dangle_oid),
-                dangle_x=float(d_x),
-                dangle_y=float(d_y),
-                chosen=prop.chosen,
+                parent_id=int(prop.ctx.src_parent_id),
+                dangle_oid=int(prop.ctx.dangle_oid),
+                dangle_x=float(prop.ctx.dangle_x),
+                dangle_y=float(prop.ctx.dangle_y),
+                chosen={
+                    "near_x": float(prop.ctx.near_x),
+                    "near_y": float(prop.ctx.near_y),
+                    "near_fc_key": str(prop.ctx.near_fc_key),
+                    "near_fid": int(prop.ctx.near_fid),
+                },
                 gap_source=str(gap_source),
-                bonus_applied=prop.bonus_applied,
-                assess=assess_by_dangle.get(int(prop.dangle_oid)),
-                best_fit_score=prop.best_fit_score,
+                bonus_applied=prop.ctx.bonus_applied,
+                assess=prop.ctx.assess,
+                best_fit_score=prop.score.composite,
             )
 
-            tmp.setdefault(int(prop.src_parent_id), []).append((prop.score, entry))
+            tmp.setdefault(int(prop.ctx.src_parent_id), []).append((prop.sort_key(), entry))
 
         plan_by_parent: dict[int, list[dict]] = {}
         for pid, items in tmp.items():
@@ -3540,7 +3713,7 @@ class FillLineGaps:
 
         # Component scopes: greedy acceptance to prevent deferred candidates
         # from creating cycles among themselves, ordered by original score.
-        sorted_valid = sorted(valid, key=lambda t: t[0].proposal.score)
+        sorted_valid = sorted(valid, key=lambda t: t[0].proposal.sort_key())
         uf = _UnionFind()
         accepted: list[tuple[DeferredCapture, float, float]] = []
         for cap, nx, ny in sorted_valid:
@@ -3678,9 +3851,9 @@ class FillLineGaps:
                     "near_fid": cap.forced_target_parent,
                 },
                 gap_source=self.GAP_SOURCE_DEFERRED,
-                bonus_applied=cap.proposal.bonus_applied,
-                assess=cap.assess,
-                best_fit_score=cap.proposal.best_fit_score,
+                bonus_applied=cap.proposal.ctx.bonus_applied,
+                assess=cap.proposal.ctx.assess,
+                best_fit_score=cap.proposal.score.composite,
             )
 
         return out
@@ -3801,7 +3974,9 @@ class FillLineGaps:
         arcpy.management.AddField(fc_path, "status_reason", "TEXT", field_length=50)
         arcpy.management.AddField(fc_path, "start_z", "DOUBLE")
         arcpy.management.AddField(fc_path, "end_z", "DOUBLE")
-        arcpy.management.AddField(fc_path, "norm_z", "DOUBLE")
+        arcpy.management.AddField(fc_path, "dangle_norm_z", "DOUBLE")
+        arcpy.management.AddField(fc_path, "network_norm_z", "DOUBLE")
+        arcpy.management.AddField(fc_path, "global_norm_z", "DOUBLE")
 
     def _write_candidate_connections_output(
         self,
@@ -3834,7 +4009,9 @@ class FillLineGaps:
             "status_reason",
             "start_z",
             "end_z",
-            "norm_z",
+            "dangle_norm_z",
+            "network_norm_z",
+            "global_norm_z",
         ]
         with arcpy.da.InsertCursor(fc_path, fields) as cur:
             for d in diagnostics:
@@ -3865,7 +4042,9 @@ class FillLineGaps:
                     d.status_reason,
                     d.start_z,
                     d.end_z,
-                    d.norm_z,
+                    d.dangle_norm_z,
+                    d.network_norm_z,
+                    d.global_norm_z,
                 ))
 
     def _apply_plan(self, plan) -> None:
