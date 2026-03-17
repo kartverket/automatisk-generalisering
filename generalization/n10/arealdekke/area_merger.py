@@ -15,7 +15,9 @@ from file_manager.n10.file_manager_arealdekke import Arealdekke_N10
 
 
 @timing_decorator
-def area_merger(input_fc: str, buffered_fc: str, work_fc: str, output_fc: str, changed_area: str) -> None:
+def area_merger(
+    input_fc: str, buffered_fc: str, work_fc: str, output_fc: str, changed_area: str
+) -> None:
     """
     The main function that dissolves buffered geometries into the
     data set, removes overlapping areas and preserves topology.
@@ -28,9 +30,19 @@ def area_merger(input_fc: str, buffered_fc: str, work_fc: str, output_fc: str, c
         changed_area (str): The field name value of the land use 'arealdekke'
                             that is enlarged and overlaps other areas
     """
-    create_overlapping_land_use(input_fc=input_fc, buffered_fc=buffered_fc, output_fc=work_fc, changed_area=changed_area)
+    create_overlapping_land_use(
+        input_fc=input_fc,
+        buffered_fc=buffered_fc,
+        output_fc=work_fc,
+        changed_area=changed_area,
+    )
 
-    adjusting_surrounding_geometries(input_fc=work_fc, buffered_fc=buffered_fc, output_fc=output_fc, changed_area=changed_area)
+    adjusting_surrounding_geometries(
+        input_fc=work_fc,
+        buffered_fc=buffered_fc,
+        output_fc=output_fc,
+        changed_area=changed_area,
+    )
 
 
 # ========================
@@ -242,7 +254,4 @@ def collect_and_finish(files: dict, output_fc: str) -> None:
         files["erased_intersection"],
     ]
 
-    arcpy.management.Merge(
-        inputs=data,
-        output=output_fc
-    )
+    arcpy.management.Merge(inputs=data, output=output_fc)
