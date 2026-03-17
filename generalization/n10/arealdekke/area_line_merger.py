@@ -6,10 +6,8 @@ arcpy.env.overwriteOutput = True
 
 from composition_configs import core_config
 from custom_tools.decorators.timing_decorator import timing_decorator
-from env_setup import environment_setup
 from file_manager import WorkFileManager
 from file_manager.n10.file_manager_arealdekke import Arealdekke_N10
-from input_data import input_test_data
 
 # ========================
 # Program
@@ -17,56 +15,44 @@ from input_data import input_test_data
 
 
 @timing_decorator
-def adjusting_surrounding_geometries(input: str, changed_area: str) -> None:
+def adjusting_surrounding_geometries(
+    input_fc: str, buffered_fc: str, output_fc: str, changed_area: str
+) -> None:
     """
     Adjusts land use that intersects with 'changed_area'
     that have been enlarged to preserve topology.
 
     Args:
-        input (str): Input feature class with overlapping land use
-        changed_area (str): The field name value of the land
-                            use 'arealdekke' that is enlarged
-                            and overlaps other areas
-
-    Concept:
-        0) Input feature class contains a complete land use, where one specific value of 'arealdekke' overlaps other areas
-        1) Select all features with 'arealdekke' equal to 'changed_area' and keep these as locked features
-        2) Select all features that overlaps with the locked features
-        3) Create a dictionary with: key: locked area ID, value: the geometry of the bounding line
-        4) For each of the overlapping features:
-            a) Use PolygonToLine to get the bounding line geometry
-            b) Identify the points on the edge of locked area and those within
-            c) Remove the points within
-            d) Fetch the line of the locked featyre between the intersecting points
-            e) Add these points to the original line geometry
+        input_fc (str): Input feature class with overlapping land use
+        buffered_fc (str): Feature class with the buffer zones for thin polygons
+        changed_area (str): The field name value of the land use 'arealdekke'
+                            that is enlarged and overlaps other areas
     """
     print(f"\n🚀 Adjusts edges to fit overlapping areas to {changed_area}...\n")
 
-    # Setting up constants
-    output_fc = Arealdekke_N10.area_line_merger_output__n10_land_use.value
-
     # 1) Sets up work file manager to take care of temporary files
-    work_fc = Arealdekke_N10.area_line_merger__n10_land_use.value
-    work_config = core_config.WorkFileConfig(root_file=work_fc)
-    work_wfm = WorkFileManager(config=work_config)
+    fc = Arealdekke_N10.area_line_merger__n10_land_use.value
+    config = core_config.WorkFileConfig(root_file=fc)
+    wfm = WorkFileManager(config=config)
 
     # 2) Creates temporary files
-    work_files = create_work_wfm_gdbs(work_wfm)
+    work_files = create_work_wfm_gdbs(wfm)
 
     # 3) Fetch data with changed area and those overlapping these
-    fetch_relevant_data(input_fc=input, files=work_files, attr_val=changed_area)
+    fetch_relevant_data(
+        input_fc=input_fc,
+        buffered_fc=buffered_fc,
+        files=work_files,
+        attr_val=changed_area,
+    )
 
-    # 4) Make line features of the polygon data
-    create_line_features(files=work_files)
-
-    # 5) Delete line segments of overlapping features
+    # 4) Delete overlapping areas from features
     erase_overlap(files=work_files)
 
-    # 6) Merge valid line data sets
-    combine_lines(files=work_files)
+    # 5) Collect the data and store the result
+    collect_and_finish(files=work_files, output_fc=output_fc)
 
-    # 7) Create polygon data that do not overlap
-    create_non_overlapping_land_use(files=work_files)
+    wfm.delete_created_files()
 
 
 @timing_decorator
@@ -142,31 +128,22 @@ def create_work_wfm_gdbs(wfm: WorkFileManager) -> dict:
     intersecting_features = wfm.build_file_path(
         file_name="intersecting_features", file_type="gdb"
     )
-    lines_locked = wfm.build_file_path(file_name="lines_locked", file_type="gdb")
-    lines_intersecting = wfm.build_file_path(
-        file_name="lines_intersecting", file_type="gdb"
+    erased_intersection = wfm.build_file_path(
+        file_name="erased_intersection", file_type="gdb"
     )
-    erased_lines = wfm.build_file_path(file_name="erased_lines", file_type="gdb")
-    combined_lines = wfm.build_file_path(file_name="combined_lines", file_type="gdb")
-    temp_non_overlapping = wfm.build_file_path(
-        file_name="temp_non_overlapping", file_type="gdb"
-    )
-    temp_selection_non_overlapping = wfm.build_file_path(file_name="temp_selection_non_overlapping", file_type="gdb")
 
     return {
         "copy_of_input": copy_of_input,
         "locked_features": locked_features,
         "intersecting_features": intersecting_features,
-        "lines_locked": lines_locked,
-        "lines_intersecting": lines_intersecting,
-        "erased_lines": erased_lines,
-        "combined_lines": combined_lines,
-        "temp_non_overlapping": temp_non_overlapping,
+        "erased_intersection": erased_intersection,
     }
 
 
 @timing_decorator
-def fetch_relevant_data(input_fc: str, files: dict, attr_val: str) -> None:
+def fetch_relevant_data(
+    input_fc: str, buffered_fc: str, files: dict, attr_val: str
+) -> None:
     """
     Copies the original data to work file manager and creates two feature classes:
         1) All the buffered data (locked)
@@ -174,6 +151,7 @@ def fetch_relevant_data(input_fc: str, files: dict, attr_val: str) -> None:
 
     Args:
         input_fc (str): Feature class with the original input data
+        buffered_fc (str): Feature class with the buffers
         files (dict): Dictionary with all the working files
         attr_val (str): String representing the value of the attribute that must be locked
     """
@@ -202,8 +180,7 @@ def fetch_relevant_data(input_fc: str, files: dict, attr_val: str) -> None:
     arcpy.management.SelectLayerByLocation(
         in_layer=land_use_lyr,
         overlap_type="INTERSECT",
-        select_features=locked_fc,
-        search_distance="5 Meters",
+        select_features=buffered_fc,
         selection_type="NEW_SELECTION",
     )
     arcpy.management.CopyFeatures(
@@ -215,28 +192,6 @@ def fetch_relevant_data(input_fc: str, files: dict, attr_val: str) -> None:
 
 
 @timing_decorator
-def create_line_features(files: dict) -> None:
-    """
-    Creates line geometries of all the land use areas that have overlap.
-
-    Args:
-        files (dict): Dictionary with all the working files
-    """
-    files_to_process = [
-        [files["locked_features"], files["lines_locked"]],
-        [files["intersecting_features"], files["lines_intersecting"]],
-    ]
-
-    print()
-
-    for inp, out in files_to_process:
-        arcpy.management.PolygonToLine(in_features=inp, out_feature_class=out)
-        print(f"Processed: {inp.split("_1_")[-1]} - {out.split("_1_")[-1]}")
-
-    print()
-
-
-@timing_decorator
 def erase_overlap(files: dict) -> None:
     """
     Erase line parts of intersecting features that overlaps locked features (avoiding overlap).
@@ -245,66 +200,29 @@ def erase_overlap(files: dict) -> None:
         files (dict): Dictionary with all the working files
     """
     arcpy.analysis.Erase(
-        in_features=files["lines_intersecting"],
+        in_features=files["intersecting_features"],
         erase_features=files["locked_features"],
-        out_feature_class=files["erased_lines"],
+        out_feature_class=files["erased_intersection"],
     )
 
 
 @timing_decorator
-def combine_lines(files: dict) -> None:
+def collect_and_finish(files: dict, output_fc: str) -> None:
     """
-    Combine all data sets with non-overlapping lines.
+    Collects original data and modified data in one
+    feature class, and copies the result to output.
 
     Args:
         files (dict): Dictionary with all the working files
+        output_fc (str): Feature class to store the final result
     """
+    data = [
+        files["copy_of_input"],
+        files["locked_features"],
+        files["erased_intersection"],
+    ]
+
     arcpy.management.Merge(
-        inputs=[files["lines_locked"], files["erased_lines"]],
-        output=files["combined_lines"],
+        inputs=data,
+        output=output_fc
     )
-
-
-@timing_decorator
-def create_non_overlapping_land_use(files: dict) -> None:
-    """
-    Creates polygon data from the line data sets and preserves non-overlapping data set.
-
-    Args:
-        files (dict): Dictionary with all the working files
-    """
-    arcpy.management.FeatureToPolygon(
-        in_features=files["combined_lines"],
-        out_feature_class=files["temp_non_overlapping"],
-    )
-
-
-# ========================
-# Helper functions
-# ========================
-
-
-# ========================
-
-
-if __name__ == "__main__":
-    environment_setup.main()
-
-    working_fc = Arealdekke_N10.area_line_merger_start__n10_land_use.value
-    input_fc = input_test_data.arealdekke
-    elv_fc = input_test_data.elv
-    attribute = "Ferskvann_elv_bekk"
-
-    if not arcpy.Exists(working_fc):
-        create_overlapping_land_use(
-            complete_fc=input_fc,
-            buffered_fc=elv_fc,
-            output_fc=working_fc,
-            attribute=attribute,
-        )
-    else:
-        print(
-            "⚡ Sammenslått datasett er allerede på plass – går rett videre i prosessen!"
-        )
-
-    adjusting_surrounding_geometries(input=working_fc, changed_area=attribute)
