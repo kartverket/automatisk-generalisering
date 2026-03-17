@@ -8,13 +8,13 @@ from file_manager import WorkFileManager
 from file_manager.n10.file_manager_landuse import Landuse_N10
 from input_data import input_arealdekke
 
-'''
-Feilmelding:
-arcgisscripting.ExecuteError: Failed to execute. Parameters are not valid.
-ERROR 000732: Input Features: Dataset C:\GIS_Files\ag_outputs\n10\land_use.gdb\polygon___buffed_polygon_segments___n10_land_use_id0313_1628_2_areas_chosen does not exist or is not supported
-Failed to execute (MakeFeatureLayer).
-'''
+arcpy.env.overwriteOutput = True
 
+'''
+Function that buff small hydro polygon segments.
+
+Args: input feacture class, output feature class and to-be minimum width of the small polygon segments (Meters)
+'''
 
 @timing_decorator
 def buff_small_polygon_segments(in_feature_class, out_feature_class, min_width:int):
@@ -28,6 +28,7 @@ def buff_small_polygon_segments(in_feature_class, out_feature_class, min_width:i
 
     insert_data(files=files, input_data=in_feature_class)
     find_segments_under_min(files=files, min_width=min_width)
+    choose_target_areas(files=files)
     buff_small_segments(files=files, min_width=min_width, out_fc=out_feature_class)
 
 class fc (Enum):
@@ -36,6 +37,7 @@ class fc (Enum):
     input_polygon_minus_buffer="input_polygon_minus_buffer"
     core_of_segments_wide_enough="core_of_segments_wide_enough"
     segments_wide_enough="segments_wide_enough"
+    core_wide_enough_segments_singlepart="core_wide_enough_segments_singlepart"
     segments_too_small="segments_too_small"
     segments_too_small_single="segments_too_small_single"
 
@@ -45,6 +47,7 @@ class fc (Enum):
     centre_line="centre_line"
     small_segments_centre="small_segments_centre"
     small_segments_enlarged="small_segments_enlarged"
+    small_segments_enlarged_single="small_segments_enlarged_single"
 
 def files_setup(wfm: WorkFileManager) -> dict:
 
@@ -56,6 +59,7 @@ def files_setup(wfm: WorkFileManager) -> dict:
     input_polygon_minus_buffer=wfm.build_file_path(file_name="input_polygon_minus_buffer", file_type="gdb")
     core_of_segments_wide_enough=wfm.build_file_path(file_name="core_of_segments_wide_enough", file_type="gdb")
     segments_wide_enough=wfm.build_file_path(file_name="segments_wide_enough", file_type="gdb")
+    core_wide_enough_segments_singlepart=wfm.build_file_path(file_name="core_wide_enough_segments_singlepart", file_type="gdb")
     segments_too_small=wfm.build_file_path(file_name="segments_too_small", file_type="gdb")
     segments_too_small_single=wfm.build_file_path(file_name="segments_too_small_single", file_type="gdb")
 
@@ -67,6 +71,7 @@ def files_setup(wfm: WorkFileManager) -> dict:
     centre_line=wfm.build_file_path(file_name="centre_line", file_type="gdb")
     small_segments_centre=wfm.build_file_path(file_name="small_segments_centre", file_type="gdb")
     small_segments_enlarged=wfm.build_file_path(file_name="small_segments_enlarged", file_type="gdb")
+    small_segments_enlarged_single=wfm.build_file_path(file_name="small_segments_enlarged_single", file_type="gdb")
 
     return {
         fc.input_data:input_data,
@@ -74,6 +79,7 @@ def files_setup(wfm: WorkFileManager) -> dict:
         fc.input_polygon_minus_buffer:input_polygon_minus_buffer,
         fc.core_of_segments_wide_enough:core_of_segments_wide_enough,
         fc.segments_wide_enough:segments_wide_enough,
+        fc.core_wide_enough_segments_singlepart:core_wide_enough_segments_singlepart,
         fc.segments_too_small:segments_too_small,
         fc.segments_too_small_single:segments_too_small_single,
 
@@ -82,7 +88,8 @@ def files_setup(wfm: WorkFileManager) -> dict:
 
         fc.centre_line:centre_line,
         fc.small_segments_centre:small_segments_centre,
-        fc.small_segments_enlarged:small_segments_enlarged
+        fc.small_segments_enlarged:small_segments_enlarged,
+        fc.small_segments_enlarged_single:small_segments_enlarged_single
     }
 
 def insert_data(files:dict, input_data) -> None:
@@ -119,12 +126,16 @@ def find_segments_under_min(files:dict, min_width:int)->None:
     core_of_segments_wide_enough_lyr="core_of_segments_wide_enough_lyr"
     arcpy.management.MakeFeatureLayer(in_features=files[fc.core_of_segments_wide_enough], out_layer=core_of_segments_wide_enough_lyr)
 
-    arcpy.analysis.Buffer(
-        in_features=core_of_segments_wide_enough_lyr,
+    arcpy.management.RepairGeometry(in_features=core_of_segments_wide_enough_lyr, delete_null='DELETE_NULL')
+    arcpy.management.MultipartToSinglepart(in_features=core_of_segments_wide_enough_lyr, out_feature_class=files[fc.core_wide_enough_segments_singlepart])
+
+    core_wide_enough_segments_singlepart_lyr="core_wide_enough_segments_singlepart_lyr"
+    arcpy.management.MakeFeatureLayer(in_features=files[fc.core_wide_enough_segments_singlepart], out_layer=core_wide_enough_segments_singlepart_lyr)
+
+    arcpy.analysis.PairwiseBuffer(
+        in_features=core_wide_enough_segments_singlepart_lyr,
         out_feature_class=files[fc.segments_wide_enough],
-        buffer_distance_or_field=f"{min_width} Meters",
-        line_side="FULL",
-        line_end_type="FLAT"
+        buffer_distance_or_field=f"{min_width} Meters"
     )
 
     #Remove the large enough segments from the original polyon
@@ -134,18 +145,18 @@ def find_segments_under_min(files:dict, min_width:int)->None:
     arcpy.analysis.Erase(in_features=input_polygon_lyr, erase_features=segments_wide_enough_lyr, out_feature_class=files[fc.segments_too_small])
     
     #Make sure the polygon segments are singlepart
-    segments_too_small_lyr="segments_too_small_lyr"
-    arcpy.management.MakeFeatureLayer(in_features=files[fc.segments_too_small], out_layer=segments_too_small_lyr)
+    #segments_too_small_lyr="segments_too_small_lyr"
+    #arcpy.management.MakeFeatureLayer(in_features=files[fc.segments_too_small], out_layer=segments_too_small_lyr)
 
-    arcpy.management.RepairGeometry(in_features=segments_too_small_lyr, delete_null="DELETE_NULL")
+    #arcpy.management.RepairGeometry(in_features=segments_too_small_lyr, delete_null="DELETE_NULL")
 
-    arcpy.management.MultipartToSinglepart(in_features=segments_too_small_lyr, out_feature_class=files[fc.segments_too_small_single])
+    #arcpy.management.MultipartToSinglepart(in_features=segments_too_small_lyr, out_feature_class=files[fc.segments_too_small_single])
 
 def choose_target_areas(files:dict)->None:
     
     #Create an overkill buffer that includes the small segments and some of the area around.
     segments_too_small_single_lyr="segments_too_small_single_lyr"
-    arcpy.management.MakeFeatureLayer(in_features=files[fc.segments_too_small_single], out_layer=segments_too_small_single_lyr)
+    arcpy.management.MakeFeatureLayer(in_features=files[fc.segments_too_small], out_layer=segments_too_small_single_lyr)
     
     arcpy.analysis.Buffer(
         in_features=segments_too_small_single_lyr,
@@ -199,7 +210,7 @@ def buff_small_segments(files:dict, min_width:int, out_fc)->None:
         )
 
     except:
-        arcpy.analysis.Buffer(
+        arcpy.analysis.PairBuffer(
             in_features=small_segments_centre_lyr,
             out_feature_class=files[fc.small_segments_enlarged],
             buffer_distance_or_field=f"{min_width} Meters"
@@ -209,4 +220,19 @@ def buff_small_segments(files:dict, min_width:int, out_fc)->None:
     small_segments_enlarged_lyr="small_segments_enlarged_lyr"
     arcpy.management.MakeFeatureLayer(in_features=files[fc.small_segments_enlarged], out_layer=small_segments_enlarged_lyr)
 
-    arcpy.management.MultipartToSinglepart(in_features=small_segments_enlarged_lyr, out_feature_class=out_fc)
+    arcpy.management.MultipartToSinglepart(in_features=small_segments_enlarged_lyr, out_feature_class=files[fc.small_segments_enlarged_single])
+
+    #Do a spatial join to get the arealdekke value.
+    small_segments_enlarged_single_lyr="small_segments_enlarged_single_lyr"
+    arcpy.management.MakeFeatureLayer(in_features=files[fc.small_segments_enlarged_single], out_layer=small_segments_enlarged_single_lyr)
+
+    arcpy.analysis.SpatialJoin(
+        target_features=small_segments_enlarged_single_lyr,
+        join_features=chosen_areas_lyr,
+        out_feature_class=out_fc,
+        join_operation='JOIN_ONE_TO_ONE',
+        match_option='INTERSECT'
+    )
+
+if __name__ == "__main__":
+    buff_small_polygon_segments()
