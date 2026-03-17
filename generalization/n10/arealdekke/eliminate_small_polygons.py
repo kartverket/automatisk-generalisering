@@ -26,9 +26,15 @@ class EliminateSmallPolygons:
         )
         self.files = self.create_wfm_gdbs(self.wfm)
 
-    def create_wfm_gdbs(self, wfm: WorkFileManager) -> dict:
+    def _create_wfm_gdbs(self, wfm: WorkFileManager) -> dict:
         eliminate_input = wfm.build_file_path(
             file_name="eliminate_input", file_type="gdb"
+        )
+        eliminate_input_include = wfm.build_file_path(
+            file_name="eliminate_input_include", file_type="gdb"
+        )
+        eliminate_input_exclude = wfm.build_file_path(
+            file_name="eliminate_input_exclude", file_type="gdb"
         )
         eliminate_eliminated = wfm.build_file_path(
             file_name="eliminate_eliminated", file_type="gdb"
@@ -63,9 +69,14 @@ class EliminateSmallPolygons:
         eliminate_clipped_singlepart = wfm.build_file_path(
             file_name="eliminate_clipped_singlepart", file_type="gdb"
         )
+        eliminate_final_elim_merged = wfm.build_file_path(
+            file_name="eliminate_final_elim_merged", file_type="gdb"
+        )
 
         return {
             "eliminate_input": eliminate_input,
+            "eliminate_input_include": eliminate_input_include,
+            "eliminate_input_exclude": eliminate_input_exclude,
             "eliminate_eliminated": eliminate_eliminated,
             "eliminate_after_elim": eliminate_after_elim,
             "eliminate_selected_negative_buffers": eliminate_selected_negative_buffers,
@@ -77,13 +88,34 @@ class EliminateSmallPolygons:
             "eliminate_merged_clipped_erased": eliminate_merged_clipped_erased,
             "eliminate_clip_erase_eliminated": eliminate_clip_erase_eliminated,
             "eliminate_final_elim": eliminate_final_elim,
+            "eliminate_final_elim_merged": eliminate_final_elim_merged
         }
 
-    def fetch_data(self):
+    def _fetch_data(self):
         arcpy.management.CopyFeatures(
             in_features=self.input_eliminate,
             out_feature_class=self.files["eliminate_input"],
         )
+    
+    def _exlude(self):
+        """
+        Removes certain obj types like gangvei to prevent eliminating the nice patterns
+        """
+        include = "layer_include"
+        exclude = "layer_exclude"
+        arcpy.management.MakeFeatureLayer(self.files["eliminate_input"], include, where_clause="arealbruk_underklasse <> 'GangSykkelVeg' OR arealbruk_underklasse IS NULL")
+        arcpy.management.CopyFeatures(include, self.files["eliminate_input_include"])
+        arcpy.management.MakeFeatureLayer(self.files["eliminate_input"], exclude, where_clause="arealbruk_underklasse = 'GangSykkelVeg'")
+        arcpy.management.CopyFeatures(exclude, self.files["eliminate_input_exclude"])
+    
+    def _merge_excluded(self):
+        """
+        Merge excluded data to output
+        """
+        arcpy.management.Merge([self.files["eliminate_input_exclude"], self.files["eliminate_final_elim"]], self.files["eliminate_final_elim_merged"])
+    
+
+
 
     @timing_decorator
     def add_fields(self, input_fc):
@@ -153,7 +185,7 @@ class EliminateSmallPolygons:
         )
 
     @timing_decorator
-    def buffer_potential_spikes(self):
+    def _buffer_potential_spikes(self):
         """Buffer all polygons except water and samferdsel to remove spikes"""
         layer = "eliminate_after_elim_layer"
         arcpy.management.MakeFeatureLayer(
@@ -173,7 +205,7 @@ class EliminateSmallPolygons:
         )
 
     @timing_decorator
-    def clip_and_erase(self):
+    def _clip_and_erase(self):
         """Clip and erase the buffered features, to remove narrow parts of polygons, and then merge the clipped and erased features back together. And run a final eliminate on anything smaller than 100 sqm that is not water or samferdsel."""
         arcpy.analysis.Clip(
             in_features=self.files["eliminate_after_elim"],
@@ -251,27 +283,28 @@ class EliminateSmallPolygons:
     @timing_decorator
     def run(self):
         environment_setup.main()
-        self.fetch_data()
+        self._fetch_data()
         self.add_fields(self.files["eliminate_input"])
+        self._exlude()
         self.eliminate(
-            self.files["eliminate_input"], self.files["eliminate_after_elim"]
+            self.files["eliminate_input_include"], self.files["eliminate_after_elim"]
         )
-        self.buffer_potential_spikes()
-        self.clip_and_erase()
+        self._buffer_potential_spikes()
+        self._clip_and_erase()
         self.eliminate(
             self.files["eliminate_clip_erase_eliminated"],
             self.files["eliminate_final_elim"],
         )
-
-        self._integrate(self.files["eliminate_final_elim"])
-        self._remove_fields(self.files["eliminate_final_elim"])
+        self._merge_excluded()
+        self._integrate(self.files["eliminate_final_elim_merged"])
+        self._remove_fields(self.files["eliminate_final_elim_merged"])
 
         arcpy.management.CopyFeatures(
-            in_features=self.files["eliminate_final_elim"],
+            in_features=self.files["eliminate_final_elim_merged"],
             out_feature_class=self.output_feature,
         )
 
-        self.wfm.delete_created_files()
+        #self.wfm.delete_created_files()
 
 
 def normal_call(input_fc: str, output_fc: str):

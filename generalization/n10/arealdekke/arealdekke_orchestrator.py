@@ -18,7 +18,7 @@ from custom_tools.decorators.timing_decorator import timing_decorator
 @timing_decorator
 def main():
     environment_setup.main()
-    attribute_changer(
+    """attribute_changer(
         input_fc=input_n10.Arealdekke_Oslo,
         output_fc=Arealdekke_N10.attribute_changer_output__n10_land_use.value,
     )
@@ -26,6 +26,7 @@ def main():
         input_fc=Arealdekke_N10.attribute_changer_output__n10_land_use.value,
         output_fc=Arealdekke_N10.dissolve_arealdekke.value,
     )
+    """
     eliminate_small_polygons(
         input_fc=Arealdekke_N10.dissolve_arealdekke.value,
         output_fc=Arealdekke_N10.elim_output.value,
