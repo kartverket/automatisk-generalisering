@@ -10,8 +10,83 @@ from file_manager import WorkFileManager
 from file_manager.n10.file_manager_arealdekke import Arealdekke_N10
 
 # ========================
-# Program
+# Main function
 # ========================
+
+
+@timing_decorator
+def area_merger(input_fc: str, buffered_fc: str, work_fc: str, output_fc: str, changed_area: str) -> None:
+    """
+    The main function that dissolves buffered geometries into the
+    data set, removes overlapping areas and preserves topology.
+
+    Args:
+        input_fc (str): Input feature class with overlapping land use
+        buffered_fc (str): Feature class with the buffer zones for thin polygons
+        work_fc (str): Feature class to store half-processed results
+        output_fc (str): Feature class to store output
+        changed_area (str): The field name value of the land use 'arealdekke'
+                            that is enlarged and overlaps other areas
+    """
+    create_overlapping_land_use(input_fc=input_fc, buffered_fc=buffered_fc, output_fc=work_fc, changed_area=changed_area)
+
+    adjusting_surrounding_geometries(input_fc=work_fc, buffered_fc=buffered_fc, output_fc=output_fc, changed_area=changed_area)
+
+
+# ========================
+# Helper functions
+# ========================
+
+
+@timing_decorator
+def create_overlapping_land_use(
+    input_fc: str, buffered_fc: str, output_fc: str, changed_area: str
+) -> None:
+    """
+    Creates a new feature class that keeps all original features except
+    for those matching 'changed_area' and adds the buffered features so that
+    the complete data contains correct, but overlapping areas.
+
+    Args:
+        input_fc (str): Feature class containing all the original features
+        buffered_fc (str): Feature class containing the buffered, small features
+        output_fc (str): Feature class to be created with overlapping geometries
+        changed_area (str): The attribute value of the attribute field to change
+    """
+    print(f"🎯 Filtering 'arealdekke' on attribute: '{changed_area}' …")
+    land_use_lyr = "land_use_lyr"
+    arcpy.management.MakeFeatureLayer(input_fc, land_use_lyr)
+    arcpy.management.SelectLayerByAttribute(
+        in_layer_or_view=land_use_lyr,
+        selection_type="NEW_SELECTION",
+        where_clause=f"arealdekke = '{changed_area}'",
+    )
+
+    print("🔀 Merges buffered features with selected original land use …")
+    temp_merge_fc = r"in_memory/temp_merge_fc"
+    temp_dissolve_fc = r"in_memory/temp_dissolved_fc"
+
+    arcpy.management.Merge(inputs=[buffered_fc, land_use_lyr], output=temp_merge_fc)
+
+    print("🧩 Runs dissolve …")
+    arcpy.management.Dissolve(
+        in_features=temp_merge_fc,
+        out_feature_class=temp_dissolve_fc,
+        dissolve_field="arealdekke",
+        multi_part="SINGLE_PART",
+    )
+
+    print(f"🧹 Collects all other land use types except for '{changed_area}' …")
+    arcpy.management.SelectLayerByAttribute(
+        land_use_lyr,
+        selection_type="NEW_SELECTION",
+        where_clause=f"arealdekke NOT IN ('{changed_area}')",
+    )
+
+    print("🏁 Merges the data together in final output …")
+    arcpy.management.Merge(inputs=[temp_dissolve_fc, land_use_lyr], output=output_fc)
+
+    print("Feature class is ready for use 🎉")
 
 
 @timing_decorator
@@ -25,6 +100,7 @@ def adjusting_surrounding_geometries(
     Args:
         input_fc (str): Input feature class with overlapping land use
         buffered_fc (str): Feature class with the buffer zones for thin polygons
+        output_fc (str): Feature class to store output
         changed_area (str): The field name value of the land use 'arealdekke'
                             that is enlarged and overlaps other areas
     """
@@ -53,62 +129,6 @@ def adjusting_surrounding_geometries(
     collect_and_finish(files=work_files, output_fc=output_fc)
 
     wfm.delete_created_files()
-
-
-@timing_decorator
-def create_overlapping_land_use(
-    complete_fc: str, buffered_fc: str, output_fc: str, attribute: str
-) -> None:
-    """
-    Creates a new feature class that keeps all original features except
-    for those matching 'attribute' and adds the buffered features so that
-    the complete data contains correct, but overlapping areas.
-
-    Args:
-        complete_fc (str): Feature class containing all the original features
-        buffered_fc (str): Feature class containing the buffered, small features
-        output_fc (str): Feature class to be created with overlapping geometries
-        attribute (str): The attribute value of the attribute field to change
-    """
-    print(f"🎯 Filtering 'arealdekke' on attribute: '{attribute}' …")
-    land_use_lyr = "land_use_lyr"
-    arcpy.management.MakeFeatureLayer(complete_fc, land_use_lyr)
-    arcpy.management.SelectLayerByAttribute(
-        in_layer_or_view=land_use_lyr,
-        selection_type="NEW_SELECTION",
-        where_clause=f"arealdekke = '{attribute}'",
-    )
-
-    print("🔀 Merges buffered features with selected original land use …")
-    temp_merge_fc = r"in_memory/temp_merge_fc"
-    temp_dissolve_fc = r"in_memory/temp_dissolved_fc"
-
-    arcpy.management.Merge(inputs=[buffered_fc, land_use_lyr], output=temp_merge_fc)
-
-    print("🧩 Runs dissolve …")
-    arcpy.management.Dissolve(
-        in_features=temp_merge_fc,
-        out_feature_class=temp_dissolve_fc,
-        dissolve_field="arealdekke",
-        multi_part="SINGLE_PART",
-    )
-
-    print(f"🧹 Collects all other land use types except for '{attribute}' …")
-    arcpy.management.SelectLayerByAttribute(
-        land_use_lyr,
-        selection_type="NEW_SELECTION",
-        where_clause=f"arealdekke NOT IN ('{attribute}')",
-    )
-
-    print("🏁 Merges the data together in final output …")
-    arcpy.management.Merge(inputs=[temp_dissolve_fc, land_use_lyr], output=output_fc)
-
-    print("Feature class is ready for use 🎉")
-
-
-# ========================
-# Main functions
-# ========================
 
 
 @timing_decorator
