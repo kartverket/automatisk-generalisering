@@ -5,11 +5,13 @@ on:
     branches:
       - main
 
+permissions:
+  contents: read
+
 jobs:
   black-check:
     name: Black Lint Check
     runs-on: ubuntu-latest
-
     steps:
       - name: Checkout Code
         uses: actions/checkout@v4

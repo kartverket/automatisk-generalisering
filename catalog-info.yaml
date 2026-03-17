@@ -7,4 +7,4 @@ metadata:
 spec:
   type: service
   lifecycle: production
-  owner: n50
+  owner: automatisk_generalisering

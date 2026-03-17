@@ -1,21 +1,14 @@
-from dataclasses import dataclass, field
-import os
+from dataclasses import dataclass
 from typing import (
     Dict,
     List,
-    Literal,
     Optional,
     Tuple,
     Union,
     Any,
-    Callable,
-    Mapping,
-    Sequence,
 )
-from enum import Enum
 
-from composition_configs import core_config, type_defs, io_types
-from file_manager import work_file_manager
+from composition_configs import core_config, io_types
 
 
 @dataclass(frozen=True)
@@ -145,6 +138,13 @@ class RemoveRoadTrianglesRunParams:
     scale: str
 
 
+class CleanTrailsKwargs:
+    work_file_manager_config: core_config.WorkFileConfig
+    maximum_length: int
+    root_file: io_types.GdbIOArg
+    sql_expressions: Optional[List[str]] = None
+
+
 @dataclass(frozen=True)
 class CollapseRoadDetailsKwargs:
     input_road_line: io_types.GdbIOArg
@@ -188,6 +188,29 @@ class DissolveInitKwargs:
 
 
 @dataclass(frozen=True)
+class ArealDekkeDissolverInitKwargs:
+    input_feature: str
+    output_feature: str
+    index_column_name: str
+    work_file_manager_config: core_config.WorkFileConfig
+
+
+@dataclass(frozen=True)
+class GangSykkelDissolverInitKwargs:
+    input_feature: str
+    output_feature: str
+    index_column_name: str
+    work_file_manager_config: core_config.WorkFileConfig
+
+
+@dataclass(frozen=True)
+class EliminateSmallPolygonsInitKwargs:
+    input_feature: str
+    output_feature: str
+    work_file_manager_config: core_config.WorkFileConfig
+
+
+@dataclass(frozen=True)
 class ConnectRiverLinesKwargs:
     work_file_manager_config: core_config.WorkFileConfig
     output_processed_feature: io_types.GdbIOArg
@@ -207,3 +230,12 @@ class RiverStrahlerKwargs:
     work_file_manager_config: core_config.WorkFileConfig
     output_processed_feature: io_types.GdbIOArg
     havflate_feature: io_types.GdbIOArg
+
+
+@dataclass(frozen=True)
+class AttributeChangerInitKwargs:
+    input_feature: str
+    output_feature: str
+    new_field: str
+    new_type: str
+    work_file_manager_config: core_config.WorkFileConfig

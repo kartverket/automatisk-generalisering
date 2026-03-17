@@ -5,10 +5,11 @@ from custom_tools.decorators.timing_decorator import timing_decorator
 from custom_tools.general_tools.isolated_line_remover import IsolatedLineRemover
 
 from composition_configs import core_config
-from file_manager import WorkFileManager
-from file_manager.n10.file_manager_railway import Railway_N10
-from input_data import input_n10
 from env_setup import environment_setup
+from file_manager import WorkFileManager
+from file_manager.n10.file_manager_facilities import Facility_N10
+from generalization.n10.facilities.railways_attributes import main as update_attributes
+from input_data import input_n10, input_fkb
 
 
 def compute_line_azimuth(geom: arcpy.Polyline):
@@ -246,7 +247,6 @@ def explore_paths(
     geom_by_oid: dict,
     adjacency: dict,
     buffer_outlines_geoms: list,
-    global_visited: set,
 ):
     """
     Explore all paths starting from start_oid at start_endpoint going in one direction, looking for paths that intersect buffer edges.
@@ -308,8 +308,6 @@ def explore_paths(
         neighbors = adjacency.get(oid, set())
 
         # compute vector from the shared endpoint toward the start centroid (reference)
-        other_ep_x, other_ep_y = other_ep
-        # use tuple coordinates for vector math
         start_centroid_xy = (start_centroid.X, start_centroid.Y)
         v_to_start = vec_from(other_ep, start_centroid_xy)
         v_to_start_len2 = norm2(v_to_start)
@@ -443,7 +441,7 @@ def iterative_side_lines(
                 selected_geoms.append(mid_line)
                 selected_oids.add(mid_oid)
 
-            for i in range(max_iterations):
+            for _ in range(max_iterations):
                 with arcpy.da.SearchCursor(
                     "lines_lyr", ["OID@", "SHAPE@", "prio"]
                 ) as line_cur:
@@ -485,9 +483,7 @@ def iterative_side_lines(
 
                 if candidates:
                     # choose the candidate with the smallest distance (closest among those >= step)
-                    chosen_oid, chosen_geom, chosen_dist = min(
-                        candidates, key=lambda t: t[2]
-                    )
+                    chosen_oid, chosen_geom, _ = min(candidates, key=lambda t: t[2])
                     # if chosen_geom.length > 1.0 and chosen_oid not in selected_oids:
                     selected_geoms.append(chosen_geom)
                     selected_oids.add(chosen_oid)
@@ -510,7 +506,7 @@ def iterative_side_lines(
         arcpy.management.Merge(all_side_lines, output_fc)
 
         ##########
-        # Ensure each cluster of lines going into the buffer has atleast one line that continues
+        # Ensure each cluster of lines going into the buffer has at least one line that continues
         ##########
 
         dissolved_endpoint_buf_lyr = "dissolved_endpoint_buf_lyr"
@@ -620,7 +616,7 @@ def attach_extra_lines_endpoints(orig_layer: str, output_fc: str, meters: int):
                 with arcpy.da.SearchCursor(
                     "orig_lines_lyr", ["OID@", "SHAPE@", "prio", "Shape_Length"]
                 ) as cand_cur:
-                    for oid, geom, prio, length in cand_cur:
+                    for _, geom, prio, length in cand_cur:
                         # score: prefer prio==1, then longer length
                         score = (1000 if prio == 1 else 0) + (length or 0)
                         if score > best_score:
@@ -655,7 +651,6 @@ def prepare_lines(
     files: dict,
     default_source: str,
     lines_layer: str,
-    max_length: float = 1000.0,
     length_field: str = "Length_m",
 ) -> str:
     """
@@ -860,9 +855,7 @@ def connect_lines_to_buffer_and_buffer_centroids(clipped_fc: str, buffer_fc: str
     return buffer_centroids
 
 
-def create_whole_lines(
-    clipped_fc: str, erased_fc: str, centroid_fc: str, buffer_fc: str
-):
+def create_whole_lines(clipped_fc: str, centroid_fc: str, buffer_fc: str):
     """
     For each buffer group, connect lines into continuous paths starting from the line closest to the centroid.
 
@@ -880,7 +873,6 @@ def create_whole_lines(
             bid = row[0]
             group_ids.add(bid)
 
-    keep_line_set = set()
     clipped_layer = "clipped_layer"
     arcpy.management.MakeFeatureLayer(clipped_fc, clipped_layer)
     centroid_layer = "centroid_layer"
@@ -936,8 +928,6 @@ def create_whole_lines(
                     adjacency[a].update(oids - {a})
 
         # traversal: start from the closest line to centroid
-        possible_path = []
-        added = False
         visited = set()
         keep_line_list_list_prio1 = []
         keep_line_list_list_prio2 = []
@@ -968,7 +958,6 @@ def create_whole_lines(
                 geom_by_oid,
                 adjacency,
                 buffer_outlines_geoms,
-                visited,
             )
             # Explore from the opposite endpoint
             found2, path2 = explore_paths(
@@ -977,7 +966,6 @@ def create_whole_lines(
                 geom_by_oid,
                 adjacency,
                 buffer_outlines_geoms,
-                visited,
             )
 
             # Merge paths and add to keep line lists based on priority
@@ -1068,7 +1056,7 @@ def keep_lines(files: dict, lines_layer: str, buffer_dissolved_mem: str):
         clipped_sp, buffer_dissolved_mem
     )
 
-    create_whole_lines(clipped_sp, erased_sp, buffer_centroids, buffer_dissolved_mem)
+    create_whole_lines(clipped_sp, buffer_centroids, buffer_dissolved_mem)
 
     arcpy.management.CopyFeatures(erased_sp, files["erased_restored"])
 
@@ -1328,7 +1316,7 @@ def restore_medium_b_lines(
                         possible_lines[w_oid] = [w_geom, w_prio]
 
             # insert the selected geometries for this b_geom
-            for geom, prio in possible_lines.values():
+            for geom, _ in possible_lines.values():
                 i_cur.insertRow([geom])
 
 
@@ -1392,13 +1380,11 @@ def merge_lines(files: dict):
             row[2] = base + add
             cursor.updateRow(row)
 
-    outside_lines_dissolved = r"in_memory\outside_lines_dissolved_1264"
-    # arcpy.management.Dissolve(outside_lines_singlepart, outside_lines_dissolved, merge_field, multi_part="SINGLE_PART")
     arcpy.cartography.MergeDividedRoads(
         in_features=lines_singlepart,
         merge_field=merge_field,
         merge_distance="7 Meters",
-        out_features=Railway_N10.output_railway_n10.value,
+        out_features=Facility_N10.output_railway_n10.value,
     )
 
 
@@ -1521,7 +1507,6 @@ def create_wfm_gdbs(wfm: WorkFileManager) -> dict:
 
 @timing_decorator
 def main():
-    #
     # For some reason these settings cause the output to worsen so we clear them then restore them
     # arcpy.env.XYTolerance, arcpy.env.XYResolution, arcpy.env.parallelProcessingFactor
     environment_setup.main()
@@ -1544,10 +1529,14 @@ def main():
     arcpy.env.XYResolution = res
     arcpy.env.parallelProcessingFactor = ppf
 
+    # Update the attribute table (see: railways_attributes.py)
+    update_attributes()
 
+
+@timing_decorator
 def setup_workflow():
-    source_file = input_n10.Railways
-    working_fc = Railway_N10.input_railway_n10.value
+    source_file = input_fkb.fkb_bane_senterlinje  # input_n10.Railways
+    working_fc = Facility_N10.input_railway_n10.value
     work_config = core_config.WorkFileConfig(root_file=working_fc)
     wfm = WorkFileManager(config=work_config)
     files = create_wfm_gdbs(wfm=wfm)
@@ -1605,13 +1594,13 @@ def finalize_and_export(files: dict, buffer_dissolved_mem: str):
 
     merge_lines(files)
 
-    oid_field = arcpy.Describe(Railway_N10.output_railway_n10.value).OIDFieldName
+    oid_field = arcpy.Describe(Facility_N10.output_railway_n10.value).OIDFieldName
     fields = [
         f.name
-        for f in arcpy.ListFields(Railway_N10.output_railway_n10.value)
+        for f in arcpy.ListFields(Facility_N10.output_railway_n10.value)
         if f.name != oid_field
     ]
-    arcpy.management.DeleteIdentical(Railway_N10.output_railway_n10.value, fields)
+    arcpy.management.DeleteIdentical(Facility_N10.output_railway_n10.value, fields)
 
 
 if __name__ == "__main__":
