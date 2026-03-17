@@ -4,6 +4,14 @@ generalization.n10.arealdekke package
 Submodules
 ----------
 
+generalization.n10.arealdekke.area\_merger module
+-------------------------------------------------
+
+.. automodule:: generalization.n10.arealdekke.area_merger
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
 generalization.n10.arealdekke.arealdekke\_dissolver module
 ----------------------------------------------------------
 

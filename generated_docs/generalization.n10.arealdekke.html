@@ -105,6 +105,130 @@
 <section id="submodules">
 <h2>Submodules<a class="headerlink" href="#submodules" title="Link to this heading"></a></h2>
 </section>
+<section id="module-generalization.n10.arealdekke.area_merger">
+<span id="generalization-n10-arealdekke-area-merger-module"></span><h2>generalization.n10.arealdekke.area_merger module<a class="headerlink" href="#module-generalization.n10.arealdekke.area_merger" title="Link to this heading"></a></h2>
+<dl class="py function">
+<dt class="sig sig-object py" id="generalization.n10.arealdekke.area_merger.area_merger">
+<span class="sig-prename descclassname"><span class="pre">generalization.n10.arealdekke.area_merger.</span></span><span class="sig-name descname"><span class="pre">area_merger</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">input_fc</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">buffered_fc</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">work_fc</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">output_fc</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">changed_area</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="reference internal" href="../_modules/generalization/n10/arealdekke/area_merger.html#area_merger"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#generalization.n10.arealdekke.area_merger.area_merger" title="Link to this definition"></a></dt>
+<dd><p>The main function that dissolves buffered geometries into the
+data set, removes overlapping areas and preserves topology.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>input_fc</strong> (<em>str</em>) – Input feature class with overlapping land use</p></li>
+<li><p><strong>buffered_fc</strong> (<em>str</em>) – Feature class with the buffer zones for thin polygons</p></li>
+<li><p><strong>work_fc</strong> (<em>str</em>) – Feature class to store half-processed results</p></li>
+<li><p><strong>output_fc</strong> (<em>str</em>) – Feature class to store output</p></li>
+<li><p><strong>changed_area</strong> (<em>str</em>) – The field name value of the land use ‘arealdekke’
+that is enlarged and overlaps other areas</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="generalization.n10.arealdekke.area_merger.create_overlapping_land_use">
+<span class="sig-prename descclassname"><span class="pre">generalization.n10.arealdekke.area_merger.</span></span><span class="sig-name descname"><span class="pre">create_overlapping_land_use</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">input_fc</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">buffered_fc</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">output_fc</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">changed_area</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="reference internal" href="../_modules/generalization/n10/arealdekke/area_merger.html#create_overlapping_land_use"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#generalization.n10.arealdekke.area_merger.create_overlapping_land_use" title="Link to this definition"></a></dt>
+<dd><p>Creates a new feature class that keeps all original features except
+for those matching ‘changed_area’ and adds the buffered features so that
+the complete data contains correct, but overlapping areas.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>input_fc</strong> (<em>str</em>) – Feature class containing all the original features</p></li>
+<li><p><strong>buffered_fc</strong> (<em>str</em>) – Feature class containing the buffered, small features</p></li>
+<li><p><strong>output_fc</strong> (<em>str</em>) – Feature class to be created with overlapping geometries</p></li>
+<li><p><strong>changed_area</strong> (<em>str</em>) – The attribute value of the attribute field to change</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="generalization.n10.arealdekke.area_merger.adjusting_surrounding_geometries">
+<span class="sig-prename descclassname"><span class="pre">generalization.n10.arealdekke.area_merger.</span></span><span class="sig-name descname"><span class="pre">adjusting_surrounding_geometries</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">input_fc</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">buffered_fc</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">output_fc</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">changed_area</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="reference internal" href="../_modules/generalization/n10/arealdekke/area_merger.html#adjusting_surrounding_geometries"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#generalization.n10.arealdekke.area_merger.adjusting_surrounding_geometries" title="Link to this definition"></a></dt>
+<dd><p>Adjusts land use that intersects with ‘changed_area’
+that have been enlarged to preserve topology.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>input_fc</strong> (<em>str</em>) – Input feature class with overlapping land use</p></li>
+<li><p><strong>buffered_fc</strong> (<em>str</em>) – Feature class with the buffer zones for thin polygons</p></li>
+<li><p><strong>output_fc</strong> (<em>str</em>) – Feature class to store output</p></li>
+<li><p><strong>changed_area</strong> (<em>str</em>) – The field name value of the land use ‘arealdekke’
+that is enlarged and overlaps other areas</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="generalization.n10.arealdekke.area_merger.create_work_wfm_gdbs">
+<span class="sig-prename descclassname"><span class="pre">generalization.n10.arealdekke.area_merger.</span></span><span class="sig-name descname"><span class="pre">create_work_wfm_gdbs</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">wfm</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="file_manager.html#file_manager.work_file_manager.WorkFileManager" title="file_manager.work_file_manager.WorkFileManager"><span class="pre">WorkFileManager</span></a></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">dict</span></span></span><a class="reference internal" href="../_modules/generalization/n10/arealdekke/area_merger.html#create_work_wfm_gdbs"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#generalization.n10.arealdekke.area_merger.create_work_wfm_gdbs" title="Link to this definition"></a></dt>
+<dd><p>Creates all the temporarily files that are going to be used
+during the process of adjusting land use boundaries.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>wfm</strong> (<a class="reference internal" href="file_manager.html#file_manager.work_file_manager.WorkFileManager" title="file_manager.work_file_manager.WorkFileManager"><em>WorkFileManager</em></a>) – The WorkFileManager instance that are keeping the files</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>A dictionary with all the files as variables</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>dict</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="generalization.n10.arealdekke.area_merger.fetch_relevant_data">
+<span class="sig-prename descclassname"><span class="pre">generalization.n10.arealdekke.area_merger.</span></span><span class="sig-name descname"><span class="pre">fetch_relevant_data</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">input_fc</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">buffered_fc</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">files</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dict</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">attr_val</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="reference internal" href="../_modules/generalization/n10/arealdekke/area_merger.html#fetch_relevant_data"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#generalization.n10.arealdekke.area_merger.fetch_relevant_data" title="Link to this definition"></a></dt>
+<dd><dl class="simple">
+<dt>Copies the original data to work file manager and creates two feature classes:</dt><dd><ol class="arabic simple">
+<li><p>All the buffered data (locked)</p></li>
+<li><p>Data intersecting these buffers</p></li>
+</ol>
+</dd>
+</dl>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>input_fc</strong> (<em>str</em>) – Feature class with the original input data</p></li>
+<li><p><strong>buffered_fc</strong> (<em>str</em>) – Feature class with the buffers</p></li>
+<li><p><strong>files</strong> (<em>dict</em>) – Dictionary with all the working files</p></li>
+<li><p><strong>attr_val</strong> (<em>str</em>) – String representing the value of the attribute that must be locked</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="generalization.n10.arealdekke.area_merger.erase_overlap">
+<span class="sig-prename descclassname"><span class="pre">generalization.n10.arealdekke.area_merger.</span></span><span class="sig-name descname"><span class="pre">erase_overlap</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">files</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dict</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="reference internal" href="../_modules/generalization/n10/arealdekke/area_merger.html#erase_overlap"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#generalization.n10.arealdekke.area_merger.erase_overlap" title="Link to this definition"></a></dt>
+<dd><p>Erase line parts of intersecting features that overlaps locked features (avoiding overlap).</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>files</strong> (<em>dict</em>) – Dictionary with all the working files</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="generalization.n10.arealdekke.area_merger.collect_and_finish">
+<span class="sig-prename descclassname"><span class="pre">generalization.n10.arealdekke.area_merger.</span></span><span class="sig-name descname"><span class="pre">collect_and_finish</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">files</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dict</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">output_fc</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="reference internal" href="../_modules/generalization/n10/arealdekke/area_merger.html#collect_and_finish"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#generalization.n10.arealdekke.area_merger.collect_and_finish" title="Link to this definition"></a></dt>
+<dd><p>Collects original data and modified data in one
+feature class, and copies the result to output.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>files</strong> (<em>dict</em>) – Dictionary with all the working files</p></li>
+<li><p><strong>output_fc</strong> (<em>str</em>) – Feature class to store the final result</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+</section>
 <section id="generalization-n10-arealdekke-arealdekke-dissolver-module">
 <h2>generalization.n10.arealdekke.arealdekke_dissolver module<a class="headerlink" href="#generalization-n10-arealdekke-arealdekke-dissolver-module" title="Link to this heading"></a></h2>
 </section>
