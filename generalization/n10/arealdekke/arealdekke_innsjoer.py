@@ -1,6 +1,7 @@
 import arcpy
 from enum import Enum
 from custom_tools.decorators.timing_decorator import timing_decorator
+from arealdekke_configurations import a_configs
 
 from composition_configs import core_config
 from env_setup import environment_setup
@@ -38,7 +39,17 @@ Buffe innsjø segmenter under minstemål (denne burde deles opp!) 👍
 
 Aggregering
 - Aggreger små innsjøer som er veldig nærme hverandre. 7 meter aggregation distance virker greit hittil.
-**
+    - Kan være en løsning å sette opp en sjekk etter aggregeringen på områdene som ble selektert. Hvis arealet lagt til er en viss prosent av det originale
+        arealet (hvertfall 50% ikke innafor), bør endringen sløyfes. Kan velges ut ved å legge til id-en i en liste eller å ha et ekstra attributt felt i
+        den aggregerte polygon tabellen.
+
+        - En mulighet kan være å lage en buffer rundt innsjøene som er innenfor største og minstemål. Deretter, kan man clippe arealdekket til bufferne, og
+            kjøre en erase for å fjerne vann fra polygonet. Deretter, regner man ut hvilket areal som er størst i nærheten av innsjøen, og legger dette inn i
+            innsjøen. En tanke kan å være å kjøre en dissolve for å gjøre alt område om til det som er størst. Her inngår selvsagt prioriteringene. Dette 
+            kan feks. komme frem ved at selv om myr er størst, kan bebyggelse prioriteres.
+
+    - Kan legge inn hierarkiet når sjekken skjer. Feks. hvis innsjøen ligger på myr, trenger den ikke å sjekkes.
+    - Trenger minstemål og maksmål på innsjøer som skal bli kjørt gjennom aggregeringsfunksjonen. Maks kan f.eks. være 1500m^2, mens minstemål 40m^2
 
 Forenkle innsjø kantene med smoothing og simplify algoritme
 
@@ -60,7 +71,7 @@ def main():
     files = create_wfm_gdbs(wfm=wfm)
     fetch_data(files=files)
 
-    remove_county_borders(files=files)
+    #remove_county_borders(files=files)
     combine_small_lakes(files=files)
     #target_selection(files=files)
 
@@ -80,6 +91,7 @@ class fc(Enum):
     lakes_dissolved="lakes_dissolved"
     lakes_singlepart="lakes_singlepart"
     lakes_processed="lakes_processed"
+    lakes_simplified_buffed="lakes_simplified_buffed"
     lakes_aggregated="lakes_aggregated"
     lakes_processed_selection="lakes_processed_selection"
 
@@ -103,7 +115,7 @@ def create_wfm_gdbs(wfm: WorkFileManager) -> dict:
     lakes_dissolved=wfm.build_file_path(file_name="lakes_dissolved", file_type="gdb")
     lakes_singlepart=wfm.build_file_path(file_name="lakes_singlepart", file_type="gdb")
     lakes_processed=wfm.build_file_path(file_name="lakes_processed", file_type="gdb")
-
+    lakes_simplified_buffed=wfm.build_file_path(file_name="lakes_simplified_buffed", file_type="gdb")
     lakes_aggregated=wfm.build_file_path(file_name="lakes_aggregated", file_type="gdb")
 
     lakes_processed_selection=wfm.build_file_path(file_name="lakes_processed_selection", file_type="gdb")
@@ -116,6 +128,7 @@ def create_wfm_gdbs(wfm: WorkFileManager) -> dict:
         fc.lakes_dissolved:lakes_dissolved,
         fc.lakes_singlepart:lakes_singlepart,
         fc.lakes_processed:lakes_processed,
+        fc.lakes_simplified_buffed:lakes_simplified_buffed,
         fc.lakes_aggregated:lakes_aggregated,
 
         fc.lakes_processed_selection:lakes_processed_selection
@@ -158,26 +171,57 @@ def remove_county_borders(files:dict)->None: #Denne kan kanskje sløyfes hvis vi
 @timing_decorator
 def combine_small_lakes(files:dict)->None:
 
-    '''
-    Notater etter samtale med Virjinia angående aggregering.
-    - Kan være en løsning å sette opp en sjekk etter aggregeringen på områdene som ble selektert. Hvis arealet lagt til er en viss prosent av det originale
-        arealet (hvertfall 50% ikke innafor), bør endringen sløyfes. Kan velges ut ved å legge til id-en i en liste eller å ha et ekstra attributt felt i
-        den aggregerte polygon tabellen.
-    - Kan legge inn hierarkiet når sjekken skjer. Feks. hvis innsjøen ligger på myr, trenger den ikke å sjekkes.
-    - Trenger minstemål og maksmål på innsjøer som skal bli kjørt gjennom aggregeringsfunksjonen.
-    '''
+    lakes_lyr="lakes_lyr"
+    arcpy.management.MakeFeatureLayer(in_features=files[fc.lakes_fc], out_layer=lakes_lyr)
+
+    arcpy.management.RepairGeometry(in_features=lakes_lyr, delete_null='DELETE_NULL')
+
+    #Må kjøre simplify først for at aggregate ikke tar for lang tid.
+    arcpy.cartography.SimplifyPolygon(
+        in_features=lakes_lyr,
+        out_feature_class=files[fc.lakes_processed],
+        algorithm='BEND_SIMPLIFY',
+        tolerance='4 Meters',
+        error_option='RESOLVE_ERRORS'
+    )
+
+    #Opprett en buffer for å finne innsjøer som er innenfor aggregation distance-en. Innsjøer som ikke er i nærheten av andre innsjøer skal ikke aggregeres.
+    lakes_simplified_lyr="lakes_simplified_lyr"
+    arcpy.management.MakeFeatureLayer(in_features=files[fc.lakes_processed], out_layer=lakes_simplified_lyr)
+
+    arcpy.analysis.PairwiseBuffer(
+        in_features=lakes_simplified_lyr,
+        out_feature_class=files[fc.lakes_simplified_buffed],
+        buffer_distance_or_field=a_configs.lake_aggregation_distance,
+        dissolve_option='ALL'
+    )
+
+    id_field="buffer_id"
+    arcpy.management.AddField(in_table=lakes_simplified_lyr, field_name=id_field)
 
     lakes_processed_lyr="lakes_processed_lyr"
     arcpy.management.MakeFeatureLayer(in_features=files[fc.lakes_processed], out_layer=lakes_processed_lyr)
 
+    arcpy.management.SelectLayerByLocation(in_layer=lakes_simplified_lyr, overlap_type='INTERSECT', select_features=lakes_processed_lyr, selection_type='NEW_SELECTION')
+
+    with arcpy.da.UpdateCursor(lakes_simplified_lyr, ["OID@", "SHAPE@", id_field]) as ucur:
+        for oid, geom, _ in ucur:
+            if (oid, geom) in candidates:
+                if main_geom.overlaps(geom) or main_geom.contains(geom) or main_geom.within(geom):
+                    ucur.updateRow([oid, geom, main_oid])
+
+
     arcpy.cartography.AggregatePolygons(
         in_features=lakes_processed_lyr,
         out_feature_class=files[fc.lakes_aggregated],
-        aggregation_distance='7 Meter'
+        aggregation_distance=a_configs.lake_aggregation_distance
     )
 
+    #Sjekk om det som ble aggregert IKKE er større enn et av polygonene den koblet seg til. Hvis for stor, legg innsjø objektidene til en liste over objekter
+    #som selekteres bort. Kan f.eks. være en løsning å opprette en loop som 
+
 @timing_decorator
-def target_selection(files:dict)->None:
+def target_selection(files:dict)->None: #Må endres!
     lakes_processed_lyr="lakes_processed_lyr"
     arcpy.management.MakeFeatureLayer(in_features=files[fc.lakes_processed], out_layer=lakes_processed_lyr)
 
