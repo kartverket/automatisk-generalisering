@@ -230,3 +230,12 @@ class Road_N10(Enum):
         script_source_name=data_selection,
         description="roads_final",
     )
+
+    # ========================================
+    #           Roadblocks Rotation
+    # ========================================
+
+    data_selection__roadblock__n10_road=file_manager.generate_file_name_gdb(
+        script_source_name=data_selection,
+        description="roadblocks_rotated"
+    )
