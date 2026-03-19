@@ -808,20 +808,20 @@ class _GlobalProposal:
 
 
 @dataclass(frozen=True)
-class DeferredCapture:
+class _ResnappedCapture:
     """
-    Original proposal metadata captured when a proposal is marked deferred.
+    Metadata for an accepted connection whose near-point may land on a segment
+    that moves when another accepted SNAP connection applies.
 
-    Carries both the routing information (which dangle, which forced target) and
-    the original _DangleProposal from the main plan phase.  The geometry is
-    resolved later from post-pass-1 line positions, but the metadata here
-    answers *why* the connection was chosen.
+    Identified after Stage B; geometry is re-resolved in _resnap_connections
+    using post-apply lines_copy geometry.
     """
 
     parent_id: int
     dangle_oid: int
-    forced_target_parent: int
-    proposal: "_DangleProposal"
+    forced_target_parent: int   # target_parent_id of the accepted connection
+    proposal: "_GlobalProposal"
+    gap_source: str
 
 
 @dataclass(frozen=True)
@@ -849,8 +849,8 @@ class CandidateDiagnostic:
     Diagnostic record for one candidate connection evaluated during the main planning phase.
 
     One record exists per (dangle, target) pair, excluding the self parent line target.
-    The dataclass is mutable so that deferred-acceptance outcomes can be patched by
-    run() after _build_deferred_plan resolves.
+    The dataclass is mutable so that resnap outcomes can be patched by run()
+    after _resnap_connections resolves.
 
     candidate_status values:
         "illegal"             — failed legality or angle blocking; could not be selected
@@ -865,9 +865,8 @@ class CandidateDiagnostic:
                               blocked_by_angle | expanded_dangle_angle_disallowed |
                               blocked_by_z_drop
         legal_not_selected:   outscored_within_dangle
-        selected_for_dangle:  deferred | lost_pair_competition | lost_cycle_prevention |
-                              deferred_rejected_connectivity
-        applied_to_output:    applied_main | applied_deferred
+        selected_for_dangle:  lost_pair_competition | lost_cycle_prevention
+        applied_to_output:    applied_main | applied_resnapped
     """
 
     parent_id: int
@@ -904,7 +903,6 @@ class FillLineGaps:
     GAP_SOURCE_DEFAULT = "default"
     GAP_SOURCE_PAIR_DANGLE = "pair_dangle"
     GAP_SOURCE_PAIR_LINE = "pair_line"
-    GAP_SOURCE_DEFERRED = "deferred"
 
     # Near table fields
     F_IN_FID = "IN_FID"
@@ -2603,7 +2601,7 @@ class FillLineGaps:
 
     def _build_plan(
         self, *, dangles_fc: str, target_layers: list[str]
-    ) -> tuple[dict[int, list[dict]], dict[int, dict], list[CandidateDiagnostic]]:
+    ) -> tuple[dict[int, list[dict]], list[_ResnappedCapture], list[CandidateDiagnostic]]:
         dangle_parent = self._build_dangle_parent_lookup(dangles_fc=dangles_fc)
         dangle_xy = self._build_dangle_xy_lookup(dangles_fc=dangles_fc)
 
@@ -2683,7 +2681,6 @@ class FillLineGaps:
         # Pipeline stage fate sets — populated as _build_plan progresses;
         # _assemble_diagnostics captures them by reference so early-return calls
         # always see whatever has been filled in at that point.
-        deferred_dangles: set[int] = set()         # dangle_oids routed to deferred pass
         stage_a_loser_oids: set[int] = set()       # local winners that lost Stage-A pair competition
         stage_b_rejected_oids: set[int] = set()    # Stage-A winners dropped by Kruskal
         accepted_dangle_oids: set[int] = set()     # proposals that made it into the main plan
@@ -2808,12 +2805,6 @@ class FillLineGaps:
                     final_gs: Optional[str] = None
                     net_nz: Optional[float] = None
                     glob_nz: Optional[float] = None
-                elif int(d_oid) in deferred_dangles:
-                    status = "selected_for_dangle"
-                    reason = "deferred"
-                    final_gs = None
-                    net_nz = None
-                    glob_nz = None
                 elif int(d_oid) in stage_a_loser_oids:
                     status = "selected_for_dangle"
                     reason = "lost_pair_competition"
@@ -3334,62 +3325,16 @@ class FillLineGaps:
             dangle_norm_z_by_dangle[dangle_oid] = winner_norm_z
 
         if not _dangle_proposals:
-            return {}, {}, _assemble_diagnostics()
+            return {}, [], _assemble_diagnostics()
 
         # ----------------------------
         # Mutual detection (for labeling)
         # - dangle mutual pairs: D1 targets D2 AND D2 targets D1 (both dangle targets)
         # - network mutual: any proposal exists in both directions between the two network nodes
         # ----------------------------
-        parents_with_dangles = sorted(set(dangle_parent.values()))
-        parents_with_dangles_set = {int(v) for v in parents_with_dangles}
-
-        outgoing_parent_targets: dict[int, set[int]] = {}
-        for p in _dangle_proposals.values():
-            if p.ctx.target_parent_id is None:
-                continue
-            outgoing_parent_targets.setdefault(int(p.ctx.src_parent_id), set()).add(
-                int(p.ctx.target_parent_id)
-            )
-
-        deferred_by_parent: dict[int, DeferredCapture] = {}
-        deferred_sort_key_by_parent: dict[int, tuple] = {}
-
-        for p in _dangle_proposals.values():
-            b_parent = p.ctx.target_parent_id
-            if b_parent is None:
-                continue
-            b_parent = int(b_parent)
-
-            # Only defer when the target parent has dangles in this run
-            if b_parent not in parents_with_dangles_set:
-                continue
-
-            # No reciprocal proposal from B -> A (parent-id space)
-            b_out = outgoing_parent_targets.get(b_parent, set())
-            if int(p.ctx.src_parent_id) in b_out:
-                continue
-
-            # Keep only one deferred per parent (deterministic: best sort key)
-            cur_best = deferred_sort_key_by_parent.get(int(p.ctx.src_parent_id))
-            if cur_best is None or p.sort_key() < cur_best:
-                deferred_by_parent[int(p.ctx.src_parent_id)] = DeferredCapture(
-                    parent_id=int(p.ctx.src_parent_id),
-                    dangle_oid=int(p.ctx.dangle_oid),
-                    forced_target_parent=int(b_parent),
-                    proposal=p,
-                )
-                deferred_sort_key_by_parent[int(p.ctx.src_parent_id)] = p.sort_key()
-                deferred_dangles.add(int(p.ctx.dangle_oid))
-
-        # Active proposals exclude deferred dangles (no fallback)
-        active: list[_DangleProposal] = [
-            p
-            for d_oid, p in _dangle_proposals.items()
-            if int(d_oid) not in deferred_dangles
-        ]
+        active: list[_DangleProposal] = list(_dangle_proposals.values())
         if not active:
-            return {}, deferred_by_parent, _assemble_diagnostics()
+            return {}, [], _assemble_diagnostics()
         active_by_dangle = {int(p.ctx.dangle_oid): p for p in active}
 
         dangle_mutual_oids: set[int] = set()
@@ -3542,7 +3487,34 @@ class FillLineGaps:
             )
 
         if not _global_proposals:
-            return {}, deferred_by_parent, _assemble_diagnostics()
+            return {}, [], _assemble_diagnostics()
+
+        # ----------------------------
+        # Resnap candidate identification
+        # A connection A→B needs resnap if:
+        #   1. B is the target_parent_id of A's accepted connection
+        #   2. Another accepted connection B→T exists with GAP_SOURCE_PAIR_DANGLE
+        #      (i.e. B's dangle endpoint will move when B snaps to T)
+        #   3. A's near-point lies on B's last segment — checked in _resnap_connections
+        #      using post-apply geometry (this block is a cheap pre-filter only).
+        # ----------------------------
+        snap_source_parents: set[int] = {
+            int(prop.ctx.src_parent_id)
+            for prop, gap_source in _global_proposals
+            if str(gap_source) == self.GAP_SOURCE_PAIR_DANGLE
+        }
+        resnap_captures: list[_ResnappedCapture] = []
+        for prop, gap_source in _global_proposals:
+            tp = prop.ctx.target_parent_id
+            if tp is None or int(tp) not in snap_source_parents:
+                continue
+            resnap_captures.append(_ResnappedCapture(
+                parent_id=int(prop.ctx.src_parent_id),
+                dangle_oid=int(prop.ctx.dangle_oid),
+                forced_target_parent=int(tp),
+                proposal=prop,
+                gap_source=str(gap_source),
+            ))
 
         # ----------------------------
         # Build plan_by_parent: parent_id -> list[plan_entry]
@@ -3577,7 +3549,7 @@ class FillLineGaps:
             )
             plan_by_parent[int(pid)] = [entry for _, entry in ordered]
 
-        return plan_by_parent, deferred_by_parent, _assemble_diagnostics()
+        return plan_by_parent, resnap_captures, _assemble_diagnostics()
 
     def _make_plan_entry(
         self,
@@ -3644,140 +3616,109 @@ class FillLineGaps:
             decided_by_parent[keep]["skip"] = False
 
     # ----------------------------
-    # Deferred handling
+    # Resnap pass
     # ----------------------------
 
-    def _rebuild_topology_for_deferred(
-        self, *, captures: "dict[int, DeferredCapture]"
-    ) -> "TopologyModel":
-        """
-        Rebuild topology from the post-pass-1 lines_copy so that deferred
-        connectivity checks reflect the updated network state.
-        """
-        relevant: set[int] = set()
-        for cap in captures.values():
-            relevant.add(int(cap.parent_id))
-            relevant.add(int(cap.forced_target_parent))
-
-        return TopologyBuilder(
-            lines_fc=self.lines_copy,
-            original_id_field=self.ORIGINAL_ID,
-            connect_to_features=self.connect_to_features,
-            dataset_key_fn=self._dataset_key,
-            wfm=self.wfm,
-            write_work_files_to_memory=self.write_work_files_to_memory,
-            connectivity_tolerance_meters=self.connectivity_tolerance_meters,
-            line_connectivity_mode=self.line_connectivity_mode,
-            file_name_prefix="deferred_",
-        ).build(
-            scope=self.connectivity_scope,
-            relevant_parent_ids=relevant,
-        )
-
-    def _accept_deferred_candidates(
+    def _resnap_connections(
         self,
         *,
-        candidates: "list[tuple[DeferredCapture, float, float]]",
-        updated_topology: "TopologyModel",
-    ) -> "list[tuple[DeferredCapture, float, float]]":
-        """
-        Validate and accept deferred candidates against the post-pass-1 topology.
-
-        Per-candidate: reject if src and forced-target are now in the same network.
-        For component scopes: greedy Kruskal acceptance ordered by original
-        proposal.score so the result is deterministic and cycle-free.
-
-        Each entry is (capture, near_x, near_y).
-        """
-        valid = [
-            (cap, nx, ny)
-            for cap, nx, ny in candidates
-            if not self._same_network(
-                a_parent=cap.parent_id,
-                b_parent=cap.forced_target_parent,
-                topology=updated_topology,
-            )
-        ]
-
-        if not valid:
-            return []
-
-        scope = updated_topology.scope
-        if scope not in (
-            logic_config.ConnectivityScope.INPUT_LINES,
-            logic_config.ConnectivityScope.ONE_DEGREE,
-            logic_config.ConnectivityScope.TRANSITIVE,
-        ):
-            # NONE / DIRECT_CONNECTION: per-candidate check is sufficient
-            return valid
-
-        # Component scopes: greedy acceptance to prevent deferred candidates
-        # from creating cycles among themselves, ordered by original score.
-        sorted_valid = sorted(valid, key=lambda t: t[0].proposal.sort_key())
-        uf = _UnionFind()
-        accepted: list[tuple[DeferredCapture, float, float]] = []
-        for cap, nx, ny in sorted_valid:
-            src_node = self._node_for_parent(
-                parent_id=cap.parent_id, topology=updated_topology
-            )
-            tgt_node = self._node_for_parent(
-                parent_id=cap.forced_target_parent, topology=updated_topology
-            )
-            if uf.find(src_node) == uf.find(tgt_node):
-                continue
-            uf.union(src_node, tgt_node)
-            accepted.append((cap, nx, ny))
-
-        return accepted
-
-    def _build_deferred_plan(
-        self,
-        *,
-        deferred: "dict[int, DeferredCapture]",
+        captures: "list[_ResnappedCapture]",
         dangles_fc: str,
+        snap_source_dangle_xy: "dict[int, tuple[float, float]]",
     ) -> dict[int, dict]:
         """
-        Resolve deferred connections in three stages:
-        1. Geometry lookup — find the best near-point on each forced target line,
-           using updated post-pass-1 geometry.
-        2. Connectivity validation — rebuild topology from updated lines_copy and
-           reject any candidate that would now create a forbidden connection.
-        3. Plan entry construction — reuse original proposal/assess metadata so
-           the output correctly reflects why the connection was chosen.
+        Re-resolve the near-point for connections whose target line endpoint moved
+        during _apply_plan (SNAP operations).
+
+        Steps:
+        1. Read the last segment of each target line (B) from post-apply lines_copy.
+           V_prev is the vertex adjacent to B's dangle end; V_end is the original
+           dangle position from snap_source_dangle_xy (before the snap moved it).
+        2. Project A's original near-point onto [V_prev, V_end]. Discard captures
+           whose near-point is not on that segment (unaffected by the snap).
+        3. Run GenerateNearTable on the surviving captures against the updated
+           target lines to get the new near-point.
+        4. Build and return plan entries keyed by parent_id.
         """
-        dangle_oids = sorted({int(cap.dangle_oid) for cap in deferred.values()})
-        if not dangle_oids:
+        # --- 1. Read V_prev for each forced-target line from updated geometry ---
+        forced_target_parents = {int(cap.forced_target_parent) for cap in captures}
+        where_l = (
+            f"{arcpy.AddFieldDelimiters(self.lines_copy, self.ORIGINAL_ID)}"
+            f" IN ({','.join(map(str, sorted(forced_target_parents)))})"
+        )
+        v_prev_by_parent: dict[int, tuple[float, float]] = {}
+        with arcpy.da.SearchCursor(self.lines_copy, [self.ORIGINAL_ID, "SHAPE@"], where_l) as cur:
+            for pid, shape in cur:
+                part = shape.getPart(0)
+                pts = [pt for pt in part if pt is not None]
+                if len(pts) < 2:
+                    continue
+                orig_v_end = snap_source_dangle_xy.get(int(pid))
+                if orig_v_end is None:
+                    continue
+                # Determine which end was the dangle by proximity to the original
+                # dangle position (dangle end has moved; non-dangle end is unchanged).
+                d_first = (pts[0].X - orig_v_end[0]) ** 2 + (pts[0].Y - orig_v_end[1]) ** 2
+                d_last = (pts[-1].X - orig_v_end[0]) ** 2 + (pts[-1].Y - orig_v_end[1]) ** 2
+                if d_first <= d_last:
+                    v_prev_by_parent[int(pid)] = (pts[1].X, pts[1].Y)
+                else:
+                    v_prev_by_parent[int(pid)] = (pts[-2].X, pts[-2].Y)
+
+        # --- 2. Segment projection: keep captures whose near-point is on [V_prev, V_end] ---
+        filtered: list[_ResnappedCapture] = []
+        for cap in captures:
+            tp = int(cap.forced_target_parent)
+            v_prev = v_prev_by_parent.get(tp)
+            v_end = snap_source_dangle_xy.get(tp)
+            if v_prev is None or v_end is None:
+                continue
+            nx = float(cap.proposal.ctx.near_x)
+            ny = float(cap.proposal.ctx.near_y)
+            dx = v_end[0] - v_prev[0]
+            dy = v_end[1] - v_prev[1]
+            seg_len_sq = dx * dx + dy * dy
+            if seg_len_sq == 0.0:
+                continue
+            t = ((nx - v_prev[0]) * dx + (ny - v_prev[1]) * dy) / seg_len_sq
+            if 0.0 <= t <= 1.0:
+                filtered.append(cap)
+
+        if not filtered:
             return {}
 
-        # --- 1a. Feature layers for near-table lookup ---
-        dangles_oid = arcpy.Describe(dangles_fc).OIDFieldName
-        where_d = f"{arcpy.AddFieldDelimiters(dangles_fc, dangles_oid)} IN ({','.join(map(str, dangle_oids))})"
-        deferred_lyr = "deferred_dangles_lyr"
-        arcpy.management.MakeFeatureLayer(dangles_fc, deferred_lyr, where_d)
+        # --- 3. GenerateNearTable against updated target-line geometry ---
+        dangle_oids = sorted({int(cap.dangle_oid) for cap in filtered})
+        forced_parents_filtered = sorted({int(cap.forced_target_parent) for cap in filtered})
 
-        forced_parents = sorted(
-            {int(cap.forced_target_parent) for cap in deferred.values()}
+        dangles_oid_field = arcpy.Describe(dangles_fc).OIDFieldName
+        where_d = (
+            f"{arcpy.AddFieldDelimiters(dangles_fc, dangles_oid_field)}"
+            f" IN ({','.join(map(str, dangle_oids))})"
         )
-        where_l = f"{arcpy.AddFieldDelimiters(self.lines_copy, self.ORIGINAL_ID)} IN ({','.join(map(str, forced_parents))})"
-        forced_lines_lyr = "forced_lines_lyr"
-        arcpy.management.MakeFeatureLayer(self.lines_copy, forced_lines_lyr, where_l)
+        resnap_dangles_lyr = "resnap_dangles_lyr"
+        arcpy.management.MakeFeatureLayer(dangles_fc, resnap_dangles_lyr, where_d)
 
-        lines_oid = arcpy.Describe(forced_lines_lyr).OIDFieldName
+        where_l2 = (
+            f"{arcpy.AddFieldDelimiters(self.lines_copy, self.ORIGINAL_ID)}"
+            f" IN ({','.join(map(str, forced_parents_filtered))})"
+        )
+        resnap_lines_lyr = "resnap_lines_lyr"
+        arcpy.management.MakeFeatureLayer(self.lines_copy, resnap_lines_lyr, where_l2)
+
+        lines_oid_field = arcpy.Describe(resnap_lines_lyr).OIDFieldName
         near_oid_to_parent: dict[int, int] = {}
-        with arcpy.da.SearchCursor(
-            forced_lines_lyr, [lines_oid, self.ORIGINAL_ID]
-        ) as cur:
+        with arcpy.da.SearchCursor(resnap_lines_lyr, [lines_oid_field, self.ORIGINAL_ID]) as cur:
             for oid, pid in cur:
                 near_oid_to_parent[int(oid)] = int(pid)
 
-        # --- 1b. GenerateNearTable against updated forced-target geometry ---
-        large_m = max(50, int(self.gap_tolerance_meters) * 10)
-        forced_table = self.wfm.build_file_path(file_name="deferred_forced_table")
+        search_radius = 2 * self.connectivity_tolerance_meters + self.gap_tolerance_meters
+        resnap_table = self.wfm.build_file_path(file_name="resnap_near_table")
         arcpy.analysis.GenerateNearTable(
-            in_features=deferred_lyr,
-            near_features=[forced_lines_lyr],
-            out_table=forced_table,
-            search_radius=f"{int(large_m)} Meters",
+            in_features=resnap_dangles_lyr,
+            near_features=[resnap_lines_lyr],
+            out_table=resnap_table,
+            search_radius=f"{search_radius} Meters",
             location="LOCATION",
             angle="NO_ANGLE",
             closest="ALL",
@@ -3785,15 +3726,9 @@ class FillLineGaps:
             method="PLANAR",
         )
 
-        best_xy: dict[tuple[int, int], tuple[float, float]] = {}
-        fields = [
-            self.F_IN_FID,
-            self.F_NEAR_FID,
-            self.F_NEAR_DIST,
-            self.F_NEAR_X,
-            self.F_NEAR_Y,
-        ]
-        with arcpy.da.SearchCursor(forced_table, fields) as cur:
+        best_xy: dict[tuple[int, int], tuple[float, float, float]] = {}
+        fields = [self.F_IN_FID, self.F_NEAR_FID, self.F_NEAR_DIST, self.F_NEAR_X, self.F_NEAR_Y]
+        with arcpy.da.SearchCursor(resnap_table, fields) as cur:
             for in_fid, near_fid, near_dist, near_x, near_y in cur:
                 if near_fid is None or near_dist is None:
                     continue
@@ -3801,56 +3736,37 @@ class FillLineGaps:
                 if near_parent is None:
                     continue
                 key = (int(in_fid), int(near_parent))
-                prev_dist = best_xy.get(key, (0.0, 0.0, float("inf")))[2]  # type: ignore[misc]
-                if float(near_dist) < prev_dist:
-                    best_xy[key] = (float(near_x), float(near_y), float(near_dist))  # type: ignore[assignment]
+                prev = best_xy.get(key)
+                if prev is None or float(near_dist) < prev[2]:
+                    best_xy[key] = (float(near_x), float(near_y), float(near_dist))
 
         if not best_xy:
             return {}
 
+        # --- 4. Build updated plan entries ---
         dangle_xy = self._build_dangle_xy_lookup(dangles_fc)
-
-        # --- 1c. Pair each capture with its resolved near-point ---
-        candidates: list[tuple[DeferredCapture, float, float]] = []
-        for cap in deferred.values():
-            hit = best_xy.get((cap.dangle_oid, cap.forced_target_parent))
-            if hit is None:
-                continue
-            if dangle_xy.get(cap.dangle_oid) is None:
-                continue
-            candidates.append((cap, float(hit[0]), float(hit[1])))
-
-        if not candidates:
-            return {}
-
-        # --- 2. Validate against post-pass-1 connectivity ---
-        updated_topology = self._rebuild_topology_for_deferred(captures=deferred)
-        accepted = self._accept_deferred_candidates(
-            candidates=candidates,
-            updated_topology=updated_topology,
-        )
-
-        if not accepted:
-            return {}
-
-        # --- 3. Build plan entries with preserved original metadata ---
         lines_key = self._dataset_key(self.lines_copy)
         out: dict[int, dict] = {}
 
-        for cap, near_x, near_y in accepted:
-            dangle_x, dangle_y = dangle_xy[cap.dangle_oid]
+        for cap in filtered:
+            hit = best_xy.get((cap.dangle_oid, cap.forced_target_parent))
+            if hit is None:
+                continue
+            dangle_coords = dangle_xy.get(cap.dangle_oid)
+            if dangle_coords is None:
+                continue
             out[cap.parent_id] = self._make_plan_entry(
                 parent_id=cap.parent_id,
                 dangle_oid=cap.dangle_oid,
-                dangle_x=float(dangle_x),
-                dangle_y=float(dangle_y),
+                dangle_x=float(dangle_coords[0]),
+                dangle_y=float(dangle_coords[1]),
                 chosen={
-                    "near_x": float(near_x),
-                    "near_y": float(near_y),
+                    "near_x": float(hit[0]),
+                    "near_y": float(hit[1]),
                     "near_fc_key": lines_key,
                     "near_fid": cap.forced_target_parent,
                 },
-                gap_source=self.GAP_SOURCE_DEFERRED,
+                gap_source=cap.gap_source,
                 bonus_applied=cap.proposal.ctx.bonus_applied,
                 assess=cap.proposal.ctx.assess,
                 best_fit_score=cap.proposal.score.composite,
@@ -4216,37 +4132,40 @@ class FillLineGaps:
         if self.candidate_connections_output is not None:
             self._setup_candidate_connections_output(self.candidate_connections_output)
 
-        plan, deferred, diagnostics = self._build_plan(
+        plan, resnap_captures, diagnostics = self._build_plan(
             dangles_fc=dangles_for_plan, target_layers=targets
         )
 
+        # Capture snap-source dangle endpoints before _apply_plan moves them.
+        snap_source_dangle_xy: dict[int, tuple[float, float]] = {
+            parent_id: (float(info["dangle_x"]), float(info["dangle_y"]))
+            for parent_id, entries in plan.items()
+            for info in entries
+            if str(info.get("edit_op")) == EditOp.SNAP.value
+        }
+
         self._apply_plan(plan)
 
-        if deferred:
-            deferred_plan = self._build_deferred_plan(
-                deferred=deferred, dangles_fc=dangles_for_plan
+        if resnap_captures:
+            resnap_plan = self._resnap_connections(
+                captures=resnap_captures,
+                dangles_fc=dangles_for_plan,
+                snap_source_dangle_xy=snap_source_dangle_xy,
             )
-            self._apply_plan(deferred_plan)
+            self._apply_plan(resnap_plan)
 
-            # Patch diagnostic status for deferred candidates now that we know
-            # which ones were accepted vs rejected by _build_deferred_plan.
-            if self.candidate_connections_output is not None and diagnostics:
-                applied_deferred_dangle_oids = {
+            if self.candidate_connections_output is not None and diagnostics and resnap_plan:
+                resnapped_dangle_oids = {
                     int(v["dangle_oid"])
-                    for v in deferred_plan.values()
+                    for v in resnap_plan.values()
                     if isinstance(v, dict) and "dangle_oid" in v
                 }
                 for diag in diagnostics:
                     if (
-                        diag.candidate_status == "selected_for_dangle"
-                        and diag.status_reason == "deferred"
+                        diag.candidate_status == "applied_to_output"
+                        and int(diag.dangle_oid) in resnapped_dangle_oids
                     ):
-                        if int(diag.dangle_oid) in applied_deferred_dangle_oids:
-                            diag.candidate_status = "applied_to_output"
-                            diag.status_reason = "applied_deferred"
-                            diag.final_gap_source = self.GAP_SOURCE_DEFERRED
-                        else:
-                            diag.status_reason = "deferred_rejected_connectivity"
+                        diag.status_reason = "applied_resnapped"
 
         if self.candidate_connections_output is not None and diagnostics:
             spatial_reference = arcpy.Describe(self.lines_copy).spatialReference
