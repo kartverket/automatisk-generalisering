@@ -53,10 +53,8 @@ def main() -> None:
     else:
         print("\nNo small polygons with multiple land use features inside.\n")
         print("Copies original data to output.")
-        
-        arcpy.management.CopyFeatures(
-            in_features=input_fc, out_feature_class=output_fc
-        )
+
+        arcpy.management.CopyFeatures(in_features=input_fc, out_feature_class=output_fc)
 
     wfm.delete_created_files()
 
@@ -95,7 +93,7 @@ def create_wfm_gdbs(wfm: WorkFileManager) -> dict:
         "spatial_join": spatial_join,
         "hole_statistics": hole_statistics,
         "relevant_holes": relevant_holes,
-        "correct_attributes": correct_attributes
+        "correct_attributes": correct_attributes,
     }
 
 
