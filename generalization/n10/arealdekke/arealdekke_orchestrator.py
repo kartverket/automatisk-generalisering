@@ -14,6 +14,7 @@ from file_manager.n10.file_manager_arealdekke import Arealdekke_N10
 from env_setup import environment_setup
 from custom_tools.decorators.timing_decorator import timing_decorator
 
+
 @timing_decorator
 def main():
     MAP_SCALE = "N10"
@@ -27,7 +28,7 @@ def main():
         output_fc=Arealdekke_N10.dissolve_arealdekke.value,
         map_scale=MAP_SCALE,
     )
-    
+
     eliminate_small_polygons(
         input_fc=Arealdekke_N10.dissolve_arealdekke.value,
         output_fc=Arealdekke_N10.elim_output.value,

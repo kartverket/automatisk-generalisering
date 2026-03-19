@@ -35,8 +35,12 @@ class GangSykkelDissolver:
 
         self.map_scale = gang_sykkel_dissolver_config.map_scale
         params_path = Path(__file__).parent / "parameters" / "parameters.yml"
-        self.scale_parameters = initialize_params(params_path=params_path, class_name="GangSykkelDissolver", map_scale=self.map_scale, dataclass=GangSykkelDissolverParameters)
-
+        self.scale_parameters = initialize_params(
+            params_path=params_path,
+            class_name="GangSykkelDissolver",
+            map_scale=self.map_scale,
+            dataclass=GangSykkelDissolverParameters,
+        )
 
     def _create_wfm_gdbs(self, wfm: WorkFileManager) -> dict:
         gangsykkel_input = wfm.build_file_path(
@@ -452,7 +456,9 @@ class GangSykkelDissolver:
     def run(self) -> None:
         environment_setup.main()
         self._fetch_data()
-        self._dissolve_looping(buffer_distance=f"{self.scale_parameters.buffer_distance} Meters")
+        self._dissolve_looping(
+            buffer_distance=f"{self.scale_parameters.buffer_distance} Meters"
+        )
         self.wfm.delete_created_files()
 
 
@@ -534,5 +540,5 @@ if __name__ == "__main__":
     partition_call(
         input_fc=Arealdekke_N10.elim_output.value,
         output_fc=Arealdekke_N10.dissolve_gangsykkel.value,
-        map_scale="N10"
+        map_scale="N10",
     )

@@ -1,5 +1,16 @@
 from dataclasses import is_dataclass, asdict, fields
-from typing import Any, Mapping, Optional, Union, Dict, List, Sequence, get_type_hints, get_origin, get_args
+from typing import (
+    Any,
+    Mapping,
+    Optional,
+    Union,
+    Dict,
+    List,
+    Sequence,
+    get_type_hints,
+    get_origin,
+    get_args,
+)
 import inspect
 import yaml
 
@@ -113,24 +124,23 @@ def payload_log(
 
 
 def initialize_params(params_path: str, class_name: str, map_scale: str, dataclass):
-        """
-        Reads parameters from yml file and loads into dataclass object
+    """
+    Reads parameters from yml file and loads into dataclass object
 
-        Args:
-        class_name:  class name in yml file
-        map scale: map scale in yml file
-        dataclass: dataclass for parameters
+    Args:
+    class_name:  class name in yml file
+    map scale: map scale in yml file
+    dataclass: dataclass for parameters
 
-        Returns:
-            Populated dataclass object
-        
-        """
-        with open(params_path, "r", encoding="utf-8") as f:
-            yml = yaml.safe_load(f)
+    Returns:
+        Populated dataclass object
 
-        yml_map_scale = yml[class_name][map_scale]
+    """
+    with open(params_path, "r", encoding="utf-8") as f:
+        yml = yaml.safe_load(f)
 
-        params = dataclass(**yml_map_scale)
+    yml_map_scale = yml[class_name][map_scale]
 
-        return params
+    params = dataclass(**yml_map_scale)
 
+    return params

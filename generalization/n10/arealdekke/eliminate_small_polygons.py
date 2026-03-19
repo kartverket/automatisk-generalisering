@@ -10,6 +10,7 @@ from parameters.parameter_dataclasses import EliminateSmallPolygonsParameters
 from pathlib import Path
 from custom_tools.general_tools.param_utils import initialize_params
 
+
 class EliminateSmallPolygons:
     """
     Eliminates small polygons based on area times isoperimetric quotient, while excluding rivers and samferdsel.
@@ -26,16 +27,16 @@ class EliminateSmallPolygons:
             config=eliminate_small_polygons_config.work_file_manager_config
         )
 
-
         self.map_scale = eliminate_small_polygons_config.map_scale
         params_path = Path(__file__).parent / "parameters" / "parameters.yml"
-        self.scale_parameters = initialize_params(params_path=params_path, class_name="EliminateSmallPolygons", map_scale=self.map_scale, dataclass=EliminateSmallPolygonsParameters)
+        self.scale_parameters = initialize_params(
+            params_path=params_path,
+            class_name="EliminateSmallPolygons",
+            map_scale=self.map_scale,
+            dataclass=EliminateSmallPolygonsParameters,
+        )
 
         self.files = self._create_wfm_gdbs(self.wfm)
-
-
-
-        
 
     def _create_wfm_gdbs(self, wfm: WorkFileManager) -> dict:
         eliminate_input = wfm.build_file_path(
@@ -99,7 +100,7 @@ class EliminateSmallPolygons:
             "eliminate_merged_clipped_erased": eliminate_merged_clipped_erased,
             "eliminate_clip_erase_eliminated": eliminate_clip_erase_eliminated,
             "eliminate_final_elim": eliminate_final_elim,
-            "eliminate_final_elim_merged": eliminate_final_elim_merged
+            "eliminate_final_elim_merged": eliminate_final_elim_merged,
         }
 
     def _fetch_data(self):
@@ -107,26 +108,34 @@ class EliminateSmallPolygons:
             in_features=self.input_eliminate,
             out_feature_class=self.files["eliminate_input"],
         )
-    
+
     def _exlude(self):
         """
         Removes certain obj types like gangvei to prevent others eliminating into them
         """
         include = "layer_include"
         exclude = "layer_exclude"
-        arcpy.management.MakeFeatureLayer(self.files["eliminate_input"], include, where_clause="arealbruk_underklasse <> 'GangSykkelVeg' OR arealbruk_underklasse IS NULL")
+        arcpy.management.MakeFeatureLayer(
+            self.files["eliminate_input"],
+            include,
+            where_clause="arealbruk_underklasse <> 'GangSykkelVeg' OR arealbruk_underklasse IS NULL",
+        )
         arcpy.management.CopyFeatures(include, self.files["eliminate_input_include"])
-        arcpy.management.MakeFeatureLayer(self.files["eliminate_input"], exclude, where_clause="arealbruk_underklasse = 'GangSykkelVeg'")
+        arcpy.management.MakeFeatureLayer(
+            self.files["eliminate_input"],
+            exclude,
+            where_clause="arealbruk_underklasse = 'GangSykkelVeg'",
+        )
         arcpy.management.CopyFeatures(exclude, self.files["eliminate_input_exclude"])
-    
+
     def _merge_excluded(self):
         """
         Merge excluded data to output
         """
-        arcpy.management.Merge([self.files["eliminate_input_exclude"], self.files["eliminate_final_elim"]], self.files["eliminate_final_elim_merged"])
-    
-
-
+        arcpy.management.Merge(
+            [self.files["eliminate_input_exclude"], self.files["eliminate_final_elim"]],
+            self.files["eliminate_final_elim_merged"],
+        )
 
     @timing_decorator
     def add_fields(self, input_fc):
@@ -187,16 +196,16 @@ class EliminateSmallPolygons:
         exclusion_sql = f"arealdekke NOT IN ({quoted})"
         numeric_clauses = []
         numeric_clauses.append(f"area < {self.scale_parameters.max_area_b_iq}")
-        numeric_clauses.append(f"iq_adjusted_area < {self.scale_parameters.min_iq_area}")
+        numeric_clauses.append(
+            f"iq_adjusted_area < {self.scale_parameters.min_iq_area}"
+        )
 
         # combine all parts into one where clause
         where_parts = [exclusion_sql] + numeric_clauses
         where_clause = " AND ".join(where_parts)
 
         arcpy.management.MakeFeatureLayer(
-            in_features=input_fc,
-            out_layer=layer,
-            where_clause=where_clause
+            in_features=input_fc, out_layer=layer, where_clause=where_clause
         )
 
         arcpy.management.Eliminate(
@@ -215,7 +224,7 @@ class EliminateSmallPolygons:
         arcpy.management.MakeFeatureLayer(
             in_features=self.files["eliminate_after_elim"],
             out_layer=layer,
-            where_clause=exclusion_sql
+            where_clause=exclusion_sql,
         )
         arcpy.analysis.Buffer(
             in_features=layer,
@@ -276,7 +285,7 @@ class EliminateSmallPolygons:
             delete_null="DELETE_NULL",
             validation_method="ESRI",
         )
-        
+
         quoted = ", ".join(f"'{v}'" for v in self.scale_parameters.dont_remove_spikes)
         exclusion_sql = f"arealdekke NOT IN ({quoted})"
         numeric_clauses = []
@@ -288,7 +297,7 @@ class EliminateSmallPolygons:
         arcpy.management.MakeFeatureLayer(
             in_features=self.files["eliminate_merged_clipped_erased"],
             out_layer=layer,
-            where_clause=where_clause
+            where_clause=where_clause,
         )
 
         arcpy.management.Eliminate(
@@ -313,7 +322,7 @@ class EliminateSmallPolygons:
     @timing_decorator
     def run(self):
         environment_setup.main()
-        
+
         self._fetch_data()
         self.add_fields(self.files["eliminate_input"])
         self._exlude()
@@ -334,7 +343,7 @@ class EliminateSmallPolygons:
             in_features=self.files["eliminate_final_elim_merged"],
             out_feature_class=self.output_feature,
         )
-        
+
         self.wfm.delete_created_files()
 
 
@@ -346,7 +355,7 @@ def normal_call(input_fc: str, output_fc: str, map_scale: str):
         work_file_manager_config=core_config.WorkFileConfig(
             root_file=Arealdekke_N10.dissolve_arealdekke_root.value
         ),
-        map_scale=map_scale
+        map_scale=map_scale,
     )
     EliminateSmallPolygons(eliminate_small_polygons_config=eliminate_config).run()
 
@@ -426,5 +435,5 @@ if __name__ == "__main__":
     partition_call(
         input_fc=Arealdekke_N10.dissolve_arealdekke.value,
         output_fc=Arealdekke_N10.elim_output.value,
-        map_scale="N10"
+        map_scale="N10",
     )
