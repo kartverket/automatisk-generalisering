@@ -124,27 +124,27 @@ def adjusting_surrounding_geometries(
     wfm = WorkFileManager(config=config)
 
     # 2) Creates temporary files
-    work_files = create_work_wfm_gdbs(wfm)
+    files = create_wfm_gdbs(wfm)
 
     # 3) Fetch data with changed area and those overlapping these
     fetch_relevant_data(
         input_fc=input_fc,
         buffered_fc=buffered_fc,
-        files=work_files,
+        files=files,
         attr_val=changed_area,
     )
 
     # 4) Delete overlapping areas from features
-    erase_overlap(files=work_files)
+    erase_overlap(files=files)
 
     # 5) Collect the data and store the result
-    collect_and_finish(files=work_files, output_fc=output_fc)
+    collect_and_finish(files=files, output_fc=output_fc)
 
     wfm.delete_created_files()
 
 
 @timing_decorator
-def create_work_wfm_gdbs(wfm: WorkFileManager) -> dict:
+def create_wfm_gdbs(wfm: WorkFileManager) -> dict:
     """
     Creates all the temporarily files that are going to be used
     during the process of adjusting land use boundaries.
