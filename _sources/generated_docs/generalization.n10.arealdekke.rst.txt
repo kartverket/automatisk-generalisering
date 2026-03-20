@@ -68,6 +68,14 @@ generalization.n10.arealdekke.gangsykkel\_dissolver module
    :show-inheritance:
    :undoc-members:
 
+generalization.n10.arealdekke.island\_controller module
+-------------------------------------------------------
+
+.. automodule:: generalization.n10.arealdekke.island_controller
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
 Module contents
 ---------------
 

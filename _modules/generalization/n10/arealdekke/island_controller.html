@@ -1,0 +1,527 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../../../">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>generalization.n10.arealdekke.island_controller &mdash; Automatisk Generalisering 0.0.1 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../../../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../../../../_static/css/theme.css?v=9edc463e" />
+      <link rel="stylesheet" type="text/css" href="../../../../_static/custom.css" />
+
+  
+      <script src="../../../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../../../_static/documentation_options.js?v=d45e8c67"></script>
+      <script src="../../../../_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="../../../../_static/sphinx_highlight.js?v=6ffebe34"></script>
+    <script src="../../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../../index.html" class="icon icon-home">
+            Automatisk Generalisering
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../../generated_docs/custom_tools.html">custom_tools package</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../generated_docs/env_setup.html">env_setup package</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../generated_docs/file_manager.html">file_manager package</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../generated_docs/generalization.n100.building.html">generalization.n100.building package</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../generated_docs/input_data.html">input_data package</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../generated_docs/modules.html">automatisk-generalisering</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../../index.html">Automatisk Generalisering</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../../../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">generalization.n10.arealdekke.island_controller</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for generalization.n10.arealdekke.island_controller</h1><div class="highlight"><pre>
+<span></span><span class="kn">import</span><span class="w"> </span><span class="nn">arcpy</span>
+
+<span class="n">arcpy</span><span class="o">.</span><span class="n">env</span><span class="o">.</span><span class="n">overwriteOutput</span> <span class="o">=</span> <span class="kc">True</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">collections</span><span class="w"> </span><span class="kn">import</span> <span class="n">defaultdict</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">composition_configs</span><span class="w"> </span><span class="kn">import</span> <span class="n">core_config</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">custom_tools.decorators.timing_decorator</span><span class="w"> </span><span class="kn">import</span> <span class="n">timing_decorator</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">file_manager</span><span class="w"> </span><span class="kn">import</span> <span class="n">WorkFileManager</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">file_manager.n10.file_manager_arealdekke</span><span class="w"> </span><span class="kn">import</span> <span class="n">Arealdekke_N10</span>
+
+<span class="c1"># ========================</span>
+<span class="c1"># Program</span>
+<span class="c1"># ========================</span>
+
+
+<div class="viewcode-block" id="island_controller">
+<a class="viewcode-back" href="../../../../generated_docs/generalization.n10.arealdekke.html#generalization.n10.arealdekke.island_controller.island_controller">[docs]</a>
+<span class="nd">@timing_decorator</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">island_controller</span><span class="p">(</span><span class="n">input_fc</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">output_fc</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Main function dissolving small areas (also under minimum)</span>
+<span class="sd">    on islands too small for multiple feature classes.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        input_fc (str): The input feature class with complete land use data</span>
+<span class="sd">        output_fc (str): The feature class to store final output in</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">stat_field</span> <span class="o">=</span> <span class="s2">&quot;arealdekke&quot;</span>
+
+    <span class="c1"># 1) Setting up work file manager</span>
+    <span class="n">fc</span> <span class="o">=</span> <span class="n">Arealdekke_N10</span><span class="o">.</span><span class="n">island_merger__n10_land_use</span><span class="o">.</span><span class="n">value</span>
+    <span class="n">config</span> <span class="o">=</span> <span class="n">core_config</span><span class="o">.</span><span class="n">WorkFileConfig</span><span class="p">(</span><span class="n">root_file</span><span class="o">=</span><span class="n">fc</span><span class="p">)</span>
+    <span class="n">wfm</span> <span class="o">=</span> <span class="n">WorkFileManager</span><span class="p">(</span><span class="n">config</span><span class="o">=</span><span class="n">config</span><span class="p">)</span>
+
+    <span class="c1"># 2) Create temporary files</span>
+    <span class="n">files</span> <span class="o">=</span> <span class="n">create_wfm_gdbs</span><span class="p">(</span><span class="n">wfm</span><span class="o">=</span><span class="n">wfm</span><span class="p">)</span>
+
+    <span class="c1"># 3) Performe main program</span>
+    <span class="n">copy_features_and_identifies_inner_holes</span><span class="p">(</span><span class="n">input_fc</span><span class="o">=</span><span class="n">input_fc</span><span class="p">,</span> <span class="n">files</span><span class="o">=</span><span class="n">files</span><span class="p">)</span>
+    <span class="n">find_hole_geometries</span><span class="p">(</span><span class="n">files</span><span class="o">=</span><span class="n">files</span><span class="p">)</span>
+    <span class="n">find_holes_with_multiple_features</span><span class="p">(</span><span class="n">files</span><span class="o">=</span><span class="n">files</span><span class="p">,</span> <span class="n">stat_field</span><span class="o">=</span><span class="n">stat_field</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">arcpy</span><span class="o">.</span><span class="n">Exists</span><span class="p">(</span><span class="n">files</span><span class="p">[</span><span class="s2">&quot;relevant_holes&quot;</span><span class="p">]):</span>
+        <span class="n">features_to_keep</span><span class="p">,</span> <span class="n">features_to_remove</span> <span class="o">=</span> <span class="n">find_largest_feature_on_island</span><span class="p">(</span>
+            <span class="n">files</span><span class="o">=</span><span class="n">files</span><span class="p">,</span> <span class="n">stat_field</span><span class="o">=</span><span class="n">stat_field</span>
+        <span class="p">)</span>
+
+        <span class="n">update_island_attributes</span><span class="p">(</span><span class="n">files</span><span class="o">=</span><span class="n">files</span><span class="p">,</span> <span class="n">area_ids</span><span class="o">=</span><span class="n">features_to_keep</span><span class="p">)</span>
+        <span class="n">update_relevant_islands</span><span class="p">(</span>
+            <span class="n">files</span><span class="o">=</span><span class="n">files</span><span class="p">,</span> <span class="n">feature_ids</span><span class="o">=</span><span class="n">features_to_remove</span><span class="p">,</span> <span class="n">output_fc</span><span class="o">=</span><span class="n">output_fc</span>
+        <span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2">No small polygons with multiple land use features inside.</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">)</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Copies original data to output.&quot;</span><span class="p">)</span>
+
+        <span class="n">arcpy</span><span class="o">.</span><span class="n">management</span><span class="o">.</span><span class="n">CopyFeatures</span><span class="p">(</span><span class="n">in_features</span><span class="o">=</span><span class="n">input_fc</span><span class="p">,</span> <span class="n">out_feature_class</span><span class="o">=</span><span class="n">output_fc</span><span class="p">)</span>
+
+    <span class="n">wfm</span><span class="o">.</span><span class="n">delete_created_files</span><span class="p">()</span></div>
+
+
+
+<span class="c1"># ========================</span>
+<span class="c1"># Main functions</span>
+<span class="c1"># ========================</span>
+
+
+<div class="viewcode-block" id="create_wfm_gdbs">
+<a class="viewcode-back" href="../../../../generated_docs/generalization.n10.arealdekke.html#generalization.n10.arealdekke.island_controller.create_wfm_gdbs">[docs]</a>
+<span class="nd">@timing_decorator</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">create_wfm_gdbs</span><span class="p">(</span><span class="n">wfm</span><span class="p">:</span> <span class="n">WorkFileManager</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Creates all the temporarily files that are going to be used</span>
+<span class="sd">    during the process of combining land use on islands.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        wfm (WorkFileManager): The WorkFileManager instance that are keeping the files</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        dict: A dictionary with all the files as variables</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">copy_of_input</span> <span class="o">=</span> <span class="n">wfm</span><span class="o">.</span><span class="n">build_file_path</span><span class="p">(</span><span class="n">file_name</span><span class="o">=</span><span class="s2">&quot;copy_of_input&quot;</span><span class="p">,</span> <span class="n">file_type</span><span class="o">=</span><span class="s2">&quot;gdb&quot;</span><span class="p">)</span>
+    <span class="n">inner_holes</span> <span class="o">=</span> <span class="n">wfm</span><span class="o">.</span><span class="n">build_file_path</span><span class="p">(</span><span class="n">file_name</span><span class="o">=</span><span class="s2">&quot;inner_holes&quot;</span><span class="p">,</span> <span class="n">file_type</span><span class="o">=</span><span class="s2">&quot;gdb&quot;</span><span class="p">)</span>
+    <span class="n">hole_polygons</span> <span class="o">=</span> <span class="n">wfm</span><span class="o">.</span><span class="n">build_file_path</span><span class="p">(</span><span class="n">file_name</span><span class="o">=</span><span class="s2">&quot;hole_polygons&quot;</span><span class="p">,</span> <span class="n">file_type</span><span class="o">=</span><span class="s2">&quot;gdb&quot;</span><span class="p">)</span>
+    <span class="n">spatial_join</span> <span class="o">=</span> <span class="n">wfm</span><span class="o">.</span><span class="n">build_file_path</span><span class="p">(</span><span class="n">file_name</span><span class="o">=</span><span class="s2">&quot;spatial_join&quot;</span><span class="p">,</span> <span class="n">file_type</span><span class="o">=</span><span class="s2">&quot;gdb&quot;</span><span class="p">)</span>
+    <span class="n">hole_statistics</span> <span class="o">=</span> <span class="n">wfm</span><span class="o">.</span><span class="n">build_file_path</span><span class="p">(</span><span class="n">file_name</span><span class="o">=</span><span class="s2">&quot;hole_statistics&quot;</span><span class="p">,</span> <span class="n">file_type</span><span class="o">=</span><span class="s2">&quot;gdb&quot;</span><span class="p">)</span>
+    <span class="n">relevant_holes</span> <span class="o">=</span> <span class="n">wfm</span><span class="o">.</span><span class="n">build_file_path</span><span class="p">(</span><span class="n">file_name</span><span class="o">=</span><span class="s2">&quot;relevant_holes&quot;</span><span class="p">,</span> <span class="n">file_type</span><span class="o">=</span><span class="s2">&quot;gdb&quot;</span><span class="p">)</span>
+    <span class="n">correct_attributes</span> <span class="o">=</span> <span class="n">wfm</span><span class="o">.</span><span class="n">build_file_path</span><span class="p">(</span>
+        <span class="n">file_name</span><span class="o">=</span><span class="s2">&quot;correct_attributes&quot;</span><span class="p">,</span> <span class="n">file_type</span><span class="o">=</span><span class="s2">&quot;gdb&quot;</span>
+    <span class="p">)</span>
+
+    <span class="k">return</span> <span class="p">{</span>
+        <span class="s2">&quot;copy_of_input&quot;</span><span class="p">:</span> <span class="n">copy_of_input</span><span class="p">,</span>
+        <span class="s2">&quot;inner_holes&quot;</span><span class="p">:</span> <span class="n">inner_holes</span><span class="p">,</span>
+        <span class="s2">&quot;hole_polygons&quot;</span><span class="p">:</span> <span class="n">hole_polygons</span><span class="p">,</span>
+        <span class="s2">&quot;spatial_join&quot;</span><span class="p">:</span> <span class="n">spatial_join</span><span class="p">,</span>
+        <span class="s2">&quot;hole_statistics&quot;</span><span class="p">:</span> <span class="n">hole_statistics</span><span class="p">,</span>
+        <span class="s2">&quot;relevant_holes&quot;</span><span class="p">:</span> <span class="n">relevant_holes</span><span class="p">,</span>
+        <span class="s2">&quot;correct_attributes&quot;</span><span class="p">:</span> <span class="n">correct_attributes</span><span class="p">,</span>
+    <span class="p">}</span></div>
+
+
+
+<div class="viewcode-block" id="copy_features_and_identifies_inner_holes">
+<a class="viewcode-back" href="../../../../generated_docs/generalization.n10.arealdekke.html#generalization.n10.arealdekke.island_controller.copy_features_and_identifies_inner_holes">[docs]</a>
+<span class="nd">@timing_decorator</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">copy_features_and_identifies_inner_holes</span><span class="p">(</span><span class="n">input_fc</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">files</span><span class="p">:</span> <span class="nb">dict</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Copy the original data into a separate feature class,</span>
+<span class="sd">    add a new field on the water features where:</span>
+<span class="sd">        - 1: polygon has inner hole</span>
+<span class="sd">        - 0: polygon does not have inner hole</span>
+<span class="sd">    ... and store those with in an own feature class.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        input_fc (str): Feature class with the original land use data</span>
+<span class="sd">        files (dict): Dictionary with all the working files</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">arcpy</span><span class="o">.</span><span class="n">management</span><span class="o">.</span><span class="n">CopyFeatures</span><span class="p">(</span>
+        <span class="n">in_features</span><span class="o">=</span><span class="n">input_fc</span><span class="p">,</span> <span class="n">out_feature_class</span><span class="o">=</span><span class="n">files</span><span class="p">[</span><span class="s2">&quot;copy_of_input&quot;</span><span class="p">]</span>
+    <span class="p">)</span>
+
+    <span class="n">new_field</span> <span class="o">=</span> <span class="s2">&quot;has_hole&quot;</span>
+    <span class="n">relevant_features</span> <span class="o">=</span> <span class="p">[</span>
+        <span class="s2">&quot;Ferskvann_elv_bekk&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;Ferskvann_innsjo_tjern&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;Ferskvann_innsjo_tjern_regulert&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;Ferskvann_kanal&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;Hav&quot;</span><span class="p">,</span>
+    <span class="p">]</span>
+
+    <span class="n">arcpy</span><span class="o">.</span><span class="n">management</span><span class="o">.</span><span class="n">AddField</span><span class="p">(</span><span class="n">files</span><span class="p">[</span><span class="s2">&quot;copy_of_input&quot;</span><span class="p">],</span> <span class="n">new_field</span><span class="p">,</span> <span class="s2">&quot;SHORT&quot;</span><span class="p">)</span>
+
+    <span class="n">land_use_lyr</span> <span class="o">=</span> <span class="s2">&quot;land_use_lyr&quot;</span>
+    <span class="n">arcpy</span><span class="o">.</span><span class="n">management</span><span class="o">.</span><span class="n">MakeFeatureLayer</span><span class="p">(</span>
+        <span class="n">in_features</span><span class="o">=</span><span class="n">files</span><span class="p">[</span><span class="s2">&quot;copy_of_input&quot;</span><span class="p">],</span> <span class="n">out_layer</span><span class="o">=</span><span class="n">land_use_lyr</span>
+    <span class="p">)</span>
+
+    <span class="n">sel_str</span> <span class="o">=</span> <span class="s2">&quot;,&quot;</span><span class="o">.</span><span class="n">join</span><span class="p">([</span><span class="sa">f</span><span class="s2">&quot;&#39;</span><span class="si">{</span><span class="n">x</span><span class="si">}</span><span class="s2">&#39;&quot;</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">relevant_features</span><span class="p">])</span>
+    <span class="n">arcpy</span><span class="o">.</span><span class="n">management</span><span class="o">.</span><span class="n">SelectLayerByAttribute</span><span class="p">(</span>
+        <span class="n">in_layer_or_view</span><span class="o">=</span><span class="n">land_use_lyr</span><span class="p">,</span>
+        <span class="n">selection_type</span><span class="o">=</span><span class="s2">&quot;NEW_SELECTION&quot;</span><span class="p">,</span>
+        <span class="n">where_clause</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;arealdekke IN (</span><span class="si">{</span><span class="n">sel_str</span><span class="si">}</span><span class="s2">)&quot;</span><span class="p">,</span>
+    <span class="p">)</span>
+
+    <span class="n">arcpy</span><span class="o">.</span><span class="n">management</span><span class="o">.</span><span class="n">CalculateField</span><span class="p">(</span>
+        <span class="n">in_table</span><span class="o">=</span><span class="n">land_use_lyr</span><span class="p">,</span>
+        <span class="n">field</span><span class="o">=</span><span class="n">new_field</span><span class="p">,</span>
+        <span class="n">expression</span><span class="o">=</span><span class="s2">&quot;1 if !SHAPE!.boundary().partCount &gt; !SHAPE!.partCount else 0&quot;</span><span class="p">,</span>
+        <span class="n">expression_type</span><span class="o">=</span><span class="s2">&quot;PYTHON3&quot;</span><span class="p">,</span>
+    <span class="p">)</span>
+
+    <span class="n">arcpy</span><span class="o">.</span><span class="n">management</span><span class="o">.</span><span class="n">SelectLayerByAttribute</span><span class="p">(</span>
+        <span class="n">in_layer_or_view</span><span class="o">=</span><span class="n">land_use_lyr</span><span class="p">,</span>
+        <span class="n">selection_type</span><span class="o">=</span><span class="s2">&quot;SUBSET_SELECTION&quot;</span><span class="p">,</span>
+        <span class="n">where_clause</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">new_field</span><span class="si">}</span><span class="s2"> = 1&quot;</span><span class="p">,</span>
+    <span class="p">)</span>
+
+    <span class="n">arcpy</span><span class="o">.</span><span class="n">management</span><span class="o">.</span><span class="n">CopyFeatures</span><span class="p">(</span>
+        <span class="n">in_features</span><span class="o">=</span><span class="n">land_use_lyr</span><span class="p">,</span> <span class="n">out_feature_class</span><span class="o">=</span><span class="n">files</span><span class="p">[</span><span class="s2">&quot;inner_holes&quot;</span><span class="p">]</span>
+    <span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="find_hole_geometries">
+<a class="viewcode-back" href="../../../../generated_docs/generalization.n10.arealdekke.html#generalization.n10.arealdekke.island_controller.find_hole_geometries">[docs]</a>
+<span class="nd">@timing_decorator</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">find_hole_geometries</span><span class="p">(</span><span class="n">files</span><span class="p">:</span> <span class="nb">dict</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Extract hole boundaries and create own geometries of these that are of relevant size.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        files (dict): Dictionary with all the working files</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">SMALLEST_MINIMUM</span> <span class="o">=</span> <span class="mi">150</span>  <span class="c1"># [m^2]</span>
+    <span class="n">SMALLEST_LIM</span> <span class="o">=</span> <span class="mi">500</span>  <span class="c1"># [m^2]</span>
+    <span class="n">RATIO_LIM</span> <span class="o">=</span> <span class="mi">5</span>  <span class="c1"># []</span>
+
+    <span class="n">arcpy</span><span class="o">.</span><span class="n">management</span><span class="o">.</span><span class="n">FeatureToPolygon</span><span class="p">(</span>
+        <span class="n">in_features</span><span class="o">=</span><span class="n">files</span><span class="p">[</span><span class="s2">&quot;inner_holes&quot;</span><span class="p">],</span> <span class="n">out_feature_class</span><span class="o">=</span><span class="n">files</span><span class="p">[</span><span class="s2">&quot;hole_polygons&quot;</span><span class="p">]</span>
+    <span class="p">)</span>
+
+    <span class="n">ratio_field</span> <span class="o">=</span> <span class="s2">&quot;SHAPE_Ratio&quot;</span>
+    <span class="n">arcpy</span><span class="o">.</span><span class="n">management</span><span class="o">.</span><span class="n">AddField</span><span class="p">(</span>
+        <span class="n">in_table</span><span class="o">=</span><span class="n">files</span><span class="p">[</span><span class="s2">&quot;hole_polygons&quot;</span><span class="p">],</span> <span class="n">field_name</span><span class="o">=</span><span class="n">ratio_field</span><span class="p">,</span> <span class="n">field_type</span><span class="o">=</span><span class="s2">&quot;DOUBLE&quot;</span>
+    <span class="p">)</span>
+
+    <span class="n">arcpy</span><span class="o">.</span><span class="n">management</span><span class="o">.</span><span class="n">CalculateField</span><span class="p">(</span>
+        <span class="n">in_table</span><span class="o">=</span><span class="n">files</span><span class="p">[</span><span class="s2">&quot;hole_polygons&quot;</span><span class="p">],</span>
+        <span class="n">field</span><span class="o">=</span><span class="n">ratio_field</span><span class="p">,</span>
+        <span class="n">expression</span><span class="o">=</span><span class="s2">&quot;!shape.length! / np.sqrt(!shape.area!)&quot;</span><span class="p">,</span>
+        <span class="n">expression_type</span><span class="o">=</span><span class="s2">&quot;PYTHON3&quot;</span><span class="p">,</span>
+        <span class="n">code_block</span><span class="o">=</span><span class="s2">&quot;import numpy as np&quot;</span><span class="p">,</span>
+    <span class="p">)</span>
+
+    <span class="n">land_use_lyr</span> <span class="o">=</span> <span class="s2">&quot;land_use_lyr&quot;</span>
+    <span class="n">arcpy</span><span class="o">.</span><span class="n">management</span><span class="o">.</span><span class="n">MakeFeatureLayer</span><span class="p">(</span>
+        <span class="n">in_features</span><span class="o">=</span><span class="n">files</span><span class="p">[</span><span class="s2">&quot;hole_polygons&quot;</span><span class="p">],</span> <span class="n">out_layer</span><span class="o">=</span><span class="n">land_use_lyr</span>
+    <span class="p">)</span>
+
+    <span class="n">arcpy</span><span class="o">.</span><span class="n">management</span><span class="o">.</span><span class="n">SelectLayerByAttribute</span><span class="p">(</span>
+        <span class="n">in_layer_or_view</span><span class="o">=</span><span class="n">land_use_lyr</span><span class="p">,</span>
+        <span class="n">selection_type</span><span class="o">=</span><span class="s2">&quot;NEW_SELECTION&quot;</span><span class="p">,</span>
+        <span class="n">where_clause</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;SHAPE_Area &lt; </span><span class="si">{</span><span class="n">SMALLEST_MINIMUM</span><span class="si">}</span><span class="s2"> OR SHAPE_Area &gt; </span><span class="si">{</span><span class="n">SMALLEST_LIM</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span>
+    <span class="p">)</span>
+
+    <span class="n">arcpy</span><span class="o">.</span><span class="n">management</span><span class="o">.</span><span class="n">DeleteFeatures</span><span class="p">(</span><span class="n">in_features</span><span class="o">=</span><span class="n">land_use_lyr</span><span class="p">)</span>
+
+    <span class="n">arcpy</span><span class="o">.</span><span class="n">management</span><span class="o">.</span><span class="n">SelectLayerByAttribute</span><span class="p">(</span>
+        <span class="n">in_layer_or_view</span><span class="o">=</span><span class="n">land_use_lyr</span><span class="p">,</span>
+        <span class="n">selection_type</span><span class="o">=</span><span class="s2">&quot;NEW_SELECTION&quot;</span><span class="p">,</span>
+        <span class="n">where_clause</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">ratio_field</span><span class="si">}</span><span class="s2"> &gt; </span><span class="si">{</span><span class="n">RATIO_LIM</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span>
+    <span class="p">)</span>
+
+    <span class="n">arcpy</span><span class="o">.</span><span class="n">management</span><span class="o">.</span><span class="n">DeleteFeatures</span><span class="p">(</span><span class="n">in_features</span><span class="o">=</span><span class="n">land_use_lyr</span><span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="find_holes_with_multiple_features">
+<a class="viewcode-back" href="../../../../generated_docs/generalization.n10.arealdekke.html#generalization.n10.arealdekke.island_controller.find_holes_with_multiple_features">[docs]</a>
+<span class="nd">@timing_decorator</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">find_holes_with_multiple_features</span><span class="p">(</span><span class="n">files</span><span class="p">:</span> <span class="nb">dict</span><span class="p">,</span> <span class="n">stat_field</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Detects which of the hole polygons that contains multiple land use categories.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        files (dict): Dictionary with all the working files</span>
+<span class="sd">        stat_field (str): Field name in statistic table</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="c1"># 1) Join one to many to find every unique match between hole and land use</span>
+    <span class="n">arcpy</span><span class="o">.</span><span class="n">analysis</span><span class="o">.</span><span class="n">SpatialJoin</span><span class="p">(</span>
+        <span class="n">target_features</span><span class="o">=</span><span class="n">files</span><span class="p">[</span><span class="s2">&quot;hole_polygons&quot;</span><span class="p">],</span>
+        <span class="n">join_features</span><span class="o">=</span><span class="n">files</span><span class="p">[</span><span class="s2">&quot;copy_of_input&quot;</span><span class="p">],</span>
+        <span class="n">out_feature_class</span><span class="o">=</span><span class="n">files</span><span class="p">[</span><span class="s2">&quot;spatial_join&quot;</span><span class="p">],</span>
+        <span class="n">join_operation</span><span class="o">=</span><span class="s2">&quot;JOIN_ONE_TO_MANY&quot;</span><span class="p">,</span>
+        <span class="n">match_option</span><span class="o">=</span><span class="s2">&quot;CONTAINS&quot;</span><span class="p">,</span>
+    <span class="p">)</span>
+
+    <span class="c1"># 2) Count number of features per hole</span>
+    <span class="n">target_field</span> <span class="o">=</span> <span class="s2">&quot;TARGET_FID&quot;</span>
+    <span class="n">arcpy</span><span class="o">.</span><span class="n">analysis</span><span class="o">.</span><span class="n">Statistics</span><span class="p">(</span>
+        <span class="n">in_table</span><span class="o">=</span><span class="n">files</span><span class="p">[</span><span class="s2">&quot;spatial_join&quot;</span><span class="p">],</span>
+        <span class="n">out_table</span><span class="o">=</span><span class="n">files</span><span class="p">[</span><span class="s2">&quot;hole_statistics&quot;</span><span class="p">],</span>
+        <span class="n">statistics_fields</span><span class="o">=</span><span class="p">[[</span><span class="n">stat_field</span><span class="p">,</span> <span class="s2">&quot;COUNT&quot;</span><span class="p">]],</span>
+        <span class="n">case_field</span><span class="o">=</span><span class="n">target_field</span><span class="p">,</span>
+    <span class="p">)</span>
+
+    <span class="c1"># 3) Select those with &gt; 1 features</span>
+    <span class="n">stats_lyr</span> <span class="o">=</span> <span class="s2">&quot;stats_lyr&quot;</span>
+    <span class="n">arcpy</span><span class="o">.</span><span class="n">management</span><span class="o">.</span><span class="n">MakeTableView</span><span class="p">(</span>
+        <span class="n">in_table</span><span class="o">=</span><span class="n">files</span><span class="p">[</span><span class="s2">&quot;hole_statistics&quot;</span><span class="p">],</span> <span class="n">out_view</span><span class="o">=</span><span class="n">stats_lyr</span>
+    <span class="p">)</span>
+
+    <span class="n">arcpy</span><span class="o">.</span><span class="n">management</span><span class="o">.</span><span class="n">SelectLayerByAttribute</span><span class="p">(</span>
+        <span class="n">in_layer_or_view</span><span class="o">=</span><span class="n">stats_lyr</span><span class="p">,</span>
+        <span class="n">selection_type</span><span class="o">=</span><span class="s2">&quot;NEW_SELECTION&quot;</span><span class="p">,</span>
+        <span class="n">where_clause</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;COUNT_</span><span class="si">{</span><span class="n">stat_field</span><span class="si">}</span><span class="s2"> &gt; 1&quot;</span><span class="p">,</span>
+    <span class="p">)</span>
+
+    <span class="c1"># 4) Store the relevant holes in an own feature class</span>
+    <span class="n">land_use_lyr</span> <span class="o">=</span> <span class="s2">&quot;land_use_lyr&quot;</span>
+    <span class="n">arcpy</span><span class="o">.</span><span class="n">management</span><span class="o">.</span><span class="n">MakeFeatureLayer</span><span class="p">(</span>
+        <span class="n">in_features</span><span class="o">=</span><span class="n">files</span><span class="p">[</span><span class="s2">&quot;hole_polygons&quot;</span><span class="p">],</span> <span class="n">out_layer</span><span class="o">=</span><span class="n">land_use_lyr</span>
+    <span class="p">)</span>
+
+    <span class="n">fids</span> <span class="o">=</span> <span class="p">[</span><span class="n">row</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="k">for</span> <span class="n">row</span> <span class="ow">in</span> <span class="n">arcpy</span><span class="o">.</span><span class="n">da</span><span class="o">.</span><span class="n">SearchCursor</span><span class="p">(</span><span class="n">stats_lyr</span><span class="p">,</span> <span class="p">[</span><span class="n">target_field</span><span class="p">])]</span>
+
+    <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">fids</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+        <span class="n">fids_str</span> <span class="o">=</span> <span class="s2">&quot;,&quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="nb">str</span><span class="p">(</span><span class="n">x</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">fids</span><span class="p">)</span>
+
+        <span class="n">arcpy</span><span class="o">.</span><span class="n">management</span><span class="o">.</span><span class="n">SelectLayerByAttribute</span><span class="p">(</span>
+            <span class="n">in_layer_or_view</span><span class="o">=</span><span class="n">land_use_lyr</span><span class="p">,</span>
+            <span class="n">selection_type</span><span class="o">=</span><span class="s2">&quot;NEW_SELECTION&quot;</span><span class="p">,</span>
+            <span class="n">where_clause</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;OBJECTID IN (</span><span class="si">{</span><span class="n">fids_str</span><span class="si">}</span><span class="s2">)&quot;</span><span class="p">,</span>
+        <span class="p">)</span>
+
+        <span class="n">arcpy</span><span class="o">.</span><span class="n">management</span><span class="o">.</span><span class="n">CopyFeatures</span><span class="p">(</span>
+            <span class="n">in_features</span><span class="o">=</span><span class="n">land_use_lyr</span><span class="p">,</span> <span class="n">out_feature_class</span><span class="o">=</span><span class="n">files</span><span class="p">[</span><span class="s2">&quot;relevant_holes&quot;</span><span class="p">]</span>
+        <span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="find_largest_feature_on_island">
+<a class="viewcode-back" href="../../../../generated_docs/generalization.n10.arealdekke.html#generalization.n10.arealdekke.island_controller.find_largest_feature_on_island">[docs]</a>
+<span class="nd">@timing_decorator</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">find_largest_feature_on_island</span><span class="p">(</span><span class="n">files</span><span class="p">:</span> <span class="nb">dict</span><span class="p">,</span> <span class="n">stat_field</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    For each of the detected relevant island, find the features with largest area.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        files (dict): Dictionary with all the working files</span>
+<span class="sd">        stat_field (str): Field name in statistic table</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        tuple:</span>
+<span class="sd">            - dict: Dictionary with island oid as key and feature oid with largest area inside as value</span>
+<span class="sd">            - set: A set with object ID for all features inside relevant islands</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">relevant_oids</span> <span class="o">=</span> <span class="nb">set</span><span class="p">(</span>
+        <span class="n">oid</span>
+        <span class="k">for</span> <span class="n">oid</span><span class="p">,</span> <span class="n">stat</span> <span class="ow">in</span> <span class="n">arcpy</span><span class="o">.</span><span class="n">da</span><span class="o">.</span><span class="n">SearchCursor</span><span class="p">(</span>
+            <span class="n">files</span><span class="p">[</span><span class="s2">&quot;hole_statistics&quot;</span><span class="p">],</span> <span class="p">[</span><span class="s2">&quot;TARGET_FID&quot;</span><span class="p">,</span> <span class="sa">f</span><span class="s2">&quot;COUNT_</span><span class="si">{</span><span class="n">stat_field</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">]</span>
+        <span class="p">)</span>
+        <span class="k">if</span> <span class="n">stat</span> <span class="o">&gt;</span> <span class="mi">1</span>
+    <span class="p">)</span>
+
+    <span class="n">island_features</span> <span class="o">=</span> <span class="n">defaultdict</span><span class="p">(</span><span class="nb">list</span><span class="p">)</span>
+    <span class="n">feature_collection</span> <span class="o">=</span> <span class="nb">set</span><span class="p">()</span>
+    <span class="n">feature_areas</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">()</span>
+
+    <span class="k">with</span> <span class="n">arcpy</span><span class="o">.</span><span class="n">da</span><span class="o">.</span><span class="n">SearchCursor</span><span class="p">(</span>
+        <span class="n">files</span><span class="p">[</span><span class="s2">&quot;spatial_join&quot;</span><span class="p">],</span> <span class="p">[</span><span class="s2">&quot;TARGET_FID&quot;</span><span class="p">,</span> <span class="s2">&quot;JOIN_FID&quot;</span><span class="p">]</span>
+    <span class="p">)</span> <span class="k">as</span> <span class="n">search</span><span class="p">:</span>
+        <span class="k">for</span> <span class="n">target</span><span class="p">,</span> <span class="n">join</span> <span class="ow">in</span> <span class="n">search</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">target</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">relevant_oids</span><span class="p">:</span>
+                <span class="k">continue</span>
+            <span class="n">island_features</span><span class="p">[</span><span class="n">target</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">join</span><span class="p">)</span>
+            <span class="n">feature_collection</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">join</span><span class="p">)</span>
+
+    <span class="k">with</span> <span class="n">arcpy</span><span class="o">.</span><span class="n">da</span><span class="o">.</span><span class="n">SearchCursor</span><span class="p">(</span>
+        <span class="n">files</span><span class="p">[</span><span class="s2">&quot;copy_of_input&quot;</span><span class="p">],</span> <span class="p">[</span><span class="s2">&quot;OID@&quot;</span><span class="p">,</span> <span class="s2">&quot;SHAPE_Area&quot;</span><span class="p">]</span>
+    <span class="p">)</span> <span class="k">as</span> <span class="n">search</span><span class="p">:</span>
+        <span class="k">for</span> <span class="n">oid</span><span class="p">,</span> <span class="n">area</span> <span class="ow">in</span> <span class="n">search</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">oid</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">feature_collection</span><span class="p">:</span>
+                <span class="k">continue</span>
+            <span class="n">feature_areas</span><span class="p">[</span><span class="n">oid</span><span class="p">]</span> <span class="o">=</span> <span class="n">area</span>
+
+    <span class="n">to_keep</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">()</span>
+    <span class="k">for</span> <span class="n">island</span><span class="p">,</span> <span class="n">features</span> <span class="ow">in</span> <span class="n">island_features</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+        <span class="n">areas</span> <span class="o">=</span> <span class="p">[[</span><span class="n">oid</span><span class="p">,</span> <span class="n">feature_areas</span><span class="p">[</span><span class="n">oid</span><span class="p">]]</span> <span class="k">for</span> <span class="n">oid</span> <span class="ow">in</span> <span class="n">features</span><span class="p">]</span>
+        <span class="n">areas</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">areas</span><span class="p">,</span> <span class="n">key</span><span class="o">=</span><span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="n">x</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span>
+        <span class="n">areas</span><span class="o">.</span><span class="n">sort</span><span class="p">(</span><span class="n">key</span><span class="o">=</span><span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="n">x</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="n">reverse</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+        <span class="n">to_keep</span><span class="p">[</span><span class="n">island</span><span class="p">]</span> <span class="o">=</span> <span class="n">areas</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="mi">0</span><span class="p">]</span>
+
+    <span class="k">return</span> <span class="n">to_keep</span><span class="p">,</span> <span class="n">feature_collection</span></div>
+
+
+
+<div class="viewcode-block" id="update_island_attributes">
+<a class="viewcode-back" href="../../../../generated_docs/generalization.n10.arealdekke.html#generalization.n10.arealdekke.island_controller.update_island_attributes">[docs]</a>
+<span class="nd">@timing_decorator</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">update_island_attributes</span><span class="p">(</span><span class="n">files</span><span class="p">:</span> <span class="nb">dict</span><span class="p">,</span> <span class="n">area_ids</span><span class="p">:</span> <span class="nb">dict</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Sets the attributes of the island equal the largest inner polygon.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        files (dict): Dictionary with all the working files</span>
+<span class="sd">        area_ids (dict): Connection between islands and inner polygons</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">fields</span> <span class="o">=</span> <span class="p">[</span><span class="n">f</span><span class="o">.</span><span class="n">name</span> <span class="k">for</span> <span class="n">f</span> <span class="ow">in</span> <span class="n">arcpy</span><span class="o">.</span><span class="n">ListFields</span><span class="p">(</span><span class="n">files</span><span class="p">[</span><span class="s2">&quot;copy_of_input&quot;</span><span class="p">])]</span>
+    <span class="n">fields</span> <span class="o">=</span> <span class="n">fields</span><span class="p">[</span><span class="mi">2</span><span class="p">:</span><span class="o">-</span><span class="mi">3</span><span class="p">]</span>
+
+    <span class="n">unique_islands</span> <span class="o">=</span> <span class="nb">set</span><span class="p">(</span><span class="n">oid</span> <span class="k">for</span> <span class="n">oid</span> <span class="ow">in</span> <span class="n">area_ids</span><span class="o">.</span><span class="n">keys</span><span class="p">())</span>
+    <span class="n">unique_ids</span> <span class="o">=</span> <span class="nb">set</span><span class="p">(</span><span class="n">oid</span> <span class="k">for</span> <span class="n">oid</span> <span class="ow">in</span> <span class="n">area_ids</span><span class="o">.</span><span class="n">values</span><span class="p">())</span>
+
+    <span class="n">info</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">()</span>
+    <span class="k">with</span> <span class="n">arcpy</span><span class="o">.</span><span class="n">da</span><span class="o">.</span><span class="n">SearchCursor</span><span class="p">(</span><span class="n">files</span><span class="p">[</span><span class="s2">&quot;copy_of_input&quot;</span><span class="p">],</span> <span class="p">[</span><span class="s2">&quot;OID@&quot;</span><span class="p">]</span> <span class="o">+</span> <span class="n">fields</span><span class="p">)</span> <span class="k">as</span> <span class="n">search</span><span class="p">:</span>
+        <span class="k">for</span> <span class="n">row</span> <span class="ow">in</span> <span class="n">search</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">row</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">unique_ids</span><span class="p">:</span>
+                <span class="k">continue</span>
+            <span class="n">info</span><span class="p">[</span><span class="n">row</span><span class="p">[</span><span class="mi">0</span><span class="p">]]</span> <span class="o">=</span> <span class="n">row</span><span class="p">[</span><span class="mi">1</span><span class="p">:]</span>
+
+    <span class="k">with</span> <span class="n">arcpy</span><span class="o">.</span><span class="n">da</span><span class="o">.</span><span class="n">UpdateCursor</span><span class="p">(</span><span class="n">files</span><span class="p">[</span><span class="s2">&quot;hole_polygons&quot;</span><span class="p">],</span> <span class="p">[</span><span class="s2">&quot;OID@&quot;</span><span class="p">]</span> <span class="o">+</span> <span class="n">fields</span><span class="p">)</span> <span class="k">as</span> <span class="n">update</span><span class="p">:</span>
+        <span class="k">for</span> <span class="n">row</span> <span class="ow">in</span> <span class="n">update</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">row</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">unique_islands</span><span class="p">:</span>
+                <span class="k">continue</span>
+            <span class="n">feature_id</span> <span class="o">=</span> <span class="n">area_ids</span><span class="p">[</span><span class="n">row</span><span class="p">[</span><span class="mi">0</span><span class="p">]]</span>
+            <span class="n">data_to_update</span> <span class="o">=</span> <span class="p">[</span><span class="n">row</span><span class="p">[</span><span class="mi">0</span><span class="p">]]</span> <span class="o">+</span> <span class="nb">list</span><span class="p">(</span><span class="n">info</span><span class="p">[</span><span class="n">feature_id</span><span class="p">])</span>
+            <span class="n">update</span><span class="o">.</span><span class="n">updateRow</span><span class="p">(</span><span class="n">data_to_update</span><span class="p">)</span>
+
+    <span class="n">sel_str</span> <span class="o">=</span> <span class="s2">&quot;,&quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="nb">map</span><span class="p">(</span><span class="nb">str</span><span class="p">,</span> <span class="n">unique_islands</span><span class="p">))</span>
+
+    <span class="n">islands_lyr</span> <span class="o">=</span> <span class="s2">&quot;islands_lyr&quot;</span>
+    <span class="n">arcpy</span><span class="o">.</span><span class="n">management</span><span class="o">.</span><span class="n">MakeFeatureLayer</span><span class="p">(</span>
+        <span class="n">in_features</span><span class="o">=</span><span class="n">files</span><span class="p">[</span><span class="s2">&quot;hole_polygons&quot;</span><span class="p">],</span> <span class="n">out_layer</span><span class="o">=</span><span class="n">islands_lyr</span>
+    <span class="p">)</span>
+
+    <span class="n">arcpy</span><span class="o">.</span><span class="n">management</span><span class="o">.</span><span class="n">SelectLayerByAttribute</span><span class="p">(</span>
+        <span class="n">in_layer_or_view</span><span class="o">=</span><span class="n">islands_lyr</span><span class="p">,</span>
+        <span class="n">selection_type</span><span class="o">=</span><span class="s2">&quot;NEW_SELECTION&quot;</span><span class="p">,</span>
+        <span class="n">where_clause</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;OBJECTID IN (</span><span class="si">{</span><span class="n">sel_str</span><span class="si">}</span><span class="s2">)&quot;</span><span class="p">,</span>
+    <span class="p">)</span>
+
+    <span class="n">arcpy</span><span class="o">.</span><span class="n">management</span><span class="o">.</span><span class="n">CopyFeatures</span><span class="p">(</span>
+        <span class="n">in_features</span><span class="o">=</span><span class="n">islands_lyr</span><span class="p">,</span> <span class="n">out_feature_class</span><span class="o">=</span><span class="n">files</span><span class="p">[</span><span class="s2">&quot;correct_attributes&quot;</span><span class="p">]</span>
+    <span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="update_relevant_islands">
+<a class="viewcode-back" href="../../../../generated_docs/generalization.n10.arealdekke.html#generalization.n10.arealdekke.island_controller.update_relevant_islands">[docs]</a>
+<span class="nd">@timing_decorator</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">update_relevant_islands</span><span class="p">(</span><span class="n">files</span><span class="p">:</span> <span class="nb">dict</span><span class="p">,</span> <span class="n">feature_ids</span><span class="p">:</span> <span class="nb">set</span><span class="p">,</span> <span class="n">output_fc</span><span class="p">:</span> <span class="nb">str</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Erases the relevant island geometries from the input data and replaces these holes with the updated island polygons.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        files (dict): Dictionary with all the working files</span>
+<span class="sd">        feature_ids (set): Set of object IDS that should be removed</span>
+<span class="sd">        output_fc (str): The feature class to store the final data</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">islands_lyr</span> <span class="o">=</span> <span class="s2">&quot;islands_lyr&quot;</span>
+    <span class="n">arcpy</span><span class="o">.</span><span class="n">management</span><span class="o">.</span><span class="n">MakeFeatureLayer</span><span class="p">(</span>
+        <span class="n">in_features</span><span class="o">=</span><span class="n">files</span><span class="p">[</span><span class="s2">&quot;copy_of_input&quot;</span><span class="p">],</span> <span class="n">out_layer</span><span class="o">=</span><span class="n">islands_lyr</span>
+    <span class="p">)</span>
+
+    <span class="n">sel_str</span> <span class="o">=</span> <span class="s2">&quot;,&quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="nb">map</span><span class="p">(</span><span class="nb">str</span><span class="p">,</span> <span class="n">feature_ids</span><span class="p">))</span>
+
+    <span class="n">arcpy</span><span class="o">.</span><span class="n">management</span><span class="o">.</span><span class="n">SelectLayerByAttribute</span><span class="p">(</span>
+        <span class="n">in_layer_or_view</span><span class="o">=</span><span class="n">islands_lyr</span><span class="p">,</span>
+        <span class="n">selection_type</span><span class="o">=</span><span class="s2">&quot;NEW_SELECTION&quot;</span><span class="p">,</span>
+        <span class="n">where_clause</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;OBJECTID IN (</span><span class="si">{</span><span class="n">sel_str</span><span class="si">}</span><span class="s2">)&quot;</span><span class="p">,</span>
+    <span class="p">)</span>
+
+    <span class="n">arcpy</span><span class="o">.</span><span class="n">management</span><span class="o">.</span><span class="n">DeleteFeatures</span><span class="p">(</span><span class="n">in_features</span><span class="o">=</span><span class="n">islands_lyr</span><span class="p">)</span>
+
+    <span class="n">arcpy</span><span class="o">.</span><span class="n">management</span><span class="o">.</span><span class="n">Merge</span><span class="p">(</span>
+        <span class="n">inputs</span><span class="o">=</span><span class="p">[</span><span class="n">files</span><span class="p">[</span><span class="s2">&quot;copy_of_input&quot;</span><span class="p">],</span> <span class="n">files</span><span class="p">[</span><span class="s2">&quot;correct_attributes&quot;</span><span class="p">]],</span> <span class="n">output</span><span class="o">=</span><span class="n">output_fc</span>
+    <span class="p">)</span></div>
+
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2024, Kartverket.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

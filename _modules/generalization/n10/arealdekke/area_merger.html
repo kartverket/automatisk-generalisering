@@ -209,30 +209,30 @@
     <span class="n">wfm</span> <span class="o">=</span> <span class="n">WorkFileManager</span><span class="p">(</span><span class="n">config</span><span class="o">=</span><span class="n">config</span><span class="p">)</span>
 
     <span class="c1"># 2) Creates temporary files</span>
-    <span class="n">work_files</span> <span class="o">=</span> <span class="n">create_work_wfm_gdbs</span><span class="p">(</span><span class="n">wfm</span><span class="p">)</span>
+    <span class="n">files</span> <span class="o">=</span> <span class="n">create_wfm_gdbs</span><span class="p">(</span><span class="n">wfm</span><span class="p">)</span>
 
     <span class="c1"># 3) Fetch data with changed area and those overlapping these</span>
     <span class="n">fetch_relevant_data</span><span class="p">(</span>
         <span class="n">input_fc</span><span class="o">=</span><span class="n">input_fc</span><span class="p">,</span>
         <span class="n">buffered_fc</span><span class="o">=</span><span class="n">buffered_fc</span><span class="p">,</span>
-        <span class="n">files</span><span class="o">=</span><span class="n">work_files</span><span class="p">,</span>
+        <span class="n">files</span><span class="o">=</span><span class="n">files</span><span class="p">,</span>
         <span class="n">attr_val</span><span class="o">=</span><span class="n">changed_area</span><span class="p">,</span>
     <span class="p">)</span>
 
     <span class="c1"># 4) Delete overlapping areas from features</span>
-    <span class="n">erase_overlap</span><span class="p">(</span><span class="n">files</span><span class="o">=</span><span class="n">work_files</span><span class="p">)</span>
+    <span class="n">erase_overlap</span><span class="p">(</span><span class="n">files</span><span class="o">=</span><span class="n">files</span><span class="p">)</span>
 
     <span class="c1"># 5) Collect the data and store the result</span>
-    <span class="n">collect_and_finish</span><span class="p">(</span><span class="n">files</span><span class="o">=</span><span class="n">work_files</span><span class="p">,</span> <span class="n">output_fc</span><span class="o">=</span><span class="n">output_fc</span><span class="p">)</span>
+    <span class="n">collect_and_finish</span><span class="p">(</span><span class="n">files</span><span class="o">=</span><span class="n">files</span><span class="p">,</span> <span class="n">output_fc</span><span class="o">=</span><span class="n">output_fc</span><span class="p">)</span>
 
     <span class="n">wfm</span><span class="o">.</span><span class="n">delete_created_files</span><span class="p">()</span></div>
 
 
 
-<div class="viewcode-block" id="create_work_wfm_gdbs">
-<a class="viewcode-back" href="../../../../generated_docs/generalization.n10.arealdekke.html#generalization.n10.arealdekke.area_merger.create_work_wfm_gdbs">[docs]</a>
+<div class="viewcode-block" id="create_wfm_gdbs">
+<a class="viewcode-back" href="../../../../generated_docs/generalization.n10.arealdekke.html#generalization.n10.arealdekke.area_merger.create_wfm_gdbs">[docs]</a>
 <span class="nd">@timing_decorator</span>
-<span class="k">def</span><span class="w"> </span><span class="nf">create_work_wfm_gdbs</span><span class="p">(</span><span class="n">wfm</span><span class="p">:</span> <span class="n">WorkFileManager</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">:</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">create_wfm_gdbs</span><span class="p">(</span><span class="n">wfm</span><span class="p">:</span> <span class="n">WorkFileManager</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Creates all the temporarily files that are going to be used</span>
 <span class="sd">    during the process of adjusting land use boundaries.</span>

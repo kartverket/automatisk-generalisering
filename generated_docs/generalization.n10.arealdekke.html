@@ -176,8 +176,8 @@ that is enlarged and overlaps other areas</p></li>
 </dd></dl>
 
 <dl class="py function">
-<dt class="sig sig-object py" id="generalization.n10.arealdekke.area_merger.create_work_wfm_gdbs">
-<span class="sig-prename descclassname"><span class="pre">generalization.n10.arealdekke.area_merger.</span></span><span class="sig-name descname"><span class="pre">create_work_wfm_gdbs</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">wfm</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="file_manager.html#file_manager.work_file_manager.WorkFileManager" title="file_manager.work_file_manager.WorkFileManager"><span class="pre">WorkFileManager</span></a></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">dict</span></span></span><a class="reference internal" href="../_modules/generalization/n10/arealdekke/area_merger.html#create_work_wfm_gdbs"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#generalization.n10.arealdekke.area_merger.create_work_wfm_gdbs" title="Link to this definition"></a></dt>
+<dt class="sig sig-object py" id="generalization.n10.arealdekke.area_merger.create_wfm_gdbs">
+<span class="sig-prename descclassname"><span class="pre">generalization.n10.arealdekke.area_merger.</span></span><span class="sig-name descname"><span class="pre">create_wfm_gdbs</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">wfm</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="file_manager.html#file_manager.work_file_manager.WorkFileManager" title="file_manager.work_file_manager.WorkFileManager"><span class="pre">WorkFileManager</span></a></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">dict</span></span></span><a class="reference internal" href="../_modules/generalization/n10/arealdekke/area_merger.html#create_wfm_gdbs"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#generalization.n10.arealdekke.area_merger.create_wfm_gdbs" title="Link to this definition"></a></dt>
 <dd><p>Creates all the temporarily files that are going to be used
 during the process of adjusting land use boundaries.</p>
 <dl class="field-list simple">
@@ -274,6 +274,142 @@ feature class, and copies the result to output.</p>
 </section>
 <section id="generalization-n10-arealdekke-gangsykkel-dissolver-module">
 <h2>generalization.n10.arealdekke.gangsykkel_dissolver module<a class="headerlink" href="#generalization-n10-arealdekke-gangsykkel-dissolver-module" title="Link to this heading"></a></h2>
+</section>
+<section id="module-generalization.n10.arealdekke.island_controller">
+<span id="generalization-n10-arealdekke-island-controller-module"></span><h2>generalization.n10.arealdekke.island_controller module<a class="headerlink" href="#module-generalization.n10.arealdekke.island_controller" title="Link to this heading"></a></h2>
+<dl class="py function">
+<dt class="sig sig-object py" id="generalization.n10.arealdekke.island_controller.island_controller">
+<span class="sig-prename descclassname"><span class="pre">generalization.n10.arealdekke.island_controller.</span></span><span class="sig-name descname"><span class="pre">island_controller</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">input_fc</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">output_fc</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="reference internal" href="../_modules/generalization/n10/arealdekke/island_controller.html#island_controller"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#generalization.n10.arealdekke.island_controller.island_controller" title="Link to this definition"></a></dt>
+<dd><p>Main function dissolving small areas (also under minimum)
+on islands too small for multiple feature classes.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>input_fc</strong> (<em>str</em>) – The input feature class with complete land use data</p></li>
+<li><p><strong>output_fc</strong> (<em>str</em>) – The feature class to store final output in</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="generalization.n10.arealdekke.island_controller.create_wfm_gdbs">
+<span class="sig-prename descclassname"><span class="pre">generalization.n10.arealdekke.island_controller.</span></span><span class="sig-name descname"><span class="pre">create_wfm_gdbs</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">wfm</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="file_manager.html#file_manager.work_file_manager.WorkFileManager" title="file_manager.work_file_manager.WorkFileManager"><span class="pre">WorkFileManager</span></a></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">dict</span></span></span><a class="reference internal" href="../_modules/generalization/n10/arealdekke/island_controller.html#create_wfm_gdbs"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#generalization.n10.arealdekke.island_controller.create_wfm_gdbs" title="Link to this definition"></a></dt>
+<dd><p>Creates all the temporarily files that are going to be used
+during the process of combining land use on islands.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>wfm</strong> (<a class="reference internal" href="file_manager.html#file_manager.work_file_manager.WorkFileManager" title="file_manager.work_file_manager.WorkFileManager"><em>WorkFileManager</em></a>) – The WorkFileManager instance that are keeping the files</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>A dictionary with all the files as variables</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>dict</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="generalization.n10.arealdekke.island_controller.copy_features_and_identifies_inner_holes">
+<span class="sig-prename descclassname"><span class="pre">generalization.n10.arealdekke.island_controller.</span></span><span class="sig-name descname"><span class="pre">copy_features_and_identifies_inner_holes</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">input_fc</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">files</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dict</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="reference internal" href="../_modules/generalization/n10/arealdekke/island_controller.html#copy_features_and_identifies_inner_holes"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#generalization.n10.arealdekke.island_controller.copy_features_and_identifies_inner_holes" title="Link to this definition"></a></dt>
+<dd><p>Copy the original data into a separate feature class,
+add a new field on the water features where:</p>
+<blockquote>
+<div><ul class="simple">
+<li><p>1: polygon has inner hole</p></li>
+<li><p>0: polygon does not have inner hole</p></li>
+</ul>
+</div></blockquote>
+<p>… and store those with in an own feature class.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>input_fc</strong> (<em>str</em>) – Feature class with the original land use data</p></li>
+<li><p><strong>files</strong> (<em>dict</em>) – Dictionary with all the working files</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="generalization.n10.arealdekke.island_controller.find_hole_geometries">
+<span class="sig-prename descclassname"><span class="pre">generalization.n10.arealdekke.island_controller.</span></span><span class="sig-name descname"><span class="pre">find_hole_geometries</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">files</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dict</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="reference internal" href="../_modules/generalization/n10/arealdekke/island_controller.html#find_hole_geometries"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#generalization.n10.arealdekke.island_controller.find_hole_geometries" title="Link to this definition"></a></dt>
+<dd><p>Extract hole boundaries and create own geometries of these that are of relevant size.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>files</strong> (<em>dict</em>) – Dictionary with all the working files</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="generalization.n10.arealdekke.island_controller.find_holes_with_multiple_features">
+<span class="sig-prename descclassname"><span class="pre">generalization.n10.arealdekke.island_controller.</span></span><span class="sig-name descname"><span class="pre">find_holes_with_multiple_features</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">files</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dict</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">stat_field</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="reference internal" href="../_modules/generalization/n10/arealdekke/island_controller.html#find_holes_with_multiple_features"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#generalization.n10.arealdekke.island_controller.find_holes_with_multiple_features" title="Link to this definition"></a></dt>
+<dd><p>Detects which of the hole polygons that contains multiple land use categories.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>files</strong> (<em>dict</em>) – Dictionary with all the working files</p></li>
+<li><p><strong>stat_field</strong> (<em>str</em>) – Field name in statistic table</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="generalization.n10.arealdekke.island_controller.find_largest_feature_on_island">
+<span class="sig-prename descclassname"><span class="pre">generalization.n10.arealdekke.island_controller.</span></span><span class="sig-name descname"><span class="pre">find_largest_feature_on_island</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">files</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dict</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">stat_field</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">tuple</span></span></span><a class="reference internal" href="../_modules/generalization/n10/arealdekke/island_controller.html#find_largest_feature_on_island"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#generalization.n10.arealdekke.island_controller.find_largest_feature_on_island" title="Link to this definition"></a></dt>
+<dd><p>For each of the detected relevant island, find the features with largest area.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>files</strong> (<em>dict</em>) – Dictionary with all the working files</p></li>
+<li><p><strong>stat_field</strong> (<em>str</em>) – Field name in statistic table</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p><ul class="simple">
+<li><p>dict: Dictionary with island oid as key and feature oid with largest area inside as value</p></li>
+<li><p>set: A set with object ID for all features inside relevant islands</p></li>
+</ul>
+</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>tuple</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="generalization.n10.arealdekke.island_controller.update_island_attributes">
+<span class="sig-prename descclassname"><span class="pre">generalization.n10.arealdekke.island_controller.</span></span><span class="sig-name descname"><span class="pre">update_island_attributes</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">files</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dict</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">area_ids</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dict</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="reference internal" href="../_modules/generalization/n10/arealdekke/island_controller.html#update_island_attributes"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#generalization.n10.arealdekke.island_controller.update_island_attributes" title="Link to this definition"></a></dt>
+<dd><p>Sets the attributes of the island equal the largest inner polygon.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>files</strong> (<em>dict</em>) – Dictionary with all the working files</p></li>
+<li><p><strong>area_ids</strong> (<em>dict</em>) – Connection between islands and inner polygons</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="generalization.n10.arealdekke.island_controller.update_relevant_islands">
+<span class="sig-prename descclassname"><span class="pre">generalization.n10.arealdekke.island_controller.</span></span><span class="sig-name descname"><span class="pre">update_relevant_islands</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">files</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dict</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">feature_ids</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">set</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">output_fc</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/generalization/n10/arealdekke/island_controller.html#update_relevant_islands"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#generalization.n10.arealdekke.island_controller.update_relevant_islands" title="Link to this definition"></a></dt>
+<dd><p>Erases the relevant island geometries from the input data and replaces these holes with the updated island polygons.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>files</strong> (<em>dict</em>) – Dictionary with all the working files</p></li>
+<li><p><strong>feature_ids</strong> (<em>set</em>) – Set of object IDS that should be removed</p></li>
+<li><p><strong>output_fc</strong> (<em>str</em>) – The feature class to store the final data</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
 </section>
 <section id="module-generalization.n10.arealdekke">
 <span id="module-contents"></span><h2>Module contents<a class="headerlink" href="#module-generalization.n10.arealdekke" title="Link to this heading"></a></h2>

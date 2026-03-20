@@ -91,6 +91,7 @@
 <span class="n">elim_file</span> <span class="o">=</span> <span class="s2">&quot;eliminate&quot;</span>
 <span class="n">attribute_file</span> <span class="o">=</span> <span class="s2">&quot;attribute_changer&quot;</span>
 <span class="n">area_line_merger</span> <span class="o">=</span> <span class="s2">&quot;area_line_merger&quot;</span>
+<span class="n">island_merger</span> <span class="o">=</span> <span class="s2">&quot;island_merger&quot;</span>
 
 
 <div class="viewcode-block" id="Arealdekke_N10">
@@ -188,6 +189,18 @@
 
     <span class="n">area_line_merger_output__n10_land_use</span> <span class="o">=</span> <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_gdb</span><span class="p">(</span>
         <span class="n">script_source_name</span><span class="o">=</span><span class="n">area_line_merger</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">&quot;area_line_merger_output&quot;</span>
+    <span class="p">)</span>
+
+    <span class="c1"># ========================================</span>
+    <span class="c1">#                            ISLAND MERGER</span>
+    <span class="c1"># ========================================</span>
+
+    <span class="n">island_merger__n10_land_use</span> <span class="o">=</span> <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_gdb</span><span class="p">(</span>
+        <span class="n">script_source_name</span><span class="o">=</span><span class="n">island_merger</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">&quot;island_merger&quot;</span>
+    <span class="p">)</span>
+
+    <span class="n">island_merger_output__n10_land_use</span> <span class="o">=</span> <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_gdb</span><span class="p">(</span>
+        <span class="n">script_source_name</span><span class="o">=</span><span class="n">island_merger</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">&quot;island_merger_output&quot;</span>
     <span class="p">)</span></div>
 
 </pre></div>
