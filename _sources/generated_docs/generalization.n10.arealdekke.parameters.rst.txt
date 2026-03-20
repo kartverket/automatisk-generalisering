@@ -1,0 +1,21 @@
+generalization.n10.arealdekke.parameters package
+================================================
+
+Submodules
+----------
+
+generalization.n10.arealdekke.parameters.parameter\_dataclasses module
+----------------------------------------------------------------------
+
+.. automodule:: generalization.n10.arealdekke.parameters.parameter_dataclasses
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+Module contents
+---------------
+
+.. automodule:: generalization.n10.arealdekke.parameters
+   :members:
+   :show-inheritance:
+   :undoc-members:

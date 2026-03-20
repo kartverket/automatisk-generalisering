@@ -1,6 +1,14 @@
 generalization.n10.arealdekke package
 =====================================
 
+Subpackages
+-----------
+
+.. toctree::
+   :maxdepth: 4
+
+   generalization.n10.arealdekke.parameters
+
 Submodules
 ----------
 

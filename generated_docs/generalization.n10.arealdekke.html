@@ -20,7 +20,7 @@
     <script src="../_static/js/theme.js"></script>
     <link rel="index" title="Index" href="../genindex.html" />
     <link rel="search" title="Search" href="../search.html" />
-    <link rel="next" title="generalization.n10.facilities package" href="generalization.n10.facilities.html" />
+    <link rel="next" title="generalization.n10.arealdekke.parameters package" href="generalization.n10.arealdekke.parameters.html" />
     <link rel="prev" title="generalization.n10 package" href="generalization.n10.html" /> 
 </head>
 
@@ -102,6 +102,19 @@
              
   <section id="generalization-n10-arealdekke-package">
 <h1>generalization.n10.arealdekke package<a class="headerlink" href="#generalization-n10-arealdekke-package" title="Link to this heading"></a></h1>
+<section id="subpackages">
+<h2>Subpackages<a class="headerlink" href="#subpackages" title="Link to this heading"></a></h2>
+<div class="toctree-wrapper compound">
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="generalization.n10.arealdekke.parameters.html">generalization.n10.arealdekke.parameters package</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="generalization.n10.arealdekke.parameters.html#submodules">Submodules</a></li>
+<li class="toctree-l2"><a class="reference internal" href="generalization.n10.arealdekke.parameters.html#generalization-n10-arealdekke-parameters-parameter-dataclasses-module">generalization.n10.arealdekke.parameters.parameter_dataclasses module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="generalization.n10.arealdekke.parameters.html#module-generalization.n10.arealdekke.parameters">Module contents</a></li>
+</ul>
+</li>
+</ul>
+</div>
+</section>
 <section id="submodules">
 <h2>Submodules<a class="headerlink" href="#submodules" title="Link to this heading"></a></h2>
 </section>
@@ -256,65 +269,8 @@ feature class, and copies the result to output.</p>
 <section id="generalization-n10-arealdekke-attribute-changer-module">
 <h2>generalization.n10.arealdekke.attribute_changer module<a class="headerlink" href="#generalization-n10-arealdekke-attribute-changer-module" title="Link to this heading"></a></h2>
 </section>
-<section id="module-generalization.n10.arealdekke.eliminate_small_polygons">
-<span id="generalization-n10-arealdekke-eliminate-small-polygons-module"></span><h2>generalization.n10.arealdekke.eliminate_small_polygons module<a class="headerlink" href="#module-generalization.n10.arealdekke.eliminate_small_polygons" title="Link to this heading"></a></h2>
-<dl class="py class">
-<dt class="sig sig-object py" id="generalization.n10.arealdekke.eliminate_small_polygons.EliminateSmallPolygons">
-<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">generalization.n10.arealdekke.eliminate_small_polygons.</span></span><span class="sig-name descname"><span class="pre">EliminateSmallPolygons</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">eliminate_small_polygons_config</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="composition_configs.html#composition_configs.logic_config.EliminateSmallPolygonsInitKwargs" title="composition_configs.logic_config.EliminateSmallPolygonsInitKwargs"><span class="pre">EliminateSmallPolygonsInitKwargs</span></a></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/generalization/n10/arealdekke/eliminate_small_polygons.html#EliminateSmallPolygons"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#generalization.n10.arealdekke.eliminate_small_polygons.EliminateSmallPolygons" title="Link to this definition"></a></dt>
-<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
-<p>Eliminates small polygons based on area times isoperimetric quotient, while excluding rivers and samferdsel.
-Also removes narrow polygon parts using buffer.</p>
-<dl class="py method">
-<dt class="sig sig-object py" id="generalization.n10.arealdekke.eliminate_small_polygons.EliminateSmallPolygons.create_wfm_gdbs">
-<span class="sig-name descname"><span class="pre">create_wfm_gdbs</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">wfm</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="file_manager.html#file_manager.work_file_manager.WorkFileManager" title="file_manager.work_file_manager.WorkFileManager"><span class="pre">WorkFileManager</span></a></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">dict</span></span></span><a class="reference internal" href="../_modules/generalization/n10/arealdekke/eliminate_small_polygons.html#EliminateSmallPolygons.create_wfm_gdbs"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#generalization.n10.arealdekke.eliminate_small_polygons.EliminateSmallPolygons.create_wfm_gdbs" title="Link to this definition"></a></dt>
-<dd></dd></dl>
-
-<dl class="py method">
-<dt class="sig sig-object py" id="generalization.n10.arealdekke.eliminate_small_polygons.EliminateSmallPolygons.fetch_data">
-<span class="sig-name descname"><span class="pre">fetch_data</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/generalization/n10/arealdekke/eliminate_small_polygons.html#EliminateSmallPolygons.fetch_data"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#generalization.n10.arealdekke.eliminate_small_polygons.EliminateSmallPolygons.fetch_data" title="Link to this definition"></a></dt>
-<dd></dd></dl>
-
-<dl class="py method">
-<dt class="sig sig-object py" id="generalization.n10.arealdekke.eliminate_small_polygons.EliminateSmallPolygons.add_fields">
-<span class="sig-name descname"><span class="pre">add_fields</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">input_fc</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/generalization/n10/arealdekke/eliminate_small_polygons.html#EliminateSmallPolygons.add_fields"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#generalization.n10.arealdekke.eliminate_small_polygons.EliminateSmallPolygons.add_fields" title="Link to this definition"></a></dt>
-<dd><p>Add area, length, isoperimetric quotient and iq_adjusted_area fields to the input feature class, and populate them with values.</p>
-</dd></dl>
-
-<dl class="py method">
-<dt class="sig sig-object py" id="generalization.n10.arealdekke.eliminate_small_polygons.EliminateSmallPolygons.eliminate">
-<span class="sig-name descname"><span class="pre">eliminate</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">input_fc</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">output_fc</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/generalization/n10/arealdekke/eliminate_small_polygons.html#EliminateSmallPolygons.eliminate"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#generalization.n10.arealdekke.eliminate_small_polygons.EliminateSmallPolygons.eliminate" title="Link to this definition"></a></dt>
-<dd><p>Eliminate small polygons based on area times isoperimetric quotient, while excluding rivers and samferdsel.</p>
-</dd></dl>
-
-<dl class="py method">
-<dt class="sig sig-object py" id="generalization.n10.arealdekke.eliminate_small_polygons.EliminateSmallPolygons.buffer_potential_spikes">
-<span class="sig-name descname"><span class="pre">buffer_potential_spikes</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/generalization/n10/arealdekke/eliminate_small_polygons.html#EliminateSmallPolygons.buffer_potential_spikes"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#generalization.n10.arealdekke.eliminate_small_polygons.EliminateSmallPolygons.buffer_potential_spikes" title="Link to this definition"></a></dt>
-<dd><p>Buffer all polygons except water and samferdsel to remove spikes</p>
-</dd></dl>
-
-<dl class="py method">
-<dt class="sig sig-object py" id="generalization.n10.arealdekke.eliminate_small_polygons.EliminateSmallPolygons.clip_and_erase">
-<span class="sig-name descname"><span class="pre">clip_and_erase</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/generalization/n10/arealdekke/eliminate_small_polygons.html#EliminateSmallPolygons.clip_and_erase"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#generalization.n10.arealdekke.eliminate_small_polygons.EliminateSmallPolygons.clip_and_erase" title="Link to this definition"></a></dt>
-<dd><p>Clip and erase the buffered features, to remove narrow parts of polygons, and then merge the clipped and erased features back together. And run a final eliminate on anything smaller than 100 sqm that is not water or samferdsel.</p>
-</dd></dl>
-
-<dl class="py method">
-<dt class="sig sig-object py" id="generalization.n10.arealdekke.eliminate_small_polygons.EliminateSmallPolygons.run">
-<span class="sig-name descname"><span class="pre">run</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/generalization/n10/arealdekke/eliminate_small_polygons.html#EliminateSmallPolygons.run"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#generalization.n10.arealdekke.eliminate_small_polygons.EliminateSmallPolygons.run" title="Link to this definition"></a></dt>
-<dd></dd></dl>
-
-</dd></dl>
-
-<dl class="py function">
-<dt class="sig sig-object py" id="generalization.n10.arealdekke.eliminate_small_polygons.normal_call">
-<span class="sig-prename descclassname"><span class="pre">generalization.n10.arealdekke.eliminate_small_polygons.</span></span><span class="sig-name descname"><span class="pre">normal_call</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">input_fc</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">output_fc</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/generalization/n10/arealdekke/eliminate_small_polygons.html#normal_call"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#generalization.n10.arealdekke.eliminate_small_polygons.normal_call" title="Link to this definition"></a></dt>
-<dd></dd></dl>
-
-<dl class="py function">
-<dt class="sig sig-object py" id="generalization.n10.arealdekke.eliminate_small_polygons.partition_call">
-<span class="sig-prename descclassname"><span class="pre">generalization.n10.arealdekke.eliminate_small_polygons.</span></span><span class="sig-name descname"><span class="pre">partition_call</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">input_fc</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">output_fc</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/generalization/n10/arealdekke/eliminate_small_polygons.html#partition_call"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#generalization.n10.arealdekke.eliminate_small_polygons.partition_call" title="Link to this definition"></a></dt>
-<dd></dd></dl>
-
+<section id="generalization-n10-arealdekke-eliminate-small-polygons-module">
+<h2>generalization.n10.arealdekke.eliminate_small_polygons module<a class="headerlink" href="#generalization-n10-arealdekke-eliminate-small-polygons-module" title="Link to this heading"></a></h2>
 </section>
 <section id="generalization-n10-arealdekke-gangsykkel-dissolver-module">
 <h2>generalization.n10.arealdekke.gangsykkel_dissolver module<a class="headerlink" href="#generalization-n10-arealdekke-gangsykkel-dissolver-module" title="Link to this heading"></a></h2>
@@ -329,7 +285,7 @@ Also removes narrow polygon parts using buffer.</p>
           </div>
           <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
         <a href="generalization.n10.html" class="btn btn-neutral float-left" title="generalization.n10 package" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
-        <a href="generalization.n10.facilities.html" class="btn btn-neutral float-right" title="generalization.n10.facilities package" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+        <a href="generalization.n10.arealdekke.parameters.html" class="btn btn-neutral float-right" title="generalization.n10.arealdekke.parameters package" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
     </div>
 
   <hr/>
