@@ -279,9 +279,6 @@ class FillLineGapsAdvancedConfig:
     angle_block_threshold_degrees: Optional[float] = None
     angle_extra_dangle_threshold_degrees: Optional[float] = None
 
-    # 0..1, prefer line alignment a bit more than connector transition
-    line_alignment_weight: float = 0.6
-
     best_fit_weights: BestFitWeightsConfig = field(
         default_factory=BestFitWeightsConfig
     )

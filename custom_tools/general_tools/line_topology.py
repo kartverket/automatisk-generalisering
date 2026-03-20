@@ -840,7 +840,6 @@ class AngleAssessment:
     connector_target_diff: Optional[float] = None
     src_target_diff: Optional[float] = None
     connector_transition_diff: Optional[float] = None
-    line_match_diff: Optional[float] = None
 
 
 @dataclass
@@ -896,6 +895,7 @@ class CandidateDiagnostic:
 # ---------------------------------------------------------------------------
 # Pipeline type aliases
 # ---------------------------------------------------------------------------
+_DangleXYsByParent:    TypeAlias = dict[int, list[tuple[float, float]]]
 _IllegalTargets:       TypeAlias = dict[int, dict[str, set[int]]]
 _CandRow:              TypeAlias = dict[str, Any]
 _Grouped:              TypeAlias = dict[int, list[_CandRow]]
@@ -967,9 +967,6 @@ class FillLineGaps:
             else float(adv.angle_extra_dangle_threshold_degrees)
         )
         self.best_fit_weights = adv.best_fit_weights
-
-        w = float(getattr(adv, "line_alignment_weight", 0.6))
-        self.line_alignment_weight = max(0.0, min(1.0, w))
 
         self.angle_local_half_window_m = float(
             getattr(adv, "angle_local_half_window_m", 2.0)
@@ -2190,7 +2187,7 @@ class FillLineGaps:
         polyline_by_parent: dict[int, Any],
         polyline_by_external: dict[str, dict[int, Any]],
         is_external_line_like: dict[str, bool],
-        dangle_target_parents: Optional[set] = None,
+        dangle_xys_by_parent: Optional[_DangleXYsByParent] = None,
     ) -> AngleAssessment:
         ds_key = str(cand["near_fc_key"])
         near_fid = int(cand["near_fid"])
@@ -2259,7 +2256,6 @@ class FillLineGaps:
         connector_target_diff: Optional[float] = None
         src_target_diff: Optional[float] = None
         connector_transition_diff: Optional[float] = None
-        line_match_diff: Optional[float] = None
 
         if ds_key == lines_fc_key:
             tgt_parent = int(near_fid)
@@ -2319,11 +2315,13 @@ class FillLineGaps:
         # and must be scored with identical directional semantics to prevent it
         # from getting an unfair undirected scoring advantage.
         _is_dangle_pair = ds_key == dangles_fc_key
-        _is_dangle_parent_line = (
-            ds_key == lines_fc_key
-            and dangle_target_parents is not None
-            and int(near_fid) in dangle_target_parents
-        )
+        _is_dangle_parent_line = False
+        if ds_key == lines_fc_key and dangle_xys_by_parent is not None:
+            _tol = self.connectivity_tolerance_meters
+            _is_dangle_parent_line = any(
+                abs(dx - near_x) < _tol and abs(dy - near_y) < _tol
+                for dx, dy in dangle_xys_by_parent.get(int(near_fid), [])
+            )
         _use_directional = _is_dangle_pair or _is_dangle_parent_line
 
         if _use_directional:
@@ -2372,13 +2370,10 @@ class FillLineGaps:
             _src_conn_for_transition + float(connector_target_diff)
         )
 
-        w = float(self.line_alignment_weight)
-        connector_w = 1.0 - w
-        line_match_diff = connector_w * float(connector_transition_diff) + w * float(
-            src_target_diff
-        )
-
-        metric = float(line_match_diff)
+        if _use_directional:
+            metric = float(src_target_diff)
+        else:
+            metric = float(src_connector_diff)
 
         blocks = self.angle_block_threshold_degrees is not None and metric > float(
             self.angle_block_threshold_degrees
@@ -2401,7 +2396,6 @@ class FillLineGaps:
             connector_target_diff=float(connector_target_diff),
             src_target_diff=float(src_target_diff),
             connector_transition_diff=float(connector_transition_diff),
-            line_match_diff=float(line_match_diff),
         )
 
     def _pair_token_from_candidate(
@@ -3139,16 +3133,14 @@ class FillLineGaps:
                         z_score_min = min(_valid_z)
                         z_score_max = max(_valid_z)
 
-            # Parent IDs of target-dangle candidates for this source dangle.
-            # A line candidate to one of these parents represents the same
-            # connection opportunity as the dangle candidate and must be scored
-            # with identical directional semantics (no undirected bypass).
-            _dangle_target_parents: set[int] = set()
-            for _c in legal_rows:
-                if str(_c["near_fc_key"]) == str(dangles_key):
-                    _p = dangle_parent.get(int(_c["near_fid"]))
-                    if _p is not None:
-                        _dangle_target_parents.add(int(_p))
+            # Build a mapping from parent line ID -> list of dangle XY coords.
+            # Used in _assess_angle to detect when a line candidate is hit at a
+            # dangle endpoint, so it can be scored with directional semantics.
+            _dangle_xys_by_parent: _DangleXYsByParent = {}
+            for _d_oid, _d_parent in dangle_parent.items():
+                _d_xy = dangle_xy.get(_d_oid)
+                if _d_xy is not None:
+                    _dangle_xys_by_parent.setdefault(int(_d_parent), []).append(_d_xy)
 
             # (_ProposalScore, cand, raw_dist, best_fit, bonus, assess, norm_z, end_z)
             scored_candidates: list[tuple[Any, ...]] = []
@@ -3167,7 +3159,7 @@ class FillLineGaps:
                     polyline_by_parent=polyline_by_parent,
                     polyline_by_external=polyline_by_external,
                     is_external_line_like=is_external_line_like,
-                    dangle_target_parents=_dangle_target_parents,
+                    dangle_xys_by_parent=_dangle_xys_by_parent,
                 )
 
                 _cand_end_z: Optional[float] = end_z_by_cand_index.get(_cand_idx)
@@ -3851,7 +3843,6 @@ class FillLineGaps:
                 entry["meta_connector_transition_diff"] = (
                     assess.connector_transition_diff
                 )
-                entry["meta_line_match_diff"] = assess.line_match_diff
                 entry["meta_angle_metric_deg"] = assess.angle_metric_deg
                 entry["meta_best_fit_score"] = best_fit_score
         return entry
@@ -4071,7 +4062,6 @@ class FillLineGaps:
             "connector_target_diff",
             "src_target_diff",
             "connector_transition_diff",
-            "line_match_diff",
             "angle_metric_deg",
             "best_fit_score",
         ]
@@ -4111,7 +4101,6 @@ class FillLineGaps:
                     meta.get("meta_connector_target_diff"),
                     meta.get("meta_src_target_diff"),
                     meta.get("meta_connector_transition_diff"),
-                    meta.get("meta_line_match_diff"),
                     meta.get("meta_angle_metric_deg"),
                     meta.get("meta_best_fit_score"),
                     meta.get("meta_bonus_applied"),
@@ -4146,7 +4135,6 @@ class FillLineGaps:
             "connector_target_diff",
             "src_target_diff",
             "connector_transition_diff",
-            "line_match_diff",
         ):
             arcpy.management.AddField(fc_path, fname, "DOUBLE")
         arcpy.management.AddField(fc_path, "final_gap_source", "TEXT", field_length=20)
@@ -4183,7 +4171,6 @@ class FillLineGaps:
             "connector_target_diff",
             "src_target_diff",
             "connector_transition_diff",
-            "line_match_diff",
             "final_gap_source",
             "candidate_status",
             "status_reason",
@@ -4216,7 +4203,6 @@ class FillLineGaps:
                     a.connector_target_diff if a is not None else None,
                     a.src_target_diff if a is not None else None,
                     a.connector_transition_diff if a is not None else None,
-                    a.line_match_diff if a is not None else None,
                     d.final_gap_source,
                     d.candidate_status,
                     d.status_reason,
@@ -4297,7 +4283,6 @@ class FillLineGaps:
                                     "meta_connector_target_diff",
                                     "meta_src_target_diff",
                                     "meta_connector_transition_diff",
-                                    "meta_line_match_diff",
                                     "meta_angle_metric_deg",
                                     "meta_best_fit_score",
                                     "meta_bonus_applied",
@@ -4340,7 +4325,6 @@ class FillLineGaps:
                 "connector_target_diff",
                 "src_target_diff",
                 "connector_transition_diff",
-                "line_match_diff",
                 "angle_metric_deg",
                 "best_fit_score",
                 "bonus_applied",
