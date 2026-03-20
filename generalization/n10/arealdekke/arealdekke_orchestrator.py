@@ -8,6 +8,7 @@ from generalization.n10.arealdekke.eliminate_small_polygons import (
     partition_call as eliminate_small_polygons,
 )
 from generalization.n10.arealdekke.attribute_changer import attribute_changer
+from generalization.n10.arealdekke.island_controller import island_controller
 
 from input_data import input_n10
 from file_manager.n10.file_manager_arealdekke import Arealdekke_N10
@@ -26,8 +27,12 @@ def main():
         input_fc=Arealdekke_N10.attribute_changer_output__n10_land_use.value,
         output_fc=Arealdekke_N10.dissolve_arealdekke.value,
     )
-    eliminate_small_polygons(
+    island_controller(
         input_fc=Arealdekke_N10.dissolve_arealdekke.value,
+        output_fc=Arealdekke_N10.island_merger_output__n10_land_use.value,
+    )
+    eliminate_small_polygons(
+        input_fc=Arealdekke_N10.island_merger_output__n10_land_use.value,
         output_fc=Arealdekke_N10.elim_output.value,
     )
     gangsykkel_dissolver(

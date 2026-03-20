@@ -6,10 +6,8 @@ from collections import defaultdict
 
 from composition_configs import core_config
 from custom_tools.decorators.timing_decorator import timing_decorator
-from env_setup import environment_setup
 from file_manager import WorkFileManager
 from file_manager.n10.file_manager_arealdekke import Arealdekke_N10
-from input_data import input_test_data
 
 # ========================
 # Program
@@ -17,16 +15,16 @@ from input_data import input_test_data
 
 
 @timing_decorator
-def main() -> None:
+def island_controller(input_fc: str, output_fc: str) -> None:
     """
     Main function dissolving small areas (also under minimum)
     on islands too small for multiple feature classes.
-    """
-    input_fc = input_test_data.arealdekke
-    stat_field = "arealdekke"
-    output_fc = Arealdekke_N10.island_merger_output__n10_land_use.value
 
-    environment_setup.main()
+    Args:
+        input_fc (str): The input feature class with complete land use data
+        output_fc (str): The feature class to store final output in
+    """
+    stat_field = "arealdekke"
 
     # 1) Setting up work file manager
     fc = Arealdekke_N10.island_merger__n10_land_use.value
@@ -396,10 +394,3 @@ def update_relevant_islands(files: dict, feature_ids: set, output_fc: str):
     arcpy.management.Merge(
         inputs=[files["copy_of_input"], files["correct_attributes"]], output=output_fc
     )
-
-
-# ========================
-
-
-if __name__ == "__main__":
-    main()
