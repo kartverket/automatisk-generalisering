@@ -8,13 +8,16 @@ from custom_tools.general_tools.partition_iterator import PartitionIterator
 from composition_configs import core_config, logic_config
 from generalization.n10.arealdekke.arealdekke_dissolver import ArealdekkeDissolver
 from collections import defaultdict
+from pathlib import Path
+from custom_tools.general_tools.param_utils import initialize_params
+from parameters.parameter_dataclasses import GangSykkelDissolverParameters
 
 
 class GangSykkelDissolver:
     """
     Dissolved gang og sykkel vei polygons that are adjecent to other samferdsel polygons into samferdsel.
     Iteratively buffer 5m, clip, split by length and dissolve until no more dissolving is done.
-    dissolve gang og sykkel over 25 length into samferdsel, and keep the rest as gang og sykkel.
+    dissolve gang og sykkel over a certain length into samferdsel, and keep the rest as gang og sykkel.
     """
 
     def __init__(
@@ -29,6 +32,15 @@ class GangSykkelDissolver:
             config=gang_sykkel_dissolver_config.work_file_manager_config
         )
         self.files = self._create_wfm_gdbs(self.wfm)
+
+        self.map_scale = gang_sykkel_dissolver_config.map_scale
+        params_path = Path(__file__).parent / "parameters" / "parameters.yml"
+        self.scale_parameters = initialize_params(
+            params_path=params_path,
+            class_name="GangSykkelDissolver",
+            map_scale=self.map_scale,
+            dataclass=GangSykkelDissolverParameters,
+        )
 
     def _create_wfm_gdbs(self, wfm: WorkFileManager) -> dict:
         gangsykkel_input = wfm.build_file_path(
@@ -250,7 +262,7 @@ class GangSykkelDissolver:
         arcpy.management.MakeFeatureLayer(
             in_features=self.files["gangsykkel_final_merge_singlepart"],
             out_layer=gangsykkel_final_merge_singlepart_lyr,
-            where_clause=f"arealbruk_underklasse = 'GangSykkelVeg' AND Shape_Length < 45",
+            where_clause=f"arealbruk_underklasse = 'GangSykkelVeg' AND Shape_Length < {self.scale_parameters.length_divide}",
         )
 
         arcpy.management.Eliminate(
@@ -376,12 +388,12 @@ class GangSykkelDissolver:
         arcpy.management.MakeFeatureLayer(
             in_features=clipped_path,
             out_layer=long_layer,
-            where_clause='"Shape_Length" > 45',
+            where_clause=f'"Shape_Length" > {self.scale_parameters.length_divide}',
         )
         arcpy.management.MakeFeatureLayer(
             in_features=clipped_path,
             out_layer=short_layer,
-            where_clause='"Shape_Length" <= 45',
+            where_clause=f'"Shape_Length" <= {self.scale_parameters.length_divide}',
         )
 
         arcpy.management.Append(
@@ -444,11 +456,13 @@ class GangSykkelDissolver:
     def run(self) -> None:
         environment_setup.main()
         self._fetch_data()
-        self._dissolve_looping()
+        self._dissolve_looping(
+            buffer_distance=f"{self.scale_parameters.buffer_distance} Meters"
+        )
         self.wfm.delete_created_files()
 
 
-def partition_call(input_fc: str, output_fc: str):
+def partition_call(input_fc: str, output_fc: str, map_scale: str):
     gangsykkel = "gangsykkel"
     dissolved_gangsykkel = "dissolved_gangsykkel"
     partition_input_config = core_config.PartitionInputConfig(
@@ -488,6 +502,7 @@ def partition_call(input_fc: str, output_fc: str):
         work_file_manager_config=core_config.WorkFileConfig(
             root_file=Arealdekke_N10.dissolve_arealdekke_root.value
         ),
+        map_scale=map_scale,
     )
     arealdekke_method = core_config.ClassMethodEntryConfig(
         class_=GangSykkelDissolver,
@@ -525,4 +540,5 @@ if __name__ == "__main__":
     partition_call(
         input_fc=Arealdekke_N10.elim_output.value,
         output_fc=Arealdekke_N10.dissolve_gangsykkel.value,
+        map_scale="N10",
     )
