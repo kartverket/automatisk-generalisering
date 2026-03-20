@@ -1,0 +1,59 @@
+Description:
+  This is where parameters that can change are stored. 
+
+EliminateSmallPolygons:
+  descriptions: 
+    - eliminates all polygons with smaller areas than min_area
+    - eliminates areas smaller than both max_area_b_iq and min_iq_area,
+    - min_iq_area is area * isoperimetric quotient 
+    - max_area_b_iq is max size of polygon that can be eliminated if they have very low iq
+    - dont_eliminate is list of arealdekke values that wont be eliminated but can still have others eliminated into them
+    - spike_size is size of buffer to detect spikes in meters, buffers from both sides of polygon so spike_size 2 = 4 meters
+    - dont_remove_spikes is list of arealdekke values wont be buffered for spike selection
+    - integrate_tolerance is cluster tolerance in meters on integrate run in the end to fix small holes
+
+  N10:
+    min_area: 100
+    min_iq_area: 150   
+    max_area_b_iq: 1500      
+    dont_eliminate:
+      - Samferdsel
+      - Ferskvann_elv_bekk
+      - Ferskvann_kanal
+    spike_size: 2
+    dont_remove_spikes:
+      - Samferdsel
+      - Ferskvann_elv_bekk
+      - Ferskvann_kanal
+      - Ferskvann_innsjo_tjern_regulert
+      - Ferskvann_innsjo_tjern
+    integrate_tolerance: 0.09
+
+  N100:
+    min_area: 0000
+    min_iq_area: 000         
+    dont_eliminate:
+      - Eksempel
+      - Eksempel
+      - Eksempel
+    spike_size: 0
+    dont_remove_spikes:
+      - Eksempel
+      - Eksempel
+      - Eksempel
+      - Eksempel
+      - Eksempel
+    integrate_tolerance: 0.0
+
+
+GangSykkelDissolver:
+  description:
+    - buffer distance is size of buffer that iterates out from roads to absorb gangvei
+    - length divide is length we use to decide if gangvei is adjecent to road or if they move out from road
+  N10:
+    buffer_distance: 5
+    length_divide: 45 
+
+
+
+
