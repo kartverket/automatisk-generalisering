@@ -1,4 +1,4 @@
-# ========================================
+A# ========================================
 #                 DEFINED CPU PERCENTAGE
 # ========================================
 cpu_percentage = "90%"
@@ -7,20 +7,20 @@ select_study_area = True
 # ========================================
 #                 WORKSPACE ENVIRONMENT PATHS
 # ========================================
-default_project_workspace = r"path\to\workspace.gdb"
-output_folder = r"C:\path\to\folder\you\want\your\outputs\in"
+default_project_workspace = r"C:\Users\haumal\Documents\ArcGIS\Projects\MyProject\MyProject.gdb"
+output_folder = r"C:\GIS_FILES\ag_outputs"
 
 
 # ========================================
 #                 N50 GDB
 # ========================================
-n50_path = r"path\to\n50.gdb"
+n50_path = r"C:\GIS_FILES\ag_outputs\n50"
 
 
 # ========================================
 #                 N100 GDB
 # ========================================
-n100_path = r"path\to\n100.gdb"
+n100_path = r"C:\GIS_FILES\ag_outputs\n100"
 
 # ========================================
 #                 OTHER PATH LOCATIONS

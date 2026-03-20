@@ -1,14 +1,15 @@
 #Imports
 import arcpy
+from math import degrees, atan2
 from enum import Enum
 from custom_tools.decorators.timing_decorator import timing_decorator
 
 from composition_configs import core_config
 from env_setup import environment_setup
 from file_manager import WorkFileManager
-from file_manager.n10.file_manager_roads import Road_N10
+from file_manager.n10.file_manager_facilities import Facility_N10
 from input_data import input_roads
-from point_rotation_tool import tool
+from road.point_rotation_tool import tool
 
 arcpy.env.overwriteOutput = True
 
@@ -17,7 +18,7 @@ def main():
     environment_setup.main()
 
     # Sets up work file manager and creates temporarily files
-    working_fc = Road_N10.data_selection__roadblock__n10_road.value
+    working_fc = Facility_N10.train_station__n10_facility.value
     config = core_config.WorkFileConfig(root_file=working_fc)
     wfm = WorkFileManager(config=config)
 

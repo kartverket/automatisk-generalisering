@@ -1,11 +1,14 @@
 import config
-from config import roads_path, road_output
+#from config import roads_path, road_output, roads_to_rotate
+
+from config import roads_to_rotate
 import arcpy
 from env_setup import environment_setup
 from custom_tools.general_tools import custom_arcpy
 from file_manager.n100.file_manager_roads import Road_N100
 from file_manager.n100.file_manager_buildings import Building_N100
 
+'''
 vegsenterlinje = rf"{roads_path}\vegsenterlinje"
 elveg = rf"{roads_path}\elveg"
 annet_elveg = rf"{roads_path}\annet_elveg"
@@ -23,6 +26,9 @@ roads = rf"{roads_path}\roads"
 
 road_output_1 = rf"{road_output}\elveg_and_sti"
 vegsperring = rf"{road_output}\vegsperring"
+'''
+road_veglenke=rf"{roads_to_rotate}\veglenke"
+road_vegsperring=rf"{roads_to_rotate}\Vegsperring"
 
 if __name__ == "__main__":
     environment_setup.main()

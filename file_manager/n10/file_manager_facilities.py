@@ -12,6 +12,7 @@ file_manager = BaseFileManager(scale=scale, object_name=object_name)
 # All scripts
 ledning_file = "ledning"
 railway_file = "railway"
+train_station_file="train_station"
 
 
 class Facility_N10(Enum):
@@ -48,4 +49,12 @@ class Facility_N10(Enum):
 
     railway_output__n10_facility = file_manager.generate_file_name_gdb(
         script_source_name=railway_file, description="railway_output"
+    )
+
+    # ========================================
+    #                       ROTERING TOGSTASJON
+    # ========================================
+
+    train_station__n10_facility=file_manager.generate_file_name_gdb(
+        script_source_name=train_station_file, description="train_station_rotated"
     )
