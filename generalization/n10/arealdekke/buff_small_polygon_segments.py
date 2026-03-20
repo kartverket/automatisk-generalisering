@@ -11,13 +11,16 @@ from input_data import input_arealdekke
 arcpy.env.overwriteOutput = True
 
 '''
-Function that buff small hydro polygon segments.
-
-Args: input feacture class, output feature class and to-be minimum width of the small polygon segments (Meters)
+Function that buff small polygon segments.
+Args: target arealdekk (string), locked arealdekks (list: arealdekks), output feature class (string), min width of polygon segments (int, meters)
 '''
-
 @timing_decorator
-def buff_small_polygon_segments(in_feature_class, out_feature_class, min_width:int):
+def buff_small_polygon_segments(
+    target_fc,
+    locked_fc:list,
+    out_fc,
+    min_width:int
+    ):
 
     # Sets up work file manager and creates temporarily files
     working_fc = Landuse_N10.buffed_polygon_segments__n10_landuse.value
@@ -26,13 +29,18 @@ def buff_small_polygon_segments(in_feature_class, out_feature_class, min_width:i
 
     files=files_setup(wfm=wfm)
 
-    insert_data(files=files, input_data=in_feature_class)
+    extract_data(files=files, target_fc=target_fc, locked_fc=locked_fc)
     find_segments_under_min(files=files, min_width=min_width)
     choose_target_areas(files=files)
-    buff_small_segments(files=files, min_width=min_width, out_fc=out_feature_class)
+    #buff_small_segments(files=files, min_width=min_width, out_fc=out_feature_class)
 
 class fc (Enum):
-    input_data="input_data"
+    target_fc="target_fc"
+    locked_fc="locked_fc"
+
+    target_out_buffer="target_out_buffer"
+    locked_fc_conflicts="locked_fc_conflicts"
+
     input_polygon_edge="input_polygon_edge"
     input_polygon_minus_buffer="input_polygon_minus_buffer"
     core_of_segments_wide_enough="core_of_segments_wide_enough"
@@ -49,10 +57,16 @@ class fc (Enum):
     small_segments_enlarged="small_segments_enlarged"
     small_segments_enlarged_single="small_segments_enlarged_single"
 
+
 def files_setup(wfm: WorkFileManager) -> dict:
 
-    #Input data
-    input_data=wfm.build_file_path(file_name="input_data", file_type="gdb")
+    #Extract data
+    target_fc=wfm.build_file_path(file_name="target_fc", file_type="gdb")
+    locked_fc=wfm.build_file_path(file_name="locked_fc", file_type="gdb")
+
+    #Get shared boundary
+    target_out_buffer=wfm.build_file_path(file_name="target_out_buffer", file_type="gdb")
+    locked_fc_conflicts=wfm.build_file_path(file_name="locked_fc_conflicts", file_type="gdb")
 
     #Find segments under min
     input_polygon_edge=wfm.build_file_path(file_name="input_polygon_edge", file_type="gdb")
@@ -74,7 +88,12 @@ def files_setup(wfm: WorkFileManager) -> dict:
     small_segments_enlarged_single=wfm.build_file_path(file_name="small_segments_enlarged_single", file_type="gdb")
 
     return {
-        fc.input_data:input_data,
+        fc.target_fc:target_fc,
+        fc.locked_fc:locked_fc,
+
+        fc.target_out_buffer:target_out_buffer,
+        fc.locked_fc_conflicts:locked_fc_conflicts,
+
         fc.input_polygon_edge:input_polygon_edge,
         fc.input_polygon_minus_buffer:input_polygon_minus_buffer,
         fc.core_of_segments_wide_enough:core_of_segments_wide_enough,
@@ -92,17 +111,27 @@ def files_setup(wfm: WorkFileManager) -> dict:
         fc.small_segments_enlarged_single:small_segments_enlarged_single
     }
 
-def insert_data(files:dict, input_data) -> None:
 
-    input_data_lyr="input_data_lyr"
-    arcpy.management.MakeFeatureLayer(in_features=input_data, out_layer=input_data_lyr)
-    arcpy.management.CopyFeatures(in_features=input_data_lyr, out_feature_class=files[fc.input_data])
+@timing_decorator
+def extract_data(files:dict, target_fc, locked_fc:list)->None:#TODO: Done?
+    
+    #Extract the target fc from the data layer.
+    target_fc_lyr="target_fc_lyr"
+    arcpy.management.MakeFeatureLayer(in_features=input_arealdekke.arealdekke, out_layer=target_fc_lyr, where_clause=f"arealdekke='{target_fc}'")
+    arcpy.management.CopyFeatures(in_features=target_fc_lyr, out_feature_class=files[fc.target_fc])
 
+    #Extract the locked areas from the data layer that share a line with the target fc.
+    locked_fc_lyr="locked_fc_lyr"
+    arcpy.management.MakeFeatureLayer(in_features=input_arealdekke.arealdekke, out_layer=locked_fc_lyr, where_clause=f"arealdekke IN {tuple(list)}")
+    arcpy.management.SelectLayerByLocation(in_layer=locked_fc_lyr, overlap_type='SHARE_A_LINE_SEGMENT_WITH', select_features=target_fc_lyr, selection_type='NEW_SELECTION')
+    arcpy.management.CopyFeatures(in_features=locked_fc_lyr, out_feature_class=files[fc.locked_fc])
+  
+@timing_decorator
 def find_segments_under_min(files:dict, min_width:int)->None:
 
     #Create a lyr with the outline of the input polygon
     input_polygon_lyr="input_polygon_lyr"
-    arcpy.management.MakeFeatureLayer(in_features=files[fc.input_data], out_layer=input_polygon_lyr)
+    arcpy.management.MakeFeatureLayer(in_features=files[fc.target_fc], out_layer=input_polygon_lyr)
     arcpy.management.PolygonToLine(in_features=input_polygon_lyr, out_feature_class=files[fc.input_polygon_edge])
 
     #Use polygon outline to create a negative buffer
@@ -143,15 +172,8 @@ def find_segments_under_min(files:dict, min_width:int)->None:
     arcpy.management.MakeFeatureLayer(in_features=files[fc.segments_wide_enough], out_layer=segments_wide_enough_lyr)
 
     arcpy.analysis.Erase(in_features=input_polygon_lyr, erase_features=segments_wide_enough_lyr, out_feature_class=files[fc.segments_too_small])
-    
-    #Make sure the polygon segments are singlepart
-    #segments_too_small_lyr="segments_too_small_lyr"
-    #arcpy.management.MakeFeatureLayer(in_features=files[fc.segments_too_small], out_layer=segments_too_small_lyr)
 
-    #arcpy.management.RepairGeometry(in_features=segments_too_small_lyr, delete_null="DELETE_NULL")
-
-    #arcpy.management.MultipartToSinglepart(in_features=segments_too_small_lyr, out_feature_class=files[fc.segments_too_small_single])
-
+@timing_decorator
 def choose_target_areas(files:dict)->None:
     
     #Create an overkill buffer that includes the small segments and some of the area around.
@@ -177,6 +199,45 @@ def choose_target_areas(files:dict)->None:
     except:
         arcpy.analysis.Clip(in_features=original_polygon_lyr, clip_features=overkill_buffer_lyr, out_feature_class=files[fc.areas_chosen])
 
+@timing_decorator
+def get_shared_locked_boundary(files:dict)->None: #TODO: Done?
+    
+    #Clip the locked fcs to the chosen target area buffer
+
+    #Create a buffer around the clipped locked area
+
+    #Clip the buffed area to the 
+    
+    #select the line that share a boundary with 
+
+    target_polygon_lyr="target_polygon_lyr"
+    arcpy.management.MakeFeatureLayer(in_features=files[fc.target_fc], out_layer=target_polygon_lyr)
+
+    arcpy.analysis.Buffer(
+        in_features=target_polygon_lyr,
+        out_feature_class=files[fc.target_out_buffer],
+        buffer_distance_or_field='1 Meters',
+        line_side='OUTSIDE_ONLY'
+    )
+
+    target_out_buffer_lyr="target_out_buffer_lyr"
+    locked_fc_lyr="locked_fc_lyr"
+
+    arcpy.management.MakeFeatureLayer(in_features=files[fc.target_out_buffer], out_layer=target_out_buffer_lyr)
+    arcpy.management.MakeFeatureLayer(in_features=files[fc.locked_fc], out_layer=locked_fc_lyr)
+
+    arcpy.analysis.Clip(
+        in_features=locked_fc_lyr,
+        clip_features=target_out_buffer_lyr,
+        out_feature_class=files[fc.locked_fc_conflicts]
+    )
+ 
+
+@timing_decorator
+def buff_locked_fc(files:dict, min_width:int)->None:
+    #Buff the locked fs if they area within the chosen target area
+
+@timing_decorator
 def buff_small_segments(files:dict, min_width:int, out_fc)->None:
 
     #Use collapse hydro polygon to find the centre line of the segments
@@ -189,11 +250,14 @@ def buff_small_segments(files:dict, min_width:int, out_fc)->None:
         merge_adjacent_input_polygons="NO_MERGE"
     )
 
-    #Erase large enough areas from the centre line
-    centre_line_lyr="centre_line_lyr"
-    arcpy.management.MakeFeatureLayer(in_features=files[fc.centre_line], out_layer=centre_line_lyr)
+    #Erase large enough areas from the centre line and the areas too close to the locked areas
 
+    centre_line_lyr="centre_line_lyr"
     large_segments_lyr="large_segments_lyr"
+
+
+
+    arcpy.management.MakeFeatureLayer(in_features=files[fc.centre_line], out_layer=centre_line_lyr)
     arcpy.management.MakeFeatureLayer(in_features=files[fc.segments_wide_enough], out_layer=large_segments_lyr)
 
     arcpy.analysis.Erase(in_features=centre_line_lyr, erase_features=large_segments_lyr, out_feature_class=files[fc.small_segments_centre])
