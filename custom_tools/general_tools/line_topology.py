@@ -4,7 +4,7 @@ from enum import Enum
 import math
 import os
 
-from typing import Optional, Callable, Iterable, Any
+from typing import Optional, Callable, Iterable, Any, TypeAlias
 
 import arcpy
 
@@ -892,6 +892,20 @@ class CandidateDiagnostic:
     connection_norm_z:  Optional[float] = None  # Z normalized within pair_key group; None for illegals/deferred
     global_norm_z:   Optional[float] = None  # Z normalized across all Stage-A winners; None unless Stage-B reached
 
+
+# ---------------------------------------------------------------------------
+# Pipeline type aliases
+# ---------------------------------------------------------------------------
+_IllegalTargets:       TypeAlias = dict[int, dict[str, set[int]]]
+_CandRow:              TypeAlias = dict[str, Any]
+_Grouped:              TypeAlias = dict[int, list[_CandRow]]
+_NormZByDangle:        TypeAlias = dict[int, Optional[float]]
+_ConnectionWithSource: TypeAlias = tuple[_ConnectionProposal, str]
+_GlobalWithSource:     TypeAlias = tuple[_GlobalProposal, str]
+# Diagnostic collection tuples (produced in _select_dangle_proposals, consumed in _assemble_diagnostics)
+_Step1AIllegalEntry:   TypeAlias = tuple[int, int, _CandRow, str]
+_Step1BIllegalEntry:   TypeAlias = tuple[int, int, _CandRow, AngleAssessment, str, Optional[float], Optional[float]]
+_Step1BScoredEntry:    TypeAlias = tuple[int, int, _CandRow, AngleAssessment, float, float, bool, bool, tuple[float, int, float], Optional[float], Optional[float], Optional[float]]
 
 class FillLineGaps:
     ORIGINAL_ID = "line_gap_original_id"
@@ -2740,7 +2754,7 @@ class FillLineGaps:
         # Best line parent per dangle (angle-aware)
         # Used by edge-case bonus detection.
         # ----------------------------
-        best_line_parent_by_dangle = {}
+        best_line_parent_by_dangle: dict[int, int] = {}
 
         for dangle_oid in sorted(legal_rows_by_dangle.keys()):
             parent_id = int(parent_id_by_dangle[dangle_oid])
@@ -2966,23 +2980,23 @@ class FillLineGaps:
     def _filter_legal_candidates(
         self,
         *,
-        grouped: dict,
+        grouped: _Grouped,
         dangle_parent: dict[int, int],
-        illegal,
+        illegal: _IllegalTargets,
         dangles_key: str,
         lines_key: str,
         base_tol: float,
         dangle_tol: float,
-        topology: "TopologyModel",
+        topology: TopologyModel,
         collect_diags: bool,
-    ) -> tuple[dict[int, list[dict]], dict[int, int], list[tuple]]:
+    ) -> tuple[_Grouped, dict[int, int], list[_Step1AIllegalEntry]]:
         """Dangle filtering: collect legal candidates per dangle.
 
         Returns (legal_rows_by_dangle, parent_id_by_dangle, step1a_illegal).
         """
         legal_rows_by_dangle: dict[int, list[dict]] = {}
         parent_id_by_dangle: dict[int, int] = {}
-        _step1a_illegal: list[tuple[int, int, dict, str]] = []
+        _step1a_illegal: list[_Step1AIllegalEntry] = []
 
         for dangle_oid in sorted(grouped.keys()):
             candidates = grouped[dangle_oid]
@@ -3042,24 +3056,24 @@ class FillLineGaps:
     def _select_dangle_proposals(
         self,
         *,
-        legal_rows_by_dangle: dict[int, list[dict]],
+        legal_rows_by_dangle: _Grouped,
         parent_id_by_dangle: dict[int, int],
         dangle_xy: dict[int, tuple[float, float]],
         dangles_key: str,
         lines_key: str,
         base_tol: float,
-        polyline_by_parent: dict,
-        polyline_by_external: dict,
-        is_external_line_like: dict,
-        best_line_parent_by_dangle: dict,
+        polyline_by_parent: dict[int, Any],
+        polyline_by_external: dict[str, dict[int, Any]],
+        is_external_line_like: dict[str, bool],
+        best_line_parent_by_dangle: dict[int, int],
         dangle_parent: dict[int, int],
-        topology: "TopologyModel",
+        topology: TopologyModel,
         collect_diags: bool,
     ) -> tuple[
-        dict[int, "_DangleProposal"],
-        dict[int, "Optional[float]"],
-        list[tuple],
-        list[tuple],
+        dict[int, _DangleProposal],
+        _NormZByDangle,
+        list[_Step1BIllegalEntry],
+        list[_Step1BScoredEntry],
     ]:
         """Dangle selection: choose one proposal per dangle using angle-aware scoring.
 
@@ -3067,8 +3081,8 @@ class FillLineGaps:
         """
         _dangle_proposals: dict[int, _DangleProposal] = {}
         dangle_norm_z_by_dangle: dict[int, Optional[float]] = {}
-        _step1b_illegal: list[tuple] = []
-        _step1b_scored: list[tuple] = []
+        _step1b_illegal: list[_Step1BIllegalEntry] = []
+        _step1b_scored: list[_Step1BScoredEntry] = []
 
         for dangle_oid in sorted(legal_rows_by_dangle.keys()):
             dangle_oid = int(dangle_oid)
@@ -3137,7 +3151,7 @@ class FillLineGaps:
                         _dangle_target_parents.add(int(_p))
 
             # (_ProposalScore, cand, raw_dist, best_fit, bonus, assess, norm_z, end_z)
-            scored_candidates: list[tuple] = []
+            scored_candidates: list[tuple[Any, ...]] = []
 
             for _cand_idx, cand in enumerate(legal_rows):
                 assess = self._assess_angle(
@@ -3375,8 +3389,8 @@ class FillLineGaps:
 
     def _run_connection_normalization(
         self,
-        dangle_proposals: "dict[int, _DangleProposal]",
-    ) -> "tuple[dict[int, _ConnectionProposal], dict[int, Optional[float]]]":
+        dangle_proposals: dict[int, _DangleProposal],
+    ) -> tuple[dict[int, _ConnectionProposal], _NormZByDangle]:
         """Connection normalization: re-normalize Z within each undirected A↔B connection group.
 
         Returns (connection_proposals_by_dangle, connection_norm_z_by_dangle).
@@ -3413,11 +3427,11 @@ class FillLineGaps:
     def _run_connection_selection(
         self,
         *,
-        connection_proposals_by_dangle: "dict[int, _ConnectionProposal]",
-        directed_edges: "set[tuple[EntityKey, EntityKey]]",
-        dangle_mutual_oids: "set[int]",
+        connection_proposals_by_dangle: dict[int, _ConnectionProposal],
+        directed_edges: set[tuple[EntityKey, EntityKey]],
+        dangle_mutual_oids: set[int],
         collect_diags: bool,
-    ) -> "tuple[list[tuple[_ConnectionProposal, str]], set[int]]":
+    ) -> tuple[list[_ConnectionWithSource], set[int]]:
         """Connection selection: one winner per undirected connection.
 
         Returns (_connection_proposals, connection_loser_oids).
@@ -3426,7 +3440,7 @@ class FillLineGaps:
         for p in connection_proposals_by_dangle.values():
             by_connection.setdefault(p.ctx.pair_key, []).append(p)
 
-        _connection_proposals: list[tuple[_ConnectionProposal, str]] = []
+        _connection_proposals: list[_ConnectionWithSource] = []
         for pair_key in sorted(by_connection.keys()):
             group = by_connection[pair_key]
             winner = min(group, key=lambda pr: pr.sort_key())
@@ -3462,14 +3476,14 @@ class FillLineGaps:
 
     def _run_global_normalization(
         self,
-        connection_proposals: "list[tuple[_ConnectionProposal, str]]",
-    ) -> "tuple[list[tuple[_GlobalProposal, str]], dict[int, Optional[float]]]":
+        connection_proposals: list[_ConnectionWithSource],
+    ) -> tuple[list[_GlobalWithSource], _NormZByDangle]:
         """Global normalization: re-normalize Z across all connection winners.
 
         Returns (_global_winners, global_norm_z_by_dangle).
         """
         _all_end_z_global = [p.ctx.end_z for p, _ in connection_proposals]
-        _global_winners: list[tuple[_GlobalProposal, str]] = []
+        _global_winners: list[_GlobalWithSource] = []
         global_norm_z_by_dangle: dict[int, Optional[float]] = {}
         for n_prop, gap_source in connection_proposals:
             glob_norm_z = self._normalize_z_within(_all_end_z_global, n_prop.ctx.end_z)
@@ -3493,16 +3507,16 @@ class FillLineGaps:
     def _run_kruskal(
         self,
         *,
-        global_winners: "list[tuple[_GlobalProposal, str]]",
-        topology: "TopologyModel",
+        global_winners: list[_GlobalWithSource],
+        topology: TopologyModel,
         collect_diags: bool,
-    ) -> "tuple[list[tuple[_GlobalProposal, str]], set[int], set[int], dict[int, str]]":
+    ) -> tuple[list[_GlobalWithSource], set[int], set[int], dict[int, str]]:
         """Global selection: Kruskal cycle prevention across accepted connections.
 
         Returns (_global_proposals, accepted_dangle_oids, kruskal_rejected_oids, gap_source_by_dangle).
         """
         scope = topology.scope
-        _global_proposals: list[tuple[_GlobalProposal, str]] = []
+        _global_proposals: list[_GlobalWithSource] = []
 
         if scope in (
             logic_config.ConnectivityScope.INPUT_LINES,
@@ -3549,8 +3563,8 @@ class FillLineGaps:
 
     def _identify_resnap_captures(
         self,
-        global_proposals: "list[tuple[_GlobalProposal, str]]",
-    ) -> "list[_ResnappedCapture]":
+        global_proposals: list[_GlobalWithSource],
+    ) -> list[_ResnappedCapture]:
         """Identify connections whose near-point may need re-resolving after snap.
 
         A connection A→B needs resnap if:
@@ -3581,10 +3595,10 @@ class FillLineGaps:
 
     def _assemble_plan_entries(
         self,
-        global_proposals: "list[tuple[_GlobalProposal, str]]",
-    ) -> "dict[int, list[dict]]":
+        global_proposals: list[_GlobalWithSource],
+    ) -> dict[int, list[dict[str, Any]]]:
         """Assemble plan_by_parent from accepted global proposals."""
-        tmp: dict[int, list[tuple[tuple, dict]]] = {}
+        tmp: dict[int, list[tuple[tuple[Any, ...], dict[str, Any]]]] = {}
 
         for prop, gap_source in sorted(global_proposals, key=lambda t: t[0].sort_key()):
             entry = self._make_plan_entry(
@@ -3620,21 +3634,21 @@ class FillLineGaps:
         self,
         *,
         collect_diags: bool,
-        step1a_illegal: list,
-        step1b_illegal: list,
-        step1b_scored: list,
-        connection_loser_oids: "set[int]",
-        kruskal_rejected_oids: "set[int]",
-        accepted_dangle_oids: "set[int]",
-        gap_source_by_dangle: "dict[int, str]",
-        dangle_norm_z_by_dangle: "dict[int, Optional[float]]",
-        connection_norm_z_by_dangle: "dict[int, Optional[float]]",
-        global_norm_z_by_dangle: "dict[int, Optional[float]]",
-        dangle_xy: "dict[int, tuple[float, float]]",
-        dangle_parent: "dict[int, int]",
+        step1a_illegal: list[_Step1AIllegalEntry],
+        step1b_illegal: list[_Step1BIllegalEntry],
+        step1b_scored: list[_Step1BScoredEntry],
+        connection_loser_oids: set[int],
+        kruskal_rejected_oids: set[int],
+        accepted_dangle_oids: set[int],
+        gap_source_by_dangle: dict[int, str],
+        dangle_norm_z_by_dangle: _NormZByDangle,
+        connection_norm_z_by_dangle: _NormZByDangle,
+        global_norm_z_by_dangle: _NormZByDangle,
+        dangle_xy: dict[int, tuple[float, float]],
+        dangle_parent: dict[int, int],
         dangles_key: str,
         lines_key: str,
-    ) -> "list[CandidateDiagnostic]":
+    ) -> list[CandidateDiagnostic]:
         """Assemble CandidateDiagnostic records from all pipeline state collected during _build_plan."""
         if not collect_diags:
             return []
@@ -3719,7 +3733,7 @@ class FillLineGaps:
             ))
 
         # Compute per-dangle rank for scored candidates (1 = local winner)
-        scored_by_dangle: dict[int, list] = {}
+        scored_by_dangle: dict[int, list[_Step1BScoredEntry]] = {}
         for entry in step1b_scored:
             scored_by_dangle.setdefault(int(entry[0]), []).append(entry)
         rank_map: dict[tuple[int, str, int], int] = {}
