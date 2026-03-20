@@ -66,7 +66,6 @@ def fill_line_topology_gaps():
         line_connectivity_mode=logic_config.LineConnectivityMode.ENDPOINTS,
         angle_block_threshold_degrees=95,
         angle_extra_dangle_threshold_degrees=70,
-        line_alignment_weight=0.75,
         best_fit_weights=(
             logic_config.BestFitWeightsConfig(
                 distance=0.5,

@@ -325,6 +325,7 @@ class FillLineGapsAdvancedConfig:
     line_alignment_weight: float = 0.6
 
     best_fit_weights: BestFitWeightsConfig = field(default_factory=BestFitWeightsConfig)
+    best_fit_weights: BestFitWeightsConfig = field(default_factory=BestFitWeightsConfig)
 
     # Passed to local_line_angle_at_xy(desired_half_window_m=...)
     angle_local_half_window_m: float = 2.0
