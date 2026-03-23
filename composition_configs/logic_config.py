@@ -378,11 +378,6 @@ class LineZOrientMode(str, Enum):
     NETWORK = "network"
 
 
-class LineZOrientOutletMode(str, Enum):
-    DANGLE_ENDPOINTS = "dangle_endpoints"
-    ANY_ENDPOINT = "any_endpoint"
-
-
 @dataclass(frozen=True)
 class LineZValueFieldNameConfig:
     start_z: str = "start_z"
@@ -407,5 +402,5 @@ class LineZOrientConfig:
     input_lines: str
     raster_paths: RasterPathList
     orientation_mode: LineZOrientMode = LineZOrientMode.INDIVIDUAL
-    outlet_mode: LineZOrientOutletMode = LineZOrientOutletMode.DANGLE_ENDPOINTS
+    min_z_drop_meters: float = 0.5
     connectivity_tolerance_meters: float = 0.02

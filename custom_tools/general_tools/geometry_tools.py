@@ -16,7 +16,6 @@ from composition_configs.logic_config import (
     LineEndpointToolConfig,
     LineZOrientConfig,
     LineZOrientMode,
-    LineZOrientOutletMode,
     LineZValueFieldNameConfig,
     LineZValueMode,
     LineZValueToolConfig,
@@ -1785,20 +1784,24 @@ class LineZOrientTool:
         self,
         z_by_oid: dict[int, tuple[Optional[float], Optional[float]]],
     ) -> set[int]:
+        threshold = self.config.min_z_drop_meters
         oids_to_flip: set[int] = set()
-        no_data_count = 0
+        uncertain_count = 0
 
         for oid, (start_z, end_z) in z_by_oid.items():
             if start_z is None or end_z is None:
-                no_data_count += 1
+                uncertain_count += 1
+                continue
+            if abs(start_z - end_z) < threshold:
+                uncertain_count += 1
                 continue
             if start_z < end_z:
                 oids_to_flip.add(oid)
 
-        if no_data_count:
+        if uncertain_count:
             arcpy.AddWarning(
-                f"LineZOrientTool (INDIVIDUAL): {no_data_count} line(s) had no raster "
-                "coverage at one or both endpoints and were left unchanged."
+                f"LineZOrientTool (INDIVIDUAL): {uncertain_count} line(s) had no Z data "
+                f"or a Z drop below {threshold} m; original orientation preserved."
             )
 
         return oids_to_flip
@@ -1812,12 +1815,14 @@ class LineZOrientTool:
     ) -> tuple[
         dict[int, tuple[_EndpointKey, _EndpointKey]],
         dict[_EndpointKey, list[int]],
+        dict[int, float],
     ]:
         """
-        Read all line geometries and return two complementary dicts:
+        Read all line geometries and return three complementary dicts:
 
-        oid_to_eps   : {oid: (start_key, end_key)}
-        ep_to_oids   : {endpoint_key: [oid, ...]}
+        oid_to_eps    : {oid: (start_key, end_key)}
+        ep_to_oids    : {endpoint_key: [oid, ...]}
+        oid_to_length : {oid: length_in_map_units}
 
         Endpoint keys are integer grid coordinates snapped to
         connectivity_tolerance_meters so that nearby endpoints are
@@ -1828,11 +1833,12 @@ class LineZOrientTool:
 
         oid_to_eps: dict[int, tuple[_EndpointKey, _EndpointKey]] = {}
         ep_to_oids: dict[_EndpointKey, list[int]] = {}
+        oid_to_length: dict[int, float] = {}
 
         with arcpy.da.SearchCursor(
-            self.config.input_lines, [oid_field, "SHAPE@"]
+            self.config.input_lines, [oid_field, "SHAPE@", "SHAPE@LENGTH"]
         ) as cursor:
-            for oid, polyline in cursor:
+            for oid, polyline, length in cursor:
                 if polyline is None or polyline.partCount == 0:
                     continue
                 first = polyline.firstPoint
@@ -1853,8 +1859,9 @@ class LineZOrientTool:
                 oid_to_eps[oid] = (start_key, end_key)
                 ep_to_oids.setdefault(start_key, []).append(oid)
                 ep_to_oids.setdefault(end_key, []).append(oid)
+                oid_to_length[oid] = float(length) if length is not None else 0.0
 
-        return oid_to_eps, ep_to_oids
+        return oid_to_eps, ep_to_oids, oid_to_length
 
     def _find_components(
         self,
@@ -1906,107 +1913,256 @@ class LineZOrientTool:
                     dangle_eps.add(ep_key)
         return dangle_eps
 
-    def _orient_component(
+    def _classify_lines(
         self,
         component: set[int],
+        z_by_oid: dict[int, tuple[Optional[float], Optional[float]]],
         oid_to_eps: dict[int, tuple[_EndpointKey, _EndpointKey]],
         ep_to_oids: dict[_EndpointKey, list[int]],
-        z_by_oid: dict[int, tuple[Optional[float], Optional[float]]],
-    ) -> set[int]:
+        oid_to_length: dict[int, float],
+    ) -> tuple[set[int], set[int], dict[int, bool]]:
         """
-        BFS from the outlet endpoint in the component.  Returns the set of
-        OIDs within this component that need to be flipped.
+        Partition component into certain and uncertain lines.
 
-        The outlet is selected according to outlet_mode:
-          DANGLE_ENDPOINTS  — lowest-Z endpoint among free ends (dangles) of the
-                              local network.  Falls back to any endpoint if no
-                              dangle has raster coverage.
-          ANY_ENDPOINT      — lowest-Z endpoint regardless of connectivity.
+        A line is certain if its own |start_z - end_z| >= min_z_drop_meters,
+        or if it is a short dangle-adjacent segment that can be promoted via
+        the extended Z diff: the Z at the far end of the longest upstream
+        neighbor vs the Z at the dangle endpoint.
+
+        Returns:
+            certain_oids        : lines with strong Z evidence.
+            uncertain_oids      : lines with weak or absent Z evidence.
+            extension_flip      : for extension-promoted lines, the pre-computed
+                                  flip decision (True = needs flip).  Lines in
+                                  certain_oids that are absent from this dict
+                                  are oriented by their own Z in Phase 1.
         """
-        # Collect all endpoint keys and their sampled Z values for this component.
-        ep_z: dict[_EndpointKey, float] = {}
+        threshold = self.config.min_z_drop_meters
+        certain: set[int] = set()
+        uncertain: set[int] = set()
+        extension_flip: dict[int, bool] = {}
+
+        dangle_eps = self._find_dangle_endpoints(component, oid_to_eps, ep_to_oids)
+
         for oid in component:
-            if oid not in z_by_oid:
-                continue
-            start_z, end_z = z_by_oid[oid]
+            start_z, end_z = z_by_oid.get(oid, (None, None))
             start_key, end_key = oid_to_eps[oid]
-            if start_z is not None:
-                if start_key not in ep_z or start_z < ep_z[start_key]:
-                    ep_z[start_key] = start_z
-            if end_z is not None:
-                if end_key not in ep_z or end_z < ep_z[end_key]:
-                    ep_z[end_key] = end_z
 
-        if not ep_z:
-            return set()
-
-        if self.config.outlet_mode == LineZOrientOutletMode.DANGLE_ENDPOINTS:
-            dangle_eps = self._find_dangle_endpoints(component, oid_to_eps, ep_to_oids)
-            dangle_ep_z = {ep: z for ep, z in ep_z.items() if ep in dangle_eps}
-            candidate_ep_z = dangle_ep_z if dangle_ep_z else ep_z
-        else:
-            candidate_ep_z = ep_z
-
-        outlet_ep = min(candidate_ep_z, key=lambda k: candidate_ep_z[k])
-
-        # BFS from outlet endpoint, orienting lines so their END is toward the outlet.
-        oids_to_flip: set[int] = set()
-        visited_eps: set[_EndpointKey] = {outlet_ep}
-        visited_oids: set[int] = set()
-        queue: list[_EndpointKey] = [outlet_ep]
-
-        while queue:
-            current_ep = queue.pop(0)
-
-            for oid in ep_to_oids.get(current_ep, []):
-                if oid not in component or oid in visited_oids:
+            # Own Z check.
+            if start_z is not None and end_z is not None:
+                if abs(start_z - end_z) >= threshold:
+                    certain.add(oid)
                     continue
-                visited_oids.add(oid)
 
+            # Below threshold or no Z — try dangle extension for short outlet/inlet
+            # segments that border the edge of the network.
+            dangle_ep: Optional[_EndpointKey] = None
+            non_dangle_ep: Optional[_EndpointKey] = None
+
+            if end_key in dangle_eps:
+                dangle_ep = end_key
+                non_dangle_ep = start_key
+            elif start_key in dangle_eps:
+                dangle_ep = start_key
+                non_dangle_ep = end_key
+
+            if dangle_ep is not None and non_dangle_ep is not None:
+                dangle_z = end_z if dangle_ep == end_key else start_z
+
+                upstream_oids = [
+                    o for o in ep_to_oids.get(non_dangle_ep, [])
+                    if o != oid and o in component
+                ]
+
+                if upstream_oids and dangle_z is not None:
+                    longest_up = max(
+                        upstream_oids, key=lambda o: oid_to_length.get(o, 0.0)
+                    )
+                    u_start_z, u_end_z = z_by_oid.get(longest_up, (None, None))
+                    u_start_key, u_end_key = oid_to_eps[longest_up]
+
+                    far_z = u_start_z if u_end_key == non_dangle_ep else u_end_z
+
+                    if far_z is not None and abs(far_z - dangle_z) >= threshold:
+                        certain.add(oid)
+                        # Orientation from extended direction, not own Z.
+                        if far_z > dangle_z:
+                            # Dangle is outlet (lower) — end should be at dangle.
+                            extension_flip[oid] = end_key != dangle_ep
+                        else:
+                            # Dangle is source (higher) — start should be at dangle.
+                            extension_flip[oid] = start_key != dangle_ep
+                        continue
+
+            uncertain.add(oid)
+
+        return certain, uncertain, extension_flip
+
+    def _orient_certain_lines(
+        self,
+        certain_oids: set[int],
+        z_by_oid: dict[int, tuple[Optional[float], Optional[float]]],
+        oid_to_eps: dict[int, tuple[_EndpointKey, _EndpointKey]],
+        extension_flip: dict[int, bool],
+    ) -> tuple[set[int], dict[int, tuple[_EndpointKey, _EndpointKey]]]:
+        """
+        Phase 1: orient all certain lines by Z and return the flip set plus
+        an oriented_eps dict that reflects the post-Phase-1 start/end state.
+        Extension-promoted lines use the pre-computed flip decision from
+        _classify_lines; all others use their own start_z vs end_z.
+        """
+        flips: set[int] = set()
+        oriented_eps: dict[int, tuple[_EndpointKey, _EndpointKey]] = dict(oid_to_eps)
+
+        for oid in certain_oids:
+            if oid in extension_flip:
+                needs_flip = extension_flip[oid]
+            else:
+                start_z, end_z = z_by_oid[oid]
+                needs_flip = start_z < end_z
+
+            if needs_flip:
+                flips.add(oid)
                 start_key, end_key = oid_to_eps[oid]
+                oriented_eps[oid] = (end_key, start_key)
 
-                if end_key == current_ep:
-                    # END is on the outlet side — correctly oriented.
-                    other_ep = start_key
-                else:
-                    # START is on the outlet side — needs flipping.
-                    oids_to_flip.add(oid)
-                    other_ep = end_key
+        return flips, oriented_eps
 
-                if other_ep not in visited_eps:
-                    visited_eps.add(other_ep)
-                    queue.append(other_ep)
+    def _propagate_to_uncertain(
+        self,
+        uncertain_oids: set[int],
+        certain_oids: set[int],
+        oriented_eps: dict[int, tuple[_EndpointKey, _EndpointKey]],
+        ep_to_oids: dict[_EndpointKey, list[int]],
+        z_by_oid: dict[int, tuple[Optional[float], Optional[float]]],
+    ) -> tuple[set[int], int, int]:
+        """
+        Phase 2: orient uncertain lines using network context and raw Z fallback.
 
-        return oids_to_flip
+        For each uncertain line:
+          - Count head-to-tail signals from certain neighbors (N ends at X's start,
+            or X ends at N's start).  A head-to-tail match confirms the current
+            orientation is consistent with the network; the line is kept as-is.
+          - If no head-to-tail signal and Z data is available: orient by raw Z
+            (best guess, counted in raw_z_fallback).
+          - If no head-to-tail signal and no Z data: keep original orientation
+            (counted in unresolved).
+
+        Returns (flips_phase2, raw_z_fallback_count, unresolved_count).
+        """
+        flips: set[int] = set()
+        raw_z_fallback_count = 0
+        unresolved_count = 0
+
+        # Process lines with more certain neighbors first so that the most
+        # constrained uncertain lines are resolved with better context.
+        def certain_neighbor_count(oid: int) -> int:
+            s, e = oriented_eps[oid]
+            return sum(
+                1
+                for ep in (s, e)
+                for nb in ep_to_oids.get(ep, [])
+                if nb in certain_oids
+            )
+
+        for oid in sorted(uncertain_oids, key=certain_neighbor_count, reverse=True):
+            start_key, end_key = oriented_eps[oid]
+            start_z, end_z = z_by_oid.get(oid, (None, None))
+
+            # Look for a clear head-to-tail relationship with any certain neighbor.
+            # N.end == X.start  →  N→junction→X  (N feeds X, through-flow)
+            # N.start == X.end  →  X→junction→N  (X feeds N, through-flow)
+            has_consistent_signal = False
+            for junction_key, is_x_start in ((start_key, True), (end_key, False)):
+                for neighbor in ep_to_oids.get(junction_key, []):
+                    if neighbor not in certain_oids:
+                        continue
+                    n_start, n_end = oriented_eps[neighbor]
+                    if is_x_start and n_end == junction_key:
+                        has_consistent_signal = True
+                        break
+                    if not is_x_start and n_start == junction_key:
+                        has_consistent_signal = True
+                        break
+                if has_consistent_signal:
+                    break
+
+            if has_consistent_signal:
+                # Current orientation is consistent with certain network; keep it.
+                continue
+
+            # No network signal — fall back to raw Z.
+            if start_z is not None and end_z is not None:
+                if start_z < end_z:
+                    flips.add(oid)
+                raw_z_fallback_count += 1
+            else:
+                unresolved_count += 1
+
+        return flips, raw_z_fallback_count, unresolved_count
 
     def _compute_network_flips(
         self,
         z_by_oid: dict[int, tuple[Optional[float], Optional[float]]],
     ) -> set[int]:
-        oid_to_eps, ep_to_oids = self._build_endpoint_graph()
+        oid_to_eps, ep_to_oids, oid_to_length = self._build_endpoint_graph()
         components = self._find_components(oid_to_eps, ep_to_oids)
 
-        oids_to_flip: set[int] = set()
-        skipped_components = 0
+        all_flips: set[int] = set()
+        no_certain_components = 0
+        total_raw_z = 0
+        total_unresolved = 0
 
         for component in components:
-            flips = self._orient_component(
-                component, oid_to_eps, ep_to_oids, z_by_oid
+            certain, uncertain, extension_flip = self._classify_lines(
+                component, z_by_oid, oid_to_eps, ep_to_oids, oid_to_length
             )
-            if not flips and all(
-                z_by_oid.get(oid, (None, None)) == (None, None) for oid in component
-            ):
-                skipped_components += 1
+
+            if not certain:
+                # No lines meet the threshold; orient everything by raw Z and warn.
+                no_certain_components += 1
+                for oid in component:
+                    s, e = z_by_oid.get(oid, (None, None))
+                    if s is not None and e is not None and s < e:
+                        all_flips.add(oid)
                 continue
-            oids_to_flip.update(flips)
 
-        if skipped_components:
+            # Phase 1 — certain lines.
+            flips_p1, oriented_eps = self._orient_certain_lines(
+                certain, z_by_oid, oid_to_eps, extension_flip
+            )
+            all_flips.update(flips_p1)
+
+            if not uncertain:
+                continue
+
+            # Phase 2 — uncertain lines.
+            flips_p2, raw_z, unresolved = self._propagate_to_uncertain(
+                uncertain, certain, oriented_eps, ep_to_oids, z_by_oid
+            )
+            all_flips.update(flips_p2)
+            total_raw_z += raw_z
+            total_unresolved += unresolved
+
+        if no_certain_components:
             arcpy.AddWarning(
-                f"LineZOrientTool (NETWORK): {skipped_components} connected component(s) "
-                "had no raster coverage and were left unchanged."
+                f"LineZOrientTool (NETWORK): {no_certain_components} connected "
+                f"component(s) had no line meeting the {self.config.min_z_drop_meters} m "
+                "Z drop threshold; all lines in those components oriented by raw Z."
+            )
+        if total_raw_z:
+            arcpy.AddWarning(
+                f"LineZOrientTool (NETWORK): {total_raw_z} uncertain line(s) had a Z drop "
+                f"below {self.config.min_z_drop_meters} m and were oriented by raw Z as "
+                "best guess."
+            )
+        if total_unresolved:
+            arcpy.AddWarning(
+                f"LineZOrientTool (NETWORK): {total_unresolved} line(s) had no Z data "
+                "and could not be resolved by the network; original orientation preserved."
             )
 
-        return oids_to_flip
+        return all_flips
 
     # ------------------------------------------------------------------
     # Shared flip helper
