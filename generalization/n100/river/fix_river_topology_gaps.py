@@ -38,11 +38,12 @@ def fix_river_orientation():
         raster_dir=config.raster_directory,
         input_features=River_N100.data_preparation___river_lines___n100_river.value,
     )
+
     flip_config = logic_config.LineZOrientConfig(
         input_lines=River_N100.river_topology___fixed_river_orientation___n100_river.value,
         raster_paths=rasters,
         orientation_mode=logic_config.LineZOrientMode.NETWORK,
-        outlet_mode=logic_config.LineZOrientOutletMode.DANGLE_ENDPOINTS,
+        min_z_drop_meters=1,
         connectivity_tolerance_meters=environment_setup.ArcGisEnvironmentSetup.XY_TOLERANCE,
     )
     LineZOrientTool(config=flip_config).run()
