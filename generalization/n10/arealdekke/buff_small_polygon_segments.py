@@ -38,8 +38,8 @@ class fc (Enum):
     target_fc="target_fc"
     locked_fc="locked_fc"
 
-    target_out_buffer="target_out_buffer"
-    locked_fc_conflicts="locked_fc_conflicts"
+    locked_areas_within_target="locked_areas_within_target"
+    locked_areas_outside_buffer="locked_areas_outside_buffer"
 
     input_polygon_edge="input_polygon_edge"
     input_polygon_minus_buffer="input_polygon_minus_buffer"
@@ -65,8 +65,8 @@ def files_setup(wfm: WorkFileManager) -> dict:
     locked_fc=wfm.build_file_path(file_name="locked_fc", file_type="gdb")
 
     #Get shared boundary
-    target_out_buffer=wfm.build_file_path(file_name="target_out_buffer", file_type="gdb")
-    locked_fc_conflicts=wfm.build_file_path(file_name="locked_fc_conflicts", file_type="gdb")
+    locked_areas_within_target=wfm.build_file_path(file_name="locked_areas_within_target", file_type="gdb")
+    locked_areas_outside_buffer=wfm.build_file_path(file_name="locked_areas_outside_buffer", file_type="gdb")
 
     #Find segments under min
     input_polygon_edge=wfm.build_file_path(file_name="input_polygon_edge", file_type="gdb")
@@ -91,8 +91,8 @@ def files_setup(wfm: WorkFileManager) -> dict:
         fc.target_fc:target_fc,
         fc.locked_fc:locked_fc,
 
-        fc.target_out_buffer:target_out_buffer,
-        fc.locked_fc_conflicts:locked_fc_conflicts,
+        fc.locked_areas_within_target:locked_areas_within_target,
+        fc.locked_areas_outside_buffer:locked_areas_outside_buffer,
 
         fc.input_polygon_edge:input_polygon_edge,
         fc.input_polygon_minus_buffer:input_polygon_minus_buffer,
@@ -110,7 +110,6 @@ def files_setup(wfm: WorkFileManager) -> dict:
         fc.small_segments_enlarged:small_segments_enlarged,
         fc.small_segments_enlarged_single:small_segments_enlarged_single
     }
-
 
 @timing_decorator
 def extract_data(files:dict, target_fc, locked_fc:list)->None:#TODO: Done?
@@ -200,42 +199,31 @@ def choose_target_areas(files:dict)->None:
         arcpy.analysis.Clip(in_features=original_polygon_lyr, clip_features=overkill_buffer_lyr, out_feature_class=files[fc.areas_chosen])
 
 @timing_decorator
-def get_shared_locked_boundary(files:dict)->None: #TODO: Done?
+def get_shared_locked_boundary(files:dict, min_width:int)->None: #TODO: Done?
     
     #Clip the locked fcs to the chosen target area buffer
+    areas_chosen_lyr="areas_chosen_lyr"
+    arcpy.management.MakeFeatureLayer(in_features=files[fc.areas_chosen], out_layer=areas_chosen_lyr)
 
-    #Create a buffer around the clipped locked area
+    locked_areas_lyr="locked_areas_lyr"
+    arcpy.management.MakeFeatureLayer(in_features=files[fc.locked_fc], out_layer=locked_areas_lyr)
 
-    #Clip the buffed area to the 
+    try:
+        arcpy.analysis.PairwiseClip(in_features=locked_areas_lyr, clip_features=areas_chosen_lyr, out_feature_class=files[fc.locked_areas_within_target])
+    except:
+        arcpy.analysis.Clip(in_features=locked_areas_lyr, clip_features=areas_chosen_lyr, out_feature_class=files[fc.locked_areas_within_target])
     
-    #select the line that share a boundary with 
-
-    target_polygon_lyr="target_polygon_lyr"
-    arcpy.management.MakeFeatureLayer(in_features=files[fc.target_fc], out_layer=target_polygon_lyr)
+    #Create a buffer around the clipped locked area
+    locked_areas_within_target_lyr="locked_areas_within_target_lyr"
+    arcpy.management.MakeFeatureLayer(in_features=files[fc.locked_areas_within_target], out_layer=locked_areas_within_target_lyr)
 
     arcpy.analysis.Buffer(
-        in_features=target_polygon_lyr,
-        out_feature_class=files[fc.target_out_buffer],
-        buffer_distance_or_field='1 Meters',
-        line_side='OUTSIDE_ONLY'
+        in_features=locked_areas_within_target_lyr,
+        out_feature_class=files[fc.locked_areas_outside_buffer],
+        buffer_distance_or_field=f'{min_width} Meter',
+        line_side='OUTSIDE_ONLY',
+        dissolve_option='NONE'
     )
-
-    target_out_buffer_lyr="target_out_buffer_lyr"
-    locked_fc_lyr="locked_fc_lyr"
-
-    arcpy.management.MakeFeatureLayer(in_features=files[fc.target_out_buffer], out_layer=target_out_buffer_lyr)
-    arcpy.management.MakeFeatureLayer(in_features=files[fc.locked_fc], out_layer=locked_fc_lyr)
-
-    arcpy.analysis.Clip(
-        in_features=locked_fc_lyr,
-        clip_features=target_out_buffer_lyr,
-        out_feature_class=files[fc.locked_fc_conflicts]
-    )
- 
-
-@timing_decorator
-def buff_locked_fc(files:dict, min_width:int)->None:
-    #Buff the locked fs if they area within the chosen target area
 
 @timing_decorator
 def buff_small_segments(files:dict, min_width:int, out_fc)->None:
@@ -251,11 +239,8 @@ def buff_small_segments(files:dict, min_width:int, out_fc)->None:
     )
 
     #Erase large enough areas from the centre line and the areas too close to the locked areas
-
     centre_line_lyr="centre_line_lyr"
     large_segments_lyr="large_segments_lyr"
-
-
 
     arcpy.management.MakeFeatureLayer(in_features=files[fc.centre_line], out_layer=centre_line_lyr)
     arcpy.management.MakeFeatureLayer(in_features=files[fc.segments_wide_enough], out_layer=large_segments_lyr)
@@ -274,7 +259,7 @@ def buff_small_segments(files:dict, min_width:int, out_fc)->None:
         )
 
     except:
-        arcpy.analysis.PairBuffer(
+        arcpy.analysis.Buffer(
             in_features=small_segments_centre_lyr,
             out_feature_class=files[fc.small_segments_enlarged],
             buffer_distance_or_field=f"{min_width} Meters"
@@ -285,6 +270,16 @@ def buff_small_segments(files:dict, min_width:int, out_fc)->None:
     arcpy.management.MakeFeatureLayer(in_features=files[fc.small_segments_enlarged], out_layer=small_segments_enlarged_lyr)
 
     arcpy.management.MultipartToSinglepart(in_features=small_segments_enlarged_lyr, out_feature_class=files[fc.small_segments_enlarged_single])
+
+    #Make the locked fcs into lines with polygon to line. Then, use intersect analysis to find the centre line that intersects any locked fc buffers.
+
+    #Erase the segment from the target polygon centre line and buff the centre line segment with the minimum width in a new layer.
+
+    #Do another intersect analysis to find the locked fc segment that intersects the target polygon.
+
+    #Buff the locked fc segment with the minimum width and erase the original polygon from the buffer.
+
+    #Dissolve the new buffed segment with the rest of the target polygon.
 
     #Do a spatial join to get the arealdekke value.
     small_segments_enlarged_single_lyr="small_segments_enlarged_single_lyr"
