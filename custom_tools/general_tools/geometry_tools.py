@@ -16,6 +16,7 @@ from composition_configs.logic_config import (
     LineEndpointToolConfig,
     LineZOrientConfig,
     LineZOrientMode,
+    LineZOrientOutletMode,
     LineZValueFieldNameConfig,
     LineZValueMode,
     LineZValueToolConfig,
@@ -1887,6 +1888,24 @@ class LineZOrientTool:
 
         return components
 
+    def _find_dangle_endpoints(
+        self,
+        component: set[int],
+        oid_to_eps: dict[int, tuple[_EndpointKey, _EndpointKey]],
+        ep_to_oids: dict[_EndpointKey, list[int]],
+    ) -> set[_EndpointKey]:
+        """
+        Return endpoint keys that are connected to exactly one line within the
+        component.  These are the free ends (dangles) of the local network.
+        """
+        dangle_eps: set[_EndpointKey] = set()
+        for oid in component:
+            for ep_key in oid_to_eps[oid]:
+                count = sum(1 for o in ep_to_oids.get(ep_key, []) if o in component)
+                if count == 1:
+                    dangle_eps.add(ep_key)
+        return dangle_eps
+
     def _orient_component(
         self,
         component: set[int],
@@ -1895,8 +1914,14 @@ class LineZOrientTool:
         z_by_oid: dict[int, tuple[Optional[float], Optional[float]]],
     ) -> set[int]:
         """
-        BFS from the lowest-Z endpoint in the component.  Returns the set of
+        BFS from the outlet endpoint in the component.  Returns the set of
         OIDs within this component that need to be flipped.
+
+        The outlet is selected according to outlet_mode:
+          DANGLE_ENDPOINTS  — lowest-Z endpoint among free ends (dangles) of the
+                              local network.  Falls back to any endpoint if no
+                              dangle has raster coverage.
+          ANY_ENDPOINT      — lowest-Z endpoint regardless of connectivity.
         """
         # Collect all endpoint keys and their sampled Z values for this component.
         ep_z: dict[_EndpointKey, float] = {}
@@ -1915,7 +1940,14 @@ class LineZOrientTool:
         if not ep_z:
             return set()
 
-        outlet_ep = min(ep_z, key=lambda k: ep_z[k])
+        if self.config.outlet_mode == LineZOrientOutletMode.DANGLE_ENDPOINTS:
+            dangle_eps = self._find_dangle_endpoints(component, oid_to_eps, ep_to_oids)
+            dangle_ep_z = {ep: z for ep, z in ep_z.items() if ep in dangle_eps}
+            candidate_ep_z = dangle_ep_z if dangle_ep_z else ep_z
+        else:
+            candidate_ep_z = ep_z
+
+        outlet_ep = min(candidate_ep_z, key=lambda k: candidate_ep_z[k])
 
         # BFS from outlet endpoint, orienting lines so their END is toward the outlet.
         oids_to_flip: set[int] = set()
