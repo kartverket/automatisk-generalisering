@@ -132,6 +132,13 @@ class River_N100(Enum):
         description="river_angles",
     )
 
+    river_topology___fixed_river_orientation___n100_river = (
+        file_manager.generate_file_name_gdb(
+            script_source_name=river_topology,
+            description="fixed_river_orientation",
+        )
+    )
+
     river_topology___river_angles_2___n100_river = file_manager.generate_file_name_gdb(
         script_source_name=river_topology,
         description="river_angles_2",

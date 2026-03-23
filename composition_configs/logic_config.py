@@ -373,6 +373,11 @@ class LineZValueMode(str, Enum):
     BOTH_ENDPOINTS = "both_endpoints"
 
 
+class LineZOrientMode(str, Enum):
+    INDIVIDUAL = "individual"
+    NETWORK = "network"
+
+
 @dataclass(frozen=True)
 class LineZValueFieldNameConfig:
     start_z: str = "start_z"
@@ -390,3 +395,11 @@ class LineZValueToolConfig:
     # If None and multiple rasters: auto "start_z_1", "end_z_1", "start_z_2", "end_z_2" …
     return_results: bool = True
     write_fields: bool = False
+
+
+@dataclass(frozen=True)
+class LineZOrientConfig:
+    input_lines: str
+    raster_paths: RasterPathList
+    orientation_mode: LineZOrientMode = LineZOrientMode.INDIVIDUAL
+    connectivity_tolerance_meters: float = 0.02

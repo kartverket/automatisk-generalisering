@@ -14,6 +14,8 @@ from composition_configs.logic_config import (
     LineAngleMode,
     LineEndpointMode,
     LineEndpointToolConfig,
+    LineZOrientConfig,
+    LineZOrientMode,
     LineZValueFieldNameConfig,
     LineZValueMode,
     LineZValueToolConfig,
@@ -1661,3 +1663,344 @@ def find_rasters_for_vector_extent(
             arcpy.AddWarning(f"Could not read extent of raster: {tif_path}. Skipping.")
 
     return matched
+
+
+# ---------------------------------------------------------------------------
+# Endpoint key type used throughout LineZOrientTool.
+# A snapped integer grid coordinate pair — two endpoints that fall on the
+# same cell are treated as connected.
+# ---------------------------------------------------------------------------
+_EndpointKey = tuple[int, int]
+
+
+class LineZOrientTool:
+    """
+    Orient line features so that the start vertex is upstream (higher Z) and
+    the end vertex is downstream (lower Z).
+
+    Two modes are supported, controlled by LineZOrientConfig.orientation_mode:
+
+    INDIVIDUAL
+        Each line is oriented in isolation.  If start_z < end_z the line is
+        flipped.  Lines where either endpoint has no raster coverage are left
+        unchanged and produce a warning.
+
+    NETWORK
+        Lines that share endpoints are treated as a connected network.  Within
+        each connected component the endpoint with the lowest sampled Z is
+        identified as the outlet.  All lines in the component are then
+        oriented so that flow runs toward the outlet, regardless of each
+        individual line's Z drop.  This corrects single outlier segments that
+        would otherwise point against the network's predominant direction.
+        Components where no Z values can be sampled are skipped with a warning.
+
+    The method modifies input_lines in-place (no output feature class is
+    created).  It is designed to be called on a working copy inside
+    FillLineGaps.
+    """
+
+    def __init__(self, config: LineZOrientConfig) -> None:
+        self.config = config
+        self._tol_grid = max(1e-9, float(config.connectivity_tolerance_meters))
+
+    def run(self) -> None:
+        handles = self._build_raster_handles()
+        z_by_oid = self._sample_z_values(handles)
+
+        if self.config.orientation_mode == LineZOrientMode.INDIVIDUAL:
+            oids_to_flip = self._compute_individual_flips(z_by_oid)
+        else:
+            oids_to_flip = self._compute_network_flips(z_by_oid)
+
+        if oids_to_flip:
+            self._flip_lines(oids_to_flip)
+
+    # ------------------------------------------------------------------
+    # Raster handles
+    # ------------------------------------------------------------------
+
+    def _build_raster_handles(self) -> list[RasterHandle]:
+        desc = arcpy.Describe(self.config.input_lines)
+        ext = desc.extent
+        handles: list[RasterHandle] = []
+        for raster_path in self.config.raster_paths:
+            try:
+                handle = build_raster_handle(
+                    raster_path,
+                    clip_xmin=ext.XMin,
+                    clip_ymin=ext.YMin,
+                    clip_xmax=ext.XMax,
+                    clip_ymax=ext.YMax,
+                )
+                handles.append(handle)
+            except Exception as exc:
+                arcpy.AddWarning(
+                    f"LineZOrientTool: could not load raster {raster_path}: {exc}"
+                )
+        return handles
+
+    # ------------------------------------------------------------------
+    # Z sampling
+    # ------------------------------------------------------------------
+
+    def _sample_z_values(
+        self,
+        handles: list[RasterHandle],
+    ) -> dict[int, tuple[Optional[float], Optional[float]]]:
+        """Return {oid: (start_z, end_z)} for every line in input_lines."""
+        oid_field = arcpy.Describe(self.config.input_lines).OIDFieldName
+        z_by_oid: dict[int, tuple[Optional[float], Optional[float]]] = {}
+
+        with arcpy.da.SearchCursor(
+            self.config.input_lines, [oid_field, "SHAPE@"]
+        ) as cursor:
+            for oid, polyline in cursor:
+                if polyline is None or polyline.partCount == 0:
+                    arcpy.AddWarning(
+                        f"LineZOrientTool: OID {oid} has null or empty geometry. Skipping."
+                    )
+                    continue
+
+                first = polyline.firstPoint
+                last = polyline.lastPoint
+
+                if first is None or last is None:
+                    arcpy.AddWarning(
+                        f"LineZOrientTool: OID {oid} has no first/last point. Skipping."
+                    )
+                    continue
+
+                start_z = local_z_at_xy(handles, first.X, first.Y)
+                end_z = local_z_at_xy(handles, last.X, last.Y)
+                z_by_oid[int(oid)] = (start_z, end_z)
+
+        return z_by_oid
+
+    # ------------------------------------------------------------------
+    # INDIVIDUAL mode
+    # ------------------------------------------------------------------
+
+    def _compute_individual_flips(
+        self,
+        z_by_oid: dict[int, tuple[Optional[float], Optional[float]]],
+    ) -> set[int]:
+        oids_to_flip: set[int] = set()
+        no_data_count = 0
+
+        for oid, (start_z, end_z) in z_by_oid.items():
+            if start_z is None or end_z is None:
+                no_data_count += 1
+                continue
+            if start_z < end_z:
+                oids_to_flip.add(oid)
+
+        if no_data_count:
+            arcpy.AddWarning(
+                f"LineZOrientTool (INDIVIDUAL): {no_data_count} line(s) had no raster "
+                "coverage at one or both endpoints and were left unchanged."
+            )
+
+        return oids_to_flip
+
+    # ------------------------------------------------------------------
+    # NETWORK mode
+    # ------------------------------------------------------------------
+
+    def _build_endpoint_graph(
+        self,
+    ) -> tuple[
+        dict[int, tuple[_EndpointKey, _EndpointKey]],
+        dict[_EndpointKey, list[int]],
+    ]:
+        """
+        Read all line geometries and return two complementary dicts:
+
+        oid_to_eps   : {oid: (start_key, end_key)}
+        ep_to_oids   : {endpoint_key: [oid, ...]}
+
+        Endpoint keys are integer grid coordinates snapped to
+        connectivity_tolerance_meters so that nearby endpoints are
+        treated as shared.
+        """
+        scale = 1.0 / self._tol_grid
+        oid_field = arcpy.Describe(self.config.input_lines).OIDFieldName
+
+        oid_to_eps: dict[int, tuple[_EndpointKey, _EndpointKey]] = {}
+        ep_to_oids: dict[_EndpointKey, list[int]] = {}
+
+        with arcpy.da.SearchCursor(
+            self.config.input_lines, [oid_field, "SHAPE@"]
+        ) as cursor:
+            for oid, polyline in cursor:
+                if polyline is None or polyline.partCount == 0:
+                    continue
+                first = polyline.firstPoint
+                last = polyline.lastPoint
+                if first is None or last is None:
+                    continue
+
+                oid = int(oid)
+                start_key: _EndpointKey = (
+                    int(round(first.X * scale)),
+                    int(round(first.Y * scale)),
+                )
+                end_key: _EndpointKey = (
+                    int(round(last.X * scale)),
+                    int(round(last.Y * scale)),
+                )
+
+                oid_to_eps[oid] = (start_key, end_key)
+                ep_to_oids.setdefault(start_key, []).append(oid)
+                ep_to_oids.setdefault(end_key, []).append(oid)
+
+        return oid_to_eps, ep_to_oids
+
+    def _find_components(
+        self,
+        oid_to_eps: dict[int, tuple[_EndpointKey, _EndpointKey]],
+        ep_to_oids: dict[_EndpointKey, list[int]],
+    ) -> list[set[int]]:
+        """Return a list of connected components as sets of OIDs."""
+        visited_oids: set[int] = set()
+        components: list[set[int]] = []
+
+        for seed_oid in oid_to_eps:
+            if seed_oid in visited_oids:
+                continue
+
+            component: set[int] = set()
+            queue = [seed_oid]
+
+            while queue:
+                oid = queue.pop()
+                if oid in visited_oids:
+                    continue
+                visited_oids.add(oid)
+                component.add(oid)
+
+                for ep_key in oid_to_eps[oid]:
+                    for neighbor_oid in ep_to_oids.get(ep_key, []):
+                        if neighbor_oid not in visited_oids:
+                            queue.append(neighbor_oid)
+
+            components.append(component)
+
+        return components
+
+    def _orient_component(
+        self,
+        component: set[int],
+        oid_to_eps: dict[int, tuple[_EndpointKey, _EndpointKey]],
+        ep_to_oids: dict[_EndpointKey, list[int]],
+        z_by_oid: dict[int, tuple[Optional[float], Optional[float]]],
+    ) -> set[int]:
+        """
+        BFS from the lowest-Z endpoint in the component.  Returns the set of
+        OIDs within this component that need to be flipped.
+        """
+        # Collect all endpoint keys and their sampled Z values for this component.
+        ep_z: dict[_EndpointKey, float] = {}
+        for oid in component:
+            if oid not in z_by_oid:
+                continue
+            start_z, end_z = z_by_oid[oid]
+            start_key, end_key = oid_to_eps[oid]
+            if start_z is not None:
+                if start_key not in ep_z or start_z < ep_z[start_key]:
+                    ep_z[start_key] = start_z
+            if end_z is not None:
+                if end_key not in ep_z or end_z < ep_z[end_key]:
+                    ep_z[end_key] = end_z
+
+        if not ep_z:
+            return set()
+
+        outlet_ep = min(ep_z, key=lambda k: ep_z[k])
+
+        # BFS from outlet endpoint, orienting lines so their END is toward the outlet.
+        oids_to_flip: set[int] = set()
+        visited_eps: set[_EndpointKey] = {outlet_ep}
+        visited_oids: set[int] = set()
+        queue: list[_EndpointKey] = [outlet_ep]
+
+        while queue:
+            current_ep = queue.pop(0)
+
+            for oid in ep_to_oids.get(current_ep, []):
+                if oid not in component or oid in visited_oids:
+                    continue
+                visited_oids.add(oid)
+
+                start_key, end_key = oid_to_eps[oid]
+
+                if end_key == current_ep:
+                    # END is on the outlet side — correctly oriented.
+                    other_ep = start_key
+                else:
+                    # START is on the outlet side — needs flipping.
+                    oids_to_flip.add(oid)
+                    other_ep = end_key
+
+                if other_ep not in visited_eps:
+                    visited_eps.add(other_ep)
+                    queue.append(other_ep)
+
+        return oids_to_flip
+
+    def _compute_network_flips(
+        self,
+        z_by_oid: dict[int, tuple[Optional[float], Optional[float]]],
+    ) -> set[int]:
+        oid_to_eps, ep_to_oids = self._build_endpoint_graph()
+        components = self._find_components(oid_to_eps, ep_to_oids)
+
+        oids_to_flip: set[int] = set()
+        skipped_components = 0
+
+        for component in components:
+            flips = self._orient_component(
+                component, oid_to_eps, ep_to_oids, z_by_oid
+            )
+            if not flips and all(
+                z_by_oid.get(oid, (None, None)) == (None, None) for oid in component
+            ):
+                skipped_components += 1
+                continue
+            oids_to_flip.update(flips)
+
+        if skipped_components:
+            arcpy.AddWarning(
+                f"LineZOrientTool (NETWORK): {skipped_components} connected component(s) "
+                "had no raster coverage and were left unchanged."
+            )
+
+        return oids_to_flip
+
+    # ------------------------------------------------------------------
+    # Shared flip helper
+    # ------------------------------------------------------------------
+
+    def _flip_lines(self, oids_to_flip: set[int]) -> None:
+        """Reverse the geometry of every OID in oids_to_flip in-place."""
+        oid_field = arcpy.Describe(self.config.input_lines).OIDFieldName
+
+        with arcpy.da.UpdateCursor(
+            self.config.input_lines, [oid_field, "SHAPE@"]
+        ) as cursor:
+            for row in cursor:
+                if int(row[0]) not in oids_to_flip:
+                    continue
+
+                polyline: arcpy.Polyline = row[1]
+                if polyline is None:
+                    continue
+
+                reversed_parts = arcpy.Array()
+                for part_idx in range(polyline.partCount):
+                    part = polyline.getPart(part_idx)
+                    points = [part.getObject(i) for i in range(part.count)]
+                    reversed_part = arcpy.Array(reversed(points))
+                    reversed_parts.add(reversed_part)
+
+                row[1] = arcpy.Polyline(reversed_parts, polyline.spatialReference)
+                cursor.updateRow(row)

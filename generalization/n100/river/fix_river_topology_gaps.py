@@ -14,16 +14,37 @@ from custom_tools.general_tools.geometry_tools import (
     LineEndpointTool,
     find_rasters_for_vector_extent,
     LineZValueTool,
+    LineZOrientTool,
 )
 
 
 @timing_decorator
 def main():
     environment_setup.main()
-    fill_line_topology_gaps()
+    # fill_line_topology_gaps()
+    fix_river_orientation()
     # find_angles()
     # find_xy_endpoints()
     # find_relevant_rasters()
+
+
+def fix_river_orientation():
+    arcpy.management.CopyFeatures(
+        in_features=River_N100.data_preparation___river_lines___n100_river.value,
+        out_feature_class=River_N100.river_topology___fixed_river_orientation___n100_river.value,
+    )
+
+    rasters = find_rasters_for_vector_extent(
+        raster_dir=config.raster_directory,
+        input_features=River_N100.data_preparation___river_lines___n100_river.value,
+    )
+    flip_config = logic_config.LineZOrientConfig(
+        input_lines=River_N100.river_topology___fixed_river_orientation___n100_river.value,
+        raster_paths=rasters,
+        orientation_mode=logic_config.LineZOrientMode.NETWORK,
+        connectivity_tolerance_meters=environment_setup.ArcGisEnvironmentSetup.XY_TOLERANCE,
+    )
+    LineZOrientTool(config=flip_config).run()
 
 
 def find_angles():
