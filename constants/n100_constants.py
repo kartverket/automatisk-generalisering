@@ -188,6 +188,7 @@ class MediumAlias:
     tunnel: str = "U"
     bridge: str = "L"
     on_surface: str = "T"
+    building: str = "B"
 
 
 @dataclass(frozen=True)

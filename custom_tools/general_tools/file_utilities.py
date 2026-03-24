@@ -158,6 +158,28 @@ def reclassify_value(
     )
 
 
+def reclassify_if_not_in(
+    input_table: str,
+    target_field: str,
+    allowed_values: list[str],
+    replace_value: str,
+    logic_format: str = "PYTHON3",
+) -> None:
+    code_block = f"""def Reclass(value):
+        if value not in {tuple(allowed_values)}:
+            return {repr(replace_value)}
+        else:
+            return value
+    """
+    arcpy.management.CalculateField(
+        in_table=input_table,
+        field=target_field,
+        expression=f"Reclass(!{target_field}!)",
+        expression_type=logic_format,
+        code_block=code_block,
+    )
+
+
 def deleting_added_field_from_feature_to_x(
     input_file_feature: str = None,
     field_name_feature: str = None,
