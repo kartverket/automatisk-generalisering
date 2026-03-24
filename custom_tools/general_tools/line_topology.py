@@ -954,6 +954,14 @@ class FillLineGaps:
             )
 
         # ----------------------------
+        # Source direction mode
+        # ----------------------------
+        self.source_direction_mode = logic_config.SourceDirectionMode(
+            adv.source_direction_mode
+        )
+        self.min_z_drop_meters: float = float(adv.min_z_drop_meters)
+
+        # ----------------------------
         # Angle config
         # ----------------------------
         self.angle_block_threshold_degrees = (
@@ -967,6 +975,16 @@ class FillLineGaps:
             else float(adv.angle_extra_dangle_threshold_degrees)
         )
         self.best_fit_weights = adv.best_fit_weights
+
+        if (
+            self.source_direction_mode != logic_config.SourceDirectionMode.UNDIRECTED
+            and self.best_fit_weights.angle == 0.0
+        ):
+            raise ValueError(
+                f"source_direction_mode={self.source_direction_mode.value!r} requires "
+                f"best_fit_weights.angle > 0.0 — directional scoring has no effect when "
+                f"angle weight is zero."
+            )
 
         self.angle_local_half_window_m = float(
             getattr(adv, "angle_local_half_window_m", 2.0)
@@ -993,6 +1011,14 @@ class FillLineGaps:
             None if adv.z_drop_threshold is None else float(adv.z_drop_threshold)
         )
         self._raster_handles: list[geometry_tools.RasterHandle] = []
+
+        if (
+            self.source_direction_mode == logic_config.SourceDirectionMode.RASTER_DERIVED
+            and not self.raster_paths
+        ):
+            raise ValueError(
+                "source_direction_mode='raster_derived' requires raster_paths to be set."
+            )
 
         # Local angle cache (dataset_key, oid, rx, ry) -> Optional[float]
         self._local_angle_cache: dict[tuple[str, int, int, int], Optional[float]] = {}
@@ -1485,6 +1511,37 @@ class FillLineGaps:
                 )
 
         self._raster_handles = handles
+
+    # ----------------------------
+    # Source direction orientation
+    # ----------------------------
+
+    def _z_orient_mode_for_scope(self) -> logic_config.LineZOrientMode:
+        """Derive LineZOrientMode from connectivity_scope.
+        Point-to-point scopes (NONE, DIRECT_CONNECTION) use INDIVIDUAL orientation;
+        network-aware scopes use NETWORK orientation.
+        """
+        individual_scopes = (
+            ConnectivityScope.NONE,
+            ConnectivityScope.DIRECT_CONNECTION,
+        )
+        if self.connectivity_scope in individual_scopes:
+            return logic_config.LineZOrientMode.INDIVIDUAL
+        return logic_config.LineZOrientMode.NETWORK
+
+    def _orient_feature_class_by_raster(self, feature_class: str) -> None:
+        """Run LineZOrientTool on *feature_class* in-place using the shared raster
+        config. Called for lines_copy and any external line-like working copies when
+        source_direction_mode == RASTER_DERIVED.
+        """
+        orient_config = logic_config.LineZOrientConfig(
+            input_lines=feature_class,
+            raster_paths=self.raster_paths,
+            orientation_mode=self._z_orient_mode_for_scope(),
+            min_z_drop_meters=self.min_z_drop_meters,
+            connectivity_tolerance_meters=self.connectivity_tolerance_meters,
+        )
+        geometry_tools.LineZOrientTool(config=orient_config).run()
 
     def _local_angle_cache_key(
         self, *, dataset_key: str, oid: int, x: float, y: float
@@ -2309,11 +2366,11 @@ class FillLineGaps:
                 src_connector_diff=float(src_connector_diff),
             )
 
-        # Dangle-pair targets use directional comparison so anti-parallel lines
-        # are not collapsed to zero diff. A line candidate to the parent of a
-        # known target-dangle candidate represents the same connection opportunity
-        # and must be scored with identical directional semantics to prevent it
-        # from getting an unfair undirected scoring advantage.
+        # Dangle-pair detection is retained for:
+        # (1) edge-case distance bonus eligibility
+        # (2) diagnostic labeling
+        # (3) using the precise dangle XY as the target snap point for angle normalisation.
+        # It no longer solely drives the switch to directional semantics.
         _is_dangle_pair = ds_key == dangles_fc_key
         _is_dangle_parent_line = False
         if ds_key == lines_fc_key and dangle_xys_by_parent is not None:
@@ -2322,7 +2379,16 @@ class FillLineGaps:
                 abs(dx - near_x) < _tol and abs(dy - near_y) < _tol
                 for dx, dy in dangle_xys_by_parent.get(int(near_fid), [])
             )
-        _use_directional = _is_dangle_pair or _is_dangle_parent_line
+
+        # Use directional diff (0–180°, src_target_diff as metric) when:
+        # - source lines are known/assumed to be oriented (PRE_ORIENTED or RASTER_DERIVED), or
+        # - comparing dangle-pair / dangle-parent-line targets in UNDIRECTED mode, to avoid
+        #   collapsing anti-parallel lines to zero diff.
+        _use_directional = (
+            self.source_direction_mode != logic_config.SourceDirectionMode.UNDIRECTED
+            or _is_dangle_pair
+            or _is_dangle_parent_line
+        )
 
         if _use_directional:
             _diff = self._directional_diff
@@ -2342,17 +2408,19 @@ class FillLineGaps:
                 if src_m is not None and src_m < 0.5:
                     src_angle_deg = (float(src_angle_deg) + 180.0) % 360.0
 
-            # target_angle -> "entry direction into target interior from its dangle"
-            #   Forward tangent equals the entry direction when the dangle is at
-            #   the start (m < 0.5); it must be reversed when at the end (m >= 0.5).
-            # For a true dangle candidate the snap point is the target dangle XY;
-            # for a line candidate that shares the same parent, the snap point is
-            # the GenerateNearTable hit on the line (near_x, near_y).
-            _tgt_snap_x = float(tx) if _is_dangle_pair else float(near_x)
-            _tgt_snap_y = float(ty) if _is_dangle_pair else float(near_y)
-            tgt_m = self._line_measure_at_xy(tgt_poly, _tgt_snap_x, _tgt_snap_y)
-            if tgt_m is not None and tgt_m >= 0.5:
-                target_angle = (float(target_angle) + 180.0) % 360.0
+            # In UNDIRECTED mode (_use_directional triggered by dangle-pair / dangle-parent-line):
+            # normalise target_angle to "entry direction into target interior" so that both
+            # dangles in a pair score symmetrically (0° for a good collinear fill).
+            # In PRE_ORIENTED / RASTER_DERIVED mode: leave target_angle as the raw flow
+            # direction of the target line at the snap point. The source exits toward the gap;
+            # the target should flow in the same direction for a good match — flipping would
+            # collapse the score to 0° for both dangles regardless of their relative orientation.
+            if self.source_direction_mode == logic_config.SourceDirectionMode.UNDIRECTED:
+                _tgt_snap_x = float(tx) if _is_dangle_pair else float(near_x)
+                _tgt_snap_y = float(ty) if _is_dangle_pair else float(near_y)
+                tgt_m = self._line_measure_at_xy(tgt_poly, _tgt_snap_x, _tgt_snap_y)
+                if tgt_m is not None and tgt_m >= 0.5:
+                    target_angle = (float(target_angle) + 180.0) % 360.0
         else:
             _diff = self._orientation_diff
             angle_max_deg = 90.0
@@ -2360,7 +2428,7 @@ class FillLineGaps:
         connector_target_diff = _diff(float(connector_angle), float(target_angle))
         src_target_diff = _diff(float(src_angle_deg), float(target_angle))
         # connector_transition_diff mixes src→connector and connector→target.
-        # For directional cases, use directional src→connector to stay consistent.
+        # Use directional src→connector when in directional mode to stay consistent.
         _src_conn_for_transition = (
             self._directional_diff(float(src_angle_deg), float(connector_angle))
             if _use_directional
@@ -4363,9 +4431,19 @@ class FillLineGaps:
         self._copy_input_lines()
         self._build_raster_handles()
         self._add_original_id_field()
+
+        if self.source_direction_mode == logic_config.SourceDirectionMode.RASTER_DERIVED:
+            self._orient_feature_class_by_raster(self.lines_copy)
+
         self._create_dangles()
 
         self._build_external_target_layers_once()
+
+        if self.source_direction_mode == logic_config.SourceDirectionMode.RASTER_DERIVED:
+            for ext_layer in self.external_target_layers:
+                if self._is_polyline_fc(ext_layer):
+                    self._orient_feature_class_by_raster(ext_layer)
+
         targets = self._select_targets_within_tolerance_of_dangles()
 
         # Keep only dangles that have any candidate within base tolerance
