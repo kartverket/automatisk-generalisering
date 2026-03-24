@@ -1984,13 +1984,45 @@ class LineZOrientTool:
                     far_z = u_start_z if u_end_key == non_dangle_ep else u_end_z
 
                     if far_z is not None and abs(far_z - dangle_z) >= threshold:
-                        certain.add(oid)
                         # Orientation from extended direction, not own Z.
                         if far_z > dangle_z:
-                            # Dangle is outlet (lower) — end should be at dangle.
+                            # Dangle is a potential outlet (lower Z).
+                            # Confirm by checking that no other line at the junction
+                            # leads to a point more than threshold lower than dangle_z.
+                            # If one does, the dangle is a side branch and that other
+                            # line is the true downstream continuation.
+                            competing_oids = [
+                                o for o in ep_to_oids.get(non_dangle_ep, [])
+                                if o != oid and o != longest_up and o in component
+                            ]
+                            true_outlet = True
+                            for comp_oid in competing_oids:
+                                c_start_z, c_end_z = z_by_oid.get(
+                                    comp_oid, (None, None)
+                                )
+                                c_start_key, _ = oid_to_eps[comp_oid]
+                                comp_far_z = (
+                                    c_end_z
+                                    if c_start_key == non_dangle_ep
+                                    else c_start_z
+                                )
+                                if (
+                                    comp_far_z is not None
+                                    and (dangle_z - comp_far_z) >= threshold
+                                ):
+                                    true_outlet = False
+                                    break
+
+                            if not true_outlet:
+                                uncertain.add(oid)
+                                continue
+
+                            # Confirmed outlet — end should be at dangle.
+                            certain.add(oid)
                             extension_flip[oid] = end_key != dangle_ep
                         else:
                             # Dangle is source (higher) — start should be at dangle.
+                            certain.add(oid)
                             extension_flip[oid] = start_key != dangle_ep
                         continue
 
@@ -2033,20 +2065,26 @@ class LineZOrientTool:
         uncertain_oids: set[int],
         certain_oids: set[int],
         oriented_eps: dict[int, tuple[_EndpointKey, _EndpointKey]],
+        oid_to_eps: dict[int, tuple[_EndpointKey, _EndpointKey]],
         ep_to_oids: dict[_EndpointKey, list[int]],
         z_by_oid: dict[int, tuple[Optional[float], Optional[float]]],
+        dangle_eps: set[_EndpointKey],
     ) -> tuple[set[int], int, int]:
         """
-        Phase 2: orient uncertain lines using network context and raw Z fallback.
+        Phase 2: orient uncertain lines using competing-outlet-aware Z logic,
+        with a network-context fallback for lines that lack Z data.
 
-        For each uncertain line:
-          - Count head-to-tail signals from certain neighbors (N ends at X's start,
-            or X ends at N's start).  A head-to-tail match confirms the current
-            orientation is consistent with the network; the line is kept as-is.
-          - If no head-to-tail signal and Z data is available: orient by raw Z
-            (best guess, counted in raw_z_fallback).
-          - If no head-to-tail signal and no Z data: keep original orientation
-            (counted in unresolved).
+        For lines with Z data:
+          - raw_flip = (start_z < end_z).
+          - If raw_flip: suppress if any neighbor at end_key has far_z < start_z —
+            that neighbor is the true downstream continuation, so start_key is the
+            inlet (keep original orientation, or no flip).
+          - If not raw_flip and end_key is a dangle: force flip if any neighbor at
+            start_key has far_z < end_z — the junction (start_key) connects to
+            something lower than the dangle, so the dangle must be the inlet.
+        For lines without Z data:
+          - Use head-to-tail signal from certain neighbors if available.
+          - Otherwise leave original orientation (unresolved).
 
         Returns (flips_phase2, raw_z_fallback_count, unresolved_count).
         """
@@ -2054,8 +2092,6 @@ class LineZOrientTool:
         raw_z_fallback_count = 0
         unresolved_count = 0
 
-        # Process lines with more certain neighbors first so that the most
-        # constrained uncertain lines are resolved with better context.
         def certain_neighbor_count(oid: int) -> int:
             s, e = oriented_eps[oid]
             return sum(
@@ -2065,39 +2101,80 @@ class LineZOrientTool:
                 if nb in certain_oids
             )
 
+        def z_at_ep(nb: int, ep_key: _EndpointKey) -> Optional[float]:
+            """Z at a specific endpoint of nb, using original geometry Z values."""
+            orig_start, orig_end = oid_to_eps[nb]
+            zs, ze = z_by_oid.get(nb, (None, None))
+            if ep_key == orig_start:
+                return zs
+            if ep_key == orig_end:
+                return ze
+            return None
+
+        def far_z_of(nb: int, junction_key: _EndpointKey) -> Optional[float]:
+            """Z at the far end of neighbor nb from junction_key."""
+            n_start, n_end = oriented_eps[nb]
+            far_ep = n_end if n_start == junction_key else n_start
+            return z_at_ep(nb, far_ep)
+
         for oid in sorted(uncertain_oids, key=certain_neighbor_count, reverse=True):
             start_key, end_key = oriented_eps[oid]
             start_z, end_z = z_by_oid.get(oid, (None, None))
 
-            # Look for a clear head-to-tail relationship with any certain neighbor.
-            # N.end == X.start  →  N→junction→X  (N feeds X, through-flow)
-            # N.start == X.end  →  X→junction→N  (X feeds N, through-flow)
-            has_consistent_signal = False
-            for junction_key, is_x_start in ((start_key, True), (end_key, False)):
-                for neighbor in ep_to_oids.get(junction_key, []):
-                    if neighbor not in certain_oids:
-                        continue
-                    n_start, n_end = oriented_eps[neighbor]
-                    if is_x_start and n_end == junction_key:
-                        has_consistent_signal = True
-                        break
-                    if not is_x_start and n_start == junction_key:
-                        has_consistent_signal = True
-                        break
-                if has_consistent_signal:
-                    break
-
-            if has_consistent_signal:
-                # Current orientation is consistent with certain network; keep it.
-                continue
-
-            # No network signal — fall back to raw Z.
             if start_z is not None and end_z is not None:
-                if start_z < end_z:
-                    flips.add(oid)
+                # Competing-outlet-aware Z orientation.
+                raw_flip = start_z < end_z
+
+                if raw_flip:
+                    # Proposed flip: end_key becomes start (upstream junction),
+                    # start_key becomes end (dangle outlet).
+                    # Suppress if any neighbor at end_key leads to even lower Z
+                    # than start_z — that line is the true downstream continuation.
+                    blocked = False
+                    for nb in ep_to_oids.get(end_key, []):
+                        if nb == oid:
+                            continue
+                        fz = far_z_of(nb, end_key)
+                        if fz is not None and fz < start_z:
+                            blocked = True
+                            break
+                    if not blocked:
+                        flips.add(oid)
+                else:
+                    # Raw Z says keep (start already higher than or equal to end).
+                    # But if end_key is a dangle and start_key (junction) leads to
+                    # something lower than end_z, the dangle is the inlet — flip.
+                    if end_key in dangle_eps:
+                        for nb in ep_to_oids.get(start_key, []):
+                            if nb == oid:
+                                continue
+                            fz = far_z_of(nb, start_key)
+                            if fz is not None and fz < end_z:
+                                flips.add(oid)
+                                break
+
                 raw_z_fallback_count += 1
+
             else:
-                unresolved_count += 1
+                # No Z — fall back to head-to-tail network signal from certain
+                # neighbors.  N.end == X.start or X.end == N.start.
+                has_signal = False
+                for junction_key, is_x_start in ((start_key, True), (end_key, False)):
+                    for nb in ep_to_oids.get(junction_key, []):
+                        if nb not in certain_oids:
+                            continue
+                        n_start, n_end = oriented_eps[nb]
+                        if is_x_start and n_end == junction_key:
+                            has_signal = True
+                            break
+                        if not is_x_start and n_start == junction_key:
+                            has_signal = True
+                            break
+                    if has_signal:
+                        break
+
+                if not has_signal:
+                    unresolved_count += 1
 
         return flips, raw_z_fallback_count, unresolved_count
 
@@ -2137,8 +2214,10 @@ class LineZOrientTool:
                 continue
 
             # Phase 2 — uncertain lines.
+            dangle_eps = self._find_dangle_endpoints(component, oid_to_eps, ep_to_oids)
             flips_p2, raw_z, unresolved = self._propagate_to_uncertain(
-                uncertain, certain, oriented_eps, ep_to_oids, z_by_oid
+                uncertain, certain, oriented_eps, oid_to_eps, ep_to_oids, z_by_oid,
+                dangle_eps,
             )
             all_flips.update(flips_p2)
             total_raw_z += raw_z
