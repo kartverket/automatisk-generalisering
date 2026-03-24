@@ -57,23 +57,23 @@ SCALE = "n100"
 def main():
     environment_setup.main()
     arcpy.env.referenceScale = 100000
-    data_selection_and_validation(AREA_SELECTOR)
-    reclassify_medium()
-    categories_major_road_crossings()
-    generalize_roundabouts()
-    remove_roadblock()
-    trim_road_details()
-    ramp_points()
-    admin_boarder()
-    adding_fields()
-    collapse_road_detail()
-    simplify_road()
-    thin_roads()
-    thin_sti_and_forest_roads()
-    merge_divided_roads()
-    smooth_line()
-    generalize_road_triangles(SCALE)
-    pre_resolve_road_conflicts(AREA_SELECTOR)
+    # data_selection_and_validation(AREA_SELECTOR)
+    # reclassify_medium()
+    # categories_major_road_crossings()
+    # generalize_roundabouts()
+    # remove_roadblock()
+    # trim_road_details()
+    # ramp_points()
+    # admin_boarder()
+    # adding_fields()
+    # collapse_road_detail()
+    # simplify_road()
+    # thin_roads()
+    # thin_sti_and_forest_roads()
+    # merge_divided_roads()
+    # smooth_line()
+    # generalize_road_triangles(SCALE)
+    # pre_resolve_road_conflicts(AREA_SELECTOR)
     resolve_road_conflicts()
     generalize_dam()
     final_output()
@@ -627,6 +627,7 @@ def pre_resolve_road_conflicts(area_selection: str):
         dissolve_fc=Road_N100.data_preparation__water_feature_outline_dissolved__n100_road.value,
         split_fc=Road_N100.data_preparation__water_feature_outline_split_xm__n100_road.value,
         output_fc=Road_N100.data_preparation___water_feature_outline_single_part___n100_road.value,
+        interval=50,
     )
 
     road_data_validation = GeometryValidator(
@@ -754,7 +755,7 @@ def resolve_road_conflicts():
         output_displacement_feature=core_config.InjectIO(
             object=displacement, tag="displacement_feature"
         ),
-        map_scale="100000",
+        map_scale="125000",
         hierarchy_field="hierarchy",
     )
 
@@ -769,8 +770,8 @@ def resolve_road_conflicts():
 
     # --- Partition run + WFM for iterator -------------------------------------
     rrc_run_config = core_config.PartitionRunConfig(
-        max_elements_per_partition=50_000,
-        context_radius_meters=500,
+        max_elements_per_partition=30_000,
+        context_radius_meters=200,
         partition_method=core_config.PartitionMethod.VERTICES,
     )
 
