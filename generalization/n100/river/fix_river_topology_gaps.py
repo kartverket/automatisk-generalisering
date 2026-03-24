@@ -21,8 +21,8 @@ from custom_tools.general_tools.geometry_tools import (
 @timing_decorator
 def main():
     environment_setup.main()
-    # fill_line_topology_gaps()
-    fix_river_orientation()
+    fill_line_topology_gaps()
+    # fix_river_orientation()
     # find_angles()
     # find_xy_endpoints()
     # find_relevant_rasters()
@@ -97,6 +97,8 @@ def fill_line_topology_gaps():
             )
         ),
         angle_local_half_window_m=20,
+        source_direction_mode=logic_config.SourceDirectionMode.RASTER_DERIVED,
+        min_z_drop_meters=1,
         raster_paths=rasters,
     )
     work_file_manager_config = core_config.WorkFileConfig(

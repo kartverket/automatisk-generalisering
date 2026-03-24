@@ -260,6 +260,36 @@ class BestFitWeightsConfig:
     z: float = 0.0
 
 
+class SourceDirectionMode(str, Enum):
+    """
+    Controls how FillLineGaps interprets the digitization direction of source lines
+    when computing angle metrics for candidate scoring and blocking.
+
+    UNDIRECTED
+        Default. Lines have no guaranteed direction. Angle comparisons use
+        orientation-diff (0–90°) and src_connector_diff as the metric.
+        This is the original behavior.
+
+    PRE_ORIENTED
+        The user guarantees that all input lines (and any line-like
+        connect_to_features) are already oriented correctly (e.g. flow goes
+        from start to end). No orientation step is run. Angle comparisons use
+        directional-diff (0–180°) and src_target_diff as the metric for all
+        line-to-line pairs.
+
+    RASTER_DERIVED
+        FillLineGaps orients the working copy of input lines (and any line-like
+        connect_to_features copies) using LineZOrientTool before building the
+        gap-fill plan. Requires raster_paths to be set. After orientation,
+        directional semantics apply as in PRE_ORIENTED.
+        Requires min_z_drop_meters to be set in FillLineGapsAdvancedConfig.
+    """
+
+    UNDIRECTED = "undirected"
+    PRE_ORIENTED = "pre_oriented"
+    RASTER_DERIVED = "raster_derived"
+
+
 @dataclass(frozen=True)
 class FillLineGapsAdvancedConfig:
     fill_gaps_on_self: bool = True
@@ -290,6 +320,21 @@ class FillLineGapsAdvancedConfig:
     # Keying recommendation:
     # - support keys by original connect_to_features path OR by dataset_key(path)
     connect_to_features_angle_mode: Optional[dict[str, AngleTargetMode]] = None
+
+    # ----------------------------
+    # Source line direction
+    # ----------------------------
+
+    # Controls whether lines are treated as undirected, assumed already oriented,
+    # or oriented by raster elevation before gap-filling.
+    # See SourceDirectionMode for full semantics.
+    # When RASTER_DERIVED: raster_paths must be set and min_z_drop_meters applies.
+    # When not UNDIRECTED: best_fit_weights.angle must be > 0 (enforced at init).
+    source_direction_mode: SourceDirectionMode = SourceDirectionMode.UNDIRECTED
+
+    # Minimum elevation drop (metres) required for LineZOrientTool to commit a flip.
+    # Only used when source_direction_mode == RASTER_DERIVED.
+    min_z_drop_meters: float = 0.5
 
     # ----------------------------
     # Z / elevation layer
