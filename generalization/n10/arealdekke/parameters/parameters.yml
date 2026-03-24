@@ -52,8 +52,11 @@ GangSykkelDissolver:
     - length divide is length we use to decide if gangvei is adjecent to road or if they move out from road
   N10:
     buffer_distance: 5
-    length_divide: 45 
+    length_divide: 45
 
 
-
-
+ExpandLandUse:
+  description:
+    - Each variable is the minimum width (in meters) of the land use type that is visible on a printed map
+  N10:
+    elvFlate: 6

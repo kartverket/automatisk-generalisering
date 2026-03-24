@@ -24,3 +24,8 @@ class EliminateSmallPolygonsParameters:
 class GangSykkelDissolverParameters:
     buffer_distance: int
     length_divide: int
+
+
+@dataclass(frozen=True)
+class ExpandLandUseParameters:
+    elvFlate: int
