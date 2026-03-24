@@ -15,6 +15,7 @@ elim_file = "eliminate"
 attribute_file = "attribute_changer"
 area_line_merger = "area_line_merger"
 island_merger = "island_merger"
+accessibility = "accessibility"
 
 
 class Arealdekke_N10(Enum):
@@ -122,4 +123,12 @@ class Arealdekke_N10(Enum):
 
     island_merger_output__n10_land_use = file_manager.generate_file_name_gdb(
         script_source_name=island_merger, description="island_merger_output"
+    )
+
+    # ========================================
+    #                            ACCESSIBILITY
+    # ========================================
+
+    accessibility__n10_land_use = file_manager.generate_file_name_gdb(
+        script_source_name=accessibility, description="accessibility"
     )
