@@ -6,6 +6,9 @@ arcpy.env.overwriteOutput = True
 
 from pathlib import Path
 
+from generalization.n10.arealdekke.buff_smal_polygon_segments import (
+    buff_small_polygon_segments,
+)
 from composition_configs import core_config, logic_config
 from custom_tools.decorators.timing_decorator import timing_decorator
 from custom_tools.general_tools.param_utils import initialize_params
@@ -61,7 +64,7 @@ class ExpansionController:
             params_path=params_path,
             class_name="ExpandLandUse",
             map_scale=self.map_scale,
-            dataclass=ExpandLandUseParameters
+            dataclass=ExpandLandUseParameters,
         )
 
         self.locked_land_use = set()
@@ -130,22 +133,33 @@ class ExpansionController:
     @timing_decorator
     def run(self) -> None:
         """
-        Performes the entire expansion loop, type for type through
+        Performes the entire expansion loop, type by type through
         all the land use classes that need to be taken care of.
         """
         self.copy_fc(input_fc=self.input_fc, output_fc=self.files["copy_of_input"])
 
-        # ElvFlate
-        self.locked_land_use = "utvid_elver"(
-            input_fc=self.files["copy_of_input"],
-            output_fc=self.files["decreased_ElvFlate"],
-            land_use_type="Ferskvann_Elv_bekk",
-            locked_features=self.locked_land_use,
-            tolerance=self.scale_parameters.elvFlate
-        )
-        
+        EXPANSIONS = [
+            [ # ElvFlate
+                self.files["copy_of_input"],
+                self.files["decreased_ElvFlate"],
+                "ElvFlate",
+                self.scale_parameters.elvFlate,
+            ],
+        ]
+
+        for input_fc, output_fc, attribute, parameter in EXPANSIONS:
+            self.locked_land_use = buff_small_polygon_segments(
+                input_fc=input_fc,
+                output_fc=output_fc,
+                locked_land_use=self.locked_land_use,
+                attribute=attribute,
+                min_size=parameter,
+            )
+
         # Copy final output
-        self.copy_fc(input_fc=self.files["decreased_ElvFlate"], output_fc=self.output_fc)
+        self.copy_fc(
+            input_fc=self.files["decreased_ElvFlate"], output_fc=self.output_fc
+        )
 
     # ========================
     # Helper functions
