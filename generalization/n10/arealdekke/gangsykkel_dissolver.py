@@ -7,12 +7,13 @@ from env_setup import environment_setup
 from custom_tools.general_tools.partition_iterator import PartitionIterator
 from composition_configs import core_config, logic_config
 from generalization.n10.arealdekke.arealdekke_dissolver import ArealdekkeDissolver
-from generalization.n10.arealdekke.eliminate_small_polygons import EliminateSmallPolygons
+from generalization.n10.arealdekke.eliminate_small_polygons import (
+    EliminateSmallPolygons,
+)
 from collections import defaultdict
 from pathlib import Path
 from custom_tools.general_tools.param_utils import initialize_params
 from parameters.parameter_dataclasses import GangSykkelDissolverParameters
-
 
 
 class GangSykkelDissolver:
@@ -471,8 +472,7 @@ class GangSykkelDissolver:
             work_file_manager_config=core_config.WorkFileConfig(
                 root_file=Arealdekke_N10.gangsykkel_root.value
             ),
-            map_scale=self.map_scale
-
+            map_scale=self.map_scale,
         )
         e = EliminateSmallPolygons(e_kwargs)
         e.eliminate_holes(
