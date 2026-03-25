@@ -1,5 +1,4 @@
-import config
-#from config import roads_path, road_output, roads_to_rotate
+from config import roads_path, road_output, roads_to_rotate
 
 from config import roads_to_rotate
 import arcpy
