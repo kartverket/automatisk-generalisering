@@ -244,7 +244,7 @@ def change_attributes(init: logic_config.AttributeChangerInitKwargs) -> None:
 
         for rule in rule_set[a]:
             if match(rule, a, h, u, g):
-                return [rule["ny_arealdekke"], rule["framkommelighet"]]
+                return [rule["ny_arealdekke"], rule["fremkommelighet"]]
 
         return [a, None]
 
