@@ -87,8 +87,8 @@ def fill_line_topology_gaps():
         connectivity_scope=logic_config.ConnectivityScope.TRANSITIVE,
         connectivity_tolerance_meters=environment_setup.ArcGisEnvironmentSetup.XY_TOLERANCE,
         line_connectivity_mode=logic_config.LineConnectivityMode.ENDPOINTS,
-        angle_block_threshold_degrees=95,
-        angle_extra_dangle_threshold_degrees=70,
+        angle_block_threshold_degrees=115,
+        angle_extra_dangle_threshold_degrees=95,
         best_fit_weights=(
             logic_config.BestFitWeightsConfig(
                 distance=0.5,
