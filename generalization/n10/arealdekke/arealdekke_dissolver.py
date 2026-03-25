@@ -37,6 +37,7 @@ class ArealdekkeDissolver:
         self.wfm = WorkFileManager(
             config=areal_dekke_dissolver_config.work_file_manager_config
         )
+
         self.files = self.create_wfm_gdbs(self.wfm)
 
     def create_wfm_gdbs(self, wfm: WorkFileManager) -> dict:
@@ -64,7 +65,6 @@ class ArealdekkeDissolver:
         arealdekke_dissolved_Norge = wfm.build_file_path(
             file_name="arealdekke_dissolved_Norge", file_type="gdb"
         )
-        fishnet = wfm.build_file_path(file_name="fishnet", file_type="gdb")
         arealdekke_identity = wfm.build_file_path(
             file_name="arealdekke_identity", file_type="gdb"
         )
@@ -81,7 +81,6 @@ class ArealdekkeDissolver:
             "arealdekke_dissolved_Norge": arealdekke_dissolved_Norge,
             "arealdekke_samferdsel": arealdekke_samferdsel,
             "arealdekke_samferdsel_dissolved": arealdekke_samferdsel_dissolved,
-            "fishnet": fishnet,
             "arealdekke_identity": arealdekke_identity,
             "arealdekke_gangogsykkel": arealdekke_gangogsykkel,
         }
@@ -377,9 +376,9 @@ def normal_call(input_fc: str, output_fc: str):
     ArealdekkeDissolver(areal_dekke_dissolver_config=areal_dekke_config).run()
 
 
-def partition_call(input_fc: str, output_fc: str):
+def partition_call(input_fc: str, output_fc: str, map_scale: str):
     identity = "in_memory\\arealdekke_identity"
-    arcpy.analysis.Identity(  ################################ Resultatet ble bedre når identity ble kjørt utenfor partition iterator. ################################ ????Identity brukes bare for samferdsel tror jeg. sikkert noe forbedringspotensialet her, kan kanskje ikke kjøre identity på hele norge utenfor partition eller kanskje vi kjører det bare en gang på hele norge utenfor denne modellen
+    arcpy.analysis.Identity(  # Resultatet ble bedre når identity ble kjørt utenfor partition iterator. Identity brukes bare for samferdsel tror jeg.
         in_features=input_fc,
         identity_features=input_n10.Fishnet_500m,
         out_feature_class=identity,
@@ -424,6 +423,7 @@ def partition_call(input_fc: str, output_fc: str):
         work_file_manager_config=core_config.WorkFileConfig(
             root_file=Arealdekke_N10.dissolve_arealdekke_root.value
         ),
+        map_scale=map_scale,
     )
     arealdekke_method = core_config.ClassMethodEntryConfig(
         class_=ArealdekkeDissolver,
@@ -461,4 +461,5 @@ if __name__ == "__main__":
     partition_call(
         input_fc=input_n10.Arealdekke_Oslo,
         output_fc=Arealdekke_N10.dissolve_arealdekke.value,
+        map_scale="N10",
     )

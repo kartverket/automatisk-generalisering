@@ -1,6 +1,18 @@
-from dataclasses import is_dataclass, asdict
-from typing import Any, Mapping, Optional, Union, Dict, List, Sequence
+from dataclasses import is_dataclass, asdict, fields
+from typing import (
+    Any,
+    Mapping,
+    Optional,
+    Union,
+    Dict,
+    List,
+    Sequence,
+    get_type_hints,
+    get_origin,
+    get_args,
+)
 import inspect
+import yaml
 
 from composition_configs import core_config
 
@@ -109,3 +121,26 @@ def payload_log(
     if not dcs:
         return None
     return [_dc_to_log_dict(dc, jsonifier) for dc in dcs]
+
+
+def initialize_params(params_path: str, class_name: str, map_scale: str, dataclass):
+    """
+    Reads parameters from yml file and loads into dataclass object
+
+    Args:
+    class_name:  class name in yml file
+    map scale: map scale in yml file
+    dataclass: dataclass for parameters
+
+    Returns:
+        Populated dataclass object
+
+    """
+    with open(params_path, "r", encoding="utf-8") as f:
+        yml = yaml.safe_load(f)
+
+    yml_map_scale = yml[class_name][map_scale]
+
+    params = dataclass(**yml_map_scale)
+
+    return params

@@ -172,6 +172,7 @@ class RemoveRoadTriangles:
                 f" {FieldNames_str.medium.upper()} = '{MediumAlias.tunnel}'",
                 f" {FieldNames_str.medium.upper()} = '{MediumAlias.bridge}'",
                 f" {FieldNames_str.medium.upper()} = '{MediumAlias.on_surface}'",
+                f" {FieldNames_str.medium.upper()} = '{MediumAlias.building}'",
             ],
         )
 

@@ -13,6 +13,8 @@ file_manager = BaseFileManager(scale=scale, object_name=object_name)
 dissolve_file = "dissolve"
 elim_file = "eliminate"
 attribute_file = "attribute_changer"
+area_line_merger = "area_line_merger"
+island_merger = "island_merger"
 
 
 class Arealdekke_N10(Enum):
@@ -66,7 +68,7 @@ class Arealdekke_N10(Enum):
     )
 
     # ========================================
-    #                               Attribute changer
+    #                        ATTRIBUTE CHANGER
     # ========================================
 
     attribute_changer__n10_land_use = file_manager.generate_file_name_gdb(
@@ -92,4 +94,32 @@ class Arealdekke_N10(Enum):
 
     attribute_changer_output__n10_land_use = file_manager.generate_file_name_gdb(
         script_source_name=attribute_file, description="attribute_changer_output"
+    )
+
+    # ========================================
+    #                         AREA LINE MERGER
+    # ========================================
+
+    area_line_merger_start__n10_land_use = file_manager.generate_file_name_gdb(
+        script_source_name=area_line_merger, description="area_line_merger_start"
+    )
+
+    area_line_merger__n10_land_use = file_manager.generate_file_name_gdb(
+        script_source_name=area_line_merger, description="area_line_merger"
+    )
+
+    area_line_merger_output__n10_land_use = file_manager.generate_file_name_gdb(
+        script_source_name=area_line_merger, description="area_line_merger_output"
+    )
+
+    # ========================================
+    #                            ISLAND MERGER
+    # ========================================
+
+    island_merger__n10_land_use = file_manager.generate_file_name_gdb(
+        script_source_name=island_merger, description="island_merger"
+    )
+
+    island_merger_output__n10_land_use = file_manager.generate_file_name_gdb(
+        script_source_name=island_merger, description="island_merger_output"
     )
