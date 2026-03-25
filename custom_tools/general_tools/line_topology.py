@@ -1577,25 +1577,30 @@ class FillLineGaps:
         self._local_angle_cache[key] = angle
         return angle
 
-    def _line_measure_at_xy(self, polyline, x: float, y: float) -> Optional[float]:
+    def _xy_is_at_line_start(self, polyline, x: float, y: float) -> bool:
         """
-        Returns the percentage measure [0, 1] of the nearest point to (x, y) on polyline.
-        Returns None if the query fails or the result is unavailable.
+        Returns True if (x, y) is geometrically closer to the start of polyline than to
+        its end, False otherwise (including on any geometry failure).
+
+        Uses squared-distance comparison between (x, y) and polyline.firstPoint /
+        polyline.lastPoint — no ArcPy queryPointAndDistance call, so this is immune
+        to the map-unit vs percentage ambiguity in that API.
+
+        Used for angle normalisation: flip the forward tangent to the exit direction
+        when the dangle sits at the start of its parent line, leave it when at the end.
         """
         if polyline is None:
-            return None
+            return False
         try:
-            sr = getattr(polyline, "spatialReference", None)
-            pt = arcpy.PointGeometry(arcpy.Point(float(x), float(y)), sr)
-            try:
-                q = polyline.queryPointAndDistance(pt, use_percentage=True)
-            except TypeError:
-                q = polyline.queryPointAndDistance(pt, True)
-            if q and len(q) >= 2 and q[1] is not None:
-                return float(q[1])
+            first = polyline.firstPoint
+            last = polyline.lastPoint
+            if first is None or last is None:
+                return False
+            d_start = (x - first.X) ** 2 + (y - first.Y) ** 2
+            d_end = (x - last.X) ** 2 + (y - last.Y) ** 2
+            return d_start < d_end
         except Exception:
-            pass
-        return None
+            return False
 
     # ----------------------------
     # Target staging
@@ -2394,19 +2399,18 @@ class FillLineGaps:
             _diff = self._directional_diff
             angle_max_deg = 180.0
 
-            # Normalize both angles to a digitization-independent convention so
-            # that directional diffs are 0 for a perfect collinear gap fill
-            # regardless of which end of each line the dangle sits on.
-            #
-            # src_angle_deg -> "exit direction from source dangle toward the gap"
-            #   Forward tangent points away from the line when the dangle is at
-            #   the end (m >= 0.5); it points INTO the line when at the start
-            #   (m < 0.5), so we reverse it.
             src_poly_for_norm = polyline_by_parent.get(int(src_parent_id))
+            _is_directional = (
+                self.source_direction_mode != logic_config.SourceDirectionMode.UNDIRECTED
+            )
+            _endpoint_snap = _is_dangle_pair or _is_dangle_parent_line
+            # Normalize src to "exit toward gap" convention UNLESS this is a directional
+            # endpoint snap — in that case raw flow direction + topology check takes over,
+            # and the flip would collapse A>>B and A<>B onto identical inputs.
             if src_poly_for_norm is not None and src_angle_deg is not None:
-                src_m = self._line_measure_at_xy(src_poly_for_norm, dangle_x, dangle_y)
-                if src_m is not None and src_m < 0.5:
-                    src_angle_deg = (float(src_angle_deg) + 180.0) % 360.0
+                if not (_is_directional and _endpoint_snap):
+                    if self._xy_is_at_line_start(src_poly_for_norm, dangle_x, dangle_y):
+                        src_angle_deg = (float(src_angle_deg) + 180.0) % 360.0
 
             # In UNDIRECTED mode (_use_directional triggered by dangle-pair / dangle-parent-line):
             # normalise target_angle to "entry direction into target interior" so that both
@@ -2418,8 +2422,7 @@ class FillLineGaps:
             if self.source_direction_mode == logic_config.SourceDirectionMode.UNDIRECTED:
                 _tgt_snap_x = float(tx) if _is_dangle_pair else float(near_x)
                 _tgt_snap_y = float(ty) if _is_dangle_pair else float(near_y)
-                tgt_m = self._line_measure_at_xy(tgt_poly, _tgt_snap_x, _tgt_snap_y)
-                if tgt_m is not None and tgt_m >= 0.5:
+                if not self._xy_is_at_line_start(tgt_poly, _tgt_snap_x, _tgt_snap_y):
                     target_angle = (float(target_angle) + 180.0) % 360.0
         else:
             _diff = self._orientation_diff
@@ -2439,7 +2442,31 @@ class FillLineGaps:
         )
 
         if _use_directional:
-            metric = float(src_target_diff)
+            if _is_directional and _endpoint_snap:
+                # Topology-aware metric: only end→start is a valid directional connection.
+                # "Opposite attracts": src_is_end AND target_is_start → use direction diff.
+                # All other combinations (end→end, start→start, start→end) → 180° (BAD).
+                _snap_x = float(tx) if _is_dangle_pair else float(near_x)
+                _snap_y = float(ty) if _is_dangle_pair else float(near_y)
+                _src_is_end = (
+                    src_poly_for_norm is not None
+                    and not self._xy_is_at_line_start(src_poly_for_norm, dangle_x, dangle_y)
+                )
+                _tgt_is_start = self._xy_is_at_line_start(tgt_poly, _snap_x, _snap_y)
+                if _src_is_end and _tgt_is_start:
+                    metric = float(src_target_diff)
+                else:
+                    metric = 180.0
+            elif _is_directional:
+                # Non-endpoint line-like target: blend angular alignment with connector
+                # direction so mid-line snaps are not purely angle-driven.
+                _src_conn_directional = self._directional_diff(
+                    float(src_angle_deg), float(connector_angle)
+                )
+                metric = 0.5 * float(src_target_diff) + 0.5 * _src_conn_directional
+            else:
+                # UNDIRECTED dangle-pair / dangle-parent-line after both normalizations.
+                metric = float(src_target_diff)
         else:
             metric = float(src_connector_diff)
 
