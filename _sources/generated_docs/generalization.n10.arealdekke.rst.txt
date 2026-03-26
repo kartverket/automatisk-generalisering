@@ -60,6 +60,14 @@ generalization.n10.arealdekke.eliminate\_small\_polygons module
    :show-inheritance:
    :undoc-members:
 
+generalization.n10.arealdekke.expansion\_controller module
+----------------------------------------------------------
+
+.. automodule:: generalization.n10.arealdekke.expansion_controller
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
 generalization.n10.arealdekke.gangsykkel\_dissolver module
 ----------------------------------------------------------
 
