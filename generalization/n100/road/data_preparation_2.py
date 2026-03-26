@@ -1,4 +1,4 @@
-# Importing packages
+# Importing packagesimport arcpy
 import arcpy
 
 # Importing custom input files modules
@@ -29,6 +29,7 @@ from input_data.input_symbology import SymbologyN100
 from constants.n100_constants import (
     FieldNames,
     NvdbAlias,
+    MediumAlias,
 )
 from generalization.n100.road.dam import generalize_dam
 from generalization.n100.road.major_road_crossings import (
@@ -48,7 +49,7 @@ from file_manager.n100.file_manager_buildings import Building_N100
 
 MERGE_DIVIDED_ROADS_ALTERATIVE = False
 
-AREA_SELECTOR = "navn IN ('Hole')"
+AREA_SELECTOR = "navn IN ('Vinje')"
 SCALE = "n100"
 
 
@@ -57,6 +58,7 @@ def main():
     environment_setup.main()
     arcpy.env.referenceScale = 100000
     data_selection_and_validation(AREA_SELECTOR)
+    reclassify_medium()
     categories_major_road_crossings()
     generalize_roundabouts()
     remove_roadblock()
@@ -66,10 +68,6 @@ def main():
     adding_fields()
     collapse_road_detail()
     simplify_road()
-    """
-    generalize_road_triangles(scale="n100")
-    return
-    # """
     thin_roads()
     thin_sti_and_forest_roads()
     merge_divided_roads()
@@ -126,6 +124,20 @@ def data_selection_and_validation(area_selection: str):
         output_table_path=Road_N100.data_preparation___geometry_validation___n100_road.value,
     )
     road_data_validation.check_repair_sequence()
+
+
+def reclassify_medium():
+    file_utilities.reclassify_if_not_in(
+        input_table=Road_N100.data_selection___nvdb_roads___n100_road.value,
+        target_field="medium",
+        allowed_values=[
+            MediumAlias.tunnel,
+            MediumAlias.bridge,
+            MediumAlias.on_surface,
+            MediumAlias.building,
+        ],
+        replace_value=MediumAlias.on_surface,
+    )
 
 
 def run_thin_roads(
@@ -615,6 +627,7 @@ def pre_resolve_road_conflicts(area_selection: str):
         dissolve_fc=Road_N100.data_preparation__water_feature_outline_dissolved__n100_road.value,
         split_fc=Road_N100.data_preparation__water_feature_outline_split_xm__n100_road.value,
         output_fc=Road_N100.data_preparation___water_feature_outline_single_part___n100_road.value,
+        interval=50,
     )
 
     road_data_validation = GeometryValidator(
@@ -742,7 +755,7 @@ def resolve_road_conflicts():
         output_displacement_feature=core_config.InjectIO(
             object=displacement, tag="displacement_feature"
         ),
-        map_scale="100000",
+        map_scale="125000",
         hierarchy_field="hierarchy",
     )
 
@@ -757,8 +770,8 @@ def resolve_road_conflicts():
 
     # --- Partition run + WFM for iterator -------------------------------------
     rrc_run_config = core_config.PartitionRunConfig(
-        max_elements_per_partition=100_000,
-        context_radius_meters=500,
+        max_elements_per_partition=30_000,
+        context_radius_meters=200,
         partition_method=core_config.PartitionMethod.VERTICES,
     )
 
