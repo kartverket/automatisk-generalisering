@@ -2404,11 +2404,13 @@ class FillLineGaps:
                 self.source_direction_mode != logic_config.SourceDirectionMode.UNDIRECTED
             )
             _endpoint_snap = _is_dangle_pair or _is_dangle_parent_line
-            # Normalize src to "exit toward gap" convention UNLESS this is a directional
-            # endpoint snap — in that case raw flow direction + topology check takes over,
-            # and the flip would collapse A>>B and A<>B onto identical inputs.
+            # In directional mode: always use raw forward direction (no flip).
+            # The topology check handles endpoint snaps; for mid-line snaps, raw angles
+            # give consistent directionality across all target types.
+            # In UNDIRECTED mode: flip if at start so src points "exit toward gap"
+            # for symmetric dangle-pair scoring.
             if src_poly_for_norm is not None and src_angle_deg is not None:
-                if not (_is_directional and _endpoint_snap):
+                if not _is_directional:
                     if self._xy_is_at_line_start(src_poly_for_norm, dangle_x, dangle_y):
                         src_angle_deg = (float(src_angle_deg) + 180.0) % 360.0
 
