@@ -2468,9 +2468,9 @@ class FillLineGaps:
                 else:
                     metric = 180.0
             elif _is_directional:
-                # Non-endpoint line-like target: blend angular alignment with connector
-                # direction so mid-line snaps are not purely angle-driven.
-                metric = 0.5 * float(src_target_diff) + 0.5 * float(src_connector_diff)
+                # Non-endpoint line-like target: worst of angular alignment vs connector
+                # direction — a bad score on either component makes the candidate bad.
+                metric = max(float(src_target_diff), float(src_connector_diff))
             else:
                 # UNDIRECTED dangle-pair / dangle-parent-line after both normalizations.
                 metric = float(src_target_diff)
