@@ -89,6 +89,7 @@
 <span class="c1"># All scripts</span>
 <span class="n">dissolve_file</span> <span class="o">=</span> <span class="s2">&quot;dissolve&quot;</span>
 <span class="n">elim_file</span> <span class="o">=</span> <span class="s2">&quot;eliminate&quot;</span>
+<span class="n">gangsykkel_file</span> <span class="o">=</span> <span class="s2">&quot;gangsykkel&quot;</span>
 <span class="n">attribute_file</span> <span class="o">=</span> <span class="s2">&quot;attribute_changer&quot;</span>
 <span class="n">area_line_merger</span> <span class="o">=</span> <span class="s2">&quot;area_line_merger&quot;</span>
 <span class="n">island_merger</span> <span class="o">=</span> <span class="s2">&quot;island_merger&quot;</span>
@@ -120,14 +121,22 @@
         <span class="n">script_source_name</span><span class="o">=</span><span class="n">dissolve_file</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">&quot;arealdekke_docu&quot;</span>
     <span class="p">)</span>
 
+    <span class="c1"># ========================================</span>
+    <span class="c1">#                     gangsykkel dissolver</span>
+    <span class="c1"># ========================================</span>
+
+    <span class="n">gangsykkel_root</span> <span class="o">=</span> <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_gdb</span><span class="p">(</span>
+        <span class="n">script_source_name</span><span class="o">=</span><span class="n">gangsykkel_file</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">&quot;gangsykkel_root&quot;</span>
+    <span class="p">)</span>
+
     <span class="n">dissolve_gangsykkel</span> <span class="o">=</span> <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_gdb</span><span class="p">(</span>
-        <span class="n">script_source_name</span><span class="o">=</span><span class="n">dissolve_file</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">&quot;gangsykkel&quot;</span>
+        <span class="n">script_source_name</span><span class="o">=</span><span class="n">gangsykkel_file</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">&quot;gangsykkel&quot;</span>
     <span class="p">)</span>
     <span class="n">dissolve_gangsykkel2</span> <span class="o">=</span> <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_gdb</span><span class="p">(</span>
-        <span class="n">script_source_name</span><span class="o">=</span><span class="n">dissolve_file</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">&quot;gangsykkel2&quot;</span>
+        <span class="n">script_source_name</span><span class="o">=</span><span class="n">gangsykkel_file</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">&quot;gangsykkel2&quot;</span>
     <span class="p">)</span>
     <span class="n">dissolve_gangsykkel3</span> <span class="o">=</span> <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_gdb</span><span class="p">(</span>
-        <span class="n">script_source_name</span><span class="o">=</span><span class="n">dissolve_file</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">&quot;gangsykkel3&quot;</span>
+        <span class="n">script_source_name</span><span class="o">=</span><span class="n">gangsykkel_file</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">&quot;gangsykkel3&quot;</span>
     <span class="p">)</span>
 
     <span class="c1"># ========================================</span>
