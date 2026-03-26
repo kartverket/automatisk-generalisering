@@ -139,7 +139,7 @@ class ExpansionController:
         self.copy_fc(input_fc=self.input_fc, output_fc=self.files["copy_of_input"])
 
         EXPANSIONS = [
-            [ # ElvFlate
+            [  # ElvFlate
                 self.files["copy_of_input"],
                 self.files["decreased_ElvFlate"],
                 "ElvFlate",
