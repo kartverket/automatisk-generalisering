@@ -2426,6 +2426,14 @@ class FillLineGaps:
                 _tgt_snap_y = float(ty) if _is_dangle_pair else float(near_y)
                 if not self._xy_is_at_line_start(tgt_poly, _tgt_snap_x, _tgt_snap_y):
                     target_angle = (float(target_angle) + 180.0) % 360.0
+            # In directional mode, override src_connector_diff to use directional diff
+            # so that anti-parallel src/connector (e.g. west vs east) reports 180° (BAD)
+            # rather than collapsing to 0° under orientation_diff.
+            # UNDIRECTED mode keeps the orientation-based value computed at line ~2286.
+            if _is_directional:
+                src_connector_diff = self._directional_diff(
+                    float(src_angle_deg), float(connector_angle)
+                )
         else:
             _diff = self._orientation_diff
             angle_max_deg = 90.0
@@ -2462,10 +2470,7 @@ class FillLineGaps:
             elif _is_directional:
                 # Non-endpoint line-like target: blend angular alignment with connector
                 # direction so mid-line snaps are not purely angle-driven.
-                _src_conn_directional = self._directional_diff(
-                    float(src_angle_deg), float(connector_angle)
-                )
-                metric = 0.5 * float(src_target_diff) + 0.5 * _src_conn_directional
+                metric = 0.5 * float(src_target_diff) + 0.5 * float(src_connector_diff)
             else:
                 # UNDIRECTED dangle-pair / dangle-parent-line after both normalizations.
                 metric = float(src_target_diff)
