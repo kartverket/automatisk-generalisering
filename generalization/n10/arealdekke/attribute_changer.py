@@ -301,7 +301,7 @@ def change_attributes(init: logic_config.AttributeChangerInitKwargs) -> None:
 
 
 def create_new_fc(
-    input_fc: str, output_fc: str, new_field: str | None, new_type: str | None
+    input_fc: str, output_fc: str, new_field: str=None, new_type: str=None
 ):
     """
     Creates a new fc with the same attributes as

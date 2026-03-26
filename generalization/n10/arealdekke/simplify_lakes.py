@@ -8,6 +8,7 @@ from composition_configs import core_config
 from custom_tools.decorators.timing_decorator import timing_decorator
 from file_manager import WorkFileManager
 from file_manager.n10.file_manager_arealdekke import Arealdekke_N10
+from generalization.n10.arealdekke.attribute_changer import create_new_fc
 
 # ========================
 # Program
@@ -43,6 +44,7 @@ def simplify_lakes(input_fc: str, output_fc: str) -> None:
     fetch_relevant_data(files=files)
     simplify_and_smooth_lakes(files=files)
     adjust_not_lakes(files=files)
+    fetch_original_data(files=files, output_fc=output_fc)
 
 
 # ========================
@@ -80,6 +82,9 @@ def create_wfm_gdbs(wfm: WorkFileManager) -> dict:
     not_lakes_dissolved = wfm.build_file_path(
         file_name="not_lakes_dissolved", file_type="gdb"
     )
+    final_spatial_join = wfm.build_file_path(
+        file_name="final_spatial_join", file_type="gdb"
+    )
 
     return {
         "copy_of_input": copy_of_input,
@@ -92,6 +97,7 @@ def create_wfm_gdbs(wfm: WorkFileManager) -> dict:
         "spatial_join": spatial_join,
         "merged": merged,
         "not_lakes_dissolved": not_lakes_dissolved,
+        "final_spatial_join": final_spatial_join,
     }
 
 
@@ -131,7 +137,10 @@ def fetch_relevant_data(files: dict) -> None:
 @timing_decorator
 def simplify_and_smooth_lakes(files: dict) -> None:
     """
-    ...
+    Simplifies the lakes to avoid huge amounts of details and smooths it afterwards.
+
+    Args:
+        files (dict): Dictionary with all the working files
     """
     arcpy.cartography.SimplifyPolygon(
         in_features=files["lakes"],
@@ -153,7 +162,11 @@ def simplify_and_smooth_lakes(files: dict) -> None:
 @timing_decorator
 def adjust_not_lakes(files: dict) -> None:
     """
-    ...
+    Erases overlap of water from other land use types
+    and fills in holes that have been created.
+
+    Args:
+        files (dict): Dictionary with all the working files
     """
     arcpy.management.FeatureToPolygon(
         in_features=[files["not_lakes"], files["smoothed_lakes"]],
@@ -195,7 +208,8 @@ def adjust_not_lakes(files: dict) -> None:
     )
 
     arcpy.management.Merge(
-        inputs=[files["not_lakes_no_overlap"], files["spatial_join"]], output=files["merged"]
+        inputs=[files["not_lakes_no_overlap"], files["spatial_join"]],
+        output=files["merged"],
     )
 
     arcpy.management.Dissolve(
@@ -204,6 +218,24 @@ def adjust_not_lakes(files: dict) -> None:
         dissolve_field="JOIN_FID",
         multi_part="SINGLE_PART",
     )
+
+    arcpy.management.DeleteField(in_table=files["not_lakes_dissolved"], drop_field="JOIN_FID")
+
+
+@timing_decorator
+def fetch_original_data(files: dict, output_fc: str) -> None:
+    """
+    ...
+    """
+    arcpy.analysis.SpatialJoin(
+        target_features=files["not_lakes_dissolved"],
+        join_features=files["not_lakes"],
+        out_feature_class=files["final_spatial_join"],
+        join_operation="JOIN_ONE_TO_MANY",
+        match_option="LARGEST_OVERLAP",
+    )
+
+    create_new_fc(input_fc=files["copy_of_input"], output_fc=output_fc)
 
 
 # ========================
