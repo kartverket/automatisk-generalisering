@@ -28,6 +28,14 @@ generalization.n10.facilities.railways\_generalization module
    :show-inheritance:
    :undoc-members:
 
+generalization.n10.facilities.train\_station\_rotation module
+-------------------------------------------------------------
+
+.. automodule:: generalization.n10.facilities.train_station_rotation
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
 Module contents
 ---------------
 

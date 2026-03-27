@@ -95,6 +95,9 @@
 <span class="n">island_merger</span> <span class="o">=</span> <span class="s2">&quot;island_merger&quot;</span>
 <span class="n">simplify_polygon</span> <span class="o">=</span> <span class="s2">&quot;simplify_polygon&quot;</span>
 <span class="n">expansion_controller</span> <span class="o">=</span> <span class="s2">&quot;expansion_controller&quot;</span>
+<span class="n">buff_polygon_segments</span> <span class="o">=</span> <span class="s2">&quot;buff_polygon_segments&quot;</span>
+<span class="n">river_file</span> <span class="o">=</span> <span class="s2">&quot;river_file&quot;</span>
+<span class="n">innsjo_file</span> <span class="o">=</span> <span class="s2">&quot;innsjo_file&quot;</span>
 
 
 <div class="viewcode-block" id="Arealdekke_N10">
@@ -233,6 +236,30 @@
     <span class="n">expansion_controller_output__n10_land_use</span> <span class="o">=</span> <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_gdb</span><span class="p">(</span>
         <span class="n">script_source_name</span><span class="o">=</span><span class="n">expansion_controller</span><span class="p">,</span>
         <span class="n">description</span><span class="o">=</span><span class="s2">&quot;expansion_controller_output&quot;</span><span class="p">,</span>
+    <span class="p">)</span>
+
+    <span class="c1"># ========================================</span>
+    <span class="c1">#                              BUFF RIVERS</span>
+    <span class="c1"># ========================================</span>
+
+    <span class="n">generalise_rivers__n10_land_use</span> <span class="o">=</span> <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_gdb</span><span class="p">(</span>
+        <span class="n">script_source_name</span><span class="o">=</span><span class="n">river_file</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">&quot;buffed_small_rivers&quot;</span>
+    <span class="p">)</span>
+
+    <span class="c1"># ========================================</span>
+    <span class="c1">#              BUFF SMALL POLYGON SEGMENTS</span>
+    <span class="c1"># ========================================</span>
+
+    <span class="n">buffed_polygon_segments__n10_land_use</span> <span class="o">=</span> <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_gdb</span><span class="p">(</span>
+        <span class="n">script_source_name</span><span class="o">=</span><span class="n">buff_polygon_segments</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">&quot;buffed_polygon_segments&quot;</span>
+    <span class="p">)</span>
+
+    <span class="c1"># ========================================</span>
+    <span class="c1">#                   INNSJO HØYDE INTERVALL</span>
+    <span class="c1"># ========================================</span>
+
+    <span class="n">innsjo_hoydeintervall__n10_land_use</span> <span class="o">=</span> <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_gdb</span><span class="p">(</span>
+        <span class="n">script_source_name</span><span class="o">=</span><span class="n">innsjo_file</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">&quot;hoyde_intervall&quot;</span>
     <span class="p">)</span></div>
 
 </pre></div>
