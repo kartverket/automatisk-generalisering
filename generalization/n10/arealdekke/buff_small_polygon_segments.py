@@ -27,7 +27,7 @@ def buff_small_polygon_segments(input_fc, target_fc, locked_fc:set, min_width:in
     choose_target_areas(files=files)
     get_shared_locked_boundary(files=files, min_width=min_width)
     buff_small_segments(files=files, min_width=min_width)
-    return
+    
     area_merger(
         input_fc=input_fc,
         buffered_fc=files[fc.test],
