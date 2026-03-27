@@ -49,6 +49,7 @@ Veglenke_Tunnel_2026Anno10000 = rf"{n10_path}\Veglenke_Tunnel_2026Anno10000"
 vegsperring = rf"{n10_path}\vegsperring"
 vindturbin = rf"{n10_path}\vindturbiner"
 voll = rf"{n10_path}\voll"
+Innsjo_bearbeidet = rf"{n10_path}\innsjoer_N10_bearbeidet"
 
 Railways = rf"{n10_path}\fkb_bane_senterlinje"
 N50HoydePunkt = rf"{n10_path}\N50HoydePunkt"
@@ -57,6 +58,7 @@ FKBterrengpunkt = rf"{n10_path}\FKBterrengpunkt"
 ArealdekkeFlate_bebygd = rf"{n10_path}\ArealdekkeFlate_bebygd"
 Arealdekke_Oslo = rf"{n10_path}\Arealdekke_Oslo"
 Arealdekke_Norge = rf"{n10_path}\Arealdekke_Norge"
+Arealdekke_Buskerud = rf"{n10_path}\Arealdekke_Buskerud"
 AdminFlate = rf"{n10_path}\AdminFlate"
 Buildings = rf"{n10_path}\bygning_omrade"
 Contours = rf"{n10_path}\n10_hoydekurver_5m"
@@ -70,6 +72,7 @@ Veglenke = rf"{n10_path}\N10_Veglenke_2026Anno10000"
 Veglenke_overbygg = rf"{n10_path}\Veglenke_Overbygg_2026Anno10000"
 Veglenke_tunnel = rf"{n10_path}\Veglenke_Tunnel_2026Anno10000"
 Hoydetall = rf"{n10_path}\N20_Hoydetall_10000"
+Stedsnavn_bearbeidet = rf"{n10_path}\annotasjoner_pre_buffed"
 
 
 # Defining datasets to test paths are set up correctly later
@@ -127,6 +130,7 @@ n10_datasets = [
     ArealdekkeFlate_bebygd,
     Arealdekke_Oslo,
     Arealdekke_Norge,
+    Arealdekke_Buskerud,
     AdminFlate,
     Buildings,
     Contours,
@@ -137,6 +141,7 @@ n10_datasets = [
     Veglenke_tunnel,
     Hoydetall,
     Fishnet_500m,
+    Innsjo_bearbeidet,
 ]
 
 # Annotations
@@ -147,6 +152,7 @@ annotations = [
     Veglenke_overbygg,
     Veglenke_tunnel,
     Hoydetall,
+    Stedsnavn_bearbeidet,
 ]
 
 # Annotations
