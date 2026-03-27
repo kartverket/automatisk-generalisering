@@ -22,7 +22,9 @@ out_feature_class -> feature class the processed points will be saved to
 """
 
 
-def point_rotation_tool(in_features_point, in_features_line, out_feature_class, rotation_difference:int):
+def point_rotation_tool(
+    in_features_point, in_features_line, out_feature_class, rotation_difference: int
+):
 
     environment_setup.main()
 
