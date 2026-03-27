@@ -15,7 +15,7 @@ elim_file = "eliminate"
 attribute_file = "attribute_changer"
 area_line_merger = "area_line_merger"
 island_merger = "island_merger"
-simplify_lakes = "simplify_lakes"
+simplify_polygon = "simplify_polygon"
 
 
 class Arealdekke_N10(Enum):
@@ -126,13 +126,9 @@ class Arealdekke_N10(Enum):
     )
 
     # ========================================
-    #                           SIMPLIFY LAKES
+    #                        SIMPLIFY LAND USE
     # ========================================
 
-    simplify_lakes__n10_land_use = file_manager.generate_file_name_gdb(
-        script_source_name=simplify_lakes, description="simplify_lakes"
-    )
-
-    simplify_lakes_output__n10_land_use = file_manager.generate_file_name_gdb(
-        script_source_name=simplify_lakes, description="simplify_lakes_output"
+    simplified_polygons__n10_land_use = file_manager.generate_file_name_gdb(
+        script_source_name=simplify_polygon, description="simplified_polygons"
     )

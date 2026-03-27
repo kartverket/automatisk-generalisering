@@ -4,12 +4,42 @@ import arcpy
 
 arcpy.env.overwriteOutput = True
 
-from composition_configs import core_config
 from custom_tools.decorators.timing_decorator import timing_decorator
-from file_manager import WorkFileManager
 from file_manager.n10.file_manager_arealdekke import Arealdekke_N10
-from generalization.n10.arealdekke.attribute_changer import create_new_fc
 
+# ========================
+# Main function
+# ========================
+
+
+@timing_decorator
+def simplify_and_smooth_polygon(input_fc: str, output_fc: str) -> None:
+    """
+    Simplifies polygons with the WEIGHTED_AREA algorithm before
+    they are smoothed with the BEZIER_INTERPOLATION algorithm.
+    
+    Args:
+        input_fc (str): The feature class with polygon geometries to be simplified and smoothed
+        output_fc (str): The feature class where the result should be saved
+    """
+    arcpy.cartography.SimplifyPolygon(
+        in_features=input_fc,
+        out_feature_class=Arealdekke_N10.simplified_polygons__n10_land_use.value,
+        algorithm="WEIGHTED_AREA",
+        tolerance=5,
+        error_option="RESOLVE_ERRORS",
+        collapsed_point_option="NO_KEEP",
+    )
+
+    arcpy.cartography.SmoothPolygon(
+        in_features=Arealdekke_N10.simplified_polygons__n10_land_use.value,
+        out_feature_class=output_fc,
+        algorithm="BEZIER_INTERPOLATION",
+        error_option="RESOLVE_ERRORS",
+    )
+
+
+"""
 # ========================
 # Program
 # ========================
@@ -17,7 +47,7 @@ from generalization.n10.arealdekke.attribute_changer import create_new_fc
 
 @timing_decorator
 def simplify_lakes(input_fc: str, output_fc: str) -> None:
-    """
+    
     Simplifies lakes by removing unneccessary detailed features and object types.
 
     What it removes:
@@ -26,7 +56,7 @@ def simplify_lakes(input_fc: str, output_fc: str) -> None:
     Args:
         input_fc (str): Feature class with land use data, including lakes to be modified
         output_fc (str): Feature class with fixed lakes, modified to a complete land use data set
-    """
+    
     # 1) Sets up WorkFileManager
     fc = Arealdekke_N10.simplify_lakes__n10_land_use.value
     config = core_config.WorkFileConfig(root_file=fc)
@@ -54,7 +84,7 @@ def simplify_lakes(input_fc: str, output_fc: str) -> None:
 
 @timing_decorator
 def create_wfm_gdbs(wfm: WorkFileManager) -> dict:
-    """
+    
     Creates all the temporarily files that are going to
     be used during the process of simplifying lakes.
 
@@ -63,14 +93,18 @@ def create_wfm_gdbs(wfm: WorkFileManager) -> dict:
 
     Returns:
         dict: A dictionary with all the files as variables
-    """
+    
     copy_of_input = wfm.build_file_path(file_name="copy_of_input", file_type="gdb")
     lakes = wfm.build_file_path(file_name="lakes", file_type="gdb")
     not_lakes = wfm.build_file_path(file_name="not_lakes", file_type="gdb")
+    intersecting_lakes = wfm.build_file_path(
+        file_name="intersecting_lakes", file_type="gdb"
+    )
     simplified_lakes = wfm.build_file_path(
         file_name="simplified_lakes", file_type="gdb"
     )
     smoothed_lakes = wfm.build_file_path(file_name="smoothed_lakes", file_type="gdb")
+    corrected_lakes = wfm.build_file_path(file_name="corrected_lakes", file_type="gdb")
     polyfied_land_use = wfm.build_file_path(
         file_name="polyfied_land_use", file_type="gdb"
     )
@@ -90,8 +124,10 @@ def create_wfm_gdbs(wfm: WorkFileManager) -> dict:
         "copy_of_input": copy_of_input,
         "lakes": lakes,
         "not_lakes": not_lakes,
+        "intersecting_lakes": intersecting_lakes,
         "simplified_lakes": simplified_lakes,
         "smoothed_lakes": smoothed_lakes,
+        "corrected_lakes": corrected_lakes,
         "polyfied_land_use": polyfied_land_use,
         "not_lakes_no_overlap": not_lakes_no_overlap,
         "spatial_join": spatial_join,
@@ -103,12 +139,12 @@ def create_wfm_gdbs(wfm: WorkFileManager) -> dict:
 
 @timing_decorator
 def fetch_relevant_data(files: dict) -> None:
-    """
+    
     Separates data into lakes and not lakes.
 
     Args:
         files (dict): Dictionary with all the working files
-    """
+    
     water_fields = ["'Ferskvann_innsjo_tjern'", "'Ferskvann_innsjo_tjern_regulert'"]
     sql = f"arealdekke IN ({', '.join(water_fields)})"
 
@@ -133,15 +169,31 @@ def fetch_relevant_data(files: dict) -> None:
         in_features=land_use_lyr, out_feature_class=files["not_lakes"]
     )
 
+    arcpy.management.MakeFeatureLayer(
+        in_features=files["not_lakes"], out_layer=land_use_lyr
+    )
+
+    arcpy.management.SelectLayerByLocation(
+        in_layer=land_use_lyr,
+        overlap_type="BOUNDARY_TOUCHES",
+        select_features=files["lakes"],
+    )
+
+    arcpy.management.CopyFeatures(
+        in_features=land_use_lyr, out_feature_class=files["intersecting_lakes"]
+    )
+
+    arcpy.management.DeleteFeatures(in_features=land_use_lyr)
+
 
 @timing_decorator
 def simplify_and_smooth_lakes(files: dict) -> None:
-    """
+    
     Simplifies the lakes to avoid huge amounts of details and smooths it afterwards.
 
     Args:
         files (dict): Dictionary with all the working files
-    """
+    
     arcpy.cartography.SimplifyPolygon(
         in_features=files["lakes"],
         out_feature_class=files["simplified_lakes"],
@@ -158,24 +210,30 @@ def simplify_and_smooth_lakes(files: dict) -> None:
         error_option="RESOLVE_ERRORS",
     )
 
+    arcpy.analysis.Clip(
+        in_features=files["smoothed_lakes"],
+        clip_features=input_test_data.sjablong,
+        out_feature_class=files["corrected_lakes"],
+    )
+
 
 @timing_decorator
 def adjust_not_lakes(files: dict) -> None:
-    """
+    
     Erases overlap of water from other land use types
     and fills in holes that have been created.
 
     Args:
         files (dict): Dictionary with all the working files
-    """
+    
     arcpy.management.FeatureToPolygon(
-        in_features=[files["not_lakes"], files["smoothed_lakes"]],
+        in_features=[files["intersecting_lakes"], files["corrected_lakes"]],
         out_feature_class=files["polyfied_land_use"],
     )
 
     arcpy.analysis.Erase(
         in_features=files["polyfied_land_use"],
-        erase_features=files["smoothed_lakes"],
+        erase_features=files["corrected_lakes"],
         out_feature_class=files["not_lakes_no_overlap"],
     )
 
@@ -187,7 +245,7 @@ def adjust_not_lakes(files: dict) -> None:
     arcpy.management.SelectLayerByLocation(
         in_layer=land_use_lyr,
         overlap_type="WITHIN",
-        select_features=files["not_lakes"],
+        select_features=files["intersecting_lakes"],
         selection_type="NEW_SELECTION",
         invert_spatial_relationship="INVERT",
     )
@@ -199,6 +257,23 @@ def adjust_not_lakes(files: dict) -> None:
         join_operation="JOIN_ONE_TO_MANY",
         match_option="BOUNDARY_TOUCHES",
     )
+
+    arcpy.management.DeleteFeatures(in_features=land_use_lyr)
+
+    spatial_join_lyr = "spatial_join_lyr"
+    arcpy.management.MakeFeatureLayer(
+        in_features=files["spatial_join"], out_layer=spatial_join_lyr
+    )
+
+    arcpy.management.SelectLayerByLocation(
+        in_layer=spatial_join_lyr,
+        overlap_type="INTERSECT",
+        select_features=files["corrected_lakes"],
+        selection_type="NEW_SELECTION",
+        invert_spatial_relationship="INVERT",
+    )
+
+    arcpy.management.DeleteFeatures(in_features=spatial_join_lyr)
 
     arcpy.management.CalculateField(
         in_table=files["not_lakes_no_overlap"],
@@ -219,20 +294,22 @@ def adjust_not_lakes(files: dict) -> None:
         multi_part="SINGLE_PART",
     )
 
-    arcpy.management.DeleteField(in_table=files["not_lakes_dissolved"], drop_field="JOIN_FID")
+    arcpy.management.DeleteField(
+        in_table=files["not_lakes_dissolved"], drop_field="JOIN_FID"
+    )
 
 
 @timing_decorator
 def fetch_original_data(files: dict, output_fc: str) -> None:
-    """
+    
     ...
-    """
+    
     arcpy.analysis.SpatialJoin(
         target_features=files["not_lakes_dissolved"],
-        join_features=files["not_lakes"],
+        join_features=files["intersecting_lakes"],
         out_feature_class=files["final_spatial_join"],
         join_operation="JOIN_ONE_TO_MANY",
-        match_option="LARGEST_OVERLAP",
+        match_option="WITHIN",
     )
 
     create_new_fc(input_fc=files["copy_of_input"], output_fc=output_fc)
@@ -244,3 +321,4 @@ def fetch_original_data(files: dict, output_fc: str) -> None:
 
 
 #
+"""
