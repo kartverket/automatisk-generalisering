@@ -147,7 +147,7 @@ class Arealdekke_N10(Enum):
     )
 
     # ========================================
-    #                     EXPANSION CONTROLLER
+    #                     
     # ========================================
 
     expansion_controller__n10_land_use = file_manager.generate_file_name_gdb(

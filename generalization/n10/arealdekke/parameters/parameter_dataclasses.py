@@ -28,5 +28,5 @@ class GangSykkelDissolverParameters:
 
 
 @dataclass(frozen=True)
-class ExpandLandUseParameters:
-    elvFlate: int
+class LandUseParameters:
+    elvFlate: dict

@@ -9,7 +9,7 @@ from generalization.n10.arealdekke.eliminate_small_polygons import (
 )
 from generalization.n10.arealdekke.attribute_changer import attribute_changer
 from generalization.n10.arealdekke.island_controller import island_controller
-from generalization.n10.arealdekke.expansion_controller import expand_land_use
+from generalization.n10.arealdekke.expansion_controller import simplify_and_expand_land_use
 
 from input_data import input_n10
 from file_manager.n10.file_manager_arealdekke import Arealdekke_N10
@@ -47,7 +47,7 @@ def main():
         map_scale=MAP_SCALE,
     )
 
-    expand_land_use(
+    simplify_and_expand_land_use(
         input_fc=Arealdekke_N10.dissolve_gangsykkel.value,
         output_fc=Arealdekke_N10.expansion_controller_output__n10_land_use.value,
     )

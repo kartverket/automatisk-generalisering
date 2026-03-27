@@ -60,8 +60,8 @@ GangSykkelDissolver:
     length_divide: 45
 
 
-ExpandLandUse:
+LandUse:
   description:
     - Each variable is the minimum width (in meters) of the land use type that is visible on a printed map
   N10:
-    elvFlate: 6
+    elvFlate: {"width": 6, "thin": True}

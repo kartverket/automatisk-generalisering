@@ -245,8 +245,7 @@ class AttributeChangerInitKwargs:
 
 
 @dataclass(frozen=True)
-class ExpansionControllerInitKwargs:
+class LandUseInitKwargs:
     input_feature: str
     output_feature: str
-    wfm_config: core_config.WorkFileConfig
     map_scale: str
