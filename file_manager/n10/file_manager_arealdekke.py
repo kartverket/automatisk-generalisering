@@ -162,10 +162,9 @@ class Arealdekke_N10(Enum):
     # ========================================
     #                              BUFF RIVERS
     # ========================================
-    
+
     generalise_rivers__n10_land_use = file_manager.generate_file_name_gdb(
-        script_source_name=river_file, 
-        description="buffed_small_rivers"
+        script_source_name=river_file, description="buffed_small_rivers"
     )
 
     # ========================================
@@ -173,8 +172,7 @@ class Arealdekke_N10(Enum):
     # ========================================
 
     buffed_polygon_segments__n10_land_use = file_manager.generate_file_name_gdb(
-        script_source_name=buff_polygon_segments, 
-        description="buffed_polygon_segments"
+        script_source_name=buff_polygon_segments, description="buffed_polygon_segments"
     )
 
     # ========================================
@@ -182,6 +180,5 @@ class Arealdekke_N10(Enum):
     # ========================================
 
     innsjo_hoydeintervall__n10_land_use = file_manager.generate_file_name_gdb(
-        script_source_name=innsjo_file, 
-        description="hoyde_intervall"
+        script_source_name=innsjo_file, description="hoyde_intervall"
     )

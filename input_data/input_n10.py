@@ -72,7 +72,7 @@ Veglenke = rf"{n10_path}\N10_Veglenke_2026Anno10000"
 Veglenke_overbygg = rf"{n10_path}\Veglenke_Overbygg_2026Anno10000"
 Veglenke_tunnel = rf"{n10_path}\Veglenke_Tunnel_2026Anno10000"
 Hoydetall = rf"{n10_path}\N20_Hoydetall_10000"
-Stedsnavn_bearbeidet =rf"{n10_path}\annotasjoner_pre_buffed"
+Stedsnavn_bearbeidet = rf"{n10_path}\annotasjoner_pre_buffed"
 
 
 # Defining datasets to test paths are set up correctly later
@@ -141,7 +141,7 @@ n10_datasets = [
     Veglenke_tunnel,
     Hoydetall,
     Fishnet_500m,
-    Innsjo_bearbeidet
+    Innsjo_bearbeidet,
 ]
 
 # Annotations
@@ -152,7 +152,7 @@ annotations = [
     Veglenke_overbygg,
     Veglenke_tunnel,
     Hoydetall,
-    Stedsnavn_bearbeidet
+    Stedsnavn_bearbeidet,
 ]
 
 # Annotations
