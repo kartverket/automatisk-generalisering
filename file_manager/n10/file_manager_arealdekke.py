@@ -12,9 +12,12 @@ file_manager = BaseFileManager(scale=scale, object_name=object_name)
 # All scripts
 dissolve_file = "dissolve"
 elim_file = "eliminate"
+gangsykkel_file = "gangsykkel"
 attribute_file = "attribute_changer"
 area_line_merger = "area_line_merger"
 island_merger = "island_merger"
+simplify_polygon = "simplify_polygon"
+expansion_controller = "expansion_controller"
 
 
 class Arealdekke_N10(Enum):
@@ -41,14 +44,22 @@ class Arealdekke_N10(Enum):
         script_source_name=dissolve_file, description="arealdekke_docu"
     )
 
+    # ========================================
+    #                     gangsykkel dissolver
+    # ========================================
+
+    gangsykkel_root = file_manager.generate_file_name_gdb(
+        script_source_name=gangsykkel_file, description="gangsykkel_root"
+    )
+
     dissolve_gangsykkel = file_manager.generate_file_name_gdb(
-        script_source_name=dissolve_file, description="gangsykkel"
+        script_source_name=gangsykkel_file, description="gangsykkel"
     )
     dissolve_gangsykkel2 = file_manager.generate_file_name_gdb(
-        script_source_name=dissolve_file, description="gangsykkel2"
+        script_source_name=gangsykkel_file, description="gangsykkel2"
     )
     dissolve_gangsykkel3 = file_manager.generate_file_name_gdb(
-        script_source_name=dissolve_file, description="gangsykkel3"
+        script_source_name=gangsykkel_file, description="gangsykkel3"
     )
 
     # ========================================
@@ -122,4 +133,25 @@ class Arealdekke_N10(Enum):
 
     island_merger_output__n10_land_use = file_manager.generate_file_name_gdb(
         script_source_name=island_merger, description="island_merger_output"
+    )
+
+    # ========================================
+    #                        SIMPLIFY LAND USE
+    # ========================================
+
+    simplified_polygons__n10_land_use = file_manager.generate_file_name_gdb(
+        script_source_name=simplify_polygon, description="simplified_polygons"
+    )
+
+    # ========================================
+    #                     EXPANSION CONTROLLER
+    # ========================================
+
+    expansion_controller__n10_land_use = file_manager.generate_file_name_gdb(
+        script_source_name=expansion_controller, description="expansion_controller"
+    )
+
+    expansion_controller_output__n10_land_use = file_manager.generate_file_name_gdb(
+        script_source_name=expansion_controller,
+        description="expansion_controller_output",
     )

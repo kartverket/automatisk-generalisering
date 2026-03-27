@@ -242,3 +242,11 @@ class AttributeChangerInitKwargs:
     new_field: str
     new_type: str
     work_file_manager_config: core_config.WorkFileConfig
+
+
+@dataclass(frozen=True)
+class ExpansionControllerInitKwargs:
+    input_feature: str
+    output_feature: str
+    wfm_config: core_config.WorkFileConfig
+    map_scale: str

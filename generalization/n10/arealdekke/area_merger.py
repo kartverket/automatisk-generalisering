@@ -23,7 +23,7 @@ def area_merger(
     data set, removes overlapping areas and preserves topology.
 
     Args:
-        input_fc (str): Input feature class with overlapping land use
+        input_fc (str): Input feature class with original land use
         buffered_fc (str): Feature class with the buffer zones for thin polygons
         work_fc (str): Feature class to store half-processed results
         output_fc (str): Feature class to store output
