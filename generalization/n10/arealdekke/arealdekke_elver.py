@@ -16,6 +16,7 @@ arcpy.env.overwriteOutput = True
 # Program
 # ========================
 
+
 def main():
 
     environment_setup.main()
@@ -29,18 +30,22 @@ def main():
     fetch_data(files=files)
 
     buff_small_polygon_segments(
-        in_feature_class=files[fc.rivers_fc], 
+        in_feature_class=files[fc.rivers_fc],
         out_feature_class=files[fc.rivers_fixed],
-        min_width=3)
+        min_width=3,
+    )
+
 
 # ========================
 # Dictionary creation and
 # Data fetching
 # ========================
 
+
 class fc(Enum):
-    rivers_fc="rivers_fc"
-    rivers_fixed="rivers_fixed"
+    rivers_fc = "rivers_fc"
+    rivers_fixed = "rivers_fixed"
+
 
 @timing_decorator
 def create_wfm_gdbs(wfm: WorkFileManager) -> dict:
@@ -54,33 +59,43 @@ def create_wfm_gdbs(wfm: WorkFileManager) -> dict:
     Returns:
         dict: A dictionary with all the files as variables
     """
-    
-    #Fetch data
-    rivers_fc=wfm.build_file_path(file_name="rivers_fc", file_type="gdb")
-    rivers_fixed=wfm.build_file_path(file_name="rivers_fixed", file_type="gdb")
+
+    # Fetch data
+    rivers_fc = wfm.build_file_path(file_name="rivers_fc", file_type="gdb")
+    rivers_fixed = wfm.build_file_path(file_name="rivers_fixed", file_type="gdb")
 
     return {
-        #Fetch data
-        fc.rivers_fc:rivers_fc,
-        fc.rivers_fixed:rivers_fixed
+        # Fetch data
+        fc.rivers_fc: rivers_fc,
+        fc.rivers_fixed: rivers_fixed,
     }
 
+
 @timing_decorator
-def fetch_data(files: dict)->None:
+def fetch_data(files: dict) -> None:
     """
     Fetches relevant data.
 
     Args:
         files (dict): Dictionary with all the working files
     """
-    
-    #Get data from gdb
-    arealdekke_lyr="arealdekke_lyr"
-    arcpy.management.MakeFeatureLayer(in_features=input_arealdekke.arealdekke, out_layer=arealdekke_lyr, where_clause="arealdekke='Ferskvann_elv_bekk'")
-    
-    #Repair data to remove self intersections
-    arcpy.management.RepairGeometry(in_features=arealdekke_lyr, delete_null='DELETE_NULL')
-    arcpy.management.EliminatePolygonPart(in_features=arealdekke_lyr, out_feature_class=files[fc.rivers_fc])
+
+    # Get data from gdb
+    arealdekke_lyr = "arealdekke_lyr"
+    arcpy.management.MakeFeatureLayer(
+        in_features=input_arealdekke.arealdekke,
+        out_layer=arealdekke_lyr,
+        where_clause="arealdekke='Ferskvann_elv_bekk'",
+    )
+
+    # Repair data to remove self intersections
+    arcpy.management.RepairGeometry(
+        in_features=arealdekke_lyr, delete_null="DELETE_NULL"
+    )
+    arcpy.management.EliminatePolygonPart(
+        in_features=arealdekke_lyr, out_feature_class=files[fc.rivers_fc]
+    )
+
 
 if __name__ == "__main__":
     main()

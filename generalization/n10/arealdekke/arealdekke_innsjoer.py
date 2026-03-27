@@ -14,8 +14,7 @@ from buff_small_polygon_segments import buff_small_polygon_segments
 arcpy.env.overwriteOutput = True
 
 
-
-'''
+"""
 Hent data 👍
 - Trekker ut innsjøer og regulerte innsjøer fra arealdekket og gjør dem om til egen fc.
 
@@ -57,7 +56,8 @@ Hierarkiet
 
 1. Laveste nivå: minstemål på øyene. Disse fjernes fullstendig
 2. Middels nivå: hvis øyer har flere lag, f.eks. skog og snaumark, spiser det største arealet opp det/de andre arealet.
-'''
+"""
+
 
 def main():
 
@@ -71,29 +71,32 @@ def main():
     files = create_wfm_gdbs(wfm=wfm)
     fetch_data(files=files)
 
-    #remove_county_borders(files=files)
+    # remove_county_borders(files=files)
     combine_small_lakes(files=files)
-    #target_selection(files=files)
+    # target_selection(files=files)
 
-    #buff_small_polygon_segments(
-    #    in_feature_class=files[fc.lakes_processed_selection], 
+    # buff_small_polygon_segments(
+    #    in_feature_class=files[fc.lakes_processed_selection],
     #    out_feature_class=files[fc.lakes_segments_fixed],
     #    min_width=3)
+
 
 # ========================
 # Dictionary creation and
 # Data fetching
 # ========================
 
+
 class fc(Enum):
-    lakes_fc="lakes_fc"
-    lakes_segments_fixed="lakes_segments_fixed"
-    lakes_dissolved="lakes_dissolved"
-    lakes_singlepart="lakes_singlepart"
-    lakes_processed="lakes_processed"
-    lakes_simplified_buffed="lakes_simplified_buffed"
-    lakes_aggregated="lakes_aggregated"
-    lakes_processed_selection="lakes_processed_selection"
+    lakes_fc = "lakes_fc"
+    lakes_segments_fixed = "lakes_segments_fixed"
+    lakes_dissolved = "lakes_dissolved"
+    lakes_singlepart = "lakes_singlepart"
+    lakes_processed = "lakes_processed"
+    lakes_simplified_buffed = "lakes_simplified_buffed"
+    lakes_aggregated = "lakes_aggregated"
+    lakes_processed_selection = "lakes_processed_selection"
+
 
 @timing_decorator
 def create_wfm_gdbs(wfm: WorkFileManager) -> dict:
@@ -107,126 +110,183 @@ def create_wfm_gdbs(wfm: WorkFileManager) -> dict:
     Returns:
         dict: A dictionary with all the files as variables
     """
-    
-    #Fetch data
-    lakes_fc=wfm.build_file_path(file_name="lakes_fc", file_type="gdb")
-    lakes_segments_fixed=wfm.build_file_path(file_name="lakes_segments_fixed", file_type="gdb")
 
-    lakes_dissolved=wfm.build_file_path(file_name="lakes_dissolved", file_type="gdb")
-    lakes_singlepart=wfm.build_file_path(file_name="lakes_singlepart", file_type="gdb")
-    lakes_processed=wfm.build_file_path(file_name="lakes_processed", file_type="gdb")
-    lakes_simplified_buffed=wfm.build_file_path(file_name="lakes_simplified_buffed", file_type="gdb")
-    lakes_aggregated=wfm.build_file_path(file_name="lakes_aggregated", file_type="gdb")
+    # Fetch data
+    lakes_fc = wfm.build_file_path(file_name="lakes_fc", file_type="gdb")
+    lakes_segments_fixed = wfm.build_file_path(
+        file_name="lakes_segments_fixed", file_type="gdb"
+    )
 
-    lakes_processed_selection=wfm.build_file_path(file_name="lakes_processed_selection", file_type="gdb")
+    lakes_dissolved = wfm.build_file_path(file_name="lakes_dissolved", file_type="gdb")
+    lakes_singlepart = wfm.build_file_path(
+        file_name="lakes_singlepart", file_type="gdb"
+    )
+    lakes_processed = wfm.build_file_path(file_name="lakes_processed", file_type="gdb")
+    lakes_simplified_buffed = wfm.build_file_path(
+        file_name="lakes_simplified_buffed", file_type="gdb"
+    )
+    lakes_aggregated = wfm.build_file_path(
+        file_name="lakes_aggregated", file_type="gdb"
+    )
+
+    lakes_processed_selection = wfm.build_file_path(
+        file_name="lakes_processed_selection", file_type="gdb"
+    )
 
     return {
-        #Fetch data
-        fc.lakes_fc:lakes_fc,
-        fc.lakes_segments_fixed:lakes_segments_fixed,
-
-        fc.lakes_dissolved:lakes_dissolved,
-        fc.lakes_singlepart:lakes_singlepart,
-        fc.lakes_processed:lakes_processed,
-        fc.lakes_simplified_buffed:lakes_simplified_buffed,
-        fc.lakes_aggregated:lakes_aggregated,
-
-        fc.lakes_processed_selection:lakes_processed_selection
+        # Fetch data
+        fc.lakes_fc: lakes_fc,
+        fc.lakes_segments_fixed: lakes_segments_fixed,
+        fc.lakes_dissolved: lakes_dissolved,
+        fc.lakes_singlepart: lakes_singlepart,
+        fc.lakes_processed: lakes_processed,
+        fc.lakes_simplified_buffed: lakes_simplified_buffed,
+        fc.lakes_aggregated: lakes_aggregated,
+        fc.lakes_processed_selection: lakes_processed_selection,
     }
 
-@timing_decorator
-def fetch_data(files: dict)->None:
-    #Get data from gdb
-    arealdekke_lyr="arealdekke_lyr"
-    arcpy.management.MakeFeatureLayer(in_features=input_arealdekke.arealdekke, out_layer=arealdekke_lyr, where_clause="arealdekke='Ferskvann_innsjo_tjern' OR arealdekke='Ferskvann_innsjo_tjern_regulert'")
-
-    #Repair data to remove self intersections
-    arcpy.management.RepairGeometry(in_features=arealdekke_lyr, delete_null='DELETE_NULL')
-    arcpy.management.EliminatePolygonPart(in_features=arealdekke_lyr, out_feature_class=files[fc.lakes_fc])
 
 @timing_decorator
-def remove_county_borders(files:dict)->None: #Denne kan kanskje sløyfes hvis vi aggregerer alt uansett
+def fetch_data(files: dict) -> None:
+    # Get data from gdb
+    arealdekke_lyr = "arealdekke_lyr"
+    arcpy.management.MakeFeatureLayer(
+        in_features=input_arealdekke.arealdekke,
+        out_layer=arealdekke_lyr,
+        where_clause="arealdekke='Ferskvann_innsjo_tjern' OR arealdekke='Ferskvann_innsjo_tjern_regulert'",
+    )
+
+    # Repair data to remove self intersections
+    arcpy.management.RepairGeometry(
+        in_features=arealdekke_lyr, delete_null="DELETE_NULL"
+    )
+    arcpy.management.EliminatePolygonPart(
+        in_features=arealdekke_lyr, out_feature_class=files[fc.lakes_fc]
+    )
+
+
+@timing_decorator
+def remove_county_borders(
+    files: dict,
+) -> None:  # Denne kan kanskje sløyfes hvis vi aggregerer alt uansett
     # Fikse kommunegrenser som kutter innsjøer i biter: Dissolve -> multi-to-singlepart -> spatial join
-    lakes_lyr="lakes_lyr"
-    arcpy.management.MakeFeatureLayer(in_features=files[fc.lakes_fc], out_layer=lakes_lyr)
+    lakes_lyr = "lakes_lyr"
+    arcpy.management.MakeFeatureLayer(
+        in_features=files[fc.lakes_fc], out_layer=lakes_lyr
+    )
 
-    arcpy.management.Dissolve(in_features=lakes_lyr, out_feature_class=files[fc.lakes_dissolved])
+    arcpy.management.Dissolve(
+        in_features=lakes_lyr, out_feature_class=files[fc.lakes_dissolved]
+    )
 
-    lakes_dissolved_lyr="lakes_dissolved_lyr"
-    arcpy.management.MakeFeatureLayer(in_features=files[fc.lakes_dissolved], out_layer=lakes_dissolved_lyr)
+    lakes_dissolved_lyr = "lakes_dissolved_lyr"
+    arcpy.management.MakeFeatureLayer(
+        in_features=files[fc.lakes_dissolved], out_layer=lakes_dissolved_lyr
+    )
 
-    arcpy.management.MultipartToSinglepart(in_features=lakes_dissolved_lyr, out_feature_class=files[fc.lakes_singlepart])
+    arcpy.management.MultipartToSinglepart(
+        in_features=lakes_dissolved_lyr, out_feature_class=files[fc.lakes_singlepart]
+    )
 
-    lakes_singlepart_lyr="lakes_singlepart_lyr"
-    arcpy.management.MakeFeatureLayer(in_features=files[fc.lakes_singlepart], out_layer=lakes_singlepart_lyr)
+    lakes_singlepart_lyr = "lakes_singlepart_lyr"
+    arcpy.management.MakeFeatureLayer(
+        in_features=files[fc.lakes_singlepart], out_layer=lakes_singlepart_lyr
+    )
 
     arcpy.analysis.SpatialJoin(
         target_features=lakes_singlepart_lyr,
         join_features=lakes_lyr,
         out_feature_class=files[fc.lakes_processed],
-        join_operation='JOIN_ONE_TO_ONE',
-        match_option='INTERSECT'
+        join_operation="JOIN_ONE_TO_ONE",
+        match_option="INTERSECT",
     )
 
+
 @timing_decorator
-def combine_small_lakes(files:dict)->None:
+def combine_small_lakes(files: dict) -> None:
 
-    lakes_lyr="lakes_lyr"
-    arcpy.management.MakeFeatureLayer(in_features=files[fc.lakes_fc], out_layer=lakes_lyr)
+    lakes_lyr = "lakes_lyr"
+    arcpy.management.MakeFeatureLayer(
+        in_features=files[fc.lakes_fc], out_layer=lakes_lyr
+    )
 
-    arcpy.management.RepairGeometry(in_features=lakes_lyr, delete_null='DELETE_NULL')
+    arcpy.management.RepairGeometry(in_features=lakes_lyr, delete_null="DELETE_NULL")
 
-    #Må kjøre simplify først for at aggregate ikke tar for lang tid.
+    # Må kjøre simplify først for at aggregate ikke tar for lang tid.
     arcpy.cartography.SimplifyPolygon(
         in_features=lakes_lyr,
         out_feature_class=files[fc.lakes_processed],
-        algorithm='BEND_SIMPLIFY',
-        tolerance='4 Meters',
-        error_option='RESOLVE_ERRORS'
+        algorithm="BEND_SIMPLIFY",
+        tolerance="4 Meters",
+        error_option="RESOLVE_ERRORS",
     )
 
-    #Opprett en buffer for å finne innsjøer som er innenfor aggregation distance-en. Innsjøer som ikke er i nærheten av andre innsjøer skal ikke aggregeres.
-    lakes_simplified_lyr="lakes_simplified_lyr"
-    arcpy.management.MakeFeatureLayer(in_features=files[fc.lakes_processed], out_layer=lakes_simplified_lyr)
+    # Opprett en buffer for å finne innsjøer som er innenfor aggregation distance-en. Innsjøer som ikke er i nærheten av andre innsjøer skal ikke aggregeres.
+    lakes_simplified_lyr = "lakes_simplified_lyr"
+    arcpy.management.MakeFeatureLayer(
+        in_features=files[fc.lakes_processed], out_layer=lakes_simplified_lyr
+    )
 
     arcpy.analysis.PairwiseBuffer(
         in_features=lakes_simplified_lyr,
         out_feature_class=files[fc.lakes_simplified_buffed],
         buffer_distance_or_field=a_configs.lake_aggregation_distance,
-        dissolve_option='ALL'
+        dissolve_option="ALL",
     )
 
-    id_field="buffer_id"
+    id_field = "buffer_id"
     arcpy.management.AddField(in_table=lakes_simplified_lyr, field_name=id_field)
 
-    lakes_processed_lyr="lakes_processed_lyr"
-    arcpy.management.MakeFeatureLayer(in_features=files[fc.lakes_processed], out_layer=lakes_processed_lyr)
+    lakes_processed_lyr = "lakes_processed_lyr"
+    arcpy.management.MakeFeatureLayer(
+        in_features=files[fc.lakes_processed], out_layer=lakes_processed_lyr
+    )
 
-    arcpy.management.SelectLayerByLocation(in_layer=lakes_simplified_lyr, overlap_type='INTERSECT', select_features=lakes_processed_lyr, selection_type='NEW_SELECTION')
+    arcpy.management.SelectLayerByLocation(
+        in_layer=lakes_simplified_lyr,
+        overlap_type="INTERSECT",
+        select_features=lakes_processed_lyr,
+        selection_type="NEW_SELECTION",
+    )
 
-    with arcpy.da.UpdateCursor(lakes_simplified_lyr, ["OID@", "SHAPE@", id_field]) as ucur:
+    with arcpy.da.UpdateCursor(
+        lakes_simplified_lyr, ["OID@", "SHAPE@", id_field]
+    ) as ucur:
         for oid, geom, _ in ucur:
             if (oid, geom) in candidates:
-                if main_geom.overlaps(geom) or main_geom.contains(geom) or main_geom.within(geom):
+                if (
+                    main_geom.overlaps(geom)
+                    or main_geom.contains(geom)
+                    or main_geom.within(geom)
+                ):
                     ucur.updateRow([oid, geom, main_oid])
-
 
     arcpy.cartography.AggregatePolygons(
         in_features=lakes_processed_lyr,
         out_feature_class=files[fc.lakes_aggregated],
-        aggregation_distance=a_configs.lake_aggregation_distance
+        aggregation_distance=a_configs.lake_aggregation_distance,
     )
 
-    #Sjekk om det som ble aggregert IKKE er større enn et av polygonene den koblet seg til. Hvis for stor, legg innsjø objektidene til en liste over objekter
-    #som selekteres bort. Kan f.eks. være en løsning å opprette en loop som 
+    # Sjekk om det som ble aggregert IKKE er større enn et av polygonene den koblet seg til. Hvis for stor, legg innsjø objektidene til en liste over objekter
+    # som selekteres bort. Kan f.eks. være en løsning å opprette en loop som
+
 
 @timing_decorator
-def target_selection(files:dict)->None: #Må endres!
-    lakes_processed_lyr="lakes_processed_lyr"
-    arcpy.management.MakeFeatureLayer(in_features=files[fc.lakes_processed], out_layer=lakes_processed_lyr)
+def target_selection(files: dict) -> None:  # Må endres!
+    lakes_processed_lyr = "lakes_processed_lyr"
+    arcpy.management.MakeFeatureLayer(
+        in_features=files[fc.lakes_processed], out_layer=lakes_processed_lyr
+    )
 
-    arcpy.management.SelectLayerByAttribute(in_layer_or_view=lakes_processed_lyr, selection_type='NEW_SELECTION', where_clause="SHAPE_Area>=1000")
-    arcpy.management.CopyFeatures(in_features=lakes_processed_lyr, out_feature_class=files[fc.lakes_processed_selection])
+    arcpy.management.SelectLayerByAttribute(
+        in_layer_or_view=lakes_processed_lyr,
+        selection_type="NEW_SELECTION",
+        where_clause="SHAPE_Area>=1000",
+    )
+    arcpy.management.CopyFeatures(
+        in_features=lakes_processed_lyr,
+        out_feature_class=files[fc.lakes_processed_selection],
+    )
 
 
 if __name__ == "__main__":

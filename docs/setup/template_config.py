@@ -1,4 +1,4 @@
-A# ========================================
+A  # ========================================
 #                 DEFINED CPU PERCENTAGE
 # ========================================
 cpu_percentage = "90%"
@@ -7,7 +7,9 @@ select_study_area = True
 # ========================================
 #                 WORKSPACE ENVIRONMENT PATHS
 # ========================================
-default_project_workspace = r"C:\Users\haumal\Documents\ArcGIS\Projects\MyProject\MyProject.gdb"
+default_project_workspace = (
+    r"C:\Users\haumal\Documents\ArcGIS\Projects\MyProject\MyProject.gdb"
+)
 output_folder = r"C:\GIS_FILES\ag_outputs"
 
 

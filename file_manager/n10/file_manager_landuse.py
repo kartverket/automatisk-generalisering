@@ -11,8 +11,8 @@ file_manager = BaseFileManager(scale=scale, object_name=object_name)
 
 # All scripts
 innsjo_file = "innsjo"
-polygon_file="polygon"
-river_file="river"
+polygon_file = "polygon"
+river_file = "river"
 
 
 class Landuse_N10(Enum):
@@ -27,14 +27,14 @@ class Landuse_N10(Enum):
     # ========================================
     #                  BUFF RIVERS AREALDEKKET
     # ========================================
-    arealdekket_river__n10_landuse=file_manager.generate_file_name_gdb(
+    arealdekket_river__n10_landuse = file_manager.generate_file_name_gdb(
         script_source_name=river_file, description="buffed_small_rivers"
     )
 
     # ========================================
     #                ADJUST LAKES AREALDEKKET
     # ========================================
-    arealdekket_lake__n10_landuse=file_manager.generate_file_name_gdb(
+    arealdekket_lake__n10_landuse = file_manager.generate_file_name_gdb(
         script_source_name=innsjo_file, description="fixing_arealdekket_innsjo"
     )
 
