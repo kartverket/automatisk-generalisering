@@ -14,6 +14,7 @@ class EliminateSmallPolygonsParameters:
     min_area: int
     min_iq_area: int
     max_area_b_iq: int
+    exclude: list[str]
     dont_eliminate: list[str]
     spike_size: int
     dont_remove_spikes: list[str]
@@ -24,3 +25,8 @@ class EliminateSmallPolygonsParameters:
 class GangSykkelDissolverParameters:
     buffer_distance: int
     length_divide: int
+
+
+@dataclass(frozen=True)
+class ExpandLandUseParameters:
+    elvFlate: int

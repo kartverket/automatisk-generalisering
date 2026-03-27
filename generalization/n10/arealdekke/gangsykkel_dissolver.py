@@ -7,6 +7,9 @@ from env_setup import environment_setup
 from custom_tools.general_tools.partition_iterator import PartitionIterator
 from composition_configs import core_config, logic_config
 from generalization.n10.arealdekke.arealdekke_dissolver import ArealdekkeDissolver
+from generalization.n10.arealdekke.eliminate_small_polygons import (
+    EliminateSmallPolygons,
+)
 from collections import defaultdict
 from pathlib import Path
 from custom_tools.general_tools.param_utils import initialize_params
@@ -89,6 +92,9 @@ class GangSykkelDissolver:
         not_grown_dissolved = wfm.build_file_path(
             file_name="not_grown_dissolved", file_type="gdb"
         )
+        gangsykkel_final_dissolve_looping = wfm.build_file_path(
+            file_name="gangsykkel_final_dissolve_looping", file_type="gdb"
+        )
 
         return {
             "gangsykkel_input": gangsykkel_input,
@@ -107,6 +113,7 @@ class GangSykkelDissolver:
             "gangsykkel_final_gangsykkel_dissolved": gangsykkel_final_gangsykkel_dissolved,
             "not_grown": not_grown,
             "not_grown_dissolved": not_grown_dissolved,
+            "gangsykkel_final_dissolve_looping": gangsykkel_final_dissolve_looping,
         }
 
     def _fetch_data(self):
@@ -267,7 +274,7 @@ class GangSykkelDissolver:
 
         arcpy.management.Eliminate(
             in_features=gangsykkel_final_merge_singlepart_lyr,
-            out_feature_class=self.output_feature,
+            out_feature_class=self.files["gangsykkel_final_dissolve_looping"],
             selection="LENGTH",
         )
 
@@ -459,6 +466,21 @@ class GangSykkelDissolver:
         self._dissolve_looping(
             buffer_distance=f"{self.scale_parameters.buffer_distance} Meters"
         )
+        e_kwargs = logic_config.EliminateSmallPolygonsInitKwargs(
+            input_feature="",
+            output_feature="",
+            work_file_manager_config=core_config.WorkFileConfig(
+                root_file=Arealdekke_N10.gangsykkel_root.value
+            ),
+            map_scale=self.map_scale,
+        )
+        e = EliminateSmallPolygons(e_kwargs)
+        e.eliminate_holes(
+            input_fc=self.files["gangsykkel_final_dissolve_looping"],
+            output_fc=self.output_feature,
+            selection="arealdekke = 'Samferdsel' AND arealbruk_underklasse <> 'GangSykkelVeg'",
+            wfm=self.wfm,
+        )
         self.wfm.delete_created_files()
 
 
@@ -500,7 +522,7 @@ def partition_call(input_fc: str, output_fc: str, map_scale: str):
         output_feature=partition_output,
         index_column_name="FID_Fishnet_500m",
         work_file_manager_config=core_config.WorkFileConfig(
-            root_file=Arealdekke_N10.dissolve_arealdekke_root.value
+            root_file=Arealdekke_N10.gangsykkel_root.value
         ),
         map_scale=map_scale,
     )

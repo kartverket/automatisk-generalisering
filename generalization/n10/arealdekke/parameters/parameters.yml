@@ -1,5 +1,7 @@
 Description:
-  This is where parameters that can change are stored. 
+  This is where parameters that can change based on map scale or general rules for the classes are stored.
+  Each object should correspond to a dataclass in parameter_dataclasses.py
+  Read these from class using initialize_params from param_utils.py  
 
 EliminateSmallPolygons:
   descriptions: 
@@ -7,6 +9,7 @@ EliminateSmallPolygons:
     - eliminates areas smaller than both max_area_b_iq and min_iq_area,
     - min_iq_area is area * isoperimetric quotient 
     - max_area_b_iq is max size of polygon that can be eliminated if they have very low iq
+    - exclude is a list of arealdekke values that are not to be eliminated or eliminated into, including spikes
     - dont_eliminate is list of arealdekke values that wont be eliminated but can still have others eliminated into them
     - spike_size is size of buffer to detect spikes in meters, buffers from both sides of polygon so spike_size 2 = 4 meters
     - dont_remove_spikes is list of arealdekke values wont be buffered for spike selection
@@ -15,14 +18,16 @@ EliminateSmallPolygons:
   N10:
     min_area: 100
     min_iq_area: 150   
-    max_area_b_iq: 1500      
+    max_area_b_iq: 1500 
+    exclude: 
+      - Samferdsel     
     dont_eliminate:
-      - Samferdsel
+      - Samferdsel   
       - Ferskvann_elv_bekk
       - Ferskvann_kanal
     spike_size: 2
     dont_remove_spikes:
-      - Samferdsel
+      - Samferdsel   
       - Ferskvann_elv_bekk
       - Ferskvann_kanal
       - Ferskvann_innsjo_tjern_regulert
@@ -52,8 +57,11 @@ GangSykkelDissolver:
     - length divide is length we use to decide if gangvei is adjecent to road or if they move out from road
   N10:
     buffer_distance: 5
-    length_divide: 45 
+    length_divide: 45
 
 
-
-
+ExpandLandUse:
+  description:
+    - Each variable is the minimum width (in meters) of the land use type that is visible on a printed map
+  N10:
+    elvFlate: 6
