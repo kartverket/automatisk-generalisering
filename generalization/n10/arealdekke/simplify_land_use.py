@@ -17,7 +17,7 @@ def simplify_and_smooth_polygon(input_fc: str, output_fc: str) -> None:
     """
     Simplifies polygons with the WEIGHTED_AREA algorithm before
     they are smoothed with the BEZIER_INTERPOLATION algorithm.
-    
+
     Args:
         input_fc (str): The feature class with polygon geometries to be simplified and smoothed
         output_fc (str): The feature class where the result should be saved
