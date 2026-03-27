@@ -18,6 +18,9 @@ area_line_merger = "area_line_merger"
 island_merger = "island_merger"
 simplify_polygon = "simplify_polygon"
 expansion_controller = "expansion_controller"
+buff_polygon_segments = "buff_polygon_segments"
+river_file = "river_file"
+innsjo_file = "innsjo_file"
 
 
 class Arealdekke_N10(Enum):
@@ -154,4 +157,31 @@ class Arealdekke_N10(Enum):
     expansion_controller_output__n10_land_use = file_manager.generate_file_name_gdb(
         script_source_name=expansion_controller,
         description="expansion_controller_output",
+    )
+
+    # ========================================
+    #                              BUFF RIVERS
+    # ========================================
+    
+    generalise_rivers__n10_land_use = file_manager.generate_file_name_gdb(
+        script_source_name=river_file, 
+        description="buffed_small_rivers"
+    )
+
+    # ========================================
+    #              BUFF SMALL POLYGON SEGMENTS
+    # ========================================
+
+    buffed_polygon_segments__n10_land_use = file_manager.generate_file_name_gdb(
+        script_source_name=buff_polygon_segments, 
+        description="buffed_polygon_segments"
+    )
+
+    # ========================================
+    #                   INNSJO HØYDE INTERVALL
+    # ========================================
+
+    innsjo_hoydeintervall__n10_land_use = file_manager.generate_file_name_gdb(
+        script_source_name=innsjo_file, 
+        description="hoyde_intervall"
     )

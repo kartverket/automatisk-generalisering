@@ -4,8 +4,8 @@ from composition_configs import core_config
 from custom_tools.decorators.timing_decorator import timing_decorator
 from env_setup import environment_setup
 from file_manager import WorkFileManager
-from file_manager.n10.file_manager_landuse import Landuse_N10
-from input_data import input_innsjohoyde, input_n100
+from file_manager.n10.file_manager_arealdekke import Arealdekke_N10
+from input_data import input_n10, input_n100
 
 arcpy.env.overwriteOutput = True
 
@@ -35,12 +35,12 @@ class prog_config(Enum):
 def main():
 
     # County ids
-    area = [301, 3435, 1160, 1525, 1848, 1851]
+    area = []
 
     environment_setup.main()
 
     # Sets up work file manager and creates temporarily files
-    working_fc = Landuse_N10.hoydeintervall__n10_landuse.value
+    working_fc = Arealdekke_N10.innsjo_hoydeintervall__n10_land_use.value
     config = core_config.WorkFileConfig(root_file=working_fc)
     wfm = WorkFileManager(config=config)
 
@@ -247,12 +247,12 @@ def fetch_data(files: dict, area: list = None) -> None:
 
     innsjo_bearbeidet_lyr = "innsjo_bearbeidet_lyr"
     arcpy.management.MakeFeatureLayer(
-        in_features=input_innsjohoyde.hoyde_bearbeidet, out_layer=innsjo_bearbeidet_lyr
+        in_features=input_n10.Innsjo_bearbeidet, out_layer=innsjo_bearbeidet_lyr
     )
 
     annotasjoner_bearbeidet_lyr = "annotasjoner_bearbeidet_lyr"
     arcpy.management.MakeFeatureLayer(
-        in_features=input_innsjohoyde.annotasjoner_bearbeidet,
+        in_features=input_n10.Stedsnavn_bearbeidet,
         out_layer=annotasjoner_bearbeidet_lyr,
     )
 

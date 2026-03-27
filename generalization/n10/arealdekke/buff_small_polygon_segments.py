@@ -4,7 +4,7 @@ from custom_tools.decorators.timing_decorator import timing_decorator
 from composition_configs import core_config
 from env_setup import environment_setup
 from file_manager import WorkFileManager
-from file_manager.n10.file_manager_landuse import Landuse_N10
+from file_manager.n10.file_manager_arealdekke import Arealdekke_N10
 from input_data import input_arealdekke
 from area_merger import area_merger
 
@@ -18,7 +18,7 @@ def buff_small_polygon_segments(input_fc, target_fc, locked_fc: set, min_width: 
     # Args: input_fc (input data), target_fc (string), locked_fc (set: string), output_fc (string), min width of polygon segments (int, meters)
 
     environment_setup.main()
-    working_fc = Landuse_N10.buffed_polygon_segments__n10_landuse.value
+    working_fc = Arealdekke_N10.buffed_polygon_segments__n10_land_use.value
     config = core_config.WorkFileConfig(root_file=working_fc)
     wfm = WorkFileManager(config=config)
     files = files_setup(wfm=wfm)

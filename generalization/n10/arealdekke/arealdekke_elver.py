@@ -5,8 +5,8 @@ from custom_tools.decorators.timing_decorator import timing_decorator
 from composition_configs import core_config
 from env_setup import environment_setup
 from file_manager import WorkFileManager
-from file_manager.n10.file_manager_landuse import Landuse_N10
-from input_data import input_arealdekke
+from file_manager.n10.file_manager_arealdekke import Arealdekke_N10
+from input_data import input_n10
 
 from buff_small_polygon_segments import buff_small_polygon_segments
 
@@ -22,7 +22,7 @@ def main():
     environment_setup.main()
 
     # Sets up work file manager and creates temporarily files
-    working_fc = Landuse_N10.arealdekket_river__n10_landuse.value
+    working_fc = Arealdekke_N10.generalise_rivers__n10_land_use.value
     config = core_config.WorkFileConfig(root_file=working_fc)
     wfm = WorkFileManager(config=config)
 
@@ -83,7 +83,7 @@ def fetch_data(files: dict) -> None:
     # Get data from gdb
     arealdekke_lyr = "arealdekke_lyr"
     arcpy.management.MakeFeatureLayer(
-        in_features=input_arealdekke.arealdekke,
+        in_features=input_n10.Arealdekke_Buskerud,
         out_layer=arealdekke_lyr,
         where_clause="arealdekke='Ferskvann_elv_bekk'",
     )
