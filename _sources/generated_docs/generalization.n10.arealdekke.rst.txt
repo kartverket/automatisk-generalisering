@@ -84,6 +84,14 @@ generalization.n10.arealdekke.island\_controller module
    :show-inheritance:
    :undoc-members:
 
+generalization.n10.arealdekke.simplify\_land\_use module
+--------------------------------------------------------
+
+.. automodule:: generalization.n10.arealdekke.simplify_land_use
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
 Module contents
 ---------------
 
