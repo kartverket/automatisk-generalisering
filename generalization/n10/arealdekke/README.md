@@ -20,5 +20,9 @@
     gangsykkel_dissolver.py:
         Dissolves GangSykkelVeg into roads if they are adjacent
 
+    buff_small_polygon_segments.py:
+        Function that buffs polygon segments under a minimum with requirement without overlapping locked features.  Uses area_merger.py afterwards to put the
+        new enlarged areas back into the arealdekke.
+
 
 

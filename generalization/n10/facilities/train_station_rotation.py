@@ -9,7 +9,7 @@ from env_setup import environment_setup
 from file_manager import WorkFileManager
 from file_manager.n10.file_manager_facilities import Facility_N10
 from input_data import input_roads
-from road.point_rotation_tool import tool
+from road.point_rotation_tool import point_rotation_tool
 
 arcpy.env.overwriteOutput = True
 
@@ -25,7 +25,7 @@ def main():
     files = create_wfm_gdbs(wfm=wfm)
     fetch_data(files=files)
 
-    tool(
+    point_rotation_tool(
         in_features_line=files[fc.non_overlapping_roads],
         in_features_point=files[fc.roadblocks_preprocessed],
         out_feature_class=files[fc.roadblocks_done],
