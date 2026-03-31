@@ -1,15 +1,15 @@
-from generalization.n10.arealdekke.arealdekke_dissolver import (
+from generalization.n10.arealdekke.overall_tools.arealdekke_dissolver import (
     partition_call as arealdekke_dissolver,
 )
-from generalization.n10.arealdekke.gangsykkel_dissolver import (
+from generalization.n10.arealdekke.overall_tools.gangsykkel_dissolver import (
     partition_call as gangsykkel_dissolver,
 )
-from generalization.n10.arealdekke.eliminate_small_polygons import (
+from generalization.n10.arealdekke.overall_tools.eliminate_small_polygons import (
     partition_call as eliminate_small_polygons,
 )
 from generalization.n10.arealdekke.attribute_changer import attribute_changer
-from generalization.n10.arealdekke.island_controller import island_controller
-from generalization.n10.arealdekke.expansion_controller import simplify_and_expand_land_use
+from generalization.n10.arealdekke.overall_tools.island_controller import island_controller
+from generalization.n10.arealdekke.orchestrator.expansion_controller import simplify_and_expand_land_use
 
 from input_data import input_n10
 from file_manager.n10.file_manager_arealdekke import Arealdekke_N10

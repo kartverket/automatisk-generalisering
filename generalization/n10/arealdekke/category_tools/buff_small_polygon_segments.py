@@ -5,8 +5,8 @@ from composition_configs import core_config
 from env_setup import environment_setup
 from file_manager import WorkFileManager
 from file_manager.n10.file_manager_arealdekke import Arealdekke_N10
-from input_data import input_arealdekke
-from area_merger import area_merger
+from input_data import input_n10
+from generalization.n10.arealdekke.overall_tools.area_merger import area_merger
 
 arcpy.env.overwriteOutput = True
 
@@ -569,7 +569,7 @@ def buff_small_segments(files: dict, min_width: int) -> None:
 
 if __name__ == "__main__":
     buff_small_polygon_segments(
-        input_fc=input_arealdekke.arealdekke,
+        input_fc=input_n10.Arealdekke_Buskerud,
         target_fc="Ferskvann_elv_bekk",
         locked_fc=["Samferdsel"],
         min_width=3,
