@@ -6,7 +6,7 @@ from file_manager.n10.file_manager_arealdekke import Arealdekke_N10
 from env_setup import environment_setup
 from custom_tools.general_tools.partition_iterator import PartitionIterator
 from composition_configs import core_config, logic_config
-from parameters.parameter_dataclasses import EliminateSmallPolygonsParameters
+from generalization.n10.arealdekke.parameters.parameter_dataclasses import EliminateSmallPolygonsParameters
 from pathlib import Path
 from custom_tools.general_tools.param_utils import initialize_params
 import os

@@ -1,11 +1,11 @@
 #Module imports:
 import arcpy
-from category_class import Category
 import yaml
 from composition_configs import core_config
 from env_setup import environment_setup
 from file_manager import WorkFileManager
 from file_manager.n10.file_manager_arealdekke import Arealdekke_N10
+from generalization.n10.arealdekke.orchestrator.category_class import Category
 
 #Arealdekke tools:
 from generalization.n10.arealdekke.overall_tools.arealdekke_dissolver import (partition_call as arealdekke_dissolver,)
@@ -45,7 +45,7 @@ class Arealdekke:
     # ========================
 
 
-    def preprocess_and_add_categories(self)->None:
+    def preprocess(self)->None:
         
         #Pipeline from original orchistrator file. Preprocessing the arealdekke data.
         attribute_changer(

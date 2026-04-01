@@ -13,7 +13,7 @@ from generalization.n10.arealdekke.overall_tools.eliminate_small_polygons import
 from collections import defaultdict
 from pathlib import Path
 from custom_tools.general_tools.param_utils import initialize_params
-from parameters.parameter_dataclasses import GangSykkelDissolverParameters
+from generalization.n10.arealdekke.parameters.parameter_dataclasses import GangSykkelDissolverParameters
 
 
 class GangSykkelDissolver:

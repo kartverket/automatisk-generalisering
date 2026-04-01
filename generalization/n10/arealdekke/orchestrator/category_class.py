@@ -15,10 +15,10 @@ class Category:
     def __init__(self, title:str, operations:list, accessibility:bool, order:int):
 
         #Extracts inputs and saves them within object
-        self.title = title
-        self.operations = [operations]
-        self.accessibility = accessibility
-        self.order = order
+        self.__title = title
+        self.__operations = operations
+        self.__accessibility = accessibility
+        self.__order = order
 
 
         #Dictionary with all tools available to the category objects
@@ -27,14 +27,14 @@ class Category:
             "buff_small_segments":buff_small_polygon_segments
             }
         
-        for operation in self.operations:
+        for item in self.__operations:
             
             #Checks if each operation is written correctly (test can be improved later)
-            if operation not in self.cat_tools:
-                raise f"Incorrect syntax in yml file. Object:{self.title}"
+            if item not in list(self.cat_tools.keys()):
+                raise Exception(f"Incorrect syntax in yml file. Object:{self.__title}")
             
         #Creates layer for the category. Data inserted into it in setter function.
-        self.lyr=f"{self.title}_lyr"
+        self.lyr=f"{self.__title}_lyr"
 
     
     # ========================
@@ -52,18 +52,18 @@ class Category:
         reinsert=False
 
         #File that will be overwritten with new input for each iteration.
-        output_lyr=f"{self.title}_output_lyr"
+        output_lyr=f"{self.__title}_output_lyr"
 
-        if self.operations:
+        if self.__operations:
             #Inserts the arealdekke input data into the layer.
             self.set_layer(input_data)
 
             #Iterates through the operations needed for each category.
-            for operation in self.operations:
+            for operation in self.__operations:
                 
                 #Calls function from dictionary
                 self.cat_tools[operation](
-                    self.title,
+                    self.__title,
                     self.lyr,
                     locked_layers,
                     output_lyr,
@@ -93,7 +93,7 @@ class Category:
 
     
     def set_accessibility(self, newStatus:bool)->None:
-        self.accessibility=newStatus
+        self.__accessibility=newStatus
     
 
     # ========================
@@ -101,24 +101,24 @@ class Category:
     # ========================
 
     def get_title(self)->str:
-        return self.title
+        return self.__title
 
 
     def get_order(self)->int:
-        return self.order
+        return self.__order
 
 
     def get_accessibility(self)->bool:
-        return self.accessibility
+        return self.__accessibility
 
 
     def get_operations(self)->list:
-        return self.operations
+        return self.__operations
     
 
     def __str__(self)->str:
         return(
-            f"Category(title='{self.title}', "
-            f"accessibility={self.accessibility}, "
-            f"order={self.order})"
+            f"Category title='{self.__title}', "
+            f"accessibility={self.__accessibility}, "
+            f"order={self.__order})"
         )

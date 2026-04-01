@@ -15,7 +15,7 @@ from custom_tools.general_tools.param_utils import initialize_params
 from file_manager import WorkFileManager
 from file_manager.n10.file_manager_arealdekke import Arealdekke_N10
 from generalization.n10.arealdekke.orchestrator.simplify_land_use import simplify_and_smooth_polygon
-from parameters.parameter_dataclasses import LandUseParameters
+from generalization.n10.arealdekke.parameters.parameter_dataclasses import LandUseParameters
 
 # ========================
 # Class
