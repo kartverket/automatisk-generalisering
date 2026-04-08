@@ -1089,6 +1089,8 @@ class PartitionIterator:
                 "search_distance_meters": self.search_distance,
                 "search_distance_used": self.search_distance > 0,
                 "max_elements_per_partition": self.max_elements_per_partition,
+                "run_partition_optimization": self.run_partition_optimization,
+                "final_partition_feature_count": self.final_partition_feature_count,
             },
             "partition_summary": {
                 "total_partitions": self.max_partition_count,
