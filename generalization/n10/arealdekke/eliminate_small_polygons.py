@@ -9,6 +9,7 @@ from composition_configs import core_config, logic_config
 from parameters.parameter_dataclasses import EliminateSmallPolygonsParameters
 from pathlib import Path
 from custom_tools.general_tools.param_utils import initialize_params
+import os
 
 
 class EliminateSmallPolygons:
@@ -111,20 +112,24 @@ class EliminateSmallPolygons:
 
     def _exlude(self):
         """
-        Removes certain obj types like gangvei to prevent others eliminating into them
+        Removes certain arealdekke types to exclude them from being eliminated and eliminated into
         """
         include = "layer_include"
         exclude = "layer_exclude"
+        quoted = ", ".join(f"'{v}'" for v in self.scale_parameters.exclude)
+        exclusion_sql = f"arealdekke NOT IN ({quoted})"
+        not_exclusion_sql = f"arealdekke IN ({quoted})"
+
         arcpy.management.MakeFeatureLayer(
             self.files["eliminate_input"],
             include,
-            where_clause="arealbruk_underklasse <> 'GangSykkelVeg' OR arealbruk_underklasse IS NULL",
+            where_clause=exclusion_sql,
         )
         arcpy.management.CopyFeatures(include, self.files["eliminate_input_include"])
         arcpy.management.MakeFeatureLayer(
             self.files["eliminate_input"],
             exclude,
-            where_clause="arealbruk_underklasse = 'GangSykkelVeg'",
+            where_clause=not_exclusion_sql,
         )
         arcpy.management.CopyFeatures(exclude, self.files["eliminate_input_exclude"])
 
@@ -313,11 +318,113 @@ class EliminateSmallPolygons:
             cluster_tolerance=f"{self.scale_parameters.integrate_tolerance} Meters",
         )
 
-    def _remove_fields(self, input_fc):
+    @staticmethod
+    def remove_fields(input_fc):
         """Remove area, length, isoperimetric quotient and iq_adjusted_area fields"""
         arcpy.management.DeleteField(
             input_fc, ["area", "length", "isoperimetric_quotient", "iq_adjusted_area"]
         )
+
+    def eliminate_holes(
+        self, input_fc: str, output_fc: str, selection: str, wfm: WorkFileManager
+    ):
+        """
+        Eliminates polygons that are holes inside polygons in selection defined in selection parameter, if they are within elim parameters
+        """
+        input_copy = wfm.build_file_path(
+            file_name="eliminate_holes_input_copy", file_type="gdb"
+        )
+        lines = wfm.build_file_path(file_name="eliminate_holes_lines", file_type="gdb")
+        singlepart = wfm.build_file_path(
+            file_name="eliminate_holes_singlepart", file_type="gdb"
+        )
+        potential_holes_lines = wfm.build_file_path(
+            file_name="eliminate_holes_potential_holes_lines", file_type="gdb"
+        )
+        potential_holes_polygons = wfm.build_file_path(
+            file_name="eliminate_holes_potential_holes_polygons", file_type="gdb"
+        )
+        eliminated = wfm.build_file_path(
+            file_name="eliminate_holes_eliminated", file_type="gdb"
+        )
+        input_copy_layer_selection = "eliminate_holes_input_copy_layer_selection"
+        input_copy_layer_potential_elims = (
+            "eliminate_holes_input_copy_layer_potential_elims"
+        )
+        singlepart_layer = "eliminate_holes_singlepart_layer"
+
+        arcpy.management.CopyFeatures(
+            in_features=input_fc, out_feature_class=input_copy
+        )
+        self.add_fields(input_copy)
+        arcpy.management.MakeFeatureLayer(
+            in_features=input_copy,
+            out_layer=input_copy_layer_selection,
+            where_clause=selection,
+        )
+        arcpy.management.PolygonToLine(
+            in_features=input_copy_layer_selection,
+            out_feature_class=lines,
+            neighbor_option="IGNORE_NEIGHBORS",
+        )
+        arcpy.management.MultipartToSinglepart(
+            in_features=lines, out_feature_class=singlepart
+        )
+
+        sr = arcpy.Describe(lines).spatialReference
+        path, name = os.path.split(potential_holes_lines)
+        arcpy.management.CreateFeatureclass(
+            out_path=path, out_name=name, geometry_type="POLYLINE", spatial_reference=sr
+        )
+        with arcpy.da.SearchCursor(lines, ["SHAPE@"]) as scur, arcpy.da.InsertCursor(
+            potential_holes_lines, ["SHAPE@"]
+        ) as icur:
+            for row in scur:
+                poly = row[0]
+                # parts: index 0 = exterior; indexes 1..n-1 = holes
+                for i in range(1, poly.partCount):
+                    part = poly.getPart(i)
+                    # build a Polyline from the part points
+                    pl = arcpy.Polyline(arcpy.Array([p for p in part]), sr)
+                    icur.insertRow([pl])
+
+        arcpy.management.FeatureToPolygon(
+            in_features=potential_holes_lines,
+            out_feature_class=potential_holes_polygons,
+        )
+
+        quoted = ", ".join(f"'{v}'" for v in self.scale_parameters.dont_eliminate)
+        exclusion_sql = f"arealdekke NOT IN ({quoted})"
+        numeric_clauses = []
+        numeric_clauses.append(f"area < {self.scale_parameters.max_area_b_iq}")
+        numeric_clauses.append(
+            f"iq_adjusted_area < {self.scale_parameters.min_iq_area}"
+        )
+        where_parts = [exclusion_sql] + numeric_clauses
+        where_clause = " AND ".join(where_parts)
+
+        arcpy.management.MakeFeatureLayer(
+            in_features=input_copy, out_layer=input_copy_layer_potential_elims
+        )
+        arcpy.management.SelectLayerByAttribute(
+            in_layer_or_view=input_copy_layer_potential_elims,
+            selection_type="NEW_SELECTION",
+            where_clause=where_clause,
+        )
+        arcpy.management.SelectLayerByLocation(
+            in_layer=input_copy_layer_potential_elims,
+            overlap_type="INTERSECT",
+            select_features=potential_holes_polygons,
+            selection_type="REMOVE_FROM_SELECTION",
+            invert_spatial_relationship="INVERT",
+        )
+
+        arcpy.management.Eliminate(
+            in_features=input_copy_layer_potential_elims,
+            out_feature_class=output_fc,
+            selection="LENGTH",
+        )
+        self.remove_fields(output_fc)
 
     @timing_decorator
     def run(self):
@@ -337,11 +444,16 @@ class EliminateSmallPolygons:
         )
         self._merge_excluded()
         self._integrate(self.files["eliminate_final_elim_merged"])
-        self._remove_fields(self.files["eliminate_final_elim_merged"])
+        self.remove_fields(self.files["eliminate_final_elim_merged"])
 
         arcpy.management.CopyFeatures(
             in_features=self.files["eliminate_final_elim_merged"],
             out_feature_class=self.output_feature,
+        )
+        arcpy.management.RepairGeometry(
+            in_features=self.output_feature,
+            delete_null="DELETE_NULL",
+            validation_method="ESRI",
         )
 
         self.wfm.delete_created_files()

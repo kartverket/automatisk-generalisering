@@ -228,6 +228,7 @@ def run_dissolve_with_intersections(
             f" MEDIUM = '{MediumAlias.tunnel}'",
             f" MEDIUM = '{MediumAlias.bridge}'",
             f" MEDIUM = '{MediumAlias.on_surface}'",
+            f" MEDIUM = '{MediumAlias.building}'",
         ],
     )
     DissolveWithIntersections(cfg).run()
