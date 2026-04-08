@@ -12,9 +12,9 @@ from custom_tools.decorators.timing_decorator import timing_decorator
 
 
 @timing_decorator
-def create_accessibility_layer(input_fc: str, output_fc: str) -> None:
+def create_passability_layer(input_fc: str, output_fc: str) -> None:
     """
-    Creates a separate feature class with the geometries not having 'None' as accessibility.
+    Creates a separate feature class with the geometries not having 'None' as passability.
 
     Args:
         input_fc (str): Feature class with original land use data having a column named 'fremkommelighet'

@@ -16,7 +16,7 @@ gangsykkel_file = "gangsykkel"
 attribute_file = "attribute_changer"
 area_line_merger = "area_line_merger"
 island_merger = "island_merger"
-accessibility = "accessibility"
+passability = "passability"
 simplify_polygon = "simplify_polygon"
 expansion_controller = "expansion_controller"
 buff_polygon_segments = "buff_polygon_segments"
@@ -140,11 +140,11 @@ class Arealdekke_N10(Enum):
     )
 
     # ========================================
-    #                            ACCESSIBILITY
+    #                              PASSABILITY
     # ========================================
 
-    accessibility__n10_land_use = file_manager.generate_file_name_gdb(
-        script_source_name=accessibility, description="accessibility"
+    passability__n10_land_use = file_manager.generate_file_name_gdb(
+        script_source_name=passability, description="passability"
     )
 
     # ========================================
