@@ -11,17 +11,21 @@ from generalization.n10.arealdekke.overall_tools.area_merger import area_merger
 from composition_configs import core_config, logic_config
 from pathlib import Path
 from custom_tools.general_tools.param_utils import initialize_params
-from generalization.n10.arealdekke.parameters.parameter_dataclasses import buff_small_polygon_segments_parameters
+from generalization.n10.arealdekke.parameters.parameter_dataclasses import (
+    buff_small_polygon_segments_parameters,
+)
 
 arcpy.env.overwriteOutput = True
 
 
 @timing_decorator
-def buff_small_polygon_segments(target_fc, input_fc, output_fc, locked_fc: set, map_scale: str):
+def buff_small_polygon_segments(
+    target_fc, input_fc, output_fc, locked_fc: set, map_scale: str
+):
 
     # Function that buff small polygon segments.
     # Args: input_fc (input data), target_fc (string), locked_fc (set: string), output_fc (string), min width of polygon segments (int, meters)
- 
+
     environment_setup.main()
     working_fc = Arealdekke_N10.buffed_polygon_segments__n10_land_use.value
     config = core_config.WorkFileConfig(root_file=working_fc)
@@ -35,7 +39,7 @@ def buff_small_polygon_segments(target_fc, input_fc, output_fc, locked_fc: set, 
         map_scale=map_scale,
         dataclass=buff_small_polygon_segments_parameters,
     )
-    min_width=scale_parameters.min_width[target_fc]
+    min_width = scale_parameters.min_width[target_fc]
 
     extract_data(
         files=files, target_fc=target_fc, locked_fc=locked_fc, input_fc=input_fc
@@ -579,5 +583,5 @@ if __name__ == "__main__":
         input_fc=input_n10.Arealdekke_Buskerud,
         locked_fc=["Samferdsel"],
         output_fc="output",
-        map_scale="N10"
+        map_scale="N10",
     )

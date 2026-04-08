@@ -4,6 +4,7 @@ import yaml
 from unittest.mock import patch, MagicMock
 from generalization.n10.arealdekke.orchestrator.category_class import Category
 
+
 class test_category_class(unittest.TestCase):
 
     def test_process_category_t1(self):
@@ -17,21 +18,17 @@ class test_category_class(unittest.TestCase):
         with patch("generalization.n10.arealdekke.orchestrator.category_class.arcpy"):
 
             self.category_t1 = Category(
-                "Ferskvann",
-                ["buff_small_segments"],
-                True,
-                1,
-                "N10"
+                "Ferskvann", ["buff_small_segments"], True, 1, "N10"
             )
 
             # Override the instance dict with the mock dict
             self.category_t1.cat_tools = mock_cat_tools
 
-            with patch("generalization.n10.arealdekke.orchestrator.category_class.arcpy"):
+            with patch(
+                "generalization.n10.arealdekke.orchestrator.category_class.arcpy"
+            ):
                 reinsert = self.category_t1.process_category(
-                    "input_data",
-                    "locked_layers",
-                    "processed_lyr"
+                    "input_data", "locked_layers", "processed_lyr"
                 )
 
                 mock_operation.assert_called_once()

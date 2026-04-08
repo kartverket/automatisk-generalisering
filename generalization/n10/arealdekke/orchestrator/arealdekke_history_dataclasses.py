@@ -10,18 +10,21 @@ from typing import (
     Union,
     Any,
 )
+
+
 @dataclass
 class Categories_progress:
-    title:str
-    accessibility:bool
-    completed_operations:list
+    title: str
+    accessibility: bool
+    completed_operations: list
     path_processed_data: str
+
 
 @dataclass
 class Arealdekke_progress:
-    file_path:str
-    preprocessing_completed:list
-    categories: list[Categories_progress]=field(default_factory=list)
+    file_path: str
+    preprocessing_completed: list
+    categories: list[Categories_progress] = field(default_factory=list)
 
 
 def load_yaml(path: str) -> dict:

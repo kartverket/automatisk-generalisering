@@ -1,21 +1,26 @@
-import arcpy
+from pathlib import Path
+
 from arealdekke_class import Arealdekke
-from input_data import input_n10
+from env_setup import environment_setup
+
 
 def main():
-    #Creates an instance of the arealdekke object.
-    lyr="lyr"
-    arcpy.management.MakeFeatureLayer(in_features=input_n10.Arealdekke_Buskerud, out_layer=lyr)
-    arealdekke=Arealdekke(lyr, r"C:\GIS_FILES\automatisk-generalisering\generalization\n10\arealdekke\parameters\parameters.yml", "N10")
+    environment_setup.main()
+
+    # Creates an instance of the arealdekke object.
+    arealdekke = Arealdekke("N10")
 
     arealdekke.preprocess()
 
-    #Adds the categories to the arealdekke object
-    yml_file=r"generalization\n10\arealdekke\orchestrator\arealdekke_categories_config.yml"
+    # Adds the categories to the arealdekke object
+    yml_file = (
+        Path(__file__).parent / "arealdekke_categories_config.yml"
+    )
     arealdekke.add_categories(yml_file)
 
-    #Process categories
+    # Process categories
     arealdekke.process_categories()
+
 
 if __name__ == "__main__":
     main()

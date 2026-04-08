@@ -14,8 +14,12 @@ from custom_tools.decorators.timing_decorator import timing_decorator
 from custom_tools.general_tools.param_utils import initialize_params
 from file_manager import WorkFileManager
 from file_manager.n10.file_manager_arealdekke import Arealdekke_N10
-from generalization.n10.arealdekke.orchestrator.simplify_land_use import simplify_and_smooth_polygon
-from generalization.n10.arealdekke.parameters.parameter_dataclasses import LandUseParameters
+from generalization.n10.arealdekke.orchestrator.simplify_land_use import (
+    simplify_and_smooth_polygon,
+)
+from generalization.n10.arealdekke.parameters.parameter_dataclasses import (
+    LandUseParameters,
+)
 
 # ========================
 # Class
@@ -52,6 +56,7 @@ Hierarchy of the order that the land use types must be expanded in:
 - Skog
 - Snaumark
 """
+
 
 class LandUse:
     """
@@ -94,7 +99,6 @@ class LandUse:
         )
 
         # self.locked_features = locked_features
-    
 
     @timing_decorator
     def fetch_data() -> None:
@@ -142,9 +146,7 @@ class ExpansionController:
             that need to be taken care of during the process
     """
 
-    def __init__(
-        self, expansion_controller_config: logic_config.LandUseInitKwargs
-    ):
+    def __init__(self, expansion_controller_config: logic_config.LandUseInitKwargs):
         """
         Creates an instance of the ExpansionController.
 
@@ -168,8 +170,6 @@ class ExpansionController:
         )
 
         self.locked_land_use = set()
-
-    
 
     # ========================
     # Main functions

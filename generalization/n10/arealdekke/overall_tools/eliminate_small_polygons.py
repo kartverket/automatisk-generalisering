@@ -6,7 +6,9 @@ from file_manager.n10.file_manager_arealdekke import Arealdekke_N10
 from env_setup import environment_setup
 from custom_tools.general_tools.partition_iterator import PartitionIterator
 from composition_configs import core_config, logic_config
-from generalization.n10.arealdekke.parameters.parameter_dataclasses import EliminateSmallPolygonsParameters
+from generalization.n10.arealdekke.parameters.parameter_dataclasses import (
+    EliminateSmallPolygonsParameters,
+)
 from pathlib import Path
 from custom_tools.general_tools.param_utils import initialize_params
 import os
@@ -29,7 +31,7 @@ class EliminateSmallPolygons:
         )
 
         self.map_scale = eliminate_small_polygons_config.map_scale
-        params_path = Path(__file__).parent / "parameters" / "parameters.yml"
+        params_path = Path(__file__).parent.parent / "parameters" / "parameters.yml"
         self.scale_parameters = initialize_params(
             params_path=params_path,
             class_name="EliminateSmallPolygons",
