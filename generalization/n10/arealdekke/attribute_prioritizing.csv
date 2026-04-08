@@ -113,7 +113,7 @@ Myr_tresatt,GroenneOmr,*,*,Park,Myr
 Myr_tresatt,IdrettsOmr,Alpinanlegg,*,Alpinbakke,Myr
 Myr_tresatt,IdrettsOmr,Golfanlegg,*,Golfbane,Myr
 Myr_tresatt,IdrettsOmr,*,*,IdrettsOmr,Myr
-Myr_tresatt,*,*,*,Myr,Skog
+Myr_tresatt,*,*,*,Skog,Myr
 Samferdsel,TransportTelek,Bane,*,Bane,None
 Samferdsel,TransportTelek,LufthavnOmr,*,LufthavnOmr,None
 Samferdsel,TransportTelek,Parkering,*,Parkering,None
