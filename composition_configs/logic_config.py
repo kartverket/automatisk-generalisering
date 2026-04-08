@@ -239,7 +239,7 @@ class RiverStrahlerKwargs:
 class AttributeChangerInitKwargs:
     input_feature: str
     output_feature: str
-    new_field: str
+    new_field: list
     new_type: str
     work_file_manager_config: core_config.WorkFileConfig
 
