@@ -18,15 +18,15 @@ EliminateSmallPolygons:
     max_area_b_iq: 1500      
     dont_eliminate:
       - Samferdsel
-      - Ferskvann_elv_bekk
-      - Ferskvann_kanal
+      - ElvFlate
+      - Kanal
     spike_size: 2
     dont_remove_spikes:
       - Samferdsel
-      - Ferskvann_elv_bekk
-      - Ferskvann_kanal
-      - Ferskvann_innsjo_tjern_regulert
-      - Ferskvann_innsjo_tjern
+      - ElvFlate
+      - Kanal
+      - InnsjoRegulert
+      - Innsjo
     integrate_tolerance: 0.09
 
   N100:

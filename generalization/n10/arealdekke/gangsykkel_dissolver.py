@@ -249,6 +249,8 @@ class GangSykkelDissolver:
             output=self.files["gangsykkel_final_merge"],
         )
 
+        arcpy.management.RepairGeometry(self.files["gangsykkel_final_merge"])
+
         arcpy.management.MultipartToSinglepart(
             in_features=self.files["gangsykkel_final_merge"],
             out_feature_class=self.files["gangsykkel_final_merge_singlepart"],
