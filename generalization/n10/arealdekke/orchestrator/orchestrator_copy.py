@@ -6,7 +6,9 @@ def main():
     #Creates an instance of the arealdekke object.
     lyr="lyr"
     arcpy.management.MakeFeatureLayer(in_features=input_n10.Arealdekke_Buskerud, out_layer=lyr)
-    arealdekke=Arealdekke(lyr, r"C:\GIS_FILES\automatisk-generalisering\generalization\n10\arealdekke\parameters\parameters.yml")
+    arealdekke=Arealdekke(lyr, r"C:\GIS_FILES\automatisk-generalisering\generalization\n10\arealdekke\parameters\parameters.yml", "N10")
+
+    arealdekke.preprocess()
 
     #Adds the categories to the arealdekke object
     yml_file=r"generalization\n10\arealdekke\orchestrator\arealdekke_categories_config.yml"

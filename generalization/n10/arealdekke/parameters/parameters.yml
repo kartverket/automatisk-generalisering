@@ -65,3 +65,9 @@ LandUse:
     - Each variable is the minimum width (in meters) of the land use type that is visible on a printed map
   N10:
     elvFlate: {"width": 6, "thin": True}
+
+BuffSmallPolygonSegments:
+  description:
+    - Buffs parts of polygons that are below a specified minimum value.
+  N10:
+    min_width: {"Ferskvann_elv_bekk":6, "Ferskvann_innsjo_tjern":6}

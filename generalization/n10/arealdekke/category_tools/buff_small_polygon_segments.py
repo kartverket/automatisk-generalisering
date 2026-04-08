@@ -8,20 +8,34 @@ from file_manager.n10.file_manager_arealdekke import Arealdekke_N10
 from input_data import input_n10
 from generalization.n10.arealdekke.overall_tools.area_merger import area_merger
 
+from composition_configs import core_config, logic_config
+from pathlib import Path
+from custom_tools.general_tools.param_utils import initialize_params
+from generalization.n10.arealdekke.parameters.parameter_dataclasses import buff_small_polygon_segments_parameters
+
 arcpy.env.overwriteOutput = True
 
 
 @timing_decorator
-def buff_small_polygon_segments(input_fc, target_fc, locked_fc: set, min_width: int):
+def buff_small_polygon_segments(target_fc, input_fc, output_fc, locked_fc: set, map_scale: str):
 
     # Function that buff small polygon segments.
     # Args: input_fc (input data), target_fc (string), locked_fc (set: string), output_fc (string), min width of polygon segments (int, meters)
-
+ 
     environment_setup.main()
     working_fc = Arealdekke_N10.buffed_polygon_segments__n10_land_use.value
     config = core_config.WorkFileConfig(root_file=working_fc)
     wfm = WorkFileManager(config=config)
     files = files_setup(wfm=wfm)
+
+    params_path = Path(__file__).parent.parent / "parameters" / "parameters.yml"
+    scale_parameters = initialize_params(
+        params_path=params_path,
+        class_name="BuffSmallPolygonSegments",
+        map_scale=map_scale,
+        dataclass=buff_small_polygon_segments_parameters,
+    )
+    min_width=scale_parameters.min_width[target_fc]
 
     extract_data(
         files=files, target_fc=target_fc, locked_fc=locked_fc, input_fc=input_fc
@@ -30,14 +44,6 @@ def buff_small_polygon_segments(input_fc, target_fc, locked_fc: set, min_width: 
     choose_target_areas(files=files)
     get_shared_locked_boundary(files=files, min_width=min_width)
     buff_small_segments(files=files, min_width=min_width)
-
-    area_merger(
-        input_fc=input_fc,
-        buffered_fc=files[fc.test],
-        work_fc=files[fc.work_fc],
-        output_fc=files[fc.output_fc],
-        changed_area=target_fc,
-    )
 
 
 class fc(Enum):
@@ -230,7 +236,7 @@ def find_segments_under_min(files: dict, min_width: int) -> None:
     arcpy.analysis.Buffer(
         in_features=input_polygon_edge_lyr,
         out_feature_class=files[fc.input_polygon_minus_buffer],
-        buffer_distance_or_field=f"{min_width} Meters",
+        buffer_distance_or_field=f"{min_width/2} Meters",
         line_side="FULL",
     )
 
@@ -272,7 +278,7 @@ def find_segments_under_min(files: dict, min_width: int) -> None:
     arcpy.analysis.PairwiseBuffer(
         in_features=core_wide_enough_segments_singlepart_lyr,
         out_feature_class=files[fc.segments_wide_enough],
-        buffer_distance_or_field=f"{min_width} Meters",
+        buffer_distance_or_field=f"{min_width/2} Meters",
     )
 
     # Remove the large enough segments from the original polyon
@@ -396,7 +402,7 @@ def get_shared_locked_boundary(files: dict, min_width: int) -> None:
     arcpy.analysis.PairwiseBuffer(
         in_features=locked_fc_line_clipped_lyr,
         out_feature_class=locked_fc_line_clipped_n_buffed_fc,
-        buffer_distance_or_field=f"{min_width} Meters",
+        buffer_distance_or_field=f"{min_width/2} Meters",
     )
 
     locked_fc_line_clipped_n_buffed_lyr = "locked_fc_line_clipped_n_buffed_lyr"
@@ -419,7 +425,7 @@ def get_shared_locked_boundary(files: dict, min_width: int) -> None:
     arcpy.analysis.PairwiseBuffer(
         in_features=areas_chosen_within_locked_lyr,
         out_feature_class=areas_chosen_within_locked_buffed_fc,
-        buffer_distance_or_field=f"{min_width} Meter",
+        buffer_distance_or_field=f"{min_width/2} Meter",
     )
 
     areas_chosen_within_locked_buffed_lyr = "areas_chosen_within_locked_buffed_lyr"
@@ -445,7 +451,7 @@ def get_shared_locked_boundary(files: dict, min_width: int) -> None:
     arcpy.analysis.PairwiseBuffer(
         in_features=locked_fc_line_intersecting_lyr,
         out_feature_class=files[fc.locked_areas_outside_buffer],
-        buffer_distance_or_field=f"{min_width} Meter",
+        buffer_distance_or_field=f"{min_width/2} Meter",
     )
 
     # Erase the original locked fc from the new buffer.
@@ -518,14 +524,14 @@ def buff_small_segments(files: dict, min_width: int) -> None:
         arcpy.analysis.PairwiseBuffer(
             in_features=only_small_segments_centre_lyr,
             out_feature_class=files[fc.small_segments_enlarged],
-            buffer_distance_or_field=f"{min_width} Meters",
+            buffer_distance_or_field=f"{min_width/2} Meters",
         )
 
     except:
         arcpy.analysis.Buffer(
             in_features=only_small_segments_centre_lyr,
             out_feature_class=files[fc.small_segments_enlarged],
-            buffer_distance_or_field=f"{min_width} Meters",
+            buffer_distance_or_field=f"{min_width/2} Meters",
         )
 
     # Dissolve the locked fc buffed segments with the rest of the target polygon.
@@ -569,8 +575,9 @@ def buff_small_segments(files: dict, min_width: int) -> None:
 
 if __name__ == "__main__":
     buff_small_polygon_segments(
-        input_fc=input_n10.Arealdekke_Buskerud,
         target_fc="Ferskvann_elv_bekk",
+        input_fc=input_n10.Arealdekke_Buskerud,
         locked_fc=["Samferdsel"],
-        min_width=3,
+        output_fc="output",
+        map_scale="N10"
     )

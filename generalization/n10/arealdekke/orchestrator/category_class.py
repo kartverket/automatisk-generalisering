@@ -12,13 +12,14 @@ from generalization.n10.arealdekke.category_tools.buff_small_polygon_segments im
 
 class Category:
 
-    def __init__(self, title:str, operations:list, accessibility:bool, order:int):
+    def __init__(self, title:str, operations:list, accessibility:bool, order:int, map_scale:int):
 
         #Extracts inputs and saves them within object
         self.__title = title
         self.__operations = operations
         self.__accessibility = accessibility
         self.__order = order
+        self.__map_scale = str(map_scale)
 
 
         #Dictionary with all tools available to the category objects
@@ -56,7 +57,7 @@ class Category:
 
         if self.__operations:
             #Inserts the arealdekke input data into the layer.
-            self.set_layer(input_data)
+            arcpy.management.MakeFeatureLayer(input_data, self.lyr) 
 
             #Iterates through the operations needed for each category.
             for operation in self.__operations:
@@ -65,13 +66,13 @@ class Category:
                 self.cat_tools[operation](
                     self.__title,
                     self.lyr,
-                    locked_layers,
                     output_lyr,
-                    self.min_criteria
+                    locked_layers,
+                    self.__map_scale
                     )
                 
                 #Updates the layer that will be passed on to the next operation to be the output.
-                self.set_lyr(output_lyr)
+                arcpy.management.MakeFeatureLayer(output_lyr, self.lyr) 
 
             #Marks the process as completed and insert the final layer into the output layer.
             reinsert=True
@@ -84,12 +85,6 @@ class Category:
     # ========================
     # Setters
     # ========================
-
-
-    def set_layer(self, data)->None:
-
-        #Extracts data into feature layer initiated in object init
-        arcpy.management.MakeFeatureLayer(data, self.lyr)   
 
     
     def set_accessibility(self, newStatus:bool)->None:
@@ -114,6 +109,9 @@ class Category:
 
     def get_operations(self)->list:
         return self.__operations
+    
+    def get_map_scale(self)->str:
+        return self.__map_scale
     
 
     def __str__(self)->str:

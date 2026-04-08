@@ -30,3 +30,7 @@ class GangSykkelDissolverParameters:
 @dataclass(frozen=True)
 class LandUseParameters:
     elvFlate: dict
+
+@dataclass(frozen=True)
+class buff_small_polygon_segments_parameters:
+    min_width: dict

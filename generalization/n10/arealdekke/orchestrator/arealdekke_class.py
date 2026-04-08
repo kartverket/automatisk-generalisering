@@ -1,6 +1,7 @@
 #Module imports:
 import arcpy
 import yaml
+from pathlib import Path
 from composition_configs import core_config
 from env_setup import environment_setup
 from file_manager import WorkFileManager
@@ -14,13 +15,14 @@ from generalization.n10.arealdekke.overall_tools.eliminate_small_polygons import
 from generalization.n10.arealdekke.attribute_changer import attribute_changer
 from generalization.n10.arealdekke.overall_tools.island_controller import island_controller
 from generalization.n10.arealdekke.orchestrator.expansion_controller import simplify_and_expand_land_use
+from generalization.n10.arealdekke.overall_tools.area_merger import area_merger
 
 arcpy.env.overwriteOutput = True
 
 class Arealdekke:
 
 
-    def __init__(self, input_data, min_criteria)->None:
+    def __init__(self, input_data, map_scale)->None:
         
         #Setting up file manager
         self.working_fc = Arealdekke_N10.buffed_polygon_segments__n10_land_use.value
@@ -35,9 +37,11 @@ class Arealdekke:
         #Safety lock to make sure categories are not added before data is ok.
         self.preprocessed=False
 
-        #Criteria to the arealdekke
-        self.min_criteria=min_criteria
-        self.MAP_SCALE="N10" #This should be in min_criteria yml file
+        #Other attributes
+        self.__map_scale=map_scale
+
+        #Program history
+        self.__program_history_path = Path(__file__).parent / "arealdekke_history.yml"
 
 
     # ========================
@@ -99,12 +103,13 @@ class Arealdekke:
                     python_structured=yaml.safe_load(yml)
 
                     for category in python_structured["Categories"]:
-                        
+
                         #Extracts the data from the yml file into a category object.
                         category_obj = Category(**category)
 
-                        #Adds it to the categories list/array.
-                        self.categories.append(category_obj)
+                        #Adds it to the categories list/array if it has the same map scale as arealdekke.
+                        if category_obj.get_map_scale()==self.__map_scale:
+                            self.categories.append(category_obj)
 
                 #Sorts the categories based on their order key.
                 self.categories.sort(key=lambda obj: obj.get_order())
@@ -143,22 +148,21 @@ class Arealdekke:
 
             if reinsert:
                 #Add the category back into the input layer.
-                self.add_back_to_lyr(processed_layer)
+                pass
+                #area_merger()
             
             #Lock the layer
-            category.set_accessibility(True)
+            category.set_accessibility(False)
 
-            #Delete the output layer (just in case).
-            del processed_layer
-    
-    
-    def add_back_to_lyr(self, output)->None:
-        pass
+            #Delete the layers (just in case).
+            del processed_layer, currently_locked_layers, open_layer
                     
 
     # ========================
     # Getters
     # ========================
+    def get_map_scale(self)->str:
+        return self.__map_scale
 
 
     def get_locked_categories(self, locked_lyr)->None:
@@ -181,7 +185,6 @@ class Arealdekke:
 
         #Extracts categorical data from arealdekke into feature layer
         arcpy.management.MakeFeatureLayer(self.arealdekke_data, open_lyr, where_clause=f"arealdekke='{category_title}'")   
-
 
     # ========================
     # Setters
