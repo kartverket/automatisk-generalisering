@@ -8,6 +8,7 @@ Bebygd,IdrettsOmr,Golfanlegg,*,Golfbane,None
 Bebygd,IdrettsOmr,*,*,IdrettsOmr,None
 Bebygd,NaeringTjeneste,Bergverk,*,Bergverk,None
 Bebygd,NaeringTjeneste,Industri,*,Industri,None
+Bebygd,TeknInfrastr,*,*,TeknInfrastr,None
 Bebygd,TransportTelek,LufthavnOmr,*,LufthavnOmr,None
 Bebygd,TransportTelek,Parkering,*,Parkering,None
 Bebygd,*,*,*,Bebygd,None
@@ -22,7 +23,7 @@ Jordbruk_fulldyrka,Fritidsbebyggelse,*,*,Bebygd,None
 Jordbruk_fulldyrka,HelseSosial,*,*,Bebygd,None
 Jordbruk_fulldyrka,KulturReligion,*,*,Bebygd,None
 Jordbruk_fulldyrka,LandbrukFiske,*,*,Bebygd,None
-Jordbruk_fulldyrka,TeknInfrastr,*,*,Bebygd,None
+Jordbruk_fulldyrka,TeknInfrastr,*,*,TeknInfrastr,None
 Jordbruk_fulldyrka,UndervisnBhage,*,*,Bebygd,None
 Jordbruk_fulldyrka,GroenneOmr,GravUrnelund,*,GravUrnelund,None
 Jordbruk_fulldyrka,GroenneOmr,Lekeplass,*,Snaumark,None
@@ -52,7 +53,7 @@ Jordbruk_innmarksbeite_aapen,*,*,*,Innmarksbeite,None
 Jordbruk_innmarksbeite_tresatt,Boligbebyggelse,*,*,Bebygd,None
 Jordbruk_innmarksbeite_tresatt,Fritidsbebyggelse,*,*,Bebygd,None
 Jordbruk_innmarksbeite_tresatt,LandbrukFiske,*,*,Bebygd,None
-Jordbruk_innmarksbeite_tresatt,TeknInfrastr,*,*,Bebygd,None
+Jordbruk_innmarksbeite_tresatt,TeknInfrastr,*,*,TeknInfrastr,None
 Jordbruk_innmarksbeite_tresatt,GroenneOmr,GravUrnelund,*,GravUrnelund,Skog
 Jordbruk_innmarksbeite_tresatt,GroenneOmr,Lekeplass,*,Snaumark,Skog
 Jordbruk_innmarksbeite_tresatt,IdrettsOmr,Alpinanlegg,*,Alpinbakke,Skog
@@ -68,7 +69,7 @@ Jordbruk_innmarksbeite_uspes,Fritidsbebyggelse,*,*,Bebygd,None
 Jordbruk_innmarksbeite_uspes,HelseSosial,*,*,Bebygd,None
 Jordbruk_innmarksbeite_uspes,KulturReligion,*,*,Bebygd,None
 Jordbruk_innmarksbeite_uspes,LandbrukFiske,*,*,Bebygd,None
-Jordbruk_innmarksbeite_uspes,TeknInfrastr,*,*,Bebygd,None
+Jordbruk_innmarksbeite_uspes,TeknInfrastr,*,*,TeknInfrastr,None
 Jordbruk_innmarksbeite_uspes,UndervisnBhage,*,*,Bebygd,None
 Jordbruk_innmarksbeite_uspes,GroenneOmr,GravUrnelund,*,GravUrnelund,None
 Jordbruk_innmarksbeite_uspes,GroenneOmr,Lekeplass,*,Snaumark,None
@@ -86,7 +87,7 @@ Jordbruk_overflatedyrka,Boligbebyggelse,*,*,Bebygd,None
 Jordbruk_overflatedyrka,Fritidsbebyggelse,*,*,Bebygd,None
 Jordbruk_overflatedyrka,KulturReligion,*,*,Bebygd,None
 Jordbruk_overflatedyrka,LandbrukFiske,*,*,Bebygd,None
-Jordbruk_overflatedyrka,TeknInfrastr,*,*,Bebygd,None
+Jordbruk_overflatedyrka,TeknInfrastr,*,*,TeknInfrastr,None
 Jordbruk_overflatedyrka,UndervisnBhage,*,*,Bebygd,None
 Jordbruk_overflatedyrka,GroenneOmr,GravUrnelund,*,GravUrnelund,None
 Jordbruk_overflatedyrka,GroenneOmr,Lekeplass,*,Snaumark,None
@@ -124,7 +125,7 @@ Samferdsel,Fritidsbebyggelse,*,*,Bebygd,None
 Samferdsel,HelseSosial,*,*,Bebygd,None
 Samferdsel,KulturReligion,*,*,Bebygd,None
 Samferdsel,LandbrukFiske,*,*,Bebygd,None
-Samferdsel,TeknInfrastr,*,*,Bebygd,None
+Samferdsel,TeknInfrastr,*,*,TeknInfrastr,None
 Samferdsel,UndervisnBhage,*,*,Bebygd,None
 Samferdsel,GroenneOmr,GravUrnelund,*,GravUrnelund,None
 Samferdsel,GroenneOmr,Lekeplass,*,Snaumark,None
