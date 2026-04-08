@@ -108,8 +108,8 @@ Myr_aapen,IdrettsOmr,Golfanlegg,*,Golfbane,Myr
 Myr_aapen,IdrettsOmr,*,*,IdrettsOmr,Myr
 Myr_aapen,*,*,*,Myr,None
 Myr_tresatt,GroenneOmr,GravUrnelund,*,GravUrnelund,Myr
-Myr_tresatt,GroenneOmr,Lekeplass,*,Snaumark,Myr
-Myr_tresatt,GroenneOmr,*,*,Park,Myr
+Myr_tresatt,GroenneOmr,Lekeplass,*,Skog,Myr
+Myr_tresatt,GroenneOmr,*,*,Skog,Myr
 Myr_tresatt,IdrettsOmr,Alpinanlegg,*,Alpinbakke,Myr
 Myr_tresatt,IdrettsOmr,Golfanlegg,*,Golfbane,Myr
 Myr_tresatt,IdrettsOmr,*,*,IdrettsOmr,Myr
@@ -140,7 +140,7 @@ Samferdsel,*,*,*,Samferdsel,None
 Skog,GroenneOmr,GravUrnelund,*,GravUrnelund,Skog
 Skog,GroenneOmr,Lekeplass,Fjell_i_dagen,Skog,Fjell_i_dagen
 Skog,GroenneOmr,Lekeplass,*,Skog,None
-Skog,GroenneOmr,*,*,Park,Skog
+Skog,GroenneOmr,*,*,Skog,None
 Skog,IdrettsOmr,Alpinanlegg,Blokkmark,Alpinbakke,Blokkmark
 Skog,IdrettsOmr,Alpinanlegg,Fjell_i_dagen,Alpinbakke,Fjell_i_dagen
 Skog,IdrettsOmr,Alpinanlegg,*,Alpinbakke,Skog
