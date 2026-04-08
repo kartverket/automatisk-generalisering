@@ -108,6 +108,14 @@ generalization.n10.arealdekke.island\_controller module
    :show-inheritance:
    :undoc-members:
 
+generalization.n10.arealdekke.passability\_layer module
+-------------------------------------------------------
+
+.. automodule:: generalization.n10.arealdekke.passability_layer
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
 generalization.n10.arealdekke.simplify\_land\_use module
 --------------------------------------------------------
 
