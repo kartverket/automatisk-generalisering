@@ -80,10 +80,14 @@ class Arealdekke:
             map_scale=self.MAP_SCALE,
         )
 
+        output_fc=Arealdekke_N10.expansion_controller_output__n10_land_use.value
+
         simplify_and_expand_land_use(
             input_fc=Arealdekke_N10.dissolve_gangsykkel.value,
             output_fc=Arealdekke_N10.expansion_controller_output__n10_land_use.value,
         )
+
+        self.set_arealdekke_input(output_fc)
 
         self.preprocessed=True
 
