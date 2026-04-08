@@ -239,6 +239,15 @@ def count_objects(input_layer):
     return count
 
 
+def count_vertices(input_layer) -> int:
+    total = 0
+    with arcpy.da.SearchCursor(input_layer, ["SHAPE@"]) as cursor:
+        for (shape,) in cursor:
+            if shape is not None:
+                total += shape.pointCount
+    return total
+
+
 def delete_fields_if_exist(
     feature_class_path: str, fields_to_delete: list[str]
 ) -> None:
