@@ -1105,6 +1105,13 @@ class PartitionIterator:
                 "max_iteration_runtime_seconds": None,
                 "max_iteration_runtime_partition_id": None,
             },
+            "context_inputs_summary": {
+                "total_processed_objects": 0,
+                "total_processed_vertices": 0,
+                "total_objects_saved_by_optimization": None,
+                "total_processing_input_context_objects": 0,
+                "total_processing_input_context_vertices": 0,
+            },
             "processing_inputs": processing_inputs,
         }
 
@@ -1169,6 +1176,16 @@ class PartitionIterator:
                 _update_max_min(obj_overview, "max_context_object_percentage", "min_context_object_percentage",
                                 iteration_entry.get(self.CONTEXT_OBJECT_PERCENTAGE, 0))
 
+            context_summary = self.overview_catalog["context_inputs_summary"]
+            context_summary["total_processing_input_context_objects"] += iteration_entry.get(self.CONTEXT_OBJECT_COUNT, 0)
+            context_summary["total_processing_input_context_vertices"] += iteration_entry.get(self.CONTEXT_VERTEX_COUNT, 0)
+
+        context_summary = self.overview_catalog["context_inputs_summary"]
+        for object_key, _ in self._context_items():
+            iteration_entry = self.iteration_catalog.get(object_key, {})
+            context_summary["total_processed_objects"] += iteration_entry.get(self.COUNT, 0)
+            context_summary["total_processed_vertices"] += iteration_entry.get(self.VERTEX_COUNT, 0)
+
     def _finalize_and_write_overview_catalog(self) -> None:
         """
         Compute all derived values (averages, diffs, percentages) and write overview.json
@@ -1188,6 +1205,13 @@ class PartitionIterator:
             partition_summary["average_load"] = round(
                 sum(self._overview_partition_loads) / len(self._overview_partition_loads), 2
             )
+
+        context_summary = self.overview_catalog["context_inputs_summary"]
+        context_summary["total_objects_saved_by_optimization"] = sum(
+            tag_dict.get(self.REDUCED_COUNT, 0)
+            for object_key, tag_dict in self.input_catalog.items()
+            if self._is_vector_of_type(tag_dict=tag_dict, input_type=core_config.InputType.CONTEXT)
+        )
 
         for object_key, obj_overview in self.overview_catalog["processing_inputs"].items():
             n = obj_overview["partitions_with_object_present"]
