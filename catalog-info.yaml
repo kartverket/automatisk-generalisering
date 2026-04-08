@@ -8,3 +8,4 @@ spec:
   type: service
   lifecycle: production
   owner: automatisk_generalisering
+  system: system:default/automatisk_generalisering
