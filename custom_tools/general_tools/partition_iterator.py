@@ -152,6 +152,15 @@ class PartitionIterator:
     INPUT_KEY = "input"
     DUMMY = "dummy"
     COUNT = "count"
+    VERTEX_COUNT = "vertex_count"
+    PROCESSING_OBJECT_COUNT = "processing_object_count"
+    CONTEXT_OBJECT_COUNT = "context_object_count"
+    PROCESSING_VERTEX_COUNT = "processing_vertex_count"
+    CONTEXT_VERTEX_COUNT = "context_vertex_count"
+    PROCESSING_OBJECT_PERCENTAGE = "processing_object_percentage"
+    CONTEXT_OBJECT_PERCENTAGE = "context_object_percentage"
+    PROCESSING_VERTEX_PERCENTAGE = "processing_vertex_percentage"
+    CONTEXT_VERTEX_PERCENTAGE = "context_vertex_percentage"
     PRE_OPTIMIZATION_COUNT = "pre_optimization_count"
     REDUCED_COUNT = "reduced_count"
     PARTITION_FIELD = "partition_selection_field"
@@ -338,21 +347,37 @@ class PartitionIterator:
         )
         print(f"Created partition feature: {self.partition_feature}")
 
+    def _total_partition_load(self) -> int:
+        """
+        Returns the total load for the current partition based on partition_method.
+
+        FEATURES: sum of feature counts across all catalog entries.
+        VERTICES: sum of vertex counts across all catalog entries.
+        """
+        if self.partition_method == "VERTICES":
+            return sum(
+                entry.get(self.VERTEX_COUNT, 0)
+                for entry in self.iteration_catalog.values()
+            )
+        return sum(
+            entry.get(self.COUNT, 0) for entry in self.iteration_catalog.values()
+        )
+
     def _count_maximum_objects_in_partition(self) -> int:
         """
         What:
-            Iterates over all partitions and determines the highest number of total processed
-            input features (processing + context) found in any single partition.
+            Iterates over all partitions and determines the highest load (features or
+            vertices depending on partition_method) found in any single partition.
 
         How:
             For each partition:
             - Select the partition geometry.
             - Run processing and context selection logic.
-            - Track total processed objects.
+            - Track total load via _total_partition_load.
             - Cleanup intermediate files.
 
         Returns:
-            int: Maximum number of features found in a partition across all iterations.
+            int: Maximum partition load across all iterations.
         """
         self.update_max_partition_count()
         max_partition_load = 0
@@ -383,14 +408,12 @@ class PartitionIterator:
                 partition_id=partition_id,
             )
 
-            total_objects = sum(
-                row.get(self.COUNT, 0) for row in self.iteration_catalog.values()
-            )
-            max_partition_load = max(max_partition_load, total_objects)
+            total_load = self._total_partition_load()
+            max_partition_load = max(max_partition_load, total_load)
 
             print(
                 f"\nCounting objects for Partition: {partition_id}\n"
-                f"Current total found: {total_objects}\n"
+                f"Current total found: {total_load}\n"
                 f"Current maximum found: {max_partition_load}"
             )
 
@@ -776,6 +799,7 @@ class PartitionIterator:
 
         if center_count == 0:
             iteration_entry[self.COUNT] = center_count
+            iteration_entry[self.VERTEX_COUNT] = 0
             self.update_empty_object_tag_with_dummy_file(
                 object_key=object_key, tag=self.INPUT_KEY
             )
@@ -841,6 +865,7 @@ class PartitionIterator:
             if self.search_distance > 0
             else center_count
         )
+        iteration_entry[self.VERTEX_COUNT] = file_utilities.count_vertices(output_path)
         iteration_entry[self.INPUT_KEY] = output_path
         self.work_file_manager_temp_files.delete_created_files()
         return True
@@ -913,11 +938,12 @@ class PartitionIterator:
 
         if count > 0:
             iteration_entry[self.INPUT_KEY] = output_path
-
+            iteration_entry[self.VERTEX_COUNT] = file_utilities.count_vertices(output_path)
         else:
             self.update_empty_object_tag_with_dummy_file(
                 object_key=object_key, tag=self.INPUT_KEY
             )
+            iteration_entry[self.VERTEX_COUNT] = 0
         iteration_entry[self.COUNT] = count
 
     def process_all_context_inputs(
@@ -936,6 +962,86 @@ class PartitionIterator:
                 object_key=object_key,
                 input_path=input_path,
                 iteration_partition=iteration_partition,
+                partition_id=partition_id,
+            )
+
+    def _collect_single_processing_input_metadata(
+        self, object_key: str, partition_id: int
+    ) -> None:
+        """
+        Compute and store processing/context split metadata for one processing input.
+
+        Uses PARTITION_FIELD (1 = processing, 0 = context) to make two attribute
+        selections on the iteration path, then counts objects and vertices for each.
+        Results are written into iteration_catalog for the given object_key.
+        """
+        iteration_entry = self.iteration_catalog.get(object_key, {})
+
+        if iteration_entry.get(self.COUNT, 0) == 0:
+            iteration_entry[self.PROCESSING_OBJECT_COUNT] = 0
+            iteration_entry[self.CONTEXT_OBJECT_COUNT] = 0
+            iteration_entry[self.PROCESSING_VERTEX_COUNT] = 0
+            iteration_entry[self.CONTEXT_VERTEX_COUNT] = 0
+            iteration_entry[self.PROCESSING_OBJECT_PERCENTAGE] = 0
+            iteration_entry[self.CONTEXT_OBJECT_PERCENTAGE] = 0
+            iteration_entry[self.PROCESSING_VERTEX_PERCENTAGE] = 0
+            iteration_entry[self.CONTEXT_VERTEX_PERCENTAGE] = 0
+            return
+
+        iteration_path = iteration_entry[self.INPUT_KEY]
+        total_count = iteration_entry[self.COUNT]
+
+        processing_layer = f"partition_{partition_id}_{object_key}_processing_lyr"
+        context_layer = f"partition_{partition_id}_{object_key}_context_lyr"
+
+        custom_arcpy.select_attribute_and_make_feature_layer(
+            input_layer=iteration_path,
+            expression=f"{self.PARTITION_FIELD} = 1",
+            output_name=processing_layer,
+        )
+        custom_arcpy.select_attribute_and_make_feature_layer(
+            input_layer=iteration_path,
+            expression=f"{self.PARTITION_FIELD} = 0",
+            output_name=context_layer,
+        )
+
+        processing_count = file_utilities.count_objects(processing_layer)
+        context_count = file_utilities.count_objects(context_layer)
+        processing_vertices = file_utilities.count_vertices(processing_layer)
+        context_vertices = file_utilities.count_vertices(context_layer)
+
+        arcpy.Delete_management(processing_layer)
+        arcpy.Delete_management(context_layer)
+
+        iteration_entry[self.PROCESSING_OBJECT_COUNT] = processing_count
+        iteration_entry[self.CONTEXT_OBJECT_COUNT] = context_count
+        iteration_entry[self.PROCESSING_VERTEX_COUNT] = processing_vertices
+        iteration_entry[self.CONTEXT_VERTEX_COUNT] = context_vertices
+        total_vertices = processing_vertices + context_vertices
+
+        iteration_entry[self.PROCESSING_OBJECT_PERCENTAGE] = round(
+            processing_count / total_count * 100, 2
+        )
+        iteration_entry[self.CONTEXT_OBJECT_PERCENTAGE] = round(
+            context_count / total_count * 100, 2
+        )
+        iteration_entry[self.PROCESSING_VERTEX_PERCENTAGE] = round(
+            processing_vertices / total_vertices * 100, 2
+        ) if total_vertices > 0 else 0
+        iteration_entry[self.CONTEXT_VERTEX_PERCENTAGE] = round(
+            context_vertices / total_vertices * 100, 2
+        ) if total_vertices > 0 else 0
+
+    def _collect_processing_input_metadata(self, partition_id: int) -> None:
+        """
+        Collect processing/context split metadata for all processing inputs.
+
+        Calls _collect_single_processing_input_metadata for each processing object
+        in the iteration_catalog. Mirrors the process_single_X / process_all_X pattern.
+        """
+        for object_key, _ in self._processing_items():
+            self._collect_single_processing_input_metadata(
+                object_key=object_key,
                 partition_id=partition_id,
             )
 
@@ -1436,6 +1542,8 @@ class PartitionIterator:
                 self.process_all_context_inputs(
                     iteration_partition=iteration_partition, partition_id=partition_id
                 )
+
+                self._collect_processing_input_metadata(partition_id=partition_id)
 
                 self.execute_injected_methods_with_retry(partition_id=partition_id)
                 self.write_documentation(
