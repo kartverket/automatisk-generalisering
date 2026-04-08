@@ -84,7 +84,7 @@ class Arealdekke:
 
         simplify_and_expand_land_use(
             input_fc=Arealdekke_N10.dissolve_gangsykkel.value,
-            output_fc=Arealdekke_N10.expansion_controller_output__n10_land_use.value,
+            output_fc=output_fc,
         )
 
         self.set_arealdekke_input(output_fc)
