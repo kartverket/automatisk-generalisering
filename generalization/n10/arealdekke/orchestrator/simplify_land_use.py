@@ -13,9 +13,7 @@ from file_manager.n10.file_manager_arealdekke import Arealdekke_N10
 
 
 @timing_decorator
-def simplify_and_smooth_polygon(
-    target: str, input_fc: str, output_fc: str, locked_fc: set, map_scale: str
-) -> None:
+def simplify_and_smooth_polygon(input_fc: str, output_fc: str) -> None:
     """
     Simplifies polygons with the WEIGHTED_AREA algorithm before
     they are smoothed with the BEZIER_INTERPOLATION algorithm.

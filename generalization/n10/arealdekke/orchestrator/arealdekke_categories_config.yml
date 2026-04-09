@@ -1,8 +1,8 @@
 Categories :
   - title : ElvFlate
     operations :
-      - simplify_and_smooth
       - buff_small_segments
+      - simplify_and_smooth
     accessibility : true
     order: 1
     map_scale: N10
