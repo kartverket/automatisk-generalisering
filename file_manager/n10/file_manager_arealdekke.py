@@ -22,6 +22,8 @@ expansion_controller = "expansion_controller"
 buff_polygon_segments = "buff_polygon_segments"
 river_file = "river_file"
 innsjo_file = "innsjo_file"
+arealdekke_class = "arealdekke_class"
+category_class = "category_class"
 
 
 class Arealdekke_N10(Enum):
@@ -190,4 +192,24 @@ class Arealdekke_N10(Enum):
 
     innsjo_hoydeintervall__n10_land_use = file_manager.generate_file_name_gdb(
         script_source_name=innsjo_file, description="hoyde_intervall"
+    )
+
+    # ========================================
+    #                         AREALDEKKE CLASS
+    # ========================================
+
+    arealdekke_class_in_progress__n10_land_use = file_manager.generate_file_name_gdb(
+        script_source_name=arealdekke_class, description="in_progress_files"
+    )
+
+    arealdekke_class_final__n10_land_use = file_manager.generate_file_name_gdb(
+        script_source_name=arealdekke_class, description="final_file"
+    )
+
+    # ========================================
+    #                           CATEGORY CLASS
+    # ========================================
+
+    category_class_in_progress__n10_land_use = file_manager.generate_file_name_gdb(
+        script_source_name=category_class, description="in_progress_files"
     )
