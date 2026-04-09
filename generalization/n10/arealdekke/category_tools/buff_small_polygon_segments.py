@@ -47,9 +47,7 @@ def buff_small_polygon_segments(
     )
     min_width = scale_parameters.min_width[target]
 
-    extract_data(
-        files=files, target_fc=target, locked_fc=locked_fc, input_fc=input_fc
-    )
+    extract_data(files=files, target_fc=target, locked_fc=locked_fc, input_fc=input_fc)
     find_segments_under_min(files=files, min_width=min_width)
     choose_target_areas(files=files)
     get_shared_locked_boundary(files=files, min_width=min_width)

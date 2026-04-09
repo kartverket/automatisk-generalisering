@@ -6,7 +6,9 @@ from file_manager import WorkFileManager
 from file_manager.n10.file_manager_arealdekke import Arealdekke_N10
 
 # Category tools:
-from generalization.n10.arealdekke.orchestrator.simplify_land_use import simplify_and_smooth_polygon
+from generalization.n10.arealdekke.orchestrator.simplify_land_use import (
+    simplify_and_smooth_polygon,
+)
 from generalization.n10.arealdekke.category_tools.buff_small_polygon_segments import (
     buff_small_polygon_segments,
 )

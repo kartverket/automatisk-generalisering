@@ -13,9 +13,7 @@ def main():
     arealdekke.preprocess()
 
     # Adds the categories to the arealdekke object
-    yml_file = (
-        Path(__file__).parent / "arealdekke_categories_config.yml"
-    )
+    yml_file = Path(__file__).parent / "arealdekke_categories_config.yml"
     arealdekke.add_categories(yml_file)
 
     # Process categories
