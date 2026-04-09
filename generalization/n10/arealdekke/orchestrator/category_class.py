@@ -26,21 +26,23 @@ class Category:
         order: int,
         map_scale: str,
     ):
-        
+
         # Extracts inputs and saves them within object
         self.__title = title
         self.__operations = operations or []
         self.__accessibility = accessibility
         self.__order = order
         self.__map_scale = map_scale
-        
+
         # Setting up file manager w. dictionary for easy file access
         self.working_fc = Arealdekke_N10.category_class_in_progress__n10_land_use.value
         self.config = core_config.WorkFileConfig(root_file=self.working_fc)
         self.wfm = WorkFileManager(config=self.config)
 
-        self.files={
-            "last_edited_fc":self.wfm.build_file_path(file_name=f"last_edited_fc_{self.__title}", file_type="gdb")
+        self.files = {
+            "last_edited_fc": self.wfm.build_file_path(
+                file_name=f"last_edited_fc_{self.__title}", file_type="gdb"
+            )
         }
 
         # Dictionary with all tools available to the category objects
@@ -98,15 +100,14 @@ class Category:
 
                 # Updates the layer that will be passed on to the next operation to be the output.
                 arcpy.management.CopyFeatures(
-                    in_features=processed_fc,
-                    out_feature_class=input_fc
-                    )
-                
+                    in_features=processed_fc, out_feature_class=input_fc
+                )
+
                 # Saves the last edits made in case program stops.
                 arcpy.management.CopyFeatures(
                     in_features=processed_fc,
-                    out_feature_class=self.files["last_edited_fc"]
-                    )
+                    out_feature_class=self.files["last_edited_fc"],
+                )
 
             # Marks the process as completed.
             reinsert = True

@@ -41,15 +41,25 @@ class Arealdekke:
     def __init__(self, map_scale) -> None:
 
         # Setting up file manager w. dictionary for easy file access
-        self.working_fc = Arealdekke_N10.arealdekke_class_in_progress__n10_land_use.value
+        self.working_fc = (
+            Arealdekke_N10.arealdekke_class_in_progress__n10_land_use.value
+        )
         self.config = core_config.WorkFileConfig(root_file=self.working_fc)
         self.wfm = WorkFileManager(config=self.config)
 
-        self.files={
-            "arealdekke_fc":self.wfm.build_file_path(file_name="arealdekke_fc", file_type="gdb"),
-            "category_fc":self.wfm.build_file_path(file_name="category_fc", file_type="gdb"),
-            "locked_fc":self.wfm.build_file_path(file_name="locked_fc", file_type="gdb"),
-            "processed_fc":self.wfm.build_file_path(file_name="processed_fc", file_type="gdb")
+        self.files = {
+            "arealdekke_fc": self.wfm.build_file_path(
+                file_name="arealdekke_fc", file_type="gdb"
+            ),
+            "category_fc": self.wfm.build_file_path(
+                file_name="category_fc", file_type="gdb"
+            ),
+            "locked_fc": self.wfm.build_file_path(
+                file_name="locked_fc", file_type="gdb"
+            ),
+            "processed_fc": self.wfm.build_file_path(
+                file_name="processed_fc", file_type="gdb"
+            ),
         }
 
         # Extracts the data and saves it in the object
@@ -111,12 +121,10 @@ class Arealdekke:
         )
 
         arcpy.management.CopyFeatures(
-            in_features=output_fc,
-            out_feature_class=self.files["arealdekke_fc"]
+            in_features=output_fc, out_feature_class=self.files["arealdekke_fc"]
         )
 
         self.preprocessed = True
-
 
     def add_categories(self, categories_config_file) -> bool:
 
@@ -177,21 +185,19 @@ class Arealdekke:
             # Lock the layer
             category.set_accessibility(False)
 
-        #Save processed data to final fc and delete the last files
+        # Save processed data to final fc and delete the last files
         arcpy.management.CopyFeatures(
             in_features=self.files["processed_fc"],
-            out_feature_class=Arealdekke_N10.arealdekke_class_final__n10_land_use.value
+            out_feature_class=Arealdekke_N10.arealdekke_class_final__n10_land_use.value,
         )
 
         self.wfm.delete_created_files()
-
 
     # ========================
     # Getters
     # ========================
     def get_map_scale(self) -> str:
         return self.__map_scale
-    
 
     def get_locked_categories(self) -> None:
 
@@ -206,7 +212,7 @@ class Arealdekke:
         values = ", ".join([f"'{v}'" for v in locked_categories_titles])
         where_clause = f"arealdekke IN ({values})"
 
-        temp_lyr="temp_lyr"
+        temp_lyr = "temp_lyr"
 
         arcpy.management.MakeFeatureLayer(
             in_features=self.files["arealdekke_fc"],
@@ -214,16 +220,15 @@ class Arealdekke:
             where_clause=where_clause,
         )
 
-        #Makes layer into fc
+        # Makes layer into fc
         arcpy.management.CopyFeatures(
-            in_features=temp_lyr,
-            out_feature_class=self.files["locked_fc"]
-            )
+            in_features=temp_lyr, out_feature_class=self.files["locked_fc"]
+        )
 
     def get_category(self, category_title: str) -> None:
 
         # Extracts categorical data from arealdekke into feature layer
-        temp_lyr="temp_lyr"
+        temp_lyr = "temp_lyr"
 
         arcpy.management.MakeFeatureLayer(
             in_features=self.files["arealdekke_fc"],
@@ -232,8 +237,7 @@ class Arealdekke:
         )
 
         arcpy.management.CopyFeatures(
-            in_features=temp_lyr,
-            out_feature_class=self.files["category_fc"]
+            in_features=temp_lyr, out_feature_class=self.files["category_fc"]
         )
 
     # ========================
