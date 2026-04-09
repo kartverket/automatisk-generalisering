@@ -1,7 +1,7 @@
 Categories :
   - title : ElvFlate
     operations :
-      - remove_islands
+      - simplify_and_smooth
       - buff_small_segments
     accessibility : true
     order: 1
@@ -51,7 +51,7 @@ Categories :
 
   - title : Samferdsel
     operations : 
-    accessibility : true
+    accessibility : false
     order: 9
     map_scale: N10
 

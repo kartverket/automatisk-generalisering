@@ -6,9 +6,7 @@ from file_manager import WorkFileManager
 from file_manager.n10.file_manager_arealdekke import Arealdekke_N10
 
 # Category tools:
-from generalization.n10.arealdekke.overall_tools.island_controller import (
-    island_controller,
-)
+from generalization.n10.arealdekke.orchestrator.simplify_land_use import simplify_and_smooth_polygon
 from generalization.n10.arealdekke.category_tools.buff_small_polygon_segments import (
     buff_small_polygon_segments,
 )
@@ -22,19 +20,19 @@ class Category:
         operations: list,
         accessibility: bool,
         order: int,
-        map_scale: int,
+        map_scale: str,
     ):
 
         # Extracts inputs and saves them within object
         self.__title = title
-        self.__operations = operations
+        self.__operations = operations or []
         self.__accessibility = accessibility
         self.__order = order
-        self.__map_scale = str(map_scale)
+        self.__map_scale = map_scale
 
         # Dictionary with all tools available to the category objects
         self.cat_tools = {
-            "remove_islands": island_controller,
+            "simplify_and_smooth": simplify_and_smooth_polygon,
             "buff_small_segments": buff_small_polygon_segments,
         }
 

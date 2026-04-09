@@ -1,5 +1,6 @@
 # Module imports:
 import arcpy
+from sqlalchemy import values
 import yaml
 from pathlib import Path
 from composition_configs import core_config
@@ -148,15 +149,10 @@ class Arealdekke:
         return completed
 
     def process_categories(self) -> None:
-
-        print(list(filter(lambda cat: cat.get_accessibility(), self.categories)))
-        return
-
         # Iterates through the categories that are true, meaning they are open.
         for category in list(
             filter(lambda cat: cat.get_accessibility(), self.categories)
         ):
-
             # Get the locked layers and the input layer
             currently_locked_layers = "currently_locked_layers"
             open_layer = "open_layer"
@@ -201,10 +197,13 @@ class Arealdekke:
                 locked_categories_titles.add(category.get_title())
 
         # Creates new layer with all the locked features
+        values = ", ".join([f"'{v}'" for v in locked_categories_titles])
+        where_clause = f"arealdekke IN ({values})"
+
         arcpy.management.MakeFeatureLayer(
             in_features=self.arealdekke_data,
             out_layer=locked_lyr,
-            where_clause=f"arealdekke IN {tuple(locked_categories_titles)}",
+            where_clause=where_clause,
         )
 
     def get_category(self, category_title: str, open_lyr) -> None:
