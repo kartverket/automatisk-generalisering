@@ -34,6 +34,17 @@ class Category:
         self.__order = order
         self.__map_scale = map_scale
 
+        # Setting up file manager w. dictionary for easy file access
+        self.working_fc = Arealdekke_N10.category_class_in_progress__n10_land_use.value
+        self.config = core_config.WorkFileConfig(root_file=self.working_fc)
+        self.wfm = WorkFileManager(config=self.config)
+
+        self.files = {
+            "last_edited_fc": self.wfm.build_file_path(
+                file_name=f"last_edited_fc_{self.__title}", file_type="gdb"
+            )
+        }
+
         # Dictionary with all tools available to the category objects
         self.cat_tools = {
             "simplify_and_smooth": simplify_and_smooth_polygon,
@@ -54,17 +65,14 @@ class Category:
     # ========================
 
     def process_category(
-        self, input_data: str, locked_layers: str, processed_layer: str
+        self, input_fc: str, locked_fc: str, processed_fc: str
     ) -> bool:
 
         reinsert = False
 
         # File that will be overwritten with new input for each iteration.
-        output_lyr = f"{self.__title}_output_lyr"
 
         if self.__operations:
-            # Inserts the arealdekke input data into the layer.
-            arcpy.management.MakeFeatureLayer(input_data, self.lyr)
 
             # Iterates through the operations needed for each category.
             for operation in self.__operations:
@@ -91,13 +99,18 @@ class Category:
                 self.cat_tools[operation](**args_to_pass)
 
                 # Updates the layer that will be passed on to the next operation to be the output.
-                arcpy.management.MakeFeatureLayer(output_lyr, self.lyr)
+                arcpy.management.CopyFeatures(
+                    in_features=processed_fc, out_feature_class=input_fc
+                )
 
-            # Marks the process as completed and insert the final layer into the output layer.
+                # Saves the last edits made in case program stops.
+                arcpy.management.CopyFeatures(
+                    in_features=processed_fc,
+                    out_feature_class=self.files["last_edited_fc"],
+                )
+
+            # Marks the process as completed.
             reinsert = True
-            arcpy.management.MakeFeatureLayer(
-                in_features=self.lyr, out_layer=processed_layer
-            )
 
         # Once done, return if the layer should be reinserted into arealdekke.
         return reinsert
