@@ -6,14 +6,18 @@ from file_manager.n10.file_manager_arealdekke import Arealdekke_N10
 from env_setup import environment_setup
 from custom_tools.general_tools.partition_iterator import PartitionIterator
 from composition_configs import core_config, logic_config
-from generalization.n10.arealdekke.arealdekke_dissolver import ArealdekkeDissolver
-from generalization.n10.arealdekke.eliminate_small_polygons import (
+from generalization.n10.arealdekke.overall_tools.arealdekke_dissolver import (
+    ArealdekkeDissolver,
+)
+from generalization.n10.arealdekke.overall_tools.eliminate_small_polygons import (
     EliminateSmallPolygons,
 )
 from collections import defaultdict
 from pathlib import Path
 from custom_tools.general_tools.param_utils import initialize_params
-from parameters.parameter_dataclasses import GangSykkelDissolverParameters
+from generalization.n10.arealdekke.parameters.parameter_dataclasses import (
+    GangSykkelDissolverParameters,
+)
 
 
 class GangSykkelDissolver:
@@ -37,7 +41,7 @@ class GangSykkelDissolver:
         self.files = self._create_wfm_gdbs(self.wfm)
 
         self.map_scale = gang_sykkel_dissolver_config.map_scale
-        params_path = Path(__file__).parent / "parameters" / "parameters.yml"
+        params_path = Path(__file__).parent.parent / "parameters" / "parameters.yml"
         self.scale_parameters = initialize_params(
             params_path=params_path,
             class_name="GangSykkelDissolver",

@@ -1,0 +1,74 @@
+Categories :
+  - title : ElvFlate
+    operations :
+      - simplify_and_smooth
+      - buff_small_segments
+    accessibility : true
+    order: 1
+    map_scale: N10
+
+  - title : Innsjo
+    operations : 
+    accessibility : true
+    order: 2
+    map_scale: N10
+
+  - title : InnsjoRegulert
+    operations : 
+    accessibility : true
+    order: 3
+    map_scale: N10
+
+  - title : Kanal
+    operations : 
+    accessibility : true
+    order: 4
+    map_scale: N10
+
+  - title : Hav
+    operations : 
+    accessibility : false
+    order: 5
+    map_scale: N10
+
+  - title : Jordbruk
+    operations : 
+    accessibility : true
+    order: 6
+    map_scale: N10
+
+  - title : Innmarksbeite
+    operations : 
+    accessibility : true
+    order: 7
+    map_scale: N10
+
+  - title : Myr
+    operations : 
+    accessibility : true
+    order: 8
+    map_scale: N10
+
+  - title : Samferdsel
+    operations : 
+    accessibility : false
+    order: 9
+    map_scale: N10
+
+  - title : Skog
+    operations : 
+    accessibility : true
+    order: 10
+    map_scale: N10
+
+  - title : Snaumark
+    operations : 
+    accessibility : true
+    order: 11
+    map_scale: N10
+
+  - title : Snosisbre
+    operations : 
+    accessibility : true
+    order: 12
+    map_scale: N10
