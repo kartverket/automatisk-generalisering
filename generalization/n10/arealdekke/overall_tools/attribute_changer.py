@@ -14,7 +14,7 @@ from custom_tools.decorators.timing_decorator import timing_decorator
 from custom_tools.general_tools.partition_iterator import PartitionIterator
 from env_setup import environment_setup
 from file_manager.n10.file_manager_arealdekke import Arealdekke_N10
-from generalization.n10.arealdekke.attribute_analyzer import (
+from generalization.n10.arealdekke.overall_tools.attribute_analyzer import (
     sort_results,
     write_to_file,
     load_rules,
