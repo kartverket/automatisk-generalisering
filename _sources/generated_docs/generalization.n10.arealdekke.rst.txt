@@ -12,33 +12,6 @@ Subpackages
    generalization.n10.arealdekke.overall_tools
    generalization.n10.arealdekke.parameters
 
-Submodules
-----------
-
-generalization.n10.arealdekke.attribute\_analyzer module
---------------------------------------------------------
-
-.. automodule:: generalization.n10.arealdekke.attribute_analyzer
-   :members:
-   :show-inheritance:
-   :undoc-members:
-
-generalization.n10.arealdekke.attribute\_changer module
--------------------------------------------------------
-
-.. automodule:: generalization.n10.arealdekke.attribute_changer
-   :members:
-   :show-inheritance:
-   :undoc-members:
-
-generalization.n10.arealdekke.passability\_layer module
--------------------------------------------------------
-
-.. automodule:: generalization.n10.arealdekke.passability_layer
-   :members:
-   :show-inheritance:
-   :undoc-members:
-
 Module contents
 ---------------
 

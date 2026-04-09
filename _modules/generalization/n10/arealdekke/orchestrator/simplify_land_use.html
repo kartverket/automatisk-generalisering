@@ -92,9 +92,7 @@
 <div class="viewcode-block" id="simplify_and_smooth_polygon">
 <a class="viewcode-back" href="../../../../../generated_docs/generalization.n10.arealdekke.orchestrator.html#generalization.n10.arealdekke.orchestrator.simplify_land_use.simplify_and_smooth_polygon">[docs]</a>
 <span class="nd">@timing_decorator</span>
-<span class="k">def</span><span class="w"> </span><span class="nf">simplify_and_smooth_polygon</span><span class="p">(</span>
-    <span class="n">target</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">input_fc</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">output_fc</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">locked_fc</span><span class="p">:</span> <span class="nb">set</span><span class="p">,</span> <span class="n">map_scale</span><span class="p">:</span> <span class="nb">str</span>
-<span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">simplify_and_smooth_polygon</span><span class="p">(</span><span class="n">input_fc</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">output_fc</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Simplifies polygons with the WEIGHTED_AREA algorithm before</span>
 <span class="sd">    they are smoothed with the BEZIER_INTERPOLATION algorithm.</span>

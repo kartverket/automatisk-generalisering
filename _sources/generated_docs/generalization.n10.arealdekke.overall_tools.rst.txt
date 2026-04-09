@@ -20,6 +20,22 @@ generalization.n10.arealdekke.overall\_tools.arealdekke\_dissolver module
    :show-inheritance:
    :undoc-members:
 
+generalization.n10.arealdekke.overall\_tools.attribute\_analyzer module
+-----------------------------------------------------------------------
+
+.. automodule:: generalization.n10.arealdekke.overall_tools.attribute_analyzer
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+generalization.n10.arealdekke.overall\_tools.attribute\_changer module
+----------------------------------------------------------------------
+
+.. automodule:: generalization.n10.arealdekke.overall_tools.attribute_changer
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
 generalization.n10.arealdekke.overall\_tools.eliminate\_small\_polygons module
 ------------------------------------------------------------------------------
 
@@ -40,6 +56,14 @@ generalization.n10.arealdekke.overall\_tools.island\_controller module
 ----------------------------------------------------------------------
 
 .. automodule:: generalization.n10.arealdekke.overall_tools.island_controller
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+generalization.n10.arealdekke.overall\_tools.passability\_layer module
+----------------------------------------------------------------------
+
+.. automodule:: generalization.n10.arealdekke.overall_tools.passability_layer
    :members:
    :show-inheritance:
    :undoc-members:
