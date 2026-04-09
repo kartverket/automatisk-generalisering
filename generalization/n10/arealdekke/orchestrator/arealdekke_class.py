@@ -64,7 +64,7 @@ class Arealdekke:
 
         # Extracts the data and saves it in the object
         arcpy.management.CopyFeatures(
-            in_features=input_n10.Arealdekke_Buskerud,
+            in_features=input_test_data.arealdekke, # input_n10.Arealdekke_Buskerud,
             out_feature_class=self.files["arealdekke_fc"],
         )
 
@@ -86,7 +86,7 @@ class Arealdekke:
 
         # Pipeline from original orchistrator file. Preprocessing the arealdekke data.
         attribute_changer(
-            input_fc=self.arealdekke_data,
+            input_fc=self.files["arealdekke_fc"],
             output_fc=Arealdekke_N10.attribute_changer_output__n10_land_use.value,
         )
 
@@ -172,9 +172,9 @@ class Arealdekke:
 
             # Process category.
             reinsert = category.process_category(
-                input_data=self.files["category_fc"],
-                locked_layers=self.files["locked_fc"],
-                processed_layer=self.files["processed_fc"],
+                input_fc=self.files["category_fc"],
+                locked_fc=self.files["locked_fc"],
+                processed_fc=self.files["processed_fc"],
             )
 
             if reinsert:

@@ -198,20 +198,12 @@ def extract_data(files: dict, target_fc: str, locked_fc: set, input_fc) -> None:
 
     # Extract the locked areas from the data layer that share a line with the target fc.
     if locked_fc:
-        if len(locked_fc) == 1:
-            # Single value → still needs quotes, but no commas
-            vals = f"'{locked_fc[0]}'"
-        else:
-            # Multiple values → join normally
-            vals = "', '".join(str(v) for v in locked_fc)
-            vals = f"'{vals}'"
-
         locked_fc_lyr = "locked_fc_lyr"
         arcpy.management.MakeFeatureLayer(
             in_features=input_fc,
             out_layer=locked_fc_lyr,
-            where_clause=f"arealdekke IN ({vals})",
         )
+        
         arcpy.management.SelectLayerByLocation(
             in_layer=locked_fc_lyr,
             overlap_type="SHARE_A_LINE_SEGMENT_WITH",

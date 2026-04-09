@@ -3,7 +3,6 @@ import arcpy
 import inspect
 
 from composition_configs import core_config
-from env_setup import environment_setup
 from file_manager import WorkFileManager
 from file_manager.n10.file_manager_arealdekke import Arealdekke_N10
 
@@ -83,9 +82,9 @@ class Category:
 
                 available_args = {
                     "target": self.__title,
-                    "input_fc": self.lyr,
-                    "output_fc": output_lyr,
-                    "locked_fc": locked_layers,
+                    "input_fc": input_fc,
+                    "output_fc": processed_fc,
+                    "locked_fc": locked_fc,
                     "map_scale": self.__map_scale,
                 }
 
