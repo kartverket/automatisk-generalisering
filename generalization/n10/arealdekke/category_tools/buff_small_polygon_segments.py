@@ -2,13 +2,12 @@ import arcpy
 from enum import Enum
 from custom_tools.decorators.timing_decorator import timing_decorator
 from composition_configs import core_config
-from env_setup import environment_setup
 from file_manager import WorkFileManager
 from file_manager.n10.file_manager_arealdekke import Arealdekke_N10
 from input_data import input_n10
 from generalization.n10.arealdekke.overall_tools.area_merger import area_merger
 
-from composition_configs import core_config, logic_config
+from composition_configs import core_config
 from pathlib import Path
 from custom_tools.general_tools.param_utils import initialize_params
 from generalization.n10.arealdekke.parameters.parameter_dataclasses import (
@@ -20,13 +19,20 @@ arcpy.env.overwriteOutput = True
 
 @timing_decorator
 def buff_small_polygon_segments(
-    target_fc, input_fc, output_fc, locked_fc: set, map_scale: str
+    target: str, input_fc: str, output_fc: str, locked_fc: set, map_scale: str
 ):
+    """
+    Function that detects and buffers small polygon segments from input_fc, having
+    land use type equal target. Finally, the funtion dissolves the buffered
+    geometries into the input data.
 
-    # Function that buff small polygon segments.
-    # Args: input_fc (input data), target_fc (string), locked_fc (set: string), output_fc (string), min width of polygon segments (int, meters)
-
-    environment_setup.main()
+    Args:
+        target (str): The land use type of the segments to be buffered
+        input_fc (str): The feature class containing the original data with type 'target'
+        output_fc (str): The feature class to store the buffered data
+        locked_fc (set): A set of feature classes representing locked areas
+        map_scale (str): The map scale for the operation
+    """
     working_fc = Arealdekke_N10.buffed_polygon_segments__n10_land_use.value
     config = core_config.WorkFileConfig(root_file=working_fc)
     wfm = WorkFileManager(config=config)
@@ -39,10 +45,10 @@ def buff_small_polygon_segments(
         map_scale=map_scale,
         dataclass=buff_small_polygon_segments_parameters,
     )
-    min_width = scale_parameters.min_width[target_fc]
+    min_width = scale_parameters.min_width[target]
 
     extract_data(
-        files=files, target_fc=target_fc, locked_fc=locked_fc, input_fc=input_fc
+        files=files, target_fc=target, locked_fc=locked_fc, input_fc=input_fc
     )
     find_segments_under_min(files=files, min_width=min_width)
     choose_target_areas(files=files)
