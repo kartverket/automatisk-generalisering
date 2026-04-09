@@ -99,6 +99,8 @@
 <span class="n">buff_polygon_segments</span> <span class="o">=</span> <span class="s2">&quot;buff_polygon_segments&quot;</span>
 <span class="n">river_file</span> <span class="o">=</span> <span class="s2">&quot;river_file&quot;</span>
 <span class="n">innsjo_file</span> <span class="o">=</span> <span class="s2">&quot;innsjo_file&quot;</span>
+<span class="n">arealdekke_class</span> <span class="o">=</span> <span class="s2">&quot;arealdekke_class&quot;</span>
+<span class="n">category_class</span> <span class="o">=</span> <span class="s2">&quot;category_class&quot;</span>
 
 
 <div class="viewcode-block" id="Arealdekke_N10">
@@ -269,6 +271,26 @@
 
     <span class="n">innsjo_hoydeintervall__n10_land_use</span> <span class="o">=</span> <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_gdb</span><span class="p">(</span>
         <span class="n">script_source_name</span><span class="o">=</span><span class="n">innsjo_file</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">&quot;hoyde_intervall&quot;</span>
+    <span class="p">)</span>
+
+    <span class="c1"># ========================================</span>
+    <span class="c1">#                         AREALDEKKE CLASS</span>
+    <span class="c1"># ========================================</span>
+
+    <span class="n">arealdekke_class_in_progress__n10_land_use</span> <span class="o">=</span> <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_gdb</span><span class="p">(</span>
+        <span class="n">script_source_name</span><span class="o">=</span><span class="n">arealdekke_class</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">&quot;in_progress_files&quot;</span>
+    <span class="p">)</span>
+
+    <span class="n">arealdekke_class_final__n10_land_use</span> <span class="o">=</span> <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_gdb</span><span class="p">(</span>
+        <span class="n">script_source_name</span><span class="o">=</span><span class="n">arealdekke_class</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">&quot;final_file&quot;</span>
+    <span class="p">)</span>
+
+    <span class="c1"># ========================================</span>
+    <span class="c1">#                           CATEGORY CLASS</span>
+    <span class="c1"># ========================================</span>
+
+    <span class="n">category_class_in_progress__n10_land_use</span> <span class="o">=</span> <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_gdb</span><span class="p">(</span>
+        <span class="n">script_source_name</span><span class="o">=</span><span class="n">category_class</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">&quot;in_progress_files&quot;</span>
     <span class="p">)</span></div>
 
 </pre></div>
