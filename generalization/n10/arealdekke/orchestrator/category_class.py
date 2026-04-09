@@ -1,5 +1,7 @@
 # Module imports:
 import arcpy
+import inspect
+
 from composition_configs import core_config
 from env_setup import environment_setup
 from file_manager import WorkFileManager
@@ -72,11 +74,27 @@ class Category:
 
             # Iterates through the operations needed for each category.
             for operation in self.__operations:
+                func = self.cat_tools[operation]
+
+                sig = inspect.signature(func)
+                param_names = sig.parameters.keys()
+
+                available_args = {
+                    "target": self.__title,
+                    "input_fc": self.lyr,
+                    "output_fc": output_lyr,
+                    "locked_fc": locked_layers,
+                    "map_scale": self.__map_scale,
+                }
+
+                args_to_pass = {
+                    name: available_args[name]
+                    for name in param_names
+                    if name in available_args
+                }
 
                 # Calls function from dictionary
-                self.cat_tools[operation](
-                    self.__title, input_fc, locked_fc, processed_fc, self.__map_scale
-                )
+                self.cat_tools[operation](**args_to_pass)
 
                 # Updates the layer that will be passed on to the next operation to be the output.
                 arcpy.management.CopyFeatures(
