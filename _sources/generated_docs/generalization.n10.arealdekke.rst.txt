@@ -7,50 +7,13 @@ Subpackages
 .. toctree::
    :maxdepth: 4
 
+   generalization.n10.arealdekke.category_tools
+   generalization.n10.arealdekke.orchestrator
+   generalization.n10.arealdekke.overall_tools
    generalization.n10.arealdekke.parameters
 
 Submodules
 ----------
-
-generalization.n10.arealdekke.area\_merger module
--------------------------------------------------
-
-.. automodule:: generalization.n10.arealdekke.area_merger
-   :members:
-   :show-inheritance:
-   :undoc-members:
-
-generalization.n10.arealdekke.arealdekke\_dissolver module
-----------------------------------------------------------
-
-.. automodule:: generalization.n10.arealdekke.arealdekke_dissolver
-   :members:
-   :show-inheritance:
-   :undoc-members:
-
-generalization.n10.arealdekke.arealdekke\_elver module
-------------------------------------------------------
-
-.. automodule:: generalization.n10.arealdekke.arealdekke_elver
-   :members:
-   :show-inheritance:
-   :undoc-members:
-
-generalization.n10.arealdekke.arealdekke\_innsjoer module
----------------------------------------------------------
-
-.. automodule:: generalization.n10.arealdekke.arealdekke_innsjoer
-   :members:
-   :show-inheritance:
-   :undoc-members:
-
-generalization.n10.arealdekke.arealdekke\_orchestrator module
--------------------------------------------------------------
-
-.. automodule:: generalization.n10.arealdekke.arealdekke_orchestrator
-   :members:
-   :show-inheritance:
-   :undoc-members:
 
 generalization.n10.arealdekke.attribute\_analyzer module
 --------------------------------------------------------
@@ -68,58 +31,10 @@ generalization.n10.arealdekke.attribute\_changer module
    :show-inheritance:
    :undoc-members:
 
-generalization.n10.arealdekke.buff\_small\_polygon\_segments module
--------------------------------------------------------------------
-
-.. automodule:: generalization.n10.arealdekke.buff_small_polygon_segments
-   :members:
-   :show-inheritance:
-   :undoc-members:
-
-generalization.n10.arealdekke.eliminate\_small\_polygons module
----------------------------------------------------------------
-
-.. automodule:: generalization.n10.arealdekke.eliminate_small_polygons
-   :members:
-   :show-inheritance:
-   :undoc-members:
-
-generalization.n10.arealdekke.expansion\_controller module
-----------------------------------------------------------
-
-.. automodule:: generalization.n10.arealdekke.expansion_controller
-   :members:
-   :show-inheritance:
-   :undoc-members:
-
-generalization.n10.arealdekke.gangsykkel\_dissolver module
-----------------------------------------------------------
-
-.. automodule:: generalization.n10.arealdekke.gangsykkel_dissolver
-   :members:
-   :show-inheritance:
-   :undoc-members:
-
-generalization.n10.arealdekke.island\_controller module
--------------------------------------------------------
-
-.. automodule:: generalization.n10.arealdekke.island_controller
-   :members:
-   :show-inheritance:
-   :undoc-members:
-
 generalization.n10.arealdekke.passability\_layer module
 -------------------------------------------------------
 
 .. automodule:: generalization.n10.arealdekke.passability_layer
-   :members:
-   :show-inheritance:
-   :undoc-members:
-
-generalization.n10.arealdekke.simplify\_land\_use module
---------------------------------------------------------
-
-.. automodule:: generalization.n10.arealdekke.simplify_land_use
    :members:
    :show-inheritance:
    :undoc-members:

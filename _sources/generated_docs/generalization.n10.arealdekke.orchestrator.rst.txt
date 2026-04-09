@@ -1,0 +1,85 @@
+generalization.n10.arealdekke.orchestrator package
+==================================================
+
+Submodules
+----------
+
+generalization.n10.arealdekke.orchestrator.arealdekke\_class module
+-------------------------------------------------------------------
+
+.. automodule:: generalization.n10.arealdekke.orchestrator.arealdekke_class
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+generalization.n10.arealdekke.orchestrator.arealdekke\_elver module
+-------------------------------------------------------------------
+
+.. automodule:: generalization.n10.arealdekke.orchestrator.arealdekke_elver
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+generalization.n10.arealdekke.orchestrator.arealdekke\_history\_dataclasses module
+----------------------------------------------------------------------------------
+
+.. automodule:: generalization.n10.arealdekke.orchestrator.arealdekke_history_dataclasses
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+generalization.n10.arealdekke.orchestrator.arealdekke\_innsjoer module
+----------------------------------------------------------------------
+
+.. automodule:: generalization.n10.arealdekke.orchestrator.arealdekke_innsjoer
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+generalization.n10.arealdekke.orchestrator.arealdekke\_orchestrator module
+--------------------------------------------------------------------------
+
+.. automodule:: generalization.n10.arealdekke.orchestrator.arealdekke_orchestrator
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+generalization.n10.arealdekke.orchestrator.category\_class module
+-----------------------------------------------------------------
+
+.. automodule:: generalization.n10.arealdekke.orchestrator.category_class
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+generalization.n10.arealdekke.orchestrator.expansion\_controller module
+-----------------------------------------------------------------------
+
+.. automodule:: generalization.n10.arealdekke.orchestrator.expansion_controller
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+generalization.n10.arealdekke.orchestrator.orchestrator\_copy module
+--------------------------------------------------------------------
+
+.. automodule:: generalization.n10.arealdekke.orchestrator.orchestrator_copy
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+generalization.n10.arealdekke.orchestrator.simplify\_land\_use module
+---------------------------------------------------------------------
+
+.. automodule:: generalization.n10.arealdekke.orchestrator.simplify_land_use
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+Module contents
+---------------
+
+.. automodule:: generalization.n10.arealdekke.orchestrator
+   :members:
+   :show-inheritance:
+   :undoc-members:

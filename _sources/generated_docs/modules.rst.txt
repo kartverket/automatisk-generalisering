@@ -13,3 +13,4 @@ automatisk-generalisering
    generalization
    generate_pyvis_docu
    input_data
+   tests

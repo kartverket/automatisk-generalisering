@@ -1,0 +1,29 @@
+tests package
+=============
+
+Submodules
+----------
+
+tests.test\_arealdekke\_class module
+------------------------------------
+
+.. automodule:: tests.test_arealdekke_class
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+tests.test\_category\_class module
+----------------------------------
+
+.. automodule:: tests.test_category_class
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+Module contents
+---------------
+
+.. automodule:: tests
+   :members:
+   :show-inheritance:
+   :undoc-members:

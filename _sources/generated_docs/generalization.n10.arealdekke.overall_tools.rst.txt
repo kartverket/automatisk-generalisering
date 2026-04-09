@@ -1,0 +1,53 @@
+generalization.n10.arealdekke.overall\_tools package
+====================================================
+
+Submodules
+----------
+
+generalization.n10.arealdekke.overall\_tools.area\_merger module
+----------------------------------------------------------------
+
+.. automodule:: generalization.n10.arealdekke.overall_tools.area_merger
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+generalization.n10.arealdekke.overall\_tools.arealdekke\_dissolver module
+-------------------------------------------------------------------------
+
+.. automodule:: generalization.n10.arealdekke.overall_tools.arealdekke_dissolver
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+generalization.n10.arealdekke.overall\_tools.eliminate\_small\_polygons module
+------------------------------------------------------------------------------
+
+.. automodule:: generalization.n10.arealdekke.overall_tools.eliminate_small_polygons
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+generalization.n10.arealdekke.overall\_tools.gangsykkel\_dissolver module
+-------------------------------------------------------------------------
+
+.. automodule:: generalization.n10.arealdekke.overall_tools.gangsykkel_dissolver
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+generalization.n10.arealdekke.overall\_tools.island\_controller module
+----------------------------------------------------------------------
+
+.. automodule:: generalization.n10.arealdekke.overall_tools.island_controller
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+Module contents
+---------------
+
+.. automodule:: generalization.n10.arealdekke.overall_tools
+   :members:
+   :show-inheritance:
+   :undoc-members:
