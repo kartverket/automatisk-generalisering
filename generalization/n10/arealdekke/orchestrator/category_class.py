@@ -3,6 +3,7 @@ import arcpy
 import inspect
 
 from composition_configs import core_config
+from custom_tools.decorators.timing_decorator import timing_decorator
 from file_manager import WorkFileManager
 from file_manager.n10.file_manager_arealdekke import Arealdekke_N10
 
@@ -59,10 +60,13 @@ class Category:
         # Creates layer for the category. Data inserted into it in setter function.
         self.lyr = f"{self.__title}_lyr"
 
+
     # ========================
     # Main functions
     # ========================
 
+
+    @timing_decorator
     def process_category(
         self, input_fc: str, locked_fc: str, processed_fc: str
     ) -> bool:
@@ -114,16 +118,20 @@ class Category:
         # Once done, return if the layer should be reinserted into arealdekke.
         return reinsert
 
+
     # ========================
     # Setters
     # ========================
 
+
     def set_accessibility(self, newStatus: bool) -> None:
         self.__accessibility = newStatus
+
 
     # ========================
     # Getters
     # ========================
+
 
     def get_title(self) -> str:
         return self.__title

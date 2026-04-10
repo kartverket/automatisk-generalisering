@@ -2,8 +2,10 @@ from pathlib import Path
 
 from arealdekke_class import Arealdekke
 from env_setup import environment_setup
+from custom_tools.decorators.timing_decorator import timing_decorator
 
 
+@timing_decorator
 def main():
     environment_setup.main()
 

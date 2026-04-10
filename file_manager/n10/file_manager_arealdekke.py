@@ -14,7 +14,7 @@ dissolve_file = "dissolve"
 elim_file = "eliminate"
 gangsykkel_file = "gangsykkel"
 attribute_file = "attribute_changer"
-area_line_merger = "area_line_merger"
+overlap_remover = "overlap_remover"
 island_merger = "island_merger"
 passability = "passability"
 simplify_polygon = "simplify_polygon"
@@ -24,6 +24,7 @@ river_file = "river_file"
 innsjo_file = "innsjo_file"
 arealdekke_class = "arealdekke_class"
 category_class = "category_class"
+overlap_merger = "overlap_merger"
 
 
 class Arealdekke_N10(Enum):
@@ -114,19 +115,19 @@ class Arealdekke_N10(Enum):
     )
 
     # ========================================
-    #                         AREA LINE MERGER
+    #                          OVERLAP REMOVER
     # ========================================
 
-    area_line_merger_start__n10_land_use = file_manager.generate_file_name_gdb(
-        script_source_name=area_line_merger, description="area_line_merger_start"
+    overlap_remover_start__n10_land_use = file_manager.generate_file_name_gdb(
+        script_source_name=overlap_remover, description="overlap_remover_start"
     )
 
-    area_line_merger__n10_land_use = file_manager.generate_file_name_gdb(
-        script_source_name=area_line_merger, description="area_line_merger"
+    overlap_remover__n10_land_use = file_manager.generate_file_name_gdb(
+        script_source_name=overlap_remover, description="overlap_remover"
     )
 
-    area_line_merger_output__n10_land_use = file_manager.generate_file_name_gdb(
-        script_source_name=area_line_merger, description="area_line_merger_output"
+    overlap_remover_output__n10_land_use = file_manager.generate_file_name_gdb(
+        script_source_name=overlap_remover, description="overlap_remover_output"
     )
 
     # ========================================
@@ -212,4 +213,12 @@ class Arealdekke_N10(Enum):
 
     category_class_in_progress__n10_land_use = file_manager.generate_file_name_gdb(
         script_source_name=category_class, description="in_progress_files"
+    )
+
+    # ========================================
+    #                           OVERLAP MERGER
+    # ========================================
+
+    overlap_merger__n10_land_use = file_manager.generate_file_name_gdb(
+        script_source_name=overlap_merger, description="overlap_merger"
     )
