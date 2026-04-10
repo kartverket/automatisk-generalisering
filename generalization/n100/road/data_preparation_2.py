@@ -1,4 +1,4 @@
-# Importing packagesimport arcpy
+# Importing packages
 import arcpy
 
 # Importing custom input files modules
@@ -49,7 +49,7 @@ from file_manager.n100.file_manager_buildings import Building_N100
 
 MERGE_DIVIDED_ROADS_ALTERATIVE = False
 
-AREA_SELECTOR = "navn IN ('Vinje')"
+AREA_SELECTOR = "navn IN ('Drammen', 'Asker', 'Oslo')"
 SCALE = "n100"
 
 
@@ -616,6 +616,15 @@ def pre_resolve_road_conflicts(area_selection: str):
         output_fc=Road_N100.road_cleaning_output__n100_road.value,
         area_selection=area_selection,
     )
+
+    split_polyline_featureclass(
+        input_fc=Road_N100.road_cleaning_output__n100_road.value,
+        dissolve_fc=Road_N100.data_preparation___road_split_dissolved___n100_road.value,
+        split_fc=Road_N100.data_preparation___road_split_xm__n100_road.value,
+        output_fc=Road_N100.data_preparation___road_split_single_part___n100_road.value,
+        interval=100,
+    )
+
     arcpy.management.MultipartToSinglepart(
         in_features=Road_N100.data_selection___railroad___n100_road.value,
         out_feature_class=Road_N100.data_preparation___railroad_single_part___n100_road.value,
@@ -627,7 +636,7 @@ def pre_resolve_road_conflicts(area_selection: str):
         dissolve_fc=Road_N100.data_preparation__water_feature_outline_dissolved__n100_road.value,
         split_fc=Road_N100.data_preparation__water_feature_outline_split_xm__n100_road.value,
         output_fc=Road_N100.data_preparation___water_feature_outline_single_part___n100_road.value,
-        interval=50,
+        interval=100,
     )
 
     road_data_validation = GeometryValidator(
@@ -659,7 +668,7 @@ def resolve_road_conflicts():
     """
 
     arcpy.management.CalculateField(
-        in_table=Road_N100.road_cleaning_output__n100_road.value,
+        in_table=Road_N100.data_preparation___road_split_single_part___n100_road.value,
         field="hierarchy",
         expression="Reclass(!vegklasse!, !typeveg!)",
         expression_type="PYTHON3",
@@ -667,7 +676,7 @@ def resolve_road_conflicts():
     )
 
     calculate_boarder_road_hierarchy(
-        input_road=Road_N100.road_cleaning_output__n100_road.value,
+        input_road=Road_N100.data_preparation___road_split_single_part___n100_road.value,
         root_file=Road_N100.data_preparation___root_calculate_boarder_hierarchy_2___n100_road.value,
         input_boarder_dagnle=Road_N100.data_preparation___boarder_road_dangle___n100_road.value,
         output_road=Road_N100.data_preparation___calculated_boarder_hierarchy_2___n100_road.value,
@@ -770,14 +779,14 @@ def resolve_road_conflicts():
 
     # --- Partition run + WFM for iterator -------------------------------------
     rrc_run_config = core_config.PartitionRunConfig(
-        max_elements_per_partition=30_000,
-        context_radius_meters=200,
+        max_elements_per_partition=20_000,
+        context_radius_meters=1500,
         partition_method=core_config.PartitionMethod.VERTICES,
     )
 
     rrc_partition_wfm = core_config.WorkFileConfig(
         root_file=Road_N100.data_preparation___resolve_road_partition_root___n100_road.value,
-        keep_files=True,
+        keep_files=False,
     )
 
     # --- Execute ---------------------------------------------------------------
@@ -789,6 +798,12 @@ def resolve_road_conflicts():
     )
 
     partition_resolve_road_conflicts.run()
+
+    run_dissolve_with_intersections(
+        input_line_feature=Road_N100.data_preparation___resolve_road_conflicts___n100_road.value,
+        output_processed_feature=Road_N100.data_preparation___resolve_road_conflicts_dissolved___n100_road.value,
+        dissolve_field_list=FieldNames.road_all_fields(),
+    )
 
 
 def final_output():
