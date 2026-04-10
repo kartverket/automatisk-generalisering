@@ -18,7 +18,7 @@ from custom_tools.general_tools import custom_arcpy
 
 data_files = {
     # Stores all the relevant file paths to the geodata used in this Python file
-    "input": Road_N100.data_preparation___resolve_road_conflicts___n100_road.value,
+    "input": Road_N100.data_preparation___resolve_road_conflicts_dissolved___n100_road.value,
     "output": Road_N100.dam__cleaned_roads__n100_road.value,
     "roads_input": Road_N100.dam__relevant_roads__n100_road.value,
     "dam_input": Road_N100.dam__relevant_dam__n100_road.value,

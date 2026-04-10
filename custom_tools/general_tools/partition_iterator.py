@@ -152,6 +152,16 @@ class PartitionIterator:
     INPUT_KEY = "input"
     DUMMY = "dummy"
     COUNT = "count"
+    VERTEX_COUNT = "vertex_count"
+    PARTITION_ID_FIELD = "partition_id"
+    PROCESSING_OBJECT_COUNT = "processing_object_count"
+    CONTEXT_OBJECT_COUNT = "context_object_count"
+    PROCESSING_VERTEX_COUNT = "processing_vertex_count"
+    CONTEXT_VERTEX_COUNT = "context_vertex_count"
+    PROCESSING_OBJECT_PERCENTAGE = "processing_object_percentage"
+    CONTEXT_OBJECT_PERCENTAGE = "context_object_percentage"
+    PROCESSING_VERTEX_PERCENTAGE = "processing_vertex_percentage"
+    CONTEXT_VERTEX_PERCENTAGE = "context_vertex_percentage"
     PRE_OPTIMIZATION_COUNT = "pre_optimization_count"
     REDUCED_COUNT = "reduced_count"
     PARTITION_FIELD = "partition_selection_field"
@@ -263,11 +273,20 @@ class PartitionIterator:
                 object_name="partition_feature",
             )
         )
+        self.partition_features_all = (
+            self.work_file_manager_partition_feature.generate_partition_path(
+                object_name="partition_features_all",
+            )
+        )
 
         self.total_start_time: float
         self.iteration_times_with_input = []
         self.iteration_start_time: float
         self._last_injected_log = None
+
+        self.overview_catalog: Dict[str, Any] = {}
+        self._overview_partition_loads: List[float] = []
+        self._overview_pct_accumulators: Dict[str, Dict[str, float]] = {}
 
     def resolve_partition_input_config(
         self,
@@ -316,7 +335,9 @@ class PartitionIterator:
         Creates cartographic partitions based on the given element_limit.
         Overwrites any existing partition feature.
         """
-        self.work_file_manager_partition_feature.delete_created_files()
+        self.work_file_manager_partition_feature.delete_created_files(
+            exceptions=[self.partition_features_all]
+        )
         VALID_TAGS = {self.INPUT_KEY}
 
         in_features = [
@@ -338,21 +359,37 @@ class PartitionIterator:
         )
         print(f"Created partition feature: {self.partition_feature}")
 
+    def _total_partition_load(self) -> int:
+        """
+        Returns the total load for the current partition based on partition_method.
+
+        FEATURES: sum of feature counts across all catalog entries.
+        VERTICES: sum of vertex counts across all catalog entries.
+        """
+        if self.partition_method == "VERTICES":
+            return sum(
+                entry.get(self.VERTEX_COUNT, 0)
+                for entry in self.iteration_catalog.values()
+            )
+        return sum(
+            entry.get(self.COUNT, 0) for entry in self.iteration_catalog.values()
+        )
+
     def _count_maximum_objects_in_partition(self) -> int:
         """
         What:
-            Iterates over all partitions and determines the highest number of total processed
-            input features (processing + context) found in any single partition.
+            Iterates over all partitions and determines the highest load (features or
+            vertices depending on partition_method) found in any single partition.
 
         How:
             For each partition:
             - Select the partition geometry.
             - Run processing and context selection logic.
-            - Track total processed objects.
+            - Track total load via _total_partition_load.
             - Cleanup intermediate files.
 
         Returns:
-            int: Maximum number of features found in a partition across all iterations.
+            int: Maximum partition load across all iterations.
         """
         self.update_max_partition_count()
         max_partition_load = 0
@@ -383,14 +420,12 @@ class PartitionIterator:
                 partition_id=partition_id,
             )
 
-            total_objects = sum(
-                row.get(self.COUNT, 0) for row in self.iteration_catalog.values()
-            )
-            max_partition_load = max(max_partition_load, total_objects)
+            total_load = self._total_partition_load()
+            max_partition_load = max(max_partition_load, total_load)
 
             print(
                 f"\nCounting objects for Partition: {partition_id}\n"
-                f"Current total found: {total_objects}\n"
+                f"Current total found: {total_load}\n"
                 f"Current maximum found: {max_partition_load}"
             )
 
@@ -776,6 +811,7 @@ class PartitionIterator:
 
         if center_count == 0:
             iteration_entry[self.COUNT] = center_count
+            iteration_entry[self.VERTEX_COUNT] = 0
             self.update_empty_object_tag_with_dummy_file(
                 object_key=object_key, tag=self.INPUT_KEY
             )
@@ -841,6 +877,7 @@ class PartitionIterator:
             if self.search_distance > 0
             else center_count
         )
+        iteration_entry[self.VERTEX_COUNT] = file_utilities.count_vertices(output_path)
         iteration_entry[self.INPUT_KEY] = output_path
         self.work_file_manager_temp_files.delete_created_files()
         return True
@@ -913,11 +950,14 @@ class PartitionIterator:
 
         if count > 0:
             iteration_entry[self.INPUT_KEY] = output_path
-
+            iteration_entry[self.VERTEX_COUNT] = file_utilities.count_vertices(
+                output_path
+            )
         else:
             self.update_empty_object_tag_with_dummy_file(
                 object_key=object_key, tag=self.INPUT_KEY
             )
+            iteration_entry[self.VERTEX_COUNT] = 0
         iteration_entry[self.COUNT] = count
 
     def process_all_context_inputs(
@@ -939,6 +979,376 @@ class PartitionIterator:
                 partition_id=partition_id,
             )
 
+    @staticmethod
+    def _empty_stat() -> dict:
+        return {"value": None, "partition_id": None}
+
+    def _zero_fill_processing_split_metadata(self, iteration_entry: dict) -> None:
+        for key in [
+            self.PROCESSING_OBJECT_COUNT,
+            self.CONTEXT_OBJECT_COUNT,
+            self.PROCESSING_VERTEX_COUNT,
+            self.CONTEXT_VERTEX_COUNT,
+            self.PROCESSING_OBJECT_PERCENTAGE,
+            self.CONTEXT_OBJECT_PERCENTAGE,
+            self.PROCESSING_VERTEX_PERCENTAGE,
+            self.CONTEXT_VERTEX_PERCENTAGE,
+        ]:
+            iteration_entry[key] = 0
+
+    def _update_stat_max_min(
+        self, entry: dict, key_max: str, key_min: str, value: float, partition_id: int
+    ) -> None:
+        if entry[key_max]["value"] is None or value > entry[key_max]["value"]:
+            entry[key_max] = {"value": value, "partition_id": partition_id}
+        if entry[key_min]["value"] is None or value < entry[key_min]["value"]:
+            entry[key_min] = {"value": value, "partition_id": partition_id}
+
+    def _collect_single_processing_input_metadata(
+        self, object_key: str, partition_id: int
+    ) -> None:
+        """
+        Compute and store processing/context split metadata for one processing input.
+
+        Uses PARTITION_FIELD (1 = processing, 0 = context) to make two attribute
+        selections on the iteration path, then counts objects and vertices for each.
+        Results are written into iteration_catalog for the given object_key.
+        """
+        iteration_entry = self.iteration_catalog.get(object_key, {})
+
+        if iteration_entry.get(self.COUNT, 0) == 0:
+            self._zero_fill_processing_split_metadata(iteration_entry)
+            return
+
+        iteration_path = iteration_entry[self.INPUT_KEY]
+        total_count = iteration_entry[self.COUNT]
+
+        processing_layer = f"partition_{partition_id}_{object_key}_processing_lyr"
+        context_layer = f"partition_{partition_id}_{object_key}_context_lyr"
+
+        custom_arcpy.select_attribute_and_make_feature_layer(
+            input_layer=iteration_path,
+            expression=f"{self.PARTITION_FIELD} = 1",
+            output_name=processing_layer,
+        )
+        custom_arcpy.select_attribute_and_make_feature_layer(
+            input_layer=iteration_path,
+            expression=f"{self.PARTITION_FIELD} = 0",
+            output_name=context_layer,
+        )
+
+        processing_count = file_utilities.count_objects(processing_layer)
+        context_count = file_utilities.count_objects(context_layer)
+        processing_vertices = file_utilities.count_vertices(processing_layer)
+        context_vertices = file_utilities.count_vertices(context_layer)
+
+        arcpy.Delete_management(processing_layer)
+        arcpy.Delete_management(context_layer)
+
+        iteration_entry[self.PROCESSING_OBJECT_COUNT] = processing_count
+        iteration_entry[self.CONTEXT_OBJECT_COUNT] = context_count
+        iteration_entry[self.PROCESSING_VERTEX_COUNT] = processing_vertices
+        iteration_entry[self.CONTEXT_VERTEX_COUNT] = context_vertices
+        total_vertices = processing_vertices + context_vertices
+
+        iteration_entry[self.PROCESSING_OBJECT_PERCENTAGE] = round(
+            processing_count / total_count * 100, 2
+        )
+        iteration_entry[self.CONTEXT_OBJECT_PERCENTAGE] = round(
+            context_count / total_count * 100, 2
+        )
+        iteration_entry[self.PROCESSING_VERTEX_PERCENTAGE] = (
+            round(processing_vertices / total_vertices * 100, 2)
+            if total_vertices > 0
+            else 0
+        )
+        iteration_entry[self.CONTEXT_VERTEX_PERCENTAGE] = (
+            round(context_vertices / total_vertices * 100, 2)
+            if total_vertices > 0
+            else 0
+        )
+
+    def _collect_processing_input_metadata(self, partition_id: int) -> None:
+        """
+        Collect processing/context split metadata for all processing inputs.
+
+        Calls _collect_single_processing_input_metadata for each processing object
+        in the iteration_catalog. Mirrors the process_single_X / process_all_X pattern.
+        """
+        for object_key, _ in self._processing_items():
+            self._collect_single_processing_input_metadata(
+                object_key=object_key,
+                partition_id=partition_id,
+            )
+
+    def _initialize_overview_catalog(self) -> None:
+        """
+        Set up the overview_catalog structure and accumulators before the partition loop.
+
+        Builds one entry per processing input (with per-tag output sub-entries) and
+        top-level sections for run_config, partition_summary, and runtime.
+        Accumulators for averages are kept as instance variables, not in the JSON structure.
+        """
+        processing_inputs = {}
+        for object_key, _ in self._processing_items():
+            outputs = {}
+            tag_dict = self.output_catalog.get(object_key, {})
+            for tag in tag_dict:
+                if tag == self.DATA_TYPE_KEY:
+                    continue
+                outputs[tag] = {
+                    "output_object_count": 0,
+                    "output_vertex_count": 0,
+                }
+            processing_inputs[object_key] = {
+                "input_object_count": 0,
+                "input_vertex_count": 0,
+                "partitions_with_object_present": 0,
+                "max_processing_object_count": self._empty_stat(),
+                "min_processing_object_count": self._empty_stat(),
+                "max_processing_vertex_count": self._empty_stat(),
+                "min_processing_vertex_count": self._empty_stat(),
+                "max_processing_object_percentage": self._empty_stat(),
+                "min_processing_object_percentage": self._empty_stat(),
+                "max_context_object_percentage": self._empty_stat(),
+                "min_context_object_percentage": self._empty_stat(),
+                "outputs": outputs,
+            }
+
+        self.overview_catalog = {
+            "run_config": {
+                "partition_method": self.partition_method,
+                "search_distance_meters": self.search_distance,
+                "search_distance_used": self.search_distance > 0,
+                "max_elements_per_partition": self.max_elements_per_partition,
+                "run_partition_optimization": self.run_partition_optimization,
+                "final_partition_feature_count": self.final_partition_feature_count,
+            },
+            "partition_summary": {
+                "total_partitions": self.max_partition_count,
+                "partitions_with_inputs": 0,
+                "partitions_skipped": 0,
+                "partition_id_highest_load": None,
+                "highest_load_value": 0,
+                "average_load": None,
+            },
+            "runtime": {
+                "start_time": datetime.now().isoformat(),
+                "end_time": None,
+                "average_iteration_runtime_seconds": None,
+                "max_iteration_runtime_seconds": None,
+                "max_iteration_runtime_partition_id": None,
+            },
+            "context_inputs_summary": {
+                "total_processed_objects": 0,
+                "total_processed_vertices": 0,
+                "total_objects_saved_by_optimization": None,
+                "total_processing_input_context_objects": 0,
+                "total_processing_input_context_vertices": 0,
+            },
+            "processing_inputs": processing_inputs,
+        }
+
+        self._overview_partition_loads = []
+        self._overview_pct_accumulators = {
+            object_key: {
+                "processing_object_percentage": 0.0,
+                "context_object_percentage": 0.0,
+                "processing_vertex_percentage": 0.0,
+                "context_vertex_percentage": 0.0,
+            }
+            for object_key in processing_inputs
+        }
+
+    def _update_partition_load_overview(self, partition_id: int) -> None:
+        """Track partition load and update highest load in partition_summary."""
+        partition_summary = self.overview_catalog["partition_summary"]
+        partition_summary["partitions_with_inputs"] += 1
+
+        current_load = self._total_partition_load()
+        self._overview_partition_loads.append(current_load)
+        if current_load > partition_summary["highest_load_value"]:
+            partition_summary["highest_load_value"] = current_load
+            partition_summary["partition_id_highest_load"] = partition_id
+
+    def _update_processing_inputs_overview(self, partition_id: int) -> None:
+        """Accumulate per-object counts, max/min stats, percentage accumulators,
+        and processing-input context totals from the current iteration_catalog."""
+        context_summary = self.overview_catalog["context_inputs_summary"]
+
+        for object_key, _ in self._processing_items():
+            iteration_entry = self.iteration_catalog.get(object_key, {})
+            if iteration_entry.get(self.COUNT, 0) == 0:
+                continue
+
+            obj_overview = self.overview_catalog["processing_inputs"][object_key]
+            obj_overview["partitions_with_object_present"] += 1
+            obj_overview["input_object_count"] += iteration_entry.get(
+                self.PROCESSING_OBJECT_COUNT, 0
+            )
+            obj_overview["input_vertex_count"] += iteration_entry.get(
+                self.PROCESSING_VERTEX_COUNT, 0
+            )
+
+            acc = self._overview_pct_accumulators[object_key]
+            acc["processing_object_percentage"] += iteration_entry.get(
+                self.PROCESSING_OBJECT_PERCENTAGE, 0
+            )
+            acc["context_object_percentage"] += iteration_entry.get(
+                self.CONTEXT_OBJECT_PERCENTAGE, 0
+            )
+            acc["processing_vertex_percentage"] += iteration_entry.get(
+                self.PROCESSING_VERTEX_PERCENTAGE, 0
+            )
+            acc["context_vertex_percentage"] += iteration_entry.get(
+                self.CONTEXT_VERTEX_PERCENTAGE, 0
+            )
+
+            self._update_stat_max_min(
+                obj_overview,
+                "max_processing_object_count",
+                "min_processing_object_count",
+                iteration_entry.get(self.PROCESSING_OBJECT_COUNT, 0),
+                partition_id,
+            )
+            self._update_stat_max_min(
+                obj_overview,
+                "max_processing_vertex_count",
+                "min_processing_vertex_count",
+                iteration_entry.get(self.PROCESSING_VERTEX_COUNT, 0),
+                partition_id,
+            )
+
+            if self.search_distance > 0:
+                self._update_stat_max_min(
+                    obj_overview,
+                    "max_processing_object_percentage",
+                    "min_processing_object_percentage",
+                    iteration_entry.get(self.PROCESSING_OBJECT_PERCENTAGE, 0),
+                    partition_id,
+                )
+                self._update_stat_max_min(
+                    obj_overview,
+                    "max_context_object_percentage",
+                    "min_context_object_percentage",
+                    iteration_entry.get(self.CONTEXT_OBJECT_PERCENTAGE, 0),
+                    partition_id,
+                )
+
+            context_summary[
+                "total_processing_input_context_objects"
+            ] += iteration_entry.get(self.CONTEXT_OBJECT_COUNT, 0)
+            context_summary[
+                "total_processing_input_context_vertices"
+            ] += iteration_entry.get(self.CONTEXT_VERTEX_COUNT, 0)
+
+    def _update_context_inputs_overview(self) -> None:
+        """Accumulate object and vertex totals for context input datasets
+        from the current iteration_catalog."""
+        context_summary = self.overview_catalog["context_inputs_summary"]
+        for object_key, _ in self._context_items():
+            iteration_entry = self.iteration_catalog.get(object_key, {})
+            context_summary["total_processed_objects"] += iteration_entry.get(
+                self.COUNT, 0
+            )
+            context_summary["total_processed_vertices"] += iteration_entry.get(
+                self.VERTEX_COUNT, 0
+            )
+
+    def _update_overview_from_partition(self, partition_id: int) -> None:
+        """
+        Accumulate all per-partition data from iteration_catalog into overview_catalog.
+
+        Called after _collect_processing_input_metadata so all metadata is populated.
+        """
+        self._update_partition_load_overview(partition_id)
+        self._update_processing_inputs_overview(partition_id)
+        self._update_context_inputs_overview()
+
+    def _finalize_runtime_overview(self) -> None:
+        """Set end_time and compute average iteration runtime."""
+        runtime = self.overview_catalog["runtime"]
+        runtime["end_time"] = datetime.now().isoformat()
+        if self.iteration_times_with_input:
+            runtime["average_iteration_runtime_seconds"] = round(
+                sum(self.iteration_times_with_input)
+                / len(self.iteration_times_with_input),
+                3,
+            )
+
+    def _finalize_partition_summary_overview(self) -> None:
+        """Compute average partition load."""
+        if self._overview_partition_loads:
+            self.overview_catalog["partition_summary"]["average_load"] = round(
+                sum(self._overview_partition_loads)
+                / len(self._overview_partition_loads),
+                2,
+            )
+
+    def _finalize_context_inputs_overview(self) -> None:
+        """Sum REDUCED_COUNT from input_catalog to populate total_objects_saved_by_optimization."""
+        self.overview_catalog["context_inputs_summary"][
+            "total_objects_saved_by_optimization"
+        ] = sum(
+            tag_dict.get(self.REDUCED_COUNT, 0)
+            for _, tag_dict in self.input_catalog.items()
+            if self._is_vector_of_type(
+                tag_dict=tag_dict, input_type=core_config.InputType.CONTEXT
+            )
+        )
+
+    def _finalize_processing_inputs_overview(self) -> None:
+        """Compute per-object averages and output diffs."""
+        for object_key, obj_overview in self.overview_catalog[
+            "processing_inputs"
+        ].items():
+            n = obj_overview["partitions_with_object_present"]
+            acc = self._overview_pct_accumulators.get(object_key, {})
+
+            obj_overview["avg_processing_object_percentage"] = (
+                round(acc["processing_object_percentage"] / n, 2) if n > 0 else None
+            )
+            obj_overview["avg_context_object_percentage"] = (
+                round(acc["context_object_percentage"] / n, 2) if n > 0 else None
+            )
+            obj_overview["avg_processing_vertex_percentage"] = (
+                round(acc["processing_vertex_percentage"] / n, 2) if n > 0 else None
+            )
+            obj_overview["avg_context_vertex_percentage"] = (
+                round(acc["context_vertex_percentage"] / n, 2) if n > 0 else None
+            )
+
+            input_obj = obj_overview["input_object_count"]
+            input_vtx = obj_overview["input_vertex_count"]
+
+            for tag_entry in obj_overview["outputs"].values():
+                out_obj = tag_entry["output_object_count"]
+                out_vtx = tag_entry["output_vertex_count"]
+                tag_entry["object_count_diff_absolute"] = out_obj - input_obj
+                tag_entry["object_count_diff_percentage"] = (
+                    round((out_obj - input_obj) / input_obj * 100, 2)
+                    if input_obj > 0
+                    else None
+                )
+                tag_entry["vertex_count_diff_absolute"] = out_vtx - input_vtx
+                tag_entry["vertex_count_diff_percentage"] = (
+                    round((out_vtx - input_vtx) / input_vtx * 100, 2)
+                    if input_vtx > 0
+                    else None
+                )
+
+    def _finalize_and_write_overview_catalog(self) -> None:
+        """
+        Compute all derived values and write overview.json to documentation_directory root.
+
+        Called once at the end of the full run after all partitions are processed.
+        """
+        self._finalize_runtime_overview()
+        self._finalize_partition_summary_overview()
+        self._finalize_context_inputs_overview()
+        self._finalize_processing_inputs_overview()
+        self.write_documentation(name="overview", dict_data=self.overview_catalog)
+
     def track_iteration_time(self, object_id: int, inputs_present: bool) -> None:
         """
         Tracks runtime and estimates remaining time based on iterations with inputs.
@@ -947,6 +1357,16 @@ class PartitionIterator:
         iteration_time = time.time() - self.iteration_start_time
         if inputs_present:
             self.iteration_times_with_input.append(iteration_time)
+            if self.overview_catalog:
+                runtime = self.overview_catalog["runtime"]
+                if (
+                    runtime["max_iteration_runtime_seconds"] is None
+                    or iteration_time > runtime["max_iteration_runtime_seconds"]
+                ):
+                    runtime["max_iteration_runtime_seconds"] = round(iteration_time, 3)
+                    runtime["max_iteration_runtime_partition_id"] = object_id
+        elif self.overview_catalog:
+            self.overview_catalog["partition_summary"]["partitions_skipped"] += 1
 
         avg_runtime = (
             sum(self.iteration_times_with_input) / len(self.iteration_times_with_input)
@@ -1289,6 +1709,37 @@ class PartitionIterator:
 
                     raise
 
+    def _append_iteration_partition_to_output(
+        self, iteration_partition: str, partition_id: int
+    ) -> None:
+        """
+        Append the current partition geometry to the accumulated partition features output.
+
+        Adds a partition_id field to the iteration_partition feature, then appends it
+        to self.partition_features_all (creating it on the first call).
+        """
+        arcpy.AddField_management(
+            in_table=iteration_partition,
+            field_name=self.PARTITION_ID_FIELD,
+            field_type="LONG",
+        )
+        arcpy.CalculateField_management(
+            in_table=iteration_partition,
+            field=self.PARTITION_ID_FIELD,
+            expression=str(partition_id),
+        )
+        if not arcpy.Exists(self.partition_features_all):
+            arcpy.management.CopyFeatures(
+                in_features=iteration_partition,
+                out_feature_class=self.partition_features_all,
+            )
+        else:
+            arcpy.management.Append(
+                inputs=iteration_partition,
+                target=self.partition_features_all,
+                schema_type="NO_TEST",
+            )
+
     def _append_partition_selected_features(
         self,
         object_key: str,
@@ -1328,6 +1779,21 @@ class PartitionIterator:
         try:
             if not file_utilities.feature_has_rows(feature=partition_selection_path):
                 return
+
+            output_entry = (
+                self.overview_catalog.get("processing_inputs", {})
+                .get(object_key, {})
+                .get("outputs", {})
+                .get(tag)
+            )
+            if output_entry is not None:
+                output_entry["output_object_count"] += file_utilities.count_objects(
+                    partition_selection_path
+                )
+                output_entry["output_vertex_count"] += file_utilities.count_vertices(
+                    partition_selection_path
+                )
+
             if not arcpy.Exists(final_output_path):
                 arcpy.management.CopyFeatures(
                     in_features=partition_selection_path,
@@ -1411,6 +1877,8 @@ class PartitionIterator:
 
         self.update_max_partition_count()
         self.work_file_manager_iteration_files.delete_created_files()
+        self._initialize_overview_catalog()
+        file_utilities.delete_feature(self.partition_features_all)
 
         for partition_id in range(1, self.max_partition_count + 1):
             self._reset_iteration_state(partition_id=partition_id)
@@ -1426,6 +1894,9 @@ class PartitionIterator:
             )
 
             try:
+                self._append_iteration_partition_to_output(
+                    iteration_partition=iteration_partition, partition_id=partition_id
+                )
                 inputs_present_in_partition = self.process_all_processing_inputs(
                     iteration_partition=iteration_partition,
                     partition_id=partition_id,
@@ -1436,6 +1907,9 @@ class PartitionIterator:
                 self.process_all_context_inputs(
                     iteration_partition=iteration_partition, partition_id=partition_id
                 )
+
+                self._collect_processing_input_metadata(partition_id=partition_id)
+                self._update_overview_from_partition(partition_id=partition_id)
 
                 self.execute_injected_methods_with_retry(partition_id=partition_id)
                 self.write_documentation(
@@ -1494,6 +1968,7 @@ class PartitionIterator:
 
         print("\nStarting on Partition Iteration...")
         self.partition_iteration()
+        self._finalize_and_write_overview_catalog()
 
         self.cleanup_helper_fields()
         self.work_file_manager_persistent_files.delete_created_files()
