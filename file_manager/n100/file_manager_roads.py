@@ -529,11 +529,9 @@ class Road_N100(Enum):
         )
     )
 
-    data_preparation___road_split_xm__n100_road = (
-        file_manager.generate_file_name_gdb(
-            script_source_name=data_preparation,
-            description="road_split_xm",
-        )
+    data_preparation___road_split_xm__n100_road = file_manager.generate_file_name_gdb(
+        script_source_name=data_preparation,
+        description="road_split_xm",
     )
 
     data_preparation___road_split_single_part___n100_road = (

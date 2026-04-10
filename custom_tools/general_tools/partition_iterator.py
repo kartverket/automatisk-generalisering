@@ -950,7 +950,9 @@ class PartitionIterator:
 
         if count > 0:
             iteration_entry[self.INPUT_KEY] = output_path
-            iteration_entry[self.VERTEX_COUNT] = file_utilities.count_vertices(output_path)
+            iteration_entry[self.VERTEX_COUNT] = file_utilities.count_vertices(
+                output_path
+            )
         else:
             self.update_empty_object_tag_with_dummy_file(
                 object_key=object_key, tag=self.INPUT_KEY
@@ -983,10 +985,14 @@ class PartitionIterator:
 
     def _zero_fill_processing_split_metadata(self, iteration_entry: dict) -> None:
         for key in [
-            self.PROCESSING_OBJECT_COUNT, self.CONTEXT_OBJECT_COUNT,
-            self.PROCESSING_VERTEX_COUNT, self.CONTEXT_VERTEX_COUNT,
-            self.PROCESSING_OBJECT_PERCENTAGE, self.CONTEXT_OBJECT_PERCENTAGE,
-            self.PROCESSING_VERTEX_PERCENTAGE, self.CONTEXT_VERTEX_PERCENTAGE,
+            self.PROCESSING_OBJECT_COUNT,
+            self.CONTEXT_OBJECT_COUNT,
+            self.PROCESSING_VERTEX_COUNT,
+            self.CONTEXT_VERTEX_COUNT,
+            self.PROCESSING_OBJECT_PERCENTAGE,
+            self.CONTEXT_OBJECT_PERCENTAGE,
+            self.PROCESSING_VERTEX_PERCENTAGE,
+            self.CONTEXT_VERTEX_PERCENTAGE,
         ]:
             iteration_entry[key] = 0
 
@@ -1051,12 +1057,16 @@ class PartitionIterator:
         iteration_entry[self.CONTEXT_OBJECT_PERCENTAGE] = round(
             context_count / total_count * 100, 2
         )
-        iteration_entry[self.PROCESSING_VERTEX_PERCENTAGE] = round(
-            processing_vertices / total_vertices * 100, 2
-        ) if total_vertices > 0 else 0
-        iteration_entry[self.CONTEXT_VERTEX_PERCENTAGE] = round(
-            context_vertices / total_vertices * 100, 2
-        ) if total_vertices > 0 else 0
+        iteration_entry[self.PROCESSING_VERTEX_PERCENTAGE] = (
+            round(processing_vertices / total_vertices * 100, 2)
+            if total_vertices > 0
+            else 0
+        )
+        iteration_entry[self.CONTEXT_VERTEX_PERCENTAGE] = (
+            round(context_vertices / total_vertices * 100, 2)
+            if total_vertices > 0
+            else 0
+        )
 
     def _collect_processing_input_metadata(self, partition_id: int) -> None:
         """
@@ -1173,28 +1183,64 @@ class PartitionIterator:
 
             obj_overview = self.overview_catalog["processing_inputs"][object_key]
             obj_overview["partitions_with_object_present"] += 1
-            obj_overview["input_object_count"] += iteration_entry.get(self.PROCESSING_OBJECT_COUNT, 0)
-            obj_overview["input_vertex_count"] += iteration_entry.get(self.PROCESSING_VERTEX_COUNT, 0)
+            obj_overview["input_object_count"] += iteration_entry.get(
+                self.PROCESSING_OBJECT_COUNT, 0
+            )
+            obj_overview["input_vertex_count"] += iteration_entry.get(
+                self.PROCESSING_VERTEX_COUNT, 0
+            )
 
             acc = self._overview_pct_accumulators[object_key]
-            acc["processing_object_percentage"] += iteration_entry.get(self.PROCESSING_OBJECT_PERCENTAGE, 0)
-            acc["context_object_percentage"] += iteration_entry.get(self.CONTEXT_OBJECT_PERCENTAGE, 0)
-            acc["processing_vertex_percentage"] += iteration_entry.get(self.PROCESSING_VERTEX_PERCENTAGE, 0)
-            acc["context_vertex_percentage"] += iteration_entry.get(self.CONTEXT_VERTEX_PERCENTAGE, 0)
+            acc["processing_object_percentage"] += iteration_entry.get(
+                self.PROCESSING_OBJECT_PERCENTAGE, 0
+            )
+            acc["context_object_percentage"] += iteration_entry.get(
+                self.CONTEXT_OBJECT_PERCENTAGE, 0
+            )
+            acc["processing_vertex_percentage"] += iteration_entry.get(
+                self.PROCESSING_VERTEX_PERCENTAGE, 0
+            )
+            acc["context_vertex_percentage"] += iteration_entry.get(
+                self.CONTEXT_VERTEX_PERCENTAGE, 0
+            )
 
-            self._update_stat_max_min(obj_overview, "max_processing_object_count", "min_processing_object_count",
-                                      iteration_entry.get(self.PROCESSING_OBJECT_COUNT, 0), partition_id)
-            self._update_stat_max_min(obj_overview, "max_processing_vertex_count", "min_processing_vertex_count",
-                                      iteration_entry.get(self.PROCESSING_VERTEX_COUNT, 0), partition_id)
+            self._update_stat_max_min(
+                obj_overview,
+                "max_processing_object_count",
+                "min_processing_object_count",
+                iteration_entry.get(self.PROCESSING_OBJECT_COUNT, 0),
+                partition_id,
+            )
+            self._update_stat_max_min(
+                obj_overview,
+                "max_processing_vertex_count",
+                "min_processing_vertex_count",
+                iteration_entry.get(self.PROCESSING_VERTEX_COUNT, 0),
+                partition_id,
+            )
 
             if self.search_distance > 0:
-                self._update_stat_max_min(obj_overview, "max_processing_object_percentage", "min_processing_object_percentage",
-                                          iteration_entry.get(self.PROCESSING_OBJECT_PERCENTAGE, 0), partition_id)
-                self._update_stat_max_min(obj_overview, "max_context_object_percentage", "min_context_object_percentage",
-                                          iteration_entry.get(self.CONTEXT_OBJECT_PERCENTAGE, 0), partition_id)
+                self._update_stat_max_min(
+                    obj_overview,
+                    "max_processing_object_percentage",
+                    "min_processing_object_percentage",
+                    iteration_entry.get(self.PROCESSING_OBJECT_PERCENTAGE, 0),
+                    partition_id,
+                )
+                self._update_stat_max_min(
+                    obj_overview,
+                    "max_context_object_percentage",
+                    "min_context_object_percentage",
+                    iteration_entry.get(self.CONTEXT_OBJECT_PERCENTAGE, 0),
+                    partition_id,
+                )
 
-            context_summary["total_processing_input_context_objects"] += iteration_entry.get(self.CONTEXT_OBJECT_COUNT, 0)
-            context_summary["total_processing_input_context_vertices"] += iteration_entry.get(self.CONTEXT_VERTEX_COUNT, 0)
+            context_summary[
+                "total_processing_input_context_objects"
+            ] += iteration_entry.get(self.CONTEXT_OBJECT_COUNT, 0)
+            context_summary[
+                "total_processing_input_context_vertices"
+            ] += iteration_entry.get(self.CONTEXT_VERTEX_COUNT, 0)
 
     def _update_context_inputs_overview(self) -> None:
         """Accumulate object and vertex totals for context input datasets
@@ -1202,8 +1248,12 @@ class PartitionIterator:
         context_summary = self.overview_catalog["context_inputs_summary"]
         for object_key, _ in self._context_items():
             iteration_entry = self.iteration_catalog.get(object_key, {})
-            context_summary["total_processed_objects"] += iteration_entry.get(self.COUNT, 0)
-            context_summary["total_processed_vertices"] += iteration_entry.get(self.VERTEX_COUNT, 0)
+            context_summary["total_processed_objects"] += iteration_entry.get(
+                self.COUNT, 0
+            )
+            context_summary["total_processed_vertices"] += iteration_entry.get(
+                self.VERTEX_COUNT, 0
+            )
 
     def _update_overview_from_partition(self, partition_id: int) -> None:
         """
@@ -1221,27 +1271,37 @@ class PartitionIterator:
         runtime["end_time"] = datetime.now().isoformat()
         if self.iteration_times_with_input:
             runtime["average_iteration_runtime_seconds"] = round(
-                sum(self.iteration_times_with_input) / len(self.iteration_times_with_input), 3
+                sum(self.iteration_times_with_input)
+                / len(self.iteration_times_with_input),
+                3,
             )
 
     def _finalize_partition_summary_overview(self) -> None:
         """Compute average partition load."""
         if self._overview_partition_loads:
             self.overview_catalog["partition_summary"]["average_load"] = round(
-                sum(self._overview_partition_loads) / len(self._overview_partition_loads), 2
+                sum(self._overview_partition_loads)
+                / len(self._overview_partition_loads),
+                2,
             )
 
     def _finalize_context_inputs_overview(self) -> None:
         """Sum REDUCED_COUNT from input_catalog to populate total_objects_saved_by_optimization."""
-        self.overview_catalog["context_inputs_summary"]["total_objects_saved_by_optimization"] = sum(
+        self.overview_catalog["context_inputs_summary"][
+            "total_objects_saved_by_optimization"
+        ] = sum(
             tag_dict.get(self.REDUCED_COUNT, 0)
             for _, tag_dict in self.input_catalog.items()
-            if self._is_vector_of_type(tag_dict=tag_dict, input_type=core_config.InputType.CONTEXT)
+            if self._is_vector_of_type(
+                tag_dict=tag_dict, input_type=core_config.InputType.CONTEXT
+            )
         )
 
     def _finalize_processing_inputs_overview(self) -> None:
         """Compute per-object averages and output diffs."""
-        for object_key, obj_overview in self.overview_catalog["processing_inputs"].items():
+        for object_key, obj_overview in self.overview_catalog[
+            "processing_inputs"
+        ].items():
             n = obj_overview["partitions_with_object_present"]
             acc = self._overview_pct_accumulators.get(object_key, {})
 
@@ -1266,11 +1326,15 @@ class PartitionIterator:
                 out_vtx = tag_entry["output_vertex_count"]
                 tag_entry["object_count_diff_absolute"] = out_obj - input_obj
                 tag_entry["object_count_diff_percentage"] = (
-                    round((out_obj - input_obj) / input_obj * 100, 2) if input_obj > 0 else None
+                    round((out_obj - input_obj) / input_obj * 100, 2)
+                    if input_obj > 0
+                    else None
                 )
                 tag_entry["vertex_count_diff_absolute"] = out_vtx - input_vtx
                 tag_entry["vertex_count_diff_percentage"] = (
-                    round((out_vtx - input_vtx) / input_vtx * 100, 2) if input_vtx > 0 else None
+                    round((out_vtx - input_vtx) / input_vtx * 100, 2)
+                    if input_vtx > 0
+                    else None
                 )
 
     def _finalize_and_write_overview_catalog(self) -> None:
@@ -1717,15 +1781,18 @@ class PartitionIterator:
                 return
 
             output_entry = (
-                self.overview_catalog
-                .get("processing_inputs", {})
+                self.overview_catalog.get("processing_inputs", {})
                 .get(object_key, {})
                 .get("outputs", {})
                 .get(tag)
             )
             if output_entry is not None:
-                output_entry["output_object_count"] += file_utilities.count_objects(partition_selection_path)
-                output_entry["output_vertex_count"] += file_utilities.count_vertices(partition_selection_path)
+                output_entry["output_object_count"] += file_utilities.count_objects(
+                    partition_selection_path
+                )
+                output_entry["output_vertex_count"] += file_utilities.count_vertices(
+                    partition_selection_path
+                )
 
             if not arcpy.Exists(final_output_path):
                 arcpy.management.CopyFeatures(
