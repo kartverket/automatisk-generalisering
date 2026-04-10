@@ -5,6 +5,8 @@ import arcpy
 arcpy.env.overwriteOutput = True
 
 from custom_tools.decorators.timing_decorator import timing_decorator
+from composition_configs import core_config
+from file_manager import WorkFileManager
 from file_manager.n10.file_manager_arealdekke import Arealdekke_N10
 
 # ========================
@@ -13,30 +15,76 @@ from file_manager.n10.file_manager_arealdekke import Arealdekke_N10
 
 
 @timing_decorator
-def simplify_and_smooth_polygon(input_fc: str, output_fc: str) -> None:
+def fill_holes(input_fc: str, output_fc: str, target: str) -> None:
     """
-    Simplifies polygons with the WEIGHTED_AREA algorithm before
-    they are smoothed with the BEZIER_INTERPOLATION algorithm.
+    Fills holes in the polygons of the input feature class and saves the result in the output feature class.
 
     Args:
-        input_fc (str): The feature class with polygon geometries to be simplified and smoothed
+        input_fc (str): The feature class with polygon geometries to be processed
         output_fc (str): The feature class where the result should be saved
+        target (str): Land use category that is being processed
     """
-    arcpy.cartography.SimplifyPolygon(
-        in_features=input_fc,
-        out_feature_class=Arealdekke_N10.simplified_polygons__n10_land_use.value,
-        algorithm="WEIGHTED_AREA",
-        tolerance=5,
-        error_option="RESOLVE_ERRORS",
-        collapsed_point_option="NO_KEEP",
+    # Set up WorkFileManager
+    fc = Arealdekke_N10.fill_holes__n10_land_use.value
+    config = core_config.WorkFileConfig(root_file=fc)
+    wfm = WorkFileManager(config=config)
+
+    # Create temporary file for filled holes
+    files = create_wfm_gdbs(wfm=wfm)
+
+
+# ========================
+# Helper functions
+# ========================
+
+
+def create_wfm_gdbs(wfm: WorkFileManager) -> dict:
+    """
+    Creates all the temporary files that are going to
+    be used during the process of filling holes.
+
+    Args:
+        wfm (WorkFileManager): The WorkFileManager instance that are keeping the files
+
+    Returns:
+        dict: A dictionary with all the files as variables
+    """
+    return {
+        "complete": wfm.build_file_path(file_name="complete", file_type="gdb"),
+        "holes": wfm.build_file_path(file_name="holes", file_type="gdb"),
+    }
+
+def find_holes(input_fc: str, files: dict, target: str) -> None:
+    """
+    Finds holes in the input feature class and saves them in a temporary file.
+
+    Args:
+        input_fc (str): The feature class with polygon geometries to be processed
+        files (dict): Dictionary with all the working files
+        target (str): Land use category that is being processed
+    """
+    # Create Polygons of the holes
+    arcpy.management.FeatureToPolygon(
+        in_features=input_fc, out_feature_class=files["complete"]
     )
 
-    arcpy.cartography.SmoothPolygon(
-        in_features=Arealdekke_N10.simplified_polygons__n10_land_use.value,
-        out_feature_class=output_fc,
-        algorithm="BEZIER_INTERPOLATION",
-        error_option="RESOLVE_ERRORS",
+    land_use_lyr = "land_use_lyr"
+    arcpy.management.MakeFeatureLayer(in_features=files["complete"], out_layer=land_use_lyr)
+
+    # Collect the holes and store them in a separate feature class
+    arcpy.management.SelectLayerByLocation(
+        in_layer=land_use_lyr,
+        overlap_type="WITHIN",
+        select_features=input_fc,
+        selection_type="NEW_SELECTION",
+        invert_spatial_relationship="INVERT",
     )
+    arcpy.management.CopyFeatures(in_features=land_use_lyr, out_feature_class=files["holes"])
+
+    # Create a 
+    arcpy.management.MakeFeatureLayer(in_features=input_fc, out_layer=land_use_lyr)
+
+
 
 
 """

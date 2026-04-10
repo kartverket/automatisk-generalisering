@@ -5,7 +5,6 @@ from composition_configs import core_config
 from file_manager import WorkFileManager
 from file_manager.n10.file_manager_arealdekke import Arealdekke_N10
 from input_data import input_n10
-from generalization.n10.arealdekke.overall_tools.area_merger import area_merger
 
 from composition_configs import core_config
 from pathlib import Path

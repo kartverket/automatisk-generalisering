@@ -30,6 +30,7 @@ from generalization.n10.arealdekke.overall_tools.passability_layer import (
 from generalization.n10.arealdekke.overall_tools.overlap_remover import (
     remove_overlaps,
 )
+from generalization.n10.arealdekke.overall_tools.fill_holes import fill_holes
 
 arcpy.env.overwriteOutput = True
 
@@ -61,6 +62,9 @@ class Arealdekke:
             "intermediate_fc": self.wfm.build_file_path(
                 file_name="intermediate_fc", file_type="gdb"
             ),
+            "intermediate_fixed_fc": self.wfm.build_file_path(
+                file_name="intermediate_fixed_fc", file_type="gdb"
+            ),
         }
 
         # Extracts the data and saves it in the object
@@ -79,11 +83,9 @@ class Arealdekke:
         # Program history
         # self.__program_history_path = Path(__file__).parent / "arealdekke_history.yml"
 
-
     # ========================
     # Main functions
     # ========================
-
 
     @timing_decorator
     def preprocess(self) -> None:
@@ -193,8 +195,14 @@ class Arealdekke:
                     changed_area=category.get_title(),
                 )
 
+                fill_holes(
+                    input_fc=self.files["intermediate_fc"],
+                    output_fc=self.files["intermediate_fixed_fc"],
+                    target=category.get_title(),
+                )
+
                 arcpy.management.CopyFeatures(
-                    in_features=self.files["intermediate_fc"],
+                    in_features=self.files["intermediate_fixed_fc"],
                     out_feature_class=self.files["arealdekke_fc"],
                 )
 
@@ -207,13 +215,11 @@ class Arealdekke:
             out_feature_class=Arealdekke_N10.arealdekke_class_final__n10_land_use.value,
         )
 
-        #self.wfm.delete_created_files()
-
+        # self.wfm.delete_created_files()
 
     # ========================
     # Getters
     # ========================
-
 
     def get_map_scale(self) -> str:
         return self.__map_scale
@@ -258,7 +264,6 @@ class Arealdekke:
         arcpy.management.CopyFeatures(
             in_features=temp_lyr, out_feature_class=self.files["category_fc"]
         )
-
 
     # ========================
     # Setters

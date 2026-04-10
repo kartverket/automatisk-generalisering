@@ -8,7 +8,7 @@ from file_manager import WorkFileManager
 from file_manager.n10.file_manager_arealdekke import Arealdekke_N10
 
 # Category tools:
-from generalization.n10.arealdekke.orchestrator.simplify_land_use import (
+from generalization.n10.arealdekke.category_tools.simplify_land_use import (
     simplify_and_smooth_polygon,
 )
 from generalization.n10.arealdekke.category_tools.buff_small_polygon_segments import (
@@ -60,11 +60,9 @@ class Category:
         # Creates layer for the category. Data inserted into it in setter function.
         self.lyr = f"{self.__title}_lyr"
 
-
     # ========================
     # Main functions
     # ========================
-
 
     @timing_decorator
     def process_category(
@@ -118,20 +116,16 @@ class Category:
         # Once done, return if the layer should be reinserted into arealdekke.
         return reinsert
 
-
     # ========================
     # Setters
     # ========================
 
-
     def set_accessibility(self, newStatus: bool) -> None:
         self.__accessibility = newStatus
-
 
     # ========================
     # Getters
     # ========================
-
 
     def get_title(self) -> str:
         return self.__title

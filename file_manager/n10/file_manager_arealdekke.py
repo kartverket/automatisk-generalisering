@@ -25,6 +25,7 @@ innsjo_file = "innsjo_file"
 arealdekke_class = "arealdekke_class"
 category_class = "category_class"
 overlap_merger = "overlap_merger"
+fill_holes = "fill_holes"
 
 
 class Arealdekke_N10(Enum):
@@ -221,4 +222,12 @@ class Arealdekke_N10(Enum):
 
     overlap_merger__n10_land_use = file_manager.generate_file_name_gdb(
         script_source_name=overlap_merger, description="overlap_merger"
+    )
+
+    # ========================================
+    #                               FILL HOLES
+    # ========================================
+
+    fill_holes__n10_land_use = file_manager.generate_file_name_gdb(
+        script_source_name=fill_holes, description="fill_holes"
     )

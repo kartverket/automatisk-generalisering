@@ -66,7 +66,7 @@ def remove_overlaps(
     # 5) Collect the data and store the result
     collect_and_finish(files=files, output_fc=output_fc)
 
-    #wfm.delete_created_files()
+    # wfm.delete_created_files()
 
 
 # ========================
@@ -89,9 +89,7 @@ def create_wfm_gdbs(wfm: WorkFileManager) -> dict:
         "erased_buffers": wfm.build_file_path(
             file_name="erased_buffers", file_type="gdb"
         ),
-        "spatial_join": wfm.build_file_path(
-            file_name="spatial_join", file_type="gdb"
-        ),
+        "spatial_join": wfm.build_file_path(file_name="spatial_join", file_type="gdb"),
         "copy_of_input": wfm.build_file_path(
             file_name="copy_of_input", file_type="gdb"
         ),
@@ -137,12 +135,18 @@ def change_target_features(input_fc: str, files: dict, target: str) -> None:
 
     # Fetch field names not relevant anymore
     orig_field_names = [f.name for f in arcpy.ListFields(input_fc)]
-    fields_to_delete = [f.name for f in arcpy.ListFields(files["spatial_join"]) if f.name not in orig_field_names]
+    fields_to_delete = [
+        f.name
+        for f in arcpy.ListFields(files["spatial_join"])
+        if f.name not in orig_field_names
+    ]
 
     # Delete irrelevant fields and keep the ones from original data
     if fields_to_delete:
-        arcpy.management.DeleteField(in_table=files["spatial_join"], drop_field=fields_to_delete)
-    
+        arcpy.management.DeleteField(
+            in_table=files["spatial_join"], drop_field=fields_to_delete
+        )
+
     # Merge the two datasets into one single with correct attributes and overlap
     arcpy.management.Merge(
         inputs=[land_use_lyr, files["spatial_join"]],
@@ -150,9 +154,7 @@ def change_target_features(input_fc: str, files: dict, target: str) -> None:
     )
 
 
-def fetch_relevant_data(
-    files: dict, attr_val: str
-) -> None:
+def fetch_relevant_data(files: dict, attr_val: str) -> None:
     """
     Copies the original data to work file manager and creates two feature classes:
         1) All the buffered data (locked)
