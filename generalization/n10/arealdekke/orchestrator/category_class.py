@@ -25,6 +25,8 @@ class Category:
         accessibility: bool,
         order: int,
         map_scale: str,
+        last_processed: str=None,
+        operations_completed: int=None
     ):
 
         # Extracts inputs and saves them within object
@@ -33,6 +35,8 @@ class Category:
         self.__accessibility = accessibility
         self.__order = order
         self.__map_scale = map_scale
+        self.__last_processed = last_processed
+        self.__operations_completed = operations_completed
 
         # Setting up file manager w. dictionary for easy file access
         self.working_fc = Arealdekke_N10.category_class_in_progress__n10_land_use.value

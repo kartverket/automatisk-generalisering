@@ -1,7 +1,8 @@
 # Module imports:
 import arcpy
-from sqlalchemy import values
 import yaml
+import os
+from sqlalchemy import values
 from pathlib import Path
 from composition_configs import core_config
 from file_manager import WorkFileManager
@@ -62,21 +63,70 @@ class Arealdekke:
             ),
         }
 
-        # Extracts the data and saves it in the object
-        arcpy.management.CopyFeatures(
-            in_features=input_n10.Arealdekke_Buskerud,
-            out_feature_class=self.files["arealdekke_fc"],
-        )
-
         # Creates a variable to see if the data has been preprocessed.
         # Safety lock to make sure categories are not added before data is ok.
-        self.preprocessed = False
+        self.preprocessed = None
 
         # Other attributes
-        self.__map_scale = map_scale
+        self.__map_scale = None
+        self.__preprocessing_operations_completed = None
+        self.categories= []
 
         # Program history
-        # self.__program_history_path = Path(__file__).parent / "arealdekke_history.yml"
+        self.__program_history_path = Path(__file__).parent / "arealdekke_history.yml"
+
+        update=False
+
+        #Check if the program history exists
+        if self.__program_history_path.is_file():
+        
+            try:
+                with open(self.__program_history_path, "r", encoding="utf-8") as yml:
+                    data = yaml.safe_load(yml)
+
+                    # Check how far the preprocessing got. If at least one process was
+                    #  completed, update paths etc.
+                    if data.get("preprocessing_operations_completed", 0)>0:
+                        
+                        update=True
+
+                        self.files["arealdekke_fc"]=data["newest_version"]
+                        self.preprocessed=data["preprocessed"]
+                        self.__preprocessing_operations_completed=data["preprocessing_operations_completed"]
+                        self.__map_scale=data["map_scale"]
+
+                        # If preprocessed is false or the categories have not started
+                        # processing, the categories will be added like normal.
+                        category_history = data.get("category_history", [])
+
+                        if (
+                            self.preprocessed and 
+                            category_history and 
+                            category_history[0]["operations_completed"]
+                        ):
+
+                            # Extracts the data from the yml file into a category object.
+                            for category in data["category_history"]:
+                                category_obj = Category(**category)
+                                self.categories.append(category_obj)
+
+            except Exception as e:
+                raise e
+
+        if update==False:
+            #reset history
+            self.reset_history()
+
+            # Update variables
+            self.preprocessed = False
+            self.__map_scale = map_scale
+
+            # Extracts the data and saves it in the object
+            arcpy.management.CopyFeatures(
+                in_features=input_n10.Arealdekke_Buskerud,
+                out_feature_class=self.files["arealdekke_fc"],
+            )
+
 
     # ========================
     # Main functions
@@ -84,41 +134,51 @@ class Arealdekke:
 
     def preprocess(self) -> None:
 
-        # Pipeline from original orchistrator file. Preprocessing the arealdekke data.
-        attribute_changer(
-            input_fc=self.arealdekke_data,
-            output_fc=Arealdekke_N10.attribute_changer_output__n10_land_use.value,
-        )
-
-        create_passability_layer(
-            input_fc=Arealdekke_N10.attribute_changer_output__n10_land_use.value,
-            output_fc=Arealdekke_N10.passability__n10_land_use.value,
-        )
-
-        arealdekke_dissolver(
-            input_fc=Arealdekke_N10.attribute_changer_output__n10_land_use.value,
-            output_fc=Arealdekke_N10.dissolve_arealdekke.value,
-            map_scale=self.__map_scale,
-        )
-
-        island_controller(
-            input_fc=Arealdekke_N10.dissolve_arealdekke.value,
-            output_fc=Arealdekke_N10.island_merger_output__n10_land_use.value,
-        )
-
-        eliminate_small_polygons(
-            input_fc=Arealdekke_N10.island_merger_output__n10_land_use.value,
-            output_fc=Arealdekke_N10.elim_output.value,
-            map_scale=self.__map_scale,
-        )
-
         output_fc = Arealdekke_N10.dissolve_gangsykkel.value
 
-        gangsykkel_dissolver(
-            input_fc=Arealdekke_N10.elim_output.value,
-            output_fc=output_fc,
-            map_scale=self.__map_scale,
-        )
+        preprocesses=[
+            lambda: attribute_changer(
+                input_fc=self.arealdekke_data,
+                output_fc=Arealdekke_N10.attribute_changer_output__n10_land_use.value,
+            ),
+
+            lambda: create_passability_layer(
+                input_fc=Arealdekke_N10.attribute_changer_output__n10_land_use.value,
+                output_fc=Arealdekke_N10.passability__n10_land_use.value,
+            ),
+            
+            lambda: arealdekke_dissolver(
+                input_fc=Arealdekke_N10.attribute_changer_output__n10_land_use.value,
+                output_fc=Arealdekke_N10.dissolve_arealdekke.value,
+                map_scale=self.__map_scale,
+            ),
+
+            lambda: island_controller(
+                input_fc=Arealdekke_N10.dissolve_arealdekke.value,
+                output_fc=Arealdekke_N10.island_merger_output__n10_land_use.value,
+            ),
+
+            lambda: eliminate_small_polygons(
+                input_fc=Arealdekke_N10.island_merger_output__n10_land_use.value,
+                output_fc=Arealdekke_N10.elim_output.value,
+                map_scale=self.__map_scale,
+            ),
+
+            lambda: gangsykkel_dissolver(
+                input_fc=Arealdekke_N10.elim_output.value,
+                output_fc=output_fc,
+                map_scale=self.__map_scale,
+            )
+        ]
+
+        # Pipeline from original orchistrator file. Preprocessing the arealdekke data.
+        for preprocess in range(self.__preprocessing_operations_completed, len(preprocesses), 1):
+
+            #Call process
+            preprocesses[preprocess]()
+
+            #Update history (operations completed)
+            
 
         arcpy.management.CopyFeatures(
             in_features=output_fc, out_feature_class=self.files["arealdekke_fc"]
@@ -131,10 +191,7 @@ class Arealdekke:
         completed = False
 
         # Checks if the data has been preprocessed.
-        if self.preprocessed:
-
-            # List with all categories in arealdekke.
-            self.categories = []
+        if self.preprocessed and not self.categories:
 
             try:
                 with open(categories_config_file, "r", encoding="utf-8") as yml:
@@ -192,10 +249,12 @@ class Arealdekke:
         )
 
         self.wfm.delete_created_files()
+        self.reset_history()
 
     # ========================
     # Getters
     # ========================
+
     def get_map_scale(self) -> str:
         return self.__map_scale
 
@@ -243,3 +302,18 @@ class Arealdekke:
     # ========================
     # Setters
     # ========================
+
+    def reset_history(self):
+        if self.__program_history_path.is_file():
+            os.remove(self.__program_history_path)
+
+        template = {
+            "newest_version": None,
+            "map_scale": None,
+            "preprocessed": None,
+            "preprocessing_operations_completed": None,
+            "category_history": []
+        }
+
+        with open(self.__program_history_path, "w", encoding="utf-8") as new_history:
+            yaml.dump(template, new_history)
