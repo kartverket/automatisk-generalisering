@@ -199,6 +199,14 @@ class Arealdekke:
                     input_fc=self.files["intermediate_fc"],
                     output_fc=self.files["intermediate_fixed_fc"],
                     target=category.get_title(),
+                    locked_categories=set(
+                        map(
+                            lambda cat: cat.get_title(),
+                            filter(
+                                lambda cat: not cat.get_accessibility(), self.categories
+                            ),
+                        )
+                    ),
                 )
 
                 arcpy.management.CopyFeatures(
@@ -215,7 +223,7 @@ class Arealdekke:
             out_feature_class=Arealdekke_N10.arealdekke_class_final__n10_land_use.value,
         )
 
-        # self.wfm.delete_created_files()
+        self.wfm.delete_created_files()
 
     # ========================
     # Getters

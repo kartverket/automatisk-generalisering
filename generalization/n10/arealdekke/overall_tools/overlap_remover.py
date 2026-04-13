@@ -33,8 +33,6 @@ def remove_overlaps(
         changed_area (str): The field name value of the land use / 'arealdekke'
                             that is enlarged and overlaps other areas
     """
-    print(f"\n🚀 Adjusts edges to fit overlapping areas to {changed_area}...\n")
-
     # 1) Sets up work file manager to take care of temporary files
     fc = Arealdekke_N10.overlap_remover__n10_land_use.value
     config = core_config.WorkFileConfig(root_file=fc)
@@ -43,30 +41,43 @@ def remove_overlaps(
     # 2) Creates temporary files
     files = create_wfm_gdbs(wfm)
 
-    # ) Remove locked features from buffers to avoid overlap in these areas
+    print("\nCreated WorkFileManager and temporary files for overlap remover process.")
+
+    # 3) Remove locked features from buffers to avoid overlap in these areas
     arcpy.analysis.Erase(
         in_features=buffered_fc,
         erase_features=locked_fc,
         out_feature_class=files["erased_buffers"],
     )
+    print(
+        "Erased locked features from buffered features to avoid overlap in these areas."
+    )
 
-    # ) Fetch correct attributes for the buffered features
+    # 4) Fetch correct attributes for the buffered features
     # (those that are going to be merged with original data)
     change_target_features(input_fc=input_fc, files=files, target=changed_area)
+    print(
+        "Changed geometry of target features to fit with buffered features, and preserved attributes."
+    )
 
-    # 3) Fetch data with changed area and those overlapping these
+    # 5) Fetch data with changed area and those overlapping these
     fetch_relevant_data(
         files=files,
         attr_val=changed_area,
     )
+    print(
+        "Fetched relevant data for the process: the buffer zones and the features intersecting these."
+    )
 
-    # 4) Delete overlapping areas from features
+    # 6) Delete overlapping areas from features
     erase_overlap(files=files)
+    print("Overlap erased.")
 
-    # 5) Collect the data and store the result
+    # 7) Collect the data and store the result
     collect_and_finish(files=files, output_fc=output_fc)
+    print("Collected data and stored the result in output feature class.\n")
 
-    # wfm.delete_created_files()
+    wfm.delete_created_files()
 
 
 # ========================
