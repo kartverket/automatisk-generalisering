@@ -302,6 +302,44 @@ class Arealdekke:
     # ========================
     # Setters
     # ========================
+    
+    def save_history(self, data):
+        with open(self.__program_history_path, "w") as file:
+            yaml.dump(data, file, default_flow_style=False, allow_unicode=True)
+
+    def load_history(self, data):
+        with open(self.__program_history_path) as file:
+            return yaml.safe_load(file)
+        
+    def update_history_key(self, key, value):
+        data=self.load_history()
+        data[key]=value
+        self.save_history(data)
+
+    def new_history_category(
+            self, 
+            title, 
+            operations, 
+            accessibility=True, 
+            order=None,
+            map_scale="N10"
+            ):
+        
+        data = self.load_history()
+        history = data["category_history"]
+
+        new_entry = {
+            "title": title,
+            "operations": operations,
+            "accessibility": accessibility,
+            "order": order,
+            "map_scale": map_scale,
+            "last_processed": None,
+            "operations_completed": None,
+        }
+
+        history.append(new_entry)
+        self.save_history(data)
 
     def reset_history(self):
         if self.__program_history_path.is_file():
