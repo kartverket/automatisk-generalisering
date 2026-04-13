@@ -298,6 +298,10 @@ class FillLineGapsAdvancedConfig:
     candidate_connections_output: Optional[str] = None
 
     increased_tolerance_edge_case_distance_meters: int = 0
+    # When True, the edge-case distance bonus is only applied when both source and target
+    # dangles mutually prefer each other's parent line. Defaults to False — the angle gate
+    # (angle_extra_dangle_threshold_degrees) is the primary guard.
+    require_mutual_dangle_preference_for_bonus: bool = False
     edit_method: EditMethod = EditMethod.AUTO
     connectivity_scope: ConnectivityScope = ConnectivityScope.DIRECT_CONNECTION
     connectivity_tolerance_meters: float = 0.02

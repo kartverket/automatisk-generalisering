@@ -22,8 +22,8 @@ from custom_tools.general_tools.geometry_tools import (
 @timing_decorator
 def main():
     environment_setup.main()
-    # fill_line_topology_gaps()
-    fill_raod_gaps()
+    fill_line_topology_gaps()
+    # fill_raod_gaps()
     # fix_river_orientation()
     # find_angles()
     # find_xy_endpoints()

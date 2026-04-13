@@ -940,6 +940,9 @@ class FillLineGaps:
         self.increased_tolerance_edge_case_distance_meters = int(
             adv.increased_tolerance_edge_case_distance_meters
         )
+        self.require_mutual_dangle_preference_for_bonus = bool(
+            adv.require_mutual_dangle_preference_for_bonus
+        )
         self.edit_method = logic_config.EditMethod(adv.edit_method)
 
         self.connectivity_scope = logic_config.ConnectivityScope(adv.connectivity_scope)
@@ -1252,6 +1255,29 @@ class FillLineGaps:
                 return int(cand["near_fid"])
         return None
 
+    def _mutual_dangle_preference(
+        self,
+        *,
+        dangle_oid: int,
+        other_dangle_oid: int,
+        dangle_parent: dict[int, int],
+        best_line_parent_by_dangle: dict[int, int],
+    ) -> bool:
+        """
+        True when source and target dangles mutually prefer each other's parent line:
+        - source's best line target is the other dangle's parent
+        - other dangle's best line target is the source's parent
+        """
+        src_parent = dangle_parent.get(int(dangle_oid))
+        other_parent = dangle_parent.get(int(other_dangle_oid))
+        if src_parent is None or other_parent is None:
+            return False
+        src_best = best_line_parent_by_dangle.get(int(dangle_oid))
+        other_best = best_line_parent_by_dangle.get(int(other_dangle_oid))
+        if src_best is None or other_best is None:
+            return False
+        return int(src_best) == int(other_parent) and int(other_best) == int(src_parent)
+
     def _edge_case_bonus_applies(
         self,
         *,
@@ -1262,13 +1288,17 @@ class FillLineGaps:
         best_line_parent_by_dangle: dict[int, int],
     ) -> bool:
         """
-        Edge-case bonus applies only for dangle targets when:
+        Determines whether the edge-case distance bonus applies for a candidate.
 
-        - source dangle's best legal line target is the target dangle's parent line
-        - target dangle's best legal line target is the source dangle's parent line
+        The bonus is only possible when the TARGET is a true dangle — i.e. an unconnected
+        endpoint of an input line. For all other target types (self-lines, external features)
+        the bonus is never applied; those targets benefit only from the expanded search
+        tolerance, not from the effective-distance reduction.
 
-        This is the explicit implementation of:
-        "if both dangles want each other's parent line, prioritize the dangle".
+        For dangle targets the condition is mutual preference: both dangles must prefer
+        each other's parent line (see _mutual_dangle_preference).
+
+        Requires increased_tolerance_edge_case_distance_meters > 0.
         """
         extra = max(0, int(self.increased_tolerance_edge_case_distance_meters))
         if extra <= 0:
@@ -1277,24 +1307,15 @@ class FillLineGaps:
         if str(cand["near_fc_key"]) != str(dangles_fc_key):
             return False
 
-        src_parent = dangle_parent.get(int(dangle_oid))
-        if src_parent is None:
-            return False
+        if not self.require_mutual_dangle_preference_for_bonus:
+            return True
 
-        other_dangle_oid = int(cand["near_fid"])
-        other_parent = dangle_parent.get(int(other_dangle_oid))
-        if other_parent is None:
-            return False
-
-        src_best_line_parent = best_line_parent_by_dangle.get(int(dangle_oid))
-        other_best_line_parent = best_line_parent_by_dangle.get(int(other_dangle_oid))
-
-        if src_best_line_parent is None or other_best_line_parent is None:
-            return False
-
-        return int(src_best_line_parent) == int(other_parent) and int(
-            other_best_line_parent
-        ) == int(src_parent)
+        return self._mutual_dangle_preference(
+            dangle_oid=dangle_oid,
+            other_dangle_oid=int(cand["near_fid"]),
+            dangle_parent=dangle_parent,
+            best_line_parent_by_dangle=best_line_parent_by_dangle,
+        )
 
     def _candidate_score_details(
         self,
@@ -2102,6 +2123,7 @@ class FillLineGaps:
         dangle_parent: dict[int, int],
         dangles_fc_key: str,
         lines_fc_key: str,
+        line_like_ds_keys: set[str],
         parent_id: int,
         cand: dict,
         base_tol: float,
@@ -2113,7 +2135,6 @@ class FillLineGaps:
         dist = float(cand["near_dist"])
 
         if ds_key == dangles_fc_key:
-            # IMPORTANT: use dangle_candidate_tol, not expanded tolerance by default
             if dist > float(dangle_candidate_tol):
                 return False
 
@@ -2121,7 +2142,6 @@ class FillLineGaps:
             if other_parent is None:
                 return False
 
-            # Same-network restriction (value-neutral topology)
             if topology is not None and self._same_network(
                 a_parent=int(parent_id),
                 b_parent=int(other_parent),
@@ -2129,7 +2149,7 @@ class FillLineGaps:
             ):
                 return False
 
-            # Dangle->dangle still illegal-checks against the other parent line id
+            # Dangle->dangle illegal-checks against the other parent line id
             if self._is_illegal(
                 illegal=illegal,
                 parent_id=parent_id,
@@ -2140,14 +2160,15 @@ class FillLineGaps:
 
             return True
 
-        # non-dangle always uses base_tol
-        if dist > float(base_tol):
+        # Line-like targets (self-lines and connect_to_features polylines) use the
+        # expanded tolerance so true-dangle connections beyond base_tol are reachable.
+        effective_tol = dangle_candidate_tol if ds_key in line_like_ds_keys else base_tol
+        if dist > float(effective_tol):
             return False
 
         if ds_key == lines_fc_key and int(oid) == int(parent_id):
             return False
 
-        # Same-network restriction for line targets (oid is in ORIGINAL_ID space in your grouped rows)
         if (
             ds_key == lines_fc_key
             and topology is not None
@@ -2176,6 +2197,7 @@ class FillLineGaps:
         dangle_parent: dict[int, int],
         dangles_fc_key: str,
         lines_fc_key: str,
+        line_like_ds_keys: set[str],
         parent_id: int,
         cand: dict,
         base_tol: float,
@@ -2206,7 +2228,8 @@ class FillLineGaps:
                 return "illegal_target"
             return "illegal_target"
 
-        if dist > float(base_tol):
+        effective_tol = dangle_candidate_tol if ds_key in line_like_ds_keys else base_tol
+        if dist > float(effective_tol):
             return "beyond_distance_tolerance"
         if topology is not None and ds_key == lines_fc_key and self._same_network(
             a_parent=int(parent_id), b_parent=int(oid), topology=topology
@@ -2542,6 +2565,7 @@ class FillLineGaps:
                 dangle_parent=dangle_parent,
                 dangles_fc_key=dangles_fc_key,
                 lines_fc_key=lines_fc_key,
+                line_like_ds_keys=set(),  # no expanded tolerance in this context
                 parent_id=parent_id,
                 cand=cand,
                 base_tol=base_tol,
@@ -2778,47 +2802,12 @@ class FillLineGaps:
         collect_diags = self.candidate_connections_output is not None
 
         # ----------------------------
-        # Dangle filtering: collect legal candidates per dangle
-        # ----------------------------
-        legal_rows_by_dangle, parent_id_by_dangle, _step1a_illegal = (
-            self._filter_legal_candidates(
-                grouped=grouped,
-                dangle_parent=dangle_parent,
-                illegal=illegal,
-                dangles_key=dangles_key,
-                lines_key=lines_key,
-                base_tol=base_tol,
-                dangle_tol=dangle_tol,
-                topology=topology,
-                collect_diags=collect_diags,
-            )
-        )
-
-        if not legal_rows_by_dangle:
-            return {}, {}, self._assemble_diagnostics(
-                collect_diags=collect_diags,
-                step1a_illegal=_step1a_illegal,
-                step1b_illegal=[],
-                step1b_scored=[],
-                connection_loser_oids=set(),
-                kruskal_rejected_oids=set(),
-                accepted_dangle_oids=set(),
-                gap_source_by_dangle={},
-                dangle_norm_z_by_dangle={},
-                connection_norm_z_by_dangle={},
-                global_norm_z_by_dangle={},
-                dangle_xy=dangle_xy,
-                dangle_parent=dangle_parent,
-                dangles_key=dangles_key,
-                lines_key=lines_key,
-            )
-
-        # ----------------------------
         # Angle caches
         # ----------------------------
         polyline_by_parent = self._build_polyline_by_parent_id()
 
-        # External polyline caches keyed by dataset_key(layer)
+        # External polyline caches and line-type map, keyed by dataset_key(layer).
+        # Built before candidate filtering so line_like_ds_keys is available.
         polyline_by_external: dict[str, dict[int, Any]] = {}
         is_external_line_like: dict[str, bool] = {}
 
@@ -2845,6 +2834,53 @@ class FillLineGaps:
                 polyline_by_external[ds_key] = self._build_polyline_by_oid(lyr)
             else:
                 is_external_line_like[ds_key] = False
+
+        # ds_keys for line-like targets that receive the expanded tolerance.
+        # Self-lines are included only when fill_gaps_on_self is active (otherwise no
+        # candidates with lines_key appear in the near table anyway).
+        line_like_external_ds_keys: set[str] = {
+            ds_key for ds_key, is_line in is_external_line_like.items() if is_line
+        }
+        line_like_ds_keys: set[str] = line_like_external_ds_keys.copy()
+        if self.fill_gaps_on_self:
+            line_like_ds_keys.add(lines_key)
+
+        # ----------------------------
+        # Dangle filtering: collect legal candidates per dangle
+        # ----------------------------
+        legal_rows_by_dangle, parent_id_by_dangle, _step1a_illegal = (
+            self._filter_legal_candidates(
+                grouped=grouped,
+                dangle_parent=dangle_parent,
+                illegal=illegal,
+                dangles_key=dangles_key,
+                lines_key=lines_key,
+                line_like_ds_keys=line_like_ds_keys,
+                base_tol=base_tol,
+                dangle_tol=dangle_tol,
+                topology=topology,
+                collect_diags=collect_diags,
+            )
+        )
+
+        if not legal_rows_by_dangle:
+            return {}, {}, self._assemble_diagnostics(
+                collect_diags=collect_diags,
+                step1a_illegal=_step1a_illegal,
+                step1b_illegal=[],
+                step1b_scored=[],
+                connection_loser_oids=set(),
+                kruskal_rejected_oids=set(),
+                accepted_dangle_oids=set(),
+                gap_source_by_dangle={},
+                dangle_norm_z_by_dangle={},
+                connection_norm_z_by_dangle={},
+                global_norm_z_by_dangle={},
+                dangle_xy=dangle_xy,
+                dangle_parent=dangle_parent,
+                dangles_key=dangles_key,
+                lines_key=lines_key,
+            )
 
         # ----------------------------
         # Best line parent per dangle (angle-aware)
@@ -2895,7 +2931,6 @@ class FillLineGaps:
                 if assess.blocks:
                     continue
 
-                # Line targets do not use edge-case bonus.
                 raw_dist = float(cand["near_dist"])
                 _tol = float(self.gap_tolerance_meters) or 1.0
                 eff = self._compute_best_fit_score(
@@ -2920,6 +2955,8 @@ class FillLineGaps:
                 dangle_xy=dangle_xy,
                 dangles_key=dangles_key,
                 lines_key=lines_key,
+                line_like_ds_keys=line_like_ds_keys,
+                line_like_external_ds_keys=line_like_external_ds_keys,
                 base_tol=base_tol,
                 polyline_by_parent=polyline_by_parent,
                 polyline_by_external=polyline_by_external,
@@ -3081,6 +3118,7 @@ class FillLineGaps:
         illegal: _IllegalTargets,
         dangles_key: str,
         lines_key: str,
+        line_like_ds_keys: set[str],
         base_tol: float,
         dangle_tol: float,
         topology: TopologyModel,
@@ -3119,6 +3157,7 @@ class FillLineGaps:
                     dangle_parent=dangle_parent,
                     dangles_fc_key=dangles_key,
                     lines_fc_key=lines_key,
+                    line_like_ds_keys=line_like_ds_keys,
                     parent_id=parent_id,
                     cand=cand,
                     base_tol=base_tol,
@@ -3133,6 +3172,7 @@ class FillLineGaps:
                         dangle_parent=dangle_parent,
                         dangles_fc_key=dangles_key,
                         lines_fc_key=lines_key,
+                        line_like_ds_keys=line_like_ds_keys,
                         parent_id=parent_id,
                         cand=cand,
                         base_tol=base_tol,
@@ -3157,6 +3197,8 @@ class FillLineGaps:
         dangle_xy: dict[int, tuple[float, float]],
         dangles_key: str,
         lines_key: str,
+        line_like_ds_keys: set[str],
+        line_like_external_ds_keys: set[str],
         base_tol: float,
         polyline_by_parent: dict[int, Any],
         polyline_by_external: dict[str, dict[int, Any]],
@@ -3275,12 +3317,15 @@ class FillLineGaps:
                         )
                     continue
 
-                # 2) Expanded dangle tolerance gating (angle_extra_dangle_threshold_degrees)
+                # 2) Expanded tolerance gating (angle_extra_dangle_threshold_degrees)
+                # Applies to dangle targets and line-like targets that are only in range
+                # because of the expanded tolerance — angle must permit extra-dangle behavior.
                 is_dangle_target = str(cand["near_fc_key"]) == str(dangles_key)
+                is_line_like_target = str(cand["near_fc_key"]) in line_like_ds_keys
                 dist = float(cand["near_dist"])
 
                 if (
-                    is_dangle_target
+                    (is_dangle_target or is_line_like_target)
                     and dist > float(base_tol)
                     and not bool(assess.allow_extra_dangle)
                 ):
@@ -3313,7 +3358,8 @@ class FillLineGaps:
                             )
                         continue
 
-                # 4) Edge-case bonus eligibility is angle-controlled (and conservative when angle missing)
+                # 4) Edge-case bonus eligibility is angle-controlled (and conservative when
+                # angle missing). Only dangle targets can receive the bonus.
                 bonus_allowed = True
                 if is_dangle_target:
                     # conservative policy: if angle is unavailable => no expanded behavior, no bonus
@@ -4299,7 +4345,7 @@ class FillLineGaps:
                     d.raw_distance,
                     d.best_fit_score,
                     d.best_fit_rank,
-                    int(d.bonus_applied) if d.bonus_applied is not None else None,
+                    int(bool(d.bonus_applied)),
                     a.angle_metric_deg if a is not None else None,
                     a.src_connector_diff if a is not None else None,
                     a.connector_target_diff if a is not None else None,
