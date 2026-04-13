@@ -4,6 +4,7 @@ import arcpy
 import config
 from custom_tools.general_tools import custom_arcpy, line_topology
 from file_manager.n100.file_manager_rivers import River_N100
+from file_manager.n100.file_manager_roads import Road_N100
 from env_setup import environment_setup
 
 from composition_configs import core_config, logic_config
@@ -21,7 +22,8 @@ from custom_tools.general_tools.geometry_tools import (
 @timing_decorator
 def main():
     environment_setup.main()
-    fill_line_topology_gaps()
+    # fill_line_topology_gaps()
+    fill_raod_gaps()
     # fix_river_orientation()
     # find_angles()
     # find_xy_endpoints()
@@ -87,7 +89,7 @@ def fill_line_topology_gaps():
         connectivity_scope=logic_config.ConnectivityScope.TRANSITIVE,
         connectivity_tolerance_meters=environment_setup.ArcGisEnvironmentSetup.XY_TOLERANCE,
         line_connectivity_mode=logic_config.LineConnectivityMode.ENDPOINTS,
-        angle_block_threshold_degrees=115,
+        angle_block_threshold_degrees=85,
         angle_extra_dangle_threshold_degrees=95,
         best_fit_weights=(
             logic_config.BestFitWeightsConfig(
@@ -119,6 +121,60 @@ def fill_line_topology_gaps():
     )
 
     line_topology.FillLineGaps(line_gap_config=line_fix_config).run()
+
+
+@timing_decorator
+def fill_raod_gaps():
+    custom_arcpy.select_attribute_and_make_permanent_feature(
+        input_layer=Road_N100.data_selection___nvdb_roads___n100_road.value,
+        expression="objtype IN ('VegSenterlinje')",
+        output_name=Road_N100.data_preparation___nvdb_selection___n100_road.value,
+    )
+
+    custom_arcpy.select_attribute_and_make_permanent_feature(
+        input_layer=Road_N100.data_selection___nvdb_roads___n100_road.value,
+        expression="objtype IN ('VegSenterlinje')",
+        output_name=Road_N100.data_preparation___tractor_selection___n100_road.value,
+        inverted=True,
+    )
+
+    line_fix_advanced_config = logic_config.FillLineGapsAdvancedConfig(
+        fill_gaps_on_self=False,
+        line_changes_output=Road_N100.data_preparation___road_gap_changes___n100_road.value,
+        write_output_metadata=True,
+        candidate_connections_output=Road_N100.data_preparation___road_gap_diagnostics___n100_road.value,
+        increased_tolerance_edge_case_distance_meters=10,
+        edit_method=logic_config.EditMethod.AUTO,
+        connectivity_scope=logic_config.ConnectivityScope.DIRECT_CONNECTION,
+        connectivity_tolerance_meters=environment_setup.ArcGisEnvironmentSetup.XY_TOLERANCE,
+        line_connectivity_mode=logic_config.LineConnectivityMode.ENDPOINTS,
+    )
+    work_file_manager_config = core_config.WorkFileConfig(
+        root_file=Road_N100.data_preparation___road_gap_root___n100_road.value,
+        write_to_memory=False,
+        keep_files=True,
+    )
+
+    line_fix_config = logic_config.FillLineGapsConfig(
+        input_lines=Road_N100.data_preparation___tractor_selection___n100_road.value,
+        output_lines=Road_N100.data_preparation___fixed_road_gaps___n100_road.value,
+        work_file_manager_config=work_file_manager_config,
+        gap_tolerance_meters=25,
+        connect_to_features=[
+            Road_N100.data_preparation___nvdb_selection___n100_road.value
+        ],
+        advanced_config=line_fix_advanced_config,
+    )
+
+    line_topology.FillLineGaps(line_gap_config=line_fix_config).run()
+
+    arcpy.management.Merge(
+        inputs=(
+            Road_N100.data_preparation___nvdb_selection___n100_road.value,
+            Road_N100.data_preparation___fixed_road_gaps___n100_road.value,
+        ),
+        output=Road_N100.data_preparation___integrated_nvdb_traktor_sti___n100_road.value,
+    )
 
 
 @timing_decorator

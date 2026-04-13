@@ -141,6 +141,51 @@ class Road_N100(Enum):
         description="car_raod",
     )
 
+    data_preparation___nvdb_selection___n100_road = file_manager.generate_file_name_gdb(
+        script_source_name=data_preparation,
+        description="nvdb_selection",
+    )
+
+    data_preparation___tractor_selection___n100_road = (
+        file_manager.generate_file_name_gdb(
+            script_source_name=data_preparation,
+            description="tractor_selection",
+        )
+    )
+
+    data_preparation___road_gap_changes___n100_road = (
+        file_manager.generate_file_name_gdb(
+            script_source_name=data_preparation,
+            description="road_gap_changes",
+        )
+    )
+
+    data_preparation___road_gap_diagnostics___n100_road = (
+        file_manager.generate_file_name_gdb(
+            script_source_name=data_preparation,
+            description="road_gap_diagnostics",
+        )
+    )
+
+    data_preparation___road_gap_root___n100_road = file_manager.generate_file_name_gdb(
+        script_source_name=data_preparation,
+        description="road_gap_root",
+    )
+
+    data_preparation___fixed_road_gaps___n100_road = (
+        file_manager.generate_file_name_gdb(
+            script_source_name=data_preparation,
+            description="fixed_road_gaps",
+        )
+    )
+
+    data_preparation___integrated_nvdb_traktor_sti___n100_road = (
+        file_manager.generate_file_name_gdb(
+            script_source_name=data_preparation,
+            description="integrated_nvdb_traktor_sti",
+        )
+    )
+
     data_preparation___road_dangle___n100_road = file_manager.generate_file_name_gdb(
         script_source_name=data_preparation,
         description="road_dangle",
