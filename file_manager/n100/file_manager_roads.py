@@ -522,6 +522,25 @@ class Road_N100(Enum):
         )
     )
 
+    data_preparation___road_split_dissolved___n100_road = (
+        file_manager.generate_file_name_gdb(
+            script_source_name=data_preparation,
+            description="road_split_dissolved",
+        )
+    )
+
+    data_preparation___road_split_xm__n100_road = file_manager.generate_file_name_gdb(
+        script_source_name=data_preparation,
+        description="road_split_xm",
+    )
+
+    data_preparation___road_split_single_part___n100_road = (
+        file_manager.generate_file_name_gdb(
+            script_source_name=data_preparation,
+            description="road_split_single_part",
+        )
+    )
+
     data_preparation__water_feature_outline_dissolved__n100_road = (
         file_manager.generate_file_name_gdb(
             script_source_name=data_preparation,
@@ -579,6 +598,13 @@ class Road_N100(Enum):
         file_manager.generate_file_name_gdb(
             script_source_name=data_preparation,
             description="resolve_road_conflicts_displacement_feature",
+        )
+    )
+
+    data_preparation___resolve_road_conflicts_dissolved___n100_road = (
+        file_manager.generate_file_name_gdb(
+            script_source_name=data_preparation,
+            description="resolve_road_conflicts_dissolved",
         )
     )
 
