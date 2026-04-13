@@ -211,11 +211,26 @@ def match_holes_with_surrounding_features(files: dict, output_fc: str) -> None:
     )
 
     # Fetch original attributes
-    changed_geometries = {oid: geom for oid, geom in arcpy.da.SearchCursor(files["dissolved_data"], [match_attribute, "SHAPE@"])}
+    changed_geometries = {
+        oid: geom
+        for oid, geom in arcpy.da.SearchCursor(
+            files["dissolved_data"], [match_attribute, "SHAPE@"]
+        )
+    }
 
-    with arcpy.da.UpdateCursor(files["intersecting_features"], ["OID@", "SHAPE@"]) as cursor:
+    with arcpy.da.UpdateCursor(
+        files["intersecting_features"], ["OID@", "SHAPE@"]
+    ) as cursor:
         for oid, _ in cursor:
             if oid in changed_geometries:
                 cursor.updateRow([oid, changed_geometries[oid]])
 
-    arcpy.management.Merge(inputs=[files["copy_of_input"], files["locked_features"], files["target_features"], files["intersecting_features"]], output=output_fc)
+    arcpy.management.Merge(
+        inputs=[
+            files["copy_of_input"],
+            files["locked_features"],
+            files["target_features"],
+            files["intersecting_features"],
+        ],
+        output=output_fc,
+    )
