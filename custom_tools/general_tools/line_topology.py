@@ -1751,6 +1751,37 @@ class FillLineGaps:
                 out[int(dangle_oid)] = (float(x), float(y))
         return out
 
+    def _directed_start_dangle_oids(
+        self,
+        *,
+        dangle_xy: dict[int, tuple[float, float]],
+        dangle_parent: dict[int, int],
+        polyline_by_parent: dict[int, Any],
+    ) -> set[int]:
+        """
+        Returns the set of dangle OIDs that sit at the start of their parent line.
+
+        In directed mode a gap-fill connector extended from a start-node dangle would
+        run antiparallel to the source line's digitization direction, breaking topology.
+        Only end-node dangles are valid sources.
+
+        Returns an empty set when source_direction_mode == UNDIRECTED.
+        """
+        if self.source_direction_mode == logic_config.SourceDirectionMode.UNDIRECTED:
+            return set()
+
+        start_oids: set[int] = set()
+        for dangle_oid, (x, y) in dangle_xy.items():
+            parent_id = dangle_parent.get(dangle_oid)
+            if parent_id is None:
+                continue
+            poly = polyline_by_parent.get(int(parent_id))
+            if poly is None:
+                continue
+            if self._xy_is_at_line_start(poly, x, y):
+                start_oids.add(dangle_oid)
+        return start_oids
+
     # ----------------------------
     # Illegal targets detection
     # ----------------------------
@@ -2845,6 +2876,14 @@ class FillLineGaps:
         if self.fill_gaps_on_self:
             line_like_ds_keys.add(lines_key)
 
+        # In directed mode, source dangles at a line's start node are invalid sources.
+        # polyline_by_parent is already built above; dangle_xy was built at the top.
+        directed_start_dangles = self._directed_start_dangle_oids(
+            dangle_xy=dangle_xy,
+            dangle_parent=dangle_parent,
+            polyline_by_parent=polyline_by_parent,
+        )
+
         # ----------------------------
         # Dangle filtering: collect legal candidates per dangle
         # ----------------------------
@@ -2860,6 +2899,7 @@ class FillLineGaps:
                 dangle_tol=dangle_tol,
                 topology=topology,
                 collect_diags=collect_diags,
+                directed_source_illegal_oids=directed_start_dangles,
             )
         )
 
@@ -3123,6 +3163,7 @@ class FillLineGaps:
         dangle_tol: float,
         topology: TopologyModel,
         collect_diags: bool,
+        directed_source_illegal_oids: set[int],
     ) -> tuple[_Grouped, dict[int, int], list[_Step1AIllegalEntry]]:
         """Dangle filtering: collect legal candidates per dangle.
 
@@ -3140,6 +3181,21 @@ class FillLineGaps:
             if parent_id is None:
                 continue
             parent_id = int(parent_id)
+
+            # In directed mode, start-node dangles cannot be gap-fill sources.
+            # A connector from a start node would run antiparallel to the source line.
+            if dangle_oid in directed_source_illegal_oids:
+                if collect_diags:
+                    for cand in candidates:
+                        if (
+                            str(cand["near_fc_key"]) == str(lines_key)
+                            and int(cand["near_fid"]) == int(parent_id)
+                        ):
+                            continue
+                        _step1a_illegal.append(
+                            (dangle_oid, parent_id, cand, "directed_start_node")
+                        )
+                continue
 
             rows = sorted(candidates, key=self._candidate_sort_key)
 
