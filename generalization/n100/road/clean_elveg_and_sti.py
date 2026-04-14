@@ -7,6 +7,7 @@ Steg 2: Snap berørte endepunkter
 Steg 3: Snap alene-endepunkter innen 2 m
 Steg 4: Split vegnett i endepunkter på edge
 """
+
 import arcpy
 import os
 import paths
