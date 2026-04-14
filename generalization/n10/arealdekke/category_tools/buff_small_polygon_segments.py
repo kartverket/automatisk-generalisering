@@ -5,13 +5,15 @@ from composition_configs import core_config
 from file_manager import WorkFileManager
 from file_manager.n10.file_manager_arealdekke import Arealdekke_N10
 from input_data import input_n10
-from generalization.n10.arealdekke.overall_tools.area_merger import area_merger
 
 from composition_configs import core_config
 from pathlib import Path
 from custom_tools.general_tools.param_utils import initialize_params
 from generalization.n10.arealdekke.parameters.parameter_dataclasses import (
     buff_small_polygon_segments_parameters,
+)
+from generalization.n10.arealdekke.overall_tools.overlap_merger import (
+    create_overlapping_land_use,
 )
 
 arcpy.env.overwriteOutput = True
@@ -52,6 +54,14 @@ def buff_small_polygon_segments(
     choose_target_areas(files=files)
     get_shared_locked_boundary(files=files, min_width=min_width)
     buff_small_segments(files=files, min_width=min_width)
+
+    create_overlapping_land_use(
+        input_fc=files[fc.target_fc],
+        buffered_fc=files[fc.small_segments_locked_buffed_dissolved],
+        output_fc=output_fc,
+    )
+
+    wfm.delete_created_files()
 
 
 class fc(Enum):
@@ -198,20 +208,12 @@ def extract_data(files: dict, target_fc: str, locked_fc: set, input_fc) -> None:
 
     # Extract the locked areas from the data layer that share a line with the target fc.
     if locked_fc:
-        if len(locked_fc) == 1:
-            # Single value → still needs quotes, but no commas
-            vals = f"'{locked_fc[0]}'"
-        else:
-            # Multiple values → join normally
-            vals = "', '".join(str(v) for v in locked_fc)
-            vals = f"'{vals}'"
-
         locked_fc_lyr = "locked_fc_lyr"
         arcpy.management.MakeFeatureLayer(
             in_features=input_fc,
             out_layer=locked_fc_lyr,
-            where_clause=f"arealdekke IN ({vals})",
         )
+
         arcpy.management.SelectLayerByLocation(
             in_layer=locked_fc_lyr,
             overlap_type="SHARE_A_LINE_SEGMENT_WITH",
@@ -561,23 +563,6 @@ def buff_small_segments(files: dict, min_width: int) -> None:
     arcpy.management.Dissolve(
         in_features=small_segments_locked_buffed_merged_lyr,
         out_feature_class=files[fc.small_segments_locked_buffed_dissolved],
-    )
-
-    # Do a spatial join to get the original values.
-    small_segments_locked_buffed_dissolved_lyr = (
-        "small_segments_locked_buffed_dissolved_lyr"
-    )
-    arcpy.management.MakeFeatureLayer(
-        in_features=files[fc.small_segments_locked_buffed_dissolved],
-        out_layer=small_segments_locked_buffed_dissolved_lyr,
-    )
-
-    arcpy.analysis.SpatialJoin(
-        target_features=small_segments_locked_buffed_dissolved_lyr,
-        join_features=chosen_areas_lyr,
-        out_feature_class=files[fc.test],
-        join_operation="JOIN_ONE_TO_ONE",
-        match_option="INTERSECT",
     )
 
 
