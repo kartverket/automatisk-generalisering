@@ -49,6 +49,7 @@ def fix_river_orientation():
         connectivity_tolerance_meters=environment_setup.ArcGisEnvironmentSetup.XY_TOLERANCE,
     )
     LineZOrientTool(config=flip_config).run()
+    custom_arcpy.select_location_and_make_feature_layer()
 
 
 def find_angles():
@@ -102,6 +103,7 @@ def fill_line_topology_gaps():
         source_direction_mode=logic_config.SourceDirectionMode.RASTER_DERIVED,
         min_z_drop_meters=1,
         raster_paths=rasters,
+        crossing_check_spatial_reference=environment_setup.project_spatial_reference,
     )
     work_file_manager_config = core_config.WorkFileConfig(
         root_file=River_N100.river_topology___root___n100_river.value,
@@ -148,6 +150,7 @@ def fill_raod_gaps():
         connectivity_scope=logic_config.ConnectivityScope.DIRECT_CONNECTION,
         connectivity_tolerance_meters=environment_setup.ArcGisEnvironmentSetup.XY_TOLERANCE,
         line_connectivity_mode=logic_config.LineConnectivityMode.ENDPOINTS,
+        crossing_check_spatial_reference=environment_setup.project_spatial_reference,
     )
     work_file_manager_config = core_config.WorkFileConfig(
         root_file=Road_N100.data_preparation___road_gap_root___n100_road.value,
