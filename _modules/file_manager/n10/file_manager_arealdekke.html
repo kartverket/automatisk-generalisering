@@ -91,7 +91,7 @@
 <span class="n">elim_file</span> <span class="o">=</span> <span class="s2">&quot;eliminate&quot;</span>
 <span class="n">gangsykkel_file</span> <span class="o">=</span> <span class="s2">&quot;gangsykkel&quot;</span>
 <span class="n">attribute_file</span> <span class="o">=</span> <span class="s2">&quot;attribute_changer&quot;</span>
-<span class="n">area_line_merger</span> <span class="o">=</span> <span class="s2">&quot;area_line_merger&quot;</span>
+<span class="n">overlap_remover</span> <span class="o">=</span> <span class="s2">&quot;overlap_remover&quot;</span>
 <span class="n">island_merger</span> <span class="o">=</span> <span class="s2">&quot;island_merger&quot;</span>
 <span class="n">passability</span> <span class="o">=</span> <span class="s2">&quot;passability&quot;</span>
 <span class="n">simplify_polygon</span> <span class="o">=</span> <span class="s2">&quot;simplify_polygon&quot;</span>
@@ -101,6 +101,8 @@
 <span class="n">innsjo_file</span> <span class="o">=</span> <span class="s2">&quot;innsjo_file&quot;</span>
 <span class="n">arealdekke_class</span> <span class="o">=</span> <span class="s2">&quot;arealdekke_class&quot;</span>
 <span class="n">category_class</span> <span class="o">=</span> <span class="s2">&quot;category_class&quot;</span>
+<span class="n">overlap_merger</span> <span class="o">=</span> <span class="s2">&quot;overlap_merger&quot;</span>
+<span class="n">fill_holes</span> <span class="o">=</span> <span class="s2">&quot;fill_holes&quot;</span>
 
 
 <div class="viewcode-block" id="Arealdekke_N10">
@@ -193,19 +195,19 @@
     <span class="p">)</span>
 
     <span class="c1"># ========================================</span>
-    <span class="c1">#                         AREA LINE MERGER</span>
+    <span class="c1">#                          OVERLAP REMOVER</span>
     <span class="c1"># ========================================</span>
 
-    <span class="n">area_line_merger_start__n10_land_use</span> <span class="o">=</span> <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_gdb</span><span class="p">(</span>
-        <span class="n">script_source_name</span><span class="o">=</span><span class="n">area_line_merger</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">&quot;area_line_merger_start&quot;</span>
+    <span class="n">overlap_remover_start__n10_land_use</span> <span class="o">=</span> <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_gdb</span><span class="p">(</span>
+        <span class="n">script_source_name</span><span class="o">=</span><span class="n">overlap_remover</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">&quot;overlap_remover_start&quot;</span>
     <span class="p">)</span>
 
-    <span class="n">area_line_merger__n10_land_use</span> <span class="o">=</span> <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_gdb</span><span class="p">(</span>
-        <span class="n">script_source_name</span><span class="o">=</span><span class="n">area_line_merger</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">&quot;area_line_merger&quot;</span>
+    <span class="n">overlap_remover__n10_land_use</span> <span class="o">=</span> <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_gdb</span><span class="p">(</span>
+        <span class="n">script_source_name</span><span class="o">=</span><span class="n">overlap_remover</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">&quot;overlap_remover&quot;</span>
     <span class="p">)</span>
 
-    <span class="n">area_line_merger_output__n10_land_use</span> <span class="o">=</span> <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_gdb</span><span class="p">(</span>
-        <span class="n">script_source_name</span><span class="o">=</span><span class="n">area_line_merger</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">&quot;area_line_merger_output&quot;</span>
+    <span class="n">overlap_remover_output__n10_land_use</span> <span class="o">=</span> <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_gdb</span><span class="p">(</span>
+        <span class="n">script_source_name</span><span class="o">=</span><span class="n">overlap_remover</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">&quot;overlap_remover_output&quot;</span>
     <span class="p">)</span>
 
     <span class="c1"># ========================================</span>
@@ -291,6 +293,22 @@
 
     <span class="n">category_class_in_progress__n10_land_use</span> <span class="o">=</span> <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_gdb</span><span class="p">(</span>
         <span class="n">script_source_name</span><span class="o">=</span><span class="n">category_class</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">&quot;in_progress_files&quot;</span>
+    <span class="p">)</span>
+
+    <span class="c1"># ========================================</span>
+    <span class="c1">#                           OVERLAP MERGER</span>
+    <span class="c1"># ========================================</span>
+
+    <span class="n">overlap_merger__n10_land_use</span> <span class="o">=</span> <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_gdb</span><span class="p">(</span>
+        <span class="n">script_source_name</span><span class="o">=</span><span class="n">overlap_merger</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">&quot;overlap_merger&quot;</span>
+    <span class="p">)</span>
+
+    <span class="c1"># ========================================</span>
+    <span class="c1">#                               FILL HOLES</span>
+    <span class="c1"># ========================================</span>
+
+    <span class="n">fill_holes__n10_land_use</span> <span class="o">=</span> <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_gdb</span><span class="p">(</span>
+        <span class="n">script_source_name</span><span class="o">=</span><span class="n">fill_holes</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">&quot;fill_holes&quot;</span>
     <span class="p">)</span></div>
 
 </pre></div>

@@ -1,0 +1,365 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../../../../">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>generalization.n10.arealdekke.overall_tools.overlap_remover &mdash; Automatisk Generalisering 0.0.1 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../../../../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../../../../../_static/css/theme.css?v=9edc463e" />
+      <link rel="stylesheet" type="text/css" href="../../../../../_static/custom.css" />
+
+  
+      <script src="../../../../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../../../../_static/documentation_options.js?v=d45e8c67"></script>
+      <script src="../../../../../_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="../../../../../_static/sphinx_highlight.js?v=6ffebe34"></script>
+    <script src="../../../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../../../index.html" class="icon icon-home">
+            Automatisk Generalisering
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../generated_docs/custom_tools.html">custom_tools package</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../generated_docs/env_setup.html">env_setup package</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../generated_docs/file_manager.html">file_manager package</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../generated_docs/generalization.n100.building.html">generalization.n100.building package</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../generated_docs/input_data.html">input_data package</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../generated_docs/modules.html">automatisk-generalisering</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../../../index.html">Automatisk Generalisering</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../../../../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">generalization.n10.arealdekke.overall_tools.overlap_remover</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for generalization.n10.arealdekke.overall_tools.overlap_remover</h1><div class="highlight"><pre>
+<span></span><span class="c1"># Libraries</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">importlib.metadata</span><span class="w"> </span><span class="kn">import</span> <span class="n">files</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">arcpy</span>
+
+<span class="n">arcpy</span><span class="o">.</span><span class="n">env</span><span class="o">.</span><span class="n">overwriteOutput</span> <span class="o">=</span> <span class="kc">True</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">composition_configs</span><span class="w"> </span><span class="kn">import</span> <span class="n">core_config</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">custom_tools.decorators.timing_decorator</span><span class="w"> </span><span class="kn">import</span> <span class="n">timing_decorator</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">file_manager</span><span class="w"> </span><span class="kn">import</span> <span class="n">WorkFileManager</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">file_manager.n10.file_manager_arealdekke</span><span class="w"> </span><span class="kn">import</span> <span class="n">Arealdekke_N10</span>
+
+<span class="c1"># ========================</span>
+<span class="c1"># Main function</span>
+<span class="c1"># ========================</span>
+
+
+<div class="viewcode-block" id="remove_overlaps">
+<a class="viewcode-back" href="../../../../../generated_docs/generalization.n10.arealdekke.overall_tools.html#generalization.n10.arealdekke.overall_tools.overlap_remover.remove_overlaps">[docs]</a>
+<span class="nd">@timing_decorator</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">remove_overlaps</span><span class="p">(</span>
+    <span class="n">input_fc</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">buffered_fc</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">locked_fc</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">output_fc</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">changed_area</span><span class="p">:</span> <span class="nb">str</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Adjusts land use that intersects with &#39;changed_area&#39;</span>
+<span class="sd">    that have been enlarged to preserve topology.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        input_fc (str): Input feature class with original, complete land use</span>
+<span class="sd">        buffered_fc (str): Feature class with the enlarged land use that</span>
+<span class="sd">                           overlaps other areas</span>
+<span class="sd">        locked_fc (str): Feature class with the locked features</span>
+<span class="sd">        output_fc (str): Feature class to store output</span>
+<span class="sd">        changed_area (str): The field name value of the land use / &#39;arealdekke&#39;</span>
+<span class="sd">                            that is enlarged and overlaps other areas</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="c1"># 1) Sets up work file manager to take care of temporary files</span>
+    <span class="n">fc</span> <span class="o">=</span> <span class="n">Arealdekke_N10</span><span class="o">.</span><span class="n">overlap_remover__n10_land_use</span><span class="o">.</span><span class="n">value</span>
+    <span class="n">config</span> <span class="o">=</span> <span class="n">core_config</span><span class="o">.</span><span class="n">WorkFileConfig</span><span class="p">(</span><span class="n">root_file</span><span class="o">=</span><span class="n">fc</span><span class="p">)</span>
+    <span class="n">wfm</span> <span class="o">=</span> <span class="n">WorkFileManager</span><span class="p">(</span><span class="n">config</span><span class="o">=</span><span class="n">config</span><span class="p">)</span>
+
+    <span class="c1"># 2) Creates temporary files</span>
+    <span class="n">files</span> <span class="o">=</span> <span class="n">create_wfm_gdbs</span><span class="p">(</span><span class="n">wfm</span><span class="p">)</span>
+
+    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2">Created WorkFileManager and temporary files for overlap remover process.&quot;</span><span class="p">)</span>
+
+    <span class="c1"># 3) Remove locked features from buffers to avoid overlap in these areas</span>
+    <span class="n">arcpy</span><span class="o">.</span><span class="n">analysis</span><span class="o">.</span><span class="n">Erase</span><span class="p">(</span>
+        <span class="n">in_features</span><span class="o">=</span><span class="n">buffered_fc</span><span class="p">,</span>
+        <span class="n">erase_features</span><span class="o">=</span><span class="n">locked_fc</span><span class="p">,</span>
+        <span class="n">out_feature_class</span><span class="o">=</span><span class="n">files</span><span class="p">[</span><span class="s2">&quot;erased_buffers&quot;</span><span class="p">],</span>
+    <span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span>
+        <span class="s2">&quot;Erased locked features from buffered features to avoid overlap in these areas.&quot;</span>
+    <span class="p">)</span>
+
+    <span class="c1"># 4) Fetch correct attributes for the buffered features</span>
+    <span class="c1"># (those that are going to be merged with original data)</span>
+    <span class="n">change_target_features</span><span class="p">(</span><span class="n">input_fc</span><span class="o">=</span><span class="n">input_fc</span><span class="p">,</span> <span class="n">files</span><span class="o">=</span><span class="n">files</span><span class="p">,</span> <span class="n">target</span><span class="o">=</span><span class="n">changed_area</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span>
+        <span class="s2">&quot;Changed geometry of target features to fit with buffered features, and preserved attributes.&quot;</span>
+    <span class="p">)</span>
+
+    <span class="c1"># 5) Fetch data with changed area and those overlapping these</span>
+    <span class="n">fetch_relevant_data</span><span class="p">(</span>
+        <span class="n">files</span><span class="o">=</span><span class="n">files</span><span class="p">,</span>
+        <span class="n">attr_val</span><span class="o">=</span><span class="n">changed_area</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span>
+        <span class="s2">&quot;Fetched relevant data for the process: the buffer zones and the features intersecting these.&quot;</span>
+    <span class="p">)</span>
+
+    <span class="c1"># 6) Delete overlapping areas from features</span>
+    <span class="n">erase_overlap</span><span class="p">(</span><span class="n">files</span><span class="o">=</span><span class="n">files</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Overlap erased.&quot;</span><span class="p">)</span>
+
+    <span class="c1"># 7) Collect the data and store the result</span>
+    <span class="n">collect_and_finish</span><span class="p">(</span><span class="n">files</span><span class="o">=</span><span class="n">files</span><span class="p">,</span> <span class="n">output_fc</span><span class="o">=</span><span class="n">output_fc</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Collected data and stored the result in output feature class.</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">)</span>
+
+    <span class="n">wfm</span><span class="o">.</span><span class="n">delete_created_files</span><span class="p">()</span></div>
+
+
+
+<span class="c1"># ========================</span>
+<span class="c1"># Helper functions</span>
+<span class="c1"># ========================</span>
+
+
+<div class="viewcode-block" id="create_wfm_gdbs">
+<a class="viewcode-back" href="../../../../../generated_docs/generalization.n10.arealdekke.overall_tools.html#generalization.n10.arealdekke.overall_tools.overlap_remover.create_wfm_gdbs">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">create_wfm_gdbs</span><span class="p">(</span><span class="n">wfm</span><span class="p">:</span> <span class="n">WorkFileManager</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Creates all the temporarily files that are going to be used</span>
+<span class="sd">    during the process of removing overlap in the land use data.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        wfm (WorkFileManager): The WorkFileManager instance that are keeping the files</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        dict: A dictionary with all the files as variables</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="p">{</span>
+        <span class="s2">&quot;erased_buffers&quot;</span><span class="p">:</span> <span class="n">wfm</span><span class="o">.</span><span class="n">build_file_path</span><span class="p">(</span>
+            <span class="n">file_name</span><span class="o">=</span><span class="s2">&quot;erased_buffers&quot;</span><span class="p">,</span> <span class="n">file_type</span><span class="o">=</span><span class="s2">&quot;gdb&quot;</span>
+        <span class="p">),</span>
+        <span class="s2">&quot;spatial_join&quot;</span><span class="p">:</span> <span class="n">wfm</span><span class="o">.</span><span class="n">build_file_path</span><span class="p">(</span><span class="n">file_name</span><span class="o">=</span><span class="s2">&quot;spatial_join&quot;</span><span class="p">,</span> <span class="n">file_type</span><span class="o">=</span><span class="s2">&quot;gdb&quot;</span><span class="p">),</span>
+        <span class="s2">&quot;copy_of_input&quot;</span><span class="p">:</span> <span class="n">wfm</span><span class="o">.</span><span class="n">build_file_path</span><span class="p">(</span>
+            <span class="n">file_name</span><span class="o">=</span><span class="s2">&quot;copy_of_input&quot;</span><span class="p">,</span> <span class="n">file_type</span><span class="o">=</span><span class="s2">&quot;gdb&quot;</span>
+        <span class="p">),</span>
+        <span class="s2">&quot;locked_features&quot;</span><span class="p">:</span> <span class="n">wfm</span><span class="o">.</span><span class="n">build_file_path</span><span class="p">(</span>
+            <span class="n">file_name</span><span class="o">=</span><span class="s2">&quot;locked_features&quot;</span><span class="p">,</span> <span class="n">file_type</span><span class="o">=</span><span class="s2">&quot;gdb&quot;</span>
+        <span class="p">),</span>
+        <span class="s2">&quot;intersecting_features&quot;</span><span class="p">:</span> <span class="n">wfm</span><span class="o">.</span><span class="n">build_file_path</span><span class="p">(</span>
+            <span class="n">file_name</span><span class="o">=</span><span class="s2">&quot;intersecting_features&quot;</span><span class="p">,</span> <span class="n">file_type</span><span class="o">=</span><span class="s2">&quot;gdb&quot;</span>
+        <span class="p">),</span>
+        <span class="s2">&quot;erased_intersection&quot;</span><span class="p">:</span> <span class="n">wfm</span><span class="o">.</span><span class="n">build_file_path</span><span class="p">(</span>
+            <span class="n">file_name</span><span class="o">=</span><span class="s2">&quot;erased_intersection&quot;</span><span class="p">,</span> <span class="n">file_type</span><span class="o">=</span><span class="s2">&quot;gdb&quot;</span>
+        <span class="p">),</span>
+    <span class="p">}</span></div>
+
+
+
+<div class="viewcode-block" id="change_target_features">
+<a class="viewcode-back" href="../../../../../generated_docs/generalization.n10.arealdekke.overall_tools.html#generalization.n10.arealdekke.overall_tools.overlap_remover.change_target_features">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">change_target_features</span><span class="p">(</span><span class="n">input_fc</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">files</span><span class="p">:</span> <span class="nb">dict</span><span class="p">,</span> <span class="n">target</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Changes the original geometry to fit with the edited features and preserves attribute information.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        input_fc (str): Input feature class with original, complete land use</span>
+<span class="sd">        files (dict): Dictionary with all the working files</span>
+<span class="sd">        target (str): The field name value of the land use / &#39;arealdekke&#39;</span>
+<span class="sd">                      that is enlarged and overlaps other areas</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="c1"># Find connection between input data and buffered features with &#39;arealdekke&#39; = target</span>
+    <span class="n">arcpy</span><span class="o">.</span><span class="n">analysis</span><span class="o">.</span><span class="n">SpatialJoin</span><span class="p">(</span>
+        <span class="n">target_features</span><span class="o">=</span><span class="n">files</span><span class="p">[</span><span class="s2">&quot;erased_buffers&quot;</span><span class="p">],</span>
+        <span class="n">join_features</span><span class="o">=</span><span class="n">input_fc</span><span class="p">,</span>
+        <span class="n">out_feature_class</span><span class="o">=</span><span class="n">files</span><span class="p">[</span><span class="s2">&quot;spatial_join&quot;</span><span class="p">],</span>
+        <span class="n">join_operation</span><span class="o">=</span><span class="s2">&quot;JOIN_ONE_TO_ONE&quot;</span><span class="p">,</span>
+        <span class="n">join_type</span><span class="o">=</span><span class="s2">&quot;KEEP_ALL&quot;</span><span class="p">,</span>
+        <span class="n">match_option</span><span class="o">=</span><span class="s2">&quot;LARGEST_OVERLAP&quot;</span><span class="p">,</span>
+    <span class="p">)</span>
+
+    <span class="c1"># Fetch data not being buffered</span>
+    <span class="n">land_use_lyr</span> <span class="o">=</span> <span class="s2">&quot;land_use_lyr&quot;</span>
+    <span class="n">arcpy</span><span class="o">.</span><span class="n">management</span><span class="o">.</span><span class="n">MakeFeatureLayer</span><span class="p">(</span>
+        <span class="n">in_features</span><span class="o">=</span><span class="n">input_fc</span><span class="p">,</span>
+        <span class="n">out_layer</span><span class="o">=</span><span class="n">land_use_lyr</span><span class="p">,</span>
+        <span class="n">where_clause</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;arealdekke NOT IN (&#39;</span><span class="si">{</span><span class="n">target</span><span class="si">}</span><span class="s2">&#39;)&quot;</span><span class="p">,</span>
+    <span class="p">)</span>
+
+    <span class="c1"># Fetch field names not relevant anymore</span>
+    <span class="n">orig_field_names</span> <span class="o">=</span> <span class="p">[</span><span class="n">f</span><span class="o">.</span><span class="n">name</span> <span class="k">for</span> <span class="n">f</span> <span class="ow">in</span> <span class="n">arcpy</span><span class="o">.</span><span class="n">ListFields</span><span class="p">(</span><span class="n">input_fc</span><span class="p">)]</span>
+    <span class="n">fields_to_delete</span> <span class="o">=</span> <span class="p">[</span>
+        <span class="n">f</span><span class="o">.</span><span class="n">name</span>
+        <span class="k">for</span> <span class="n">f</span> <span class="ow">in</span> <span class="n">arcpy</span><span class="o">.</span><span class="n">ListFields</span><span class="p">(</span><span class="n">files</span><span class="p">[</span><span class="s2">&quot;spatial_join&quot;</span><span class="p">])</span>
+        <span class="k">if</span> <span class="n">f</span><span class="o">.</span><span class="n">name</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">orig_field_names</span>
+    <span class="p">]</span>
+
+    <span class="c1"># Delete irrelevant fields and keep the ones from original data</span>
+    <span class="k">if</span> <span class="n">fields_to_delete</span><span class="p">:</span>
+        <span class="n">arcpy</span><span class="o">.</span><span class="n">management</span><span class="o">.</span><span class="n">DeleteField</span><span class="p">(</span>
+            <span class="n">in_table</span><span class="o">=</span><span class="n">files</span><span class="p">[</span><span class="s2">&quot;spatial_join&quot;</span><span class="p">],</span> <span class="n">drop_field</span><span class="o">=</span><span class="n">fields_to_delete</span>
+        <span class="p">)</span>
+
+    <span class="c1"># Merge the two datasets into one single with correct attributes and overlap</span>
+    <span class="n">arcpy</span><span class="o">.</span><span class="n">management</span><span class="o">.</span><span class="n">Merge</span><span class="p">(</span>
+        <span class="n">inputs</span><span class="o">=</span><span class="p">[</span><span class="n">land_use_lyr</span><span class="p">,</span> <span class="n">files</span><span class="p">[</span><span class="s2">&quot;spatial_join&quot;</span><span class="p">]],</span>
+        <span class="n">output</span><span class="o">=</span><span class="n">files</span><span class="p">[</span><span class="s2">&quot;copy_of_input&quot;</span><span class="p">],</span>
+    <span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="fetch_relevant_data">
+<a class="viewcode-back" href="../../../../../generated_docs/generalization.n10.arealdekke.overall_tools.html#generalization.n10.arealdekke.overall_tools.overlap_remover.fetch_relevant_data">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">fetch_relevant_data</span><span class="p">(</span><span class="n">files</span><span class="p">:</span> <span class="nb">dict</span><span class="p">,</span> <span class="n">attr_val</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Copies the original data to work file manager and creates two feature classes:</span>
+<span class="sd">        1) All the buffered data (locked)</span>
+<span class="sd">        2) Data intersecting these buffers</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        files (dict): Dictionary with all the working files</span>
+<span class="sd">        attr_val (str): String representing the value of the attribute that must be locked</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">orig_fc</span> <span class="o">=</span> <span class="n">files</span><span class="p">[</span><span class="s2">&quot;copy_of_input&quot;</span><span class="p">]</span>
+    <span class="n">locked_fc</span> <span class="o">=</span> <span class="n">files</span><span class="p">[</span><span class="s2">&quot;locked_features&quot;</span><span class="p">]</span>
+    <span class="n">intersecting_fc</span> <span class="o">=</span> <span class="n">files</span><span class="p">[</span><span class="s2">&quot;intersecting_features&quot;</span><span class="p">]</span>
+
+    <span class="n">land_use_lyr</span> <span class="o">=</span> <span class="s2">&quot;land_use_lyr&quot;</span>
+    <span class="n">arcpy</span><span class="o">.</span><span class="n">management</span><span class="o">.</span><span class="n">MakeFeatureLayer</span><span class="p">(</span><span class="n">in_features</span><span class="o">=</span><span class="n">orig_fc</span><span class="p">,</span> <span class="n">out_layer</span><span class="o">=</span><span class="n">land_use_lyr</span><span class="p">)</span>
+
+    <span class="c1"># Stores locked features in own fc</span>
+    <span class="n">arcpy</span><span class="o">.</span><span class="n">management</span><span class="o">.</span><span class="n">SelectLayerByAttribute</span><span class="p">(</span>
+        <span class="n">in_layer_or_view</span><span class="o">=</span><span class="n">land_use_lyr</span><span class="p">,</span>
+        <span class="n">selection_type</span><span class="o">=</span><span class="s2">&quot;NEW_SELECTION&quot;</span><span class="p">,</span>
+        <span class="n">where_clause</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;arealdekke = &#39;</span><span class="si">{</span><span class="n">attr_val</span><span class="si">}</span><span class="s2">&#39;&quot;</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="n">arcpy</span><span class="o">.</span><span class="n">management</span><span class="o">.</span><span class="n">CopyFeatures</span><span class="p">(</span><span class="n">in_features</span><span class="o">=</span><span class="n">land_use_lyr</span><span class="p">,</span> <span class="n">out_feature_class</span><span class="o">=</span><span class="n">locked_fc</span><span class="p">)</span>
+
+    <span class="c1"># Deletes locked features from original data</span>
+    <span class="n">arcpy</span><span class="o">.</span><span class="n">management</span><span class="o">.</span><span class="n">DeleteFeatures</span><span class="p">(</span><span class="n">in_features</span><span class="o">=</span><span class="n">land_use_lyr</span><span class="p">)</span>
+
+    <span class="c1"># Stores overlapping features in own fc</span>
+    <span class="n">arcpy</span><span class="o">.</span><span class="n">management</span><span class="o">.</span><span class="n">SelectLayerByLocation</span><span class="p">(</span>
+        <span class="n">in_layer</span><span class="o">=</span><span class="n">land_use_lyr</span><span class="p">,</span>
+        <span class="n">overlap_type</span><span class="o">=</span><span class="s2">&quot;INTERSECT&quot;</span><span class="p">,</span>
+        <span class="n">select_features</span><span class="o">=</span><span class="n">locked_fc</span><span class="p">,</span>
+        <span class="n">selection_type</span><span class="o">=</span><span class="s2">&quot;NEW_SELECTION&quot;</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="n">arcpy</span><span class="o">.</span><span class="n">management</span><span class="o">.</span><span class="n">CopyFeatures</span><span class="p">(</span>
+        <span class="n">in_features</span><span class="o">=</span><span class="n">land_use_lyr</span><span class="p">,</span> <span class="n">out_feature_class</span><span class="o">=</span><span class="n">intersecting_fc</span>
+    <span class="p">)</span>
+
+    <span class="c1"># Deletes intersecting features from original data</span>
+    <span class="n">arcpy</span><span class="o">.</span><span class="n">management</span><span class="o">.</span><span class="n">DeleteFeatures</span><span class="p">(</span><span class="n">in_features</span><span class="o">=</span><span class="n">land_use_lyr</span><span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="erase_overlap">
+<a class="viewcode-back" href="../../../../../generated_docs/generalization.n10.arealdekke.overall_tools.html#generalization.n10.arealdekke.overall_tools.overlap_remover.erase_overlap">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">erase_overlap</span><span class="p">(</span><span class="n">files</span><span class="p">:</span> <span class="nb">dict</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Erase line parts of intersecting features that overlaps locked features (avoiding overlap).</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        files (dict): Dictionary with all the working files</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">arcpy</span><span class="o">.</span><span class="n">analysis</span><span class="o">.</span><span class="n">Erase</span><span class="p">(</span>
+        <span class="n">in_features</span><span class="o">=</span><span class="n">files</span><span class="p">[</span><span class="s2">&quot;intersecting_features&quot;</span><span class="p">],</span>
+        <span class="n">erase_features</span><span class="o">=</span><span class="n">files</span><span class="p">[</span><span class="s2">&quot;locked_features&quot;</span><span class="p">],</span>
+        <span class="n">out_feature_class</span><span class="o">=</span><span class="n">files</span><span class="p">[</span><span class="s2">&quot;erased_intersection&quot;</span><span class="p">],</span>
+    <span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="collect_and_finish">
+<a class="viewcode-back" href="../../../../../generated_docs/generalization.n10.arealdekke.overall_tools.html#generalization.n10.arealdekke.overall_tools.overlap_remover.collect_and_finish">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">collect_and_finish</span><span class="p">(</span><span class="n">files</span><span class="p">:</span> <span class="nb">dict</span><span class="p">,</span> <span class="n">output_fc</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Collects original data and modified data in one</span>
+<span class="sd">    feature class, and copies the result to output.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        files (dict): Dictionary with all the working files</span>
+<span class="sd">        output_fc (str): Feature class to store the final result</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">data</span> <span class="o">=</span> <span class="p">[</span>
+        <span class="n">files</span><span class="p">[</span><span class="s2">&quot;copy_of_input&quot;</span><span class="p">],</span>
+        <span class="n">files</span><span class="p">[</span><span class="s2">&quot;locked_features&quot;</span><span class="p">],</span>
+        <span class="n">files</span><span class="p">[</span><span class="s2">&quot;erased_intersection&quot;</span><span class="p">],</span>
+    <span class="p">]</span>
+
+    <span class="n">arcpy</span><span class="o">.</span><span class="n">management</span><span class="o">.</span><span class="n">Merge</span><span class="p">(</span><span class="n">inputs</span><span class="o">=</span><span class="n">data</span><span class="p">,</span> <span class="n">output</span><span class="o">=</span><span class="n">output_fc</span><span class="p">)</span></div>
+
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2024, Kartverket.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

@@ -68,14 +68,6 @@ generalization.n10.arealdekke.orchestrator.orchestrator\_copy module
    :show-inheritance:
    :undoc-members:
 
-generalization.n10.arealdekke.orchestrator.simplify\_land\_use module
----------------------------------------------------------------------
-
-.. automodule:: generalization.n10.arealdekke.orchestrator.simplify_land_use
-   :members:
-   :show-inheritance:
-   :undoc-members:
-
 Module contents
 ---------------
 
