@@ -313,9 +313,7 @@ class FillLineGapsAdvancedConfig:
     angle_block_threshold_degrees: Optional[float] = None
     angle_extra_dangle_threshold_degrees: Optional[float] = None
 
-    best_fit_weights: BestFitWeightsConfig = field(
-        default_factory=BestFitWeightsConfig
-    )
+    best_fit_weights: BestFitWeightsConfig = field(default_factory=BestFitWeightsConfig)
 
     # Passed to local_line_angle_at_xy(desired_half_window_m=...)
     angle_local_half_window_m: float = 2.0
@@ -355,6 +353,33 @@ class FillLineGapsAdvancedConfig:
     #   0   → candidate must run downhill or flat
     #  -10  → candidate must drop more than 10 m
     z_drop_threshold: Optional[float] = None
+
+    # ----------------------------
+    # Connector crossing check
+    # ----------------------------
+
+    # When True, candidates whose connector geometry crosses an existing feature
+    # (self-lines or connect_to_features) are rejected at Step 1a.  Accepted
+    # connectors are also checked against each other during Kruskal's selection,
+    # and resnap captures are re-checked after their final geometry is resolved.
+    # crossing_check_spatial_reference is required when this is True.
+    reject_crossing_connectors: bool = True
+
+    # Spatial reference used to construct temporary connector geometries for
+    # the crossing check.  Accepts an integer WKID or a .prj file path
+    # (passed directly to arcpy.SpatialReference()).  Only required when
+    # reject_crossing_connectors is True.
+    crossing_check_spatial_reference: "int | str | None" = None
+
+    def __post_init__(self) -> None:
+        if (
+            self.reject_crossing_connectors
+            and self.crossing_check_spatial_reference is None
+        ):
+            raise ValueError(
+                "crossing_check_spatial_reference is required when "
+                "reject_crossing_connectors is True"
+            )
 
 
 @dataclass(frozen=True)
