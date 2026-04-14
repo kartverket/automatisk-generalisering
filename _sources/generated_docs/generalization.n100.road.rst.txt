@@ -4,6 +4,14 @@ generalization.n100.road package
 Submodules
 ----------
 
+generalization.n100.road.clean\_elveg\_and\_sti module
+------------------------------------------------------
+
+.. automodule:: generalization.n100.road.clean_elveg_and_sti
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
 generalization.n100.road.dam module
 -----------------------------------
 
