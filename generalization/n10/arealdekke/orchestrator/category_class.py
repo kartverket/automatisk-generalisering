@@ -3,12 +3,12 @@ import arcpy
 import inspect
 
 from composition_configs import core_config
-from env_setup import environment_setup
+from custom_tools.decorators.timing_decorator import timing_decorator
 from file_manager import WorkFileManager
 from file_manager.n10.file_manager_arealdekke import Arealdekke_N10
 
 # Category tools:
-from generalization.n10.arealdekke.orchestrator.simplify_land_use import (
+from generalization.n10.arealdekke.category_tools.simplify_land_use import (
     simplify_and_smooth_polygon,
 )
 from generalization.n10.arealdekke.category_tools.buff_small_polygon_segments import (
@@ -68,6 +68,7 @@ class Category:
     # Main functions
     # ========================
 
+    @timing_decorator
     def process_category(
         self, input_fc: str, locked_fc: str, processed_fc: str
     ) -> bool:
@@ -87,9 +88,9 @@ class Category:
 
                 available_args = {
                     "target": self.__title,
-                    "input_fc": self.lyr,
-                    "output_fc": output_lyr,
-                    "locked_fc": locked_layers,
+                    "input_fc": input_fc,
+                    "output_fc": processed_fc,
+                    "locked_fc": locked_fc,
                     "map_scale": self.__map_scale,
                 }
 

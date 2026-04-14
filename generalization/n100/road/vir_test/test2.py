@@ -312,5 +312,12 @@ def update_vegstatus():
     print(f" VEGSTATUS updated to 'A' for {count} features in elveg/sti.")
 
 
+vector_check(
+    before=input_feature,
+    after=output_feature,
+    scale=100,
+    vector_type=Landcover,
+)
+
 if __name__ == "__main__":
     main()
