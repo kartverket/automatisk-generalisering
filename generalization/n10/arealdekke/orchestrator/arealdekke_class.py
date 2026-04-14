@@ -9,6 +9,8 @@ from file_manager import WorkFileManager
 from file_manager.n10.file_manager_arealdekke import Arealdekke_N10
 from input_data import input_n10, input_test_data
 from generalization.n10.arealdekke.orchestrator.category_class import Category
+from generalization.n10.arealdekke.orchestrator.program_history_class import Program_history_class as History_class
+
 
 # Arealdekke tools:
 from generalization.n10.arealdekke.overall_tools.arealdekke_dissolver import (
@@ -63,71 +65,32 @@ class Arealdekke:
             ),
         }
 
-        # Creates a variable to see if the data has been preprocessed.
-        # Safety lock to make sure categories are not added before data is ok.
-        self.preprocessed = None
-
-        # Other attributes
-        self.__map_scale = None
-        self.__preprocessing_operations_completed = None
-        self.categories= []
-
         # Program history
-        self.__program_history_path = Path(__file__).parent / "arealdekke_history.yml"
+        self.program_history: History_class = History_class(file_path=Path(__file__).parent / "arealdekke_history.yml")
 
-        update=False
+        #Check preprocessing
+        top_lvl_info=self.program_history.restore_arealdekke_attributes()
 
-        #Check if the program history exists
-        if self.__program_history_path.is_file():
-        
-            try:
-                with open(self.__program_history_path, "r", encoding="utf-8") as yml:
-                    data = yaml.safe_load(yml)
-
-                    # Check how far the preprocessing got. If at least one process was
-                    #  completed, update paths etc.
-                    if data.get("preprocessing_operations_completed", 0)>0:
-                        
-                        update=True
-
-                        self.files["arealdekke_fc"]=data["newest_version"]
-                        self.preprocessed=data["preprocessed"]
-                        self.__preprocessing_operations_completed=data["preprocessing_operations_completed"]
-                        self.__map_scale=data["map_scale"]
-
-                        # If preprocessed is false or the categories have not started
-                        # processing, the categories will be added like normal.
-                        category_history = data.get("category_history", [])
-
-                        if (
-                            self.preprocessed and 
-                            category_history and 
-                            category_history[0]["operations_completed"]
-                        ):
-
-                            # Extracts the data from the yml file into a category object.
-                            for category in data["category_history"]:
-                                category_obj = Category(**category)
-                                self.categories.append(category_obj)
-
-            except Exception as e:
-                raise e
-
-        if update==False:
-            #reset history
-            self.reset_history()
-
-            # Update variables
-            self.preprocessed = False
-            self.__map_scale = map_scale
-
+        #Update attributes
+        if top_lvl_info["file_path"] is not None:
+            self.files["arealdekke_fc"] = top_lvl_info["file_path"]
+        else:
             # Extracts the data and saves it in the object
             arcpy.management.CopyFeatures(
                 in_features=input_n10.Arealdekke_Buskerud,
                 out_feature_class=self.files["arealdekke_fc"],
             )
+        
+        self.__preprocessed: bool = top_lvl_info["preprocessed"] if top_lvl_info["preprocessed"] is not None else False
+        self.__preprocessings_completed: int = top_lvl_info["preprocessings_completed"] if top_lvl_info["preprocessings_completed"] is not None else 0
+        self.__map_scale: str = top_lvl_info["map_scale"] if top_lvl_info["map_scale"] is not None else map_scale
 
+        #Get categories
+        cat_lvl_info: dict =self.program_history.restore_arealdekke_categories()
 
+        self.categories: list[Category] = cat_lvl_info["cats"] if cat_lvl_info["cats"] is not None else [Category]
+
+            
     # ========================
     # Main functions
     # ========================
@@ -172,26 +135,30 @@ class Arealdekke:
         ]
 
         # Pipeline from original orchistrator file. Preprocessing the arealdekke data.
-        for preprocess in range(self.__preprocessing_operations_completed, len(preprocesses), 1):
+        for preprocess in range(self.__preprocessings_completed, len(preprocesses), 1):
 
             #Call process
             preprocesses[preprocess]()
 
-            #Update history (operations completed)
-            
+            #Update __preprocessings_completed
+            self.__preprocessings_completed+=1
 
+            #Update history (operations completed)
+            self.program_history.update_history_top_lvl(
+                key="preprocessing_operations_completed",
+                value=self.__preprocessings_completed
+            )
+            
         arcpy.management.CopyFeatures(
             in_features=output_fc, out_feature_class=self.files["arealdekke_fc"]
         )
 
-        self.preprocessed = True
+        self.__preprocessed = True
 
-    def add_categories(self, categories_config_file) -> bool:
-
-        completed = False
+    def add_categories(self, categories_config_file):
 
         # Checks if the data has been preprocessed.
-        if self.preprocessed and not self.categories:
+        if self.__preprocessed and not self.categories:
 
             try:
                 with open(categories_config_file, "r", encoding="utf-8") as yml:
@@ -206,17 +173,20 @@ class Arealdekke:
                         if category_obj.get_map_scale() == self.__map_scale:
                             self.categories.append(category_obj)
 
+                        #Adds category to the history file
+                        self.program_history.new_history_category(
+                            title=category_obj.get_title(),
+                            operations=category_obj.get_operations(),
+                            accessibility=category_obj.get_accessibility(),
+                            order=category_obj.get_order(),
+                            map_scale=category_obj.get_map_scale()
+                        )
+
                 # Sorts the categories based on their order key.
                 self.categories.sort(key=lambda obj: obj.get_order())
 
-                # Updates completed variable.
-                completed = True
-
             except Exception as e:
                 raise e
-
-        # Returns status of completion to user.
-        return completed
 
     def process_categories(self) -> None:
         # Iterates through the categories that are true, meaning they are open.
@@ -228,7 +198,7 @@ class Arealdekke:
             self.get_category(category.get_title())
 
             # Process category.
-            reinsert = category.process_category(
+            reinsert: bool = category.process_category(
                 input_data=self.files["category_fc"],
                 locked_layers=self.files["locked_fc"],
                 processed_layer=self.files["processed_fc"],
@@ -242,6 +212,12 @@ class Arealdekke:
             # Lock the layer
             category.set_accessibility(False)
 
+            self.program_history.update_history_cat_lvl(
+                title=category.get_title(),
+                key="accessibility",
+                value=category.get_accessibility()
+            )
+
         # Save processed data to final fc and delete the last files
         arcpy.management.CopyFeatures(
             in_features=self.files["processed_fc"],
@@ -249,7 +225,6 @@ class Arealdekke:
         )
 
         self.wfm.delete_created_files()
-        self.reset_history()
 
     # ========================
     # Getters
@@ -302,56 +277,3 @@ class Arealdekke:
     # ========================
     # Setters
     # ========================
-    
-    def save_history(self, data):
-        with open(self.__program_history_path, "w") as file:
-            yaml.dump(data, file, default_flow_style=False, allow_unicode=True)
-
-    def load_history(self, data):
-        with open(self.__program_history_path) as file:
-            return yaml.safe_load(file)
-        
-    def update_history_key(self, key, value):
-        data=self.load_history()
-        data[key]=value
-        self.save_history(data)
-
-    def new_history_category(
-            self, 
-            title, 
-            operations, 
-            accessibility=True, 
-            order=None,
-            map_scale="N10"
-            ):
-        
-        data = self.load_history()
-        history = data["category_history"]
-
-        new_entry = {
-            "title": title,
-            "operations": operations,
-            "accessibility": accessibility,
-            "order": order,
-            "map_scale": map_scale,
-            "last_processed": None,
-            "operations_completed": None,
-        }
-
-        history.append(new_entry)
-        self.save_history(data)
-
-    def reset_history(self):
-        if self.__program_history_path.is_file():
-            os.remove(self.__program_history_path)
-
-        template = {
-            "newest_version": None,
-            "map_scale": None,
-            "preprocessed": None,
-            "preprocessing_operations_completed": None,
-            "category_history": []
-        }
-
-        with open(self.__program_history_path, "w", encoding="utf-8") as new_history:
-            yaml.dump(template, new_history)

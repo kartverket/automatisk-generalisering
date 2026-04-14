@@ -3,7 +3,7 @@ import os
 from pathlib import Path
 from generalization.n10.arealdekke.orchestrator.category_class import Category
 
-class Program_history_tracker:
+class Program_history_class:
     def __init__(self, file_path)->bool:
 
         self.__program_history_path=file_path
@@ -17,19 +17,23 @@ class Program_history_tracker:
         else:
             return True
 
+    # ========================
+    # Getters
+    # ========================
+
+
     def restore_arealdekke_attributes(self):
         history=self.load_history()
 
         # Check how far the preprocessing got. If at least one process was
-        #  completed, update paths etc.
+        # completed, update paths etc.
         response={}
 
         if history.get("preprocessing_operations_completed", 0)>0:
             response["update"]=True
-            
             response["file_path"] = history["newest_version"]
             response["preprocessed"] = history["preprocessed"]
-            response["preprocessing_operations_completed"] = history["preprocessing_operations_completed"]
+            response["preprocessings_completed"] = history["preprocessings_completed"]
             response["map_scale"] = history["map_scale"]
             
         else:
@@ -62,7 +66,11 @@ class Program_history_tracker:
             response["cats_exists"]=False
         
         return response
-            
+
+    # ========================
+    # Setters
+    # ========================
+
     def save_history(self, data):
         with open(self.__program_history_path, "w") as file:
             yaml.dump(data, file, default_flow_style=False, allow_unicode=True)
@@ -71,10 +79,19 @@ class Program_history_tracker:
         with open(self.__program_history_path) as file:
             return yaml.safe_load(file)
         
-    def update_history_key(self, key, value):
+    def update_history_top_lvl(self, key, value):
         data=self.load_history()
         data[key]=value
         self.save_history(data)
+
+    def update_history_cat_lvl(self, title, key, value):
+        data=self.load_history()
+        
+        for cat in data["category_history"]:
+            if cat["title"] == title:
+                cat[key] = value
+                break
+        self.save(data)
 
     def new_history_category(
             self, 
@@ -102,8 +119,6 @@ class Program_history_tracker:
         self.save_history(data)
 
     def reset_history(self):
-        if self.__program_history_path.is_file():
-            os.remove(self.__program_history_path)
 
         template = {
             "newest_version": None,
@@ -113,5 +128,5 @@ class Program_history_tracker:
             "category_history": []
         }
 
-        with open(self.__program_history_path, "w", encoding="utf-8") as new_history:
-            yaml.dump(template, new_history)
+        data=template
+        self.save(data)

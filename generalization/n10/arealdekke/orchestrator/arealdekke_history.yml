@@ -8,7 +8,7 @@ category_history:
     operations :
       - buff_small_segments
       - simplify_and_smooth
-    accessibility : true
+    accessibility : True
     order: 1
     map_scale: N10
     last_processed: path
@@ -17,7 +17,7 @@ category_history:
   - title : Innsjo
     operations :
       - buff_small_segments
-    accessibility : true
+    accessibility : True
     order: 2
     map_scale: N10
     last_processed: path
