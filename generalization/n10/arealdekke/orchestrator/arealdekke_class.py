@@ -1,13 +1,12 @@
 # Module imports:
 import arcpy
-from sqlalchemy import values
 import yaml
-from pathlib import Path
 from composition_configs import core_config
 from file_manager import WorkFileManager
 from file_manager.n10.file_manager_arealdekke import Arealdekke_N10
 from input_data import input_n10, input_test_data
 from generalization.n10.arealdekke.orchestrator.category_class import Category
+from custom_tools.decorators.timing_decorator import timing_decorator
 
 # Arealdekke tools:
 from generalization.n10.arealdekke.overall_tools.arealdekke_dissolver import (
@@ -25,13 +24,13 @@ from generalization.n10.arealdekke.overall_tools.attribute_changer import (
 from generalization.n10.arealdekke.overall_tools.island_controller import (
     island_controller,
 )
-from generalization.n10.arealdekke.orchestrator.expansion_controller import (
-    simplify_and_expand_land_use,
-)
-from generalization.n10.arealdekke.overall_tools.area_merger import area_merger
 from generalization.n10.arealdekke.overall_tools.passability_layer import (
     create_passability_layer,
 )
+from generalization.n10.arealdekke.overall_tools.overlap_remover import (
+    remove_overlaps,
+)
+from generalization.n10.arealdekke.overall_tools.fill_holes import fill_holes
 
 arcpy.env.overwriteOutput = True
 
@@ -60,11 +59,17 @@ class Arealdekke:
             "processed_fc": self.wfm.build_file_path(
                 file_name="processed_fc", file_type="gdb"
             ),
+            "intermediate_fc": self.wfm.build_file_path(
+                file_name="intermediate_fc", file_type="gdb"
+            ),
+            "intermediate_fixed_fc": self.wfm.build_file_path(
+                file_name="intermediate_fixed_fc", file_type="gdb"
+            ),
         }
 
         # Extracts the data and saves it in the object
         arcpy.management.CopyFeatures(
-            in_features=input_n10.Arealdekke_Buskerud,
+            in_features=input_test_data.arealdekke,  # input_n10.Arealdekke_Buskerud,
             out_feature_class=self.files["arealdekke_fc"],
         )
 
@@ -82,11 +87,12 @@ class Arealdekke:
     # Main functions
     # ========================
 
+    @timing_decorator
     def preprocess(self) -> None:
 
         # Pipeline from original orchistrator file. Preprocessing the arealdekke data.
         attribute_changer(
-            input_fc=self.arealdekke_data,
+            input_fc=self.files["arealdekke_fc"],
             output_fc=Arealdekke_N10.attribute_changer_output__n10_land_use.value,
         )
 
@@ -126,6 +132,7 @@ class Arealdekke:
 
         self.preprocessed = True
 
+    @timing_decorator
     def add_categories(self, categories_config_file) -> bool:
 
         completed = False
@@ -161,6 +168,7 @@ class Arealdekke:
         # Returns status of completion to user.
         return completed
 
+    @timing_decorator
     def process_categories(self) -> None:
         # Iterates through the categories that are true, meaning they are open.
         for category in list(
@@ -172,22 +180,46 @@ class Arealdekke:
 
             # Process category.
             reinsert = category.process_category(
-                input_data=self.files["category_fc"],
-                locked_layers=self.files["locked_fc"],
-                processed_layer=self.files["processed_fc"],
+                input_fc=self.files["category_fc"],
+                locked_fc=self.files["locked_fc"],
+                processed_fc=self.files["processed_fc"],
             )
 
             if reinsert:
                 # Add the category back into the input layer.
-                pass
-                # area_merger()
+                remove_overlaps(
+                    input_fc=self.files["arealdekke_fc"],
+                    buffered_fc=self.files["processed_fc"],
+                    locked_fc=self.files["locked_fc"],
+                    output_fc=self.files["intermediate_fc"],
+                    changed_area=category.get_title(),
+                )
+
+                fill_holes(
+                    input_fc=self.files["intermediate_fc"],
+                    output_fc=self.files["intermediate_fixed_fc"],
+                    target=category.get_title(),
+                    locked_categories=set(
+                        map(
+                            lambda cat: cat.get_title(),
+                            filter(
+                                lambda cat: not cat.get_accessibility(), self.categories
+                            ),
+                        )
+                    ),
+                )
+
+                arcpy.management.CopyFeatures(
+                    in_features=self.files["intermediate_fixed_fc"],
+                    out_feature_class=self.files["arealdekke_fc"],
+                )
 
             # Lock the layer
             category.set_accessibility(False)
 
         # Save processed data to final fc and delete the last files
         arcpy.management.CopyFeatures(
-            in_features=self.files["processed_fc"],
+            in_features=self.files["arealdekke_fc"],
             out_feature_class=Arealdekke_N10.arealdekke_class_final__n10_land_use.value,
         )
 
@@ -196,6 +228,7 @@ class Arealdekke:
     # ========================
     # Getters
     # ========================
+
     def get_map_scale(self) -> str:
         return self.__map_scale
 
