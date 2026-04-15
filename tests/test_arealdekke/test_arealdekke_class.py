@@ -9,7 +9,7 @@ from generalization.n10.arealdekke.orchestrator.arealdekke_class import Arealdek
 
 class test_arealdekke_class(unittest.TestCase):
 
-    # Methods with this tag runs once everytime the tests are run.
+
     @classmethod
     def setUpClass(cls):
         pass

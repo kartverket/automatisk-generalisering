@@ -26,34 +26,35 @@ class Category:
         order: int,
         map_scale: str,
         last_processed: str=None,
-        operations_completed: int=None
+        operations_completed: int=None,
     ):
-
-        # Extracts inputs and saves them within object
-        self.__title = title
-        self.__operations = operations or []
-        self.__accessibility = accessibility
-        self.__order = order
-        self.__map_scale = map_scale
-        self.__last_processed = last_processed
-        self.__operations_completed = operations_completed
 
         # Setting up file manager w. dictionary for easy file access
         self.working_fc = Arealdekke_N10.category_class_in_progress__n10_land_use.value
         self.config = core_config.WorkFileConfig(root_file=self.working_fc)
         self.wfm = WorkFileManager(config=self.config)
 
-        self.files = {
+        self.__title: str = title
+        
+        self.files: dict = {
             "last_edited_fc": self.wfm.build_file_path(
                 file_name=f"last_edited_fc_{self.__title}", file_type="gdb"
             )
         }
 
         # Dictionary with all tools available to the category objects
-        self.cat_tools = {
+        self.cat_tools: dict = {
             "simplify_and_smooth": simplify_and_smooth_polygon,
             "buff_small_segments": buff_small_polygon_segments,
         }
+
+        # Extracts inputs and saves them within object
+        self.__operations:list[str] = operations or [str]
+        self.__accessibility: bool = accessibility or True
+        self.__order: int = order
+        self.__map_scale: str = map_scale
+        self.__last_processed: str = last_processed or self.files["last_edited_fc"]
+        self.__operations_completed: int = operations_completed or 0
 
         for item in self.__operations:
 
@@ -70,55 +71,54 @@ class Category:
 
     @timing_decorator
     def process_category(
-        self, input_fc: str, locked_fc: str, processed_fc: str
-    ) -> bool:
+        self, input_fc: str, locked_fc: str, processed_fc: str):
 
-        reinsert = False
+        # Iterates through the operations needed for each category.
+        for operation in self.__operations:
+            func = self.cat_tools[operation]
 
-        # File that will be overwritten with new input for each iteration.
+            sig = inspect.signature(func)
+            param_names = sig.parameters.keys()
 
-        if self.__operations:
+            available_args = {
+                "target": self.__title,
+                "input_fc": input_fc,
+                "output_fc": processed_fc,
+                "locked_fc": locked_fc,
+                "map_scale": self.__map_scale,
+            }
 
-            # Iterates through the operations needed for each category.
-            for operation in self.__operations:
-                func = self.cat_tools[operation]
+            args_to_pass = {
+                name: available_args[name]
+                for name in param_names
+                if name in available_args
+            }
 
-                sig = inspect.signature(func)
-                param_names = sig.parameters.keys()
+            # Calls function from dictionary
+            self.cat_tools[operation](**args_to_pass)
 
-                available_args = {
-                    "target": self.__title,
-                    "input_fc": input_fc,
-                    "output_fc": processed_fc,
-                    "locked_fc": locked_fc,
-                    "map_scale": self.__map_scale,
-                }
+            # Updates the layer that will be passed on to the next operation to be the output.
+            arcpy.management.CopyFeatures(
+                in_features=processed_fc, out_feature_class=input_fc
+            )
 
-                args_to_pass = {
-                    name: available_args[name]
-                    for name in param_names
-                    if name in available_args
-                }
+            # Saves the last edits made in case program stops.
+            arcpy.management.CopyFeatures(
+                in_features=processed_fc,
+                out_feature_class=self.files["last_edited_fc"],
+            )
 
-                # Calls function from dictionary
-                self.cat_tools[operation](**args_to_pass)
+            #Updates program history
+            self.__operations_completed+=1
 
-                # Updates the layer that will be passed on to the next operation to be the output.
-                arcpy.management.CopyFeatures(
-                    in_features=processed_fc, out_feature_class=input_fc
-                )
+            update: dict ={
+                "last_processed" : self.__last_processed,
+                "operations_completed" : self.__operations_completed,
+                "operations" : operation,
+            }
 
-                # Saves the last edits made in case program stops.
-                arcpy.management.CopyFeatures(
-                    in_features=processed_fc,
-                    out_feature_class=self.files["last_edited_fc"],
-                )
+            yield update
 
-            # Marks the process as completed.
-            reinsert = True
-
-        # Once done, return if the layer should be reinserted into arealdekke.
-        return reinsert
 
     # ========================
     # Setters

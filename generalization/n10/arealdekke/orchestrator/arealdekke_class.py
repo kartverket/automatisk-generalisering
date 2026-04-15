@@ -4,10 +4,11 @@ import yaml
 import os
 from sqlalchemy import values
 from pathlib import Path
+from custom_tools.decorators.timing_decorator import timing_decorator
 from composition_configs import core_config
 from file_manager import WorkFileManager
 from file_manager.n10.file_manager_arealdekke import Arealdekke_N10
-from input_data import input_n10, input_test_data
+from input_data import input_n10 #input_test_data
 from generalization.n10.arealdekke.orchestrator.category_class import Category
 from generalization.n10.arealdekke.orchestrator.program_history_class import Program_history_class as History_class
 
@@ -71,6 +72,8 @@ class Arealdekke:
             ),
         }
 
+        # TODO: IKKE LEGG BARE TIL FILSTI!!!!!!!!!!
+
         # Program history
         self.program_history: History_class = History_class(file_path=Path(__file__).parent / "arealdekke_history.yml")
 
@@ -78,7 +81,7 @@ class Arealdekke:
         top_lvl_info=self.program_history.restore_arealdekke_attributes()
 
         #Update attributes
-        if top_lvl_info["file_path"] is not None:
+        if top_lvl_info["file_path"] is not None and top_lvl_info["preprocessings_completed"]>0:
             self.files["arealdekke_fc"] = top_lvl_info["file_path"]
         else:
             # Extracts the data and saves it in the object
@@ -87,14 +90,15 @@ class Arealdekke:
                 out_feature_class=self.files["arealdekke_fc"],
             )
         
-        self.__preprocessed: bool = top_lvl_info["preprocessed"] if top_lvl_info["preprocessed"] is not None else False
-        self.__preprocessings_completed: int = top_lvl_info["preprocessings_completed"] if top_lvl_info["preprocessings_completed"] is not None else 0
-        self.__map_scale: str = top_lvl_info["map_scale"] if top_lvl_info["map_scale"] is not None else map_scale
+        #TODO HELE BITEN MÅ ENDRES FOR AT MAN IKKE SKAL LEGGE TIL FILSTI BARE FORDI DEN VAR DER I SISTE KJØRING.
+        self.__preprocessed: bool = top_lvl_info["preprocessed"] or False
+        self.__preprocessings_completed: int = top_lvl_info["preprocessings_completed"] or 0
+        self.__map_scale: str = top_lvl_info["map_scale"] or map_scale
 
         #Get categories
         cat_lvl_info: dict =self.program_history.restore_arealdekke_categories()
 
-        self.categories: list[Category] = cat_lvl_info["cats"] if cat_lvl_info["cats"] is not None else [Category]
+        self.categories: list[Category] = cat_lvl_info["cats"] or [Category]
 
             
     # ========================
@@ -141,8 +145,12 @@ class Arealdekke:
             )
         ]
 
+        # TODO: LEGG TIL IF NOT PROCESSED DONE
+
         # Pipeline from original orchistrator file. Preprocessing the arealdekke data.
-        for preprocess in range(self.__preprocessings_completed, len(preprocesses), 1):
+        for preprocess in range((
+            self.__preprocessings_completed if self.__preprocessings_completed==0 else (self.__preprocessings_completed+1)
+            ), len(preprocesses), 1):
 
             #Call process
             preprocesses[preprocess]()
@@ -204,14 +212,24 @@ class Arealdekke:
             self.get_locked_categories()
             self.get_category(category.get_title())
 
-            # Process category.
-            reinsert: bool = category.process_category(
-                input_data=self.files["category_fc"],
-                locked_layers=self.files["locked_fc"],
-                processed_layer=self.files["processed_fc"],
-            )
+            # Iterates through operations for each category
+            cat_operations=category.get_operations()
 
-            if reinsert:
+            if cat_operations:
+                
+                # Process category.
+                for operation in category.process_category(
+                    input_data=self.files["category_fc"],
+                    locked_layers=self.files["locked_fc"],
+                    processed_layer=self.files["processed_fc"],
+                    program_history=self.program_history
+                ):
+                    for key, value in operation:
+                        self.program_history.update_history_cat_lvl(
+                            key=key,
+                            value=value
+                        )
+                    
                 # Add the category back into the input layer.
                 remove_overlaps(
                     input_fc=self.files["arealdekke_fc"],
