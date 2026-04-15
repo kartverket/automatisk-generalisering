@@ -51,8 +51,8 @@ def remove_polygon_islands(output_feature_class):
 class GeometryValidator:
     def __init__(
         self,
-        input_features: Union[Dict[str, str], str],
-        output_table_path: str,
+        input_features: Union[Dict[str, str], str] = None,
+        output_table_path: str = None,
     ):
         self.input_features = input_features
         self.output_table_path = output_table_path
@@ -125,9 +125,13 @@ class GeometryValidator:
         input_param_names=["input_features"],
         output_param_names=None,
     )
-    def check_repair_sequence(self, max_iterations=2):
+    def check_repair_sequence(self, input_fc: str = None, max_iterations=2):
         """Run the check-repair-check sequence until no issues remain or max iterations reached."""
         self.iteration = 0
+
+        if input_fc:
+            self.input_features = input_fc
+
         while self.iteration < max_iterations:
             print(f"--- Iteration {self.iteration + 1} ---")
             self.check_geometry()
