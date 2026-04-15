@@ -953,6 +953,8 @@ _Grouped: TypeAlias = dict[int, list[_CandRow]]
 _NormZByDangle: TypeAlias = dict[int, Optional[float]]
 _ConnectionWithSource: TypeAlias = tuple[_ConnectionProposal, str]
 _GlobalWithSource: TypeAlias = tuple[_GlobalProposal, str]
+# (dangle_oid, dangle_x, dangle_y, near_x, near_y)
+_AcceptedConnectorRaw: TypeAlias = tuple[int, float, float, float, float]
 # Diagnostic collection tuples (produced in _select_dangle_proposals, consumed in _assemble_diagnostics)
 _Step1AIllegalEntry: TypeAlias = tuple[int, int, _CandRow, str]
 _Step1BIllegalEntry: TypeAlias = tuple[
@@ -1888,118 +1890,74 @@ class FillLineGaps:
             spatial_reference,
         )
 
-    @staticmethod
-    def _connector_intersects_any(
-        trimmed_connector: Any,
-        geom_with_extents: list[tuple[Any, Any]],
-    ) -> bool:
-        """
-        Returns True if trimmed_connector intersects any geometry in the list.
-
-        Caller must pre-trim the connector so that legitimate endpoint touches
-        are excluded before calling this method.
-
-        Each element of geom_with_extents is (geometry, geometry.extent).
-        The extent is used as a cheap bounding-box pre-filter so that the
-        expensive .disjoint() call is only made when envelopes actually overlap.
-        """
-        conn_ext = trimmed_connector.extent
-        cx_min = conn_ext.XMin
-        cx_max = conn_ext.XMax
-        cy_min = conn_ext.YMin
-        cy_max = conn_ext.YMax
-        for geom, ext in geom_with_extents:
-            if cx_max < ext.XMin or cx_min > ext.XMax:
-                continue
-            if cy_max < ext.YMin or cy_min > ext.YMax:
-                continue
-            if not trimmed_connector.disjoint(geom):
-                return True
-        return False
-
-    def _collect_spatially_selected_geometries(
+    def _write_trimmed_cands_fc(
         self,
         *,
-        trimmed_geoms: list[Any],
-        check_feature_layers: list[str],
+        cands_with_keys: list[tuple[Any, Any]],
+        fc_path: str,
         spatial_reference: Any,
-    ) -> list[tuple[Any, Any]]:
-        """
-        Writes trimmed_geoms to a temporary in-memory FC, then for each layer in
-        check_feature_layers runs SelectLayerByLocation (INTERSECT) to collect only
-        those features that intersect at least one trimmed connector.
+    ) -> dict[int, Any]:
+        """Write trimmed connector geometries to a temp in-memory FC.
 
-        Returns a list of (geometry, extent) pairs ready for _connector_intersects_any.
-        The temporary FC and feature layers are deleted before returning.
+        Creates fc_path, inserts one polyline per (key, geom) pair, and returns
+        a mapping from OID → key so near-table IN_FID results can be resolved
+        back to the original candidate identifier.
+
+        CAND_IDX stores the insertion index; a post-insert SearchCursor builds
+        the OID→key mapping without relying on OID-assignment order.
         """
-        _temp_fc = "memory/crossing_check_trimmed_cands"
-        if arcpy.Exists(_temp_fc):
-            arcpy.management.Delete(_temp_fc)
+        if arcpy.Exists(fc_path):
+            arcpy.management.Delete(fc_path)
+        workspace, fc_name = fc_path.rsplit("/", 1)
         arcpy.management.CreateFeatureclass(
-            "memory", "crossing_check_trimmed_cands", "POLYLINE",
-            spatial_reference=spatial_reference,
+            workspace, fc_name, "POLYLINE", spatial_reference=spatial_reference
         )
-        with arcpy.da.InsertCursor(_temp_fc, ["SHAPE@"]) as ins:
-            for geom in trimmed_geoms:
-                ins.insertRow((geom,))
+        arcpy.management.AddField(fc_path, "CAND_IDX", "LONG")
 
-        result: list[tuple[Any, Any]] = []
-        try:
-            for check_lyr in check_feature_layers:
-                _temp_lyr = "crossing_check_sel_lyr"
-                arcpy.management.MakeFeatureLayer(check_lyr, _temp_lyr)
-                try:
-                    arcpy.management.SelectLayerByLocation(
-                        _temp_lyr,
-                        "INTERSECT",
-                        _temp_fc,
-                        selection_type="NEW_SELECTION",
-                    )
-                    with arcpy.da.SearchCursor(_temp_lyr, ["SHAPE@"]) as cur:
-                        for (geom,) in cur:
-                            if geom is not None:
-                                result.append((geom, geom.extent))
-                finally:
-                    arcpy.management.Delete(_temp_lyr)
-        finally:
-            arcpy.management.Delete(_temp_fc)
+        keys_by_idx: dict[int, Any] = {}
+        with arcpy.da.InsertCursor(fc_path, ["SHAPE@", "CAND_IDX"]) as ins:
+            for idx, (key, geom) in enumerate(cands_with_keys):
+                ins.insertRow((geom, idx))
+                keys_by_idx[idx] = key
 
-        return result
+        oid_field = arcpy.Describe(fc_path).OIDFieldName
+        oid_to_key: dict[int, Any] = {}
+        with arcpy.da.SearchCursor(fc_path, [oid_field, "CAND_IDX"]) as cur:
+            for oid, idx in cur:
+                oid_to_key[int(oid)] = keys_by_idx[int(idx)]
+
+        return oid_to_key
 
     def _find_crossing_conflict_keys(
         self,
         *,
-        grouped: "_Grouped",
+        legal_rows_by_dangle: "_Grouped",
         dangle_xy: dict[int, tuple[float, float]],
         check_feature_layers: list[str],
         trim_distance: float,
         spatial_reference: Any,
     ) -> tuple[set[tuple[int, str, int]], dict[tuple[int, str, int], Any]]:
         """
-        Pre-filter: identify candidates whose connector crosses an existing feature.
+        Pre-filter: identify candidates whose trimmed connector crosses an existing feature.
 
-        Step 1 – builds trimmed connector geometries for all candidates and
-                 populates trimmed_cache.
-        Step 2 – delegates to _collect_spatially_selected_geometries to reduce
-                 each check layer to only those features that intersect at least
-                 one trimmed candidate (single arcpy spatial-index batch call per
-                 layer instead of O(candidates × features) Python geometry calls).
-        Step 3 – per-candidate intersection check against the reduced set.
+        Writes trimmed candidate connectors to a temp in-memory FC and uses
+        GenerateNearTable against check_feature_layers as the source of truth for
+        crossing conflicts.  Only legal candidates (already filtered by all other
+        legality checks) are considered, so the temp FC is as small as possible.
 
         Returns:
           crossing_conflict_keys
-            (dangle_oid, near_fc_key, near_fid) tuples whose trimmed connector
-            intersects at least one check geometry.
+            (dangle_oid, near_fc_key, near_fid) tuples whose trimmed connector is
+            within connectivity_tolerance_meters of any check feature.
           trimmed_cache
-            Trimmed connector polyline for every candidate key (None when the
-            connector is too short to trim).  Cached here so Kruskal's crossing
-            check can reuse the geometries without re-trimming.
+            Trimmed connector polyline for every legal candidate key (None when the
+            connector is too short to trim after 2x trimming).  Reused by the
+            Kruskal candidate-vs-candidate crossing check.
         """
-        # --- Step 1: build trimmed cache ---
         trimmed_cache: dict[tuple[int, str, int], Any] = {}
-        trimmed_geoms: list[Any] = []
+        cands_with_keys: list[tuple[tuple[int, str, int], Any]] = []
 
-        for dangle_oid, candidates in grouped.items():
+        for dangle_oid, candidates in legal_rows_by_dangle.items():
             dangle_oid = int(dangle_oid)
             xy = dangle_xy.get(dangle_oid)
             if xy is None:
@@ -2021,28 +1979,43 @@ class FillLineGaps:
                 )
                 trimmed_cache[key] = trimmed
                 if trimmed is not None:
-                    trimmed_geoms.append(trimmed)
+                    cands_with_keys.append((key, trimmed))
 
-        if not trimmed_geoms or not check_feature_layers:
+        if not cands_with_keys or not check_feature_layers:
             return set(), trimmed_cache
 
-        # --- Step 2: spatially-select check features ---
-        check_geoms_with_extents = self._collect_spatially_selected_geometries(
-            trimmed_geoms=trimmed_geoms,
-            check_feature_layers=check_feature_layers,
+        _cands_fc = "memory/crossing_check_trimmed_cands"
+        _near_table = "memory/crossing_check_near"
+
+        oid_to_key = self._write_trimmed_cands_fc(
+            cands_with_keys=cands_with_keys,
+            fc_path=_cands_fc,
             spatial_reference=spatial_reference,
         )
 
-        if not check_geoms_with_extents:
-            return set(), trimmed_cache
+        if arcpy.Exists(_near_table):
+            arcpy.management.Delete(_near_table)
+        arcpy.analysis.GenerateNearTable(
+            in_features=_cands_fc,
+            near_features=check_feature_layers,
+            out_table=_near_table,
+            search_radius=self._connectivity_tolerance_linear_unit(),
+            location="NO_LOCATION",
+            angle="NO_ANGLE",
+            closest="ALL",
+            closest_count=0,
+            method="PLANAR",
+        )
 
-        # --- Step 3: per-candidate intersection check against the reduced set ---
         conflict_keys: set[tuple[int, str, int]] = set()
-        for key, trimmed in trimmed_cache.items():
-            if trimmed is None:
-                continue
-            if self._connector_intersects_any(trimmed, check_geoms_with_extents):
-                conflict_keys.add(key)
+        with arcpy.da.SearchCursor(_near_table, ["IN_FID"]) as cur:
+            for (in_fid,) in cur:
+                key = oid_to_key.get(int(in_fid))
+                if key is not None:
+                    conflict_keys.add(key)
+
+        arcpy.management.Delete(_near_table)
+        arcpy.management.Delete(_cands_fc)
 
         return conflict_keys, trimmed_cache
 
@@ -3048,8 +3021,8 @@ class FillLineGaps:
         dict[int, list[dict]],
         list["_ResnappedCapture"],
         list["CandidateDiagnostic"],
-        list[Any],   # accepted_connector_geoms  (for resnap crossing re-check)
-        dict[int, int],  # kruskal_rank_by_dangle_oid (for resnap crossing re-check)
+        list[_AcceptedConnectorRaw],  # accepted_connector_raw (for resnap crossing re-check)
+        dict[int, int],               # kruskal_rank_by_dangle_oid (for resnap crossing re-check)
     ]:
         dangle_parent = self._build_dangle_parent_lookup(dangles_fc=dangles_fc)
         dangle_xy = self._build_dangle_xy_lookup(dangles_fc=dangles_fc)
@@ -3160,37 +3133,6 @@ class FillLineGaps:
         if self.fill_gaps_on_self:
             line_like_ds_keys.add(lines_key)
 
-        # ----------------------------
-        # Crossing conflict pre-filter (Step 1a)
-        # Build trimmed connector geometries for all candidates and flag any
-        # that cross an existing feature (self-lines + connect_to_features).
-        # The trimmed connector cache is reused in _run_kruskal.
-        # ----------------------------
-        crossing_conflict_keys: set[tuple[int, str, int]] = set()
-        trimmed_connector_cache: dict[tuple[int, str, int], Any] = {}
-
-        if self.reject_crossing_connectors:
-            _crossing_sr = arcpy.SpatialReference(
-                self.crossing_check_spatial_reference
-            )
-            # lines_copy provides self-line geometries (source of polyline_by_parent).
-            # External layers whose ds_key is in polyline_by_external are polyline
-            # features that were loaded as angle caches; pass their layer paths so
-            # _find_crossing_conflict_keys can run SelectLayerByLocation on them.
-            _check_layers: list[str] = [self.lines_copy]
-            for _lyr in target_layers:
-                if self._dataset_key(_lyr) in polyline_by_external:
-                    _check_layers.append(_lyr)
-            crossing_conflict_keys, trimmed_connector_cache = (
-                self._find_crossing_conflict_keys(
-                    grouped=grouped,
-                    dangle_xy=dangle_xy,
-                    check_feature_layers=_check_layers,
-                    trim_distance=float(self.connectivity_tolerance_meters),
-                    spatial_reference=_crossing_sr,
-                )
-            )
-
         # In directed mode, source dangles at a line's start node are invalid sources.
         # polyline_by_parent is already built above; dangle_xy was built at the top.
         directed_start_dangles = self._directed_start_dangle_oids(
@@ -3215,9 +3157,62 @@ class FillLineGaps:
                 topology=topology,
                 collect_diags=collect_diags,
                 directed_source_illegal_oids=directed_start_dangles,
-                crossing_conflict_keys=crossing_conflict_keys,
             )
         )
+
+        # ----------------------------
+        # Crossing conflict pre-filter (last legality check)
+        # Run after all other legality checks so only surviving legal candidates
+        # are written to the temp FC.  The trimmed connector cache is reused in
+        # _run_kruskal for the candidate-vs-candidate crossing check.
+        # ----------------------------
+        trimmed_connector_cache: dict[tuple[int, str, int], Any] = {}
+        if self.reject_crossing_connectors and legal_rows_by_dangle:
+            _crossing_sr = arcpy.SpatialReference(
+                self.crossing_check_spatial_reference
+            )
+            # lines_copy provides self-line geometries; external polyline layers
+            # whose ds_key is in polyline_by_external were loaded as angle caches.
+            _check_layers: list[str] = [self.lines_copy]
+            for _lyr in target_layers:
+                if self._dataset_key(_lyr) in polyline_by_external:
+                    _check_layers.append(_lyr)
+            crossing_conflict_keys, trimmed_connector_cache = (
+                self._find_crossing_conflict_keys(
+                    legal_rows_by_dangle=legal_rows_by_dangle,
+                    dangle_xy=dangle_xy,
+                    check_feature_layers=_check_layers,
+                    trim_distance=2.0 * float(self.connectivity_tolerance_meters),
+                    spatial_reference=_crossing_sr,
+                )
+            )
+            if crossing_conflict_keys:
+                for _dangle_oid in list(legal_rows_by_dangle.keys()):
+                    _parent_id = parent_id_by_dangle[_dangle_oid]
+                    _remaining: list[dict] = []
+                    for _cand in legal_rows_by_dangle[_dangle_oid]:
+                        _cand_key = (
+                            _dangle_oid,
+                            str(_cand["near_fc_key"]),
+                            int(_cand["near_fid"]),
+                        )
+                        if _cand_key in crossing_conflict_keys:
+                            if collect_diags:
+                                _step1a_illegal.append(
+                                    (
+                                        _dangle_oid,
+                                        _parent_id,
+                                        _cand,
+                                        "crosses_existing_feature",
+                                    )
+                                )
+                        else:
+                            _remaining.append(_cand)
+                    if _remaining:
+                        legal_rows_by_dangle[_dangle_oid] = _remaining
+                    else:
+                        del legal_rows_by_dangle[_dangle_oid]
+                        parent_id_by_dangle.pop(_dangle_oid, None)
 
         if not legal_rows_by_dangle:
             return (
@@ -3438,7 +3433,7 @@ class FillLineGaps:
             kruskal_rejected_oids,
             kruskal_crossing_rejected_oids,
             gap_source_by_dangle,
-            accepted_connector_geoms,
+            accepted_connector_raw,
             kruskal_rank_by_dangle_oid,
         ) = self._run_kruskal(
             global_winners=_global_winners,
@@ -3509,7 +3504,7 @@ class FillLineGaps:
                 dangles_key=dangles_key,
                 lines_key=lines_key,
             ),
-            accepted_connector_geoms,
+            accepted_connector_raw,
             kruskal_rank_by_dangle_oid,
         )
 
@@ -3527,7 +3522,6 @@ class FillLineGaps:
         topology: TopologyModel,
         collect_diags: bool,
         directed_source_illegal_oids: set[int],
-        crossing_conflict_keys: set[tuple[int, str, int]],
     ) -> tuple[_Grouped, dict[int, int], list[_Step1AIllegalEntry]]:
         """Dangle filtering: collect legal candidates per dangle.
 
@@ -3568,15 +3562,6 @@ class FillLineGaps:
                 if str(cand["near_fc_key"]) == str(lines_key) and int(
                     cand["near_fid"]
                 ) == int(parent_id):
-                    continue
-
-                # Candidate whose connector crosses an existing feature is illegal.
-                cand_key = (dangle_oid, str(cand["near_fc_key"]), int(cand["near_fid"]))
-                if cand_key in crossing_conflict_keys:
-                    if collect_diags:
-                        _step1a_illegal.append(
-                            (dangle_oid, parent_id, cand, "crosses_existing_feature")
-                        )
                     continue
 
                 is_legal = self._candidate_is_legal(
@@ -4133,8 +4118,8 @@ class FillLineGaps:
         set[int],         # kruskal_rejected_oids (cycle-based)
         set[int],         # kruskal_crossing_rejected_oids
         dict[int, str],   # gap_source_by_dangle
-        list[Any],        # accepted_connector_geoms (original untrimmed, for resnap re-check)
-        dict[int, int],   # kruskal_rank_by_dangle_oid
+        list[_AcceptedConnectorRaw],  # accepted_connector_raw (for resnap crossing re-check)
+        dict[int, int],               # kruskal_rank_by_dangle_oid
     ]:
         """Global selection: Kruskal cycle prevention across accepted connections.
 
@@ -4143,40 +4128,81 @@ class FillLineGaps:
           - Cycle rejection: UF finds src_node and tgt_node already in the same
             component (reason: lost_kruskal_selection).
           - Crossing rejection (when reject_crossing_connectors is True): the
-            candidate's trimmed connector intersects the original geometry of an
-            already-accepted connector (reason: crosses_accepted_connector).
+            candidate's trimmed connector is within connectivity_tolerance_meters
+            of an already-accepted candidate's trimmed connector
+            (reason: crosses_accepted_connector).
 
-        Crossing check uses trimmed_connector_cache (built in _find_crossing_conflict_keys)
-        to avoid re-trimming.  Accepted connector geometries are stored in
-        original (untrimmed) form because the accepted connectors' full bodies
-        are real output geometry; any intersection of the new trimmed candidate
-        with that body — including endpoints — is a genuine crossing conflict.
+        Crossing uses a single pre-loop GenerateNearTable of all candidate trimmed
+        connectors against themselves to build a conflict lookup.  During the loop,
+        _crossing_blocked consults that lookup instead of running live geometry
+        checks.
 
         Note on deferred displacement inaccuracy:
             When a deferred connector's (resnap capture's) final geometry causes
             a previously accepted connector to be displaced during the resnap
             re-check (see _recheck_resnap_crossings), the Union-Find state built
-            here becomes stale.  Two consequences follow: (1) components merged
-            by the displaced connector become disconnected in output, and (2)
-            candidates rejected here as cycle-forming may in hindsight have been
-            valid.  Both are accepted inaccuracies — the scenario is rare enough
-            that a full mock-Kruskal + mock-deferred pass to eliminate it is not
+            here becomes stale.  Both are accepted inaccuracies — the scenario is
+            rare enough that a full mock-Kruskal + mock-deferred pass is not
             justified.
 
         Returns (proposals, accepted_dangle_oids, kruskal_rejected_oids,
                  kruskal_crossing_rejected_oids, gap_source_by_dangle,
-                 accepted_connector_geoms, kruskal_rank_by_dangle_oid).
+                 accepted_connector_raw, kruskal_rank_by_dangle_oid).
         """
         reject_crossing = crossing_spatial_reference is not None
         scope = topology.scope
         _global_proposals: list[_GlobalWithSource] = []
         kruskal_crossing_rejected_oids: set[int] = set()
-        # Stores (geometry, extent) pairs so _connector_intersects_any can apply
-        # the bounding-box pre-filter without re-fetching extents each call.
-        accepted_connector_geoms: list[tuple[Any, Any]] = []
-        accepted_connector_dangle_oids: list[int] = []
+        accepted_keys: set[tuple[int, str, int]] = set()
+        accepted_connector_raw: list[_AcceptedConnectorRaw] = []
         kruskal_rank_by_dangle_oid: dict[int, int] = {}
         rank_counter = 0
+
+        # --- Pre-loop: build candidate-vs-candidate conflict lookup ---
+        conflict_lookup: dict[tuple[int, str, int], set[tuple[int, str, int]]] = {}
+        if reject_crossing:
+            _kruskal_cands: list[tuple[tuple[int, str, int], Any]] = []
+            for prop, _ in global_winners:
+                _key = (
+                    int(prop.ctx.dangle_oid),
+                    str(prop.ctx.near_fc_key),
+                    int(prop.ctx.near_fid),
+                )
+                _trimmed = trimmed_connector_cache.get(_key)
+                if _trimmed is not None:
+                    _kruskal_cands.append((_key, _trimmed))
+
+            if _kruskal_cands:
+                _kruskal_fc = "memory/crossing_check_kruskal_cands"
+                _kruskal_near = "memory/crossing_check_kruskal_near"
+                _kruskal_oid_to_key = self._write_trimmed_cands_fc(
+                    cands_with_keys=_kruskal_cands,
+                    fc_path=_kruskal_fc,
+                    spatial_reference=crossing_spatial_reference,
+                )
+                if arcpy.Exists(_kruskal_near):
+                    arcpy.management.Delete(_kruskal_near)
+                arcpy.analysis.GenerateNearTable(
+                    in_features=_kruskal_fc,
+                    near_features=[_kruskal_fc],
+                    out_table=_kruskal_near,
+                    search_radius=self._connectivity_tolerance_linear_unit(),
+                    location="NO_LOCATION",
+                    angle="NO_ANGLE",
+                    closest="ALL",
+                    closest_count=0,
+                    method="PLANAR",
+                )
+                with arcpy.da.SearchCursor(_kruskal_near, ["IN_FID", "NEAR_FID"]) as _cur:
+                    for _in_fid, _near_fid in _cur:
+                        if int(_in_fid) == int(_near_fid):
+                            continue
+                        _key_in = _kruskal_oid_to_key.get(int(_in_fid))
+                        _key_near = _kruskal_oid_to_key.get(int(_near_fid))
+                        if _key_in is not None and _key_near is not None:
+                            conflict_lookup.setdefault(_key_in, set()).add(_key_near)
+                arcpy.management.Delete(_kruskal_near)
+                arcpy.management.Delete(_kruskal_fc)
 
         def _accept(prop: Any, gap_source: Any) -> None:
             nonlocal rank_counter
@@ -4185,21 +4211,15 @@ class FillLineGaps:
                 rank_counter += 1
                 d_oid = int(prop.ctx.dangle_oid)
                 kruskal_rank_by_dangle_oid[d_oid] = rank_counter
-                accepted_connector_dangle_oids.append(d_oid)
-                geom = arcpy.Polyline(
-                    arcpy.Array(
-                        [
-                            arcpy.Point(
-                                float(prop.ctx.dangle_x), float(prop.ctx.dangle_y)
-                            ),
-                            arcpy.Point(
-                                float(prop.ctx.near_x), float(prop.ctx.near_y)
-                            ),
-                        ]
-                    ),
-                    crossing_spatial_reference,
-                )
-                accepted_connector_geoms.append((geom, geom.extent))
+                _key = (d_oid, str(prop.ctx.near_fc_key), int(prop.ctx.near_fid))
+                accepted_keys.add(_key)
+                accepted_connector_raw.append((
+                    d_oid,
+                    float(prop.ctx.dangle_x),
+                    float(prop.ctx.dangle_y),
+                    float(prop.ctx.near_x),
+                    float(prop.ctx.near_y),
+                ))
 
         def _crossing_blocked(prop: Any) -> bool:
             if not reject_crossing:
@@ -4209,10 +4229,10 @@ class FillLineGaps:
                 str(prop.ctx.near_fc_key),
                 int(prop.ctx.near_fid),
             )
-            trimmed = trimmed_connector_cache.get(key)
-            if trimmed is None:
+            if trimmed_connector_cache.get(key) is None:
                 return False
-            return self._connector_intersects_any(trimmed, accepted_connector_geoms)
+            return bool(conflict_lookup.get(key, set()) & accepted_keys)
+
         if scope in (
             logic_config.ConnectivityScope.INPUT_LINES,
             logic_config.ConnectivityScope.ONE_DEGREE,
@@ -4277,7 +4297,7 @@ class FillLineGaps:
             kruskal_rejected_oids,
             kruskal_crossing_rejected_oids,
             gap_source_by_dangle,
-            accepted_connector_geoms,
+            accepted_connector_raw,
             kruskal_rank_by_dangle_oid,
         )
 
@@ -4319,7 +4339,7 @@ class FillLineGaps:
         self,
         *,
         resnap_plan: dict[int, dict],
-        accepted_connector_geoms: list[Any],
+        accepted_connector_raw: list[_AcceptedConnectorRaw],
         kruskal_rank_by_dangle_oid: dict[int, int],
         trim_distance: float,
         spatial_reference: Any,
@@ -4327,7 +4347,9 @@ class FillLineGaps:
         """Re-check resnap captures against accepted connector geometries.
 
         Called after _resnap_connections resolves final geometry for deferred
-        connectors.  Uses rank-based conflict resolution:
+        connectors.  Uses GenerateNearTable (trimmed resnap connectors vs trimmed
+        accepted connectors) as the source of truth for crossing conflicts, then
+        applies rank-based conflict resolution:
 
           - If the resnap capture has a worse (higher) rank than the best-ranked
             conflicting accepted connector → the resnap capture loses; its plan
@@ -4340,24 +4362,14 @@ class FillLineGaps:
         Returns (resnap_plan, resnap_crossing_rejected_oids,
                  resnap_crossing_displaced_oids).
         """
-        if not accepted_connector_geoms:
+        if not accepted_connector_raw:
             return resnap_plan, set(), set()
 
-        # Build reverse lookup: index in accepted_connector_geoms → dangle_oid
-        # (populated alongside accepted_connector_geoms in _run_kruskal)
-        # We recover this from kruskal_rank_by_dangle_oid: rank = index + 1.
-        rank_to_dangle_oid: dict[int, int] = {
-            rank: d_oid for d_oid, rank in kruskal_rank_by_dangle_oid.items()
-        }
-
-        resnap_crossing_rejected_oids: set[int] = set()
-        resnap_crossing_displaced_oids: set[int] = set()
-
+        # Build trimmed resnap connectors: key = parent_id (unique per resnap entry).
+        resnap_cands: list[tuple[Any, Any]] = []
         for parent_id, entry in resnap_plan.items():
             if entry.get("skip", False):
                 continue
-
-            dangle_oid = int(entry["dangle_oid"])
             trimmed = self._build_trimmed_connector(
                 from_x=float(entry["dangle_x"]),
                 from_y=float(entry["dangle_y"]),
@@ -4366,40 +4378,92 @@ class FillLineGaps:
                 trim_distance=trim_distance,
                 spatial_reference=spatial_reference,
             )
-            if trimmed is None:
+            if trimmed is not None:
+                resnap_cands.append((parent_id, trimmed))
+
+        if not resnap_cands:
+            return resnap_plan, set(), set()
+
+        # Build trimmed accepted connectors: key = dangle_oid.
+        accepted_cands: list[tuple[Any, Any]] = []
+        for acc_doid, ax, ay, bx, by in accepted_connector_raw:
+            trimmed = self._build_trimmed_connector(
+                from_x=ax,
+                from_y=ay,
+                to_x=bx,
+                to_y=by,
+                trim_distance=trim_distance,
+                spatial_reference=spatial_reference,
+            )
+            if trimmed is not None:
+                accepted_cands.append((acc_doid, trimmed))
+
+        if not accepted_cands:
+            return resnap_plan, set(), set()
+
+        _resnap_fc = "memory/resnap_crossing_trimmed"
+        _accepted_fc = "memory/resnap_crossing_accepted"
+        _near_table = "memory/resnap_crossing_near"
+
+        oid_to_parent_id = self._write_trimmed_cands_fc(
+            cands_with_keys=resnap_cands,
+            fc_path=_resnap_fc,
+            spatial_reference=spatial_reference,
+        )
+        oid_to_accepted_doid = self._write_trimmed_cands_fc(
+            cands_with_keys=accepted_cands,
+            fc_path=_accepted_fc,
+            spatial_reference=spatial_reference,
+        )
+
+        if arcpy.Exists(_near_table):
+            arcpy.management.Delete(_near_table)
+        arcpy.analysis.GenerateNearTable(
+            in_features=_resnap_fc,
+            near_features=[_accepted_fc],
+            out_table=_near_table,
+            search_radius=self._connectivity_tolerance_linear_unit(),
+            location="NO_LOCATION",
+            angle="NO_ANGLE",
+            closest="ALL",
+            closest_count=0,
+            method="PLANAR",
+        )
+
+        # {parent_id: set of conflicting accepted dangle_oids}
+        conflicts_by_parent: dict[int, set[int]] = {}
+        with arcpy.da.SearchCursor(_near_table, ["IN_FID", "NEAR_FID"]) as cur:
+            for in_fid, near_fid in cur:
+                parent_id = oid_to_parent_id.get(int(in_fid))
+                acc_doid = oid_to_accepted_doid.get(int(near_fid))
+                if parent_id is not None and acc_doid is not None:
+                    conflicts_by_parent.setdefault(parent_id, set()).add(int(acc_doid))
+
+        arcpy.management.Delete(_near_table)
+        arcpy.management.Delete(_resnap_fc)
+        arcpy.management.Delete(_accepted_fc)
+
+        resnap_crossing_rejected_oids: set[int] = set()
+        resnap_crossing_displaced_oids: set[int] = set()
+
+        for parent_id, entry in resnap_plan.items():
+            if entry.get("skip", False):
                 continue
 
-            # Find indices of conflicting accepted connectors (extent pre-filter).
-            trimmed_ext = trimmed.extent
-            conflict_indices = [
-                i
-                for i, (geom, ext) in enumerate(accepted_connector_geoms)
-                if not (
-                    trimmed_ext.XMax < ext.XMin or trimmed_ext.XMin > ext.XMax
-                    or trimmed_ext.YMax < ext.YMin or trimmed_ext.YMin > ext.YMax
-                )
-                and not trimmed.disjoint(geom)
-            ]
-            if not conflict_indices:
+            conflicting_doids = conflicts_by_parent.get(parent_id)
+            if not conflicting_doids:
                 continue
 
-            # Rank of the resnap capture; default to +inf if somehow absent.
+            dangle_oid = int(entry["dangle_oid"])
             resnap_rank = kruskal_rank_by_dangle_oid.get(dangle_oid, float("inf"))
-
-            # Best (lowest) rank among conflicting accepted connectors.
             best_conflict_rank = min(
-                kruskal_rank_by_dangle_oid.get(
-                    rank_to_dangle_oid.get(i + 1, -1), float("inf")
-                )
-                for i in conflict_indices
+                kruskal_rank_by_dangle_oid.get(aoid, float("inf"))
+                for aoid in conflicting_doids
             )
 
             if resnap_rank <= best_conflict_rank:
                 # Resnap capture wins: displace the conflicting accepted connectors.
-                for i in conflict_indices:
-                    conflict_d_oid = rank_to_dangle_oid.get(i + 1)
-                    if conflict_d_oid is not None:
-                        resnap_crossing_displaced_oids.add(conflict_d_oid)
+                resnap_crossing_displaced_oids.update(conflicting_doids)
             else:
                 # Resnap capture loses: skip the corrected-geometry application.
                 entry["skip"] = True
@@ -5267,7 +5331,7 @@ class FillLineGaps:
         if self.candidate_connections_output is not None:
             self._setup_candidate_connections_output(self.candidate_connections_output)
 
-        plan, resnap_captures, diagnostics, accepted_connector_geoms, kruskal_rank_by_dangle_oid = (
+        plan, resnap_captures, diagnostics, accepted_connector_raw, kruskal_rank_by_dangle_oid = (
             self._build_plan(dangles_fc=dangles_for_plan, target_layers=targets)
         )
 
@@ -5288,13 +5352,13 @@ class FillLineGaps:
                 snap_source_dangle_xy=snap_source_dangle_xy,
             )
 
-            if self.reject_crossing_connectors and resnap_plan and accepted_connector_geoms:
+            if self.reject_crossing_connectors and resnap_plan and accepted_connector_raw:
                 resnap_plan, resnap_crossing_rejected_oids, resnap_crossing_displaced_oids = (
                     self._recheck_resnap_crossings(
                         resnap_plan=resnap_plan,
-                        accepted_connector_geoms=accepted_connector_geoms,
+                        accepted_connector_raw=accepted_connector_raw,
                         kruskal_rank_by_dangle_oid=kruskal_rank_by_dangle_oid,
-                        trim_distance=float(self.connectivity_tolerance_meters),
+                        trim_distance=2.0 * float(self.connectivity_tolerance_meters),
                         spatial_reference=arcpy.SpatialReference(
                             self.crossing_check_spatial_reference
                         ),
