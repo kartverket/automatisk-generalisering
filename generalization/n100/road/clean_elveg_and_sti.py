@@ -2,6 +2,7 @@
 ### RYDDE KARTDATA MOT VEGNETT ###
 ##################################
 """
+Steg 0: overfør Motorveg som Ida hentet fra N50
 Steg 1: Buffer+intersect per medium → erase
 Steg 2: Snap berørte endepunkter
 Steg 3: Snap alene-endepunkter innen 2 m
@@ -10,45 +11,11 @@ Steg 4: Split vegnett i endepunkter på edge
 
 import arcpy
 import os
-import paths
 
 # ===== ArcPy miljø =====
-working_gdb = os.path.join(paths.DATA_WORKING, "working.gdb")
-arcpy.env.workspace = working_gdb
+gdb = r"C:\AG_inputs\Roads_raw.gdb"
+arcpy.env.workspace = gdb
 arcpy.env.overwriteOutput = True
-
-
-# ===== STEG 0: SPLITT INPUT =====
-
-INPUT_FC = r"C:\overlaps\data\input\Roads.gdb\elveg_and_sti"
-
-VEGNETT_KODER = ["1", "2", "3", "4", "5"]
-KARTDATA_KODER = [
-    "Barmarksløype",
-    "Gang- og Sykkelveg",
-    "Traktorveg",
-    "Sti",
-]
-
-VEGNETT = "vegnett"
-STIER = "kartdata"
-
-
-def steg0_split():
-    print("\n[STEG 0] Splitt elveg_and_sti → vegnett + kartdata")
-
-    # ===== VEGNETT =====
-    vegnett_sql = "objtype = 'VegSenterlinje'"
-
-    arcpy.conversion.ExportFeatures(INPUT_FC, VEGNETT, vegnett_sql)
-    print(f"  vegnett: {int(arcpy.management.GetCount(VEGNETT)[0])} linjer")
-
-    # ===== KARTDATA =====
-    kartdata_sql = "objtype <> 'VegSenterlinje'"
-
-    arcpy.conversion.ExportFeatures(INPUT_FC, STIER, kartdata_sql)
-    print(f"  kartdata: {int(arcpy.management.GetCount(STIER)[0])} linjer")
-
 
 # ===== Konfigurasjon =====
 VEGNETT = "vegnett"
@@ -72,6 +39,30 @@ SNAP_TOLERANSE = "0.01 Meters"
 def legg_til_felt(fc, feltnavn, felttype):
     if feltnavn not in [f.name for f in arcpy.ListFields(fc)]:
         arcpy.management.AddField(fc, feltnavn, felttype)
+
+
+# ===== STEG 0: Oppdater motorvegtype i vegnett =====
+
+
+def steg0_motorvegtype():
+    print("\n[STEG 0] Oppdaterer motorvegtype i vegnett...")
+
+    motorveg_fc = r"C:\AG_inputs\Roads_raw.gdb\motorveg_Ida"
+
+    arcpy.management.MakeFeatureLayer(VEGNETT, "veg_lyr")
+
+    # Velg kun de som deler linjesegment
+    arcpy.management.SelectLayerByLocation(
+        "veg_lyr", "SHARE_A_LINE_SEGMENT_WITH", motorveg_fc
+    )
+
+    # Sett verdi
+    arcpy.management.CalculateField("veg_lyr", "motorvegtype", "'Motorveg'", "PYTHON3")
+
+    n = int(arcpy.management.GetCount("veg_lyr")[0])
+    print(f"  Oppdatert {n} veglinjer til motorvegtype = 'Motorveg'")
+
+    arcpy.management.Delete("veg_lyr")
 
 
 # ===== STEG 1: Overlapp og erase =====
@@ -170,7 +161,7 @@ def overlapp_og_erase():
 
     stier_clean = "stier_clean"
     arcpy.analysis.Erase(STIER, overlap_big, stier_clean)
-    arcpy.management.CopyFeatures(stier_clean, "stier_clean_backup")
+    # arcpy.management.CopyFeatures(stier_clean, "stier_clean_backup")
     n_før = int(arcpy.management.GetCount(STIER)[0])
     n_etter = int(arcpy.management.GetCount(stier_clean)[0])
     print(f"  Kartdata før: {n_før} | etter erase: {n_etter}")
@@ -511,11 +502,33 @@ def split_vegnett(kartdata_ferdig):
     print(f"  Lagret som: {vegnett_splittet}")
 
 
+# ===== STEG 5: Slå sammen til elveg_and_sti =====
+
+
+def merge_til_slutt():
+    print("\n[STEG 5] Slår sammen vegnett og kartdata ...")
+
+    output_gdb = r"C:\AG_inputs\Roads_test.gdb"
+    output_fc = os.path.join(output_gdb, "elveg_and_sti")
+
+    vegnett_fc = "vegnett_splittet"
+    kartdata_fc = "kartdata_ferdig"
+
+    # Slett hvis finnes fra før
+    if arcpy.Exists(output_fc):
+        arcpy.management.Delete(output_fc)
+
+    arcpy.management.Merge([vegnett_fc, kartdata_fc], output_fc)
+
+    n = int(arcpy.management.GetCount(output_fc)[0])
+    print(f"  Lagret: {output_fc} ({n} linjer)")
+
+
 # ===== Main =====
 
 
 def main():
-    steg0_split()  # ← NYTT STEG
+    steg0_motorvegtype()
     stier_clean, overlap_big = overlapp_og_erase()
     if stier_clean is None:
         return
@@ -524,11 +537,11 @@ def main():
     kartdata_etter_snap1 = mellomtrinn_merge(stier_uberørt, stier_berørt_snappet)
     kartdata_ferdig = snap_alene_2m(kartdata_etter_snap1)
     split_vegnett(kartdata_ferdig)
+    merge_til_slutt()  # ← NY LINJE
 
     print("\n✓ Ferdig! Datasett i working.gdb:")
     print(f"  overlap_big              – overlapp-polygoner")
     print(f"  stier_clean              – kartdata etter erase")
-    print(f"  stier_clean_backup       – backup av stier_clean")
     print(f"  sti_endepunkter_berørt   – endepunkter berørt av erase")
     print(f"  stier_uberørt            – linjer ikke berørt av erase")
     print(f"  stier_berørt_snappet     – berørte linjer etter snap")
