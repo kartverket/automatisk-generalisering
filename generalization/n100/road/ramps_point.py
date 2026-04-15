@@ -90,6 +90,7 @@ data_files = {
     "ramp_points_moved": Road_N100.ramps__ramp_points_moved__n100_road.value,
     "generalized_ramps": Road_N100.ramps__generalized_ramps__n100_road.value,
     "temp_output": Road_N100.temp_output.value,
+    "temp_output_2": Road_N100.temp_output_2.value,
 
 }
 
@@ -648,10 +649,9 @@ def build_adjecency(lines):
         for in_fid, near_fid in cursor:
             if in_fid != near_fid:
                 adjecency[in_fid].add(near_fid)
-
+    
     arcpy.management.Delete(near_table)
     return adjecency
-
 
 def get_selected_oids(layer):
     """Return set of OIDs for currently selected features in a feature layer."""
@@ -662,69 +662,28 @@ def get_selected_oids(layer):
             oids.add(int(oid))
     return oids
 
-
-def reachable_nodes(adjacency, start_oids, distance_threshold, length_map):
+def within_n_steps(adjacency, start_oids, steps=10):
     """
-    Traverses the graph defined by 'adjacency' starting from 'start_oids'
-    returns all nodes reachable within a path length of 'distance_threshold' using lengths from 'length_map'.
+    Return set of OIDs reachable within `steps` graph steps from any start OID.
+    adjacency: dict mapping OID -> set(neighbor OIDs)
+    start_oids: iterable of starting OIDs (ints)
     """
-    # result: union of all nodes seen on any path
-    result = set(start_oids)
-
-    # best_remaining[v] = maximum remaining budget seen when arriving at v
-    best_remaining = {}
-
-    # stack entries: (node, remaining_budget)
-    stack = []
-
-    # initialize stack with starts
-    for s in start_oids:
-        rem = distance_threshold  # - length_map[s]
-        # if start node itself already exceeds threshold we still include it
-        # but only push for exploration if rem >= 0
-        best_remaining[s] = rem
-        if rem >= 0:
-            stack.append((s, rem))
-
-    # local references for speed
-    adj_get = adjacency.get
-    lm = length_map
-    thr = distance_threshold
-
-    while stack:
-        u, rem_u = stack.pop()
-        # iterate neighbors
-        for v in adj_get(u, ()):
-            rem_v = rem_u - lm[v]
-
-            if rem_v >= 0:
-                # v is reachable within threshold via this path
-                # prune if we have seen v with >= remaining budget
-                prev = best_remaining.get(v)
-                if prev is None or rem_v > prev:
-                    best_remaining[v] = rem_v
-                    result.add(v)
-                    stack.append((v, rem_v))
-            else:
-                # v would exceed threshold on this step
-                if rem_u >= 0:
-                    result.add(v)
-                # do not push v for further exploration
-
-    return result
-
-
-def build_length_map(layer):
-    """
-    Build a map of OID to length for features in the given layer.
-    """
-    length_map = {}
-    oid_field = arcpy.Describe(layer).OIDFieldName
-    with arcpy.da.SearchCursor(layer, [oid_field, "SHAPE@LENGTH"]) as cursor:
-        for oid, length in cursor:
-            length_map[int(oid)] = float(length)
-    return length_map
-
+    start = set(start_oids)
+    if not start:
+        return set()
+    visited = set(start)
+    frontier = set(start)
+    for _ in range(steps):
+        next_frontier = set()
+        for fid in frontier:
+            for nbr in adjacency.get(fid, ()):
+                if nbr not in visited:
+                    next_frontier.add(nbr)
+        if not next_frontier:
+            break
+        visited.update(next_frontier)
+        frontier = next_frontier
+    return visited
 
 @timing_decorator
 def connect_roads_to_points():
@@ -754,55 +713,35 @@ def connect_roads_to_points():
 #        where_clause="priority = 3 or priority = 3.5 or priority = 4",
     )
 
+    #################
+    # build adjecency graph for roads, select roads that are within 1 meter of ramp points, 
+    # roads that are 10 steps out from those shall not be edited
+    #################
+
+    adjecency = build_adjecency("roads_lyr")
+
+
     arcpy.management.SelectLayerByLocation(
         "roads_lyr", "WITHIN_A_DISTANCE", "ramp_points_34_lyr", selection_type="NEW_SELECTION", search_distance="1 Meters"
     )
 
     arcpy.management.CopyFeatures("roads_lyr", data_files["temp_output"])
 
+    
+    selected_oids = get_selected_oids("roads_lyr")
+    oids_within_10_steps = within_n_steps(adjecency, selected_oids, steps=10)
+
+    arcpy.management.SelectLayerByAttribute("roads_lyr", "CLEAR_SELECTION")
+    arcpy.management.SelectLayerByAttribute(
+        "roads_lyr", "NEW_SELECTION", where_clause="OBJECTID IN ({})".format(",".join(map(str, oids_within_10_steps)))
+    )
+    arcpy.management.CopyFeatures("roads_lyr", data_files["temp_output_2"])
+
+
 
 
     arcpy.management.SelectLayerByLocation(
-        roads_lyr,
-        "WITHIN_A_DISTANCE",
-        ramp_points_lyr,
-        selection_type="NEW_SELECTION",
-        search_distance="1 Meters",
-    )
-
-    near_table_ramp_road = "in_memory\\near_table_ramp_road"
-    arcpy.analysis.GenerateNearTable(
-        in_features=ramp_points_lyr,
-        near_features=roads_lyr,
-        out_table=near_table_ramp_road,
-        search_radius="1 Meters",
-        closest="ALL",
-    )
-
-    ramp_to_near_roads = {}
-    with arcpy.da.SearchCursor(near_table_ramp_road, ["IN_FID", "NEAR_FID"]) as nt_cur:
-        for in_fid, near_fid in nt_cur:
-            ramp_to_near_roads.setdefault(int(in_fid), set()).add(int(near_fid))
-
-    # for each ramp point, find roads that are within 1 m, then find all roads that are within 1500 m network distance from those roads, and store in a map of ramp point oid to set of road oids
-    oids_within_10_by_rid = {}
-    for ramp_pid, near_roads in ramp_to_near_roads.items():
-        if not near_roads:
-            oids_within_10_by_rid[ramp_pid] = set()
-            continue
-        within_set = set(
-            reachable_nodes(
-                adjecency,
-                list(near_roads),
-                distance_threshold=1500,
-                length_map=length_map,
-            )
-        )
-        oids_within_10_by_rid[ramp_pid] = within_set
-
-    # get endpoints of all roads and select those that intersect with ramps
-    arcpy.management.SelectLayerByLocation(
-        roads_lyr, "INTERSECT", ramps_lyr, selection_type="NEW_SELECTION"
+        "roads_lyr", "INTERSECT", "ramps_lyr", selection_type="NEW_SELECTION"
     )
    
     sr = arcpy.Describe(ramp_points_fc).spatialReference
@@ -819,8 +758,8 @@ def connect_roads_to_points():
         endpoints_fc, ["SHAPE@", "from_road", "start_end"]
     ) as ins_cur:
         for oid, geom in road_cur:
-            # if oid in oids_within_10_steps:
-            #    continue
+            if oid in oids_within_10_steps:
+                continue
             start_pg, end_pg = get_line_endpoints(geom)
             ins_cur.insertRow([start_pg, oid, 1])
             ins_cur.insertRow([end_pg, oid, 2])
@@ -889,44 +828,48 @@ def connect_roads_to_points():
 
     with arcpy.da.UpdateCursor("roads_lyr", ["OID@", "SHAPE@"]) as road_cur:
         for oid, geom in road_cur:
-            if oid in roads_without_neighbours:
-                continue
             # Check start point
             start_key = (oid, 1)
             end_key = (oid, 2)
-            if end_key in end_dict:
-                endpoint_oid = end_dict[end_key]
-                if endpoint_oid in near_map:
-                    nx, ny, nd, pr, rid = near_map[endpoint_oid]
-                    #if pr != 3 and pr != 3.5 and pr != 4:
-                    #    continue
-                    if rid == oid:
-                        continue
-                    new_end = arcpy.Point(nx, ny)
-                    arr = arcpy.Array()
-                    for part in geom:
-                        for p in part:
-                            arr.add(p)
-                    arr.add(new_end)
-                    geom = arcpy.Polyline(arr, geom.spatialReference)
-                    modified = True
+            start_ep_oid = end_dict.get(start_key)
+            end_ep_oid = end_dict.get(end_key)
+
+            start_entry = near_map.get(start_ep_oid) if start_ep_oid is not None else None
+            end_entry = near_map.get(end_ep_oid) if end_ep_oid is not None else None
+
+            chosen_pos = None
+            chosen_entry = None
+
+
+            # choose the endpoint with the smaller near-distance (nd is index 2)
+            if start_entry and end_entry:
+                chosen_pos = "start" if start_entry[2] <= end_entry[2] else "end"
+                chosen_entry = start_entry if chosen_pos == "start" else end_entry
+            elif start_entry:
+                chosen_pos = "start"
+                chosen_entry = start_entry
+            elif end_entry:
+                chosen_pos = "end"
+                chosen_entry = end_entry
             else:
-                if start_key in end_dict:
-                    endpoint_oid = end_dict[start_key]
-                    if endpoint_oid in near_map:
-                        nx, ny, nd, pr, rid = near_map[endpoint_oid]
-                        #if pr != 3 and pr != 3.5 and pr != 4:
-                        #    continue
-                        if rid == oid:
-                            continue
-                        new_start = arcpy.Point(nx, ny)
-                        arr = arcpy.Array()
-                        arr.add(new_start)
-                        for part in geom:
-                            for p in part:
-                                arr.add(p)
-                        geom = arcpy.Polyline(arr, geom.spatialReference)
-                        modified = True
+                continue  # nothing to snap for this road
+
+            nx, ny, nd, pr, rid = chosen_entry
+            if rid == oid:
+                continue
+
+            new_pt = arcpy.Point(nx, ny)
+            arr = arcpy.Array()
+            if chosen_pos == "start":
+                arr.add(new_pt)
+                for part in geom:
+                    for p in part:
+                        arr.add(p)
+            else:  # end
+                for part in geom:
+                    for p in part:
+                        arr.add(p)
+                arr.add(new_pt)
 
             new_geom = arcpy.Polyline(arr, geom.spatialReference)
 
@@ -936,13 +879,6 @@ def connect_roads_to_points():
 
             road_cur.updateRow([oid, new_geom])
             point_endpoint_seen[point_endpoint_combo] = 0
-            # add to network connection
-            within_set = set(
-                reachable_nodes(
-                    adjecency, [oid], distance_threshold=1500, length_map=length_map
-                )
-            )
-            oids_within_10_by_rid.setdefault(ramp_id, set()).update(within_set)
 
     arcpy.management.DeleteFeatures(ramps_lyr)
 
