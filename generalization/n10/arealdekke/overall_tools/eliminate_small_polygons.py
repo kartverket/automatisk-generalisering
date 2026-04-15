@@ -4,6 +4,7 @@ from custom_tools.decorators.timing_decorator import timing_decorator
 from file_manager import WorkFileManager
 from file_manager.n10.file_manager_arealdekke import Arealdekke_N10
 from env_setup import environment_setup
+from custom_tools.general_tools.geometry_tools import GeometryValidator
 from custom_tools.general_tools.partition_iterator import PartitionIterator
 from composition_configs import core_config, logic_config
 from generalization.n10.arealdekke.parameters.parameter_dataclasses import (
@@ -40,6 +41,8 @@ class EliminateSmallPolygons:
         )
 
         self.files = self._create_wfm_gdbs(self.wfm)
+
+        self.geometry_validator = GeometryValidator()
 
     def _create_wfm_gdbs(self, wfm: WorkFileManager) -> dict:
         eliminate_input = wfm.build_file_path(
@@ -221,6 +224,10 @@ class EliminateSmallPolygons:
             selection="LENGTH",
         )
 
+        self.geometry_validator.check_repair_sequence(
+            input_fc=output_fc, max_iterations=5
+        )
+
     @timing_decorator
     def _buffer_potential_spikes(self):
         """Buffer all polygons except water and samferdsel to remove spikes"""
@@ -257,15 +264,11 @@ class EliminateSmallPolygons:
             erase_features=self.files["eliminate_selected_positive_buffers"],
             out_feature_class=self.files["eliminate_erased"],
         )
-        arcpy.management.RepairGeometry(
-            in_features=self.files["eliminate_erased"],
-            delete_null="DELETE_NULL",
-            validation_method="ESRI",
+        self.geometry_validator.check_repair_sequence(
+            input_fc=self.files["eliminate_clipped"], max_iterations=5
         )
-        arcpy.management.RepairGeometry(
-            in_features=self.files["eliminate_clipped"],
-            delete_null="DELETE_NULL",
-            validation_method="ESRI",
+        self.geometry_validator.check_repair_sequence(
+            input_fc=self.files["eliminate_erased"], max_iterations=5
         )
 
         arcpy.management.MultipartToSinglepart(
@@ -287,10 +290,8 @@ class EliminateSmallPolygons:
 
         self.add_fields(self.files["eliminate_merged_clipped_erased"])
 
-        arcpy.management.RepairGeometry(
-            in_features=self.files["eliminate_merged_clipped_erased"],
-            delete_null="DELETE_NULL",
-            validation_method="ESRI",
+        self.geometry_validator.check_repair_sequence(
+            input_fc=self.files["eliminate_merged_clipped_erased"], max_iterations=5
         )
 
         quoted = ", ".join(f"'{v}'" for v in self.scale_parameters.dont_remove_spikes)
@@ -452,10 +453,8 @@ class EliminateSmallPolygons:
             in_features=self.files["eliminate_final_elim_merged"],
             out_feature_class=self.output_feature,
         )
-        arcpy.management.RepairGeometry(
-            in_features=self.output_feature,
-            delete_null="DELETE_NULL",
-            validation_method="ESRI",
+        self.geometry_validator.check_repair_sequence(
+            input_fc=self.output_feature, max_iterations=5
         )
 
         self.wfm.delete_created_files()

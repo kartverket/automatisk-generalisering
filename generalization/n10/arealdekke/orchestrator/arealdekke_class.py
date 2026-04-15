@@ -4,7 +4,6 @@ import yaml
 from composition_configs import core_config
 from file_manager import WorkFileManager
 from file_manager.n10.file_manager_arealdekke import Arealdekke_N10
-from input_data import input_n10, input_test_data
 from generalization.n10.arealdekke.orchestrator.category_class import Category
 from custom_tools.decorators.timing_decorator import timing_decorator
 
@@ -37,7 +36,7 @@ arcpy.env.overwriteOutput = True
 
 class Arealdekke:
 
-    def __init__(self, map_scale) -> None:
+    def __init__(self, input_data: str, map_scale: str) -> None:
 
         # Setting up file manager w. dictionary for easy file access
         self.working_fc = (
@@ -69,7 +68,7 @@ class Arealdekke:
 
         # Extracts the data and saves it in the object
         arcpy.management.CopyFeatures(
-            in_features=input_test_data.arealdekke,  # input_n10.Arealdekke_Buskerud,
+            in_features=input_data,
             out_feature_class=self.files["arealdekke_fc"],
         )
 
