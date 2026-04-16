@@ -656,22 +656,55 @@ def connect_roads_to_points():
 
     adjecency = build_adjecency("roads_lyr")
 
-
+    
     arcpy.management.SelectLayerByLocation(
         "roads_lyr", "WITHIN_A_DISTANCE", "ramp_points_34_lyr", selection_type="NEW_SELECTION", search_distance="1 Meters"
     )
 
     arcpy.management.CopyFeatures("roads_lyr", data_files["temp_output"])
 
-    
+    """
     selected_oids = get_selected_oids("roads_lyr")
     oids_within_10_steps = within_n_steps(adjecency, selected_oids, steps=10)
+    """
 
-    arcpy.management.SelectLayerByAttribute("roads_lyr", "CLEAR_SELECTION")
+    near_table_road_ramp = "in_memory\\near_table_road_ramp"
+    arcpy.analysis.GenerateNearTable(
+        in_features="roads_lyr",
+        near_features="ramp_points_34_lyr",
+        out_table=near_table_road_ramp,
+        search_radius="1 Meters",
+        closest="CLOSEST",
+    )     
+
+    ramp_to_near_roads = {}
+    with arcpy.da.SearchCursor(near_table_road_ramp, ["IN_FID", "NEAR_FID"]) as nt_cur:
+        for in_fid, near_fid in nt_cur:
+            ramp_to_near_roads.setdefault(int(near_fid), set()).add(int(in_fid))
+    
+    """road_to_near_ramp = {}
+    with arcpy.da.SearchCursor(near_table_road_ramp, ["IN_FID", "NEAR_FID"]) as nt_cur:
+        for in_fid, near_fid in nt_cur:
+            road_to_near_ramp.setdefault(int(in_fid), set()).add(int(near_fid))"""
+
+
+    oids_within_10_by_rid = {}
+    for ramp_pid, near_roads in ramp_to_near_roads.items():
+        if not near_roads:
+            oids_within_10_by_rid[ramp_pid] = set()
+            print("Dette burde ikke skje?")
+            continue
+        # within_n_steps expects a list/iterable of starting oids
+        within_set = set(within_n_steps(adjecency, list(near_roads), steps=10))
+        oids_within_10_by_rid[ramp_pid] = within_set
+    
+    """
     arcpy.management.SelectLayerByAttribute(
         "roads_lyr", "NEW_SELECTION", where_clause="OBJECTID IN ({})".format(",".join(map(str, oids_within_10_steps)))
     )
     arcpy.management.CopyFeatures("roads_lyr", data_files["temp_output_2"])
+    """
+
 
 
 
@@ -694,8 +727,8 @@ def connect_roads_to_points():
         endpoints_fc, ["SHAPE@", "from_road", "start_end"]
     ) as ins_cur:
         for oid, geom in road_cur:
-            if oid in oids_within_10_steps:
-                continue
+            #if oid in oids_within_10_steps:
+            #    continue
             start_pg, end_pg = get_line_endpoints(geom)
             ins_cur.insertRow([start_pg, oid, 1])
             ins_cur.insertRow([end_pg, oid, 2])
@@ -737,7 +770,7 @@ def connect_roads_to_points():
             pr = point_priority.get(int(near_fid))
             rid = roadID.get(int(near_fid))
             # store priority as fourth element (nx, ny, dist, priority)
-            near_map[int(in_fid)] = (float(nx), float(ny), float(nd), pr, rid)
+            near_map[int(in_fid)] = (float(nx), float(ny), float(nd), pr, rid, int(near_fid))
 
     arcpy.management.Delete(near_table)
 
@@ -780,9 +813,16 @@ def connect_roads_to_points():
             else:
                 continue  # nothing to snap for this road
 
-            nx, ny, nd, pr, rid = chosen_entry
+            nx, ny, nd, pr, rid, ramp_id = chosen_entry
             if rid == oid:
                 continue
+            within_10_for_this_ramp = oids_within_10_by_rid.get(int(ramp_id), set())
+            if oid in within_10_for_this_ramp:
+                print(f"Skipping road {oid} because it is within 10 steps of a road that is within 1 meter of ramp {rid}")
+                continue
+            """road_to_ramp = road_to_near_ramp.get(int(oid), set())
+            if rid not in road_to_ramp:
+                continue"""
 
             new_pt = arcpy.Point(nx, ny)
             arr = arcpy.Array()
@@ -805,6 +845,8 @@ def connect_roads_to_points():
 
             road_cur.updateRow([oid, new_geom])
             point_endpoint_seen[point_endpoint_combo] = 0
+            within_set = set(within_n_steps(adjecency, [oid], steps=10))
+            oids_within_10_by_rid[ramp_pid] = within_set
 
     arcpy.management.DeleteFeatures("ramps_lyr")
 
