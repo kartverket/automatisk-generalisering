@@ -44,7 +44,7 @@ class Arealdekke:
 
     def __init__(self, map_scale) -> None:
 
-        # Setting up file manager w. dictionary for easy file access
+        # Setting up file manager w. dictionary
         self.working_fc = (
             Arealdekke_N10.arealdekke_class_in_progress__n10_land_use.value
         )
@@ -72,17 +72,26 @@ class Arealdekke:
             ),
         }
 
-        # TODO: IKKE LEGG BARE TIL FILSTI!!!!!!!!!!
-
         # Program history
         self.program_history: History_class = History_class(file_path=Path(__file__).parent / "arealdekke_history.yml")
 
-        #Check preprocessing
+        #Get top level attributes from program history
         top_lvl_info=self.program_history.restore_arealdekke_attributes()
 
         #Update attributes
-        if top_lvl_info["file_path"] is not None and top_lvl_info["preprocessings_completed"]>0:
+        if (
+            top_lvl_info["file_path"] is not None and 
+            top_lvl_info["preprocessing_operations_completed"] is not None and 
+            top_lvl_info["preprocessing_operations_completed"]>0
+            ):
+            
+            # Begin reinserting attributes from history file
             self.files["arealdekke_fc"] = top_lvl_info["file_path"]
+
+            self.__preprocessed: bool = top_lvl_info.get("preprocessed", False)
+            self.__preprocessings_completed: int = top_lvl_info["preprocessing_operations_completed"]
+            self.__map_scale: str = top_lvl_info.get("map_scale", None) or map_scale
+
         else:
             # Extracts the data and saves it in the object
             arcpy.management.CopyFeatures(
@@ -90,15 +99,14 @@ class Arealdekke:
                 out_feature_class=self.files["arealdekke_fc"],
             )
         
-        #TODO HELE BITEN MÅ ENDRES FOR AT MAN IKKE SKAL LEGGE TIL FILSTI BARE FORDI DEN VAR DER I SISTE KJØRING.
-        self.__preprocessed: bool = top_lvl_info["preprocessed"] or False
-        self.__preprocessings_completed: int = top_lvl_info["preprocessings_completed"] or 0
-        self.__map_scale: str = top_lvl_info["map_scale"] or map_scale
+            self.__preprocessed: bool = False
+            self.__preprocessings_completed: int = 0
+            self.__map_scale: str = map_scale or None
 
-        #Get categories
+        #Get categories - If none are to be retrieved, empty list will return.
         cat_lvl_info: dict =self.program_history.restore_arealdekke_categories()
 
-        self.categories: list[Category] = cat_lvl_info["cats"] or [Category]
+        self.categories: list[Category] = cat_lvl_info.get("cats", None) or [Category]
 
             
     # ========================
@@ -145,30 +153,29 @@ class Arealdekke:
             )
         ]
 
-        # TODO: LEGG TIL IF NOT PROCESSED DONE
-
         # Pipeline from original orchistrator file. Preprocessing the arealdekke data.
-        for preprocess in range((
-            self.__preprocessings_completed if self.__preprocessings_completed==0 else (self.__preprocessings_completed+1)
-            ), len(preprocesses), 1):
+        if not self.__preprocessed:
+            for preprocess in range((
+                self.__preprocessings_completed if self.__preprocessings_completed==0 else (self.__preprocessings_completed+1)
+                ), len(preprocesses), 1):
 
-            #Call process
-            preprocesses[preprocess]()
+                #Call process
+                preprocesses[preprocess]()
 
-            #Update __preprocessings_completed
-            self.__preprocessings_completed+=1
+                #Update __preprocessings_completed
+                self.__preprocessings_completed+=1
 
-            #Update history (operations completed)
-            self.program_history.update_history_top_lvl(
-                key="preprocessing_operations_completed",
-                value=self.__preprocessings_completed
+                #Update history (operations completed)
+                self.program_history.update_history_top_lvl(
+                    key="preprocessing_operations_completed",
+                    value=self.__preprocessings_completed
+                )
+                
+            arcpy.management.CopyFeatures(
+                in_features=output_fc, out_feature_class=self.files["arealdekke_fc"]
             )
-            
-        arcpy.management.CopyFeatures(
-            in_features=output_fc, out_feature_class=self.files["arealdekke_fc"]
-        )
 
-        self.__preprocessed = True
+            self.__preprocessed = True
 
     def add_categories(self, categories_config_file):
 
@@ -323,6 +330,11 @@ class Arealdekke:
         arcpy.management.CopyFeatures(
             in_features=temp_lyr, out_feature_class=self.files["category_fc"]
         )
+    
+    def __str__(self) -> str:
+        return (f"preprocessed: {self.__preprocessed} "+ 
+                f"preprocessings completed: {self.__preprocessings_completed} "+ 
+                f"map scale: {self.__map_scale} ")
 
     # ========================
     # Setters

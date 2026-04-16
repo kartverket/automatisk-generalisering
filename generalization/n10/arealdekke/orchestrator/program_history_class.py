@@ -41,7 +41,7 @@ class Program_history_class:
 
         response: dict ={}
 
-        if history.get("preprocessing_operations_completed" or 0)>0:
+        if history.get("preprocessing_operations_completed", 0)>0:
             response["file_path"] = history["newest_version"]
             response["preprocessed"] = history["preprocessed"]
             response["preprocessing_operations_completed"] = history["preprocessing_operations_completed"]
