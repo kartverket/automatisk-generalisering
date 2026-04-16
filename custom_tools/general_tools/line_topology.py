@@ -2008,8 +2008,10 @@ class FillLineGaps:
         )
 
         conflict_keys: set[tuple[int, str, int]] = set()
-        with arcpy.da.SearchCursor(_near_table, ["IN_FID"]) as cur:
-            for (in_fid,) in cur:
+        with arcpy.da.SearchCursor(_near_table, ["IN_FID", "NEAR_DIST"]) as cur:
+            for in_fid, near_dist in cur:
+                if near_dist != 0.0:
+                    continue
                 key = oid_to_key.get(int(in_fid))
                 if key is not None:
                     conflict_keys.add(key)
@@ -4193,9 +4195,11 @@ class FillLineGaps:
                     closest_count=0,
                     method="PLANAR",
                 )
-                with arcpy.da.SearchCursor(_kruskal_near, ["IN_FID", "NEAR_FID"]) as _cur:
-                    for _in_fid, _near_fid in _cur:
+                with arcpy.da.SearchCursor(_kruskal_near, ["IN_FID", "NEAR_FID", "NEAR_DIST"]) as _cur:
+                    for _in_fid, _near_fid, _near_dist in _cur:
                         if int(_in_fid) == int(_near_fid):
+                            continue
+                        if _near_dist != 0.0:
                             continue
                         _key_in = _kruskal_oid_to_key.get(int(_in_fid))
                         _key_near = _kruskal_oid_to_key.get(int(_near_fid))
@@ -4432,8 +4436,10 @@ class FillLineGaps:
 
         # {parent_id: set of conflicting accepted dangle_oids}
         conflicts_by_parent: dict[int, set[int]] = {}
-        with arcpy.da.SearchCursor(_near_table, ["IN_FID", "NEAR_FID"]) as cur:
-            for in_fid, near_fid in cur:
+        with arcpy.da.SearchCursor(_near_table, ["IN_FID", "NEAR_FID", "NEAR_DIST"]) as cur:
+            for in_fid, near_fid, near_dist in cur:
+                if near_dist != 0.0:
+                    continue
                 parent_id = oid_to_parent_id.get(int(in_fid))
                 acc_doid = oid_to_accepted_doid.get(int(near_fid))
                 if parent_id is not None and acc_doid is not None:
