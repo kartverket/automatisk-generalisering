@@ -803,14 +803,8 @@ def connect_roads_to_points():
                 continue
             pr = point_priority.get(int(near_fid))
             rid = roadID.get(int(near_fid))
-            near_map[int(in_fid)] = (
-                float(nx),
-                float(ny),
-                float(nd),
-                pr,
-                rid,
-                int(near_fid),
-            )
+            # store priority as fourth element (nx, ny, dist, priority)
+            near_map[int(in_fid)] = (float(nx), float(ny), float(nd), pr, rid)
 
     arcpy.management.Delete(near_table)
 
@@ -854,7 +848,7 @@ def connect_roads_to_points():
             else:
                 continue  # nothing to snap for this road
 
-            nx, ny, nd, pr, rid = chosen_entry
+            nx, ny, nd, pr, rid, ramp_id = chosen_entry
             if rid == oid:
                 continue
 
