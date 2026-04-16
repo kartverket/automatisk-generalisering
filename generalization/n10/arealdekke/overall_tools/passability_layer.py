@@ -32,6 +32,6 @@ def create_passability_layer(input_fc: str, output_fc: str) -> None:
     arcpy.management.Dissolve(
         in_features=land_use_lyr,
         out_feature_class=output_fc,
-        dissolve_field="fremkommelighet",
+        dissolve_field=["arealdekke", "fremkommelighet"],
         multi_part="SINGLE_PART",
     )
