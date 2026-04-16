@@ -72,6 +72,8 @@ class Arealdekke:
             out_feature_class=self.files["arealdekke_fc"],
         )
 
+        self.final_output_fc = Arealdekke_N10.arealdekke_class_final__n10_land_use.value
+
         # Creates a variable to see if the data has been preprocessed.
         # Safety lock to make sure categories are not added before data is ok.
         self.preprocessed = False
@@ -219,10 +221,17 @@ class Arealdekke:
         # Save processed data to final fc and delete the last files
         arcpy.management.CopyFeatures(
             in_features=self.files["arealdekke_fc"],
-            out_feature_class=Arealdekke_N10.arealdekke_class_final__n10_land_use.value,
+            out_feature_class=self.final_output_fc,
         )
 
         self.wfm.delete_created_files()
+
+    @timing_decorator
+    def finish_results(self) -> None:
+        """
+        ...
+        """
+        return
 
     # ========================
     # Getters
