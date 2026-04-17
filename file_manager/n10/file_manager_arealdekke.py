@@ -151,6 +151,10 @@ class Arealdekke_N10(Enum):
         script_source_name=passability, description="passability"
     )
 
+    passability_work_file__n10_land_use = file_manager.generate_file_name_gdb(
+        script_source_name=passability, description="passability_work_file"
+    )
+
     # ========================================
     #                        SIMPLIFY LAND USE
     # ========================================
