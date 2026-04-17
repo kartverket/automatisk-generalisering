@@ -25,6 +25,7 @@ from generalization.n10.arealdekke.overall_tools.island_controller import (
 )
 from generalization.n10.arealdekke.overall_tools.passability_layer import (
     create_passability_layer,
+    postprocess_passability_layer,
 )
 from generalization.n10.arealdekke.overall_tools.overlap_remover import (
     remove_overlaps,
@@ -229,9 +230,12 @@ class Arealdekke:
     @timing_decorator
     def finish_results(self) -> None:
         """
-        ...
+        Performes a final clean-up of the results by adjusting any misalignments of geometries.
         """
-        return
+        postprocess_passability_layer(
+            final_fc=self.final_output_fc,
+            passability_fc=Arealdekke_N10.passability__n10_land_use.value,
+        )
 
     # ========================
     # Getters

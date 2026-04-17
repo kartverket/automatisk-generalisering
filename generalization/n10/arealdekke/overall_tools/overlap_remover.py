@@ -63,7 +63,9 @@ def remove_overlaps(
     )
 
     # Extra: Fix geometries in the passability layer after buffering
-    update_passability_for_buffer(buffered_fc=files["erased_buffers"], target=changed_area)
+    update_passability_for_buffer(
+        buffered_fc=files["erased_buffers"], target=changed_area
+    )
 
     # 4) Fetch correct attributes for the buffered features
     # (those that are going to be merged with original data)
