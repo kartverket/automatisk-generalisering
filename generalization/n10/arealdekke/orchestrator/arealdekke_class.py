@@ -31,6 +31,9 @@ from generalization.n10.arealdekke.overall_tools.overlap_remover import (
     remove_overlaps,
 )
 from generalization.n10.arealdekke.overall_tools.fill_holes import fill_holes
+from generalization.n10.arealdekke.overall_tools.small_features_changer import (
+    change_attribute_value_main,
+)
 
 arcpy.env.overwriteOutput = True
 
@@ -101,6 +104,10 @@ class Arealdekke:
         create_passability_layer(
             input_fc=Arealdekke_N10.attribute_changer_output__n10_land_use.value,
             output_fc=Arealdekke_N10.passability__n10_land_use.value,
+        )
+
+        change_attribute_value_main(
+            working_fc=Arealdekke_N10.attribute_changer_output__n10_land_use.value
         )
 
         arealdekke_dissolver(
