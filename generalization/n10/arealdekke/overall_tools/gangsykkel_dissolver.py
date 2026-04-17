@@ -14,6 +14,7 @@ from generalization.n10.arealdekke.overall_tools.eliminate_small_polygons import
 )
 from collections import defaultdict
 from pathlib import Path
+from custom_tools.general_tools.geometry_tools import GeometryValidator
 from custom_tools.general_tools.param_utils import initialize_params
 from generalization.n10.arealdekke.parameters.parameter_dataclasses import (
     GangSykkelDissolverParameters,
@@ -48,6 +49,8 @@ class GangSykkelDissolver:
             map_scale=self.map_scale,
             dataclass=GangSykkelDissolverParameters,
         )
+
+        self.geometry_validator = GeometryValidator()
 
     def _create_wfm_gdbs(self, wfm: WorkFileManager) -> dict:
         gangsykkel_input = wfm.build_file_path(
@@ -260,14 +263,18 @@ class GangSykkelDissolver:
             output=self.files["gangsykkel_final_merge"],
         )
 
-        arcpy.management.RepairGeometry(self.files["gangsykkel_final_merge"])
+        self.geometry_validator.check_repair_sequence(
+            input_fc=self.files["gangsykkel_final_merge"], max_iterations=5
+        )
 
         arcpy.management.MultipartToSinglepart(
             in_features=self.files["gangsykkel_final_merge"],
             out_feature_class=self.files["gangsykkel_final_merge_singlepart"],
         )
 
-        arcpy.management.RepairGeometry(self.files["gangsykkel_final_merge_singlepart"])
+        self.geometry_validator.check_repair_sequence(
+            input_fc=self.files["gangsykkel_final_merge_singlepart"], max_iterations=5
+        )
 
         gangsykkel_final_merge_singlepart_lyr = (
             "layer_gangsykkel_final_merge_singlepart_lyr"
@@ -356,14 +363,18 @@ class GangSykkelDissolver:
             out_feature_class=paths["clip_path"],
         )
 
-        arcpy.management.RepairGeometry(in_features=paths["clip_path"])
+        self.geometry_validator.check_repair_sequence(
+            input_fc=paths["clip_path"], max_iterations=5
+        )
 
         arcpy.management.MultipartToSinglepart(
             in_features=paths["clip_path"],
             out_feature_class=paths["singlepart_clipped_path"],
         )
 
-        arcpy.management.RepairGeometry(in_features=paths["singlepart_clipped_path"])
+        self.geometry_validator.check_repair_sequence(
+            input_fc=paths["singlepart_clipped_path"], max_iterations=5
+        )
 
         arcpy.analysis.Erase(
             in_features=current_gangsykkel,
@@ -371,14 +382,18 @@ class GangSykkelDissolver:
             out_feature_class=paths["erased_path"],
         )
 
-        arcpy.management.RepairGeometry(in_features=paths["erased_path"])
+        self.geometry_validator.check_repair_sequence(
+            input_fc=paths["erased_path"], max_iterations=5
+        )
 
         arcpy.management.MultipartToSinglepart(
             in_features=paths["erased_path"],
             out_feature_class=paths["singlepart_erased_path"],
         )
 
-        arcpy.management.RepairGeometry(in_features=paths["singlepart_erased_path"])
+        self.geometry_validator.check_repair_sequence(
+            input_fc=paths["singlepart_erased_path"], max_iterations=5
+        )
 
         return (
             paths["buf_path"],

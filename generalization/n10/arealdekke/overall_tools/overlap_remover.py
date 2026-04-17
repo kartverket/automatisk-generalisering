@@ -10,6 +10,15 @@ from composition_configs import core_config
 from custom_tools.decorators.timing_decorator import timing_decorator
 from file_manager import WorkFileManager
 from file_manager.n10.file_manager_arealdekke import Arealdekke_N10
+from generalization.n10.arealdekke.overall_tools.arealdekke_dissolver import (
+    ArealdekkeDissolver,
+)
+from generalization.n10.arealdekke.overall_tools.passability_layer import (
+    update_passability_for_buffer,
+)
+
+fetch_orig_data = ArealdekkeDissolver.restore_data_polygon_without_feature_to_point
+
 
 # ========================
 # Main function
@@ -51,6 +60,11 @@ def remove_overlaps(
     )
     print(
         "Erased locked features from buffered features to avoid overlap in these areas."
+    )
+
+    # Extra: Fix geometries in the passability layer after buffering
+    update_passability_for_buffer(
+        buffered_fc=files["erased_buffers"], target=changed_area
     )
 
     # 4) Fetch correct attributes for the buffered features
@@ -126,41 +140,39 @@ def change_target_features(input_fc: str, files: dict, target: str) -> None:
         target (str): The field name value of the land use / 'arealdekke'
                       that is enlarged and overlaps other areas
     """
-    # Find connection between input data and buffered features with 'arealdekke' = target
-    arcpy.analysis.SpatialJoin(
-        target_features=files["erased_buffers"],
-        join_features=input_fc,
-        out_feature_class=files["spatial_join"],
-        join_operation="JOIN_ONE_TO_ONE",
-        join_type="KEEP_ALL",
-        match_option="LARGEST_OVERLAP",
+    # Update attribute information of buffered features with 'arealdekke' == target to original data
+    arcpy.management.AddField(
+        in_table=files["erased_buffers"], field_name="arealdekke", field_type="TEXT"
     )
 
-    # Fetch data not being buffered
+    arcpy.management.CalculateField(
+        in_table=files["erased_buffers"],
+        field="arealdekke",
+        expression=f"'{target}'",
+        expression_type="PYTHON3",
+    )
+
+    fetch_orig_data(
+        without_data=files["erased_buffers"],
+        original=input_fc,
+        column="arealdekke",
+        index="arealdekke",
+    )
+
+    # Delete old features with 'arealdekke' == target
     land_use_lyr = "land_use_lyr"
-    arcpy.management.MakeFeatureLayer(
-        in_features=input_fc,
-        out_layer=land_use_lyr,
-        where_clause=f"arealdekke NOT IN ('{target}')",
+    arcpy.management.MakeFeatureLayer(in_features=input_fc, out_layer=land_use_lyr)
+
+    arcpy.management.SelectLayerByAttribute(
+        in_layer_or_view=land_use_lyr,
+        selection_type="NEW_SELECTION",
+        where_clause=f"arealdekke = '{target}'",
     )
+    arcpy.management.DeleteFeatures(in_features=land_use_lyr)
 
-    # Fetch field names not relevant anymore
-    orig_field_names = [f.name for f in arcpy.ListFields(input_fc)]
-    fields_to_delete = [
-        f.name
-        for f in arcpy.ListFields(files["spatial_join"])
-        if f.name not in orig_field_names
-    ]
-
-    # Delete irrelevant fields and keep the ones from original data
-    if fields_to_delete:
-        arcpy.management.DeleteField(
-            in_table=files["spatial_join"], drop_field=fields_to_delete
-        )
-
-    # Merge the two datasets into one single with correct attributes and overlap
+    # Insert the buffered features with correct attribute information
     arcpy.management.Merge(
-        inputs=[land_use_lyr, files["spatial_join"]],
+        inputs=[input_fc, files["erased_buffers"]],
         output=files["copy_of_input"],
     )
 

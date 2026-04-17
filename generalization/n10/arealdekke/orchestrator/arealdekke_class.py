@@ -31,6 +31,7 @@ from generalization.n10.arealdekke.overall_tools.island_controller import (
 )
 from generalization.n10.arealdekke.overall_tools.passability_layer import (
     create_passability_layer,
+    postprocess_passability_layer,
 )
 from generalization.n10.arealdekke.overall_tools.overlap_remover import (
     remove_overlaps,
@@ -42,7 +43,7 @@ arcpy.env.overwriteOutput = True
 
 class Arealdekke:
 
-    def __init__(self, map_scale) -> None:
+    def __init__(self, input_data: str, map_scale: str) -> None:
 
         # Setting up file manager w. dictionary
         self.working_fc = (
@@ -247,10 +248,20 @@ class Arealdekke:
         # Save processed data to final fc and delete the last files
         arcpy.management.CopyFeatures(
             in_features=self.files["arealdekke_fc"],
-            out_feature_class=Arealdekke_N10.arealdekke_class_final__n10_land_use.value,
+            out_feature_class=self.final_output_fc,
         )
 
         self.wfm.delete_created_files()
+
+    @timing_decorator
+    def finish_results(self) -> None:
+        """
+        Performes a final clean-up of the results by adjusting any misalignments of geometries.
+        """
+        postprocess_passability_layer(
+            final_fc=self.final_output_fc,
+            passability_fc=Arealdekke_N10.passability__n10_land_use.value,
+        )
 
     # ========================
     # Getters

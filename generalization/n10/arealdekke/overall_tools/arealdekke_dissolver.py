@@ -9,6 +9,7 @@ from input_data import input_n10
 from env_setup import environment_setup
 
 from custom_tools.general_tools.partition_iterator import PartitionIterator
+from custom_tools.general_tools.geometry_tools import GeometryValidator
 
 from collections import defaultdict
 
@@ -33,6 +34,8 @@ class ArealdekkeDissolver:
         self.output_feature = areal_dekke_dissolver_config.output_feature
 
         self.index_col = areal_dekke_dissolver_config.index_column_name
+
+        self.geometry_validator = GeometryValidator()
 
         self.wfm = WorkFileManager(
             config=areal_dekke_dissolver_config.work_file_manager_config
@@ -339,20 +342,14 @@ class ArealdekkeDissolver:
                 arcpy.management.DeleteField(without_data, field)
 
     @timing_decorator
-    def repair_geom(self):
-        arcpy.management.RepairGeometry(
-            in_features=self.output_feature,
-            delete_null="DELETE_NULL",
-            validation_method="ESRI",
-        )
-
-    @timing_decorator
     def run(self) -> None:
         environment_setup.main()
         self.fetch_divide_data()
         self.dissolve()
         self.restore_data()
-        self.repair_geom()
+        self.geometry_validator.check_repair_sequence(
+            input_fc=self.output_feature, max_iterations=5
+        )
         self.wfm.delete_created_files()
 
 
