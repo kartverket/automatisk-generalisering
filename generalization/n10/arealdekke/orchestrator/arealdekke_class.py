@@ -94,10 +94,7 @@ class Arealdekke:
 
         else:
             # Extracts the data and saves it in the object
-            arcpy.management.CopyFeatures(
-                in_features=input_n10.Arealdekke_Buskerud,
-                out_feature_class=self.files["arealdekke_fc"],
-            )
+            self.get_arealdekke_data()
         
             self.__preprocessed: bool = False
             self.__preprocessings_completed: int = 0
@@ -116,47 +113,14 @@ class Arealdekke:
     @timing_decorator
     def preprocess(self) -> None:
 
+        preprocesses=self.set_preprocesses()
+
         output_fc = Arealdekke_N10.dissolve_gangsykkel.value
-
-        preprocesses=[
-            lambda: attribute_changer(
-                input_fc=self.arealdekke_data,
-                output_fc=Arealdekke_N10.attribute_changer_output__n10_land_use.value,
-            ),
-
-            lambda: create_passability_layer(
-                input_fc=Arealdekke_N10.attribute_changer_output__n10_land_use.value,
-                output_fc=Arealdekke_N10.passability__n10_land_use.value,
-            ),
-            
-            lambda: arealdekke_dissolver(
-                input_fc=Arealdekke_N10.attribute_changer_output__n10_land_use.value,
-                output_fc=Arealdekke_N10.dissolve_arealdekke.value,
-                map_scale=self.__map_scale,
-            ),
-
-            lambda: island_controller(
-                input_fc=Arealdekke_N10.dissolve_arealdekke.value,
-                output_fc=Arealdekke_N10.island_merger_output__n10_land_use.value,
-            ),
-
-            lambda: eliminate_small_polygons(
-                input_fc=Arealdekke_N10.island_merger_output__n10_land_use.value,
-                output_fc=Arealdekke_N10.elim_output.value,
-                map_scale=self.__map_scale,
-            ),
-
-            lambda: gangsykkel_dissolver(
-                input_fc=Arealdekke_N10.elim_output.value,
-                output_fc=output_fc,
-                map_scale=self.__map_scale,
-            )
-        ]
 
         # Pipeline from original orchistrator file. Preprocessing the arealdekke data.
         if not self.__preprocessed:
             for preprocess in range((
-                self.__preprocessings_completed if self.__preprocessings_completed==0 else (self.__preprocessings_completed+1)
+                self.__preprocessings_completed
                 ), len(preprocesses), 1):
 
                 #Call process
@@ -174,8 +138,14 @@ class Arealdekke:
             arcpy.management.CopyFeatures(
                 in_features=output_fc, out_feature_class=self.files["arealdekke_fc"]
             )
-
+            
+            # Update history and object attribute
             self.__preprocessed = True
+
+            self.program_history.update_history_top_lvl(
+                key="preprocessed",
+                value=True
+            )
 
     def add_categories(self, categories_config_file):
 
@@ -286,7 +256,6 @@ class Arealdekke:
     # Getters
     # ========================
 
-
     def get_map_scale(self) -> str:
         return self.__map_scale
 
@@ -331,11 +300,53 @@ class Arealdekke:
             in_features=temp_lyr, out_feature_class=self.files["category_fc"]
         )
     
+    def get_arealdekke_data(self):
+        arcpy.management.CopyFeatures(
+                in_features=input_n10.Arealdekke_Buskerud,
+                out_feature_class=self.files["arealdekke_fc"],
+            )
+    
     def __str__(self) -> str:
         return (f"preprocessed: {self.__preprocessed} "+ 
                 f"preprocessings completed: {self.__preprocessings_completed} "+ 
-                f"map scale: {self.__map_scale} ")
+                f"map scale: {self.__map_scale}")
 
     # ========================
     # Setters
     # ========================
+
+    def set_preprocesses(self)-> list:
+        return [
+            lambda: attribute_changer(
+                input_fc=self.files["arealdekke_fc"],
+                output_fc=Arealdekke_N10.attribute_changer_output__n10_land_use.value,
+            ),
+
+            lambda: create_passability_layer(
+                input_fc=Arealdekke_N10.attribute_changer_output__n10_land_use.value,
+                output_fc=Arealdekke_N10.passability__n10_land_use.value,
+            ),
+            
+            lambda: arealdekke_dissolver(
+                input_fc=Arealdekke_N10.attribute_changer_output__n10_land_use.value,
+                output_fc=Arealdekke_N10.dissolve_arealdekke.value,
+                map_scale=self.__map_scale,
+            ),
+
+            lambda: island_controller(
+                input_fc=Arealdekke_N10.dissolve_arealdekke.value,
+                output_fc=Arealdekke_N10.island_merger_output__n10_land_use.value,
+            ),
+
+            lambda: eliminate_small_polygons(
+                input_fc=Arealdekke_N10.island_merger_output__n10_land_use.value,
+                output_fc=Arealdekke_N10.elim_output.value,
+                map_scale=self.__map_scale,
+            ),
+
+            lambda: gangsykkel_dissolver(
+                input_fc=Arealdekke_N10.elim_output.value,
+                output_fc=Arealdekke_N10.dissolve_gangsykkel.value,
+                map_scale=self.__map_scale,
+            )
+        ]

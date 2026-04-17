@@ -3,7 +3,7 @@ import tempfile
 import yaml
 import os
 from pathlib import Path
-from unittest.mock import patch
+from unittest.mock import patch, MagicMock
 from generalization.n10.arealdekke.orchestrator.arealdekke_class import Arealdekke
 from generalization.n10.arealdekke.orchestrator.program_history_class import Program_history_class as History_class
 
@@ -57,38 +57,72 @@ class test_arealdekket_class_2(unittest.TestCase):
             yaml.dump(data_pre_comp, temp_pre_comp)
             temp_pre_comp.close()
             self.temp_path_pre_comp = temp_pre_comp.name
+            self.temp_obj_pre_comp = History_class(file_path=Path(self.temp_path_pre_comp))
         
         with tempfile.NamedTemporaryFile(mode="w", suffix=".yml", delete=False) as temp_pre_incomp:
             yaml.dump(data_pre_incomp, temp_pre_incomp)
             temp_pre_incomp.close()
             self.temp_path_pre_incomp = temp_pre_incomp.name
+            self.temp_obj_pre_incomp = History_class(file_path=Path(self.temp_path_pre_incomp))
 
         self.temp_path_non_existing="temp_file_path_non_existing.yml"
 
+        self.arealdekke_module="generalization.n10.arealdekke.orchestrator.arealdekke_class"
+
     def test_init(self):
 
-        arealdekke_module="generalization.n10.arealdekke.orchestrator.arealdekke_class"
-        history_module="generalization.n10.arealdekke.orchestrator.program_history_class"
-        
-        # Does arealdekke initiate correctly if the yml file is empty?
-        with patch(history_module) as mock_pre_comp:
+        # Does arealdekke initiate correctly if it previously completed the preprocessing?
+        with patch(self.arealdekke_module + ".History_class") as mock_history_pre_comp:
             
-            mock_pre_comp.side_effect = lambda file_path : History_class(file_path=Path(self.temp_path_pre_comp))
+            mock_history_pre_comp.return_value = self.temp_obj_pre_comp
             arealdekke_pre_comp = Arealdekke("N10")
 
             self.assertEqual(arealdekke_pre_comp.__str__(), "preprocessed: True preprocessings completed: 1 map scale: N10")
-
         
-        # Does arealdekke initiate correctly if it previously completed the preprocessing?
-        # What if arealdekke loaded in all info but stopped before the first preprocessing was done?
         
-        '''
-        with patch(history_module) as mock_pre_comp, patch(arealdekke_module+".arcpy") as mock_arcpy:
+        # What if arealdekke loaded in all info but stopped before the first preprocessing was done? (Would be the same if the yaml file was empty.)
+        with patch(self.arealdekke_module + ".History_class") as mock_history_pre_incomp, \
+            patch.object(History_class, "restore_arealdekke_attributes") as mock_restore:
             
-            mock_pre_comp.side_effect = lambda file_path : History_class(file_path=self.temp_path_pre_comp)
-            arealdekke_pre_comp = Arealdekke("n10")
-            mock_arcpy.management.CopyFeatures.assert_called_once()'''
+            mock_history_pre_incomp.return_value = self.temp_obj_pre_incomp
 
+            mock_restore.return_value = {
+                "file_path": "/fake/path",
+                "preprocessing_operations_completed": 0,
+                "preprocessed": False,
+                "map_scale": "N10",
+            }
+
+            arealdekke_pre_incomp = Arealdekke("N10")
+
+            self.assertEqual(arealdekke_pre_incomp.__str__(), "preprocessed: False preprocessings completed: 0 map scale: N10")
+
+    def test_preprocess(self):
+
+        # Does preprocess restart where it last stopped?
+        temp_obj_pre_comp=Arealdekke.__new__(Arealdekke)
+        temp_obj_pre_comp._Arealdekke__preprocessed=False
+        temp_obj_pre_comp._Arealdekke__preprocessings_completed=2
+        temp_obj_pre_comp._Arealdekke__map_scale="N10"
+        temp_obj_pre_comp.categories=[]
+        temp_obj_pre_comp.program_history=temp_obj_pre_comp
+        temp_obj_pre_comp.files={"arealdekke_fc":"path"}
+
+        fake_preprocesses=[MagicMock() for _ in range(10)]
+
+        with patch(self.arealdekke_module + ".arcpy") as mock_arcpy, \
+        patch(self.arealdekke_module + ".History_class") as mock_history_pre_comp, \
+        patch.object(Arealdekke, "set_preprocesses", return_value=fake_preprocesses) as mock_preprocesses_lst:
+            
+            mock_arcpy.return_value = None
+            temp_obj_pre_comp.program_history.update_history_top_lvl = MagicMock()
+
+            temp_obj_pre_comp.preprocess()
+
+            assert sum(preprocess.call_count for preprocess in fake_preprocesses) == 8
+            self.assertEqual(temp_obj_pre_comp._Arealdekke__preprocessings_completed, 10)
+
+    def process_categories(self):
         pass
 
     def tearDown(self):
