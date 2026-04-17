@@ -81,7 +81,10 @@
 
 <span class="n">arcpy</span><span class="o">.</span><span class="n">env</span><span class="o">.</span><span class="n">overwriteOutput</span> <span class="o">=</span> <span class="kc">True</span>
 
+<span class="kn">from</span><span class="w"> </span><span class="nn">composition_configs</span><span class="w"> </span><span class="kn">import</span> <span class="n">core_config</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">custom_tools.decorators.timing_decorator</span><span class="w"> </span><span class="kn">import</span> <span class="n">timing_decorator</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">file_manager</span><span class="w"> </span><span class="kn">import</span> <span class="n">WorkFileManager</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">file_manager.n10.file_manager_arealdekke</span><span class="w"> </span><span class="kn">import</span> <span class="n">Arealdekke_N10</span>
 
 <span class="c1"># ========================</span>
 <span class="c1"># Main functions</span>
@@ -111,8 +114,138 @@
     <span class="n">arcpy</span><span class="o">.</span><span class="n">management</span><span class="o">.</span><span class="n">Dissolve</span><span class="p">(</span>
         <span class="n">in_features</span><span class="o">=</span><span class="n">land_use_lyr</span><span class="p">,</span>
         <span class="n">out_feature_class</span><span class="o">=</span><span class="n">output_fc</span><span class="p">,</span>
-        <span class="n">dissolve_field</span><span class="o">=</span><span class="s2">&quot;fremkommelighet&quot;</span><span class="p">,</span>
+        <span class="n">dissolve_field</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;arealdekke&quot;</span><span class="p">,</span> <span class="s2">&quot;fremkommelighet&quot;</span><span class="p">],</span>
         <span class="n">multi_part</span><span class="o">=</span><span class="s2">&quot;SINGLE_PART&quot;</span><span class="p">,</span>
+    <span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="postprocess_passability_layer">
+<a class="viewcode-back" href="../../../../../generated_docs/generalization.n10.arealdekke.overall_tools.html#generalization.n10.arealdekke.overall_tools.passability_layer.postprocess_passability_layer">[docs]</a>
+<span class="nd">@timing_decorator</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">postprocess_passability_layer</span><span class="p">(</span><span class="n">final_fc</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">passability_fc</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Post-processes the passability layer by checking for match with geometries in the final feature class.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        final_fc (str): Feature class to be created with the post-processed passability layer</span>
+<span class="sd">        passability_fc (str): Feature class with the passability layer to be post-processed</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="nb">print</span><span class="p">(</span>
+        <span class="s2">&quot;</span><span class="se">\n</span><span class="s2">Starting post-processing of the passability layer by checking for match with geometries in the final feature class.&quot;</span>
+    <span class="p">)</span>
+
+    <span class="c1"># Sets up work file manager to take care of temporary files</span>
+    <span class="n">fc</span> <span class="o">=</span> <span class="n">Arealdekke_N10</span><span class="o">.</span><span class="n">passability_work_file__n10_land_use</span><span class="o">.</span><span class="n">value</span>
+    <span class="n">config</span> <span class="o">=</span> <span class="n">core_config</span><span class="o">.</span><span class="n">WorkFileConfig</span><span class="p">(</span><span class="n">root_file</span><span class="o">=</span><span class="n">fc</span><span class="p">)</span>
+    <span class="n">wfm</span> <span class="o">=</span> <span class="n">WorkFileManager</span><span class="p">(</span><span class="n">config</span><span class="o">=</span><span class="n">config</span><span class="p">)</span>
+
+    <span class="c1"># Fetch original fields to keep in the final passability layer</span>
+    <span class="n">field</span> <span class="o">=</span> <span class="s2">&quot;arealdekke&quot;</span>
+    <span class="n">fields</span> <span class="o">=</span> <span class="p">[</span><span class="n">f</span><span class="o">.</span><span class="n">name</span> <span class="k">for</span> <span class="n">f</span> <span class="ow">in</span> <span class="n">arcpy</span><span class="o">.</span><span class="n">ListFields</span><span class="p">(</span><span class="n">passability_fc</span><span class="p">)]</span>
+
+    <span class="n">arealdekke_set</span> <span class="o">=</span> <span class="nb">set</span><span class="p">()</span>
+
+    <span class="k">with</span> <span class="n">arcpy</span><span class="o">.</span><span class="n">da</span><span class="o">.</span><span class="n">SearchCursor</span><span class="p">(</span><span class="n">passability_fc</span><span class="p">,</span> <span class="p">[</span><span class="n">field</span><span class="p">])</span> <span class="k">as</span> <span class="n">cursor</span><span class="p">:</span>
+        <span class="k">for</span> <span class="n">row</span> <span class="ow">in</span> <span class="n">cursor</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">row</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="n">arealdekke_set</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">row</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+
+    <span class="c1"># Performes intersection for each land use category</span>
+    <span class="n">intersect_results</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="n">num</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">arealdekke_set</span><span class="p">)</span>
+
+    <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">value</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">arealdekke_set</span><span class="p">):</span>
+        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Processing passability for land use category: </span><span class="si">{</span><span class="n">value</span><span class="si">}</span><span class="s2"> (</span><span class="si">{</span><span class="n">i</span><span class="o">+</span><span class="mi">1</span><span class="si">}</span><span class="s2"> / </span><span class="si">{</span><span class="n">num</span><span class="si">}</span><span class="s2">)&quot;</span><span class="p">)</span>
+
+        <span class="c1"># Creates layers</span>
+        <span class="n">pass_lyr</span> <span class="o">=</span> <span class="s2">&quot;pass_lyr&quot;</span>
+        <span class="n">final_lyr</span> <span class="o">=</span> <span class="s2">&quot;final_lyr&quot;</span>
+
+        <span class="n">arcpy</span><span class="o">.</span><span class="n">management</span><span class="o">.</span><span class="n">MakeFeatureLayer</span><span class="p">(</span>
+            <span class="n">in_features</span><span class="o">=</span><span class="n">passability_fc</span><span class="p">,</span> <span class="n">out_layer</span><span class="o">=</span><span class="n">pass_lyr</span>
+        <span class="p">)</span>
+        <span class="n">arcpy</span><span class="o">.</span><span class="n">management</span><span class="o">.</span><span class="n">MakeFeatureLayer</span><span class="p">(</span><span class="n">in_features</span><span class="o">=</span><span class="n">final_fc</span><span class="p">,</span> <span class="n">out_layer</span><span class="o">=</span><span class="n">final_lyr</span><span class="p">)</span>
+
+        <span class="c1"># Selects features with the current &#39;arealdekke&#39; value in both layers</span>
+        <span class="n">sql</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">field</span><span class="si">}</span><span class="s2"> = &#39;</span><span class="si">{</span><span class="n">value</span><span class="si">}</span><span class="s2">&#39;&quot;</span>
+        <span class="n">arcpy</span><span class="o">.</span><span class="n">management</span><span class="o">.</span><span class="n">SelectLayerByAttribute</span><span class="p">(</span>
+            <span class="n">in_layer_or_view</span><span class="o">=</span><span class="n">pass_lyr</span><span class="p">,</span> <span class="n">selection_type</span><span class="o">=</span><span class="s2">&quot;NEW_SELECTION&quot;</span><span class="p">,</span> <span class="n">where_clause</span><span class="o">=</span><span class="n">sql</span>
+        <span class="p">)</span>
+        <span class="n">arcpy</span><span class="o">.</span><span class="n">management</span><span class="o">.</span><span class="n">SelectLayerByAttribute</span><span class="p">(</span>
+            <span class="n">in_layer_or_view</span><span class="o">=</span><span class="n">final_lyr</span><span class="p">,</span> <span class="n">selection_type</span><span class="o">=</span><span class="s2">&quot;NEW_SELECTION&quot;</span><span class="p">,</span> <span class="n">where_clause</span><span class="o">=</span><span class="n">sql</span>
+        <span class="p">)</span>
+
+        <span class="c1"># Creates temporary file for this category</span>
+        <span class="n">out_fc</span> <span class="o">=</span> <span class="n">wfm</span><span class="o">.</span><span class="n">build_file_path</span><span class="p">(</span>
+            <span class="n">file_name</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;passability_intersect_</span><span class="si">{</span><span class="n">value</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">file_type</span><span class="o">=</span><span class="s2">&quot;gdb&quot;</span>
+        <span class="p">)</span>
+
+        <span class="n">arcpy</span><span class="o">.</span><span class="n">analysis</span><span class="o">.</span><span class="n">Intersect</span><span class="p">(</span>
+            <span class="n">in_features</span><span class="o">=</span><span class="p">[</span><span class="n">pass_lyr</span><span class="p">,</span> <span class="n">final_lyr</span><span class="p">],</span>
+            <span class="n">out_feature_class</span><span class="o">=</span><span class="n">out_fc</span><span class="p">,</span>
+            <span class="n">join_attributes</span><span class="o">=</span><span class="s2">&quot;ALL&quot;</span><span class="p">,</span>
+        <span class="p">)</span>
+
+        <span class="n">intersect_results</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">out_fc</span><span class="p">)</span>
+
+    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Merging intersected features to create the final passability layer.&quot;</span><span class="p">)</span>
+    <span class="n">merged</span> <span class="o">=</span> <span class="n">wfm</span><span class="o">.</span><span class="n">build_file_path</span><span class="p">(</span><span class="n">file_name</span><span class="o">=</span><span class="s2">&quot;merged_passability&quot;</span><span class="p">,</span> <span class="n">file_type</span><span class="o">=</span><span class="s2">&quot;gdb&quot;</span><span class="p">)</span>
+    <span class="n">arcpy</span><span class="o">.</span><span class="n">management</span><span class="o">.</span><span class="n">Merge</span><span class="p">(</span><span class="n">inputs</span><span class="o">=</span><span class="n">intersect_results</span><span class="p">,</span> <span class="n">output</span><span class="o">=</span><span class="n">merged</span><span class="p">)</span>
+
+    <span class="nb">print</span><span class="p">(</span>
+        <span class="s2">&quot;Dissoling merged geometries based on &#39;fremkommelighet&#39; to create the final passability layer.</span><span class="se">\n</span><span class="s2">&quot;</span>
+    <span class="p">)</span>
+    <span class="n">arcpy</span><span class="o">.</span><span class="n">management</span><span class="o">.</span><span class="n">Dissolve</span><span class="p">(</span>
+        <span class="n">in_features</span><span class="o">=</span><span class="n">merged</span><span class="p">,</span>
+        <span class="n">out_feature_class</span><span class="o">=</span><span class="n">passability_fc</span><span class="p">,</span>
+        <span class="n">dissolve_field</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;fremkommelighet&quot;</span><span class="p">],</span>
+        <span class="n">multi_part</span><span class="o">=</span><span class="s2">&quot;SINGLE_PART&quot;</span><span class="p">,</span>
+    <span class="p">)</span>
+
+    <span class="n">wfm</span><span class="o">.</span><span class="n">delete_created_files</span><span class="p">()</span></div>
+
+
+
+<span class="c1"># ========================</span>
+<span class="c1"># Helper functions</span>
+<span class="c1"># ========================</span>
+
+
+<div class="viewcode-block" id="update_passability_for_buffer">
+<a class="viewcode-back" href="../../../../../generated_docs/generalization.n10.arealdekke.overall_tools.html#generalization.n10.arealdekke.overall_tools.passability_layer.update_passability_for_buffer">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">update_passability_for_buffer</span><span class="p">(</span><span class="n">buffered_fc</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">target</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Removes areas from the passability layer that overlaps with buffered features of a</span>
+<span class="sd">    specific land use category (target) on the fly during the process_category pipeline.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        buffered_fc (str): Feature class with the buffered features of the target category</span>
+<span class="sd">        target (str): The field name value of the land use / &#39;arealdekke&#39;</span>
+<span class="sd">                       that is enlarged and overlaps other areas</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">passability_fc</span> <span class="o">=</span> <span class="n">Arealdekke_N10</span><span class="o">.</span><span class="n">passability__n10_land_use</span><span class="o">.</span><span class="n">value</span>
+
+    <span class="n">temp_file</span> <span class="o">=</span> <span class="s2">&quot;in_memory/temp_passability&quot;</span>
+    <span class="n">arcpy</span><span class="o">.</span><span class="n">management</span><span class="o">.</span><span class="n">CopyFeatures</span><span class="p">(</span>
+        <span class="n">in_features</span><span class="o">=</span><span class="n">passability_fc</span><span class="p">,</span> <span class="n">out_feature_class</span><span class="o">=</span><span class="n">temp_file</span>
+    <span class="p">)</span>
+
+    <span class="n">sql</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;arealdekke &lt;&gt; &#39;</span><span class="si">{</span><span class="n">target</span><span class="si">}</span><span class="s2">&#39;&quot;</span>
+    <span class="n">passability_lyr</span> <span class="o">=</span> <span class="s2">&quot;passability_lyr&quot;</span>
+
+    <span class="n">arcpy</span><span class="o">.</span><span class="n">management</span><span class="o">.</span><span class="n">MakeFeatureLayer</span><span class="p">(</span><span class="n">in_features</span><span class="o">=</span><span class="n">temp_file</span><span class="p">,</span> <span class="n">out_layer</span><span class="o">=</span><span class="n">passability_lyr</span><span class="p">)</span>
+
+    <span class="n">arcpy</span><span class="o">.</span><span class="n">management</span><span class="o">.</span><span class="n">SelectLayerByAttribute</span><span class="p">(</span>
+        <span class="n">in_layer_or_view</span><span class="o">=</span><span class="n">passability_lyr</span><span class="p">,</span>
+        <span class="n">selection_type</span><span class="o">=</span><span class="s2">&quot;NEW_SELECTION&quot;</span><span class="p">,</span>
+        <span class="n">where_clause</span><span class="o">=</span><span class="n">sql</span><span class="p">,</span>
+    <span class="p">)</span>
+
+    <span class="n">arcpy</span><span class="o">.</span><span class="n">analysis</span><span class="o">.</span><span class="n">Erase</span><span class="p">(</span>
+        <span class="n">in_features</span><span class="o">=</span><span class="n">passability_lyr</span><span class="p">,</span>
+        <span class="n">erase_features</span><span class="o">=</span><span class="n">buffered_fc</span><span class="p">,</span>
+        <span class="n">out_feature_class</span><span class="o">=</span><span class="n">passability_fc</span><span class="p">,</span>
     <span class="p">)</span></div>
 
 </pre></div>
