@@ -90,7 +90,6 @@ data_files = {
     "ramp_points_moved": Road_N100.ramps__ramp_points_moved__n100_road.value,
     "generalized_ramps": Road_N100.ramps__generalized_ramps__n100_road.value,
     "temp_output": Road_N100.temp_output.value,
-    "temp_output_2": Road_N100.temp_output_2.value,
 
 }
 
@@ -107,7 +106,7 @@ files_to_delete = [
     "merged_ramps",
     "dissolved_group",
     "splitted_group",
-    #"ramp_points",
+    "ramp_points",
 ]
 
 
@@ -649,9 +648,10 @@ def build_adjecency(lines):
         for in_fid, near_fid in cursor:
             if in_fid != near_fid:
                 adjecency[in_fid].add(near_fid)
-    
+
     arcpy.management.Delete(near_table)
     return adjecency
+
 
 def get_selected_oids(layer):
     """Return set of OIDs for currently selected features in a feature layer."""
@@ -685,13 +685,12 @@ def within_n_steps(adjacency, start_oids, steps=10):
         frontier = next_frontier
     return visited
 
+
 @timing_decorator
 def connect_roads_to_points():
     """
-    Connects roads to ramp points by moving endpoints of roads that intersect with ramps to the nearest ramp point,
-    but only if they are not within 1500 m network distance of another road that is already connected to the same ramp point,
-    to avoid cascading edits in dense areas.
-    Maximum distance of 500 m to be considered for connection.
+    connect roads to ramp points priority 3, 3.5 and 4.
+    This takes the endpoints of the roads that intersect with ramps finds the closest ramp point and ads the cords of that point to the roads start or end.
     """
     roads_fc = data_files["generalized_ramps"]
     ramp_points_fc = data_files["ramp_points_moved"]
@@ -722,7 +721,11 @@ def connect_roads_to_points():
 
 
     arcpy.management.SelectLayerByLocation(
-        "roads_lyr", "WITHIN_A_DISTANCE", "ramp_points_34_lyr", selection_type="NEW_SELECTION", search_distance="1 Meters"
+        roads_lyr,
+        "WITHIN_A_DISTANCE",
+        ramp_points_lyr,
+        selection_type="NEW_SELECTION",
+        search_distance="1 Meters",
     )
 
     arcpy.management.CopyFeatures("roads_lyr", data_files["temp_output"])
@@ -741,9 +744,9 @@ def connect_roads_to_points():
 
 
     arcpy.management.SelectLayerByLocation(
-        "roads_lyr", "INTERSECT", "ramps_lyr", selection_type="NEW_SELECTION"
+        roads_lyr, "INTERSECT", ramps_lyr, selection_type="NEW_SELECTION"
     )
-   
+
     sr = arcpy.Describe(ramp_points_fc).spatialReference
     endpoints_fc = "in_memory\\collected_endpoints"
     arcpy.CreateFeatureclass_management(
@@ -828,12 +831,13 @@ def connect_roads_to_points():
             start_ep_oid = end_dict.get(start_key)
             end_ep_oid = end_dict.get(end_key)
 
-            start_entry = near_map.get(start_ep_oid) if start_ep_oid is not None else None
+            start_entry = (
+                near_map.get(start_ep_oid) if start_ep_oid is not None else None
+            )
             end_entry = near_map.get(end_ep_oid) if end_ep_oid is not None else None
 
             chosen_pos = None
             chosen_entry = None
-
 
             # choose the endpoint with the smaller near-distance (nd is index 2)
             if start_entry and end_entry:
@@ -848,7 +852,7 @@ def connect_roads_to_points():
             else:
                 continue  # nothing to snap for this road
 
-            nx, ny, nd, pr, rid, ramp_id = chosen_entry
+            nx, ny, nd, pr, rid = chosen_entry
             if rid == oid:
                 continue
 
@@ -1035,7 +1039,7 @@ class MovePointsToCrossings:
         self.make_priority2_points(
             roads_t_lyr, roads_l_lyr, roads_u_lyr, roads_ul_lyr, self.priority2
         )
-        #if not self.with_ramps:
+        # if not self.with_ramps:
         self.make_priority2_5_points(roads_lyr, self.piority2_5)
 
         # keep only priority points within 100 meters of ramps
@@ -1089,9 +1093,6 @@ class MovePointsToCrossings:
             count = int(arcpy.management.GetCount(priority2_lyr).getOutput(0))
             if count > 0:
                 arcpy.management.DeleteFeatures(priority2_lyr)
-
-        
-       # arcpy.management.Merge(inputs=[self.priority1, self.priority1_5, self.priority2, self.piority2_5], output=r"C:\temp\ramper.gdb\priority_points_merged")
 
     def make_priority_maps(self):
         # oids
@@ -1159,7 +1160,7 @@ class MovePointsToCrossings:
                 self.input_point_feature,
                 self.piority2_5,
                 self.unmatched_oids,
-                "in_memory\\buffer_ramps_100m_dissolved"
+                "in_memory\\buffer_ramps_100m_dissolved",
             )
         else:
             self.near2_5_map = self.create_near_map_unmatched(
@@ -1478,7 +1479,6 @@ class MovePointsToCrossings:
         """
         priority 2_5 is where the endpoints of 4 different roads or more intersect
         """
-        print("priority 2.5...")
         endpoints_fc = "in_memory\\collected_endpoints"
 
         sr = arcpy.Describe(roads_lyr).spatialReference
@@ -1516,9 +1516,6 @@ class MovePointsToCrossings:
                 counts[key] = counts.get(key, 0) + 1
                 if key not in coords_example:
                     coords_example[key] = (x, y)
-
-        for key, cnt in counts.items():
-            print(f"Key: {key}, Count: {cnt}")
 
         # insert keys with count >= 3
         with arcpy.da.InsertCursor(priority2_5, ["SHAPE@XY", "count"]) as ins:
