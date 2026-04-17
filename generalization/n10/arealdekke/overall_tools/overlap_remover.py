@@ -13,8 +13,12 @@ from file_manager.n10.file_manager_arealdekke import Arealdekke_N10
 from generalization.n10.arealdekke.overall_tools.arealdekke_dissolver import (
     ArealdekkeDissolver,
 )
+from generalization.n10.arealdekke.overall_tools.passability_layer import (
+    update_passability_for_buffer,
+)
 
 fetch_orig_data = ArealdekkeDissolver.restore_data_polygon_without_feature_to_point
+
 
 # ========================
 # Main function
@@ -56,6 +60,11 @@ def remove_overlaps(
     )
     print(
         "Erased locked features from buffered features to avoid overlap in these areas."
+    )
+
+    # Extra: Fix geometries in the passability layer after buffering
+    update_passability_for_buffer(
+        buffered_fc=files["erased_buffers"], target=changed_area
     )
 
     # 4) Fetch correct attributes for the buffered features

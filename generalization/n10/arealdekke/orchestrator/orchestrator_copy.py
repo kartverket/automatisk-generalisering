@@ -23,6 +23,9 @@ def main():
     # Process categories
     arealdekke.process_categories()
 
+    # Final post-processing of the results
+    arealdekke.finish_results()
+
 
 if __name__ == "__main__":
     main()
