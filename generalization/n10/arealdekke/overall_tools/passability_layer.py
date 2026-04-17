@@ -74,9 +74,7 @@ def postprocess_passability_layer(final_fc: str, passability_fc: str) -> None:
     num = len(arealdekke_set)
 
     for i, value in enumerate(arealdekke_set):
-        print(
-            f"Processing passability for land use category: {value} ({i+1} / {num})"
-        )
+        print(f"Processing passability for land use category: {value} ({i+1} / {num})")
 
         # Creates layers
         pass_lyr = "pass_lyr"
