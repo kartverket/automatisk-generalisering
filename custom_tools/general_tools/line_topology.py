@@ -1002,10 +1002,19 @@ class FillLineGaps:
         self.gap_tolerance_meters = int(line_gap_config.gap_tolerance_meters)
 
         adv = line_gap_config.advanced_config
-        self.fill_gaps_on_self = bool(adv.fill_gaps_on_self)
-        self.line_changes_output = adv.line_changes_output
-        self.write_output_metadata = bool(adv.write_output_metadata)
-        self.candidate_connections_output = adv.candidate_connections_output
+        out = line_gap_config.output_config
+        ang = line_gap_config.angle_config
+        z = line_gap_config.z_config
+        cross = line_gap_config.crossing_config
+        conn = line_gap_config.connectivity_config
+
+        self.fill_gaps_on_self = bool(line_gap_config.fill_gaps_on_self)
+        self.best_fit_weights = line_gap_config.best_fit_weights
+
+        self.line_changes_output = out.line_changes_output
+        self.write_output_metadata = bool(out.write_output_metadata)
+        self.candidate_connections_output = out.candidate_connections_output
+
         self.increased_tolerance_edge_case_distance_meters = int(
             adv.increased_tolerance_edge_case_distance_meters
         )
@@ -1014,10 +1023,10 @@ class FillLineGaps:
         )
         self.edit_method = logic_config.EditMethod(adv.edit_method)
 
-        self.connectivity_scope = logic_config.ConnectivityScope(adv.connectivity_scope)
-        self.connectivity_tolerance_meters = float(adv.connectivity_tolerance_meters)
+        self.connectivity_scope = logic_config.ConnectivityScope(conn.connectivity_scope)
+        self.connectivity_tolerance_meters = float(conn.connectivity_tolerance_meters)
         self.line_connectivity_mode = logic_config.LineConnectivityMode(
-            adv.line_connectivity_mode
+            conn.line_connectivity_mode
         )
 
         if self.connect_to_features is None and self.fill_gaps_on_self is False:
@@ -1025,25 +1034,21 @@ class FillLineGaps:
                 "Invalid config: fill_gaps_on_self cannot be False when connect_to_features is None."
             )
 
-        # ----------------------------
-        # Source line direction
-        # ----------------------------
-        self.lines_are_directed: bool = bool(adv.lines_are_directed)
+        self.lines_are_directed: bool = bool(ang.lines_are_directed)
+        self.dangle_pair_apply_connector_diff: bool = bool(
+            ang.dangle_pair_apply_connector_diff
+        )
 
-        # ----------------------------
-        # Angle config
-        # ----------------------------
         self.angle_block_threshold_degrees = (
             None
-            if adv.angle_block_threshold_degrees is None
-            else float(adv.angle_block_threshold_degrees)
+            if ang.angle_block_threshold_degrees is None
+            else float(ang.angle_block_threshold_degrees)
         )
         self.angle_extra_dangle_threshold_degrees = (
             None
-            if adv.angle_extra_dangle_threshold_degrees is None
-            else float(adv.angle_extra_dangle_threshold_degrees)
+            if ang.angle_extra_dangle_threshold_degrees is None
+            else float(ang.angle_extra_dangle_threshold_degrees)
         )
-        self.best_fit_weights = adv.best_fit_weights
 
         if self.lines_are_directed and self.best_fit_weights.angle == 0.0:
             raise ValueError(
@@ -1051,38 +1056,27 @@ class FillLineGaps:
                 "directional scoring has no effect when angle weight is zero."
             )
 
-        self.angle_local_half_window_m = float(
-            getattr(adv, "angle_local_half_window_m", 2.0)
-        )
+        self.angle_local_half_window_m = float(ang.angle_local_half_window_m)
 
-        # Raw config map (may be keyed by path or dataset_key(path))
         self._connect_to_features_angle_mode_raw = (
-            adv.connect_to_features_angle_mode or {}
+            ang.connect_to_features_angle_mode or {}
         )
 
-        # Filled during _build_external_target_layers_once:
-        # dataset_key(output_layer) -> AngleTargetMode
         self._angle_mode_by_external_ds_key: dict[str, logic_config.AngleTargetMode] = (
             {}
         )
 
-        # ----------------------------
-        # Z / elevation layer
-        # ----------------------------
         self.raster_paths: tuple[str, ...] = (
-            tuple(adv.raster_paths) if adv.raster_paths else ()
+            tuple(z.raster_paths) if z.raster_paths else ()
         )
         self.z_drop_threshold: Optional[float] = (
-            None if adv.z_drop_threshold is None else float(adv.z_drop_threshold)
+            None if z.z_drop_threshold is None else float(z.z_drop_threshold)
         )
         self._raster_handles: list[geometry_tools.RasterHandle] = []
 
-        self.reject_crossing_connectors: bool = bool(adv.reject_crossing_connectors)
-        self.crossing_check_spatial_reference = adv.crossing_check_spatial_reference
-        self.barrier_layers: list[str] | None = adv.barrier_layers or None
-        self.dangle_pair_apply_connector_diff: bool = bool(
-            adv.dangle_pair_apply_connector_diff
-        )
+        self.reject_crossing_connectors: bool = bool(cross.reject_crossing_connectors)
+        self.crossing_check_spatial_reference = cross.crossing_check_spatial_reference
+        self.barrier_layers: list[str] | None = cross.barrier_layers or None
 
         # Local angle cache (dataset_key, oid, rx, ry) -> Optional[float]
         self._local_angle_cache: dict[tuple[str, int, int, int], Optional[float]] = {}

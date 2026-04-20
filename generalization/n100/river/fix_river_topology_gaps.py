@@ -60,30 +60,6 @@ def fix_river_orientation(raster_list: list[type_defs.RasterFilePath]):
 @timing_decorator
 def fill_line_topology_gaps(raster_list: list[type_defs.RasterFilePath]):
 
-    line_fix_advanced_config = logic_config.FillLineGapsAdvancedConfig(
-        fill_gaps_on_self=True,
-        line_changes_output=River_N100.river_topology___river_gaps_changes___n100_river.value,
-        write_output_metadata=True,
-        candidate_connections_output=River_N100.river_topology___river_gaps_diagnostic___n100_river.value,
-        increased_tolerance_edge_case_distance_meters=10,
-        edit_method=logic_config.EditMethod.AUTO,
-        connectivity_scope=logic_config.ConnectivityScope.TRANSITIVE,
-        connectivity_tolerance_meters=environment_setup.ArcGisEnvironmentSetup.XY_TOLERANCE,
-        line_connectivity_mode=logic_config.LineConnectivityMode.ENDPOINTS,
-        angle_block_threshold_degrees=85,
-        angle_extra_dangle_threshold_degrees=95,
-        best_fit_weights=(
-            logic_config.BestFitWeightsConfig(
-                distance=0.5,
-                angle=0.25,
-                z=0.25,
-            )
-        ),
-        angle_local_half_window_m=20,
-        lines_are_directed=True,
-        raster_paths=raster_list,
-        crossing_check_spatial_reference=environment_setup.project_spatial_reference,
-    )
     work_file_manager_config = core_config.WorkFileConfig(
         root_file=River_N100.river_topology___root___n100_river.value,
     )
@@ -96,7 +72,34 @@ def fill_line_topology_gaps(raster_list: list[type_defs.RasterFilePath]):
         connect_to_features=[
             River_N100.data_preparation___river_polygons___n100_river.value
         ],
-        advanced_config=line_fix_advanced_config,
+        best_fit_weights=logic_config.BestFitWeightsConfig(
+            distance=0.5,
+            angle=0.25,
+            z=0.25,
+        ),
+        output_config=logic_config.FillLineGapsOutputConfig(
+            line_changes_output=River_N100.river_topology___river_gaps_changes___n100_river.value,
+            write_output_metadata=True,
+            candidate_connections_output=River_N100.river_topology___river_gaps_diagnostic___n100_river.value,
+        ),
+        angle_config=logic_config.FillLineGapsAngleConfig(
+            angle_block_threshold_degrees=85,
+            angle_extra_dangle_threshold_degrees=95,
+            angle_local_half_window_m=20,
+            lines_are_directed=True,
+        ),
+        z_config=logic_config.FillLineGapsZConfig(raster_paths=raster_list),
+        crossing_config=logic_config.FillLineGapsCrossingConfig(
+            reject_crossing_connectors=True,
+            crossing_check_spatial_reference=environment_setup.project_spatial_reference,
+        ),
+        connectivity_config=logic_config.FillLineGapsConnectivityConfig(
+            connectivity_scope=logic_config.ConnectivityScope.TRANSITIVE,
+            connectivity_tolerance_meters=environment_setup.ArcGisEnvironmentSetup.XY_TOLERANCE,
+        ),
+        advanced_config=logic_config.FillLineGapsAdvancedConfig(
+            increased_tolerance_edge_case_distance_meters=10,
+        ),
     )
 
     line_topology.FillLineGaps(line_gap_config=line_fix_config).run()
@@ -117,18 +120,6 @@ def fill_raod_gaps():
         inverted=True,
     )
 
-    line_fix_advanced_config = logic_config.FillLineGapsAdvancedConfig(
-        fill_gaps_on_self=False,
-        line_changes_output=Road_N100.data_preparation___road_gap_changes___n100_road.value,
-        write_output_metadata=True,
-        candidate_connections_output=Road_N100.data_preparation___road_gap_diagnostics___n100_road.value,
-        increased_tolerance_edge_case_distance_meters=10,
-        edit_method=logic_config.EditMethod.AUTO,
-        connectivity_scope=logic_config.ConnectivityScope.DIRECT_CONNECTION,
-        connectivity_tolerance_meters=environment_setup.ArcGisEnvironmentSetup.XY_TOLERANCE,
-        line_connectivity_mode=logic_config.LineConnectivityMode.ENDPOINTS,
-        crossing_check_spatial_reference=environment_setup.project_spatial_reference,
-    )
     work_file_manager_config = core_config.WorkFileConfig(
         root_file=Road_N100.data_preparation___road_gap_root___n100_road.value,
         write_to_memory=False,
@@ -143,7 +134,22 @@ def fill_raod_gaps():
         connect_to_features=[
             Road_N100.data_preparation___nvdb_selection___n100_road.value
         ],
-        advanced_config=line_fix_advanced_config,
+        fill_gaps_on_self=False,
+        output_config=logic_config.FillLineGapsOutputConfig(
+            line_changes_output=Road_N100.data_preparation___road_gap_changes___n100_road.value,
+            write_output_metadata=True,
+            candidate_connections_output=Road_N100.data_preparation___road_gap_diagnostics___n100_road.value,
+        ),
+        crossing_config=logic_config.FillLineGapsCrossingConfig(
+            reject_crossing_connectors=True,
+            crossing_check_spatial_reference=environment_setup.project_spatial_reference,
+        ),
+        connectivity_config=logic_config.FillLineGapsConnectivityConfig(
+            connectivity_tolerance_meters=environment_setup.ArcGisEnvironmentSetup.XY_TOLERANCE,
+        ),
+        advanced_config=logic_config.FillLineGapsAdvancedConfig(
+            increased_tolerance_edge_case_distance_meters=10,
+        ),
     )
 
     line_topology.FillLineGaps(line_gap_config=line_fix_config).run()
