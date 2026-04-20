@@ -1031,7 +1031,12 @@ class FillLineGaps:
         self.source_direction_mode = logic_config.SourceDirectionMode(
             adv.source_direction_mode
         )
-        self.min_z_drop_meters: float = float(adv.min_z_drop_meters)
+        self.min_anchor_z_drop_meters: float = float(adv.min_anchor_z_drop_meters)
+        self.min_confident_flip_meters: Optional[float] = (
+            float(adv.min_confident_flip_meters)
+            if adv.min_confident_flip_meters is not None
+            else None
+        )
 
         # ----------------------------
         # Angle config
@@ -1636,8 +1641,9 @@ class FillLineGaps:
             input_lines=feature_class,
             raster_paths=self.raster_paths,
             orientation_mode=self._z_orient_mode_for_scope(),
-            min_z_drop_meters=self.min_z_drop_meters,
+            min_anchor_z_drop_meters=self.min_anchor_z_drop_meters,
             connectivity_tolerance_meters=self.connectivity_tolerance_meters,
+            min_confident_flip_meters=self.min_confident_flip_meters,
         )
         geometry_tools.LineZOrientTool(config=orient_config).run()
 
