@@ -282,7 +282,7 @@ class SourceDirectionMode(str, Enum):
         connect_to_features copies) using LineZOrientTool before building the
         gap-fill plan. Requires raster_paths to be set. After orientation,
         directional semantics apply as in PRE_ORIENTED.
-        Requires min_z_drop_meters to be set in FillLineGapsAdvancedConfig.
+        Requires min_anchor_z_drop_meters to be set in FillLineGapsAdvancedConfig.
     """
 
     UNDIRECTED = "undirected"
@@ -330,7 +330,7 @@ class FillLineGapsAdvancedConfig:
     # Controls whether lines are treated as undirected, assumed already oriented,
     # or oriented by raster elevation before gap-filling.
     # See SourceDirectionMode for full semantics.
-    # When RASTER_DERIVED: raster_paths must be set and min_z_drop_meters applies.
+    # When RASTER_DERIVED: raster_paths must be set and min_anchor_z_drop_meters applies.
     # When not UNDIRECTED: best_fit_weights.angle must be > 0 (enforced at init).
     source_direction_mode: SourceDirectionMode = SourceDirectionMode.UNDIRECTED
 
@@ -342,9 +342,15 @@ class FillLineGapsAdvancedConfig:
     # Has no effect in UNDIRECTED mode.
     dangle_pair_apply_connector_diff: bool = False
 
-    # Minimum elevation drop (metres) required for LineZOrientTool to commit a flip.
+    # Minimum elevation drop (metres) required to classify a line as a network anchor.
     # Only used when source_direction_mode == RASTER_DERIVED.
-    min_z_drop_meters: float = 0.5
+    min_anchor_z_drop_meters: float = 0.5
+
+    # When set, a line will only be flipped if it is NOT backed by a confident network
+    # context AND its own Z drop is below this value.  Lines in components that have at
+    # least one anchor are still flipped freely via network propagation.
+    # Defaults to None (no extra guard — behaves identically to the old min_z_drop_meters).
+    min_confident_flip_meters: Optional[float] = None
 
     # ----------------------------
     # Z / elevation layer
@@ -388,9 +394,8 @@ class FillLineGapsAdvancedConfig:
 
     def __post_init__(self) -> None:
         if (
-            (self.reject_crossing_connectors or self.barrier_layers is not None)
-            and self.crossing_check_spatial_reference is None
-        ):
+            self.reject_crossing_connectors or self.barrier_layers is not None
+        ) and self.crossing_check_spatial_reference is None:
             raise ValueError(
                 "crossing_check_spatial_reference is required when "
                 "reject_crossing_connectors is True or barrier_layers is set"
@@ -491,5 +496,6 @@ class LineZOrientConfig:
     input_lines: str
     raster_paths: RasterPathList
     orientation_mode: LineZOrientMode = LineZOrientMode.INDIVIDUAL
-    min_z_drop_meters: float = 0.5
+    min_anchor_z_drop_meters: float = 0.5
+    min_confident_flip_meters: Optional[float] = None
     connectivity_tolerance_meters: float = 0.02

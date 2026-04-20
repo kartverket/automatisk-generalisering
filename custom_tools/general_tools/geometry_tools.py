@@ -1784,7 +1784,12 @@ class LineZOrientTool:
         self,
         z_by_oid: dict[int, tuple[Optional[float], Optional[float]]],
     ) -> set[int]:
-        threshold = self.config.min_z_drop_meters
+        anchor_threshold = self.config.min_anchor_z_drop_meters
+        flip_threshold = (
+            self.config.min_confident_flip_meters
+            if self.config.min_confident_flip_meters is not None
+            else anchor_threshold
+        )
         oids_to_flip: set[int] = set()
         uncertain_count = 0
 
@@ -1792,7 +1797,11 @@ class LineZOrientTool:
             if start_z is None or end_z is None:
                 uncertain_count += 1
                 continue
-            if abs(start_z - end_z) < threshold:
+            drop = abs(start_z - end_z)
+            if drop < anchor_threshold:
+                uncertain_count += 1
+                continue
+            if drop < flip_threshold:
                 uncertain_count += 1
                 continue
             if start_z < end_z:
@@ -1801,7 +1810,7 @@ class LineZOrientTool:
         if uncertain_count:
             arcpy.AddWarning(
                 f"LineZOrientTool (INDIVIDUAL): {uncertain_count} line(s) had no Z data "
-                f"or a Z drop below {threshold} m; original orientation preserved."
+                f"or a Z drop below {flip_threshold} m; original orientation preserved."
             )
 
         return oids_to_flip
@@ -1924,7 +1933,7 @@ class LineZOrientTool:
         """
         Partition component into certain and uncertain lines.
 
-        A line is certain if its own |start_z - end_z| >= min_z_drop_meters,
+        A line is certain if its own |start_z - end_z| >= min_anchor_z_drop_meters,
         or if it is a short dangle-adjacent segment that can be promoted via
         the extended Z diff: the Z at the far end of the longest upstream
         neighbor vs the Z at the dangle endpoint.
@@ -1937,7 +1946,7 @@ class LineZOrientTool:
                                   certain_oids that are absent from this dict
                                   are oriented by their own Z in Phase 1.
         """
-        threshold = self.config.min_z_drop_meters
+        threshold = self.config.min_anchor_z_drop_meters
         certain: set[int] = set()
         uncertain: set[int] = set()
         extension_flip: dict[int, bool] = {}
@@ -2196,11 +2205,22 @@ class LineZOrientTool:
             )
 
             if not certain:
-                # No lines meet the threshold; orient everything by raw Z and warn.
+                # No lines meet the anchor threshold; orient everything by raw Z and warn.
+                # min_confident_flip_meters guards flips here — no network context to rely on.
+                flip_guard = (
+                    self.config.min_confident_flip_meters
+                    if self.config.min_confident_flip_meters is not None
+                    else 0.0
+                )
                 no_certain_components += 1
                 for oid in component:
                     s, e = z_by_oid.get(oid, (None, None))
-                    if s is not None and e is not None and s < e:
+                    if (
+                        s is not None
+                        and e is not None
+                        and s < e
+                        and abs(s - e) >= flip_guard
+                    ):
                         all_flips.add(oid)
                 continue
 
@@ -2226,13 +2246,13 @@ class LineZOrientTool:
         if no_certain_components:
             arcpy.AddWarning(
                 f"LineZOrientTool (NETWORK): {no_certain_components} connected "
-                f"component(s) had no line meeting the {self.config.min_z_drop_meters} m "
-                "Z drop threshold; all lines in those components oriented by raw Z."
+                f"component(s) had no line meeting the {self.config.min_anchor_z_drop_meters} m "
+                "Z drop anchor threshold; all lines in those components oriented by raw Z."
             )
         if total_raw_z:
             arcpy.AddWarning(
                 f"LineZOrientTool (NETWORK): {total_raw_z} uncertain line(s) had a Z drop "
-                f"below {self.config.min_z_drop_meters} m and were oriented by raw Z as "
+                f"below {self.config.min_anchor_z_drop_meters} m and were oriented by raw Z as "
                 "best guess."
             )
         if total_unresolved:

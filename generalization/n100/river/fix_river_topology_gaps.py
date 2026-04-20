@@ -8,6 +8,7 @@ from file_manager.n100.file_manager_roads import Road_N100
 from env_setup import environment_setup
 
 from composition_configs import core_config, logic_config
+from composition_configs import type_defs
 
 from custom_tools.decorators.timing_decorator import timing_decorator
 from custom_tools.general_tools.geometry_tools import (
@@ -22,64 +23,43 @@ from custom_tools.general_tools.geometry_tools import (
 @timing_decorator
 def main():
     environment_setup.main()
-    fill_line_topology_gaps()
+    raster = compute_raster_extent()
+    fix_river_orientation(raster_list=raster)
+    fill_line_topology_gaps(raster_list=raster)
     # fill_raod_gaps()
-    # fix_river_orientation()
-    # find_angles()
     # find_xy_endpoints()
     # find_relevant_rasters()
 
 
-def fix_river_orientation():
+def compute_raster_extent() -> list[type_defs.RasterFilePath]:
+
+    rasters = find_rasters_for_vector_extent(
+        raster_dir=config.raster_directory,
+        input_features=River_N100.data_preparation___river_lines___n100_river.value,
+    )
+    return rasters
+
+
+def fix_river_orientation(raster_list: list[type_defs.RasterFilePath]):
     arcpy.management.CopyFeatures(
         in_features=River_N100.data_preparation___river_lines___n100_river.value,
         out_feature_class=River_N100.river_topology___fixed_river_orientation___n100_river.value,
     )
 
-    rasters = find_rasters_for_vector_extent(
-        raster_dir=config.raster_directory,
-        input_features=River_N100.data_preparation___river_lines___n100_river.value,
-    )
-
     flip_config = logic_config.LineZOrientConfig(
         input_lines=River_N100.river_topology___fixed_river_orientation___n100_river.value,
-        raster_paths=rasters,
+        raster_paths=raster_list,
         orientation_mode=logic_config.LineZOrientMode.NETWORK,
-        min_z_drop_meters=1.5,
+        min_anchor_z_drop_meters=2,
+        min_confident_flip_meters=1.5,
         connectivity_tolerance_meters=environment_setup.ArcGisEnvironmentSetup.XY_TOLERANCE,
     )
     LineZOrientTool(config=flip_config).run()
-    custom_arcpy.select_location_and_make_feature_layer()
-
-
-def find_angles():
-    line_angle_config = logic_config.AngleToolConfig(
-        input_lines=River_N100.data_preparation___river_lines___n100_river.value,
-        angle_modes=(logic_config.LineAngleMode.ALL_ANGLES,),
-        output_lines=River_N100.river_topology___river_angles___n100_river.value,
-        return_results=True,
-        write_fields=True,
-    )
-    returned_angles = LineAngleTool(config=line_angle_config).run()
-    print(f"{returned_angles}")
-
-    line_angle_config2 = logic_config.AngleToolConfig(
-        input_lines=River_N100.river_topology___river_gaps_changes___n100_river.value,
-        angle_modes=(logic_config.LineAngleMode.ALL_ANGLES,),
-        output_lines=River_N100.river_topology___river_angles_2___n100_river.value,
-        return_results=True,
-        write_fields=True,
-    )
-    returned_angles2 = LineAngleTool(config=line_angle_config2).run()
 
 
 @timing_decorator
-def fill_line_topology_gaps():
+def fill_line_topology_gaps(raster_list: list[type_defs.RasterFilePath]):
 
-    rasters = find_rasters_for_vector_extent(
-        raster_dir=config.raster_directory,
-        input_features=River_N100.data_preparation___river_lines___n100_river.value,
-    )
     line_fix_advanced_config = logic_config.FillLineGapsAdvancedConfig(
         fill_gaps_on_self=True,
         line_changes_output=River_N100.river_topology___river_gaps_changes___n100_river.value,
@@ -100,9 +80,8 @@ def fill_line_topology_gaps():
             )
         ),
         angle_local_half_window_m=20,
-        source_direction_mode=logic_config.SourceDirectionMode.RASTER_DERIVED,
-        min_z_drop_meters=1,
-        raster_paths=rasters,
+        source_direction_mode=logic_config.SourceDirectionMode.PRE_ORIENTED,
+        raster_paths=raster_list,
         crossing_check_spatial_reference=environment_setup.project_spatial_reference,
     )
     work_file_manager_config = core_config.WorkFileConfig(
@@ -112,7 +91,7 @@ def fill_line_topology_gaps():
     )
 
     line_fix_config = logic_config.FillLineGapsConfig(
-        input_lines=River_N100.data_preparation___river_lines___n100_river.value,
+        input_lines=River_N100.river_topology___fixed_river_orientation___n100_river.value,
         output_lines=River_N100.river_topology___fixed_river_gaps___n100_river.value,
         work_file_manager_config=work_file_manager_config,
         gap_tolerance_meters=25,
