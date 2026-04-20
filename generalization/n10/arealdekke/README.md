@@ -1,54 +1,34 @@
 # Arealdekke - Generalization Pipeline
 
-This folder contains all functions and classes that are specific to the arealdekke generalization pipeline.
+This folder contains all functions and classes that are relevant and sepcific to the arealdekke generalization pipeline.
 
-## 📁 Structure
+## 📁 Program Structure
 
-**File structure**
+The file structure of our arealdekke pipeline is structured around three core classes: **Arealdekke, Category and Program History**. Arealdekke represents the arealdekke as a whole. It is used to handle procedures where relations between the different arealdekke types matter. Category represents a single arealdekke type. This is used to process the arealdekke types seperately. Lastly, the Program History represents a yaml file that includes information about how far the program got during its last run. This ensures that the program can restart on its last checkpoint if the program suddenly stops.
 
 The Python files is organized into the following folders:
-- Category_tools
-- Orchestrator
-- Overall_tools
-- Parameters
+````
+root
+|___generalization
+    |___n10
+        |___arealdekke
+            |___Category_tools
+            |___Orchestrator
+            |___Parameters
+            |___Overall_tools
+````
 
-The folder *category_tools* contains functionality editing single selections of land use categories. *Orchestrator* contains the larger main classes performing the main functions and constitutes the skeleton of the pipeline. *Overall_tools* includes all functionality related to land use as one unit, all categories together. Finally, *parameters* takes care of all the parameters used to initialize classes and functionality based upon specific rule sets.
+***Category_tools***. Includes functionality used for editing single selections of land use categories.
 
-**Arealdekke_orchestrator.py**
+***Orchestrator***. Contains the core classes and functions that constitutes the skeleton of the pipeline. Arealdekke_orchistrator.py is the pipeline root that initiates and calls all classes.
 
-- The main file that imports and calls the different functions and classes in order
-- It should only contain calls of the functions/classes
-- All logic related to parameters, set up and processing, is taken care of in their respective file / class / function
-- Parameters that are scale specific or general rules for the class/function should be defined in specific *.yml* files in the *parameters* folder
+***Parameters***. Takes care of all parameters used to initialize classes and functionality based upon specific rule sets.
 
-## 🧩 Functions & Classes
+***Overall_tools***. Includes all functionality that handles arealdekke as one unit.
+##
+## Class documentation
 
-### Category_tools
-
-**Buff_small_polygon_segments.py**
-
-Function that buffs polygon segments under a minimum width requirement without overlapping locked features. The function uses *create_overlapping_land_use* to merge the buffered segments back into the layer.
-
-**Simplify_land_use.py**
-
-Function that uses simplify and smooth to adjust polygons and remove small, extra details.
-
-### Orchestrator
-
-**Arealdekke_categories_config.yml**
-
-Yaml file with setup for each unique land use category with descriptions of how to process the individual land use types. Each category contains:
-
-- Title (category name)
-- Operations (how the category should be processed)
-- Accessibility (whether or not the layer is locked / finished processing)
-- Order (processing rank / order)
-- Map_scale
-
-**Arealdekke_class.py**
-
-Main file for the *Arealdekke* class, including initialization function, processing functions of land use, and getters and setters.
-
+### 🌻Arealdekke
 - Parameters
     - self.wfm: WorkFileManager
     - self.files: Dictionary with the files used during the generalization of land use
@@ -73,15 +53,8 @@ Main file for the *Arealdekke* class, including initialization function, process
 - Setters
     - None
 
-**Arealdekke_orchestrator.py**
-
-Main program performing the generalization of land use. The pipeline is as follows:
-- Initializa an instance of the *'Arealdekke'* class
-- Preprocess the data
-- Add the categories to be processed
-- Process each category individually
-
-**Category_class.py**
+##
+### 🌻Category_class.py
 
 Main file for the *Category* class, including initialization function, processing functions of individually land use categories, and getters and setters.
 
@@ -107,19 +80,37 @@ Main file for the *Category* class, including initialization function, processin
 - Setters
     - Set_accessibility
 
-### Overall_tools
 
-**Arealdekke_dissolver.py**
+##
+### Additional Class Configuration
 
-Main dissolve class that dissolves based on the categories defined in *attribute_changer.py*. This file contains:
+**Arealdekke_categories_config.yml**
 
-- Restore_data_polygon_without_feature_to_point
+Yaml file with setup for each unique land use category with descriptions of how to process the individual land use types. Each category contains:
 
-This function follows the rules for restoring data after dissolving and can be used by other functions / classes.
+- Title (category name)
+- Operations (how the category should be processed)
+- Accessibility (whether or not the layer is locked / finished processing)
+- Order (processing rank / order)
+- Map_scale
 
-**Attribute_analyzer.py**
+##
+## 🧩 Category Tools
 
-File analyzing attribute data from csv file and list. Functions:
+**Buff_small_polygon_segments.py**. Buffs polygon segments under a minimum width requirement without overlapping locked features. *Create_overlapping_land_use* can be used afterwards to merge the buffered segments back into the layer.
+
+**Simplify_land_use.py**. Uses simplify and smooth to adjust polygons and remove small, extra details.
+
+
+
+##
+## Overall_tools
+
+**Arealdekke_dissolver.py**. Main dissolve class that dissolves based on the categories defined in *attribute_changer.py*. This file contains:
+
+- **Restore_data_polygon_without_feature_to_point**. This function follows the rules for restoring data after dissolving and can be used by other functions / classes.
+
+**Attribute_analyzer.py**. File analyzing attribute data from csv file and list. Functions:
 - Sort_results
 - Write_to_file
 - Load_rules
