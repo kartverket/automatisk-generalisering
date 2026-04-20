@@ -1928,6 +1928,42 @@ class FillLineGaps:
 
         return oid_to_key
 
+    @staticmethod
+    def _find_crossing_pairs(
+        in_fc: str,
+        against_fcs: list[str],
+    ) -> dict[int, set[int]]:
+        """Return {in_oid: {against_oid, ...}} for pairs where in_fc line crosses against_fcs line.
+
+        Uses INTERSECT as a broad spatial pre-filter, then confirms each candidate
+        with spatial_relationship="CROSSES" — exact, no false positives from
+        XY-tolerance snapping.  Self-pairs are excluded when against_fcs contains in_fc.
+        """
+        pairs: dict[int, set[int]] = {}
+        _in_lyr = arcpy.management.MakeFeatureLayer(in_fc, "__crossing_filter_lyr")[0]
+        for i, _against_fc in enumerate(against_fcs):
+            arcpy.management.SelectLayerByLocation(
+                in_layer=_in_lyr,
+                overlap_type="INTERSECT",
+                select_features=_against_fc,
+                selection_type="NEW_SELECTION" if i == 0 else "ADD_TO_SELECTION",
+            )
+        with arcpy.da.SearchCursor(_in_lyr, ["OID@", "SHAPE@"]) as _cur:
+            for _in_oid, _in_geom in _cur:
+                for _against_fc in against_fcs:
+                    with arcpy.da.SearchCursor(
+                        _against_fc,
+                        ["OID@"],
+                        spatial_filter=_in_geom,
+                        spatial_relationship="CROSSES",
+                    ) as _inner:
+                        for (_against_oid,) in _inner:
+                            if _against_fc == in_fc and _against_oid == _in_oid:
+                                continue
+                            pairs.setdefault(_in_oid, set()).add(_against_oid)
+        arcpy.management.Delete(_in_lyr)
+        return pairs
+
     def _find_crossing_conflict_keys(
         self,
         *,
@@ -1941,8 +1977,8 @@ class FillLineGaps:
         Pre-filter: identify candidates whose trimmed connector crosses an existing feature.
 
         Writes trimmed candidate connectors to a temp in-memory FC and uses
-        GenerateNearTable against check_feature_layers as the source of truth for
-        crossing conflicts.  Only legal candidates (already filtered by all other
+        a spatial CROSSES relationship check against check_feature_layers as the
+        source of truth for crossing conflicts.  Only legal candidates (already filtered by all other
         legality checks) are considered, so the temp FC is as small as possible.
 
         Returns:
@@ -1985,7 +2021,6 @@ class FillLineGaps:
             return set(), trimmed_cache
 
         _cands_fc = "memory/crossing_check_trimmed_cands"
-        _near_table = "memory/crossing_check_near"
 
         oid_to_key = self._write_trimmed_cands_fc(
             cands_with_keys=cands_with_keys,
@@ -1993,30 +2028,14 @@ class FillLineGaps:
             spatial_reference=spatial_reference,
         )
 
-        if arcpy.Exists(_near_table):
-            arcpy.management.Delete(_near_table)
-        arcpy.analysis.GenerateNearTable(
-            in_features=_cands_fc,
-            near_features=check_feature_layers,
-            out_table=_near_table,
-            search_radius=self._connectivity_tolerance_linear_unit(),
-            location="NO_LOCATION",
-            angle="NO_ANGLE",
-            closest="ALL",
-            closest_count=0,
-            method="PLANAR",
-        )
+        crossing_pairs = self._find_crossing_pairs(_cands_fc, check_feature_layers)
 
         conflict_keys: set[tuple[int, str, int]] = set()
-        with arcpy.da.SearchCursor(_near_table, ["IN_FID", "NEAR_DIST"]) as cur:
-            for in_fid, near_dist in cur:
-                if near_dist != 0.0:
-                    continue
-                key = oid_to_key.get(int(in_fid))
-                if key is not None:
-                    conflict_keys.add(key)
+        for in_oid in crossing_pairs:
+            key = oid_to_key.get(in_oid)
+            if key is not None:
+                conflict_keys.add(key)
 
-        arcpy.management.Delete(_near_table)
         arcpy.management.Delete(_cands_fc)
 
         return conflict_keys, trimmed_cache
@@ -4134,9 +4153,9 @@ class FillLineGaps:
             of an already-accepted candidate's trimmed connector
             (reason: crosses_accepted_connector).
 
-        Crossing uses a single pre-loop GenerateNearTable of all candidate trimmed
-        connectors against themselves to build a conflict lookup.  During the loop,
-        _crossing_blocked consults that lookup instead of running live geometry
+        Crossing uses a single pre-loop CROSSES relationship check of all candidate
+        trimmed connectors against themselves to build a conflict lookup.  During the
+        loop, _crossing_blocked consults that lookup instead of running live geometry
         checks.
 
         Note on deferred displacement inaccuracy:
@@ -4176,38 +4195,21 @@ class FillLineGaps:
 
             if _kruskal_cands:
                 _kruskal_fc = "memory/crossing_check_kruskal_cands"
-                _kruskal_near = "memory/crossing_check_kruskal_near"
                 _kruskal_oid_to_key = self._write_trimmed_cands_fc(
                     cands_with_keys=_kruskal_cands,
                     fc_path=_kruskal_fc,
                     spatial_reference=crossing_spatial_reference,
                 )
-                if arcpy.Exists(_kruskal_near):
-                    arcpy.management.Delete(_kruskal_near)
-                arcpy.analysis.GenerateNearTable(
-                    in_features=_kruskal_fc,
-                    near_features=[_kruskal_fc],
-                    out_table=_kruskal_near,
-                    search_radius=self._connectivity_tolerance_linear_unit(),
-                    location="NO_LOCATION",
-                    angle="NO_ANGLE",
-                    closest="ALL",
-                    closest_count=0,
-                    method="PLANAR",
-                )
-                with arcpy.da.SearchCursor(
-                    _kruskal_near, ["IN_FID", "NEAR_FID", "NEAR_DIST"]
-                ) as _cur:
-                    for _in_fid, _near_fid, _near_dist in _cur:
-                        if int(_in_fid) == int(_near_fid):
-                            continue
-                        if _near_dist != 0.0:
-                            continue
-                        _key_in = _kruskal_oid_to_key.get(int(_in_fid))
-                        _key_near = _kruskal_oid_to_key.get(int(_near_fid))
-                        if _key_in is not None and _key_near is not None:
+                for _oid_in, _against_oids in self._find_crossing_pairs(
+                    _kruskal_fc, [_kruskal_fc]
+                ).items():
+                    _key_in = _kruskal_oid_to_key.get(_oid_in)
+                    if _key_in is None:
+                        continue
+                    for _oid_near in _against_oids:
+                        _key_near = _kruskal_oid_to_key.get(_oid_near)
+                        if _key_near is not None:
                             conflict_lookup.setdefault(_key_in, set()).add(_key_near)
-                arcpy.management.Delete(_kruskal_near)
                 arcpy.management.Delete(_kruskal_fc)
 
         def _accept(prop: Any, gap_source: Any) -> None:
@@ -4355,8 +4357,9 @@ class FillLineGaps:
         """Re-check resnap captures against accepted connector geometries.
 
         Called after _resnap_connections resolves final geometry for deferred
-        connectors.  Uses GenerateNearTable (trimmed resnap connectors vs trimmed
-        accepted connectors) as the source of truth for crossing conflicts, then
+        connectors.  Uses a spatial CROSSES relationship check (trimmed resnap
+        connectors vs trimmed accepted connectors) as the source of truth for
+        crossing conflicts, then
         applies rank-based conflict resolution:
 
           - If the resnap capture has a worse (higher) rank than the best-ranked
@@ -4411,7 +4414,6 @@ class FillLineGaps:
 
         _resnap_fc = "memory/resnap_crossing_trimmed"
         _accepted_fc = "memory/resnap_crossing_accepted"
-        _near_table = "memory/resnap_crossing_near"
 
         oid_to_parent_id = self._write_trimmed_cands_fc(
             cands_with_keys=resnap_cands,
@@ -4424,34 +4426,19 @@ class FillLineGaps:
             spatial_reference=spatial_reference,
         )
 
-        if arcpy.Exists(_near_table):
-            arcpy.management.Delete(_near_table)
-        arcpy.analysis.GenerateNearTable(
-            in_features=_resnap_fc,
-            near_features=[_accepted_fc],
-            out_table=_near_table,
-            search_radius=self._connectivity_tolerance_linear_unit(),
-            location="NO_LOCATION",
-            angle="NO_ANGLE",
-            closest="ALL",
-            closest_count=0,
-            method="PLANAR",
-        )
-
         # {parent_id: set of conflicting accepted dangle_oids}
         conflicts_by_parent: dict[int, set[int]] = {}
-        with arcpy.da.SearchCursor(
-            _near_table, ["IN_FID", "NEAR_FID", "NEAR_DIST"]
-        ) as cur:
-            for in_fid, near_fid, near_dist in cur:
-                if near_dist != 0.0:
-                    continue
-                parent_id = oid_to_parent_id.get(int(in_fid))
-                acc_doid = oid_to_accepted_doid.get(int(near_fid))
-                if parent_id is not None and acc_doid is not None:
+        for rsnp_oid, acc_oids in self._find_crossing_pairs(
+            _resnap_fc, [_accepted_fc]
+        ).items():
+            parent_id = oid_to_parent_id.get(rsnp_oid)
+            if parent_id is None:
+                continue
+            for acc_oid in acc_oids:
+                acc_doid = oid_to_accepted_doid.get(acc_oid)
+                if acc_doid is not None:
                     conflicts_by_parent.setdefault(parent_id, set()).add(int(acc_doid))
 
-        arcpy.management.Delete(_near_table)
         arcpy.management.Delete(_resnap_fc)
         arcpy.management.Delete(_accepted_fc)
 
