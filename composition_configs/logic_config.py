@@ -334,6 +334,14 @@ class FillLineGapsAdvancedConfig:
     # When not UNDIRECTED: best_fit_weights.angle must be > 0 (enforced at init).
     source_direction_mode: SourceDirectionMode = SourceDirectionMode.UNDIRECTED
 
+    # When True and source_direction_mode is directional, the angle metric for a
+    # valid end→start dangle-to-dangle candidate uses max(src_target_diff,
+    # src_connector_diff) instead of src_target_diff alone.  This penalises
+    # candidates whose connector direction is poor even when target alignment is
+    # good, affecting blocking, extra-dangle eligibility, and score weighting.
+    # Has no effect in UNDIRECTED mode.
+    dangle_pair_apply_connector_diff: bool = False
+
     # Minimum elevation drop (metres) required for LineZOrientTool to commit a flip.
     # Only used when source_direction_mode == RASTER_DERIVED.
     min_z_drop_meters: float = 0.5

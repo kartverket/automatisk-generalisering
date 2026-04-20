@@ -1087,6 +1087,9 @@ class FillLineGaps:
         self.reject_crossing_connectors: bool = bool(adv.reject_crossing_connectors)
         self.crossing_check_spatial_reference = adv.crossing_check_spatial_reference
         self.barrier_layers: list[str] | None = adv.barrier_layers or None
+        self.dangle_pair_apply_connector_diff: bool = bool(
+            adv.dangle_pair_apply_connector_diff
+        )
 
         if (
             self.source_direction_mode
@@ -2847,7 +2850,11 @@ class FillLineGaps:
                 )
                 _tgt_is_start = self._xy_is_at_line_start(tgt_poly, _snap_x, _snap_y)
                 if _src_is_end and _tgt_is_start:
-                    metric = float(src_target_diff)
+                    metric = (
+                        max(float(src_target_diff), float(src_connector_diff))
+                        if self.dangle_pair_apply_connector_diff and _is_dangle_pair
+                        else float(src_target_diff)
+                    )
                 else:
                     metric = 180.0
             elif _is_directional:
