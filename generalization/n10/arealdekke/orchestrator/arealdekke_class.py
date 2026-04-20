@@ -43,7 +43,7 @@ arcpy.env.overwriteOutput = True
 
 class Arealdekke:
 
-    def __init__(self, input_data: str, map_scale: str) -> None:
+    def __init__(self, map_scale: str) -> None:
 
         # Setting up file manager w. dictionary
         self.working_fc = (
@@ -148,7 +148,7 @@ class Arealdekke:
                 value=True
             )
 
-    def add_categories(self, categories_config_file):
+    def add_categories(self, categories_config_file) -> None:
 
         # Checks if the data has been preprocessed.
         if self.__preprocessed and not self.categories:
@@ -182,6 +182,7 @@ class Arealdekke:
                 raise e
 
     def process_categories(self) -> None:
+        
         # Iterates through the categories that are true, meaning they are open.
         for category in list(
             filter(lambda cat: cat.get_accessibility(), self.categories)
@@ -209,28 +210,35 @@ class Arealdekke:
                         )
                     
                 # Add the category back into the input layer.
-                remove_overlaps(
-                    input_fc=self.files["arealdekke_fc"],
-                    buffered_fc=self.files["processed_fc"],
-                    locked_fc=self.files["locked_fc"],
-                    output_fc=self.files["intermediate_fc"],
-                    changed_area=category.get_title(),
-                )
+                reinserts_completed=category.get_reinserts_completed()
 
-                fill_holes(
-                    input_fc=self.files["intermediate_fc"],
-                    output_fc=self.files["intermediate_fixed_fc"],
-                    target=category.get_title(),
-                    locked_categories=set(
-                        map(
-                            lambda cat: cat.get_title(),
-                            filter(
-                                lambda cat: not cat.get_accessibility(), self.categories
-                            ),
-                        )
-                    ),
-                )
+                # Reinsert methods:
+                reinsert_operations = [
+                    lambda: remove_overlaps(input_fc=self.files["arealdekke_fc"],
+                            buffered_fc=self.files["processed_fc"],
+                            locked_fc=self.files["locked_fc"],
+                            output_fc=self.files["intermediate_fc"],
+                            changed_area=category.get_title()),
+                    
+                    lambda: fill_holes(
+                            input_fc=self.files["intermediate_fc"],
+                            output_fc=self.files["intermediate_fixed_fc"],
+                            target=category.get_title(),
+                            locked_categories=set(
+                                map(
+                                    lambda cat: cat.get_title(),
+                                    filter(lambda cat: not cat.get_accessibility(), self.categories)
+                                )
+                            ))
+                ]
 
+                for reinsert_operation in range(reinserts_completed, len):
+                    
+                    reinsert_operations[reinsert_operation]()
+
+                    # Update reinserts completed
+                    category.update_reinsert_operations_completed()
+                
                 arcpy.management.CopyFeatures(
                     in_features=self.files["intermediate_fixed_fc"],
                     out_feature_class=self.files["arealdekke_fc"],
@@ -361,3 +369,6 @@ class Arealdekke:
                 map_scale=self.__map_scale,
             )
         ]
+
+    def set_reinsert_operations(self)->list:
+        return 

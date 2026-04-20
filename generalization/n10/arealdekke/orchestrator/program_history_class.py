@@ -47,7 +47,6 @@ class Program_history_class:
             response["preprocessing_operations_completed"] = history["preprocessing_operations_completed"]
             response["map_scale"] = history["map_scale"]
         
-
         return response
     
     def restore_arealdekke_categories(self):
@@ -122,6 +121,7 @@ class Program_history_class:
             "map_scale": map_scale,
             "last_processed": None,
             "operations_completed": 0,
+            "reinserts_completed": 0
         }
 
         history.append(new_entry)

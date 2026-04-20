@@ -6,10 +6,11 @@ from pathlib import Path
 from unittest.mock import patch, MagicMock
 from generalization.n10.arealdekke.orchestrator.arealdekke_class import Arealdekke
 from generalization.n10.arealdekke.orchestrator.program_history_class import Program_history_class as History_class
+from generalization.n10.arealdekke.orchestrator.category_class import Category
 
 # TO RUN TEST IN TERMINAL USE: & "C:\Program Files\ArcGIS\Pro\bin\Python\envs\arcgispro-py3\python.exe" -m pytest
 
-class test_arealdekket_class_2(unittest.TestCase):
+class test_arealdekket_class(unittest.TestCase):
 
     def setUp(self):
         #Mock the yml file and filepath
@@ -29,7 +30,8 @@ class test_arealdekket_class_2(unittest.TestCase):
                     "order": 1,
                     "map_scale": "N10",
                     "last_processed": "path",
-                    "operations_completed": 2
+                    "operations_completed": 0,
+                    "reinserts_completed":0
                 },
                 {
                     "title": "Innsjo",
@@ -40,7 +42,8 @@ class test_arealdekket_class_2(unittest.TestCase):
                     "order": 2,
                     "map_scale": "N10",
                     "last_processed": "path",
-                    "operations_completed": 0
+                    "operations_completed": 0,
+                    "reinserts_completed":0
                 }
             ]
         }
@@ -75,7 +78,7 @@ class test_arealdekket_class_2(unittest.TestCase):
         with patch(self.arealdekke_module + ".History_class") as mock_history_pre_comp:
             
             mock_history_pre_comp.return_value = self.temp_obj_pre_comp
-            arealdekke_pre_comp = Arealdekke("N10")
+            arealdekke_pre_comp = Arealdekke(map_scale="N10")
 
             self.assertEqual(arealdekke_pre_comp.__str__(), "preprocessed: True preprocessings completed: 1 map scale: N10")
         
@@ -93,7 +96,7 @@ class test_arealdekket_class_2(unittest.TestCase):
                 "map_scale": "N10",
             }
 
-            arealdekke_pre_incomp = Arealdekke("N10")
+            arealdekke_pre_incomp = Arealdekke(map_scale="N10")
 
             self.assertEqual(arealdekke_pre_incomp.__str__(), "preprocessed: False preprocessings completed: 0 map scale: N10")
 
@@ -105,7 +108,7 @@ class test_arealdekket_class_2(unittest.TestCase):
         temp_obj_pre_comp._Arealdekke__preprocessings_completed=2
         temp_obj_pre_comp._Arealdekke__map_scale="N10"
         temp_obj_pre_comp.categories=[]
-        temp_obj_pre_comp.program_history=temp_obj_pre_comp
+        temp_obj_pre_comp.program_history=self.temp_obj_pre_comp
         temp_obj_pre_comp.files={"arealdekke_fc":"path"}
 
         fake_preprocesses=[MagicMock() for _ in range(10)]
@@ -122,7 +125,42 @@ class test_arealdekket_class_2(unittest.TestCase):
             assert sum(preprocess.call_count for preprocess in fake_preprocesses) == 8
             self.assertEqual(temp_obj_pre_comp._Arealdekke__preprocessings_completed, 10)
 
-    def process_categories(self):
+    def test_get_locked_categories(self)->None:
+
+        # What happens if we have four locked categories?
+        temp_obj_with_locked=Arealdekke.__new__(Arealdekke)
+        temp_obj_with_locked._Arealdekke__preprocessed=False
+        temp_obj_with_locked._Arealdekke__preprocessings_completed=2
+        temp_obj_with_locked._Arealdekke__map_scale="N10"
+        temp_obj_with_locked.categories=[]
+        temp_obj_with_locked.files={"arealdekke_fc":"path"}
+
+        # What happens if we have no locked categories?
+
+        pass
+
+    def test_add_categories(self)->None:
+        pass
+
+    def test_process_categories(self)->None:
+        
+        # What happens if we run through the process as normal?
+        with patch(self.arealdekke_module + ".History_class") as mock_history_pre_comp:
+            
+            mock_history_pre_comp.return_value = self.temp_obj_pre_comp
+            arealdekke_pre_comp = Arealdekke(map_scale="N10")
+
+            arealdekke_pre_comp.process_categories()
+
+            for cat in arealdekke_pre_comp.categories:
+                assert cat.get_accessibility()==False
+                assert cat.get_reinserts_completed()==2
+
+
+
+        # What happens if we previously fully completed all operations for one category but did not reinsert it?
+        # What happens if we previously fully completed all opeations and reinsertions for one category?
+        
         pass
 
     def tearDown(self):

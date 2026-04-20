@@ -32,7 +32,8 @@ class test_program_history_class(unittest.TestCase):
                     "order": 1,
                     "map_scale": "N10",
                     "last_processed": "path",
-                    "operations_completed": 2
+                    "operations_completed": 2,
+                    "reinserts_completed":0
                 },
                 {
                     "title": "Innsjo",
@@ -43,7 +44,8 @@ class test_program_history_class(unittest.TestCase):
                     "order": 2,
                     "map_scale": "N10",
                     "last_processed": "path",
-                    "operations_completed": 0
+                    "operations_completed": 0,
+                    "reinserts_completed":0
                 }
             ]
         }

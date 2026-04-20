@@ -27,6 +27,7 @@ class Category:
         map_scale: str,
         last_processed: str=None,
         operations_completed: int=None,
+        reinserts_completed: int=None
     ):
 
         # Setting up file manager w. dictionary for easy file access
@@ -42,12 +43,6 @@ class Category:
             )
         }
 
-        # Dictionary with all tools available to the category objects
-        self.cat_tools: dict = {
-            "simplify_and_smooth": simplify_and_smooth_polygon,
-            "buff_small_segments": buff_small_polygon_segments,
-        }
-
         # Extracts inputs and saves them within object
         self.__operations:list[str] = operations or [str]
         self.__accessibility: bool = accessibility or True
@@ -55,11 +50,12 @@ class Category:
         self.__map_scale: str = map_scale
         self.__last_processed: str = last_processed or self.files["last_edited_fc"]
         self.__operations_completed: int = operations_completed or 0
+        self.__reinserts_completed: int = reinserts_completed or 0
 
         for item in self.__operations:
 
             # Checks if each operation is written correctly (test can be improved later)
-            if item not in list(self.cat_tools.keys()):
+            if item not in list(self.set_cat_tools()):
                 raise Exception(f"Incorrect syntax in yml file. Object:{self.__title}")
 
         # Creates layer for the category. Data inserted into it in setter function.
@@ -73,9 +69,12 @@ class Category:
     def process_category(
         self, input_fc: str, locked_fc: str, processed_fc: str):
 
+        cat_tools=self.set_cat_tools()
+
         # Iterates through the operations needed for each category.
-        for operation in self.__operations:
-            func = self.cat_tools[operation]
+        for operation in range(self.__operations_completed, len(self.__operations), 1):
+
+            func = cat_tools[self.__operations[operation]]
 
             sig = inspect.signature(func)
             param_names = sig.parameters.keys()
@@ -95,7 +94,7 @@ class Category:
             }
 
             # Calls function from dictionary
-            self.cat_tools[operation](**args_to_pass)
+            cat_tools[self.__operations[operation]](**args_to_pass)
 
             # Updates the layer that will be passed on to the next operation to be the output.
             arcpy.management.CopyFeatures(
@@ -127,6 +126,15 @@ class Category:
     def set_accessibility(self, newStatus: bool) -> None:
         self.__accessibility = newStatus
 
+    def update_reinsert_operations_completed(self)->None:
+        self.__reinserts_completed+=1
+
+    def set_cat_tools(self)-> dict:
+        return {
+            "simplify_and_smooth": simplify_and_smooth_polygon,
+            "buff_small_segments": buff_small_polygon_segments,
+            }
+
     # ========================
     # Getters
     # ========================
@@ -145,6 +153,9 @@ class Category:
 
     def get_map_scale(self) -> str:
         return self.__map_scale
+
+    def get_reinserts_completed(self)->int:
+        return self.__reinserts_completed
 
     def __str__(self) -> str:
         return (
