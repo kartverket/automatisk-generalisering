@@ -260,34 +260,6 @@ class BestFitWeightsConfig:
     z: float = 0.0
 
 
-class SourceDirectionMode(str, Enum):
-    """
-    Controls how FillLineGaps interprets the digitization direction of source lines
-    when computing angle metrics for candidate scoring and blocking.
-
-    UNDIRECTED
-        Default. Lines have no guaranteed direction. Angle comparisons use
-        orientation-diff (0–90°) and src_connector_diff as the metric.
-        This is the original behavior.
-
-    PRE_ORIENTED
-        The user guarantees that all input lines (and any line-like
-        connect_to_features) are already oriented correctly (e.g. flow goes
-        from start to end). No orientation step is run. Angle comparisons use
-        directional-diff (0–180°) and src_target_diff as the metric for all
-        line-to-line pairs.
-
-    RASTER_DERIVED
-        FillLineGaps orients the working copy of input lines (and any line-like
-        connect_to_features copies) using LineZOrientTool before building the
-        gap-fill plan. Requires raster_paths to be set. After orientation,
-        directional semantics apply as in PRE_ORIENTED.
-        Requires min_anchor_z_drop_meters to be set in FillLineGapsAdvancedConfig.
-    """
-
-    UNDIRECTED = "undirected"
-    PRE_ORIENTED = "pre_oriented"
-    RASTER_DERIVED = "raster_derived"
 
 
 @dataclass(frozen=True)
@@ -327,30 +299,21 @@ class FillLineGapsAdvancedConfig:
     # Source line direction
     # ----------------------------
 
-    # Controls whether lines are treated as undirected, assumed already oriented,
-    # or oriented by raster elevation before gap-filling.
-    # See SourceDirectionMode for full semantics.
-    # When RASTER_DERIVED: raster_paths must be set and min_anchor_z_drop_meters applies.
-    # When not UNDIRECTED: best_fit_weights.angle must be > 0 (enforced at init).
-    source_direction_mode: SourceDirectionMode = SourceDirectionMode.UNDIRECTED
+    # When True the caller guarantees that all input lines (and any line-like
+    # connect_to_features) are already oriented correctly (e.g. flow runs from
+    # start to end).  Angle comparisons use directional-diff (0–180°) and
+    # src_target_diff as the metric for all line-to-line pairs.
+    # When True, best_fit_weights.angle must be > 0 (enforced at init).
+    # When False (default), lines are treated as undirected.
+    lines_are_directed: bool = False
 
-    # When True and source_direction_mode is directional, the angle metric for a
-    # valid end→start dangle-to-dangle candidate uses max(src_target_diff,
-    # src_connector_diff) instead of src_target_diff alone.  This penalises
-    # candidates whose connector direction is poor even when target alignment is
-    # good, affecting blocking, extra-dangle eligibility, and score weighting.
-    # Has no effect in UNDIRECTED mode.
+    # When True and lines_are_directed, the angle metric for a valid end→start
+    # dangle-to-dangle candidate uses max(src_target_diff, src_connector_diff)
+    # instead of src_target_diff alone.  This penalises candidates whose connector
+    # direction is poor even when target alignment is good, affecting blocking,
+    # extra-dangle eligibility, and score weighting.
+    # Has no effect when lines_are_directed is False.
     dangle_pair_apply_connector_diff: bool = False
-
-    # Minimum elevation drop (metres) required to classify a line as a network anchor.
-    # Only used when source_direction_mode == RASTER_DERIVED.
-    min_anchor_z_drop_meters: float = 0.5
-
-    # When set, a line will only be flipped if it is NOT backed by a confident network
-    # context AND its own Z drop is below this value.  Lines in components that have at
-    # least one anchor are still flipped freely via network propagation.
-    # Defaults to None (no extra guard — behaves identically to the old min_z_drop_meters).
-    min_confident_flip_meters: Optional[float] = None
 
     # ----------------------------
     # Z / elevation layer
