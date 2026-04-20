@@ -24,7 +24,7 @@ from custom_tools.general_tools.geometry_tools import (
 def main():
     environment_setup.main()
     raster = compute_raster_extent()
-    fix_river_orientation(raster_list=raster)
+    # fix_river_orientation(raster_list=raster)
     fill_line_topology_gaps(raster_list=raster)
     # fill_raod_gaps()
     # find_xy_endpoints()
@@ -80,14 +80,12 @@ def fill_line_topology_gaps(raster_list: list[type_defs.RasterFilePath]):
             )
         ),
         angle_local_half_window_m=20,
-        source_direction_mode=logic_config.SourceDirectionMode.PRE_ORIENTED,
+        lines_are_directed=True,
         raster_paths=raster_list,
         crossing_check_spatial_reference=environment_setup.project_spatial_reference,
     )
     work_file_manager_config = core_config.WorkFileConfig(
         root_file=River_N100.river_topology___root___n100_river.value,
-        write_to_memory=False,
-        keep_files=True,
     )
 
     line_fix_config = logic_config.FillLineGapsConfig(
