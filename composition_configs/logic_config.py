@@ -367,18 +367,25 @@ class FillLineGapsAdvancedConfig:
 
     # Spatial reference used to construct temporary connector geometries for
     # the crossing check.  Accepts an integer WKID or a .prj file path
-    # (passed directly to arcpy.SpatialReference()).  Only required when
-    # reject_crossing_connectors is True.
+    # (passed directly to arcpy.SpatialReference()).  Required when
+    # reject_crossing_connectors is True or barrier_layers is set.
     crossing_check_spatial_reference: "int | str | None" = None
+
+    # Feature layers that act as impassable barriers.  Any candidate whose
+    # trimmed connector crosses one of these layers is rejected at Step 1a,
+    # regardless of the reject_crossing_connectors setting.  These layers are
+    # never used as snap targets.  crossing_check_spatial_reference is required
+    # when this is set.
+    barrier_layers: "list[str] | None" = None
 
     def __post_init__(self) -> None:
         if (
-            self.reject_crossing_connectors
+            (self.reject_crossing_connectors or self.barrier_layers is not None)
             and self.crossing_check_spatial_reference is None
         ):
             raise ValueError(
                 "crossing_check_spatial_reference is required when "
-                "reject_crossing_connectors is True"
+                "reject_crossing_connectors is True or barrier_layers is set"
             )
 
 

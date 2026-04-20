@@ -1086,6 +1086,7 @@ class FillLineGaps:
 
         self.reject_crossing_connectors: bool = bool(adv.reject_crossing_connectors)
         self.crossing_check_spatial_reference = adv.crossing_check_spatial_reference
+        self.barrier_layers: list[str] | None = adv.barrier_layers or None
 
         if (
             self.source_direction_mode
@@ -2039,6 +2040,62 @@ class FillLineGaps:
         arcpy.management.Delete(_cands_fc)
 
         return conflict_keys, trimmed_cache
+
+    def _find_barrier_crossing_keys(
+        self,
+        *,
+        legal_rows_by_dangle: "_Grouped",
+        dangle_xy: dict[int, tuple[float, float]],
+        barrier_layers: list[str] | None,
+        trim_distance: float,
+        spatial_reference: Any,
+    ) -> set[tuple[int, str, int]]:
+        """Return keys of candidates whose trimmed connector crosses a barrier layer.
+
+        Returns an empty set immediately when barrier_layers is None or empty.
+        barrier_layers are never used as snap targets; they only block candidates
+        that cross them.
+        """
+        if not barrier_layers:
+            return set()
+
+        cands_with_keys: list[tuple[Any, Any]] = []
+        for dangle_oid, candidates in legal_rows_by_dangle.items():
+            dangle_oid = int(dangle_oid)
+            xy = dangle_xy.get(dangle_oid)
+            if xy is None:
+                continue
+            from_x, from_y = xy
+            for cand in candidates:
+                key = (dangle_oid, str(cand["near_fc_key"]), int(cand["near_fid"]))
+                trimmed = self._build_trimmed_connector(
+                    from_x=from_x,
+                    from_y=from_y,
+                    to_x=float(cand["near_x"]),
+                    to_y=float(cand["near_y"]),
+                    trim_distance=trim_distance,
+                    spatial_reference=spatial_reference,
+                )
+                if trimmed is not None:
+                    cands_with_keys.append((key, trimmed))
+
+        if not cands_with_keys:
+            return set()
+
+        _fc = "memory/barrier_crossing_check"
+        oid_to_key = self._write_trimmed_cands_fc(
+            cands_with_keys=cands_with_keys,
+            fc_path=_fc,
+            spatial_reference=spatial_reference,
+        )
+        crossing_pairs = self._find_crossing_pairs(_fc, barrier_layers)
+        arcpy.management.Delete(_fc)
+
+        return {
+            key
+            for in_oid in crossing_pairs
+            if (key := oid_to_key.get(in_oid)) is not None
+        }
 
     # ----------------------------
     # Illegal targets detection
@@ -3183,13 +3240,55 @@ class FillLineGaps:
 
         # ----------------------------
         # Crossing conflict pre-filter (last legality check)
-        # Run after all other legality checks so only surviving legal candidates
-        # are written to the temp FC.  The trimmed connector cache is reused in
-        # _run_kruskal for the candidate-vs-candidate crossing check.
+        # Barrier check runs first so the subsequent check against existing
+        # features only processes survivors.  The trimmed connector cache built
+        # by _find_crossing_conflict_keys is reused in _run_kruskal.
         # ----------------------------
+        _crossing_trim = 2.0 * float(self.connectivity_tolerance_meters)
+        _crossing_sr = (
+            arcpy.SpatialReference(self.crossing_check_spatial_reference)
+            if self.crossing_check_spatial_reference is not None
+            else None
+        )
+
+        if self.barrier_layers and legal_rows_by_dangle and _crossing_sr is not None:
+            _barrier_keys = self._find_barrier_crossing_keys(
+                legal_rows_by_dangle=legal_rows_by_dangle,
+                dangle_xy=dangle_xy,
+                barrier_layers=self.barrier_layers,
+                trim_distance=_crossing_trim,
+                spatial_reference=_crossing_sr,
+            )
+            if _barrier_keys:
+                for _dangle_oid in list(legal_rows_by_dangle.keys()):
+                    _parent_id = parent_id_by_dangle[_dangle_oid]
+                    _remaining: list[dict] = []
+                    for _cand in legal_rows_by_dangle[_dangle_oid]:
+                        _cand_key = (
+                            _dangle_oid,
+                            str(_cand["near_fc_key"]),
+                            int(_cand["near_fid"]),
+                        )
+                        if _cand_key in _barrier_keys:
+                            if collect_diags:
+                                _step1a_illegal.append(
+                                    (
+                                        _dangle_oid,
+                                        _parent_id,
+                                        _cand,
+                                        "crosses_barrier_layer",
+                                    )
+                                )
+                        else:
+                            _remaining.append(_cand)
+                    if _remaining:
+                        legal_rows_by_dangle[_dangle_oid] = _remaining
+                    else:
+                        del legal_rows_by_dangle[_dangle_oid]
+                        parent_id_by_dangle.pop(_dangle_oid, None)
+
         trimmed_connector_cache: dict[tuple[int, str, int], Any] = {}
-        if self.reject_crossing_connectors and legal_rows_by_dangle:
-            _crossing_sr = arcpy.SpatialReference(self.crossing_check_spatial_reference)
+        if self.reject_crossing_connectors and legal_rows_by_dangle and _crossing_sr is not None:
             # lines_copy provides self-line geometries; external polyline layers
             # whose ds_key is in polyline_by_external were loaded as angle caches.
             _check_layers: list[str] = [self.lines_copy]
@@ -3201,7 +3300,7 @@ class FillLineGaps:
                     legal_rows_by_dangle=legal_rows_by_dangle,
                     dangle_xy=dangle_xy,
                     check_feature_layers=_check_layers,
-                    trim_distance=2.0 * float(self.connectivity_tolerance_meters),
+                    trim_distance=_crossing_trim,
                     spatial_reference=_crossing_sr,
                 )
             )
