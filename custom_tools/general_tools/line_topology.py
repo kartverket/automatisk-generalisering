@@ -3017,14 +3017,14 @@ class FillLineGaps:
     # Build plan (two-phase: detect pairs first, then decide moves)
     # ----------------------------
 
-    def _build_plan(
-        self, *, dangles_fc: str, target_layers: list[str]
-    ) -> tuple[
+    def _build_plan(self, *, dangles_fc: str, target_layers: list[str]) -> tuple[
         dict[int, list[dict]],
         list["_ResnappedCapture"],
         list["CandidateDiagnostic"],
-        list[_AcceptedConnectorRaw],  # accepted_connector_raw (for resnap crossing re-check)
-        dict[int, int],               # kruskal_rank_by_dangle_oid (for resnap crossing re-check)
+        list[
+            _AcceptedConnectorRaw
+        ],  # accepted_connector_raw (for resnap crossing re-check)
+        dict[int, int],  # kruskal_rank_by_dangle_oid (for resnap crossing re-check)
     ]:
         dangle_parent = self._build_dangle_parent_lookup(dangles_fc=dangles_fc)
         dangle_xy = self._build_dangle_xy_lookup(dangles_fc=dangles_fc)
@@ -3170,9 +3170,7 @@ class FillLineGaps:
         # ----------------------------
         trimmed_connector_cache: dict[tuple[int, str, int], Any] = {}
         if self.reject_crossing_connectors and legal_rows_by_dangle:
-            _crossing_sr = arcpy.SpatialReference(
-                self.crossing_check_spatial_reference
-            )
+            _crossing_sr = arcpy.SpatialReference(self.crossing_check_spatial_reference)
             # lines_copy provides self-line geometries; external polyline layers
             # whose ds_key is in polyline_by_external were loaded as angle caches.
             _check_layers: list[str] = [self.lines_copy]
@@ -4116,12 +4114,14 @@ class FillLineGaps:
         crossing_spatial_reference: Any,  # arcpy.SpatialReference | None
     ) -> tuple[
         list[_GlobalWithSource],
-        set[int],         # accepted_dangle_oids
-        set[int],         # kruskal_rejected_oids (cycle-based)
-        set[int],         # kruskal_crossing_rejected_oids
-        dict[int, str],   # gap_source_by_dangle
-        list[_AcceptedConnectorRaw],  # accepted_connector_raw (for resnap crossing re-check)
-        dict[int, int],               # kruskal_rank_by_dangle_oid
+        set[int],  # accepted_dangle_oids
+        set[int],  # kruskal_rejected_oids (cycle-based)
+        set[int],  # kruskal_crossing_rejected_oids
+        dict[int, str],  # gap_source_by_dangle
+        list[
+            _AcceptedConnectorRaw
+        ],  # accepted_connector_raw (for resnap crossing re-check)
+        dict[int, int],  # kruskal_rank_by_dangle_oid
     ]:
         """Global selection: Kruskal cycle prevention across accepted connections.
 
@@ -4195,7 +4195,9 @@ class FillLineGaps:
                     closest_count=0,
                     method="PLANAR",
                 )
-                with arcpy.da.SearchCursor(_kruskal_near, ["IN_FID", "NEAR_FID", "NEAR_DIST"]) as _cur:
+                with arcpy.da.SearchCursor(
+                    _kruskal_near, ["IN_FID", "NEAR_FID", "NEAR_DIST"]
+                ) as _cur:
                     for _in_fid, _near_fid, _near_dist in _cur:
                         if int(_in_fid) == int(_near_fid):
                             continue
@@ -4217,13 +4219,15 @@ class FillLineGaps:
                 kruskal_rank_by_dangle_oid[d_oid] = rank_counter
                 _key = (d_oid, str(prop.ctx.near_fc_key), int(prop.ctx.near_fid))
                 accepted_keys.add(_key)
-                accepted_connector_raw.append((
-                    d_oid,
-                    float(prop.ctx.dangle_x),
-                    float(prop.ctx.dangle_y),
-                    float(prop.ctx.near_x),
-                    float(prop.ctx.near_y),
-                ))
+                accepted_connector_raw.append(
+                    (
+                        d_oid,
+                        float(prop.ctx.dangle_x),
+                        float(prop.ctx.dangle_y),
+                        float(prop.ctx.near_x),
+                        float(prop.ctx.near_y),
+                    )
+                )
 
         def _crossing_blocked(prop: Any) -> bool:
             if not reject_crossing:
@@ -4436,7 +4440,9 @@ class FillLineGaps:
 
         # {parent_id: set of conflicting accepted dangle_oids}
         conflicts_by_parent: dict[int, set[int]] = {}
-        with arcpy.da.SearchCursor(_near_table, ["IN_FID", "NEAR_FID", "NEAR_DIST"]) as cur:
+        with arcpy.da.SearchCursor(
+            _near_table, ["IN_FID", "NEAR_FID", "NEAR_DIST"]
+        ) as cur:
             for in_fid, near_fid, near_dist in cur:
                 if near_dist != 0.0:
                     continue
@@ -4475,7 +4481,11 @@ class FillLineGaps:
                 entry["skip"] = True
                 resnap_crossing_rejected_oids.add(dangle_oid)
 
-        return resnap_plan, resnap_crossing_rejected_oids, resnap_crossing_displaced_oids
+        return (
+            resnap_plan,
+            resnap_crossing_rejected_oids,
+            resnap_crossing_displaced_oids,
+        )
 
     def _assemble_plan_entries(
         self,
@@ -5337,9 +5347,13 @@ class FillLineGaps:
         if self.candidate_connections_output is not None:
             self._setup_candidate_connections_output(self.candidate_connections_output)
 
-        plan, resnap_captures, diagnostics, accepted_connector_raw, kruskal_rank_by_dangle_oid = (
-            self._build_plan(dangles_fc=dangles_for_plan, target_layers=targets)
-        )
+        (
+            plan,
+            resnap_captures,
+            diagnostics,
+            accepted_connector_raw,
+            kruskal_rank_by_dangle_oid,
+        ) = self._build_plan(dangles_fc=dangles_for_plan, target_layers=targets)
 
         # Capture snap-source dangle endpoints before _apply_plan moves them.
         snap_source_dangle_xy: dict[int, tuple[float, float]] = {
@@ -5358,17 +5372,23 @@ class FillLineGaps:
                 snap_source_dangle_xy=snap_source_dangle_xy,
             )
 
-            if self.reject_crossing_connectors and resnap_plan and accepted_connector_raw:
-                resnap_plan, resnap_crossing_rejected_oids, resnap_crossing_displaced_oids = (
-                    self._recheck_resnap_crossings(
-                        resnap_plan=resnap_plan,
-                        accepted_connector_raw=accepted_connector_raw,
-                        kruskal_rank_by_dangle_oid=kruskal_rank_by_dangle_oid,
-                        trim_distance=2.0 * float(self.connectivity_tolerance_meters),
-                        spatial_reference=arcpy.SpatialReference(
-                            self.crossing_check_spatial_reference
-                        ),
-                    )
+            if (
+                self.reject_crossing_connectors
+                and resnap_plan
+                and accepted_connector_raw
+            ):
+                (
+                    resnap_plan,
+                    resnap_crossing_rejected_oids,
+                    resnap_crossing_displaced_oids,
+                ) = self._recheck_resnap_crossings(
+                    resnap_plan=resnap_plan,
+                    accepted_connector_raw=accepted_connector_raw,
+                    kruskal_rank_by_dangle_oid=kruskal_rank_by_dangle_oid,
+                    trim_distance=2.0 * float(self.connectivity_tolerance_meters),
+                    spatial_reference=arcpy.SpatialReference(
+                        self.crossing_check_spatial_reference
+                    ),
                 )
             else:
                 resnap_crossing_rejected_oids: set[int] = set()
@@ -5380,7 +5400,8 @@ class FillLineGaps:
                 resnapped_dangle_oids = {
                     int(v["dangle_oid"])
                     for v in resnap_plan.values()
-                    if isinstance(v, dict) and "dangle_oid" in v
+                    if isinstance(v, dict)
+                    and "dangle_oid" in v
                     and not v.get("skip", False)
                 }
                 for diag in diagnostics:
