@@ -1,13 +1,15 @@
 # Arealdekke - Generalization Pipeline
 
-This folder contains all functions and classes that are relevant and sepcific to the arealdekke generalization pipeline.
+This folder contains all functions and classes that are relevant and specific to the arealdekke generalization pipeline.
 
+#
 ## 📁 Program Structure
 
-The file structure of our arealdekke pipeline is structured around three core classes: **Arealdekke, Category and Program History**. Arealdekke represents the arealdekke as a whole. It is used to handle procedures where relations between the different arealdekke types matter. Category represents a single arealdekke type. This is used to process the arealdekke types seperately. Lastly, the Program History represents a yaml file that includes information about how far the program got during its last run. This ensures that the program can restart on its last checkpoint if the program suddenly stops.
+The file structure of our arealdekke pipeline is structured around three core classes: **Arealdekke**, **Category** and **Program History**. Arealdekke represents the arealdekke as a whole unit. It is used to handle procedures where relations between the different arealdekke types matter. Category represents a single arealdekke type. This is used to process the arealdekke types separately. Lastly, the Program History represents a yaml file that includes information about how far the program got during its last run. This ensures that the program can restart on its last checkpoint if the program suddenly stops.
 
 The Python files is organized into the following folders:
-````
+
+```
 root
 |___generalization
     |___n10
@@ -16,16 +18,17 @@ root
             |___Orchestrator
             |___Parameters
             |___Overall_tools
-````
+```
 
-***Category_tools***. Includes functionality used for editing single selections of land use categories.
+***Category_tools***: Includes functionality used for editing single selections of land use categories.
 
-***Orchestrator***. Contains the core classes and functions that constitutes the skeleton of the pipeline. Arealdekke_orchistrator.py is the pipeline root that initiates and calls all classes.
+***Orchestrator***: Contains the core classes and functions that constitutes the skeleton of the pipeline. Arealdekke_orchestrator.py is the pipeline root that initiates and calls all classes.
 
-***Parameters***. Takes care of all parameters used to initialize classes and functionality based upon specific rule sets.
+***Parameters***: Takes care of all parameters used to initialize classes and functionality based upon specific rule sets.
 
-***Overall_tools***. Includes all functionality that handles arealdekke as one unit.
-##
+***Overall_tools***: Includes all functionality that handles arealdekke as one unit.
+
+#
 ## Class documentation
 
 ### 🌻Arealdekke
@@ -60,9 +63,8 @@ root
 |------------|-------------|------------|-----------------|----------------|
 | **Name**| **Parameters** | **Return** | **Description** | **Tools used** |
 
-
 ##
-### 🌻Category_class.py
+### 🌻Category
 
 |**Attributes** | | |
 |----------------|-|-|
@@ -97,7 +99,7 @@ root
 | set_accessibility | bool | None | Locks or opens the category. | None |
 
 ##
-### 🌻Program_history_class.py
+### 🌻Program History
 
 |**Attributes** | | |
 |----------------|-|-|
