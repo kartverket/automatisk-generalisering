@@ -69,8 +69,17 @@ LandUse:
   N10:
     elvFlate: {"width": 6, "thin": True}
 
+
 BuffSmallPolygonSegments:
   description:
     - Buffs parts of polygons that are below a specified minimum value.
   N10:
     min_width: {"ElvFlate":6, "Innsjo":6}
+
+
+SmallFeatures:
+  description:
+    - Changes attributes of small features to look more like the actual terrain
+    - Minimum areas for each category
+  N10:
+    Bebygd: 1000

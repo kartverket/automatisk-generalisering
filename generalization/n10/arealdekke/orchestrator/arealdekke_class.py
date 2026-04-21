@@ -4,7 +4,6 @@ import yaml
 from composition_configs import core_config
 from file_manager import WorkFileManager
 from file_manager.n10.file_manager_arealdekke import Arealdekke_N10
-from input_data import input_n10, input_test_data
 from generalization.n10.arealdekke.orchestrator.category_class import Category
 from custom_tools.decorators.timing_decorator import timing_decorator
 
@@ -26,18 +25,22 @@ from generalization.n10.arealdekke.overall_tools.island_controller import (
 )
 from generalization.n10.arealdekke.overall_tools.passability_layer import (
     create_passability_layer,
+    postprocess_passability_layer,
 )
 from generalization.n10.arealdekke.overall_tools.overlap_remover import (
     remove_overlaps,
 )
 from generalization.n10.arealdekke.overall_tools.fill_holes import fill_holes
+from generalization.n10.arealdekke.overall_tools.small_features_changer import (
+    change_attribute_value_main,
+)
 
 arcpy.env.overwriteOutput = True
 
 
 class Arealdekke:
 
-    def __init__(self, map_scale) -> None:
+    def __init__(self, input_data: str, map_scale: str) -> None:
 
         # Setting up file manager w. dictionary for easy file access
         self.working_fc = (
@@ -69,9 +72,14 @@ class Arealdekke:
 
         # Extracts the data and saves it in the object
         arcpy.management.CopyFeatures(
-            in_features=input_test_data.arealdekke,  # input_n10.Arealdekke_Buskerud,
+            in_features=input_data,
             out_feature_class=self.files["arealdekke_fc"],
         )
+
+        self.final_categories_fc = (
+            Arealdekke_N10.arealdekke_processed_categories__n10_land_use.value
+        )
+        self.final_output_fc = Arealdekke_N10.arealdekke_class_final__n10_land_use.value
 
         # Creates a variable to see if the data has been preprocessed.
         # Safety lock to make sure categories are not added before data is ok.
@@ -117,6 +125,8 @@ class Arealdekke:
             output_fc=Arealdekke_N10.elim_output.value,
             map_scale=self.__map_scale,
         )
+
+        change_attribute_value_main(working_fc=Arealdekke_N10.elim_output.value)
 
         output_fc = Arealdekke_N10.dissolve_gangsykkel.value
 
@@ -220,10 +230,26 @@ class Arealdekke:
         # Save processed data to final fc and delete the last files
         arcpy.management.CopyFeatures(
             in_features=self.files["arealdekke_fc"],
-            out_feature_class=Arealdekke_N10.arealdekke_class_final__n10_land_use.value,
+            out_feature_class=self.final_categories_fc,
         )
 
         self.wfm.delete_created_files()
+
+    @timing_decorator
+    def finish_results(self) -> None:
+        """
+        Performes a final clean-up of the results by adjusting any misalignments of geometries.
+        """
+        postprocess_passability_layer(
+            final_fc=self.final_categories_fc,
+            passability_fc=Arealdekke_N10.passability__n10_land_use.value,
+        )
+
+        arealdekke_dissolver(
+            input_fc=self.final_categories_fc,
+            output_fc=self.final_output_fc,
+            map_scale=self.__map_scale,
+        )
 
     # ========================
     # Getters
