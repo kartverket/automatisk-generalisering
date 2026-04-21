@@ -194,7 +194,7 @@
     <span class="n">arcpy</span><span class="o">.</span><span class="n">management</span><span class="o">.</span><span class="n">Merge</span><span class="p">(</span><span class="n">inputs</span><span class="o">=</span><span class="n">intersect_results</span><span class="p">,</span> <span class="n">output</span><span class="o">=</span><span class="n">merged</span><span class="p">)</span>
 
     <span class="nb">print</span><span class="p">(</span>
-        <span class="s2">&quot;Dissoling merged geometries based on &#39;fremkommelighet&#39; to create the final passability layer.</span><span class="se">\n</span><span class="s2">&quot;</span>
+        <span class="s2">&quot;Dissolving merged geometries based on &#39;fremkommelighet&#39; to create the final passability layer.</span><span class="se">\n</span><span class="s2">&quot;</span>
     <span class="p">)</span>
     <span class="n">arcpy</span><span class="o">.</span><span class="n">management</span><span class="o">.</span><span class="n">Dissolve</span><span class="p">(</span>
         <span class="n">in_features</span><span class="o">=</span><span class="n">merged</span><span class="p">,</span>

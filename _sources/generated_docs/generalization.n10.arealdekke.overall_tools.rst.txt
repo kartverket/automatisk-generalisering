@@ -84,6 +84,14 @@ generalization.n10.arealdekke.overall\_tools.passability\_layer module
    :show-inheritance:
    :undoc-members:
 
+generalization.n10.arealdekke.overall\_tools.small\_features\_changer module
+----------------------------------------------------------------------------
+
+.. automodule:: generalization.n10.arealdekke.overall_tools.small_features_changer
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
 Module contents
 ---------------
 

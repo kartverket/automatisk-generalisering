@@ -103,6 +103,7 @@
 <span class="n">category_class</span> <span class="o">=</span> <span class="s2">&quot;category_class&quot;</span>
 <span class="n">overlap_merger</span> <span class="o">=</span> <span class="s2">&quot;overlap_merger&quot;</span>
 <span class="n">fill_holes</span> <span class="o">=</span> <span class="s2">&quot;fill_holes&quot;</span>
+<span class="n">small_features_changer</span> <span class="o">=</span> <span class="s2">&quot;small_features_changer&quot;</span>
 
 
 <div class="viewcode-block" id="Arealdekke_N10">
@@ -287,6 +288,10 @@
         <span class="n">script_source_name</span><span class="o">=</span><span class="n">arealdekke_class</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">&quot;in_progress_files&quot;</span>
     <span class="p">)</span>
 
+    <span class="n">arealdekke_processed_categories__n10_land_use</span> <span class="o">=</span> <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_gdb</span><span class="p">(</span>
+        <span class="n">script_source_name</span><span class="o">=</span><span class="n">arealdekke_class</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">&quot;final_categories&quot;</span>
+    <span class="p">)</span>
+
     <span class="n">arealdekke_class_final__n10_land_use</span> <span class="o">=</span> <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_gdb</span><span class="p">(</span>
         <span class="n">script_source_name</span><span class="o">=</span><span class="n">arealdekke_class</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">&quot;final_file&quot;</span>
     <span class="p">)</span>
@@ -313,6 +318,14 @@
 
     <span class="n">fill_holes__n10_land_use</span> <span class="o">=</span> <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_gdb</span><span class="p">(</span>
         <span class="n">script_source_name</span><span class="o">=</span><span class="n">fill_holes</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">&quot;fill_holes&quot;</span>
+    <span class="p">)</span>
+
+    <span class="c1"># ========================================</span>
+    <span class="c1">#                   SMALL FEATURES CHANGER</span>
+    <span class="c1"># ========================================</span>
+
+    <span class="n">small_features_changer__n10_land_use</span> <span class="o">=</span> <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_gdb</span><span class="p">(</span>
+        <span class="n">script_source_name</span><span class="o">=</span><span class="n">small_features_changer</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">&quot;small_features_changer&quot;</span>
     <span class="p">)</span></div>
 
 </pre></div>
