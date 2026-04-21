@@ -103,27 +103,35 @@ class test_arealdekket_class(unittest.TestCase):
     def test_preprocess(self):
 
         # Does preprocess restart where it last stopped?
-        temp_obj_pre_comp=Arealdekke.__new__(Arealdekke)
-        temp_obj_pre_comp._Arealdekke__preprocessed=False
-        temp_obj_pre_comp._Arealdekke__preprocessings_completed=2
-        temp_obj_pre_comp._Arealdekke__map_scale="N10"
-        temp_obj_pre_comp.categories=[]
-        temp_obj_pre_comp.program_history=self.temp_obj_pre_comp
-        temp_obj_pre_comp.files={"arealdekke_fc":"path"}
-
         fake_preprocesses=[MagicMock() for _ in range(10)]
 
         with patch(self.arealdekke_module + ".arcpy") as mock_arcpy, \
-        patch(self.arealdekke_module + ".History_class") as mock_history_pre_comp, \
-        patch.object(Arealdekke, "set_preprocesses", return_value=fake_preprocesses) as mock_preprocesses_lst:
+            patch(self.arealdekke_module + ".History_class") as mock_history_pre_comp, \
+            patch.object(Arealdekke, "set_preprocesses", return_value=fake_preprocesses) as mock_preprocesses_lst, \
+            tempfile.NamedTemporaryFile(mode="w", suffix=".yml", delete=False) as temp_pre_comp:
+
+            data_pre_comp: dict = {
+            "newest_version": "path",
+            "map_scale": "N10",
+            "preprocessed": False,
+            "preprocessing_operations_completed": 2,
+            "category_history":[]
+            }
+
+            yaml.dump(data_pre_comp, temp_pre_comp)
+            temp_pre_comp.close()
+            temp_path_pre_comp = temp_pre_comp.name
+            temp_obj_pre_comp = History_class(file_path=Path(temp_path_pre_comp))
             
             mock_arcpy.return_value = None
-            temp_obj_pre_comp.program_history.update_history_top_lvl = MagicMock()
+            mock_history_pre_comp.return_value = temp_obj_pre_comp
 
-            temp_obj_pre_comp.preprocess()
+            temp_arealdekke_pre_comp=Arealdekke("N10")
+
+            temp_arealdekke_pre_comp.preprocess()
 
             assert sum(preprocess.call_count for preprocess in fake_preprocesses) == 8
-            self.assertEqual(temp_obj_pre_comp._Arealdekke__preprocessings_completed, 10)
+            self.assertEqual(temp_arealdekke_pre_comp._Arealdekke__preprocessings_completed, 10)
 
     def test_get_locked_categories(self)->None:
 
@@ -143,19 +151,35 @@ class test_arealdekket_class(unittest.TestCase):
         pass
 
     def test_process_categories(self)->None:
-        
+
         # What happens if we run through the process as normal?
-        with patch(self.arealdekke_module + ".History_class") as mock_history_pre_comp:
+        with patch(self.arealdekke_module + ".History_class") as mock_history_pre_comp, \
+            patch.object(Arealdekke, "get_locked_categories") as mock_get_locked, \
+            patch.object(Arealdekke, "get_category") as mock_get_category, \
+            patch(self.arealdekke_module + ".category_class.process_category") as mock_category_class, \
+            patch(self.arealdekke_module+".arcpy.management.CopyFeatures") as mock_arcpy_copy:
             
             mock_history_pre_comp.return_value = self.temp_obj_pre_comp
-            arealdekke_pre_comp = Arealdekke(map_scale="N10")
+            mock_get_locked.return_value="locked_cats"
+            mock_get_category.return_value="category"
+            mock_category_class.return_value={"key1":"value1","key2":"value2","key3":"value3"}
 
+            cat1=Category.__new__(Category)
+            cat1._Category__accessibility=True
+
+            cat2=Category.__new__(Category)
+            cat2._Category__accessibility=True
+
+            cat3=Category.__new__(Category)
+            cat3._Category__accessibility=True
+
+            arealdekke_pre_comp = Arealdekke(map_scale="N10")
+            arealdekke_pre_comp.categories=[cat1, cat2, cat3]
             arealdekke_pre_comp.process_categories()
 
             for cat in arealdekke_pre_comp.categories:
                 assert cat.get_accessibility()==False
                 assert cat.get_reinserts_completed()==2
-
 
 
         # What happens if we previously fully completed all operations for one category but did not reinsert it?

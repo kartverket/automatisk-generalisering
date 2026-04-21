@@ -104,7 +104,7 @@ class Arealdekke:
         #Get categories - If none are to be retrieved, empty list will return.
         cat_lvl_info: dict =self.program_history.restore_arealdekke_categories()
 
-        self.categories: list[Category] = cat_lvl_info.get("cats", None) or [Category]
+        self.categories: list[Category] = cat_lvl_info.get("cats", None) or []
 
             
     # ========================
@@ -184,9 +184,9 @@ class Arealdekke:
     def process_categories(self) -> None:
         
         # Iterates through the categories that are true, meaning they are open.
-        for category in list(
-            filter(lambda cat: cat.get_accessibility(), self.categories)
-        ):
+        open_cats=list(filter(lambda cat: cat.get_accessibility(), self.categories))
+
+        for category in open_cats:
             # Get the locked layers and the input layer
             self.get_locked_categories()
             self.get_category(category.get_title())
