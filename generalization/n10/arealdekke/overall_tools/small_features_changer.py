@@ -24,7 +24,7 @@ from generalization.n10.arealdekke.parameters.parameter_dataclasses import (
 @timing_decorator
 def change_attribute_value_main(working_fc: str) -> None:
     params = fetch_parameters(map_scale="N10")
-    
+
     change_attribute_value_category(
         working_fc=working_fc,
         field="arealdekke",
@@ -185,7 +185,10 @@ def change_attribute_value_category(
                 update.updateRow(updated_fields[category])
 
         # Updates attribute for 'exception_category'
-        arcpy.analysis.Near(in_features=files["selected_exception"], near_features=files["surrounding_features"])
+        arcpy.analysis.Near(
+            in_features=files["selected_exception"],
+            near_features=files["surrounding_features"],
+        )
 
         OIDS = ", ".join(
             [
@@ -200,11 +203,26 @@ def change_attribute_value_category(
             selection_type="NEW_SELECTION",
             where_clause=f"OBJECTID IN ({OIDS})",
         )
-        match_fields = {oid: val for oid, val in arcpy.da.SearchCursor(files["surrounding_features"], ["OID@", relevant_fields[exception_category][-1]])}
-        sel_oids = {orig_OID: near_OID for orig_OID, near_OID in arcpy.da.SearchCursor(files["selected_exception"], [new_field, "NEAR_FID"])}
-        with arcpy.da.UpdateCursor(work_lyr, ["OID@"] + relevant_fields[exception_category]) as update:
-            for oid, _, _ in update: # (category, dissolve_field, object ID)
-                update.updateRow([oid, exception_category, match_fields[sel_oids[str(oid)]]])
+        match_fields = {
+            oid: val
+            for oid, val in arcpy.da.SearchCursor(
+                files["surrounding_features"],
+                ["OID@", relevant_fields[exception_category][-1]],
+            )
+        }
+        sel_oids = {
+            orig_OID: near_OID
+            for orig_OID, near_OID in arcpy.da.SearchCursor(
+                files["selected_exception"], [new_field, "NEAR_FID"]
+            )
+        }
+        with arcpy.da.UpdateCursor(
+            work_lyr, ["OID@"] + relevant_fields[exception_category]
+        ) as update:
+            for oid, _, _ in update:  # (category, dissolve_field, object ID)
+                update.updateRow(
+                    [oid, exception_category, match_fields[sel_oids[str(oid)]]]
+                )
     else:
         # If no exception value, rewrite all selected features
         with arcpy.da.UpdateCursor(
@@ -229,7 +247,7 @@ def fetch_parameters(map_scale: str) -> dict:
 
     Args:
         map_scale (str): The map scale to fetch parameters for
-    
+
     Returns:
         dict: A dictionary of minimum area parameters for small features for the given map scale
     """

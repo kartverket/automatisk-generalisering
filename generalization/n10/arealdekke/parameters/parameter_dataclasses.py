@@ -36,6 +36,7 @@ class LandUseParameters:
 class buff_small_polygon_segments_parameters:
     min_width: dict
 
+
 @dataclass(frozen=True)
 class SmallFeatures:
     Bebygd: int

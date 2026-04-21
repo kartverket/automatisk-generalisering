@@ -76,7 +76,9 @@ class Arealdekke:
             out_feature_class=self.files["arealdekke_fc"],
         )
 
-        self.final_categories_fc = Arealdekke_N10.arealdekke_processed_categories__n10_land_use.value
+        self.final_categories_fc = (
+            Arealdekke_N10.arealdekke_processed_categories__n10_land_use.value
+        )
         self.final_output_fc = Arealdekke_N10.arealdekke_class_final__n10_land_use.value
 
         # Creates a variable to see if the data has been preprocessed.
