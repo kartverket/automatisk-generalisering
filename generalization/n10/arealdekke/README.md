@@ -29,169 +29,169 @@ root
 ## Class documentation
 
 ### 🌻Arealdekke
-- Parameters
-    - self.wfm: WorkFileManager
-    - self.files: Dictionary with the files used during the generalization of land use
-    - self.preprocessed: Boolean telling if the preprocessing is finished or not
-    - self.__map_scale
-- Functions
-    - Preprocess: Performes all the generalization not specific to a category to remove the vast amount of noise in the data set. Sets self.preprocessed = True when finished. This function uses the functions:
-        - *Attribute_changer*
-        - *Create_passability_layer*
-        - *Arealdekke_dissolver*
-        - *Island_controller*
-        - *Eliminate_small_polygons*
-        - *Gangsykkel_dissolver*
-    - Add_categories: Adds relevant categories to be processed from a **.yml* file (*arealdekke_categories_config.yml*) with correct initialization
-    - Process_categories: Performes all adjustment needed to generalize each category. Iterate through each category and their specific processing functions specified in the **.yml* file. The function starts by generalizing the specific category for itself, before the following functions are used to create a complete, final land use:
-        - *Remove_overlaps*
-        - *Fill_holes*
-- Getters
-    - Get_map_scale
-    - Get_locked_categories
-    - Get_category
-- Setters
-    - None
+
+>**Arealdekke_categories_config.yml**. Yaml file with setup for each unique land use category with descriptions of how to process the individual land use types. Each category contains:<br/>- Title (category name)<br/>- Operations (how the category should be processed)<br/>- Accessibility (whether or not the layer is locked / finished processing)<br/>- Order (processing rank / order)<br/>- Map_scale
+
+
+|**Attributes** | | |
+|----------------|-|-|
+| **Name**| **Datatype** | **Description** |
+| wfm | obj: WorkFileManager ||
+| files | dict | Dictionary with all files used in the generalization of land use. |
+| preprocessed | bool | Tells if the preprocessing is finished. |
+| __map_scale | str | Scale of the map. |
+
+|**Core** |               |             |                 |                |
+|---------|---------------|-------------|-----------------|----------------|
+| **Name**| **Parameters** | **Return** | **Description** | **Tools used** |
+| init | 
+| preprocess | None | None | Performes all the generalization not specific to a category to remove the vast amount of noise in the data set. Sets self.preprocessed = True when finished. |-*Attribute_changer*<br/>- *Create_passability_layer*<br/>- *Arealdekke_dissolver*<br/>- *Island_controller*<br/>- *Eliminate_small_polygons*<br/>- *Gangsykkel_dissolver*|
+| add_categories | None | None | Adds categories based on what specified in external yaml file (*arealdekke_categories_config.yml*).||
+| process_categories | None | None | Performes all adjustment needed to generalize each category. Iterate through each category and their specific processing functions specified in the **.yml* file. The function starts by generalizing the specific category for itself, before the reinserting it back into the arealdekke. | -*remove_overlaps*<br/>-*fill_holes*|
+
+|**Getters** |             |            |                 |                |
+|------------|-------------|------------|-----------------|----------------|
+| **Name**| **Parameters** | **Return** | **Description** | **Tools used** |
+| get_map_scale | None | str | Returns the scale of the map. | None |
+| get_locked_categories | None | None | Updates the locked_fcs key in the arealdekke files dictionary to include the feature classes of all locked files | * |
+| get_category | category title: str | 
+
+|**Setters** |             |            |                 |                |
+|------------|-------------|------------|-----------------|----------------|
+| **Name**| **Parameters** | **Return** | **Description** | **Tools used** |
+
 
 ##
 ### 🌻Category_class.py
 
-Main file for the *Category* class, including initialization function, processing functions of individually land use categories, and getters and setters.
+|**Attributes** | | |
+|----------------|-|-|
+| **Name**| **Datatype** | **Description** |
+| title | str | Name of category |
+| operations | list | List of functions that should be applied to this specific category. Order of items determine the order of function execution. Can be empty if no operations should be done. |
+| accessibility | bool | Represents if the category can be edited or not. True: open, False: locked. |
+| order | int | The order of which the category will be processed in relation to the other arealdekke categories. |
+| map_scale | str | The scale of the map the category belongs to. |
+| wfm | obj: WorkFileManager | |
+| files | dict | Dictionary with files used during generalization of each category. |
 
-- Parameters
-    - self.__title: Category name
-    - self.__operations: List of functions that should be applied to this specific category in the same order as in the list (can be an empty list)
-    - self.__accessibility: Boolean telling whether or not this category is editable or not (finished processing)
-    - self.__order
-    - self.__map_scale
-    - self.wfm: WorkFileManager
-    - self.files: Dictionary with the files used during the generalization of each unique category
-    - self.cat_tools: Dictionary with all possible functions that can be applied to a category
-    - self.lyr: Feature layer for this category
-- Functions
-    - Process_category: Iterates through the list of operations (*self.__operations*) for this category and generalizes the geometries
-    - `__str__`: Creates an informative string describing the category
-- Getters
-    - Get_title
-    - Get_order
-    - Get_accessibility
-    - Get_operations
-    - Get_map_scale
-- Setters
-    - Set_accessibility
 
+|**Core** |               |             |                 |                |
+|---------|---------------|-------------|-----------------|----------------|
+| **Name**| **Parameters** | **Return** | **Description** | **Tools used** |
+| process_category | input_fc: Path, locked_fc: Path, processed_fc: Path | dict | Iterates through the operations listed in self.operations and generalizes the geometries. Returns the 
+
+|**Getters** |             |            |                 |                |
+|------------|-------------|------------|-----------------|----------------|
+| **Name**| **Parameters** | **Return** | **Description** | **Tools used** |
+| get_title | None | str | Returns the title of the category. | None |
+| get_order | None | int | Returns the order of the category. | None |
+| get_accessibility | None | bool | Returns True or False based on if the category is open or locked. | None |
+| get_map_scale | None | str | Returns the map scale the category generalization must be based on. | None |
+| __str___ | None | str | Returns a string with most of the category attributes. Used for debugging etc. | None |
+
+
+|**Setters** |             |            |                 |                |
+|------------|-------------|------------|-----------------|----------------|
+| **Name**| **Parameters** | **Return** | **Description** | **Tools used** |
+| set_accessibility | bool | None | Locks or opens the category. | None |
 
 ##
-### Additional Class Configuration
+### 🌻Program_history_class.py
 
-**Arealdekke_categories_config.yml**
+|**Attributes** | | |
+|----------------|-|-|
+| **Name**| **Datatype** | **Description** |
+| program_history_path | obj: Path | File path to the yaml file where everything is tracked. |
+| new_history_created | bool | Tells if the history previously existed, or if the file had to be created from scratch. |
 
-Yaml file with setup for each unique land use category with descriptions of how to process the individual land use types. Each category contains:
 
-- Title (category name)
-- Operations (how the category should be processed)
-- Accessibility (whether or not the layer is locked / finished processing)
-- Order (processing rank / order)
-- Map_scale
+|**Core** |               |             |                 |                |
+|---------|---------------|-------------|-----------------|----------------|
+| **Name**| **Parameters** | **Return** | **Description** | **Tools used** |
+| init | file path: Path | None | Initialises the object by checking if the file path sent is empty or not. If it is empty, a new file will be created with the same file name. | None |
+
+|**Getters** |             |            |                 |                |
+|------------|-------------|------------|-----------------|----------------|
+| **Name**| **Parameters** | **Return** | **Description** | **Tools used** |
+| get_new_history_created | None | bool | Returns True or False depending on if a new history file was created. | None |
+| get_history_attribute_top_lvl | key: str | any | Extracts the content of the history file and checks if there is a key that is spelled the same as the key parameter sent to the function. If found, it returns the value belonging to the key. | None |
+| get_history_attribute_cat_lvl | category_title: str<br/>key: str | any | Extracts the content of the history file and finds the category specified. Then, it checks if the key belongs to the category and returns the value belonging to the key. | None |
+| restore_arealdekke_attributes | None | dict | Extracts contents of history file and checks if the previous run had completed any preprocessing operation steps. If it did, it will return the attributes that belonged to arealdekke last run, excluding the categories. | None |
+| restore_arealdekke_categories | None | dict | Extracts contents of history file and checks if the data completed its preprocessing and had begun preprocessing its categories. If both are true, it will collect the informaiton about each category and return them as a list and a boolean. This is then put into a dictionary with "cats_exist", which is a boolean that says if the list was empty or not. | None |
+ 
+
+|**Setters** |             |            |                 |                |
+|------------|-------------|------------|-----------------|----------------|
+| **Name**| **Parameters** | **Return** | **Description** | **Tools used** |
+| save_history | data: new entry | None | Saves new data to the history file.
+| load_history | None | Extracted yaml data | Extracts the data from the yaml history file and returns it to the caller. | None |
+| update_history_top_lvl | key: str<br/>value: any | None | Updates the value of a specified key that exist in the history file. | None |
+| update_history_cat_lvl | title: str<br/>key: str<br/>value: str | None | Updates the value of a specified key that belong to a specific category that exist in the history file. | None |
+| new_history_category | title: str<br/>operations:list<br/>accessibility: bool<br/>order: int<br/>map_scale: str<br/> | None | Adds a new category to the history file. | None
+| reset_history | None | None | A new history file is created with the same file path as the path specified during object initialisation. | None |
 
 ##
 ## 🧩 Category Tools
 
-**Buff_small_polygon_segments.py**. Buffs polygon segments under a minimum width requirement without overlapping locked features. *Create_overlapping_land_use* can be used afterwards to merge the buffered segments back into the layer.
+> Input for all category tools: <br/> input_fc
 
-**Simplify_land_use.py**. Uses simplify and smooth to adjust polygons and remove small, extra details.
+| Module Name       | File path         | Description                   |
+|-------------------|-------------------|-------------------------------|
+| **buff_small_polygon_segments** | buff_small_polygon_segments.py | Buffs polygon segments under a minimum width requirement without overlapping locked features. *Create_overlapping_land_use* can be used afterwards to merge the buffered segments back into the layer. |
+|**simplify_land_use**| Simplify_land_use.py | Uses simplify and smooth to adjust polygons and remove small, extra details.|
 
 
 
 ##
-## Overall_tools
+## 🧩 Overall_tools
 
-**Arealdekke_dissolver.py**. Main dissolve class that dissolves based on the categories defined in *attribute_changer.py*. This file contains:
 
-- **Restore_data_polygon_without_feature_to_point**. This function follows the rules for restoring data after dissolving and can be used by other functions / classes.
+### Attributes
 
-**Attribute_analyzer.py**. File analyzing attribute data from csv file and list. Functions:
-- Sort_results
-- Write_to_file
-- Load_rules
+| Module Name       | Parameters | Return | File path | Description         |
+|-------------------|------------|--------|-----------|---------------------|
+|**** | Attribute_analyzer.py | File analyzing attribute data from csv file and list. Core processes: <br/>- Sort_results <br/>- Write_to_file <br/>- Load_rules |
+|**attribute_changer** | attribute_changer.py | Re-categorizes *'arealdekke'* based on the fields: *"Arealdekke", "Hovedklasse", "Underklasse", "Grunnforhold"*. Overwrites the original *"Arealdekke"* field to replace it with two new fields: *"gammel_arealdekke"* and *"fremkommelighet"*.
 
-**Attribute_changer.py**
+##
+> **Attribute_prioritizing.csv** is a CSV file that outlines how the arealdekke categories must be sorted and reclassified. Can be imported into other files as a dictionary. The file contains the following columns: <br/>- Arealdekke <br/>- Hovedklasse <br/>- Underklasse <br/>- Grunnforhold <br/>- Ny_arealdekke <br/>- Fremkommelighet
+##
+### Elimination and Dissolving
 
-Re-categorizes *'arealdekke'* based on the fields:
 
-- Arealdekke
-- Hovedklasse
-- Underklasse
-- Grunnforhold
+| Module Name       | Parameters | Return | File path | Description         |
+|-------------------|------------|--------|-----------|---------------------|
+|**partition_call**| arealdekke_dissolver.py | Main dissolve class that dissolves based on the categories defined in           *attribute_changer.py*. This file contains: <br/> - **Restore_data_polygon_without_feature_to_point**. This function follows the rules for restoring data after dissolving and can be used by other functions / classes.|
+| **partition_call**| Eliminate_small_polygons.py| Eliminates small polygons based on *area times isoperimetric quotient* and removes narrow polygon parts with a minus buffer.|
+|**eliminate_holes**| Eliminate_small_polygons| Function in Eliminate_small_polygons. Finds and eliminates holes in selected polygons based on criteria spesified in parameters.yml.|
+|**fill_holes**| Fill_holes.py| Functionality to remove holes and replace it with geometries that are merged into the complete data set. The function does also take care of locked features not to be edited.|
+|**partition_call**| Gangsykkel_dissolver.py | Dissolves *'GangSykkelVeg'* into roads if they are adjacent. Uses *eliminate_holes* on the *'samferdsel'* layer (without *'GangSykkelVeg'*) afterwards.|
+|**island_controller**| Island_controller.py | Dissolves areas on small islands that are too small to include multiple land use categories. The category using most of the area of the island will get the area of the other categories.|
 
-Field *'arealdekke'* is overwritten, and a new field *'gammel_arealdekke'* is added, along with the field *'fremkommelighet'*. This file contains:
+### Reinsertion
 
-- Attribute_changer
+| Module Name       | Parameters | Return | File path | Description         |
+|-------------------|------------|--------|-----------|---------------------|
+|**overlap_merger**| Overlap_merger.py | Merges buffered segments of polygons into the original data set. Main function is called Create_overlapping_land_use.|
+|**overlap_remover**| Overlap_remover.py | Removes overlap between geometries to preserve a complete dataset without topological errors. The main function called Remove_overlaps.|
 
-**Attribute_prioritizing.csv**
 
-CSV file containing all the information of how to sort and reclassify the new *'arealdekke'* categories. The file contains the following columns:
+### Passability
 
-- Arealdekke
-- Hovedklasse
-- Underklasse
-- Grunnforhold
-- Ny_arealdekke
-- Fremkommelighet
+| Module Name       | Parameters | Return | File path | Description         |
+|-------------------|------------|--------|-----------|---------------------|
+|**passability_layer**| Passability_layer.py | Uses the rewritten attribute table from *attribute_changer* to extract geometries with specific values in field *'fremkommelighet'* (*'passability'*). Main function called Create_passability_layer. |
 
-**Eliminate_small_polygons.py**
 
-Eliminates too small polygons based on *area times isoperimetric quotient* and removes narrow polygon parts using minus buffer. This file contains:
+##
+## 🗨️🦜 Parameters
 
-- Eliminate_holes
-
-This function finds holes in the chosen polygons and eliminate those that are  within the specifications determined by the rule sets in parameters.yml for the *Eliminate class*. The function can be useful for other classes as well.
-
-**Fill_holes.py**
-
-Functionality to remove holes and replace it with geometries that are merged into the complete data set. The function does also take care of locked features not to be edited. The main function is:
-
-- Fill_holes
-
-**Gangsykkel_dissolver.py**
-
-Dissolves *'GangSykkelVeg'* into roads if they are adjacent. The function uses *eliminate_holes* on the *'samferdsel'* layer (without *'GangSykkelVeg'*) afterwards.
-
-**Island_controller.py**
-
-Dissolves areas on small islands that are too small to include multiple land use categories. The category using most of the area of the island will get the area of the other categories. Main function:
-
-- Island_controller
-
-**Overlap_merger.py**
-
-Functionality to merge buffered segments of polygons into the original data set. Main function:
-
-- Create_overlapping_land_use
-
-**Overlap_remover.py**
-
-Removes overlap between geometries to preserve a complete dataset without topological errors. The main function:
-
-- Remove_overlaps
-
-**Passability_layer.py**
-
-Uses the rewritten attribute table from *attribute_changer* to extract geometries with specific values in field *'fremkommelighet'* (*'passability'*). Main function:
-
-- Create_passability_layer
-
-### Parameters
-
-**Parameter_dataclasses.py**
-
-Specifies specific classes for specific functions with initialization parameters. Classes that are defined now:
+**Parameter_dataclasses.py**. Specifies classes for functions with initialization parameters. Classes that are defined now:
 
 - EliminateSmallPolygonsParameters
 - GangSykkelDissolverParameters
 - LandUseParameters
 - buff_small_polygon_segments_parameters
 
-**parameters.yml**
-
-Description and parameters for each function that needs elaborated parameters.
+**parameters.yml**. Description and parameters for each function that needs elaborated parameters.
