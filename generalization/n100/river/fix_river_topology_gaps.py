@@ -24,11 +24,9 @@ from custom_tools.general_tools.geometry_tools import (
 def main():
     environment_setup.main()
     raster = compute_raster_extent()
-    # fix_river_orientation(raster_list=raster)
+    fix_river_orientation(raster_list=raster)
     fill_line_topology_gaps(raster_list=raster)
     # fill_raod_gaps()
-    # find_xy_endpoints()
-    # find_relevant_rasters()
 
 
 def compute_raster_extent() -> list[type_defs.RasterFilePath]:
@@ -161,38 +159,6 @@ def fill_raod_gaps():
         ),
         output=Road_N100.data_preparation___integrated_nvdb_traktor_sti___n100_road.value,
     )
-
-
-@timing_decorator
-def find_xy_endpoints():
-    xy_endpoint_config = logic_config.LineEndpointToolConfig(
-        input_lines=River_N100.river_topology___river_angles___n100_river.value,
-        output_lines=River_N100.river_topology___river_xy_endpoints___n100_river.value,
-        endpoint_modes=(logic_config.LineEndpointMode.BOTH_ENDPOINTS,),
-        write_fields=True,
-        return_results=True,
-    )
-
-    results = LineEndpointTool(config=xy_endpoint_config).run()
-    # print(f"{results}")
-
-
-@timing_decorator
-def find_relevant_rasters():
-    rasters = find_rasters_for_vector_extent(
-        raster_dir=config.raster_directory,
-        input_features=River_N100.data_preparation___river_lines___n100_river.value,
-    )
-    print(rasters)
-
-    line_z_config = logic_config.LineZValueToolConfig(
-        input_lines=River_N100.data_preparation___river_lines___n100_river.value,
-        input_rasters=rasters,
-        endpoint_modes=(logic_config.LineZValueMode.BOTH_ENDPOINTS,),
-        output_lines=River_N100.river_topology___river_angles___n100_river.value,
-        write_fields=True,
-    )
-    LineZValueTool(config=line_z_config).run()
 
 
 if __name__ == "__main__":
