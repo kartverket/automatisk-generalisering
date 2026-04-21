@@ -31,6 +31,9 @@ from generalization.n10.arealdekke.overall_tools.overlap_remover import (
     remove_overlaps,
 )
 from generalization.n10.arealdekke.overall_tools.fill_holes import fill_holes
+from generalization.n10.arealdekke.overall_tools.small_features_changer import (
+    change_attribute_value_main,
+)
 
 arcpy.env.overwriteOutput = True
 
@@ -73,6 +76,9 @@ class Arealdekke:
             out_feature_class=self.files["arealdekke_fc"],
         )
 
+        self.final_categories_fc = (
+            Arealdekke_N10.arealdekke_processed_categories__n10_land_use.value
+        )
         self.final_output_fc = Arealdekke_N10.arealdekke_class_final__n10_land_use.value
 
         # Creates a variable to see if the data has been preprocessed.
@@ -119,6 +125,8 @@ class Arealdekke:
             output_fc=Arealdekke_N10.elim_output.value,
             map_scale=self.__map_scale,
         )
+
+        change_attribute_value_main(working_fc=Arealdekke_N10.elim_output.value)
 
         output_fc = Arealdekke_N10.dissolve_gangsykkel.value
 
@@ -222,7 +230,7 @@ class Arealdekke:
         # Save processed data to final fc and delete the last files
         arcpy.management.CopyFeatures(
             in_features=self.files["arealdekke_fc"],
-            out_feature_class=self.final_output_fc,
+            out_feature_class=self.final_categories_fc,
         )
 
         self.wfm.delete_created_files()
@@ -233,8 +241,14 @@ class Arealdekke:
         Performes a final clean-up of the results by adjusting any misalignments of geometries.
         """
         postprocess_passability_layer(
-            final_fc=self.final_output_fc,
+            final_fc=self.final_categories_fc,
             passability_fc=Arealdekke_N10.passability__n10_land_use.value,
+        )
+
+        arealdekke_dissolver(
+            input_fc=self.final_categories_fc,
+            output_fc=self.final_output_fc,
+            map_scale=self.__map_scale,
         )
 
     # ========================

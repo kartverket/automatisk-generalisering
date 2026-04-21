@@ -26,6 +26,7 @@ arealdekke_class = "arealdekke_class"
 category_class = "category_class"
 overlap_merger = "overlap_merger"
 fill_holes = "fill_holes"
+small_features_changer = "small_features_changer"
 
 
 class Arealdekke_N10(Enum):
@@ -208,6 +209,10 @@ class Arealdekke_N10(Enum):
         script_source_name=arealdekke_class, description="in_progress_files"
     )
 
+    arealdekke_processed_categories__n10_land_use = file_manager.generate_file_name_gdb(
+        script_source_name=arealdekke_class, description="final_categories"
+    )
+
     arealdekke_class_final__n10_land_use = file_manager.generate_file_name_gdb(
         script_source_name=arealdekke_class, description="final_file"
     )
@@ -234,4 +239,12 @@ class Arealdekke_N10(Enum):
 
     fill_holes__n10_land_use = file_manager.generate_file_name_gdb(
         script_source_name=fill_holes, description="fill_holes"
+    )
+
+    # ========================================
+    #                   SMALL FEATURES CHANGER
+    # ========================================
+
+    small_features_changer__n10_land_use = file_manager.generate_file_name_gdb(
+        script_source_name=small_features_changer, description="small_features_changer"
     )

@@ -112,7 +112,7 @@ def postprocess_passability_layer(final_fc: str, passability_fc: str) -> None:
     arcpy.management.Merge(inputs=intersect_results, output=merged)
 
     print(
-        "Dissoling merged geometries based on 'fremkommelighet' to create the final passability layer.\n"
+        "Dissolving merged geometries based on 'fremkommelighet' to create the final passability layer.\n"
     )
     arcpy.management.Dissolve(
         in_features=merged,
