@@ -209,6 +209,10 @@ class Arealdekke_N10(Enum):
         script_source_name=arealdekke_class, description="in_progress_files"
     )
 
+    arealdekke_processed_categories__n10_land_use = file_manager.generate_file_name_gdb(
+        script_source_name=arealdekke_class, description="final_categories"
+    )
+
     arealdekke_class_final__n10_land_use = file_manager.generate_file_name_gdb(
         script_source_name=arealdekke_class, description="final_file"
     )
