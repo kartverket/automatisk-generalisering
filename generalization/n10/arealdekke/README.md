@@ -1,11 +1,11 @@
 # Arealdekke - Generalization Pipeline
 
-This folder contains all functions and classes that are relevant and specific to the arealdekke generalization pipeline.
+This folder contains all functions and classes that are relevant and specific to the arealdekke / land use generalization pipeline.
 
 #
 ## 📁 Program Structure
 
-The file structure of our arealdekke pipeline is structured around three core classes: **Arealdekke**, **Category** and **Program History**. Arealdekke represents the arealdekke as a whole unit. It is used to handle procedures where relations between the different arealdekke types matter. Category represents a single arealdekke type. This is used to process the arealdekke types separately. Lastly, the Program History represents a yaml file that includes information about how far the program got during its last run. This ensures that the program can restart on its last checkpoint if the program suddenly stops.
+The file structure of our land use pipeline is structured around three core classes: **Arealdekke**, **Category** and **Program History**. Arealdekke represents the land use as a whole unit. It is used to handle procedures where relations between the different land use types matter. Category represents a single land use type. This is used to process the land use types separately. Lastly, the Program History represents a yaml file that includes information about how far the program got during its last run. This ensures that the program can restart on its last checkpoint if the program suddenly stops.
 
 The Python files is organized into the following folders:
 
@@ -22,27 +22,27 @@ root
 
 ***Category_tools***: Includes functionality used for editing single selections of land use categories.
 
-***Orchestrator***: Contains the core classes and functions that constitutes the skeleton of the pipeline. Arealdekke_orchestrator.py is the pipeline root that initiates and calls all classes.
+***Orchestrator***: Contains the core classes and functions that constitutes the skeleton of the pipeline. *Arealdekke_orchestrator.py* is the pipeline root that initiates and calls all classes.
 
 ***Parameters***: Takes care of all parameters used to initialize classes and functionality based upon specific rule sets.
 
-***Overall_tools***: Includes all functionality that handles arealdekke as one unit.
+***Overall_tools***: Includes all functionality that handles land use as one unit.
 
 #
 ## Class documentation
 
 ### 🌻Arealdekke
 
->**Arealdekke_categories_config.yml**. Yaml file with setup for each unique land use category with descriptions of how to process the individual land use types. Each category contains:<br/>- Title (category name)<br/>- Operations (how the category should be processed)<br/>- Accessibility (whether or not the layer is locked / finished processing)<br/>- Order (processing rank / order)<br/>- Map_scale
+>**Arealdekke_categories_config.yml**: Yaml file with setup for each unique land use category with descriptions of how to process the individual land use types. Each category contains:<br/>- Title (category name)<br/>- Operations (how the category should be processed)<br/>- Accessibility (whether or not the layer is locked / finished processing)<br/>- Order (processing rank / order)<br/>- Map_scale
 
 
 |**Attributes** | | |
 |----------------|-|-|
-| **Name**| **Datatype** | **Description** |
+| **Name** | **Datatype** | **Description** |
 | wfm | obj: WorkFileManager ||
-| files | dict | Dictionary with all files used in the generalization of land use. |
-| preprocessed | bool | Tells if the preprocessing is finished. |
-| __map_scale | str | Scale of the map. |
+| files | dict | Dictionary with all files used in the generalization of land use |
+| preprocessed | bool | Tells if the preprocessing is finished |
+| __map_scale | str | Scale of the map |
 
 |**Core** |               |             |                 |                |
 |---------|---------------|-------------|-----------------|----------------|
