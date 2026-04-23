@@ -153,25 +153,44 @@ class test_arealdekket_class(unittest.TestCase):
     def test_process_categories(self)->None:
 
         # What happens if we run through the process as normal?
-        with patch(self.arealdekke_module + ".History_class") as mock_history_pre_comp, \
+        with  patch.object(History_class, "update_history_cat_lvl") as mock_history_update, \
+            patch(self.arealdekke_module + ".History_class") as mock_history_pre_comp, \
             patch.object(Arealdekke, "get_locked_categories") as mock_get_locked, \
             patch.object(Arealdekke, "get_category") as mock_get_category, \
-            patch(self.arealdekke_module + ".category_class.process_category") as mock_category_class, \
+            patch.object(Category, "process_category") as mock_process_category, \
+            patch(self.arealdekke_module + ".remove_overlaps") as mock_remove_overlaps, \
+            patch(self.arealdekke_module + ".fill_holes") as mock_fill_holes, \
             patch(self.arealdekke_module+".arcpy.management.CopyFeatures") as mock_arcpy_copy:
             
             mock_history_pre_comp.return_value = self.temp_obj_pre_comp
             mock_get_locked.return_value="locked_cats"
             mock_get_category.return_value="category"
-            mock_category_class.return_value={"key1":"value1","key2":"value2","key3":"value3"}
+            mock_process_category.return_value = [
+                {"last_processed": "SomeCategory", "operations_completed": 1, "operations": 0},
+                {"last_processed": "SomeCategory", "operations_completed": 2, "operations": 1},
+            ]
+            mock_history_update.return_value=None
+            mock_remove_overlaps.return_value=None
+            mock_fill_holes.return_value=None
+            mock_arcpy_copy.return_value=None
 
             cat1=Category.__new__(Category)
             cat1._Category__accessibility=True
+            cat1._Category__title="Test1"
+            cat1._Category__reinserts_completed=0
+            cat1._Category__operations=["simplify_and_smooth","buff_small_segments"]
 
             cat2=Category.__new__(Category)
             cat2._Category__accessibility=True
+            cat2._Category__title="Test2"
+            cat2._Category__reinserts_completed=0
+            cat2._Category__operations=["simplify_and_smooth","buff_small_segments"]
 
             cat3=Category.__new__(Category)
             cat3._Category__accessibility=True
+            cat3._Category__title="Test3"
+            cat3._Category__reinserts_completed=0
+            cat3._Category__operations=["simplify_and_smooth","buff_small_segments"]
 
             arealdekke_pre_comp = Arealdekke(map_scale="N10")
             arealdekke_pre_comp.categories=[cat1, cat2, cat3]
@@ -184,8 +203,6 @@ class test_arealdekket_class(unittest.TestCase):
 
         # What happens if we previously fully completed all operations for one category but did not reinsert it?
         # What happens if we previously fully completed all opeations and reinsertions for one category?
-        
-        pass
 
     def tearDown(self):
         #Tear down the mocked yml files

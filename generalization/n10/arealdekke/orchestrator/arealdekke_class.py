@@ -106,6 +106,12 @@ class Arealdekke:
 
         self.categories: list[Category] = cat_lvl_info.get("cats", None) or []
 
+        # File paths for post preprocessing
+        self.final_categories_fc = (
+            Arealdekke_N10.arealdekke_processed_categories__n10_land_use.value
+        )
+        self.final_output_fc = Arealdekke_N10.arealdekke_class_final__n10_land_use.value
+
             
     # ========================
     # Main functions
@@ -203,7 +209,7 @@ class Arealdekke:
                     processed_layer=self.files["processed_fc"],
                     program_history=self.program_history
                 ):
-                    for key, value in operation:
+                    for key, value in operation.items():
                         self.program_history.update_history_cat_lvl(
                             key=key,
                             value=value
@@ -232,7 +238,7 @@ class Arealdekke:
                             ))
                 ]
 
-                for reinsert_operation in range(reinserts_completed, len):
+                for reinsert_operation in range(reinserts_completed, len(reinsert_operations)):
                     
                     reinsert_operations[reinsert_operation]()
 
@@ -369,6 +375,3 @@ class Arealdekke:
                 map_scale=self.__map_scale,
             )
         ]
-
-    def set_reinsert_operations(self)->list:
-        return 
