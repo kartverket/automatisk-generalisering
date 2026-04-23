@@ -1198,6 +1198,46 @@ class BuildPlanResult:
 
 
 class FillLineGaps:
+    """Fill small end-of-line gaps by snapping or extending dangle endpoints.
+
+    A dangle is an open polyline end.  For each dangle, this class picks the
+    best legal target within ``gap_tolerance_meters`` and edits the source
+    line so the gap closes.  Targets come from ``connect_to_features``, from
+    the input itself (``fill_gaps_on_self``), or both; at least one mode must
+    be enabled.
+
+    How:
+        ``run`` orchestrates the full workflow.  ``_build_plan`` drives the
+        four-scope decision pipeline and ``_apply_plan`` commits the edits.
+        The scopes are, in order:
+
+          - CANDIDATE:  angle and polyline caches, legality gates (distance,
+            network membership, illegal-target, barrier/crossing), and one
+            angle-aware proposal per dangle.
+          - NETWORK:    one winner per undirected A<->B connection, with Z
+            re-normalized inside each connection group.
+          - KRUSKAL:    cycle prevention and accepted-connector crossing
+            checks across all connection winners.
+          - DEFERRED:   post-apply resnap pass for connections whose target
+            endpoint moved during ``_apply_plan``, with an optional crossing
+            recheck.
+
+    Why:
+        Scope-based staging attributes every rejected candidate to the
+        earliest scope that can prove it.  The optional diagnostic feature
+        class ``candidate_connections_output`` relies on that separation so
+        each row carries the scope that decided its fate.
+
+    Outputs:
+        output_lines:
+            Required.  The edited polyline feature class.
+        line_changes_output:
+            Optional per-edit metadata feature class.
+        candidate_connections_output:
+            Optional diagnostic feature class.  One row per evaluated
+            ``(dangle, candidate)`` pair.
+    """
+
     ORIGINAL_ID = "line_gap_original_id"
 
     # Change output fields
@@ -1213,6 +1253,21 @@ class FillLineGaps:
     F_NEAR_Y = "NEAR_Y"
 
     def __init__(self, line_gap_config: logic_config.FillLineGapsConfig):
+        """Transcribe the config bundle into flat instance attributes.
+
+        The ``FillLineGapsConfig`` groups settings by concern (``advanced_config``,
+        ``output_config``, ``angle_config``, ``z_config``, ``crossing_config``,
+        ``connectivity_config``); ``__init__`` flattens those groups onto
+        ``self`` so hot-path methods can read one attribute instead of walking
+        the config tree.  It also resolves work-file names via
+        ``WorkFileManager`` and preloads the local angle cache.
+
+        Raises:
+            ValueError: if ``connect_to_features`` is ``None`` while
+                ``fill_gaps_on_self`` is ``False`` (no legal target source),
+                or if ``lines_are_directed`` is enabled with an angle weight
+                of zero (directed scoring would have no effect).
+        """
         self.input_lines = line_gap_config.input_lines
         self.output_lines = line_gap_config.output_lines
         self.connect_to_features = line_gap_config.connect_to_features
@@ -1373,6 +1428,12 @@ class FillLineGaps:
         return out
 
     def _resolve_edit_op(self, *, gap_source: GapSource) -> EditOp:
+        """Map ``edit_method`` + ``gap_source`` onto the geometry edit to perform.
+
+        ``FORCED_SNAP`` and ``FORCED_EXTEND`` ignore ``gap_source``.
+        ``AUTO`` snaps dangle-to-dangle pairs
+        (``GapSource.PAIR_DANGLE``) and extends everything else.
+        """
         method = self.edit_method
 
         if method == logic_config.EditMethod.FORCED_SNAP:
@@ -1392,6 +1453,14 @@ class FillLineGaps:
         b_parent: int,
         topology: TopologyModel,
     ) -> bool:
+        """Return ``True`` if two parent lines share a network under the topology scope.
+
+          - NONE: always ``False``.
+          - DIRECT_CONNECTION: ``True`` iff ``b`` is in ``a``'s direct
+            neighbor set.
+          - Component scopes: ``True`` iff both parents share a
+            connectivity id.
+        """
         scope = topology.scope
 
         if scope == logic_config.ConnectivityScope.NONE:
@@ -1740,6 +1809,15 @@ class FillLineGaps:
         target_layers: list[str],
         lines_key: DatasetKey,
     ) -> _AngleCaches:
+        """Build the polyline caches and line-like flags used by angle scoring.
+
+        Populates one cache per parent id for the source lines and one
+        OID-keyed cache per external dataset.  Line-like status is
+        resolved by the configured ``AngleTargetMode`` (falling back to
+        ``Describe.shapeType``).  When ``fill_gaps_on_self`` is enabled,
+        the self-lines dataset key is added to the line-like set so
+        self-targets participate in angle-aware scoring.
+        """
         polyline_by_parent = self._build_polyline_by_parent_id()
 
         polyline_by_external: dict[DatasetKey, dict[int, Any]] = {}
@@ -1913,6 +1991,17 @@ class FillLineGaps:
     # ----------------------------
 
     def _build_external_target_layers_once(self) -> None:
+        """Pre-filter each ``connect_to_features`` layer to its tolerance window.
+
+        Runs ``SELECT_LOCATION`` with ``WITHIN_A_DISTANCE`` at the
+        configured gap tolerance so downstream near-table queries and
+        angle caches only scan features that can possibly matter.  Each
+        output layer's angle mode is resolved from
+        ``connect_to_features_angle_mode`` (keyed by source path, source
+        dataset key, or output dataset key) and recorded in
+        ``_angle_mode_by_external_ds_key``.  Idempotent — skips work on
+        re-entry.
+        """
         if self.external_target_layers:
             return
         if self.connect_to_features is None:
@@ -1956,6 +2045,12 @@ class FillLineGaps:
             self._angle_mode_by_external_ds_key[str(out_key)] = mode
 
     def _select_targets_within_tolerance_of_dangles(self) -> list[str]:
+        """Return the combined target layer list for the near table.
+
+        Includes the tolerance-filtered self-lines layer (``target_self``)
+        when ``fill_gaps_on_self`` is enabled, followed by the external
+        target layers built in ``_build_external_target_layers_once``.
+        """
         targets: list[str] = []
         if self.fill_gaps_on_self:
             if self.write_work_files_to_memory:
@@ -3380,6 +3475,52 @@ class FillLineGaps:
     def _build_plan(
         self, *, dangles_fc: str, target_layers: list[str]
     ) -> BuildPlanResult:
+        """Decide which dangles to fill and how, in four staged scopes.
+
+        Each scope narrows the set of surviving proposals.  Rejected
+        candidates carry the scope label of the earliest stage that
+        rejected them, which drives the diagnostic feature class.
+
+        How:
+            CANDIDATE scope
+                Build the near table and angle caches, then run legality
+                gates (``_filter_legal_candidates``) and crossing
+                pre-filters (barrier + existing-feature CROSSES checks).
+                For each surviving dangle, pick the best line-target parent
+                (``_compute_best_line_parent_by_dangle``) and emit one
+                angle-aware proposal per dangle
+                (``_select_dangle_proposals``).
+
+            NETWORK scope
+                Detect mutual pairs, re-normalize Z inside each undirected
+                A<->B connection group (``_run_connection_normalization``),
+                and pick one winner per connection
+                (``_run_connection_selection``).  The winner is stamped
+                with its authoritative ``gap_source``.
+
+            KRUSKAL scope
+                Re-normalize Z globally (``_run_global_normalization``),
+                then run Kruskal-style cycle prevention plus
+                accepted-connector crossing checks (``_run_kruskal``).
+
+            DEFERRED scope
+                Identify proposals whose target endpoint will move during
+                ``_apply_plan`` (``_identify_resnap_captures``) and
+                assemble the per-parent plan entries
+                (``_assemble_plan_entries``).  Their final status is not
+                resolved here — it is filled in by
+                ``_update_deferred_diagnostics`` after the resnap pass in
+                ``run``.
+
+            Each scope short-circuits to a diagnostics-only
+            ``BuildPlanResult`` when no survivors remain, so the caller
+            still receives a complete rejection record.
+
+        Returns:
+            ``BuildPlanResult`` — plan keyed by parent id, plus resnap
+            captures, diagnostics, and the Kruskal bookkeeping needed for
+            the post-apply passes in ``run``.
+        """
         dangle_parent = self._build_dangle_parent_lookup(dangles_fc=dangles_fc)
         dangle_xy = self._build_dangle_xy_lookup(dangles_fc=dangles_fc)
 
@@ -5407,6 +5548,27 @@ class FillLineGaps:
                 cur.insertRow(self._diag_row(d, geom))
 
     def _apply_plan(self, plan: PlanByParent) -> None:
+        """Commit plan entries to ``lines_copy`` and optionally record changes.
+
+        Iterates ``lines_copy`` via ``UpdateCursor``.  For each parent line
+        with pending plan entries, applies each entry in order — SNAP moves
+        the dangle endpoint exactly to the target point; EXTEND inserts the
+        target point as the new endpoint while preserving the existing
+        vertices.  When ``line_changes_output`` is set and metadata writing
+        is enabled, a per-edit row is collected and inserted after all
+        geometry updates are complete.
+
+        How:
+            Each ``PlanEntry`` carries ``skip`` and ``processed`` flags.
+            Entries with ``skip=True`` (e.g. a losing side of a mutual pair
+            or a resnap capture displaced by a crossing recheck) are never
+            applied.  ``processed`` is set as soon as an entry is applied,
+            so calling ``_apply_plan`` a second time with the same plan is
+            a no-op for already-applied entries — this is what lets
+            ``run`` invoke ``_apply_plan`` twice (once for the initial
+            plan, once for the resnap plan) without double-editing any
+            line.
+        """
         if not plan:
             return
 
@@ -5539,6 +5701,39 @@ class FillLineGaps:
     # ----------------------------
 
     def run(self) -> None:
+        """Execute the full gap-fill workflow.
+
+        How:
+            1. Set up the arcpy environment and resolve work-file paths via
+               ``WorkFileManager``.
+            2. Copy inputs, stamp ``ORIGINAL_ID``, extract dangle endpoints
+               and (optionally) load raster handles for Z scoring.
+            3. Build the target universe: self-lines filtered by tolerance
+               (``fill_gaps_on_self``) plus external ``connect_to_features``
+               layers (``_build_external_target_layers_once``).
+            4. Keep only true dangles — those not already touching an
+               external target (``_filter_true_dangles``).
+            5. Initialize optional diagnostic feature classes
+               (``line_changes_output``, ``candidate_connections_output``).
+            6. Run the four-scope decision pipeline in ``_build_plan`` and
+               apply the resulting edits with ``_apply_plan``.
+            7. If any proposals deferred into the resnap scope, resolve
+               their final geometry with ``_resnap_connections``; when
+               ``reject_crossing_connectors`` is enabled, re-check the
+               resnapped geometry against accepted connectors via
+               ``_recheck_resnap_crossings`` before applying the second
+               pass and annotating diagnostics.
+            8. Write the diagnostic feature class (if requested), copy
+               ``lines_copy`` to ``output_lines``, and delete work files.
+
+        Why:
+            The resnap pass runs after the first ``_apply_plan`` because a
+            snap moves the target line's endpoint, which can invalidate any
+            connector previously anchored on that endpoint's last segment.
+            Resolving that re-projection pre-apply would require predicting
+            the snapped geometry; doing it post-apply reads the real
+            geometry and is exact.
+        """
         environment_setup.main()
 
         self.work_file_list = self.wfm.setup_work_file_paths(
