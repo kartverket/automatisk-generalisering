@@ -174,34 +174,39 @@ class test_arealdekket_class(unittest.TestCase):
             mock_fill_holes.return_value=None
             mock_arcpy_copy.return_value=None
 
-            cat1=Category.__new__(Category)
-            cat1._Category__accessibility=True
-            cat1._Category__title="Test1"
-            cat1._Category__reinserts_completed=0
-            cat1._Category__operations=["simplify_and_smooth","buff_small_segments"]
+            cat11=Category.__new__(Category)
+            cat11._Category__accessibility=True
+            cat11._Category__title="Test1"
+            cat11._Category__operations_completed=0
+            cat11._Category__reinserts_completed=0
+            cat11._Category__operations=["simplify_and_smooth","buff_small_segments"]
 
-            cat2=Category.__new__(Category)
-            cat2._Category__accessibility=True
-            cat2._Category__title="Test2"
-            cat2._Category__reinserts_completed=0
-            cat2._Category__operations=["simplify_and_smooth","buff_small_segments"]
+            cat12=Category.__new__(Category)
+            cat12._Category__accessibility=True
+            cat12._Category__title="Test2"
+            cat12._Category__operations_completed=0
+            cat12._Category__reinserts_completed=0
+            cat12._Category__operations=["simplify_and_smooth","buff_small_segments"]
 
-            cat3=Category.__new__(Category)
-            cat3._Category__accessibility=True
-            cat3._Category__title="Test3"
-            cat3._Category__reinserts_completed=0
-            cat3._Category__operations=["simplify_and_smooth","buff_small_segments"]
+            cat13=Category.__new__(Category)
+            cat13._Category__accessibility=True
+            cat13._Category__title="Test3"
+            cat13._Category__operations_completed=0
+            cat13._Category__reinserts_completed=0
+            cat13._Category__operations=["simplify_and_smooth","buff_small_segments"]
 
-            arealdekke_pre_comp = Arealdekke(map_scale="N10")
-            arealdekke_pre_comp.categories=[cat1, cat2, cat3]
-            arealdekke_pre_comp.process_categories()
+            arealdekke_no_pre_comp = Arealdekke(map_scale="N10")
+            arealdekke_no_pre_comp.categories=[cat11, cat12, cat13]
+            arealdekke_no_pre_comp.process_categories()
 
-            for cat in arealdekke_pre_comp.categories:
+            for cat in arealdekke_no_pre_comp.categories:
                 assert cat.get_accessibility()==False
                 assert cat.get_reinserts_completed()==2
 
 
         # What happens if we previously fully completed all operations for one category but did not reinsert it?
+        # What happens if we run through the process as normal?
+        
         # What happens if we previously fully completed all opeations and reinsertions for one category?
 
     def tearDown(self):
