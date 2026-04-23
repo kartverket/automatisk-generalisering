@@ -35,7 +35,7 @@ def split_polyline_featureclass(
     split_fc: str,
     output_fc: str,
     interval: float = 500.0,
-    type_fields: list = [],
+    type_fields: list = []
 ) -> None:
     """
     Divides all the polylines in input_fc into pieces of x meters equal intervall,
@@ -49,7 +49,7 @@ def split_polyline_featureclass(
         split_fc (str): Layer for the divided geometries
         output_fc (str): Where to store the final single part output geometries
         intervall (float, optional): The split intervall, default: 500 m
-        type_fields (list, optional): the fields which determine line types
+        type_fields (list, optional): the fields which determine line types 
     """
     # Fetch fields
     oid_fields = arcpy.Describe(input_fc).OIDFieldName
@@ -105,12 +105,13 @@ def split_polyline_featureclass(
                 in_table=split_fc, field_name=fld.name, field_type=fld.type
             )
 
+
+    
+
     # Divide the geometries
     with arcpy.da.SearchCursor(
         single_in, ["SHAPE@"] + type_fields
-    ) as s_cursor, arcpy.da.InsertCursor(
-        split_fc, ["SHAPE@"] + type_fields
-    ) as i_cursor:
+    ) as s_cursor, arcpy.da.InsertCursor(split_fc, ["SHAPE@"] + type_fields) as i_cursor:
         for s_row in s_cursor:
             geom = s_row[0]
             new_row = list(s_row)
@@ -160,7 +161,7 @@ def split_polyline_featureclass(
     if arcpy.Exists(joined_temp):
         arcpy.management.Delete(joined_temp)
 
-    match_fields = []
+    match_fields =[]
     for field in type_fields:
         match_fields.append([field, field])
     arcpy.analysis.SpatialJoin(
