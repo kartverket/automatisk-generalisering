@@ -66,7 +66,7 @@ def fill_line_topology_gaps(raster_list: list[type_defs.RasterFilePath]):
         input_lines=River_N100.river_topology___fixed_river_orientation___n100_river.value,
         output_lines=River_N100.river_topology___fixed_river_gaps___n100_river.value,
         work_file_manager_config=work_file_manager_config,
-        gap_tolerance_meters=25,
+        gap_tolerance_meters=150,
         connect_to_features=[
             River_N100.data_preparation___river_polygons___n100_river.value
         ],
@@ -86,7 +86,10 @@ def fill_line_topology_gaps(raster_list: list[type_defs.RasterFilePath]):
             angle_local_half_window_m=20,
             lines_are_directed=True,
         ),
-        z_config=logic_config.FillLineGapsZConfig(raster_paths=raster_list),
+        z_config=logic_config.FillLineGapsZConfig(
+            raster_paths=raster_list,
+            z_drop_threshold=0,
+        ),
         crossing_config=logic_config.FillLineGapsCrossingConfig(
             reject_crossing_connectors=True,
             crossing_check_spatial_reference=environment_setup.project_spatial_reference,
@@ -96,7 +99,7 @@ def fill_line_topology_gaps(raster_list: list[type_defs.RasterFilePath]):
             connectivity_tolerance_meters=environment_setup.ArcGisEnvironmentSetup.XY_TOLERANCE,
         ),
         advanced_config=logic_config.FillLineGapsAdvancedConfig(
-            increased_tolerance_edge_case_distance_meters=10,
+            increased_tolerance_edge_case_distance_meters=15,
         ),
     )
 
