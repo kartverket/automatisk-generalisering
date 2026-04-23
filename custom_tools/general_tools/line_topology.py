@@ -1,5 +1,5 @@
 from __future__ import annotations
-from dataclasses import dataclass, replace
+from dataclasses import dataclass, field, replace
 from enum import Enum
 import math
 import os
@@ -1126,21 +1126,49 @@ class _ScoredCandidateItem:
     end_z: Optional[float]
 
 
+@dataclass(frozen=True)
+class _AngleCaches:
+    """Polyline and line-type caches consumed by the CANDIDATE scope.
+
+    polyline_by_parent: self-line polylines keyed by parent_id.
+    polyline_by_external: polylines from external polyline targets, keyed by
+        dataset_key then SOURCE OID. Only populated for targets that survive
+        the line-like classification below.
+    is_external_line_like: per external dataset_key, whether it is treated as
+        a line-like target for scoring. Respects
+        connect_to_features_angle_mode overrides.
+    line_like_external_ds_keys: subset of is_external_line_like where the
+        value is True.
+    line_like_ds_keys: line_like_external_ds_keys plus lines_key when
+        fill_gaps_on_self is active.
+    """
+
+    polyline_by_parent: dict[ParentId, Any]
+    polyline_by_external: dict[DatasetKey, dict[int, Any]]
+    is_external_line_like: dict[DatasetKey, bool]
+    line_like_external_ds_keys: set[DatasetKey]
+    line_like_ds_keys: set[DatasetKey]
+
+
 @dataclass
 class _DiagnosticsState:
-    """All pipeline state collected during _build_plan for diagnostic assembly."""
+    """All pipeline state collected during _build_plan for diagnostic assembly.
 
-    step1a_illegal: list[_CandidateIllegalA]
-    step1b_illegal: list[_CandidateIllegalB]
-    step1b_scored: list[_CandidateScored]
-    connection_loser_oids: set[DangleOid]
-    kruskal_rejected_oids: set[DangleOid]
-    kruskal_crossing_rejected_oids: set[DangleOid]
-    accepted_dangle_oids: set[DangleOid]
-    gap_source_by_dangle: dict[DangleOid, GapSource]
-    dangle_norm_z_by_dangle: _NormZByDangle
-    connection_norm_z_by_dangle: _NormZByDangle
-    global_norm_z_by_dangle: _NormZByDangle
+    Every field defaults to empty so early bail-outs only need to pass the
+    fields that have actually been populated up to that point.
+    """
+
+    step1a_illegal: list[_CandidateIllegalA] = field(default_factory=list)
+    step1b_illegal: list[_CandidateIllegalB] = field(default_factory=list)
+    step1b_scored: list[_CandidateScored] = field(default_factory=list)
+    connection_loser_oids: set[DangleOid] = field(default_factory=set)
+    kruskal_rejected_oids: set[DangleOid] = field(default_factory=set)
+    kruskal_crossing_rejected_oids: set[DangleOid] = field(default_factory=set)
+    accepted_dangle_oids: set[DangleOid] = field(default_factory=set)
+    gap_source_by_dangle: dict[DangleOid, GapSource] = field(default_factory=dict)
+    dangle_norm_z_by_dangle: _NormZByDangle = field(default_factory=dict)
+    connection_norm_z_by_dangle: _NormZByDangle = field(default_factory=dict)
+    global_norm_z_by_dangle: _NormZByDangle = field(default_factory=dict)
 
 
 # Per-parent plan: each parent line carries a list of planned edits, applied in
@@ -1705,6 +1733,56 @@ class FillLineGaps:
             return str(getattr(desc, "shapeType", "")).lower() == "polyline"
         except Exception:
             return False
+
+    def _build_angle_caches(
+        self,
+        *,
+        target_layers: list[str],
+        lines_key: DatasetKey,
+    ) -> _AngleCaches:
+        polyline_by_parent = self._build_polyline_by_parent_id()
+
+        polyline_by_external: dict[DatasetKey, dict[int, Any]] = {}
+        is_external_line_like: dict[DatasetKey, bool] = {}
+
+        line_keys = self._line_dataset_keys()
+
+        for lyr in target_layers:
+            ds_key = self._dataset_key(lyr)
+
+            # Skip any internal line datasets
+            if ds_key in line_keys:
+                continue
+
+            mode = self._angle_mode_by_external_ds_key.get(
+                ds_key, logic_config.AngleTargetMode.AUTO
+            )
+            if mode == logic_config.AngleTargetMode.FORCE_NON_LINE:
+                is_external_line_like[ds_key] = False
+                continue
+
+            if self._is_polyline_fc(lyr):
+                is_external_line_like[ds_key] = True
+                polyline_by_external[ds_key] = self._build_polyline_by_oid(lyr)
+            else:
+                is_external_line_like[ds_key] = False
+
+        line_like_external_ds_keys: set[DatasetKey] = {
+            ds_key for ds_key, is_line in is_external_line_like.items() if is_line
+        }
+        # Self-lines are included only when fill_gaps_on_self is active (otherwise
+        # no candidates with lines_key appear in the near table anyway).
+        line_like_ds_keys: set[DatasetKey] = line_like_external_ds_keys.copy()
+        if self.fill_gaps_on_self:
+            line_like_ds_keys.add(lines_key)
+
+        return _AngleCaches(
+            polyline_by_parent=polyline_by_parent,
+            polyline_by_external=polyline_by_external,
+            is_external_line_like=is_external_line_like,
+            line_like_external_ds_keys=line_like_external_ds_keys,
+            line_like_ds_keys=line_like_ds_keys,
+        )
 
     def _orientation(self, angle_deg: float) -> float:
         return float(angle_deg) % 180.0
@@ -3217,6 +3295,84 @@ class FillLineGaps:
                         stack.append(int(nb))
         return comp_id
 
+    def _compute_best_line_parent_by_dangle(
+        self,
+        *,
+        legal_rows_by_dangle: dict[DangleOid, list[NearCandidate]],
+        parent_id_by_dangle: dict[DangleOid, ParentId],
+        dangle_xy: dict[DangleOid, tuple[float, float]],
+        dangle_parent: dict[DangleOid, ParentId],
+        dangles_key: DatasetKey,
+        lines_key: DatasetKey,
+        polyline_by_parent: dict[ParentId, Any],
+        polyline_by_external: dict[DatasetKey, dict[int, Any]],
+        is_external_line_like: dict[DatasetKey, bool],
+    ) -> dict[DangleOid, ParentId]:
+        """Per dangle, pick the line-target parent that wins the angle-aware
+        best-fit score. Used downstream by the edge-case bonus detection in
+        _select_dangle_proposals."""
+        best_line_parent_by_dangle: dict[DangleOid, ParentId] = {}
+
+        for dangle_oid in sorted(legal_rows_by_dangle.keys()):
+            parent_id = int(parent_id_by_dangle[dangle_oid])
+
+            xy = dangle_xy.get(int(dangle_oid))
+            if xy is None:
+                continue
+            d_x, d_y = xy
+
+            src_poly = polyline_by_parent.get(int(parent_id))
+            src_angle = None
+            if src_poly is not None:
+                src_angle = self._local_line_angle_cached(
+                    dataset_key=lines_key,
+                    oid=int(parent_id),
+                    polyline=src_poly,
+                    x=float(d_x),
+                    y=float(d_y),
+                )
+
+            best = None
+            best_score = None
+
+            for cand in legal_rows_by_dangle[dangle_oid]:
+                if cand.near_fc_key != lines_key:
+                    continue
+
+                assess = self._assess_angle(
+                    src_parent_id=int(parent_id),
+                    dangle_x=float(d_x),
+                    dangle_y=float(d_y),
+                    src_angle_deg=src_angle,
+                    cand=cand,
+                    dangles_fc_key=dangles_key,
+                    lines_fc_key=lines_key,
+                    dangle_parent=dangle_parent,
+                    dangle_xy=dangle_xy,
+                    polyline_by_parent=polyline_by_parent,
+                    polyline_by_external=polyline_by_external,
+                    is_external_line_like=is_external_line_like,
+                )
+                if assess.blocks:
+                    continue
+
+                raw_dist = cand.near_dist
+                _tol = float(self.gap_tolerance_meters) or 1.0
+                eff = self._compute_best_fit_score(
+                    norm_dist=raw_dist / _tol, assess=assess
+                )
+
+                # Deterministic tie-break:
+                score = (float(eff), float(raw_dist), self._candidate_sort_key(cand))
+                if best_score is None or score < best_score:
+                    best_score = score
+                    best = cand.near_fid
+
+            if best is not None:
+                best_line_parent_by_dangle[int(dangle_oid)] = int(best)
+
+        return best_line_parent_by_dangle
+
     # ----------------------------
     # Build plan (two-phase: detect pairs first, then decide moves)
     # ----------------------------
@@ -3289,52 +3445,41 @@ class FillLineGaps:
 
         collect_diags = self.candidate_connections_output is not None
 
-        # ----------------------------
-        # Angle caches
-        # ----------------------------
-        polyline_by_parent = self._build_polyline_by_parent_id()
-
-        # External polyline caches and line-type map, keyed by dataset_key(layer).
-        # Built before candidate filtering so line_like_ds_keys is available.
-        polyline_by_external: dict[DatasetKey, dict[int, Any]] = {}
-        is_external_line_like: dict[DatasetKey, bool] = {}
-
-        line_keys = (
-            self._line_dataset_keys()
-        )  # {dataset_key(lines_copy), dataset_key(target_self)}
-
-        for lyr in target_layers:
-            ds_key = self._dataset_key(lyr)
-
-            # Skip any internal line datasets
-            if ds_key in line_keys:
-                continue
-
-            mode = self._angle_mode_by_external_ds_key.get(
-                ds_key, logic_config.AngleTargetMode.AUTO
+        def _build_diagnostics(
+            state: _DiagnosticsState,
+        ) -> list["CandidateDiagnostic"]:
+            return self._assemble_diagnostics(
+                collect_diags=collect_diags,
+                state=state,
+                dangle_xy=dangle_xy,
+                dangle_parent=dangle_parent,
+                dangles_key=dangles_key,
+                lines_key=lines_key,
             )
-            if mode == logic_config.AngleTargetMode.FORCE_NON_LINE:
-                is_external_line_like[ds_key] = False
-                continue
 
-            if self._is_polyline_fc(lyr):
-                is_external_line_like[ds_key] = True
-                polyline_by_external[ds_key] = self._build_polyline_by_oid(lyr)
-            else:
-                is_external_line_like[ds_key] = False
+        def _empty_result(state: _DiagnosticsState) -> BuildPlanResult:
+            return BuildPlanResult.empty(diagnostics=_build_diagnostics(state))
 
-        # ds_keys for line-like targets that receive the expanded tolerance.
-        # Self-lines are included only when fill_gaps_on_self is active (otherwise no
-        # candidates with lines_key appear in the near table anyway).
-        line_like_external_ds_keys: set[DatasetKey] = {
-            ds_key for ds_key, is_line in is_external_line_like.items() if is_line
-        }
-        line_like_ds_keys: set[DatasetKey] = line_like_external_ds_keys.copy()
-        if self.fill_gaps_on_self:
-            line_like_ds_keys.add(lines_key)
+        # ============================
+        # CANDIDATE SCOPE
+        # Decides which (dangle, target) pairs are legal, then picks one
+        # winning proposal per dangle.
+        # ============================
+
+        # ----------------------------
+        # Step 1 - Angle & polyline caches
+        # Built before candidate filtering so line_like_ds_keys is available.
+        # ----------------------------
+        angle_caches = self._build_angle_caches(
+            target_layers=target_layers, lines_key=lines_key,
+        )
+        polyline_by_parent = angle_caches.polyline_by_parent
+        polyline_by_external = angle_caches.polyline_by_external
+        is_external_line_like = angle_caches.is_external_line_like
+        line_like_external_ds_keys = angle_caches.line_like_external_ds_keys
+        line_like_ds_keys = angle_caches.line_like_ds_keys
 
         # In directed mode, source dangles at a line's start node are invalid sources.
-        # polyline_by_parent is already built above; dangle_xy was built at the top.
         directed_start_dangles = self._directed_start_dangle_oids(
             dangle_xy=dangle_xy,
             dangle_parent=dangle_parent,
@@ -3342,7 +3487,8 @@ class FillLineGaps:
         )
 
         # ----------------------------
-        # Dangle filtering: collect legal candidates per dangle
+        # Step 2 - Legality gates (distance / network / illegal-target)
+        # Collects legal (dangle, target) candidate rows.
         # ----------------------------
         legal_rows_by_dangle, parent_id_by_dangle, _step1a_illegal = (
             self._filter_legal_candidates(
@@ -3361,7 +3507,7 @@ class FillLineGaps:
         )
 
         # ----------------------------
-        # Crossing conflict pre-filter (last legality check)
+        # Step 3 - Crossing pre-filters (last legality check)
         # Barrier check runs first so the subsequent check against existing
         # features only processes survivors.  The trimmed connector cache built
         # by _find_crossing_conflict_keys is reused in _run_kruskal.
@@ -3373,6 +3519,27 @@ class FillLineGaps:
             else None
         )
 
+        def _apply_crossing_filter(
+            reject_keys: set[tuple[int, str, int]], reason: str
+        ) -> None:
+            for _dangle_oid in list(legal_rows_by_dangle.keys()):
+                _parent_id = parent_id_by_dangle[_dangle_oid]
+                _remaining: list[NearCandidate] = []
+                for _cand in legal_rows_by_dangle[_dangle_oid]:
+                    _cand_key = (_dangle_oid, _cand.near_fc_key, _cand.near_fid)
+                    if _cand_key in reject_keys:
+                        if collect_diags:
+                            _step1a_illegal.append(
+                                _CandidateIllegalA(_dangle_oid, _parent_id, _cand, reason)
+                            )
+                    else:
+                        _remaining.append(_cand)
+                if _remaining:
+                    legal_rows_by_dangle[_dangle_oid] = _remaining
+                else:
+                    del legal_rows_by_dangle[_dangle_oid]
+                    parent_id_by_dangle.pop(_dangle_oid, None)
+
         if self.barrier_layers and legal_rows_by_dangle and _crossing_sr is not None:
             _barrier_keys = self._find_barrier_crossing_keys(
                 legal_rows_by_dangle=legal_rows_by_dangle,
@@ -3382,23 +3549,7 @@ class FillLineGaps:
                 spatial_reference=_crossing_sr,
             )
             if _barrier_keys:
-                for _dangle_oid in list(legal_rows_by_dangle.keys()):
-                    _parent_id = parent_id_by_dangle[_dangle_oid]
-                    _remaining: list[NearCandidate] = []
-                    for _cand in legal_rows_by_dangle[_dangle_oid]:
-                        _cand_key = (_dangle_oid, _cand.near_fc_key, _cand.near_fid)
-                        if _cand_key in _barrier_keys:
-                            if collect_diags:
-                                _step1a_illegal.append(
-                                    _CandidateIllegalA(_dangle_oid, _parent_id, _cand, "crosses_barrier_layer")
-                                )
-                        else:
-                            _remaining.append(_cand)
-                    if _remaining:
-                        legal_rows_by_dangle[_dangle_oid] = _remaining
-                    else:
-                        del legal_rows_by_dangle[_dangle_oid]
-                        parent_id_by_dangle.pop(_dangle_oid, None)
+                _apply_crossing_filter(_barrier_keys, "crosses_barrier_layer")
 
         trimmed_connector_cache: dict[tuple[int, str, int], Any] = {}
         if self.reject_crossing_connectors and legal_rows_by_dangle and _crossing_sr is not None:
@@ -3418,113 +3569,31 @@ class FillLineGaps:
                 )
             )
             if crossing_conflict_keys:
-                for _dangle_oid in list(legal_rows_by_dangle.keys()):
-                    _parent_id = parent_id_by_dangle[_dangle_oid]
-                    _remaining: list[NearCandidate] = []
-                    for _cand in legal_rows_by_dangle[_dangle_oid]:
-                        _cand_key = (_dangle_oid, _cand.near_fc_key, _cand.near_fid)
-                        if _cand_key in crossing_conflict_keys:
-                            if collect_diags:
-                                _step1a_illegal.append(
-                                    _CandidateIllegalA(_dangle_oid, _parent_id, _cand, "crosses_existing_feature")
-                                )
-                        else:
-                            _remaining.append(_cand)
-                    if _remaining:
-                        legal_rows_by_dangle[_dangle_oid] = _remaining
-                    else:
-                        del legal_rows_by_dangle[_dangle_oid]
-                        parent_id_by_dangle.pop(_dangle_oid, None)
+                _apply_crossing_filter(crossing_conflict_keys, "crosses_existing_feature")
 
         if not legal_rows_by_dangle:
-            return BuildPlanResult.empty(
-                diagnostics=self._assemble_diagnostics(
-                    collect_diags=collect_diags,
-                    state=_DiagnosticsState(
-                        step1a_illegal=_step1a_illegal,
-                        step1b_illegal=[],
-                        step1b_scored=[],
-                        connection_loser_oids=set(),
-                        kruskal_rejected_oids=set(),
-                        kruskal_crossing_rejected_oids=set(),
-                        accepted_dangle_oids=set(),
-                        gap_source_by_dangle={},
-                        dangle_norm_z_by_dangle={},
-                        connection_norm_z_by_dangle={},
-                        global_norm_z_by_dangle={},
-                    ),
-                    dangle_xy=dangle_xy,
-                    dangle_parent=dangle_parent,
-                    dangles_key=dangles_key,
-                    lines_key=lines_key,
-                ),
+            return _empty_result(
+                _DiagnosticsState(step1a_illegal=_step1a_illegal),
             )
 
         # ----------------------------
-        # Best line parent per dangle (angle-aware)
-        # Used by edge-case bonus detection.
+        # Step 4 - Best line parent per dangle (angle-aware)
+        # Used by edge-case bonus detection in the scoring step.
         # ----------------------------
-        best_line_parent_by_dangle: dict[DangleOid, ParentId] = {}
+        best_line_parent_by_dangle = self._compute_best_line_parent_by_dangle(
+            legal_rows_by_dangle=legal_rows_by_dangle,
+            parent_id_by_dangle=parent_id_by_dangle,
+            dangle_xy=dangle_xy,
+            dangle_parent=dangle_parent,
+            dangles_key=dangles_key,
+            lines_key=lines_key,
+            polyline_by_parent=polyline_by_parent,
+            polyline_by_external=polyline_by_external,
+            is_external_line_like=is_external_line_like,
+        )
 
-        for dangle_oid in sorted(legal_rows_by_dangle.keys()):
-            parent_id = int(parent_id_by_dangle[dangle_oid])
-
-            xy = dangle_xy.get(int(dangle_oid))
-            if xy is None:
-                continue
-            d_x, d_y = xy
-
-            src_poly = polyline_by_parent.get(int(parent_id))
-            src_angle = None
-            if src_poly is not None:
-                src_angle = self._local_line_angle_cached(
-                    dataset_key=lines_key,
-                    oid=int(parent_id),
-                    polyline=src_poly,
-                    x=float(d_x),
-                    y=float(d_y),
-                )
-
-            best = None
-            best_score = None
-
-            for cand in legal_rows_by_dangle[dangle_oid]:
-                if cand.near_fc_key != lines_key:
-                    continue
-
-                assess = self._assess_angle(
-                    src_parent_id=int(parent_id),
-                    dangle_x=float(d_x),
-                    dangle_y=float(d_y),
-                    src_angle_deg=src_angle,
-                    cand=cand,
-                    dangles_fc_key=dangles_key,
-                    lines_fc_key=lines_key,
-                    dangle_parent=dangle_parent,
-                    dangle_xy=dangle_xy,
-                    polyline_by_parent=polyline_by_parent,
-                    polyline_by_external=polyline_by_external,
-                    is_external_line_like=is_external_line_like,
-                )
-                if assess.blocks:
-                    continue
-
-                raw_dist = cand.near_dist
-                _tol = float(self.gap_tolerance_meters) or 1.0
-                eff = self._compute_best_fit_score(
-                    norm_dist=raw_dist / _tol, assess=assess
-                )
-
-                # Deterministic tie-break:
-                score = (float(eff), float(raw_dist), self._candidate_sort_key(cand))
-                if best_score is None or score < best_score:
-                    best_score = score
-                    best = cand.near_fid
-
-            if best is not None:
-                best_line_parent_by_dangle[int(dangle_oid)] = int(best)
         # ----------------------------
-        # Dangle selection: choose one proposal per dangle using angle-aware scoring
+        # Step 5 - Angle-aware selection: one proposal per dangle
         # ----------------------------
         _dangle_proposals, dangle_norm_z_by_dangle, _step1b_illegal, _step1b_scored = (
             self._select_dangle_proposals(
@@ -3547,56 +3616,33 @@ class FillLineGaps:
         )
 
         if not _dangle_proposals:
-            return BuildPlanResult.empty(
-                diagnostics=self._assemble_diagnostics(
-                    collect_diags=collect_diags,
-                    state=_DiagnosticsState(
-                        step1a_illegal=_step1a_illegal,
-                        step1b_illegal=_step1b_illegal,
-                        step1b_scored=_step1b_scored,
-                        connection_loser_oids=set(),
-                        kruskal_rejected_oids=set(),
-                        kruskal_crossing_rejected_oids=set(),
-                        accepted_dangle_oids=set(),
-                        gap_source_by_dangle={},
-                        dangle_norm_z_by_dangle=dangle_norm_z_by_dangle,
-                        connection_norm_z_by_dangle={},
-                        global_norm_z_by_dangle={},
-                    ),
-                    dangle_xy=dangle_xy,
-                    dangle_parent=dangle_parent,
-                    dangles_key=dangles_key,
-                    lines_key=lines_key,
+            return _empty_result(
+                _DiagnosticsState(
+                    step1a_illegal=_step1a_illegal,
+                    step1b_illegal=_step1b_illegal,
+                    step1b_scored=_step1b_scored,
+                    dangle_norm_z_by_dangle=dangle_norm_z_by_dangle,
                 ),
             )
 
+        # ============================
+        # NETWORK SCOPE
+        # Resolves one winner per undirected A<->B connection group.
+        # ============================
+
         # ----------------------------
-        # Mutual detection (for labeling)
+        # Step 1 - Mutual detection (for labeling)
         # - dangle mutual pairs: D1 targets D2 AND D2 targets D1 (both dangle targets)
         # - network mutual: any proposal exists in both directions between the two network nodes
         # ----------------------------
         active: list[_DangleProposal] = list(_dangle_proposals.values())
         if not active:
-            return BuildPlanResult.empty(
-                diagnostics=self._assemble_diagnostics(
-                    collect_diags=collect_diags,
-                    state=_DiagnosticsState(
-                        step1a_illegal=_step1a_illegal,
-                        step1b_illegal=_step1b_illegal,
-                        step1b_scored=_step1b_scored,
-                        connection_loser_oids=set(),
-                        kruskal_rejected_oids=set(),
-                        kruskal_crossing_rejected_oids=set(),
-                        accepted_dangle_oids=set(),
-                        gap_source_by_dangle={},
-                        dangle_norm_z_by_dangle=dangle_norm_z_by_dangle,
-                        connection_norm_z_by_dangle={},
-                        global_norm_z_by_dangle={},
-                    ),
-                    dangle_xy=dangle_xy,
-                    dangle_parent=dangle_parent,
-                    dangles_key=dangles_key,
-                    lines_key=lines_key,
+            return _empty_result(
+                _DiagnosticsState(
+                    step1a_illegal=_step1a_illegal,
+                    step1b_illegal=_step1b_illegal,
+                    step1b_scored=_step1b_scored,
+                    dangle_norm_z_by_dangle=dangle_norm_z_by_dangle,
                 ),
             )
         active_by_dangle = {int(p.ctx.dangle_oid): p for p in active}
@@ -3617,14 +3663,14 @@ class FillLineGaps:
         }
 
         # ----------------------------
-        # Connection normalization: re-normalize Z within each undirected A↔B connection group
+        # Step 2 - Connection normalization: re-normalize Z within each undirected A<->B connection group
         # ----------------------------
         connection_proposals_by_dangle, connection_norm_z_by_dangle = (
             self._run_connection_normalization(_dangle_proposals)
         )
 
         # ----------------------------
-        # Connection selection: one winner per undirected connection
+        # Step 3 - Connection selection: one winner per undirected connection
         # ----------------------------
         _connection_proposals, connection_loser_oids = self._run_connection_selection(
             connection_proposals_by_dangle=connection_proposals_by_dangle,
@@ -3633,15 +3679,20 @@ class FillLineGaps:
             collect_diags=collect_diags,
         )
 
+        # ============================
+        # KRUSKAL SCOPE
+        # Cycle prevention + crossing recheck across all connection winners.
+        # ============================
+
         # ----------------------------
-        # Global normalization: re-normalize Z across all connection winners
+        # Step 1 - Global normalization: re-normalize Z across all connection winners
         # ----------------------------
         _global_winners, global_norm_z_by_dangle = self._run_global_normalization(
             _connection_proposals
         )
 
         # ----------------------------
-        # Global selection: Kruskal cycle prevention across accepted connections
+        # Step 2 - Kruskal cycle prevention across accepted connections
         # ----------------------------
         (
             _global_proposals,
@@ -3664,45 +3715,8 @@ class FillLineGaps:
         )
 
         if not _global_proposals:
-            return BuildPlanResult.empty(
-                diagnostics=self._assemble_diagnostics(
-                    collect_diags=collect_diags,
-                    state=_DiagnosticsState(
-                        step1a_illegal=_step1a_illegal,
-                        step1b_illegal=_step1b_illegal,
-                        step1b_scored=_step1b_scored,
-                        connection_loser_oids=connection_loser_oids,
-                        kruskal_rejected_oids=kruskal_rejected_oids,
-                        kruskal_crossing_rejected_oids=kruskal_crossing_rejected_oids,
-                        accepted_dangle_oids=accepted_dangle_oids,
-                        gap_source_by_dangle=gap_source_by_dangle,
-                        dangle_norm_z_by_dangle=dangle_norm_z_by_dangle,
-                        connection_norm_z_by_dangle=connection_norm_z_by_dangle,
-                        global_norm_z_by_dangle=global_norm_z_by_dangle,
-                    ),
-                    dangle_xy=dangle_xy,
-                    dangle_parent=dangle_parent,
-                    dangles_key=dangles_key,
-                    lines_key=lines_key,
-                ),
-            )
-
-        # ----------------------------
-        # Resnap candidate identification
-        # ----------------------------
-        resnap_captures = self._identify_resnap_captures(_global_proposals)
-
-        # ----------------------------
-        # Build plan_by_parent: parent_id -> list[plan_entry]
-        # ----------------------------
-        plan_by_parent = self._assemble_plan_entries(_global_proposals)
-
-        return BuildPlanResult(
-            plan_by_parent=plan_by_parent,
-            resnap_captures=resnap_captures,
-            diagnostics=self._assemble_diagnostics(
-                collect_diags=collect_diags,
-                state=_DiagnosticsState(
+            return _empty_result(
+                _DiagnosticsState(
                     step1a_illegal=_step1a_illegal,
                     step1b_illegal=_step1b_illegal,
                     step1b_scored=_step1b_scored,
@@ -3715,10 +3729,40 @@ class FillLineGaps:
                     connection_norm_z_by_dangle=connection_norm_z_by_dangle,
                     global_norm_z_by_dangle=global_norm_z_by_dangle,
                 ),
-                dangle_xy=dangle_xy,
-                dangle_parent=dangle_parent,
-                dangles_key=dangles_key,
-                lines_key=lines_key,
+            )
+
+        # ============================
+        # DEFERRED SCOPE
+        # Resolved later in run() after _apply_plan + _resnap_connections.
+        # ============================
+
+        # ----------------------------
+        # Step 1 - Resnap candidate identification
+        # ----------------------------
+        resnap_captures = self._identify_resnap_captures(_global_proposals)
+
+        # ----------------------------
+        # Step 2 - Plan entry assembly: parent_id -> list[plan_entry]
+        # ----------------------------
+        plan_by_parent = self._assemble_plan_entries(_global_proposals)
+
+        return BuildPlanResult(
+            plan_by_parent=plan_by_parent,
+            resnap_captures=resnap_captures,
+            diagnostics=_build_diagnostics(
+                _DiagnosticsState(
+                    step1a_illegal=_step1a_illegal,
+                    step1b_illegal=_step1b_illegal,
+                    step1b_scored=_step1b_scored,
+                    connection_loser_oids=connection_loser_oids,
+                    kruskal_rejected_oids=kruskal_rejected_oids,
+                    kruskal_crossing_rejected_oids=kruskal_crossing_rejected_oids,
+                    accepted_dangle_oids=accepted_dangle_oids,
+                    gap_source_by_dangle=gap_source_by_dangle,
+                    dangle_norm_z_by_dangle=dangle_norm_z_by_dangle,
+                    connection_norm_z_by_dangle=connection_norm_z_by_dangle,
+                    global_norm_z_by_dangle=global_norm_z_by_dangle,
+                ),
             ),
             accepted_connector_raw=accepted_connector_raw,
             kruskal_rank_by_dangle_oid=kruskal_rank_by_dangle_oid,
@@ -5453,6 +5497,40 @@ class FillLineGaps:
                         row = row + (None,) * len(meta_fields)
                     icur.insertRow(row)
 
+    def _update_deferred_diagnostics(
+        self,
+        *,
+        diagnostics: list[CandidateDiagnostic],
+        resnap_plan: dict[ParentId, PlanEntry],
+        rejected_oids: set[DangleOid],
+        displaced_oids: set[DangleOid],
+        winner_oids: set[DangleOid],
+    ) -> None:
+        """Record each accepted candidate's resnap outcome on its diagnostic.
+        Precedence: displaced > winner > applied_resnapped > rejected."""
+        if self.candidate_connections_output is None or not diagnostics:
+            return
+
+        applied_oids = {v.dangle_oid for v in resnap_plan.values() if not v.skip}
+        for diag in diagnostics:
+            if diag.kruskal_scope is None or diag.kruskal_scope.status != "accepted":
+                continue
+            d_oid = int(diag.dangle_oid)
+            if d_oid in displaced_oids:
+                deferred = ScopeRecord(status="resnap_crossing_displaced")
+                diag.deferred_scope = deferred
+                diag.final_status = deferred
+            elif d_oid in winner_oids:
+                diag.deferred_scope = ScopeRecord(status="referenced_as_winner")
+            elif d_oid in applied_oids:
+                deferred = ScopeRecord(status="applied_resnapped")
+                diag.deferred_scope = deferred
+                diag.final_status = deferred
+            elif d_oid in rejected_oids:
+                deferred = ScopeRecord(status="resnap_crossing_rejected")
+                diag.deferred_scope = deferred
+                diag.final_status = deferred
+
     def _write_output(self) -> None:
         arcpy.management.CopyFeatures(self.lines_copy, self.output_lines)
 
@@ -5536,29 +5614,13 @@ class FillLineGaps:
 
             self._apply_plan({pid: [entry] for pid, entry in resnap_plan.items()})
 
-            if self.candidate_connections_output is not None and diagnostics:
-                resnapped_dangle_oids = {
-                    v.dangle_oid
-                    for v in resnap_plan.values()
-                    if not v.skip
-                }
-                for diag in diagnostics:
-                    d_oid = int(diag.dangle_oid)
-                    if diag.kruskal_scope is not None and diag.kruskal_scope.status == "accepted":
-                        if d_oid in resnap_crossing_displaced_oids:
-                            deferred = ScopeRecord(status="resnap_crossing_displaced")
-                            diag.deferred_scope = deferred
-                            diag.final_status = deferred
-                        elif d_oid in resnap_crossing_winner_oids:
-                            diag.deferred_scope = ScopeRecord(status="referenced_as_winner")
-                        elif d_oid in resnapped_dangle_oids:
-                            deferred = ScopeRecord(status="applied_resnapped")
-                            diag.deferred_scope = deferred
-                            diag.final_status = deferred
-                        elif d_oid in resnap_crossing_rejected_oids:
-                            deferred = ScopeRecord(status="resnap_crossing_rejected")
-                            diag.deferred_scope = deferred
-                            diag.final_status = deferred
+            self._update_deferred_diagnostics(
+                diagnostics=diagnostics,
+                resnap_plan=resnap_plan,
+                rejected_oids=resnap_crossing_rejected_oids,
+                displaced_oids=resnap_crossing_displaced_oids,
+                winner_oids=resnap_crossing_winner_oids,
+            )
 
         if self.candidate_connections_output is not None and diagnostics:
             spatial_reference = arcpy.Describe(self.lines_copy).spatialReference
