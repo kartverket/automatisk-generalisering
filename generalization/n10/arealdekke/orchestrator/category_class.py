@@ -25,38 +25,34 @@ class Category:
         accessibility: bool,
         order: int,
         map_scale: str,
-        last_processed: str=None,
-        operations_completed: int=None,
-        reinserts_completed: int=None
+        last_processed: str = None,
+        operations_completed: int = None,
+        reinserts_completed: int = None,
     ):
-
         # Setting up file manager w. dictionary for easy file access
         self.working_fc = Arealdekke_N10.category_class_in_progress__n10_land_use.value
         self.config = core_config.WorkFileConfig(root_file=self.working_fc)
         self.wfm = WorkFileManager(config=self.config)
 
         self.__title: str = title
-        
-        self.files: dict = {
-            "last_edited_fc": self.wfm.build_file_path(
-                file_name=f"last_edited_fc_{self.__title}", file_type="gdb"
-            )
-        }
 
         # Extracts inputs and saves them within object
-        self.__operations:list[str] = operations or [str]
-        self.__accessibility: bool = accessibility or True
+        self.__operations: list[str] = operations or []
+        self.__accessibility: bool = accessibility if accessibility is not None else True
         self.__order: int = order
         self.__map_scale: str = map_scale
-        self.__last_processed: str = last_processed or self.files["last_edited_fc"]
+        self.__last_processed: str = last_processed or self.wfm.build_file_path(
+                file_name=f"last_edited_fc_{self.__title}", file_type="gdb"
+            )
         self.__operations_completed: int = operations_completed or 0
         self.__reinserts_completed: int = reinserts_completed or 0
 
-        for item in self.__operations:
+        if self.__operations:
+            for item in self.__operations:
 
-            # Checks if each operation is written correctly (test can be improved later)
-            if item not in list(self.set_cat_tools()):
-                raise Exception(f"Incorrect syntax in yml file. Object:{self.__title}")
+                # Checks if each operation is written correctly (test can be improved later)
+                if item not in list(self.set_cat_tools()):
+                    raise Exception(f"\nIncorrect syntax in history yml file for arealdekke: {self.__title}.\nGo check history yml file and set_cat_tools in category class for tool name inconsistencies.\n")
 
         # Creates layer for the category. Data inserted into it in setter function.
         self.lyr = f"{self.__title}_lyr"
@@ -66,10 +62,9 @@ class Category:
     # ========================
 
     @timing_decorator
-    def process_category(
-        self, input_fc: str, locked_fc: str, processed_fc: str):
+    def process_category(self, input_fc: str, locked_fc: str, processed_fc: str):
 
-        cat_tools=self.set_cat_tools()
+        cat_tools = self.set_cat_tools()
 
         # Iterates through the operations needed for each category.
         for operation in range(self.__operations_completed, len(self.__operations), 1):
@@ -104,20 +99,19 @@ class Category:
             # Saves the last edits made in case program stops.
             arcpy.management.CopyFeatures(
                 in_features=processed_fc,
-                out_feature_class=self.files["last_edited_fc"],
+                out_feature_class=self.__last_processed,
             )
 
-            #Updates program history
-            self.__operations_completed+=1
+            # Updates program history
+            self.__operations_completed += 1
 
-            update: dict ={
-                "last_processed" : self.__last_processed,
-                "operations_completed" : self.__operations_completed,
-                "operations" : operation,
+            update: dict = {
+                "last_processed": str(self.__last_processed),
+                "operations_completed": self.__operations_completed,
+                "operations": operation,
             }
 
             yield update
-
 
     # ========================
     # Setters
@@ -126,14 +120,14 @@ class Category:
     def set_accessibility(self, newStatus: bool) -> None:
         self.__accessibility = newStatus
 
-    def update_reinsert_operations_completed(self)->None:
-        self.__reinserts_completed+=1
+    def update_reinsert_operations_completed(self) -> None:
+        self.__reinserts_completed += 1
 
-    def set_cat_tools(self)-> dict:
+    def set_cat_tools(self) -> dict:
         return {
             "simplify_and_smooth": simplify_and_smooth_polygon,
             "buff_small_segments": buff_small_polygon_segments,
-            }
+        }
 
     # ========================
     # Getters
@@ -154,7 +148,7 @@ class Category:
     def get_map_scale(self) -> str:
         return self.__map_scale
 
-    def get_reinserts_completed(self)->int:
+    def get_reinserts_completed(self) -> int:
         return self.__reinserts_completed
 
     def __str__(self) -> str:

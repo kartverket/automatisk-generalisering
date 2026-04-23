@@ -207,6 +207,9 @@ pyrightconfig.json
 #.idea/
 
 
+# History log for land use generalization
+*arealdekke_history.yml
+
 # Extra
 
 input_test_data.py
