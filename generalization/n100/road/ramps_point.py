@@ -750,8 +750,7 @@ def connect_roads_to_points():
 
     arcpy.management.MakeFeatureLayer(
         ramp_points_fc,
-        "ramp_points_34_lyr",
-#        where_clause="priority = 3 or priority = 3.5 or priority = 4",
+        ramp_points_lyr,
     )
 
     # build adjecency and length map for roads
@@ -925,6 +924,9 @@ def connect_roads_to_points():
             nx, ny, nd, pr, rid = chosen_entry
             if rid == oid:
                 continue
+            within_10_for_this_ramp = oids_within_10_by_rid.get(int(ramp_id), set())
+            if oid in within_10_for_this_ramp:
+                continue
 
             # add a point to start or end of line
             new_pt = arcpy.Point(nx, ny)
@@ -957,8 +959,6 @@ def connect_roads_to_points():
             oids_within_10_by_rid.setdefault(ramp_id, set()).update(within_set)
 
     arcpy.management.DeleteFeatures(ramps_lyr)
-
-    
 
 
 @timing_decorator
@@ -1056,8 +1056,6 @@ class MovePointsToCrossings:
         arcpy.management.SelectLayerByLocation(
             roads_lyr, "INTERSECT", buffer_500m, selection_type="NEW_SELECTION"
         )
-
-        
 
         # Create layers for different road types
         arcpy.management.MakeFeatureLayer(
@@ -1254,9 +1252,9 @@ class MovePointsToCrossings:
                 self.piority2_5,
                 self.unmatched_oids,
             )
-            self.unmatched_oids = [
-                oid for oid in self.unmatched_oids if oid not in self.near2_5_map
-            ]
+        self.unmatched_oids = [
+            oid for oid in self.unmatched_oids if oid not in self.near2_5_map
+        ]
 
         roads_lyr = "roads_lyr"
 
@@ -1382,7 +1380,7 @@ class MovePointsToCrossings:
                     changed = True
 
                 # Priority 2.5 (only if ramps are not allowed)
-                elif not self.with_ramps and oid in self.near2_5_map:
+                elif oid in self.near2_5_map:
                     nx, ny, nd, nf = self.near2_5_map[oid]
                     new_geom = arcpy.PointGeometry(arcpy.Point(nx, ny), sr)
                     priority = [2.5]
