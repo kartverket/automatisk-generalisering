@@ -13,6 +13,66 @@ from custom_tools.decorators.timing_decorator import timing_decorator
 
 from dam import get_endpoints, calculate_angle
 
+"""
+Purpose:
+    Removes ramp geometries and replaces them with ramp crossing points
+Main Steps:
+    Merge Ramps (merge_ramps): 
+        dissolves and groups ramp geometries using buffers, 
+        this will cause some ramps that arent a group in reality to become groups, 
+        but having to few points is better than too many 
+
+    Create Ramp Points (make_ramp_points): 
+        produces centroid points for ramp geometries 
+        calls MovePointsToCrossings to snap/relocate those points to logical crossing locations.
+
+    Connect Roads to Points (connect_roads_to_points): 
+        Removing ramps causes some important connections to be lost, this step restores some connections
+        finds road endpoints that intersect ramps
+        finds nearest ramp points  
+        updates road endpoint vertices to the chosen ramp point coordinates 
+        under conservative constraints to avoid cascading edits.
+
+How roads are connected to points:
+    There is a 500 m distance threshold for considering a ramp point as a candidate for snapping a road endpoint, 
+    but also a network reachability constraint to prevent cascading edits in dense areas:
+    Adjacency graph: 
+        build_adjecency generates a neighbor map of roads that touch (near-table with 1 m). 
+        This graph is used to reason about network reach.
+        if a road is within 1500 m path length of a road that is within 1 m of the same ramp point, 
+        it is not edited to connect to that ramp point (to avoid cascading edits in dense areas).
+    Length map + reachability: 
+        build_length_map and reachable_nodes implement a budgeted graph traversal (distance threshold, e.g., 1500 m) 
+        that returns all road OIDs reachable within a path-length budget; 
+        this prevents moving roads that are "too close" (in network steps/distance) 
+        to other roads already associated with the same ramp point.
+    Nearest matching: 
+        Generates a near-table between road endpoints and ramp points (search radius 500 m). 
+        For each endpoint the code picks the rank-1 near feature.
+        This is so that a road only can be connected to one ramp point, and it is the closest one within 500 m.
+
+Priority-based point placement (inside MovePointsToCrossings):
+    Priority tiers: 
+        Points are classified into priority 1, 1.5, 2, 2.5, 3, 3.5, 4 
+            1. motorways that cross with different mediums
+            1.5 motorways that cross non-motorways with different mediums
+            2. Any roads that cross with different mediums
+            2.5 4 or more different endpoints that intersect
+            3. closest motorway within 100m
+            3.5 closest non-motorway within 100m
+            4. closest any road fail safe wtihin 100m
+    Buffered constraints: 
+        When with_ramps=True, 
+        candidate priority points are filtered to those within 100 m of ramp clusters (using combine_intersecting_buffers) 
+        so only relevant crossing candidates survive.
+        After later generalization steps roads will have moved away from the points,
+        So we call this class at the end without the ramps to move points to final crossing locations,
+
+"""
+
+
+
+
 data_files = {
     # Stores all the relevant file paths to the geodata used in this Python file
     "input": Road_N100.data_preparation___road_single_part_2___n100_road.value,
@@ -607,6 +667,10 @@ def get_selected_oids(layer):
 
 
 def reachable_nodes(adjacency, start_oids, distance_threshold, length_map):
+    """
+    Traverses the graph defined by 'adjacency' starting from 'start_oids'
+    returns all nodes reachable within a path length of 'distance_threshold' using lengths from 'length_map'.
+    """
     # result: union of all nodes seen on any path
     result = set(start_oids)
 
@@ -669,11 +733,10 @@ def build_length_map(layer):
 @timing_decorator
 def connect_roads_to_points():
     """
-    connect roads to ramp points.
-    This searches for roads that intersect ramps,
-    then finds the endpoints of those roads and checks which ramp point is closest to those endpoints.
-    The closest ramp point is then used to move the road endpoints, but only if the road is not within 10 steps of roads that are within 1 meter of the same ramp point.
-    And a distance threshold of 500 meters
+    Connects roads to ramp points by moving endpoints of roads that intersect with ramps to the nearest ramp point,
+    but only if they are not within 1500 m network distance of another road that is already connected to the same ramp point,
+    to avoid cascading edits in dense areas.
+    Maximum distance of 500 m to be considered for connection.
     """
     roads_fc = data_files["generalized_ramps"]
     ramp_points_fc = data_files["ramp_points_moved"]
@@ -694,10 +757,7 @@ def connect_roads_to_points():
         ramp_points_lyr,
     )
 
-    #################
-    # build adjecency graph for roads, select roads that are within 1 meter of ramp points,
-    # roads that are 500 meters out from those shall not be edited
-    #################
+    # build adjecency and length map for roads 
 
     adjecency = build_adjecency(roads_lyr)
     roads_without_neighbours = set()
@@ -713,6 +773,7 @@ def connect_roads_to_points():
         roads_lyr, data_files["roads_lyr"]
     )
 
+    # select roads that are within 1 meter of ramp points to find initial candidates for connection
     arcpy.management.SelectLayerByLocation(
         roads_lyr,
         "WITHIN_A_DISTANCE",
@@ -730,11 +791,13 @@ def connect_roads_to_points():
         closest="ALL",
     )
 
+    
     ramp_to_near_roads = {}
     with arcpy.da.SearchCursor(near_table_ramp_road, ["IN_FID", "NEAR_FID"]) as nt_cur:
         for in_fid, near_fid in nt_cur:
             ramp_to_near_roads.setdefault(int(in_fid), set()).add(int(near_fid))
 
+    # for each ramp point, find roads that are within 1 m, then find all roads that are within 1500 m network distance from those roads, and store in a map of ramp point oid to set of road oids 
     oids_within_10_by_rid = {}
     for ramp_pid, near_roads in ramp_to_near_roads.items():
         if not near_roads:
@@ -832,7 +895,7 @@ def connect_roads_to_points():
 
     # iterate over roads.
     # for each roads check if its endpoints are in the end_dict (meaning they intersect with a ramp),
-    # choose the closest endpoint and connect it aslong as its not within 10 steps of the ramp point
+    # choose the closest endpoint and connect it aslong as its not within 1500m network connection to the ramp point
     #
     with arcpy.da.UpdateCursor(roads_lyr, ["OID@", "SHAPE@"]) as road_cur:
         for oid, geom in road_cur:
@@ -871,7 +934,8 @@ def connect_roads_to_points():
             within_10_for_this_ramp = oids_within_10_by_rid.get(int(ramp_id), set())
             if oid in within_10_for_this_ramp:
                 continue
-
+            
+            # add a point to start or end of line
             new_pt = arcpy.Point(nx, ny)
             arr = arcpy.Array()
             if chosen_pos == "start":
@@ -893,6 +957,7 @@ def connect_roads_to_points():
 
             road_cur.updateRow([oid, new_geom])
             point_endpoint_seen[point_endpoint_combo] = 0
+            # add to network connection
             within_set = set(reachable_nodes(adjecency, [oid], distance_threshold=1500, length_map=length_map))
             oids_within_10_by_rid.setdefault(ramp_id, set()).update(within_set)
 
@@ -911,6 +976,9 @@ def delete_intermediate_files() -> None:
 
 
 class MovePointsToCrossings:
+    """
+    See top of file for explanation
+    """
     def __init__(
         self,
         input_road_feature: str,
