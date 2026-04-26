@@ -85,10 +85,11 @@ def fill_line_topology_gaps(raster_list: list[type_defs.RasterFilePath]):
             angle_extra_dangle_threshold_degrees=95,
             angle_local_half_window_m=20,
             lines_are_directed=True,
+            connector_angle_diff_required_above_meters=10,
         ),
         z_config=logic_config.FillLineGapsZConfig(
             raster_paths=raster_list,
-            z_drop_threshold=0,
+            z_drop_threshold=1,
         ),
         crossing_config=logic_config.FillLineGapsCrossingConfig(
             reject_crossing_connectors=True,

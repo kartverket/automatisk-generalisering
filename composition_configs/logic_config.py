@@ -298,11 +298,13 @@ class FillLineGapsAngleConfig:
         (flow runs start to end). Angle comparisons use directional difference (0 to 180
         degrees) and src_target_diff as the primary metric for line-to-line pairs.
         Requires best_fit_weights.angle > 0 on FillLineGapsConfig (enforced at init).
-    dangle_pair_apply_connector_diff: when True and lines_are_directed is also True,
-        the angle metric for a valid end-to-start dangle pair uses
-        max(src_target_diff, src_connector_diff) instead of src_target_diff alone.
-        This penalises candidates whose connector direction is poor even when target
-        alignment is good. Has no effect when lines_are_directed is False.
+    connector_angle_diff_required_above_meters: when set, the angle metric for a
+        valid end-to-start dangle pair uses max(src_target_diff, src_connector_diff)
+        instead of src_target_diff alone, but only when the source dangle is farther
+        than this many metres from the target dangle's parent line. Below the
+        threshold src_target_diff alone is used. Set to 0 to always apply the
+        penalty for any dangle pair. None (default) disables the penalty entirely.
+        Has no effect when lines_are_directed is False.
     """
 
     angle_block_threshold_degrees: Optional[float] = None
@@ -310,7 +312,7 @@ class FillLineGapsAngleConfig:
     angle_local_half_window_m: float = 2.0
     connect_to_features_angle_mode: Optional[dict[str, AngleTargetMode]] = None
     lines_are_directed: bool = False
-    dangle_pair_apply_connector_diff: bool = False
+    connector_angle_diff_required_above_meters: Optional[float] = None
 
 
 @dataclass(frozen=True)
