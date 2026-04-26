@@ -1413,6 +1413,14 @@ class FillLineGaps:
         self.conn_table = "connected_table"
 
         self.external_target_layers: list[str] = []
+        # FCs to use as against_fcs in the connector-crossing pre-filter.
+        # Polyline connect_to_features are reused as-is; polygon
+        # connect_to_features contribute their boundary as a polyline FC
+        # built once via PolygonToLine in
+        # _build_external_target_layers_once.  Populated only when
+        # reject_crossing_connectors is True; entries are pure paths so
+        # the existing line-vs-line crossing path applies uniformly.
+        self.external_target_crossing_layers: list[str] = []
 
         self.work_file_list = [
             self.lines_copy,
@@ -2075,6 +2083,26 @@ class FillLineGaps:
                 )
 
             self.external_target_layers.append(output_name)
+
+            # Companion entry for the connector-crossing pre-filter.
+            # Polyline sources reuse output_name; polygon sources are
+            # converted to their boundary polyline once via PolygonToLine
+            # so the line-vs-line crossing path handles them uniformly.
+            # Other shape types (points) are skipped — a connector cannot
+            # cross a point.
+            if self.reject_crossing_connectors:
+                if self._is_polyline_fc(output_name):
+                    self.external_target_crossing_layers.append(output_name)
+                elif self._is_polygon_fc(output_name):
+                    outline_name = self.wfm.build_file_path(
+                        file_name=f"target_feature_{index}_polygon_outline"
+                    )
+                    arcpy.management.PolygonToLine(
+                        in_features=output_name,
+                        out_feature_class=outline_name,
+                    )
+                    self.external_target_crossing_layers.append(outline_name)
+
             out_key = self._dataset_key(output_name)
 
             raw_map = self._connect_to_features_angle_mode_raw
@@ -3940,14 +3968,14 @@ class FillLineGaps:
             and _crossing_sr is not None
         ):
             # self-lines (lines_copy) plus every connect_to_features layer
-            # that can be crossed.  Shape-type filter is applied directly
-            # rather than reusing polyline_by_external: that cache is built
-            # for angle scoring and excludes FORCE_NON_LINE polylines and
-            # all polygons, neither of which should be excluded here.
-            _check_layers: list[str] = [self.lines_copy]
-            for _lyr in self.external_target_layers:
-                if self._is_polyline_fc(_lyr) or self._is_polygon_fc(_lyr):
-                    _check_layers.append(_lyr)
+            # eligible for the line-vs-line crossing pre-filter.  Polygon
+            # sources have already been converted to their boundary polyline
+            # in _build_external_target_layers_once so a single uniform path
+            # applies here.
+            _check_layers: list[str] = [
+                self.lines_copy,
+                *self.external_target_crossing_layers,
+            ]
             crossing_conflict_keys, trimmed_connector_cache = (
                 self._find_crossing_conflict_keys(
                     legal_rows_by_dangle=legal_rows_by_dangle,

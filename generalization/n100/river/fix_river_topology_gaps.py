@@ -66,7 +66,7 @@ def fill_line_topology_gaps(raster_list: list[type_defs.RasterFilePath]):
         input_lines=River_N100.river_topology___fixed_river_orientation___n100_river.value,
         output_lines=River_N100.river_topology___fixed_river_gaps___n100_river.value,
         work_file_manager_config=work_file_manager_config,
-        gap_tolerance_meters=150,
+        gap_tolerance_meters=300,
         connect_to_features=[
             River_N100.data_preparation___river_polygons___n100_river.value
         ],
