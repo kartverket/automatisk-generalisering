@@ -2803,6 +2803,28 @@ class FillLineGaps:
 
         return grouped
 
+    def _build_dist_to_parent_line_by_dangle(
+        self,
+        *,
+        grouped: dict[DangleOid, list[NearCandidate]],
+        lines_key: DatasetKey,
+    ) -> dict[DangleOid, dict[ParentId, float]]:
+        """Per source dangle, map every line-target parent_id to its near-table
+        distance. Built once from the raw grouped near table so the dangle-pair
+        connector-diff gate can do a flat lookup instead of a per-iteration
+        dict-comp inside ``_select_dangle_proposals``. Distances reflect what
+        arcpy reported regardless of legality (legal/illegal filtering decides
+        snap targets, not distance measurements).
+        """
+        return {
+            d_oid: {
+                int(c.near_fid): float(c.near_dist)
+                for c in cands
+                if c.near_fc_key == lines_key
+            }
+            for d_oid, cands in grouped.items()
+        }
+
     # ----------------------------
     # Planning: choose closest legal + detect pairs
     # ----------------------------
@@ -2955,33 +2977,6 @@ class FillLineGaps:
         if ds_key == lines_fc_key:
             return near_fid  # already in ORIGINAL_ID space
         return None
-
-    def _dangle_pair_requires_connector_diff(
-        self,
-        *,
-        target_parent_id: Optional[ParentId],
-        dist_to_parent_line_by_id: Optional[dict[ParentId, float]],
-    ) -> bool:
-        """Decide whether the connector-diff penalty fires for a dangle pair.
-
-        Caller has already verified the threshold is set and that the candidate's
-        own gap distance exceeds it (the cheap dangle-distance short-circuit), so
-        the only remaining question is whether the parent line itself is also
-        beyond the threshold. If the lookup cannot resolve a distance — missing
-        target parent, lookup unavailable, parent filtered out — the call is
-        conservative and applies the penalty.
-        """
-        threshold = self.connector_angle_diff_required_above_meters
-        if (
-            threshold is None
-            or target_parent_id is None
-            or dist_to_parent_line_by_id is None
-        ):
-            return True
-        dist = dist_to_parent_line_by_id.get(int(target_parent_id))
-        if dist is None:
-            return True
-        return float(dist) > float(threshold)
 
     def _normalize_directional_angles(
         self,
@@ -3350,12 +3345,25 @@ class FillLineGaps:
                 # own dangle endpoint, so a close dangle implies a close parent
                 # — skip the lookup and use src_target_diff.
                 and float(cand.near_dist) > float(connector_diff_threshold)
-                and self._dangle_pair_requires_connector_diff(
-                    target_parent_id=target_parent_id,
-                    dist_to_parent_line_by_id=dist_to_parent_line_by_id,
-                )
             ):
-                metric = max(float(src_target_diff), float(src_connector_diff))
+                # Inline parent-line distance gate. Conservative when the lookup
+                # cannot resolve a parent line (missing target parent, lookup
+                # disabled, or parent absent from the global table).
+                _parent_dist = (
+                    dist_to_parent_line_by_id.get(int(target_parent_id))
+                    if (
+                        dist_to_parent_line_by_id is not None
+                        and target_parent_id is not None
+                    )
+                    else None
+                )
+                if (
+                    _parent_dist is None
+                    or float(_parent_dist) > float(connector_diff_threshold)
+                ):
+                    metric = max(float(src_target_diff), float(src_connector_diff))
+                else:
+                    metric = float(src_target_diff)
             else:
                 metric = float(src_target_diff)
         elif self.lines_are_directed:
@@ -3784,6 +3792,18 @@ class FillLineGaps:
         if not grouped:
             return BuildPlanResult.empty(diagnostics=[])
 
+        # Built once when the dangle-pair distance gate is active; passed into
+        # _select_dangle_proposals so the gate has a flat per-dangle lookup
+        # instead of rebuilding it on every iteration.
+        dist_to_parent_line_by_dangle: Optional[
+            dict[DangleOid, dict[ParentId, float]]
+        ] = None
+        if self.connector_angle_diff_required_above_meters is not None:
+            dist_to_parent_line_by_dangle = self._build_dist_to_parent_line_by_dangle(
+                grouped=grouped,
+                lines_key=lines_key,
+            )
+
         collect_diags = self.candidate_connections_output is not None
 
         def _build_diagnostics(
@@ -3962,6 +3982,7 @@ class FillLineGaps:
                 dangle_parent=dangle_parent,
                 topology=topology,
                 collect_diags=collect_diags,
+                dist_to_parent_line_by_dangle=dist_to_parent_line_by_dangle,
             )
         )
 
@@ -4233,6 +4254,9 @@ class FillLineGaps:
         dangle_parent: dict[DangleOid, ParentId],
         topology: TopologyModel,
         collect_diags: bool,
+        dist_to_parent_line_by_dangle: Optional[
+            dict[DangleOid, dict[ParentId, float]]
+        ] = None,
     ) -> tuple[
         dict[DangleOid, _DangleProposal],
         _NormZByDangle,
@@ -4314,16 +4338,14 @@ class FillLineGaps:
                 if _d_xy is not None:
                     _dangle_xys_by_parent.setdefault(int(_d_parent), []).append(_d_xy)
 
-            # Per-dangle parent-line distance lookup used by the dangle-pair
-            # connector-diff distance gate. Only built when the threshold is
-            # set; otherwise the metric ladder skips the gate entirely.
-            dist_to_parent_line_by_id: Optional[dict[ParentId, float]] = None
-            if self.connector_angle_diff_required_above_meters is not None:
-                dist_to_parent_line_by_id = {
-                    int(c.near_fid): float(c.near_dist)
-                    for c in legal_rows
-                    if c.near_fc_key == lines_key
-                }
+            # Per-dangle slice of the global parent-line distance lookup; the
+            # caller already chose to materialise the global table only when
+            # connector_angle_diff_required_above_meters is set.
+            dist_to_parent_line_by_id = (
+                dist_to_parent_line_by_dangle.get(dangle_oid)
+                if dist_to_parent_line_by_dangle is not None
+                else None
+            )
 
             scored_candidates: list[_ScoredCandidateItem] = []
 
