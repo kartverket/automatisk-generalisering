@@ -1112,15 +1112,14 @@ class _DirectionalNormalization(NamedTuple):
     Undirected mode flips ``src_angle_deg`` and ``target_angle`` so a clean
     collinear pair scores 0°; directed mode replaces ``src_connector_diff``
     with the directional difference so anti-parallel src/connector reports
-    180° instead of collapsing under orientation_diff. ``src_poly_for_norm``
-    and ``endpoint_snap`` are surfaced so the metric helper can apply the
-    end-to-start topology rule without re-deriving them.
+    180° instead of collapsing under orientation_diff. ``endpoint_snap`` is
+    surfaced so the metric helper can apply the target-start topology rule
+    without re-deriving it.
     """
 
     src_angle_deg: float
     target_angle: float
     src_connector_diff: float
-    src_poly_for_norm: Any
     endpoint_snap: bool
 
 
@@ -2808,13 +2807,16 @@ class FillLineGaps:
         *,
         grouped: dict[DangleOid, list[NearCandidate]],
         lines_key: DatasetKey,
+        skip_dangles: set[DangleOid],
     ) -> dict[DangleOid, dict[ParentId, float]]:
         """Per source dangle, map every line-target parent_id to its near-table
         distance. Built once from the raw grouped near table so the dangle-pair
         connector-diff gate can do a flat lookup instead of a per-iteration
         dict-comp inside ``_select_dangle_proposals``. Distances reflect what
         arcpy reported regardless of legality (legal/illegal filtering decides
-        snap targets, not distance measurements).
+        snap targets, not distance measurements). ``skip_dangles`` excludes
+        dangles whose candidates will never reach the gate (e.g. directed
+        start-node sources rejected upstream by ``_filter_legal_candidates``).
         """
         return {
             d_oid: {
@@ -2823,6 +2825,7 @@ class FillLineGaps:
                 if c.near_fc_key == lines_key
             }
             for d_oid, cands in grouped.items()
+            if d_oid not in skip_dangles
         }
 
     # ----------------------------
@@ -3026,7 +3029,6 @@ class FillLineGaps:
             src_angle_deg=float(src_angle_deg),
             target_angle=float(target_angle),
             src_connector_diff=float(src_connector_diff),
-            src_poly_for_norm=src_poly_for_norm,
             endpoint_snap=bool(endpoint_snap),
         )
 
@@ -3200,8 +3202,16 @@ class FillLineGaps:
             float(src_angle_deg), float(connector_angle)
         )
 
-        # Non-line targets use src_connector_diff directly
+        # Non-line targets use src_connector_diff directly. In directed mode,
+        # promote to _directional_diff (0..180) so anti-parallel src/connector
+        # reports its true large angle instead of folding back into 0..90.
+        # Upstream filtering guarantees the src dangle is at its parent's end
+        # vertex when lines_are_directed, so src_angle already points outward.
         if not treat_as_line_like:
+            if self.lines_are_directed:
+                src_connector_diff = self._directional_diff(
+                    float(src_angle_deg), float(connector_angle)
+                )
             metric = float(src_connector_diff)
             block_thr = self.angle_block_threshold_degrees
             blocks = block_thr is not None and metric > float(block_thr)
@@ -3269,7 +3279,6 @@ class FillLineGaps:
             self.lines_are_directed or _is_dangle_pair or _is_dangle_parent_line
         )
 
-        src_poly_for_norm: Any = None
         endpoint_snap = False
         if _use_directional:
             _diff = self._directional_diff
@@ -3292,7 +3301,6 @@ class FillLineGaps:
             src_angle_deg = norm.src_angle_deg
             target_angle = norm.target_angle
             src_connector_diff = norm.src_connector_diff
-            src_poly_for_norm = norm.src_poly_for_norm
             endpoint_snap = norm.endpoint_snap
         else:
             _diff = self._orientation_diff
@@ -3316,27 +3324,24 @@ class FillLineGaps:
         # Directional, non-endpoint, directed: worst of angular alignment vs
         #     connector direction (a bad score on either makes the candidate bad).
         # Directional, endpoint snap, directed: only end-to-start is a valid
-        #     connection — anything else is forced to 180° (rejected). For valid
-        #     end-to-start dangle pairs connector_angle_diff_required_above_meters
-        #     decides whether to penalise bad connector direction: when the
-        #     candidate's gap distance exceeds the threshold the parent-line
-        #     lookup is consulted and max(src_target_diff, src_connector_diff)
-        #     applies if the parent line is also beyond the threshold.
+        #     connection — anything else is forced to 180° (rejected). Src-end
+        #     is guaranteed by upstream filtering (_filter_legal_candidates drops
+        #     start-node src dangles), so only target-start enforcement remains.
+        #     For valid end-to-start dangle pairs
+        #     connector_angle_diff_required_above_meters decides whether to
+        #     penalise bad connector direction: when the candidate's gap distance
+        #     exceeds the threshold the parent-line lookup is consulted and
+        #     max(src_target_diff, src_connector_diff) applies if the parent line
+        #     is also beyond the threshold.
         # Directional, undirected: src_target_diff after both normalisations.
         connector_diff_threshold = self.connector_angle_diff_required_above_meters
         if not _use_directional:
             metric = float(src_connector_diff)
         elif self.lines_are_directed and endpoint_snap:
-            _src_is_end = (
-                src_poly_for_norm is not None
-                and not self._xy_is_at_line_start(
-                    src_poly_for_norm, dangle_x, dangle_y
-                )
-            )
             _tgt_is_start = self._xy_is_at_line_start(
                 tgt_poly, tgt_snap_x, tgt_snap_y
             )
-            if not (_src_is_end and _tgt_is_start):
+            if not _tgt_is_start:
                 metric = 180.0
             elif (
                 connector_diff_threshold is not None
@@ -3792,18 +3797,6 @@ class FillLineGaps:
         if not grouped:
             return BuildPlanResult.empty(diagnostics=[])
 
-        # Built once when the dangle-pair distance gate is active; passed into
-        # _select_dangle_proposals so the gate has a flat per-dangle lookup
-        # instead of rebuilding it on every iteration.
-        dist_to_parent_line_by_dangle: Optional[
-            dict[DangleOid, dict[ParentId, float]]
-        ] = None
-        if self.connector_angle_diff_required_above_meters is not None:
-            dist_to_parent_line_by_dangle = self._build_dist_to_parent_line_by_dangle(
-                grouped=grouped,
-                lines_key=lines_key,
-            )
-
         collect_diags = self.candidate_connections_output is not None
 
         def _build_diagnostics(
@@ -3847,6 +3840,24 @@ class FillLineGaps:
             dangle_parent=dangle_parent,
             polyline_by_parent=polyline_by_parent,
         )
+
+        # Built once when the dangle-pair distance gate is active; passed into
+        # _select_dangle_proposals so the gate has a flat per-dangle lookup
+        # instead of rebuilding it on every iteration. Skips start-node src
+        # dangles since their candidates are dropped by _filter_legal_candidates
+        # and the gate is a no-op outside directed mode.
+        dist_to_parent_line_by_dangle: Optional[
+            dict[DangleOid, dict[ParentId, float]]
+        ] = None
+        if (
+            self.lines_are_directed
+            and self.connector_angle_diff_required_above_meters is not None
+        ):
+            dist_to_parent_line_by_dangle = self._build_dist_to_parent_line_by_dangle(
+                grouped=grouped,
+                lines_key=lines_key,
+                skip_dangles=directed_start_dangles,
+            )
 
         # ----------------------------
         # Step 2 - Legality gates (distance / network / illegal-target)
