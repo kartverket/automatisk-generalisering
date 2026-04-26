@@ -907,9 +907,9 @@ class _GlobalProposal:
     def from_network(
         cls, n: "_ConnectionProposal", score: "_ProposalScore"
     ) -> "_GlobalProposal":
-        assert n.gap_source is not None, (
-            "_ConnectionProposal.gap_source must be stamped before promotion to Stage B"
-        )
+        assert (
+            n.gap_source is not None
+        ), "_ConnectionProposal.gap_source must be stamped before promotion to Stage B"
         return cls(
             ctx=n.ctx,
             dangle_norm_z=n.dangle_norm_z,
@@ -1106,6 +1106,44 @@ class _CandidateScored(NamedTuple):
     end_z: Optional[float]
 
 
+class _DirectionalNormalization(NamedTuple):
+    """Outcome of normalising angles for the directional metric.
+
+    Undirected mode flips ``src_angle_deg`` and ``target_angle`` so a clean
+    collinear pair scores 0°; directed mode replaces ``src_connector_diff``
+    with the directional difference so anti-parallel src/connector reports
+    180° instead of collapsing under orientation_diff. ``src_poly_for_norm``
+    and ``endpoint_snap`` are surfaced so the metric helper can apply the
+    end-to-start topology rule without re-deriving them.
+    """
+
+    src_angle_deg: float
+    target_angle: float
+    src_connector_diff: float
+    src_poly_for_norm: Any
+    endpoint_snap: bool
+
+
+class _TargetAngleResolution(NamedTuple):
+    """Result of resolving a candidate's target polyline and snap point.
+
+    target_angle is None when the polyline is missing (parent unknown, geometry
+    not cached). tgt_poly mirrors that — None when the helper cannot resolve
+    geometry. snap_x/snap_y are the coordinates used for both local angle
+    sampling and downstream endpoint topology checks; for dangle-pair targets
+    these prefer the precise dangle XY over the near-table snap.
+    target_parent_id is set for line-like input candidates (line target →
+    own parent; dangle target → the other dangle's parent line), None for
+    external datasets.
+    """
+
+    target_angle: Optional[float]
+    tgt_poly: Any
+    snap_x: float
+    snap_y: float
+    target_parent_id: Optional[ParentId] = None
+
+
 @dataclass(frozen=True)
 class _ScoredCandidateItem:
     """One scored candidate row inside _select_dangle_proposals.
@@ -1295,7 +1333,9 @@ class FillLineGaps:
         )
         self.edit_method = logic_config.EditMethod(adv.edit_method)
 
-        self.connectivity_scope = logic_config.ConnectivityScope(conn.connectivity_scope)
+        self.connectivity_scope = logic_config.ConnectivityScope(
+            conn.connectivity_scope
+        )
         self.connectivity_tolerance_meters = float(conn.connectivity_tolerance_meters)
         self.line_connectivity_mode = logic_config.LineConnectivityMode(
             conn.line_connectivity_mode
@@ -1307,8 +1347,10 @@ class FillLineGaps:
             )
 
         self.lines_are_directed: bool = bool(ang.lines_are_directed)
-        self.dangle_pair_apply_connector_diff: bool = bool(
-            ang.dangle_pair_apply_connector_diff
+        self.connector_angle_diff_required_above_meters: Optional[float] = (
+            None
+            if ang.connector_angle_diff_required_above_meters is None
+            else float(ang.connector_angle_diff_required_above_meters)
         )
 
         self.angle_block_threshold_degrees = (
@@ -1455,11 +1497,11 @@ class FillLineGaps:
     ) -> bool:
         """Return ``True`` if two parent lines share a network under the topology scope.
 
-          - NONE: always ``False``.
-          - DIRECT_CONNECTION: ``True`` iff ``b`` is in ``a``'s direct
-            neighbor set.
-          - Component scopes: ``True`` iff both parents share a
-            connectivity id.
+        - NONE: always ``False``.
+        - DIRECT_CONNECTION: ``True`` iff ``b`` is in ``a``'s direct
+          neighbor set.
+        - Component scopes: ``True`` iff both parents share a
+          connectivity id.
         """
         scope = topology.scope
 
@@ -1925,7 +1967,6 @@ class FillLineGaps:
     # ----------------------------
     # Source direction orientation
     # ----------------------------
-
 
     def _local_angle_cache_key(
         self, *, dataset_key: str, oid: int, x: float, y: float
@@ -2915,6 +2956,210 @@ class FillLineGaps:
             return near_fid  # already in ORIGINAL_ID space
         return None
 
+    def _dangle_pair_requires_connector_diff(
+        self,
+        *,
+        target_parent_id: Optional[ParentId],
+        dist_to_parent_line_by_id: Optional[dict[ParentId, float]],
+    ) -> bool:
+        """Decide whether the connector-diff penalty fires for a dangle pair.
+
+        Caller has already verified the threshold is set and that the candidate's
+        own gap distance exceeds it (the cheap dangle-distance short-circuit), so
+        the only remaining question is whether the parent line itself is also
+        beyond the threshold. If the lookup cannot resolve a distance — missing
+        target parent, lookup unavailable, parent filtered out — the call is
+        conservative and applies the penalty.
+        """
+        threshold = self.connector_angle_diff_required_above_meters
+        if (
+            threshold is None
+            or target_parent_id is None
+            or dist_to_parent_line_by_id is None
+        ):
+            return True
+        dist = dist_to_parent_line_by_id.get(int(target_parent_id))
+        if dist is None:
+            return True
+        return float(dist) > float(threshold)
+
+    def _normalize_directional_angles(
+        self,
+        *,
+        src_parent_id: ParentId,
+        src_angle_deg: float,
+        target_angle: float,
+        src_connector_diff: float,
+        connector_angle: float,
+        dangle_x: float,
+        dangle_y: float,
+        tgt_poly: Any,
+        tgt_snap_x: float,
+        tgt_snap_y: float,
+        is_dangle_pair: bool,
+        is_dangle_parent_line: bool,
+        polyline_by_parent: dict[ParentId, Any],
+    ) -> _DirectionalNormalization:
+        """Apply the directional-mode flips and src_connector_diff override.
+
+        Undirected mode: flip src_angle if the source line starts at the dangle
+        (so it points outward toward the gap); flip target_angle when the snap
+        is not at the target line's start (so both dangles in a pair receive
+        a 0° score for a clean collinear fill).
+
+        Directed mode: lines are pre-oriented, so skip flips and re-express
+        src_connector_diff using directional_diff so anti-parallel src/connector
+        reports 180° instead of collapsing under orientation_diff.
+        """
+        src_poly_for_norm = polyline_by_parent.get(int(src_parent_id))
+        endpoint_snap = is_dangle_pair or is_dangle_parent_line
+
+        if not self.lines_are_directed:
+            if (
+                src_poly_for_norm is not None
+                and self._xy_is_at_line_start(src_poly_for_norm, dangle_x, dangle_y)
+            ):
+                src_angle_deg = (float(src_angle_deg) + 180.0) % 360.0
+            if not self._xy_is_at_line_start(tgt_poly, tgt_snap_x, tgt_snap_y):
+                target_angle = (float(target_angle) + 180.0) % 360.0
+        else:
+            src_connector_diff = self._directional_diff(
+                float(src_angle_deg), float(connector_angle)
+            )
+
+        return _DirectionalNormalization(
+            src_angle_deg=float(src_angle_deg),
+            target_angle=float(target_angle),
+            src_connector_diff=float(src_connector_diff),
+            src_poly_for_norm=src_poly_for_norm,
+            endpoint_snap=bool(endpoint_snap),
+        )
+
+    def _resolve_target_angle_and_snap(
+        self,
+        *,
+        cand: NearCandidate,
+        ds_key: DatasetKey,
+        lines_fc_key: DatasetKey,
+        dangles_fc_key: DatasetKey,
+        dangle_parent: dict[DangleOid, ParentId],
+        dangle_xy: dict[DangleOid, tuple[float, float]],
+        polyline_by_parent: dict[ParentId, Any],
+        polyline_by_external: dict[DatasetKey, dict[int, Any]],
+    ) -> _TargetAngleResolution:
+        """Resolve the target polyline, its local angle, and the snap point.
+
+        For dangle-pair targets the snap defaults to the precise dangle XY
+        (more accurate than the near-table snap, which is rounded). Other
+        targets use the near-table coordinates directly.
+        """
+        near_fid = cand.near_fid
+        snap_x = float(cand.near_x)
+        snap_y = float(cand.near_y)
+
+        if ds_key == lines_fc_key:
+            tgt_parent = int(near_fid)
+            tgt_poly = polyline_by_parent.get(tgt_parent)
+            if tgt_poly is None:
+                return _TargetAngleResolution(
+                    None, None, snap_x, snap_y, target_parent_id=tgt_parent
+                )
+            target_angle = self._local_line_angle_cached(
+                dataset_key=lines_fc_key,
+                oid=tgt_parent,
+                polyline=tgt_poly,
+                x=snap_x,
+                y=snap_y,
+            )
+            return _TargetAngleResolution(
+                target_angle, tgt_poly, snap_x, snap_y, target_parent_id=tgt_parent
+            )
+
+        if ds_key == dangles_fc_key:
+            other_dangle_oid = int(near_fid)
+            other_parent = dangle_parent.get(other_dangle_oid)
+            if other_parent is None:
+                return _TargetAngleResolution(None, None, snap_x, snap_y)
+            tgt_poly = polyline_by_parent.get(int(other_parent))
+            if tgt_poly is None:
+                return _TargetAngleResolution(
+                    None, None, snap_x, snap_y, target_parent_id=int(other_parent)
+                )
+            xy = dangle_xy.get(other_dangle_oid)
+            if xy is not None:
+                snap_x, snap_y = float(xy[0]), float(xy[1])
+            target_angle = self._local_line_angle_cached(
+                dataset_key=lines_fc_key,
+                oid=int(other_parent),
+                polyline=tgt_poly,
+                x=snap_x,
+                y=snap_y,
+            )
+            return _TargetAngleResolution(
+                target_angle,
+                tgt_poly,
+                snap_x,
+                snap_y,
+                target_parent_id=int(other_parent),
+            )
+
+        ext = polyline_by_external.get(ds_key, {})
+        tgt_poly = ext.get(int(near_fid))
+        if tgt_poly is None:
+            return _TargetAngleResolution(None, None, snap_x, snap_y)
+        target_angle = self._local_line_angle_cached(
+            dataset_key=ds_key,
+            oid=int(near_fid),
+            polyline=tgt_poly,
+            x=snap_x,
+            y=snap_y,
+        )
+        return _TargetAngleResolution(target_angle, tgt_poly, snap_x, snap_y)
+
+    def _resolve_treat_as_line_like(
+        self,
+        *,
+        ds_key: DatasetKey,
+        lines_fc_key: DatasetKey,
+        dangles_fc_key: DatasetKey,
+        is_external_line_like: dict[DatasetKey, bool],
+    ) -> bool:
+        """Decide whether a candidate's dataset should use line-aware angle scoring.
+
+        Input lines and dangles are always line-like. External datasets honour
+        the AngleTargetMode override; AUTO defers to the runtime detection
+        cached in ``is_external_line_like``.
+        """
+        if ds_key == lines_fc_key or ds_key == dangles_fc_key:
+            return True
+        mode = self._angle_mode_by_external_ds_key.get(
+            ds_key, logic_config.AngleTargetMode.AUTO
+        )
+        if mode == logic_config.AngleTargetMode.FORCE_NON_LINE:
+            return False
+        return bool(is_external_line_like.get(ds_key, False))
+
+    def _unavailable_assessment(
+        self,
+        *,
+        ds_key: DatasetKey,
+        dangles_fc_key: DatasetKey,
+        src_connector_diff: Optional[float] = None,
+    ) -> AngleAssessment:
+        """Assessment used when an angle input is missing.
+
+        Conservative policy: never block, never penalise. The extra-dangle
+        allowance only restricts dangle-layer candidates, so it stays True
+        for every other ds_key.
+        """
+        return AngleAssessment(
+            available=False,
+            blocks=False,
+            allow_extra_dangle=ds_key != dangles_fc_key,
+            angle_metric_deg=None,
+            src_connector_diff=src_connector_diff,
+        )
+
     def _assess_angle(
         self,
         *,
@@ -2931,6 +3176,7 @@ class FillLineGaps:
         polyline_by_external: dict[DatasetKey, dict[int, Any]],
         is_external_line_like: dict[DatasetKey, bool],
         dangle_xys_by_parent: Optional[_DangleXYsByParent] = None,
+        dist_to_parent_line_by_id: Optional[dict[ParentId, float]] = None,
     ) -> AngleAssessment:
         ds_key = cand.near_fc_key
         near_fid = cand.near_fid
@@ -2941,27 +3187,18 @@ class FillLineGaps:
             from_x=dangle_x, from_y=dangle_y, to_x=near_x, to_y=near_y
         )
 
-        # Determine line-like vs non-line
-        if ds_key == lines_fc_key or ds_key == dangles_fc_key:
-            treat_as_line_like = True
-        else:
-            mode = self._angle_mode_by_external_ds_key.get(
-                ds_key, logic_config.AngleTargetMode.AUTO
-            )
-            if mode == logic_config.AngleTargetMode.FORCE_NON_LINE:
-                treat_as_line_like = False
-            else:
-                treat_as_line_like = bool(is_external_line_like.get(ds_key, False))
+        treat_as_line_like = self._resolve_treat_as_line_like(
+            ds_key=ds_key,
+            lines_fc_key=lines_fc_key,
+            dangles_fc_key=dangles_fc_key,
+            is_external_line_like=is_external_line_like,
+        )
 
         # Base requirements
         if src_angle_deg is None or connector_angle is None:
-            # Angle unavailable => no block, no penalty; conservative extra-dangle policy handled below
-            allow_extra = ds_key != dangles_fc_key  # only relevant for dangle targets
-            return AngleAssessment(
-                available=False,
-                blocks=False,
-                allow_extra_dangle=bool(allow_extra),
-                angle_metric_deg=None,
+            return self._unavailable_assessment(
+                ds_key=ds_key,
+                dangles_fc_key=dangles_fc_key,
             )
 
         src_connector_diff = self._orientation_diff(
@@ -2971,21 +3208,14 @@ class FillLineGaps:
         # Non-line targets use src_connector_diff directly
         if not treat_as_line_like:
             metric = float(src_connector_diff)
-
-            blocks = self.angle_block_threshold_degrees is not None and metric > float(
-                self.angle_block_threshold_degrees
+            block_thr = self.angle_block_threshold_degrees
+            blocks = block_thr is not None and metric > float(block_thr)
+            extra_thr = self.angle_extra_dangle_threshold_degrees
+            allow_extra = (
+                ds_key != dangles_fc_key
+                or extra_thr is None
+                or metric <= float(extra_thr)
             )
-
-            # extra-dangle threshold only affects dangle targets
-            allow_extra = True
-            if ds_key == dangles_fc_key:
-                if self.angle_extra_dangle_threshold_degrees is None:
-                    allow_extra = True
-                else:
-                    allow_extra = metric <= float(
-                        self.angle_extra_dangle_threshold_degrees
-                    )
-
             return AngleAssessment(
                 available=True,
                 blocks=bool(blocks),
@@ -2995,60 +3225,30 @@ class FillLineGaps:
             )
 
         # Line-like targets: need target angle too
-        target_angle: Optional[float] = None
         connector_target_diff: Optional[float] = None
         src_target_diff: Optional[float] = None
         connector_transition_diff: Optional[float] = None
 
-        if ds_key == lines_fc_key:
-            tgt_parent = int(near_fid)
-            tgt_poly = polyline_by_parent.get(tgt_parent)
-            if tgt_poly is not None:
-                target_angle = self._local_line_angle_cached(
-                    dataset_key=lines_fc_key,
-                    oid=tgt_parent,
-                    polyline=tgt_poly,
-                    x=near_x,
-                    y=near_y,
-                )
-
-        elif ds_key == dangles_fc_key:
-            other_dangle_oid = int(near_fid)
-            other_parent = dangle_parent.get(other_dangle_oid)
-            if other_parent is not None:
-                tgt_poly = polyline_by_parent.get(int(other_parent))
-                if tgt_poly is not None:
-                    # Prefer true dangle XY lookup; fall back to near_x/near_y
-                    xy = dangle_xy.get(other_dangle_oid)
-                    tx, ty = xy if xy is not None else (near_x, near_y)
-                    target_angle = self._local_line_angle_cached(
-                        dataset_key=lines_fc_key,
-                        oid=int(other_parent),
-                        polyline=tgt_poly,
-                        x=float(tx),
-                        y=float(ty),
-                    )
-
-        else:
-            ext = polyline_by_external.get(ds_key, {})
-            tgt_poly = ext.get(int(near_fid))
-            if tgt_poly is not None:
-                target_angle = self._local_line_angle_cached(
-                    dataset_key=ds_key,
-                    oid=int(near_fid),
-                    polyline=tgt_poly,
-                    x=near_x,
-                    y=near_y,
-                )
+        resolved = self._resolve_target_angle_and_snap(
+            cand=cand,
+            ds_key=ds_key,
+            lines_fc_key=lines_fc_key,
+            dangles_fc_key=dangles_fc_key,
+            dangle_parent=dangle_parent,
+            dangle_xy=dangle_xy,
+            polyline_by_parent=polyline_by_parent,
+            polyline_by_external=polyline_by_external,
+        )
+        target_angle = resolved.target_angle
+        tgt_poly = resolved.tgt_poly
+        tgt_snap_x = resolved.snap_x
+        tgt_snap_y = resolved.snap_y
+        target_parent_id = resolved.target_parent_id
 
         if target_angle is None:
-            # Unavailable => no block/penalty; conservative extra-dangle policy for dangle targets
-            allow_extra = ds_key != dangles_fc_key
-            return AngleAssessment(
-                available=False,
-                blocks=False,
-                allow_extra_dangle=bool(allow_extra),
-                angle_metric_deg=None,
+            return self._unavailable_assessment(
+                ds_key=ds_key,
+                dangles_fc_key=dangles_fc_key,
                 src_connector_diff=float(src_connector_diff),
             )
 
@@ -3071,47 +3271,34 @@ class FillLineGaps:
         # - comparing dangle-pair / dangle-parent-line targets in undirected mode, to avoid
         #   collapsing anti-parallel lines to zero diff.
         _use_directional = (
-            self.lines_are_directed
-            or _is_dangle_pair
-            or _is_dangle_parent_line
+            self.lines_are_directed or _is_dangle_pair or _is_dangle_parent_line
         )
 
+        src_poly_for_norm: Any = None
+        endpoint_snap = False
         if _use_directional:
             _diff = self._directional_diff
             angle_max_deg = 180.0
-
-            src_poly_for_norm = polyline_by_parent.get(int(src_parent_id))
-            _endpoint_snap = _is_dangle_pair or _is_dangle_parent_line
-            # In directed mode: always use raw forward direction (no flip).
-            # The topology check handles endpoint snaps; for mid-line snaps, raw angles
-            # give consistent directionality across all target types.
-            # In undirected mode: flip if at start so src points "exit toward gap"
-            # for symmetric dangle-pair scoring.
-            if src_poly_for_norm is not None and src_angle_deg is not None:
-                if not self.lines_are_directed:
-                    if self._xy_is_at_line_start(src_poly_for_norm, dangle_x, dangle_y):
-                        src_angle_deg = (float(src_angle_deg) + 180.0) % 360.0
-
-            # In undirected mode (_use_directional triggered by dangle-pair / dangle-parent-line):
-            # normalise target_angle to "entry direction into target interior" so that both
-            # dangles in a pair score symmetrically (0° for a good collinear fill).
-            # In directed mode: leave target_angle as the raw flow direction of the target
-            # line at the snap point. The source exits toward the gap; the target should flow
-            # in the same direction for a good match — flipping would collapse the score to
-            # 0° for both dangles regardless of their relative orientation.
-            if not self.lines_are_directed:
-                _tgt_snap_x = float(tx) if _is_dangle_pair else float(near_x)
-                _tgt_snap_y = float(ty) if _is_dangle_pair else float(near_y)
-                if not self._xy_is_at_line_start(tgt_poly, _tgt_snap_x, _tgt_snap_y):
-                    target_angle = (float(target_angle) + 180.0) % 360.0
-            # In directed mode, override src_connector_diff to use directional diff
-            # so that anti-parallel src/connector (e.g. west vs east) reports 180° (BAD)
-            # rather than collapsing to 0° under orientation_diff.
-            # Undirected mode keeps the orientation-based value computed earlier.
-            if self.lines_are_directed:
-                src_connector_diff = self._directional_diff(
-                    float(src_angle_deg), float(connector_angle)
-                )
+            norm = self._normalize_directional_angles(
+                src_parent_id=src_parent_id,
+                src_angle_deg=float(src_angle_deg),
+                target_angle=float(target_angle),
+                src_connector_diff=float(src_connector_diff),
+                connector_angle=float(connector_angle),
+                dangle_x=dangle_x,
+                dangle_y=dangle_y,
+                tgt_poly=tgt_poly,
+                tgt_snap_x=tgt_snap_x,
+                tgt_snap_y=tgt_snap_y,
+                is_dangle_pair=_is_dangle_pair,
+                is_dangle_parent_line=_is_dangle_parent_line,
+                polyline_by_parent=polyline_by_parent,
+            )
+            src_angle_deg = norm.src_angle_deg
+            target_angle = norm.target_angle
+            src_connector_diff = norm.src_connector_diff
+            src_poly_for_norm = norm.src_poly_for_norm
+            endpoint_snap = norm.endpoint_snap
         else:
             _diff = self._orientation_diff
             angle_max_deg = 90.0
@@ -3129,48 +3316,61 @@ class FillLineGaps:
             _src_conn_for_transition + float(connector_target_diff)
         )
 
-        if _use_directional:
-            if self.lines_are_directed and _endpoint_snap:
-                # Topology-aware metric: only end→start is a valid directional connection.
-                # "Opposite attracts": src_is_end AND target_is_start → use direction diff.
-                # All other combinations (end→end, start→start, start→end) → 180° (BAD).
-                _snap_x = float(tx) if _is_dangle_pair else float(near_x)
-                _snap_y = float(ty) if _is_dangle_pair else float(near_y)
-                _src_is_end = (
-                    src_poly_for_norm is not None
-                    and not self._xy_is_at_line_start(
-                        src_poly_for_norm, dangle_x, dangle_y
-                    )
+        # Pick the angle metric per the directional/topology rules.
+        # Non-directional: src_connector_diff alone.
+        # Directional, non-endpoint, directed: worst of angular alignment vs
+        #     connector direction (a bad score on either makes the candidate bad).
+        # Directional, endpoint snap, directed: only end-to-start is a valid
+        #     connection — anything else is forced to 180° (rejected). For valid
+        #     end-to-start dangle pairs connector_angle_diff_required_above_meters
+        #     decides whether to penalise bad connector direction: when the
+        #     candidate's gap distance exceeds the threshold the parent-line
+        #     lookup is consulted and max(src_target_diff, src_connector_diff)
+        #     applies if the parent line is also beyond the threshold.
+        # Directional, undirected: src_target_diff after both normalisations.
+        connector_diff_threshold = self.connector_angle_diff_required_above_meters
+        if not _use_directional:
+            metric = float(src_connector_diff)
+        elif self.lines_are_directed and endpoint_snap:
+            _src_is_end = (
+                src_poly_for_norm is not None
+                and not self._xy_is_at_line_start(
+                    src_poly_for_norm, dangle_x, dangle_y
                 )
-                _tgt_is_start = self._xy_is_at_line_start(tgt_poly, _snap_x, _snap_y)
-                if _src_is_end and _tgt_is_start:
-                    metric = (
-                        max(float(src_target_diff), float(src_connector_diff))
-                        if self.dangle_pair_apply_connector_diff and _is_dangle_pair
-                        else float(src_target_diff)
-                    )
-                else:
-                    metric = 180.0
-            elif self.lines_are_directed:
-                # Non-endpoint line-like target: worst of angular alignment vs connector
-                # direction — a bad score on either component makes the candidate bad.
+            )
+            _tgt_is_start = self._xy_is_at_line_start(
+                tgt_poly, tgt_snap_x, tgt_snap_y
+            )
+            if not (_src_is_end and _tgt_is_start):
+                metric = 180.0
+            elif (
+                connector_diff_threshold is not None
+                and _is_dangle_pair
+                # Cheap short-circuit: parent line cannot be farther than its
+                # own dangle endpoint, so a close dangle implies a close parent
+                # — skip the lookup and use src_target_diff.
+                and float(cand.near_dist) > float(connector_diff_threshold)
+                and self._dangle_pair_requires_connector_diff(
+                    target_parent_id=target_parent_id,
+                    dist_to_parent_line_by_id=dist_to_parent_line_by_id,
+                )
+            ):
                 metric = max(float(src_target_diff), float(src_connector_diff))
             else:
-                # Undirected dangle-pair / dangle-parent-line after both normalizations.
                 metric = float(src_target_diff)
+        elif self.lines_are_directed:
+            metric = max(float(src_target_diff), float(src_connector_diff))
         else:
-            metric = float(src_connector_diff)
+            metric = float(src_target_diff)
 
-        blocks = self.angle_block_threshold_degrees is not None and metric > float(
-            self.angle_block_threshold_degrees
+        block_thr = self.angle_block_threshold_degrees
+        blocks = block_thr is not None and metric > float(block_thr)
+        extra_thr = self.angle_extra_dangle_threshold_degrees
+        allow_extra = (
+            ds_key != dangles_fc_key
+            or extra_thr is None
+            or metric <= float(extra_thr)
         )
-
-        allow_extra = True
-        if ds_key == dangles_fc_key:
-            if self.angle_extra_dangle_threshold_degrees is None:
-                allow_extra = True
-            else:
-                allow_extra = metric <= float(self.angle_extra_dangle_threshold_degrees)
 
         return AngleAssessment(
             available=True,
@@ -3612,7 +3812,8 @@ class FillLineGaps:
         # Built before candidate filtering so line_like_ds_keys is available.
         # ----------------------------
         angle_caches = self._build_angle_caches(
-            target_layers=target_layers, lines_key=lines_key,
+            target_layers=target_layers,
+            lines_key=lines_key,
         )
         polyline_by_parent = angle_caches.polyline_by_parent
         polyline_by_external = angle_caches.polyline_by_external
@@ -3671,7 +3872,9 @@ class FillLineGaps:
                     if _cand_key in reject_keys:
                         if collect_diags:
                             _step1a_illegal.append(
-                                _CandidateIllegalA(_dangle_oid, _parent_id, _cand, reason)
+                                _CandidateIllegalA(
+                                    _dangle_oid, _parent_id, _cand, reason
+                                )
                             )
                     else:
                         _remaining.append(_cand)
@@ -3693,7 +3896,11 @@ class FillLineGaps:
                 _apply_crossing_filter(_barrier_keys, "crosses_barrier_layer")
 
         trimmed_connector_cache: dict[tuple[int, str, int], Any] = {}
-        if self.reject_crossing_connectors and legal_rows_by_dangle and _crossing_sr is not None:
+        if (
+            self.reject_crossing_connectors
+            and legal_rows_by_dangle
+            and _crossing_sr is not None
+        ):
             # lines_copy provides self-line geometries; external polyline layers
             # whose ds_key is in polyline_by_external were loaded as angle caches.
             _check_layers: list[str] = [self.lines_copy]
@@ -3710,7 +3917,9 @@ class FillLineGaps:
                 )
             )
             if crossing_conflict_keys:
-                _apply_crossing_filter(crossing_conflict_keys, "crosses_existing_feature")
+                _apply_crossing_filter(
+                    crossing_conflict_keys, "crosses_existing_feature"
+                )
 
         if not legal_rows_by_dangle:
             return _empty_result(
@@ -3923,7 +4132,11 @@ class FillLineGaps:
         topology: TopologyModel,
         collect_diags: bool,
         directed_source_illegal_oids: set[DangleOid],
-    ) -> tuple[dict[DangleOid, list[NearCandidate]], dict[DangleOid, ParentId], list[_CandidateIllegalA]]:
+    ) -> tuple[
+        dict[DangleOid, list[NearCandidate]],
+        dict[DangleOid, ParentId],
+        list[_CandidateIllegalA],
+    ]:
         """Dangle filtering: collect legal candidates per dangle.
 
         Returns (legal_rows_by_dangle, parent_id_by_dangle, step1a_illegal).
@@ -3949,7 +4162,9 @@ class FillLineGaps:
                         if cand.near_fc_key == lines_key and cand.near_fid == parent_id:
                             continue
                         _step1a_illegal.append(
-                            _CandidateIllegalA(dangle_oid, parent_id, cand, "directed_start_node")
+                            _CandidateIllegalA(
+                                dangle_oid, parent_id, cand, "directed_start_node"
+                            )
                         )
                 continue
 
@@ -3988,7 +4203,9 @@ class FillLineGaps:
                         dangle_candidate_tol=dangle_tol,
                         topology=topology,
                     )
-                    _step1a_illegal.append(_CandidateIllegalA(dangle_oid, parent_id, cand, reason))
+                    _step1a_illegal.append(
+                        _CandidateIllegalA(dangle_oid, parent_id, cand, reason)
+                    )
 
             if not legal_rows:
                 continue
@@ -4097,6 +4314,17 @@ class FillLineGaps:
                 if _d_xy is not None:
                     _dangle_xys_by_parent.setdefault(int(_d_parent), []).append(_d_xy)
 
+            # Per-dangle parent-line distance lookup used by the dangle-pair
+            # connector-diff distance gate. Only built when the threshold is
+            # set; otherwise the metric ladder skips the gate entirely.
+            dist_to_parent_line_by_id: Optional[dict[ParentId, float]] = None
+            if self.connector_angle_diff_required_above_meters is not None:
+                dist_to_parent_line_by_id = {
+                    int(c.near_fid): float(c.near_dist)
+                    for c in legal_rows
+                    if c.near_fc_key == lines_key
+                }
+
             scored_candidates: list[_ScoredCandidateItem] = []
 
             for _cand_idx, cand in enumerate(legal_rows):
@@ -4114,6 +4342,7 @@ class FillLineGaps:
                     polyline_by_external=polyline_by_external,
                     is_external_line_like=is_external_line_like,
                     dangle_xys_by_parent=_dangle_xys_by_parent,
+                    dist_to_parent_line_by_id=dist_to_parent_line_by_id,
                 )
 
                 _cand_end_z: Optional[float] = end_z_by_cand_index.get(_cand_idx)
@@ -4122,7 +4351,15 @@ class FillLineGaps:
                 if assess.blocks:
                     if collect_diags:
                         _step1b_illegal.append(
-                            _CandidateIllegalB(dangle_oid, parent_id, cand, assess, "blocked_by_angle", start_z, _cand_end_z)
+                            _CandidateIllegalB(
+                                dangle_oid,
+                                parent_id,
+                                cand,
+                                assess,
+                                "blocked_by_angle",
+                                start_z,
+                                _cand_end_z,
+                            )
                         )
                     continue
 
@@ -4140,7 +4377,15 @@ class FillLineGaps:
                 ):
                     if collect_diags:
                         _step1b_illegal.append(
-                            _CandidateIllegalB(dangle_oid, parent_id, cand, assess, "expanded_dangle_angle_disallowed", start_z, _cand_end_z)
+                            _CandidateIllegalB(
+                                dangle_oid,
+                                parent_id,
+                                cand,
+                                assess,
+                                "expanded_dangle_angle_disallowed",
+                                start_z,
+                                _cand_end_z,
+                            )
                         )
                     continue
 
@@ -4161,7 +4406,15 @@ class FillLineGaps:
                     ):
                         if collect_diags:
                             _step1b_illegal.append(
-                                _CandidateIllegalB(dangle_oid, parent_id, cand, assess, "blocked_by_z_drop", start_z, _cand_end_z)
+                                _CandidateIllegalB(
+                                    dangle_oid,
+                                    parent_id,
+                                    cand,
+                                    assess,
+                                    "blocked_by_z_drop",
+                                    start_z,
+                                    _cand_end_z,
+                                )
                             )
                         continue
 
@@ -4240,7 +4493,11 @@ class FillLineGaps:
 
             winner_item = min(
                 scored_candidates,
-                key=lambda item: (item.score.composite, item.score.bonus_rank, item.raw_distance),
+                key=lambda item: (
+                    item.score.composite,
+                    item.score.bonus_rank,
+                    item.raw_distance,
+                ),
             )
             winner_dangle_score = winner_item.score
             chosen = winner_item.cand
@@ -4640,7 +4897,10 @@ class FillLineGaps:
                 and int(prop.ctx.dangle_oid) not in kruskal_crossing_rejected_oids
             )
             gap_source_by_dangle.update(
-                {int(prop.ctx.dangle_oid): prop.gap_source for prop in _global_proposals}
+                {
+                    int(prop.ctx.dangle_oid): prop.gap_source
+                    for prop in _global_proposals
+                }
             )
 
         return (
@@ -4695,7 +4955,9 @@ class FillLineGaps:
         kruskal_rank_by_dangle_oid: dict[DangleOid, int],
         trim_distance: float,
         spatial_reference: Any,
-    ) -> tuple[dict[ParentId, PlanEntry], set[DangleOid], set[DangleOid], set[DangleOid]]:
+    ) -> tuple[
+        dict[ParentId, PlanEntry], set[DangleOid], set[DangleOid], set[DangleOid]
+    ]:
         """Re-check resnap captures against accepted connector geometries.
 
         Called after _resnap_connections resolves final geometry for deferred
@@ -4926,7 +5188,15 @@ class FillLineGaps:
             cand_scope = ScopeRecord(status=entry.reason)
             result.append(
                 CandidateDiagnostic(
-                    **self._make_base_diag_fields(entry.cand, entry.dangle_oid, entry.parent_id, xy, dangle_parent, dangles_key, lines_key),
+                    **self._make_base_diag_fields(
+                        entry.cand,
+                        entry.dangle_oid,
+                        entry.parent_id,
+                        xy,
+                        dangle_parent,
+                        dangles_key,
+                        lines_key,
+                    ),
                     candidate_scope=cand_scope,
                     network_scope=None,
                     kruskal_scope=None,
@@ -4952,7 +5222,15 @@ class FillLineGaps:
             cand_scope = ScopeRecord(status=entry.reason)
             result.append(
                 CandidateDiagnostic(
-                    **self._make_base_diag_fields(entry.cand, entry.dangle_oid, entry.parent_id, xy, dangle_parent, dangles_key, lines_key),
+                    **self._make_base_diag_fields(
+                        entry.cand,
+                        entry.dangle_oid,
+                        entry.parent_id,
+                        xy,
+                        dangle_parent,
+                        dangles_key,
+                        lines_key,
+                    ),
                     candidate_scope=cand_scope,
                     network_scope=None,
                     kruskal_scope=None,
@@ -4976,7 +5254,9 @@ class FillLineGaps:
             scored_by_dangle.setdefault(int(entry.dangle_oid), []).append(entry)
         rank_map: dict[tuple[int, str, int], int] = {}
         for d_oid, entries in scored_by_dangle.items():
-            for rank, entry in enumerate(sorted(entries, key=lambda e: e.score_tuple), start=1):
+            for rank, entry in enumerate(
+                sorted(entries, key=lambda e: e.score_tuple), start=1
+            ):
                 rank_map[(d_oid, entry.cand.near_fc_key, entry.cand.near_fid)] = rank
 
         # Step-1B scored candidates
@@ -5047,7 +5327,15 @@ class FillLineGaps:
 
             result.append(
                 CandidateDiagnostic(
-                    **self._make_base_diag_fields(entry.cand, entry.dangle_oid, entry.parent_id, xy, dangle_parent, dangles_key, lines_key),
+                    **self._make_base_diag_fields(
+                        entry.cand,
+                        entry.dangle_oid,
+                        entry.parent_id,
+                        xy,
+                        dangle_parent,
+                        dangles_key,
+                        lines_key,
+                    ),
                     candidate_scope=cand_scope,
                     network_scope=net_scope,
                     kruskal_scope=kru_scope,
