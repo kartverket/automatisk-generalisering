@@ -1844,6 +1844,13 @@ class FillLineGaps:
         except Exception:
             return False
 
+    def _is_polygon_fc(self, fc: str) -> bool:
+        try:
+            desc = arcpy.Describe(fc)
+            return str(getattr(desc, "shapeType", "")).lower() == "polygon"
+        except Exception:
+            return False
+
     def _build_angle_caches(
         self,
         *,
@@ -3932,11 +3939,14 @@ class FillLineGaps:
             and legal_rows_by_dangle
             and _crossing_sr is not None
         ):
-            # lines_copy provides self-line geometries; external polyline layers
-            # whose ds_key is in polyline_by_external were loaded as angle caches.
+            # self-lines (lines_copy) plus every connect_to_features layer
+            # that can be crossed.  Shape-type filter is applied directly
+            # rather than reusing polyline_by_external: that cache is built
+            # for angle scoring and excludes FORCE_NON_LINE polylines and
+            # all polygons, neither of which should be excluded here.
             _check_layers: list[str] = [self.lines_copy]
-            for _lyr in target_layers:
-                if self._dataset_key(_lyr) in polyline_by_external:
+            for _lyr in self.external_target_layers:
+                if self._is_polyline_fc(_lyr) or self._is_polygon_fc(_lyr):
                     _check_layers.append(_lyr)
             crossing_conflict_keys, trimmed_connector_cache = (
                 self._find_crossing_conflict_keys(
