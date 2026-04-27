@@ -83,7 +83,6 @@ def main():
             f"Total amount of work files created: "
             f"{WorkFileManager._build_file_counter}"
         )
-        
 
 
 SEARCH_DISTANCE = 5000
@@ -624,7 +623,7 @@ def pre_resolve_road_conflicts(area_selection: str):
         split_fc=Road_N100.data_preparation___road_split_xm__n100_road.value,
         output_fc=Road_N100.data_preparation___road_split_single_part___n100_road.value,
         interval=100,
-        type_fields=FieldNames.road_all_fields(), 
+        type_fields=FieldNames.road_all_fields(),
     )
 
     arcpy.management.MultipartToSinglepart(
