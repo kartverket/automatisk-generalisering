@@ -25,19 +25,21 @@ EPS = 1e-9  # [m]
 BUFFER_DIST = 60  # [m]
 LENGTH_TOLERANCE = 10  # [m]
 
+
 # Functions
-
-
 def split_polyline_featureclass(
     input_fc: str,
     dissolve_fc: str,
     split_fc: str,
     output_fc: str,
     interval: float = 500.0,
+    type_fields: list = [],
 ) -> None:
     """
     Divides all the polylines in input_fc into pieces of x meters equal intervall,
     and stores the new geometries in an own output folder.
+    Lines with different values in type_fields parameter will be kept seperate
+
 
     Args:
         input_fc (str): The input polylines
@@ -45,6 +47,7 @@ def split_polyline_featureclass(
         split_fc (str): Layer for the divided geometries
         output_fc (str): Where to store the final single part output geometries
         intervall (float, optional): The split intervall, default: 500 m
+        type_fields (list, optional): the fields which determine line types
     """
     # Fetch fields
     oid_fields = arcpy.Describe(input_fc).OIDFieldName
@@ -64,7 +67,7 @@ def split_polyline_featureclass(
     arcpy.management.Dissolve(
         in_features=input_fc,
         out_feature_class=dissolve_fc,
-        dissolve_field=[],
+        dissolve_field=type_fields,
         multi_part="SINGLE_PART",
     )
 
@@ -94,32 +97,42 @@ def split_polyline_featureclass(
         has_z=has_z,
         spatial_reference=spatial_ref,
     )
+    for fld in arcpy.ListFields(input_fc):
+        if fld.name in type_fields:
+            arcpy.management.AddField(
+                in_table=split_fc, field_name=fld.name, field_type=fld.type
+            )
 
     # Divide the geometries
     with arcpy.da.SearchCursor(
-        single_in, ["SHAPE@"]
-    ) as s_cursor, arcpy.da.InsertCursor(split_fc, ["SHAPE@"]) as i_cursor:
+        single_in, ["SHAPE@"] + type_fields
+    ) as s_cursor, arcpy.da.InsertCursor(
+        split_fc, ["SHAPE@"] + type_fields
+    ) as i_cursor:
         for s_row in s_cursor:
             geom = s_row[0]
+            new_row = list(s_row)
             if geom is None:
                 # Needs a valid geometry
                 continue
             total_len = geom.length
             if total_len <= interval:
                 # If the geometry is shorter than the limit, just keep it
-                i_cursor.insertRow([geom])
+                i_cursor.insertRow(s_row)
             else:
                 # Otherwise -> Split it
                 n_full = int(total_len // interval)
                 pos = 0.0
                 for _ in range(n_full):
                     seg = geom.segmentAlongLine(pos, pos + interval, False)
-                    i_cursor.insertRow([seg])
+                    new_row[0] = seg
+                    i_cursor.insertRow(new_row)
                     pos += interval
                 # The rest of the geometry
                 if pos < total_len:
                     seg = geom.segmentAlongLine(pos, total_len, False)
-                    i_cursor.insertRow([seg])
+                    new_row[0] = seg
+                    i_cursor.insertRow(new_row)
 
     # Clean up
     if arcpy.Exists(single_in):
@@ -145,6 +158,9 @@ def split_polyline_featureclass(
     if arcpy.Exists(joined_temp):
         arcpy.management.Delete(joined_temp)
 
+    match_fields = []
+    for field in type_fields:
+        match_fields.append([field, field])
     arcpy.analysis.SpatialJoin(
         target_features=split_fc,
         join_features=input_fc,
@@ -153,6 +169,7 @@ def split_polyline_featureclass(
         join_type="KEEP_ALL",
         match_option="INTERSECT",
         field_mapping=fm,
+        match_fields=match_fields,
     )
 
     # Perform multipart to singlepart for final layer
