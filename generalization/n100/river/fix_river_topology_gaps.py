@@ -18,6 +18,7 @@ from custom_tools.general_tools.geometry_tools import (
     LineZValueTool,
     LineZOrientTool,
 )
+from custom_tools.general_tools.line_segmenter import segment_line
 
 
 @timing_decorator
@@ -25,6 +26,7 @@ def main():
     environment_setup.main()
     raster = compute_raster_extent()
     fix_river_orientation(raster_list=raster)
+    prepare_segmented_inputs()
     fill_line_topology_gaps(raster_list=raster)
     # fill_raod_gaps()
 
@@ -56,20 +58,44 @@ def fix_river_orientation(raster_list: list[type_defs.RasterFilePath]):
 
 
 @timing_decorator
+def prepare_segmented_inputs():
+    arcpy.management.PolygonToLine(
+        in_features=River_N100.data_preparation___river_polygons___n100_river.value,
+        out_feature_class=River_N100.river_topology___river_polygons_as_lines___n100_river.value,
+    )
+
+    segment_line(
+        input_fc=River_N100.river_topology___fixed_river_orientation___n100_river.value,
+        output_fc=River_N100.river_topology___segmented_river_lines___n100_river.value,
+        segment_interval=20,
+        even_segments=True,
+    )
+
+    segment_line(
+        input_fc=River_N100.river_topology___river_polygons_as_lines___n100_river.value,
+        output_fc=River_N100.river_topology___segmented_river_polygon_lines___n100_river.value,
+        segment_interval=20,
+        even_segments=True,
+    )
+
+
+@timing_decorator
 def fill_line_topology_gaps(raster_list: list[type_defs.RasterFilePath]):
 
     work_file_manager_config = core_config.WorkFileConfig(
         root_file=River_N100.river_topology___root___n100_river.value,
     )
 
+    segmented_polygon_lines = (
+        River_N100.river_topology___segmented_river_polygon_lines___n100_river.value
+    )
+
     line_fix_config = logic_config.FillLineGapsConfig(
-        input_lines=River_N100.river_topology___fixed_river_orientation___n100_river.value,
+        input_lines=River_N100.river_topology___segmented_river_lines___n100_river.value,
         output_lines=River_N100.river_topology___fixed_river_gaps___n100_river.value,
         work_file_manager_config=work_file_manager_config,
         gap_tolerance_meters=300,
-        connect_to_features=[
-            River_N100.data_preparation___river_polygons___n100_river.value
-        ],
+        connect_to_features=[segmented_polygon_lines],
         best_fit_weights=logic_config.BestFitWeightsConfig(
             distance=0.5,
             angle=0.25,
@@ -86,6 +112,9 @@ def fill_line_topology_gaps(raster_list: list[type_defs.RasterFilePath]):
             angle_local_half_window_m=20,
             lines_are_directed=True,
             connector_angle_diff_required_above_meters=5,
+            connect_to_features_angle_mode={
+                segmented_polygon_lines: logic_config.AngleTargetMode.FORCE_NON_LINE,
+            },
         ),
         z_config=logic_config.FillLineGapsZConfig(
             raster_paths=raster_list,
