@@ -155,6 +155,27 @@ class River_N100(Enum):
         description="root",
     )
 
+    river_topology___river_polygons_as_lines___n100_river = (
+        file_manager.generate_file_name_gdb(
+            script_source_name=river_topology,
+            description="river_polygons_as_lines",
+        )
+    )
+
+    river_topology___segmented_river_lines___n100_river = (
+        file_manager.generate_file_name_gdb(
+            script_source_name=river_topology,
+            description="segmented_river_lines",
+        )
+    )
+
+    river_topology___segmented_river_polygon_lines___n100_river = (
+        file_manager.generate_file_name_gdb(
+            script_source_name=river_topology,
+            description="segmented_river_polygon_lines",
+        )
+    )
+
     selecting_water_polygons__centerline__n100 = file_manager.generate_file_name_gdb(
         script_source_name=selecting_water_polygons,
         description="centerline",
