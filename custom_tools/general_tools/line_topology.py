@@ -41,6 +41,7 @@ class TopologyModel:
 class EditOp(str, Enum):
     SNAP = "snap"
     EXTEND = "extend"
+    NEW_LINE = "new_line"
 
 
 class GapSource(str, Enum):
@@ -112,6 +113,19 @@ class PlanEntry:
     processed: bool = False
     skip: bool = False
     meta: Optional[PlanEntryMeta] = None
+
+
+@dataclass(frozen=True)
+class _GeneratedLineRecord:
+    """One pending NEW_LINE materialisation collected during ``_apply_plan``
+    and consumed by ``_insert_generated_lines`` after the UpdateCursor closes.
+    """
+
+    parent_original_id: ParentId
+    dangle_x: float
+    dangle_y: float
+    near_x: float
+    near_y: float
 
 
 class _UnionFind:
@@ -1280,6 +1294,14 @@ class FillLineGaps:
 
     ORIGINAL_ID = "line_gap_original_id"
 
+    # Output flag: 1 on rows materialised by EditMethod.NEW_LINE, 0 otherwise.
+    FIELD_GAP_GENERATED = "fill_line_gap_generated"
+
+    # Sentinel ORIGINAL_ID for generated rows. Real ORIGINAL_IDs come from
+    # OBJECTID (>= 1), so -1 cannot collide with any plan key — keeps the
+    # second _apply_plan (resnap) pass from walking into generated rows.
+    GENERATED_ORIGINAL_ID_SENTINEL = -1
+
     # Change output fields
     FIELD_GAP_DIST_M = "gap_dist_m"
     FIELD_GAP_SOURCE = "gap_source"
@@ -1482,8 +1504,8 @@ class FillLineGaps:
     def _resolve_edit_op(self, *, gap_source: GapSource) -> EditOp:
         """Map ``edit_method`` + ``gap_source`` onto the geometry edit to perform.
 
-        ``FORCED_SNAP`` and ``FORCED_EXTEND`` ignore ``gap_source``.
-        ``AUTO`` snaps dangle-to-dangle pairs
+        ``FORCED_SNAP``, ``FORCED_EXTEND`` and ``NEW_LINE`` ignore
+        ``gap_source``.  ``AUTO`` snaps dangle-to-dangle pairs
         (``GapSource.PAIR_DANGLE``) and extends everything else.
         """
         method = self.edit_method
@@ -1492,6 +1514,8 @@ class FillLineGaps:
             return EditOp.SNAP
         if method == logic_config.EditMethod.FORCED_EXTEND:
             return EditOp.EXTEND
+        if method == logic_config.EditMethod.NEW_LINE:
+            return EditOp.NEW_LINE
 
         # AUTO
         if gap_source is GapSource.PAIR_DANGLE:
@@ -1820,6 +1844,27 @@ class FillLineGaps:
             expression=f"!{oid_field}!",
             expression_type="PYTHON3",
         )
+
+    def _ensure_gap_generated_field(self) -> None:
+        """Idempotently provision ``FIELD_GAP_GENERATED`` on ``lines_copy``.
+
+        If the field is missing, add it as SHORT and bulk-set every
+        existing row to 0.  If the field already exists (e.g. because the
+        input is the output of a prior run), values are preserved
+        verbatim — generated rows from the prior run keep their 1.
+        """
+        existing = {f.name for f in arcpy.ListFields(self.lines_copy)}
+        if self.FIELD_GAP_GENERATED in existing:
+            return
+
+        arcpy.management.AddField(
+            self.lines_copy, self.FIELD_GAP_GENERATED, "SHORT"
+        )
+        with arcpy.da.UpdateCursor(
+            self.lines_copy, [self.FIELD_GAP_GENERATED]
+        ) as cur:
+            for _ in cur:
+                cur.updateRow((0,))
 
     def _create_dangles(self) -> None:
         arcpy.management.FeatureVerticesToPoints(
@@ -5949,9 +5994,11 @@ class FillLineGaps:
         with pending plan entries, applies each entry in order — SNAP moves
         the dangle endpoint exactly to the target point; EXTEND inserts the
         target point as the new endpoint while preserving the existing
-        vertices.  When ``line_changes_output`` is set and metadata writing
-        is enabled, a per-edit row is collected and inserted after all
-        geometry updates are complete.
+        vertices; NEW_LINE leaves the parent untouched and is materialised
+        as a new feature in a post-pass insert (see
+        ``_insert_generated_lines``).  When ``line_changes_output`` is set
+        and metadata writing is enabled, a per-edit row is collected and
+        inserted after all geometry updates are complete.
 
         How:
             Each ``PlanEntry`` carries ``skip`` and ``processed`` flags.
@@ -5969,6 +6016,7 @@ class FillLineGaps:
 
         spatial_reference = arcpy.Describe(self.lines_copy).spatialReference
         change_rows: list[tuple] = []
+        generated_records: list[_GeneratedLineRecord] = []
 
         with arcpy.da.UpdateCursor(
             self.lines_copy, [self.ORIGINAL_ID, "SHAPE@"]
@@ -5984,6 +6032,7 @@ class FillLineGaps:
                     continue
 
                 current_shape = shape
+                shape_modified = False
 
                 for info in pending:
                     if info.edit_op is EditOp.SNAP:
@@ -5994,13 +6043,26 @@ class FillLineGaps:
                             near_x=info.near_x,
                             near_y=info.near_y,
                         )
-                    else:
+                        shape_modified = True
+                    elif info.edit_op is EditOp.EXTEND:
                         current_shape = self._extend_endpoint(
                             shape=current_shape,
                             dangle_x=info.dangle_x,
                             dangle_y=info.dangle_y,
                             near_x=info.near_x,
                             near_y=info.near_y,
+                        )
+                        shape_modified = True
+                    else:
+                        # NEW_LINE — defer to post-pass insert; parent untouched.
+                        generated_records.append(
+                            _GeneratedLineRecord(
+                                parent_original_id=pid,
+                                dangle_x=info.dangle_x,
+                                dangle_y=info.dangle_y,
+                                near_x=info.near_x,
+                                near_y=info.near_y,
+                            )
                         )
 
                     info.processed = True
@@ -6022,7 +6084,14 @@ class FillLineGaps:
                         if row is not None:
                             change_rows.append(row)
 
-                cur.updateRow((original_id, current_shape))
+                if shape_modified:
+                    cur.updateRow((original_id, current_shape))
+
+        if generated_records:
+            self._insert_generated_lines(
+                records=generated_records,
+                spatial_reference=spatial_reference,
+            )
 
         if (
             self.line_changes_output is not None
@@ -6053,6 +6122,97 @@ class FillLineGaps:
                         # Polygon (non-line) rows have no angle metadata; pad with None.
                         row = row + (None,) * len(meta_fields)
                     icur.insertRow(row)
+
+    def _insert_generated_lines(
+        self,
+        *,
+        records: list[_GeneratedLineRecord],
+        spatial_reference,
+    ) -> None:
+        """Materialise NEW_LINE plan entries as new features in ``lines_copy``.
+
+        Each record is written as a 2-vertex polyline (dangle -> near) that
+        carries a copy of the parent line's attributes — every field except
+        the OID, the geometry, ``Shape_Length``/``Shape_Area``,
+        ``ORIGINAL_ID``, and ``FIELD_GAP_GENERATED``.  ``ORIGINAL_ID`` is
+        forced to ``GENERATED_ORIGINAL_ID_SENTINEL`` so the second
+        ``_apply_plan`` (resnap) pass cannot mistake a generated row for a
+        real parent; ``FIELD_GAP_GENERATED`` is forced to 1.
+
+        Records whose dangle and near coordinates coincide are skipped — a
+        zero-length connector should not have been considered a gap, but
+        the guard keeps the insert pass safe.
+        """
+        if not records:
+            return
+
+        oid_field = arcpy.Describe(self.lines_copy).OIDFieldName
+        excluded = {
+            oid_field,
+            self.FIELD_GAP_GENERATED,
+            self.ORIGINAL_ID,
+        }
+        copyable_fields: list[str] = []
+        for f in arcpy.ListFields(self.lines_copy):
+            if f.type in ("Geometry", "OID", "GlobalID"):
+                continue
+            if f.name in excluded:
+                continue
+            if f.name in ("Shape_Length", "Shape_Area"):
+                continue
+            copyable_fields.append(f.name)
+
+        needed_parent_ids = {r.parent_original_id for r in records}
+        parent_attrs: dict[ParentId, tuple] = {}
+        if copyable_fields:
+            with arcpy.da.SearchCursor(
+                self.lines_copy, [self.ORIGINAL_ID] + copyable_fields
+            ) as scur:
+                for row in scur:
+                    pid = int(row[0])
+                    if pid in needed_parent_ids and pid not in parent_attrs:
+                        parent_attrs[pid] = tuple(row[1:])
+
+        insert_fields = (
+            copyable_fields
+            + [self.ORIGINAL_ID, self.FIELD_GAP_GENERATED, "SHAPE@"]
+        )
+
+        epsilon_sq = 1e-10
+        with arcpy.da.InsertCursor(self.lines_copy, insert_fields) as icur:
+            for rec in records:
+                dx = rec.near_x - rec.dangle_x
+                dy = rec.near_y - rec.dangle_y
+                if dx * dx + dy * dy <= epsilon_sq:
+                    continue
+
+                if copyable_fields:
+                    attrs = parent_attrs.get(rec.parent_original_id)
+                    if attrs is None:
+                        # Parent vanished from lines_copy between cursor
+                        # passes — should not happen, but skip rather
+                        # than write None for every field.
+                        continue
+                else:
+                    attrs = ()
+
+                geom = arcpy.Polyline(
+                    arcpy.Array(
+                        [
+                            arcpy.Point(rec.dangle_x, rec.dangle_y),
+                            arcpy.Point(rec.near_x, rec.near_y),
+                        ]
+                    ),
+                    spatial_reference,
+                )
+                icur.insertRow(
+                    tuple(attrs)
+                    + (
+                        self.GENERATED_ORIGINAL_ID_SENTINEL,
+                        1,
+                        geom,
+                    )
+                )
 
     def _update_deferred_diagnostics(
         self,
@@ -6139,6 +6299,7 @@ class FillLineGaps:
         self._copy_input_lines()
         self._build_raster_handles()
         self._add_original_id_field()
+        self._ensure_gap_generated_field()
         self._create_dangles()
         self._build_external_target_layers_once()
         targets = self._select_targets_within_tolerance_of_dangles()

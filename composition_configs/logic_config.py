@@ -216,6 +216,7 @@ class EditMethod(str, Enum):
     AUTO = "auto"
     FORCED_SNAP = "forced_snap"
     FORCED_EXTEND = "forced_extend"
+    NEW_LINE = "new_line"
 
 
 class ConnectivityScope(str, Enum):
@@ -405,7 +406,12 @@ class FillLineGapsAdvancedConfig:
 
     edit_method: controls how connectors are applied to input lines. AUTO selects snap
         or extend based on geometry; FORCED_SNAP always snaps; FORCED_EXTEND always
-        extends.
+        extends. NEW_LINE leaves all parent geometries untouched and instead inserts
+        each connector as a new 2-vertex feature in the output, copying the parent
+        line's attributes (except geometry/OID) and setting fill_line_gap_generated=1.
+        Original (non-generated) rows carry fill_line_gap_generated=0. The field is
+        preserved across re-runs: when the input already has it, existing values are
+        not overwritten.
     increased_tolerance_edge_case_distance_meters: additional distance added to
         gap_tolerance_meters when searching for dangle-pair candidates that qualify for
         the edge-case bonus. Zero disables the expanded search radius.
