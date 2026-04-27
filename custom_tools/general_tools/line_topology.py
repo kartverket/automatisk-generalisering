@@ -968,7 +968,10 @@ class AngleAssessment:
     allow_extra_dangle: bool  # expanded dangle tol + edge-case bonus
     angle_metric_deg: Optional[float]
     # Normalisation range for angle_metric_deg used in best-fit scoring.
-    # 90.0 for undirected targets; 180.0 for directional dangle-pair targets.
+    # 90.0 for undirected line-like targets and non-line targets in undirected mode;
+    # 180.0 whenever directional comparison is in effect — i.e. lines_are_directed,
+    # or a dangle endpoint snap (target is a dangle, or the parent line at one of
+    # its dangle endpoints) regardless of mode.
     angle_max_deg: float = 90.0
 
     # Diagnostics (optional)
@@ -3354,41 +3357,56 @@ class FillLineGaps:
             _src_conn_for_transition + float(connector_target_diff)
         )
 
-        # Pick the angle metric per the directional/topology rules.
-        # Non-directional: src_connector_diff alone.
-        # Directional, non-endpoint, directed: worst of angular alignment vs
-        #     connector direction (a bad score on either makes the candidate bad).
-        # Directional, endpoint snap, directed: only end-to-start is a valid
-        #     connection — anything else is forced to 180° (rejected). Src-end
-        #     is guaranteed by upstream filtering (_filter_legal_candidates drops
-        #     start-node src dangles), so only target-start enforcement remains.
-        #     For valid end-to-start dangle pairs
-        #     connector_angle_diff_required_above_meters decides whether to
-        #     penalise bad connector direction: when the candidate's gap distance
-        #     exceeds the threshold the parent-line lookup is consulted and
-        #     max(src_target_diff, src_connector_diff) applies if the parent line
-        #     is also beyond the threshold.
-        # Directional, undirected: src_target_diff after both normalisations.
+        # Pick the angle metric.
+        #
+        # Non-directional path (lines_are_directed=False, target is not a dangle
+        # endpoint snap): src_connector_diff alone.
+        #
+        # Undirected dangle endpoint snap (lines_are_directed=False but target is a
+        # dangle or the parent line at a dangle endpoint): src_target_diff after the
+        # normalisation flips, so a clean collinear pair scores 0°.
+        #
+        # Directional path (lines_are_directed=True): default to
+        # max(src_target_diff, src_connector_diff) for line-like targets — a bad
+        # score on either makes the candidate bad. At endpoint snaps two extra
+        # rules apply:
+        #   - End-to-start enforcement: target must be at its line's start, else
+        #     metric is forced to 180° (rejection). Src-end is guaranteed
+        #     upstream by _filter_legal_candidates, so only target-start needs to
+        #     be checked here.
+        #   - Close-dangle exception: connector_angle_diff_required_above_meters
+        #     decides whether to penalise bad connector direction. When the
+        #     parent line of the target dangle is within the threshold the
+        #     geometry already constrains src↔connector alignment, so use
+        #     src_target_diff alone. None disables the penalty entirely (always
+        #     src_target_diff at endpoint snaps); 0 always penalises (always
+        #     max(...)). For dangle-pair targets a per-dangle parent-line lookup
+        #     is consulted only when cand.near_dist > threshold (a closer dangle
+        #     implies an at-least-as-close parent). For dangle-parent-line
+        #     targets cand.near_dist *is* the parent-line distance, so the
+        #     direct comparison decides without a lookup.
         connector_diff_threshold = self.connector_angle_diff_required_above_meters
         if not _use_directional:
             metric = float(src_connector_diff)
-        elif self.lines_are_directed and endpoint_snap:
-            _tgt_is_start = self._xy_is_at_line_start(
-                tgt_poly, tgt_snap_x, tgt_snap_y
-            )
-            if not _tgt_is_start:
+        elif not self.lines_are_directed:
+            # Undirected dangle endpoint snap (dangle pair or dangle-parent-line).
+            metric = float(src_target_diff)
+        elif endpoint_snap:
+            if not self._xy_is_at_line_start(tgt_poly, tgt_snap_x, tgt_snap_y):
                 metric = 180.0
-            elif (
-                connector_diff_threshold is not None
-                and _is_dangle_pair
-                # Cheap short-circuit: parent line cannot be farther than its
-                # own dangle endpoint, so a close dangle implies a close parent
-                # — skip the lookup and use src_target_diff.
-                and float(cand.near_dist) > float(connector_diff_threshold)
-            ):
-                # Inline parent-line distance gate. Conservative when the lookup
-                # cannot resolve a parent line (missing target parent, lookup
-                # disabled, or parent absent from the global table).
+            elif connector_diff_threshold is None:
+                metric = float(src_target_diff)
+            elif float(connector_diff_threshold) == 0.0:
+                metric = max(float(src_target_diff), float(src_connector_diff))
+            elif float(cand.near_dist) <= float(connector_diff_threshold):
+                # Close enough that the parent line is guaranteed within the
+                # threshold (dangle-pair: parent passes through the dangle;
+                # dangle-parent-line: target IS the parent). No lookup needed.
+                metric = float(src_target_diff)
+            elif _is_dangle_pair:
+                # Dangle target outside the threshold — the parent line might
+                # still be within (e.g. running parallel back toward the source).
+                # Lookup required. Conservative on miss (treat as outside).
                 _parent_dist = (
                     dist_to_parent_line_by_id.get(int(target_parent_id))
                     if (
@@ -3398,18 +3416,18 @@ class FillLineGaps:
                     else None
                 )
                 if (
-                    _parent_dist is None
-                    or float(_parent_dist) > float(connector_diff_threshold)
+                    _parent_dist is not None
+                    and float(_parent_dist) <= float(connector_diff_threshold)
                 ):
-                    metric = max(float(src_target_diff), float(src_connector_diff))
-                else:
                     metric = float(src_target_diff)
+                else:
+                    metric = max(float(src_target_diff), float(src_connector_diff))
             else:
-                metric = float(src_target_diff)
-        elif self.lines_are_directed:
-            metric = max(float(src_target_diff), float(src_connector_diff))
+                # Dangle-parent-line outside the threshold: parent_dist == near_dist
+                # by construction, so the parent is also outside. No lookup.
+                metric = max(float(src_target_diff), float(src_connector_diff))
         else:
-            metric = float(src_target_diff)
+            metric = max(float(src_target_diff), float(src_connector_diff))
 
         block_thr = self.angle_block_threshold_degrees
         blocks = block_thr is not None and metric > float(block_thr)
