@@ -100,6 +100,7 @@ def fill_line_topology_gaps(raster_list: list[type_defs.RasterFilePath]):
             connectivity_tolerance_meters=environment_setup.ArcGisEnvironmentSetup.XY_TOLERANCE,
         ),
         advanced_config=logic_config.FillLineGapsAdvancedConfig(
+            edit_method=logic_config.EditMethod.NEW_LINE,
             increased_tolerance_edge_case_distance_meters=15,
         ),
     )
