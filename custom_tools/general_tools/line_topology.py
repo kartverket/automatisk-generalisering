@@ -3367,9 +3367,11 @@ class FillLineGaps:
         # normalisation flips, so a clean collinear pair scores 0°.
         #
         # Directional path (lines_are_directed=True): default to
-        # max(src_target_diff, src_connector_diff) for line-like targets — a bad
-        # score on either makes the candidate bad. At endpoint snaps two extra
-        # rules apply:
+        # max(src_target_diff, src_connector_diff, connector_target_diff) for
+        # line-like targets — a bad score on any of the three joints makes the
+        # candidate bad. The third term catches the case where src→target looks
+        # aligned overall but the connector enters the target broadside, which
+        # the two-term max cannot see. At endpoint snaps two extra rules apply:
         #   - End-to-start enforcement: target must be at its line's start, else
         #     metric is forced to 180° (rejection). Src-end is guaranteed
         #     upstream by _filter_legal_candidates, so only target-start needs to
@@ -3380,9 +3382,9 @@ class FillLineGaps:
         #     geometry already constrains src↔connector alignment, so use
         #     src_target_diff alone. None disables the penalty entirely (always
         #     src_target_diff at endpoint snaps); 0 always penalises (always
-        #     max(...)). For dangle-pair targets a per-dangle parent-line lookup
-        #     is consulted only when cand.near_dist > threshold (a closer dangle
-        #     implies an at-least-as-close parent). For dangle-parent-line
+        #     three-term max). For dangle-pair targets a per-dangle parent-line
+        #     lookup is consulted only when cand.near_dist > threshold (a closer
+        #     dangle implies an at-least-as-close parent). For dangle-parent-line
         #     targets cand.near_dist *is* the parent-line distance, so the
         #     direct comparison decides without a lookup.
         connector_diff_threshold = self.connector_angle_diff_required_above_meters
@@ -3397,7 +3399,11 @@ class FillLineGaps:
             elif connector_diff_threshold is None:
                 metric = float(src_target_diff)
             elif float(connector_diff_threshold) == 0.0:
-                metric = max(float(src_target_diff), float(src_connector_diff))
+                metric = max(
+                    float(src_target_diff),
+                    float(src_connector_diff),
+                    float(connector_target_diff),
+                )
             elif float(cand.near_dist) <= float(connector_diff_threshold):
                 # Close enough that the parent line is guaranteed within the
                 # threshold (dangle-pair: parent passes through the dangle;
@@ -3421,13 +3427,25 @@ class FillLineGaps:
                 ):
                     metric = float(src_target_diff)
                 else:
-                    metric = max(float(src_target_diff), float(src_connector_diff))
+                    metric = max(
+                        float(src_target_diff),
+                        float(src_connector_diff),
+                        float(connector_target_diff),
+                    )
             else:
                 # Dangle-parent-line outside the threshold: parent_dist == near_dist
                 # by construction, so the parent is also outside. No lookup.
-                metric = max(float(src_target_diff), float(src_connector_diff))
+                metric = max(
+                    float(src_target_diff),
+                    float(src_connector_diff),
+                    float(connector_target_diff),
+                )
         else:
-            metric = max(float(src_target_diff), float(src_connector_diff))
+            metric = max(
+                float(src_target_diff),
+                float(src_connector_diff),
+                float(connector_target_diff),
+            )
 
         block_thr = self.angle_block_threshold_degrees
         blocks = block_thr is not None and metric > float(block_thr)

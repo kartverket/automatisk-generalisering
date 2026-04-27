@@ -300,17 +300,18 @@ class FillLineGapsAngleConfig:
         Requires best_fit_weights.angle > 0 on FillLineGapsConfig (enforced at init).
     connector_angle_diff_required_above_meters: when set, the angle metric at a
         valid end-to-start dangle endpoint snap uses
-        max(src_target_diff, src_connector_diff) instead of src_target_diff
-        alone, but only when the source dangle is farther than this many metres
-        from the target's parent line. The endpoint snap covers both dangle-pair
-        targets (target is another dangle) and dangle-parent-line targets
-        (target is a line whose snap point coincides with one of its own dangle
-        endpoints), since both expose the same end-to-start geometry. Within the
-        threshold src_target_diff alone is used. Set to 0 to always apply the
-        penalty. None (default) disables the penalty entirely. Has no effect
-        when lines_are_directed is False, and is independent of the default
-        max(src_target_diff, src_connector_diff) metric used for line-like
-        targets that are not endpoint snaps.
+        max(src_target_diff, src_connector_diff, connector_target_diff) instead
+        of src_target_diff alone, but only when the source dangle is farther
+        than this many metres from the target's parent line. The endpoint snap
+        covers both dangle-pair targets (target is another dangle) and
+        dangle-parent-line targets (target is a line whose snap point coincides
+        with one of its own dangle endpoints), since both expose the same
+        end-to-start geometry. Within the threshold src_target_diff alone is
+        used. Set to 0 to always apply the penalty. None (default) disables the
+        penalty entirely. Has no effect when lines_are_directed is False, and
+        is independent of the default
+        max(src_target_diff, src_connector_diff, connector_target_diff) metric
+        used for line-like targets that are not endpoint snaps.
     """
 
     angle_block_threshold_degrees: Optional[float] = None
