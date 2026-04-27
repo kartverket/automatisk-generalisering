@@ -89,9 +89,6 @@ data_files = {
     "ramp_points": Road_N100.ramps__ramp_points__n100_road.value,
     "ramp_points_moved": Road_N100.ramps__ramp_points_moved__n100_road.value,
     "generalized_ramps": Road_N100.ramps__generalized_ramps__n100_road.value,
-    "within_n_meters": Road_N100.ramps__within_n_meters__n100_road.value,
-    "within_n_meters_2": Road_N100.ramps__within_n_meters__n100_road_2.value,
-    "roads_lyr": Road_N100.ramps__roads_layer__n100_road.value,
 }
 
 files_to_delete = [
@@ -765,8 +762,6 @@ def connect_roads_to_points():
                 roads_without_neighbours.add(oid)
 
     length_map = build_length_map(roads_lyr)
-
-    arcpy.management.CopyFeatures(roads_lyr, data_files["roads_lyr"])
 
     # select roads that are within 1 meter of ramp points to find initial candidates for connection
     arcpy.management.SelectLayerByLocation(

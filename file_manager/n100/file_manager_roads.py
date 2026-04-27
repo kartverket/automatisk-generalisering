@@ -946,18 +946,6 @@ class Road_N100(Enum):
         script_source_name=ramps_file, description="generalized_ramps"
     )
 
-    ramps__within_n_meters__n100_road = file_manager.generate_file_name_gdb(
-        script_source_name=ramps_file, description="within_n_meters"
-    )
-
-    ramps__within_n_meters__n100_road_2 = file_manager.generate_file_name_gdb(
-        script_source_name=ramps_file, description="within_n_meters_2"
-    )
-
-    ramps__roads_layer__n100_road = file_manager.generate_file_name_gdb(
-        script_source_name=ramps_file, description="roads_layer"
-    )
-
     ramps__dissolved_group__n100_road = file_manager.generate_file_name_gdb(
         script_source_name=ramps_file, description="dissolved_group"
     )
