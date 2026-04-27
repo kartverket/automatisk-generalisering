@@ -111,8 +111,9 @@
 <p>Steg 0: overfør Motorveg som Ida hentet fra N50
 Steg 1: Buffer+intersect per medium → erase
 Steg 2: Snap berørte endepunkter
-Steg 3: Snap alene-endepunkter innen 2 m
-Steg 4: Split vegnett i endepunkter på edge</p>
+Steg 3: Snap alene-endepunkter
+Steg 4: Splitt vegnett ved snap
+Steg 5: Merge og lag (CLEAN!) elveg_and_sti</p>
 <dl class="py function">
 <dt class="sig sig-object py" id="generalization.n100.road.clean_elveg_and_sti.legg_til_felt">
 <span class="sig-prename descclassname"><span class="pre">generalization.n100.road.clean_elveg_and_sti.</span></span><span class="sig-name descname"><span class="pre">legg_til_felt</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">fc</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">feltnavn</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">felttype</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/generalization/n100/road/clean_elveg_and_sti.html#legg_til_felt"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#generalization.n100.road.clean_elveg_and_sti.legg_til_felt" title="Link to this definition"></a></dt>
@@ -145,17 +146,14 @@ Steg 4: Split vegnett i endepunkter på edge</p>
 <dd></dd></dl>
 
 <dl class="py function">
-<dt class="sig sig-object py" id="generalization.n100.road.clean_elveg_and_sti.snap_alene_2m">
-<span class="sig-prename descclassname"><span class="pre">generalization.n100.road.clean_elveg_and_sti.</span></span><span class="sig-name descname"><span class="pre">snap_alene_2m</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">kartdata_etter_snap1</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/generalization/n100/road/clean_elveg_and_sti.html#snap_alene_2m"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#generalization.n100.road.clean_elveg_and_sti.snap_alene_2m" title="Link to this definition"></a></dt>
+<dt class="sig sig-object py" id="generalization.n100.road.clean_elveg_and_sti.snap_alene_ender">
+<span class="sig-prename descclassname"><span class="pre">generalization.n100.road.clean_elveg_and_sti.</span></span><span class="sig-name descname"><span class="pre">snap_alene_ender</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">kartdata_etter_snap1</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/generalization/n100/road/clean_elveg_and_sti.html#snap_alene_ender"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#generalization.n100.road.clean_elveg_and_sti.snap_alene_ender" title="Link to this definition"></a></dt>
 <dd></dd></dl>
 
 <dl class="py function">
 <dt class="sig sig-object py" id="generalization.n100.road.clean_elveg_and_sti.split_vegnett">
-<span class="sig-prename descclassname"><span class="pre">generalization.n100.road.clean_elveg_and_sti.</span></span><span class="sig-name descname"><span class="pre">split_vegnett</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">kartdata_ferdig</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/generalization/n100/road/clean_elveg_and_sti.html#split_vegnett"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#generalization.n100.road.clean_elveg_and_sti.split_vegnett" title="Link to this definition"></a></dt>
-<dd><p>Finner endepunkter fra kartdata_ferdig som intersect med vegnett
-og splitter vegnett i disse punktene.
-Alle mellomresultater beholdes for inspeksjon.</p>
-</dd></dl>
+<span class="sig-prename descclassname"><span class="pre">generalization.n100.road.clean_elveg_and_sti.</span></span><span class="sig-name descname"><span class="pre">split_vegnett</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/generalization/n100/road/clean_elveg_and_sti.html#split_vegnett"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#generalization.n100.road.clean_elveg_and_sti.split_vegnett" title="Link to this definition"></a></dt>
+<dd></dd></dl>
 
 <dl class="py function">
 <dt class="sig sig-object py" id="generalization.n100.road.clean_elveg_and_sti.merge_til_slutt">

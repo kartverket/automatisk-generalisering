@@ -82,8 +82,9 @@
 <span class="sd">Steg 0: overfør Motorveg som Ida hentet fra N50</span>
 <span class="sd">Steg 1: Buffer+intersect per medium → erase</span>
 <span class="sd">Steg 2: Snap berørte endepunkter</span>
-<span class="sd">Steg 3: Snap alene-endepunkter innen 2 m</span>
-<span class="sd">Steg 4: Split vegnett i endepunkter på edge</span>
+<span class="sd">Steg 3: Snap alene-endepunkter</span>
+<span class="sd">Steg 4: Splitt vegnett ved snap</span>
+<span class="sd">Steg 5: Merge og lag (CLEAN!) elveg_and_sti</span>
 <span class="sd">&quot;&quot;&quot;</span>
 
 <span class="kn">import</span><span class="w"> </span><span class="nn">arcpy</span>
@@ -111,8 +112,6 @@
 
 
 <span class="c1"># ===== Hjelpefunksjon =====</span>
-
-
 <div class="viewcode-block" id="legg_til_felt">
 <a class="viewcode-back" href="../../../../generated_docs/generalization.n100.road.html#generalization.n100.road.clean_elveg_and_sti.legg_til_felt">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">legg_til_felt</span><span class="p">(</span><span class="n">fc</span><span class="p">,</span> <span class="n">feltnavn</span><span class="p">,</span> <span class="n">felttype</span><span class="p">):</span>
@@ -122,35 +121,23 @@
 
 
 <span class="c1"># ===== STEG 0: Oppdater motorvegtype i vegnett =====</span>
-
-
 <div class="viewcode-block" id="steg0_motorvegtype">
 <a class="viewcode-back" href="../../../../generated_docs/generalization.n100.road.html#generalization.n100.road.clean_elveg_and_sti.steg0_motorvegtype">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">steg0_motorvegtype</span><span class="p">():</span>
     <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2">[STEG 0] Oppdaterer motorvegtype i vegnett...&quot;</span><span class="p">)</span>
-
-    <span class="n">motorveg_fc</span> <span class="o">=</span> <span class="sa">r</span><span class="s2">&quot;C:\AG_inputs\Roads_raw.gdb\motorveg_Ida&quot;</span>
-
+    <span class="n">motorveg_fc</span> <span class="o">=</span> <span class="sa">r</span><span class="s2">&quot;C:\AG_inputs\Roads_raw4.gdb\motorveg_Ida&quot;</span>
     <span class="n">arcpy</span><span class="o">.</span><span class="n">management</span><span class="o">.</span><span class="n">MakeFeatureLayer</span><span class="p">(</span><span class="n">VEGNETT</span><span class="p">,</span> <span class="s2">&quot;veg_lyr&quot;</span><span class="p">)</span>
-
-    <span class="c1"># Velg kun de som deler linjesegment</span>
     <span class="n">arcpy</span><span class="o">.</span><span class="n">management</span><span class="o">.</span><span class="n">SelectLayerByLocation</span><span class="p">(</span>
         <span class="s2">&quot;veg_lyr&quot;</span><span class="p">,</span> <span class="s2">&quot;SHARE_A_LINE_SEGMENT_WITH&quot;</span><span class="p">,</span> <span class="n">motorveg_fc</span>
     <span class="p">)</span>
-
-    <span class="c1"># Sett verdi</span>
     <span class="n">arcpy</span><span class="o">.</span><span class="n">management</span><span class="o">.</span><span class="n">CalculateField</span><span class="p">(</span><span class="s2">&quot;veg_lyr&quot;</span><span class="p">,</span> <span class="s2">&quot;motorvegtype&quot;</span><span class="p">,</span> <span class="s2">&quot;&#39;Motorveg&#39;&quot;</span><span class="p">,</span> <span class="s2">&quot;PYTHON3&quot;</span><span class="p">)</span>
-
     <span class="n">n</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">arcpy</span><span class="o">.</span><span class="n">management</span><span class="o">.</span><span class="n">GetCount</span><span class="p">(</span><span class="s2">&quot;veg_lyr&quot;</span><span class="p">)[</span><span class="mi">0</span><span class="p">])</span>
     <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;  Oppdatert </span><span class="si">{</span><span class="n">n</span><span class="si">}</span><span class="s2"> veglinjer til motorvegtype = &#39;Motorveg&#39;&quot;</span><span class="p">)</span>
-
     <span class="n">arcpy</span><span class="o">.</span><span class="n">management</span><span class="o">.</span><span class="n">Delete</span><span class="p">(</span><span class="s2">&quot;veg_lyr&quot;</span><span class="p">)</span></div>
 
 
 
 <span class="c1"># ===== STEG 1: Overlapp og erase =====</span>
-
-
 <div class="viewcode-block" id="overlapp_og_erase">
 <a class="viewcode-back" href="../../../../generated_docs/generalization.n100.road.html#generalization.n100.road.clean_elveg_and_sti.overlapp_og_erase">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">overlapp_og_erase</span><span class="p">():</span>
@@ -246,7 +233,6 @@
 
     <span class="n">stier_clean</span> <span class="o">=</span> <span class="s2">&quot;stier_clean&quot;</span>
     <span class="n">arcpy</span><span class="o">.</span><span class="n">analysis</span><span class="o">.</span><span class="n">Erase</span><span class="p">(</span><span class="n">STIER</span><span class="p">,</span> <span class="n">overlap_big</span><span class="p">,</span> <span class="n">stier_clean</span><span class="p">)</span>
-    <span class="c1"># arcpy.management.CopyFeatures(stier_clean, &quot;stier_clean_backup&quot;)</span>
     <span class="n">n_før</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">arcpy</span><span class="o">.</span><span class="n">management</span><span class="o">.</span><span class="n">GetCount</span><span class="p">(</span><span class="n">STIER</span><span class="p">)[</span><span class="mi">0</span><span class="p">])</span>
     <span class="n">n_etter</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">arcpy</span><span class="o">.</span><span class="n">management</span><span class="o">.</span><span class="n">GetCount</span><span class="p">(</span><span class="n">stier_clean</span><span class="p">)[</span><span class="mi">0</span><span class="p">])</span>
     <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;  Kartdata før: </span><span class="si">{</span><span class="n">n_før</span><span class="si">}</span><span class="s2"> | etter erase: </span><span class="si">{</span><span class="n">n_etter</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
@@ -256,8 +242,6 @@
 
 
 <span class="c1"># ===== STEG 2: Snap berørte endepunkter =====</span>
-
-
 <div class="viewcode-block" id="snap_kun_endepunkter">
 <a class="viewcode-back" href="../../../../generated_docs/generalization.n100.road.html#generalization.n100.road.clean_elveg_and_sti.snap_kun_endepunkter">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">snap_kun_endepunkter</span><span class="p">(</span><span class="n">linjer_fc</span><span class="p">,</span> <span class="n">output_fc</span><span class="p">):</span>
@@ -274,7 +258,6 @@
 
     <span class="n">oid_felt</span> <span class="o">=</span> <span class="n">arcpy</span><span class="o">.</span><span class="n">Describe</span><span class="p">(</span><span class="n">output_fc</span><span class="p">)</span><span class="o">.</span><span class="n">oidFieldName</span>
 
-    <span class="c1"># Finn dangle-endepunkter (Join_Count = 1)</span>
     <span class="n">join_tmp</span> <span class="o">=</span> <span class="s2">&quot;snap_join_tmp&quot;</span>
     <span class="n">arcpy</span><span class="o">.</span><span class="n">analysis</span><span class="o">.</span><span class="n">SpatialJoin</span><span class="p">(</span>
         <span class="n">ender_fc</span><span class="p">,</span>
@@ -297,7 +280,6 @@
         <span class="sa">f</span><span class="s2">&quot;hoppes over: </span><span class="si">{</span><span class="n">n_totalt</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="nb">len</span><span class="p">(</span><span class="n">dangle_ender_oids</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span>
     <span class="p">)</span>
 
-    <span class="c1"># Near mot veg_end, veg_vertex, vegnett – ett kall per lag</span>
     <span class="n">arcpy</span><span class="o">.</span><span class="n">analysis</span><span class="o">.</span><span class="n">Near</span><span class="p">(</span>
         <span class="n">ender_fc</span><span class="p">,</span> <span class="n">veg_end</span><span class="p">,</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">SNAP_END</span><span class="si">}</span><span class="s2"> Meters&quot;</span><span class="p">,</span> <span class="n">location</span><span class="o">=</span><span class="s2">&quot;LOCATION&quot;</span><span class="p">,</span> <span class="n">method</span><span class="o">=</span><span class="s2">&quot;PLANAR&quot;</span>
     <span class="p">)</span>
@@ -338,7 +320,6 @@
         <span class="n">ender_fc</span><span class="p">,</span> <span class="p">[</span><span class="s2">&quot;NEAR_FID&quot;</span><span class="p">,</span> <span class="s2">&quot;NEAR_DIST&quot;</span><span class="p">,</span> <span class="s2">&quot;NEAR_X&quot;</span><span class="p">,</span> <span class="s2">&quot;NEAR_Y&quot;</span><span class="p">]</span>
     <span class="p">)</span>
 
-    <span class="c1"># Bygg ny_pos – kun for dangle-endepunkter, prioritet END &gt; VERTEX &gt; EDGE</span>
     <span class="n">ny_pos</span> <span class="o">=</span> <span class="p">{}</span>
     <span class="k">for</span> <span class="n">ender_oid</span> <span class="ow">in</span> <span class="nb">set</span><span class="p">(</span>
         <span class="nb">list</span><span class="p">(</span><span class="n">near_end</span><span class="o">.</span><span class="n">keys</span><span class="p">())</span> <span class="o">+</span> <span class="nb">list</span><span class="p">(</span><span class="n">near_vertex</span><span class="o">.</span><span class="n">keys</span><span class="p">())</span> <span class="o">+</span> <span class="nb">list</span><span class="p">(</span><span class="n">near_edge</span><span class="o">.</span><span class="n">keys</span><span class="p">())</span>
@@ -352,13 +333,11 @@
         <span class="k">elif</span> <span class="n">ender_oid</span> <span class="ow">in</span> <span class="n">near_edge</span> <span class="ow">and</span> <span class="n">near_edge</span><span class="p">[</span><span class="n">ender_oid</span><span class="p">][</span><span class="mi">0</span><span class="p">]</span> <span class="o">!=</span> <span class="o">-</span><span class="mi">1</span><span class="p">:</span>
             <span class="n">ny_pos</span><span class="p">[</span><span class="n">ender_oid</span><span class="p">]</span> <span class="o">=</span> <span class="n">near_edge</span><span class="p">[</span><span class="n">ender_oid</span><span class="p">]</span>
 
-    <span class="c1"># Bygg dict: orig_fid → liste av (ender_oid, xy)</span>
     <span class="n">fid_til_ender_oid</span> <span class="o">=</span> <span class="p">{}</span>
     <span class="k">with</span> <span class="n">arcpy</span><span class="o">.</span><span class="n">da</span><span class="o">.</span><span class="n">SearchCursor</span><span class="p">(</span><span class="n">ender_fc</span><span class="p">,</span> <span class="p">[</span><span class="s2">&quot;OID@&quot;</span><span class="p">,</span> <span class="s2">&quot;ORIG_FID&quot;</span><span class="p">,</span> <span class="s2">&quot;SHAPE@XY&quot;</span><span class="p">])</span> <span class="k">as</span> <span class="n">cursor</span><span class="p">:</span>
         <span class="k">for</span> <span class="n">ender_oid</span><span class="p">,</span> <span class="n">orig_fid</span><span class="p">,</span> <span class="n">xy</span> <span class="ow">in</span> <span class="n">cursor</span><span class="p">:</span>
             <span class="n">fid_til_ender_oid</span><span class="o">.</span><span class="n">setdefault</span><span class="p">(</span><span class="n">orig_fid</span><span class="p">,</span> <span class="p">[])</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">ender_oid</span><span class="p">,</span> <span class="n">xy</span><span class="p">))</span>
 
-    <span class="c1"># Oppdater geometri – kun første og siste punkt</span>
     <span class="n">oppdatert</span> <span class="o">=</span> <span class="mi">0</span>
     <span class="k">with</span> <span class="n">arcpy</span><span class="o">.</span><span class="n">da</span><span class="o">.</span><span class="n">UpdateCursor</span><span class="p">(</span><span class="n">output_fc</span><span class="p">,</span> <span class="p">[</span><span class="n">oid_felt</span><span class="p">,</span> <span class="s2">&quot;SHAPE@&quot;</span><span class="p">])</span> <span class="k">as</span> <span class="n">cursor</span><span class="p">:</span>
         <span class="k">for</span> <span class="n">row</span> <span class="ow">in</span> <span class="n">cursor</span><span class="p">:</span>
@@ -424,6 +403,13 @@
         <span class="k">for</span> <span class="p">(</span><span class="n">fid</span><span class="p">,)</span> <span class="ow">in</span> <span class="n">cursor</span><span class="p">:</span>
             <span class="n">berørte_fids</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">fid</span><span class="p">)</span>
 
+    <span class="c1"># FIX 4: håndter tom berørte_fids</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">berørte_fids</span><span class="p">:</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;  Ingen berørte endepunkter – hopper over snap.&quot;</span><span class="p">)</span>
+        <span class="n">stier_uberørt</span> <span class="o">=</span> <span class="s2">&quot;stier_uberørt&quot;</span>
+        <span class="n">arcpy</span><span class="o">.</span><span class="n">management</span><span class="o">.</span><span class="n">CopyFeatures</span><span class="p">(</span><span class="n">stier_clean</span><span class="p">,</span> <span class="n">stier_uberørt</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">stier_uberørt</span><span class="p">,</span> <span class="kc">None</span>
+
     <span class="n">oid_felt</span> <span class="o">=</span> <span class="n">arcpy</span><span class="o">.</span><span class="n">Describe</span><span class="p">(</span><span class="n">stier_clean</span><span class="p">)</span><span class="o">.</span><span class="n">oidFieldName</span>
     <span class="n">fids_str</span> <span class="o">=</span> <span class="s2">&quot;,&quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="nb">map</span><span class="p">(</span><span class="nb">str</span><span class="p">,</span> <span class="n">berørte_fids</span><span class="p">))</span>
 
@@ -452,134 +438,222 @@
 
 
 <span class="c1"># ===== Mellomtrinn: Merge =====</span>
-
-
 <div class="viewcode-block" id="mellomtrinn_merge">
 <a class="viewcode-back" href="../../../../generated_docs/generalization.n100.road.html#generalization.n100.road.clean_elveg_and_sti.mellomtrinn_merge">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">mellomtrinn_merge</span><span class="p">(</span><span class="n">stier_uberørt</span><span class="p">,</span> <span class="n">stier_berørt_snappet</span><span class="p">):</span>
     <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2">[MELLOMTRINN] Merger uberørte + snappede berørte ...&quot;</span><span class="p">)</span>
     <span class="n">output_fc</span> <span class="o">=</span> <span class="s2">&quot;kartdata_etter_snap1&quot;</span>
-    <span class="n">arcpy</span><span class="o">.</span><span class="n">management</span><span class="o">.</span><span class="n">Merge</span><span class="p">([</span><span class="n">stier_uberørt</span><span class="p">,</span> <span class="n">stier_berørt_snappet</span><span class="p">],</span> <span class="n">output_fc</span><span class="p">)</span>
+
+    <span class="c1"># FIX 4 følge-opp: håndter at stier_berørt_snappet kan være None</span>
+    <span class="k">if</span> <span class="n">stier_berørt_snappet</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">arcpy</span><span class="o">.</span><span class="n">management</span><span class="o">.</span><span class="n">CopyFeatures</span><span class="p">(</span><span class="n">stier_uberørt</span><span class="p">,</span> <span class="n">output_fc</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">arcpy</span><span class="o">.</span><span class="n">management</span><span class="o">.</span><span class="n">Merge</span><span class="p">([</span><span class="n">stier_uberørt</span><span class="p">,</span> <span class="n">stier_berørt_snappet</span><span class="p">],</span> <span class="n">output_fc</span><span class="p">)</span>
+
     <span class="n">n</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">arcpy</span><span class="o">.</span><span class="n">management</span><span class="o">.</span><span class="n">GetCount</span><span class="p">(</span><span class="n">output_fc</span><span class="p">)[</span><span class="mi">0</span><span class="p">])</span>
     <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;  Lagret: </span><span class="si">{</span><span class="n">output_fc</span><span class="si">}</span><span class="s2">  (</span><span class="si">{</span><span class="n">n</span><span class="si">}</span><span class="s2"> linjer)&quot;</span><span class="p">)</span>
     <span class="k">return</span> <span class="n">output_fc</span></div>
 
 
 
-<span class="c1"># ===== STEG 3: Snap alene-endepunkter innen 2 m =====</span>
+<span class="c1"># ===== STEG 3: Snap alene-endepunkter til vegnett =====</span>
+<div class="viewcode-block" id="snap_alene_ender">
+<a class="viewcode-back" href="../../../../generated_docs/generalization.n100.road.html#generalization.n100.road.clean_elveg_and_sti.snap_alene_ender">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">snap_alene_ender</span><span class="p">(</span><span class="n">kartdata_etter_snap1</span><span class="p">):</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2">[STEG 3] Snap alene-endepunkter til vegnett...&quot;</span><span class="p">)</span>
 
-
-<div class="viewcode-block" id="snap_alene_2m">
-<a class="viewcode-back" href="../../../../generated_docs/generalization.n100.road.html#generalization.n100.road.clean_elveg_and_sti.snap_alene_2m">[docs]</a>
-<span class="k">def</span><span class="w"> </span><span class="nf">snap_alene_2m</span><span class="p">(</span><span class="n">kartdata_etter_snap1</span><span class="p">):</span>
-    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2">[STEG 3] Finn alene-endepunkter innen </span><span class="si">{</span><span class="n">DANGLE_DIST</span><span class="si">}</span><span class="s2"> m og snap ...&quot;</span><span class="p">)</span>
-
-    <span class="n">alle_ender</span> <span class="o">=</span> <span class="s2">&quot;alle_ender2_tmp&quot;</span>
+    <span class="n">alle_ender</span> <span class="o">=</span> <span class="s2">&quot;s3_alle_ender_tmp&quot;</span>
     <span class="n">arcpy</span><span class="o">.</span><span class="n">management</span><span class="o">.</span><span class="n">FeatureVerticesToPoints</span><span class="p">(</span>
         <span class="n">kartdata_etter_snap1</span><span class="p">,</span> <span class="n">alle_ender</span><span class="p">,</span> <span class="s2">&quot;BOTH_ENDS&quot;</span>
     <span class="p">)</span>
 
-    <span class="n">join_fc</span> <span class="o">=</span> <span class="s2">&quot;ender_join_tmp&quot;</span>
-    <span class="n">arcpy</span><span class="o">.</span><span class="n">analysis</span><span class="o">.</span><span class="n">SpatialJoin</span><span class="p">(</span>
-        <span class="n">alle_ender</span><span class="p">,</span>
-        <span class="n">kartdata_etter_snap1</span><span class="p">,</span>
-        <span class="n">join_fc</span><span class="p">,</span>
-        <span class="s2">&quot;JOIN_ONE_TO_ONE&quot;</span><span class="p">,</span>
-        <span class="s2">&quot;KEEP_ALL&quot;</span><span class="p">,</span>
-        <span class="n">match_option</span><span class="o">=</span><span class="s2">&quot;INTERSECT&quot;</span><span class="p">,</span>
-    <span class="p">)</span>
-    <span class="n">arcpy</span><span class="o">.</span><span class="n">management</span><span class="o">.</span><span class="n">MakeFeatureLayer</span><span class="p">(</span><span class="n">join_fc</span><span class="p">,</span> <span class="s2">&quot;alene_lyr&quot;</span><span class="p">,</span> <span class="s2">&quot;Join_Count = 1&quot;</span><span class="p">)</span>
-    <span class="n">alene_ender</span> <span class="o">=</span> <span class="s2">&quot;alene_ender_tmp&quot;</span>
+    <span class="n">overlap</span> <span class="o">=</span> <span class="s2">&quot;s3_overlap_tmp&quot;</span>
+    <span class="n">arcpy</span><span class="o">.</span><span class="n">analysis</span><span class="o">.</span><span class="n">CountOverlappingFeatures</span><span class="p">(</span><span class="n">alle_ender</span><span class="p">,</span> <span class="n">overlap</span><span class="p">)</span>
+
+    <span class="n">arcpy</span><span class="o">.</span><span class="n">management</span><span class="o">.</span><span class="n">MakeFeatureLayer</span><span class="p">(</span><span class="n">overlap</span><span class="p">,</span> <span class="s2">&quot;alene_lyr&quot;</span><span class="p">,</span> <span class="s2">&quot;COUNT_ = 1&quot;</span><span class="p">)</span>
+    <span class="n">alene_ender</span> <span class="o">=</span> <span class="s2">&quot;s3_alene_ender&quot;</span>
     <span class="n">arcpy</span><span class="o">.</span><span class="n">management</span><span class="o">.</span><span class="n">CopyFeatures</span><span class="p">(</span><span class="s2">&quot;alene_lyr&quot;</span><span class="p">,</span> <span class="n">alene_ender</span><span class="p">)</span>
     <span class="n">arcpy</span><span class="o">.</span><span class="n">management</span><span class="o">.</span><span class="n">Delete</span><span class="p">(</span><span class="s2">&quot;alene_lyr&quot;</span><span class="p">)</span>
-    <span class="nb">print</span><span class="p">(</span>
-        <span class="sa">f</span><span class="s2">&quot;  Alene endepunkter totalt: &quot;</span>
-        <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="nb">int</span><span class="p">(</span><span class="n">arcpy</span><span class="o">.</span><span class="n">management</span><span class="o">.</span><span class="n">GetCount</span><span class="p">(</span><span class="n">alene_ender</span><span class="p">)[</span><span class="mi">0</span><span class="p">])</span><span class="si">}</span><span class="s2">&quot;</span>
+
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;  Alene endepunkter: </span><span class="si">{</span><span class="nb">int</span><span class="p">(</span><span class="n">arcpy</span><span class="o">.</span><span class="n">management</span><span class="o">.</span><span class="n">GetCount</span><span class="p">(</span><span class="n">alene_ender</span><span class="p">)[</span><span class="mi">0</span><span class="p">])</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+
+    <span class="n">arcpy</span><span class="o">.</span><span class="n">management</span><span class="o">.</span><span class="n">MakeFeatureLayer</span><span class="p">(</span><span class="n">alene_ender</span><span class="p">,</span> <span class="s2">&quot;nær_veg_lyr&quot;</span><span class="p">)</span>
+    <span class="n">arcpy</span><span class="o">.</span><span class="n">management</span><span class="o">.</span><span class="n">SelectLayerByLocation</span><span class="p">(</span>
+        <span class="s2">&quot;nær_veg_lyr&quot;</span><span class="p">,</span> <span class="s2">&quot;WITHIN_A_DISTANCE&quot;</span><span class="p">,</span> <span class="n">VEGNETT</span><span class="p">,</span> <span class="s2">&quot;25 Meters&quot;</span>
+    <span class="p">)</span>
+    <span class="n">ender_nær_veg</span> <span class="o">=</span> <span class="s2">&quot;s3_ender_nar_veg&quot;</span>
+    <span class="n">arcpy</span><span class="o">.</span><span class="n">management</span><span class="o">.</span><span class="n">CopyFeatures</span><span class="p">(</span><span class="s2">&quot;nær_veg_lyr&quot;</span><span class="p">,</span> <span class="n">ender_nær_veg</span><span class="p">)</span>
+    <span class="n">arcpy</span><span class="o">.</span><span class="n">management</span><span class="o">.</span><span class="n">Delete</span><span class="p">(</span><span class="s2">&quot;nær_veg_lyr&quot;</span><span class="p">)</span>
+    <span class="n">n_nær_veg</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">arcpy</span><span class="o">.</span><span class="n">management</span><span class="o">.</span><span class="n">GetCount</span><span class="p">(</span><span class="n">ender_nær_veg</span><span class="p">)[</span><span class="mi">0</span><span class="p">])</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;  Innen 25 m fra vegnett: </span><span class="si">{</span><span class="n">n_nær_veg</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+
+    <span class="n">arcpy</span><span class="o">.</span><span class="n">management</span><span class="o">.</span><span class="n">MakeFeatureLayer</span><span class="p">(</span><span class="n">ender_nær_veg</span><span class="p">,</span> <span class="s2">&quot;snap_ok_lyr&quot;</span><span class="p">)</span>
+    <span class="n">arcpy</span><span class="o">.</span><span class="n">management</span><span class="o">.</span><span class="n">SelectLayerByLocation</span><span class="p">(</span>
+        <span class="s2">&quot;snap_ok_lyr&quot;</span><span class="p">,</span> <span class="s2">&quot;WITHIN_A_DISTANCE&quot;</span><span class="p">,</span> <span class="s2">&quot;n50_snapfasit&quot;</span><span class="p">,</span> <span class="s2">&quot;25 Meters&quot;</span>
+    <span class="p">)</span>
+    <span class="n">snap_ender_ok</span> <span class="o">=</span> <span class="s2">&quot;s3_snap_ender_ok&quot;</span>
+    <span class="n">arcpy</span><span class="o">.</span><span class="n">management</span><span class="o">.</span><span class="n">CopyFeatures</span><span class="p">(</span><span class="s2">&quot;snap_ok_lyr&quot;</span><span class="p">,</span> <span class="n">snap_ender_ok</span><span class="p">)</span>
+    <span class="n">arcpy</span><span class="o">.</span><span class="n">management</span><span class="o">.</span><span class="n">Delete</span><span class="p">(</span><span class="s2">&quot;snap_ok_lyr&quot;</span><span class="p">)</span>
+    <span class="n">n_ok</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">arcpy</span><span class="o">.</span><span class="n">management</span><span class="o">.</span><span class="n">GetCount</span><span class="p">(</span><span class="n">snap_ender_ok</span><span class="p">)[</span><span class="mi">0</span><span class="p">])</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;  Endepunkter som kan snappes: </span><span class="si">{</span><span class="n">n_ok</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">n_ok</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;  Ingen ender å snappe.&quot;</span><span class="p">)</span>
+        <span class="n">out</span> <span class="o">=</span> <span class="s2">&quot;kartdata_ferdig&quot;</span>
+        <span class="n">arcpy</span><span class="o">.</span><span class="n">management</span><span class="o">.</span><span class="n">CopyFeatures</span><span class="p">(</span><span class="n">kartdata_etter_snap1</span><span class="p">,</span> <span class="n">out</span><span class="p">)</span>
+        <span class="c1"># FIX 2/3: rydd opp også ved tidlig retur</span>
+        <span class="k">for</span> <span class="n">tmp</span> <span class="ow">in</span> <span class="p">[</span><span class="n">alle_ender</span><span class="p">,</span> <span class="n">overlap</span><span class="p">,</span> <span class="n">alene_ender</span><span class="p">,</span> <span class="n">ender_nær_veg</span><span class="p">,</span> <span class="n">snap_ender_ok</span><span class="p">]:</span>
+            <span class="k">if</span> <span class="n">arcpy</span><span class="o">.</span><span class="n">Exists</span><span class="p">(</span><span class="n">tmp</span><span class="p">):</span>
+                <span class="n">arcpy</span><span class="o">.</span><span class="n">management</span><span class="o">.</span><span class="n">Delete</span><span class="p">(</span><span class="n">tmp</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">out</span>
+
+    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;  Lager lokalt vegnett-utvalg...&quot;</span><span class="p">)</span>
+    <span class="n">arcpy</span><span class="o">.</span><span class="n">management</span><span class="o">.</span><span class="n">MakeFeatureLayer</span><span class="p">(</span><span class="n">VEGNETT</span><span class="p">,</span> <span class="s2">&quot;veg_lyr&quot;</span><span class="p">)</span>
+    <span class="n">arcpy</span><span class="o">.</span><span class="n">management</span><span class="o">.</span><span class="n">SelectLayerByLocation</span><span class="p">(</span>
+        <span class="s2">&quot;veg_lyr&quot;</span><span class="p">,</span> <span class="s2">&quot;WITHIN_A_DISTANCE&quot;</span><span class="p">,</span> <span class="n">snap_ender_ok</span><span class="p">,</span> <span class="s2">&quot;30 Meters&quot;</span>
+    <span class="p">)</span>
+    <span class="n">veg_local</span> <span class="o">=</span> <span class="s2">&quot;s3_veg_local&quot;</span>
+    <span class="n">arcpy</span><span class="o">.</span><span class="n">management</span><span class="o">.</span><span class="n">CopyFeatures</span><span class="p">(</span><span class="s2">&quot;veg_lyr&quot;</span><span class="p">,</span> <span class="n">veg_local</span><span class="p">)</span>
+    <span class="n">arcpy</span><span class="o">.</span><span class="n">management</span><span class="o">.</span><span class="n">Delete</span><span class="p">(</span><span class="s2">&quot;veg_lyr&quot;</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;  Veglinjer brukt: </span><span class="si">{</span><span class="nb">int</span><span class="p">(</span><span class="n">arcpy</span><span class="o">.</span><span class="n">management</span><span class="o">.</span><span class="n">GetCount</span><span class="p">(</span><span class="n">veg_local</span><span class="p">)[</span><span class="mi">0</span><span class="p">])</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+
+    <span class="n">veg_end</span> <span class="o">=</span> <span class="s2">&quot;s3_veg_end_tmp&quot;</span>
+    <span class="n">veg_vertex</span> <span class="o">=</span> <span class="s2">&quot;s3_veg_vertex_tmp&quot;</span>
+    <span class="n">arcpy</span><span class="o">.</span><span class="n">management</span><span class="o">.</span><span class="n">FeatureVerticesToPoints</span><span class="p">(</span><span class="n">veg_local</span><span class="p">,</span> <span class="n">veg_end</span><span class="p">,</span> <span class="s2">&quot;BOTH_ENDS&quot;</span><span class="p">)</span>
+    <span class="n">arcpy</span><span class="o">.</span><span class="n">management</span><span class="o">.</span><span class="n">FeatureVerticesToPoints</span><span class="p">(</span><span class="n">veg_local</span><span class="p">,</span> <span class="n">veg_vertex</span><span class="p">,</span> <span class="s2">&quot;ALL&quot;</span><span class="p">)</span>
+
+    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;  Kjører Near analyser...&quot;</span><span class="p">)</span>
+
+    <span class="n">arcpy</span><span class="o">.</span><span class="n">analysis</span><span class="o">.</span><span class="n">Near</span><span class="p">(</span>
+        <span class="n">snap_ender_ok</span><span class="p">,</span> <span class="n">veg_end</span><span class="p">,</span> <span class="s2">&quot;25 Meters&quot;</span><span class="p">,</span> <span class="n">location</span><span class="o">=</span><span class="s2">&quot;LOCATION&quot;</span><span class="p">,</span> <span class="n">method</span><span class="o">=</span><span class="s2">&quot;PLANAR&quot;</span>
+    <span class="p">)</span>
+    <span class="n">near_end</span> <span class="o">=</span> <span class="p">{</span>
+        <span class="n">row</span><span class="p">[</span><span class="mi">0</span><span class="p">]:</span> <span class="p">(</span><span class="n">row</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="n">row</span><span class="p">[</span><span class="mi">2</span><span class="p">])</span>
+        <span class="k">for</span> <span class="n">row</span> <span class="ow">in</span> <span class="n">arcpy</span><span class="o">.</span><span class="n">da</span><span class="o">.</span><span class="n">SearchCursor</span><span class="p">(</span><span class="n">snap_ender_ok</span><span class="p">,</span> <span class="p">[</span><span class="s2">&quot;OID@&quot;</span><span class="p">,</span> <span class="s2">&quot;NEAR_X&quot;</span><span class="p">,</span> <span class="s2">&quot;NEAR_Y&quot;</span><span class="p">])</span>
+        <span class="k">if</span> <span class="n">row</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">row</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">!=</span> <span class="o">-</span><span class="mi">1</span>
+    <span class="p">}</span>
+    <span class="n">arcpy</span><span class="o">.</span><span class="n">management</span><span class="o">.</span><span class="n">DeleteField</span><span class="p">(</span>
+        <span class="n">snap_ender_ok</span><span class="p">,</span> <span class="p">[</span><span class="s2">&quot;NEAR_FID&quot;</span><span class="p">,</span> <span class="s2">&quot;NEAR_DIST&quot;</span><span class="p">,</span> <span class="s2">&quot;NEAR_X&quot;</span><span class="p">,</span> <span class="s2">&quot;NEAR_Y&quot;</span><span class="p">]</span>
     <span class="p">)</span>
 
-    <span class="n">arcpy</span><span class="o">.</span><span class="n">analysis</span><span class="o">.</span><span class="n">Near</span><span class="p">(</span><span class="n">alene_ender</span><span class="p">,</span> <span class="n">VEGNETT</span><span class="p">,</span> <span class="n">method</span><span class="o">=</span><span class="s2">&quot;PLANAR&quot;</span><span class="p">)</span>
-    <span class="n">legg_til_felt</span><span class="p">(</span><span class="n">alene_ender</span><span class="p">,</span> <span class="s2">&quot;AVSTAND_VEGNETT&quot;</span><span class="p">,</span> <span class="s2">&quot;DOUBLE&quot;</span><span class="p">)</span>
-    <span class="n">arcpy</span><span class="o">.</span><span class="n">management</span><span class="o">.</span><span class="n">CalculateField</span><span class="p">(</span>
-        <span class="n">alene_ender</span><span class="p">,</span> <span class="s2">&quot;AVSTAND_VEGNETT&quot;</span><span class="p">,</span> <span class="s2">&quot;!NEAR_DIST!&quot;</span><span class="p">,</span> <span class="s2">&quot;PYTHON3&quot;</span>
+    <span class="n">arcpy</span><span class="o">.</span><span class="n">analysis</span><span class="o">.</span><span class="n">Near</span><span class="p">(</span>
+        <span class="n">snap_ender_ok</span><span class="p">,</span> <span class="n">veg_vertex</span><span class="p">,</span> <span class="s2">&quot;25 Meters&quot;</span><span class="p">,</span> <span class="n">location</span><span class="o">=</span><span class="s2">&quot;LOCATION&quot;</span><span class="p">,</span> <span class="n">method</span><span class="o">=</span><span class="s2">&quot;PLANAR&quot;</span>
     <span class="p">)</span>
-    <span class="n">arcpy</span><span class="o">.</span><span class="n">management</span><span class="o">.</span><span class="n">DeleteField</span><span class="p">(</span><span class="n">alene_ender</span><span class="p">,</span> <span class="p">[</span><span class="s2">&quot;NEAR_FID&quot;</span><span class="p">,</span> <span class="s2">&quot;NEAR_DIST&quot;</span><span class="p">])</span>
+    <span class="n">near_vertex</span> <span class="o">=</span> <span class="p">{</span>
+        <span class="n">row</span><span class="p">[</span><span class="mi">0</span><span class="p">]:</span> <span class="p">(</span><span class="n">row</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="n">row</span><span class="p">[</span><span class="mi">2</span><span class="p">])</span>
+        <span class="k">for</span> <span class="n">row</span> <span class="ow">in</span> <span class="n">arcpy</span><span class="o">.</span><span class="n">da</span><span class="o">.</span><span class="n">SearchCursor</span><span class="p">(</span><span class="n">snap_ender_ok</span><span class="p">,</span> <span class="p">[</span><span class="s2">&quot;OID@&quot;</span><span class="p">,</span> <span class="s2">&quot;NEAR_X&quot;</span><span class="p">,</span> <span class="s2">&quot;NEAR_Y&quot;</span><span class="p">])</span>
+        <span class="k">if</span> <span class="n">row</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">row</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">!=</span> <span class="o">-</span><span class="mi">1</span>
+    <span class="p">}</span>
+    <span class="n">arcpy</span><span class="o">.</span><span class="n">management</span><span class="o">.</span><span class="n">DeleteField</span><span class="p">(</span>
+        <span class="n">snap_ender_ok</span><span class="p">,</span> <span class="p">[</span><span class="s2">&quot;NEAR_FID&quot;</span><span class="p">,</span> <span class="s2">&quot;NEAR_DIST&quot;</span><span class="p">,</span> <span class="s2">&quot;NEAR_X&quot;</span><span class="p">,</span> <span class="s2">&quot;NEAR_Y&quot;</span><span class="p">]</span>
+    <span class="p">)</span>
 
-    <span class="n">arcpy</span><span class="o">.</span><span class="n">management</span><span class="o">.</span><span class="n">MakeFeatureLayer</span><span class="p">(</span>
+    <span class="n">arcpy</span><span class="o">.</span><span class="n">analysis</span><span class="o">.</span><span class="n">Near</span><span class="p">(</span>
+        <span class="n">snap_ender_ok</span><span class="p">,</span> <span class="n">VEGNETT</span><span class="p">,</span> <span class="s2">&quot;25 Meters&quot;</span><span class="p">,</span> <span class="n">location</span><span class="o">=</span><span class="s2">&quot;LOCATION&quot;</span><span class="p">,</span> <span class="n">method</span><span class="o">=</span><span class="s2">&quot;PLANAR&quot;</span>
+    <span class="p">)</span>
+    <span class="n">near_edge</span> <span class="o">=</span> <span class="p">{</span>
+        <span class="n">row</span><span class="p">[</span><span class="mi">0</span><span class="p">]:</span> <span class="p">(</span><span class="n">row</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="n">row</span><span class="p">[</span><span class="mi">2</span><span class="p">])</span>
+        <span class="k">for</span> <span class="n">row</span> <span class="ow">in</span> <span class="n">arcpy</span><span class="o">.</span><span class="n">da</span><span class="o">.</span><span class="n">SearchCursor</span><span class="p">(</span><span class="n">snap_ender_ok</span><span class="p">,</span> <span class="p">[</span><span class="s2">&quot;OID@&quot;</span><span class="p">,</span> <span class="s2">&quot;NEAR_X&quot;</span><span class="p">,</span> <span class="s2">&quot;NEAR_Y&quot;</span><span class="p">])</span>
+        <span class="k">if</span> <span class="n">row</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">row</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">!=</span> <span class="o">-</span><span class="mi">1</span>
+    <span class="p">}</span>
+    <span class="n">arcpy</span><span class="o">.</span><span class="n">management</span><span class="o">.</span><span class="n">DeleteField</span><span class="p">(</span>
+        <span class="n">snap_ender_ok</span><span class="p">,</span> <span class="p">[</span><span class="s2">&quot;NEAR_FID&quot;</span><span class="p">,</span> <span class="s2">&quot;NEAR_DIST&quot;</span><span class="p">,</span> <span class="s2">&quot;NEAR_X&quot;</span><span class="p">,</span> <span class="s2">&quot;NEAR_Y&quot;</span><span class="p">]</span>
+    <span class="p">)</span>
+
+    <span class="n">ny_pos</span> <span class="o">=</span> <span class="p">{}</span>
+    <span class="k">for</span> <span class="n">oid</span> <span class="ow">in</span> <span class="nb">set</span><span class="p">(</span><span class="nb">list</span><span class="p">(</span><span class="n">near_end</span><span class="p">)</span> <span class="o">+</span> <span class="nb">list</span><span class="p">(</span><span class="n">near_vertex</span><span class="p">)</span> <span class="o">+</span> <span class="nb">list</span><span class="p">(</span><span class="n">near_edge</span><span class="p">)):</span>
+        <span class="k">if</span> <span class="n">oid</span> <span class="ow">in</span> <span class="n">near_end</span><span class="p">:</span>
+            <span class="n">ny_pos</span><span class="p">[</span><span class="n">oid</span><span class="p">]</span> <span class="o">=</span> <span class="n">near_end</span><span class="p">[</span><span class="n">oid</span><span class="p">]</span>
+        <span class="k">elif</span> <span class="n">oid</span> <span class="ow">in</span> <span class="n">near_vertex</span><span class="p">:</span>
+            <span class="n">ny_pos</span><span class="p">[</span><span class="n">oid</span><span class="p">]</span> <span class="o">=</span> <span class="n">near_vertex</span><span class="p">[</span><span class="n">oid</span><span class="p">]</span>
+        <span class="k">elif</span> <span class="n">oid</span> <span class="ow">in</span> <span class="n">near_edge</span><span class="p">:</span>
+            <span class="n">ny_pos</span><span class="p">[</span><span class="n">oid</span><span class="p">]</span> <span class="o">=</span> <span class="n">near_edge</span><span class="p">[</span><span class="n">oid</span><span class="p">]</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;  Snap-punkter funnet: </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">ny_pos</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+
+    <span class="n">snap_xy</span> <span class="o">=</span> <span class="nb">set</span><span class="p">()</span>
+    <span class="k">with</span> <span class="n">arcpy</span><span class="o">.</span><span class="n">da</span><span class="o">.</span><span class="n">SearchCursor</span><span class="p">(</span><span class="n">snap_ender_ok</span><span class="p">,</span> <span class="p">[</span><span class="s2">&quot;OID@&quot;</span><span class="p">,</span> <span class="s2">&quot;SHAPE@XY&quot;</span><span class="p">])</span> <span class="k">as</span> <span class="n">cur</span><span class="p">:</span>
+        <span class="k">for</span> <span class="n">oid</span><span class="p">,</span> <span class="n">xy</span> <span class="ow">in</span> <span class="n">cur</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">oid</span> <span class="ow">in</span> <span class="n">ny_pos</span><span class="p">:</span>
+                <span class="n">snap_xy</span><span class="o">.</span><span class="n">add</span><span class="p">((</span><span class="nb">round</span><span class="p">(</span><span class="n">xy</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="mi">3</span><span class="p">),</span> <span class="nb">round</span><span class="p">(</span><span class="n">xy</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="mi">3</span><span class="p">)))</span>
+
+    <span class="n">out_fc</span> <span class="o">=</span> <span class="s2">&quot;kartdata_ferdig&quot;</span>
+    <span class="n">arcpy</span><span class="o">.</span><span class="n">management</span><span class="o">.</span><span class="n">CopyFeatures</span><span class="p">(</span><span class="n">kartdata_etter_snap1</span><span class="p">,</span> <span class="n">out_fc</span><span class="p">)</span>
+    <span class="n">sr</span> <span class="o">=</span> <span class="n">arcpy</span><span class="o">.</span><span class="n">Describe</span><span class="p">(</span><span class="n">out_fc</span><span class="p">)</span><span class="o">.</span><span class="n">spatialReference</span>
+
+    <span class="n">snappet_linjer</span> <span class="o">=</span> <span class="mi">0</span>
+    <span class="k">with</span> <span class="n">arcpy</span><span class="o">.</span><span class="n">da</span><span class="o">.</span><span class="n">UpdateCursor</span><span class="p">(</span><span class="n">out_fc</span><span class="p">,</span> <span class="p">[</span><span class="s2">&quot;SHAPE@&quot;</span><span class="p">])</span> <span class="k">as</span> <span class="n">cur</span><span class="p">:</span>
+        <span class="k">for</span> <span class="n">row</span> <span class="ow">in</span> <span class="n">cur</span><span class="p">:</span>
+            <span class="n">geom</span> <span class="o">=</span> <span class="n">row</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">geom</span><span class="p">:</span>
+                <span class="k">continue</span>
+
+            <span class="n">part</span> <span class="o">=</span> <span class="n">geom</span><span class="o">.</span><span class="n">getPart</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+            <span class="n">pts</span> <span class="o">=</span> <span class="p">[</span><span class="n">part</span><span class="o">.</span><span class="n">getObject</span><span class="p">(</span><span class="n">i</span><span class="p">)</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">part</span><span class="o">.</span><span class="n">count</span><span class="p">)]</span>
+            <span class="n">endret</span> <span class="o">=</span> <span class="kc">False</span>
+
+            <span class="n">first_xy</span> <span class="o">=</span> <span class="p">(</span><span class="nb">round</span><span class="p">(</span><span class="n">pts</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">X</span><span class="p">,</span> <span class="mi">3</span><span class="p">),</span> <span class="nb">round</span><span class="p">(</span><span class="n">pts</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">Y</span><span class="p">,</span> <span class="mi">3</span><span class="p">))</span>
+            <span class="n">last_xy</span> <span class="o">=</span> <span class="p">(</span><span class="nb">round</span><span class="p">(</span><span class="n">pts</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">X</span><span class="p">,</span> <span class="mi">3</span><span class="p">),</span> <span class="nb">round</span><span class="p">(</span><span class="n">pts</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">Y</span><span class="p">,</span> <span class="mi">3</span><span class="p">))</span>
+
+            <span class="k">if</span> <span class="n">first_xy</span> <span class="ow">in</span> <span class="n">snap_xy</span><span class="p">:</span>
+                <span class="k">for</span> <span class="n">oid</span><span class="p">,</span> <span class="n">xy</span> <span class="ow">in</span> <span class="n">ny_pos</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+                    <span class="k">if</span> <span class="nb">abs</span><span class="p">(</span><span class="n">xy</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">-</span> <span class="n">pts</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">X</span><span class="p">)</span> <span class="o">&lt;</span> <span class="mf">0.01</span> <span class="ow">and</span> <span class="nb">abs</span><span class="p">(</span><span class="n">xy</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">-</span> <span class="n">pts</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">Y</span><span class="p">)</span> <span class="o">&lt;</span> <span class="mf">0.01</span><span class="p">:</span>
+                        <span class="n">pts</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">=</span> <span class="n">arcpy</span><span class="o">.</span><span class="n">Point</span><span class="p">(</span><span class="n">xy</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">xy</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span>
+                        <span class="n">endret</span> <span class="o">=</span> <span class="kc">True</span>
+                        <span class="k">break</span>
+
+            <span class="k">if</span> <span class="n">last_xy</span> <span class="ow">in</span> <span class="n">snap_xy</span><span class="p">:</span>
+                <span class="k">for</span> <span class="n">oid</span><span class="p">,</span> <span class="n">xy</span> <span class="ow">in</span> <span class="n">ny_pos</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+                    <span class="k">if</span> <span class="nb">abs</span><span class="p">(</span><span class="n">xy</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">-</span> <span class="n">pts</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">X</span><span class="p">)</span> <span class="o">&lt;</span> <span class="mf">0.01</span> <span class="ow">and</span> <span class="nb">abs</span><span class="p">(</span><span class="n">xy</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">-</span> <span class="n">pts</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">Y</span><span class="p">)</span> <span class="o">&lt;</span> <span class="mf">0.01</span><span class="p">:</span>
+                        <span class="n">pts</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">=</span> <span class="n">arcpy</span><span class="o">.</span><span class="n">Point</span><span class="p">(</span><span class="n">xy</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">xy</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span>
+                        <span class="n">endret</span> <span class="o">=</span> <span class="kc">True</span>
+                        <span class="k">break</span>
+
+            <span class="k">if</span> <span class="n">endret</span><span class="p">:</span>
+                <span class="n">row</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">=</span> <span class="n">arcpy</span><span class="o">.</span><span class="n">Polyline</span><span class="p">(</span><span class="n">arcpy</span><span class="o">.</span><span class="n">Array</span><span class="p">(</span><span class="n">pts</span><span class="p">),</span> <span class="n">sr</span><span class="p">)</span>
+                <span class="n">cur</span><span class="o">.</span><span class="n">updateRow</span><span class="p">(</span><span class="n">row</span><span class="p">)</span>
+                <span class="n">snappet_linjer</span> <span class="o">+=</span> <span class="mi">1</span>
+
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;  Snappet linjer: </span><span class="si">{</span><span class="n">snappet_linjer</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+
+    <span class="c1"># FIX 2/3: cleanup flyttet før return, inkl. snap_ender_ok og veg_local</span>
+    <span class="k">for</span> <span class="n">tmp</span> <span class="ow">in</span> <span class="p">[</span>
+        <span class="n">alle_ender</span><span class="p">,</span>
+        <span class="n">overlap</span><span class="p">,</span>
         <span class="n">alene_ender</span><span class="p">,</span>
-        <span class="s2">&quot;nær_lyr&quot;</span><span class="p">,</span>
-        <span class="sa">f</span><span class="s2">&quot;AVSTAND_VEGNETT &gt; 0 AND AVSTAND_VEGNETT &lt;= </span><span class="si">{</span><span class="n">DANGLE_DIST</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span>
-    <span class="p">)</span>
-    <span class="n">dangles_2m</span> <span class="o">=</span> <span class="s2">&quot;sti_dangles_2m&quot;</span>
-    <span class="n">arcpy</span><span class="o">.</span><span class="n">management</span><span class="o">.</span><span class="n">CopyFeatures</span><span class="p">(</span><span class="s2">&quot;nær_lyr&quot;</span><span class="p">,</span> <span class="n">dangles_2m</span><span class="p">)</span>
-    <span class="n">arcpy</span><span class="o">.</span><span class="n">management</span><span class="o">.</span><span class="n">Delete</span><span class="p">(</span><span class="s2">&quot;nær_lyr&quot;</span><span class="p">)</span>
-    <span class="n">n_nær</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">arcpy</span><span class="o">.</span><span class="n">management</span><span class="o">.</span><span class="n">GetCount</span><span class="p">(</span><span class="n">dangles_2m</span><span class="p">)[</span><span class="mi">0</span><span class="p">])</span>
-    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;  Innen </span><span class="si">{</span><span class="n">DANGLE_DIST</span><span class="si">}</span><span class="s2"> m fra vegnett: </span><span class="si">{</span><span class="n">n_nær</span><span class="si">}</span><span class="s2">  → lagret som: </span><span class="si">{</span><span class="n">dangles_2m</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
-
-    <span class="n">snap2_fids</span> <span class="o">=</span> <span class="nb">set</span><span class="p">()</span>
-    <span class="k">with</span> <span class="n">arcpy</span><span class="o">.</span><span class="n">da</span><span class="o">.</span><span class="n">SearchCursor</span><span class="p">(</span><span class="n">dangles_2m</span><span class="p">,</span> <span class="p">[</span><span class="s2">&quot;ORIG_FID&quot;</span><span class="p">])</span> <span class="k">as</span> <span class="n">cursor</span><span class="p">:</span>
-        <span class="k">for</span> <span class="p">(</span><span class="n">fid</span><span class="p">,)</span> <span class="ow">in</span> <span class="n">cursor</span><span class="p">:</span>
-            <span class="n">snap2_fids</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">fid</span><span class="p">)</span>
-
-    <span class="n">kartdata_ferdig</span> <span class="o">=</span> <span class="s2">&quot;kartdata_ferdig&quot;</span>
-    <span class="k">if</span> <span class="ow">not</span> <span class="n">snap2_fids</span><span class="p">:</span>
-        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;  Ingen linjer å snappe i steg 3.&quot;</span><span class="p">)</span>
-        <span class="n">arcpy</span><span class="o">.</span><span class="n">management</span><span class="o">.</span><span class="n">CopyFeatures</span><span class="p">(</span><span class="n">kartdata_etter_snap1</span><span class="p">,</span> <span class="n">kartdata_ferdig</span><span class="p">)</span>
-    <span class="k">else</span><span class="p">:</span>
-        <span class="n">oid_felt</span> <span class="o">=</span> <span class="n">arcpy</span><span class="o">.</span><span class="n">Describe</span><span class="p">(</span><span class="n">kartdata_etter_snap1</span><span class="p">)</span><span class="o">.</span><span class="n">oidFieldName</span>
-        <span class="n">fids_str</span> <span class="o">=</span> <span class="s2">&quot;,&quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="nb">map</span><span class="p">(</span><span class="nb">str</span><span class="p">,</span> <span class="n">snap2_fids</span><span class="p">))</span>
-
-        <span class="n">arcpy</span><span class="o">.</span><span class="n">management</span><span class="o">.</span><span class="n">MakeFeatureLayer</span><span class="p">(</span>
-            <span class="n">kartdata_etter_snap1</span><span class="p">,</span> <span class="s2">&quot;snap2_lyr&quot;</span><span class="p">,</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">oid_felt</span><span class="si">}</span><span class="s2"> IN (</span><span class="si">{</span><span class="n">fids_str</span><span class="si">}</span><span class="s2">)&quot;</span>
-        <span class="p">)</span>
-        <span class="n">arcpy</span><span class="o">.</span><span class="n">management</span><span class="o">.</span><span class="n">MakeFeatureLayer</span><span class="p">(</span>
-            <span class="n">kartdata_etter_snap1</span><span class="p">,</span> <span class="s2">&quot;rest2_lyr&quot;</span><span class="p">,</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">oid_felt</span><span class="si">}</span><span class="s2"> NOT IN (</span><span class="si">{</span><span class="n">fids_str</span><span class="si">}</span><span class="s2">)&quot;</span>
-        <span class="p">)</span>
-
-        <span class="n">snap2_snappet</span> <span class="o">=</span> <span class="s2">&quot;snap2_snappet_tmp&quot;</span>
-        <span class="n">snap_kun_endepunkter</span><span class="p">(</span><span class="s2">&quot;snap2_lyr&quot;</span><span class="p">,</span> <span class="n">snap2_snappet</span><span class="p">)</span>
-        <span class="n">arcpy</span><span class="o">.</span><span class="n">management</span><span class="o">.</span><span class="n">Delete</span><span class="p">(</span><span class="s2">&quot;snap2_lyr&quot;</span><span class="p">)</span>
-
-        <span class="n">rest2</span> <span class="o">=</span> <span class="s2">&quot;rest2_tmp&quot;</span>
-        <span class="n">arcpy</span><span class="o">.</span><span class="n">management</span><span class="o">.</span><span class="n">CopyFeatures</span><span class="p">(</span><span class="s2">&quot;rest2_lyr&quot;</span><span class="p">,</span> <span class="n">rest2</span><span class="p">)</span>
-        <span class="n">arcpy</span><span class="o">.</span><span class="n">management</span><span class="o">.</span><span class="n">Delete</span><span class="p">(</span><span class="s2">&quot;rest2_lyr&quot;</span><span class="p">)</span>
-
-        <span class="n">arcpy</span><span class="o">.</span><span class="n">management</span><span class="o">.</span><span class="n">Merge</span><span class="p">([</span><span class="n">rest2</span><span class="p">,</span> <span class="n">snap2_snappet</span><span class="p">],</span> <span class="n">kartdata_ferdig</span><span class="p">)</span>
-        <span class="k">for</span> <span class="n">tmp</span> <span class="ow">in</span> <span class="p">[</span><span class="n">snap2_snappet</span><span class="p">,</span> <span class="n">rest2</span><span class="p">]:</span>
-            <span class="n">arcpy</span><span class="o">.</span><span class="n">management</span><span class="o">.</span><span class="n">Delete</span><span class="p">(</span><span class="n">tmp</span><span class="p">)</span>
-        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;  Snap ferdig for </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">snap2_fids</span><span class="p">)</span><span class="si">}</span><span class="s2"> linjer&quot;</span><span class="p">)</span>
-
-    <span class="n">n_ferdig</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">arcpy</span><span class="o">.</span><span class="n">management</span><span class="o">.</span><span class="n">GetCount</span><span class="p">(</span><span class="n">kartdata_ferdig</span><span class="p">)[</span><span class="mi">0</span><span class="p">])</span>
-    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;  Lagret: </span><span class="si">{</span><span class="n">kartdata_ferdig</span><span class="si">}</span><span class="s2">  (</span><span class="si">{</span><span class="n">n_ferdig</span><span class="si">}</span><span class="s2"> linjer)&quot;</span><span class="p">)</span>
-
-    <span class="k">for</span> <span class="n">tmp</span> <span class="ow">in</span> <span class="p">[</span><span class="n">alle_ender</span><span class="p">,</span> <span class="n">join_fc</span><span class="p">,</span> <span class="n">alene_ender</span><span class="p">]:</span>
+        <span class="n">ender_nær_veg</span><span class="p">,</span>
+        <span class="n">snap_ender_ok</span><span class="p">,</span>
+        <span class="n">veg_local</span><span class="p">,</span>
+        <span class="n">veg_end</span><span class="p">,</span>
+        <span class="n">veg_vertex</span><span class="p">,</span>
+    <span class="p">]:</span>
         <span class="k">if</span> <span class="n">arcpy</span><span class="o">.</span><span class="n">Exists</span><span class="p">(</span><span class="n">tmp</span><span class="p">):</span>
             <span class="n">arcpy</span><span class="o">.</span><span class="n">management</span><span class="o">.</span><span class="n">Delete</span><span class="p">(</span><span class="n">tmp</span><span class="p">)</span>
 
-    <span class="k">return</span> <span class="n">kartdata_ferdig</span></div>
+    <span class="k">return</span> <span class="n">out_fc</span></div>
 
 
 
 <span class="c1"># ===== STEG 4: Split vegnett =====</span>
-
-
 <div class="viewcode-block" id="split_vegnett">
 <a class="viewcode-back" href="../../../../generated_docs/generalization.n100.road.html#generalization.n100.road.clean_elveg_and_sti.split_vegnett">[docs]</a>
-<span class="k">def</span><span class="w"> </span><span class="nf">split_vegnett</span><span class="p">(</span><span class="n">kartdata_ferdig</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">    Finner endepunkter fra kartdata_ferdig som intersect med vegnett</span>
-<span class="sd">    og splitter vegnett i disse punktene.</span>
-<span class="sd">    Alle mellomresultater beholdes for inspeksjon.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">split_vegnett</span><span class="p">():</span>
     <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2">[STEG 4] Split vegnett i nye sti-endepunkter ...&quot;</span><span class="p">)</span>
+    <span class="n">kartdata_ferdig</span> <span class="o">=</span> <span class="s2">&quot;kartdata_ferdig&quot;</span>
+    <span class="n">sti_ferdig</span> <span class="o">=</span> <span class="s2">&quot;sti_ferdig&quot;</span>
 
-    <span class="c1"># Alle endepunkter av kartdata_ferdig – beholdes</span>
+    <span class="c1"># FIX 6: lag layer før SelectLayerByAttribute</span>
+    <span class="n">arcpy</span><span class="o">.</span><span class="n">management</span><span class="o">.</span><span class="n">MakeFeatureLayer</span><span class="p">(</span><span class="n">kartdata_ferdig</span><span class="p">,</span> <span class="s2">&quot;kartdata_lyr&quot;</span><span class="p">)</span>
+    <span class="n">arcpy</span><span class="o">.</span><span class="n">management</span><span class="o">.</span><span class="n">SelectLayerByAttribute</span><span class="p">(</span>
+        <span class="s2">&quot;kartdata_lyr&quot;</span><span class="p">,</span> <span class="s2">&quot;NEW_SELECTION&quot;</span><span class="p">,</span> <span class="s2">&quot;OBJTYPE=&#39;Sti&#39;&quot;</span>
+    <span class="p">)</span>
+    <span class="n">arcpy</span><span class="o">.</span><span class="n">management</span><span class="o">.</span><span class="n">CopyFeatures</span><span class="p">(</span><span class="s2">&quot;kartdata_lyr&quot;</span><span class="p">,</span> <span class="n">sti_ferdig</span><span class="p">)</span>
+    <span class="n">arcpy</span><span class="o">.</span><span class="n">management</span><span class="o">.</span><span class="n">Delete</span><span class="p">(</span><span class="s2">&quot;kartdata_lyr&quot;</span><span class="p">)</span>
+
     <span class="n">alle_ender</span> <span class="o">=</span> <span class="s2">&quot;s4_alle_ender&quot;</span>
-    <span class="n">arcpy</span><span class="o">.</span><span class="n">management</span><span class="o">.</span><span class="n">FeatureVerticesToPoints</span><span class="p">(</span><span class="n">kartdata_ferdig</span><span class="p">,</span> <span class="n">alle_ender</span><span class="p">,</span> <span class="s2">&quot;BOTH_ENDS&quot;</span><span class="p">)</span>
+    <span class="n">arcpy</span><span class="o">.</span><span class="n">management</span><span class="o">.</span><span class="n">FeatureVerticesToPoints</span><span class="p">(</span><span class="n">sti_ferdig</span><span class="p">,</span> <span class="n">alle_ender</span><span class="p">,</span> <span class="s2">&quot;BOTH_ENDS&quot;</span><span class="p">)</span>
     <span class="n">n_alle</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">arcpy</span><span class="o">.</span><span class="n">management</span><span class="o">.</span><span class="n">GetCount</span><span class="p">(</span><span class="n">alle_ender</span><span class="p">)[</span><span class="mi">0</span><span class="p">])</span>
     <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;  Totalt endepunkter i kartdata_ferdig: </span><span class="si">{</span><span class="n">n_alle</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
-    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;  Lagret som: </span><span class="si">{</span><span class="n">alle_ender</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
 
-    <span class="c1"># Velg endepunkter som intersect med vegnett – beholdes</span>
     <span class="n">arcpy</span><span class="o">.</span><span class="n">management</span><span class="o">.</span><span class="n">MakeFeatureLayer</span><span class="p">(</span><span class="n">alle_ender</span><span class="p">,</span> <span class="s2">&quot;intersect_lyr&quot;</span><span class="p">)</span>
     <span class="n">arcpy</span><span class="o">.</span><span class="n">management</span><span class="o">.</span><span class="n">SelectLayerByLocation</span><span class="p">(</span><span class="s2">&quot;intersect_lyr&quot;</span><span class="p">,</span> <span class="s2">&quot;INTERSECT&quot;</span><span class="p">,</span> <span class="n">VEGNETT</span><span class="p">)</span>
     <span class="n">snap_punkter</span> <span class="o">=</span> <span class="s2">&quot;s4_snap_punkter&quot;</span>
@@ -588,79 +662,61 @@
 
     <span class="n">n_snap</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">arcpy</span><span class="o">.</span><span class="n">management</span><span class="o">.</span><span class="n">GetCount</span><span class="p">(</span><span class="n">snap_punkter</span><span class="p">)[</span><span class="mi">0</span><span class="p">])</span>
     <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;  Endepunkter som intersect vegnett: </span><span class="si">{</span><span class="n">n_snap</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
-    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;  Lagret som: </span><span class="si">{</span><span class="n">snap_punkter</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
 
-    <span class="c1"># Split</span>
     <span class="n">n_før</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">arcpy</span><span class="o">.</span><span class="n">management</span><span class="o">.</span><span class="n">GetCount</span><span class="p">(</span><span class="n">VEGNETT</span><span class="p">)[</span><span class="mi">0</span><span class="p">])</span>
     <span class="n">vegnett_splittet</span> <span class="o">=</span> <span class="s2">&quot;vegnett_splittet&quot;</span>
     <span class="n">arcpy</span><span class="o">.</span><span class="n">management</span><span class="o">.</span><span class="n">SplitLineAtPoint</span><span class="p">(</span>
         <span class="n">VEGNETT</span><span class="p">,</span> <span class="n">snap_punkter</span><span class="p">,</span> <span class="n">vegnett_splittet</span><span class="p">,</span> <span class="n">SNAP_TOLERANSE</span>
     <span class="p">)</span>
     <span class="n">n_etter</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">arcpy</span><span class="o">.</span><span class="n">management</span><span class="o">.</span><span class="n">GetCount</span><span class="p">(</span><span class="n">vegnett_splittet</span><span class="p">)[</span><span class="mi">0</span><span class="p">])</span>
-    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;  Vegnett før:   </span><span class="si">{</span><span class="n">n_før</span><span class="si">}</span><span class="s2"> linjer&quot;</span><span class="p">)</span>
-    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;  Vegnett etter: </span><span class="si">{</span><span class="n">n_etter</span><span class="si">}</span><span class="s2"> linjer  (</span><span class="si">{</span><span class="n">n_etter</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="n">n_før</span><span class="si">}</span><span class="s2"> nye segmenter)&quot;</span><span class="p">)</span>
-    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;  Lagret som: </span><span class="si">{</span><span class="n">vegnett_splittet</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span></div>
+    <span class="nb">print</span><span class="p">(</span>
+        <span class="sa">f</span><span class="s2">&quot;  Vegnett før: </span><span class="si">{</span><span class="n">n_før</span><span class="si">}</span><span class="s2"> | etter: </span><span class="si">{</span><span class="n">n_etter</span><span class="si">}</span><span class="s2"> (</span><span class="si">{</span><span class="n">n_etter</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="n">n_før</span><span class="si">}</span><span class="s2"> nye segmenter)&quot;</span>
+    <span class="p">)</span></div>
 
 
 
 <span class="c1"># ===== STEG 5: Slå sammen til elveg_and_sti =====</span>
-
-
 <div class="viewcode-block" id="merge_til_slutt">
 <a class="viewcode-back" href="../../../../generated_docs/generalization.n100.road.html#generalization.n100.road.clean_elveg_and_sti.merge_til_slutt">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">merge_til_slutt</span><span class="p">():</span>
     <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2">[STEG 5] Slår sammen vegnett og kartdata ...&quot;</span><span class="p">)</span>
-
     <span class="n">output_gdb</span> <span class="o">=</span> <span class="sa">r</span><span class="s2">&quot;C:\AG_inputs\Roads_test.gdb&quot;</span>
     <span class="n">output_fc</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">output_gdb</span><span class="p">,</span> <span class="s2">&quot;elveg_and_sti&quot;</span><span class="p">)</span>
 
-    <span class="n">vegnett_fc</span> <span class="o">=</span> <span class="s2">&quot;vegnett_splittet&quot;</span>
-    <span class="n">kartdata_fc</span> <span class="o">=</span> <span class="s2">&quot;kartdata_ferdig&quot;</span>
-
-    <span class="c1"># Slett hvis finnes fra før</span>
     <span class="k">if</span> <span class="n">arcpy</span><span class="o">.</span><span class="n">Exists</span><span class="p">(</span><span class="n">output_fc</span><span class="p">):</span>
         <span class="n">arcpy</span><span class="o">.</span><span class="n">management</span><span class="o">.</span><span class="n">Delete</span><span class="p">(</span><span class="n">output_fc</span><span class="p">)</span>
 
-    <span class="n">arcpy</span><span class="o">.</span><span class="n">management</span><span class="o">.</span><span class="n">Merge</span><span class="p">([</span><span class="n">vegnett_fc</span><span class="p">,</span> <span class="n">kartdata_fc</span><span class="p">],</span> <span class="n">output_fc</span><span class="p">)</span>
-
+    <span class="n">arcpy</span><span class="o">.</span><span class="n">management</span><span class="o">.</span><span class="n">Merge</span><span class="p">([</span><span class="s2">&quot;vegnett_splittet&quot;</span><span class="p">,</span> <span class="s2">&quot;kartdata_ferdig&quot;</span><span class="p">],</span> <span class="n">output_fc</span><span class="p">)</span>
     <span class="n">n</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">arcpy</span><span class="o">.</span><span class="n">management</span><span class="o">.</span><span class="n">GetCount</span><span class="p">(</span><span class="n">output_fc</span><span class="p">)[</span><span class="mi">0</span><span class="p">])</span>
     <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;  Lagret: </span><span class="si">{</span><span class="n">output_fc</span><span class="si">}</span><span class="s2"> (</span><span class="si">{</span><span class="n">n</span><span class="si">}</span><span class="s2"> linjer)&quot;</span><span class="p">)</span></div>
 
 
 
-<span class="c1"># ===== Main =====</span>
-
-
+<span class="c1"># ===== MAIN =====</span>
 <div class="viewcode-block" id="main">
 <a class="viewcode-back" href="../../../../generated_docs/generalization.n100.road.html#generalization.n100.road.clean_elveg_and_sti.main">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">main</span><span class="p">():</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2">===== STARTER PROSESS =====&quot;</span><span class="p">)</span>
+
     <span class="n">steg0_motorvegtype</span><span class="p">()</span>
+
     <span class="n">stier_clean</span><span class="p">,</span> <span class="n">overlap_big</span> <span class="o">=</span> <span class="n">overlapp_og_erase</span><span class="p">()</span>
     <span class="k">if</span> <span class="n">stier_clean</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Ingen overlapp funnet – stopper.&quot;</span><span class="p">)</span>
         <span class="k">return</span>
 
     <span class="n">stier_uberørt</span><span class="p">,</span> <span class="n">stier_berørt_snappet</span> <span class="o">=</span> <span class="n">snap_berørte</span><span class="p">(</span><span class="n">stier_clean</span><span class="p">,</span> <span class="n">overlap_big</span><span class="p">)</span>
+
     <span class="n">kartdata_etter_snap1</span> <span class="o">=</span> <span class="n">mellomtrinn_merge</span><span class="p">(</span><span class="n">stier_uberørt</span><span class="p">,</span> <span class="n">stier_berørt_snappet</span><span class="p">)</span>
-    <span class="n">kartdata_ferdig</span> <span class="o">=</span> <span class="n">snap_alene_2m</span><span class="p">(</span><span class="n">kartdata_etter_snap1</span><span class="p">)</span>
-    <span class="n">split_vegnett</span><span class="p">(</span><span class="n">kartdata_ferdig</span><span class="p">)</span>
-    <span class="n">merge_til_slutt</span><span class="p">()</span>  <span class="c1"># ← NY LINJE</span>
 
-    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2">✓ Ferdig! Datasett i working.gdb:&quot;</span><span class="p">)</span>
-    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;  overlap_big              – overlapp-polygoner&quot;</span><span class="p">)</span>
-    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;  stier_clean              – kartdata etter erase&quot;</span><span class="p">)</span>
-    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;  sti_endepunkter_berørt   – endepunkter berørt av erase&quot;</span><span class="p">)</span>
-    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;  stier_uberørt            – linjer ikke berørt av erase&quot;</span><span class="p">)</span>
-    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;  stier_berørt_snappet     – berørte linjer etter snap&quot;</span><span class="p">)</span>
-    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;  kartdata_etter_snap1     – mellomtrinn: uberørt + snap1&quot;</span><span class="p">)</span>
-    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;  sti_dangles_2m           – alene-endepunkter innen 2 m fra vegnett&quot;</span><span class="p">)</span>
-    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;  kartdata_ferdig          – sluttresultat kartdata&quot;</span><span class="p">)</span>
-    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;  s4_alle_ender            – alle endepunkter fra kartdata_ferdig&quot;</span><span class="p">)</span>
-    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;  s4_snap_punkter          – endepunkter som intersect vegnett&quot;</span><span class="p">)</span>
-    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;  vegnett_splittet         – vegnett med nye noder&quot;</span><span class="p">)</span></div>
+    <span class="n">kartdata_ferdig</span> <span class="o">=</span> <span class="n">snap_alene_ender</span><span class="p">(</span><span class="n">kartdata_etter_snap1</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2">Ferdig → </span><span class="si">{</span><span class="n">kartdata_ferdig</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+
+    <span class="n">split_vegnett</span><span class="p">()</span>
+    <span class="n">merge_til_slutt</span><span class="p">()</span>  <span class="c1"># FIX 5: kall som manglet</span></div>
 
 
 
-<span class="c1"># ===== Kjør main =====</span>
 <span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s2">&quot;__main__&quot;</span><span class="p">:</span>
     <span class="n">main</span><span class="p">()</span>
 </pre></div>
