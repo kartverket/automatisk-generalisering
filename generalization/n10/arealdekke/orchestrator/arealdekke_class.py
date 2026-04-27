@@ -13,6 +13,7 @@ from generalization.n10.arealdekke.orchestrator.category_class import Category
 from generalization.n10.arealdekke.orchestrator.program_history_class import (
     Program_history_class as History_class,
 )
+from generalization.n10.arealdekke.orchestrator.enum_variables import history_keys as keys
 
 # Arealdekke tools:
 from generalization.n10.arealdekke.overall_tools.arealdekke_dissolver import (
@@ -88,28 +89,34 @@ class Arealdekke:
         # Update attributes
         if (
             top_lvl_info["file_path"] is not None
-            and top_lvl_info["preprocessing_operations_completed"] is not None
-            and top_lvl_info["preprocessing_operations_completed"] > 0
+            and top_lvl_info[keys.preprocessing_operations_completed.value] is not None
+            and top_lvl_info[keys.preprocessing_operations_completed.value] > 0
         ):
 
             # Begin reinserting attributes from history file
             self.files["arealdekke_fc"] = top_lvl_info["file_path"]
 
-            self.__preprocessed: bool = top_lvl_info.get("preprocessed", False)
+            self.__preprocessed: bool = top_lvl_info.get(keys.preprocessed.value, False)
             self.__preprocessings_completed: int = top_lvl_info[
-                "preprocessing_operations_completed"
+                keys.preprocessing_operations_completed.value
             ]
-            self.__map_scale: str = top_lvl_info.get("map_scale", None) or map_scale
+            self.__postprocessings_completed: int = top_lvl_info[
+                keys.postprocessing_operations_completed.value
+            ]
+            self.__map_scale: str = top_lvl_info.get(keys.map_scale.value, None) or map_scale
 
         else:
             # Extracts the data and saves it in the object
             self.get_arealdekke_data(input_data=input_data)
 
             # Updates history to track the main file
-            self.program_history.update_history_top_lvl(key="newest_version", value=str(self.files["arealdekke_fc"]))
+            self.program_history.update_history_top_lvl(
+                key=keys.newest_version.value, value=str(self.files["arealdekke_fc"])
+            )
 
             self.__preprocessed: bool = False
             self.__preprocessings_completed: int = 0
+            self.__postprocessings_completed: int = 0
             self.__map_scale: str = map_scale or None
 
         # Get categories - If none are to be retrieved, empty list will return.
@@ -148,7 +155,7 @@ class Arealdekke:
 
                 # Update history (operations completed)
                 self.program_history.update_history_top_lvl(
-                    key="preprocessing_operations_completed",
+                    key=keys.preprocessing_operations_completed.value,
                     value=self.__preprocessings_completed,
                 )
 
@@ -159,15 +166,16 @@ class Arealdekke:
             # Update history and object attribute
             self.__preprocessed = True
 
-            self.program_history.update_history_top_lvl(key="preprocessed", value=True)
-
+            self.program_history.update_history_top_lvl(key=keys.preprocessed.value, value=True)
 
     @timing_decorator
     def add_categories(self, categories_config_file) -> None:
 
         # Checks if the data has been preprocessed.
         if self.__preprocessed and not self.categories:
-            self.program_history.update_history_top_lvl(key="category_history", value=[])
+            self.program_history.update_history_top_lvl(
+                key=keys.category_history.value, value=[]
+            )
 
             try:
                 with open(categories_config_file, "r", encoding="utf-8") as yml:
@@ -197,7 +205,6 @@ class Arealdekke:
             except Exception as e:
                 raise e
 
-
     @timing_decorator
     def process_categories(self) -> None:
 
@@ -206,8 +213,9 @@ class Arealdekke:
 
         for category in open_cats:
             # Get the locked layers and the input layer
+            cat_title=category.get_title()
             self.get_locked_categories()
-            self.get_category(category.get_title())
+            self.get_category(cat_title)
 
             # Iterates through operations for each category
             cat_operations = category.get_operations()
@@ -218,15 +226,18 @@ class Arealdekke:
                 for operation in category.process_category(
                     input_fc=self.files["category_fc"],
                     locked_fc=self.files["locked_fc"],
-                    processed_fc=self.files["processed_fc"]
+                    processed_fc=self.files["processed_fc"],
                 ):
                     for key, value in operation.items():
+                        print(f"{key} : {value}")
                         self.program_history.update_history_cat_lvl(
-                            title=category.get_title(), key=key, value=value
+                            title=cat_title, key=key, value=value
                         )
 
                 # Add the category back into the input layer.
                 reinserts_completed = category.get_reinserts_completed()
+                
+                locked_cat_titles=self.get_locked_categories_titles()
 
                 # Reinsert methods:
                 reinsert_operations = [
@@ -235,52 +246,53 @@ class Arealdekke:
                         buffered_fc=self.files["processed_fc"],
                         locked_fc=self.files["locked_fc"],
                         output_fc=self.files["intermediate_fc"],
-                        changed_area=category.get_title(),
-                    ),
-                    lambda: fill_holes(
-                        input_fc=self.files["intermediate_fc"],
-                        output_fc=self.files["intermediate_fixed_fc"],
-                        target=category.get_title(),
-                        locked_categories=set(
-                            map(
-                                lambda cat: cat.get_title(),
-                                filter(
-                                    lambda cat: not cat.get_accessibility(),
-                                    self.categories,
-                                ),
-                            )
+                        changed_area=cat_title,
                         ),
-                    ),
+                    lambda: fill_holes(
+                            input_fc=self.files["arealdekke_fc"],
+                            output_fc=self.files["intermediate_fc"],
+                            target=cat_title,
+                            locked_categories=locked_cat_titles
+                            )
                 ]
 
-                for reinsert_operation in range(
-                    reinserts_completed, len(reinsert_operations)
-                ):
+                for index in range(reinserts_completed, len(reinsert_operations)):
 
-                    reinsert_operations[reinsert_operation]()
+                    reinsert_operations[index]()
+
+                    # Update input data
+                    arcpy.management.CopyFeatures(
+                        in_features=self.files["intermediate_fc"],
+                        out_feature_class=self.files["arealdekke_fc"]
+                    )
+
+                    # Update newest version in history file
+                    self.program_history.update_history_top_lvl(
+                        key=keys.newest_version.value, value=str(self.files["intermediate_fc"])
+                    )
 
                     # Update reinserts completed
                     category.update_reinsert_operations_completed()
-
-                arcpy.management.CopyFeatures(
-                    in_features=self.files["intermediate_fixed_fc"],
-                    out_feature_class=self.files["arealdekke_fc"],
-                )
 
             # Lock the layer
             category.set_accessibility(False)
 
             self.program_history.update_history_cat_lvl(
-                title=category.get_title(),
-                key="accessibility",
+                title=cat_title,
+                key=keys.accessibility.value,
                 value=category.get_accessibility(),
             )
 
-        # Save processed data to final fc and delete the last files
-        arcpy.management.CopyFeatures(
-            in_features=self.files["arealdekke_fc"],
-            out_feature_class=self.final_categories_fc,
-        )
+        if open_cats:
+            # Save processed data to final fc and delete the last files
+            arcpy.management.CopyFeatures(
+                in_features=self.files["arealdekke_fc"],
+                out_feature_class=self.final_categories_fc,
+            )
+
+            self.program_history.update_history_top_lvl(
+                key=keys.newest_version.value, value=str(self.final_categories_fc)
+            )
 
         self.wfm.delete_created_files()
 
@@ -289,16 +301,22 @@ class Arealdekke:
         """
         Performes a final clean-up of the results by adjusting any misalignments of geometries.
         """
-        postprocess_passability_layer(
-            final_fc=self.final_categories_fc,
-            passability_fc=Arealdekke_N10.passability__n10_land_use.value,
-        )
+        postprocesses = self.set_postprocesses()
 
-        arealdekke_dissolver(
-            input_fc=self.final_categories_fc,
-            output_fc=self.final_output_fc,
-            map_scale=self.__map_scale,
-        )
+        for process in range(self.__postprocessings_completed, len(postprocesses), 1):
+            # Call process
+            postprocesses[process]()
+
+            # Update __postprocessings_completed
+            self.__postprocessings_completed += 1
+
+            # Update history (operations completed)
+            self.program_history.update_history_top_lvl(
+                key=keys.postprocessing_operations_completed.value,
+                value=self.__postprocessings_completed,
+            )
+
+        self.program_history.delete_history()
 
     # ========================
     # Getters
@@ -321,7 +339,9 @@ class Arealdekke:
             values = ", ".join([f"'{v}'" for v in locked_categories_titles])
             where_clause = f"arealdekke IN ({values})"
         else:
-            where_clause = "1=0"  # No categories are locked, so we create an empty layer.
+            where_clause = (
+                "1=0"  # No categories are locked, so we create an empty layer.
+            )
 
         temp_lyr = "temp_lyr"
 
@@ -356,6 +376,17 @@ class Arealdekke:
             in_features=input_data,
             out_feature_class=self.files["arealdekke_fc"],
         )
+
+    def get_locked_categories_titles(self):
+        return set(
+                    map(
+                        lambda cat: cat.get_title(),
+                        filter(
+                            lambda cat: not cat.get_accessibility(),
+                            self.categories,
+                        ),
+                    )
+                )
 
     def __str__(self) -> str:
         return (
@@ -395,6 +426,19 @@ class Arealdekke:
             lambda: gangsykkel_dissolver(
                 input_fc=Arealdekke_N10.elim_output.value,
                 output_fc=Arealdekke_N10.dissolve_gangsykkel.value,
+                map_scale=self.__map_scale,
+            ),
+        ]
+
+    def set_postprocesses(self) -> list:
+        return [
+            lambda: postprocess_passability_layer(
+                final_fc=self.final_categories_fc,
+                passability_fc=Arealdekke_N10.passability__n10_land_use.value,
+            ),
+            lambda: arealdekke_dissolver(
+                input_fc=self.final_categories_fc,
+                output_fc=self.final_output_fc,
                 map_scale=self.__map_scale,
             ),
         ]

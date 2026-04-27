@@ -6,6 +6,9 @@ from composition_configs import core_config
 from custom_tools.decorators.timing_decorator import timing_decorator
 from file_manager import WorkFileManager
 from file_manager.n10.file_manager_arealdekke import Arealdekke_N10
+from generalization.n10.arealdekke.orchestrator.enum_variables import (
+    history_keys as keys,
+)
 
 # Category tools:
 from generalization.n10.arealdekke.category_tools.simplify_land_use import (
@@ -38,12 +41,12 @@ class Category:
 
         # Extracts inputs and saves them within object
         self.__operations: list[str] = operations or []
-        self.__accessibility: bool = accessibility if accessibility is not None else True
+        self.__accessibility: bool = (
+            accessibility if accessibility is not None else True
+        )
         self.__order: int = order
         self.__map_scale: str = map_scale
-        self.__last_processed: str = last_processed or self.wfm.build_file_path(
-                file_name=f"last_edited_fc_{self.__title}", file_type="gdb"
-            )
+        self.__last_processed: str = last_processed if last_processed else None
         self.__operations_completed: int = operations_completed or 0
         self.__reinserts_completed: int = reinserts_completed or 0
 
@@ -52,7 +55,9 @@ class Category:
 
                 # Checks if each operation is written correctly (test can be improved later)
                 if item not in list(self.set_cat_tools()):
-                    raise Exception(f"\nIncorrect syntax in history yml file for arealdekke: {self.__title}.\nGo check history yml file and set_cat_tools in category class for tool name inconsistencies.\n")
+                    raise Exception(
+                        f"\nIncorrect syntax in history yml file for arealdekke: {self.__title}.\nGo check history yml file and set_cat_tools in category class for tool name inconsistencies.\n"
+                    )
 
         # Creates layer for the category. Data inserted into it in setter function.
         self.lyr = f"{self.__title}_lyr"
@@ -74,9 +79,15 @@ class Category:
             sig = inspect.signature(func)
             param_names = sig.parameters.keys()
 
+            print("last_processed: ", self.__last_processed)
+
             available_args = {
                 "target": self.__title,
-                "input_fc": input_fc,
+                "input_fc": (
+                    self.__last_processed
+                    if self.__last_processed is not None
+                    else input_fc
+                ),
                 "output_fc": processed_fc,
                 "locked_fc": locked_fc,
                 "map_scale": self.__map_scale,
@@ -97,18 +108,15 @@ class Category:
             )
 
             # Saves the last edits made in case program stops.
-            arcpy.management.CopyFeatures(
-                in_features=processed_fc,
-                out_feature_class=self.__last_processed,
-            )
+
+            self.__last_processed=processed_fc
 
             # Updates program history
             self.__operations_completed += 1
 
             update: dict = {
-                "last_processed": str(self.__last_processed),
-                "operations_completed": self.__operations_completed,
-                "operations": operation,
+                keys.last_processed.value : str(self.__last_processed),
+                keys.operations_completed.value: self.__operations_completed,
             }
 
             yield update
