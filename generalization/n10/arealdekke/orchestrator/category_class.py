@@ -85,7 +85,7 @@ class Category:
                 "target": self.__title,
                 "input_fc": (
                     self.__last_processed
-                    if self.__last_processed is not None
+                    if (self.__last_processed is not None or self.__operations_completed>0)
                     else input_fc
                 ),
                 "output_fc": processed_fc,
@@ -103,9 +103,12 @@ class Category:
             cat_tools[self.__operations[operation]](**args_to_pass)
 
             # Updates the layer that will be passed on to the next operation to be the output.
+            '''
+            Er ikke nødvendig lenger siden vi bruker self.__last_processed med mindre det er første kjøring🤠
             arcpy.management.CopyFeatures(
                 in_features=processed_fc, out_feature_class=input_fc
             )
+            '''
 
             # Saves the last edits made in case program stops.
 
