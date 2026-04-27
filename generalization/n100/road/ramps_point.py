@@ -884,8 +884,6 @@ def connect_roads_to_points():
 
     point_endpoint_seen = {}
 
-
-    with arcpy.da.UpdateCursor("roads_lyr", ["OID@", "SHAPE@"]) as road_cur:
     # iterate over roads.
     # for each roads check if its endpoints are in the end_dict (meaning they intersect with a ramp),
     # choose the closest endpoint and connect it aslong as its not within 1500m network connection to the ramp point
