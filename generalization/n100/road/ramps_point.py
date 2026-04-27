@@ -71,8 +71,6 @@ Priority-based point placement (inside MovePointsToCrossings):
 """
 
 
-
-
 data_files = {
     # Stores all the relevant file paths to the geodata used in this Python file
     "input": Road_N100.data_preparation___road_single_part_2___n100_road.value,
@@ -682,7 +680,7 @@ def reachable_nodes(adjacency, start_oids, distance_threshold, length_map):
 
     # initialize stack with starts
     for s in start_oids:
-        rem = distance_threshold #- length_map[s]
+        rem = distance_threshold  # - length_map[s]
         # if start node itself already exceeds threshold we still include it
         # but only push for exploration if rem >= 0
         best_remaining[s] = rem
@@ -715,7 +713,6 @@ def reachable_nodes(adjacency, start_oids, distance_threshold, length_map):
                 # do not push v for further exploration
 
     return result
-
 
 
 def build_length_map(layer):
@@ -757,7 +754,7 @@ def connect_roads_to_points():
         ramp_points_lyr,
     )
 
-    # build adjecency and length map for roads 
+    # build adjecency and length map for roads
 
     adjecency = build_adjecency(roads_lyr)
     roads_without_neighbours = set()
@@ -766,12 +763,10 @@ def connect_roads_to_points():
             oid = row[0]
             if oid not in adjecency:
                 roads_without_neighbours.add(oid)
-    
+
     length_map = build_length_map(roads_lyr)
 
-    arcpy.management.CopyFeatures(
-        roads_lyr, data_files["roads_lyr"]
-    )
+    arcpy.management.CopyFeatures(roads_lyr, data_files["roads_lyr"])
 
     # select roads that are within 1 meter of ramp points to find initial candidates for connection
     arcpy.management.SelectLayerByLocation(
@@ -791,21 +786,26 @@ def connect_roads_to_points():
         closest="ALL",
     )
 
-    
     ramp_to_near_roads = {}
     with arcpy.da.SearchCursor(near_table_ramp_road, ["IN_FID", "NEAR_FID"]) as nt_cur:
         for in_fid, near_fid in nt_cur:
             ramp_to_near_roads.setdefault(int(in_fid), set()).add(int(near_fid))
 
-    # for each ramp point, find roads that are within 1 m, then find all roads that are within 1500 m network distance from those roads, and store in a map of ramp point oid to set of road oids 
+    # for each ramp point, find roads that are within 1 m, then find all roads that are within 1500 m network distance from those roads, and store in a map of ramp point oid to set of road oids
     oids_within_10_by_rid = {}
     for ramp_pid, near_roads in ramp_to_near_roads.items():
         if not near_roads:
             oids_within_10_by_rid[ramp_pid] = set()
             continue
-        within_set = set(reachable_nodes(adjecency, list(near_roads), distance_threshold=1500, length_map=length_map))
+        within_set = set(
+            reachable_nodes(
+                adjecency,
+                list(near_roads),
+                distance_threshold=1500,
+                length_map=length_map,
+            )
+        )
         oids_within_10_by_rid[ramp_pid] = within_set
-       
 
     # get endpoints of all roads and select those that intersect with ramps
     arcpy.management.SelectLayerByLocation(
@@ -934,7 +934,7 @@ def connect_roads_to_points():
             within_10_for_this_ramp = oids_within_10_by_rid.get(int(ramp_id), set())
             if oid in within_10_for_this_ramp:
                 continue
-            
+
             # add a point to start or end of line
             new_pt = arcpy.Point(nx, ny)
             arr = arcpy.Array()
@@ -958,12 +958,14 @@ def connect_roads_to_points():
             road_cur.updateRow([oid, new_geom])
             point_endpoint_seen[point_endpoint_combo] = 0
             # add to network connection
-            within_set = set(reachable_nodes(adjecency, [oid], distance_threshold=1500, length_map=length_map))
+            within_set = set(
+                reachable_nodes(
+                    adjecency, [oid], distance_threshold=1500, length_map=length_map
+                )
+            )
             oids_within_10_by_rid.setdefault(ramp_id, set()).update(within_set)
 
     arcpy.management.DeleteFeatures(ramps_lyr)
-
-    
 
 
 @timing_decorator
@@ -979,6 +981,7 @@ class MovePointsToCrossings:
     """
     See top of file for explanation
     """
+
     def __init__(
         self,
         input_road_feature: str,
@@ -1060,8 +1063,6 @@ class MovePointsToCrossings:
         arcpy.management.SelectLayerByLocation(
             roads_lyr, "INTERSECT", buffer_500m, selection_type="NEW_SELECTION"
         )
-
-        
 
         # Create layers for different road types
         arcpy.management.MakeFeatureLayer(
@@ -1402,7 +1403,6 @@ class MovePointsToCrossings:
                         priority = [4]
                         roadid = [nf]
                         changed = True
-                    
 
                 if changed:
                     insert_row = [new_geom] + priority + roadid
