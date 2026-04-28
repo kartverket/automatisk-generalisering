@@ -5,8 +5,9 @@
 Steg 0: overfør Motorveg som Ida hentet fra N50
 Steg 1: Buffer+intersect per medium → erase
 Steg 2: Snap berørte endepunkter
-Steg 3: Snap alene-endepunkter innen 2 m
-Steg 4: Split vegnett i endepunkter på edge
+Steg 3: Snap alene-endepunkter
+Steg 4: Splitt vegnett ved snap
+Steg 5: Merge og lag (CLEAN!) elveg_and_sti
 """
 
 import arcpy
@@ -34,40 +35,26 @@ SNAP_TOLERANSE = "0.01 Meters"
 
 
 # ===== Hjelpefunksjon =====
-
-
 def legg_til_felt(fc, feltnavn, felttype):
     if feltnavn not in [f.name for f in arcpy.ListFields(fc)]:
         arcpy.management.AddField(fc, feltnavn, felttype)
 
 
 # ===== STEG 0: Oppdater motorvegtype i vegnett =====
-
-
 def steg0_motorvegtype():
     print("\n[STEG 0] Oppdaterer motorvegtype i vegnett...")
-
-    motorveg_fc = r"C:\AG_inputs\Roads_raw.gdb\motorveg_Ida"
-
+    motorveg_fc = r"C:\AG_inputs\Roads_raw4.gdb\motorveg_Ida"
     arcpy.management.MakeFeatureLayer(VEGNETT, "veg_lyr")
-
-    # Velg kun de som deler linjesegment
     arcpy.management.SelectLayerByLocation(
         "veg_lyr", "SHARE_A_LINE_SEGMENT_WITH", motorveg_fc
     )
-
-    # Sett verdi
     arcpy.management.CalculateField("veg_lyr", "motorvegtype", "'Motorveg'", "PYTHON3")
-
     n = int(arcpy.management.GetCount("veg_lyr")[0])
     print(f"  Oppdatert {n} veglinjer til motorvegtype = 'Motorveg'")
-
     arcpy.management.Delete("veg_lyr")
 
 
 # ===== STEG 1: Overlapp og erase =====
-
-
 def overlapp_og_erase():
     print("\n[STEG 1] Buffer og intersect per medium-verdi ...")
     overlap_per_medium = []
@@ -161,7 +148,6 @@ def overlapp_og_erase():
 
     stier_clean = "stier_clean"
     arcpy.analysis.Erase(STIER, overlap_big, stier_clean)
-    # arcpy.management.CopyFeatures(stier_clean, "stier_clean_backup")
     n_før = int(arcpy.management.GetCount(STIER)[0])
     n_etter = int(arcpy.management.GetCount(stier_clean)[0])
     print(f"  Kartdata før: {n_før} | etter erase: {n_etter}")
@@ -170,8 +156,6 @@ def overlapp_og_erase():
 
 
 # ===== STEG 2: Snap berørte endepunkter =====
-
-
 def snap_kun_endepunkter(linjer_fc, output_fc):
     """Snapper KUN første og siste punkt på hver linje. Ingen midtpunkter røres."""
     arcpy.management.CopyFeatures(linjer_fc, output_fc)
@@ -186,7 +170,6 @@ def snap_kun_endepunkter(linjer_fc, output_fc):
 
     oid_felt = arcpy.Describe(output_fc).oidFieldName
 
-    # Finn dangle-endepunkter (Join_Count = 1)
     join_tmp = "snap_join_tmp"
     arcpy.analysis.SpatialJoin(
         ender_fc,
@@ -209,7 +192,6 @@ def snap_kun_endepunkter(linjer_fc, output_fc):
         f"hoppes over: {n_totalt - len(dangle_ender_oids)}"
     )
 
-    # Near mot veg_end, veg_vertex, vegnett – ett kall per lag
     arcpy.analysis.Near(
         ender_fc, veg_end, f"{SNAP_END} Meters", location="LOCATION", method="PLANAR"
     )
@@ -250,7 +232,6 @@ def snap_kun_endepunkter(linjer_fc, output_fc):
         ender_fc, ["NEAR_FID", "NEAR_DIST", "NEAR_X", "NEAR_Y"]
     )
 
-    # Bygg ny_pos – kun for dangle-endepunkter, prioritet END > VERTEX > EDGE
     ny_pos = {}
     for ender_oid in set(
         list(near_end.keys()) + list(near_vertex.keys()) + list(near_edge.keys())
@@ -264,13 +245,11 @@ def snap_kun_endepunkter(linjer_fc, output_fc):
         elif ender_oid in near_edge and near_edge[ender_oid][0] != -1:
             ny_pos[ender_oid] = near_edge[ender_oid]
 
-    # Bygg dict: orig_fid → liste av (ender_oid, xy)
     fid_til_ender_oid = {}
     with arcpy.da.SearchCursor(ender_fc, ["OID@", "ORIG_FID", "SHAPE@XY"]) as cursor:
         for ender_oid, orig_fid, xy in cursor:
             fid_til_ender_oid.setdefault(orig_fid, []).append((ender_oid, xy))
 
-    # Oppdater geometri – kun første og siste punkt
     oppdatert = 0
     with arcpy.da.UpdateCursor(output_fc, [oid_felt, "SHAPE@"]) as cursor:
         for row in cursor:
@@ -333,6 +312,13 @@ def snap_berørte(stier_clean, overlap_big):
         for (fid,) in cursor:
             berørte_fids.add(fid)
 
+    # FIX 4: håndter tom berørte_fids
+    if not berørte_fids:
+        print("  Ingen berørte endepunkter – hopper over snap.")
+        stier_uberørt = "stier_uberørt"
+        arcpy.management.CopyFeatures(stier_clean, stier_uberørt)
+        return stier_uberørt, None
+
     oid_felt = arcpy.Describe(stier_clean).oidFieldName
     fids_str = ",".join(map(str, berørte_fids))
 
@@ -360,126 +346,214 @@ def snap_berørte(stier_clean, overlap_big):
 
 
 # ===== Mellomtrinn: Merge =====
-
-
 def mellomtrinn_merge(stier_uberørt, stier_berørt_snappet):
     print("\n[MELLOMTRINN] Merger uberørte + snappede berørte ...")
     output_fc = "kartdata_etter_snap1"
-    arcpy.management.Merge([stier_uberørt, stier_berørt_snappet], output_fc)
+
+    # FIX 4 følge-opp: håndter at stier_berørt_snappet kan være None
+    if stier_berørt_snappet is None:
+        arcpy.management.CopyFeatures(stier_uberørt, output_fc)
+    else:
+        arcpy.management.Merge([stier_uberørt, stier_berørt_snappet], output_fc)
+
     n = int(arcpy.management.GetCount(output_fc)[0])
     print(f"  Lagret: {output_fc}  ({n} linjer)")
     return output_fc
 
 
-# ===== STEG 3: Snap alene-endepunkter innen 2 m =====
+# ===== STEG 3: Snap alene-endepunkter til vegnett =====
+def snap_alene_ender(kartdata_etter_snap1):
+    print("\n[STEG 3] Snap alene-endepunkter til vegnett...")
 
-
-def snap_alene_2m(kartdata_etter_snap1):
-    print(f"\n[STEG 3] Finn alene-endepunkter innen {DANGLE_DIST} m og snap ...")
-
-    alle_ender = "alle_ender2_tmp"
+    alle_ender = "s3_alle_ender_tmp"
     arcpy.management.FeatureVerticesToPoints(
         kartdata_etter_snap1, alle_ender, "BOTH_ENDS"
     )
 
-    join_fc = "ender_join_tmp"
-    arcpy.analysis.SpatialJoin(
-        alle_ender,
-        kartdata_etter_snap1,
-        join_fc,
-        "JOIN_ONE_TO_ONE",
-        "KEEP_ALL",
-        match_option="INTERSECT",
-    )
-    arcpy.management.MakeFeatureLayer(join_fc, "alene_lyr", "Join_Count = 1")
-    alene_ender = "alene_ender_tmp"
+    overlap = "s3_overlap_tmp"
+    arcpy.analysis.CountOverlappingFeatures(alle_ender, overlap)
+
+    arcpy.management.MakeFeatureLayer(overlap, "alene_lyr", "COUNT_ = 1")
+    alene_ender = "s3_alene_ender"
     arcpy.management.CopyFeatures("alene_lyr", alene_ender)
     arcpy.management.Delete("alene_lyr")
-    print(
-        f"  Alene endepunkter totalt: "
-        f"{int(arcpy.management.GetCount(alene_ender)[0])}"
+
+    print(f"  Alene endepunkter: {int(arcpy.management.GetCount(alene_ender)[0])}")
+
+    arcpy.management.MakeFeatureLayer(alene_ender, "nær_veg_lyr")
+    arcpy.management.SelectLayerByLocation(
+        "nær_veg_lyr", "WITHIN_A_DISTANCE", VEGNETT, "25 Meters"
+    )
+    ender_nær_veg = "s3_ender_nar_veg"
+    arcpy.management.CopyFeatures("nær_veg_lyr", ender_nær_veg)
+    arcpy.management.Delete("nær_veg_lyr")
+    n_nær_veg = int(arcpy.management.GetCount(ender_nær_veg)[0])
+    print(f"  Innen 25 m fra vegnett: {n_nær_veg}")
+
+    arcpy.management.MakeFeatureLayer(ender_nær_veg, "snap_ok_lyr")
+    arcpy.management.SelectLayerByLocation(
+        "snap_ok_lyr", "WITHIN_A_DISTANCE", "n50_snapfasit", "25 Meters"
+    )
+    snap_ender_ok = "s3_snap_ender_ok"
+    arcpy.management.CopyFeatures("snap_ok_lyr", snap_ender_ok)
+    arcpy.management.Delete("snap_ok_lyr")
+    n_ok = int(arcpy.management.GetCount(snap_ender_ok)[0])
+    print(f"  Endepunkter som kan snappes: {n_ok}")
+
+    if n_ok == 0:
+        print("  Ingen ender å snappe.")
+        out = "kartdata_ferdig"
+        arcpy.management.CopyFeatures(kartdata_etter_snap1, out)
+        # FIX 2/3: rydd opp også ved tidlig retur
+        for tmp in [alle_ender, overlap, alene_ender, ender_nær_veg, snap_ender_ok]:
+            if arcpy.Exists(tmp):
+                arcpy.management.Delete(tmp)
+        return out
+
+    print("  Lager lokalt vegnett-utvalg...")
+    arcpy.management.MakeFeatureLayer(VEGNETT, "veg_lyr")
+    arcpy.management.SelectLayerByLocation(
+        "veg_lyr", "WITHIN_A_DISTANCE", snap_ender_ok, "30 Meters"
+    )
+    veg_local = "s3_veg_local"
+    arcpy.management.CopyFeatures("veg_lyr", veg_local)
+    arcpy.management.Delete("veg_lyr")
+    print(f"  Veglinjer brukt: {int(arcpy.management.GetCount(veg_local)[0])}")
+
+    veg_end = "s3_veg_end_tmp"
+    veg_vertex = "s3_veg_vertex_tmp"
+    arcpy.management.FeatureVerticesToPoints(veg_local, veg_end, "BOTH_ENDS")
+    arcpy.management.FeatureVerticesToPoints(veg_local, veg_vertex, "ALL")
+
+    print("  Kjører Near analyser...")
+
+    arcpy.analysis.Near(
+        snap_ender_ok, veg_end, "25 Meters", location="LOCATION", method="PLANAR"
+    )
+    near_end = {
+        row[0]: (row[1], row[2])
+        for row in arcpy.da.SearchCursor(snap_ender_ok, ["OID@", "NEAR_X", "NEAR_Y"])
+        if row[1] is not None and row[1] != -1
+    }
+    arcpy.management.DeleteField(
+        snap_ender_ok, ["NEAR_FID", "NEAR_DIST", "NEAR_X", "NEAR_Y"]
     )
 
-    arcpy.analysis.Near(alene_ender, VEGNETT, method="PLANAR")
-    legg_til_felt(alene_ender, "AVSTAND_VEGNETT", "DOUBLE")
-    arcpy.management.CalculateField(
-        alene_ender, "AVSTAND_VEGNETT", "!NEAR_DIST!", "PYTHON3"
+    arcpy.analysis.Near(
+        snap_ender_ok, veg_vertex, "25 Meters", location="LOCATION", method="PLANAR"
     )
-    arcpy.management.DeleteField(alene_ender, ["NEAR_FID", "NEAR_DIST"])
+    near_vertex = {
+        row[0]: (row[1], row[2])
+        for row in arcpy.da.SearchCursor(snap_ender_ok, ["OID@", "NEAR_X", "NEAR_Y"])
+        if row[1] is not None and row[1] != -1
+    }
+    arcpy.management.DeleteField(
+        snap_ender_ok, ["NEAR_FID", "NEAR_DIST", "NEAR_X", "NEAR_Y"]
+    )
 
-    arcpy.management.MakeFeatureLayer(
+    arcpy.analysis.Near(
+        snap_ender_ok, VEGNETT, "25 Meters", location="LOCATION", method="PLANAR"
+    )
+    near_edge = {
+        row[0]: (row[1], row[2])
+        for row in arcpy.da.SearchCursor(snap_ender_ok, ["OID@", "NEAR_X", "NEAR_Y"])
+        if row[1] is not None and row[1] != -1
+    }
+    arcpy.management.DeleteField(
+        snap_ender_ok, ["NEAR_FID", "NEAR_DIST", "NEAR_X", "NEAR_Y"]
+    )
+
+    ny_pos = {}
+    for oid in set(list(near_end) + list(near_vertex) + list(near_edge)):
+        if oid in near_end:
+            ny_pos[oid] = near_end[oid]
+        elif oid in near_vertex:
+            ny_pos[oid] = near_vertex[oid]
+        elif oid in near_edge:
+            ny_pos[oid] = near_edge[oid]
+    print(f"  Snap-punkter funnet: {len(ny_pos)}")
+
+    snap_xy = set()
+    with arcpy.da.SearchCursor(snap_ender_ok, ["OID@", "SHAPE@XY"]) as cur:
+        for oid, xy in cur:
+            if oid in ny_pos:
+                snap_xy.add((round(xy[0], 3), round(xy[1], 3)))
+
+    out_fc = "kartdata_ferdig"
+    arcpy.management.CopyFeatures(kartdata_etter_snap1, out_fc)
+    sr = arcpy.Describe(out_fc).spatialReference
+
+    snappet_linjer = 0
+    with arcpy.da.UpdateCursor(out_fc, ["SHAPE@"]) as cur:
+        for row in cur:
+            geom = row[0]
+            if not geom:
+                continue
+
+            part = geom.getPart(0)
+            pts = [part.getObject(i) for i in range(part.count)]
+            endret = False
+
+            first_xy = (round(pts[0].X, 3), round(pts[0].Y, 3))
+            last_xy = (round(pts[-1].X, 3), round(pts[-1].Y, 3))
+
+            if first_xy in snap_xy:
+                for oid, xy in ny_pos.items():
+                    if abs(xy[0] - pts[0].X) < 0.01 and abs(xy[1] - pts[0].Y) < 0.01:
+                        pts[0] = arcpy.Point(xy[0], xy[1])
+                        endret = True
+                        break
+
+            if last_xy in snap_xy:
+                for oid, xy in ny_pos.items():
+                    if abs(xy[0] - pts[-1].X) < 0.01 and abs(xy[1] - pts[-1].Y) < 0.01:
+                        pts[-1] = arcpy.Point(xy[0], xy[1])
+                        endret = True
+                        break
+
+            if endret:
+                row[0] = arcpy.Polyline(arcpy.Array(pts), sr)
+                cur.updateRow(row)
+                snappet_linjer += 1
+
+    print(f"  Snappet linjer: {snappet_linjer}")
+
+    # FIX 2/3: cleanup flyttet før return, inkl. snap_ender_ok og veg_local
+    for tmp in [
+        alle_ender,
+        overlap,
         alene_ender,
-        "nær_lyr",
-        f"AVSTAND_VEGNETT > 0 AND AVSTAND_VEGNETT <= {DANGLE_DIST}",
-    )
-    dangles_2m = "sti_dangles_2m"
-    arcpy.management.CopyFeatures("nær_lyr", dangles_2m)
-    arcpy.management.Delete("nær_lyr")
-    n_nær = int(arcpy.management.GetCount(dangles_2m)[0])
-    print(f"  Innen {DANGLE_DIST} m fra vegnett: {n_nær}  → lagret som: {dangles_2m}")
-
-    snap2_fids = set()
-    with arcpy.da.SearchCursor(dangles_2m, ["ORIG_FID"]) as cursor:
-        for (fid,) in cursor:
-            snap2_fids.add(fid)
-
-    kartdata_ferdig = "kartdata_ferdig"
-    if not snap2_fids:
-        print("  Ingen linjer å snappe i steg 3.")
-        arcpy.management.CopyFeatures(kartdata_etter_snap1, kartdata_ferdig)
-    else:
-        oid_felt = arcpy.Describe(kartdata_etter_snap1).oidFieldName
-        fids_str = ",".join(map(str, snap2_fids))
-
-        arcpy.management.MakeFeatureLayer(
-            kartdata_etter_snap1, "snap2_lyr", f"{oid_felt} IN ({fids_str})"
-        )
-        arcpy.management.MakeFeatureLayer(
-            kartdata_etter_snap1, "rest2_lyr", f"{oid_felt} NOT IN ({fids_str})"
-        )
-
-        snap2_snappet = "snap2_snappet_tmp"
-        snap_kun_endepunkter("snap2_lyr", snap2_snappet)
-        arcpy.management.Delete("snap2_lyr")
-
-        rest2 = "rest2_tmp"
-        arcpy.management.CopyFeatures("rest2_lyr", rest2)
-        arcpy.management.Delete("rest2_lyr")
-
-        arcpy.management.Merge([rest2, snap2_snappet], kartdata_ferdig)
-        for tmp in [snap2_snappet, rest2]:
-            arcpy.management.Delete(tmp)
-        print(f"  Snap ferdig for {len(snap2_fids)} linjer")
-
-    n_ferdig = int(arcpy.management.GetCount(kartdata_ferdig)[0])
-    print(f"  Lagret: {kartdata_ferdig}  ({n_ferdig} linjer)")
-
-    for tmp in [alle_ender, join_fc, alene_ender]:
+        ender_nær_veg,
+        snap_ender_ok,
+        veg_local,
+        veg_end,
+        veg_vertex,
+    ]:
         if arcpy.Exists(tmp):
             arcpy.management.Delete(tmp)
 
-    return kartdata_ferdig
+    return out_fc
 
 
 # ===== STEG 4: Split vegnett =====
-
-
-def split_vegnett(kartdata_ferdig):
-    """
-    Finner endepunkter fra kartdata_ferdig som intersect med vegnett
-    og splitter vegnett i disse punktene.
-    Alle mellomresultater beholdes for inspeksjon.
-    """
+def split_vegnett():
     print("\n[STEG 4] Split vegnett i nye sti-endepunkter ...")
+    kartdata_ferdig = "kartdata_ferdig"
+    sti_ferdig = "sti_ferdig"
 
-    # Alle endepunkter av kartdata_ferdig – beholdes
+    # FIX 6: lag layer før SelectLayerByAttribute
+    arcpy.management.MakeFeatureLayer(kartdata_ferdig, "kartdata_lyr")
+    arcpy.management.SelectLayerByAttribute(
+        "kartdata_lyr", "NEW_SELECTION", "OBJTYPE='Sti'"
+    )
+    arcpy.management.CopyFeatures("kartdata_lyr", sti_ferdig)
+    arcpy.management.Delete("kartdata_lyr")
+
     alle_ender = "s4_alle_ender"
-    arcpy.management.FeatureVerticesToPoints(kartdata_ferdig, alle_ender, "BOTH_ENDS")
+    arcpy.management.FeatureVerticesToPoints(sti_ferdig, alle_ender, "BOTH_ENDS")
     n_alle = int(arcpy.management.GetCount(alle_ender)[0])
     print(f"  Totalt endepunkter i kartdata_ferdig: {n_alle}")
-    print(f"  Lagret som: {alle_ender}")
 
-    # Velg endepunkter som intersect med vegnett – beholdes
     arcpy.management.MakeFeatureLayer(alle_ender, "intersect_lyr")
     arcpy.management.SelectLayerByLocation("intersect_lyr", "INTERSECT", VEGNETT)
     snap_punkter = "s4_snap_punkter"
@@ -488,71 +562,53 @@ def split_vegnett(kartdata_ferdig):
 
     n_snap = int(arcpy.management.GetCount(snap_punkter)[0])
     print(f"  Endepunkter som intersect vegnett: {n_snap}")
-    print(f"  Lagret som: {snap_punkter}")
 
-    # Split
     n_før = int(arcpy.management.GetCount(VEGNETT)[0])
     vegnett_splittet = "vegnett_splittet"
     arcpy.management.SplitLineAtPoint(
         VEGNETT, snap_punkter, vegnett_splittet, SNAP_TOLERANSE
     )
     n_etter = int(arcpy.management.GetCount(vegnett_splittet)[0])
-    print(f"  Vegnett før:   {n_før} linjer")
-    print(f"  Vegnett etter: {n_etter} linjer  ({n_etter - n_før} nye segmenter)")
-    print(f"  Lagret som: {vegnett_splittet}")
+    print(
+        f"  Vegnett før: {n_før} | etter: {n_etter} ({n_etter - n_før} nye segmenter)"
+    )
 
 
 # ===== STEG 5: Slå sammen til elveg_and_sti =====
-
-
 def merge_til_slutt():
     print("\n[STEG 5] Slår sammen vegnett og kartdata ...")
-
     output_gdb = r"C:\AG_inputs\Roads_test.gdb"
     output_fc = os.path.join(output_gdb, "elveg_and_sti")
 
-    vegnett_fc = "vegnett_splittet"
-    kartdata_fc = "kartdata_ferdig"
-
-    # Slett hvis finnes fra før
     if arcpy.Exists(output_fc):
         arcpy.management.Delete(output_fc)
 
-    arcpy.management.Merge([vegnett_fc, kartdata_fc], output_fc)
-
+    arcpy.management.Merge(["vegnett_splittet", "kartdata_ferdig"], output_fc)
     n = int(arcpy.management.GetCount(output_fc)[0])
     print(f"  Lagret: {output_fc} ({n} linjer)")
 
 
-# ===== Main =====
-
-
+# ===== MAIN =====
 def main():
+    print("\n===== STARTER PROSESS =====")
+
     steg0_motorvegtype()
+
     stier_clean, overlap_big = overlapp_og_erase()
     if stier_clean is None:
+        print("Ingen overlapp funnet – stopper.")
         return
 
     stier_uberørt, stier_berørt_snappet = snap_berørte(stier_clean, overlap_big)
+
     kartdata_etter_snap1 = mellomtrinn_merge(stier_uberørt, stier_berørt_snappet)
-    kartdata_ferdig = snap_alene_2m(kartdata_etter_snap1)
-    split_vegnett(kartdata_ferdig)
-    merge_til_slutt()  # ← NY LINJE
 
-    print("\n✓ Ferdig! Datasett i working.gdb:")
-    print(f"  overlap_big              – overlapp-polygoner")
-    print(f"  stier_clean              – kartdata etter erase")
-    print(f"  sti_endepunkter_berørt   – endepunkter berørt av erase")
-    print(f"  stier_uberørt            – linjer ikke berørt av erase")
-    print(f"  stier_berørt_snappet     – berørte linjer etter snap")
-    print(f"  kartdata_etter_snap1     – mellomtrinn: uberørt + snap1")
-    print(f"  sti_dangles_2m           – alene-endepunkter innen 2 m fra vegnett")
-    print(f"  kartdata_ferdig          – sluttresultat kartdata")
-    print(f"  s4_alle_ender            – alle endepunkter fra kartdata_ferdig")
-    print(f"  s4_snap_punkter          – endepunkter som intersect vegnett")
-    print(f"  vegnett_splittet         – vegnett med nye noder")
+    kartdata_ferdig = snap_alene_ender(kartdata_etter_snap1)
+    print(f"\nFerdig → {kartdata_ferdig}")
+
+    split_vegnett()
+    merge_til_slutt()  # FIX 5: kall som manglet
 
 
-# ===== Kjør main =====
 if __name__ == "__main__":
     main()
