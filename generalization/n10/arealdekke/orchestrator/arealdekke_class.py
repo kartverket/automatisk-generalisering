@@ -138,7 +138,10 @@ class Arealdekke:
                         len(category.get_operations())
                         == category.get_operations_completed()
                     )
-                    and (category.get_reinserts_completed() < self.get_num_postprocessors())
+                    and (
+                        category.get_reinserts_completed()
+                        < self.get_num_postprocessors()
+                    )
                 ):
                     arcpy.management.CopyFeatures(
                         in_features=last_processed,
@@ -420,7 +423,7 @@ class Arealdekke:
                 ),
             )
         )
-    
+
     def get_num_postprocessors(self) -> int:
         return len(self.set_postprocesses())
 
