@@ -12,30 +12,6 @@ generalization.n10.arealdekke.orchestrator.arealdekke\_class module
    :show-inheritance:
    :undoc-members:
 
-generalization.n10.arealdekke.orchestrator.arealdekke\_elver module
--------------------------------------------------------------------
-
-.. automodule:: generalization.n10.arealdekke.orchestrator.arealdekke_elver
-   :members:
-   :show-inheritance:
-   :undoc-members:
-
-generalization.n10.arealdekke.orchestrator.arealdekke\_history\_dataclasses module
-----------------------------------------------------------------------------------
-
-.. automodule:: generalization.n10.arealdekke.orchestrator.arealdekke_history_dataclasses
-   :members:
-   :show-inheritance:
-   :undoc-members:
-
-generalization.n10.arealdekke.orchestrator.arealdekke\_innsjoer module
-----------------------------------------------------------------------
-
-.. automodule:: generalization.n10.arealdekke.orchestrator.arealdekke_innsjoer
-   :members:
-   :show-inheritance:
-   :undoc-members:
-
 generalization.n10.arealdekke.orchestrator.arealdekke\_orchestrator module
 --------------------------------------------------------------------------
 
@@ -52,6 +28,14 @@ generalization.n10.arealdekke.orchestrator.category\_class module
    :show-inheritance:
    :undoc-members:
 
+generalization.n10.arealdekke.orchestrator.enum\_variables module
+-----------------------------------------------------------------
+
+.. automodule:: generalization.n10.arealdekke.orchestrator.enum_variables
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
 generalization.n10.arealdekke.orchestrator.expansion\_controller module
 -----------------------------------------------------------------------
 
@@ -64,6 +48,14 @@ generalization.n10.arealdekke.orchestrator.orchestrator\_copy module
 --------------------------------------------------------------------
 
 .. automodule:: generalization.n10.arealdekke.orchestrator.orchestrator_copy
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+generalization.n10.arealdekke.orchestrator.program\_history\_class module
+-------------------------------------------------------------------------
+
+.. automodule:: generalization.n10.arealdekke.orchestrator.program_history_class
    :members:
    :show-inheritance:
    :undoc-members:

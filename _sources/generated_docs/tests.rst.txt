@@ -1,24 +1,13 @@
 tests package
 =============
 
-Submodules
-----------
+Subpackages
+-----------
 
-tests.test\_arealdekke\_class module
-------------------------------------
+.. toctree::
+   :maxdepth: 4
 
-.. automodule:: tests.test_arealdekke_class
-   :members:
-   :show-inheritance:
-   :undoc-members:
-
-tests.test\_category\_class module
-----------------------------------
-
-.. automodule:: tests.test_category_class
-   :members:
-   :show-inheritance:
-   :undoc-members:
+   tests.test_arealdekke
 
 Module contents
 ---------------

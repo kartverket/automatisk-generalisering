@@ -1,0 +1,37 @@
+tests.test\_arealdekke package
+==============================
+
+Submodules
+----------
+
+tests.test\_arealdekke.test\_arealdekket\_class module
+------------------------------------------------------
+
+.. automodule:: tests.test_arealdekke.test_arealdekket_class
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+tests.test\_arealdekke.test\_category\_class module
+---------------------------------------------------
+
+.. automodule:: tests.test_arealdekke.test_category_class
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+tests.test\_arealdekke.test\_program\_history\_class module
+-----------------------------------------------------------
+
+.. automodule:: tests.test_arealdekke.test_program_history_class
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+Module contents
+---------------
+
+.. automodule:: tests.test_arealdekke
+   :members:
+   :show-inheritance:
+   :undoc-members:
