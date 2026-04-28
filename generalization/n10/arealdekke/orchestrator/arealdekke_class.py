@@ -1,14 +1,11 @@
 # Module imports:
 import arcpy
 import yaml
-import os
-from sqlalchemy import values
 from pathlib import Path
 from custom_tools.decorators.timing_decorator import timing_decorator
 from composition_configs import core_config
 from file_manager import WorkFileManager
 from file_manager.n10.file_manager_arealdekke import Arealdekke_N10
-from input_data import input_n10  # input_test_data
 from generalization.n10.arealdekke.orchestrator.category_class import Category
 from generalization.n10.arealdekke.orchestrator.program_history_class import (
     Program_history_class as History_class,
@@ -99,10 +96,10 @@ class Arealdekke:
             self.files["arealdekke_fc"] = top_lvl_info["file_path"]
 
             self.__preprocessed: bool = top_lvl_info.get(keys.preprocessed.value, False)
-            self.__preprocessings_completed: int = top_lvl_info[
+            self.__preprocesses_completed: int = top_lvl_info[
                 keys.preprocessing_operations_completed.value
             ]
-            self.__postprocessings_completed: int = top_lvl_info[
+            self.__postpreprocesses_completed: int = top_lvl_info[
                 keys.postprocessing_operations_completed.value
             ]
             self.__map_scale: str = (
@@ -119,8 +116,8 @@ class Arealdekke:
             )
 
             self.__preprocessed: bool = False
-            self.__preprocessings_completed: int = 0
-            self.__postprocessings_completed: int = 0
+            self.__preprocesses_completed: int = 0
+            self.__postpreprocesses_completed: int = 0
             self.__map_scale: str = map_scale or None
 
         # Get categories - If none are to be retrieved, empty list will return.
@@ -141,7 +138,7 @@ class Arealdekke:
                         len(category.get_operations())
                         == category.get_operations_completed()
                     )
-                    and (category.get_reinserts_completed() < 2)
+                    and (category.get_reinserts_completed() < self.get_num_postprocessors())
                 ):
                     arcpy.management.CopyFeatures(
                         in_features=last_processed,
@@ -169,19 +166,19 @@ class Arealdekke:
         # Pipeline from original orchistrator file. Preprocessing the arealdekke data.
         if not self.__preprocessed:
             for preprocess in range(
-                (self.__preprocessings_completed), len(preprocesses), 1
+                (self.__preprocesses_completed), len(preprocesses), 1
             ):
 
                 # Call process
                 preprocesses[preprocess]()
 
-                # Update __preprocessings_completed
-                self.__preprocessings_completed += 1
+                # Update __preprocesses_completed
+                self.__preprocesses_completed += 1
 
                 # Update history (operations completed)
                 self.program_history.update_history_top_lvl(
                     key=keys.preprocessing_operations_completed.value,
-                    value=self.__preprocessings_completed,
+                    value=self.__preprocesses_completed,
                 )
 
             arcpy.management.CopyFeatures(
@@ -217,14 +214,14 @@ class Arealdekke:
                         if category_obj.get_map_scale() == self.__map_scale:
                             self.categories.append(category_obj)
 
-                        # Adds category to the history file
-                        self.program_history.new_history_category(
-                            title=category_obj.get_title(),
-                            operations=category_obj.get_operations(),
-                            accessibility=category_obj.get_accessibility(),
-                            order=category_obj.get_order(),
-                            map_scale=category_obj.get_map_scale(),
-                        )
+                            # Adds category to the history file
+                            self.program_history.new_history_category(
+                                title=category_obj.get_title(),
+                                operations=category_obj.get_operations(),
+                                accessibility=category_obj.get_accessibility(),
+                                order=category_obj.get_order(),
+                                map_scale=category_obj.get_map_scale(),
+                            )
 
                 # Sorts the categories based on their order key.
                 self.categories.sort(key=lambda obj: obj.get_order())
@@ -339,17 +336,17 @@ class Arealdekke:
         """
         postprocesses = self.set_postprocesses()
 
-        for process in range(self.__postprocessings_completed, len(postprocesses), 1):
+        for process in range(self.__postpreprocesses_completed, len(postprocesses), 1):
             # Call process
             postprocesses[process]()
 
-            # Update __postprocessings_completed
-            self.__postprocessings_completed += 1
+            # Update __postpreprocesses_completed
+            self.__postpreprocesses_completed += 1
 
             # Update history (operations completed)
             self.program_history.update_history_top_lvl(
                 key=keys.postprocessing_operations_completed.value,
-                value=self.__postprocessings_completed,
+                value=self.__postpreprocesses_completed,
             )
 
         self.program_history.delete_history()
@@ -423,11 +420,14 @@ class Arealdekke:
                 ),
             )
         )
+    
+    def get_num_postprocessors(self) -> int:
+        return len(self.set_postprocesses())
 
     def __str__(self) -> str:
         return (
             f"preprocessed: {self.__preprocessed} "
-            + f"preprocessings completed: {self.__preprocessings_completed} "
+            + f"preprocessings completed: {self.__preprocesses_completed} "
             + f"map scale: {self.__map_scale}"
         )
 
@@ -458,6 +458,9 @@ class Arealdekke:
                 input_fc=Arealdekke_N10.island_merger_output__n10_land_use.value,
                 output_fc=Arealdekke_N10.elim_output.value,
                 map_scale=self.__map_scale,
+            ),
+            lambda: change_attribute_value_main(
+                working_fc=Arealdekke_N10.elim_output.value,
             ),
             lambda: gangsykkel_dissolver(
                 input_fc=Arealdekke_N10.elim_output.value,
