@@ -13,7 +13,9 @@ from generalization.n10.arealdekke.orchestrator.category_class import Category
 from generalization.n10.arealdekke.orchestrator.program_history_class import (
     Program_history_class as History_class,
 )
-from generalization.n10.arealdekke.orchestrator.enum_variables import history_keys as keys
+from generalization.n10.arealdekke.orchestrator.enum_variables import (
+    history_keys as keys,
+)
 
 # Arealdekke tools:
 from generalization.n10.arealdekke.overall_tools.arealdekke_dissolver import (
@@ -103,7 +105,9 @@ class Arealdekke:
             self.__postprocessings_completed: int = top_lvl_info[
                 keys.postprocessing_operations_completed.value
             ]
-            self.__map_scale: str = top_lvl_info.get(keys.map_scale.value, None) or map_scale
+            self.__map_scale: str = (
+                top_lvl_info.get(keys.map_scale.value, None) or map_scale
+            )
 
         else:
             # Extracts the data and saves it in the object
@@ -123,6 +127,27 @@ class Arealdekke:
         cat_lvl_info: dict = self.program_history.restore_arealdekke_categories()
 
         self.categories: list[Category] = cat_lvl_info.get("cats", None) or []
+
+        # Update last_processed file path if program was restarted during category processing
+        if cat_lvl_info["cats_exist"]:
+
+            category: Category
+            for category in cat_lvl_info["cats"]:
+                last_processed = category.get_last_processed()
+
+                if (
+                    (last_processed is not None)
+                    and (
+                        len(category.get_operations())
+                        == category.get_operations_completed()
+                    )
+                    and (category.get_reinserts_completed() < 2)
+                ):
+                    arcpy.management.CopyFeatures(
+                        in_features=last_processed,
+                        out_feature_class=self.files["processed_fc"],
+                    )
+                    break
 
         # File paths for post preprocessing
         self.final_categories_fc = (
@@ -166,7 +191,9 @@ class Arealdekke:
             # Update history and object attribute
             self.__preprocessed = True
 
-            self.program_history.update_history_top_lvl(key=keys.preprocessed.value, value=True)
+            self.program_history.update_history_top_lvl(
+                key=keys.preprocessed.value, value=True
+            )
 
     @timing_decorator
     def add_categories(self, categories_config_file) -> None:
@@ -213,7 +240,7 @@ class Arealdekke:
 
         for category in open_cats:
             # Get the locked layers and the input layer
-            cat_title=category.get_title()
+            cat_title = category.get_title()
             self.get_locked_categories()
             self.get_category(cat_title)
 
@@ -229,15 +256,14 @@ class Arealdekke:
                     processed_fc=self.files["processed_fc"],
                 ):
                     for key, value in operation.items():
-                        print(f"{key} : {value}")
                         self.program_history.update_history_cat_lvl(
                             title=cat_title, key=key, value=value
                         )
 
                 # Add the category back into the input layer.
                 reinserts_completed = category.get_reinserts_completed()
-                
-                locked_cat_titles=self.get_locked_categories_titles()
+
+                locked_cat_titles = self.get_locked_categories_titles()
 
                 # Reinsert methods:
                 reinsert_operations = [
@@ -247,13 +273,13 @@ class Arealdekke:
                         locked_fc=self.files["locked_fc"],
                         output_fc=self.files["intermediate_fc"],
                         changed_area=cat_title,
-                        ),
+                    ),
                     lambda: fill_holes(
-                            input_fc=self.files["arealdekke_fc"],
-                            output_fc=self.files["intermediate_fc"],
-                            target=cat_title,
-                            locked_categories=locked_cat_titles
-                            )
+                        input_fc=self.files["arealdekke_fc"],
+                        output_fc=self.files["intermediate_fc"],
+                        target=cat_title,
+                        locked_categories=locked_cat_titles,
+                    ),
                 ]
 
                 for index in range(reinserts_completed, len(reinsert_operations)):
@@ -263,16 +289,26 @@ class Arealdekke:
                     # Update input data
                     arcpy.management.CopyFeatures(
                         in_features=self.files["intermediate_fc"],
-                        out_feature_class=self.files["arealdekke_fc"]
+                        out_feature_class=self.files["arealdekke_fc"],
                     )
 
                     # Update newest version in history file
                     self.program_history.update_history_top_lvl(
-                        key=keys.newest_version.value, value=str(self.files["intermediate_fc"])
+                        key=keys.newest_version.value,
+                        value=str(self.files["arealdekke_fc"]),
                     )
 
                     # Update reinserts completed
-                    category.update_reinsert_operations_completed()
+                    reinserts_completed_updated = (
+                        category.update_reinsert_operations_completed()
+                    )
+
+                    # Update reinserts in history file
+                    self.program_history.update_history_cat_lvl(
+                        title=cat_title,
+                        key=keys.reinserts_completed.value,
+                        value=reinserts_completed_updated,
+                    )
 
             # Lock the layer
             category.set_accessibility(False)
@@ -379,14 +415,14 @@ class Arealdekke:
 
     def get_locked_categories_titles(self):
         return set(
-                    map(
-                        lambda cat: cat.get_title(),
-                        filter(
-                            lambda cat: not cat.get_accessibility(),
-                            self.categories,
-                        ),
-                    )
-                )
+            map(
+                lambda cat: cat.get_title(),
+                filter(
+                    lambda cat: not cat.get_accessibility(),
+                    self.categories,
+                ),
+            )
+        )
 
     def __str__(self) -> str:
         return (

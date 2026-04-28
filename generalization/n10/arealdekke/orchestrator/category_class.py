@@ -85,7 +85,10 @@ class Category:
                 "target": self.__title,
                 "input_fc": (
                     self.__last_processed
-                    if (self.__last_processed is not None or self.__operations_completed>0)
+                    if (
+                        self.__last_processed is not None
+                        or self.__operations_completed > 0
+                    )
                     else input_fc
                 ),
                 "output_fc": processed_fc,
@@ -102,23 +105,15 @@ class Category:
             # Calls function from dictionary
             cat_tools[self.__operations[operation]](**args_to_pass)
 
-            # Updates the layer that will be passed on to the next operation to be the output.
-            '''
-            Er ikke nødvendig lenger siden vi bruker self.__last_processed med mindre det er første kjøring🤠
-            arcpy.management.CopyFeatures(
-                in_features=processed_fc, out_feature_class=input_fc
-            )
-            '''
-
             # Saves the last edits made in case program stops.
 
-            self.__last_processed=processed_fc
+            self.__last_processed = processed_fc
 
             # Updates program history
             self.__operations_completed += 1
 
             update: dict = {
-                keys.last_processed.value : str(self.__last_processed),
+                keys.last_processed.value: str(self.__last_processed),
                 keys.operations_completed.value: self.__operations_completed,
             }
 
@@ -131,8 +126,9 @@ class Category:
     def set_accessibility(self, newStatus: bool) -> None:
         self.__accessibility = newStatus
 
-    def update_reinsert_operations_completed(self) -> None:
+    def update_reinsert_operations_completed(self) -> int:
         self.__reinserts_completed += 1
+        return self.__reinserts_completed
 
     def set_cat_tools(self) -> dict:
         return {
@@ -161,6 +157,12 @@ class Category:
 
     def get_reinserts_completed(self) -> int:
         return self.__reinserts_completed
+
+    def get_last_processed(self) -> str:
+        return self.__last_processed
+
+    def get_operations_completed(self) -> int:
+        return self.__operations_completed
 
     def __str__(self) -> str:
         return (
