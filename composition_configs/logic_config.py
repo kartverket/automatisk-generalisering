@@ -261,6 +261,21 @@ class BestFitWeightsConfig:
     z: float = 0.0
 
 
+class DiagnosticDetail(Enum):
+    """Fidelity tier for the candidate diagnostics output.
+
+    OFF: skip per-candidate diagnostic collection entirely. Equivalent in
+        effect to setting candidate_connections_output=None, but lets a
+        caller keep the output path configured (e.g. wired via the file
+        manager) while disabling diagnostics for a specific run.
+    FULL: current behavior — one record per evaluated dangle/target pair,
+        with scoring detail.
+    """
+
+    OFF = "off"
+    FULL = "full"
+
+
 @dataclass(frozen=True)
 class FillLineGapsOutputConfig:
     """
@@ -273,11 +288,16 @@ class FillLineGapsOutputConfig:
     candidate_connections_output: path to write the full candidate diagnostics feature
         class (one POLYLINE row per evaluated dangle/target pair, with scoring detail).
         None disables candidate collection entirely, skipping all diagnostic assembly.
+    diagnostic_detail: fidelity tier when candidate_connections_output is set. Default
+        FULL preserves prior behavior. OFF skips collection entirely even if an output
+        path is configured, useful for callers that want to keep the path wired but
+        disable diagnostics for a specific run.
     """
 
     line_changes_output: Optional[str] = None
     write_output_metadata: bool = False
     candidate_connections_output: Optional[str] = None
+    diagnostic_detail: DiagnosticDetail = DiagnosticDetail.FULL
 
 
 @dataclass(frozen=True)
@@ -419,11 +439,64 @@ class FillLineGapsAdvancedConfig:
         is only applied when both source and target dangles mutually prefer each other's
         parent line. When False (default) the angle gate
         (angle_extra_dangle_threshold_degrees) is the sole guard.
+    candidate_closest_count: caps the number of near targets retained per source
+        dangle when generating the candidate near table (and the resnap near table,
+        which is conceptually the same kind of query against forced-parent line
+        segments). Default 100. Under heavy segmentation at a large search radius
+        the cap is often saturated; raise to capture more candidates at memory cost,
+        lower to bound near-table size on memory-constrained systems.
+    connectivity_closest_count: caps adjacencies per endpoint for the connectivity
+        near table. The connectivity tolerance is typically tiny (xy_tolerance), so
+        the cap is rarely hit; included for symmetry with candidate_closest_count and
+        for future-proofing. Default 100.
     """
 
     edit_method: EditMethod = EditMethod.AUTO
     increased_tolerance_edge_case_distance_meters: int = 0
     require_mutual_dangle_preference_for_bonus: bool = False
+    candidate_closest_count: int = 100
+    connectivity_closest_count: int = 100
+
+
+class SegmentationMode(Enum):
+    EVEN = "even"
+    FIXED = "fixed"
+
+
+@dataclass(frozen=True)
+class SegmentationConfig:
+    """
+    Internal segmentation of input_lines and line-like connect_to_features for
+    use in the candidate near table only. Other phases (TopologyBuilder,
+    connectivity, crossing checks, polyline caches, edits, output) operate on
+    the unsegmented originals.
+
+    The candidate near table benefits from short segments because GenerateNearTable
+    measures distance to the closest segment; on long target features the closest
+    point on the whole feature can be far from the actual best connection point.
+    Segmenting only the targets used by that table preserves the precision win
+    without paying the segmentation cost in every other phase.
+
+    Polygon connect_to_features are NOT supported when segmentation is enabled.
+    Convert polygons to polylines (e.g. via PolygonToLine) before passing them
+    to FillLineGaps in that case. Polyline and other geometry types pass through;
+    only polylines are actually segmented.
+
+    Setting segmentation=None on FillLineGapsConfig disables internal segmentation
+    entirely; FillLineGaps then uses caller-provided feature classes as today.
+
+    interval_meters: maximum segment length in the input's linear units. Must be > 0.
+    mode: EVEN divides each long line into ceil(L / interval) equal-length pieces.
+        FIXED cuts at fixed interval and emits the remainder as a final segment
+        (subject to tail_tolerance_meters).
+    tail_tolerance_meters: FIXED mode only. When the remainder of a fixed split
+        is <= this value, it is absorbed into the preceding segment instead of
+        emitted on its own. Default 0.0 disables absorption.
+    """
+
+    interval_meters: float
+    mode: SegmentationMode = SegmentationMode.EVEN
+    tail_tolerance_meters: float = 0.0
 
 
 @dataclass(frozen=True)
@@ -453,6 +526,13 @@ class FillLineGapsConfig:
     crossing_config: optional connector crossing rejection and barrier layer settings.
     connectivity_config: optional connectivity detection settings.
     advanced_config: residual tuning parameters (edit method and edge-case bonus).
+    segmentation: optional internal segmentation of input_lines and line-like
+        connect_to_features for use in the candidate near table only. When set,
+        the engine builds segmented copies internally; the caller passes the
+        original (unsegmented) inputs. Polygon connect_to_features are not
+        supported when segmentation is set — convert polygons to polylines
+        externally first. None (default) disables this and uses caller-provided
+        feature classes for all phases.
     """
 
     input_lines: str
@@ -478,6 +558,7 @@ class FillLineGapsConfig:
     advanced_config: FillLineGapsAdvancedConfig = field(
         default_factory=FillLineGapsAdvancedConfig
     )
+    segmentation: Optional[SegmentationConfig] = None
 
 
 class LineAngleMode(str, Enum):
