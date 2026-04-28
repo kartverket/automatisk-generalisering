@@ -3,6 +3,7 @@ from dataclasses import dataclass, field, replace
 from enum import Enum
 import math
 import os
+import time  # [DBG_LINEGAP]
 
 from typing import Optional, Callable, Iterable, Any, TypeAlias, NamedTuple
 
@@ -10,6 +11,7 @@ import arcpy
 
 from env_setup import environment_setup
 from custom_tools.general_tools import custom_arcpy, file_utilities
+from custom_tools.general_tools.line_segmenter import segment_line
 from file_manager import WorkFileManager
 from composition_configs import logic_config
 from composition_configs.logic_config import ConnectivityScope, LineConnectivityMode
@@ -65,8 +67,11 @@ class NearCandidate:
     """One row from the GenerateNearTable output, already keyed against the canonical
     dataset keys (line-like targets collapsed onto a single ``lines_key``).
 
-    near_fc_key_raw preserves the original dataset key before normalization; kept for
-    debugging only.
+    near_fc_key_raw preserves the original dataset key before normalization;
+    near_fid_raw preserves the original OID before parent-id mapping. Together
+    they let the per-segment angle path reach the segmented twin's polyline
+    geometry when segmentation is enabled. With segmentation off, near_fid_raw
+    equals near_fid and near_fc_key_raw equals the source FC key.
 
     near_fid is polymorphic (DangleOid when near_fc_key == dangles_key, ParentId when
     near_fc_key == lines_key, external-dataset FID otherwise); stays as int.
@@ -78,6 +83,7 @@ class NearCandidate:
     near_x: float
     near_y: float
     near_fc_key_raw: DatasetKey
+    near_fid_raw: int
 
 
 @dataclass(frozen=True)
@@ -1184,10 +1190,18 @@ class _ScoredCandidateItem:
 class _AngleCaches:
     """Polyline and line-type caches consumed by the CANDIDATE scope.
 
-    polyline_by_parent: self-line polylines keyed by parent_id.
+    polyline_by_parent: self-line polylines keyed by parent_id. Used for the
+        SOURCE side of every candidate (the source dangle sits at a parent
+        endpoint) and for dangle-to-dangle target lookups (the other dangle is
+        also at its parent's endpoint).
     polyline_by_external: polylines from external polyline targets, keyed by
-        dataset_key then SOURCE OID. Only populated for targets that survive
-        the line-like classification below.
+        SOURCE dataset_key then SOURCE OID. Used for the target side when
+        segmentation is None. Only populated for targets that survive the
+        line-like classification below.
+    polyline_by_segment: polylines from segmented twin FCs, keyed by raw
+        segmented dataset_key then segmented OID. Empty when segmentation is
+        None. Used for the target side when segmentation is set so each
+        candidate is scored against its own segment's local geometry.
     is_external_line_like: per external dataset_key, whether it is treated as
         a line-like target for scoring. Respects
         connect_to_features_angle_mode overrides.
@@ -1199,6 +1213,7 @@ class _AngleCaches:
 
     polyline_by_parent: dict[ParentId, Any]
     polyline_by_external: dict[DatasetKey, dict[int, Any]]
+    polyline_by_segment: dict[DatasetKey, dict[int, Any]]
     is_external_line_like: dict[DatasetKey, bool]
     line_like_external_ds_keys: set[DatasetKey]
     line_like_ds_keys: set[DatasetKey]
@@ -1344,10 +1359,16 @@ class FillLineGaps:
 
         self.fill_gaps_on_self = bool(line_gap_config.fill_gaps_on_self)
         self.best_fit_weights = line_gap_config.best_fit_weights
+        self.segmentation = line_gap_config.segmentation
 
         self.line_changes_output = out.line_changes_output
         self.write_output_metadata = bool(out.write_output_metadata)
         self.candidate_connections_output = out.candidate_connections_output
+        self.diagnostic_detail = logic_config.DiagnosticDetail(out.diagnostic_detail)
+        self._collect_diags = (
+            self.candidate_connections_output is not None
+            and self.diagnostic_detail is not logic_config.DiagnosticDetail.OFF
+        )
 
         self.increased_tolerance_edge_case_distance_meters = int(
             adv.increased_tolerance_edge_case_distance_meters
@@ -1356,6 +1377,8 @@ class FillLineGaps:
             adv.require_mutual_dangle_preference_for_bonus
         )
         self.edit_method = logic_config.EditMethod(adv.edit_method)
+        self.candidate_closest_count = int(adv.candidate_closest_count)
+        self.connectivity_closest_count = int(adv.connectivity_closest_count)
 
         self.connectivity_scope = logic_config.ConnectivityScope(
             conn.connectivity_scope
@@ -1437,6 +1460,16 @@ class FillLineGaps:
         self.conn_endpoints = "line_endpoints"
         self.conn_table = "connected_table"
 
+        # Segmented twins of lines_copy / target_self / each line-like external
+        # target layer. Built by _setup_segmentation when self.segmentation is
+        # set; used by the candidate near table only. Other phases continue to
+        # read the unsegmented originals. Lookups map a segmented FC's OID
+        # space back to parent ORIGINAL_ID.
+        self.lines_copy_segmented = "lines_copy_segmented"
+        self.target_self_segmented = "target_self_segmented"
+        self.external_target_layers_segmented: list[str] = []
+        self._segmented_oid_to_parent_id: dict[str, dict[int, ParentId]] = {}
+
         self.external_target_layers: list[str] = []
         # FCs to use as against_fcs in the connector-crossing pre-filter.
         # Polyline connect_to_features are reused as-is; polygon
@@ -1456,6 +1489,11 @@ class FillLineGaps:
             self.conn_endpoints,
             self.conn_table,
         ]
+
+        if self.segmentation is not None:
+            self.work_file_list.extend(
+                [self.lines_copy_segmented, self.target_self_segmented]
+            )
 
     # ----------------------------
     # Units & dataset key
@@ -1480,10 +1518,14 @@ class FillLineGaps:
         return text.split("/")[-1]
 
     def _line_dataset_keys(self) -> set[str]:
-        return {
+        keys = {
             self._dataset_key(self.lines_copy),
             self._dataset_key(self.target_self),
         }
+        if self.segmentation is not None:
+            keys.add(self._dataset_key(self.lines_copy_segmented))
+            keys.add(self._dataset_key(self.target_self_segmented))
+        return keys
 
     def _normalize_target_key(
         self, *, near_fc_key: str, lines_key: str, line_keys: set[str]
@@ -1925,6 +1967,7 @@ class FillLineGaps:
         polyline_by_parent = self._build_polyline_by_parent_id()
 
         polyline_by_external: dict[DatasetKey, dict[int, Any]] = {}
+        polyline_by_segment: dict[DatasetKey, dict[int, Any]] = {}
         is_external_line_like: dict[DatasetKey, bool] = {}
 
         line_keys = self._line_dataset_keys()
@@ -1949,6 +1992,34 @@ class FillLineGaps:
             else:
                 is_external_line_like[ds_key] = False
 
+        # Per-segment polyline cache (consumed by _resolve_target_angle_and_snap
+        # when segmentation is enabled). Built only for the candidate-side
+        # segmented twins — the tolerance filter that scopes target_self also
+        # scopes target_self_segmented, so the cache size tracks candidate
+        # volume, not total segment count.
+        if self.segmentation is not None:
+            if self.fill_gaps_on_self:
+                seg_self_key = self._dataset_key(self.target_self_segmented)
+                polyline_by_segment[seg_self_key] = self._build_polyline_by_oid(
+                    self.target_self_segmented
+                )
+            # external_target_layers and external_target_layers_segmented are
+            # appended in lock-step in _setup_segmentation (one entry per
+            # source layer), so zip pairs each segmented twin with its source.
+            for ext_src, ext_seg in zip(
+                self.external_target_layers, self.external_target_layers_segmented
+            ):
+                if not self._is_polyline_fc(ext_seg):
+                    continue
+                src_mode = self._angle_mode_by_external_ds_key.get(
+                    self._dataset_key(ext_src), logic_config.AngleTargetMode.AUTO
+                )
+                if src_mode == logic_config.AngleTargetMode.FORCE_NON_LINE:
+                    continue
+                polyline_by_segment[self._dataset_key(ext_seg)] = (
+                    self._build_polyline_by_oid(ext_seg)
+                )
+
         line_like_external_ds_keys: set[DatasetKey] = {
             ds_key for ds_key, is_line in is_external_line_like.items() if is_line
         }
@@ -1961,6 +2032,7 @@ class FillLineGaps:
         return _AngleCaches(
             polyline_by_parent=polyline_by_parent,
             polyline_by_external=polyline_by_external,
+            polyline_by_segment=polyline_by_segment,
             is_external_line_like=is_external_line_like,
             line_like_external_ds_keys=line_like_external_ds_keys,
             line_like_ds_keys=line_like_ds_keys,
@@ -2113,7 +2185,14 @@ class FillLineGaps:
         for index, feature_path in enumerate(self.connect_to_features):
             output_name = self.wfm.build_file_path(file_name=f"target_feature_{index}")
 
-            if self.write_work_files_to_memory:
+            # Segmentation needs to stamp ORIGINAL_ID on the output FC so the
+            # segmented twin can map back to a stable parent identifier;
+            # that requires a permanent FC rather than a memory-backed layer
+            # view (which would point at the user's source data).
+            use_memory_layer = (
+                self.write_work_files_to_memory and self.segmentation is None
+            )
+            if use_memory_layer:
                 custom_arcpy.select_location_and_make_feature_layer(
                     input_layer=feature_path,
                     overlap_type=custom_arcpy.OverlapType.WITHIN_A_DISTANCE.value,
@@ -2128,6 +2207,23 @@ class FillLineGaps:
                     select_features=self.dangles,
                     output_name=output_name,
                     search_distance=self._tolerance_linear_unit(),
+                )
+
+            if self.segmentation is not None:
+                # Stamp ORIGINAL_ID = OID on the staged target FC so the
+                # segmented twin's segments can carry their parent's OID
+                # via segment_line's field-preservation, giving a clean
+                # segmented_oid -> parent_id mapping in the candidate near
+                # table reader.
+                existing = {f.name for f in arcpy.ListFields(output_name)}
+                if self.ORIGINAL_ID not in existing:
+                    arcpy.management.AddField(output_name, self.ORIGINAL_ID, "LONG")
+                oid_field = arcpy.Describe(output_name).OIDFieldName
+                arcpy.management.CalculateField(
+                    output_name,
+                    self.ORIGINAL_ID,
+                    expression=f"!{oid_field}!",
+                    expression_type="PYTHON3",
                 )
 
             self.external_target_layers.append(output_name)
@@ -2167,12 +2263,93 @@ class FillLineGaps:
 
             self._angle_mode_by_external_ds_key[str(out_key)] = mode
 
+    def _setup_segmentation(self) -> None:
+        """Build internal segmented twins of ``lines_copy`` and line-like
+        external target layers. Segmented twins are read only by the
+        candidate near table; other phases continue to use the unsegmented
+        originals.
+
+        ``ORIGINAL_ID`` is stamped on ``lines_copy`` by
+        ``_add_original_id_field`` and on each external target layer in
+        ``_build_external_target_layers_once`` (when segmentation is
+        enabled); ``segment_line`` preserves all non-required fields, so
+        each segment carries its parent's ORIGINAL_ID and the OID lookup
+        reduces to the existing ``_oid_to_original_id_lookup`` helper.
+
+        Polygon ``connect_to_features`` are not supported with segmentation
+        enabled — callers should convert polygons to polylines before
+        passing them in. Geometry types other than polygon and polyline
+        (e.g. points) pass through unsegmented; the candidate near table
+        reads them directly.
+
+        No-op when ``self.segmentation`` is None.
+        """
+        if self.segmentation is None:
+            return
+
+        seg_cfg = self.segmentation
+        even = seg_cfg.mode is logic_config.SegmentationMode.EVEN
+
+        print(f"[DBG_LINEGAP] {time.strftime('%H:%M:%S')} _setup_segmentation lines_copy START")  # [DBG_LINEGAP]
+        segment_line(
+            input_fc=self.lines_copy,
+            output_fc=self.lines_copy_segmented,
+            segment_interval=float(seg_cfg.interval_meters),
+            even_segments=even,
+            tail_tolerance=float(seg_cfg.tail_tolerance_meters),
+        )
+        self._segmented_oid_to_parent_id[
+            self._dataset_key(self.lines_copy_segmented)
+        ] = self._oid_to_original_id_lookup(self.lines_copy_segmented)
+        print(f"[DBG_LINEGAP] {time.strftime('%H:%M:%S')} _setup_segmentation lines_copy END (rows={int(arcpy.management.GetCount(self.lines_copy_segmented)[0])})")  # [DBG_LINEGAP]
+
+        for index, ext_path in enumerate(self.external_target_layers):
+            if self._is_polygon_fc(ext_path):
+                raise ValueError(
+                    f"connect_to_features[{index}] is a polygon feature class. "
+                    f"Segmentation only supports polyline connect_to_features. "
+                    f"Convert polygons to polylines (e.g. via PolygonToLine) "
+                    f"before passing them to FillLineGaps when segmentation "
+                    f"is enabled."
+                )
+            if not self._is_polyline_fc(ext_path):
+                # Non-line, non-polygon (e.g. point) — segmentation does
+                # not apply. Pass the source path through so the segmented
+                # list aligns with external_target_layers.
+                self.external_target_layers_segmented.append(ext_path)
+                continue
+
+            print(f"[DBG_LINEGAP] {time.strftime('%H:%M:%S')} _setup_segmentation external[{index}] START")  # [DBG_LINEGAP]
+            seg_path = self.wfm.build_file_path(
+                file_name=f"target_feature_{index}_segmented"
+            )
+            segment_line(
+                input_fc=ext_path,
+                output_fc=seg_path,
+                segment_interval=float(seg_cfg.interval_meters),
+                even_segments=even,
+                tail_tolerance=float(seg_cfg.tail_tolerance_meters),
+            )
+            self.external_target_layers_segmented.append(seg_path)
+            self._segmented_oid_to_parent_id[
+                self._dataset_key(seg_path)
+            ] = self._oid_to_original_id_lookup(seg_path)
+            print(f"[DBG_LINEGAP] {time.strftime('%H:%M:%S')} _setup_segmentation external[{index}] END (rows={int(arcpy.management.GetCount(seg_path)[0])})")  # [DBG_LINEGAP]
+
     def _select_targets_within_tolerance_of_dangles(self) -> list[str]:
-        """Return the combined target layer list for the near table.
+        """Return the global target layer list for connectivity-side queries.
 
         Includes the tolerance-filtered self-lines layer (``target_self``)
         when ``fill_gaps_on_self`` is enabled, followed by the external
-        target layers built in ``_build_external_target_layers_once``.
+        target layers built in ``_build_external_target_layers_once``. The
+        candidate-side target list is produced separately by
+        ``_candidate_target_layers`` (which routes to segmented twins when
+        ``self.segmentation`` is set).
+
+        When segmentation is enabled and ``fill_gaps_on_self`` is True, also
+        builds ``target_self_segmented`` (a tolerance-filtered slice of
+        ``lines_copy_segmented``) and registers its segmented OID lookup so
+        the candidate near table reader can map back to parent ids.
         """
         targets: list[str] = []
         if self.fill_gaps_on_self:
@@ -2194,8 +2371,53 @@ class FillLineGaps:
                 )
             targets.append(self.target_self)
 
+            if self.segmentation is not None:
+                # target_self_segmented is built from lines_copy_segmented at
+                # the same tolerance filter — candidates reach segments by
+                # their segmented OID, the OID lookup maps back to parent_id.
+                print(f"[DBG_LINEGAP] {time.strftime('%H:%M:%S')} target_self_segmented build START")  # [DBG_LINEGAP]
+                if self.write_work_files_to_memory:
+                    custom_arcpy.select_location_and_make_feature_layer(
+                        input_layer=self.lines_copy_segmented,
+                        overlap_type=custom_arcpy.OverlapType.WITHIN_A_DISTANCE.value,
+                        select_features=self.dangles,
+                        output_name=self.target_self_segmented,
+                        search_distance=self._tolerance_linear_unit(),
+                    )
+                else:
+                    custom_arcpy.select_location_and_make_permanent_feature(
+                        input_layer=self.lines_copy_segmented,
+                        overlap_type=custom_arcpy.OverlapType.WITHIN_A_DISTANCE.value,
+                        select_features=self.dangles,
+                        output_name=self.target_self_segmented,
+                        search_distance=self._tolerance_linear_unit(),
+                    )
+                self._segmented_oid_to_parent_id[
+                    self._dataset_key(self.target_self_segmented)
+                ] = self._oid_to_original_id_lookup(self.target_self_segmented)
+                print(f"[DBG_LINEGAP] {time.strftime('%H:%M:%S')} target_self_segmented build END (rows={int(arcpy.management.GetCount(self.target_self_segmented)[0])})")  # [DBG_LINEGAP]
+
         targets.extend(self.external_target_layers)
         return targets
+
+    def _candidate_target_layers(self, global_target_layers: list[str]) -> list[str]:
+        """Translate the global target list to its segmented twins for the
+        candidate near table.
+
+        Returns ``global_target_layers`` unchanged when
+        ``self.segmentation`` is None. Otherwise returns
+        ``[target_self_segmented]`` (when ``fill_gaps_on_self``) followed
+        by ``external_target_layers_segmented`` — the same shape as
+        ``_select_targets_within_tolerance_of_dangles``, but every line-like
+        entry points at its segmented twin.
+        """
+        if self.segmentation is None:
+            return global_target_layers
+        out: list[str] = []
+        if self.fill_gaps_on_self:
+            out.append(self.target_self_segmented)
+        out.extend(self.external_target_layers_segmented)
+        return out
 
     def _filter_true_dangles(self) -> None:
         """
@@ -2667,6 +2889,7 @@ class FillLineGaps:
         connect_tol_m = float(self.connectivity_tolerance_meters)
         connect_tol = f"{connect_tol_m} Meters"
 
+        print(f"[DBG_LINEGAP] {time.strftime('%H:%M:%S')} GenerateNearTable(connectivity) START (in_endpoints={int(arcpy.management.GetCount(self.conn_endpoints)[0])}, near_features={len(near_features)}, radius={connect_tol})")  # [DBG_LINEGAP]
         arcpy.analysis.GenerateNearTable(
             in_features=self.conn_endpoints,
             near_features=near_features,
@@ -2675,9 +2898,10 @@ class FillLineGaps:
             location="NO_LOCATION",
             angle="NO_ANGLE",
             closest="ALL",
-            closest_count=100,
+            closest_count=self.connectivity_closest_count,
             method="PLANAR",
         )
+        print(f"[DBG_LINEGAP] {time.strftime('%H:%M:%S')} GenerateNearTable(connectivity) END (conn_table_rows={int(arcpy.management.GetCount(self.conn_table)[0])})")  # [DBG_LINEGAP]
 
         lines_key = self._dataset_key(self.lines_copy)
         line_keys = self._line_dataset_keys()
@@ -2814,7 +3038,7 @@ class FillLineGaps:
             location="LOCATION",
             angle="NO_ANGLE",
             closest="ALL",
-            closest_count=100,
+            closest_count=self.candidate_closest_count,
             method="PLANAR",
         )
 
@@ -2850,17 +3074,25 @@ class FillLineGaps:
                     continue
 
                 in_id = int(in_fid)
-                nf_id = int(near_fid)
+                raw_fid = int(near_fid)
                 dist = float(near_dist)
 
                 raw_key = self._dataset_key(near_fc)
-                nf_id = int(near_fid)
 
-                # Convert line-like near_fid into ORIGINAL_ID space
-                if raw_key == lines_copy_key:
-                    nf_id = lines_copy_oid_to_orig.get(nf_id, nf_id)
+                # Convert line-like near_fid into ORIGINAL_ID space. Segmented
+                # twins (when self.segmentation is set) are checked first so
+                # the candidate near table's segmented OID maps to its parent
+                # ORIGINAL_ID; the lines_copy / target_self branches handle
+                # the unsegmented path.
+                seg_lookup = self._segmented_oid_to_parent_id.get(raw_key)
+                if seg_lookup is not None:
+                    nf_id = seg_lookup.get(raw_fid, raw_fid)
+                elif raw_key == lines_copy_key:
+                    nf_id = lines_copy_oid_to_orig.get(raw_fid, raw_fid)
                 elif raw_key == target_self_key:
-                    nf_id = target_self_oid_to_orig.get(nf_id, nf_id)
+                    nf_id = target_self_oid_to_orig.get(raw_fid, raw_fid)
+                else:
+                    nf_id = raw_fid
 
                 near_fc_key = self._normalize_target_key(
                     near_fc_key=raw_key,
@@ -2880,6 +3112,7 @@ class FillLineGaps:
                         near_x=float(near_x),
                         near_y=float(near_y),
                         near_fc_key_raw=raw_key,
+                        near_fid_raw=raw_fid,
                     )
                 )
 
@@ -3126,27 +3359,47 @@ class FillLineGaps:
         dangle_xy: dict[DangleOid, tuple[float, float]],
         polyline_by_parent: dict[ParentId, Any],
         polyline_by_external: dict[DatasetKey, dict[int, Any]],
+        polyline_by_segment: dict[DatasetKey, dict[int, Any]],
     ) -> _TargetAngleResolution:
         """Resolve the target polyline, its local angle, and the snap point.
 
         For dangle-pair targets the snap defaults to the precise dangle XY
         (more accurate than the near-table snap, which is rounded). Other
         targets use the near-table coordinates directly.
+
+        When segmentation is enabled, line-target angle is evaluated against
+        the candidate's segment polyline (looked up via near_fc_key_raw +
+        near_fid_raw in polyline_by_segment) so each segment gets its own
+        local angle. Source-side dangle and other-dangle target lookups stay
+        on parent geometry — those endpoints sit at the parent's true ends.
         """
         near_fid = cand.near_fid
         snap_x = float(cand.near_x)
         snap_y = float(cand.near_y)
+        use_segment = self.segmentation is not None
 
         if ds_key == lines_fc_key:
             tgt_parent = int(near_fid)
-            tgt_poly = polyline_by_parent.get(tgt_parent)
+            if use_segment:
+                seg_lookup = polyline_by_segment.get(cand.near_fc_key_raw)
+                tgt_poly = (
+                    seg_lookup.get(int(cand.near_fid_raw))
+                    if seg_lookup is not None
+                    else None
+                )
+                angle_ds_key = cand.near_fc_key_raw
+                angle_oid = int(cand.near_fid_raw)
+            else:
+                tgt_poly = polyline_by_parent.get(tgt_parent)
+                angle_ds_key = lines_fc_key
+                angle_oid = tgt_parent
             if tgt_poly is None:
                 return _TargetAngleResolution(
                     None, None, snap_x, snap_y, target_parent_id=tgt_parent
                 )
             target_angle = self._local_line_angle_cached(
-                dataset_key=lines_fc_key,
-                oid=tgt_parent,
+                dataset_key=angle_ds_key,
+                oid=angle_oid,
                 polyline=tgt_poly,
                 x=snap_x,
                 y=snap_y,
@@ -3183,13 +3436,25 @@ class FillLineGaps:
                 target_parent_id=int(other_parent),
             )
 
-        ext = polyline_by_external.get(ds_key, {})
-        tgt_poly = ext.get(int(near_fid))
+        if use_segment:
+            seg_lookup = polyline_by_segment.get(cand.near_fc_key_raw)
+            tgt_poly = (
+                seg_lookup.get(int(cand.near_fid_raw))
+                if seg_lookup is not None
+                else None
+            )
+            angle_ds_key = cand.near_fc_key_raw
+            angle_oid = int(cand.near_fid_raw)
+        else:
+            ext = polyline_by_external.get(ds_key, {})
+            tgt_poly = ext.get(int(near_fid))
+            angle_ds_key = ds_key
+            angle_oid = int(near_fid)
         if tgt_poly is None:
             return _TargetAngleResolution(None, None, snap_x, snap_y)
         target_angle = self._local_line_angle_cached(
-            dataset_key=ds_key,
-            oid=int(near_fid),
+            dataset_key=angle_ds_key,
+            oid=angle_oid,
             polyline=tgt_poly,
             x=snap_x,
             y=snap_y,
@@ -3254,6 +3519,7 @@ class FillLineGaps:
         dangle_xy: dict[DangleOid, tuple[float, float]],
         polyline_by_parent: dict[ParentId, Any],
         polyline_by_external: dict[DatasetKey, dict[int, Any]],
+        polyline_by_segment: dict[DatasetKey, dict[int, Any]],
         is_external_line_like: dict[DatasetKey, bool],
         dangle_xys_by_parent: Optional[_DangleXYsByParent] = None,
         dist_to_parent_line_by_id: Optional[dict[ParentId, float]] = None,
@@ -3326,6 +3592,7 @@ class FillLineGaps:
             dangle_xy=dangle_xy,
             polyline_by_parent=polyline_by_parent,
             polyline_by_external=polyline_by_external,
+            polyline_by_segment=polyline_by_segment,
         )
         target_angle = resolved.target_angle
         tgt_poly = resolved.tgt_poly
@@ -3730,6 +3997,7 @@ class FillLineGaps:
         lines_key: DatasetKey,
         polyline_by_parent: dict[ParentId, Any],
         polyline_by_external: dict[DatasetKey, dict[int, Any]],
+        polyline_by_segment: dict[DatasetKey, dict[int, Any]],
         is_external_line_like: dict[DatasetKey, bool],
     ) -> dict[DangleOid, ParentId]:
         """Per dangle, pick the line-target parent that wins the angle-aware
@@ -3775,6 +4043,7 @@ class FillLineGaps:
                     dangle_xy=dangle_xy,
                     polyline_by_parent=polyline_by_parent,
                     polyline_by_external=polyline_by_external,
+                    polyline_by_segment=polyline_by_segment,
                     is_external_line_like=is_external_line_like,
                 )
                 if assess.blocks:
@@ -3855,6 +4124,7 @@ class FillLineGaps:
 
         relevant_parent_ids = set(dangle_parent.values())
 
+        print(f"[DBG_LINEGAP] {time.strftime('%H:%M:%S')} TopologyBuilder.build START (relevant_parents={len(relevant_parent_ids)})")  # [DBG_LINEGAP]
         topology = TopologyBuilder(
             lines_fc=self.lines_copy,
             original_id_field=self.ORIGINAL_ID,
@@ -3868,17 +4138,24 @@ class FillLineGaps:
             scope=self.connectivity_scope,
             relevant_parent_ids=relevant_parent_ids,
         )
+        print(f"[DBG_LINEGAP] {time.strftime('%H:%M:%S')} TopologyBuilder.build END")  # [DBG_LINEGAP]
 
+        print(f"[DBG_LINEGAP] {time.strftime('%H:%M:%S')} detect_illegal_targets START")  # [DBG_LINEGAP]
         illegal = self.detect_illegal_targets(
             dangle_parent=dangle_parent,
             target_layers=target_layers,
             topology=topology,
         )
+        print(f"[DBG_LINEGAP] {time.strftime('%H:%M:%S')} detect_illegal_targets END (illegal_dangles={len(illegal)})")  # [DBG_LINEGAP]
 
         dangles_key = self._dataset_key(dangles_fc)
         lines_key = self._dataset_key(self.lines_copy)
 
-        near_features = list(target_layers) + [dangles_fc]
+        # Candidate near table reads from segmented twins when
+        # self.segmentation is set (per-segment closest-point + per-segment
+        # angle); other engine phases continue to use the unsegmented globals.
+        candidate_target_layers = self._candidate_target_layers(target_layers)
+        near_features = list(candidate_target_layers) + [dangles_fc]
 
         base_tol = float(self.gap_tolerance_meters)
         dangle_tol = float(self._expanded_dangle_tolerance_meters())
@@ -3894,13 +4171,16 @@ class FillLineGaps:
         )
 
         # Expanded radius so we can see dangle→dangle candidates, but legality will enforce tol rules.
+        print(f"[DBG_LINEGAP] {time.strftime('%H:%M:%S')} GenerateNearTable(candidate) START (near_features={len(near_features)}, radius={self._expanded_dangle_tolerance_linear_unit()})")  # [DBG_LINEGAP]
         self._generate_near_table(
             in_dangles=dangles_fc,
             near_features=near_features,
             search_radius=self._expanded_dangle_tolerance_linear_unit(),
             out_table=self.near_table,
         )
+        print(f"[DBG_LINEGAP] {time.strftime('%H:%M:%S')} GenerateNearTable(candidate) END (near_table_rows={int(arcpy.management.GetCount(self.near_table)[0])})")  # [DBG_LINEGAP]
 
+        print(f"[DBG_LINEGAP] {time.strftime('%H:%M:%S')} _read_near_table_grouped START")  # [DBG_LINEGAP]
         grouped = self._read_near_table_grouped(
             near_table=self.near_table,
             dangles_fc_key=dangles_key,
@@ -3909,11 +4189,12 @@ class FillLineGaps:
             lines_copy_oid_to_orig=lines_copy_oid_to_orig,
             target_self_oid_to_orig=target_self_oid_to_orig,
         )
+        print(f"[DBG_LINEGAP] {time.strftime('%H:%M:%S')} _read_near_table_grouped END (dangles_with_candidates={len(grouped)})")  # [DBG_LINEGAP]
 
         if not grouped:
             return BuildPlanResult.empty(diagnostics=[])
 
-        collect_diags = self.candidate_connections_output is not None
+        collect_diags = self._collect_diags
 
         def _build_diagnostics(
             state: _DiagnosticsState,
@@ -3946,6 +4227,7 @@ class FillLineGaps:
         )
         polyline_by_parent = angle_caches.polyline_by_parent
         polyline_by_external = angle_caches.polyline_by_external
+        polyline_by_segment = angle_caches.polyline_by_segment
         is_external_line_like = angle_caches.is_external_line_like
         line_like_external_ds_keys = angle_caches.line_like_external_ds_keys
         line_like_ds_keys = angle_caches.line_like_ds_keys
@@ -3979,6 +4261,7 @@ class FillLineGaps:
         # Step 2 - Legality gates (distance / network / illegal-target)
         # Collects legal (dangle, target) candidate rows.
         # ----------------------------
+        print(f"[DBG_LINEGAP] {time.strftime('%H:%M:%S')} _filter_legal_candidates START (grouped={len(grouped)})")  # [DBG_LINEGAP]
         legal_rows_by_dangle, parent_id_by_dangle, _step1a_illegal = (
             self._filter_legal_candidates(
                 grouped=grouped,
@@ -3994,6 +4277,11 @@ class FillLineGaps:
                 directed_source_illegal_oids=directed_start_dangles,
             )
         )
+        print(f"[DBG_LINEGAP] {time.strftime('%H:%M:%S')} _filter_legal_candidates END (legal_dangles={len(legal_rows_by_dangle)}, illegal_rows={len(_step1a_illegal)})")  # [DBG_LINEGAP]
+
+        # Eager release: the outer dict's surviving NearCandidate lists are
+        # already referenced by legal_rows_by_dangle; the rest is dead weight.
+        grouped.clear()
 
         # ----------------------------
         # Step 3 - Crossing pre-filters (last legality check)
@@ -4032,6 +4320,7 @@ class FillLineGaps:
                     parent_id_by_dangle.pop(_dangle_oid, None)
 
         if self.barrier_layers and legal_rows_by_dangle and _crossing_sr is not None:
+            print(f"[DBG_LINEGAP] {time.strftime('%H:%M:%S')} _find_barrier_crossing_keys START (legal_dangles={len(legal_rows_by_dangle)})")  # [DBG_LINEGAP]
             _barrier_keys = self._find_barrier_crossing_keys(
                 legal_rows_by_dangle=legal_rows_by_dangle,
                 dangle_xy=dangle_xy,
@@ -4039,6 +4328,7 @@ class FillLineGaps:
                 trim_distance=_crossing_trim,
                 spatial_reference=_crossing_sr,
             )
+            print(f"[DBG_LINEGAP] {time.strftime('%H:%M:%S')} _find_barrier_crossing_keys END (rejected_keys={len(_barrier_keys)})")  # [DBG_LINEGAP]
             if _barrier_keys:
                 _apply_crossing_filter(_barrier_keys, "crosses_barrier_layer")
 
@@ -4057,6 +4347,7 @@ class FillLineGaps:
                 self.lines_copy,
                 *self.external_target_crossing_layers,
             ]
+            print(f"[DBG_LINEGAP] {time.strftime('%H:%M:%S')} _find_crossing_conflict_keys START (legal_dangles={len(legal_rows_by_dangle)}, check_layers={len(_check_layers)})")  # [DBG_LINEGAP]
             crossing_conflict_keys, trimmed_connector_cache = (
                 self._find_crossing_conflict_keys(
                     legal_rows_by_dangle=legal_rows_by_dangle,
@@ -4066,6 +4357,7 @@ class FillLineGaps:
                     spatial_reference=_crossing_sr,
                 )
             )
+            print(f"[DBG_LINEGAP] {time.strftime('%H:%M:%S')} _find_crossing_conflict_keys END (rejected_keys={len(crossing_conflict_keys)}, trimmed_cache={len(trimmed_connector_cache)})")  # [DBG_LINEGAP]
             if crossing_conflict_keys:
                 _apply_crossing_filter(
                     crossing_conflict_keys, "crosses_existing_feature"
@@ -4080,6 +4372,7 @@ class FillLineGaps:
         # Step 4 - Best line parent per dangle (angle-aware)
         # Used by edge-case bonus detection in the scoring step.
         # ----------------------------
+        print(f"[DBG_LINEGAP] {time.strftime('%H:%M:%S')} _compute_best_line_parent_by_dangle START (legal_dangles={len(legal_rows_by_dangle)})")  # [DBG_LINEGAP]
         best_line_parent_by_dangle = self._compute_best_line_parent_by_dangle(
             legal_rows_by_dangle=legal_rows_by_dangle,
             parent_id_by_dangle=parent_id_by_dangle,
@@ -4089,12 +4382,15 @@ class FillLineGaps:
             lines_key=lines_key,
             polyline_by_parent=polyline_by_parent,
             polyline_by_external=polyline_by_external,
+            polyline_by_segment=polyline_by_segment,
             is_external_line_like=is_external_line_like,
         )
+        print(f"[DBG_LINEGAP] {time.strftime('%H:%M:%S')} _compute_best_line_parent_by_dangle END (best_line_parents={len(best_line_parent_by_dangle)})")  # [DBG_LINEGAP]
 
         # ----------------------------
         # Step 5 - Angle-aware selection: one proposal per dangle
         # ----------------------------
+        print(f"[DBG_LINEGAP] {time.strftime('%H:%M:%S')} _select_dangle_proposals START (legal_dangles={len(legal_rows_by_dangle)})")  # [DBG_LINEGAP]
         _dangle_proposals, dangle_norm_z_by_dangle, _step1b_illegal, _step1b_scored = (
             self._select_dangle_proposals(
                 legal_rows_by_dangle=legal_rows_by_dangle,
@@ -4107,6 +4403,7 @@ class FillLineGaps:
                 base_tol=base_tol,
                 polyline_by_parent=polyline_by_parent,
                 polyline_by_external=polyline_by_external,
+                polyline_by_segment=polyline_by_segment,
                 is_external_line_like=is_external_line_like,
                 best_line_parent_by_dangle=best_line_parent_by_dangle,
                 dangle_parent=dangle_parent,
@@ -4115,6 +4412,7 @@ class FillLineGaps:
                 dist_to_parent_line_by_dangle=dist_to_parent_line_by_dangle,
             )
         )
+        print(f"[DBG_LINEGAP] {time.strftime('%H:%M:%S')} _select_dangle_proposals END (proposals={len(_dangle_proposals)}, illegal_b={len(_step1b_illegal)}, scored_b={len(_step1b_scored)})")  # [DBG_LINEGAP]
 
         if not _dangle_proposals:
             return _empty_result(
@@ -4166,19 +4464,23 @@ class FillLineGaps:
         # ----------------------------
         # Step 2 - Connection normalization: re-normalize Z within each undirected A<->B connection group
         # ----------------------------
+        print(f"[DBG_LINEGAP] {time.strftime('%H:%M:%S')} _run_connection_normalization START (dangle_proposals={len(_dangle_proposals)})")  # [DBG_LINEGAP]
         connection_proposals_by_dangle, connection_norm_z_by_dangle = (
             self._run_connection_normalization(_dangle_proposals)
         )
+        print(f"[DBG_LINEGAP] {time.strftime('%H:%M:%S')} _run_connection_normalization END (proposals={len(connection_proposals_by_dangle)})")  # [DBG_LINEGAP]
 
         # ----------------------------
         # Step 3 - Connection selection: one winner per undirected connection
         # ----------------------------
+        print(f"[DBG_LINEGAP] {time.strftime('%H:%M:%S')} _run_connection_selection START")  # [DBG_LINEGAP]
         _connection_proposals, connection_loser_oids = self._run_connection_selection(
             connection_proposals_by_dangle=connection_proposals_by_dangle,
             directed_edges=directed_network_edges,
             dangle_mutual_oids=dangle_mutual_oids,
             collect_diags=collect_diags,
         )
+        print(f"[DBG_LINEGAP] {time.strftime('%H:%M:%S')} _run_connection_selection END (winners={len(_connection_proposals)}, losers={len(connection_loser_oids)})")  # [DBG_LINEGAP]
 
         # ============================
         # KRUSKAL SCOPE
@@ -4188,13 +4490,16 @@ class FillLineGaps:
         # ----------------------------
         # Step 1 - Global normalization: re-normalize Z across all connection winners
         # ----------------------------
+        print(f"[DBG_LINEGAP] {time.strftime('%H:%M:%S')} _run_global_normalization START (connection_proposals={len(_connection_proposals)})")  # [DBG_LINEGAP]
         _global_winners, global_norm_z_by_dangle = self._run_global_normalization(
             _connection_proposals
         )
+        print(f"[DBG_LINEGAP] {time.strftime('%H:%M:%S')} _run_global_normalization END (global_winners={len(_global_winners)})")  # [DBG_LINEGAP]
 
         # ----------------------------
         # Step 2 - Kruskal cycle prevention across accepted connections
         # ----------------------------
+        print(f"[DBG_LINEGAP] {time.strftime('%H:%M:%S')} _run_kruskal START")  # [DBG_LINEGAP]
         (
             _global_proposals,
             accepted_dangle_oids,
@@ -4214,6 +4519,12 @@ class FillLineGaps:
                 else None
             ),
         )
+        print(f"[DBG_LINEGAP] {time.strftime('%H:%M:%S')} _run_kruskal END (accepted={len(accepted_dangle_oids)}, kruskal_rejected={len(kruskal_rejected_oids)}, crossing_rejected={len(kruskal_crossing_rejected_oids)})")  # [DBG_LINEGAP]
+
+        # Eager release: trimmed_connector_cache is consumed by _run_kruskal
+        # and not referenced by resnap or output phases; release the Polyline
+        # handles before the deferred scope and the diagnostics assembly run.
+        trimmed_connector_cache.clear()
 
         if not _global_proposals:
             return _empty_result(
@@ -4240,12 +4551,16 @@ class FillLineGaps:
         # ----------------------------
         # Step 1 - Resnap candidate identification
         # ----------------------------
+        print(f"[DBG_LINEGAP] {time.strftime('%H:%M:%S')} _identify_resnap_captures START (global_proposals={len(_global_proposals)})")  # [DBG_LINEGAP]
         resnap_captures = self._identify_resnap_captures(_global_proposals)
+        print(f"[DBG_LINEGAP] {time.strftime('%H:%M:%S')} _identify_resnap_captures END (resnap_captures={len(resnap_captures)})")  # [DBG_LINEGAP]
 
         # ----------------------------
         # Step 2 - Plan entry assembly: parent_id -> list[plan_entry]
         # ----------------------------
+        print(f"[DBG_LINEGAP] {time.strftime('%H:%M:%S')} _assemble_plan_entries START")  # [DBG_LINEGAP]
         plan_by_parent = self._assemble_plan_entries(_global_proposals)
+        print(f"[DBG_LINEGAP] {time.strftime('%H:%M:%S')} _assemble_plan_entries END (plan_parents={len(plan_by_parent)})")  # [DBG_LINEGAP]
 
         return BuildPlanResult(
             plan_by_parent=plan_by_parent,
@@ -4379,6 +4694,7 @@ class FillLineGaps:
         base_tol: float,
         polyline_by_parent: dict[ParentId, Any],
         polyline_by_external: dict[DatasetKey, dict[int, Any]],
+        polyline_by_segment: dict[DatasetKey, dict[int, Any]],
         is_external_line_like: dict[DatasetKey, bool],
         best_line_parent_by_dangle: dict[DangleOid, ParentId],
         dangle_parent: dict[DangleOid, ParentId],
@@ -4492,6 +4808,7 @@ class FillLineGaps:
                     dangle_xy=dangle_xy,
                     polyline_by_parent=polyline_by_parent,
                     polyline_by_external=polyline_by_external,
+                    polyline_by_segment=polyline_by_segment,
                     is_external_line_like=is_external_line_like,
                     dangle_xys_by_parent=_dangle_xys_by_parent,
                     dist_to_parent_line_by_id=dist_to_parent_line_by_id,
@@ -5252,6 +5569,7 @@ class FillLineGaps:
                 near_x=float(prop.ctx.near_x),
                 near_y=float(prop.ctx.near_y),
                 near_fc_key_raw=str(prop.ctx.near_fc_key),
+                near_fid_raw=int(prop.ctx.near_fid),
             )
             entry = self._make_plan_entry(
                 parent_id=int(prop.ctx.src_parent_id),
@@ -5313,10 +5631,24 @@ class FillLineGaps:
         dangles_key: DatasetKey,
         lines_key: DatasetKey,
     ) -> list[CandidateDiagnostic]:
-        """Assemble CandidateDiagnostic records from all pipeline state collected during _build_plan."""
+        """Stream non-deferrable diagnostic records to the FC; return only the
+        accepted-Kruskal subset that may receive late annotations from
+        ``_update_deferred_diagnostics`` after the resnap pass.
+
+        The returned list contains records with ``kruskal_scope.status ==
+        "accepted"`` only. All other records (step-1A illegals, step-1B
+        illegals, and step-1B scored entries that were outscored, lost the
+        connection selection, or rejected by Kruskal) are written immediately
+        and not retained, dropping the peak in-memory diagnostic footprint
+        from O(rejected candidates) to O(accepted candidates).
+        """
         if not collect_diags:
             return []
-        result: list[CandidateDiagnostic] = []
+
+        assert self.candidate_connections_output is not None
+        deferred: list[CandidateDiagnostic] = []
+        spatial_reference = arcpy.Describe(self.lines_copy).spatialReference
+        cursor_fields = ("SHAPE@",) + self._diag_field_names()
 
         def _z_pair(
             d_xy: tuple[float, float], near_x: float, near_y: float
@@ -5331,154 +5663,181 @@ class FillLineGaps:
             )
             return sz, ez
 
-        # Step-1A illegals: angle never computed; z values looked up here
-        for entry in state.step1a_illegal:
-            xy = dangle_xy.get(int(entry.dangle_oid))
-            if xy is None:
-                continue
-            _sz, _ez = _z_pair(xy, entry.cand.near_x, entry.cand.near_y)
-            cand_scope = ScopeRecord(status=entry.reason)
-            result.append(
-                CandidateDiagnostic(
-                    **self._make_base_diag_fields(
-                        entry.cand,
-                        entry.dangle_oid,
-                        entry.parent_id,
-                        xy,
-                        dangle_parent,
-                        dangles_key,
-                        lines_key,
+        with arcpy.da.InsertCursor(
+            self.candidate_connections_output, cursor_fields
+        ) as cur:
+
+            def _emit(d: CandidateDiagnostic) -> None:
+                geom = arcpy.Polyline(
+                    arcpy.Array(
+                        [
+                            arcpy.Point(d.dangle_x, d.dangle_y),
+                            arcpy.Point(d.near_x, d.near_y),
+                        ]
                     ),
-                    candidate_scope=cand_scope,
-                    network_scope=None,
-                    kruskal_scope=None,
-                    deferred_scope=None,
-                    final_status=cand_scope,
-                    best_fit_score=None,
-                    best_fit_rank=None,
-                    bonus_applied=None,
-                    norm_dist=None,
-                    norm_angle=None,
-                    assess=None,
-                    final_gap_source=None,
-                    start_z=_sz,
-                    end_z=_ez,
+                    spatial_reference,
                 )
-            )
+                cur.insertRow(self._diag_row(d, geom))
 
-        # Step-1B angle/Z-blocked illegals: z values carried in entry
-        for entry in state.step1b_illegal:
-            xy = dangle_xy.get(int(entry.dangle_oid))
-            if xy is None:
-                continue
-            cand_scope = ScopeRecord(status=entry.reason)
-            result.append(
-                CandidateDiagnostic(
-                    **self._make_base_diag_fields(
-                        entry.cand,
-                        entry.dangle_oid,
-                        entry.parent_id,
-                        xy,
-                        dangle_parent,
-                        dangles_key,
-                        lines_key,
-                    ),
-                    candidate_scope=cand_scope,
-                    network_scope=None,
-                    kruskal_scope=None,
-                    deferred_scope=None,
-                    final_status=cand_scope,
-                    best_fit_score=None,
-                    best_fit_rank=None,
-                    bonus_applied=None,
-                    norm_dist=None,
-                    norm_angle=None,
-                    assess=entry.assess,
-                    final_gap_source=None,
-                    start_z=entry.start_z,
-                    end_z=entry.end_z,
+            # Step-1A illegals: angle never computed; z values looked up here.
+            # Never accepted by Kruskal — stream directly.
+            for entry in state.step1a_illegal:
+                xy = dangle_xy.get(int(entry.dangle_oid))
+                if xy is None:
+                    continue
+                _sz, _ez = _z_pair(xy, entry.cand.near_x, entry.cand.near_y)
+                cand_scope = ScopeRecord(status=entry.reason)
+                _emit(
+                    CandidateDiagnostic(
+                        **self._make_base_diag_fields(
+                            entry.cand,
+                            entry.dangle_oid,
+                            entry.parent_id,
+                            xy,
+                            dangle_parent,
+                            dangles_key,
+                            lines_key,
+                        ),
+                        candidate_scope=cand_scope,
+                        network_scope=None,
+                        kruskal_scope=None,
+                        deferred_scope=None,
+                        final_status=cand_scope,
+                        best_fit_score=None,
+                        best_fit_rank=None,
+                        bonus_applied=None,
+                        norm_dist=None,
+                        norm_angle=None,
+                        assess=None,
+                        final_gap_source=None,
+                        start_z=_sz,
+                        end_z=_ez,
+                    )
                 )
-            )
 
-        # Compute per-dangle rank for scored candidates (1 = local winner)
-        scored_by_dangle: dict[int, list[_CandidateScored]] = {}
-        for entry in state.step1b_scored:
-            scored_by_dangle.setdefault(int(entry.dangle_oid), []).append(entry)
-        rank_map: dict[tuple[int, str, int], int] = {}
-        for d_oid, entries in scored_by_dangle.items():
-            for rank, entry in enumerate(
-                sorted(entries, key=lambda e: e.score_tuple), start=1
-            ):
-                rank_map[(d_oid, entry.cand.near_fc_key, entry.cand.near_fid)] = rank
+            # Eager release: source records are not referenced past this loop.
+            state.step1a_illegal.clear()
 
-        # Step-1B scored candidates
-        for entry in state.step1b_scored:
-            xy = dangle_xy.get(int(entry.dangle_oid))
-            if xy is None:
-                continue
-            rank = rank_map.get(
-                (entry.dangle_oid, entry.cand.near_fc_key, entry.cand.near_fid)
-            )
-            d_oid = int(entry.dangle_oid)
-            cand_scope = ScopeRecord(status="scored", norm_z=entry.dangle_norm_z)
+            # Step-1B angle/Z-blocked illegals: z values carried in entry.
+            # Never accepted by Kruskal — stream directly.
+            for entry in state.step1b_illegal:
+                xy = dangle_xy.get(int(entry.dangle_oid))
+                if xy is None:
+                    continue
+                cand_scope = ScopeRecord(status=entry.reason)
+                _emit(
+                    CandidateDiagnostic(
+                        **self._make_base_diag_fields(
+                            entry.cand,
+                            entry.dangle_oid,
+                            entry.parent_id,
+                            xy,
+                            dangle_parent,
+                            dangles_key,
+                            lines_key,
+                        ),
+                        candidate_scope=cand_scope,
+                        network_scope=None,
+                        kruskal_scope=None,
+                        deferred_scope=None,
+                        final_status=cand_scope,
+                        best_fit_score=None,
+                        best_fit_rank=None,
+                        bonus_applied=None,
+                        norm_dist=None,
+                        norm_angle=None,
+                        assess=entry.assess,
+                        final_gap_source=None,
+                        start_z=entry.start_z,
+                        end_z=entry.end_z,
+                    )
+                )
 
-            if not entry.is_local_winner:
-                net_scope = ScopeRecord(status="outscored_within_dangle")
-                kru_scope: Optional[ScopeRecord] = None
-                final_scope = net_scope
-                final_gs: Optional[str] = None
-            elif d_oid in state.connection_loser_oids:
-                net_scope = ScopeRecord(
-                    status="lost_connection_selection",
-                    norm_z=state.connection_norm_z_by_dangle.get(d_oid),
-                )
-                kru_scope = None
-                final_scope = net_scope
-                final_gs = None
-            elif d_oid in state.kruskal_rejected_oids:
-                net_scope = ScopeRecord(
-                    status="passed",
-                    norm_z=state.connection_norm_z_by_dangle.get(d_oid),
-                )
-                kru_scope = ScopeRecord(
-                    status="lost_kruskal_selection",
-                    norm_z=state.global_norm_z_by_dangle.get(d_oid),
-                )
-                final_scope = kru_scope
-                final_gs = None
-            elif d_oid in state.kruskal_crossing_rejected_oids:
-                net_scope = ScopeRecord(
-                    status="passed",
-                    norm_z=state.connection_norm_z_by_dangle.get(d_oid),
-                )
-                kru_scope = ScopeRecord(
-                    status="crosses_accepted_connector",
-                    norm_z=state.global_norm_z_by_dangle.get(d_oid),
-                )
-                final_scope = kru_scope
-                final_gs = None
-            elif d_oid in state.accepted_dangle_oids:
-                net_scope = ScopeRecord(
-                    status="passed",
-                    norm_z=state.connection_norm_z_by_dangle.get(d_oid),
-                )
-                kru_scope = ScopeRecord(
-                    status="accepted",
-                    norm_z=state.global_norm_z_by_dangle.get(d_oid),
-                )
-                final_scope = kru_scope
-                gs = state.gap_source_by_dangle.get(d_oid)
-                final_gs = gs.value if gs is not None else None
-            else:
-                # Local winner that didn't reach proposal construction
-                # (e.g. target dangle had no resolvable parent)
-                net_scope = ScopeRecord(status="passed")
-                kru_scope = None
-                final_scope = net_scope
-                final_gs = None
+            # Eager release: source records are not referenced past this loop.
+            state.step1b_illegal.clear()
 
-            result.append(
-                CandidateDiagnostic(
+            # Compute per-dangle rank for scored candidates (1 = local winner)
+            scored_by_dangle: dict[int, list[_CandidateScored]] = {}
+            for entry in state.step1b_scored:
+                scored_by_dangle.setdefault(int(entry.dangle_oid), []).append(entry)
+            rank_map: dict[tuple[int, str, int], int] = {}
+            for d_oid, entries in scored_by_dangle.items():
+                for rank, entry in enumerate(
+                    sorted(entries, key=lambda e: e.score_tuple), start=1
+                ):
+                    rank_map[(d_oid, entry.cand.near_fc_key, entry.cand.near_fid)] = (
+                        rank
+                    )
+
+            # Step-1B scored candidates: only the accepted-Kruskal branch
+            # below produces records eligible for late deferred-scope
+            # annotation; everything else streams.
+            for entry in state.step1b_scored:
+                xy = dangle_xy.get(int(entry.dangle_oid))
+                if xy is None:
+                    continue
+                rank = rank_map.get(
+                    (entry.dangle_oid, entry.cand.near_fc_key, entry.cand.near_fid)
+                )
+                d_oid = int(entry.dangle_oid)
+                cand_scope = ScopeRecord(status="scored", norm_z=entry.dangle_norm_z)
+
+                if not entry.is_local_winner:
+                    net_scope = ScopeRecord(status="outscored_within_dangle")
+                    kru_scope: Optional[ScopeRecord] = None
+                    final_scope = net_scope
+                    final_gs: Optional[str] = None
+                elif d_oid in state.connection_loser_oids:
+                    net_scope = ScopeRecord(
+                        status="lost_connection_selection",
+                        norm_z=state.connection_norm_z_by_dangle.get(d_oid),
+                    )
+                    kru_scope = None
+                    final_scope = net_scope
+                    final_gs = None
+                elif d_oid in state.kruskal_rejected_oids:
+                    net_scope = ScopeRecord(
+                        status="passed",
+                        norm_z=state.connection_norm_z_by_dangle.get(d_oid),
+                    )
+                    kru_scope = ScopeRecord(
+                        status="lost_kruskal_selection",
+                        norm_z=state.global_norm_z_by_dangle.get(d_oid),
+                    )
+                    final_scope = kru_scope
+                    final_gs = None
+                elif d_oid in state.kruskal_crossing_rejected_oids:
+                    net_scope = ScopeRecord(
+                        status="passed",
+                        norm_z=state.connection_norm_z_by_dangle.get(d_oid),
+                    )
+                    kru_scope = ScopeRecord(
+                        status="crosses_accepted_connector",
+                        norm_z=state.global_norm_z_by_dangle.get(d_oid),
+                    )
+                    final_scope = kru_scope
+                    final_gs = None
+                elif d_oid in state.accepted_dangle_oids:
+                    net_scope = ScopeRecord(
+                        status="passed",
+                        norm_z=state.connection_norm_z_by_dangle.get(d_oid),
+                    )
+                    kru_scope = ScopeRecord(
+                        status="accepted",
+                        norm_z=state.global_norm_z_by_dangle.get(d_oid),
+                    )
+                    final_scope = kru_scope
+                    gs = state.gap_source_by_dangle.get(d_oid)
+                    final_gs = gs.value if gs is not None else None
+                else:
+                    # Local winner that didn't reach proposal construction
+                    # (e.g. target dangle had no resolvable parent)
+                    net_scope = ScopeRecord(status="passed")
+                    kru_scope = None
+                    final_scope = net_scope
+                    final_gs = None
+
+                d = CandidateDiagnostic(
                     **self._make_base_diag_fields(
                         entry.cand,
                         entry.dangle_oid,
@@ -5503,8 +5862,13 @@ class FillLineGaps:
                     start_z=entry.start_z,
                     end_z=entry.end_z,
                 )
-            )
-        return result
+
+                if kru_scope is not None and kru_scope.status == "accepted":
+                    deferred.append(d)
+                else:
+                    _emit(d)
+
+        return deferred
 
     def _make_plan_entry(
         self,
@@ -5684,6 +6048,7 @@ class FillLineGaps:
             2 * self.connectivity_tolerance_meters + self.gap_tolerance_meters
         )
         resnap_table = self.wfm.build_file_path(file_name="resnap_near_table")
+        print(f"[DBG_LINEGAP] {time.strftime('%H:%M:%S')} GenerateNearTable(resnap) START (dangles={len(dangle_oids)}, target_parents={len(forced_parents_filtered)}, radius={search_radius} Meters)")  # [DBG_LINEGAP]
         arcpy.analysis.GenerateNearTable(
             in_features=resnap_dangles_lyr,
             near_features=[resnap_lines_lyr],
@@ -5692,9 +6057,10 @@ class FillLineGaps:
             location="LOCATION",
             angle="NO_ANGLE",
             closest="ALL",
-            closest_count=100,
+            closest_count=self.candidate_closest_count,
             method="PLANAR",
         )
+        print(f"[DBG_LINEGAP] {time.strftime('%H:%M:%S')} GenerateNearTable(resnap) END (resnap_table_rows={int(arcpy.management.GetCount(resnap_table)[0])})")  # [DBG_LINEGAP]
 
         best_xy: dict[tuple[int, int], tuple[float, float, float]] = {}
         fields = [
@@ -5738,6 +6104,7 @@ class FillLineGaps:
                 near_x=float(hit[0]),
                 near_y=float(hit[1]),
                 near_fc_key_raw=lines_key,
+                near_fid_raw=cap.forced_target_parent,
             )
             out[cap.parent_id] = self._make_plan_entry(
                 parent_id=cap.parent_id,
@@ -6225,7 +6592,7 @@ class FillLineGaps:
     ) -> None:
         """Record each accepted candidate's resnap outcome on its diagnostic.
         Precedence: displaced > winner > applied_resnapped > rejected."""
-        if self.candidate_connections_output is None or not diagnostics:
+        if not self._collect_diags or not diagnostics:
             return
 
         applied_oids = {v.dangle_oid for v in resnap_plan.values() if not v.skip}
@@ -6290,37 +6657,52 @@ class FillLineGaps:
             geometry and is exact.
         """
         environment_setup.main()
+        print(f"[DBG_LINEGAP] {time.strftime('%H:%M:%S')} run START")  # [DBG_LINEGAP]
 
         self.work_file_list = self.wfm.setup_work_file_paths(
             instance=self,
             file_structure=self.work_file_list,
         )
 
+        print(f"[DBG_LINEGAP] {time.strftime('%H:%M:%S')} _copy_input_lines START")  # [DBG_LINEGAP]
         self._copy_input_lines()
+        print(f"[DBG_LINEGAP] {time.strftime('%H:%M:%S')} _copy_input_lines END (lines_copy_rows={int(arcpy.management.GetCount(self.lines_copy)[0])})")  # [DBG_LINEGAP]
         self._build_raster_handles()
         self._add_original_id_field()
         self._ensure_gap_generated_field()
+        print(f"[DBG_LINEGAP] {time.strftime('%H:%M:%S')} _create_dangles START")  # [DBG_LINEGAP]
         self._create_dangles()
+        print(f"[DBG_LINEGAP] {time.strftime('%H:%M:%S')} _create_dangles END (dangles_rows={int(arcpy.management.GetCount(self.dangles)[0])})")  # [DBG_LINEGAP]
+        print(f"[DBG_LINEGAP] {time.strftime('%H:%M:%S')} _build_external_target_layers_once START")  # [DBG_LINEGAP]
         self._build_external_target_layers_once()
+        print(f"[DBG_LINEGAP] {time.strftime('%H:%M:%S')} _build_external_target_layers_once END")  # [DBG_LINEGAP]
+        self._setup_segmentation()
+        print(f"[DBG_LINEGAP] {time.strftime('%H:%M:%S')} _select_targets_within_tolerance_of_dangles START")  # [DBG_LINEGAP]
         targets = self._select_targets_within_tolerance_of_dangles()
+        print(f"[DBG_LINEGAP] {time.strftime('%H:%M:%S')} _select_targets_within_tolerance_of_dangles END (target_layers={len(targets)})")  # [DBG_LINEGAP]
 
         # Keep only dangles that have any candidate within base tolerance
+        print(f"[DBG_LINEGAP] {time.strftime('%H:%M:%S')} _filter_true_dangles START")  # [DBG_LINEGAP]
         self._filter_true_dangles()
         dangles_for_plan = self.filtered_dangles
+        print(f"[DBG_LINEGAP] {time.strftime('%H:%M:%S')} _filter_true_dangles END (filtered_dangles_rows={int(arcpy.management.GetCount(dangles_for_plan)[0])})")  # [DBG_LINEGAP]
 
         if self.line_changes_output is not None and self.write_output_metadata:
             file_utilities.delete_feature(input_feature=self.line_changes_output)
             self._setup_line_changes_output()
 
-        if self.candidate_connections_output is not None:
+        if self._collect_diags:
+            assert self.candidate_connections_output is not None
             self._setup_candidate_connections_output(self.candidate_connections_output)
 
+        print(f"[DBG_LINEGAP] {time.strftime('%H:%M:%S')} _build_plan START")  # [DBG_LINEGAP]
         result = self._build_plan(dangles_fc=dangles_for_plan, target_layers=targets)
         plan = result.plan_by_parent
         resnap_captures = result.resnap_captures
         diagnostics = result.diagnostics
         accepted_connector_raw = result.accepted_connector_raw
         kruskal_rank_by_dangle_oid = result.kruskal_rank_by_dangle_oid
+        print(f"[DBG_LINEGAP] {time.strftime('%H:%M:%S')} _build_plan END (plan_parents={len(plan)}, resnap_captures={len(resnap_captures)}, diagnostics={len(diagnostics)})")  # [DBG_LINEGAP]
 
         # Capture snap-source dangle endpoints before _apply_plan moves them.
         snap_source_dangle_xy: dict[ParentId, tuple[float, float]] = {
@@ -6330,20 +6712,25 @@ class FillLineGaps:
             if info.edit_op is EditOp.SNAP
         }
 
+        print(f"[DBG_LINEGAP] {time.strftime('%H:%M:%S')} _apply_plan START (plan_parents={len(plan)})")  # [DBG_LINEGAP]
         self._apply_plan(plan)
+        print(f"[DBG_LINEGAP] {time.strftime('%H:%M:%S')} _apply_plan END")  # [DBG_LINEGAP]
 
         if resnap_captures:
+            print(f"[DBG_LINEGAP] {time.strftime('%H:%M:%S')} _resnap_connections START (captures={len(resnap_captures)})")  # [DBG_LINEGAP]
             resnap_plan = self._resnap_connections(
                 captures=resnap_captures,
                 dangles_fc=dangles_for_plan,
                 snap_source_dangle_xy=snap_source_dangle_xy,
             )
+            print(f"[DBG_LINEGAP] {time.strftime('%H:%M:%S')} _resnap_connections END (resnap_plan={len(resnap_plan)})")  # [DBG_LINEGAP]
 
             if (
                 self.reject_crossing_connectors
                 and resnap_plan
                 and accepted_connector_raw
             ):
+                print(f"[DBG_LINEGAP] {time.strftime('%H:%M:%S')} _recheck_resnap_crossings START (resnap_plan={len(resnap_plan)})")  # [DBG_LINEGAP]
                 (
                     resnap_plan,
                     resnap_crossing_rejected_oids,
@@ -6358,12 +6745,15 @@ class FillLineGaps:
                         self.crossing_check_spatial_reference
                     ),
                 )
+                print(f"[DBG_LINEGAP] {time.strftime('%H:%M:%S')} _recheck_resnap_crossings END (resnap_plan={len(resnap_plan)}, rejected={len(resnap_crossing_rejected_oids)})")  # [DBG_LINEGAP]
             else:
                 resnap_crossing_rejected_oids: set[DangleOid] = set()
                 resnap_crossing_displaced_oids: set[DangleOid] = set()
                 resnap_crossing_winner_oids: set[DangleOid] = set()
 
+            print(f"[DBG_LINEGAP] {time.strftime('%H:%M:%S')} _apply_plan(resnap) START (entries={len(resnap_plan)})")  # [DBG_LINEGAP]
             self._apply_plan({pid: [entry] for pid, entry in resnap_plan.items()})
+            print(f"[DBG_LINEGAP] {time.strftime('%H:%M:%S')} _apply_plan(resnap) END")  # [DBG_LINEGAP]
 
             self._update_deferred_diagnostics(
                 diagnostics=diagnostics,
@@ -6373,14 +6763,19 @@ class FillLineGaps:
                 winner_oids=resnap_crossing_winner_oids,
             )
 
-        if self.candidate_connections_output is not None and diagnostics:
+        if self._collect_diags and diagnostics:
+            assert self.candidate_connections_output is not None
+            print(f"[DBG_LINEGAP] {time.strftime('%H:%M:%S')} _write_candidate_connections_output START (diagnostics={len(diagnostics)})")  # [DBG_LINEGAP]
             spatial_reference = arcpy.Describe(self.lines_copy).spatialReference
             self._write_candidate_connections_output(
                 fc_path=self.candidate_connections_output,
                 diagnostics=diagnostics,
                 spatial_reference=spatial_reference,
             )
+            print(f"[DBG_LINEGAP] {time.strftime('%H:%M:%S')} _write_candidate_connections_output END")  # [DBG_LINEGAP]
 
+        print(f"[DBG_LINEGAP] {time.strftime('%H:%M:%S')} _write_output START")  # [DBG_LINEGAP]
         self._write_output()
+        print(f"[DBG_LINEGAP] {time.strftime('%H:%M:%S')} run END")  # [DBG_LINEGAP]
 
         self.wfm.delete_created_files()

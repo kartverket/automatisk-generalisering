@@ -64,19 +64,19 @@ def prepare_segmented_inputs():
         out_feature_class=River_N100.river_topology___river_polygons_as_lines___n100_river.value,
     )
 
-    segment_line(
-        input_fc=River_N100.river_topology___fixed_river_orientation___n100_river.value,
-        output_fc=River_N100.river_topology___segmented_river_lines___n100_river.value,
-        segment_interval=20,
-        even_segments=True,
-    )
-
-    segment_line(
-        input_fc=River_N100.river_topology___river_polygons_as_lines___n100_river.value,
-        output_fc=River_N100.river_topology___segmented_river_polygon_lines___n100_river.value,
-        segment_interval=20,
-        even_segments=True,
-    )
+    # segment_line(
+    #     input_fc=River_N100.river_topology___fixed_river_orientation___n100_river.value,
+    #     output_fc=River_N100.river_topology___segmented_river_lines___n100_river.value,
+    #     segment_interval=20,
+    #     even_segments=True,
+    # )
+    #
+    # segment_line(
+    #     input_fc=River_N100.river_topology___river_polygons_as_lines___n100_river.value,
+    #     output_fc=River_N100.river_topology___segmented_river_polygon_lines___n100_river.value,
+    #     segment_interval=20,
+    #     even_segments=True,
+    # )
 
 
 @timing_decorator
@@ -87,11 +87,11 @@ def fill_line_topology_gaps(raster_list: list[type_defs.RasterFilePath]):
     )
 
     segmented_polygon_lines = (
-        River_N100.river_topology___segmented_river_polygon_lines___n100_river.value
+        River_N100.river_topology___river_polygons_as_lines___n100_river.value
     )
 
     line_fix_config = logic_config.FillLineGapsConfig(
-        input_lines=River_N100.river_topology___segmented_river_lines___n100_river.value,
+        input_lines=River_N100.river_topology___fixed_river_orientation___n100_river.value,
         output_lines=River_N100.river_topology___fixed_river_gaps___n100_river.value,
         work_file_manager_config=work_file_manager_config,
         gap_tolerance_meters=300,
@@ -131,6 +131,10 @@ def fill_line_topology_gaps(raster_list: list[type_defs.RasterFilePath]):
         advanced_config=logic_config.FillLineGapsAdvancedConfig(
             edit_method=logic_config.EditMethod.NEW_LINE,
             increased_tolerance_edge_case_distance_meters=15,
+        ),
+        segmentation=logic_config.SegmentationConfig(
+            interval_meters=20,
+            mode=logic_config.SegmentationMode.EVEN,
         ),
     )
 
