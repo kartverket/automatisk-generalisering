@@ -5,7 +5,11 @@ This folder contains all functions and classes that are relevant and specific to
 #
 ## 📁 Program Structure
 
-The file structure of our land use pipeline is structured around three core classes: **Arealdekke**, **Category** and **Program History**. Arealdekke represents the land use as a whole unit. It is used to handle procedures where relations between the different land use types matter. Category represents a single land use type. This is used to process the land use types separately. Lastly, the Program History represents a yaml file that includes information about how far the program got during its last run. This ensures that the program can restart on its last checkpoint if the program suddenly stops.
+The file structure of our land use pipeline is structured around three core classes: **Arealdekke**, **Category** and **Program History**:
+
+- Arealdekke represents the land use as a whole unit. It is used to handle procedures where relations between the different land use types matter.
+- Category represents a single land use type. This is used to process the land use types separately.
+- The Program History represents a yaml file that includes information about how far the program got during its last run. This ensures that the program can restart on its last checkpoint if the program suddenly stops.
 
 The Python files is organized into the following folders:
 
@@ -14,10 +18,10 @@ root
 |___generalization
     |___n10
         |___arealdekke
-            |___Category_tools
-            |___Orchestrator
-            |___Parameters
-            |___Overall_tools
+            |___category_tools
+            |___orchestrator
+            |___overall_tools
+            |___parameters
 ```
 
 ***Category_tools***: Includes functionality used for editing single selections of land use categories.
