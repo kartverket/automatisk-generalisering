@@ -840,11 +840,12 @@ class _CandidateContext:
     near_x: float
     near_y: float
     raw_distance: float
+    effective_distance: float  # raw_distance minus edge-case bonus when bonus_applied
     bonus_applied: bool
     # Scoring inputs (fixed; needed for diagnostics and score recomputation)
     start_z: Optional[float]  # Z at source dangle endpoint
     end_z: Optional[float]  # Z at target near-point
-    norm_dist: float  # raw_distance / gap_tolerance_meters
+    norm_dist: float  # dangle-scope min-max normalized effective distance
     # assess is always populated on constructed contexts — code paths that
     # early-return before proposal construction never reach _CandidateContext.
     assess: "AngleAssessment"
@@ -1177,11 +1178,30 @@ class _ScoredCandidateItem:
     score: "_ProposalScore"
     cand: NearCandidate
     raw_distance: float
+    effective_distance: float
     effective_for_scoring: float
     bonus_applied: bool
     assess: AngleAssessment
     norm_z: Optional[float]
     norm_dist: float
+    norm_angle: Optional[float]
+    end_z: Optional[float]
+
+
+@dataclass(frozen=True)
+class _PendingDangleItem:
+    """Pass-1 collection inside _select_dangle_proposals.
+
+    Holds inputs for a candidate that survived all gates. Pass 2 normalizes
+    effective_distance and end_z over the dangle's surviving candidate set,
+    then promotes each pending item to a final _ScoredCandidateItem.
+    """
+
+    cand: NearCandidate
+    assess: AngleAssessment
+    raw_distance: float
+    effective_distance: float
+    bonus_applied: bool
     norm_angle: Optional[float]
     end_z: Optional[float]
 
@@ -1816,18 +1836,45 @@ class FillLineGaps:
     ) -> Optional[float]:
         """
         Normalize target_end_z within the range of end_z_values.
-        Returns None when fewer than 2 valid values exist, range is flat, or target is None.
+
+        Returns None only when the target's own Z is missing (data unavailable
+        for this candidate); the dimension is then excluded from the composite.
+        Returns 0.0 when the scope is degenerate (fewer than 2 valid values or a
+        flat range): the lone candidate gets the best possible normalized score
+        on this dimension while the dimension stays in the composite at full
+        weight, preserving the user's best_fit_weights ratios.
         """
         if target_end_z is None:
             return None
         valid = [z for z in end_z_values if z is not None]
         if len(valid) < 2:
-            return None
+            return 0.0
         lo = min(valid)
         hi = max(valid)
         if hi == lo:
-            return None
+            return 0.0
         return (target_end_z - lo) / (hi - lo)
+
+    @staticmethod
+    def _normalize_within_scope(
+        values: "list[float]",
+        target: float,
+    ) -> float:
+        """
+        Min-max normalize ``target`` within ``values``.
+
+        Returns 0.0 when the scope is degenerate (fewer than 2 values or a flat
+        range): the lone candidate gets the best possible normalized score on
+        this dimension while the dimension stays in the composite at full
+        weight, preserving the user's best_fit_weights ratios.
+        """
+        if len(values) < 2:
+            return 0.0
+        lo = min(values)
+        hi = max(values)
+        if hi == lo:
+            return 0.0
+        return (target - lo) / (hi - lo)
 
     def _compute_best_fit_score(
         self,
@@ -4752,9 +4799,10 @@ class FillLineGaps:
 
             # Pre-scan end_z.  Run when Z scoring is active OR when diagnostic
             # output is requested so z values are available for all candidate rows.
+            # Z bounds for normalization are computed in pass 2 over the surviving
+            # (post-gate) candidate set, mirroring the per-scope semantics now
+            # applied to distance.
             end_z_by_cand_index: dict[int, Optional[float]] = {}
-            z_score_min: Optional[float] = None
-            z_score_max: Optional[float] = None
 
             if self._raster_handles and (
                 float(self.best_fit_weights.z) > 0.0 or collect_diags
@@ -4766,14 +4814,6 @@ class FillLineGaps:
                         _c.near_y,
                     )
                     end_z_by_cand_index[_i] = _ez
-
-                if float(self.best_fit_weights.z) > 0.0:
-                    _valid_z = [
-                        z for z in end_z_by_cand_index.values() if z is not None
-                    ]
-                    if _valid_z:
-                        z_score_min = min(_valid_z)
-                        z_score_max = max(_valid_z)
 
             # Build a mapping from parent line ID -> list of dangle XY coords.
             # Used in _assess_angle to detect when a line candidate is hit at a
@@ -4793,7 +4833,7 @@ class FillLineGaps:
                 else None
             )
 
-            scored_candidates: list[_ScoredCandidateItem] = []
+            pending_items: list[_PendingDangleItem] = []
 
             for _cand_idx, cand in enumerate(legal_rows):
                 assess = self._assess_angle(
@@ -4907,26 +4947,6 @@ class FillLineGaps:
                         bonus_allowed=bool(bonus_allowed),
                     )
                 )
-                bonus_rank = 0 if bonus_applied else 1
-
-                # 5) Normalized weighted composite score (dangle scope)
-                _tol = float(self.gap_tolerance_meters) or 1.0
-                _eff_norm_dist = float(effective_distance) / _tol
-
-                _norm_z: Optional[float] = None
-                if z_score_min is not None and z_score_max is not None:
-                    _ez = end_z_by_cand_index.get(_cand_idx)
-                    if _ez is not None:
-                        if z_score_max > z_score_min:
-                            _norm_z = (_ez - z_score_min) / (z_score_max - z_score_min)
-                        else:
-                            _norm_z = None  # flat range: Z cannot discriminate
-
-                effective_for_scoring = self._compute_best_fit_score(
-                    norm_dist=_eff_norm_dist,
-                    assess=assess,
-                    norm_z=_norm_z,
-                )
 
                 _norm_angle: Optional[float] = (
                     float(assess.angle_metric_deg) / float(assess.angle_max_deg)
@@ -4934,31 +4954,72 @@ class FillLineGaps:
                     else None
                 )
 
+                pending_items.append(
+                    _PendingDangleItem(
+                        cand=cand,
+                        assess=assess,
+                        raw_distance=float(raw_distance),
+                        effective_distance=float(effective_distance),
+                        bonus_applied=bool(bonus_applied),
+                        norm_angle=_norm_angle,
+                        end_z=end_z_by_cand_index.get(_cand_idx),
+                    )
+                )
+
+            if not pending_items:
+                continue
+
+            # ----------------------------
+            # Pass 2: per-dangle min-max normalization of distance + Z over the
+            # surviving candidate set, then composite computation. Degenerate
+            # scopes (single survivor or flat range) yield 0.0 so the dimension
+            # stays in the composite at full weight without biasing the lone
+            # candidate; missing-Z candidates keep norm_z=None which excludes
+            # the Z weight from the composite for that row.
+            # ----------------------------
+            _eff_dists = [p.effective_distance for p in pending_items]
+            _end_z_pool: list[Optional[float]] = [p.end_z for p in pending_items]
+
+            scored_candidates: list[_ScoredCandidateItem] = []
+            for p in pending_items:
+                _eff_norm_dist = self._normalize_within_scope(
+                    _eff_dists, p.effective_distance
+                )
+
+                _norm_z: Optional[float] = self._normalize_z_within(
+                    _end_z_pool, p.end_z
+                )
+
+                effective_for_scoring = self._compute_best_fit_score(
+                    norm_dist=_eff_norm_dist,
+                    assess=p.assess,
+                    norm_z=_norm_z,
+                )
+
+                bonus_rank = 0 if p.bonus_applied else 1
                 dangle_score = _ProposalScore(
                     composite=float(effective_for_scoring),
                     bonus_rank=int(bonus_rank),
-                    norm_dist=_eff_norm_dist,
-                    norm_angle=_norm_angle,
+                    norm_dist=float(_eff_norm_dist),
+                    norm_angle=p.norm_angle,
                     norm_z=_norm_z,
                 )
 
                 scored_candidates.append(
                     _ScoredCandidateItem(
                         score=dangle_score,
-                        cand=cand,
-                        raw_distance=float(raw_distance),
+                        cand=p.cand,
+                        raw_distance=float(p.raw_distance),
+                        effective_distance=float(p.effective_distance),
                         effective_for_scoring=float(effective_for_scoring),
-                        bonus_applied=bool(bonus_applied),
-                        assess=assess,
+                        bonus_applied=bool(p.bonus_applied),
+                        assess=p.assess,
                         norm_z=_norm_z,
-                        norm_dist=_eff_norm_dist,
-                        norm_angle=_norm_angle,
-                        end_z=end_z_by_cand_index.get(_cand_idx),
+                        norm_dist=float(_eff_norm_dist),
+                        norm_angle=p.norm_angle,
+                        end_z=p.end_z,
                     )
                 )
-
-            if not scored_candidates:
-                continue
 
             winner_item = min(
                 scored_candidates,
@@ -4971,6 +5032,7 @@ class FillLineGaps:
             winner_dangle_score = winner_item.score
             chosen = winner_item.cand
             raw_distance = winner_item.raw_distance
+            effective_distance = winner_item.effective_distance
             bonus_applied = winner_item.bonus_applied
             chosen_assess = winner_item.assess
             winner_norm_z = winner_item.norm_z
@@ -5037,7 +5099,6 @@ class FillLineGaps:
                 )
 
             pair_key = self._unordered_pair_key(src_node, tgt_node)
-            _tol_for_ctx = float(self.gap_tolerance_meters) or 1.0
 
             ctx = _CandidateContext(
                 dangle_oid=dangle_oid,
@@ -5054,10 +5115,11 @@ class FillLineGaps:
                 near_x=chosen.near_x,
                 near_y=chosen.near_y,
                 raw_distance=float(raw_distance),
+                effective_distance=float(effective_distance),
                 bonus_applied=bool(bonus_applied),
                 start_z=start_z,
                 end_z=winner_end_z,
-                norm_dist=float(raw_distance) / _tol_for_ctx,
+                norm_dist=float(winner_dangle_score.norm_dist),
                 assess=chosen_assess,
             )
 
@@ -5077,7 +5139,8 @@ class FillLineGaps:
         self,
         dangle_proposals: dict[DangleOid, _DangleProposal],
     ) -> tuple[dict[DangleOid, _ConnectionProposal], _NormZByDangle]:
-        """Connection normalization: re-normalize Z within each undirected A↔B connection group.
+        """Connection normalization: re-normalize distance and Z within each
+        undirected A↔B connection group, then recompute the composite.
 
         Returns (connection_proposals_by_dangle, connection_norm_z_by_dangle).
         """
@@ -5090,16 +5153,20 @@ class FillLineGaps:
         connection_norm_z_by_dangle: _NormZByDangle = {}
         for _pair_group in _by_connection_for_normalization.values():
             _group_end_z = [p.ctx.end_z for p in _pair_group]
+            _group_eff_dist = [p.ctx.effective_distance for p in _pair_group]
             for p in _pair_group:
                 net_norm_z = self._normalize_z_within(_group_end_z, p.ctx.end_z)
+                net_norm_dist = self._normalize_within_scope(
+                    _group_eff_dist, p.ctx.effective_distance
+                )
                 net_score = _ProposalScore(
                     composite=self._compute_best_fit_score(
-                        norm_dist=p.score.norm_dist,
+                        norm_dist=net_norm_dist,
                         assess=p.ctx.assess,
                         norm_z=net_norm_z,
                     ),
                     bonus_rank=p.score.bonus_rank,
-                    norm_dist=p.score.norm_dist,
+                    norm_dist=float(net_norm_dist),
                     norm_angle=p.score.norm_angle,
                     norm_z=net_norm_z,
                 )
@@ -5169,23 +5236,30 @@ class FillLineGaps:
         self,
         connection_proposals: list[_ConnectionProposal],
     ) -> tuple[list[_GlobalProposal], _NormZByDangle]:
-        """Global normalization: re-normalize Z across all connection winners.
+        """Global normalization: re-normalize distance and Z across all
+        connection winners, then recompute the composite.
 
         Returns (_global_winners, global_norm_z_by_dangle).
         """
         _all_end_z_global = [p.ctx.end_z for p in connection_proposals]
+        _all_eff_dist_global = [
+            p.ctx.effective_distance for p in connection_proposals
+        ]
         _global_winners: list[_GlobalProposal] = []
         global_norm_z_by_dangle: _NormZByDangle = {}
         for n_prop in connection_proposals:
             glob_norm_z = self._normalize_z_within(_all_end_z_global, n_prop.ctx.end_z)
+            glob_norm_dist = self._normalize_within_scope(
+                _all_eff_dist_global, n_prop.ctx.effective_distance
+            )
             glob_score = _ProposalScore(
                 composite=self._compute_best_fit_score(
-                    norm_dist=n_prop.score.norm_dist,
+                    norm_dist=glob_norm_dist,
                     assess=n_prop.ctx.assess,
                     norm_z=glob_norm_z,
                 ),
                 bonus_rank=n_prop.score.bonus_rank,
-                norm_dist=n_prop.score.norm_dist,
+                norm_dist=float(glob_norm_dist),
                 norm_angle=n_prop.score.norm_angle,
                 norm_z=glob_norm_z,
             )
