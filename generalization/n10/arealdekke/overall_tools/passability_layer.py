@@ -60,7 +60,6 @@ def postprocess_passability_layer(final_fc: str, passability_fc: str) -> None:
 
     # Fetch original fields to keep in the final passability layer
     field = "arealdekke"
-    fields = [f.name for f in arcpy.ListFields(passability_fc)]
 
     arealdekke_set = set()
 
