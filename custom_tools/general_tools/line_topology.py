@@ -834,6 +834,11 @@ class _CandidateContext:
     target_dangle_oid: Optional[DangleOid]
     near_fc_key: DatasetKey
     near_fid: int  # polymorphic: DangleOid / ParentId / external FID
+    # Segment-level identity preserved for the connector-crossing cache so
+    # multiple candidates from segments of one parent stay distinguishable
+    # (with segmentation off, these mirror near_fc_key / near_fid).
+    near_fc_key_raw: DatasetKey
+    near_fid_raw: int
     # Geometry
     dangle_x: float
     dangle_y: float
@@ -2700,7 +2705,7 @@ class FillLineGaps:
             from_x, from_y = xy
 
             for cand in candidates:
-                key = (dangle_oid, cand.near_fc_key, cand.near_fid)
+                key = (dangle_oid, cand.near_fc_key_raw, cand.near_fid_raw)
 
                 trimmed = self._build_trimmed_connector(
                     from_x=from_x,
@@ -2763,7 +2768,7 @@ class FillLineGaps:
                 continue
             from_x, from_y = xy
             for cand in candidates:
-                key = (dangle_oid, cand.near_fc_key, cand.near_fid)
+                key = (dangle_oid, cand.near_fc_key_raw, cand.near_fid_raw)
                 trimmed = self._build_trimmed_connector(
                     from_x=from_x,
                     from_y=from_y,
@@ -4350,7 +4355,7 @@ class FillLineGaps:
                 _parent_id = parent_id_by_dangle[_dangle_oid]
                 _remaining: list[NearCandidate] = []
                 for _cand in legal_rows_by_dangle[_dangle_oid]:
-                    _cand_key = (_dangle_oid, _cand.near_fc_key, _cand.near_fid)
+                    _cand_key = (_dangle_oid, _cand.near_fc_key_raw, _cand.near_fid_raw)
                     if _cand_key in reject_keys:
                         if collect_diags:
                             _step1a_illegal.append(
@@ -5110,6 +5115,8 @@ class FillLineGaps:
                 target_dangle_oid=target_dangle_oid,
                 near_fc_key=ds_key,
                 near_fid=near_fid,
+                near_fc_key_raw=str(chosen.near_fc_key_raw),
+                near_fid_raw=int(chosen.near_fid_raw),
                 dangle_x=float(d_x),
                 dangle_y=float(d_y),
                 near_x=chosen.near_x,
@@ -5332,8 +5339,8 @@ class FillLineGaps:
             for prop in global_winners:
                 _key = (
                     int(prop.ctx.dangle_oid),
-                    str(prop.ctx.near_fc_key),
-                    int(prop.ctx.near_fid),
+                    str(prop.ctx.near_fc_key_raw),
+                    int(prop.ctx.near_fid_raw),
                 )
                 _trimmed = trimmed_connector_cache.get(_key)
                 if _trimmed is not None:
@@ -5365,7 +5372,7 @@ class FillLineGaps:
                 rank_counter += 1
                 d_oid = int(prop.ctx.dangle_oid)
                 kruskal_rank_by_dangle_oid[d_oid] = rank_counter
-                _key = (d_oid, str(prop.ctx.near_fc_key), int(prop.ctx.near_fid))
+                _key = (d_oid, str(prop.ctx.near_fc_key_raw), int(prop.ctx.near_fid_raw))
                 accepted_keys.add(_key)
                 accepted_connector_raw.append(
                     AcceptedConnectorRaw(
@@ -5382,8 +5389,8 @@ class FillLineGaps:
                 return False
             key = (
                 int(prop.ctx.dangle_oid),
-                str(prop.ctx.near_fc_key),
-                int(prop.ctx.near_fid),
+                str(prop.ctx.near_fc_key_raw),
+                int(prop.ctx.near_fid_raw),
             )
             if trimmed_connector_cache.get(key) is None:
                 return False
