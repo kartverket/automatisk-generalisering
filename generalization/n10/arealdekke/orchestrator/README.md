@@ -2,7 +2,7 @@
 
 ## Class documentation
 
-### 🌻Arealdekke
+### 🗺️ Arealdekke
 
 >[**Arealdekke_categories_config.yml**](Arealdekke_categories_config.yml): Yaml file with setup for each unique land use category with descriptions of how to process the individual land use types. Each category contains:<br/><br/>- <b>Title</b>: category name<br/>- <b>Operations</b>: how the category should be processed<br/>- <b>Accessibility</b>: whether or not the layer is locked / finished processing<br/>- <b>Order</b>: processing rank / order<br/>- <b>Map_scale</b><br><br> The land use class *"Arealdekke"* can be seen [here](arealdekke_class.py).
 
@@ -24,11 +24,11 @@
 |**Core** |               |             |                 |                |
 |---------|---------------|-------------|-----------------|----------------|
 | **Name**| **Parameters** | **Return** | **Description** | **Tools used** |
-| init | 
-| preprocess | None | None | Performes all the generalization not specific to a category to remove the vast amount of noise in the data set. Sets self.preprocessed = True when finished. |- [*attribute_changer*](..\overall_tools\attribute_changer.py)<br/>- [*create_passability_layer*](..\overall_tools\passability_layer.py)<br/>- [*arealdekke_dissolver*](..\overall_tools\arealdekke_dissolver.py)<br/>- [*island_controller*](..\overall_tools\island_controller.py)<br/>- [*eliminate_small_polygons*](..\overall_tools\eliminate_small_polygons.py)<br/>- [*change_attribute_value_main*](..\overall_tools\small_features_changer.py)<br/>- [*gangsykkel_dissolver*](..\overall_tools\gangsykkel_dissolver.py)|
+| init | input_data: str, map_scale: str |  None | Object initialisation. Collects data from the history file connected to the class, and loads the content into the new object if it meets some criteria:<br/>1. The file path to The history file must have existed before program start.<br/>2. The arealdekke preprocess must have completed at least one operation during previous run.<br/><br/>This load does not include the arealdekke categories. They will be added from the history file if:<br/>1. All preprocessing is completed.<br/>2. At least one category processing was completed.<br/><br/>After categories from the history file are loaded into category objects, the program will not allow more category objects to be added.
+| preprocess | None | None | Performs all the generalization not specific to a category to remove the vast amount of noise in the data set. Sets self.preprocessed = True when finished. |- [*attribute_changer*](..\overall_tools\attribute_changer.py)<br/>- [*create_passability_layer*](..\overall_tools\passability_layer.py)<br/>- [*arealdekke_dissolver*](..\overall_tools\arealdekke_dissolver.py)<br/>- [*island_controller*](..\overall_tools\island_controller.py)<br/>- [*eliminate_small_polygons*](..\overall_tools\eliminate_small_polygons.py)<br/>- [*change_attribute_value_main*](..\overall_tools\small_features_changer.py)<br/>- [*gangsykkel_dissolver*](..\overall_tools\gangsykkel_dissolver.py)|
 | add_categories | categories_config_file: Path | None | Adds categories based on what specified in [external yaml file](arealdekke_categories_config.yml).||
-| process_categories | None | None | Performes all adjustment needed to generalize each category. Iterate through each category and their specific processing functions specified in the **.yml* file. The function starts by generalizing the specific category for itself, before reinserting the data back into the land use. | - [*remove_overlaps*](..\overall_tools\overlap_remover.py)<br/>- [*fill_holes*](..\overall_tools\fill_holes.py)|
-| finish_results | None | None | Post-processes the data by fixing non-dissolved features and mismatch between land use and passability layers. | - [*postprocess_passability_layer*](..\overall_tools\passability_layer.py)<br/>- [*arealdekke_dissolver*](..\overall_tools\arealdekke_dissolver.py) |
+| process_categories | None | None | Performs all adjustments needed to generalize each category. Iterates through each category and their specific processing functions specified in the **.yml* file. The function starts by generalizing the specific category for itself, before reinserting the data back into the land use. | - [*remove_overlaps*](..\overall_tools\overlap_remover.py)<br/>- [*fill_holes*](..\overall_tools\fill_holes.py)|
+| finish_results | None | None | Processes the data by fixing non-dissolved features and mismatch between land use and passability layers. | - [*postprocess_passability_layer*](..\overall_tools\passability_layer.py)<br/>- [*arealdekke_dissolver*](..\overall_tools\arealdekke_dissolver.py) |
 
 |**Getters** |             |            |                 |                |
 |------------|-------------|------------|-----------------|----------------|
@@ -48,7 +48,7 @@
 | set_postprocesses | None | list | Defines the processes needed to be applied during the postprocessing of the land use data. | None |
 
 ##
-### 🌻Category
+### 📂 Category
 
 > The Category class *"Category"* can be seen [here](category_class.py).
 
@@ -71,7 +71,8 @@
 |**Core** |               |             |                 |                |
 |---------|---------------|-------------|-----------------|----------------|
 | **Name**| **Parameters** | **Return** | **Description** | **Tools used** |
-| process_category | - input_fc: Path<br/>- locked_fc: Path<br/>- processed_fc: Path | dict | Iterates through the operations listed in self.operations and generalizes the geometries. Returns a boolean value telling whether or not the category was processed with the pre-defined order of functions. | Depending on category:<br>- [buff_small_polygon_segments](..\category_tools\buff_small_polygon_segments.py)<br>- [simplify_and_smooth_polygon](..\category_tools\simplify_polygon.py)
+| init | title: str,<br/>operations: list,<br/>accessibility: bool,<br/>order: int,<br/>map_scale: str,<br/>last_processed: str or None,<br/>operations_completed: int,<br/>reinserts_completed: int or None | None | Initialises a new category object. Includes a check that will raise an error if any of the operations in the operations list are written incorrectly. | None |
+| process_category | input_fc: str,<br/>locked_fc: str,<br/>processed_fc: str | dict | Iterates through the operations listed in self.operations and generalizes the geometries. Returns a boolean value telling whether or not the category was processed with the pre-defined order of functions. | Depending on category:<br>- [buff_small_polygon_segments](..\category_tools\buff_small_polygon_segments.py)<br>- [simplify_and_smooth_polygon](..\category_tools\simplify_polygon.py)
 
 |**Getters** |             |            |                 |                |
 |------------|-------------|------------|-----------------|----------------|
@@ -91,10 +92,12 @@
 |------------|-------------|------------|-----------------|----------------|
 | **Name**| **Parameters** | **Return** | **Description** | **Tools used** |
 | set_accessibility | bool | None | Locks or opens the category. | None |
-| update_reinsert_operations_completed | None | int | Updates the **Dette kan pakkes mer inn i koden** |
+| update_reinsert_operations_completed | None | int | Updates the number of total reinsert operations completed for the category. | None |
 
 ##
-### 🌻Program History
+### 📖 Program History
+
+> The Program History class *"program_history"* can be seen [here](program_history_class.py).
 
 |**Attributes** | | |
 |----------------|-|-|
@@ -113,7 +116,7 @@
 | **Name**| **Parameters** | **Return** | **Description** | **Tools used** |
 | get_new_history_created | None | bool | Returns True or False depending on if a new history file was created. | None |
 | get_history_attribute_top_lvl | key: str | any | Extracts the content of the history file and checks if there is a key that is spelled the same as the key parameter sent to the function. If found, it returns the value belonging to the key. | None |
-| get_history_attribute_cat_lvl | - category_title: str<br/>- key: str | any | Extracts the content of the history file and finds the category specified. Then, it checks if the key belongs to the category and returns the value belonging to the key. | None |
+| get_history_attribute_cat_lvl | category_title: str,<br/>key: str | any | Extracts the content of the history file and finds the category specified. Then, it checks if the key belongs to the category and returns the value belonging to the key. | None |
 | restore_arealdekke_attributes | None | dict | Extracts contents from history file and checks if the previous run had completed any preprocessing operation steps. If it did, it will return the attributes that belonged to land use last run, excluding the categories. | None |
 | restore_arealdekke_categories | None | dict | Extracts contents of history file and checks if the data completed its preprocessing and had begun preprocessing its categories. If both are true, it will collect the informaiton about each category and return them as a list and a boolean. This is then put into a dictionary with "cats_exist", which is a boolean that says if the list was empty or not. | None |
  
@@ -123,13 +126,15 @@
 | **Name**| **Parameters** | **Return** | **Description** | **Tools used** |
 | save_history | data: new entry | None | Saves new data to the history file.
 | load_history | None | Extracted yaml data | Extracts the data from the yaml history file and returns it to the caller. | None |
-| update_history_top_lvl | - key: str<br/>- value: any | None | Updates the value of a specified key that exist in the history file. | None |
-| update_history_cat_lvl | - title: str<br/>- key: str<br/>- value: str | None | Updates the value of a specified key that belong to a specific category that exist in the history file. | None |
-| new_history_category | - title: str<br/>- operations:list<br/>- accessibility: bool<br/>- order: int<br/>- map_scale: str | None | Adds a new category to the history file. | None
+| update_history_top_lvl | key: str,<br/>value: any | None | Updates the value of a specified key that exist in the history file. | None |
+| update_history_cat_lvl | title: str,<br/>key: str,<br/>value: str | None | Updates the value of a specified key that belong to a specific category that exist in the history file. | None |
+| new_history_category | title: str,<br/>operations:list,<br/>accessibility: bool,<br/>order: int,<br/>map_scale: str | None | Adds a new category to the history file. | None
 | reset_history | None | None | A new history file is created with the same file path as the path specified during object initialization. | None |
 
-## Additional Notes
+##
+## ❕ Additional Notes
 
-- orchestrator
-- enum...
+[**Enum_variables**](enum_variables.py). An enum class with all the history attribute titles. Used throughout the arealdekke, programhistory and category class to avoid syntax errors.
+
+[**Orchestrator**](orchestrator.py). Root of the pipeline. Only the map_scale and input_data variables are intended to be adjustable. The remainder of the code inludes only function calls. Any business logic must be kept in the tools or within one of the main classes. 
 

@@ -1,5 +1,6 @@
-##
-## 🗨️🦜 Parameters
+# Parameters
+
+### Functions
 
 **Parameter_dataclasses.py**. Specifies classes for functions with initialization parameters. Classes that are defined now:
 

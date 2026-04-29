@@ -41,7 +41,7 @@ READMEs in the corresponding subfolders will describe functionality in these fil
 
 **Running the Pipeline**
 - *Start:*
-    - The pipeline runs from the [orchestrator](orchestrator/orchestrator.py) file located in the orchistrator folder. Ensure that the input_data variable is pointing to the location of the arealdekke data. Then, run the file.
+    - The pipeline runs from the [orchestrator](orchestrator/orchestrator.py) file located in the orchistrator folder. Ensure that the input_data variable is pointing to the location of the arealdekke data, and that the map_scale is correct. Then, run the file.
 - *Stop:*
     - In the case of errors, the pipeline can restart from its last checkpoint. This checkpoint can be a category operation, reinsertion operation, or an arealdekke preprocess operation. The pipeline will not be able to restart from within any of the tools.
     - If it is not desireable to restart, delete the program history yaml file. This ensures that the pipeline begins from scratch next run.
