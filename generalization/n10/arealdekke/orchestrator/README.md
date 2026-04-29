@@ -39,7 +39,7 @@
 | get_arealdekke_data | input_data: str | None | Copies the input data to the main work file during processing of categories. | None |
 | get_locked_categories_titles | None | set | Creates a set of locked category names. | None |
 | get_num_postprocessors | None | int | Returns the number of functions that are going to be applied during the postprocessing of the land use data. | None |
-| __str__ | None | str | ToString-function used for debugging. | None |
+| `__str__` | None | str | ToString-function used for debugging. | None |
 
 |**Setters** |             |            |                 |                |
 |------------|-------------|------------|-----------------|----------------|
@@ -71,7 +71,7 @@
 |**Core** |               |             |                 |                |
 |---------|---------------|-------------|-----------------|----------------|
 | **Name**| **Parameters** | **Return** | **Description** | **Tools used** |
-| process_category | - input_fc: Path<br/>- locked_fc: Path<br/>- processed_fc: Path | dict | Iterates through the operations listed in self.operations and generalizes the geometries. Returns a boolean value telling whether or not the category was processed with the pre-defined order of functions.
+| process_category | - input_fc: Path<br/>- locked_fc: Path<br/>- processed_fc: Path | dict | Iterates through the operations listed in self.operations and generalizes the geometries. Returns a boolean value telling whether or not the category was processed with the pre-defined order of functions. | Depending on category:<br>- [buff_small_polygon_segments](..\category_tools\buff_small_polygon_segments.py)<br>- [simplify_and_smooth_polygon](..\category_tools\simplify_polygon.py)
 
 |**Getters** |             |            |                 |                |
 |------------|-------------|------------|-----------------|----------------|
@@ -79,14 +79,19 @@
 | get_title | None | str | Returns the title of the category. | None |
 | get_order | None | int | Returns the order of the category. | None |
 | get_accessibility | None | bool | Returns True or False based on if the category is open or locked. | None |
+| get_operations | None | list | Returns a list of operations that should be applied for this category. | None |
 | get_map_scale | None | str | Returns the map scale the category generalization must be based on. | None |
-| __str___ | None | str | Returns a string with most of the category attributes. Used for debugging etc. | None |
+| get_reinserts_completed| None | int | Returns the number of reinsertion functions that have been successfully applied to this category. | None |
+| get_last_processed | None | str | Returns the file path to the last processed version of this category. | None |
+| get_operations_completed | None | int | Returns the number of generalization functions that have been successfully applied to this category. | None |
+| `__str__` | None | str | Returns a string with most of the category attributes (ToString). Used for debugging etc. | None |
 
 
 |**Setters** |             |            |                 |                |
 |------------|-------------|------------|-----------------|----------------|
 | **Name**| **Parameters** | **Return** | **Description** | **Tools used** |
 | set_accessibility | bool | None | Locks or opens the category. | None |
+| update_reinsert_operations_completed | None | int | Updates the **Dette kan pakkes mer inn i koden** |
 
 ##
 ### 🌻Program History
