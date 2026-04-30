@@ -8,8 +8,6 @@ from generalization.n10.arealdekke.orchestrator.program_history_class import (
     Program_history_class as History_class,
 )
 
-# TO RUN TEST IN TERMINAL USE: & "C:\Program Files\ArcGIS\Pro\bin\Python\envs\arcgispro-py3\python.exe" -m pytest
-
 
 class test_program_history_class(unittest.TestCase):
 
@@ -191,12 +189,6 @@ class test_program_history_class(unittest.TestCase):
             ),
             None,
         )
-
-    def test_new_history_category(self):
-        # Test if we can add another category when processing have not started
-
-        # Test if we can add another category after processing have begun.
-        pass
 
     def tearDown(self):
         os.unlink(self.tmp_path_perfect)

@@ -235,7 +235,6 @@ def extract_data(files: dict, target_fc: str, locked_fc: set, input_fc) -> None:
             in_features=locked_fc_lyr, out_feature_class=files[fc.locked_fc]
         )
 
-
 @timing_decorator
 def find_segments_under_min(files: dict, min_width: int) -> None:
 
@@ -320,16 +319,17 @@ def find_segments_under_min(files: dict, min_width: int) -> None:
         out_feature_class=files[fc.segments_too_small],
     )
 
-
 @timing_decorator
 def choose_target_areas(files: dict) -> None:
 
     '''
     What:
+        Clips the original polygon to only include 15 meters around the too small segments.
     How:
+    - Creates an overkill buffer that includes the small segments and some of the area around.
+    - Clip original polygon to get area with the too small segments.
     '''
 
-    # Create an overkill buffer that includes the small segments and some of the area around.
     segments_too_small_single_lyr = "segments_too_small_single_lyr"
     arcpy.management.MakeFeatureLayer(
         in_features=files[fc.segments_too_small],
@@ -343,7 +343,6 @@ def choose_target_areas(files: dict) -> None:
         line_side="FULL",
     )
 
-    # Clip original polygon to get area with the too small segments
     overkill_buffer_lyr = "overkill_buffer_lyr"
     original_polygon_lyr = "original_polygon_lyr"
     arcpy.management.MakeFeatureLayer(
@@ -366,11 +365,15 @@ def choose_target_areas(files: dict) -> None:
             out_feature_class=files[fc.areas_chosen],
         )
 
-
 @timing_decorator
 def get_shared_locked_boundary(files: dict, min_width: int) -> None:
 
-    # Select all locked polygons who intersect the overkill buffer
+    '''
+    What:
+        Finds the boundaries between the target polygon and the locked polygons. Then, it creates a
+        buffer going outwards from the locked areas.
+    '''
+
     overkill_lyr = "overkill_lyr"
     locked_fc_lyr = "locked_fc_lyr"
     arcpy.management.MakeFeatureLayer(
@@ -386,12 +389,10 @@ def get_shared_locked_boundary(files: dict, min_width: int) -> None:
         selection_type="NEW_SELECTION",
     )
 
-    # Make the selected polygons into polylines
     arcpy.management.PolygonToLine(
         in_features=locked_fc_lyr, out_feature_class=files[fc.locked_fc_line]
     )
 
-    # Clip the polylines to the overkill buffer
     locked_fc_line_lyr = "locked_fc_line_lyr"
     arcpy.management.MakeFeatureLayer(
         in_features=files[fc.locked_fc_line], out_layer=locked_fc_line_lyr
@@ -415,7 +416,6 @@ def get_shared_locked_boundary(files: dict, min_width: int) -> None:
             out_feature_class=files[fc.locked_fc_line_clipped],
         )
 
-    # Find the intersection between the target polygon and the locked fc
     locked_fc_line_clipped_lyr = "locked_fc_line_clipped_lyr"
     areas_chosen_lyr = "areas_chosen_lyr"
     arcpy.management.MakeFeatureLayer(
@@ -487,7 +487,6 @@ def get_shared_locked_boundary(files: dict, min_width: int) -> None:
         buffer_distance_or_field=f"{min_width/2} Meter",
     )
 
-    # Erase the original locked fc from the new buffer.
     locked_areas_outside_buffer_lyr = "locked_areas_outside_buffer_lyr"
     arcpy.management.MakeFeatureLayer(
         in_features=files[fc.locked_areas_outside_buffer],
@@ -503,7 +502,13 @@ def get_shared_locked_boundary(files: dict, min_width: int) -> None:
 @timing_decorator
 def buff_small_segments(files: dict, min_width: int) -> None:
 
-    # Use collapse hydro polygon to find the centre line of the segments
+    '''
+    What:
+        Finds the centre line of the small polygon segments. Then erases large enough areas and
+        buffed locked areas from them. Lastly, the line segments are buffed to the minimum width 
+        requirement for the target polygon and dissolved with the locked areas buffers.
+    '''
+
     chosen_areas_lyr = "chosen_areas_lyr"
     arcpy.management.MakeFeatureLayer(
         in_features=files[fc.areas_chosen], out_layer=chosen_areas_lyr
@@ -515,7 +520,6 @@ def buff_small_segments(files: dict, min_width: int) -> None:
         merge_adjacent_input_polygons="NO_MERGE",
     )
 
-    # Erase large enough areas from the centre line and the locked area buffer
     centre_line_lyr = "centre_line_lyr"
     large_segments_lyr = "large_segments_lyr"
     locked_fc_outward_buffer_lyr = "locked_fc_outward_buffer_lyr"
@@ -546,7 +550,6 @@ def buff_small_segments(files: dict, min_width: int) -> None:
         out_feature_class=files[fc.only_small_segments_centre],
     )
 
-    # Buff the centre line to min width
     only_small_segments_centre_lyr = "only_small_segments_centre_lyr"
     arcpy.management.MakeFeatureLayer(
         in_features=files[fc.only_small_segments_centre],
@@ -567,7 +570,6 @@ def buff_small_segments(files: dict, min_width: int) -> None:
             buffer_distance_or_field=f"{min_width/2} Meters",
         )
 
-    # Dissolve the locked fc buffed segments with the rest of the target polygon.
     small_segments_enlarged_lyr = "small_segments_enlarged_lyr"
     arcpy.management.MakeFeatureLayer(
         in_features=files[fc.small_segments_enlarged],
@@ -586,14 +588,4 @@ def buff_small_segments(files: dict, min_width: int) -> None:
     arcpy.management.Dissolve(
         in_features=small_segments_locked_buffed_merged_lyr,
         out_feature_class=files[fc.small_segments_locked_buffed_dissolved],
-    )
-
-
-if __name__ == "__main__":
-    buff_small_polygon_segments(
-        target_fc="Ferskvann_elv_bekk",
-        input_fc=input_n10.Arealdekke_Buskerud,
-        locked_fc=["Samferdsel"],
-        output_fc="output",
-        map_scale="N10",
     )
