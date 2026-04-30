@@ -829,5 +829,11 @@ def final_ramp_points():
     f.run()
 
 
+
+
+
+def run():
+    main()
+
 if __name__ == "__main__":
     main()
