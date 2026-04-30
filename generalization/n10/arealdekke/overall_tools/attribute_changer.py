@@ -16,10 +16,9 @@ from env_setup import environment_setup
 from file_manager.n10.file_manager_arealdekke import Arealdekke_N10
 from generalization.n10.arealdekke.overall_tools.attribute_analyzer import (
     sort_results,
-    write_to_file,
     load_rules,
 )
-from input_data import input_n10, input_n100
+from input_data import input_n100
 
 # ========================
 # Program

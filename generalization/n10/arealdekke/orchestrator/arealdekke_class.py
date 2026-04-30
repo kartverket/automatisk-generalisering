@@ -99,7 +99,7 @@ class Arealdekke:
             self.__preprocesses_completed: int = top_lvl_info[
                 keys.preprocessing_operations_completed.value
             ]
-            self.__postpreprocesses_completed: int = top_lvl_info[
+            self.__postprocesses_completed: int = top_lvl_info[
                 keys.postprocessing_operations_completed.value
             ]
             self.__map_scale: str = (
@@ -117,7 +117,7 @@ class Arealdekke:
 
             self.__preprocessed: bool = False
             self.__preprocesses_completed: int = 0
-            self.__postpreprocesses_completed: int = 0
+            self.__postprocesses_completed: int = 0
             self.__map_scale: str = map_scale or None
 
         # Get categories - If none are to be retrieved, empty list will return.
@@ -196,7 +196,7 @@ class Arealdekke:
             )
 
     @timing_decorator
-    def add_categories(self, categories_config_file) -> None:
+    def add_categories(self, categories_config_file: Path) -> None:
 
         # Checks if the data has been preprocessed.
         if self.__preprocessed and not self.categories:
@@ -339,17 +339,17 @@ class Arealdekke:
         """
         postprocesses = self.set_postprocesses()
 
-        for process in range(self.__postpreprocesses_completed, len(postprocesses), 1):
+        for process in range(self.__postprocesses_completed, len(postprocesses), 1):
             # Call process
             postprocesses[process]()
 
-            # Update __postpreprocesses_completed
-            self.__postpreprocesses_completed += 1
+            # Update __postprocesses_completed
+            self.__postprocesses_completed += 1
 
             # Update history (operations completed)
             self.program_history.update_history_top_lvl(
                 key=keys.postprocessing_operations_completed.value,
-                value=self.__postpreprocesses_completed,
+                value=self.__postprocesses_completed,
             )
 
         self.program_history.delete_history()
@@ -407,13 +407,13 @@ class Arealdekke:
             in_features=temp_lyr, out_feature_class=self.files["category_fc"]
         )
 
-    def get_arealdekke_data(self, input_data: str):
+    def get_arealdekke_data(self, input_data: str) -> None:
         arcpy.management.CopyFeatures(
             in_features=input_data,
             out_feature_class=self.files["arealdekke_fc"],
         )
 
-    def get_locked_categories_titles(self):
+    def get_locked_categories_titles(self) -> set:
         return set(
             map(
                 lambda cat: cat.get_title(),
