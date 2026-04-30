@@ -31,14 +31,18 @@ class Category:
         operations_completed: int = None,
         reinserts_completed: int = None,
     ):
-        # Setting up file manager w. dictionary for easy file access
+        '''
+        What:
+            Creates a new arealdekke category object. Includes a check that ensures that all operations
+            in operations array exist within the tool dictionary defined in set_cat_tools.
+        '''
+
         self.working_fc = Arealdekke_N10.category_class_in_progress__n10_land_use.value
         self.config = core_config.WorkFileConfig(root_file=self.working_fc)
         self.wfm = WorkFileManager(config=self.config)
 
         self.__title: str = title
 
-        # Extracts inputs and saves them within object
         self.__operations: list[str] = operations or []
         self.__accessibility: bool = (
             accessibility if accessibility is not None else True
@@ -52,13 +56,11 @@ class Category:
         if self.__operations:
             for item in self.__operations:
 
-                # Checks if each operation is written correctly (test can be improved later)
                 if item not in list(self.set_cat_tools()):
                     raise Exception(
                         f"\nIncorrect syntax in history yml file for arealdekke: {self.__title}.\nGo check history yml file and set_cat_tools in category class for tool name inconsistencies.\n"
                     )
 
-        # Creates layer for the category. Data inserted into it in setter function.
         self.lyr = f"{self.__title}_lyr"
 
     # ========================
@@ -68,9 +70,17 @@ class Category:
     @timing_decorator
     def process_category(self, input_fc: str, locked_fc: str, processed_fc: str):
 
+        '''
+        What:
+	        Iterates through each operation, unless some of the operations were previously completed. 
+            For each operation, the tool is called from the set_cat_tools dictionary with tailored arguments. 
+            Afterwards, the last_processed attribute is updated to include the path to the previous output, 
+            operations_completed is updated, and information to be saved in the program history file is sent
+            back to the arealdekke class in a dictionary.
+        '''
+
         cat_tools = self.set_cat_tools()
 
-        # Iterates through the operations needed for each category.
         for operation in range(self.__operations_completed, len(self.__operations), 1):
 
             func = cat_tools[self.__operations[operation]]
@@ -101,14 +111,10 @@ class Category:
                 if name in available_args
             }
 
-            # Calls function from dictionary
             cat_tools[self.__operations[operation]](**args_to_pass)
-
-            # Saves the last edits made in case program stops.
 
             self.__last_processed = processed_fc
 
-            # Updates program history
             self.__operations_completed += 1
 
             update: dict = {
@@ -165,6 +171,12 @@ class Category:
         return self.__reinserts_completed
 
     def set_cat_tools(self) -> dict:
+
+        '''
+        What:
+            All functions that can be used on the arealdekke categories.
+        '''
+
         return {
             "simplify_and_smooth": simplify_and_smooth_polygon,
             "buff_small_segments": buff_small_polygon_segments,

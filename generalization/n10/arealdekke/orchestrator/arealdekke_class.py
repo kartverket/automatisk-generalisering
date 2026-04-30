@@ -49,7 +49,26 @@ class Arealdekke:
 
     def __init__(self, input_data: str, map_scale: str) -> None:
 
-        # Setting up file manager w. dictionary
+        '''
+        What:
+        Object initialisation. Collects data from the history file connected to the class, 
+        and loads the content into the new object if it meets some criteria:
+        
+        1. The file path to The history file must have existed before program start.
+        2. The arealdekke preprocess must have completed at least one operation during previous run.
+        
+        This load does not include the arealdekke categories. They will be added from the history 
+        file if:
+        1. All preprocessing is completed.
+        2. At least one category processing was completed.
+        
+        After categories from the history file are loaded into category objects, the program will
+        not allow more category objects to be added.
+
+        Dictionary with file paths used throughout the pipeline is created. Additionally, variables 
+        directing to arealdekke file manager for preserving the final output are established.
+    '''
+
         self.working_fc = (
             Arealdekke_N10.arealdekke_class_in_progress__n10_land_use.value
         )
@@ -77,22 +96,18 @@ class Arealdekke:
             ),
         }
 
-        # Program history
         self.program_history: History_class = History_class(
             file_path=Path(__file__).parent / "arealdekke_history.yml"
         )
 
-        # Get top level attributes from program history
         top_lvl_info: dict = self.program_history.restore_arealdekke_attributes()
 
-        # Update attributes
         if (
             top_lvl_info["file_path"] is not None
             and top_lvl_info[keys.preprocessing_operations_completed.value] is not None
             and top_lvl_info[keys.preprocessing_operations_completed.value] > 0
         ):
 
-            # Begin reinserting attributes from history file
             self.files["arealdekke_fc"] = top_lvl_info["file_path"]
 
             self.__preprocessed: bool = top_lvl_info.get(keys.preprocessed.value, False)
@@ -107,10 +122,9 @@ class Arealdekke:
             )
 
         else:
-            # Extracts the data and saves it in the object
+
             self.get_arealdekke_data(input_data=input_data)
 
-            # Updates history to track the main file
             self.program_history.update_history_top_lvl(
                 key=keys.newest_version.value, value=str(self.files["arealdekke_fc"])
             )
@@ -120,12 +134,10 @@ class Arealdekke:
             self.__postprocesses_completed: int = 0
             self.__map_scale: str = map_scale or None
 
-        # Get categories - If none are to be retrieved, empty list will return.
         cat_lvl_info: dict = self.program_history.restore_arealdekke_categories()
 
         self.categories: list[Category] = cat_lvl_info.get("cats", None) or []
 
-        # Update last_processed file path if program was restarted during category processing
         if cat_lvl_info["cats_exist"]:
 
             category: Category
@@ -149,7 +161,6 @@ class Arealdekke:
                     )
                     break
 
-        # File paths for post preprocessing
         self.final_categories_fc = (
             Arealdekke_N10.arealdekke_processed_categories__n10_land_use.value
         )
@@ -161,24 +172,27 @@ class Arealdekke:
 
     @timing_decorator
     def preprocess(self) -> None:
+        
+        '''
+        What:
+	        Iterates through the preprocess operations defined in set_preprocesses in arealdekke.
+            After each operation completion, the preprocessing_operations_completed field in the 
+            history file is updated. Once all operations are done, preprocessed is set to True 
+            in the history file and within the arealdekke object.
+        '''
 
         preprocesses = self.set_preprocesses()
 
         output_fc = Arealdekke_N10.dissolve_gangsykkel.value
 
-        # Pipeline from original orchistrator file. Preprocessing the arealdekke data.
         if not self.__preprocessed:
             for preprocess in range(
                 (self.__preprocesses_completed), len(preprocesses), 1
             ):
 
-                # Call process
                 preprocesses[preprocess]()
-
-                # Update __preprocesses_completed
                 self.__preprocesses_completed += 1
 
-                # Update history (operations completed)
                 self.program_history.update_history_top_lvl(
                     key=keys.preprocessing_operations_completed.value,
                     value=self.__preprocesses_completed,
@@ -188,7 +202,6 @@ class Arealdekke:
                 in_features=output_fc, out_feature_class=self.files["arealdekke_fc"]
             )
 
-            # Update history and object attribute
             self.__preprocessed = True
 
             self.program_history.update_history_top_lvl(
@@ -198,7 +211,20 @@ class Arealdekke:
     @timing_decorator
     def add_categories(self, categories_config_file: Path) -> None:
 
-        # Checks if the data has been preprocessed.
+        '''
+        What:
+	        Checks if preprocessing is completed and category processing has not begun.
+            When true, arealdekke_categories_config is opened, made into category objects 
+            and saved to Arealdekke's categories array. 
+            
+            *Note that only categories with corresponding map_scale to arealdekke are added
+            and registered in the history file. 
+            
+            After all categories are added, all category objects are sorted based on their 
+            order attribute. Ideally, this key should be unique. If not, the categories 
+            in question will be sorted alphabetically.
+        '''
+
         if self.__preprocessed and not self.categories:
             self.program_history.update_history_top_lvl(
                 key=keys.category_history.value, value=[]
@@ -210,14 +236,11 @@ class Arealdekke:
 
                     for category in python_structured["Categories"]:
 
-                        # Extracts the data from the yml file into a category object.
                         category_obj = Category(**category)
 
-                        # Adds it to the categories list/array if it has the same map scale as arealdekke.
                         if category_obj.get_map_scale() == self.__map_scale:
                             self.categories.append(category_obj)
 
-                            # Adds category to the history file
                             self.program_history.new_history_category(
                                 title=category_obj.get_title(),
                                 operations=category_obj.get_operations(),
@@ -226,7 +249,6 @@ class Arealdekke:
                                 map_scale=category_obj.get_map_scale(),
                             )
 
-                # Sorts the categories based on their order key.
                 self.categories.sort(key=lambda obj: obj.get_order())
 
             except Exception as e:
@@ -235,21 +257,34 @@ class Arealdekke:
     @timing_decorator
     def process_categories(self) -> None:
 
-        # Iterates through the categories that are true, meaning they are open.
+        '''
+        What:
+	        Iterates through categories that are open (accessibility=True). For each 
+            category, title is collected and category_fc and locked_fc within files 
+            dictionary is updated to fit. Program checks if the category has 
+            operations registered, and iterates through the operations if true. Each 
+            operation yields data used to update the program history file. 
+            
+            Once the iteration is done, the program collects the titles of the locked 
+            categories and how many reinsert operations have been completed. This is
+            used to reinsert the processed category back into the arealdekke. Lastly, 
+            the category is locked (accessibility=False).
+
+            When all categories are processed and locked, the arealdekke_fc is copied
+            to another path and all the paths in the files dictionary are deleted.
+        '''
+
         open_cats = list(filter(lambda cat: cat.get_accessibility(), self.categories))
 
         for category in open_cats:
-            # Get the locked layers and the input layer
             cat_title = category.get_title()
             self.get_locked_categories()
             self.get_category(cat_title)
 
-            # Iterates through operations for each category
             cat_operations = category.get_operations()
 
             if cat_operations:
 
-                # Process category.
                 for operation in category.process_category(
                     input_fc=self.files["category_fc"],
                     locked_fc=self.files["locked_fc"],
@@ -260,12 +295,10 @@ class Arealdekke:
                             title=cat_title, key=key, value=value
                         )
 
-                # Add the category back into the input layer.
                 reinserts_completed = category.get_reinserts_completed()
 
                 locked_cat_titles = self.get_locked_categories_titles()
 
-                # Reinsert methods:
                 reinsert_operations = [
                     lambda: remove_overlaps(
                         input_fc=self.files["arealdekke_fc"],
@@ -286,31 +319,26 @@ class Arealdekke:
 
                     reinsert_operations[index]()
 
-                    # Update input data
                     arcpy.management.CopyFeatures(
                         in_features=self.files["intermediate_fc"],
                         out_feature_class=self.files["arealdekke_fc"],
                     )
 
-                    # Update newest version in history file
                     self.program_history.update_history_top_lvl(
                         key=keys.newest_version.value,
                         value=str(self.files["arealdekke_fc"]),
                     )
 
-                    # Update reinserts completed
                     reinserts_completed_updated = (
                         category.update_reinsert_operations_completed()
                     )
 
-                    # Update reinserts in history file
                     self.program_history.update_history_cat_lvl(
                         title=cat_title,
                         key=keys.reinserts_completed.value,
                         value=reinserts_completed_updated,
                     )
 
-            # Lock the layer
             category.set_accessibility(False)
 
             self.program_history.update_history_cat_lvl(
@@ -320,7 +348,6 @@ class Arealdekke:
             )
 
         if open_cats:
-            # Save processed data to final fc and delete the last files
             arcpy.management.CopyFeatures(
                 in_features=self.files["arealdekke_fc"],
                 out_feature_class=self.final_categories_fc,
@@ -334,19 +361,18 @@ class Arealdekke:
 
     @timing_decorator
     def finish_results(self) -> None:
-        """
-        Performes a final clean-up of the results by adjusting any misalignments of geometries.
-        """
+        
+        '''
+        What:
+            Performes a final clean-up of the results by adjusting any misalignments of geometries.
+        '''
         postprocesses = self.set_postprocesses()
 
         for process in range(self.__postprocesses_completed, len(postprocesses), 1):
-            # Call process
             postprocesses[process]()
 
-            # Update __postprocesses_completed
             self.__postprocesses_completed += 1
 
-            # Update history (operations completed)
             self.program_history.update_history_top_lvl(
                 key=keys.postprocessing_operations_completed.value,
                 value=self.__postprocesses_completed,
@@ -363,14 +389,12 @@ class Arealdekke:
 
     def get_locked_categories(self) -> None:
 
-        # List of titles of locked categories.
         locked_categories_titles = set()
 
         for category in self.categories:
             if not category.get_accessibility():
                 locked_categories_titles.add(category.get_title())
 
-        # Creates new layer with all the locked features
         if locked_categories_titles:
             values = ", ".join([f"'{v}'" for v in locked_categories_titles])
             where_clause = f"arealdekke IN ({values})"
@@ -387,14 +411,12 @@ class Arealdekke:
             where_clause=where_clause,
         )
 
-        # Makes layer into fc
         arcpy.management.CopyFeatures(
             in_features=temp_lyr, out_feature_class=self.files["locked_fc"]
         )
 
     def get_category(self, category_title: str) -> None:
 
-        # Extracts categorical data from arealdekke into feature layer
         temp_lyr = "temp_lyr"
 
         arcpy.management.MakeFeatureLayer(

@@ -10,9 +10,14 @@ from generalization.n10.arealdekke.orchestrator.enum_variables import (
 class Program_history_class:
     def __init__(self, file_path):
 
+        '''
+        What:
+	        Creates a new program history object. Checks if the history file path recieved exists. 
+            If not, a new history yaml file is created with the same file path.
+        '''
+
         self.__program_history_path: str = str(file_path)
 
-        # Check if the program history exists. Creates new file if it does not.
         if not Path(self.__program_history_path).is_file():
             self.reset_history()
             self.new_history_created: bool = True
@@ -26,10 +31,24 @@ class Program_history_class:
         return self.new_history_created
 
     def get_history_attribute_top_lvl(self, key):
+
+        '''
+        What:	
+	        Used to extract arealdekke attributes from the history yaml file, e.g. newest_version, 
+            map_scale or preprocessing_operations_completed.
+        '''
+
         history = self.load_history()
         return history[key]
 
     def get_history_attribute_cat_lvl(self, title, key):
+
+        '''
+        What:
+	        Used to extract arealdekke category attributes from the history yaml file, e.g. 
+            last_processed (file path), title or accessibility.
+        '''
+
         history = self.load_history()
 
         for cat in history[keys.category_history.value]:
@@ -37,10 +56,13 @@ class Program_history_class:
                 return cat[key]
 
     def restore_arealdekke_attributes(self):
-        history = self.load_history()
 
-        # Check how far the preprocessing got. If at least one process was
-        # completed, update paths etc.
+        '''
+        What:
+            Checks how far the processing got in the previous run.
+        '''
+
+        history = self.load_history()
 
         response: dict = {}
 
@@ -61,7 +83,15 @@ class Program_history_class:
         return response
 
     def restore_arealdekke_categories(self):
-        # Restores list of categories and true if categories have been added and processing have started.
+
+        '''
+        What:
+	        Checks at least one of the categories stored in the history yaml file have begun 
+            processing. If true, it returns a dictionary that states that worthy categories did 
+            exist, and a list of said categories. If false, a dictionary that states that no 
+            worthy categories existed is returned.
+        '''
+
         history = self.load_history()
         preprocessed = history[keys.preprocessed.value]
         cat_history = history.get(keys.category_history.value, [])
@@ -73,7 +103,6 @@ class Program_history_class:
             and cat_history
             and cat_history[0][keys.operations_completed.value]
         ):
-            # Extracts the data from the yml file into a category object.
             response["cats_exist"] = True
             response["cats"] = []
 
