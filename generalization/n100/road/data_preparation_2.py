@@ -56,7 +56,7 @@ from data_orchestrator.data_names import DataNames as dn
 MERGE_DIVIDED_ROADS_ALTERATIVE = False
 SELECT_STUDY_AREA = require("SELECT_STUDY_AREA")
 
-AREA_SELECTOR = "navn IN ('Oslo', 'Hamar')"
+AREA_SELECTOR = "navn IN ('Ås', 'Nordre Follo')"
 SCALE = "n100"
 
 SEARCH_DISTANCE = 5000
