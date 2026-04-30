@@ -1,5 +1,4 @@
 # Module imports:
-import arcpy
 import inspect
 
 from composition_configs import core_config
@@ -11,7 +10,7 @@ from generalization.n10.arealdekke.orchestrator.enum_variables import (
 )
 
 # Category tools:
-from generalization.n10.arealdekke.category_tools.simplify_land_use import (
+from generalization.n10.arealdekke.category_tools.simplify_polygon import (
     simplify_and_smooth_polygon,
 )
 from generalization.n10.arealdekke.category_tools.buff_small_polygon_segments import (
@@ -120,23 +119,6 @@ class Category:
             yield update
 
     # ========================
-    # Setters
-    # ========================
-
-    def set_accessibility(self, newStatus: bool) -> None:
-        self.__accessibility = newStatus
-
-    def update_reinsert_operations_completed(self) -> int:
-        self.__reinserts_completed += 1
-        return self.__reinserts_completed
-
-    def set_cat_tools(self) -> dict:
-        return {
-            "simplify_and_smooth": simplify_and_smooth_polygon,
-            "buff_small_segments": buff_small_polygon_segments,
-        }
-
-    # ========================
     # Getters
     # ========================
 
@@ -170,3 +152,20 @@ class Category:
             f"accessibility={self.__accessibility}, "
             f"order={self.__order})"
         )
+
+    # ========================
+    # Setters
+    # ========================
+
+    def set_accessibility(self, newStatus: bool) -> None:
+        self.__accessibility = newStatus
+
+    def update_reinsert_operations_completed(self) -> int:
+        self.__reinserts_completed += 1
+        return self.__reinserts_completed
+
+    def set_cat_tools(self) -> dict:
+        return {
+            "simplify_and_smooth": simplify_and_smooth_polygon,
+            "buff_small_segments": buff_small_polygon_segments,
+        }

@@ -12,7 +12,8 @@ def main():
 
     # Creates an instance of the arealdekke object.
     input_data = input_test_data.arealdekke_1
-    arealdekke = Arealdekke(input_data=input_data, map_scale="N10")
+    map_scale = "N10"
+    arealdekke = Arealdekke(input_data=input_data, map_scale=map_scale)
 
     arealdekke.preprocess()
 
