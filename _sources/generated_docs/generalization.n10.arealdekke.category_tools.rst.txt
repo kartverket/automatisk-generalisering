@@ -12,10 +12,10 @@ generalization.n10.arealdekke.category\_tools.buff\_small\_polygon\_segments mod
    :show-inheritance:
    :undoc-members:
 
-generalization.n10.arealdekke.category\_tools.simplify\_land\_use module
-------------------------------------------------------------------------
+generalization.n10.arealdekke.category\_tools.simplify\_polygon module
+----------------------------------------------------------------------
 
-.. automodule:: generalization.n10.arealdekke.category_tools.simplify_land_use
+.. automodule:: generalization.n10.arealdekke.category_tools.simplify_polygon
    :members:
    :show-inheritance:
    :undoc-members:

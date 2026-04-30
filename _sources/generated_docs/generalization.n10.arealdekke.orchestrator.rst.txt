@@ -44,10 +44,10 @@ generalization.n10.arealdekke.orchestrator.expansion\_controller module
    :show-inheritance:
    :undoc-members:
 
-generalization.n10.arealdekke.orchestrator.orchestrator\_copy module
---------------------------------------------------------------------
+generalization.n10.arealdekke.orchestrator.orchestrator module
+--------------------------------------------------------------
 
-.. automodule:: generalization.n10.arealdekke.orchestrator.orchestrator_copy
+.. automodule:: generalization.n10.arealdekke.orchestrator.orchestrator
    :members:
    :show-inheritance:
    :undoc-members:
