@@ -7,6 +7,8 @@ arcpy.env.overwriteOutput = True
 from custom_tools.decorators.timing_decorator import timing_decorator
 from file_manager.n100.file_manager_roads import Road_N100
 from input_data import input_n100
+from input_data.input_datasets import DatasetNamespace
+from input_data.input_orchestrator import InputDataOrchestrator
 
 data_files = {
     # Stores all the relevant file paths to the geodata used in this Python file
@@ -95,9 +97,14 @@ def remove_roadblock():
         where_clause=where_clause,
     )
 
+    data_orc = InputDataOrchestrator(map_scale="N100")
+    data_orc.set_input_dataset(input_n100)
+
+    n100: DatasetNamespace = data_orc.get_dataset("N100")
+
     # Create layer with urban areas
     arcpy.management.MakeFeatureLayer(
-        in_features=input_n100.ArealdekkeFlate,
+        in_features=n100.ArealdekkeFlate,
         out_layer="urban_areas_lyr",
         where_clause="OBJTYPE IN ('Tettbebyggelse', 'BymessigBebyggelse')",
     )

@@ -9,6 +9,8 @@ arcpy.env.overwriteOutput = True
 
 # Importing custom input files modules
 from input_data import input_n100
+from input_data.input_datasets import DatasetNamespace
+from input_data.input_orchestrator import InputDataOrchestrator
 
 # Importing custom modules
 from file_manager.n100.file_manager_roads import Road_N100
@@ -627,11 +629,17 @@ def not_road_intersection(point: arcpy.Geometry, road_oid: str, roads: str) -> b
 def fetch_data():
     print("Fetching data...")
 
+    data_orc = InputDataOrchestrator(map_scale="N100")
+
+    data_orc.set_input_dataset(input_n100)
+
+    n100: DatasetNamespace = data_orc.get_dataset("N100")
+
     input = [
         [data_files["input"], None, data_files["roads_input"]],  # Roads
-        [input_n100.AnleggsLinje, "objtype = 'Dam'", data_files["dam_input"]],  # Dam
+        [n100.AnleggsLinje, "objtype = 'Dam'", data_files["dam_input"]],  # Dam
         [
-            input_n100.ArealdekkeFlate,
+            n100.ArealdekkeFlate,
             "OBJTYPE = 'Havflate' OR OBJTYPE = 'Innsjø' OR OBJTYPE = 'InnsjøRegulert'",
             data_files["water_input"],
         ],  # Water

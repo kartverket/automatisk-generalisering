@@ -10,7 +10,7 @@ class SymbologyN100(Enum):
     begrensnings_kurve_line = config.symbology_n100_begrensningskurve_line
 
     # Other
-    road = config.symbology_n100_roads
+    """road = config.symbology_n100_roads
     road_buffer = config.symbology_n100_drawn_polygon
     begrensngings_kurve_buffer = config.symbology_n100_begrensningskurve_buffer
     begrensningskurve_polygon = config.symbology_n100_begrensningskurve_buffer
@@ -18,13 +18,13 @@ class SymbologyN100(Enum):
     building_polygon = config.symbology_n100_grunnriss
     squares = config.symbology_n100_drawn_polygon
     railway_station_squares = config.symbology_n100_railway_station_squares
-    railway = config.symbology_n100_railway
+    railway = config.symbology_n100_railway"""
 
 
 class SymbologyN250(Enum):
     # Roads
-    samferdsel = config.symbology_n250_samferdsel
-    begrensnings_kurve_line = config.symbology_n250_begrensningskurve_line
+    """samferdsel = config.symbology_n250_samferdsel
+    begrensnings_kurve_line = config.symbology_n250_begrensningskurve_line"""
 
     # Other
     # ...

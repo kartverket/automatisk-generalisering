@@ -1,46 +1,51 @@
-# Importing config file from the root path
-from config import n50_path
-import arcpy
+# Libraries
 
-# Defining universal paths for n50 regardless of local path env_setup
-AdminFlate = rf"{n50_path}\AdminFlate"
-AdminGrense = rf"{n50_path}\AdminGrense"
-AdminGrensePunkt = rf"{n50_path}\AdminGrensePunkt"
-AnleggsLinje = rf"{n50_path}\AnleggsLinje"
-AnleggsPunkt = rf"{n50_path}\AnleggsPunkt"
-ArealdekkeFlate = rf"{n50_path}\ArealdekkeFlate"
-Bane = rf"{n50_path}\Bane"
-BegrensningsKurve = rf"{n50_path}\BegrensningsKurve"
-BygningsPunkt = rf"{n50_path}\BygningsPunkt"
-ElvBekk = rf"{n50_path}\ElvBekk"
-Ferge = rf"{n50_path}\Ferge"
-FlomLop = rf"{n50_path}\FlomLop"
-Foss = rf"{n50_path}\Foss"
-Grunnlinje = rf"{n50_path}\Grunnlinje"
-Grunnriss = rf"{n50_path}\Grunnriss"
-HoydeKontur = rf"{n50_path}\HoydeKontur"
-HoydePunkt = rf"{n50_path}\HoydePunkt"
-HoydeTall = rf"{n50_path}\HoydeTall"
-JernbaneStasjon = rf"{n50_path}\JernbaneStasjon"
-LufthavnPunkt = rf"{n50_path}\LufthavnPunkt"
-Navn = rf"{n50_path}\Navn"
-OmrissLinje = rf"{n50_path}\OmrissLinje"
-Skjaer = rf"{n50_path}\Skjaer"
-SkyteFelt = rf"{n50_path}\SkyteFelt"
-StatsAllmenning = rf"{n50_path}\StatsAllmenning"
-Tile = rf"{n50_path}\Tile"
-TileKant = rf"{n50_path}\TileKant"
-TreGruppe = rf"{n50_path}\TreGruppe"
-TuristHytte = rf"{n50_path}\TuristHytte"
-VegBom = rf"{n50_path}\VegBom"
-VegSti = rf"{n50_path}\VegSti"
-VerneOmrade = rf"{n50_path}\VerneOmrade"
+from config import input_data_folder
 
-# Defining datasets to test paths are set up correctly later
-n50_datasets = [
-    AdminFlate,
-    AdminGrense,
-    AdminGrensePunkt,
+from pathlib import Path
+
+# Setup main N50 path
+
+n50_path = Path.joinpath(Path(input_data_folder), "raw_data", "n50_09_01_2025.gdb")
+
+# Setup feature class paths
+
+# AdminFlate = Path.joinpath(n50_path, "AdminFlate")
+# AdminGrense = Path.joinpath(n50_path, "AdminGrense")
+# AdminGrensePunkt = Path.joinpath(n50_path, "AdminGrensePunkt")
+AnleggsLinje = Path.joinpath(n50_path, "AnleggsLinje")
+AnleggsPunkt = Path.joinpath(n50_path, "AnleggsPunkt")
+ArealdekkeFlate = Path.joinpath(n50_path, "ArealdekkeFlate")
+Bane = Path.joinpath(n50_path, "Bane")
+BegrensningsKurve = Path.joinpath(n50_path, "BegrensningsKurve")
+BygningsPunkt = Path.joinpath(n50_path, "BygningsPunkt")
+ElvBekk = Path.joinpath(n50_path, "ElvBekk")
+Ferge = Path.joinpath(n50_path, "Ferge")
+FlomLop = Path.joinpath(n50_path, "FlomLop")
+Foss = Path.joinpath(n50_path, "Foss")
+# Grunnlinje = Path.joinpath(n50_path, "Grunnlinje")
+Grunnriss = Path.joinpath(n50_path, "Grunnriss")
+HoydeKontur = Path.joinpath(n50_path, "HoydeKontur")
+HoydePunkt = Path.joinpath(n50_path, "HoydePunkt")
+# HoydeTall = Path.joinpath(n50_path, "HoydeTall")
+JernbaneStasjon = Path.joinpath(n50_path, "JernbaneStasjon")
+LufthavnPunkt = Path.joinpath(n50_path, "LufthavnPunkt")
+# Navn = Path.joinpath(n50_path, "Navn")
+OmrissLinje = Path.joinpath(n50_path, "OmrissLinje")
+Skjaer = Path.joinpath(n50_path, "Skjaer")
+# SkyteFelt = Path.joinpath(n50_path, "SkyteFelt")
+# StatsAllmenning = Path.joinpath(n50_path, "StatsAllmenning")
+# Tile = Path.joinpath(n50_path, "Tile")
+# TileKant = Path.joinpath(n50_path, "TileKant")
+TreGruppe = Path.joinpath(n50_path, "TreGruppe")
+TuristHytte = Path.joinpath(n50_path, "TuristHytte")
+VegBom = Path.joinpath(n50_path, "VegBom")
+VegSti = Path.joinpath(n50_path, "VegSti")
+# VerneOmrade = Path.joinpath(n50_path, "VerneOmrade")
+
+# Create dataset for imports
+
+DATA = [
     AnleggsLinje,
     AnleggsPunkt,
     ArealdekkeFlate,
@@ -51,39 +56,15 @@ n50_datasets = [
     Ferge,
     FlomLop,
     Foss,
-    Grunnlinje,
     Grunnriss,
     HoydeKontur,
     HoydePunkt,
-    HoydeTall,
     JernbaneStasjon,
     LufthavnPunkt,
-    Navn,
     OmrissLinje,
     Skjaer,
-    SkyteFelt,
-    StatsAllmenning,
-    Tile,
-    TileKant,
     TreGruppe,
     TuristHytte,
     VegBom,
     VegSti,
-    VerneOmrade,
 ]
-
-
-# Looping through all paths to check if they are formatted correctly
-def check_paths():
-    for dataset in n50_datasets:
-        try:
-            arcpy.management.MakeFeatureLayer(dataset, "temp_layer")
-            arcpy.management.Delete("temp_layer")
-        except Exception as e:
-            print(f"Failed on {dataset}: {e}")
-        else:
-            print(f"Success on {dataset}")
-
-
-if __name__ == "__main__":
-    check_paths()

@@ -15,7 +15,7 @@ class FolderSpec:
 EXPECTED = FolderSpec(
     folders={
         "raw_data": FolderSpec(
-            files={"N10_input.gdb", "N100_FGDB.gdb", "Roads.gdb"},
+            files={"N10_input.gdb", "n50_09_01_2025.gdb", "N100_FGDB.gdb", "Roads.gdb"},
         ),
         "symbology": FolderSpec(
             folders={

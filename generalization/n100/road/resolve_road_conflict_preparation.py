@@ -18,6 +18,8 @@ from file_manager import WorkFileManager
 from file_manager.n100.file_manager_roads import Road_N100
 from generalization.n100.road.dam import get_endpoints
 from input_data import input_n50, input_n100
+from input_data.input_datasets import DatasetNamespace
+from input_data.input_orchestrator import InputDataOrchestrator
 
 # Variables
 
@@ -286,20 +288,28 @@ def data_selection(files: dict, area_selection: str) -> None:
         files (dict): Dictionary with the featureclasses to be created
         area_selection (str): An SQL-query for choice of area
     """
+    data_orc = InputDataOrchestrator(map_scale="N100")
+
+    for data in [input_n50, input_n100]:
+        data_orc.set_input_dataset(data)
+
+    n50: DatasetNamespace = data_orc.get_dataset("N50")
+    n100: DatasetNamespace = data_orc.get_dataset("N100")
+
     custom_arcpy.select_attribute_and_make_permanent_feature(
-        input_layer=input_n50.ArealdekkeFlate,
+        input_layer=n50.ArealdekkeFlate,
         expression=f"OBJTYPE IN ('Havflate', 'Innsjø', 'InnsjøRegulert')",
         output_name=files["water_fc"],
         selection_type="NEW_SELECTION",
     )
     custom_arcpy.select_attribute_and_make_permanent_feature(
-        input_layer=input_n50.ArealdekkeFlate,
+        input_layer=n50.ArealdekkeFlate,
         expression=f"OBJTYPE NOT IN ('Havflate', 'Innsjø', 'InnsjøRegulert')",
         output_name=files["other_area_fc"],
         selection_type="NEW_SELECTION",
     )
     custom_arcpy.select_attribute_and_make_permanent_feature(
-        input_layer=input_n100.AdminFlate,
+        input_layer=n100.AdminFlate,
         expression=area_selection,
         output_name=files["area_fc"],
         selection_type="NEW_SELECTION",

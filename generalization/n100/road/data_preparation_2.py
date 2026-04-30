@@ -2,8 +2,9 @@
 import arcpy
 
 # Importing custom input files modules
-from input_data import input_n100
-from input_data import input_roads
+from input_data import input_n100, input_roads
+from input_data.input_datasets import DatasetNamespace
+from input_data.input_orchestrator import InputDataOrchestrator
 
 from composition_configs import core_config, logic_config, type_defs
 
@@ -15,8 +16,7 @@ from custom_tools.decorators.timing_decorator import timing_decorator
 from custom_tools.general_tools.partition_iterator import PartitionIterator
 from custom_tools.general_tools.study_area_selector import StudyAreaSelector
 from custom_tools.general_tools.geometry_tools import GeometryValidator
-from custom_tools.general_tools import custom_arcpy
-from custom_tools.general_tools import file_utilities
+from custom_tools.general_tools import custom_arcpy, file_utilities
 from custom_tools.generalization_tools.road.thin_road_network import ThinRoadNetwork
 from custom_tools.generalization_tools.road.collapse_road import collapse_road
 from custom_tools.generalization_tools.road.remove_road_triangles import (
@@ -49,7 +49,7 @@ from file_manager.n100.file_manager_buildings import Building_N100
 
 MERGE_DIVIDED_ROADS_ALTERATIVE = False
 
-AREA_SELECTOR = "navn IN ('Oslo', 'Hamar')"
+AREA_SELECTOR = "navn IN ('Kvitsøy')"
 SCALE = "n100"
 
 
@@ -91,23 +91,23 @@ OBJECT_LIMIT = 100_000
 
 @timing_decorator
 def data_selection_and_validation(area_selection: str):
-    """
-    plot_area = "navn IN ('Asker', 'Bærum', 'Drammen', 'Frogn', 'Hole', 'Holmestrand', 'Horten', 'Jevnaker', 'Kongsberg', 'Larvik', 'Lier', 'Lunner', 'Modum', 'Nesodden', 'Oslo', 'Ringerike', 'Tønsberg', 'Øvre Eiker')"
-    ferry_admin_test = "navn IN ('Hole')"
-    small_plot_area = "navn IN ('Oslo', 'Ringerike')"
-    smallest_plot_area = "navn IN ('Ringerike')"
-    presentation_area = "navn IN ('Asker', 'Bærum', 'Oslo', 'Enebakk', 'Nittedal', 'Nordre Follo', 'Hole', 'Nesodden', 'Lørenskog', 'Sandnes', 'Stavanger', 'Gjesdal', 'Sola', 'Klepp', 'Strand', 'Time', 'Randaberg')"
-    """
+    data_orc = InputDataOrchestrator(map_scale="N100")
+
+    for data in [input_n100, input_roads]:
+        data_orc.set_input_dataset(data)
+
+    roads: DatasetNamespace = data_orc.get_dataset("ROADS")
+    n100: DatasetNamespace = data_orc.get_dataset("N100")
 
     selector = StudyAreaSelector(
         input_output_file_dict={
-            input_roads.road_output_1: Road_N100.data_selection___nvdb_roads___n100_road.value,
-            input_roads.vegsperring: Road_N100.data_selection___vegsperring___n100_road.value,
-            input_n100.Bane: Road_N100.data_selection___railroad___n100_road.value,
-            input_n100.BegrensningsKurve: Road_N100.data_selection___begrensningskurve___n100_road.value,
-            input_n100.AdminGrense: Road_N100.data_selection___admin_boundary___n100_road.value,
+            roads.elveg_and_sti: Road_N100.data_selection___nvdb_roads___n100_road.value,
+            roads.Vegsperring: Road_N100.data_selection___vegsperring___n100_road.value,
+            n100.Bane: Road_N100.data_selection___railroad___n100_road.value,
+            n100.BegrensningsKurve: Road_N100.data_selection___begrensningskurve___n100_road.value,
+            n100.AdminGrense: Road_N100.data_selection___admin_boundary___n100_road.value,
         },
-        selecting_file=input_n100.AdminFlate,
+        selecting_file=n100.AdminFlate,
         selecting_sql_expression=area_selection,
         select_local=config.select_study_area,
     )

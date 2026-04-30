@@ -22,7 +22,7 @@ class BaseFileManager:
             in geodatabases.
 
     Attributes:
-        local_root_directory (str): The local root directory for the project's output.
+        local_root_directory (Path): The local root directory for the project's output.
         project_root_directory (str): The root directory name of the project.
         general_files_directory_name (str): The directory name for storing general files.
         lyrx_directory_name (str): The directory name for storing ArcGIS layer files (.lyrx).
@@ -38,7 +38,7 @@ class BaseFileManager:
     """
 
     # Define class-level attributes that are constant across instances
-    local_root_directory = config.output_folder
+    local_root_directory = Path(config.input_data_folder).parent
     project_root_directory = env_setup.global_config.main_directory_name
     general_files_directory_name = env_setup.global_config.general_files_name
     lyrx_directory_name = env_setup.global_config.lyrx_directory_name
@@ -58,9 +58,7 @@ class BaseFileManager:
         self.script_source_name = script_source_name
         self.description = description
 
-        base = (
-            Path(self.local_root_directory) / self.project_root_directory / self.scale
-        )
+        base = self.local_root_directory / self.project_root_directory / self.scale
         self._gdb_dir = base / f"{self.object}.gdb"
         self._general_dir = base / self.general_files_directory_name
         self._lyrx_dir = base / self.lyrx_directory_name
