@@ -9,6 +9,7 @@ from config import input_data_folder
 from input_data import input_n100, input_roads
 from input_data.input_datasets import DatasetNamespace
 from input_data.input_setup import EXPECTED, FolderSpec
+from input_data.input_symbology import get_symbology_paths
 
 # ========================
 # InputDataOrchestrator
@@ -129,6 +130,19 @@ class InputDataOrchestrator:
             return True
         except:
             return False
+        
+    def validate_symbology(self, sym_path: Path) -> bool:
+        """
+        ...
+        """
+        try:
+            if not sym_path.exists():
+                return False
+            # Attempt to load the layer file
+            arcpy.mp.LayerFile(str(sym_path))
+            return True
+        except:
+            return False
 
     # ========================
     # Getters
@@ -153,6 +167,12 @@ class InputDataOrchestrator:
         if data is None:
             raise KeyError(f"Dataset '{dataset_name}' not found in orchestrator.")
         return DatasetNamespace(data)
+
+    def get_symbology(self, symbology_name: str) -> str:
+        """
+        ...
+        """
+        return
 
     # ========================
     # Setters
@@ -186,14 +206,32 @@ class InputDataOrchestrator:
 
         self.datasets[data_name] = content
 
+    def set_symbology(self) -> None:
+        """
+        ...
+        """
+        symbologies = get_symbology_paths(self.map_scale)
+
+        content = {}
+        missing = set()
+
+        for name, path in symbologies.items():
+            if self.validate_symbology(path):
+                content[name] = str(path)
+            else:
+                missing.add(str(path))
+
+        if missing:
+            raise RuntimeError(f"Missing symbologies found: {missing}")
+
+        self.symbology = content
 
 # ========================
 
 if __name__ == "__main__":
     data_orc = InputDataOrchestrator(map_scale="N100")
+    
     data_orc.set_input_dataset(input_roads)
+    data_orc.set_input_dataset(input_n100)
 
-    roads: DatasetNamespace = data_orc.get_dataset("ROADS")
-
-    arcpy.management.MakeFeatureLayer(roads.elveg_and_sti, "elveg_and_sti_lyr")
-    arcpy.management.Delete("elveg_and_sti_lyr")
+    data_orc.set_symbology()
