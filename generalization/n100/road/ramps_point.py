@@ -1,7 +1,8 @@
 # Import packages
 import os
 import arcpy
-from collections import defaultdict
+from collections import deque, defaultdict
+from typing import Dict, Set, List, Any, Iterable, Optional
 from tqdm import tqdm
 
 arcpy.env.overwriteOutput = True
@@ -114,7 +115,7 @@ def ramp_points():
     make_ramp_points()
     connect_roads_to_points()
 
-    delete_intermediate_files()
+    #delete_intermediate_files()
 
 
 ##################
@@ -628,6 +629,16 @@ def make_ramp_points() -> None:
 
     run.run()
 
+def _endpoints(poly):
+    pts = set()
+    for part in poly:
+        part = list(part)
+        if not part:
+            continue
+        pts.add((part[0].X, part[0].Y))
+        pts.add((part[-1].X, part[-1].Y))
+    return pts
+
 
 def build_adjecency(lines):
     """
@@ -649,6 +660,127 @@ def build_adjecency(lines):
 
     arcpy.management.Delete(near_table)
     return adjecency
+
+def build_adjacency_with_medium(lines, medium_field="medium"):
+    """
+    Creates adjecency graph of roads that intersect using near table 1 meter, but with a check for medium attribute to avoid false connections where roads arent actually connected but just intersect in the geometry due to overpasses etc.
+    if different mediums only keep as adjecent if they intersect at endpoints
+    """
+    adjacency = defaultdict(set)
+    near_table = r"in_memory\near_table_adjacency"
+    arcpy.analysis.GenerateNearTable(
+        in_features=lines,
+        near_features=lines,
+        out_table=near_table,
+        search_radius="1 Meters",
+        closest="ALL",
+    )
+
+    # Cache shapes and medium values to avoid repeated cursors
+    shapes = {}
+    mediums = {}
+    with arcpy.da.SearchCursor(lines, ["OID@", "SHAPE@", medium_field]) as cur:
+        for oid, shape, med in cur:
+            shapes[oid] = shape
+            mediums[oid] = med
+
+    with arcpy.da.SearchCursor(near_table, ["IN_FID", "NEAR_FID"]) as cursor:
+        for in_fid, near_fid in cursor:
+            if in_fid == near_fid:
+                continue
+            # fast path: same medium -> neighbour
+            if mediums.get(in_fid) == mediums.get(near_fid):
+                adjacency[in_fid].add(near_fid)
+                continue
+
+            g1 = shapes.get(in_fid)
+            g2 = shapes.get(near_fid)
+            if g1 is None or g2 is None:
+                continue
+
+            # compute intersection geometry (dimension 1 = point)
+            inter = g1.intersect(g2, 1)  # 1 for point output
+            if inter is None:
+                continue
+
+            # collect intersection points as coordinate tuples
+            inter_pts = set()
+            for p in inter:
+                inter_pts.add((p.X, p.Y))
+
+            if not inter_pts:
+                continue
+
+            # endpoints of each polyline
+            ep1 = _endpoints(g1)
+            ep2 = _endpoints(g2)
+
+            # require every intersection point to be an endpoint of both features
+            if inter_pts.issubset(ep1) and inter_pts.issubset(ep2):
+                adjacency[in_fid].add(near_fid)
+
+    arcpy.management.Delete(near_table)
+    return adjacency
+
+
+def bfs_all_paths(
+    adjacency: Dict[Any, Iterable[Any]],
+    start: Any,
+    target: Any,
+    max_steps: int = 20,
+    max_paths: Optional[int] = None
+) -> List[List[Any]]:
+    """
+    Find all simple paths from start to target using a BFS expansion up to max_steps edges.
+
+    Parameters
+    - adjacency: mapping node -> iterable of neighbor nodes
+    - start: starting node OID
+    - target: target node OID
+    - max_steps: maximum number of edges to traverse (default 20)
+    - max_paths: optional cap on number of returned paths (None = no cap)
+
+    Returns
+    - list of paths, where each path is a list of node OIDs starting with start and ending with target
+    """
+    if start == target:
+        return [[start]]
+
+    results: List[List[Any]] = []
+    queue = deque()
+    queue.append([start])
+
+    while queue:
+        path = queue.popleft()
+        if len(path) - 1 > max_steps:
+            # path already exceeds allowed edges; skip
+            continue
+
+        last = path[-1]
+        neighbors = adjacency.get(last, ())
+
+        for nbr in neighbors:
+            if nbr in path:
+                # avoid cycles; require simple paths
+                continue
+
+            new_path = path + [nbr]
+
+            if nbr == target:
+                # found a path; only accept if within max_steps
+                if len(new_path) - 1 <= max_steps:
+                    results.append(new_path)
+                    if max_paths is not None and len(results) >= max_paths:
+                        return results
+                # do not expand this path further
+                continue
+
+            # only enqueue if we can still add edges without exceeding max_steps
+            if len(new_path) - 1 < max_steps:
+                queue.append(new_path)
+
+    return results
+
 
 
 def get_selected_oids(layer):
@@ -994,6 +1126,7 @@ class MovePointsToCrossings:
 
     def run(self):
         self.make_priority_points()
+
         self.make_priority_maps()
         self.place_points()
         for item in self.delete_list:

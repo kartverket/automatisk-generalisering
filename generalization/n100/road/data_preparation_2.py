@@ -49,7 +49,7 @@ from file_manager.n100.file_manager_buildings import Building_N100
 
 MERGE_DIVIDED_ROADS_ALTERATIVE = False
 
-AREA_SELECTOR = "navn IN ('Oslo', 'Hamar')"
+AREA_SELECTOR = "navn IN ('Ås', 'Nordre Follo')"
 SCALE = "n100"
 
 
