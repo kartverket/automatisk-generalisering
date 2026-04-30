@@ -9,7 +9,8 @@
 |[**attribute_changer**](attribute_changer.py) | input_fc: str,<br/>output_fc: str | None | attribute_changer.py | Re-categorizes *'arealdekke'* based on the fields: *"Arealdekke", "Hovedklasse", "Underklasse", "Grunnforhold"*. Overwrites the original *"arealdekke"* field to replace it with two new fields: *"gammel_arealdekke"* and *"fremkommelighet"*.
 
 ##
-> **Attribute_prioritizing.csv** is a CSV file that outlines how the arealdekke categories must be sorted and reclassified. Can be imported into other files as a dictionary. The file contains the following columns: <br/>- Arealdekke <br/>- Hovedklasse <br/>- Underklasse <br/>- Grunnforhold <br/>- Ny_arealdekke <br/>- Fremkommelighet
+> [**Attribute_prioritizing.csv**](attribute_prioritizing.csv) is a CSV file that outlines how the arealdekke categories must be sorted and reclassified. Can be imported into other files as a dictionary. The file contains the following columns: <br/>- Arealdekke <br/>- Hovedklasse <br/>- Underklasse <br/>- Grunnforhold <br/>- Ny_arealdekke <br/>- Fremkommelighet
+
 ##
 ### Elimination and Dissolving
 
