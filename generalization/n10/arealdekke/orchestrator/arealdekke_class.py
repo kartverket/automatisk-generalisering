@@ -407,7 +407,7 @@ class Arealdekke:
             in_features=temp_lyr, out_feature_class=self.files["category_fc"]
         )
 
-    def get_arealdekke_data(self, input_data: str)->None:
+    def get_arealdekke_data(self, input_data: str) -> None:
         arcpy.management.CopyFeatures(
             in_features=input_data,
             out_feature_class=self.files["arealdekke_fc"],
