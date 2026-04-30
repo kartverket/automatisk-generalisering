@@ -3,7 +3,7 @@ from pathlib import Path
 from arealdekke_class import Arealdekke
 from env_setup import environment_setup
 from custom_tools.decorators.timing_decorator import timing_decorator
-from input_data import input_n10, input_test_data
+from input_data import input_n10
 
 
 @timing_decorator
@@ -11,7 +11,7 @@ def main():
     environment_setup.main()
 
     # Creates an instance of the arealdekke object.
-    input_data = input_test_data.arealdekke_1
+    input_data = input_n10.Arealdekke_Oslo
     arealdekke = Arealdekke(input_data=input_data, map_scale="N10")
 
     arealdekke.preprocess()

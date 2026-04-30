@@ -24,9 +24,10 @@ def buff_small_polygon_segments(
     target: str, input_fc: str, output_fc: str, locked_fc: set, map_scale: str
 ):
     """
-    Function that detects and buffers small polygon segments from input_fc, having
-    land use type equal target. Finally, the funtion dissolves the buffered
-    geometries into the input data.
+    What:
+        Function that detects and buffers small polygon segments from input_fc, having
+        land use type equal target. Finally, the funtion dissolves the buffered
+        geometries into the input data.
 
     Args:
         target (str): The land use type of the segments to be buffered
