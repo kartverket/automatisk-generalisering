@@ -130,6 +130,7 @@
 | update_history_cat_lvl | title: str,<br/>key: str,<br/>value: str | None | Updates the value of a specified key that belong to a specific category that exist in the history file. | None |
 | new_history_category | title: str,<br/>operations:list,<br/>accessibility: bool,<br/>order: int,<br/>map_scale: str | None | Adds a new category to the history file. | None
 | reset_history | None | None | A new history file is created with the same file path as the path specified during object initialization. | None |
+| reset_history | None | None | Creates a new history file from a template. |
 
 ##
 ## ❕ Additional Notes
