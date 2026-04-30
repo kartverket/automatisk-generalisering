@@ -41,14 +41,7 @@ def buff_small_polygon_segments(
     wfm = WorkFileManager(config=config)
     files = files_setup(wfm=wfm)
 
-    params_path = Path(__file__).parent.parent / "parameters" / "parameters.yml"
-    scale_parameters = initialize_params(
-        params_path=params_path,
-        class_name="BuffSmallPolygonSegments",
-        map_scale=map_scale,
-        dataclass=buff_small_polygon_segments_parameters,
-    )
-    min_width = scale_parameters.min_width[target]
+    min_width = get_min_width(map_scale=map_scale, target=target)
 
     extract_data(files=files, target_fc=target, locked_fc=locked_fc, input_fc=input_fc)
     find_segments_under_min(files=files, min_width=min_width)
@@ -66,6 +59,12 @@ def buff_small_polygon_segments(
 
 
 class fc(Enum):
+
+    '''
+    What:
+        Enum class used to easier spot when a filepath does not exist in the files dictionary.
+    '''
+
     target_fc = "target_fc"
     locked_fc = "locked_fc"
     locked_areas_outside_buffer = "locked_areas_outside_buffer"
@@ -96,11 +95,8 @@ class fc(Enum):
 @timing_decorator
 def files_setup(wfm: WorkFileManager) -> dict:
 
-    # Extract data
     target_fc = wfm.build_file_path(file_name="target_fc", file_type="gdb")
     locked_fc = wfm.build_file_path(file_name="locked_fc", file_type="gdb")
-
-    # Get shared boundary
     locked_areas_outside_buffer = wfm.build_file_path(
         file_name="locked_areas_outside_buffer", file_type="gdb"
     )
@@ -114,8 +110,6 @@ def files_setup(wfm: WorkFileManager) -> dict:
     locked_fc_outward_buffer = wfm.build_file_path(
         file_name="locked_fc_outward_buffer", file_type="gdb"
     )
-
-    # Find segments under min
     input_polygon_edge = wfm.build_file_path(
         file_name="input_polygon_edge", file_type="gdb"
     )
@@ -137,12 +131,8 @@ def files_setup(wfm: WorkFileManager) -> dict:
     segments_too_small_single = wfm.build_file_path(
         file_name="segments_too_small_single", file_type="gdb"
     )
-
-    # Choose target areas
     overkill_buffer = wfm.build_file_path(file_name="overkill_buffer", file_type="gdb")
     areas_chosen = wfm.build_file_path(file_name="areas_chosen", file_type="gdb")
-
-    # Buff small segments
     only_small_segments_centre = wfm.build_file_path(
         file_name="only_small_segments_centre", file_type="gdb"
     )
@@ -159,8 +149,6 @@ def files_setup(wfm: WorkFileManager) -> dict:
     small_segments_locked_buffed_dissolved = wfm.build_file_path(
         file_name="small_segments_locked_buffed_dissolved", file_type="gdb"
     )
-
-    # Other
     test = wfm.build_file_path(file_name="test", file_type="gdb")
     work_fc = wfm.build_file_path(file_name="work_fc", file_type="gdb")
     output_fc = wfm.build_file_path(file_name="output_fc", file_type="gdb")
@@ -193,11 +181,34 @@ def files_setup(wfm: WorkFileManager) -> dict:
         fc.output_fc: output_fc,
     }
 
+@timing_decorator
+def get_min_width(map_scale:str, target:str)->int:
+
+    '''
+    What:
+        Extracts the minimum width for the target arealdekke from the parameters.yml file in the 
+        parameters folder.
+    '''
+
+    params_path = Path(__file__).parent.parent / "parameters" / "parameters.yml"
+    scale_parameters = initialize_params(
+        params_path=params_path,
+        class_name="BuffSmallPolygonSegments",
+        map_scale=map_scale,
+        dataclass=buff_small_polygon_segments_parameters,
+    )
+    return scale_parameters.min_width[target]
 
 @timing_decorator
 def extract_data(files: dict, target_fc: str, locked_fc: set, input_fc) -> None:
 
-    # Extract the target fc from the data layer.
+    '''
+    What:
+        Extracts data for the program from the parameters and insert them into the files dictionary.
+        For locked files, only the areas that share a boundry with the target polygons are selected and
+        stored.
+    '''
+
     target_fc_lyr = "target_fc_lyr"
     where = f"arealdekke='{target_fc}'"
     arcpy.management.MakeFeatureLayer(
@@ -207,7 +218,6 @@ def extract_data(files: dict, target_fc: str, locked_fc: set, input_fc) -> None:
         in_features=target_fc_lyr, out_feature_class=files[fc.target_fc]
     )
 
-    # Extract the locked areas from the data layer that share a line with the target fc.
     if locked_fc:
         locked_fc_lyr = "locked_fc_lyr"
         arcpy.management.MakeFeatureLayer(
@@ -229,7 +239,18 @@ def extract_data(files: dict, target_fc: str, locked_fc: set, input_fc) -> None:
 @timing_decorator
 def find_segments_under_min(files: dict, min_width: int) -> None:
 
-    # Create a lyr with the outline of the input polygon
+    '''
+    What:
+        Finds areas under a minimum criteria set in the parameters folder.
+    How:
+        - Create a lyr with the outline of the input polygon
+        - Use polygon outline to create a negative buffer
+        - Areas not intersecting the minus buffer are large enough. Extract them into its own layer.
+        - Create a full buffer for the core of the wide enough segments to get them back to their 
+            original size
+        - Remove the large enough segments from the original polyon
+    '''
+
     input_polygon_lyr = "input_polygon_lyr"
     arcpy.management.MakeFeatureLayer(
         in_features=files[fc.target_fc], out_layer=input_polygon_lyr
@@ -238,7 +259,6 @@ def find_segments_under_min(files: dict, min_width: int) -> None:
         in_features=input_polygon_lyr, out_feature_class=files[fc.input_polygon_edge]
     )
 
-    # Use polygon outline to create a negative buffer
     input_polygon_edge_lyr = "input_polygon_edge_lyr"
     arcpy.management.MakeFeatureLayer(
         in_features=files[fc.input_polygon_edge], out_layer=input_polygon_edge_lyr
@@ -251,7 +271,6 @@ def find_segments_under_min(files: dict, min_width: int) -> None:
         line_side="FULL",
     )
 
-    # Areas not intersecting the minus buffer are large enough. Extract them into its own layer.
     input_polygon_minus_buffer_lyr = "input_polygon_minus_buffer_lyr"
     arcpy.management.MakeFeatureLayer(
         in_features=files[fc.input_polygon_minus_buffer],
@@ -263,7 +282,6 @@ def find_segments_under_min(files: dict, min_width: int) -> None:
         out_feature_class=files[fc.core_of_segments_wide_enough],
     )
 
-    # Create a full buffer for the core of the wide enough segments to get them back to their original size
     core_of_segments_wide_enough_lyr = "core_of_segments_wide_enough_lyr"
     arcpy.management.MakeFeatureLayer(
         in_features=files[fc.core_of_segments_wide_enough],
@@ -292,7 +310,6 @@ def find_segments_under_min(files: dict, min_width: int) -> None:
         buffer_distance_or_field=f"{min_width/2} Meters",
     )
 
-    # Remove the large enough segments from the original polyon
     segments_wide_enough_lyr = "segments_wide_enough_lyr"
     arcpy.management.MakeFeatureLayer(
         in_features=files[fc.segments_wide_enough], out_layer=segments_wide_enough_lyr
@@ -306,6 +323,11 @@ def find_segments_under_min(files: dict, min_width: int) -> None:
 
 @timing_decorator
 def choose_target_areas(files: dict) -> None:
+
+    '''
+    What:
+    How:
+    '''
 
     # Create an overkill buffer that includes the small segments and some of the area around.
     segments_too_small_single_lyr = "segments_too_small_single_lyr"
