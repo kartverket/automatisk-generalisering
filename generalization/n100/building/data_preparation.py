@@ -2,14 +2,9 @@
 import arcpy
 
 # Importing custom input files modules
-from custom_tools.generalization_tools.building import (
-    begrensningskurve_land_waterbodies,
-)
-from generalization.n100 import building
 from input_data import input_n50
 from input_data import input_n100
 from input_data import input_other
-from input_data import input_roads
 
 # Importing custom modules
 from file_manager.n100.file_manager_buildings import Building_N100
@@ -92,7 +87,6 @@ def data_selection():
         Makes sure that the input data is never modified, and that all future I/O's use the same paths regardless if
         the script is run for global data or smaller subselection for logic testing.
     """
-    print(input_roads.road_output_1)
     input_output_file_dict = {
         input_n100.BegrensningsKurve: Building_N100.data_selection___begrensningskurve_n100_input_data___n100_building.value,
         input_n100.ArealdekkeFlate: Building_N100.data_selection___land_cover_n100_input_data___n100_building.value,

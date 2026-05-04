@@ -2,7 +2,7 @@
 import arcpy
 
 # Importing custom input files modules
-from input_data import input_n50, input_n100, input_roads
+from input_data import input_n50, input_n100, input_road
 from input_data.input_datasets import DatasetNamespace
 from input_data.input_orchestrator import InputDataOrchestrator
 
@@ -101,7 +101,7 @@ def data_selection_and_validation(
     area_selection: str, data_orc: InputDataOrchestrator
 ) -> tuple[DatasetNamespace, DatasetNamespace, DatasetNamespace]:
 
-    for data in [input_n50, input_n100, input_roads]:
+    for data in [input_n50, input_n100, input_road]:
         data_orc.set_input_dataset(data)
 
     n50: DatasetNamespace = data_orc.get_dataset("N50")

@@ -5,7 +5,7 @@ import env_setup.global_config
 from input_data import input_n100
 from file_manager.n100.file_manager_buildings import Building_N100
 from file_manager.n100.file_manager_roads import Road_N100
-from input_data import input_roads
+from input_data import input_road
 from input_data import input_n50
 from input_data import input_other
 import config

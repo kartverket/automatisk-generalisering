@@ -6,12 +6,12 @@ from pathlib import Path
 
 # Setup main road path
 
-road_path = Path.joinpath(Path(input_data_folder), "raw_data", "Roads.gdb")
+road_path = Path.joinpath(Path(input_data_folder), "raw_data", "road.gdb")
 
 # Setup feature class paths
 
 elveg_and_sti = Path.joinpath(road_path, "elveg_and_sti")
-vegsperring = Path.joinpath(road_path, "Vegsperring")
+vegsperring = Path.joinpath(road_path, "vegsperring")
 
 # Create dataset for imports
 

@@ -7,7 +7,7 @@ from composition_configs import core_config
 from env_setup import environment_setup
 from file_manager import WorkFileManager
 from file_manager.n10.file_manager_roads import Road_N10
-from input_data import input_roads
+from input_data import input_road
 from point_rotation_tool import point_rotation_tool
 
 arcpy.env.overwriteOutput = True
@@ -75,12 +75,12 @@ def fetch_data(files: dict) -> None:
 
     orig_points_unsnapped_lyr = "orig_points_unsnapped_lyr"
     arcpy.management.MakeFeatureLayer(
-        in_features=input_roads.road_vegsperring, out_layer=orig_points_unsnapped_lyr
+        in_features=input_road.road_vegsperring, out_layer=orig_points_unsnapped_lyr
     )
 
     orig_road_lyr = "orig_road_lyr"
     arcpy.management.MakeFeatureLayer(
-        in_features=input_roads.road_veglenke, out_layer=orig_road_lyr
+        in_features=input_road.road_veglenke, out_layer=orig_road_lyr
     )
 
     arcpy.edit.Snap(

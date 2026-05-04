@@ -9,7 +9,7 @@ from file_manager.n100.file_manager_roads import Road_N100
 from env_setup import environment_setup
 from custom_tools.general_tools import custom_arcpy
 
-from input_data import input_roads
+from input_data import input_road
 
 from custom_tools.decorators.timing_decorator import timing_decorator
 
@@ -30,7 +30,7 @@ def main():
 @timing_decorator
 def shrunked_underpass():
     custom_arcpy.select_attribute_and_make_permanent_feature(
-        input_layer=input_roads.elveg_and_sti,
+        input_layer=input_road.elveg_and_sti,
         expression="medium='U'",
         output_name=Road_N100.test2___veg_u___n100_road.value,
         selection_type="NEW_SELECTION",
@@ -53,7 +53,7 @@ def shrunked_underpass():
 @timing_decorator
 def shrunked_bridge():
     custom_arcpy.select_attribute_and_make_permanent_feature(
-        input_layer=input_roads.elveg_and_sti,
+        input_layer=input_road.elveg_and_sti,
         expression="medium='L'",
         output_name=Road_N100.test2___veg_l___n100_road.value,
         selection_type="NEW_SELECTION",
@@ -76,7 +76,7 @@ def shrunked_bridge():
 @timing_decorator
 def shrunked_ER_bridge():
     custom_arcpy.select_attribute_and_make_permanent_feature(
-        input_layer=input_roads.elveg_and_sti,
+        input_layer=input_road.elveg_and_sti,
         expression="vegkategori IN ('E', 'R')",
         output_name=Road_N100.test2___ER___n100_road.value,
         selection_type="NEW_SELECTION",
@@ -105,7 +105,7 @@ def shrunked_ER_bridge():
 @timing_decorator
 def shrunked_surface_road():
     custom_arcpy.select_attribute_and_make_permanent_feature(
-        input_layer=input_roads.elveg_and_sti,
+        input_layer=input_road.elveg_and_sti,
         expression="medium='T'",
         output_name=Road_N100.test2___veg_t___n100_road.value,
         selection_type="NEW_SELECTION",
@@ -128,7 +128,7 @@ def shrunked_surface_road():
 @timing_decorator
 def shrunked_surface_road():
     custom_arcpy.select_attribute_and_make_permanent_feature(
-        input_layer=input_roads.elveg_and_sti,
+        input_layer=input_road.elveg_and_sti,
         expression="medium='T'",
         output_name=Road_N100.test2___veg_t___n100_road.value,
         selection_type="NEW_SELECTION",
@@ -247,7 +247,7 @@ def update_vegstatus():
 
     # Make a feature layer from the input dataset
     arcpy.management.MakeFeatureLayer(
-        in_features=input_roads.elveg_and_sti, out_layer="elveg_sti_lyr"
+        in_features=input_road.elveg_and_sti, out_layer="elveg_sti_lyr"
     )
     # Select all features that intersect with the merged keep layer
     arcpy.management.SelectLayerByLocation(
@@ -291,7 +291,7 @@ def update_vegstatus():
 
     # Make a feature layer from the input dataset
     arcpy.management.MakeFeatureLayer(
-        in_features=input_roads.elveg_and_sti, out_layer="elveg_sti_lyr"
+        in_features=input_road.elveg_and_sti, out_layer="elveg_sti_lyr"
     )
     # Select all features that intersect with the merged keep layer
     arcpy.management.SelectLayerByLocation(
