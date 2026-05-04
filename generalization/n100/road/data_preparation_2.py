@@ -2,7 +2,7 @@
 import arcpy
 
 # Importing custom input files modules
-from input_data import input_n100, input_roads
+from input_data import input_n50, input_n100, input_roads
 from input_data.input_datasets import DatasetNamespace
 from input_data.input_orchestrator import InputDataOrchestrator
 
@@ -25,7 +25,6 @@ from custom_tools.generalization_tools.road.remove_road_triangles import (
 from custom_tools.generalization_tools.road.resolve_road_conflicts import (
     ResolveRoadConflicts,
 )
-from input_data.input_symbology import SymbologyN100
 from constants.n100_constants import (
     FieldNames,
     NvdbAlias,
@@ -57,11 +56,17 @@ SCALE = "n100"
 def main():
     environment_setup.main()
     arcpy.env.referenceScale = 100000
-    data_selection_and_validation(AREA_SELECTOR)
+
+    data_orc = InputDataOrchestrator(map_scale=SCALE)
+
+    n50_data, n100_data, _ = data_selection_and_validation(
+        area_selection=AREA_SELECTOR, data_orc=data_orc
+    )
+
     reclassify_medium()
     categories_major_road_crossings()
     generalize_roundabouts()
-    remove_roadblock()
+    remove_roadblock(n100=n100_data)
     trim_road_details()
     ramp_points()
     admin_boarder()
@@ -72,10 +77,12 @@ def main():
     thin_sti_and_forest_roads()
     merge_divided_roads()
     smooth_line()
-    generalize_road_triangles(SCALE)
-    pre_resolve_road_conflicts(AREA_SELECTOR)
-    resolve_road_conflicts()
-    generalize_dam()
+    generalize_road_triangles(scale=SCALE)
+    pre_resolve_road_conflicts(
+        area_selection=AREA_SELECTOR, n50_data=n50_data, n100_data=n100_data
+    )
+    resolve_road_conflicts(data_orc=data_orc)
+    generalize_dam(n100_data=n100_data)
     final_output()
     final_ramp_points()
     with open(Building_N100.total_workfile_manager_files__n100.value, "w") as f:
@@ -90,14 +97,16 @@ OBJECT_LIMIT = 100_000
 
 
 @timing_decorator
-def data_selection_and_validation(area_selection: str):
-    data_orc = InputDataOrchestrator(map_scale="N100")
+def data_selection_and_validation(
+    area_selection: str, data_orc: InputDataOrchestrator
+) -> tuple[DatasetNamespace, DatasetNamespace, DatasetNamespace]:
 
-    for data in [input_n100, input_roads]:
+    for data in [input_n50, input_n100, input_roads]:
         data_orc.set_input_dataset(data)
 
-    roads: DatasetNamespace = data_orc.get_dataset("ROADS")
+    n50: DatasetNamespace = data_orc.get_dataset("N50")
     n100: DatasetNamespace = data_orc.get_dataset("N100")
+    roads: DatasetNamespace = data_orc.get_dataset("ROADS")
 
     selector = StudyAreaSelector(
         input_output_file_dict={
@@ -124,6 +133,8 @@ def data_selection_and_validation(area_selection: str):
         output_table_path=Road_N100.data_preparation___geometry_validation___n100_road.value,
     )
     road_data_validation.check_repair_sequence()
+
+    return n50, n100, roads
 
 
 def reclassify_medium():
@@ -610,11 +621,15 @@ def smooth_line():
 
 
 @timing_decorator
-def pre_resolve_road_conflicts(area_selection: str):
+def pre_resolve_road_conflicts(
+    area_selection: str, n50_data: DatasetNamespace, n100_data: DatasetNamespace
+):
     remove_road_points_in_water(
         road_fc=Road_N100.road_triangles___removed_triangles___n100_road.value,
         output_fc=Road_N100.road_cleaning_output__n100_road.value,
         area_selection=area_selection,
+        n50_data=n50_data,
+        n100_data=n100_data,
     )
 
     split_polyline_featureclass(
@@ -651,7 +666,7 @@ def pre_resolve_road_conflicts(area_selection: str):
     road_data_validation.check_repair_sequence()
 
 
-def resolve_road_conflicts():
+def resolve_road_conflicts(data_orc: InputDataOrchestrator):
 
     road_hierarchy = """def Reclass(vegklasse, typeveg):
         if typeveg in ('bilferje', 'ramps'):
@@ -729,25 +744,29 @@ def resolve_road_conflicts():
     )
 
     # --- Symbology specs -------------------------------------------------------
+    symbology_samferdsel = data_orc.get_symbology("samferdsel")
+    symbology_begrensnings_kurve_line = data_orc.get_symbology(
+        "begrensnings_kurve_line"
+    )
     rrc_specs = [
         logic_config.SymbologyLayerSpec(
             unique_name=road,
             input_feature=core_config.InjectIO(object=road, tag="input"),
-            input_lyrx=SymbologyN100.samferdsel.value,
+            input_lyrx=symbology_samferdsel,
             grouped_lyrx=True,
             target_layer_name="N100_Samferdsel_senterlinje_veg_bru_L2",
         ),
         logic_config.SymbologyLayerSpec(
             unique_name=railroad,
             input_feature=core_config.InjectIO(object=railroad, tag="input"),
-            input_lyrx=SymbologyN100.samferdsel.value,
+            input_lyrx=symbology_samferdsel,
             grouped_lyrx=True,
             target_layer_name="N100_Samferdsel_senterlinje_jernbane_terreng_sort_maske",
         ),
         logic_config.SymbologyLayerSpec(
             unique_name=begrensningskurve,
             input_feature=core_config.InjectIO(object=begrensningskurve, tag="input"),
-            input_lyrx=SymbologyN100.begrensnings_kurve_line.value,
+            input_lyrx=symbology_begrensnings_kurve_line,
             grouped_lyrx=False,
         ),
     ]

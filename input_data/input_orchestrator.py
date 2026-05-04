@@ -6,7 +6,6 @@ from pathlib import Path
 from types import ModuleType
 
 from config import input_data_folder
-from input_data import input_n100, input_roads
 from input_data.input_datasets import DatasetNamespace
 from input_data.input_setup import EXPECTED, FolderSpec
 from input_data.input_symbology import get_symbology_paths
@@ -47,7 +46,7 @@ class InputDataOrchestrator:
         self.symbology: Path = Path.joinpath(self.path, "symbology", self.map_scale)
 
         self.datasets: dict = {}
-        self.symbology: dict = {}
+        self.set_symbology()
 
     # ========================
     # Validation functions
@@ -130,10 +129,16 @@ class InputDataOrchestrator:
             return True
         except:
             return False
-        
+
     def validate_symbology(self, sym_path: Path) -> bool:
         """
-        ...
+        Checks that the symbology file exists.
+
+        Args:
+            sym_path (Path): The path to the symbology file to validate
+
+        Returns:
+            bool: True if the symbology file is valid, False otherwise
         """
         try:
             if not sym_path.exists():
@@ -163,6 +168,7 @@ class InputDataOrchestrator:
         Returns:
             DatasetNamespace: An object exposing feature classes as attributes
         """
+        dataset_name = dataset_name.upper()
         data = self.datasets.get(dataset_name)
         if data is None:
             raise KeyError(f"Dataset '{dataset_name}' not found in orchestrator.")
@@ -170,9 +176,19 @@ class InputDataOrchestrator:
 
     def get_symbology(self, symbology_name: str) -> str:
         """
-        ...
+        Retrieve the path to a symbology file by name.
+
+        Args:
+            symbology_name (str): The name of the symbology file to retrieve.
+
+        Returns:
+            str: The path to the symbology file.
         """
-        return
+        symbology_name = symbology_name.lower()
+        sym = self.symbology.get(symbology_name)
+        if sym is None:
+            raise KeyError(f"Symbology '{symbology_name}' not found in orchestrator.")
+        return sym
 
     # ========================
     # Setters
@@ -208,7 +224,9 @@ class InputDataOrchestrator:
 
     def set_symbology(self) -> None:
         """
-        ...
+        Register all symbology files defined for the current map scale.
+        The symbology files are fetched using `get_symbology_paths()` and validated
+        using `validate_symbology()` before being added.
         """
         symbologies = get_symbology_paths(self.map_scale)
 
@@ -217,7 +235,7 @@ class InputDataOrchestrator:
 
         for name, path in symbologies.items():
             if self.validate_symbology(path):
-                content[name] = str(path)
+                content[name.lower()] = str(path)
             else:
                 missing.add(str(path))
 
@@ -225,13 +243,3 @@ class InputDataOrchestrator:
             raise RuntimeError(f"Missing symbologies found: {missing}")
 
         self.symbology = content
-
-# ========================
-
-if __name__ == "__main__":
-    data_orc = InputDataOrchestrator(map_scale="N100")
-    
-    data_orc.set_input_dataset(input_roads)
-    data_orc.set_input_dataset(input_n100)
-
-    data_orc.set_symbology()

@@ -8,6 +8,9 @@ from tqdm import tqdm
 
 arcpy.env.overwriteOutput = True
 
+# Importing custom input files modules
+from input_data.input_datasets import DatasetNamespace
+
 from composition_configs import core_config, logic_config
 from constants.n100_constants import FieldNames, MediumAlias
 from custom_tools.general_tools import custom_arcpy
@@ -17,9 +20,6 @@ from custom_tools.generalization_tools.road.dissolve_with_intersections import (
 from file_manager import WorkFileManager
 from file_manager.n100.file_manager_roads import Road_N100
 from generalization.n100.road.dam import get_endpoints
-from input_data import input_n50, input_n100
-from input_data.input_datasets import DatasetNamespace
-from input_data.input_orchestrator import InputDataOrchestrator
 
 # Variables
 
@@ -280,22 +280,18 @@ def pre_processing(road_fc: str, files: dict) -> None:
     )
 
 
-def data_selection(files: dict, area_selection: str) -> None:
+def data_selection(
+    files: dict, area_selection: str, n50: DatasetNamespace, n100: DatasetNamespace
+) -> None:
     """
     Selects the relevant data and stores it in feature classes.
 
     Args:
         files (dict): Dictionary with the featureclasses to be created
         area_selection (str): An SQL-query for choice of area
+        n50 (DatasetNamespace): The N50 dataset namespace
+        n100 (DatasetNamespace): The N100 dataset namespace
     """
-    data_orc = InputDataOrchestrator(map_scale="N100")
-
-    for data in [input_n50, input_n100]:
-        data_orc.set_input_dataset(data)
-
-    n50: DatasetNamespace = data_orc.get_dataset("N50")
-    n100: DatasetNamespace = data_orc.get_dataset("N100")
-
     custom_arcpy.select_attribute_and_make_permanent_feature(
         input_layer=n50.ArealdekkeFlate,
         expression=f"OBJTYPE IN ('Havflate', 'Innsjø', 'InnsjøRegulert')",
@@ -762,7 +758,11 @@ def delete_feature_layers(layers: list) -> None:
 
 
 def remove_road_points_in_water(
-    road_fc: str, output_fc: str, area_selection: str
+    road_fc: str,
+    output_fc: str,
+    area_selection: str,
+    n50_data: DatasetNamespace,
+    n100_data: DatasetNamespace,
 ) -> None:
     """
     Moves vertices from road_fc that are located within a specific value from water, and prepares the
@@ -773,6 +773,8 @@ def remove_road_points_in_water(
         road_fc (str): The road input feature class
         output_fc (str): Path to the new feature class that should contain the modified output data
         area_selection (str): A SQL-query selecting the prefered area
+        n50_data (DatasetNamespace): The N50 dataset namespace
+        n100_data (DatasetNamespace): The N100 dataset namespace
     """
     working_fc = Road_N100.road_cleaning__n100_road.value
     config = core_config.WorkFileConfig(root_file=working_fc)
@@ -781,7 +783,9 @@ def remove_road_points_in_water(
     files = creafte_wfm_gdbs(wfm=wfm)
 
     pre_processing(road_fc=road_fc, files=files)
-    data_selection(files=files, area_selection=area_selection)
+    data_selection(
+        files=files, area_selection=area_selection, n50=n50_data, n100=n100_data
+    )
     create_analysis_layers(files=files)
 
     points_to_keep = collect_important_points(files=files)

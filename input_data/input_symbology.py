@@ -10,6 +10,7 @@ symbology_path = Path.joinpath(Path(input_data_folder), "symbology")
 
 # Getter function for symbology paths corresponding to map scale
 
+
 def get_symbology_paths(map_scale: str) -> dict:
     map_scale = map_scale.lower()
     symbology_scale_folder = Path.joinpath(symbology_path, map_scale)
@@ -20,6 +21,7 @@ def get_symbology_paths(map_scale: str) -> dict:
         symbologies[key] = Path.joinpath(symbology_scale_folder, val)
 
     return symbologies
+
 
 # Create dataset for imports
 
