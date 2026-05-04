@@ -622,7 +622,7 @@ def make_ramp_points() -> None:
     arcpy.management.FeatureToPoint("ramps_lyr", ramp_points_fc, "CENTROID")
 
     run = MovePointsToCrossings(
-        input_road_feature=roads_fc,
+        input_road_feature=data_files["input"],
         input_point_feature=ramp_points_fc,
         output_point_feature=out_fc,
     )
@@ -728,7 +728,8 @@ def bfs_all_paths(
     start: Any,
     target: Any,
     max_steps: int = 20,
-    max_paths: Optional[int] = None
+    max_paths: Optional[int] = None,
+    valid_oids: Optional[set] = None
 ) -> List[List[Any]]:
     """
     Find all simple paths from start to target using a BFS expansion up to max_steps edges.
@@ -739,6 +740,7 @@ def bfs_all_paths(
     - target: target node OID
     - max_steps: maximum number of edges to traverse (default 20)
     - max_paths: optional cap on number of returned paths (None = no cap)
+    - valid_oids: optional set of all valid oids
 
     Returns
     - list of paths, where each path is a list of node OIDs starting with start and ending with target
@@ -760,6 +762,9 @@ def bfs_all_paths(
         neighbors = adjacency.get(last, ())
 
         for nbr in neighbors:
+            if valid_oids:
+                if nbr not in valid_oids:
+                    continue
             if nbr in path:
                 # avoid cycles; require simple paths
                 continue
@@ -1126,7 +1131,8 @@ class MovePointsToCrossings:
 
     def run(self):
         self.make_priority_points()
-
+        if self.with_ramps:
+            self.remove_unconnected_pri_points()
         self.make_priority_maps()
         self.place_points()
         for item in self.delete_list:
@@ -1308,6 +1314,87 @@ class MovePointsToCrossings:
             count = int(arcpy.management.GetCount(priority2_lyr).getOutput(0))
             if count > 0:
                 arcpy.management.DeleteFeatures(priority2_lyr)
+
+    def remove_unconnected_pri_points(self):
+        """
+        Removes priority points that arent on roads connected by ramps
+        """
+        id_field = "id_field"
+        arcpy.management.AddField(self.priority1, id_field, "SHORT")
+        arcpy.management.CalculateField(self.priority1, id_field, "!OBJECTID!", "PYTHON3")
+        arcpy.management.AddField(self.priority1_5, id_field, "SHORT")
+        arcpy.management.CalculateField(self.priority1_5, id_field, "!OBJECTID!", "PYTHON3")
+        arcpy.management.AddField(self.priority2, id_field, "SHORT")
+        arcpy.management.CalculateField(self.priority2, id_field, "!OBJECTID!", "PYTHON3")
+        arcpy.management.CopyFeatures(self.priority1, r"C:\temp\vei.gdb\pri1F")
+        arcpy.management.CopyFeatures(self.priority1_5, r"C:\temp\vei.gdb\pri1_5F")
+        arcpy.management.CopyFeatures(self.priority2, r"C:\temp\vei.gdb\pri2F")
+
+        print("Removing unconnected pri points")
+        adjacency = build_adjacency_with_medium(self.input_road_feature)
+        print("adjecency 14:")
+        print(adjacency[14])
+        ramp_oids = set()
+        ramps_lyr = "ramps_lyr_436"
+        arcpy.management.MakeFeatureLayer(self.input_road_feature, ramps_lyr, "typeveg = 'rampe'")
+        with arcpy.da.SearchCursor(ramps_lyr, ["OID@"]) as s_cur:
+            for row in s_cur:
+                ramp_oids.add(row[0])
+        
+        roads_lyr = "roads_lyr_673"
+        arcpy.management.MakeFeatureLayer(self.input_road_feature, roads_lyr, "typeveg <> 'rampe' and objtype = 'VegSenterlinje'")
+        
+        near_table = "in_memory\\near_table_12432"
+        near_table_valid = "in_memory\\near_table_45745"
+        priorities = [self.priority1, self.priority1_5, self.priority2]
+        for priority in priorities:
+            print(priority)
+            remove_points = set()
+            arcpy.analysis.GenerateNearTable(priority, roads_lyr, near_table, search_radius="1 Meter", closest="ALL")
+            in_fid_near_fid = defaultdict(list)
+            with arcpy.da.SearchCursor(near_table, ["IN_FID", "NEAR_FID"]) as s_cur:
+                for row in s_cur:
+                    in_fid = row[0]
+                    near_fid = row[1]
+                    in_fid_near_fid[in_fid].append(near_fid)
+
+
+            valid_oids = defaultdict(set)
+            arcpy.analysis.GenerateNearTable(priority, self.input_road_feature, near_table_valid, search_radius="500 Meter", closest="ALL")
+            with arcpy.da.SearchCursor(near_table_valid, ["IN_FID", "NEAR_FID"]) as s_cur:
+                for row in s_cur:
+                    in_fid = row[0]
+                    near_fid = row[1]
+                    valid_oids[in_fid].add(near_fid)
+
+
+            for in_fid, near_list in in_fid_near_fid.items():
+                if len(near_list) > 2:
+                    print(f"IN_FID {in_fid} has {len(near_list)} NEAR_FID values: {sorted(near_list)}")
+                
+                
+
+                all_paths = bfs_all_paths(adjacency=adjacency, start=near_list[0], target=near_list[1], max_steps=10, valid_oids=valid_oids[in_fid])
+                if priority == r"in_memory\priority2":
+                    if in_fid == 53 and in_fid_near_fid[53]:
+                        print(in_fid_near_fid[53])
+                        print(all_paths)
+                result = any(value in ramp_oids for path in all_paths for value in path)
+                if not result:
+                    remove_points.add(in_fid)
+
+
+
+            with arcpy.da.UpdateCursor(priority, [id_field]) as u_cur:
+                for row in u_cur:
+                    if row[0] in remove_points:
+                        u_cur.deleteRow()
+
+            print(f"deleted rows: ", {len(remove_points)})
+        
+        arcpy.management.CopyFeatures(self.priority1, r"C:\temp\vei.gdb\pri1E")
+        arcpy.management.CopyFeatures(self.priority1_5, r"C:\temp\vei.gdb\pri1_5E")
+        arcpy.management.CopyFeatures(self.priority2, r"C:\temp\vei.gdb\pri2E")
 
     def make_priority_maps(self):
         # oids
