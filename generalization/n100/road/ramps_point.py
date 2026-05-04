@@ -116,7 +116,7 @@ def ramp_points():
     make_ramp_points()
     connect_roads_to_points()
 
-    #delete_intermediate_files()
+    delete_intermediate_files()
 
 
 ##################
@@ -623,22 +623,12 @@ def make_ramp_points() -> None:
     arcpy.management.FeatureToPoint("ramps_lyr", ramp_points_fc, "CENTROID")
 
     run = MovePointsToCrossings(
-        input_road_feature=roads_fc,
+        input_road_feature=data_files["input"],
         input_point_feature=ramp_points_fc,
         output_point_feature=out_fc,
     )
 
     run.run()
-
-def _endpoints(poly):
-    pts = set()
-    for part in poly:
-        part = list(part)
-        if not part:
-            continue
-        pts.add((part[0].X, part[0].Y))
-        pts.add((part[-1].X, part[-1].Y))
-    return pts
 
 
 def build_adjecency(lines):
@@ -1000,7 +990,6 @@ class MovePointsToCrossings:
 
     def run(self):
         self.make_priority_points()
-
         self.make_priority_maps()
         self.place_points()
         for item in self.delete_list:
