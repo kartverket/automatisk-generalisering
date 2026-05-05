@@ -1133,7 +1133,9 @@ class MovePointsToCrossings:
         self.make_priority_points()
         if self.with_ramps:
             self.remove_unconnected_pri_points()
-        self.make_priority_maps()
+        self.add_vegkategori_score()
+        #self.make_priority_maps()
+        self.make_priority_maps_2()
         self.place_points()
         for item in self.delete_list:
             arcpy.management.Delete(item)
@@ -1184,9 +1186,14 @@ class MovePointsToCrossings:
             priority1_5_lyr,
             priority2_lyr,
         ]
+        #######
+        #dissolve test
+        ########
+        self.dissolved_roads = "in_memory\\input_roads_dissolved"
+        arcpy.management.Dissolve(self.input_road_feature, self.dissolved_roads, dissolve_field=["objtype", "medium", "motorvegtype", "vegkategori", "typeveg"], multi_part="SINGLE_PART")
 
         arcpy.management.MakeFeatureLayer(
-            self.input_road_feature,
+            self.dissolved_roads,
             roads_lyr,
             where_clause="typeveg <> 'rampe' and objtype = 'VegSenterlinje'",
         )
@@ -1266,7 +1273,7 @@ class MovePointsToCrossings:
         # keep only priority points within 100 meters of ramps
         if self.with_ramps:
             arcpy.management.MakeFeatureLayer(
-                self.input_road_feature, ramps_lyr, where_clause="typeveg = 'rampe'"
+                self.dissolved_roads, ramps_lyr, where_clause="typeveg = 'rampe'"
             )
             arcpy.analysis.Buffer(ramps_lyr, buffer_100m, "100 Meters")
             combine_intersecting_buffers(
@@ -1319,7 +1326,20 @@ class MovePointsToCrossings:
         """
         Removes priority points that arent on roads connected by ramps
         """
+        pri_field = "priority"
+        arcpy.management.AddField(self.priority1, pri_field, "FLOAT")
+        arcpy.management.CalculateField(self.priority1, pri_field, "1", "PYTHON3")
+        arcpy.management.AddField(self.priority1_5, pri_field, "SHORT")
+        arcpy.management.CalculateField(self.priority1_5, pri_field, "1.5", "PYTHON3")
+        arcpy.management.AddField(self.priority2, pri_field, "SHORT")
+        arcpy.management.CalculateField(self.priority2, pri_field, "2", "PYTHON3")
+
+        self.priorities_crossing = "in_memory\\priorities_crossing"
+        arcpy.management.Merge([self.priority1, self.priority1_5, self.priority2], self.priorities_crossing)
         id_field = "id_field"
+        arcpy.management.AddField(self.priorities_crossing, id_field, "SHORT")
+        arcpy.management.CalculateField(self.priorities_crossing, id_field, "!OBJECTID!", "PYTHON3")
+        """
         arcpy.management.AddField(self.priority1, id_field, "SHORT")
         arcpy.management.CalculateField(self.priority1, id_field, "!OBJECTID!", "PYTHON3")
         arcpy.management.AddField(self.priority1_5, id_field, "SHORT")
@@ -1329,72 +1349,193 @@ class MovePointsToCrossings:
         arcpy.management.CopyFeatures(self.priority1, r"C:\temp\vei.gdb\pri1F")
         arcpy.management.CopyFeatures(self.priority1_5, r"C:\temp\vei.gdb\pri1_5F")
         arcpy.management.CopyFeatures(self.priority2, r"C:\temp\vei.gdb\pri2F")
+        """
+        arcpy.management.CopyFeatures(self.priorities_crossing, r"C:\temp\vei.gdb\priorities_crossingF")
 
         print("Removing unconnected pri points")
-        adjacency = build_adjacency_with_medium(self.input_road_feature)
+        adjacency = build_adjacency_with_medium(self.dissolved_roads)
         print("adjecency 14:")
         print(adjacency[14])
         ramp_oids = set()
         ramps_lyr = "ramps_lyr_436"
-        arcpy.management.MakeFeatureLayer(self.input_road_feature, ramps_lyr, "typeveg = 'rampe'")
+        arcpy.management.MakeFeatureLayer(self.dissolved_roads, ramps_lyr, "typeveg = 'rampe'")
         with arcpy.da.SearchCursor(ramps_lyr, ["OID@"]) as s_cur:
             for row in s_cur:
                 ramp_oids.add(row[0])
         
         roads_lyr = "roads_lyr_673"
-        arcpy.management.MakeFeatureLayer(self.input_road_feature, roads_lyr, "typeveg <> 'rampe' and objtype = 'VegSenterlinje'")
+        arcpy.management.MakeFeatureLayer(self.dissolved_roads, roads_lyr, "typeveg <> 'rampe' and objtype = 'VegSenterlinje'")
         
         near_table = "in_memory\\near_table_12432"
         near_table_valid = "in_memory\\near_table_45745"
-        priorities = [self.priority1, self.priority1_5, self.priority2]
-        for priority in priorities:
-            print(priority)
-            remove_points = set()
-            arcpy.analysis.GenerateNearTable(priority, roads_lyr, near_table, search_radius="1 Meter", closest="ALL")
-            in_fid_near_fid = defaultdict(list)
-            with arcpy.da.SearchCursor(near_table, ["IN_FID", "NEAR_FID"]) as s_cur:
-                for row in s_cur:
-                    in_fid = row[0]
-                    near_fid = row[1]
-                    in_fid_near_fid[in_fid].append(near_fid)
+        #priorities = [self.priority1, self.priority1_5, self.priority2]
+        #for priority in priorities:
+            #print(priority)
+        remove_points = set()
+        arcpy.analysis.GenerateNearTable(self.priorities_crossing, roads_lyr, near_table, search_radius="1 Meter", closest="ALL")
+        in_fid_near_fid = defaultdict(list)
+        with arcpy.da.SearchCursor(near_table, ["IN_FID", "NEAR_FID"]) as s_cur:
+            for row in s_cur:
+                in_fid = row[0]
+                near_fid = row[1]
+                in_fid_near_fid[in_fid].append(near_fid)
 
 
-            valid_oids = defaultdict(set)
-            arcpy.analysis.GenerateNearTable(priority, self.input_road_feature, near_table_valid, search_radius="500 Meter", closest="ALL")
-            with arcpy.da.SearchCursor(near_table_valid, ["IN_FID", "NEAR_FID"]) as s_cur:
-                for row in s_cur:
-                    in_fid = row[0]
-                    near_fid = row[1]
-                    valid_oids[in_fid].add(near_fid)
+        valid_oids = defaultdict(set)
+        arcpy.analysis.GenerateNearTable(self.priorities_crossing, self.dissolved_roads, near_table_valid, search_radius="500 Meter", closest="ALL")
+        with arcpy.da.SearchCursor(near_table_valid, ["IN_FID", "NEAR_FID"]) as s_cur:
+            for row in s_cur:
+                in_fid = row[0]
+                near_fid = row[1]
+                valid_oids[in_fid].add(near_fid)
 
 
-            for in_fid, near_list in in_fid_near_fid.items():
-                if len(near_list) > 2:
-                    print(f"IN_FID {in_fid} has {len(near_list)} NEAR_FID values: {sorted(near_list)}")
-                
-                
+        for in_fid, near_list in in_fid_near_fid.items():
+            if len(near_list) > 2:
+                print(f"IN_FID {in_fid} has {len(near_list)} NEAR_FID values: {sorted(near_list)}")
 
-                all_paths = bfs_all_paths(adjacency=adjacency, start=near_list[0], target=near_list[1], max_steps=10, valid_oids=valid_oids[in_fid])
-                if priority == r"in_memory\priority2":
-                    if in_fid == 53 and in_fid_near_fid[53]:
-                        print(in_fid_near_fid[53])
-                        print(all_paths)
-                result = any(value in ramp_oids for path in all_paths for value in path)
-                if not result:
-                    remove_points.add(in_fid)
+            all_paths = bfs_all_paths(adjacency=adjacency, start=near_list[0], target=near_list[1], max_steps=10, valid_oids=valid_oids[in_fid])
+            result = any(value in ramp_oids for path in all_paths for value in path)
+            if not result:
+                remove_points.add(in_fid)
 
 
 
-            with arcpy.da.UpdateCursor(priority, [id_field]) as u_cur:
-                for row in u_cur:
-                    if row[0] in remove_points:
-                        u_cur.deleteRow()
+        with arcpy.da.UpdateCursor(self.priorities_crossing, [id_field]) as u_cur:
+            for row in u_cur:
+                if row[0] in remove_points:
+                    u_cur.deleteRow()
 
-            print(f"deleted rows: ", {len(remove_points)})
+        print(f"deleted rows: ", {len(remove_points)})
+        arcpy.management.CopyFeatures(self.priorities_crossing, r"C:\temp\vei.gdb\priorities_crossingE")
         
-        arcpy.management.CopyFeatures(self.priority1, r"C:\temp\vei.gdb\pri1E")
-        arcpy.management.CopyFeatures(self.priority1_5, r"C:\temp\vei.gdb\pri1_5E")
-        arcpy.management.CopyFeatures(self.priority2, r"C:\temp\vei.gdb\pri2E")
+        #arcpy.management.CopyFeatures(self.priority1, r"C:\temp\vei.gdb\pri1E")
+        #arcpy.management.CopyFeatures(self.priority1_5, r"C:\temp\vei.gdb\pri1_5E")
+        #arcpy.management.CopyFeatures(self.priority2, r"C:\temp\vei.gdb\pri2E")
+    
+    def add_vegkategori_score(self):
+        """
+        combine the vegkategori of the roads into a score for self.priorities_crossing  
+        'E':1, 'R':2, 'F':3, 'K':4, 'P':5, 'S':6
+        """
+        field = "vegkategori_sum"
+
+        # Add the new field (LONG)
+        arcpy.management.AddField(self.priorities_crossing, field, "SHORT")
+
+        # CalculateField: use a mapping dict and sum the two fields, handle None/unknown as 0
+        expression = "map_and_sum(!vegkategori!, !vegkategori_1!)"
+        code_block = """def map_and_sum(a, b):
+            m = {'E':1, 'R':2, 'F':3, 'K':4, 'P':5, 'S':6}
+            va = m.get(a, 0) if a is not None else 0
+            vb = m.get(b, 0) if b is not None else 0
+            return va + vb
+        """
+
+        arcpy.management.CalculateField(self.priorities_crossing, field, expression, "PYTHON3", code_block)
+    
+    def make_priority_maps_2(self):
+        """
+        attempt at 1 map for all priorities that are crossings
+        """
+        all_oids = []
+        oid_field = arcpy.Describe(self.input_point_feature).oidFieldName
+        with arcpy.da.SearchCursor(self.input_point_feature, [oid_field]) as sc:
+            for row in sc:
+                all_oids.append(int(row[0]))
+
+        if self.with_ramps:
+            self.near_map_crossing = self.create_near_map_unmatched_buffer_2(
+                "500 Meters",
+                self.input_point_feature,
+                self.priorities_crossing,
+                all_oids,
+                "in_memory\\buffer_ramps_100m_dissolved",
+            )
+        else:
+            self.near_map_crossing = self.create_near_map_unmatched(
+                "200 Meters", self.input_point_feature, self.priorities_crossing, all_oids
+            )
+        self.unmatched_oids = [oid for oid in all_oids if oid not in self.near_map_crossing]
+
+        ##########
+        ##########
+        ##########
+        if not self.with_ramps:
+            self.near2_5_map = self.create_near_map_unmatched(
+                "200 Meters",
+                self.input_point_feature,
+                self.piority2_5,
+                self.unmatched_oids,
+            )
+            self.unmatched_oids = [
+                oid for oid in self.unmatched_oids if oid not in self.near2_5_map
+            ]
+
+        roads_lyr = "roads_lyr"
+
+        arcpy.management.MakeFeatureLayer(
+            roads_lyr,
+            "motorveg_lyr",
+            where_clause="motorvegtype = 'Motortrafikkveg' or motorvegtype = 'Motorveg'",
+        )
+
+        if self.with_ramps:
+            self.near3_map = self.create_near_map_unmatched_buffer(
+                "100 Meters",
+                self.input_point_feature,
+                "motorveg_lyr",
+                self.unmatched_oids,
+                "in_memory\\buffer_ramps_100m_dissolved",
+            )
+        else:
+            self.near3_map = self.create_near_map_unmatched(
+                "100 Meters",
+                self.input_point_feature,
+                "motorveg_lyr",
+                self.unmatched_oids,
+            )
+        self.unmatched_oids = [
+            oid for oid in self.unmatched_oids if oid not in self.near3_map
+        ]
+
+        arcpy.management.MakeFeatureLayer(
+            roads_lyr,
+            "ikke_motorveg_lyr",
+            where_clause="motorvegtype = 'Ikke motorveg'",
+        )
+        if self.with_ramps:
+            self.near3_5_map = self.create_near_map_unmatched_buffer(
+                "100 Meters",
+                self.input_point_feature,
+                "ikke_motorveg_lyr",
+                self.unmatched_oids,
+                "in_memory\\buffer_ramps_100m_dissolved",
+            )
+        else:
+            self.near3_5_map = self.create_near_map_unmatched(
+                "100 Meters",
+                self.input_point_feature,
+                "ikke_motorveg_lyr",
+                self.unmatched_oids,
+            )
+        self.unmatched_oids = [
+            oid for oid in self.unmatched_oids if oid not in self.near3_5_map
+        ]
+
+        if self.with_ramps:
+            self.near4_map = self.create_near_map_unmatched_buffer(
+                "100 Meters",
+                self.input_point_feature,
+                "roads_lyr",
+                self.unmatched_oids,
+                "in_memory\\buffer_ramps_100m_dissolved",
+            )
+        else:
+            self.near4_map = self.create_near_map_unmatched(
+                "100 Meters", self.input_point_feature, "roads_lyr", self.unmatched_oids
+            )
+
 
     def make_priority_maps(self):
         # oids
@@ -1567,6 +1708,7 @@ class MovePointsToCrossings:
                 changed = False
 
                 # Priority 1
+                """
                 if oid in self.near1_map:
                     nx, ny, nd, nf = self.near1_map[oid]
                     new_geom = arcpy.PointGeometry(arcpy.Point(nx, ny), sr)
@@ -1587,6 +1729,13 @@ class MovePointsToCrossings:
                     nx, ny, nd, nf = self.near2_map[oid]
                     new_geom = arcpy.PointGeometry(arcpy.Point(nx, ny), sr)
                     priority = [2]
+                    roadid = [nf]
+                    changed = True
+                """
+                if oid in self.near_map_crossing:
+                    nx, ny, nd, nf, pr, vks = self.near_map_crossing[oid]
+                    new_geom = arcpy.PointGeometry(arcpy.Point(nx, ny), sr)
+                    priority = [pr]
                     roadid = [nf]
                     changed = True
 
@@ -1929,6 +2078,159 @@ class MovePointsToCrossings:
                                 float(ny),
                                 float(nr),
                                 int(nf),
+                            )
+                    else:
+                        continue
+
+            arcpy.management.Delete(near_table)
+
+        else:
+            near_map = {}
+
+        return near_map
+    
+    @staticmethod
+    def create_near_map_unmatched_buffer_2(
+        distance_str, in_fc, near_fc, unmatched_oids, buffer_fc
+    ):
+        """
+        For the subset of points in 'in_fc' (unmatched_oids) find the nearest feature in 'near_fc'
+        but only if that near_fc feature intersects the closest buffer polygon to the point.
+        Returns a dict: {in_fid: (near_x, near_y, near_dist, near_fid)}
+        """
+        if unmatched_oids:
+            points_lyr = "points_lyr_unmatched"
+            arcpy.MakeFeatureLayer_management(in_fc, points_lyr)
+
+            oid_field = arcpy.Describe(in_fc).oidFieldName
+
+            in_list = ",".join(map(str, unmatched_oids))
+            where = f"{arcpy.AddFieldDelimiters(in_fc, oid_field)} IN ({in_list})"
+
+            arcpy.SelectLayerByAttribute_management(points_lyr, "NEW_SELECTION", where)
+
+            near_table = "in_memory\\near_table"
+            arcpy.GenerateNearTable_analysis(
+                in_features=points_lyr,
+                near_features=buffer_fc,
+                out_table=near_table,
+                search_radius=distance_str,
+                location="LOCATION",
+                angle="NO_ANGLE",
+                closest="ALL",
+                method="PLANAR",
+            )
+
+            in_buffer_map = {}
+            with arcpy.da.SearchCursor(
+                near_table, ["IN_FID", "NEAR_FID", "NEAR_RANK"]
+            ) as s:
+                for in_fid, nf, nr in s:
+                    if nr != 1:
+                        continue
+                    if nf is None:
+                        continue
+                    in_buffer_map[int(in_fid)] = float(nf)
+
+            arcpy.management.Delete(near_table)
+
+            near_table = "in_memory\\near_table"
+            arcpy.GenerateNearTable_analysis(
+                in_features=near_fc,
+                near_features=buffer_fc,
+                out_table=near_table,
+                search_radius=distance_str,
+                location="LOCATION",
+                angle="NO_ANGLE",
+                closest="ALL",
+                method="PLANAR",
+            )
+
+            near_buffer_map = {}
+            with arcpy.da.SearchCursor(
+                near_table, ["IN_FID", "NEAR_FID", "NEAR_RANK"]
+            ) as s:
+                for in_fid, nf, nr in s:
+                    if nr != 1:
+                        continue
+                    if nf is None:
+                        continue
+                    near_buffer_map[int(in_fid)] = float(nf)
+
+            arcpy.management.Delete(near_table)
+
+            #map[near oid] = [priority, vegkategori_sum] 
+            near_oid_pr_vks = {}
+            with arcpy.da.SearchCursor(near_fc, ["OID@", "priority", "vegkategori_sum"]) as u_cur:
+                for oid, pr, vks in u_cur:
+                    near_oid_pr_vks[oid] = [pr, vks]
+
+            near_table = "in_memory\\near_table"
+            arcpy.GenerateNearTable_analysis(
+                in_features=points_lyr,
+                near_features=near_fc,
+                out_table=near_table,
+                search_radius=distance_str,
+                location="LOCATION",
+                angle="NO_ANGLE",
+                closest="ALL",
+                method="PLANAR",
+            )
+
+            near_map = {}
+            with arcpy.da.SearchCursor(
+                near_table, ["IN_FID", "NEAR_X", "NEAR_Y", "NEAR_FID", "NEAR_RANK"]
+            ) as s:
+                for in_fid, nx, ny, nf, nr in s:
+                    if nx is None or ny is None:
+                        continue
+                    pr, vks = near_oid_pr_vks[nf]
+                    if in_buffer_map[int(in_fid)] == near_buffer_map[int(nf)]: #hvis pr lavere bruk den, hvis pr er lik bruk lavest vks
+                        if int(in_fid) in near_map:
+                            if near_map[int(in_fid)][4] > pr:
+                                near_map[int(in_fid)] = (
+                                        float(nx),
+                                        float(ny),
+                                        float(nr),
+                                        int(nf),
+                                        int(pr),
+                                        int(vks),
+                                    )
+                            else:
+                                if near_map[int(in_fid)][4] == pr:
+                                    if near_map[int(in_fid)][5] > vks:
+                                         near_map[int(in_fid)] = (
+                                        float(nx),
+                                        float(ny),
+                                        float(nr),
+                                        int(nf),
+                                        int(pr),
+                                        int(vks),
+                                    )
+                                    else:
+                                        if near_map[int(in_fid)][5] == vks:
+                                            if near_map[int(in_fid)][2] > nr:
+                                                near_map[int(in_fid)] = (
+                                                    float(nx),
+                                                    float(ny),
+                                                    float(nr),
+                                                    int(nf),
+                                                    int(pr),
+                                                    int(vks),
+                                                )
+                                            else:
+                                                continue
+                                        else:
+                                            continue
+                            
+                        else:
+                            near_map[int(in_fid)] = (
+                                float(nx),
+                                float(ny),
+                                float(nr),
+                                int(nf),
+                                int(pr),
+                                int(vks),
                             )
                     else:
                         continue
