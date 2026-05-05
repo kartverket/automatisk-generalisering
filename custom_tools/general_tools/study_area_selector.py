@@ -1,15 +1,6 @@
 import arcpy
-from typing import Union
 
-from input_data import input_n50
-from input_data import input_n100
-from input_data import input_other
-
-from env_setup import environment_setup
-from constants.n100_constants import N100_Symbology, N100_SQLResources, N100_Values
-from file_manager.n100.file_manager_buildings import Building_N100
 from custom_tools.general_tools import custom_arcpy
-from custom_tools.decorators.partition_io_decorator import partition_io_decorator
 
 
 class StudyAreaSelector:
@@ -75,21 +66,3 @@ class StudyAreaSelector:
         else:
             self.use_global_files()
         self.delete_working_files(*self.working_files_list)
-
-
-if __name__ == "__main__":
-    environment_setup.main()
-
-    input_output_file_dict = {
-        input_n100.JernbaneStasjon: f"{Building_N100.data_preparation___railway_station_points_from_n100___n100_building.value}_test",
-        input_n100.Bane: f"{Building_N100.data_preparation___railway_station_points_from_n100___n100_building.value}_test2",
-    }
-
-    selector = StudyAreaSelector(
-        input_output_file_dict=input_output_file_dict,
-        selecting_file=input_n100.AdminFlate,
-        selecting_sql_expression="navn IN ('Asker', 'Oslo', 'Trondheim', 'Ringerike')",
-        select_local=False,
-    )
-
-    selector.run()

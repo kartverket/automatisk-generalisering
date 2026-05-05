@@ -1,6 +1,7 @@
 import arcpy
 import os
 from datetime import datetime
+from pathlib import Path
 
 import config
 from env_setup.global_config import (
@@ -146,7 +147,7 @@ class ProjectDirectorySetup:
 
     _setup_done_globally = False
 
-    def __init__(self, base_directory=config.output_folder):
+    def __init__(self, base_directory=Path(config.input_data_folder).parent):
         self.base_directory = base_directory
         self.sub_directories = [
             scale_n10,

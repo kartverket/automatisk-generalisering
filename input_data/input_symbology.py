@@ -1,30 +1,43 @@
-from enum import Enum
+# Libraries
 
-import config
+from config import input_data_folder
 
+from pathlib import Path
 
-# Defining universal paths for other files regardless of local path env_setup
-class SymbologyN100(Enum):
-    # Roads
-    samferdsel = config.symbology_n100_samferdsel
-    begrensnings_kurve_line = config.symbology_n100_begrensningskurve_line
+# Setup main symbology path
 
-    # Other
-    road = config.symbology_n100_roads
-    road_buffer = config.symbology_n100_drawn_polygon
-    begrensngings_kurve_buffer = config.symbology_n100_begrensningskurve_buffer
-    begrensningskurve_polygon = config.symbology_n100_begrensningskurve_buffer
-    building_point = config.symbology_n100_bygningspunkt
-    building_polygon = config.symbology_n100_grunnriss
-    squares = config.symbology_n100_drawn_polygon
-    railway_station_squares = config.symbology_n100_railway_station_squares
-    railway = config.symbology_n100_railway
+symbology_path = Path.joinpath(Path(input_data_folder), "symbology")
+
+# Getter function for symbology paths corresponding to map scale
 
 
-class SymbologyN250(Enum):
-    # Roads
-    samferdsel = config.symbology_n250_samferdsel
-    begrensnings_kurve_line = config.symbology_n250_begrensningskurve_line
+def get_symbology_paths(map_scale: str) -> dict:
+    map_scale = map_scale.lower()
+    symbology_scale_folder = Path.joinpath(symbology_path, map_scale)
 
-    # Other
-    # ...
+    symbologies = {}
+
+    for key, val in DATA.get(map_scale, {}).items():
+        symbologies[key] = Path.joinpath(symbology_scale_folder, val)
+
+    return symbologies
+
+
+# Create dataset for imports
+
+DATA = {
+    "n100": {
+        "begrensnings_kurve_buffer": "begrensningskurve_buffer_water_features_n100.lyrx",
+        "begrensnings_kurve_line": "N100_Arealdekke_grense_blå_maske.lyrx",
+        "bygning_areal": "grunnriss_symbology_n100.lyrx",
+        "bygningspunkt": "building_points_symbology_n100.lyrx",
+        "jernbane": "railway_buffer.lyrx",
+        "jernbanestasjon": "jernbanestasjon_square.lyrx",
+        "samferdsel": "M616_Samferdsel.lyrx",
+        "vei_buffer": "building_polygons_drawn_from_points.lyrx",
+    },
+    "n250": {
+        "begrensnings_kurve_line": "N250_Begrensningskurve.lyrx",
+        "samferdsel": "N250_Samferdsel.lyrx",
+    },
+}

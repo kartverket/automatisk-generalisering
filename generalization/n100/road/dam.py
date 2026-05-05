@@ -8,7 +8,7 @@ import os
 arcpy.env.overwriteOutput = True
 
 # Importing custom input files modules
-from input_data import input_n100
+from input_data.input_datasets import DatasetNamespace
 
 # Importing custom modules
 from file_manager.n100.file_manager_roads import Road_N100
@@ -71,7 +71,7 @@ files_to_delete = [
 
 
 @timing_decorator
-def generalize_dam():
+def generalize_dam(area_data: DatasetNamespace, building_data: DatasetNamespace):
     """
     Hva den gjør:
        Denne tar veier som går innen 60 meter av demninger og flytter de ut til 60 meter unna demningen.
@@ -84,7 +84,7 @@ def generalize_dam():
     environment_setup.main()
 
     # Data preparation
-    fetch_data()
+    fetch_data(area_data=area_data, building_data=building_data)
 
     # Data preparation
     create_buffer()
@@ -624,14 +624,18 @@ def not_road_intersection(point: arcpy.Geometry, road_oid: str, roads: str) -> b
 
 
 @timing_decorator
-def fetch_data():
+def fetch_data(area_data: DatasetNamespace, building_data: DatasetNamespace):
     print("Fetching data...")
 
     input = [
         [data_files["input"], None, data_files["roads_input"]],  # Roads
-        [input_n100.AnleggsLinje, "objtype = 'Dam'", data_files["dam_input"]],  # Dam
         [
-            input_n100.ArealdekkeFlate,
+            building_data.AnleggsLinje_N50,
+            "objtype = 'Dam'",
+            data_files["dam_input"],
+        ],  # Dam
+        [
+            area_data.ArealdekkeFlate_N50,
             "OBJTYPE = 'Havflate' OR OBJTYPE = 'Innsjø' OR OBJTYPE = 'InnsjøRegulert'",
             data_files["water_input"],
         ],  # Water

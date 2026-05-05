@@ -2,6 +2,8 @@
 from env_setup import environment_setup
 from custom_tools.decorators.timing_decorator import timing_decorator
 
+from input_data.input_orchestrator import InputDataOrchestrator
+
 # Importing building scripts
 from generalization.n100.building import data_preparation
 from generalization.n100.building import calculate_polygon_values
@@ -88,11 +90,11 @@ def main():
         MORE DOCSTRING NEEDED: Because we need to processing building information so it is cartographic usable for N100 scale.
     """
     environment_setup.main()
-    data_preparation.main()
+    data_orc: InputDataOrchestrator = data_preparation.main()
     simplify_polygons.main()
     calculate_polygon_values.main()
     polygon_propogate_displacement.main()
-    polygon_resolve_building_conflicts.main()
+    polygon_resolve_building_conflicts.main(data_orc=data_orc)
     polygon_to_point.main()
     calculate_point_values.main()
     point_propogate_displacement.main()
@@ -100,7 +102,7 @@ def main():
     point_displacement_with_buffer.main()
     point_resolve_building_conflicts.main()
     removing_points_and_erasing_polygons_in_water_features.main()
-    removing_overlapping_polygons_and_points.main()
+    removing_overlapping_polygons_and_points.main(data_orc=data_orc)
     finalizing_buildings.main()
     data_clean_up.main()
     with open(Building_N100.total_workfile_manager_files__n100.value, "w") as f:
