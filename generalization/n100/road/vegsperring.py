@@ -45,7 +45,7 @@ for example, a forest having a small gap in the middle. The road has a roadblock
 
 
 @timing_decorator
-def remove_roadblock(n100: DatasetNamespace):
+def remove_roadblock(data: DatasetNamespace):
     """
     Identifies every road having some kind of roadblock 2 m from the
     centre line and marks them with either "ja" (yes) or "nei" (no).
@@ -97,7 +97,7 @@ def remove_roadblock(n100: DatasetNamespace):
 
     # Create layer with urban areas
     arcpy.management.MakeFeatureLayer(
-        in_features=n100.ArealdekkeFlate,
+        in_features=data.ArealdekkeFlate_N50,
         out_layer="urban_areas_lyr",
         where_clause="OBJTYPE IN ('Tettbebyggelse', 'BymessigBebyggelse')",
     )

@@ -15,14 +15,26 @@ class FolderSpec:
 EXPECTED = FolderSpec(
     folders={
         "raw_data": FolderSpec(
-            files={"N10_input.gdb", "n50_09_01_2025.gdb", "N100_FGDB.gdb", "Roads.gdb"},
+            files={
+                "area.gdb",
+                "building.gdb",
+                "matrikkel.gdb",
+                "railway.gdb",
+                "road.gdb",
+            },
         ),
         "symbology": FolderSpec(
             folders={
                 "n100": FolderSpec(
                     files={
+                        "begrensningskurve_buffer_water_features_n100.lyrx",
+                        "building_points_symbology_n100.lyrx",
+                        "building_polygons_drawn_from_points.lyrx",
+                        "grunnriss_symbology_n100.lyrx",
+                        "jernbanestasjon_square.lyrx",
                         "M616_Samferdsel.lyrx",
                         "N100_Arealdekke_grense_blå_maske.lyrx",
+                        "railway_buffer.lyrx",
                     }
                 ),
                 "n250": FolderSpec(

@@ -2,7 +2,7 @@
 import arcpy
 
 # Importing custom input files modules
-from input_data import input_n50, input_n100, input_road
+from input_data import input_area, input_building, input_railway, input_road
 from input_data.input_datasets import DatasetNamespace
 from input_data.input_orchestrator import InputDataOrchestrator
 
@@ -59,14 +59,14 @@ def main():
 
     data_orc = InputDataOrchestrator(map_scale=SCALE)
 
-    n50_data, n100_data, _ = data_selection_and_validation(
+    area_data, building_data = data_selection_and_validation(
         area_selection=AREA_SELECTOR, data_orc=data_orc
     )
 
     reclassify_medium()
     categories_major_road_crossings()
     generalize_roundabouts()
-    remove_roadblock(n100=n100_data)
+    remove_roadblock(data=area_data)
     trim_road_details()
     ramp_points()
     admin_boarder()
@@ -78,11 +78,9 @@ def main():
     merge_divided_roads()
     smooth_line()
     generalize_road_triangles(scale=SCALE)
-    pre_resolve_road_conflicts(
-        area_selection=AREA_SELECTOR, n50_data=n50_data, n100_data=n100_data
-    )
+    pre_resolve_road_conflicts(area_selection=AREA_SELECTOR, area_data=area_data)
     resolve_road_conflicts(data_orc=data_orc)
-    generalize_dam(n100_data=n100_data)
+    generalize_dam(area_data=area_data, building_data=building_data)
     final_output()
     final_ramp_points()
     with open(Building_N100.total_workfile_manager_files__n100.value, "w") as f:
@@ -101,22 +99,23 @@ def data_selection_and_validation(
     area_selection: str, data_orc: InputDataOrchestrator
 ) -> tuple[DatasetNamespace, DatasetNamespace, DatasetNamespace]:
 
-    for data in [input_n50, input_n100, input_road]:
+    for data in [input_area, input_building, input_railway, input_road]:
         data_orc.set_input_dataset(data)
 
-    n50: DatasetNamespace = data_orc.get_dataset("N50")
-    n100: DatasetNamespace = data_orc.get_dataset("N100")
-    roads: DatasetNamespace = data_orc.get_dataset("ROADS")
+    area: DatasetNamespace = data_orc.get_dataset("AREA")
+    building: DatasetNamespace = data_orc.get_dataset("BUILDING")
+    road: DatasetNamespace = data_orc.get_dataset("ROAD")
+    railway: DatasetNamespace = data_orc.get_dataset("RAILWAY")
 
     selector = StudyAreaSelector(
         input_output_file_dict={
-            roads.elveg_and_sti: Road_N100.data_selection___nvdb_roads___n100_road.value,
-            roads.Vegsperring: Road_N100.data_selection___vegsperring___n100_road.value,
-            n100.Bane: Road_N100.data_selection___railroad___n100_road.value,
-            n100.BegrensningsKurve: Road_N100.data_selection___begrensningskurve___n100_road.value,
-            n100.AdminGrense: Road_N100.data_selection___admin_boundary___n100_road.value,
+            road.elveg_and_sti: Road_N100.data_selection___nvdb_roads___n100_road.value,
+            road.vegsperring: Road_N100.data_selection___vegsperring___n100_road.value,
+            railway.Bane_N50: Road_N100.data_selection___railroad___n100_road.value,
+            area.Begrensningskurve_N50: Road_N100.data_selection___begrensningskurve___n100_road.value,
+            area.AdminGrense_N50: Road_N100.data_selection___admin_boundary___n100_road.value,
         },
-        selecting_file=n100.AdminFlate,
+        selecting_file=area.AdminFlate_N50,
         selecting_sql_expression=area_selection,
         select_local=config.select_study_area,
     )
@@ -134,7 +133,7 @@ def data_selection_and_validation(
     )
     road_data_validation.check_repair_sequence()
 
-    return n50, n100, roads
+    return area, building
 
 
 def reclassify_medium():
@@ -621,15 +620,12 @@ def smooth_line():
 
 
 @timing_decorator
-def pre_resolve_road_conflicts(
-    area_selection: str, n50_data: DatasetNamespace, n100_data: DatasetNamespace
-):
+def pre_resolve_road_conflicts(area_selection: str, area_data: DatasetNamespace):
     remove_road_points_in_water(
         road_fc=Road_N100.road_triangles___removed_triangles___n100_road.value,
         output_fc=Road_N100.road_cleaning_output__n100_road.value,
         area_selection=area_selection,
-        n50_data=n50_data,
-        n100_data=n100_data,
+        area=area_data,
     )
 
     split_polyline_featureclass(

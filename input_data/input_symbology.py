@@ -27,8 +27,14 @@ def get_symbology_paths(map_scale: str) -> dict:
 
 DATA = {
     "n100": {
-        "samferdsel": "M616_Samferdsel.lyrx",
+        "begrensnings_kurve_buffer": "begrensningskurve_buffer_water_features_n100.lyrx",
         "begrensnings_kurve_line": "N100_Arealdekke_grense_blå_maske.lyrx",
+        "bygning_areal": "grunnriss_symbology_n100.lyrx",
+        "bygningspunkt": "building_points_symbology_n100.lyrx",
+        "jernbane": "railway_buffer.lyrx",
+        "jernbanestasjon": "jernbanestasjon_square.lyrx",
+        "samferdsel": "M616_Samferdsel.lyrx",
+        "vei_buffer": "building_polygons_drawn_from_points.lyrx",
     },
     "n250": {
         "begrensnings_kurve_line": "N250_Begrensningskurve.lyrx",

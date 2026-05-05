@@ -2,10 +2,6 @@ import arcpy
 
 # Importing custom files
 import config
-from custom_tools.general_tools import custom_arcpy
-from generalization.n100 import building
-from input_data import input_n100
-from input_data.input_symbology import SymbologyN100
 from file_manager.n100.file_manager_buildings import Building_N100
 from constants.n100_constants import N100_Symbology, N100_Values
 
@@ -20,13 +16,8 @@ from custom_tools.general_tools.geometry_tools import GeometryValidator
 
 from composition_configs import core_config, logic_config
 
-# Importing environment settings
-import env_setup.global_config
-
 # Importing timing decorator
 from custom_tools.decorators.timing_decorator import timing_decorator
-
-iteration_fc = config.resolve_building_conflicts_iteration_feature
 
 
 @timing_decorator
