@@ -1,5 +1,6 @@
 import re
 from datetime import datetime
+from pathlib import Path
 from typing import Any, Iterable, Literal, Optional, Union, overload
 
 import arcpy
@@ -70,30 +71,28 @@ class WorkFileManager:
             "\\memory\\" if self.write_to_memory else f"{self.root_file}_"
         )
 
-    def _modify_path(self) -> tuple[str, str]:
+    def _modify_path(self) -> tuple[Path, str]:
         """
         What:
-            Modifies the given path by removing the unwanted portion up to the scale directory.
+            Walks root_file's path components, finds the scale directory segment
+            (e.g. "n100", "n50"), and returns the path up to and including that
+            segment plus the trailing origin file name fragment.
 
         Returns:
-            tuple[str,str]: The modified path.
+            tuple[Path, str]: The scale path and the origin file name fragment.
         """
-        # Define regex pattern to find the scale directory (ends with a digit followed by \\)
-        match = re.search(r"\\\w+\d0\\", self.root_file)
-        if not match:
-            raise ValueError("Scale directory pattern not found in the path.")
         if self.write_to_memory:
             raise ValueError(
                 "Other file types than gdb are not supported in memory mode."
             )
 
-        # Extract the root up to the scale directory
-        scale_path = self.root_file[: match.end()]
-
-        remaining_path = self.root_file[match.end() :]
-        origin_file_name = remaining_path.split("\\", 1)[-1]
-
-        return scale_path, origin_file_name
+        parts = Path(self.root_file).parts
+        for i, part in enumerate(parts):
+            if re.fullmatch(r"\w+\d0", part):
+                scale_path = Path(*parts[: i + 1])
+                origin_file_name = str(Path(*parts[i + 1 :]))
+                return scale_path, origin_file_name
+        raise ValueError("Scale directory pattern not found in the path.")
 
     @overload
     def build_file_path(
@@ -145,11 +144,15 @@ class WorkFileManager:
         scale_path, origin_file_name = self._modify_path()
 
         if file_type == "lyrx":
-            s = rf"{scale_path}{self.lyrx_directory_name}\{origin_file_name}_{self.unique_id}_{file_name}{suffix}.lyrx"
-            path = type_defs.LyrxFilePath(s)
+            leaf = f"{origin_file_name}_{self.unique_id}_{file_name}{suffix}.lyrx"
+            path = type_defs.LyrxFilePath(
+                str(scale_path / self.lyrx_directory_name / leaf)
+            )
         else:
-            s = rf"{scale_path}{self.general_files_directory_name}\{origin_file_name}_{self.unique_id}_{file_name}{suffix}.{file_type}"
-            path = type_defs.GeneralFilePath(s)
+            leaf = f"{origin_file_name}_{self.unique_id}_{file_name}{suffix}.{file_type}"
+            path = type_defs.GeneralFilePath(
+                str(scale_path / self.general_files_directory_name / leaf)
+            )
 
         key = str(path)
         if key in self.created_paths:

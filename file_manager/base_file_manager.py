@@ -176,7 +176,10 @@ class BaseFileManager:
             str: The absolute path for the .lyrx file.
         """
         self.validate_inputs(script_source_name, description)
-        return rf"{self._lyrx_dir}\{script_source_name}___{description}___{self.scale}_{self.object}"
+        return str(
+            self._lyrx_dir
+            / f"{script_source_name}___{description}___{self.scale}_{self.object}"
+        )
 
     def generate_final_outputs(
         self,
