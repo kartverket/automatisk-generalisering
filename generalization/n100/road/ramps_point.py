@@ -623,7 +623,7 @@ def make_ramp_points() -> None:
     arcpy.management.FeatureToPoint("ramps_lyr", ramp_points_fc, "CENTROID")
 
     run = MovePointsToCrossings(
-        input_road_feature=data_files["input"],
+        input_road_feature=roads_fc,
         input_point_feature=ramp_points_fc,
         output_point_feature=out_fc,
     )
@@ -1041,9 +1041,14 @@ class MovePointsToCrossings:
             priority1_5_lyr,
             priority2_lyr,
         ]
+        #######
+        #dissolve test
+        ########
+        self.dissolved_roads = "in_memory\\input_roads_dissolved"
+        arcpy.management.Dissolve(self.input_road_feature, self.dissolved_roads, dissolve_field=["objtype", "medium", "motorvegtype", "vegkategori", "typeveg"], multi_part="SINGLE_PART")
 
         arcpy.management.MakeFeatureLayer(
-            self.input_road_feature,
+            self.dissolved_roads,
             roads_lyr,
             where_clause="typeveg <> 'rampe' and objtype = 'VegSenterlinje'",
         )
@@ -1123,7 +1128,7 @@ class MovePointsToCrossings:
         # keep only priority points within 100 meters of ramps
         if self.with_ramps:
             arcpy.management.MakeFeatureLayer(
-                self.input_road_feature, ramps_lyr, where_clause="typeveg = 'rampe'"
+                self.dissolved_roads, ramps_lyr, where_clause="typeveg = 'rampe'"
             )
             arcpy.analysis.Buffer(ramps_lyr, buffer_100m, "100 Meters")
             combine_intersecting_buffers(
@@ -1354,6 +1359,7 @@ class MovePointsToCrossings:
                 changed = False
 
                 # Priority 1
+                """
                 if oid in self.near1_map:
                     nx, ny, nd, nf = self.near1_map[oid]
                     new_geom = arcpy.PointGeometry(arcpy.Point(nx, ny), sr)
@@ -1374,6 +1380,13 @@ class MovePointsToCrossings:
                     nx, ny, nd, nf = self.near2_map[oid]
                     new_geom = arcpy.PointGeometry(arcpy.Point(nx, ny), sr)
                     priority = [2]
+                    roadid = [nf]
+                    changed = True
+                """
+                if oid in self.near_map_crossing:
+                    nx, ny, nd, nf, pr, vks = self.near_map_crossing[oid]
+                    new_geom = arcpy.PointGeometry(arcpy.Point(nx, ny), sr)
+                    priority = [pr]
                     roadid = [nf]
                     changed = True
 
@@ -1719,6 +1732,159 @@ class MovePointsToCrossings:
                                 float(ny),
                                 float(nr),
                                 int(nf),
+                            )
+                    else:
+                        continue
+
+            arcpy.management.Delete(near_table)
+
+        else:
+            near_map = {}
+
+        return near_map
+    
+    @staticmethod
+    def create_near_map_unmatched_buffer_2(
+        distance_str, in_fc, near_fc, unmatched_oids, buffer_fc
+    ):
+        """
+        For the subset of points in 'in_fc' (unmatched_oids) find the nearest feature in 'near_fc'
+        but only if that near_fc feature intersects the closest buffer polygon to the point.
+        Returns a dict: {in_fid: (near_x, near_y, near_dist, near_fid)}
+        """
+        if unmatched_oids:
+            points_lyr = "points_lyr_unmatched"
+            arcpy.MakeFeatureLayer_management(in_fc, points_lyr)
+
+            oid_field = arcpy.Describe(in_fc).oidFieldName
+
+            in_list = ",".join(map(str, unmatched_oids))
+            where = f"{arcpy.AddFieldDelimiters(in_fc, oid_field)} IN ({in_list})"
+
+            arcpy.SelectLayerByAttribute_management(points_lyr, "NEW_SELECTION", where)
+
+            near_table = "in_memory\\near_table"
+            arcpy.GenerateNearTable_analysis(
+                in_features=points_lyr,
+                near_features=buffer_fc,
+                out_table=near_table,
+                search_radius=distance_str,
+                location="LOCATION",
+                angle="NO_ANGLE",
+                closest="ALL",
+                method="PLANAR",
+            )
+
+            in_buffer_map = {}
+            with arcpy.da.SearchCursor(
+                near_table, ["IN_FID", "NEAR_FID", "NEAR_RANK"]
+            ) as s:
+                for in_fid, nf, nr in s:
+                    if nr != 1:
+                        continue
+                    if nf is None:
+                        continue
+                    in_buffer_map[int(in_fid)] = float(nf)
+
+            arcpy.management.Delete(near_table)
+
+            near_table = "in_memory\\near_table"
+            arcpy.GenerateNearTable_analysis(
+                in_features=near_fc,
+                near_features=buffer_fc,
+                out_table=near_table,
+                search_radius=distance_str,
+                location="LOCATION",
+                angle="NO_ANGLE",
+                closest="ALL",
+                method="PLANAR",
+            )
+
+            near_buffer_map = {}
+            with arcpy.da.SearchCursor(
+                near_table, ["IN_FID", "NEAR_FID", "NEAR_RANK"]
+            ) as s:
+                for in_fid, nf, nr in s:
+                    if nr != 1:
+                        continue
+                    if nf is None:
+                        continue
+                    near_buffer_map[int(in_fid)] = float(nf)
+
+            arcpy.management.Delete(near_table)
+
+            #map[near oid] = [priority, vegkategori_sum] 
+            near_oid_pr_vks = {}
+            with arcpy.da.SearchCursor(near_fc, ["OID@", "priority", "vegkategori_sum"]) as u_cur:
+                for oid, pr, vks in u_cur:
+                    near_oid_pr_vks[oid] = [pr, vks]
+
+            near_table = "in_memory\\near_table"
+            arcpy.GenerateNearTable_analysis(
+                in_features=points_lyr,
+                near_features=near_fc,
+                out_table=near_table,
+                search_radius=distance_str,
+                location="LOCATION",
+                angle="NO_ANGLE",
+                closest="ALL",
+                method="PLANAR",
+            )
+
+            near_map = {}
+            with arcpy.da.SearchCursor(
+                near_table, ["IN_FID", "NEAR_X", "NEAR_Y", "NEAR_FID", "NEAR_RANK"]
+            ) as s:
+                for in_fid, nx, ny, nf, nr in s:
+                    if nx is None or ny is None:
+                        continue
+                    pr, vks = near_oid_pr_vks[nf]
+                    if in_buffer_map[int(in_fid)] == near_buffer_map[int(nf)]: #hvis pr lavere bruk den, hvis pr er lik bruk lavest vks
+                        if int(in_fid) in near_map:
+                            if near_map[int(in_fid)][4] > pr:
+                                near_map[int(in_fid)] = (
+                                        float(nx),
+                                        float(ny),
+                                        float(nr),
+                                        int(nf),
+                                        int(pr),
+                                        int(vks),
+                                    )
+                            else:
+                                if near_map[int(in_fid)][4] == pr:
+                                    if near_map[int(in_fid)][5] > vks:
+                                         near_map[int(in_fid)] = (
+                                        float(nx),
+                                        float(ny),
+                                        float(nr),
+                                        int(nf),
+                                        int(pr),
+                                        int(vks),
+                                    )
+                                    else:
+                                        if near_map[int(in_fid)][5] == vks:
+                                            if near_map[int(in_fid)][2] > nr:
+                                                near_map[int(in_fid)] = (
+                                                    float(nx),
+                                                    float(ny),
+                                                    float(nr),
+                                                    int(nf),
+                                                    int(pr),
+                                                    int(vks),
+                                                )
+                                            else:
+                                                continue
+                                        else:
+                                            continue
+                            
+                        else:
+                            near_map[int(in_fid)] = (
+                                float(nx),
+                                float(ny),
+                                float(nr),
+                                int(nf),
+                                int(pr),
+                                int(vks),
                             )
                     else:
                         continue
