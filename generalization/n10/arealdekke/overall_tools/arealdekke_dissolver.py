@@ -5,7 +5,7 @@ from custom_tools.decorators.timing_decorator import timing_decorator
 from composition_configs import core_config
 from file_manager import WorkFileManager
 from file_manager.n10.file_manager_arealdekke import Arealdekke_N10
-from input_data import input_n10
+#from input_data import input_n10
 from env_setup import environment_setup
 
 from custom_tools.general_tools.partition_iterator import PartitionIterator
@@ -357,7 +357,7 @@ def normal_call(input_fc: str, output_fc: str):
     identity = "in_memory\\arealdekke_identity"
     arcpy.analysis.Identity(
         in_features=input_fc,
-        identity_features=input_n10.Fishnet_500m,
+        identity_features=rf"C:\GIS_Files\ag_inputs – Kopi\N10_input.gdb\Fishnet_500m", # input_n10.Fishnet_500m,
         out_feature_class=identity,
         join_attributes="ONLY_FID",
     )
@@ -377,7 +377,7 @@ def partition_call(input_fc: str, output_fc: str, map_scale: str):
     identity = "in_memory\\arealdekke_identity"
     arcpy.analysis.Identity(  # Resultatet ble bedre når identity ble kjørt utenfor partition iterator. Identity brukes bare for samferdsel tror jeg.
         in_features=input_fc,
-        identity_features=input_n10.Fishnet_500m,
+        identity_features=rf"C:\GIS_Files\ag_inputs – Kopi\N10_input.gdb\Fishnet_500m", # input_n10.Fishnet_500m,
         out_feature_class=identity,
         join_attributes="ONLY_FID",
     )

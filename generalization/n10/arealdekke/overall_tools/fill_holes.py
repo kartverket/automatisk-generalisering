@@ -139,7 +139,6 @@ def find_holes(files: dict, target: str) -> None:
         files (dict): Dictionary with all the working files
         target (str): Land use category that is being processed
     """
-
     # Collect the holes and store them in a separate feature class
     arcpy.analysis.Erase(
         in_features=files["complete_without_locked"],

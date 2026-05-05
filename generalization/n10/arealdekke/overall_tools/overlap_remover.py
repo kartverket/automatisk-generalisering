@@ -1,7 +1,5 @@
 # Libraries
 
-from importlib.metadata import files
-
 import arcpy
 
 arcpy.env.overwriteOutput = True

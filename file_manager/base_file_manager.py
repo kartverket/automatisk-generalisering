@@ -38,7 +38,7 @@ class BaseFileManager:
     """
 
     # Define class-level attributes that are constant across instances
-    local_root_directory = config.output_folder
+    local_root_directory = Path(config.input_data_folder).parent
     project_root_directory = env_setup.global_config.main_directory_name
     general_files_directory_name = env_setup.global_config.general_files_name
     lyrx_directory_name = env_setup.global_config.lyrx_directory_name

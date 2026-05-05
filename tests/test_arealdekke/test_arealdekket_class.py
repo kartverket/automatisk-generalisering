@@ -14,7 +14,7 @@ from generalization.n10.arealdekke.orchestrator.category_class import Category
 class test_arealdekket_class(unittest.TestCase):
 
     def setUp(self):
-        
+
         data_pre_comp: dict = {
             "newest_version": "path",
             "map_scale": "N10",
