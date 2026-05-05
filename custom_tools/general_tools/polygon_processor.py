@@ -1,7 +1,6 @@
 import numpy as np
 import arcpy
 import os
-from tqdm import tqdm
 import random
 from multiprocessing import Pool, cpu_count
 

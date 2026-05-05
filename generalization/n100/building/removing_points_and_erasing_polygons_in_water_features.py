@@ -3,7 +3,6 @@ import arcpy
 
 # Importing custom files
 from file_manager.n100.file_manager_buildings import Building_N100
-from input_data.input_symbology import SymbologyN100
 from constants.n100_constants import N100_Values
 
 # Import custom modules

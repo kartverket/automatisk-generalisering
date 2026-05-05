@@ -4,7 +4,7 @@ from env_setup import environment_setup
 from custom_tools.general_tools import custom_arcpy
 from file_manager.work_file_manager import WorkFileManager
 from custom_tools.general_tools import file_utilities
-from composition_configs import logic_config, core_config
+from composition_configs import logic_config
 
 
 class LineToBufferSymbology:

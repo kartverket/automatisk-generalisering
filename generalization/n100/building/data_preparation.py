@@ -2,10 +2,6 @@
 import arcpy
 
 # Importing custom input files modules
-from custom_tools.generalization_tools.building import (
-    begrensningskurve_land_waterbodies,
-)
-from generalization.n100 import building
 from input_data import input_n50
 from input_data import input_n100
 from input_data import input_other

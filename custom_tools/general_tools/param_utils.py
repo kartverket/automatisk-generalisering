@@ -1,4 +1,4 @@
-from dataclasses import is_dataclass, asdict, fields
+from dataclasses import is_dataclass, asdict
 from typing import (
     Any,
     Mapping,
@@ -6,10 +6,6 @@ from typing import (
     Union,
     Dict,
     List,
-    Sequence,
-    get_type_hints,
-    get_origin,
-    get_args,
 )
 import inspect
 import yaml

@@ -1,12 +1,10 @@
 import arcpy
 
 # Importing custom modules
-from file_manager.n100.file_manager_buildings import Building_N100
 from env_setup import environment_setup
 from custom_tools.general_tools import custom_arcpy
 from file_manager import WorkFileManager
 from composition_configs import logic_config
-from constants.n100_constants import N100_Values
 
 
 class BegrensningskurveLandWaterbodies:

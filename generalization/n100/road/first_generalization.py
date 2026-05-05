@@ -1,13 +1,10 @@
 # Importing packages
 import arcpy
-import os
 
 from custom_tools.general_tools.study_area_selector import StudyAreaSelector
 
 # Importing custom input files modules
-from input_data import input_n50
 from input_data import input_n100
-from input_data import input_other
 
 # Importing custom modules
 from file_manager.n100.file_manager_roads import Road_N100

@@ -1,16 +1,11 @@
 import arcpy
-from typing import List, Dict
+from typing import List
 from dataclasses import dataclass
 
 from file_manager import WorkFileManager
 from env_setup import environment_setup
 from custom_tools.general_tools import custom_arcpy
-from custom_tools.decorators.partition_io_decorator import partition_io_decorator
-from file_manager.n100.file_manager_roads import Road_N100
-from file_manager.n100.file_manager_buildings import Building_N100
-import config
-from input_data.input_symbology import SymbologyN100
-from composition_configs import core_config, logic_config
+from composition_configs import logic_config
 
 
 @dataclass

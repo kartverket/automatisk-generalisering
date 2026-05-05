@@ -9,14 +9,10 @@ from pathlib import Path
 from generalization.n10.arealdekke.category_tools.buff_small_polygon_segments import (
     buff_small_polygon_segments,
 )
-from composition_configs import core_config, logic_config
+from composition_configs import logic_config
 from custom_tools.decorators.timing_decorator import timing_decorator
 from custom_tools.general_tools.param_utils import initialize_params
 from file_manager import WorkFileManager
-from file_manager.n10.file_manager_arealdekke import Arealdekke_N10
-from generalization.n10.arealdekke.category_tools.simplify_polygon import (
-    simplify_and_smooth_polygon,
-)
 from generalization.n10.arealdekke.parameters.parameter_dataclasses import (
     LandUseParameters,
 )

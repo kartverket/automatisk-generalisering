@@ -1,5 +1,4 @@
 import arcpy
-from pprint import pprint
 import config
 from custom_tools.general_tools import custom_arcpy
 from custom_tools.general_tools.partition_iterator import PartitionIterator
@@ -9,7 +8,6 @@ from composition_configs import core_config, logic_config
 from custom_tools.generalization_tools.building.resolve_building_conflicts import (
     ResolveBuildingConflictsPolygon,
 )
-from file_manager import work_file_manager
 from input_data import input_symbology
 
 # Importing environment settings

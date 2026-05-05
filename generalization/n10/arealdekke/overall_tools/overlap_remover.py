@@ -1,6 +1,5 @@
 # Libraries
 
-from importlib.metadata import files
 
 import arcpy
 

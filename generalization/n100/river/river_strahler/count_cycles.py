@@ -1,5 +1,4 @@
 import geopandas as gpd
-from shapely.geometry import LineString
 import networkx as nx
 import matplotlib.pyplot as plt
 import config

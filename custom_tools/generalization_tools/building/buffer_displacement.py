@@ -1,14 +1,11 @@
 import arcpy
-import math
-from typing import Union, List, Dict, Tuple
+from typing import Union
 
 from env_setup import environment_setup
-from constants.n100_constants import N100_Symbology, N100_SQLResources, N100_Values
-from file_manager.n100.file_manager_buildings import Building_N100
 from custom_tools.general_tools.line_to_buffer_symbology import LineToBufferSymbology
 from custom_tools.general_tools.polygon_processor import PolygonProcessor
 from custom_tools.decorators.partition_io_decorator import partition_io_decorator
-from composition_configs import logic_config, core_config
+from composition_configs import logic_config
 from file_manager.work_file_manager import WorkFileManager
 from custom_tools.general_tools import file_utilities
 

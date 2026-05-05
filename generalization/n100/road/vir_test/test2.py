@@ -2,9 +2,7 @@
 # eller eventuelt låse veger som krysser over store veger
 
 import arcpy
-from openpyxl.styles.builtins import output
 
-from input_data import input_n50, input_n100
 from file_manager.n100.file_manager_roads import Road_N100
 from env_setup import environment_setup
 from custom_tools.general_tools import custom_arcpy
