@@ -3,8 +3,8 @@ from pathlib import Path
 
 import config
 
-import env_setup.global_config
 from composition_configs import type_defs
+from env_setup.project_layout import ProjectLayout
 
 
 class BaseFileManager:
@@ -22,12 +22,6 @@ class BaseFileManager:
             Generates the absolute path for ArcGIS layer files (.lyrx) that cannot be stored
             in geodatabases.
 
-    Attributes:
-        local_root_directory (str): The local root directory for the project's output.
-        project_root_directory (str): The root directory name of the project.
-        general_files_directory_name (str): The directory name for storing general files.
-        lyrx_directory_name (str): The directory name for storing ArcGIS layer files (.lyrx).
-
     Args:
         scale (str): The scale of the geospatial data, used to differentiate directories and
                      file names. Needs to be defined when imported.
@@ -37,12 +31,6 @@ class BaseFileManager:
     This class provides methods to generate standardized absolute paths for geodatabase files,
     general files, and layer files, using the project's naming conventions and directory structure.
     """
-
-    # Define class-level attributes that are constant across instances
-    local_root_directory = config.output_folder
-    project_root_directory = env_setup.global_config.main_directory_name
-    general_files_directory_name = env_setup.global_config.general_files_name
-    lyrx_directory_name = env_setup.global_config.lyrx_directory_name
 
     def __init__(
         self,
@@ -59,13 +47,11 @@ class BaseFileManager:
         self.script_source_name = script_source_name
         self.description = description
 
-        base = (
-            Path(self.local_root_directory) / self.project_root_directory / self.scale
-        )
-        self._gdb_dir = base / f"{self.object}.gdb"
-        self._general_dir = base / self.general_files_directory_name
-        self._lyrx_dir = base / self.lyrx_directory_name
-        self._final_outputs_dir = base / f"{env_setup.global_config.final_outputs}.gdb"
+        layout = ProjectLayout(output_root=Path(config.output_folder))
+        self._gdb_dir = layout.gdb(self.scale, self.object)
+        self._general_dir = layout.general_files_dir(self.scale)
+        self._lyrx_dir = layout.lyrx_dir(self.scale)
+        self._final_outputs_dir = layout.gdb(self.scale, layout.final_outputs_name)
 
     @property
     def script_source_name(self):

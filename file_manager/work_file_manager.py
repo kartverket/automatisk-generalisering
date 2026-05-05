@@ -78,6 +78,10 @@ class WorkFileManager:
             (e.g. "n100", "n50"), and returns the path up to and including that
             segment plus the trailing origin file name fragment.
 
+            The first segment after the scale (typically the .gdb container) is
+            dropped; the remainder is joined into a single name fragment used as
+            a tag inside lyrx and general-files filenames.
+
         Returns:
             tuple[Path, str]: The scale path and the origin file name fragment.
         """
@@ -90,7 +94,13 @@ class WorkFileManager:
         for i, part in enumerate(parts):
             if re.fullmatch(r"\w+\d0", part):
                 scale_path = Path(*parts[: i + 1])
-                origin_file_name = str(Path(*parts[i + 1 :]))
+                after_scale = parts[i + 1 :]
+                if len(after_scale) > 1:
+                    origin_file_name = str(Path(*after_scale[1:]))
+                elif after_scale:
+                    origin_file_name = after_scale[0]
+                else:
+                    origin_file_name = ""
                 return scale_path, origin_file_name
         raise ValueError("Scale directory pattern not found in the path.")
 

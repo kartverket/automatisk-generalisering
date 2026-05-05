@@ -1,14 +1,11 @@
-import os
 from datetime import datetime
+from pathlib import Path
 
 import arcpy
 import config
 
 from env_setup.global_config import (
     final_outputs,
-    general_files_name,
-    lyrx_directory_name,
-    main_directory_name,
     object_admin,
     object_arealdekke_flate,
     object_bane,
@@ -23,6 +20,7 @@ from env_setup.global_config import (
     scale_n250,
     scale_n500,
 )
+from env_setup.project_layout import ProjectLayout
 
 project_spatial_reference = 25833
 
@@ -134,22 +132,21 @@ class ProjectDirectorySetup:
 
     Details:
         - Checks if the global setup has already been completed to prevent redundancy.
-        - Creates a main directory and specified subdirectories for organizing project files.
-        - Generates geodatabases in the designated subdirectories for data storage.
-        - Sets up additional subdirectories within the subdirectories for miscellaneous files and layer configurations.
-        - A common method `create_subdir_structure` is introduced to handle the creation of additional subdirectories within the subdirectories.
+        - Creates the main directory and a per-scale subdirectory for organizing project files.
+        - Generates geodatabases in each scale subdirectory for data storage.
+        - Creates lyrx and general-files subdirectories within each scale subdirectory.
 
     Attributes:
-        base_directory (str): The root directory for the project structure.
-        sub_directories (list): A list of names for subdirectories to be created within the project structure.
-        gdb_names (list): Names of the geodatabases to be created in each subdirectory.
+        layout (ProjectLayout): The layout used to compose the directory and gdb paths.
+        scales (list): Per-scale subdirectories to create.
+        gdb_names (list): Names of the geodatabases to create in each scale subdirectory.
     """
 
     _setup_done_globally = False
 
-    def __init__(self, base_directory=config.output_folder):
-        self.base_directory = base_directory
-        self.sub_directories = [
+    def __init__(self, layout: ProjectLayout | None = None):
+        self.layout = layout or ProjectLayout(output_root=Path(config.output_folder))
+        self.scales = [
             scale_n10,
             scale_n50,
             scale_n100,
@@ -172,60 +169,22 @@ class ProjectDirectorySetup:
         if ProjectDirectorySetup._setup_done_globally:
             return
 
-        main_directory_path = os.path.join(self.base_directory, main_directory_name)
-        self.create_directory_structure(main_directory_path)
-        self.create_gdbs_in_subdirectories(main_directory_path)
-        self.create_subdirectory_structure(
-            main_directory_path, subdir_structure=lyrx_directory_name
-        )
-        self.create_subdirectory_structure(
-            main_directory_path, subdir_structure=general_files_name
-        )
+        self.layout.main_dir.mkdir(parents=True, exist_ok=True)
+        for scale in self.scales:
+            scale_dir = self.layout.scale_dir(scale)
+            scale_dir.mkdir(parents=True, exist_ok=True)
+            for gdb_name in self.gdb_names:
+                gdb_path = self.layout.gdb(scale, gdb_name)
+                if not arcpy.Exists(str(gdb_path)):
+                    arcpy.CreateFileGDB_management(
+                        out_folder_path=str(scale_dir),
+                        out_name=f"{gdb_name}.gdb",
+                    )
+            self.layout.lyrx_dir(scale).mkdir(parents=True, exist_ok=True)
+            self.layout.general_files_dir(scale).mkdir(parents=True, exist_ok=True)
 
         print("Directory structure completed.\n")
         ProjectDirectorySetup._setup_done_globally = True
-
-    def create_directory_structure(
-        self,
-        main_directory_path,
-    ):
-        os.makedirs(main_directory_path, exist_ok=True)
-        for sub_directory in self.sub_directories:
-            path = os.path.join(
-                main_directory_path,
-                sub_directory,
-            )
-            os.makedirs(path, exist_ok=True)
-
-    def create_gdbs_in_subdirectories(
-        self,
-        main_directory_path,
-    ):
-        for sub_directory in self.sub_directories:
-            subdir_path = os.path.join(
-                main_directory_path,
-                sub_directory,
-            )
-            for gdb_name in self.gdb_names:
-                gdb_path = os.path.join(subdir_path, f"{gdb_name}.gdb")
-                if not arcpy.Exists(gdb_path):
-                    arcpy.CreateFileGDB_management(
-                        out_folder_path=subdir_path,
-                        out_name=f"{gdb_name}.gdb",
-                    )
-
-    def create_subdirectory_structure(
-        self,
-        main_directory_path,
-        subdir_structure,
-    ):
-        for sub_directory in self.sub_directories:
-            structure_path = os.path.join(
-                main_directory_path,
-                sub_directory,
-                subdir_structure,
-            )
-            os.makedirs(structure_path, exist_ok=True)
 
 
 if __name__ == "__main__":
