@@ -2,8 +2,7 @@
 from custom_tools.decorators.timing_decorator import timing_decorator
 
 # Importing road scripts
-from generalization.n100.road import data_preparation
-from generalization.n100.road import first_generalization
+from generalization.n100.road import data_preparation, first_generalization
 
 
 # Main function that runs all the road scripts

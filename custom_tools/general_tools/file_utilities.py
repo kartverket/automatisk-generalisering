@@ -1,7 +1,8 @@
-from typing import Union
-import arcpy
-import os
 import json
+import os
+from typing import Union
+
+import arcpy
 
 from composition_configs import io_types
 

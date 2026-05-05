@@ -1,5 +1,6 @@
-import pyperclip
 import re
+
+import pyperclip
 
 DRIVE_PATTERN = r"[a-zA-Z]:\\"
 FILENAME_PATTERN = r'[^\\]+?\.\w+"?'

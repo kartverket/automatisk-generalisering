@@ -1,15 +1,16 @@
+# Import modules
+import datetime as dt
+
 import arcpy
 
-# Importing custom files relative to the root path
-from env_setup import environment_setup
 from custom_tools.decorators.timing_decorator import timing_decorator
 from custom_tools.general_tools.geometry_tools import GeometryValidator
 
+# Importing custom files relative to the root path
+from env_setup import environment_setup
+
 # Importing temporary files
 from file_manager.n100.file_manager_buildings import Building_N100
-
-# Import modules
-import datetime as dt
 
 
 # Main function

@@ -6,13 +6,13 @@ arcpy.env.overwriteOutput = True
 
 from pathlib import Path
 
-from generalization.n10.arealdekke.category_tools.buff_small_polygon_segments import (
-    buff_small_polygon_segments,
-)
 from composition_configs import logic_config
 from custom_tools.decorators.timing_decorator import timing_decorator
 from custom_tools.general_tools.param_utils import initialize_params
 from file_manager import WorkFileManager
+from generalization.n10.arealdekke.category_tools.buff_small_polygon_segments import (
+    buff_small_polygon_segments,
+)
 from generalization.n10.arealdekke.parameters.parameter_dataclasses import (
     LandUseParameters,
 )

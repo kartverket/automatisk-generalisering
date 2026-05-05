@@ -1,6 +1,6 @@
 # Importing config file from the root path
-from config import fkb_path
 import arcpy
+from config import fkb_path
 
 # Defining universal paths for fkb regardless of local path env_setup
 fkb_lufthavn_grense = rf"{fkb_path}\fkb_lufthavn_grense"

@@ -1,13 +1,14 @@
-from dataclasses import is_dataclass, asdict
+import inspect
+from dataclasses import asdict, is_dataclass
 from typing import (
     Any,
+    Dict,
+    List,
     Mapping,
     Optional,
     Union,
-    Dict,
-    List,
 )
-import inspect
+
 import yaml
 
 from composition_configs import core_config

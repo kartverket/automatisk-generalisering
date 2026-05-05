@@ -10,8 +10,9 @@ Steg 4: Splitt vegnett ved snap
 Steg 5: Merge og lag (CLEAN!) elveg_and_sti
 """
 
-import arcpy
 import os
+
+import arcpy
 
 # ===== ArcPy miljø =====
 gdb = r"C:\AG_inputs\Roads_raw.gdb"

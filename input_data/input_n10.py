@@ -1,6 +1,6 @@
 # Importing config file from the root path
-from config import n10_path
 import arcpy
+from config import n10_path
 
 # Defining universal paths for n10 regardless of local path env_setup
 Allmenning = rf"{n10_path}\Allmenning"

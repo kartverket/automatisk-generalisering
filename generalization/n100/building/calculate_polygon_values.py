@@ -1,12 +1,12 @@
 # Importing custom files
-from file_manager.n100.file_manager_buildings import Building_N100
-from constants.n100_constants import N100_SQLResources
-
 # Importing general packages
 import arcpy
 
+from constants.n100_constants import N100_SQLResources
+
 # Importing timing decorator
 from custom_tools.decorators.timing_decorator import timing_decorator
+from file_manager.n100.file_manager_buildings import Building_N100
 
 
 @timing_decorator

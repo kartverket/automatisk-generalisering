@@ -1,27 +1,27 @@
 # Importing modules
-from env_setup import environment_setup
 from custom_tools.decorators.timing_decorator import timing_decorator
-
-# Importing building scripts
-from generalization.n100.building import data_preparation
-from generalization.n100.building import calculate_polygon_values
-from generalization.n100.building import calculate_point_values
-from generalization.n100.building import simplify_polygons
-from generalization.n100.building import polygon_propogate_displacement
-from generalization.n100.building import polygon_to_point
-from generalization.n100.building import hospital_church_clusters
-from generalization.n100.building import point_propogate_displacement
-from generalization.n100.building import point_displacement_with_buffer
-from generalization.n100.building import point_resolve_building_conflicts
-from generalization.n100.building import (
-    removing_points_and_erasing_polygons_in_water_features,
-)
-from generalization.n100.building import data_clean_up
-from generalization.n100.building import polygon_resolve_building_conflicts
-from generalization.n100.building import removing_overlapping_polygons_and_points
-from generalization.n100.building import finalizing_buildings
+from env_setup import environment_setup
 from file_manager import WorkFileManager
 from file_manager.n100.file_manager_buildings import Building_N100
+
+# Importing building scripts
+from generalization.n100.building import (
+    calculate_point_values,
+    calculate_polygon_values,
+    data_clean_up,
+    data_preparation,
+    finalizing_buildings,
+    hospital_church_clusters,
+    point_displacement_with_buffer,
+    point_propogate_displacement,
+    point_resolve_building_conflicts,
+    polygon_propogate_displacement,
+    polygon_resolve_building_conflicts,
+    polygon_to_point,
+    removing_overlapping_polygons_and_points,
+    removing_points_and_erasing_polygons_in_water_features,
+    simplify_polygons,
+)
 
 
 # Main function that runs all the building scripts

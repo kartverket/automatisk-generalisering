@@ -3,13 +3,11 @@
 
 import arcpy
 
-from file_manager.n100.file_manager_roads import Road_N100
-from env_setup import environment_setup
-from custom_tools.general_tools import custom_arcpy
-
-from input_data import input_roads
-
 from custom_tools.decorators.timing_decorator import timing_decorator
+from custom_tools.general_tools import custom_arcpy
+from env_setup import environment_setup
+from file_manager.n100.file_manager_roads import Road_N100
+from input_data import input_roads
 
 
 @timing_decorator

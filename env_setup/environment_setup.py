@@ -1,26 +1,27 @@
-import arcpy
 import os
 from datetime import datetime
 
+import arcpy
 import config
+
 from env_setup.global_config import (
     final_outputs,
+    general_files_name,
+    lyrx_directory_name,
+    main_directory_name,
+    object_admin,
+    object_arealdekke_flate,
+    object_bane,
+    object_bygg_og_anlegg,
+    object_bygning,
+    object_elv_bekk,
+    object_hoyde,
+    object_veg_sti,
     scale_n10,
     scale_n50,
     scale_n100,
     scale_n250,
     scale_n500,
-    object_admin,
-    object_arealdekke_flate,
-    object_bygning,
-    object_elv_bekk,
-    object_veg_sti,
-    object_bygg_og_anlegg,
-    object_bane,
-    object_hoyde,
-    main_directory_name,
-    lyrx_directory_name,
-    general_files_name,
 )
 
 project_spatial_reference = 25833

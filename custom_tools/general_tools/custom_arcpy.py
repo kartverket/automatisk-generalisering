@@ -1,5 +1,6 @@
-import arcpy
 from enum import Enum
+
+import arcpy
 
 
 # Selection Type definition used for select by attribute functions

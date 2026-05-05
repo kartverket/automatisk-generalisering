@@ -1,10 +1,9 @@
-from config import roads_path, road_output, roads_to_rotate
+from config import road_output, roads_path, roads_to_rotate
 
-from config import roads_to_rotate
-from env_setup import environment_setup
 from custom_tools.general_tools import custom_arcpy
-from file_manager.n100.file_manager_roads import Road_N100
+from env_setup import environment_setup
 from file_manager.n100.file_manager_buildings import Building_N100
+from file_manager.n100.file_manager_roads import Road_N100
 
 vegsenterlinje = rf"{roads_path}\vegsenterlinje"
 elveg = rf"{roads_path}\elveg"

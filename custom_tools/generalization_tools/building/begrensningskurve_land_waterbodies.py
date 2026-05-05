@@ -1,10 +1,11 @@
 import arcpy
 
+from composition_configs import logic_config
+from custom_tools.general_tools import custom_arcpy
+
 # Importing custom modules
 from env_setup import environment_setup
-from custom_tools.general_tools import custom_arcpy
 from file_manager import WorkFileManager
-from composition_configs import logic_config
 
 
 class BegrensningskurveLandWaterbodies:

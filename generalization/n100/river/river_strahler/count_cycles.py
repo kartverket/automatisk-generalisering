@@ -1,7 +1,7 @@
-import geopandas as gpd
-import networkx as nx
-import matplotlib.pyplot as plt
 import config
+import geopandas as gpd
+import matplotlib.pyplot as plt
+import networkx as nx
 
 river_height_path = config.output_folder + r"\river_basin_combined_3D.shp"
 

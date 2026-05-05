@@ -1,7 +1,8 @@
+import math
+import os
+
 import arcpy
 import networkx as nx
-import os
-import math
 
 from env_setup import environment_setup
 from file_manager.n100.file_manager_rivers import River_N100

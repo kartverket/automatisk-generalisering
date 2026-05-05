@@ -1,7 +1,8 @@
-from pathlib import Path
 import re
+from pathlib import Path
 
 import config
+
 import env_setup.global_config
 from composition_configs import type_defs
 

@@ -1,13 +1,16 @@
 # Libraries
 
+import os
+
 import arcpy
 import numpy as np
-import os
 import requests
 
 arcpy.env.overwriteOutput = True
 
 from collections import defaultdict
+
+from lxml import etree
 from tqdm import tqdm
 
 from composition_configs import core_config
@@ -18,7 +21,6 @@ from env_setup import environment_setup
 from file_manager import WorkFileManager
 from file_manager.n10.file_manager_landforms import Landform_N10
 from input_data import input_n10, input_n50, input_n100, input_roads
-from lxml import etree
 
 # ========================
 # Program

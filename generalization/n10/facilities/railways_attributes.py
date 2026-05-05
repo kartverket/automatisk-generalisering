@@ -1,8 +1,8 @@
 # Libraries
 
-import arcpy
-
 from collections import defaultdict, deque
+
+import arcpy
 from tqdm import tqdm
 
 arcpy.env.overwriteOutput = True

@@ -1,24 +1,22 @@
 
 # Importing custom files
 import config
-from file_manager.n100.file_manager_buildings import Building_N100
+
+from composition_configs import core_config, logic_config
 from constants.n100_constants import N100_Symbology, N100_Values
 
-from env_setup import environment_setup
-from input_data import input_symbology
+# Importing environment settings
+# Importing timing decorator
+from custom_tools.decorators.timing_decorator import timing_decorator
+from custom_tools.general_tools.geometry_tools import GeometryValidator
 from custom_tools.general_tools.partition_iterator import PartitionIterator
+from custom_tools.general_tools.polygon_processor import PolygonProcessor
 from custom_tools.generalization_tools.building.resolve_building_conflicts import (
     ResolveBuildingConflictsPoints,
 )
-from custom_tools.general_tools.polygon_processor import PolygonProcessor
-from custom_tools.general_tools.geometry_tools import GeometryValidator
-
-from composition_configs import core_config, logic_config
-
-# Importing environment settings
-
-# Importing timing decorator
-from custom_tools.decorators.timing_decorator import timing_decorator
+from env_setup import environment_setup
+from file_manager.n100.file_manager_buildings import Building_N100
+from input_data import input_symbology
 
 iteration_fc = config.resolve_building_conflicts_iteration_feature
 

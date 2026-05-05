@@ -1,12 +1,11 @@
-import arcpy
 import re
 from datetime import datetime
-from typing import overload, Any, Optional, Union, Iterable, Literal
+from typing import Any, Iterable, Literal, Optional, Union, overload
 
-
-from composition_configs import core_config, type_defs, io_types
+import arcpy
 
 import env_setup.global_config
+from composition_configs import core_config, io_types, type_defs
 
 
 class WorkFileManager:

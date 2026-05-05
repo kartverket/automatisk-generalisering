@@ -1,29 +1,27 @@
 # Importing modules
 from dataclasses import dataclass
-import arcpy
-
 from typing import (
+    Iterable,
     List,
     Optional,
-    Iterable,
-    Union,
     Set,
+    Union,
 )
+
+import arcpy
 
 # Importing custom files
 import config
-from custom_tools.general_tools import custom_arcpy
-from typing import Union, List
+
 import input_data.input_n50
 import input_data.input_n100
-
-from file_manager.n100.file_manager_buildings import Building_N100
-
-from file_manager import WorkFileManager
 from composition_configs import logic_config
 from constants.n100_constants import N100_Symbology, N100_Values
+from custom_tools.general_tools import custom_arcpy
 from custom_tools.general_tools.polygon_processor import PolygonProcessor
 from env_setup import environment_setup
+from file_manager import WorkFileManager
+from file_manager.n100.file_manager_buildings import Building_N100
 from input_data import input_symbology
 
 # Importing timing decorator
