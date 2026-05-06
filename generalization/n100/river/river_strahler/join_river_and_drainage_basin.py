@@ -3,7 +3,6 @@ This script joins river and drainage basin data, selecting rivers within a speci
 """
 
 import arcpy
-import geopandas as gpd
 import config
 
 gdb_path = config.n50_path

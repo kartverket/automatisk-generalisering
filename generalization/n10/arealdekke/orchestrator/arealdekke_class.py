@@ -1,43 +1,45 @@
 # Module imports:
+from pathlib import Path
+
 import arcpy
 import yaml
-from pathlib import Path
-from custom_tools.decorators.timing_decorator import timing_decorator
+
 from composition_configs import core_config
+from custom_tools.decorators.timing_decorator import timing_decorator
 from file_manager import WorkFileManager
 from file_manager.n10.file_manager_arealdekke import Arealdekke_N10
 from generalization.n10.arealdekke.orchestrator.category_class import Category
-from generalization.n10.arealdekke.orchestrator.program_history_class import (
-    Program_history_class as History_class,
-)
 from generalization.n10.arealdekke.orchestrator.enum_variables import (
     history_keys as keys,
+)
+from generalization.n10.arealdekke.orchestrator.program_history_class import (
+    Program_history_class as History_class,
 )
 
 # Arealdekke tools:
 from generalization.n10.arealdekke.overall_tools.arealdekke_dissolver import (
     partition_call as arealdekke_dissolver,
 )
-from generalization.n10.arealdekke.overall_tools.gangsykkel_dissolver import (
-    partition_call as gangsykkel_dissolver,
+from generalization.n10.arealdekke.overall_tools.attribute_changer import (
+    attribute_changer,
 )
 from generalization.n10.arealdekke.overall_tools.eliminate_small_polygons import (
     partition_call as eliminate_small_polygons,
 )
-from generalization.n10.arealdekke.overall_tools.attribute_changer import (
-    attribute_changer,
+from generalization.n10.arealdekke.overall_tools.fill_holes import fill_holes
+from generalization.n10.arealdekke.overall_tools.gangsykkel_dissolver import (
+    partition_call as gangsykkel_dissolver,
 )
 from generalization.n10.arealdekke.overall_tools.island_controller import (
     island_controller,
+)
+from generalization.n10.arealdekke.overall_tools.overlap_remover import (
+    remove_overlaps,
 )
 from generalization.n10.arealdekke.overall_tools.passability_layer import (
     create_passability_layer,
     postprocess_passability_layer,
 )
-from generalization.n10.arealdekke.overall_tools.overlap_remover import (
-    remove_overlaps,
-)
-from generalization.n10.arealdekke.overall_tools.fill_holes import fill_holes
 from generalization.n10.arealdekke.overall_tools.small_features_changer import (
     change_attribute_value_main,
 )

@@ -1,12 +1,4 @@
 from pydantic.dataclasses import dataclass
-from typing import (
-    Dict,
-    List,
-    Optional,
-    Tuple,
-    Union,
-    Any,
-)
 
 
 @dataclass(frozen=True)

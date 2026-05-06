@@ -1,6 +1,8 @@
-import yaml
 import os
 from pathlib import Path
+
+import yaml
+
 from generalization.n10.arealdekke.orchestrator.category_class import Category
 from generalization.n10.arealdekke.orchestrator.enum_variables import (
     history_keys as keys,

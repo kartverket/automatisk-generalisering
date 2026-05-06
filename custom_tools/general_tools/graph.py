@@ -1,7 +1,7 @@
+from collections import defaultdict
+
 import arcpy
 import networkx as nx
-
-from collections import defaultdict
 
 
 class GISGraph:

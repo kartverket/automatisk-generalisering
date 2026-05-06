@@ -1,15 +1,15 @@
-import arcpy
 import math
 
-from custom_tools.decorators.timing_decorator import timing_decorator
-from custom_tools.general_tools.isolated_line_remover import IsolatedLineRemover
+import arcpy
 
 from composition_configs import core_config
+from custom_tools.decorators.timing_decorator import timing_decorator
+from custom_tools.general_tools.isolated_line_remover import IsolatedLineRemover
 from env_setup import environment_setup
 from file_manager import WorkFileManager
 from file_manager.n10.file_manager_facilities import Facility_N10
 from generalization.n10.facilities.railways_attributes import main as update_attributes
-from input_data import input_n10, input_fkb
+from input_data import input_fkb
 
 
 def compute_line_azimuth(geom: arcpy.Polyline):

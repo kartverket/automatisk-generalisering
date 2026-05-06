@@ -1,20 +1,17 @@
 # Importing packages
 import arcpy
-import os
+import config
 
+from custom_tools.decorators.timing_decorator import timing_decorator
+from custom_tools.general_tools import custom_arcpy
 from custom_tools.general_tools.study_area_selector import StudyAreaSelector
-
-# Importing custom input files modules
-from input_data import input_n50
-from input_data import input_n100
-from input_data import input_other
+from env_setup import environment_setup
 
 # Importing custom modules
 from file_manager.n100.file_manager_roads import Road_N100
-from env_setup import environment_setup
-import config
-from custom_tools.decorators.timing_decorator import timing_decorator
-from custom_tools.general_tools import custom_arcpy
+
+# Importing custom input files modules
+from input_data import input_n100
 
 
 def main():

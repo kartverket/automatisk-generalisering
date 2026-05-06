@@ -1,9 +1,8 @@
 # Importing packages
-import arcpy
-
 import os
-
 from collections import defaultdict
+
+import arcpy
 from tqdm import tqdm
 
 arcpy.env.overwriteOutput = True
@@ -11,7 +10,6 @@ arcpy.env.overwriteOutput = True
 # Importing custom modules
 from custom_tools.decorators.timing_decorator import timing_decorator
 from file_manager.n100.file_manager_roads import Road_N100
-
 from generalization.n100.road.dam import get_endpoints
 
 data_files = {

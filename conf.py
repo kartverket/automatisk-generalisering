@@ -1,6 +1,5 @@
 import os
 import sys
-import sphinx_rtd_theme
 
 autodoc_mock_imports = ["arcpy"]
 

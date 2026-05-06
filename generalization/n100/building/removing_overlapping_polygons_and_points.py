@@ -3,24 +3,22 @@
 # Importing custom files
 
 # Import custom modules
-from custom_tools.general_tools import custom_arcpy
-from env_setup import environment_setup
-from custom_tools.general_tools.file_utilities import compare_feature_classes
-from custom_tools.general_tools.polygon_processor import PolygonProcessor
-from custom_tools.general_tools.line_to_buffer_symbology import LineToBufferSymbology
-from constants.n100_constants import N100_Symbology
-from input_data.input_symbology import SymbologyN100
-from composition_configs import logic_config, core_config
-
-# Importing custom files
-from file_manager.n100.file_manager_buildings import Building_N100
-from constants.n100_constants import N100_SQLResources
-
 # Importing general packages
 import arcpy
 
+from composition_configs import core_config, logic_config
+from constants.n100_constants import N100_SQLResources, N100_Symbology
+
 # Importing timing decorator
 from custom_tools.decorators.timing_decorator import timing_decorator
+from custom_tools.general_tools import custom_arcpy
+from custom_tools.general_tools.line_to_buffer_symbology import LineToBufferSymbology
+from custom_tools.general_tools.polygon_processor import PolygonProcessor
+from env_setup import environment_setup
+
+# Importing custom files
+from file_manager.n100.file_manager_buildings import Building_N100
+from input_data.input_symbology import SymbologyN100
 
 
 @timing_decorator

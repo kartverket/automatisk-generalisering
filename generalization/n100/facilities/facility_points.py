@@ -2,52 +2,53 @@
 generaliser_anleggspunkt.py
 """
 
-import arcpy
-import os
 import math
+import os
+
+import arcpy
 
 # =============================================================================
 # STIER
 # =============================================================================
-N100_GDB    = r"D:\Data\N100K\N100k.gdb"
-N50_GDB     = r"D:\Data\N50K\N50K.gdb"
+N100_GDB = r"D:\Data\N100K\N100k.gdb"
+N50_GDB = r"D:\Data\N50K\N50K.gdb"
 working_gdb = r"D:\Data\Arbeidsfiler\AnleggsPunkt\AP.gdb"
 
 # =============================================================================
 # ARCPY MILJØ
 # =============================================================================
-arcpy.env.workspace       = working_gdb
+arcpy.env.workspace = working_gdb
 arcpy.env.overwriteOutput = True
 
 # =============================================================================
 # PARAMETERE
 # =============================================================================
 AGG_AVSTAND: dict[str, int] = {
-    "Campingplass":            150,
-    "Golfbane":                200,
-    "Gruve":                   150,
-    "Hoppbake":                140,
-    "MastTele":                150,
+    "Campingplass": 150,
+    "Golfbane": 200,
+    "Gruve": 150,
+    "Hoppbake": 140,
+    "MastTele": 150,
     "Navigasjonsinstallasjon": 150,
-    "Parkeringsområde":        170,
-    "SpesiellDetalj":           80,
-    "Tank":                     60,
-    "Tårn":                    140,
-    "Vindkraft":               180,
+    "Parkeringsområde": 170,
+    "SpesiellDetalj": 80,
+    "Tank": 60,
+    "Tårn": 140,
+    "Vindkraft": 180,
 }
 
 MIN_VEGAVSTAND: dict[str, int] = {
-    "Campingplass":            75,
-    "Golfbane":               100,
-    "Gruve":                   75,
-    "Hoppbake":                70,
-    "MastTele":                75,
+    "Campingplass": 75,
+    "Golfbane": 100,
+    "Gruve": 75,
+    "Hoppbake": 70,
+    "MastTele": 75,
     "Navigasjonsinstallasjon": 75,
-    "Parkeringsområde":        85,
-    "SpesiellDetalj":          40,
-    "Tank":                    30,
-    "Tårn":                    70,
-    "Vindkraft":               90,
+    "Parkeringsområde": 85,
+    "SpesiellDetalj": 40,
+    "Tank": 30,
+    "Tårn": 70,
+    "Vindkraft": 90,
 }
 DEFAULT_VEGAVSTAND = 50
 
@@ -56,12 +57,15 @@ DEFAULT_VEGAVSTAND = 50
 # HJELPEFUNKSJONER
 # =============================================================================
 
+
 def _felt_finnes(fc: str, feltnavn: str) -> bool:
     return feltnavn in [f.name for f in arcpy.ListFields(fc)]
+
 
 def legg_til_felt(fc: str, feltnavn: str, felttype: str) -> None:
     if not _felt_finnes(fc, feltnavn):
         arcpy.management.AddField(fc, feltnavn, felttype)
+
 
 def _euklidsk_avstand(p1: tuple, p2: tuple) -> float:
     return math.hypot(p1[0] - p2[0], p1[1] - p2[1])
@@ -71,13 +75,10 @@ def _euklidsk_avstand(p1: tuple, p2: tuple) -> float:
 # STEG 1 – KOPIERING
 # =============================================================================
 
+
 def kopiere() -> None:
-    arcpy.management.CopyFeatures(
-        os.path.join(N100_GDB, "VegSti"), "VegSti"
-    )
-    arcpy.management.CopyFeatures(
-        os.path.join(N50_GDB, "AnleggsPunkt"), "AnleggsPunkt"
-    )
+    arcpy.management.CopyFeatures(os.path.join(N100_GDB, "VegSti"), "VegSti")
+    arcpy.management.CopyFeatures(os.path.join(N50_GDB, "AnleggsPunkt"), "AnleggsPunkt")
     print("Steg 1 ferdig: Data kopiert til working.gdb")
 
 
@@ -85,8 +86,9 @@ def kopiere() -> None:
 # STEG 2 – FINN ISOLERTE VS. TETTE PUNKTER
 # =============================================================================
 
+
 def finn_isolerte(buffer_dist: int = 600) -> None:
-    analyse_fc    = "AnleggsPunkt_for_analysis"
+    analyse_fc = "AnleggsPunkt_for_analysis"
     near_table_fc = os.path.join(working_gdb, "NearTable")
 
     arcpy.management.CopyFeatures("AnleggsPunkt", analyse_fc)
@@ -111,12 +113,12 @@ def finn_isolerte(buffer_dist: int = 600) -> None:
     }
 
     if oids_med_nabo:
-        oids_str      = ",".join(map(str, oids_med_nabo))
+        oids_str = ",".join(map(str, oids_med_nabo))
         isolert_query = f"{oid_felt} NOT IN ({oids_str})"
-        dense_query   = f"{oid_felt} IN ({oids_str})"
+        dense_query = f"{oid_felt} IN ({oids_str})"
     else:
         isolert_query = "1=1"
-        dense_query   = "1=0"
+        dense_query = "1=0"
 
     arcpy.MakeFeatureLayer_management(analyse_fc, "isolert_lyr", isolert_query)
     arcpy.CopyFeatures_management("isolert_lyr", "AnleggsPunkt_Isolert")
@@ -131,8 +133,9 @@ def finn_isolerte(buffer_dist: int = 600) -> None:
 # STEG 3 – AGGREGER TETTE PUNKTER
 # =============================================================================
 
+
 def aggreger_dense() -> None:
-    input_fc  = "AnleggsPunkt_Dense"
+    input_fc = "AnleggsPunkt_Dense"
     output_fc = "AnleggsPunkt_Dense_Aggregert"
 
     arcpy.management.CopyFeatures(input_fc, output_fc)
@@ -153,14 +156,16 @@ def aggreger_dense() -> None:
         endring = True
         while endring:
             endring = False
-            aktive  = [p for p in punkter if not p["merged"]]
+            aktive = [p for p in punkter if not p["merged"]]
             for i, p1 in enumerate(aktive):
-                for p2 in aktive[i + 1:]:
+                for p2 in aktive[i + 1 :]:
                     if _euklidsk_avstand(p1["xy"], p2["xy"]) <= terskel:
                         total = p1["count"] + p2["count"]
                         p1["xy"] = (
-                            (p1["xy"][0] * p1["count"] + p2["xy"][0] * p2["count"]) / total,
-                            (p1["xy"][1] * p1["count"] + p2["xy"][1] * p2["count"]) / total,
+                            (p1["xy"][0] * p1["count"] + p2["xy"][0] * p2["count"])
+                            / total,
+                            (p1["xy"][1] * p1["count"] + p2["xy"][1] * p2["count"])
+                            / total,
                         )
                         p1["count"] = total
                         p2["merged"] = True
@@ -169,16 +174,18 @@ def aggreger_dense() -> None:
                 if endring:
                     break
 
-    alle_gjenværende = {p["oid"]: p for pts in punkter_per_type.values()
-                        for p in pts if not p["merged"]}
-    alle_merged_oids = [p["oid"] for pts in punkter_per_type.values()
-                        for p in pts if p["merged"]]
+    alle_gjenværende = {
+        p["oid"]: p for pts in punkter_per_type.values() for p in pts if not p["merged"]
+    }
+    alle_merged_oids = [
+        p["oid"] for pts in punkter_per_type.values() for p in pts if p["merged"]
+    ]
 
     with arcpy.da.UpdateCursor(output_fc, felter) as cursor:
         for row in cursor:
             oid = row[0]
             if oid in alle_gjenværende:
-                p      = alle_gjenværende[oid]
+                p = alle_gjenværende[oid]
                 row[1] = p["xy"]
                 row[4] = p["count"]
                 cursor.updateRow(row)
@@ -186,32 +193,44 @@ def aggreger_dense() -> None:
     if alle_merged_oids:
         oid_felt = arcpy.Describe(output_fc).oidFieldName
         oids_str = ",".join(map(str, alle_merged_oids))
-        arcpy.MakeFeatureLayer_management(output_fc, "slett_lyr", f"{oid_felt} IN ({oids_str})")
+        arcpy.MakeFeatureLayer_management(
+            output_fc, "slett_lyr", f"{oid_felt} IN ({oids_str})"
+        )
         arcpy.management.DeleteFeatures("slett_lyr")
         arcpy.management.Delete("slett_lyr")
 
-    print(f"Steg 3 ferdig: {len(alle_gjenværende)} aggregerte punkter lagret som {output_fc}")
+    print(
+        f"Steg 3 ferdig: {len(alle_gjenværende)} aggregerte punkter lagret som {output_fc}"
+    )
 
 
 # =============================================================================
 # STEG 4 – IDENTIFISER VEGKONFLIKT
 # =============================================================================
 
+
 def identifiser_vegkonflikt(input_fc: str, veg_fc: str, output_fc: str) -> list[int]:
     arcpy.management.CopyFeatures(input_fc, output_fc)
-    legg_til_felt(output_fc, "MIN_VEGAVSTAND",  "SHORT")
+    legg_til_felt(output_fc, "MIN_VEGAVSTAND", "SHORT")
     legg_til_felt(output_fc, "AVSTAND_TIL_VEG", "DOUBLE")
-    legg_til_felt(output_fc, "MANGLER_M",        "DOUBLE")
+    legg_til_felt(output_fc, "MANGLER_M", "DOUBLE")
 
     arcpy.analysis.Near(output_fc, veg_fc, method="PLANAR")
 
     konflikt_oids = []
-    felter = ["OID@", "objtype", "MIN_VEGAVSTAND", "AVSTAND_TIL_VEG", "MANGLER_M", "NEAR_DIST"]
+    felter = [
+        "OID@",
+        "objtype",
+        "MIN_VEGAVSTAND",
+        "AVSTAND_TIL_VEG",
+        "MANGLER_M",
+        "NEAR_DIST",
+    ]
 
     with arcpy.da.UpdateCursor(output_fc, felter) as cursor:
         for row in cursor:
             objtype = row[1]
-            krav    = MIN_VEGAVSTAND.get(objtype, DEFAULT_VEGAVSTAND)
+            krav = MIN_VEGAVSTAND.get(objtype, DEFAULT_VEGAVSTAND)
             faktisk = row[5] if row[5] >= 0 else 9999
             mangler = round(krav - faktisk, 1)
             row[2] = krav
@@ -226,17 +245,19 @@ def identifiser_vegkonflikt(input_fc: str, veg_fc: str, output_fc: str) -> list[
             arcpy.management.DeleteField(output_fc, felt)
 
     if konflikt_oids:
-        oid_felt    = arcpy.Describe(output_fc).oidFieldName
-        oids_str    = ",".join(map(str, konflikt_oids))
+        oid_felt = arcpy.Describe(output_fc).oidFieldName
+        oids_str = ",".join(map(str, konflikt_oids))
         konflikt_fc = output_fc + "_Konflikt"
-        arcpy.management.MakeFeatureLayer(output_fc, "konflikt_lyr", f"{oid_felt} IN ({oids_str})")
+        arcpy.management.MakeFeatureLayer(
+            output_fc, "konflikt_lyr", f"{oid_felt} IN ({oids_str})"
+        )
         arcpy.management.CopyFeatures("konflikt_lyr", konflikt_fc)
         arcpy.management.Delete("konflikt_lyr")
         print(f"  Konfliktpunkter lagret som: {konflikt_fc}")
 
-    total      = int(arcpy.management.GetCount(output_fc)[0])
+    total = int(arcpy.management.GetCount(output_fc)[0])
     n_konflikt = len(konflikt_oids)
-    pst        = round(n_konflikt / total * 100, 1) if total else 0
+    pst = round(n_konflikt / total * 100, 1) if total else 0
     print(f"  {input_fc}: {total} punkter totalt, {n_konflikt} for nær veg ({pst} %)")
 
     return konflikt_oids
@@ -245,6 +266,7 @@ def identifiser_vegkonflikt(input_fc: str, veg_fc: str, output_fc: str) -> list[
 # =============================================================================
 # STEG 5 – FLYTT PUNKTER BORT FRA VEG
 # =============================================================================
+
 
 def flytt_fra_veg(input_fc: str, veg_fc: str) -> None:
     konflikt_oids = [
@@ -259,13 +281,17 @@ def flytt_fra_veg(input_fc: str, veg_fc: str) -> None:
 
     oid_felt = arcpy.Describe(input_fc).oidFieldName
     oids_str = ",".join(map(str, konflikt_oids))
-    arcpy.management.MakeFeatureLayer(input_fc, "flytt_lyr", f"{oid_felt} IN ({oids_str})")
+    arcpy.management.MakeFeatureLayer(
+        input_fc, "flytt_lyr", f"{oid_felt} IN ({oids_str})"
+    )
 
-    maks_krav  = max(MIN_VEGAVSTAND.values())
-    extent     = arcpy.Describe("flytt_lyr").extent
+    maks_krav = max(MIN_VEGAVSTAND.values())
+    extent = arcpy.Describe("flytt_lyr").extent
     klipp_rect = arcpy.Extent(
-        extent.XMin - maks_krav, extent.YMin - maks_krav,
-        extent.XMax + maks_krav, extent.YMax + maks_krav,
+        extent.XMin - maks_krav,
+        extent.YMin - maks_krav,
+        extent.XMax + maks_krav,
+        extent.YMax + maks_krav,
     )
 
     veg_lokal = "VegSti_lokal_tmp"
@@ -281,17 +307,25 @@ def flytt_fra_veg(input_fc: str, veg_fc: str) -> None:
     arcpy.analysis.Near("flytt_lyr", veg_lokal, location=True, method="PLANAR")
 
     flyttet = 0
-    felter  = ["OID@", "SHAPE@XY", "objtype", "NEAR_X", "NEAR_Y", "AVSTAND_TIL_VEG", "MANGLER_M"]
+    felter = [
+        "OID@",
+        "SHAPE@XY",
+        "objtype",
+        "NEAR_X",
+        "NEAR_Y",
+        "AVSTAND_TIL_VEG",
+        "MANGLER_M",
+    ]
 
     with arcpy.da.UpdateCursor("flytt_lyr", felter) as cursor:
         for row in cursor:
             objtype = row[2]
-            krav    = MIN_VEGAVSTAND.get(objtype, DEFAULT_VEGAVSTAND)
-            px, py  = row[1]
-            nx, ny  = row[3], row[4]
+            krav = MIN_VEGAVSTAND.get(objtype, DEFAULT_VEGAVSTAND)
+            px, py = row[1]
+            nx, ny = row[3], row[4]
             dx = px - nx
             dy = py - ny
-            d  = math.hypot(dx, dy)
+            d = math.hypot(dx, dy)
             if d < 0.001:
                 dx, dy = krav, 0.0
             else:
@@ -317,6 +351,7 @@ def flytt_fra_veg(input_fc: str, veg_fc: str) -> None:
 # STEG 6 – DOKUMENTASJONSLAG ETTER FLYTTING
 # =============================================================================
 
+
 def lag_etter_konflikt(output_fc: str) -> None:
     etter_fc = output_fc + "_Etter_Flytting"
     arcpy.management.CopyFeatures(output_fc, etter_fc)
@@ -327,24 +362,27 @@ def lag_etter_konflikt(output_fc: str) -> None:
 
     with arcpy.da.UpdateCursor(etter_fc, felter) as cursor:
         for row in cursor:
-            ble_flyttet = (row[0] == row[1] and row[2] == 0.0)
+            ble_flyttet = row[0] == row[1] and row[2] == 0.0
             row[3] = 1 if ble_flyttet else 0
             cursor.updateRow(row)
             if ble_flyttet:
                 n_flyttet += 1
 
-    print(f"  Steg 6: Dokumentasjonslag lagret som {etter_fc} ({n_flyttet} punkter merket som flyttet)")
+    print(
+        f"  Steg 6: Dokumentasjonslag lagret som {etter_fc} ({n_flyttet} punkter merket som flyttet)"
+    )
 
 
 # =============================================================================
 # STEG 7 – SLÅING AV DATASETT
 # =============================================================================
 
+
 def slaa_sammen() -> None:
     output_fc = "AnleggsPunkt_n100"
 
     for fc, kilde in [
-        ("AnleggsPunkt_Isolert_Veg",   "isolert"),
+        ("AnleggsPunkt_Isolert_Veg", "isolert"),
         ("AnleggsPunkt_Aggregert_Veg", "aggregert"),
     ]:
         legg_til_felt(fc, "KILDE", "TEXT")
@@ -355,29 +393,39 @@ def slaa_sammen() -> None:
         output_fc,
     )
 
-    total       = int(arcpy.management.GetCount(output_fc)[0])
-    n_isolert   = sum(1 for r in arcpy.da.SearchCursor(output_fc, ["KILDE"]) if r[0] == "isolert")
+    total = int(arcpy.management.GetCount(output_fc)[0])
+    n_isolert = sum(
+        1 for r in arcpy.da.SearchCursor(output_fc, ["KILDE"]) if r[0] == "isolert"
+    )
     n_aggregert = total - n_isolert
-    print(f"\nSteg 7 ferdig: {total} punkter lagret som {output_fc} ({n_isolert} isolerte, {n_aggregert} aggregerte)")
+    print(
+        f"\nSteg 7 ferdig: {total} punkter lagret som {output_fc} ({n_isolert} isolerte, {n_aggregert} aggregerte)"
+    )
 
 
 # =============================================================================
 # STEG 8 – LØSNING AV TÅRN/MASTTELE-KONFLIKTER
 # =============================================================================
 
-def fiks_tårn_masttele_konflikt(veg_fc: str, min_avstand: int = 145, maks_iter: int = 3) -> None:
-    fc    = "AnleggsPunkt_n100"
-    krav  = {"Tårn": 70, "MastTele": 75}
-    sr    = arcpy.Describe(fc).spatialReference
+
+def fiks_tårn_masttele_konflikt(
+    veg_fc: str, min_avstand: int = 145, maks_iter: int = 3
+) -> None:
+    fc = "AnleggsPunkt_n100"
+    krav = {"Tårn": 70, "MastTele": 75}
+    sr = arcpy.Describe(fc).spatialReference
 
     extent = arcpy.Describe(fc).extent
     margin = max(krav.values()) * 2
     arcpy.management.MakeFeatureLayer(veg_fc, "veg_lyr_t")
     arcpy.management.SelectLayerByLocation(
-        "veg_lyr_t", "INTERSECT",
+        "veg_lyr_t",
+        "INTERSECT",
         arcpy.Extent(
-            extent.XMin - margin, extent.YMin - margin,
-            extent.XMax + margin, extent.YMax + margin,
+            extent.XMin - margin,
+            extent.YMin - margin,
+            extent.XMax + margin,
+            extent.YMax + margin,
         ).polygon,
     )
     veg_lokal = "VegSti_tårn_tmp"
@@ -389,7 +437,7 @@ def fiks_tårn_masttele_konflikt(veg_fc: str, min_avstand: int = 145, maks_iter:
         with arcpy.da.SearchCursor(veg_lokal, ["SHAPE@"]) as vc:
             for (veg,) in vc:
                 snap = veg.queryPointAndDistance(pt_geom)[0]
-                d    = pt_geom.distanceTo(snap)
+                d = pt_geom.distanceTo(snap)
                 if d < min_d:
                     min_d = d
                     nx, ny = snap.firstPoint.X, snap.firstPoint.Y
@@ -398,7 +446,7 @@ def fiks_tårn_masttele_konflikt(veg_fc: str, min_avstand: int = 145, maks_iter:
     def juster_for_veg(px, py, objtype):
         pt_geom = arcpy.PointGeometry(arcpy.Point(px, py), sr)
         nx, ny, d = nærmeste_vegpunkt(pt_geom)
-        vegkrav   = krav.get(objtype, DEFAULT_VEGAVSTAND)
+        vegkrav = krav.get(objtype, DEFAULT_VEGAVSTAND)
         if d >= vegkrav or nx is None:
             return px, py
         if d < 0.001:
@@ -408,8 +456,11 @@ def fiks_tårn_masttele_konflikt(veg_fc: str, min_avstand: int = 145, maks_iter:
 
     for iterasjon in range(1, maks_iter + 1):
         pts: dict[int, dict] = {}
-        with arcpy.da.SearchCursor(fc, ["OID@", "SHAPE@XY", "objtype"],
-                                   where_clause="objtype IN ('Tårn', 'MastTele')") as cursor:
+        with arcpy.da.SearchCursor(
+            fc,
+            ["OID@", "SHAPE@XY", "objtype"],
+            where_clause="objtype IN ('Tårn', 'MastTele')",
+        ) as cursor:
             for oid, xy, ot in cursor:
                 pts[oid] = {"xy": xy, "objtype": ot}
 
@@ -422,7 +473,7 @@ def fiks_tårn_masttele_konflikt(veg_fc: str, min_avstand: int = 145, maks_iter:
                     continue
                 dx = pt["xy"][0] - pm["xy"][0]
                 dy = pt["xy"][1] - pm["xy"][1]
-                d  = math.hypot(dx, dy)
+                d = math.hypot(dx, dy)
                 if d < min_avstand:
                     konflikter.append((oid_t, oid_m, dx, dy, d))
 
@@ -437,9 +488,9 @@ def fiks_tårn_masttele_konflikt(veg_fc: str, min_avstand: int = 145, maks_iter:
             mangler = min_avstand - d
             if d < 0.001:
                 dx, dy, d = 1.0, 0.0, 1.0
-            steg    = mangler / 2.0
-            tx, ty  = pts[oid_t]["xy"]
-            mx, my  = pts[oid_m]["xy"]
+            steg = mangler / 2.0
+            tx, ty = pts[oid_t]["xy"]
+            mx, my = pts[oid_m]["xy"]
             ny_tx = tx + (dx / d) * steg
             ny_ty = ty + (dy / d) * steg
             ny_mx = mx - (dx / d) * steg
@@ -451,7 +502,9 @@ def fiks_tårn_masttele_konflikt(veg_fc: str, min_avstand: int = 145, maks_iter:
 
         oid_felt = arcpy.Describe(fc).oidFieldName
         oids_str = ",".join(map(str, oppdater))
-        arcpy.management.MakeFeatureLayer(fc, "oppdater_lyr", f"{oid_felt} IN ({oids_str})")
+        arcpy.management.MakeFeatureLayer(
+            fc, "oppdater_lyr", f"{oid_felt} IN ({oids_str})"
+        )
         with arcpy.da.UpdateCursor("oppdater_lyr", ["OID@", "SHAPE@XY"]) as cursor:
             for row in cursor:
                 if row[0] in oppdater:
@@ -459,7 +512,9 @@ def fiks_tårn_masttele_konflikt(veg_fc: str, min_avstand: int = 145, maks_iter:
                     cursor.updateRow(row)
         arcpy.management.Delete("oppdater_lyr")
     else:
-        print(f"  OBS: Nådde maks {maks_iter} iterasjoner – noen konflikter kan gjenstå.")
+        print(
+            f"  OBS: Nådde maks {maks_iter} iterasjoner – noen konflikter kan gjenstå."
+        )
 
     arcpy.management.Delete(veg_lokal)
     print("  Steg 8 ferdig: Tårn/MastTele-konfliktsjekk fullført.")
@@ -468,6 +523,7 @@ def fiks_tårn_masttele_konflikt(veg_fc: str, min_avstand: int = 145, maks_iter:
 # =============================================================================
 # STEG 9 – LAGRE ENDELIG RESULTAT
 # =============================================================================
+
 
 def lagre_endelig() -> None:
     output_fc = os.path.join(N100_GDB, "AnleggsPunkt")
@@ -482,6 +538,7 @@ def lagre_endelig() -> None:
 # MAIN
 # =============================================================================
 
+
 def main() -> None:
     print("=" * 60)
     print("Starter generalisering av AnleggsPunkt (N50 → N100)")
@@ -494,7 +551,7 @@ def main() -> None:
     veg_fc = "VegSti"
 
     for input_fc, output_fc in [
-        ("AnleggsPunkt_Isolert",         "AnleggsPunkt_Isolert_Veg"),
+        ("AnleggsPunkt_Isolert", "AnleggsPunkt_Isolert_Veg"),
         ("AnleggsPunkt_Dense_Aggregert", "AnleggsPunkt_Aggregert_Veg"),
     ]:
         print(f"\n--- Vegsjekk: {input_fc} ---")

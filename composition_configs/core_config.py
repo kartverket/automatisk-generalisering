@@ -1,20 +1,18 @@
-from dataclasses import dataclass, field
+from dataclasses import dataclass
+from enum import Enum
 from typing import (
-    Dict,
+    Any,
+    Callable,
     List,
     Literal,
     Optional,
-    Tuple,
-    Union,
-    Any,
-    Callable,
-    Mapping,
     Sequence,
+    Union,
 )
-from enum import Enum
+
+import config
 
 from composition_configs import type_defs
-import config
 
 
 @dataclass

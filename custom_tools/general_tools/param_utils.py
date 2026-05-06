@@ -1,17 +1,14 @@
-from dataclasses import is_dataclass, asdict, fields
+import inspect
+from dataclasses import asdict, is_dataclass
 from typing import (
     Any,
+    Dict,
+    List,
     Mapping,
     Optional,
     Union,
-    Dict,
-    List,
-    Sequence,
-    get_type_hints,
-    get_origin,
-    get_args,
 )
-import inspect
+
 import yaml
 
 from composition_configs import core_config

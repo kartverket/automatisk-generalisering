@@ -1,6 +1,6 @@
 # Importing config file from the root path
-from config import n100_path
 import arcpy
+from config import n100_path
 
 # Defining universal paths for n100 regardless of local path env_setup
 AdminFlate = rf"{n100_path}\AdminFlate"

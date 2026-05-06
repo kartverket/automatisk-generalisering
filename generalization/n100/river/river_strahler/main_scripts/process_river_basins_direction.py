@@ -15,12 +15,13 @@ Instructions:
 to get a list of all possible basins in the feature class.
 """
 
-import arcpy
-import geopandas as gpd
-from shapely.geometry import Point, LineString
-import networkx as nx
-import config
 import re
+
+import arcpy
+import config
+import geopandas as gpd
+import networkx as nx
+from shapely.geometry import LineString, Point
 
 
 def main():
