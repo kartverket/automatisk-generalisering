@@ -1,0 +1,4 @@
+{
+    "name": "Arcpy Linux",
+    "image": "ghcr.io/kartverket/arcpy-linux:12.0"
+}

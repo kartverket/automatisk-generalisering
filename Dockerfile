@@ -1,5 +1,5 @@
 # Use a small Python base image
-FROM python:3.11-slim
+FROM ghcr.io/kartverket/arcpy-linux:12.0
 
 # Set working directory
 WORKDIR /app
@@ -8,8 +8,7 @@ WORKDIR /app
 COPY . /app
 
 
-
-
 # Make the project script the container entrypoint
-ENTRYPOINT ["python", "main.py"]
+ENV SCALE=n100 OBJECT=road
+CMD ["sh","-c","python main.py --scale ${SCALE} --object ${OBJECT}"]
 
