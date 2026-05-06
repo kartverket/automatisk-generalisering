@@ -1,4 +1,3 @@
-
 # Importing custom files
 import config
 

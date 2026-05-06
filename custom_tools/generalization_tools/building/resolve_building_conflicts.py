@@ -27,7 +27,6 @@ from input_data import input_symbology
 # Importing timing decorator
 
 
-
 @dataclass
 class _RbcRecord:
     spec: logic_config.SymbologyLayerSpec

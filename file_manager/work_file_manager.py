@@ -159,7 +159,9 @@ class WorkFileManager:
                 str(scale_path / self.lyrx_directory_name / leaf)
             )
         else:
-            leaf = f"{origin_file_name}_{self.unique_id}_{file_name}{suffix}.{file_type}"
+            leaf = (
+                f"{origin_file_name}_{self.unique_id}_{file_name}{suffix}.{file_type}"
+            )
             path = type_defs.GeneralFilePath(
                 str(scale_path / self.general_files_directory_name / leaf)
             )
