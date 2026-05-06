@@ -75,12 +75,13 @@
            <div itemprop="articleBody">
              
   <h1>Source code for file_manager.base_file_manager</h1><div class="highlight"><pre>
-<span></span><span class="kn">from</span><span class="w"> </span><span class="nn">pathlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">Path</span>
-<span class="kn">import</span><span class="w"> </span><span class="nn">re</span>
+<span></span><span class="kn">import</span><span class="w"> </span><span class="nn">re</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">pathlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">Path</span>
 
 <span class="kn">import</span><span class="w"> </span><span class="nn">config</span>
-<span class="kn">import</span><span class="w"> </span><span class="nn">env_setup.global_config</span>
+
 <span class="kn">from</span><span class="w"> </span><span class="nn">composition_configs</span><span class="w"> </span><span class="kn">import</span> <span class="n">type_defs</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">env_setup.project_layout</span><span class="w"> </span><span class="kn">import</span> <span class="n">ProjectLayout</span>
 
 
 <div class="viewcode-block" id="BaseFileManager">
@@ -100,12 +101,6 @@
 <span class="sd">            Generates the absolute path for ArcGIS layer files (.lyrx) that cannot be stored</span>
 <span class="sd">            in geodatabases.</span>
 
-<span class="sd">    Attributes:</span>
-<span class="sd">        local_root_directory (str): The local root directory for the project&#39;s output.</span>
-<span class="sd">        project_root_directory (str): The root directory name of the project.</span>
-<span class="sd">        general_files_directory_name (str): The directory name for storing general files.</span>
-<span class="sd">        lyrx_directory_name (str): The directory name for storing ArcGIS layer files (.lyrx).</span>
-
 <span class="sd">    Args:</span>
 <span class="sd">        scale (str): The scale of the geospatial data, used to differentiate directories and</span>
 <span class="sd">                     file names. Needs to be defined when imported.</span>
@@ -115,12 +110,6 @@
 <span class="sd">    This class provides methods to generate standardized absolute paths for geodatabase files,</span>
 <span class="sd">    general files, and layer files, using the project&#39;s naming conventions and directory structure.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
-
-    <span class="c1"># Define class-level attributes that are constant across instances</span>
-    <span class="n">local_root_directory</span> <span class="o">=</span> <span class="n">config</span><span class="o">.</span><span class="n">output_folder</span>
-    <span class="n">project_root_directory</span> <span class="o">=</span> <span class="n">env_setup</span><span class="o">.</span><span class="n">global_config</span><span class="o">.</span><span class="n">main_directory_name</span>
-    <span class="n">general_files_directory_name</span> <span class="o">=</span> <span class="n">env_setup</span><span class="o">.</span><span class="n">global_config</span><span class="o">.</span><span class="n">general_files_name</span>
-    <span class="n">lyrx_directory_name</span> <span class="o">=</span> <span class="n">env_setup</span><span class="o">.</span><span class="n">global_config</span><span class="o">.</span><span class="n">lyrx_directory_name</span>
 
     <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
@@ -137,13 +126,11 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">script_source_name</span> <span class="o">=</span> <span class="n">script_source_name</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">description</span> <span class="o">=</span> <span class="n">description</span>
 
-        <span class="n">base</span> <span class="o">=</span> <span class="p">(</span>
-            <span class="n">Path</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">local_root_directory</span><span class="p">)</span> <span class="o">/</span> <span class="bp">self</span><span class="o">.</span><span class="n">project_root_directory</span> <span class="o">/</span> <span class="bp">self</span><span class="o">.</span><span class="n">scale</span>
-        <span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_gdb_dir</span> <span class="o">=</span> <span class="n">base</span> <span class="o">/</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">object</span><span class="si">}</span><span class="s2">.gdb&quot;</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_general_dir</span> <span class="o">=</span> <span class="n">base</span> <span class="o">/</span> <span class="bp">self</span><span class="o">.</span><span class="n">general_files_directory_name</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_lyrx_dir</span> <span class="o">=</span> <span class="n">base</span> <span class="o">/</span> <span class="bp">self</span><span class="o">.</span><span class="n">lyrx_directory_name</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_final_outputs_dir</span> <span class="o">=</span> <span class="n">base</span> <span class="o">/</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">env_setup</span><span class="o">.</span><span class="n">global_config</span><span class="o">.</span><span class="n">final_outputs</span><span class="si">}</span><span class="s2">.gdb&quot;</span>
+        <span class="n">layout</span> <span class="o">=</span> <span class="n">ProjectLayout</span><span class="p">(</span><span class="n">output_root</span><span class="o">=</span><span class="n">Path</span><span class="p">(</span><span class="n">config</span><span class="o">.</span><span class="n">output_folder</span><span class="p">))</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_gdb_dir</span> <span class="o">=</span> <span class="n">layout</span><span class="o">.</span><span class="n">gdb</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">scale</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">object</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_general_dir</span> <span class="o">=</span> <span class="n">layout</span><span class="o">.</span><span class="n">general_files_dir</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">scale</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_lyrx_dir</span> <span class="o">=</span> <span class="n">layout</span><span class="o">.</span><span class="n">lyrx_dir</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">scale</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_final_outputs_dir</span> <span class="o">=</span> <span class="n">layout</span><span class="o">.</span><span class="n">gdb</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">scale</span><span class="p">,</span> <span class="n">layout</span><span class="o">.</span><span class="n">final_outputs_name</span><span class="p">)</span>
 
     <span class="nd">@property</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">script_source_name</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
@@ -268,7 +255,10 @@
 <span class="sd">            str: The absolute path for the .lyrx file.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">validate_inputs</span><span class="p">(</span><span class="n">script_source_name</span><span class="p">,</span> <span class="n">description</span><span class="p">)</span>
-        <span class="k">return</span> <span class="sa">rf</span><span class="s2">&quot;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">_lyrx_dir</span><span class="si">}</span><span class="s2">\</span><span class="si">{</span><span class="n">script_source_name</span><span class="si">}</span><span class="s2">___</span><span class="si">{</span><span class="n">description</span><span class="si">}</span><span class="s2">___</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">scale</span><span class="si">}</span><span class="s2">_</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">object</span><span class="si">}</span><span class="s2">&quot;</span></div>
+        <span class="k">return</span> <span class="nb">str</span><span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_lyrx_dir</span>
+            <span class="o">/</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">script_source_name</span><span class="si">}</span><span class="s2">___</span><span class="si">{</span><span class="n">description</span><span class="si">}</span><span class="s2">___</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">scale</span><span class="si">}</span><span class="s2">_</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">object</span><span class="si">}</span><span class="s2">&quot;</span>
+        <span class="p">)</span></div>
 
 
 <div class="viewcode-block" id="BaseFileManager.generate_final_outputs">

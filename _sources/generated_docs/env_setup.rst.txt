@@ -20,6 +20,14 @@ env\_setup.global\_config module
    :show-inheritance:
    :undoc-members:
 
+env\_setup.project\_layout module
+---------------------------------
+
+.. automodule:: env_setup.project_layout
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
 Module contents
 ---------------
 

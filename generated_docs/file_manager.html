@@ -57,14 +57,6 @@
 <li class="toctree-l2"><a class="reference internal" href="#submodules">Submodules</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#module-file_manager.base_file_manager">file_manager.base_file_manager module</a><ul>
 <li class="toctree-l3"><a class="reference internal" href="#file_manager.base_file_manager.BaseFileManager"><code class="docutils literal notranslate"><span class="pre">BaseFileManager</span></code></a><ul>
-<li class="toctree-l4"><a class="reference internal" href="#file_manager.base_file_manager.BaseFileManager.local_root_directory"><code class="docutils literal notranslate"><span class="pre">BaseFileManager.local_root_directory</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="#file_manager.base_file_manager.BaseFileManager.project_root_directory"><code class="docutils literal notranslate"><span class="pre">BaseFileManager.project_root_directory</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="#file_manager.base_file_manager.BaseFileManager.general_files_directory_name"><code class="docutils literal notranslate"><span class="pre">BaseFileManager.general_files_directory_name</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="#file_manager.base_file_manager.BaseFileManager.lyrx_directory_name"><code class="docutils literal notranslate"><span class="pre">BaseFileManager.lyrx_directory_name</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="#id0"><code class="docutils literal notranslate"><span class="pre">BaseFileManager.local_root_directory</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="#id1"><code class="docutils literal notranslate"><span class="pre">BaseFileManager.project_root_directory</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="#id2"><code class="docutils literal notranslate"><span class="pre">BaseFileManager.general_files_directory_name</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="#id3"><code class="docutils literal notranslate"><span class="pre">BaseFileManager.lyrx_directory_name</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="#file_manager.base_file_manager.BaseFileManager.script_source_name"><code class="docutils literal notranslate"><span class="pre">BaseFileManager.script_source_name</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="#file_manager.base_file_manager.BaseFileManager.description"><code class="docutils literal notranslate"><span class="pre">BaseFileManager.description</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="#file_manager.base_file_manager.BaseFileManager.validate_inputs"><code class="docutils literal notranslate"><span class="pre">BaseFileManager.validate_inputs()</span></code></a></li>
@@ -917,50 +909,6 @@ in geodatabases.</p>
 </dl>
 </dd>
 </dl>
-<dl class="py attribute">
-<dt class="sig sig-object py" id="file_manager.base_file_manager.BaseFileManager.local_root_directory">
-<span class="sig-name descname"><span class="pre">local_root_directory</span></span><a class="headerlink" href="#file_manager.base_file_manager.BaseFileManager.local_root_directory" title="Link to this definition"></a></dt>
-<dd><p>The local root directory for the project’s output.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Type<span class="colon">:</span></dt>
-<dd class="field-odd"><p>str</p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="py attribute">
-<dt class="sig sig-object py" id="file_manager.base_file_manager.BaseFileManager.project_root_directory">
-<span class="sig-name descname"><span class="pre">project_root_directory</span></span><a class="headerlink" href="#file_manager.base_file_manager.BaseFileManager.project_root_directory" title="Link to this definition"></a></dt>
-<dd><p>The root directory name of the project.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Type<span class="colon">:</span></dt>
-<dd class="field-odd"><p>str</p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="py attribute">
-<dt class="sig sig-object py" id="file_manager.base_file_manager.BaseFileManager.general_files_directory_name">
-<span class="sig-name descname"><span class="pre">general_files_directory_name</span></span><a class="headerlink" href="#file_manager.base_file_manager.BaseFileManager.general_files_directory_name" title="Link to this definition"></a></dt>
-<dd><p>The directory name for storing general files.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Type<span class="colon">:</span></dt>
-<dd class="field-odd"><p>str</p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="py attribute">
-<dt class="sig sig-object py" id="file_manager.base_file_manager.BaseFileManager.lyrx_directory_name">
-<span class="sig-name descname"><span class="pre">lyrx_directory_name</span></span><a class="headerlink" href="#file_manager.base_file_manager.BaseFileManager.lyrx_directory_name" title="Link to this definition"></a></dt>
-<dd><p>The directory name for storing ArcGIS layer files (.lyrx).</p>
-<dl class="field-list simple">
-<dt class="field-odd">Type<span class="colon">:</span></dt>
-<dd class="field-odd"><p>str</p>
-</dd>
-</dl>
-</dd></dl>
-
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
@@ -973,26 +921,6 @@ and file names. Needs to be defined when imported.</p></li>
 </dl>
 <p>This class provides methods to generate standardized absolute paths for geodatabase files,
 general files, and layer files, using the project’s naming conventions and directory structure.</p>
-<dl class="py attribute">
-<dt class="sig sig-object py" id="id0">
-<span class="sig-name descname"><span class="pre">local_root_directory</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'C:\\path\\to\\folder\\you\\want\\your\\outputs\\in'</span></span><a class="headerlink" href="#id0" title="Link to this definition"></a></dt>
-<dd></dd></dl>
-
-<dl class="py attribute">
-<dt class="sig sig-object py" id="id1">
-<span class="sig-name descname"><span class="pre">project_root_directory</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'ag_outputs'</span></span><a class="headerlink" href="#id1" title="Link to this definition"></a></dt>
-<dd></dd></dl>
-
-<dl class="py attribute">
-<dt class="sig sig-object py" id="id2">
-<span class="sig-name descname"><span class="pre">general_files_directory_name</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'general_files'</span></span><a class="headerlink" href="#id2" title="Link to this definition"></a></dt>
-<dd></dd></dl>
-
-<dl class="py attribute">
-<dt class="sig sig-object py" id="id3">
-<span class="sig-name descname"><span class="pre">lyrx_directory_name</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'lyrx_outputs'</span></span><a class="headerlink" href="#id3" title="Link to this definition"></a></dt>
-<dd></dd></dl>
-
 <dl class="py property">
 <dt class="sig sig-object py" id="file_manager.base_file_manager.BaseFileManager.script_source_name">
 <span class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">script_source_name</span></span><a class="headerlink" href="#file_manager.base_file_manager.BaseFileManager.script_source_name" title="Link to this definition"></a></dt>

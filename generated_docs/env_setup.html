@@ -61,18 +61,31 @@
 </ul>
 </li>
 <li class="toctree-l3"><a class="reference internal" href="#env_setup.environment_setup.ProjectDirectorySetup"><code class="docutils literal notranslate"><span class="pre">ProjectDirectorySetup</span></code></a><ul>
-<li class="toctree-l4"><a class="reference internal" href="#env_setup.environment_setup.ProjectDirectorySetup.base_directory"><code class="docutils literal notranslate"><span class="pre">ProjectDirectorySetup.base_directory</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="#env_setup.environment_setup.ProjectDirectorySetup.sub_directories"><code class="docutils literal notranslate"><span class="pre">ProjectDirectorySetup.sub_directories</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#env_setup.environment_setup.ProjectDirectorySetup.layout"><code class="docutils literal notranslate"><span class="pre">ProjectDirectorySetup.layout</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#env_setup.environment_setup.ProjectDirectorySetup.scales"><code class="docutils literal notranslate"><span class="pre">ProjectDirectorySetup.scales</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="#env_setup.environment_setup.ProjectDirectorySetup.gdb_names"><code class="docutils literal notranslate"><span class="pre">ProjectDirectorySetup.gdb_names</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="#env_setup.environment_setup.ProjectDirectorySetup.setup"><code class="docutils literal notranslate"><span class="pre">ProjectDirectorySetup.setup()</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="#env_setup.environment_setup.ProjectDirectorySetup.create_directory_structure"><code class="docutils literal notranslate"><span class="pre">ProjectDirectorySetup.create_directory_structure()</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="#env_setup.environment_setup.ProjectDirectorySetup.create_gdbs_in_subdirectories"><code class="docutils literal notranslate"><span class="pre">ProjectDirectorySetup.create_gdbs_in_subdirectories()</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="#env_setup.environment_setup.ProjectDirectorySetup.create_subdirectory_structure"><code class="docutils literal notranslate"><span class="pre">ProjectDirectorySetup.create_subdirectory_structure()</span></code></a></li>
 </ul>
 </li>
 </ul>
 </li>
 <li class="toctree-l2"><a class="reference internal" href="#module-env_setup.global_config">env_setup.global_config module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#module-env_setup.project_layout">env_setup.project_layout module</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#env_setup.project_layout.ProjectLayout"><code class="docutils literal notranslate"><span class="pre">ProjectLayout</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#env_setup.project_layout.ProjectLayout.output_root"><code class="docutils literal notranslate"><span class="pre">ProjectLayout.output_root</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#env_setup.project_layout.ProjectLayout.main_directory_name"><code class="docutils literal notranslate"><span class="pre">ProjectLayout.main_directory_name</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#env_setup.project_layout.ProjectLayout.lyrx_directory_name"><code class="docutils literal notranslate"><span class="pre">ProjectLayout.lyrx_directory_name</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#env_setup.project_layout.ProjectLayout.general_files_name"><code class="docutils literal notranslate"><span class="pre">ProjectLayout.general_files_name</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#env_setup.project_layout.ProjectLayout.final_outputs_name"><code class="docutils literal notranslate"><span class="pre">ProjectLayout.final_outputs_name</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#env_setup.project_layout.ProjectLayout.main_dir"><code class="docutils literal notranslate"><span class="pre">ProjectLayout.main_dir</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#env_setup.project_layout.ProjectLayout.scale_dir"><code class="docutils literal notranslate"><span class="pre">ProjectLayout.scale_dir()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#env_setup.project_layout.ProjectLayout.gdb"><code class="docutils literal notranslate"><span class="pre">ProjectLayout.gdb()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#env_setup.project_layout.ProjectLayout.lyrx_dir"><code class="docutils literal notranslate"><span class="pre">ProjectLayout.lyrx_dir()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#env_setup.project_layout.ProjectLayout.general_files_dir"><code class="docutils literal notranslate"><span class="pre">ProjectLayout.general_files_dir()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
 <li class="toctree-l2"><a class="reference internal" href="#module-env_setup">Module contents</a></li>
 </ul>
 </li>
@@ -201,7 +214,7 @@ Ensures setup is performed only once globally.</p>
 
 <dl class="py class">
 <dt class="sig sig-object py" id="env_setup.environment_setup.ProjectDirectorySetup">
-<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">env_setup.environment_setup.</span></span><span class="sig-name descname"><span class="pre">ProjectDirectorySetup</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">base_directory</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'C:\\path\\to\\folder\\you\\want\\your\\outputs\\in'</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/env_setup/environment_setup.html#ProjectDirectorySetup"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#env_setup.environment_setup.ProjectDirectorySetup" title="Link to this definition"></a></dt>
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">env_setup.environment_setup.</span></span><span class="sig-name descname"><span class="pre">ProjectDirectorySetup</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">layout</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#env_setup.project_layout.ProjectLayout" title="env_setup.project_layout.ProjectLayout"><span class="pre">ProjectLayout</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/env_setup/environment_setup.html#ProjectDirectorySetup"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#env_setup.environment_setup.ProjectDirectorySetup" title="Link to this definition"></a></dt>
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
 <p>Creates and configures the project directory structure and geodatabases.</p>
 <dl class="simple">
@@ -209,28 +222,27 @@ Ensures setup is performed only once globally.</p>
 </dd>
 <dt>Details:</dt><dd><ul class="simple">
 <li><p>Checks if the global setup has already been completed to prevent redundancy.</p></li>
-<li><p>Creates a main directory and specified subdirectories for organizing project files.</p></li>
-<li><p>Generates geodatabases in the designated subdirectories for data storage.</p></li>
-<li><p>Sets up additional subdirectories within the subdirectories for miscellaneous files and layer configurations.</p></li>
-<li><p>A common method <cite>create_subdir_structure</cite> is introduced to handle the creation of additional subdirectories within the subdirectories.</p></li>
+<li><p>Creates the main directory and a per-scale subdirectory for organizing project files.</p></li>
+<li><p>Generates geodatabases in each scale subdirectory for data storage.</p></li>
+<li><p>Creates lyrx and general-files subdirectories within each scale subdirectory.</p></li>
 </ul>
 </dd>
 </dl>
 <dl class="py attribute">
-<dt class="sig sig-object py" id="env_setup.environment_setup.ProjectDirectorySetup.base_directory">
-<span class="sig-name descname"><span class="pre">base_directory</span></span><a class="headerlink" href="#env_setup.environment_setup.ProjectDirectorySetup.base_directory" title="Link to this definition"></a></dt>
-<dd><p>The root directory for the project structure.</p>
+<dt class="sig sig-object py" id="env_setup.environment_setup.ProjectDirectorySetup.layout">
+<span class="sig-name descname"><span class="pre">layout</span></span><a class="headerlink" href="#env_setup.environment_setup.ProjectDirectorySetup.layout" title="Link to this definition"></a></dt>
+<dd><p>The layout used to compose the directory and gdb paths.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Type<span class="colon">:</span></dt>
-<dd class="field-odd"><p>str</p>
+<dd class="field-odd"><p><a class="reference internal" href="#env_setup.project_layout.ProjectLayout" title="env_setup.project_layout.ProjectLayout">ProjectLayout</a></p>
 </dd>
 </dl>
 </dd></dl>
 
 <dl class="py attribute">
-<dt class="sig sig-object py" id="env_setup.environment_setup.ProjectDirectorySetup.sub_directories">
-<span class="sig-name descname"><span class="pre">sub_directories</span></span><a class="headerlink" href="#env_setup.environment_setup.ProjectDirectorySetup.sub_directories" title="Link to this definition"></a></dt>
-<dd><p>A list of names for subdirectories to be created within the project structure.</p>
+<dt class="sig sig-object py" id="env_setup.environment_setup.ProjectDirectorySetup.scales">
+<span class="sig-name descname"><span class="pre">scales</span></span><a class="headerlink" href="#env_setup.environment_setup.ProjectDirectorySetup.scales" title="Link to this definition"></a></dt>
+<dd><p>Per-scale subdirectories to create.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Type<span class="colon">:</span></dt>
 <dd class="field-odd"><p>list</p>
@@ -241,7 +253,7 @@ Ensures setup is performed only once globally.</p>
 <dl class="py attribute">
 <dt class="sig sig-object py" id="env_setup.environment_setup.ProjectDirectorySetup.gdb_names">
 <span class="sig-name descname"><span class="pre">gdb_names</span></span><a class="headerlink" href="#env_setup.environment_setup.ProjectDirectorySetup.gdb_names" title="Link to this definition"></a></dt>
-<dd><p>Names of the geodatabases to be created in each subdirectory.</p>
+<dd><p>Names of the geodatabases to create in each scale subdirectory.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Type<span class="colon">:</span></dt>
 <dd class="field-odd"><p>list</p>
@@ -254,26 +266,71 @@ Ensures setup is performed only once globally.</p>
 <span class="sig-name descname"><span class="pre">setup</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/env_setup/environment_setup.html#ProjectDirectorySetup.setup"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#env_setup.environment_setup.ProjectDirectorySetup.setup" title="Link to this definition"></a></dt>
 <dd></dd></dl>
 
-<dl class="py method">
-<dt class="sig sig-object py" id="env_setup.environment_setup.ProjectDirectorySetup.create_directory_structure">
-<span class="sig-name descname"><span class="pre">create_directory_structure</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">main_directory_path</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/env_setup/environment_setup.html#ProjectDirectorySetup.create_directory_structure"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#env_setup.environment_setup.ProjectDirectorySetup.create_directory_structure" title="Link to this definition"></a></dt>
-<dd></dd></dl>
-
-<dl class="py method">
-<dt class="sig sig-object py" id="env_setup.environment_setup.ProjectDirectorySetup.create_gdbs_in_subdirectories">
-<span class="sig-name descname"><span class="pre">create_gdbs_in_subdirectories</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">main_directory_path</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/env_setup/environment_setup.html#ProjectDirectorySetup.create_gdbs_in_subdirectories"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#env_setup.environment_setup.ProjectDirectorySetup.create_gdbs_in_subdirectories" title="Link to this definition"></a></dt>
-<dd></dd></dl>
-
-<dl class="py method">
-<dt class="sig sig-object py" id="env_setup.environment_setup.ProjectDirectorySetup.create_subdirectory_structure">
-<span class="sig-name descname"><span class="pre">create_subdirectory_structure</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">main_directory_path</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">subdir_structure</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/env_setup/environment_setup.html#ProjectDirectorySetup.create_subdirectory_structure"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#env_setup.environment_setup.ProjectDirectorySetup.create_subdirectory_structure" title="Link to this definition"></a></dt>
-<dd></dd></dl>
-
 </dd></dl>
 
 </section>
 <section id="module-env_setup.global_config">
 <span id="env-setup-global-config-module"></span><h2>env_setup.global_config module<a class="headerlink" href="#module-env_setup.global_config" title="Link to this heading"></a></h2>
+</section>
+<section id="module-env_setup.project_layout">
+<span id="env-setup-project-layout-module"></span><h2>env_setup.project_layout module<a class="headerlink" href="#module-env_setup.project_layout" title="Link to this heading"></a></h2>
+<dl class="py class">
+<dt class="sig sig-object py" id="env_setup.project_layout.ProjectLayout">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">env_setup.project_layout.</span></span><span class="sig-name descname"><span class="pre">ProjectLayout</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">output_root</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Path</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">main_directory_name</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'ag_outputs'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">lyrx_directory_name</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'lyrx_outputs'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">general_files_name</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'general_files'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">final_outputs_name</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'final_outputs'</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/env_setup/project_layout.html#ProjectLayout"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#env_setup.project_layout.ProjectLayout" title="Link to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<p>Single source of truth for the project’s output directory layout.</p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="env_setup.project_layout.ProjectLayout.output_root">
+<span class="sig-name descname"><span class="pre">output_root</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">Path</span></span><a class="headerlink" href="#env_setup.project_layout.ProjectLayout.output_root" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="env_setup.project_layout.ProjectLayout.main_directory_name">
+<span class="sig-name descname"><span class="pre">main_directory_name</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">str</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'ag_outputs'</span></span><a class="headerlink" href="#env_setup.project_layout.ProjectLayout.main_directory_name" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="env_setup.project_layout.ProjectLayout.lyrx_directory_name">
+<span class="sig-name descname"><span class="pre">lyrx_directory_name</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">str</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'lyrx_outputs'</span></span><a class="headerlink" href="#env_setup.project_layout.ProjectLayout.lyrx_directory_name" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="env_setup.project_layout.ProjectLayout.general_files_name">
+<span class="sig-name descname"><span class="pre">general_files_name</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">str</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'general_files'</span></span><a class="headerlink" href="#env_setup.project_layout.ProjectLayout.general_files_name" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="env_setup.project_layout.ProjectLayout.final_outputs_name">
+<span class="sig-name descname"><span class="pre">final_outputs_name</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">str</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'final_outputs'</span></span><a class="headerlink" href="#env_setup.project_layout.ProjectLayout.final_outputs_name" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="env_setup.project_layout.ProjectLayout.main_dir">
+<span class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">main_dir</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">Path</span></span><a class="headerlink" href="#env_setup.project_layout.ProjectLayout.main_dir" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="env_setup.project_layout.ProjectLayout.scale_dir">
+<span class="sig-name descname"><span class="pre">scale_dir</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">scale</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">Path</span></span></span><a class="reference internal" href="../_modules/env_setup/project_layout.html#ProjectLayout.scale_dir"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#env_setup.project_layout.ProjectLayout.scale_dir" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="env_setup.project_layout.ProjectLayout.gdb">
+<span class="sig-name descname"><span class="pre">gdb</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">scale</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">name</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">Path</span></span></span><a class="reference internal" href="../_modules/env_setup/project_layout.html#ProjectLayout.gdb"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#env_setup.project_layout.ProjectLayout.gdb" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="env_setup.project_layout.ProjectLayout.lyrx_dir">
+<span class="sig-name descname"><span class="pre">lyrx_dir</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">scale</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">Path</span></span></span><a class="reference internal" href="../_modules/env_setup/project_layout.html#ProjectLayout.lyrx_dir"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#env_setup.project_layout.ProjectLayout.lyrx_dir" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="env_setup.project_layout.ProjectLayout.general_files_dir">
+<span class="sig-name descname"><span class="pre">general_files_dir</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">scale</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">Path</span></span></span><a class="reference internal" href="../_modules/env_setup/project_layout.html#ProjectLayout.general_files_dir"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#env_setup.project_layout.ProjectLayout.general_files_dir" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
 </section>
 <section id="module-env_setup">
 <span id="module-contents"></span><h2>Module contents<a class="headerlink" href="#module-env_setup" title="Link to this heading"></a></h2>

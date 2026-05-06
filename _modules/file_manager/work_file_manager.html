@@ -75,15 +75,15 @@
            <div itemprop="articleBody">
              
   <h1>Source code for file_manager.work_file_manager</h1><div class="highlight"><pre>
-<span></span><span class="kn">import</span><span class="w"> </span><span class="nn">arcpy</span>
-<span class="kn">import</span><span class="w"> </span><span class="nn">re</span>
+<span></span><span class="kn">import</span><span class="w"> </span><span class="nn">re</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">datetime</span><span class="w"> </span><span class="kn">import</span> <span class="n">datetime</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">overload</span><span class="p">,</span> <span class="n">Any</span><span class="p">,</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">Union</span><span class="p">,</span> <span class="n">Iterable</span><span class="p">,</span> <span class="n">Literal</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">pathlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">Path</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Any</span><span class="p">,</span> <span class="n">Iterable</span><span class="p">,</span> <span class="n">Literal</span><span class="p">,</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">Union</span><span class="p">,</span> <span class="n">overload</span>
 
-
-<span class="kn">from</span><span class="w"> </span><span class="nn">composition_configs</span><span class="w"> </span><span class="kn">import</span> <span class="n">core_config</span><span class="p">,</span> <span class="n">type_defs</span><span class="p">,</span> <span class="n">io_types</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">arcpy</span>
 
 <span class="kn">import</span><span class="w"> </span><span class="nn">env_setup.global_config</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">composition_configs</span><span class="w"> </span><span class="kn">import</span> <span class="n">core_config</span><span class="p">,</span> <span class="n">io_types</span><span class="p">,</span> <span class="n">type_defs</span>
 
 
 <div class="viewcode-block" id="WorkFileManager">
@@ -150,30 +150,38 @@
             <span class="s2">&quot;</span><span class="se">\\</span><span class="s2">memory</span><span class="se">\\</span><span class="s2">&quot;</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">write_to_memory</span> <span class="k">else</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">root_file</span><span class="si">}</span><span class="s2">_&quot;</span>
         <span class="p">)</span>
 
-    <span class="k">def</span><span class="w"> </span><span class="nf">_modify_path</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_modify_path</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">Path</span><span class="p">,</span> <span class="nb">str</span><span class="p">]:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        What:</span>
-<span class="sd">            Modifies the given path by removing the unwanted portion up to the scale directory.</span>
+<span class="sd">            Walks root_file&#39;s path components, finds the scale directory segment</span>
+<span class="sd">            (e.g. &quot;n100&quot;, &quot;n50&quot;), and returns the path up to and including that</span>
+<span class="sd">            segment plus the trailing origin file name fragment.</span>
+
+<span class="sd">            The first segment after the scale (typically the .gdb container) is</span>
+<span class="sd">            dropped; the remainder is joined into a single name fragment used as</span>
+<span class="sd">            a tag inside lyrx and general-files filenames.</span>
 
 <span class="sd">        Returns:</span>
-<span class="sd">            tuple[str,str]: The modified path.</span>
+<span class="sd">            tuple[Path, str]: The scale path and the origin file name fragment.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="c1"># Define regex pattern to find the scale directory (ends with a digit followed by \\)</span>
-        <span class="n">match</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">search</span><span class="p">(</span><span class="sa">r</span><span class="s2">&quot;</span><span class="se">\\</span><span class="s2">\w+\d0</span><span class="se">\\</span><span class="s2">&quot;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">root_file</span><span class="p">)</span>
-        <span class="k">if</span> <span class="ow">not</span> <span class="n">match</span><span class="p">:</span>
-            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Scale directory pattern not found in the path.&quot;</span><span class="p">)</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">write_to_memory</span><span class="p">:</span>
             <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
                 <span class="s2">&quot;Other file types than gdb are not supported in memory mode.&quot;</span>
             <span class="p">)</span>
 
-        <span class="c1"># Extract the root up to the scale directory</span>
-        <span class="n">scale_path</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">root_file</span><span class="p">[:</span> <span class="n">match</span><span class="o">.</span><span class="n">end</span><span class="p">()]</span>
-
-        <span class="n">remaining_path</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">root_file</span><span class="p">[</span><span class="n">match</span><span class="o">.</span><span class="n">end</span><span class="p">()</span> <span class="p">:]</span>
-        <span class="n">origin_file_name</span> <span class="o">=</span> <span class="n">remaining_path</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">&quot;</span><span class="se">\\</span><span class="s2">&quot;</span><span class="p">,</span> <span class="mi">1</span><span class="p">)[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
-
-        <span class="k">return</span> <span class="n">scale_path</span><span class="p">,</span> <span class="n">origin_file_name</span>
+        <span class="n">parts</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">root_file</span><span class="p">)</span><span class="o">.</span><span class="n">parts</span>
+        <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">part</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">parts</span><span class="p">):</span>
+            <span class="k">if</span> <span class="n">re</span><span class="o">.</span><span class="n">fullmatch</span><span class="p">(</span><span class="sa">r</span><span class="s2">&quot;\w+\d0&quot;</span><span class="p">,</span> <span class="n">part</span><span class="p">):</span>
+                <span class="n">scale_path</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="o">*</span><span class="n">parts</span><span class="p">[:</span> <span class="n">i</span> <span class="o">+</span> <span class="mi">1</span><span class="p">])</span>
+                <span class="n">after_scale</span> <span class="o">=</span> <span class="n">parts</span><span class="p">[</span><span class="n">i</span> <span class="o">+</span> <span class="mi">1</span> <span class="p">:]</span>
+                <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">after_scale</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">:</span>
+                    <span class="n">origin_file_name</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">Path</span><span class="p">(</span><span class="o">*</span><span class="n">after_scale</span><span class="p">[</span><span class="mi">1</span><span class="p">:]))</span>
+                <span class="k">elif</span> <span class="n">after_scale</span><span class="p">:</span>
+                    <span class="n">origin_file_name</span> <span class="o">=</span> <span class="n">after_scale</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="n">origin_file_name</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span>
+                <span class="k">return</span> <span class="n">scale_path</span><span class="p">,</span> <span class="n">origin_file_name</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Scale directory pattern not found in the path.&quot;</span><span class="p">)</span>
 
     <span class="nd">@overload</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">build_file_path</span><span class="p">(</span>
@@ -227,11 +235,17 @@
         <span class="n">scale_path</span><span class="p">,</span> <span class="n">origin_file_name</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_modify_path</span><span class="p">()</span>
 
         <span class="k">if</span> <span class="n">file_type</span> <span class="o">==</span> <span class="s2">&quot;lyrx&quot;</span><span class="p">:</span>
-            <span class="n">s</span> <span class="o">=</span> <span class="sa">rf</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">scale_path</span><span class="si">}{</span><span class="bp">self</span><span class="o">.</span><span class="n">lyrx_directory_name</span><span class="si">}</span><span class="s2">\</span><span class="si">{</span><span class="n">origin_file_name</span><span class="si">}</span><span class="s2">_</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">unique_id</span><span class="si">}</span><span class="s2">_</span><span class="si">{</span><span class="n">file_name</span><span class="si">}{</span><span class="n">suffix</span><span class="si">}</span><span class="s2">.lyrx&quot;</span>
-            <span class="n">path</span> <span class="o">=</span> <span class="n">type_defs</span><span class="o">.</span><span class="n">LyrxFilePath</span><span class="p">(</span><span class="n">s</span><span class="p">)</span>
+            <span class="n">leaf</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">origin_file_name</span><span class="si">}</span><span class="s2">_</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">unique_id</span><span class="si">}</span><span class="s2">_</span><span class="si">{</span><span class="n">file_name</span><span class="si">}{</span><span class="n">suffix</span><span class="si">}</span><span class="s2">.lyrx&quot;</span>
+            <span class="n">path</span> <span class="o">=</span> <span class="n">type_defs</span><span class="o">.</span><span class="n">LyrxFilePath</span><span class="p">(</span>
+                <span class="nb">str</span><span class="p">(</span><span class="n">scale_path</span> <span class="o">/</span> <span class="bp">self</span><span class="o">.</span><span class="n">lyrx_directory_name</span> <span class="o">/</span> <span class="n">leaf</span><span class="p">)</span>
+            <span class="p">)</span>
         <span class="k">else</span><span class="p">:</span>
-            <span class="n">s</span> <span class="o">=</span> <span class="sa">rf</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">scale_path</span><span class="si">}{</span><span class="bp">self</span><span class="o">.</span><span class="n">general_files_directory_name</span><span class="si">}</span><span class="s2">\</span><span class="si">{</span><span class="n">origin_file_name</span><span class="si">}</span><span class="s2">_</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">unique_id</span><span class="si">}</span><span class="s2">_</span><span class="si">{</span><span class="n">file_name</span><span class="si">}{</span><span class="n">suffix</span><span class="si">}</span><span class="s2">.</span><span class="si">{</span><span class="n">file_type</span><span class="si">}</span><span class="s2">&quot;</span>
-            <span class="n">path</span> <span class="o">=</span> <span class="n">type_defs</span><span class="o">.</span><span class="n">GeneralFilePath</span><span class="p">(</span><span class="n">s</span><span class="p">)</span>
+            <span class="n">leaf</span> <span class="o">=</span> <span class="p">(</span>
+                <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">origin_file_name</span><span class="si">}</span><span class="s2">_</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">unique_id</span><span class="si">}</span><span class="s2">_</span><span class="si">{</span><span class="n">file_name</span><span class="si">}{</span><span class="n">suffix</span><span class="si">}</span><span class="s2">.</span><span class="si">{</span><span class="n">file_type</span><span class="si">}</span><span class="s2">&quot;</span>
+            <span class="p">)</span>
+            <span class="n">path</span> <span class="o">=</span> <span class="n">type_defs</span><span class="o">.</span><span class="n">GeneralFilePath</span><span class="p">(</span>
+                <span class="nb">str</span><span class="p">(</span><span class="n">scale_path</span> <span class="o">/</span> <span class="bp">self</span><span class="o">.</span><span class="n">general_files_directory_name</span> <span class="o">/</span> <span class="n">leaf</span><span class="p">)</span>
+            <span class="p">)</span>
 
         <span class="n">key</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">path</span><span class="p">)</span>
         <span class="k">if</span> <span class="n">key</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">created_paths</span><span class="p">:</span>

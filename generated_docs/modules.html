@@ -460,18 +460,31 @@
 </ul>
 </li>
 <li class="toctree-l3"><a class="reference internal" href="env_setup.html#env_setup.environment_setup.ProjectDirectorySetup"><code class="docutils literal notranslate"><span class="pre">ProjectDirectorySetup</span></code></a><ul>
-<li class="toctree-l4"><a class="reference internal" href="env_setup.html#env_setup.environment_setup.ProjectDirectorySetup.base_directory"><code class="docutils literal notranslate"><span class="pre">ProjectDirectorySetup.base_directory</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="env_setup.html#env_setup.environment_setup.ProjectDirectorySetup.sub_directories"><code class="docutils literal notranslate"><span class="pre">ProjectDirectorySetup.sub_directories</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="env_setup.html#env_setup.environment_setup.ProjectDirectorySetup.layout"><code class="docutils literal notranslate"><span class="pre">ProjectDirectorySetup.layout</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="env_setup.html#env_setup.environment_setup.ProjectDirectorySetup.scales"><code class="docutils literal notranslate"><span class="pre">ProjectDirectorySetup.scales</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="env_setup.html#env_setup.environment_setup.ProjectDirectorySetup.gdb_names"><code class="docutils literal notranslate"><span class="pre">ProjectDirectorySetup.gdb_names</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="env_setup.html#env_setup.environment_setup.ProjectDirectorySetup.setup"><code class="docutils literal notranslate"><span class="pre">ProjectDirectorySetup.setup()</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="env_setup.html#env_setup.environment_setup.ProjectDirectorySetup.create_directory_structure"><code class="docutils literal notranslate"><span class="pre">ProjectDirectorySetup.create_directory_structure()</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="env_setup.html#env_setup.environment_setup.ProjectDirectorySetup.create_gdbs_in_subdirectories"><code class="docutils literal notranslate"><span class="pre">ProjectDirectorySetup.create_gdbs_in_subdirectories()</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="env_setup.html#env_setup.environment_setup.ProjectDirectorySetup.create_subdirectory_structure"><code class="docutils literal notranslate"><span class="pre">ProjectDirectorySetup.create_subdirectory_structure()</span></code></a></li>
 </ul>
 </li>
 </ul>
 </li>
 <li class="toctree-l2"><a class="reference internal" href="env_setup.html#module-env_setup.global_config">env_setup.global_config module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="env_setup.html#module-env_setup.project_layout">env_setup.project_layout module</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="env_setup.html#env_setup.project_layout.ProjectLayout"><code class="docutils literal notranslate"><span class="pre">ProjectLayout</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="env_setup.html#env_setup.project_layout.ProjectLayout.output_root"><code class="docutils literal notranslate"><span class="pre">ProjectLayout.output_root</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="env_setup.html#env_setup.project_layout.ProjectLayout.main_directory_name"><code class="docutils literal notranslate"><span class="pre">ProjectLayout.main_directory_name</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="env_setup.html#env_setup.project_layout.ProjectLayout.lyrx_directory_name"><code class="docutils literal notranslate"><span class="pre">ProjectLayout.lyrx_directory_name</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="env_setup.html#env_setup.project_layout.ProjectLayout.general_files_name"><code class="docutils literal notranslate"><span class="pre">ProjectLayout.general_files_name</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="env_setup.html#env_setup.project_layout.ProjectLayout.final_outputs_name"><code class="docutils literal notranslate"><span class="pre">ProjectLayout.final_outputs_name</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="env_setup.html#env_setup.project_layout.ProjectLayout.main_dir"><code class="docutils literal notranslate"><span class="pre">ProjectLayout.main_dir</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="env_setup.html#env_setup.project_layout.ProjectLayout.scale_dir"><code class="docutils literal notranslate"><span class="pre">ProjectLayout.scale_dir()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="env_setup.html#env_setup.project_layout.ProjectLayout.gdb"><code class="docutils literal notranslate"><span class="pre">ProjectLayout.gdb()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="env_setup.html#env_setup.project_layout.ProjectLayout.lyrx_dir"><code class="docutils literal notranslate"><span class="pre">ProjectLayout.lyrx_dir()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="env_setup.html#env_setup.project_layout.ProjectLayout.general_files_dir"><code class="docutils literal notranslate"><span class="pre">ProjectLayout.general_files_dir()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
 <li class="toctree-l2"><a class="reference internal" href="env_setup.html#module-env_setup">Module contents</a></li>
 </ul>
 </li>
@@ -507,14 +520,6 @@
 <li class="toctree-l2"><a class="reference internal" href="file_manager.html#submodules">Submodules</a></li>
 <li class="toctree-l2"><a class="reference internal" href="file_manager.html#module-file_manager.base_file_manager">file_manager.base_file_manager module</a><ul>
 <li class="toctree-l3"><a class="reference internal" href="file_manager.html#file_manager.base_file_manager.BaseFileManager"><code class="docutils literal notranslate"><span class="pre">BaseFileManager</span></code></a><ul>
-<li class="toctree-l4"><a class="reference internal" href="file_manager.html#file_manager.base_file_manager.BaseFileManager.local_root_directory"><code class="docutils literal notranslate"><span class="pre">BaseFileManager.local_root_directory</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="file_manager.html#file_manager.base_file_manager.BaseFileManager.project_root_directory"><code class="docutils literal notranslate"><span class="pre">BaseFileManager.project_root_directory</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="file_manager.html#file_manager.base_file_manager.BaseFileManager.general_files_directory_name"><code class="docutils literal notranslate"><span class="pre">BaseFileManager.general_files_directory_name</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="file_manager.html#file_manager.base_file_manager.BaseFileManager.lyrx_directory_name"><code class="docutils literal notranslate"><span class="pre">BaseFileManager.lyrx_directory_name</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="file_manager.html#id0"><code class="docutils literal notranslate"><span class="pre">BaseFileManager.local_root_directory</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="file_manager.html#id1"><code class="docutils literal notranslate"><span class="pre">BaseFileManager.project_root_directory</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="file_manager.html#id2"><code class="docutils literal notranslate"><span class="pre">BaseFileManager.general_files_directory_name</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="file_manager.html#id3"><code class="docutils literal notranslate"><span class="pre">BaseFileManager.lyrx_directory_name</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="file_manager.html#file_manager.base_file_manager.BaseFileManager.script_source_name"><code class="docutils literal notranslate"><span class="pre">BaseFileManager.script_source_name</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="file_manager.html#file_manager.base_file_manager.BaseFileManager.description"><code class="docutils literal notranslate"><span class="pre">BaseFileManager.description</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="file_manager.html#file_manager.base_file_manager.BaseFileManager.validate_inputs"><code class="docutils literal notranslate"><span class="pre">BaseFileManager.validate_inputs()</span></code></a></li>
