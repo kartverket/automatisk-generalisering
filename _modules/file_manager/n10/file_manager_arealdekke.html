@@ -88,17 +88,15 @@
 
 
 <span class="c1"># All scripts</span>
-<span class="n">dissolve_file</span> <span class="o">=</span> <span class="s2">&quot;dissolve&quot;</span>
-<span class="n">elim_file</span> <span class="o">=</span> <span class="s2">&quot;eliminate&quot;</span>
-<span class="n">gangsykkel_file</span> <span class="o">=</span> <span class="s2">&quot;gangsykkel&quot;</span>
-<span class="n">attribute_file</span> <span class="o">=</span> <span class="s2">&quot;attribute_changer&quot;</span>
+<span class="n">dissolve_file</span> <span class="o">=</span> <span class="s2">&quot;B_dissolve&quot;</span>
+<span class="n">elim_file</span> <span class="o">=</span> <span class="s2">&quot;D_eliminate&quot;</span>
+<span class="n">gangsykkel_file</span> <span class="o">=</span> <span class="s2">&quot;E_gangsykkel&quot;</span>
+<span class="n">attribute_file</span> <span class="o">=</span> <span class="s2">&quot;A_attribute_changer&quot;</span>
 <span class="n">overlap_remover</span> <span class="o">=</span> <span class="s2">&quot;overlap_remover&quot;</span>
-<span class="n">island_merger</span> <span class="o">=</span> <span class="s2">&quot;island_merger&quot;</span>
+<span class="n">island_merger</span> <span class="o">=</span> <span class="s2">&quot;C_island_merger&quot;</span>
 <span class="n">passability</span> <span class="o">=</span> <span class="s2">&quot;passability&quot;</span>
-<span class="n">simplify_polygon</span> <span class="o">=</span> <span class="s2">&quot;simplify_polygon&quot;</span>
-<span class="n">expansion_controller</span> <span class="o">=</span> <span class="s2">&quot;expansion_controller&quot;</span>
-<span class="n">buff_polygon_segments</span> <span class="o">=</span> <span class="s2">&quot;buff_polygon_segments&quot;</span>
-<span class="n">river_file</span> <span class="o">=</span> <span class="s2">&quot;river_file&quot;</span>
+<span class="n">simplify_polygon</span> <span class="o">=</span> <span class="s2">&quot;G_simplify_polygon&quot;</span>
+<span class="n">buff_polygon_segments</span> <span class="o">=</span> <span class="s2">&quot;F_buff_polygon_segments&quot;</span>
 <span class="n">innsjo_file</span> <span class="o">=</span> <span class="s2">&quot;innsjo_file&quot;</span>
 <span class="n">arealdekke_class</span> <span class="o">=</span> <span class="s2">&quot;arealdekke_class&quot;</span>
 <span class="n">category_class</span> <span class="o">=</span> <span class="s2">&quot;category_class&quot;</span>
@@ -129,9 +127,6 @@
     <span class="n">dissolve_arealdekke</span> <span class="o">=</span> <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_gdb</span><span class="p">(</span>
         <span class="n">script_source_name</span><span class="o">=</span><span class="n">dissolve_file</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">&quot;arealdekke&quot;</span>
     <span class="p">)</span>
-    <span class="n">dissolve_arealdekke_docu</span> <span class="o">=</span> <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_gdb</span><span class="p">(</span>
-        <span class="n">script_source_name</span><span class="o">=</span><span class="n">dissolve_file</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">&quot;arealdekke_docu&quot;</span>
-    <span class="p">)</span>
 
     <span class="c1"># ========================================</span>
     <span class="c1">#                     gangsykkel dissolver</span>
@@ -143,12 +138,6 @@
 
     <span class="n">dissolve_gangsykkel</span> <span class="o">=</span> <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_gdb</span><span class="p">(</span>
         <span class="n">script_source_name</span><span class="o">=</span><span class="n">gangsykkel_file</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">&quot;gangsykkel&quot;</span>
-    <span class="p">)</span>
-    <span class="n">dissolve_gangsykkel2</span> <span class="o">=</span> <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_gdb</span><span class="p">(</span>
-        <span class="n">script_source_name</span><span class="o">=</span><span class="n">gangsykkel_file</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">&quot;gangsykkel2&quot;</span>
-    <span class="p">)</span>
-    <span class="n">dissolve_gangsykkel3</span> <span class="o">=</span> <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_gdb</span><span class="p">(</span>
-        <span class="n">script_source_name</span><span class="o">=</span><span class="n">gangsykkel_file</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">&quot;gangsykkel3&quot;</span>
     <span class="p">)</span>
 
     <span class="c1"># ========================================</span>
@@ -200,16 +189,8 @@
     <span class="c1">#                          OVERLAP REMOVER</span>
     <span class="c1"># ========================================</span>
 
-    <span class="n">overlap_remover_start__n10_land_use</span> <span class="o">=</span> <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_gdb</span><span class="p">(</span>
-        <span class="n">script_source_name</span><span class="o">=</span><span class="n">overlap_remover</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">&quot;overlap_remover_start&quot;</span>
-    <span class="p">)</span>
-
     <span class="n">overlap_remover__n10_land_use</span> <span class="o">=</span> <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_gdb</span><span class="p">(</span>
         <span class="n">script_source_name</span><span class="o">=</span><span class="n">overlap_remover</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">&quot;overlap_remover&quot;</span>
-    <span class="p">)</span>
-
-    <span class="n">overlap_remover_output__n10_land_use</span> <span class="o">=</span> <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_gdb</span><span class="p">(</span>
-        <span class="n">script_source_name</span><span class="o">=</span><span class="n">overlap_remover</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">&quot;overlap_remover_output&quot;</span>
     <span class="p">)</span>
 
     <span class="c1"># ========================================</span>
@@ -242,27 +223,6 @@
 
     <span class="n">simplified_polygons__n10_land_use</span> <span class="o">=</span> <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_gdb</span><span class="p">(</span>
         <span class="n">script_source_name</span><span class="o">=</span><span class="n">simplify_polygon</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">&quot;simplified_polygons&quot;</span>
-    <span class="p">)</span>
-
-    <span class="c1"># ========================================</span>
-    <span class="c1">#</span>
-    <span class="c1"># ========================================</span>
-
-    <span class="n">expansion_controller__n10_land_use</span> <span class="o">=</span> <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_gdb</span><span class="p">(</span>
-        <span class="n">script_source_name</span><span class="o">=</span><span class="n">expansion_controller</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">&quot;expansion_controller&quot;</span>
-    <span class="p">)</span>
-
-    <span class="n">expansion_controller_output__n10_land_use</span> <span class="o">=</span> <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_gdb</span><span class="p">(</span>
-        <span class="n">script_source_name</span><span class="o">=</span><span class="n">expansion_controller</span><span class="p">,</span>
-        <span class="n">description</span><span class="o">=</span><span class="s2">&quot;expansion_controller_output&quot;</span><span class="p">,</span>
-    <span class="p">)</span>
-
-    <span class="c1"># ========================================</span>
-    <span class="c1">#                              BUFF RIVERS</span>
-    <span class="c1"># ========================================</span>
-
-    <span class="n">generalise_rivers__n10_land_use</span> <span class="o">=</span> <span class="n">file_manager</span><span class="o">.</span><span class="n">generate_file_name_gdb</span><span class="p">(</span>
-        <span class="n">script_source_name</span><span class="o">=</span><span class="n">river_file</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">&quot;buffed_small_rivers&quot;</span>
     <span class="p">)</span>
 
     <span class="c1"># ========================================</span>

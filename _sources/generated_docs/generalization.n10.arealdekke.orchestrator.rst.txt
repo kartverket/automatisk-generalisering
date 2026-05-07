@@ -12,14 +12,6 @@ generalization.n10.arealdekke.orchestrator.arealdekke\_class module
    :show-inheritance:
    :undoc-members:
 
-generalization.n10.arealdekke.orchestrator.arealdekke\_orchestrator module
---------------------------------------------------------------------------
-
-.. automodule:: generalization.n10.arealdekke.orchestrator.arealdekke_orchestrator
-   :members:
-   :show-inheritance:
-   :undoc-members:
-
 generalization.n10.arealdekke.orchestrator.category\_class module
 -----------------------------------------------------------------
 
@@ -32,14 +24,6 @@ generalization.n10.arealdekke.orchestrator.enum\_variables module
 -----------------------------------------------------------------
 
 .. automodule:: generalization.n10.arealdekke.orchestrator.enum_variables
-   :members:
-   :show-inheritance:
-   :undoc-members:
-
-generalization.n10.arealdekke.orchestrator.expansion\_controller module
------------------------------------------------------------------------
-
-.. automodule:: generalization.n10.arealdekke.orchestrator.expansion_controller
    :members:
    :show-inheritance:
    :undoc-members:

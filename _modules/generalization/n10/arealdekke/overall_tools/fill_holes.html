@@ -227,7 +227,6 @@
 <span class="sd">        files (dict): Dictionary with all the working files</span>
 <span class="sd">        target (str): Land use category that is being processed</span>
 <span class="sd">    &quot;&quot;&quot;</span>
-
     <span class="c1"># Collect the holes and store them in a separate feature class</span>
     <span class="n">arcpy</span><span class="o">.</span><span class="n">analysis</span><span class="o">.</span><span class="n">Erase</span><span class="p">(</span>
         <span class="n">in_features</span><span class="o">=</span><span class="n">files</span><span class="p">[</span><span class="s2">&quot;complete_without_locked&quot;</span><span class="p">],</span>
