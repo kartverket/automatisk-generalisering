@@ -9,6 +9,6 @@ COPY . /app
 
 
 # Make the project script the container entrypoint
-ENV SCALE=n100 OBJECT=road
+ENV SCALE=scale OBJECT=object
 CMD ["sh","-c","python main.py --scale ${SCALE} --object ${OBJECT}"]
 
