@@ -18,7 +18,8 @@ from generalization.n10.arealdekke.overall_tools.attribute_analyzer import (
     sort_results,
     load_rules,
 )
-#from input_data import input_n100
+
+# from input_data import input_n100
 
 # ========================
 # Program
@@ -227,7 +228,9 @@ def change_attributes(init: logic_config.AttributeChangerInitKwargs) -> None:
 
     print("🔧 Updates 'arealdekke' based on rule set...")
 
-    rule_set = load_rules(Path.joinpath(Path(__file__).parent, "attribute_prioritizing.csv"))
+    rule_set = load_rules(
+        Path.joinpath(Path(__file__).parent, "attribute_prioritizing.csv")
+    )
 
     def match(rule, a, h, u, g):
         return (

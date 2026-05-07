@@ -47,7 +47,9 @@ arcpy.env.overwriteOutput = True
 
 class Arealdekke:
 
-    def __init__(self, input_data: str, map_scale: str) -> None:
+    def __init__(
+        self, input_data: str, map_scale: str, only_keep_final_output: bool = False
+    ) -> None:
         """
         What:
         Object initialization. Collects data from the history file connected to the class,
@@ -170,6 +172,8 @@ class Arealdekke:
             Arealdekke_N10.arealdekke_processed_categories__n10_land_use.value
         )
         self.final_output_fc = Arealdekke_N10.arealdekke_class_final__n10_land_use.value
+
+        self.only_keep_final_output = only_keep_final_output
 
     # ========================
     # Main functions
@@ -386,6 +390,25 @@ class Arealdekke:
                 key=keys.postprocessing_operations_completed.value,
                 value=self.__postprocesses_completed,
             )
+
+        if self.only_keep_final_output:
+            gdb = Path(self.final_output_fc).parent
+            keep = {
+                Path(self.final_output_fc).name,
+                Path(Arealdekke_N10.passability__n10_land_use.value).name,
+            }
+
+            arcpy.env.workspace = str(gdb)
+
+            # Feature classes
+            for fc in arcpy.ListFeatureClasses():
+                if fc not in keep:
+                    arcpy.Delete_management(fc)
+
+            # Tabels
+            for tbl in arcpy.ListTables():
+                if tbl not in keep:
+                    arcpy.Delete_management(tbl)
 
         self.program_history.delete_history()
 
